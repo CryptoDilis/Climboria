@@ -779,6 +779,7 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 </aside></div>
 <footer class="footer">Climboria DEX · Quote-only. No wallet connection required to browse. Data by <a href="https://docs.dexscreener.com/api/reference" target="_blank" rel="noopener">DexScreener</a>; last refresh: <span id="footerLastRefresh">Waiting for market data</span>. Values are provider-reported; coverage and freshness vary. Verify token mint addresses and pools independently. <span class="footer-verification">Verify on <a href="https://solscan.io/" target="_blank" rel="noopener">Solscan</a> / <a href="https://dexscreener.com/" target="_blank" rel="noopener">DexScreener</a>.</span> · <a href="/support/">Customer Support</a></footer>
 </main>
+<script src="/dex/swap-amount.js"></script>
 <script src="/swap-config.js"></script>
 <script src="/dex/premium-terminal.js?v=1" defer></script>
 <script>
@@ -1178,8 +1179,9 @@ async function prepareJupiterSwap(){
  if(!swapExecutionReady()){status.textContent='Swap execution is safely disabled until the Climboria backend is deployed and verified.';return;}
  const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
  if(!Number.isFinite(amount)||amount<=0||from.id===to.id){status.textContent='Enter a valid amount and choose two different token mints.';return;}
- const raw=Math.floor(amount*Math.pow(10,from.decimals));
- if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
+ let raw;
+ try{raw=window.ClimboriaSwapAmount.toRaw($('quoteAmount').value,from.decimals);}
+ catch(e){status.textContent=e.message;return;}
  button.disabled=true;button.textContent='Preparing…';pendingSwapOrder=null;review.hidden=true;
  try{
   const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({inputMint:from.id,outputMint:to.id,amount:String(raw),taker:connectedWallet})});
@@ -1238,8 +1240,9 @@ async function requestJupiterQuote(){
   const stillCurrent=()=>request===dexQuoteRequestSequence&&input===$('quoteAmount').value.trim()&&from.id===quoteTokens.from.id&&to.id===quoteTokens.to.id;
   if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return;}
   if(from.id===to.id){status.textContent='Choose two different token mints.';return;}
-  const raw=Math.floor(amount*Math.pow(10,from.decimals));
-  if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
+  let raw;
+  try{raw=window.ClimboriaSwapAmount.toRaw($('quoteAmount').value,from.decimals);}
+  catch(e){status.textContent=e.message;return;}
   button.disabled=true;button.textContent='Quoting…';
   status.textContent='Requesting a fresh Jupiter route quote…';
   $('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';
