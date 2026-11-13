@@ -1657,4 +1657,16 @@ const climboriaPanelBackdrop=document.getElementById('climboriaPanelBackdrop');d
 }
 @media(min-width:761px){#baseMobileCards{display:none!important}}
 </style>
+<style id="climboria-mobile-readonly-quote-access">
+/* On small screens the compact DEX layout hides the status banner entirely.
+ * Restore the existing quote-only control only in Solana market view; Base and
+ * token-detail views retain their current intentionally compact layout. */
+@media(max-width:760px){
+ body.mobile-solana-view .execution-status{display:flex!important;align-items:center!important;gap:9px!important;margin:10px 0!important;padding:11px 12px!important;border-radius:12px!important}
+ body.mobile-solana-view .execution-status>div{min-width:0;flex:1 1 175px}
+ body.mobile-solana-view .execution-status b{font-size:12px!important}
+ body.mobile-solana-view .execution-status small{font-size:10px!important;line-height:1.45}
+ body.mobile-solana-view #showDexQuote{min-height:42px;flex:1 1 160px;white-space:normal;text-align:center;font-size:10px}
+}
+</style>
 </body></html>
