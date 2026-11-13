@@ -2,13 +2,17 @@
 
 ## Sources of truth
 
-- `README.md` records the agreed product and launch decisions.
-- `DEVELOPMENT_CHECKLIST.md` is the master development checklist. Follow its order and preserve every existing requirement.
+- `README.md` records the agreed product decisions and is the canonical master checklist.
+- `docs/RELEASE-PRIORITY-2026-11-10.md` and `docs/ACTIVE-HANDOFF-2026-11-11.md` mirror the current owner-approved execution order.
+- `DEVELOPMENT_CHECKLIST.md` points to the root README; do not maintain a conflicting second priority order.
 - `CLIMBORIA_WORLD_EXPANSION_CHECKLIST.md` tracks world expansion requirements.
 - `ASSET_SOURCES.md` records asset provenance, licensing, and integration gates.
 - Update the relevant checklist with evidence and a clear next task as work proceeds.
 
 ## Product decisions
+
+- **Current mandatory execution order:** P1 Live Swap → P2 Live DEX → P3 all Login methods → P4 fully live Game → P5 Live Launchpad (last). This latest owner instruction supersedes all older priority orders in historical records.
+- **No demo-only delivery:** do not count mocks, fixtures, static previews, fake data, alert-only actions, or placeholder success as completed functionality. A feature is LIVE only after real production integrations and exact-head end-to-end evidence. If not live, state unavailable honestly.
 
 - The current playable launch world is Jarrell's Peak. Arena, Marketplace, and Inventory menu destinations must be represented honestly according to their implemented status; do not imply future systems are live.
 - Keep wildlife and snakes disabled unless explicitly authorized for reactivation.

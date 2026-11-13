@@ -1,14 +1,41 @@
-# Climboria Active Handoff — 2026-11-11
+# Climboria Active Handoff — 2026-11-12
 
-**Purpose:** durable checkpoint so work resumes from verified repository state instead of repeating completed tasks.
+**Purpose:** resume from verified repository and workflow state. This handoff follows the latest explicit owner instruction.
 
-## Current release priority
+## Current owner-approved priority — authoritative
 
-1. P1 — production Swap backend, transaction safety, deployment and Devnet lifecycle.
-2. P2 — DEX live market/profile/chart verification.
-3. P3 — Signature Launchpad end-to-end implementation and on-chain evidence.
-4. P4 — real authentication provider and Guest-to-account linking.
-5. Resume game/Jarrell's Peak after the ecosystem release gates.
+1. **P1 — Live Swap**
+2. **P2 — Live DEX**
+3. **P3 — All Login Methods Available** (Guest, email/password, Google, X, and supported wallet authentication)
+4. **P4 — Fully Live Game** (real playable desktop/mobile game, not a demo)
+5. **P5 — Live Launchpad (last)**
+
+**Global rule: NO DEMO-ONLY DELIVERY.** All product experiences must be real and live when marked complete. Never fabricate provider data, prices, balances, charts, quotes, transaction success, login success, rewards, launch status or multiplayer presence. If a dependency is not live, show unavailable honestly. Devnet is a required safety gate, not a production-live substitute.
+
+## Current exact repository state
+
+- Main baseline immediately before the priority-documentation commits: `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
+- PR #268 is open, draft and unmerged; exact head `8c4e86994e1ed203ffa26803874924e705973462`.
+- Validate, Ecosystem Browser Smoke and Jupiter V6 CPI Trace Audit passed on the exact PR head.
+- Game Browser Smoke run `43102883650`, job `130798728159`: **SUCCESS** on exact PR head `8c4e86994e1ed203ffa26803874924e705973462`; strict Jarrell's Peak desktop/mobile gameplay step and screenshot upload both passed. Screenshot artifact `13891784600` (`climboria-game-browser-smoke-screenshots`, 3,488,205 bytes).
+- Jupiter IDL History Audit run `43102883513`, job `130798767558`: **SUCCESS** on the same exact PR head. Together with Validate `43102883438`, Ecosystem Browser Smoke `43102883591`, and Jupiter V6 CPI Trace Audit `43102883472`, all five exact-head workflows passed.
+- Swap signing/execution remains disabled until instruction semantics, account roles, independent review, controlled Devnet lifecycle, production deployment and release gates are proven.
+
+## Next task
+
+All five exact-head workflows have passed. Continue **P1 Live Swap** now, preserving the security gates. Inspect the actual current source and workflow evidence, diagnose failures from terminal logs, implement targeted counter-fixes without weakening assertions/security, and record exact commit/run evidence. Do not advance to P2 until P1 release gates are genuinely satisfied. Then proceed in the listed order through P5.
+
+## Working rules
+
+- Check actual main/PR head and workflow state before resuming.
+- Record each completed task, commit, verification evidence, unresolved blockers and one exact next task.
+- Diagnose the exact failing test/step before editing; do not repeat failed patches without a reasoned root-cause diagnosis.
+- Never claim LIVE, deployed, launched, signed, locked, paid, or verified without corresponding external evidence.
+- Preserve security gates; never enable signing or execution just to make a demo appear functional.
+
+## Historical technical handoff
+
+> The technical records below are retained as evidence. Any old priority order or next-task instruction in this historical section is superseded by the current P1–P5 order above.
 
 ## Swap — active implementation
 
@@ -91,3 +118,32 @@
 - [!] No image resampling or runtime format conversion has been shipped. Keep PNG compatibility with the existing Three.js r128 GLTFLoader. Avoid KTX2/Basis or WebP until a compatible loader/extension path is added and tested.
 - [!] PR #267 is still diagnostic-only and draft. Its branch is now 2 commits ahead and 1 behind main because the new handoff record was committed after branch creation; rebase/update branch before merge, but there is no reason to merge an audit-only PR if the optimization work supersedes it.
 - [ ] Next exact task: build an isolated optimized GLB candidate by resizing the three 4K embedded PNG maps to 2K while retaining alpha/channel semantics, original mesh/rig/19 animations and PNG MIME compatibility. Measure resulting GLB and per-image sizes; inspect visual quality and verify desktop + mobile GLB readiness with unchanged strict Browser Smoke assertions. Only then promote the candidate into a fresh current-main PR.
+
+
+---
+
+## 2026-11-13 continuation checkpoint — latest exact state
+
+**Authoritative detailed status:** [`docs/REPO-READINESS-AUDIT-2026-11-13.md`](./REPO-READINESS-AUDIT-2026-11-13.md). This section supersedes older exact-next-task notes in the historical handoff below, while preserving the owner-approved P1–P5 priority order.
+
+- Main HEAD at checkpoint: `7dd7de9192a0e4605cf2b6d1da7fcdc61dd516cb`.
+- Active Swap/security PR #269 is OPEN / DRAFT; current head `49a342cef18adf51dc98560a8c60c9e06f02654a`. It is currently 18 commits behind main (the 18 main-only commits affect only three readiness/handoff documentation files); sync before merge. PR #274 also remains OPEN / DRAFT and overlaps with the security-evidence work; do not merge both independently.
+- Exact head before the latest gameplay-summary gate: Validate `43336735429` SUCCESS (155 tests); CPI Trace `43336735443` SUCCESS (50 finalized transactions, 2 matching single-route Jupiter/Meteora transactions).
+- Browser Smoke `43336735421` was marked SUCCESS but had `The operation was canceled` and no final gameplay PASS marker. Treat it as incomplete acceptance. Added explicit `game-smoke-summary.json` generation and workflow validation in commits `d06fd9006d0a3898bd2c18833abdb841174720ac` and `49a342cef18adf51dc98560a8c60c9e06f02654a`.
+- Current exact-head runs on `49a342c`: Browser Smoke `43337636485` pending; CPI Trace `43337635961` pending; Validate `43337636118` cancelled (no failed steps; rerun required); IDL History `43337636175` in progress. Earlier IDL run `43336735508` is also still running the direct-history step.
+- Confirmed blocker: GitHub Actions environment has no `SOLANA_RPC_URL` secret (empty). The official `@solana/idl@0.3.0` direct-history step currently uses public mainnet RPC fallback. If that fallback cannot reconstruct the complete historical revision, owner must add the HTTPS archival RPC endpoint as encrypted repository Actions secret `SOLANA_RPC_URL`; never paste its value into chat.
+- Jupiter mainnet execution gates remain closed. No production Worker health/deployment, on-chain swap settlement, Base Uniswap execution, or full Login provider acceptance is claimed.
+
+### Exact next task
+
+1. Inspect terminal status/artifact for IDL History `43336735508` and `43337636175`; require exactly one route-v2 historical revision active at candidate slot `468153382`. If public RPC fails/rate-limits, request the encrypted `SOLANA_RPC_URL` configuration.
+2. Inspect Browser Smoke `43337636485`; require a valid `game-smoke-summary.json` with desktop/mobile readiness, render frames, controls and eight screenshots. Do not accept screenshots alone.
+3. Re-run Validate and CPI Trace against the latest PR head after pending/cancelled runs settle; continue exact CPI account-role and multi-hop/split-route evidence.
+4. Keep Swap execution disabled until route semantics, independent security review and controlled Devnet sign/execute/confirm/balance tests pass. Then continue P2 DEX, P3 Login, P4 game and P5 Launchpad.
+
+
+### Branch freshness correction — 2026-11-13
+
+- PR #269 head `49a342cef18adf51dc98560a8c60c9e06f02654a`: 196 ahead / 18 behind main.
+- PR #274 head `559423bdddf709cae31de06b01b2c4b461f2a482`: 203 ahead / 18 behind main.
+- Main-only delta from the shared merge base is documentation-only (three docs files); sync PR #269 before merge and keep PR #274 draft pending consolidation.

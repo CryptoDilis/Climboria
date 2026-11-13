@@ -2,6 +2,8 @@
 
 > Planning reference. Dates and features are targets, not guarantees. A feature is not live until implemented, tested, and officially announced.
 
+> **Current cross-product execution priority:** P1 Live Swap → P2 Live DEX → P3 All Login methods → P4 Fully Live Game → P5 Live Launchpad (last). This owner-approved order is recorded in the root README and release-priority document. The stages below describe product/world scope; they do not override the current release order. **No demo-only delivery:** every feature must be genuinely integrated and live before it is marked complete.
+
 ## Game-world scope — Jarrell’s Peak and Arena
 
 Jarrell’s Peak is the primary open-world experience: a vast wilderness for survival, exploration, fishing, swimming, and treasure hunting. Arena is the separate competitive game mode/map. These are the only two game-world destinations in the current scope. Documentation work must not change existing gameplay mechanics.

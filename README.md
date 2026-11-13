@@ -1,10 +1,52 @@
-## 2026-11-13 — P1 Swap fail-closed DEX-schema gate
+# CLIMBORIA — CURRENT OWNER-APPROVED PRIORITIES (2026-11-12)
 
-- [x] Commit `97f4652f49700c745d24d59f34208a7ce77e03c9` adds `JUPITER_V6_SEMANTIC_POLICY_VERSION = "v1-unverified-dex-schemas-rejected"`.
-- [x] The V6 route validator now rejects every otherwise shape-valid route unless each route adapter has an independently verified, versioned per-DEX account schema. A readonly program ID and route enum label alone cannot authorize CPI account cursor boundaries, token movement, or fee destinations.
-- [x] Targeted isolated check: `node --test dex/swap-proxy/test/jupiter-v6-policy.test.mjs` on exact commit `97f4652` passed **24/24** tests. The new assertion proves the formerly accepted Raydium fixture is rejected until semantic account evidence exists; adversarial privilege, fee, min-output, unknown-program, route graph, RPC-audit and Meteora evidence tests also passed.
-- [!] PR #268 is currently conflicted against current `main`; GitHub did not schedule a new pull-request workflow for this head. This local exact-head result is not a substitute for final current-main CI. Do not report CI for `97f4652` as green.
-- [ ] Next: resolve the stale PR through an ordinary current-main integration, preserve this deny-by-default gate, then run exact-head Validate, browser, CPI trace and IDL history workflows. Do not enable any signing or execution gate.
+> **This section is the sole active product-priority authority.** It supersedes every older priority order, "locked" order, and statement that gameplay is non-blocking in the historical log below. Do not resume an older order from a dated checkpoint.
+
+## Official execution order
+
+1. **P1 — LIVE SWAP.** Deliver a real production Swap service: live quote/order path, correct mint/network and amount validation, wallet review/signing, secure submission, chain confirmation and settlement reconciliation, replay/expiry/uncertain-outcome handling, production backend/Worker, monitoring and rollback. No fake quotes, simulated fills, placeholder success, or UI-only swap.
+2. **P2 — LIVE DEX.** Deliver a real production DEX market experience: live provider-backed discovery/search, exact mint identity, token profiles, accurate live pool/liquidity/price/volume data, working and fresh charts, correct navigation, responsive desktop/mobile behavior, and honest loading/error/empty states. No fixture-fed or fabricated market data presented as live.
+3. **P3 — ALL LOGIN METHODS AVAILABLE.** Make every intended supported login method operational: Guest, email/password, Google, X, and supported Solana/EVM wallet authentication. Complete real provider configuration, redirects, email/SMTP confirmation, secure sessions, account linking, logout, recovery and real-account isolation tests. A wallet-connect button alone is not account login.
+4. **P4 — FULLY LIVE GAME.** Deliver the actual playable Climboria game, not a demo: real gameplay/world systems, desktop and mobile controls, persistence and multiplayer/economy features only where genuinely implemented and verified. Do not substitute screenshots, static previews, mocked rewards, or fake multiplayer for working gameplay.
+5. **P5 — LIVE LAUNCHPAD (LAST).** Only after P1–P4, complete the real Launchpad lifecycle: project/token creation, metadata, authority and supply policy, fee routing, wallet signing, on-chain launch, bonding curve, liquidity migration/pool, LP ownership/lock, confirmation, explorer evidence, failure recovery and production monitoring.
+
+## Mandatory standard for every priority — NO DEMO-ONLY DELIVERY
+
+- Every delivered product must use real production integrations and real provider/backend/on-chain behavior appropriate to its function.
+- No fake balances, prices, candles, volume, quotes, bonding-curve progress, transaction results, launch status, login success, inventory ownership, rewards, or multiplayer presence.
+- No static mock screens, fixtures presented as live, alert-only buttons, or placeholder interactions counted as completion.
+- If a real dependency is not configured or verified, show a truthful unavailable/error state and record the blocker. Never label it LIVE until production evidence proves it.
+- Devnet is a required safety/testing stage for on-chain features, not a substitute for a production-live Mainnet release.
+- Security gates must never be bypassed to satisfy the priority order. In particular, Swap signing/execution remains disabled until its semantic validation, independent review, controlled Devnet lifecycle, production deployment and release gates pass.
+- A feature is complete only after real end-to-end verification on the exact release commit, including desktop/mobile where applicable, production deployment/provider evidence, and recorded logs/screenshots/run IDs.
+
+## Current status at this checkpoint
+
+- Main baseline immediately before the priority-documentation commits: `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
+- PR #268 head: `8c4e86994e1ed203ffa26803874924e705973462`, draft and unmerged.
+- On exact PR head `8c4e86994e1ed203ffa26803874924e705973462`, all five workflows passed: Validate `43102883438`; Ecosystem Browser Smoke `43102883591`; Jupiter V6 CPI Trace Audit `43102883472`; Game Browser Smoke `43102883650` (job `130798728159`, strict desktop/mobile Jarrell's Peak smoke and screenshot upload passed; artifact `13891784600`, 3,488,205 bytes); Jupiter IDL History Audit `43102883513` (job `130798767558`).
+- Swap remains fail-closed; the required security/Devnet/production evidence is not yet complete. DEX production-live acceptance, all real Login provider flows, full game release acceptance, and Launchpad are not to be marked complete without their own evidence.
+- All five exact-head workflows are now terminal SUCCESS. The dedicated strict desktop/mobile Jarrell's Peak smoke passed, but this does not by itself certify every game system or physical-device release acceptance. The immediate next action is **P1 Live Swap**: continue evidence-based security validation and production readiness while preserving the execution kill switches. Do not revert to an older priority order.
+
+## Active master checklist
+
+- [ ] **P1 Live Swap:** production backend/Worker, real wallet review/sign/submit/confirm/reconcile lifecycle, independent security review, controlled Devnet acceptance, production health and monitoring.
+- [ ] **P2 Live DEX:** real provider discovery/profile/pool/chart data, accurate freshness and token identity, production deployment and desktop/mobile acceptance.
+- [ ] **P3 All Login:** Guest, email/password, Google, X, and supported wallet auth configured and verified with real accounts, secure sessions and account linking.
+- [ ] **P4 Fully Live Game:** playable desktop/mobile game and real implemented systems; no demo-only substitutes or fabricated economy/multiplayer.
+- [ ] **P5 Live Launchpad:** real end-to-end token launch and liquidity lifecycle, with program provenance, authorities, fees, custody/LP and production security evidence.
+- [ ] **Global release standard:** no demo-only delivery; never represent an unverified feature as live.
+- [ ] Record every task, exact branch/commit, workflow evidence, failure diagnosis, counter-fix, blockers and one next task.
+
+---
+
+## 2026-11-13 — P1 Swap semantic-schema hardening and current-main synchronization
+
+- [x] Commit `97f4652f49700c745d24d59f34208a7ce77e03c9` adds the versioned `v1-unverified-dex-schemas-rejected` policy state. An otherwise shape-valid Jupiter route now fails closed unless every adapter has an independently verified per-DEX semantic account schema; a readonly program ID and route label are insufficient proof of account slicing, token movement, or fee destination safety.
+- [x] Isolated exact-commit test: `node --test dex/swap-proxy/test/jupiter-v6-policy.test.mjs` passed **24/24**. The former Raydium acceptance fixture is now explicitly rejected pending semantic-schema evidence; existing adversarial privilege, fee, minimum-output, unknown-program, route-graph, RPC-audit, and Meteora-evidence tests remain covered.
+- [x] The stale PR #268 documentation conflicts were reconciled by retaining the current `main` product-priority and handoff record, while preserving the branch's P1 implementation, policy tests, security review, research tooling, and evidence files.
+- [!] This synchronization has not yet produced a new GitHub Actions result. Signing/execution flags remain `false`; no quote, transaction, wallet-signing, Devnet settlement, deployment, or LIVE Swap claim is authorized.
+- [ ] Next: commit the verified merge tree to draft PR #268, then inspect exact-head Validate, Browser Smoke, Jupiter CPI Trace, and Jupiter IDL History results before treating the synchronization as verified.
 
 ---
 
@@ -37,7 +79,7 @@
 
 ## 2026-11-11 21:25 +08 — deep failure analysis: mobile GLB parse-stage stall
 
-**Execution order remains DEX → Swap → Login → Launchpad.** Gameplay/GLB remains a separate diagnostic track and must not displace ecosystem release work.
+**Current owner-approved order: P1 Swap → P2 DEX → P3 Login → P4 fully live Game → P5 Launchpad. This supersedes this historical checkpoint's former order.** Game is P4 in the current owner-approved sequence; it must follow P1 Swap, P2 DEX and P3 Login, and precede P5 Launchpad.
 
 ### Failed workflow investigation — PR #266
 - [x] Inspected Browser Smoke run `42972552578`, job `130364149237`, exact head `79acbc8222f6e70840eabc92c34e3f0517f72ef9`.
@@ -75,16 +117,16 @@
 - [ ] Rebase/update PR #268 against current main; rerun exact-head checks.
 - [ ] Verify dedicated gameplay workflow on its own exact head.
 - [ ] Build and visually compare an optimized GLB candidate without modifying the production asset first.
-- [ ] Continue P2 Swap per-DEX CPI/account-role, token movement and fee validation; signing/execution gates remain false.
+- [ ] Continue P1 Swap per-DEX CPI/account-role, token movement and fee validation; signing/execution gates remain false.
 - [ ] Verify DEX live provider/production deployment, Login external provider lifecycle, then Launchpad Devnet lifecycle.
 
-**Next action:** continue P2 Swap semantic validation on a current-main-based branch; keep the measured GLB optimization experiment separate and do not let gameplay diagnostics displace the DEX → Swap → Login → Launchpad delivery order.
+**Next action:** continue P1 Swap semantic validation on a current-main-based branch; keep the measured GLB optimization experiment separate and follow the current P1 Swap → P2 DEX → P3 Login → P4 Game → P5 Launchpad order.
 
 ---
 
 ## 2026-11-11 21:07 +08 — continuation audit: PR #268 exact-head checks green; GLB payload measured
 
-**Locked delivery order: DEX → Swap → Login → Launchpad.** Gameplay remains a separate, non-blocking track.
+**Historical priority declaration superseded. Current order: P1 Swap → P2 DEX → P3 Login → P4 Game → P5 Launchpad.** Game is P4 in the current owner-approved sequence; it follows P1–P3 and precedes P5 Launchpad.
 
 - [x] Re-read repository metadata: `CryptoDilis/Climboria`, default branch `main`; write permission confirmed.
 - [x] Re-read current open PRs and latest active work. PR #268 is the current Swap security hardening branch; PR #267 is the diagnostic GLB asset audit. Older #266 remains an earlier combined diagnostic branch.
@@ -104,7 +146,7 @@
 - [x] PR #268 exact-head Browser Smoke (ecosystem/browser scope only): `43025646971`.
 - [x] PR #267 GLB audit measured all embedded texture dimensions and byte sizes: `42994562962`.
 - [ ] Dedicated gameplay Browser Smoke after workflow separation: verify exact head, run, logs, and desktop/mobile screenshots.
-- [ ] Continue P2 Swap semantic validation from PR #268; retain all fail-closed gates.
+- [ ] Continue P1 Swap semantic validation from PR #268; retain all fail-closed gates.
 - [ ] Record every subsequent fix, exact commit, run IDs, root-cause evidence, verification, blockers, and one next action here.
 
 **Single next action:** continue PR #268's remaining Jupiter V6 semantic/CPI account-role validation on its exact head, while separately confirming the dedicated gameplay workflow's status; do not enable signing/execution or claim gameplay readiness from the ecosystem Browser Smoke.
@@ -113,7 +155,7 @@
 
 ## 2026-11-11 13:22 +08 — DEX mobile close fix merged; Swap account-state verification added
 
-**Execution order remains DEX → Swap → Login → Launchpad. Gameplay remains non-blocking.**
+**Current owner-approved order: P1 Swap → P2 DEX → P3 Login → P4 fully live Game → P5 Launchpad. This supersedes this historical checkpoint's former order. Game is P4 in the current owner-approved sequence; it follows P1–P3 and precedes P5 Launchpad.**
 
 - [x] PR #256 merged to main as `2e10af89026464411eda56c3094b0fa0976ae10c`. It invalidates pending detail requests, clears active token/pool URL state and chart iframe, and restores the market view.
 - [x] Exact-head PR #256 Validate `42964086934` passed on `4e286fc796cdf87b11f99b2cebb6b43a08f1e1ee`.
@@ -131,7 +173,7 @@
 
 ## 2026-11-11 13:12 +08 — Swap semantic-policy checkpoint (PR #255)
 
-**Active priority: P2 Swap. DEX implementation and Swap order-binding foundation are already merged; gameplay remains non-blocking.**
+**Active priority: P1 Swap. DEX implementation and Swap order-binding foundation are already merged; Game is P4 and follows P1 Swap, P2 DEX and P3 Login.**
 
 - [x] PR #255 adds an initial fail-closed Jupiter V6 single-route decoder, a narrow explicit DEX-variant allowlist, route-plan bounds, amount/slippage/zero-platform-fee checks, taker and account-privilege checks, and rejects unsupported top-level instruction families. Both source-level gates remain false.
 - [x] Validate run `42963237415` passed on exact PR head `a62313a05917b719117d109ba04b4fb9785375cb`.
@@ -160,51 +202,51 @@
 - [x] PR #254 merged as commit 91fa0a6b6ebfc6c5b7306e6eef79ff9adfbc7e10.
 - [x] Added strict Jupiter metadata validation: only Metis router, v0, explicit non-gasless response, exact requested input amount, positive output/minimum output, minimum output not above quoted output, and a non-empty labeled route plan. JupiterZ, Dflow, OKX, v1, gasless and external fee-payer orders are rejected.
 - [x] Validate run 42962666262 passed on exact PR head 54c09592ea5321313c825dbea6fa22040c1c323b.
-- [x] Browser Smoke run 42962666212 passed Swap/DEX steps 8–15, including Worker security, fail-closed execution, Swap UI, live DEX discovery, responsive layouts and provider-error/empty states. Step 16 is the separate gameplay smoke and remains non-blocking for ecosystem work.
+- [x] Browser Smoke run 42962666212 passed Swap/DEX steps 8–15, including Worker security, fail-closed execution, Swap UI, live DEX discovery, responsive layouts and provider-error/empty states. Step 16 is the separate gameplay smoke is part of P4 Game acceptance; it must follow P1–P3 and precede P5 Launchpad.
 - [ ] **Still not a live trading release:** program-specific decoding/validation of the Metis instruction and every DEX CPI/account role is not complete. Both signable-order issuance and execution remain hard-gated. No transaction is returned for wallet signing or submitted.
 - [ ] **Next active task:** build and test the Metis-only semantic instruction policy using raw instruction bytes and resolved accounts; reject unknown program/instruction families and validate mint/source/destination/amount/minimum output/fees/privileges before considering any gate change.
 
 
-**Current execution order remains DEX → Swap → Login → Launchpad. DEX and Swap code changes are merged; production DEX deployment and Swap transaction execution are not yet certified live. Gameplay remains a separate, non-blocking backlog.**
+**Historical priority declaration superseded. Current order: P1 Swap → P2 DEX → P3 Login → P4 Game → P5 Launchpad. DEX and Swap code changes are merged; production DEX deployment and Swap transaction execution are not yet certified live. Game is P4 in the current order; it follows P1–P3 and precedes P5 Launchpad.**
 
 ### Always-visible delivery checklist
 
-- [x] **P1 DEX implementation merged:** PR #252 merged as commit ca9fcab42274390bee14213e4166a25194bfa2de. Only the live DEX UI/provider source and focused DEX smoke step were ported; unrelated gameplay instrumentation from PR #248 was excluded. PR #248 was closed as superseded.
-- [x] **P1 DEX verification:** Validate run 42961322450 passed on PR #252 exact head 719152f1bb2ffc214461bcdd96a80ef950de367c. Browser Smoke run 42961322209 passed all DEX-specific steps 7–15. PR #253's later run 42962370467 also passed DEX/Swap steps 8–15.
-- [ ] **P1 DEX production deployment:** confirm GitHub Pages deployment after merge and verify the deployed /dex/ page and live provider responses. Do not claim deployment verified from PR checks alone.
-- [x] **P2 Swap security foundation merged:** PR #253 merged as commit 4f6797894202f2e5881168b4c438deca1a0454e2. Includes canonical v0 parsing, server-bound order-store code, one-time claim/replay protection, taker-signature checks, finalized-context ALT resolution, bounded RPC fetch, Durable Object config and adversarial tests.
-- [x] **P2 Swap verification:** Validate run 42962370373 passed on exact PR head 732f3f16602db77a5b28418f5d91c01902601d83. Browser Smoke run 42962370467 passed Swap/DEX steps 8–15, including the Worker security tests, fail-closed execution, Swap UI, live Solana discovery, mobile workspace, 390px/360px layouts and provider-error/empty states.
-- [ ] **P2 Swap release:** semantic instruction allowlist/account-role validation, full mint/source/destination/amount/min-output/fee checks, controlled Devnet sign→submit→confirm/balance lifecycle, production Cloudflare secrets/bindings/migration/monitoring and independent Solana security review remain outstanding. Both signable-order issuance and execution are blocked by hard source-level gates; Wrangler execution flag and frontend switch remain false.
+- [x] **P2 DEX implementation merged:** PR #252 merged as commit ca9fcab42274390bee14213e4166a25194bfa2de. Only the live DEX UI/provider source and focused DEX smoke step were ported; unrelated gameplay instrumentation from PR #248 was excluded. PR #248 was closed as superseded.
+- [x] **P2 DEX verification:** Validate run 42961322450 passed on PR #252 exact head 719152f1bb2ffc214461bcdd96a80ef950de367c. Browser Smoke run 42961322209 passed all DEX-specific steps 7–15. PR #253's later run 42962370467 also passed DEX/Swap steps 8–15.
+- [ ] **P2 DEX production deployment:** confirm GitHub Pages deployment after merge and verify the deployed /dex/ page and live provider responses. Do not claim deployment verified from PR checks alone.
+- [x] **P1 Swap security foundation merged:** PR #253 merged as commit 4f6797894202f2e5881168b4c438deca1a0454e2. Includes canonical v0 parsing, server-bound order-store code, one-time claim/replay protection, taker-signature checks, finalized-context ALT resolution, bounded RPC fetch, Durable Object config and adversarial tests.
+- [x] **P1 Swap verification:** Validate run 42962370373 passed on exact PR head 732f3f16602db77a5b28418f5d91c01902601d83. Browser Smoke run 42962370467 passed Swap/DEX steps 8–15, including the Worker security tests, fail-closed execution, Swap UI, live Solana discovery, mobile workspace, 390px/360px layouts and provider-error/empty states.
+- [ ] **P1 Swap release:** semantic instruction allowlist/account-role validation, full mint/source/destination/amount/min-output/fee checks, controlled Devnet sign→submit→confirm/balance lifecycle, production Cloudflare secrets/bindings/migration/monitoring and independent Solana security review remain outstanding. Both signable-order issuance and execution are blocked by hard source-level gates; Wrangler execution flag and frontend switch remain false.
 - [x] **Swap failure diagnosis recorded:** first Validate attempt 42962133644 failed because a legacy test expected the Worker to forward a Jupiter Failed result despite the new hard gate; second attempt 42962295221 exposed another legacy test expecting an upstream response while signable order issuance was gated before upstream. Both tests were rewritten to assert the intended fail-closed behavior. Final exact-head Validate 42962370373 passed. No security gate was weakened.
 - [ ] **P3 Login:** PR #250 code and database/RLS checks are present, but actual Supabase provider settings, SMTP/confirmation, redirects, CAPTCHA and real-account lifecycle/isolation tests remain unverified.
-- [ ] **P4 Launchpad:** provenance and unsigned Devnet preparation are present, but custody/treasury authority, production signer policy and full Devnet create→bonding curve→migration→pool/LP lifecycle remain unverified.
+- [ ] **P5 Launchpad:** provenance and unsigned Devnet preparation are present, but custody/treasury authority, production signer policy and full Devnet create→bonding curve→migration→pool/LP lifecycle remain unverified.
 
-### Next active task — P2 Swap semantic validation
+### Next active task — P1 Swap semantic validation
 
 Implement a versioned, fail-closed Metis-only semantic instruction policy using retained raw instruction bytes plus resolved static/loaded account keys. Decode each supported Metis route and its DEX CPI/account roles; reject unknown programs/instructions. Add adversarial cases for wrong mint/amount/minimum output, unexpected transfers/approvals, fee redirection, writable/signer escalation and unsupported Token-2022 behavior. Keep both hard source gates closed until independent review and controlled Devnet acceptance pass.
 
 **Important:** PR #253 is merged, but this does not mean wallet swaps are enabled. The quote/search path is read-only; signable order issuance and transaction submission remain blocked.
 
-**Locked on: 2026-11-11. These four priorities are the agreed product execution order: DEX → Swap → Login → Launchpad. Do not reorder, skip, or replace them without the user's explicit instruction. Gameplay work is separate and MUST NOT displace or block these four ecosystem priorities.**
+**Locked on: 2026-11-11. This dated priority declaration is superseded by the 2026-11-12 owner-approved order: P1 Swap → P2 DEX → P3 Login → P4 Game → P5 Launchpad.**
 
 ## 2026-11-11 12:39 +08 — historical delivery checkpoint (superseded by latest update above)
 
-**Current state: implementation branches exist; none of the four products is yet approved as a production-complete release.** Keep the user's requested order DEX → Swap → Login → Launchpad. Do not call preview/demo, unsigned preparation, or passing mocks a live launch/trade/auth flow.
+**Current state: implementation branches exist; none of the four products is yet approved as a production-complete release.** This dated order is superseded. Follow P1 Swap → P2 DEX → P3 Login → P4 Game → P5 Launchpad. Do not call preview/demo, unsigned preparation, or passing mocks a live launch/trade/auth flow.
 
 ### Always-visible delivery checklist
 
-- [ ] **Separate gameplay backlog (non-blocking):** PR #246 Sanctuary spawn fix still requires exact-head Browser Smoke and visual desktop/mobile landing review. Do not switch active work away from DEX → Swap → Login → Launchpad to work on this item.
-- [x] **P1 DEX implementation:** PR #252 merged the provider-backed Solana profile + boost discovery, batched token lookup (up to 30), live liquidity/price/volume validation, deepest-pool selection, honest empty/error states, and selected-token navigation.
-- [x] **P1 DEX CI:** Validate run `42958475572` passed on `066122b03db740c7e16c3890c0cef6b5944c27b8`; Browser Smoke steps 7–15 (home/DEX navigation, proxy, fail-closed execution, standalone Swap/DEX, live discovery, responsive 390/360px, provider error/empty states) passed.
-- [ ] **P1 DEX release:** PR #252 is merged and DEX-specific acceptance passed. Remaining item is independent GitHub Pages deployment/live-site verification; the unrelated gameplay step is not a DEX release blocker.
-- [x] **P2 Swap groundwork:** PR #253 merged server-bound v0 order storage, replay protection, signature checks, finalized ALT resolution and adversarial tests; Validate run `42962370373` passed.
-- [ ] **P2 Swap release:** Browser Smoke `42962370467` passed Swap/DEX steps 8–15. Semantic instruction allowlist, controlled Devnet sign-submit-confirm lifecycle, production Worker secrets/bindings and independent security review remain outstanding. Signable-order issuance and execution stay hard-blocked.
+- [ ] **P4 Game release backlog:** PR #246 Sanctuary spawn fix still requires exact-head Browser Smoke and visual desktop/mobile landing review. Historical instruction superseded. Game is now P4, after Swap, DEX and Login, and before Launchpad.
+- [x] **P2 DEX implementation:** PR #252 merged the provider-backed Solana profile + boost discovery, batched token lookup (up to 30), live liquidity/price/volume validation, deepest-pool selection, honest empty/error states, and selected-token navigation.
+- [x] **P2 DEX CI:** Validate run `42958475572` passed on `066122b03db740c7e16c3890c0cef6b5944c27b8`; Browser Smoke steps 7–15 (home/DEX navigation, proxy, fail-closed execution, standalone Swap/DEX, live discovery, responsive 390/360px, provider error/empty states) passed.
+- [ ] **P2 DEX release:** PR #252 is merged and DEX-specific acceptance passed. Remaining item is independent GitHub Pages deployment/live-site verification; the unrelated gameplay step is not a DEX release blocker.
+- [x] **P1 Swap groundwork:** PR #253 merged server-bound v0 order storage, replay protection, signature checks, finalized ALT resolution and adversarial tests; Validate run `42962370373` passed.
+- [ ] **P1 Swap release:** Browser Smoke `42962370467` passed Swap/DEX steps 8–15. Semantic instruction allowlist, controlled Devnet sign-submit-confirm lifecycle, production Worker secrets/bindings and independent security review remain outstanding. Signable-order issuance and execution stay hard-blocked.
 - [x] **P3 Login implementation:** PR #250 adds Supabase email/password, Google/X OAuth, Solana/Ethereum Web3 adapters, session restoration, sign-out, and account-scoped cloud saves.
 - [x] **P3 Login CI:** Validate `42959126489` and Browser Smoke `42959126520` both passed on `60107ab4dce5b8defb7bcad8eba6751124c61b32`.
 - [x] **P3 Supabase database:** connected Climboria project `unadepiwbovblkfjlksk` is `ACTIVE_HEALTHY`; migration `20261110205612_auth_profile_acl_rls_hardening` is present. Live schema inspection confirmed `player_profiles` and `player_saves` exist with RLS enabled; policies bind SELECT/UPDATE/INSERT to `auth.uid() = user_id`, UPDATE includes `WITH CHECK`, and the profile identity-immutability trigger exists. Security advisor returned no lints. Both tables currently contain 0 rows.
 - [ ] **P3 Login release:** actual Supabase email/OAuth/Web3 provider settings, SMTP/confirmation, redirect allowlist, CAPTCHA/Turnstile and controlled real-account lifecycle + cross-user isolation tests are not yet verified. Guest login remains gated; guest-to-account linking is not implemented. PR #250 is not merged.
-- [x] **P4 Launchpad groundwork:** PR #251 adds read-only LaunchLab provenance, live Launch Config/IDL/LP-lock checks and unsigned Devnet preparation/approval tooling. Validate `42959616757` and live provenance workflow `42959616808` passed on `0bbfa548424950df546a35146238ae8be595cd65`.
-- [ ] **P4 Launchpad release:** no approved creator custody/treasury/fee authority, production signer policy, complete real Devnet create→bonding curve→migration→pool/LP lifecycle, or mainnet release evidence. No signing/submission is performed by this preparation path. PR #251 is not merged.
+- [x] **P5 Launchpad groundwork:** PR #251 adds read-only LaunchLab provenance, live Launch Config/IDL/LP-lock checks and unsigned Devnet preparation/approval tooling. Validate `42959616757` and live provenance workflow `42959616808` passed on `0bbfa548424950df546a35146238ae8be595cd65`.
+- [ ] **P5 Launchpad release:** no approved creator custody/treasury/fee authority, production signer policy, complete real Devnet create→bonding curve→migration→pool/LP lifecycle, or mainnet release evidence. No signing/submission is performed by this preparation path. PR #251 is not merged.
 
 ### Deep diagnosis — latest DEX branch smoke failure
 
@@ -212,11 +254,11 @@ Implement a versioned, fail-closed Metis-only semantic instruction policy using 
 - [x] Log evidence: mobile GLB request completed (`42,923,204` decoded bytes; `42,923,504` transferred); no failed GLB requests and no browser errors. Loader telemetry remained at `phase=parse-start`, `parseDurationMs=null`, `sceneSetupStartedAt=null`, `heroReady=false` after `285,055ms`; the smoke failed after its bounded wait/grace.
 - [x] This is a post-download GLTF parse/readiness stall in the unrelated gameplay gate, not a DEX market-discovery failure. PR #247's separate diagnostic run `42949922898` passed once, so the symptom is intermittent and not proven fixed. Do not raise timeouts, bypass readiness, substitute a fallback avatar, or weaken the test.
 - [ ] Counter-strategy: inspect GLB parse cost, mobile memory/CPU pressure and loader lifecycle with reproducible instrumentation; choose a production optimization only after identifying the expensive stage. Re-run exact-head desktop/mobile gameplay smoke and inspect screenshots.
-- [ ] **Single next action:** implement the P2 Swap semantic instruction allowlist and adversarial tests; keep wallet signing and execution blocked until review and Devnet acceptance.
+- [ ] **Single next action:** implement the P1 Swap semantic instruction allowlist and adversarial tests; keep wallet signing and execution blocked until review and Devnet acceptance.
 
 **Session rules:** record each completed task, changed files, commit/PR, exact workflow/run IDs, evidence, unresolved blockers and one next action here. On failures, inspect the exact job/log/artifact, prove root cause, implement a distinct counter-fix, and rerun. Never mark a feature live based only on a mock, preview or unsigned transaction.
 
-## Separate gameplay backlog — non-blocking for ecosystem delivery
+## P4 Game release backlog
 
 **Sole active gameplay fix: PR #246 — Sanctuary spawn alignment.**
 - [x] PR #242's validated mobile-orientation harness merged to main: `66909629ea0fcf9dec75b0e9002a776072fe9b57`.
@@ -242,7 +284,7 @@ Implement a versioned, fail-closed Metis-only semantic instruction policy using 
 - [x] PR #247 Browser Smoke `42949922898`, job `130291551496`: SUCCESS on exact head `c06c2b8afdc511ba4302bfa61d1fe26993c7c66e`. All 16 main steps passed, including desktop/mobile Jarrell's Peak gameplay, mobile cave entrance/interior captures, and screenshot upload (artifact `13824109692`, 8.9 MB). Mobile diagnostics report `ready=true`, player visible, 70 render frames, and no render errors. This confirms the earlier GLB readiness failure is not currently reproducible; no failure-phase trace was emitted because the run passed.
 - [ ] Do not merge PR #246 or #247 until the mobile gameplay readiness and Sanctuary landing visual acceptance are satisfied. PR #247 is diagnostic only and must not be merged as a production fix unless its value is retained deliberately and the release gate is met.
 - [ ] PR #247 remains diagnostic-only; do not merge it solely to ship instrumentation. PR #246 remains unmerged until its Sanctuary landing-center correction is reverified against the now-passing mobile gameplay path and desktop/mobile screenshots.
-- [ ] **Single next task:** rerun only PR #246's previously failed Browser Smoke job against its unchanged exact head, using the successful PR #247 full-smoke result as evidence that the earlier GLB blocker may have been transient. If it passes, inspect screenshots and merge the Sanctuary fix; if it fails, use the new exact logs to select a distinct root-cause counter-fix. Keep P1 DEX blocked until this gameplay release gate closes.
+- [ ] **Single next task:** rerun only PR #246's previously failed Browser Smoke job against its unchanged exact head, using the successful PR #247 full-smoke result as evidence that the earlier GLB blocker may have been transient. If it passes, inspect screenshots and merge the Sanctuary fix; if it fails, use the new exact logs to select a distinct root-cause counter-fix. Keep P2 DEX blocked until this gameplay release gate closes.
 
 ## P1 — LIVE DEX: Complete Solana market discovery and testing
 
@@ -281,12 +323,12 @@ Implement a versioned, fail-closed Metis-only semantic instruction policy using 
 
 ## Non-negotiable execution rules
 
-1. Follow the locked order: gameplay release gate → P1 DEX → P2 Swap → P3 Login → P4 Launchpad.
+1. Follow the locked order: P1 Swap → P2 DEX → P3 Login → P4 fully live Game → P5 Launchpad.
 2. Before every change, inspect latest main, open PRs, exact branch heads and active workflow runs.
 3. One priority at a time; one authoritative PR per fix. Do not restart completed tasks or create duplicate implementations.
 4. On failure: inspect exact failing step/log/artifact, prove root cause, choose a genuinely different counter-strategy, then rerun relevant checks on the exact new head. Never recommit the same failed code.
 5. Keep real functionality live where safe. Do not disable features merely to pass tests, weaken acceptance criteria, fake provider data, or claim production readiness from mocks.
-6. **Mandatory session handoff:** before any chat/session ends, update this README in place with (a) locked P1–P4 order, (b) current priority and exact active subtask, (c) completed work with commit/PR and changed files, (d) verification evidence with exact workflow/run IDs and PASS/FAIL/IN-PROGRESS status, (e) failures/root cause/counter-strategy, (f) blockers/dependencies, and (g) exactly one next action. A commit alone is not completion; never mark unverified work done.
+6. **Mandatory session handoff:** before any chat/session ends, update this README in place with (a) current P1–P5 order, (b) current priority and exact active subtask, (c) completed work with commit/PR and changed files, (d) verification evidence with exact workflow/run IDs and PASS/FAIL/IN-PROGRESS status, (e) failures/root cause/counter-strategy, (f) blockers/dependencies, and (g) exactly one next action. A commit alone is not completion; never mark unverified work done.
 7. At the start of every continuation, read this queue, inspect latest main/open PRs/active runs, and resume from the recorded exact next action. Do not ask the user to repeat priorities or progress already in the repository.
 8. Keep this as the single source of truth: update this queue in place; do not append duplicate active queues or conflicting progress checklists. Keep older dated notes below as historical evidence.
 
@@ -525,16 +567,17 @@ Implement a versioned, fail-closed Metis-only semantic instruction policy using 
 
 ## 0. Current project control panel — updated 2026-11-03 (PRs #178–#180 merged; cave grotto swim path automated checks green)
 
-### Current priority and sequencing
+### Current priority and sequencing — superseded by 2026-11-12 owner direction
 
-1. **P0 — Finish and polish the existing Jarrell's Peak world.** This is the active development priority. Repair regressions, finish the world checklist, verify collision/movement/swimming/caves/lighting/terrain/UI, and pass desktop/mobile tests. Preserve the existing map; do not replace or redesign it during unrelated UI fixes.
-2. **P1 — DEX and Swap preparation (design/specification only while P0 is active).** Prepare a Climboria-specific product brief, premium visual direction, UX flow, architecture decision list, security/reliability requirements, and implementation checklist. Do not divert the active Jarrell's Peak workstream or publish a fake live trading interface.
-3. **P2 — Universal player accounts, identity linking, cloud saves and backups.** Begin after Jarrell's Peak completion and acceptance.
-4. **P3 — Character customization, inventory/equipment and item production.** Begin after the earlier gates, according to the detailed order below.
-5. **P4 — Marketplace and seller settlement.** Implement only after its dependencies and security gates.
-6. **P5 — DEX/Swap implementation and production activation.** The interface and technical plan may be prepared now; live swaps, liquidity, token transactions and fee collection require verified token identity, approved architecture, security review and end-to-end tests. Schedule production implementation after Jarrell's Peak is accepted unless the owner explicitly changes priority.
+This older November 3 game-first sequencing is retained only as historical project scope. It is **not** the current delivery order. Follow the current owner-approved priorities at the top of this README:
 
-**Freeze rule:** No new feature implementation may displace Jarrell's Peak polish. Character Creator, accounts, cloud-save implementation, marketplace, and live DEX/Swap remain frozen until their sequence gate. Documentation/design preparation for DEX/Swap is allowed and must not alter gameplay.
+1. P1 — Live Swap.
+2. P2 — Live DEX.
+3. P3 — All Login methods available.
+4. P4 — Fully live, genuinely playable Game.
+5. P5 — Live Launchpad, last.
+
+The no-demo-only rule applies to every priority. Old "game first", "DEX after game", or "gameplay non-blocking" statements in this historical design section do not override the current order.
 
 ### Verified repository snapshot at this update
 
@@ -926,7 +969,7 @@ A commit means code changed; it does not prove the game works. Keep status expli
 - Teleport-stone mechanics are deferred until the hero and Jarrell’s Peak map are in good shape; the current priority is character quality, terrain, collisions, and swimming.
 - Actual token payouts, persistent inventory, secure multiplayer, and anti-cheat remain separate production release gates.
 
-The game remains the priority. Crypto participation must not be required for the basic adventure. All sponsorships, marketplace fees, wagers, and rewards need clear rules and funding before launch.
+The Game is P4 in the current owner-approved delivery order. Crypto participation must not be required for the basic adventure. All sponsorships, marketplace fees, wagers, and rewards need clear rules and funding before launch.
 
 
 ---
@@ -2404,7 +2447,7 @@ For every integrated asset or borrowed technique, record:
 
 ## N. Climboria-exclusive product concept: Trade Twin & Decision Engine (DESIGN ONLY)
 
-**Status:** Proposed signature differentiator; design/specification only. Jarrell's Peak remains the active development priority. No DEX implementation is authorized by this section.
+**Status:** Proposed signature differentiator; design/specification only. DEX is P2 in the current owner-approved order; any implementation must use real providers and pass its production release gates.
 
 **Product promise:** Do not merely show traders what the market is doing. Help them understand what a proposed trade could cost, how it could fail, how it affects their existing exposure, and whether the original thesis remains valid. The engine is decision support, not a buy/sell oracle and never guarantees profit.
 
@@ -2488,7 +2531,7 @@ For every integrated asset or borrowed technique, record:
 - [ ] No fabricated order-book depth for AMMs, fake volume certainty, unsupported safety labels, guaranteed returns, or black-box buy/sell commands.
 - [ ] All simulations must disclose assumptions and include realistic fees, slippage, failed transactions, liquidity constraints and missing-data behavior.
 - [ ] Keep the system non-custodial by default. Users retain control of wallet signing and all trading decisions.
-- [ ] Jarrell's Peak remains the active development priority. These DEX concepts are design backlog only; no DEX implementation begins until the game is fully polished and the owner explicitly reprioritizes it.
+- [ ] These DEX concepts remain design options, not shipped functionality. DEX is P2 in the current owner-approved order; build and release real provider-backed functionality, not demo-only screens.
 
 
 ## 2026-11-03 — all-water-body swim depth regression coverage
@@ -2965,9 +3008,10 @@ For every integrated asset or borrowed technique, record:
 
 ## 2026-11-11 — Active release handoff (P0: live DEX / Swap / Launchpad / account login)
 
-### User priority (authoritative)
-- Complete production-live DEX, secure live Swap, functional Launchpad, and enable all intended account login methods (Google, X, and email/password). This supersedes game-content polish as the immediate release priority.
-- Do not label quote previews, wallet connection, static Launchpad UI, or a code-only integration as production-live.
+### User priority (historical record — superseded 2026-11-12)
+- This older handoff listed DEX, Swap, Launchpad and Login in a different order. It is no longer authoritative.
+- Current order: P1 Live Swap → P2 Live DEX → P3 All Login → P4 Fully Live Game → P5 Live Launchpad (last).
+- No demo-only delivery: quote previews, wallet connection, static Launchpad UI, fixtures, or code-only integrations are not production-live.
 
 ### Verified repository / CI state
 - Repository: `CryptoDilis/Climboria`; default branch: `main`; latest main checkpoint before this entry: `a52497a06db7b0c132adce5de45d473596d829ac`.
@@ -3535,7 +3579,7 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [!] PR #235 Swap integration and PR #236 Auth remain separate draft PRs. Swap execution remains disabled pending trusted ALT resolution, full instruction-semantic validation, controlled Devnet lifecycle, and Cloudflare production verification. Auth provider credentials/dashboard configuration and real-account E2E remain external release gates. No live Swap execution or fully enabled login is claimed.
 - [!] Physical Redmi 14 5G acceptance remains manual; automated mobile viewport smoke is not device acceptance.
 
-**Exact next job:** monitor the three main-commit runs above. If any fail, inspect the exact failing job logs and root cause before making a targeted counter-fix; never recommit the same failed code without a diagnosis. If all pass, verify the deployed `https://climboria.fun` and then continue with the highest-priority live DEX/Swap/Launchpad release blockers, preserving the execution kill switch until security and Devnet gates are satisfied.
+**Exact next job:** monitor the three main-commit runs above. If any fail, inspect the exact failing job logs and root cause before making a targeted counter-fix; never recommit the same failed code without a diagnosis. If all pass, verify the deployed `https://climboria.fun` and then continue with the P1 Live Swap and P2 Live DEX release blockers, preserving the execution kill switch until security and Devnet gates are satisfied.
 
 
 ## 2026-11-11 — Development resume checkpoint (latest verified repository state)
@@ -3564,7 +3608,7 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 **Exact next actions**
 1. Poll Browser Smoke `42939543763`; if it fails, inspect the failing step/job log and screenshots, identify the root cause, implement a distinct targeted fix, and rerun on the new exact head. If it succeeds, inspect its artifact and record it.
 2. Recheck current main and PR #235/#236 compare counts before synchronizing. Preserve their existing changes with conflict-aware integration; do not blindly overwrite, merge or cherry-pick duplicate code.
-3. Continue P0 DEX/Swap/Launchpad work from the actual source state: validate live DEX provider responses/chart/token detail; resolve the Swap security blockers without opening execution; advance Launchpad from the existing Raydium provenance and Devnet preview work.
+3. Continue P2 DEX/Swap/Launchpad work from the actual source state: validate live DEX provider responses/chart/token detail; resolve the Swap security blockers without opening execution; advance Launchpad from the existing Raydium provenance and Devnet preview work.
 4. Record every new code change with exact commit, CI run IDs/conclusions, artifact review, unresolved blockers and one exact next task. A successful source test or Pages build alone is not proof of production trading or launch readiness.
 
 **No application code, production secret, wallet signature, on-chain transaction or execution flag was changed during this checkpoint.**
@@ -3582,7 +3626,7 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Browser Smoke run `42940880469` on the same exact head: IN_PROGRESS at checkpoint; Playwright installation was active. Do not merge or claim the mobile/game smoke passed until this completes and the mobile orientation phase plus artifact are reviewed.
 - [!] No gameplay source, DEX/Swap logic, production configuration, wallet execution gate, secrets, or on-chain transaction was changed by this counter-fix.
 
-**Exact next task:** poll Browser Smoke `42940880469`. If it fails, inspect the new diagnostic output at the exact failure line and fix the actual runtime/test mismatch without removing the orientation assertion. If it passes, review its screenshot artifact, record the exact successful head and run IDs, then decide whether PR #242 is safe to merge. Resume P0 DEX/Swap/Launchpad after this acceptance gate.
+**Exact next task:** poll Browser Smoke `42940880469`. If it fails, inspect the new diagnostic output at the exact failure line and fix the actual runtime/test mismatch without removing the orientation assertion. If it passes, review its screenshot artifact, record the exact successful head and run IDs, then decide whether PR #242 is safe to merge. Resume P2 DEX/Swap/Launchpad after this acceptance gate.
 
 
 ### Follow-up: exact-head rerun exposed a separate DEX smoke-fixture ordering race
@@ -3612,15 +3656,15 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 
 ### Priority correction — user-confirmed delivery order (2026-11-11)
 
-- [x] Updated `docs/RELEASE-PRIORITY-2026-11-10.md` in commit `e64f6247b7e63f50dc21ee7e614714f7c292800e` to make the user's current order authoritative: **DEX → Swap → Launchpad → Login**.
+- [x] Updated `docs/RELEASE-PRIORITY-2026-11-10.md` in commit `e64f6247b7e63f50dc21ee7e614714f7c292800e` to make the user's current order authoritative: **P1 Swap → P2 DEX → P3 Login → P4 Game → P5 Launchpad**.
 - [x] DEX is now P0; Swap P1; Launchpad P2; production account login (Guest/email/Google/X) P3; cross-product acceptance P4; game focus P5.
 - [x] Portfolio & Rewards Tracker is explicitly deferred as a separate workstream, not removed. Rewards/claims remain disabled until trusted identity, pricing, ledger and settlement evidence exist.
 - [!] Existing Swap execution security gates remain unchanged: frontend and Worker execution disabled until ALT resolution, instruction semantics, independent review, controlled Devnet lifecycle and production prerequisites are accepted.
 
-**Exact next task:** finish Browser Smoke `42941085361` and inspect its gameplay screenshots; then resume P0 DEX live market discovery/profile/chart validation, not mock/demo behavior. Keep Swap signing/execution disabled while resolving its independent security gates.
+**Exact next task:** finish Browser Smoke `42941085361` and inspect its gameplay screenshots; then resume P2 DEX live market discovery/profile/chart validation, not mock/demo behavior. Keep Swap signing/execution disabled while resolving its independent security gates.
 
 
-### P0 DEX — expanded live Solana discovery feed (2026-11-11)
+### P2 DEX — expanded live Solana discovery feed (2026-11-11)
 
 - [x] Source audit found `dex/premium-terminal.js` built its six-card “Trending on Solana” feed from ten fixed symbol searches (SOL, USDC, BONK, JUP, WIF, RAY, PYTH, JTO, JLP, POPCAT). This was a curated ticker sample, not broad market discovery.
 - [x] Counter-strategy: use DexScreener's documented latest token profiles and top-active-boost endpoints to discover Solana mint addresses, then batch-fetch up to 30 token addresses through `/tokens/v1/solana/{tokenAddresses}`; select the deepest eligible pool per mint and rank the discovered subset by reported 24h volume. Each card labels whether it came from a profile, active boost, or both. UI copy explicitly says this is not a global market ranking. Provider failure displays unavailable state and never substitutes fake/sample prices.
@@ -3682,7 +3726,7 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 
 - [x] Downloaded and inspected artifact `13820584008` from Browser Smoke `42942014181`.
 - [x] Artifact contains desktop homepage, mobile homepage, desktop gameplay, desktop cave entrance/interior, and desktop/mobile DEX token-social captures. It contains no mobile gameplay/cave captures because the inherited orientation test failed before mobile gameplay capture.
-- [x] Desktop gameplay/cave images visually confirm the game rendered and cave traversal/capture completed. Visual follow-ups noted (not part of current P0 DEX work): sanctuary spawn image shows the avatar intersecting/clipping through the circular platform edge; cave interior remains visually dense/low-poly. Do not conflate these observations with the orientation harness failure.
+- [x] Desktop gameplay/cave images visually confirm the game rendered and cave traversal/capture completed. Visual follow-ups noted (not part of current P2 DEX work): sanctuary spawn image shows the avatar intersecting/clipping through the circular platform edge; cave interior remains visually dense/low-poly. Do not conflate these observations with the orientation harness failure.
 - [ ] Review corresponding PR #242 artifact once its corrected exact-head Browser Smoke completes.
 - [ ] PR #243 remains blocked on rebasing/integrating with PR #242's corrected harness and a fresh exact-head Browser Smoke pass.
 
@@ -3736,7 +3780,7 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 
 ### Master progress checklist — current checkpoint 2026-11-11
 
-**Release priority: DEX → Swap → Launchpad → Login**
+**Release priority: P1 Swap → P2 DEX → P3 Login → P4 Game → P5 Launchpad**
 
 - [x] PR #242 mobile GLB timeout diagnosed from completed run `42943304017`: timeout catch snapshot showed all strict GLB readiness flags true and no browser errors.
 - [x] Distinct test-harness counter-fix committed as `049c3907f2ccc2b868df51ffea3b1d74d069a6f4`; no production game renderer changes and no GLB assertion bypass.
@@ -3810,7 +3854,7 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Visual defect remains: desktop and mobile gameplay screenshots show the avatar positioned at/partly beyond the front edge of the sanctuary spawn platform. Track and fix spawn placement/collision/grounding separately; do not misclassify it as a smoke-harness issue.
 - [x] Latest PR metadata now reports `mergeable=true` (PR remains open and draft). No merge performed in this continuation. Confirm the current base/head and exact-head checks immediately before integration; preserve review of the gameplay spawn visual issue.
 - [ ] Next: investigate sanctuary spawn transform/platform bounds and character grounding in the production game, implement a targeted gameplay fix on a separate focused branch/PR, then rerun desktop/mobile gameplay smoke and inspect captures. After that, reconcile/merge #242 only when branch protection and review requirements are satisfied; then port only DEX source changes from #243 and rerun exact-head validation.
-- [ ] Release priorities remain DEX → Swap → Launchpad → Login. Swap execution remains fail-closed pending R1–R4 security/Devnet/deployment evidence; Launchpad and production auth are not yet verified live.
+- [ ] Release priorities remain P1 Swap → P2 DEX → P3 Login → P4 Game → P5 Launchpad. Swap execution remains fail-closed pending R1–R4 security/Devnet/deployment evidence; Launchpad and production auth are not yet verified live.
 
 ### Sanctuary spawn visual defect — source-level root cause identified (2026-11-11)
 
@@ -3837,12 +3881,7 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 
 ### Priority reset and validated-harness Sanctuary fix — 2026-11-11
 
-**Priority order (release-critical first):**
-1. [ ] Finish the Sanctuary spawn gameplay fix with exact-head desktop/mobile Browser Smoke and visual screenshot review. Do not merge while gameplay evidence is incomplete.
-2. [ ] Integrate PR #242's corrected mobile-orientation smoke harness. PR #242 exact head 7f5fa8cf354c0bd8a2ab1a2bd116426d6f5f3717 passed Validate 42946493667 and Browser Smoke 42946493750, including desktop/mobile Jarrell's Peak gameplay and screenshot upload.
-3. [ ] Port PR #243's DEX market discovery only after the validated gameplay harness is the base. Its source diff is limited to dex/index.html and dex/premium-terminal.js; preserve its live discovery changes and rerun exact-head tests. Earlier #243 Browser Smoke failed in its old mobile-orientation fixture, not the DEX discovery stages.
-4. [ ] Continue Swap security R1–R4: finish ALT resolution/adversarial tests, implement isolated semantic instruction allowlist, run controlled Devnet lifecycle tests, and verify Cloudflare production operations. Keep execution fail-closed until independently reviewed.
-5. [ ] Complete Launchpad provenance/custody/migration and real Login provider setup (Supabase migration, redirect allowlist, OAuth/SMTP/Web3 provider configuration and controlled-account tests). Mocked browser tests are not live provider proof.
+**Historical task order — superseded by the current P1–P5 priorities at the top of this README.** The Sanctuary spawn and mobile-orientation work below remains historical implementation evidence, not a current release-priority sequence. Continue current product work in this order: P1 Swap, P2 DEX, P3 Login, P4 Game, P5 Launchpad.
 
 **Sanctuary branch integration diagnosis:**
 - [x] PR #244 (5fe2dffc6c3e92243ee74c347ed6f80fbce81ad1) Validate passed (42948097496), but its Browser Smoke still uses the older mobile-orientation simulation inherited from main. Steps 1–14 passed; gameplay step 15 was still running at the last poll. Do not call it failed until GitHub publishes a terminal result.
@@ -3884,7 +3923,7 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 
 ### Priority reset and verified delivery checkpoint — 2026-11-11
 
-The user's active delivery order supersedes older locked-priority notes for this sprint. Do not insert gameplay work as a prerequisite or redirect the active workstream.
+This dated checkpoint is historical. The current owner-approved order is P1 Swap → P2 DEX → P3 Login → P4 Game → P5 Launchpad; Game is not a prerequisite for P1–P3, and Launchpad is last.
 
 - [x] DEX live Solana discovery was merged in PR #252. Its live provider, search, token detail and empty/error-state paths are covered by the browser suite.
 - [x] Mobile DEX token-detail close counter-fix was merged in PR #256. The later exact-head Browser Smoke run confirmed mobile market return/navigation on 390px and 360px widths.
@@ -3897,11 +3936,12 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Login remains unverified for production provider setup: confirm Supabase Google/X/Solana/Ethereum provider credentials, redirect allowlist, SMTP/email confirmation and real-account sign-in/session/cloud-save tests. Do not claim providers work solely because client code exists.
 - [ ] Launchpad remains Devnet preparation/read-only provenance work; verify current provider/API/on-chain config and controlled Devnet create/migrate/custody lifecycle before enabling any launch or mainnet action.
 
-**Next execution order (authoritative):**
-1. DEX: verify current-main production deployment and live provider behavior; close any remaining DEX-specific defects only.
-2. Swap: complete per-DEX account-role/fee/token-movement validation and execution-time re-fetch, add adversarial fixtures, then controlled Devnet lifecycle. Keep execution hard-gated.
-3. Login: configure and test real Supabase providers, redirects, email and account persistence.
-4. Launchpad: complete Devnet verification and custody/authority review after Swap safety.
+**Current owner-approved order (authoritative):**
+1. P1 Swap: finish security validation, Devnet lifecycle and production deployment/release gates; keep execution fail-closed until proven.
+2. P2 DEX: verify real production providers, market data, charts, token identity and desktop/mobile behavior.
+3. P3 Login: make all intended methods available and verify real provider/account lifecycle.
+4. P4 Game: complete the real playable game, not demo-only systems.
+5. P5 Launchpad: complete the real end-to-end launch and liquidity lifecycle last.
 
 **Engineering rule:** do not commit a speculative fix. First reproduce locally or with a focused deterministic test, inspect exact source and failure logs, implement one isolated counter-fix, run targeted tests, then run Validate and the relevant Browser Smoke assertions on the exact head. A gameplay-only failure must be reported separately and must not be represented as a DEX/Swap failure. Never weaken or bypass the release gates to obtain a green workflow.
 
@@ -3925,7 +3965,7 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Validate run `42964434652` failed because test fixtures supplied only two account records while the verifier correctly required source, destination, input mint, and output mint. Counter-fix updated fixtures and added mint-account cases; exact-head Validate `42964453470` passed (66 tests, 0 failures). Production validation was not weakened.
 - [x] Browser Smoke `42963568548` exposed a real mobile detail-close event-dispatch failure (visible/actionable control, but no click reached its handler; focus moved to the chart iframe). The later focused fix PR #256 was merged; exact-head Validate `42964086934` and DEX/Swap Browser Smoke steps 7–15 in `42964087241` passed.
 - [ ] Current next action: poll Browser Smoke `42965936635` to terminal status. If step 17 fails, classify it as the separate gameplay GLB/readiness issue, inspect its exact log/artifact, and do not reopen already-passing auth/DEX/Swap assertions without evidence. Then update this checkpoint with the final run state.
-- [ ] Continue release work in the agreed order DEX → Swap → Login → Launchpad. Keep security gates closed and do not label any subsystem production-live until its external deployment/provider/Devnet acceptance evidence exists.
+- [ ] Continue release work in the agreed order P1 Swap → P2 DEX → P3 Login → P4 Game → P5 Launchpad. Keep security gates closed and do not label any subsystem production-live until its external deployment/provider/Devnet acceptance evidence exists.
 
 **Engineering rule:** diagnose the failing step and exact head first; implement one evidence-based counter-fix; run targeted tests and exact-head Validate/Browser Smoke; record run IDs, conclusions, blockers, and next task. Never repeat an attempted patch without a new root-cause reason, and never weaken acceptance criteria to manufacture a green workflow.
 
@@ -3960,7 +4000,7 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Launchpad PR #251 provenance/preparation workflows passed, but production custody and full Devnet create→bonding-curve→migration→LP lifecycle remain unverified.
 - [ ] DEX live deployment/provider verification remains open.
 
-**Next exact task:** retrieve PR #261 exact-head workflow results. On failure, inspect the new `loaderDiagnostics.phase` and logs, then implement only the evidence-supported production fix. Keep the order DEX → Swap → Login → Launchpad; gameplay GLB is a separately diagnosed issue and must not be misreported as an ecosystem regression.
+**Next exact task:** retrieve PR #261 exact-head workflow results. On failure, inspect the new `loaderDiagnostics.phase` and logs, then implement only the evidence-supported production fix. Keep the order P1 Swap → P2 DEX → P3 Login → P4 Game → P5 Launchpad; gameplay GLB is a separately diagnosed issue and must not be misreported as an ecosystem regression.
 
 
 ### PR #261 CI poll — 2026-11-11 13:43 +08
@@ -4145,560 +4185,159 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [!] Correct diagnosis: the mobile readiness deadline expired while the 42.9 MB asset was still in its parse/dependency phase, after an exceptionally slow ~223.8-second transfer. Do not claim a 268-second parser stall. Next counter-strategy must address asset transfer size/delivery and capture the new container/texture diagnostics to measure parse completion time independently.
 
 
-## 2026-11-11 — Jupiter V6 raw CPI trace tooling checkpoint
-
-- [x] Added a read-only finalized Solana `getTransaction` trace utility at `dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs`. It resolves static and ALT-loaded account indexes for Jupiter outer route instructions and their ordered inner CPI vectors.
-- [x] Added offline tests for ALT ordering, stackHeight, account-index bounds, finalized commitment, raw JSON encoding, and v1 support.
-- [!] The helper explicitly distinguishes outer transaction-message maximum privileges from CPI-requested signer/writable flags. RPC innerInstructions does not provide the latter; the helper cannot prove Jupiter's per-route remaining-account slice or routePlan-step association by itself.
-- [!] No live RPC trace has been captured yet. Solscan's public transaction-detail API requires an API key; no paid API or credential was assumed. Use an approved free HTTPS RPC endpoint via `JUPITER_AUDIT_RPC_URL` without committing its secret-bearing URL.
-- [ ] Next: run the utility against a finalized Jupiter/Meteora route, inspect logs and stack heights, resolve the exact ordered CPI accounts, compare against the pinned CPI interface, and record what is proven vs still unknown. Keep signable-order/execution gates closed.
+## 2026-11-13 09:54 +08 — repository readiness audit and P1 handoff
 
+- [x] Confirmed repository access: `CryptoDilis/Climboria`, default branch `main`; repository is public and not archived.
+- [x] Re-read the active owner-approved priority authority at the top of this README. It supersedes older conversation checkpoints: **P1 Live Swap → P2 Live DEX → P3 All Login → P4 Fully Live Game → P5 Live Launchpad**. Do not follow older P0-game-first or DEX-first ordering.
+- [x] Reconciled current open engineering work: PR #269 is the fresh-main-based P1 Swap security evidence port; PRs #271/#272/#274 are supporting static-analysis/evidence increments. PR #272 records exact-head SUCCESS for Validate `43283471795`, Jupiter V6 CPI Trace `43283471547`, Jupiter IDL History `43283471617`, and Browser Smoke `43283472036` on head `208fe0a492fa077585aedac94d4ae52d9b3714d0`. Its branch-site artifact `13974815166` was inspected: 25,264 rows, 14 columns, no tab-format defect, zero edge/instruction-boundary mismatches. This proves structural branch-site inventory only, not route_v2 handler reachability or CPI privileges.
+- [x] Read PR #269 scope and safety posture: no signing/execution; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; Wrangler and public frontend execution disabled; route_v2 excluded. The PR's required fresh-branch exact-head checks are not established by the older source-branch runs cited in its description.
+- [!] Readiness verdict: **not production-ready for Live Swap**. Still missing authoritative deployed Jupiter route-handler/account-slice provenance, CPI-requested signer/writable proof, complete token movement/fee semantics, controlled Devnet settlement lifecycle, independent security review, and production backend/Worker verification. Do not enable signing, submission, or execution.
+- [!] Current audit limitation: the connected workflow-run lookup for the recorded PR #269 baseline commit `0fa8e987aec4d6e6bc7590363efa7d20fde79422` returned no PR-triggered runs; therefore this checkpoint does not claim that PR #269's current exact head is green or that all current failures have been inspected. Re-query the exact PR head and inspect every terminal failed job's step logs/artifacts before any counter-fix.
+- [ ] **Next single task:** obtain PR #269's current head SHA and exact-head Validate / Browser Smoke / Jupiter CPI Trace / Jupiter IDL History run IDs; inspect job-level conclusions and full logs for every failed/cancelled/timed-out job, distinguish infrastructure/cancellation from code failure, then continue the next evidence-backed Jupiter CPI/account-slice proof. Preserve all fail-closed gates.
+- [x] This entry is a documentation-only readiness checkpoint; no application code, workflow assertions, production configuration, or on-chain state was changed.
 
-## 2026-11-11 — Validate failure diagnosis and counter-fix
 
-- [x] Deep-inspected Validate run `43029417495` / job `130552389858`: test step failed with 77/78 passing; one new RPC trace test asserted the wrong privilege-source label for an ALT-loaded account.
-- [x] Confirmed second run `43029480369` / job `130552555595` repeated the same assertion defect; no separate product/security regression was shown. Existing route-policy/order/replay/fail-closed tests passed.
-- [x] Corrected ALT label and separated static-key vs ALT assertions. Commits: `3ef9f7b131d06b64fe733d42d6bb9487c4c21724`, `f839510f1fbb7c01f8f1690087d51e8cfe67b02d`.
-- [x] Added explicit syntax check for the new trace utility in `.github/workflows/validate-climboria.yml`, commit `701005d5b840701507d11b7edb8e32b51e4d2f49`.
-- [!] Exact-head CI for the corrected head is not yet visible; no local test could run because the environment could not resolve github.com. Do not mark the counter-fix verified until fresh exact-head Validate and Browser Smoke results are inspected.
-- [ ] Next: obtain fresh exact-head workflow results, inspect the full test summary and screenshot artifact, and continue raw Jupiter CPI evidence capture. Keep all execution/signing gates closed.
-
-
-## 2026-11-11 — RPC trace test counter-fix verified
-
-- [x] Exact code/test/workflow tree `19f5d63098ba9b648a0ab6e21b88161bbb123062`: Validate `43029729833` SUCCESS (job `130553385102`), all steps complete.
-- [x] Exact same code/test/workflow tree: Browser Smoke `43029729852` SUCCESS (job `130553473385`), all steps 7–16 complete.
-- [x] Screenshot artifact `13860116825` uploaded (5,387,245 bytes).
-- [x] ALT privilege-source label and static/ALT assertions corrected; no test weakened. Explicit syntax check added for the trace auditor.
-- [!] Gameplay, production deployment, Jupiter per-DEX semantic proof, Devnet settlement and live wallet signing/execution remain unverified/disabled.
-- Following this code verification, only README/research-document/PR-description records are updated; no runtime source, test, or workflow logic is changed.
-
-
-## 2026-11-11 — Jupiter V6 → Meteora DLMM CPI trace decoded
-
-- [x] Added a dedicated read-only audit workflow. Latest trace run `43030094086` SUCCESS; artifact `13860297377` contains the finalized v0 transaction trace for signature `5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv`.
-- [x] Decoded one-step Jupiter `route`: enum variant 75 = `MeteoraDlmmSwapV2`; 100% of input index 0 to output index 1; 97,879,923 input units; 38,687,896,434 quoted output units; 300 bps slippage; no platform fee.
-- [x] Observed Meteora `swap2` CPI at stack height 2 with 17 accounts. First 16 positions match official Meteora `swap2` IDL; one trailing writable account is consistent with the SDK's bin-array remaining-account convention. The CPI vector maps exactly to Jupiter outer account positions 10–26; outer position 27 is an unexplained extra Jupiter program account.
-- [x] Cross-checked user input, pool reserves and final output token balances.
-- [!] Transaction RPC does not expose each CPI's requested signer/writable flags. User is globally signer+writable as fee payer while Meteora IDL only requires signer; do not infer the inner CPI requested writable.
-- [!] One trace is not proof of universal Jupiter account-cursor behavior. Variant 75 remains rejected by the production allowlist.
-- [ ] Resolve trailing outer account, verify bin-array account owner/data, collect multiple route examples, and establish Jupiter deployed-binary provenance.
-- [ ] Devnet reproduction and independent security review. Execution/signing gates remain false.
+## 2026-11-13 10:02 +08 — PR #269 exact-head CI continuation
 
+- [x] Retrieved PR #269 live metadata. Head branch `codex/swap-security-evidence-current-main-2026-11-12`, exact SHA `4d30d1919ece642dd5659f666f1c9b993411c791`; base reports `main` at `0fa8e987aec4d6e6bc7590363efa7d20fde79422`; PR is open/draft and GitHub reports mergeable=false. Reconcile base drift before merge; do not merge while this remains unresolved.
+- [x] Exact-head Validate run `43346493400` — SUCCESS; job `131627021981`. All validation steps passed, including Worker security/API contract tests, Wrangler Durable Object dry-run, auth/cloud-save syntax, homepage controls, token-launch copy audit, DEX/Swap scripts, game scripts and HTML audit.
+- [x] Exact-head Browser Smoke run `43346493345` — SUCCESS; job `131627039757`. All 22 substantive steps passed, including deterministic GeckoTerminal OHLCV contract tests, live DexScreener/GeckoTerminal contract capture, auth/cloud-save isolation, homepage/DEX navigation, Cloudflare proxy, fail-closed execution, Swap/DEX, Base search/filter/provider failures, chart identity, Solana discovery, 390px/360px layouts, provider-error/empty states, and Jarrell's Peak desktop/mobile gameplay smoke. Screenshot and provider artifacts uploaded by the workflow.
+- [x] Exact-head Jupiter V6 CPI Trace Audit run `43346493401` — SUCCESS; job `131627104802`. CPI account-key/duplicate outer-position mapping, finalized-route pagination/rate-limit recovery, and read-only finalized Jupiter V6 route trace passed.
+- [ ] Exact-head Jupiter IDL History Audit run `43346493435` — IN PROGRESS at checkpoint. Job `131627006789`; IDL reconstruction step 7 running. Steps 1–6 passed, including syntax check and DEX adapter IDL evidence-classification / LaunchLab account-audit tests. No terminal failure exists at this snapshot; therefore no failed-job root cause or counter-fix is claimed. Job-log download is not yet available while the job is active; retry after terminal completion.
+- [!] The three green workflows do not establish production-live Swap or authorize signing/execution. Keep source and environment gates closed. The IDL workflow must complete and its artifact must be inspected before treating the four-workflow security evidence batch as complete.
+- [ ] Next: poll run `43346493435` to terminal state; if it fails, inspect the exact failed step and full job log/artifacts, identify the causal defect, implement a targeted counter-fix, and rerun all affected exact-head checks. If it passes, inspect its uploaded evidence and then reconcile PR #269 against the latest main (including documentation commits) before merge consideration.
 
-## 2026-11-11 — Final exact-head CI and CPI trace checkpoint
-
-- [x] Exact branch head `feb0386cbd1e84d12934e5f5ee96ddac355e1791`, 63 ahead / 0 behind main; PR #268 remains draft/unmerged.
-- [x] Validate run `43030775346` / job `130556954937`: SUCCESS, all validation steps complete.
-- [x] Browser Smoke run `43030775335` / job `130557049151`: SUCCESS, ecosystem steps 7–16 complete.
-- [x] Jupiter V6 CPI Trace Audit run `43030775438` / job `130556940556`: SUCCESS, finalized route trace captured.
-- [x] Screenshot artifact `13859239516` (5,405,347 bytes) and CPI trace artifact `13858919436` (3,699 bytes) uploaded.
-- [x] Historical Validate assertion failure runs `43029417495` and `43029480369` were root-caused, corrected, and superseded by green exact-head runs. No test assertion was weakened.
-- [!] Dedicated gameplay, production deployment, Jupiter universal CPI cursor proof, Devnet settlement and wallet signing/execution remain unverified/disabled.
-- Only documentation/PR records follow this checkpoint; runtime code, tests, and workflow logic remain unchanged.
-
-
-## 2026-11-11 — Meteora BinArray on-chain verified
-
-- [x] Added a read-only finalized `getAccountInfo` auditor with tests for owner + discriminator validation.
-- [x] Confirmed dynamic account `5m6X87JCg1a6NaQaCup6yMMLtwDqT2gyow7fQBgujiB8` is owned by Meteora DLMM, is non-executable, has 10,136 bytes, and matches the official `BinArray` discriminator `5c8e5cdc059446b5`. It is not a bitmap extension.
-- [x] Exact 17-account Meteora Swap2 CPI vector now maps to 16 fixed official IDL accounts plus one verified BinArray for this finalized transaction.
-- [x] Latest code head `abc441f1f09359355be8b5aeb99ce3c835aec39e`: Validate `43031160370` SUCCESS (81 pass / 0 fail); Browser Smoke `43031160341` SUCCESS; Jupiter CPI Trace Audit `43031160387` SUCCESS.
-- [x] Audit artifact `13860293557` contains both raw CPI trace and account metadata.
-- [!] Extra outer Jupiter account position 27 and exact CPI-requested signer/writable flags remain unresolved. One transaction does not establish general cursor semantics.
-- [ ] Repeat for bitmap extension, multiple bin arrays, transfer-hook slices, and split/multi-hop routes; establish deployed-binary provenance and complete independent security review. Variant 75 and execution remain disabled.
-
-
-## 2026-11-11 — Route-discovery failures diagnosed and fixed
-
-- [x] Deep-diagnosed Validate run `43031746350`: test file failed to load because the new `decodeBase58` import collided with an existing import. Fixed by aliasing to `decodeDiscoveryBase58`.
-- [x] Deep-diagnosed Jupiter audit failures `43031734145`, `43031746115`, `43031863938`: public Solana RPC returned HTTP 429 during repeated recent transaction fetches. Reduced scan to five signatures, added one-second spacing + bounded exponential backoff, and made persistent 429 an explicit partial report rather than a failed workflow.
-- [x] Added offline regression test for rate-limit reporting.
-- [x] Latest head `00c145cabf49588a209b2e6e6ca186eb4b86c621`: Validate `43032018023` SUCCESS (84 pass / 0 fail); Browser Smoke `43032018200` SUCCESS; Jupiter CPI Trace Audit `43032017949` SUCCESS.
-- [x] Audit artifact `13860769847`: 5 recent Meteora signatures scanned, 0 Jupiter Swap2 matches, no rate limit. This is only a bounded sample, not a global absence claim.
-- [x] Screenshot artifact `13862020231` uploaded.
-- [!] One transaction's Meteora Swap2 vector and BinArray are verified, but outer Jupiter account position 27, exact CPI-requested flags, general route cursor behavior and deployed binary provenance remain open. Variant 75 and execution stay disabled.
-
-
-### Jupiter/Meteora account-partition research update — 2026-11-11
-- [x] Resolved outer Jupiter route account position 27: it is the Jupiter program account used by the later Anchor event self-CPI, not a Meteora DLMM account.
-- [x] Evidence from trace artifact `13862030394`: inner instruction ordinal 5 invokes Jupiter at stack height 2, with Jupiter event authority `D8cy77BBepLMngZx6ZukaTff5hCt1HrWyKk3Hnd9oitf` as its sole account; decoded data begins with Anchor `EVENT_IX_TAG_LE` `e445a52e51cb9a1d`.
-- [x] Outer positions 7–8 match the generated Jupiter V6 `RouteBuilder` suffix (event authority, program); positions 10–26 remain the 17-account Meteora `swap2` vector.
-- [ ] Obtain direct evidence for exact CPI-requested signer/writable flags.
-- [ ] Trace additional variant-75 cases (bitmap extension, multiple BinArrays, transfer-hook slices, split/multi-hop) and verify deployed Jupiter binary provenance.
-- [ ] Controlled Devnet reproduction and independent Solana security review.
-- Security boundary unchanged: variant 75 remains excluded; signable-order and execution gates remain false; Wrangler execution and public frontend execution remain disabled.
-- Research details: `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md` and `dex/swap-proxy/SECURITY-REVIEW-2026-11-11.md`.
-
-
-### Older finalized Jupiter/Meteora trace pagination — 2026-11-11
-- [x] Route-discovery helper now accepts an optional `before` signature cursor for `getSignaturesForAddress`.
-- [x] CLI reads `JUPITER_AUDIT_BEFORE_SIGNATURE`; audit workflow exposes optional manual-dispatch input `before_signature`.
-- [x] Added offline regression assertion for the RPC cursor and report metadata.
-- [ ] Run exact-head CI for this pagination-only research change.
-- [ ] Run a cursor-based older finalized sample and record scan count, matches and rate-limit status.
-- Scope: research tooling only; no runtime swap-policy change. Variant 75 remains excluded and signing/execution remain disabled.
-- Research log: `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md`.
-
-
-### Older-scan pagination CI verification — 2026-11-11
-- [x] Exact-head Validate run `43034073782`: SUCCESS.
-- [x] Exact-head Browser Smoke run `43034073129`: SUCCESS.
-- [x] Exact-head Jupiter CPI Trace Audit run `43034073159`: SUCCESS.
-- [x] Cursor forwarding regression test passed as part of Validate.
-- [x] Existing recent trace and BinArray verification passed; trace artifact `13861677769`.
-- [ ] Execute a manual older-cursor scan with `before_signature`; current artifact is the newest-five sample (`before=null`), not an older window.
-- Screenshot artifact: `13862771931`.
-- Verified code head: `83d32b1d0a02981b2e9e853ce0c63954e8a54dd9`. Research log contains full evidence and limitations.
-
-
-## 2026-11-11 — continuation checkpoint: exact-head CI and older-cursor dispatch blocker
-
-- [x] Re-inspected live PR #268: open, draft, unmerged; head `80ecd60b7c6700a489afc0e52f441542eee0cd33`.
-- [x] Re-compared PR branch with current `main`: 94 ahead / 0 behind; merge base `623adfbbe9bca5832b79b71c625a2e201c5279db`.
-- [x] Re-inspected exact-head Validate run `43034661324`, job `130570222405`: SUCCESS; all 15 job steps completed, including Worker security/API tests, Wrangler dry-run, auth/cloud-save syntax, homepage/token-copy checks, DEX/Swap and game script audits.
-- [x] Re-inspected exact-head Browser Smoke run `43034661315`, job `130570220860`: SUCCESS.
-- [x] Re-inspected exact-head Jupiter CPI Trace Audit run `43034662889`, job `130570224530`: SUCCESS; all 8 steps completed. Artifact `13861693381`, 5,816 bytes, SHA-256 `26c69a7bd262cb1df433fcdfb93bdccd16f1d634e1e9edcf400d8db82e5e3cd5`.
-- [!] The current trace artifact is still the default newest-five sample (`before=null`). It does **not** prove an older-cursor scan was executed.
-- [!] The audit workflow supports `workflow_dispatch` input `before_signature`, but the available GitHub integration actions in this session expose workflow-run inspection and reruns, not workflow dispatch. No older-cursor run was triggered; do not mark that task complete or infer its results.
-- [ ] Next: dispatch `jupiter-cpi-trace-audit.yml` manually with a known finalized Meteora signature as `before_signature`; inspect artifact fields `before`, `transactionsScanned`, `matchingRoutes`, `rateLimited`, and `rateLimitedMethod`; append exact run/artifact evidence.
-- [ ] Continue authoritative investigation of exact CPI-requested signer/writable flags, route variations, deployed Jupiter binary provenance, Devnet reproduction, and independent review.
-- Security boundary unchanged: variant 75 remains excluded; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; Wrangler execution and public frontend execution remain disabled. No production deployment, live swap execution, wallet signing, gameplay completion, or Login/Launchpad completion is claimed.
-- No workflow failure occurred on this exact head; therefore no failure retry or counter-fix was appropriate in this continuation.
-
-
-## 2026-11-11 — documentation-head verification after continuation
-
-- [x] Recorded exact-head reinspection, outstanding older-cursor dispatch limitation, and next actions in this README and the Jupiter/Meteora research log.
-- [x] New documentation head before this verification: `21e65b17b968d19b54d84c1e74c58390b2c494e2`.
-- [x] Validate run `43035310603`, job `130572489108`: SUCCESS; all 15 steps completed.
-- [x] Browser Smoke run `43035310495`, job `130572489503`: SUCCESS; all 20 steps completed, including auth/cloud-save isolation, DEX routing/proxy, fail-closed execution, Swap/DEX, live Solana discovery, desktop/mobile layouts, 390px/360px responsive checks, provider-error/empty states, and screenshot upload.
-- [x] Jupiter CPI Trace Audit run `43035310502`, job `130572477387`: SUCCESS; all 8 steps completed.
-- [!] Older-cursor scan remains pending: audit artifact from this run uses the default cursor (`before=null`). Manual dispatch remains unavailable through the current GitHub integration. No older-window results are claimed.
-- [!] These are code/CI and browser checks, not production deployment, wallet signing, swap execution, full gameplay, or proof of Login/Launchpad completion.
-- Security remains fail-closed; variant 75 excluded; signing/execution flags remain false.
-
-
-
-## 2026-11-11 — Senior engineering continuation: PR #268 exact-head audit
-
-- [x] Re-read repository metadata: default branch is `main`; current main head at inspection is `623adfbbe9bca5832b79b71c625a2e201c5279db`.
-- [x] Re-read open PRs and confirmed PR #268 remains open, draft, and unmerged: `fix(swap): validate Jupiter V6 fixed account roles`.
-- [x] Inspected exact PR #268 head: `5472f435fc6f3d2eed6945059bc5b6cad4413faf`; PR base is current main `623adfbbe9bca5832b79b71c625a2e201c5279db`.
-- [x] Exact-head Validate run `43035556560`, job `130573371164`: SUCCESS. All 15 steps passed, including Worker security/API contracts, Wrangler Durable Object dry-run, auth/cloud-save syntax, homepage and token-launch copy checks, inline/Dex/Swap/game syntax, and HTML script audit.
-- [x] Exact-head ecosystem Browser Smoke run `43035556451`, job `130573341212`: SUCCESS. All executed steps passed, including auth/cloud-save isolation, homepage/DEX routing, Worker proxy, fail-closed execution, Swap/DEX, live Solana discovery, desktop/mobile workspace, 390px/360px layouts, provider-error/true-empty states, and screenshot upload.
-- [x] Exact-head Jupiter V6 CPI Trace Audit run `43035556257`, job `130573362128`: SUCCESS. All 8 steps passed, including finalized public route trace fetch and report artifact upload.
-- [!] Three earlier workflow runs on superseded intermediate heads (`43035524511`, `43035524562`, `43035524805`) were cancelled when a newer commit superseded them. These are cancellations, not failed test results; the three latest workflows above passed on the same exact head.
-- [!] The Browser Smoke workflow executed here is the ecosystem smoke, not the separate Jarrell's Peak gameplay workflow. Do not claim current-head gameplay verification from this result.
-- [!] A successful read-only Jupiter trace audit is not a complete per-DEX CPI/account-role security approval. No production deployment, Devnet settlement, wallet signing, or live swap execution is established by these checks.
-- [ ] Next: inspect the latest CPI trace artifact and update the research/security review with its exact route, account mapping, and unresolved limitations. Continue version-pinned per-DEX adapter validation and controlled Devnet evidence; do not widen the allowlist based on a single trace.
-- [ ] Run the separate gameplay Browser Smoke against a current-main-synchronized head when its required game/assets paths are changed or when explicitly dispatched. Keep Jarrell's Peak/gameplay status separate from ecosystem smoke.
-- Security boundary remains unchanged: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`, and public frontend execution remains disabled. Keep PR #268 draft pending complete evidence and independent review.
-
-
-## 2026-11-11 — Continuation: trace evidence review and discovery classifier hardening
-
-- [x] Rechecked live `main`, PR #268, current branch head, open PRs, and latest workflow runs before continuing. Main remains `623adfbbe9bca5832b79b71c625a2e201c5279db`; PR #268 is open/draft/unmerged.
-- [x] Exact documentation-head Validate `43036765524`, job `130577510624`: SUCCESS; all 15 steps passed.
-- [x] Exact documentation-head ecosystem Browser Smoke `43036765545`, job `130577511623`: SUCCESS; all steps 7–17 passed, including auth/cloud-save isolation, DEX/Swap, fail-closed execution, responsive 390px/360px layouts, provider states and screenshot upload. This is not the separate Jarrell's Peak gameplay workflow.
-- [x] Exact documentation-head Jupiter CPI Trace Audit `43036765589`, job `130577511097`: SUCCESS; finalized trace and artifact upload passed. Artifact `13864055427`, 5,509 bytes, SHA-256 `8693a65f25870cd4eec319b53022cb02be7f4ebc81c71afe6ce413d0319f2384`.
-- [x] Downloaded and inspected the artifact. Fixed historical transaction slot `464856414` succeeded; Jupiter outer instruction index 3 produced one Meteora `swap2` CPI with 17 ordered accounts. The 17-account vector maps to 16 fixed roles plus one finalized Meteora-owned BinArray at position 16; account address `5m6X87JCg1a6NaQaCup6yMMLtwDqT2gyow7fQBgujiB8`, 10,136 bytes, discriminator `5c8e5cdc059446b5`.
-- [x] One-transaction token balances show 97.879923 USDC debited from the taker and 38,687.896434 output tokens credited; pool-side balances show the corresponding opposite movements. This is a single observed transaction, not universal execution proof.
-- [!] The same newest-five discovery sample found one more Jupiter/Meteora `swap2` candidate with an 18-account vector, but its outer instruction's route-plan header was unrecognized (`routePlanHeader=null`). Root cause: the discovery reporter counted any Jupiter outer instruction with a Meteora Swap2 inner CPI as a `matchingRoutes` result, overstating parser certainty.
-- [x] Counter-fix implemented on the PR branch: preserve raw outer instruction data and discriminator, add `routePlanHeaderRecognized`, count `matchingRoutes` only for recognized route-plan headers, and separately expose `matchingJupiterMeteoraInstructions`. Added adversarial regression test and workflow output/path coverage.
-- [ ] Exact-head verification of this classifier counter-fix is pending. Do not mark it verified until Validate and CPI Trace Audit complete on the new head.
-- [ ] Next: classify the new candidate's raw discriminator against a pinned Jupiter IDL/SDK, fetch and inspect its full 18-account vector, and keep it separate from the verified 17-account route schema.
-- [ ] Older-cursor scan remains pending; latest sample used `before=null`. Available GitHub actions still do not expose manual workflow dispatch.
-- [!] No failed workflow occurred in the three completed runs above; earlier superseded runs were cancellations, not failures. Therefore no retry was needed. Any new failed job must be diagnosed from its exact step/logs before a distinct counter-fix is attempted.
-- Security gates unchanged: variant 75 remains excluded; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`; no wallet signing, live Swap execution, or production deployment is claimed.
-
-
-## 2026-11-11 — CPI discovery classifier counter-fix verified
-
-- [x] Final exact-head PR #268 commit `246d7db3daec4e53d5747b4b72ccd3a30de6af9c` passed Validate run `43037336774`, job `130579556750`: SUCCESS. Worker/security tests passed; Node test suite reports **85 tests, 85 pass, 0 fail**; Wrangler dry-run and all syntax/HTML audits passed.
-- [x] Same exact head passed ecosystem Browser Smoke run `43037337100`, job `130579556593`: SUCCESS. Auth/cloud-save isolation, homepage/DEX routing, Worker proxy, fail-closed execution, Swap/DEX, Solana discovery, mobile workspace, 390px/360px layouts, provider-error/true-empty states, and screenshot upload all passed. Screenshot artifact `13864380785`, 5,341,152 bytes.
-- [x] Same exact head passed Jupiter V6 CPI Trace Audit run `43037337332`, job `130579589004`: SUCCESS. Artifact `13863661602`, 4,709 bytes, SHA-256 `47d0a095b97c7e8532600e3f0278033c27b1a3fd7604389613df84546d37c6c4`.
-- [x] The exact-head audit artifact now correctly reports the bounded sample fields separately: `before=null`, 5 transactions scanned, `matchingRoutes=0`, `matchingJupiterMeteoraInstructions=0`, `rateLimited=false`. This is only a newest-five sample and is not evidence that no Jupiter/Meteora routes exist.
-- [x] Regression test verifies that an unknown Jupiter outer discriminator with a Meteora Swap2 CPI remains visible as an opaque instruction but is not counted as a recognized route plan. The test is included in the 85 passing tests.
-- [!] The earlier sampled 18-account candidate remains a separate unclassified observation from artifact `13864055427`; it was not reproduced in the newest-five sample. Its discriminator and full transaction still require pinned-IDL classification. Do not fold its vector into the 17-account standard-route schema.
-- [!] Earlier intermediate workflow runs were cancelled by branch concurrency after newer commits arrived; they are not failures. The three final exact-head workflows above completed successfully. No failed job occurred on this exact head, so no retry was appropriate.
-- [ ] Next: identify the previously observed candidate's outer discriminator using a pinned Jupiter instruction IDL/SDK; inspect its exact 18-account CPI vector and account data. Then expand coverage to other Meteora/Jupiter route variations and controlled Devnet verification.
-- [ ] Older-cursor scan remains pending; no manual workflow dispatch action is available in this GitHub integration. Keep `before=null` sample distinct from an older-window scan.
-- Security boundary unchanged: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`; variant 75 remains excluded; no wallet signing, live Swap execution, production deployment, or gameplay completion is claimed.
 
-
-## 2026-11-11 — Jupiter route_v2 and Meteora multi-BinArray continuation
-
-- [x] Investigated the previously unclassified 18-account candidate transaction `2y3mpbA6dSdyv2DUufEgWBNV3cL7G4JfLzCoQ2sUNthJvKW7uHxzGZfBL2DcghqgfZZpmzUH4oS9nseibki3T7MX`, finalized slot `468153382`, successful.
-- [x] Identified outer Jupiter discriminator `bb64facc31c4af14` as `route_v2` using generated Jupiter V6 `RouteV2Builder` SDK 0.4.0. Its ten fixed accounts at positions 0–9 match the official generated builder. The route contains four plan steps; first step enum byte 181 remains unmapped to a pinned deployed enum revision.
-- [x] Confirmed the production validator remains legacy-route-only; added a regression test that rejects `route_v2`. Diagnostic parsing recognizes `route_v2` without enabling it.
-- [x] Pinned Meteora DLMM IDL version 0.12.0 at commit `1532e540db41ac405dbf4c5bb2ddfceaa1f98ff1`. Candidate Meteora `swap2` CPI has 18 accounts: 16 IDL fixed roles plus two dynamic BinArrays.
-- [x] Extended account decoding and verified both BinArrays (indexes 52 and 53, version 2) and the bitmap extension all reference the same LbPair `5p7V96VMiDR5n18KUgMC6MtjZp3syGrD69bwkLMffTjR`. Audit workflow now asserts those parent-pool relationships.
-- [x] Exact-head Browser Smoke `43038503893` SUCCESS and Jupiter CPI Trace Audit `43038504288` SUCCESS on code head `f83f1d49eec2021c8bfc7db4e63cb6c4e841982d`; artifact `13863503120` uploaded and inspected.
-- [ ] Exact-head Validate `43038503976` remains pending. Older PR Validate `43037984654` is still reported in progress with no steps/logs, so the new validation may be waiting behind a stale runner. This is an infrastructure queue issue, not a test failure; no blind retry was made.
-- [!] Intermediate cancelled runs were superseded by newer commits and are not failures. No failed workflow in this checkpoint required a counter-fix.
-- [ ] Next: get a terminal Validate result, map route_v2 enum byte 181 to a pinned deployed Jupiter IDL, and inspect more route_v2 Meteora transactions. Keep route_v2 rejected until independent account-role, CPI privilege, and Devnet validation is complete.
-- Security remains fail-closed: execution/signable-order review flags false; no wallet signing, live swap execution, or production approval.
-
-
-## Final exact-head verification — 2026-11-11
+## 2026-11-13 10:18 +08 — PR #269 exact-head four-workflow completion and artifact review
 
-- [x] Final PR branch head before this documentation-only checkpoint: `19b661ba5b83051d00817881ada5bcdb044f7000`.
-- [x] Validate run `43038824734`, job `130584855789`: SUCCESS. Cloudflare Worker security/API tests **87 passed / 0 failed**; Wrangler Durable Object dry-run, Supabase auth/cloud-save syntax, homepage/token-launch copy checks, DEX/Swap/game syntax, and HTML script audit all passed.
-- [x] Ecosystem Browser Smoke run `43038824716`, job `130584844505`: SUCCESS. All steps 7–17 passed, including auth/cloud-save isolation, homepage/DEX routing, Worker proxy, fail-closed execution, standalone Swap/DEX, Solana discovery, desktop/mobile DEX, 390px/360px layouts, provider-error/true-empty states, and screenshot upload. Artifact `13864182788`, 5,379,184 bytes.
-- [x] Jupiter V6 CPI Trace Audit run `43038824874`, job `130584843060`: SUCCESS. Artifact `13864352116`, 14,373 bytes, SHA-256 `72308615add750b979c98ca6330895a96dead762320d04e0f6e553f82a808582`.
-- [x] The audit artifact includes the successful route_v2 candidate trace and the pool-parent cross-check for the Meteora bitmap extension and two BinArrays. The workflow assertion passed.
-- [!] The final exact-head Browser Smoke is ecosystem-only; it does not verify Jarrell's Peak gameplay. No gameplay workflow was run here.
-- [!] Earlier superseded PR runs were cancelled during rapid documentation commits; those are cancellations, not failed tests. The three final workflows above passed on the same exact head. No failed job occurred on this final head.
-- Security remains fail-closed: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`; Jupiter `route_v2` is recognized for diagnostics but rejected by the production legacy-route validator. No signing, live swap execution, or production approval is claimed.
-
+- [x] Re-polled exact PR #269 head `4d30d1919ece642dd5659f666f1c9b993411c791`. All four required exact-head workflows are now terminal **SUCCESS**: Validate run `43346493400` / job `131627021981`; Browser Smoke `43346493345` / job `131627039757`; Jupiter V6 CPI Trace `43346493401` / job `131627104802`; Jupiter IDL History `43346493435` / job `131627006789`. No failed terminal job exists on this exact head, so there is no new workflow failure root cause or counter-fix to invent.
+- [x] Inspected all job steps. Validate, full Browser Smoke (including 360px/390px layouts, provider error/empty states and Jarrell's Peak desktop/mobile smoke), finalized CPI trace, IDL history reconstruction, Rust static-audit tests, disassembly/CFG generation, and artifact uploads all completed successfully.
+- [x] Downloaded and inspected IDL History artifact `14002604160` (3,187,258 bytes) and CPI trace artifact `14001114756` (22,872 bytes). IDL artifact includes finalized account provenance, historical revisions, Jupiter ProgramData ELF, DEX adapter histories, static-analysis outputs and trace inputs.
+- [x] Jupiter route_v2 candidate at slot `468153382`: official `@solana/idl@0.3.0` private-RPC reconstruction succeeded with 75 revisions / 91 snapshots; 27 matching historical records and exactly one active revision covers the candidate slot. Finalized on-chain IDL account owner matches Jupiter; decompressed payload hash matches active history; route_v2 discriminator matches; ProgramData deployment slot `468023491` precedes candidate slot. ProgramData ELF SHA-256 `aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6`; pinned sBPF static analysis completed.
+- [!] The external IDL-history HTTP `/history` request timed out, but the workflow correctly recovered via independent official `@solana/idl@0.3.0` RPC reconstruction. This is a recorded provider transport warning, not a failed workflow or missing Jupiter history: `officialHistoryReconstructionSucceeded=true`, `requiredHistorySourceAvailable=true`, and the candidate-slot gate passed. Do not conflate this with the earlier exact-head timeout failure on head `7ddc437...`.
+- [!] DEX adapter IDL provenance remains scoped and limited: Kipseli **incomplete** (no historical/on-chain IDL and current ProgramData deployment after candidate); Orca Whirlpool **incomplete** (active/latest schema exists but on-chain instruction/payload does not match); Meteora DLMM **incomplete** (latest/history disagreement and on-chain instruction/payload mismatch); Raydium LaunchLab **supported for IDL provenance only**, but two active historical revisions cover candidate slot, so provenance is not unique. LaunchLab candidate account audit reports matched. No adapter status is runtime CPI compatibility or release approval.
+- [!] CPI artifact is one transaction-specific finalized Jupiter/Meteora observation. It does not prove Jupiter's runtime account-slice dispatch, CPI-requested signer/writable AccountMeta privileges, complete token movement/fee semantics, or universal route variants. Outer transaction privileges must not be represented as CPI-requested privileges.
+- [!] PR #269 remains open/draft/unmerged and GitHub reports `mergeable=false`; its reported base SHA remains `0fa8e987aec4d6e6bc7590363efa7d20fde79422`, behind latest main documentation checkpoints. Reconcile branch with latest main and rerun exact-head checks before merge consideration.
+- [ ] Next: compare PR #269 against current main; sync safely without overwriting owner-approved priority docs; then continue multi-hop/split finalized CPI traces, DEX order permutations, transfer-hook slices, variable Meteora BinArray counts, runtime account cursor/privilege proof, and adapter-specific provenance.
+- [!] Keep all signing/execution switches disabled; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; no production Worker deployment, Devnet settlement acceptance, independent security review, or LIVE Swap claim is established.
 
-## Exact next engineering task — 2026-11-11
 
-- [ ] Obtain a version-pinned deployed Jupiter IDL/enum definition that maps route_v2 route-plan enum byte `181`; do not infer its DEX identity from a different SDK revision.
-- [ ] Decode all four route_v2 steps and correlate each to its inner CPI using stack height, program ID, account vector and transaction metadata.
-- [ ] Capture additional route_v2/Meteora transactions with one, two, and more BinArrays; verify BinArray direction/order and any transfer-hook remaining-account slices.
-- [ ] Obtain direct evidence for CPI-requested signer/writable metas; outer transaction-message privileges are only maximum privilege constraints.
-- [ ] Continue controlled Devnet reproduction and independent security review before any allowlist expansion or signing/execution approval.
-- [ ] Keep the separate Jarrell's Peak gameplay smoke and production hosting checks independent from ecosystem Browser Smoke.
+## 2026-11-13 10:22 +08 — PR #269 base-drift reconciliation checkpoint
 
+- [x] Recorded completed exact-head four-workflow and artifact findings in main README at commit `0467298a8ec226e2c94af90fd8ad17dc56fb87d3`; detailed artifact evidence was also recorded on PR #269 branch in `docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md` at commit `9410c72cabb7a12ae8a2aacf9b5d3cb5aa530caf`.
+- [x] Rechecked PR #269 after the documentation commit. Current branch head is `9410c72cabb7a12ae8a2aacf9b5d3cb5aa530caf`; it has no PR-triggered workflow runs returned by the commit-run lookup. The four passing workflow results are on tested code head `4d30d1919ece642dd5659f666f1c9b993411c791`; the intervening branch commit changes only the evidence register. Do not describe the docs-only SHA as having its own four new runs.
+- [!] GitHub compare `main...codex/swap-security-evidence-current-main-2026-11-12` reports **diverged**, feature branch 204 commits ahead / 26 behind; merge base remains `0fa8e987aec4d6e6bc7590363efa7d20fde79422`; latest main is `0467298a8ec226e2c94af90fd8ad17dc56fb87d3`. PR remains draft/unmerged and GitHub mergeable=false.
+- [!] Do not force-update the feature branch or manufacture a merge commit without a verified merged tree. The compare includes README.md changes and multiple P1 code/evidence paths; a blind merge/rebase could overwrite the owner-approved current-main priority authority or alter security work.
+- [ ] Next: inspect the 26 mainline commits since the merge base and reconcile file-level conflicts deliberately, preserving main's current priority order and all PR security evidence. Then run all four required workflows on the reconciled exact head.
 
-## 2026-11-11 — Final verification and route_v2 CPI correlation
 
-- [x] Latest PR head `7e5521a71b6036ee98e4c1fd8d0d23149026207e` passed Validate run `43039071777`: SUCCESS, 87 tests passed / 0 failed; Wrangler dry-run and all syntax/HTML checks passed.
-- [x] Latest PR head passed ecosystem Browser Smoke run `43039071847`: SUCCESS, all steps 7–17 passed; screenshot artifact `13864397521`, 5,348,920 bytes.
-- [x] Latest PR head passed Jupiter CPI Trace Audit run `43039071652`: SUCCESS; artifact `13864223042`, 14,373 bytes, SHA-256 `15027e07fc0c4c559bc94081c5b41992c105e4188bfcb6ee6c597f295e6a85b5`.
-- [!] These latest checks are ecosystem-only; Jarrell's Peak gameplay and production deployment are not verified.
-- [x] Additional CPI correlation: the four observed DEX-level outer CPI calls in candidate transaction order are Kipseli (`3TK9D8...`), Orca Whirlpool (`whirLb...`), Meteora DLMM (`LBUZ...`), and Raydium LaunchLab (`LanMV...`). The Kipseli instruction discriminator `f0e02621b01ff1af` matches Anchor `global:swap_v3`; the transaction route_v2 plan has four steps and first enum byte `181`.
-- [!] The order makes `route_v2` step 181 a plausible Kipseli SwapV3 mapping, but it is not accepted as proven until a pinned Jupiter route-plan enum revision confirms it. Do not add this mapping to production policy yet.
-- [!] No failed workflow occurred on the latest head. Earlier runs cancelled by concurrency during superseding commits were cancellations, not failures.
-- Security remains fail-closed: route_v2 is diagnostic-only and rejected by the legacy production validator; all signing/execution review flags remain false.
+## 2026-11-13 10:28 +08 — PR #269 mainline commit-by-commit drift audit
 
+- [x] Inspected all 26 mainline commits between PR #269's merge base `0fa8e987aec4d6e6bc7590363efa7d20fde79422` and latest main `8cc9444fd50a9d9707dee015d5377e328a952ada` (before this checkpoint's own README commit). Every inspected commit changes documentation only; no mainline application code or workflow files changed in this 26-commit interval.
+- [x] Mainline documentation paths touched include `README.md`, `docs/REPO-READINESS-AUDIT-2026-11-13.md`, `docs/ACTIVE-HANDOFF-2026-11-11.md`, and `docs/LIVE-DEX-SWAP-LOGIN-HTML-AUDIT-2026-11-13.md`. The 26 commits are readiness/handoff/evidence updates, including PR #272/#274 status and latest owner-approved priorities.
+- [!] This narrows merge risk: no code/workflow conflict is indicated by the inspected commit diffs, but documentation conflicts are real and must be reconciled. PR #269's README changes must not replace current main's authoritative P1→P5 priority order or newer readiness handoff. A safe branch sync must preserve main's versions of the documentation files while retaining PR #269's security code, tests, workflows, and failure register.
+- [ ] Next: build/verify a merge tree that combines current mainline documentation with PR #269's P1 implementation, or use GitHub's supported branch-update operation if available. Do not force-push a guessed tree. Once the PR head is genuinely based on latest main, rerun Validate, Browser Smoke, Jupiter CPI Trace and Jupiter IDL History on that exact SHA.
 
-## 2026-11-12 +08 — PR #268 continuation: enum evidence and exact-head CI
 
-- [x] Rechecked live branch against main: 125 commits ahead / 0 behind; PR #268 remains draft, open and unmerged.
-- [x] Latest exact PR head before this documentation update: bff9811e4d691e1cbff7b4efda590a82d1ab844d.
-- [x] Validate 43039523013 SUCCESS (job 130587263835); Browser Smoke 43039523019 SUCCESS (job 130587292145); Jupiter CPI Trace Audit 43039523256 SUCCESS (job 130587264461). No failed job on this head; no retry was needed. Browser Smoke covers ecosystem UI/API, not Jarrell's Peak gameplay.
-- [x] Independent enum cross-check: published carbon-jupiter-swap-decoder 2.0.0 declares 152 Borsh Swap variants and places Kipseli at zero-based index 145, not 181. Source and limitations are recorded in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md.
-- [!] This decoder is not an authoritative deployed Jupiter IDL/version attestation. It disproves neither the possibility of a newer deployed enum containing variant 181 nor identifies variant 181. Keep route_v2 byte 181 unmapped; the Kipseli-first-CPI sequence is correlation only.
-- [x] Updated detailed research checkpoint in commit 3af3d48f261e4c12bd71fe698ee0a2ab8925ed05.
-- [ ] Next: obtain a pinned deployed Jupiter route_v2 enum/IDL for byte 181, decode all four route steps, collect more Meteora BinArray samples, and obtain CPI signer/writable evidence. Keep all execution/signing gates false.
-- [ ] Separately run/verify Jarrell's Peak gameplay smoke and production hosting checks. Do not claim live DEX/Swap execution or production release from CI.
+## 2026-11-13 — PR #269 exact-head workflow follow-up (latest PR code head 2f5dbdd)
 
+### Workflow results and failure analysis
 
-### Documentation-head handoff — 2026-11-12
+- [x] Validate Climboria run `43354341807` passed on PR head `2f5dbddb94aef7938909cf92decb6076c9f38604`.
+- [x] Browser Smoke run `43354341745` passed all 25 steps on the same head, including Jarrell's Peak desktop/mobile gameplay. Artifact `14005941115` (8,851,236 bytes) was downloaded and inspected. `game-smoke-summary.json` reports `status=passed`, `errorCount=0`, `desktopReady=true`, `mobileReady=true`, `mobileControlsReady=true`, 98 desktop frames, 72 mobile frames, and all 8 expected gameplay screenshots.
+- [x] Investigated Browser Smoke run `43353746700` on code head `7516d1c83997dfbba79c4eb4c7f157b2e0439bb2`, which was cancelled during gameplay step 22 after steps 1–21 passed. The job log shows `The operation was canceled` while the gameplay smoke process was active; no gameplay assertion failure was recorded. Workflow configuration uses the same branch concurrency group with `cancel-in-progress: true`; a newer PR synchronize run on docs-only head `2f5dbdd` started and the replacement Browser Smoke run `43354341745` completed successfully. Classification: superseded/cancelled workflow execution, not a code/test failure.
+- [x] Deep-diagnosed Jupiter CPI Trace run `43354341668`, job `131652641671`, on head `2f5dbdd`. Both unit-test steps passed. The first attempt failed only in step 6, `Fetch finalized public Jupiter V6 route trace`: the bounded public-RPC discovery command exceeded its explicit 180-second `timeout` and exited 124. No assertion or RPC error was printed; stdout was redirected to the report file, so the process was killed before a complete report/artifact could be produced.
+- [x] Compared the previous successful exact-head scan: run `43353746718` completed the same 50-transaction scan in approximately 79 seconds. Re-ran only the failed CPI job (job `131655779690`) on the same latest code head; the retry succeeded. Its discovery scan took approximately 96 seconds, fetched 50/50 transactions over two pages, reported `transactionFetchComplete=true`, no rate limit, no RPC failure, and no unavailable signatures. Artifact `14005856745` (22,872 bytes; SHA-256 `13a95f05e120e0e01714b0cf722d4b8820c20eed02d495b20aa31b4fd713a75f`) was downloaded and inspected.
+- [!] The successful CPI sample still contains only two recognized Jupiter/Meteora matches, both legacy `route` with `routePlanCount=1`. It is not multi-hop/split-route evidence. The scan is bounded (50 transactions) and does not claim exhaustive coverage. No code counter-fix was justified for the transient 180-second public-RPC timeout because the identical failed job passed on retry without source/config changes; classify as transient public-RPC latency/throughput, with concurrent IDL-history reconstructions a possible load contributor, not a proven sole cause.
+- [ ] Jupiter IDL History run `43353746705` on tested code head `7516d1c83997dfbba79c4eb4c7f157b2e0439bb2` and latest-head run `43354342003` on `2f5dbddb94aef7938909cf92decb6076c9f38604` were both still in progress at this checkpoint, each on step 7, direct on-chain Jupiter IDL history reconstruction. Do not infer failure from duration; the step has a 30-minute timeout and job a 50-minute timeout. Inspect each terminal result separately and use only the latest-head run for latest-head acceptance.
+- [ ] After the latest-head IDL run terminates, inspect its complete job log and artifact; verify unique candidate-slot history provenance, Rust static-audit tests, disassembly/CFG and artifact upload.
 
-- [x] Research detail commit: 3af3d48f261e4c12bd71fe698ee0a2ab8925ed05.
-- [x] README checkpoint commit: 83623290525bd786d3d2e61119326ea8530d30ea.
-- [!] No workflow runs are currently associated with documentation-only commit 8362329. The latest verified executable/code tree remains bff9811e4d691e1cbff7b4efda590a82d1ab844d, with Validate 43039523013, Browser Smoke 43039523019 and Jupiter CPI Trace Audit 43039523256 all successful. The two subsequent commits only changed README/research documentation; do not claim fresh exact-head CI on 8362329.
-- [ ] At next continuation, recheck PR #268 branch head and workflow inventory; continue from authoritative deployed route_v2 enum resolution, not from assumptions about Kipseli.
+### Top-priority checklist
 
+- [x] P1 supporting validation: latest-head Validate and Browser Smoke pass; CPI trace rerun passes; all remain evidence-only and do not authorize production signing/execution.
+- [ ] P1 Live Swap: finish unique IDL provenance, runtime account-slice/CPI privilege proof, independent security review, controlled Devnet wallet-sign → Worker-verify → submit → confirm → balance-reconciliation acceptance, production Worker deployment/monitoring.
+- [ ] P2 Live DEX: complete production provider/data freshness and exact token identity acceptance.
+- [ ] P3 All Login: verify Guest, email/password, Google, X and supported wallet auth with real providers/accounts and isolation.
+- [ ] P4 Fully Live Game: continue beyond smoke coverage to full real gameplay/system and release acceptance; no demo-only claims.
+- [ ] P5 Live Launchpad: retain last priority until P1–P4 pass.
+- [ ] Continue multi-step Jupiter route discovery (`routePlanCount >= 2`), CPI account-slice and privilege evidence; preserve raw traces, cursors and incomplete-coverage reporting.
+- [ ] Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and all signing/execution kill switches closed.
 
-## 2026-11-12 +08 — Revalidated PR #268 and Jupiter route_v2 source audit
+Repository state note: this is a documentation-only checkpoint on `main`. The PR branch remains open/draft/unmerged; the PR code head tested above is `2f5dbddb94aef7938909cf92decb6076c9f38604`. No merge, production deployment, Devnet settlement acceptance, independent security approval, or LIVE Swap claim is made.
 
-- [x] Latest inspected head before this record: ae39e7fa5be5458f7ab1db66a9f88943fcf42e34. PR #268 remains draft/open; branch compare is 128 ahead / 0 behind main.
-- [x] Validate 43056805117 / job 130648355318: SUCCESS. All Worker tests, Wrangler dry-run, auth/cloud-save syntax, homepage/launch copy, DEX/Swap/game syntax and HTML audits passed.
-- [x] Browser Smoke 43056805135 / job 130648366587: SUCCESS. Auth/cloud-save isolation, homepage/DEX, proxy/fail-closed behavior, Swap/DEX, Solana discovery, desktop/mobile layouts, provider error/empty states and screenshots passed. This is ecosystem smoke, not dedicated Jarrell's Peak gameplay.
-- [x] Jupiter CPI Trace Audit 43056805358 / job 130648321551: SUCCESS; artifact 13870664486 (14,373 bytes), SHA-256 c21526e5f6340261e6ab04ca7b1feccc9db2aa85d7e160c004363c57e574f1c6. Newest-five discovery returned 0 recognized routes and 0 Jupiter/Meteora instructions, without rate limiting; this is a bounded sample only.
-- [!] The preceding README checkpoint's Validate 43056730929 and Browser Smoke 43056731146 were cancelled mid-run (Validate during launch-copy checks; Browser Smoke during Playwright install). They were cancellations, not failed assertions; later steps were skipped. The following ae39e7fa head completed all three workflows successfully. No retry or failure counter-fix was warranted.
-- [x] Official Jupiter developer notification confirms route_v2 and three related v2 instruction families were introduced and points to the latest Solscan IDL. Official jup-ag/instruction-parser main remains legacy-only: package 6.0.27, IDL blob 4273e9f0f34a3d4d29e035fe37e88d6c80b634b5 has legacy RoutePlanStep percent:u8 and no route_v2 schema. The current parser source cannot decode byte 181.
-- [!] Solscan lists the Jupiter program as upgradeable, last deployed slot 462802085, and not program-verified; its fetched page did not expose the latest IDL body. The candidate transaction at slot 468153382 is later than that displayed slot, but this alone does not establish the exact deployed binary hash or IDL provenance.
-- [x] Detailed evidence, limitations and next tasks recorded in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md, commit e1aff9ae21e54030a8069be7e8b962e3c5675533.
-- [ ] Obtain and hash the actual latest route_v2 IDL from an authoritative Jupiter artifact, verify deployment provenance, then decode four route steps and correlate CPI trees.
-- [ ] Keep route_v2 diagnostic-only and all execution/signing gates false. Separately run dedicated Jarrell's Peak gameplay smoke and production hosting checks.
 
+## 2026-11-13 — PR #269 multi-step Jupiter/Meteora discovery implementation (PR head 1137dd4)
 
-- [x] Added an on-chain IDL history retrieval path to the research log: Solana IDL Explorer documents current/latest/history endpoints and a CLI for Anchor/Program Metadata IDLs. This is a retrieval lead only; Jupiter's current/history IDL has not yet been obtained or validated. Follow-up documentation commit: c894d27918225ea389838f8f52d536cb979547a3.
+### Code changes
 
+- [x] `9ec25ad976a141d69314cc7b0bc661822e511971` adds `minRoutePlanCount` to finalized Jupiter/Meteora discovery (default 1 preserves prior behavior), plus explicit counters for candidate instructions, unrecognized route headers, skipped unrecognized headers, and recognized routes below the minimum.
+- [x] `cea944066ad26f523f2a51e067a11610382ec1b6` adds a regression test with a known single-step Jupiter route followed by a known four-step route. It asserts the first match is skipped, pagination continues, the second is retained, skip counters are correct, and `nextBefore` preserves the qualifying transaction cursor.
+- [x] `1137dd496b27caa12ede72637c62e675afcf1c2c` updates the CPI audit workflow to request a bounded 250-transaction scan, retain only routes with at least two decoded route-plan steps, use a 12-minute discovery timeout / 20-minute job timeout, report the new counters, and fail the evidence step if transaction fetching is incomplete. No route assertions or security gates were weakened.
+- [x] Latest-head CPI unit-test steps 4 and 5 passed in run `43356405140` on exact PR head `1137dd496b27caa12ede72637c62e675afcf1c2c`.
 
-## 2026-11-12 — Jupiter route_v2 IDL investigation checkpoint
+### Exact-head workflow checkpoint
 
-- PR #268's last fully inspected head `9f69deafb10110c974fd226ff3adae4b6f5ad430` passed exact-head Validate `43068998073`, Browser Smoke `43068998041`, and Jupiter CPI Trace Audit `43068998208`; all job steps succeeded. No failed job existed on that head. Browser Smoke is ecosystem-only, not a Jarrell's Peak gameplay pass.
-- A public Surfpool Jupiter fixture includes a `routeV2` entry but is not the candidate schema: its discriminator is `b98d6ec5d3b66cd1`, not candidate `bb64facc31c4af14`; its `Swap` enum has 44 variants (0–43) and no Kipseli. Byte 181 remains unmapped.
-- Added an automated Solana IDL Explorer `/api/latest` + `/api/history` fetcher and workflow; raw responses, SHA-256 hashes, schema summaries, and failure evidence are intended to be uploaded as an artifact. Its result has not yet been observed; do not claim retrieval success.
-- Detailed findings and exact source/blob metadata: `docs/JUPITER-ROUTE-V2-IDL-RESEARCH-2026-11-12.md`; continuing research log: `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md`.
-- Safety unchanged: route_v2 stays diagnostic-only/rejected by production legacy-route validation; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`. No signing, execution, deployment, or production approval.
-- Next: inspect the IDL History Audit workflow/artifact; diagnose any HTTP/transport failure from the raw response and job logs; verify IDL authority/source, revision slot and exact route_v2 discriminator before decoding byte 181. Keep gameplay and production release checks separate.
+| Workflow | Run | Exact head | Latest status at checkpoint |
+|---|---:|---|---|
+| Validate Climboria | `43356405086` | `1137dd4` | **SUCCESS** |
+| Climboria Browser Smoke | `43356405200` | `1137dd4` | IN PROGRESS — strict Jarrell's Peak desktop/mobile smoke |
+| Jupiter V6 CPI Trace Audit | `43356405140` | `1137dd4` | IN PROGRESS — bounded finalized public-RPC scan |
+| Jupiter IDL History Audit | `43356405126` | `1137dd4` | IN PROGRESS — direct on-chain Jupiter IDL reconstruction |
 
+- The CPI route discovery step is configured with `JUPITER_AUDIT_MIN_ROUTE_PLAN_COUNT=2`, `MAX_TRANSACTIONS=250`, `MAX_MATCHES=5`, and `DELAY_MS=100`. The result must still report transaction-fetch completeness; a rate-limited, unavailable, or exhausted transport scan fails the evidence step instead of presenting partial results as a complete sample.
+- Browser Smoke has no failed steps at this checkpoint; it is still in the strict gameplay step. Validate passed on the exact head.
+- CPI unit tests passed; the live scan and artifact are not yet complete. No multi-step route is claimed until the artifact is inspected.
+- IDL History on older code/documentation heads is also still running: `43353746705` on `7516d1c` and `43354342003` on `2f5dbdd`. These are separate historical runs, not evidence for the latest head. Latest-head IDL run is `43356405126`.
+- These long-running IDL reconstructions use the bounded 30-minute step and 50-minute job timeout. Previous successful public-RPC reconstruction required about 28m51s. Do not classify an in-progress step as a failure before it reaches terminal state.
+- No workflow has failed on PR head `1137dd4` at this checkpoint. If a terminal failure occurs, inspect the exact failed step, complete job log and artifact; identify whether the cause is source logic, fixture, runner, provider/RPC, timeout, or workflow configuration before choosing a distinct counter-fix.
 
-## 2026-11-12 — Jupiter route_v2 schema breakthrough
+### Top-priority checklist
 
-- Downloaded and inspected IDL History Audit artifact `13879226571` (run `43072350854` SUCCESS). The matching Anchor IDL revision is active from slot `467726546`, which covers candidate transaction slot `468153382`; its `route_v2` discriminator `bb64facc31c4af14` exactly matches the candidate.
-- IDL content SHA-256: `11e04af55c8b102ac4230b55cb77df7ab1ce30295f18e5cdb2432d8279e7b981`. Anchor metadata account reported by Explorer: `C88XWfp26heEmDkmfSzeXP7Fd7GQJ2j9dDTUsyiZbUTa`.
-- The slot-matched 211-variant `Swap` enum decodes variant **181 as KipseliV3** (`is_base_to_quote=true`). The full four-step payload decodes as KipseliV3 → WhirlpoolSwapV2 → MeteoraDlmmSwapV2 → RaydiumLaunchlabBuy. BPS/token-index details and complete raw response hashes are in `docs/JUPITER-ROUTE-V2-IDL-RESEARCH-2026-11-12.md`.
-- Added a Borsh route_v2 decoder and tests; improved the IDL fetcher to enforce exactly one active historical revision for the candidate slot and to preserve compact schema/slot provenance in its artifact summary.
-- This resolves the route enum mapping for this candidate, not deployed-binary provenance or universal CPI dispatch. IDL Explorer did not return authority; CPI-requested signer/writable flags and per-DEX account slicing remain unproven.
-- Keep route_v2 diagnostic-only and rejected by the production legacy-route validator. Do not expand execution allowlists. `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`.
-- Exact-head CI on decoder/test commit `39fb8877af0915369dbe596c787fcc16a21ec6d9` was still running at last poll; inspect all four workflows before claiming verification. Next: verify metadata account authority and deployment provenance, then CPI privilege evidence, route-shape samples, Devnet reproduction, independent review.
+- [x] P1 supporting validation: Validate on latest head passed; route filter/pagination unit tests passed.
+- [ ] P1 supporting validation: complete latest-head Browser Smoke and inspect gameplay screenshots/summary.
+- [ ] P1 supporting validation: complete latest-head 250-transaction CPI scan; inspect whether any qualifying multi-step routes were found and verify cursor/completeness metadata.
+- [ ] P1 supporting validation: complete latest-head IDL reconstruction, candidate-slot unique provenance, Rust static tests, disassembly/CFG and artifact upload.
+- [ ] P1 Live Swap release: runtime CPI account slicing, CPI-requested signer/writable privileges, adapter-specific provenance, independent security review, controlled Devnet wallet-sign → Worker-verify → submit → confirm → balance reconciliation, production Worker deployment/monitoring.
+- [ ] P2 Live DEX production acceptance; P3 all real login providers/account lifecycle; P4 fully live game acceptance; P5 live Launchpad last.
+- [ ] Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and signing/execution disabled.
 
+Repository state: the PR remains open, draft, and unmerged. Latest PR code head is `1137dd496b27caa12ede72637c62e675afcf1c2c`. The PR branch has not been rebased/merged into main as part of this checkpoint. No production deployment, Devnet settlement acceptance, independent security approval, or LIVE Swap claim is made.
 
-## 2026-11-12 — Decoder test failure diagnosis and counter-fix recorded
 
-- Validate runs `43073364769` and `43073589763` failed only because the new synthetic IDL test fixture had malformed nested object delimiters (first missing a closing brace, then one extra closing brace). Full logs identified the exact test file and parser lines. No runtime regression was found.
-- Final fixture correction: `c4dbc932061fcec396e288802bfa47716f78bc85`. Exact-head Validate `43073749233`: **89/89 tests passed**, Wrangler dry-run and all later validation steps passed. Jupiter CPI Trace Audit `43073749383`: SUCCESS.
-- Exact slot-matched IDL result: variant 181 = `KipseliV3`; four route steps decode and correlate transaction-specifically with Kipseli, Whirlpool, Meteora DLMM and Raydium LaunchLab CPIs. Full BPS, indexes, hashes and provenance limits are in the research documents.
-- Added finalized-RPC audit of Anchor IDL account authority/payload and Jupiter ProgramData deployment/binary metadata. Run is pending; do not claim account or binary provenance until its artifact is reviewed.
-- Keep route_v2 diagnostic-only; all signing/execution gates remain false.
+## 2026-11-13 — PR #269 latest-head CI, multi-step route evidence, and IDL timeout diagnosis
 
+### Latest PR head: 1137dd496b27caa12ede72637c62e675afcf1c2c
 
-## 2026-11-12 — Corrected Anchor IDL account provenance parser
+- [x] Validate run 43356405086 — SUCCESS.
+- [x] Browser Smoke run 43356405200 — SUCCESS, all 25 steps. Artifact 14006726595 was downloaded and inspected: game-smoke-summary.json reports status=passed, errorCount=0, desktop/mobile ready, mobile controls ready, 100 desktop frames, 73 mobile frames, and all 8 gameplay screenshots. Artifact SHA-256: 1a8c961b9039a592b1facd605308a21aa3426bfae9aef28f60fcf8aeb5856df7.
+- [x] Jupiter CPI Trace run 43356405140 — SUCCESS. Unit steps 4–5 passed. Live scan artifact 14005899738 (31,384 bytes; SHA-256 f5c439f122c4ae453766ef56c781af8ca8e5e2c5c5857b1d0df5daeb395e758f) downloaded and inspected.
+- [ ] Jupiter IDL History run 43356405126 — still in progress at step 7 (direct on-chain Jupiter IDL reconstruction); no failed step at this checkpoint.
 
-- Re-inspected IDL History Audit artifact 13882890059 from run 43074132804. The slot-matched schema is valid for candidate slot 468153382: active from 467726546, route_v2 discriminator bb64facc31c4af14, 211 Swap variants, variant 181 KipseliV3.
-- The same artifact's finalized RPC sample showed the IDL account is Jupiter-owned, but the old provenance parser reported a false discriminator mismatch. Root cause: legacy Anchor IDL accounts have no 8-byte account discriminator; layout is authority[32] + data_len:u32 LE + zlib-compressed IDL. Previous code incorrectly used offsets 8/40/44.
-- Added dex/swap-proxy/tools/legacy-anchor-idl-account.mjs, integrated it into the IDL audit fetcher, and added positive/negative regression tests. This fixes research instrumentation only; no production route policy changed.
-- Previous ProgramData observation: address 4Ec7ZxZS6Sbdg5UGSLHbAnM7GQHp2eFd4KYWRexAipQT, deployment slot 468023491 (before candidate), binary SHA-256 aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6, upgrade authority CvQZZ23qYDWF2RUpxYJ8y9K4skmuvYEEjH7fK58jtipQ. Treat this as a current finalized RPC observation, not a full archival binary attestation.
-- Parser-fix commits: a52b84476770fa1064c174e4f6fbc11d9e4b2d11, b47ce4dc295cb1c3bcfe43ba49f96edc05987fd4, 8a3f6dbd872d615be5bca6fa92bf3e9a875d8247.
-- Latest check status at checkpoint: Validate 43074720199 SUCCESS; Jupiter CPI Trace Audit 43074720213 SUCCESS; Browser Smoke 43074720380 still running; IDL History Audit 43074720141 still running. See research log for exact step status and next actions.
-- Next: inspect new IDL artifact for authority and decompressed payload hash equality; finish Browser Smoke; diagnose any real failed step from complete logs. Keep route_v2 rejected by production validation and all signing/execution gates closed.
+### Multi-step CPI artifact findings
 
+- The bounded finalized scan requested and fetched 250/250 transactions across 10 pages. transactionFetchComplete=true; no rate limiting, RPC failure, or unavailable signatures. It stopped at the configured transaction bound, so this is not exhaustive history.
+- It observed 11 Jupiter/Meteora candidate instructions; skipped 6 recognized single-step route headers and 2 unrecognized route headers; retained 3 routes, each with decoded routePlanCount=2.
+- The three retained transactions are successful and show two direct stack-height-2 DEX program invocations in the Jupiter route: Pump AMM (pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA) and Meteora DLMM (LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo). The Meteora Swap2 CPI has 19 accounts in these traces, with a unique contiguous parent-account sequence correlation at outer position 30.
+- This is concrete two-step route evidence for the observed transactions. It does not prove split-route behavior, all route permutations, runtime remaining-account cursor behavior, or CPI-requested signer/writable privileges. Parent account correlation remains observational only.
 
-## 2026-11-12 — IDL account parser: second evidence-based correction
+### Deep diagnosis — older IDL History failure on code head 7516d1c83997dfbba79c4eb4c7f157b2e0439bb2
 
-- New artifact 13879892798 proved the first no-prefix parser assumption was also wrong: account owner matched Jupiter, but parsing bytes 0–31 as authority and offset 32 as data_len produced impossible length 1,381,709,786 for a 6,314-byte account.
-- Added dual-layout detection (8-byte prefix + authority + length + zlib, or no-prefix legacy layout), validates decompression and JSON before accepting a layout, records raw prefix hex, and tests the prefixed format and malformed payloads.
-- Updated IDL audit summary with explicit booleans for on-chain owner, payload hash, route discriminator, and ProgramData deployment coverage. New parser head 57d2ffdbdd86ceeb55f030d2fa5acad4dd3390a1 awaits exact-head workflows.
-- Previous head 8a3f6dbd872d615be5bca6fa92bf3e9a875d8247 had Validate, Browser Smoke, CPI Trace and IDL History workflows all operationally successful; however the IDL artifact revealed the parser defect. No production route behavior changed.
-- Full root-cause analysis and next actions are in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md. Keep route_v2 excluded from production validation and signing/execution disabled.
+- **Run/job:** 43353746705 / 131650715043. Terminal result FAILURE at step 8, “Fetch Jupiter and DEX CPI IDL history records”. Artifact 14005844995 (720,021 bytes; SHA-256 2afbbc277111aebabd9f96426e5822783694587bb62f7d73bac4588b940196a2) preserved and inspected.
+- **First causal failure:** step 7, “Reconstruct Jupiter IDL history directly from on-chain transactions”, exceeded its 30-minute timeout at 2026-11-13T03:10:30Z. SOLANA_RPC_URL was empty, so the script used https://api.mainnet-beta.solana.com as the public fallback. The hard timeout left neither official-jupiter-history.json nor official-jupiter-history-error.json in the artifact; official history status was therefore unavailable, not a schema mismatch.
+- **Downstream failure mechanism:** step 8 fetched the Jupiter /api/latest response successfully (HTTP 200, 42,346 bytes), but its /api/history request was aborted after the configured 15-second timeout and one attempt. The latest-only IDL contained the expected route_v2 discriminator but cannot establish a historical revision covering candidate slot 468153382. The assessment correctly recorded requiredHistorySourceAvailable=false, zero matching/active historical revisions, no unique candidate-slot revision, and exited 1. On-chain IDL owner, route_v2 discriminator, ProgramData loader owner, and deployment chronology still matched; they do not replace the missing historical payload comparison.
+- **Classification:** public-RPC historical reconstruction latency exceeded the bounded step timeout, while the external history fallback independently timed out. This is provider/transport availability and bounded-timeout variability, not a failing unit test, bad fixture, or demonstrated source-code regression. No acceptance condition was bypassed.
+- **Same-code recovery evidence:** IDL History run 43354342003 on documentation-only successor head 2f5dbddb94aef7938909cf92decb6076c9f38604 completed SUCCESS. Its direct on-chain reconstruction finished in approximately 25m33s using the same public RPC fallback; the external /history provider still failed, but official reconstruction supplied the required history. Artifact 14006198462 (3,187,672 bytes; SHA-256 6c01f48faed572c015e0c35a59672c137ce437cfb99dd064540fa96bd681a5ac) downloaded and inspected.
+- **Recovered Jupiter candidate evidence:** official @solana/idl@0.3.0 reconstruction found 92 Anchor snapshots / 76 revisions. At candidate slot 468153382 there are 27 matching route_v2 history records and exactly one active revision. Finalized on-chain IDL owner, decompressed payload hash and route_v2 discriminator match the active revision; ProgramData deployment slot 468023491 precedes the candidate. Pinned ELF SHA-256 remains aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6.
+- **Adapter limitations remain:** Kipseli, Orca Whirlpool and Meteora DLMM IDL provenance are classified incomplete. Raydium LaunchLab is supported for candidate-slot IDL provenance, but two active revisions cover the slot; do not claim unique revision provenance or runtime CPI compatibility. LaunchLab account-state audit matched.
+- **Counter-fix decision:** do not blindly rerun or change assertions. The same code completed successfully on the successor run, proving the timeout is variable. The durable reliability improvement is to configure a private archival-capable GitHub Actions secret SOLANA_RPC_URL; no secret was read, exposed, or modified. Keep the existing 30-minute bounded step until the latest-head run completes; if it again times out, reassess provider configuration/timeout using its exact logs rather than weakening provenance requirements.
 
+### Top-priority checklist
 
-## 2026-11-12 — IDL prefix parser verification pending
+- [x] Latest-head Validate and Browser Smoke passed.
+- [x] Latest-head CPI audit passed and produced three observed two-step routes from a complete 250-transaction bounded sample.
+- [x] Diagnose and preserve older-head IDL timeout failure and same-code successor recovery evidence.
+- [ ] Latest-head IDL run 43356405126 must complete candidate-slot history gate, Rust static tests, disassembly/CFG and artifact upload.
+- [ ] Continue runtime account-slice/CPI privilege proof, adapter-specific IDL provenance gaps, independent security review, and controlled Devnet settlement acceptance.
+- [ ] Keep EXECUTION_SECURITY_REVIEW_COMPLETE=false, SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false, and signing/execution disabled.
 
-- Added dual-layout Anchor IDL account decoding and tests. It accepts either 8-byte prefix + authority + length + zlib payload, or no-prefix authority + length + zlib payload, only after bounds, inflate, and JSON checks. Unknown prefix is recorded verbatim, not assumed to be a known discriminator.
-- Current PR head is eff5810c1173c5fe020d9eda22ef976a2e4baad3; code tree is 57d2ffdbdd86ceeb55f030d2fa5acad4dd3390a1. No commit-associated workflow runs or statuses were visible for the new code head at the last poll. Do not claim tests passed on this change.
-- Preceding head 8a3f6dbd872d615be5bca6fa92bf3e9a875d8247 passed Validate, Browser Smoke, Jupiter CPI Trace and IDL History workflows, but the IDL artifact exposed a parser defect; green operational workflow status did not equal successful on-chain payload validation.
-- Full diagnosis, exact evidence, and next actions are in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md. Keep route_v2 rejected by production validation and signing/execution disabled.
-
-
-## 2026-11-12 — On-chain Jupiter IDL provenance verified
-
-- Exact tested code/merge head: 23ac3897ded80d43c8d7c2d31de525832287b3bf. Validate 43076000705 passed **92/92 tests** and all syntax/dry-run checks. Jupiter CPI Trace Audit 43076000789 passed. IDL History Audit 43076000606 passed and artifact 13882737009 was inspected. Browser Smoke 43076000655 was still queued at last poll.
-- Correct parser selected the 8-byte-prefix layout. Observed prefix 184662bf3a907b9e (not the standard Anchor account discriminator), IDL authority 9u9iZBWqGsp5hXBxkVZtBTuLSGNAG9gEQLgpuVw39ASg, Jupiter owner match, and decompressed payload SHA-256 exactly matches the slot-history revision: 11e04af55c8b102ac4230b55cb77df7ab1ce30295f18e5cdb2432d8279e7b981. The payload route_v2 discriminator also matches bb64facc31c4af14.
-- ProgramData deployment slot 468023491 precedes candidate transaction slot 468153382. Binary SHA-256 aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6; upgrade authority remains set. Strong interface/deployment evidence, not proof of adapter CPI account-slice behavior or CPI-requested privileges.
-- The first helper-file commit a52b844 was inadvertently created on main because its create-file operation omitted the branch argument; no production runtime was changed. PR branch was synchronized with main by merge commit 23ac3897ded80d43c8d7c2d31de525832287b3bf (164 ahead / 0 behind). Further file creation must specify the PR branch.
-- Detailed raw hashes, root causes, account layout and limitations are in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md. Keep route_v2 excluded from production validation and all signing/execution gates closed.
-
-
-## 2026-11-12 — Candidate route_v2 CPI positional mapping
-
-- Matched the candidate route_v2 IDL's fixed 10-account prefix to outer positions 0–9.
-- Compared ordered stack-height-2 DEX CPI vectors with the 85 outer accounts: Kipseli inner 0 → outer 12–26 (15/15); Whirlpool inner 3 → outer 28–42 (15/15); Meteora inner 6 → outer 44–61 (18/18); Raydium LaunchLab inner 11 → outer 64–78 and 80–82 (18/18, skips duplicate user-authority at outer 79).
-- This is one-transaction address-order correlation, not proof of universal Jupiter cursor behavior or CPI-requested signer/writable flags. Outer positions 10, 62, 79, 83, 84 need further explanation. Full analysis is in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md.
-- Browser Smoke run 43076000655 remained queued at the last poll. Exact-head Validate passed 92 tests; IDL provenance and CPI trace audits passed. Keep route_v2 rejected by production validation and signing/execution disabled.
-
-
-## 2026-11-12 — Jupiter route_v2 platform fee and full transaction trace
-
-- The candidate trace now retains all seven outer instructions. It confirms WSOL ATA creation, 99,550,000-lamport funding, SyncNative, Jupiter route_v2, WSOL account close, plus two separate System Program transfers whose recipients are not yet classified.
-- Outer account position 10 is the WSOL platform-fee recipient for this transaction: inner SPL Token transfer index 17 moves 99,550 base units from the user's WSOL source to EaUgh...; route args are in_amount=99,550,000 and platform_fee_bps=10, so the fee matches exactly. Transaction pre/post balance delta for account index 19 is +99,550.
-- Kipseli CPI moves the remaining 99,450,450 WSOL units to the pool-side account, matching input less fee. Position 10's mint/authority are also decoded from its 165-byte SPL Token account. Full details and evidence limits are in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md.
-- Exact code head c7736c25c2bb03d8b3a9f02ebb7287eb8ce5e38c passed Validate (95/95 tests), Browser Smoke, Jupiter CPI Trace Audit and IDL History Audit. No failed workflow on that head.
-- Still unresolved: duplicate wallet outer position 79, duplicate Jupiter program positions 62/83, and CPI-requested signer/writable flags. Keep route_v2 rejected by production validation and signing/execution disabled.
-
-
-**Account-index clarification:** Jupiter's trace records CPI account-key indices, not the unique occurrence number in its outer account array. The user wallet and Jupiter program are repeated outer keys. Positions 79 and 62/83 therefore remain duplicate-key layout observations; their handler-level consumption cannot be uniquely assigned from address-only alignment. The fee account at position 10 is not ambiguous because inner transfer 17 directly references transaction key index 19.
-
-
-## 2026-11-12 — account-key duplicate-position audit instrumentation
-
-- Added `outerInstructionPositionsForSameTransactionKey` to every CPI account in the read-only Jupiter trace report. The field maps the exact transaction account-key index to every occurrence of that same index in the parent Jupiter instruction's account array.
-- Added regression coverage for duplicate static account keys and address-lookup-table key ordering. The report explicitly states that these positions do not reveal which duplicate occurrence a deployed handler consumed; no cursor/slice inference is made.
-- Code commit: `ae0f10aa98b8db85f49b69a7c3cda8e7802ee95c`. Test commit: `b4da973aaff9482ed90e8c89f57cbd6e84b49297`. Test-order correction: `ddf5f609fde582845d4265629aec59afae86858f` (the ALT test now asserts that combined account-key index 2 resolves to the first loaded writable address).
-- The new commits are present on `codex/swap-jupiter-fixed-account-roles-2026-11-11`. Compare against main: 184 ahead / 0 behind at this checkpoint.
-- Exact-head workflow results for the new commits are **not yet visible** through the commit-associated workflow query. Do not claim these new tests or trace output are verified. The preceding code head `c7736c25c2bb03d8b3a9f02ebb7287eb8ce5e38c` passed Validate (95 tests), Browser Smoke, Jupiter CPI Trace Audit and IDL History Audit; those results do not cover the new instrumentation.
-- No failed workflow has been observed for the new code yet. No retry or failure counter-fix is appropriate without an actual failed job.
-- Safety unchanged: `route_v2` remains rejected by production validation; signing/execution gates remain false; no production deployment or live swap execution is claimed.
-- Exact next task: obtain and inspect fresh Validate, Browser Smoke and Jupiter CPI Trace Audit runs on the latest branch head. If no run appears, use a supported Actions trigger or report the dispatch limitation; do not mark the change complete. If green, inspect the trace artifact and update the duplicate-key research only with transaction-key-index evidence, then continue CPI privilege and multi-shape route verification.
-
-## 2026-11-12 — verification blocked for CPI duplicate-position instrumentation
-
-- Added CPI account-key → all matching outer-instruction positions mapping and tests for duplicate static keys plus ALT-loaded keys. The output explicitly does not claim which duplicate occurrence a deployed handler consumed.
-- Added a dedicated regression-test step to the Jupiter CPI Trace Audit workflow (`c6c1df9d0e3dc0c0e899a28263cca2142fe0ac79`).
-- The branch is 187 commits ahead / 0 behind main at the code checkpoint. Subsequent research documentation records the verification limitation.
-- No workflow run or combined status is visible for the new code/workflow head. The previous green head `c7736c25c2bb03d8b3a9f02ebb7287eb8ce5e38c` does not verify these new changes. Local test execution was unavailable because GitHub DNS could not be resolved; this is an environment/tooling blocker, not a test failure.
-- No failed workflow was observed on the new head, so no retry or counter-fix is justified. Exact next task: obtain authorized Actions dispatch for Validate, Browser Smoke and CPI Trace Audit, inspect the exact-head results and artifact, and only then mark the change verified.
-- Safety: route_v2 remains excluded from production validation; execution and signable-order gates remain false.
-
-## 2026-11-12 — deep CI failure diagnosis and exact-head recovery
-
-- Audited the branch workflow history, not just the latest green runs. Found Validate run `43080087974` on PR head `b4da973aaff9482ed90e8c89f57cbd6e84b49297` (GitHub synthetic merge checkout `25ffe69788f8b239c5b335214a9d9c940edf71ba`). Job `130730057040` failed at step 4, `Test Cloudflare swap proxy security and API contracts`.
-- Root cause from the full job log: 96/97 tests passed. The ALT key-order fixture expected `LookupReadonly...` for combined account-key index 2, but Solana RPC ordering is static keys → loaded writable keys → loaded readonly keys; index 2 correctly resolved to `LookupWritable...`. The implementation's account-key concatenation was correct; the assertion's fixture expectation was wrong. No production policy or runtime behavior failed.
-- Counter-fix: corrected only the expected address in `dex/swap-proxy/test/jupiter-cpi-index-mapping.test.mjs`; did not weaken assertions or alter runtime logic. Commit `ddf5f609fde582845d4265629aec59afae86858f`.
-- Recovery evidence: Validate run `43080142035`, CPI Trace Audit `43080142010`, and IDL History Audit `43080142015` all completed SUCCESS on exact PR head `ddf5f609fde582845d4265629aec59afae86858f`.
-- Latest full PR-head verification on `302bb0841a20a51c3cebc39d51ba82440aab4e2c`: Validate `43080434138` SUCCESS (97 tests, 97 pass, 0 fail; Wrangler dry-run passed); Browser Smoke `43080434131` SUCCESS (steps 7–17 all passed); Jupiter CPI Trace Audit `43080436579` SUCCESS (new duplicate-position test, finalized trace fetch and artifact upload all passed); Jupiter IDL History Audit `43080434110` SUCCESS (IDL history fetch and artifact upload passed). All four runs were verified via run metadata to target this exact head.
-- Artifact from CPI Trace Audit: `jupiter-v6-meteora-cpi-trace`, artifact ID `13883338579`, SHA-256 `2429b7920db72831ee3a6b91c5f00e77eb86463aee95a774dd288f3ff28b911c`.
-- Other workflow conclusions in this short history: runs cancelled by `cancel-in-progress` on superseded commits are cancellations, not failed tests; do not retry them as failures. No other failed run was found in the returned recent branch history window.
-- Current branch comparison at this verified checkpoint: 189 commits ahead / 0 behind main. PR #268 remains draft and unmerged. Ecosystem Browser Smoke does not cover Jarrell's Peak gameplay. Passing CI does not prove production deployment, CPI-requested signer/writable privileges, universal Jupiter adapter behavior, Devnet settlement, or production-safe signing/execution.
-- Exact next task: continue collecting independently grounded CPI evidence for more route shapes and DEX variants; preserve the fail-closed route_v2 policy and all signing/execution gates. Re-run and inspect all relevant workflows after any subsequent source, test, or workflow changes.
-
-## 2026-11-12 — full branch CI failure inventory (521 workflow runs)
-
-Audit scope: all six pages returned by GitHub for `codex/swap-jupiter-fixed-account-roles-2026-11-11`, 521 workflow runs total. Found 22 concluded failures and 31 cancellations. Cancellations caused by superseded runs/concurrency are not test failures and were not counted as such.
-
-### Failure groups, root causes and counter-fixes
-
-1. **Validate / ALT key ordering — run `43080087974`.** The new regression expected combined account-key index 2 to resolve to the loaded readonly address. Solana v0 ordering is static keys → loaded writable → loaded readonly, so index 2 is the first loaded writable key. Production parser ordering was correct; test fixture expected value was wrong. Fixed only the assertion in `ddf5f609fde582845d4265629aec59afae86858f`. Later Validate passed on the corrected head (`43080142035`) and the latest exact code head passed 97/97 (`43080434138`).
-2. **Browser Smoke / DEX Forward history — runs `43017733079` and `43078477145`.** Both failed while waiting for same-document Forward navigation to restore pool B. The earlier run had a redundant synthetic same-URL pool-A `pushState` in the test before the real UI click; `c2d1873b67ed886f543bb5d991f80f6ab7deb2f4` removed that duplicate entry and added `popstate`/history diagnostics. The later run `43078477145` still intermittently missed the Forward `popstate` (the diagnostic showed Back fired once, URL/selected row remained on pool A). Comparison of `e27510d966131b48676d7836f4ddca48bececa2f` to the later successful `99e9a26586a4cb71db89fa111fbeea3f3f0e68c2` showed no changes to `dex/index.html` or `.github/workflows/browser-smoke.yml`; the same test passed in `43079635297`. Treat the later recurrence as an intermittent Playwright same-document history traversal issue, not a confirmed deterministic product regression. Keep assertions strict; do not claim the underlying browser scheduling cause is proven.
-3. **Jupiter IDL History Audit / missing module — run `43074681122`.** `fetch-jupiter-idl-history.mjs` imported `legacy-anchor-idl-account.mjs` before that dependency existed in the commit tree, producing `ERR_MODULE_NOT_FOUND`. This was a non-atomic multi-file dependency commit. The missing decoder was added in `8a3f6dbd872d615be5bca6fa92bf3e9a875d8247`; the latest IDL History Audit passed on exact code head (`43080434110`).
-4. **Validate / malformed nested IDL fixture — runs `43073252926`, `43073330167`, `43073364769`, `43073455000`, `43073489963`, `43073589763`.** The `RemainingAccountsInfo` and `RemainingAccountsSlice` fixture objects each had one extra closing brace (`] } } },` rather than `] } },`), so Node could not parse `jupiter-route-v2-idl.test.mjs` (87/88 tests passed before the module parse failure). The first correction commit `0e941823...` was incomplete and still failed. Definitive correction `c4dbc932061fcec396e288802bfa47716f78bc85` balanced both object delimiters. Latest Validate passes 97/97.
-5. **Jupiter CPI Trace Audit / public RPC 429 — runs `43031734145`, `43031746115`, `43031863938`.** Bounded route discovery hit HTTP 429 from `https://api.mainnet-beta.solana.com` on `getTransaction`. This is public RPC rate limiting, not malformed transaction data. Counter-fix `2fabcde436bd8f74a9ef05c421ff749009e0c1d6` added bounded exponential retries, captures status/method, stops the scan cleanly on 429, and marks the sample `rateLimited` with explicit evidence limitations instead of turning a partial sample into a workflow failure. Regression coverage followed in `dce2bee62250ca89027b3e056e499e43f38869ac` and `c0500a03011d740eaddd916e6a7a42cfab800419`. Latest CPI Trace Audit passed (`43080436579`). A rate-limited sample must still be described as incomplete, never as proof that no routes exist.
-6. **Validate / duplicate `decodeBase58` declaration — run `43031746350`.** The policy test imported `decodeBase58` from both the discovery tool and transaction validation module into the same ESM binding, causing `SyntaxError: Identifier 'decodeBase58' has already been declared`. Fixed by aliasing the discovery import as `decodeDiscoveryBase58` in `65c684b79bcf200dd6dfc8e10057a9fca94868a5`. Latest Validate passes.
-7. **Validate / ALT privilege source label assertion — runs `43029417495`, `43029480369`.** Test 18 asserted the `not the CPI-requested meta` explanation on the ALT account, but that account correctly reports `address-lookup-table transaction message privilege`; the explanatory suffix belongs to the static message privilege source. Fixed the assertion to check the correct static and ALT labels in `f839510f1fbb7c01f8f1690087d51e8cfe67b02d`. This was a test expectation issue, not a privilege calculation failure.
-8. **Browser Smoke workflow YAML indentation — run `43023263382`.** GitHub created a failed workflow run with no jobs because two `await page.evaluate(...)` heredoc lines were dedented outside the `run: |` block. Restored indentation in `80941976310de7ddcb63ef9c157199d3edf28035`. The corrected workflow subsequently passed Browser Smoke (`43080434131`).
-9. **Browser Smoke / `page.goBack()` timeout — run `43022924844`.** Playwright waited for a full document `load` after a same-document History API transition; SPA `pushState`/`popstate` does not create a new document load. The test was changed to exercise `history.back()`/`history.forward()` and assert the `popstate` contract in `d551035a53a6c028500dfd911269afd7e0782525`; that edit exposed the YAML indentation issue above, then `8094197...` corrected it. Latest Browser Smoke passed.
-10. **Browser Smoke / mobile close-detail tap — run `43022517549`.** After `openToken()` smooth-scroll, the close button moved between the test's pre-tap measurement and Playwright's touch tap (Y 628.75 → 516.75); no pointer/touch/click event reached the button and the cross-origin chart iframe became active. Added an eight-animation-frame stable geometry + `scrollY` check and center hit-test before the real tap in `d69ecbc5374aca7174d2a28120d171db4471deb9`. Later Browser Smoke passed.
-11. **Browser Smoke / mobile GLB hero readiness — runs `43012675319`, `43014262897`, `43015790533`.** All three reached desktop gameplay/world checks but failed the strict mobile hero invariant. The 42,923,204-byte `assets/characters/Climboria_Hero.glb` resource completed transfer, but after 108–115 seconds mobile still reported `heroReady=false`, `__climboriaGLBRenderer=null`, `selectedHero=loading-adventurer`, `renderer=awaiting-saved-glb`, 47–48 render frames, no failed GLB requests and no browser errors. This indicates a mobile GLB load/parse/renderer readiness stall, not a 404 or a surfaced JavaScript exception. The game smoke was later separated into `.github/workflows/game-browser-smoke.yml`, but no run of that separate workflow appears in the audited 512 branch runs. **Unresolved; do not mark mobile gameplay verified.** Next: profile GLB transfer/parse on mobile, inspect asset texture/geometry payload and GLTFLoader callback progression, then optimize or repair the asset/loader and run the dedicated game workflow.
-
-### Latest verification and safety state
-
-- Exact code head `302bb0841a20a51c3cebc39d51ba82440aab4e2c`: Validate `43080434138` passed 97/97 plus Wrangler dry-run; Browser Smoke `43080434131` passed; Jupiter CPI Trace Audit `43080436579` passed including duplicate-position regression and artifact upload; Jupiter IDL History Audit `43080434110` passed.
-- The current PR branch has since received documentation-only audit updates; these do not change the validated runtime/test source. PR #268 remains open, draft and unmerged.
-- 31 cancelled runs were superseded by newer commits/concurrency and are not counted as failures.
-- `route_v2` remains excluded from production validation. Wallet signing and transaction execution remain disabled. CI success is not proof of universal CPI account slicing, CPI-requested privileges, Devnet settlement, deployed-binary equivalence, or production readiness.
-
-### Next tasks
-
-1. Resolve the mobile GLB stall in the dedicated game workflow; do not weaken the hero-ready assertion or accept the procedural fallback as a GLB pass.
-2. Continue multi-transaction Jupiter/Meteora route evidence gathering; record RPC rate limiting as incomplete sampling and retry on a bounded schedule.
-3. Keep the current fail-closed Jupiter policy until exact adapter account slicing and CPI signer/writable semantics are independently established.
-
-## 2026-11-12 — mobile GLB diagnostic instrumentation checkpoint
-
-- Commit `876ec829524fcb0ec3fab51f3e97208e4e26eeb4` instruments `game/play.html` and `.github/scripts/game-smoke.mjs` with GLTFLoader phases: downloading, parsing, callback entry, scene assembly, ready, callback-error and load-error. The smoke failure diagnostic now includes progress bytes/percent and elapsed time. No readiness threshold was relaxed and the procedural fallback is not accepted as a GLB pass.
-- Exact-head run status for `876ec829524fcb0ec3fab51f3e97208e4e26eeb4`: Validate `43082219716` SUCCESS; Browser Smoke `43082219819` SUCCESS; Jupiter CPI Trace Audit `43082219845` SUCCESS; Game Browser Smoke `43082219869` IN PROGRESS; Jupiter IDL History Audit `43082219871` IN PROGRESS. The two in-progress runs must not be marked passed.
-- The 521-run snapshot comprises 22 failures, 219 cancellations, 278 successes and 2 in-progress runs. The 22 historical failures and their counter-fixes are itemized above. Cancellations are superseded runs, not failures.
-- Branch comparison before this documentation update: 195 ahead / 0 behind main. PR #268 remains open, draft and unmerged.
-- Next: inspect the Game Browser Smoke diagnostic to determine whether the 42.9 MB GLB is still transferring, stuck in GLTFLoader parsing, or failing during scene assembly. Inspect IDL History Audit completion. Record both exact-head results before continuing.
-
-
-## 2026-11-12 — Jupiter IDL provenance and route-shape follow-up
-
-- Exact branch head before this update: `54dc0d3b41ba052a4c2d5862f4a2f30e46db9125`. Validate `43082463049`, Browser Smoke `43082463077`, Jupiter CPI Trace Audit `43082463058`, and Jupiter IDL History Audit `43082463143` all passed on that exact head. Validate reported 97/97 tests and a successful Wrangler dry-run. Artifacts: browser `13884508085`, CPI `13884148109`, IDL `13884792897`.
-- Inspected IDL artifact `13884792897`: the Jupiter-owned on-chain IDL account payload hash matches the one active historical IDL; its route_v2 discriminator matches; ProgramData deployment slot `468023491` is before candidate transaction slot `468153382`. The IDL account authority and ProgramData upgrade authority are recorded in the research report. These checks are provenance evidence, not proof of CPI account slicing or CPI-requested privileges.
-- Deep diagnosis found a false-negative diagnostic: Anchor's legacy `IdlAccount` discriminator is namespaced `internal:IdlAccount`, not `account:IdlAccount`. The on-chain prefix `184662bf3a907b9e` equals the first eight bytes of SHA-256(`internal:IdlAccount`). The Anchor changelog records this historical namespace change: https://github.com/otter-sec/anchor/blob/master/CHANGELOG.md. Updated the decoder and added a regression test while retaining a negative test for unknown prefixes.
-- Inspected CPI artifact `13884148109`: legacy route sample at slot `464856414` has a Meteora `Swap` CPI with 17 accounts and one observed BinArray; route_v2 candidate at slot `468153382` has a Meteora `Swap2` CPI with 18 accounts, a matching bitmap extension, and two BinArrays (indexes 52 and 53). A separate bounded discovery sample at slot `468231758` reports a 19-account Meteora `Swap2` CPI. This supports variable observed account counts only; it does not establish adapter cursor boundaries or a universal account layout.
-- Exact-head Game Browser Smoke run `43082463178` was still reported `in_progress` when inspected. Its job remained on strict desktop/mobile gameplay smoke; GitHub's job-log endpoint returned `BlobNotFound` while active, so no mobile GLB phase result was available. Do not mark gameplay passed or classify the run as failed without a terminal conclusion.
-- Branch was 197 commits ahead / 0 behind main before this update. PR #268 remains open, draft, and unmerged. Keep route_v2 excluded from production validation; wallet signing, transaction execution, and deployment remain disabled.
-- Next: run Validate and IDL History Audit on this discriminator correction; inspect their artifacts and exact-head status. Continue multi-transaction DEX traces and obtain authoritative CPI-requested privilege/account-slice evidence. Separately resolve the mobile GLB diagnostic without weakening its readiness assertion.
-
-
-## 2026-11-12 — exact-head follow-up after Anchor IDL discriminator correction
-
-- Current source head audited: `f5f403f24ac11a3349734f0c28bd047d8fa6fe72`. PR #268 remains open, draft and unmerged. Branch comparison: 198 commits ahead / 0 behind `main`.
-- Exact-head workflow results:
-  - Validate `43083743886`: SUCCESS — 98 tests passed, 0 failed; Wrangler dry-run succeeded.
-  - Browser Smoke `43083744078`: SUCCESS.
-  - Jupiter V6 CPI Trace Audit `43083744120`: SUCCESS; 2/2 focused duplicate-account-index mapping tests passed and read-only trace artifact uploaded as `13884639160`.
-  - Jupiter IDL History Audit `43083743796`: SUCCESS; fresh artifact `13885387689` reports `prefixMatchesAnchorAccountDiscriminator=true` for on-chain prefix `184662bf3a907b9e`, confirming the `internal:IdlAccount` decoder correction against finalized mainnet account bytes.
-  - Game Browser Smoke `43083743684`: still IN PROGRESS at the latest inspection. Job `130743806158` remains on strict desktop/mobile gameplay smoke. GitHub job logs return `BlobNotFound` while this step is active; there is no terminal conclusion or mobile GLB phase result. Do not report pass or failure until a terminal run result and logs are available.
-- Previous Game Browser Smoke `43082463178` was CANCELLED after the newer PR run superseded it; it is not a failed workflow. Its partial run produced desktop checks/screenshots only; no mobile gameplay screenshot or successful mobile GLB readiness evidence was available.
-- Asset inventory confirms `assets/characters/Climboria_Hero.glb` is 42,923,204 bytes. Loader instrumentation records `downloading`, `parsing`, `assembling`, `ready`, `callback-error`, and `error`; the strict mobile acceptance still requires `heroReady`, `__climboriaGLBRenderer===true`, and camera API `heroUsesGlb===true`. Do not weaken this contract or accept the procedural fallback.
-- The new IDL artifact also shows outstanding DEX evidence gaps: Kipseli's expected `swap_v3` instruction has no matching historical IDL record in the current source result; Meteora DLMM's candidate-slot historical IDL (0.10.0) marks `bin_array_bitmap_extension` optional but omits its `writable` flag; latest IDL (0.12.0) marks it optional and explicitly writable. This is a schema difference, not an explicit historical `writable: false` assertion or measured CPI-requested privilege. Do not select a privilege layout until the deployed Meteora program/IDL version is independently established. Orca's active and latest schemas agree. Raydium's two active metadata sources agree on instruction schema.
-- The bounded five-transaction route-discovery sample on this exact head returned no matching Jupiter/Meteora route. This means no match in that sample only; it is not evidence that no routes exist. Continue bounded cursor-based finalized scans and preserve RPC 429 as incomplete sampling.
-- Safety remains unchanged: route_v2 excluded from production validation; wallet signing and transaction execution disabled; no production deployment or PR merge.
-- Next actions: (1) obtain terminal Game Browser Smoke run/logs and classify the measured GLB phase; (2) profile GLB geometry/texture/buffer sizes before any optimization; (3) establish Meteora deployed version/IDL and obtain Kipseli IDL or deployed-program evidence; (4) extend multi-transaction route trace evidence without assuming fixed account counts or inferring CPI-requested privileges from outer transaction privileges.
-
-
-## 2026-11-12 — tighten DEX provenance: historical IDL defaults and on-chain deployment evidence
-
-- Downloaded and inspected IDL artifact `13885387689` and CPI trace artifact `13884639160`.
-- Corrected an earlier shorthand: Meteora DLMM historical Anchor IDL 0.10.0 marks `bin_array_bitmap_extension` as `optional: true` but omits the `writable` property; latest 0.12.0 marks it `optional: true, writable: true`. This is a schema change/omission, not an explicit historical `writable: false` assertion and not proof of the CPI's requested meta. Do not equate an omitted IDL field with an observed runtime privilege without validating the IDL format and deployed program.
-- Historical Meteora record is Anchor 0.10.0, slot 356279108, active-to-current in the history service; candidate Jupiter route is slot 468153382. Latest 0.12.0 has no historical activation slot in the latest response. This does not establish which binary was deployed at the candidate transaction slot.
-- Kipseli latest/history endpoints returned HTTP 200 with empty `anchor` and `pmp` arrays. They do provide Anchor metadata address `8DW4XwaDSDjnb2ccHiSkCdFSswzMD8WVo44xXCwVPo6y` and PMP metadata address `AiGJDXFDDv6KbuRUXgSPzYdBByPjM3v6izk3dEGZAPM5`; no matching IDL content was supplied. This is an Explorer metadata gap, not proof of no deployed IDL.
-- The Jupiter CPI artifact confirms the 18-account Meteora Swap2 call includes bitmap extension at CPI account position 1; the transaction-level message marks that account writable, but the trace explicitly cannot expose the CPI-requested AccountMeta writable bit. Duplicate transaction key indexes and outer-position ambiguity remain.
-- Countermeasure committed with this checkpoint: extend the read-only IDL history audit to query each DEX program account, its ProgramData account when upgradeable-loader owned, and the on-chain Anchor IDL metadata account. Record deployment slot, binary hash, IDL owner/prefix/payload hash, instruction discriminator and schema comparisons against candidate-slot history/latest. Missing/unavailable accounts are reported as evidence gaps and do not silently become a privilege decision. This audit does not change swap execution policy.
-- Next: run Validate and IDL History Audit; inspect the new on-chain provenance section for Meteora and Kipseli; correlate Meteora ProgramData deployment slot and on-chain IDL schema to candidate slot 468153382. Keep production route policy fail-closed.
-
-
-## 2026-11-12 — provenance comparison normalization correction
-
-- While reviewing the new on-chain DEX provenance comparison before its first workflow result, found a comparison-normalization defect: historical/latest Explorer candidates expose `discriminatorHex`, while the decoded on-chain IDL exposes a discriminator byte array. The first implementation converted hex to a Buffer but the summary formatter only recognized JavaScript arrays, which could produce a null discriminator in the comparison hash.
-- Corrected normalization to preserve either the decoded byte-array discriminator or the already-normalized `discriminatorHex` string, and compare the active/latest candidates directly. This prevents a false schema mismatch in the new provenance report. No runtime swap policy changed.
-- The correction is included in the follow-up commit; validate the on-chain comparison against the first completed IDL History Audit artifact.
-
-
-## 2026-11-12 — compare on-chain DEX IDLs against every active history source
-
-- Artifact `13886281758` from IDL History Audit `43085430999` passed and was downloaded/inspected. It reports four DEX program accounts as upgradeable-loader owned; three have on-chain Anchor IDL accounts owned by their corresponding DEX program.
-- The first comparison implementation only passed a single active history candidate when exactly one source revision existed. This left Raydium's two active sources un-compared even though their schema hashes agree. Corrected the audit to compare the on-chain instruction schema and payload against **all** active candidate revisions, while preserving the unique-revision-only field for strict single-source checks.
-- Exact artifact observations:
-  - Kipseli ProgramData deployment slot `468190520` is after candidate Jupiter route slot `468153382`; its Explorer-provided Anchor metadata account `8DW4XwaDSDjnb2ccHiSkCdFSswzMD8WVo44xXCwVPo6y` was not found through finalized RPC. The currently deployed binary therefore cannot be used as evidence for Kipseli's code at the earlier candidate slot. No account-role inference is allowed.
-  - Meteora DLMM ProgramData deployment slot `423977638` is before the candidate slot. Current on-chain IDL account `7UZRobkzaKVm1RbCH5WdFaYCGzCRjnu3prziHAsYiSyr` is owned by Meteora and decodes as Anchor `lb_clmm` version `0.12.0`; its `swap2` schema marks optional `bin_array_bitmap_extension` writable. The history service's candidate-slot revision is `0.10.0` and omits that writable property. ProgramData deployment slot does not date independent IDL-account writes, so this historical/current metadata mismatch remains unresolved.
-  - Orca Whirlpool ProgramData deployment slot `457152296` is before the candidate slot. Current on-chain IDL version `0.9.0` and schema match the latest Anchor candidate. The active history service candidate is a PMP source with a 15-account `swap_v2` list, while the current on-chain Anchor IDL contains an additional `whirlpool_program` account (16 total). The history source is therefore not a sufficient substitute for the current on-chain Anchor account schema.
-  - Raydium LaunchLab ProgramData deployment slot `446221802` is before the candidate slot. Its on-chain Anchor IDL version `0.2.0` is owned by Raydium and matches the latest schema; two active history sources (PMP and Anchor) agree on the instruction schema.
-- Assessment caveat: current on-chain IDL accounts are fetched at finalized context slots around `468236954–468237043`; they prove current account contents and current ProgramData deployment slots, not historical IDL-account contents at candidate slot `468153382`.
-- Next: inspect the next exact-head IDL artifact after the all-active comparison correction. To resolve Meteora's version conflict, determine the IDL-account write slot/signature or obtain a historical account snapshot at the candidate slot. Keep Kipseli blocked because its current deployment postdates the candidate. Do not infer CPI-requested privileges from outer message privileges.
-
-
-## 2026-11-12 — exact-head DEX provenance and CI scheduling verification
-
-- Exact source head: `1182657ccd50ef8a6478bb6c595a10d7ae78b04a`.
-- Validate `43086016256`: SUCCESS; 98/98 tests passed, 0 failed; Wrangler dry-run succeeded (72.28 KiB upload / 17.17 KiB gzip).
-- Browser Smoke `43086016239`: SUCCESS.
-- Jupiter CPI Trace Audit `43086016910`: SUCCESS; 2/2 duplicate-index mapping tests passed; artifact `13885444751`.
-- Jupiter IDL History Audit `43086016378`: SUCCESS; syntax check, finalized RPC provenance collection and artifact upload all completed. Artifact `13887265217` (SHA-256 ZIP digest `70fc0c5f3c512c873008fc4ccb3391a55d53125da78adfc6a5472c5248376dc4`) was downloaded and inspected.
-- Game Browser Smoke `43086016321`: IN PROGRESS at latest inspection; job `130750627322` remains on strict desktop/mobile gameplay smoke. No terminal conclusion yet. Do not count it as passed or failed.
-- No workflow on exact head `1182657ccd50ef8a6478bb6c595a10d7ae78b04a` has a failed conclusion. Push/PR duplicate IDL run `43086006627` was CANCELLED by the normalized shared concurrency group while PR run `43086016378` continued; this is intentional deduplication, not a test failure.
-- Workflow concurrency correction is verified: push and pull_request now share branch-based concurrency keys across Browser Smoke, Game Browser Smoke, Jupiter CPI Trace Audit, Jupiter IDL History Audit and Validate. This avoids duplicate RPC/browser runs for the same branch head.
-- A transient intermediate commit `1bc9190165bfd30fb0c25fc4dbc36da3adf4c3da` briefly contained an incomplete reconstructed Validate workflow. It was caught immediately and restored from the prior complete file, changing only the concurrency expression, in `81c1b1ea550621e0d549f5c2564e9ca07b6795fd`. The final workflow content was compared byte-for-byte against the prior version plus the intended concurrency expression; exact-head Validate `43086016256` then passed. Its earlier run `43085790449` was cancelled, not a failed test.
-- On-chain DEX provenance at finalized contexts around slots `468236954–468237043`:
-  - **Kipseli:** current ProgramData deployment slot `468190520` is later than candidate route slot `468153382`; current Anchor metadata address was not found. Current binary is not evidence for the earlier candidate execution.
-  - **Meteora DLMM:** ProgramData deployment slot `423977638` predates candidate. Current on-chain Anchor IDL `0.12.0` is owned by Meteora and marks optional `bin_array_bitmap_extension` writable. Candidate-slot history says `0.10.0` and omits the writable field. The ProgramData slot dates binary deployment, not independent IDL-account writes; historical IDL contents at the candidate slot remain unresolved.
-  - **Orca Whirlpool:** ProgramData deployment slot `457152296` predates candidate. Current on-chain Anchor IDL schema matches latest Anchor metadata and contains 16 `swap_v2` accounts including `whirlpool_program`; the active history service PMP candidate has 15 accounts. Do not use the PMP historical source as a substitute for the on-chain Anchor schema.
-  - **Raydium LaunchLab:** ProgramData deployment slot `446221802` predates candidate. Current on-chain Anchor IDL version `0.2.0` matches one of the active history records; the two active metadata sources agree on schema.
-- Corrected the audit comparison to compare on-chain IDL payload/schema against **all** active history sources, not only a unique active revision. The latest artifact assessment reports 4 DEX program accounts, 4 upgradeable ProgramData accounts, 3 deployments predating candidate, 3 on-chain Anchor IDL accounts owned by the DEX program, and 1 on-chain IDL payload/schema matching active history. The other cases are explicit evidence gaps or schema differences, not inferred privileges.
-- Safety remains unchanged: route_v2 excluded from production validation; wallet signing, transaction execution, and deployment disabled; PR #268 remains draft and unmerged.
-- Next: complete strict Game Browser Smoke and inspect GLB phase diagnostics; determine Meteora IDL account update slot/history to reconcile 0.10.0 vs 0.12.0; keep Kipseli excluded until historical deployed binary/IDL evidence exists; preserve CPI requested-privilege and account-slice fail-closed gates.
-
-
-## Continuation checkpoint — 2026-11-12 03:27 PHT
-
-- Repository: `CryptoDilis/Climboria`; default branch `main` currently points to `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
-- Active draft PR: [#268](https://github.com/CryptoDilis/Climboria/pull/268), branch `codex/swap-jupiter-fixed-account-roles-2026-11-11`, exact head `c2bc868c988c5e5c87c8cbd6afff679010f01381`. PR is open, mergeable, draft, and unmerged; base is current `main` SHA `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
-- Exact-head Validate run [43086425666](https://github.com/CryptoDilis/Climboria/actions/runs/43086425666): SUCCESS on `c2bc868c988c5e5c87c8cbd6afff679010f01381`.
-- Exact-head Ecosystem Browser Smoke run [43086425696](https://github.com/CryptoDilis/Climboria/actions/runs/43086425696): SUCCESS on the same SHA.
-- Exact-head Jupiter V6 CPI Trace Audit run [43086425672](https://github.com/CryptoDilis/Climboria/actions/runs/43086425672): SUCCESS on the same SHA.
-- Exact-head Jupiter IDL History Audit run [43086426135](https://github.com/CryptoDilis/Climboria/actions/runs/43086426135): SUCCESS on the same SHA.
-- Exact-head Game Browser Smoke run [43086425686](https://github.com/CryptoDilis/Climboria/actions/runs/43086425686), job `130752039656`: still IN_PROGRESS at the latest inspection. Setup, checkout, Node, Playwright install and local server startup passed; strict Jarrell's Peak desktop/mobile gameplay step 7 is running; screenshot upload is pending. Job-log retrieval while active returned Azure `BlobNotFound`; this is an unavailable live log artifact, not evidence of a gameplay failure. Do not report gameplay as passed or failed until the run reaches a terminal conclusion.
-- Recent superseded runs on earlier SHAs were marked CANCELLED by shared branch concurrency when newer commits were pushed. These are cancellations, not failed tests, and are not candidates for blind retry. No failed conclusion is present in the inspected latest exact-head workflow set.
-- No counter-fix was made because no new failure has been established. Preserve strict gameplay readiness assertions and all DEX security checks.
-- Safety boundary unchanged: PR #268 stays draft/unmerged; Jupiter route variants without authoritative deployed CPI/account-slice and requested-privilege evidence remain excluded; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; Wrangler execution and public frontend transaction execution remain disabled.
-- Next actions: (1) poll Game Browser Smoke run `43086425686`; once terminal, fetch job steps/logs and uploaded screenshots, identify the precise failing assertion/GLB loader phase if it failed, and implement a narrow evidence-based counter-fix; (2) if it succeeds, record the gameplay scope and limitations; (3) continue the open DEX provenance gaps, including historical Meteora IDL update history and exact CPI-requested privileges. Re-run exact-head checks after any code change.
-
-
-## Follow-up after checkpoint-triggered CI — 2026-11-12 03:30 PHT
-
-- The previous documentation commit `72b83187809992a5d8bcdb46fe7be31c3fb3454a` changed the PR head and correctly superseded/cancelled the still-running Game Browser Smoke run `43086425686` on prior head `c2bc868c988c5e5c87c8cbd6afff679010f01381`. Its conclusion is CANCELLED, not FAILURE; do not diagnose it as a gameplay regression or count it as a pass.
-- PR #268 now points to exact head `72b83187809992a5d8bcdb46fe7be31c3fb3454a`, still open/draft/unmerged; base remains main `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
-- New exact-head run set:
-  - Validate `43087323341`: SUCCESS.
-  - Jupiter V6 CPI Trace Audit `43087323380`: SUCCESS.
-  - Ecosystem Browser Smoke `43087323407`: IN_PROGRESS, job `130755010094`; setup, Playwright install, server startup, and Supabase auth/cloud-save isolation passed; homepage CTA/DEX routing/mobile navigation is running. Remaining checks pending.
-  - Jupiter IDL History Audit `43087323396`: IN_PROGRESS, job `130755010424`; setup and syntax check passed; fetching current/historical Jupiter and DEX CPI IDL history is running.
-  - Game Browser Smoke `43087323330`: IN_PROGRESS, job `130755171748`; setup, checkout, Node and browser cache passed; Playwright installation is running; gameplay test has not started.
-- No new failed workflow/job is present on this exact head at this inspection. No code counter-fix is warranted. The earlier active-job log BlobNotFound response was an artifact retrieval limitation while a job was running, not test evidence.
-- Next: poll the three in-progress runs on this exact SHA. If any reaches FAILURE, capture terminal job steps and logs, identify the first causal failing assertion/command, distinguish product defect from runner/provider/network/tooling failure, make one narrow evidence-based correction, and rerun all affected checks on the resulting exact head. Do not create another documentation-only commit while these long-running checks are active unless a substantive record is required; avoid needless cancellation churn.
-- Security gates and draft status remain unchanged.
-
-
-## Game Browser Smoke failure investigation — 2026-11-12 04:27 PHT
-
-- Latest PR #268 head at inspection: `35a146f322fd23fec72bf89494a129fdd2548f03`; PR remains open, draft, and unmerged.
-- Exact-head CI on this SHA: Validate run [43087451893](https://github.com/CryptoDilis/Climboria/actions/runs/43087451893) SUCCESS; Ecosystem Browser Smoke [43087452169](https://github.com/CryptoDilis/Climboria/actions/runs/43087452169) SUCCESS; Jupiter IDL History Audit [43087451703](https://github.com/CryptoDilis/Climboria/actions/runs/43087451703) SUCCESS; Jupiter V6 CPI Trace Audit [43087452325](https://github.com/CryptoDilis/Climboria/actions/runs/43087452325) SUCCESS.
-- Game Browser Smoke [43087451664](https://github.com/CryptoDilis/Climboria/actions/runs/43087451664), job `130755605746`: FAILURE. Steps 1–6 (runner setup, checkout, Node, Playwright cache/install, local HTTP server) succeeded. Step 7, strict Jarrell's Peak desktop/mobile gameplay smoke assertions, failed. Step 8 screenshot artifact upload succeeded; artifact `13886484854` (`climboria-game-browser-smoke-screenshots`, 2,581,528 bytes) is present and not expired at checkpoint time.
-- Diagnosis boundary: this is a test-execution failure, not a runner/bootstrap failure. The exact first failed assertion / thrown diagnostic has NOT yet been established. Repeated `fetch_workflow_job_logs` requests for job `130755605746` timed out; artifact download also timed out. Therefore do not claim a GLB, gameplay, terrain, collision, water, or mobile-controls root cause without the terminal log or artifact evidence.
-- No code/test/workflow counter-fix has been applied. Do not weaken the strict assertions or blindly rerun. The test script `.github/scripts/game-smoke.mjs` exercises desktop GLB hero readiness, render loop, walking/running jump, sanctuary flags, Jarrell's Peak world/terrain/chests/facilities, collision and water/fishing audits, then mobile GLB readiness, camera orbit/pinch, movement-facing, HUD and touch controls, and visual captures. The failure location within this sequence must be read from the job log.
-- Earlier runs `43087323330`, `43087323396`, and `43087323407` on SHA `72b83187809992a5d8bcdb46fe7be31c3fb3454a` were CANCELLED after the branch advanced; these are not failures. No retry is justified by those cancellations.
-- Next actions: retrieve the terminal log for job `130755605746` and inspect uploaded screenshots from artifact `13886484854`; identify the first causal assertion and associated runtime diagnostics; trace it to the owning implementation and add/adjust a targeted regression test only if warranted; implement a narrow counter-fix without relaxing acceptance criteria; rerun Game Browser Smoke and affected validation on the resulting exact head. Record the specific root cause, fix commit, and rerun evidence here.
-- Security boundary unchanged: PR #268 stays draft/unmerged; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; no wallet signing or transaction execution.
-
-
-## Deep Game Browser Smoke failure diagnosis and counter-fix — 2026-11-12
-
-- Failed run: Game Browser Smoke `43087451664`, job `130755605746`, on PR code head `35a146f322fd23fec72bf89494a129fdd2548f03`. The failure is in the mobile saved-GLB readiness assertion at `.github/scripts/game-smoke.mjs:712`, after desktop gameplay and desktop evidence captures completed.
-- Exact terminal evidence: mobile GLB resource transfer completed at 42,923,504 bytes (`decodedBodySize=42,923,204`), no failed GLB requests, no browser errors, but `glbLoadDiagnostics.phase=parsing`, `loadCallbackAt=null`, `readyAt=null`, and `heroReady=false`. The 75-second wait plus 15-second bounded grace expired. The error is not a network/download failure, browser bootstrap failure, or desktop gameplay assertion.
-- Root-cause analysis: the smoke harness retained the fully rendered desktop page and its WebGL context after all desktop checks/screenshots, then started a second full gameplay page in a mobile context in the same Chromium process. Desktop diagnostics showed 191 streamed chunks; the mobile page then downloaded the 42.9 MB GLB but did not reach the GLTFLoader parse callback. This strongly indicates avoidable renderer/decoded-scene resource contention in the test harness. The exact internal Chromium allocation/GC stall is not directly exposed by the captured logs, so do not claim a specific GPU OOM or parser defect.
-- Counter-fix commit `6b2093e3fb7722112fb47a9b061403c2dac2a964`: after desktop assertions and screenshots are complete, close the desktop page and browser context before creating/loading the mobile page. This releases the desktop WebGL renderer and scene resources before the mobile GLB parse. No production gameplay behavior, readiness invariant, timeout, or acceptance assertion was weakened.
-- Verification status: **PENDING**. The PR head is now `6b2093e3fb7722112fb47a9b061403c2dac2a964`. The five runs queued on the preceding documentation-only head `78111338b79a5a6e8fd20cdf5c9de22769dea9cf` remain queued and have no jobs yet; they do not verify this counter-fix. No exact-head passing result is claimed. Re-check Actions for a run on the new head; if no run is dispatched, trigger the game smoke workflow through an authorized workflow-dispatch path or document the dispatch blocker.
-- Prior canceled runs are not failures. Ecosystem Browser Smoke success does not imply gameplay smoke success.
-- Next task: verify the desktop context is fully closed before mobile page creation, obtain an exact-head Game Browser Smoke run, inspect all terminal failures deeply, and only then mark the fix verified. Keep PR #268 draft/unmerged and all wallet signing/execution security gates disabled.
+The PR remains open, draft and unmerged. Latest PR code head is 1137dd496b27caa12ede72637c62e675afcf1c2c. No production deployment, independent security approval, Devnet settlement acceptance, or LIVE Swap claim is made.

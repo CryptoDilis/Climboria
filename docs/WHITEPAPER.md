@@ -4,7 +4,7 @@
 
 ## 1. Vision
 
-Climboria is a browser-first climbing, survival, and open-world treasure-hunting project. The principle is **Game First, Speculation Later**. The two game-world destinations are Jarrell’s Peak, the open-world survival experience, and Arena, the separate competitive map.
+Climboria is a browser-first climbing, survival, and open-world treasure-hunting project. **Game First, Speculation Later** describes the product philosophy and the importance of a genuinely playable game; it is not the current cross-product engineering release order. The owner-approved execution order is **P1 Live Swap → P2 Live DEX → P3 All Login methods → P4 Fully Live Game → P5 Live Launchpad (last)**, as recorded in the root README and release-priority document. No demo-only delivery is accepted: each product must use real integrations and be verified live before it is called complete. The two game-world destinations are Jarrell’s Peak, the open-world survival experience, and Arena, the separate competitive map.
 
 ## 2. Launch world: Jarrell’s Peak
 
