@@ -463,3 +463,8 @@ Verified prior Phase48 CI commit `5d59cb9470c759c48e956e1a234312ebbf5eb384`: CLI
 ## Phase 51 checkpoint — 2026-11-13 (PostgreSQL CI setup failure diagnosed)
 
 Phase50 PostgreSQL CI commit `8b31809cfb00437cdca02ed9103a43c9c8a4400d`: Validate Climboria **43444803858** success, but CLIMBX release safety **43444803965** failure. Logs show integration setUpClass `psycopg.errors.UndefinedObject: role "authenticated" does not exist`, because vanilla PostgreSQL service does not provide Supabase's predefined roles. Added isolated CI bootstrap of NOLOGIN `anon` and `authenticated` roles in `climbx/test_postgres_integration.py` commit `e5161e31541b48c821c5a8927f59c1e94340bc78`. This is only test-environment setup; latest CI NOT YET VERIFIED. Do not mark PostgreSQL tests passed or deploy. NO-GO.
+
+
+## Phase 52 checkpoint — 2026-11-13 (PostgreSQL CI syntax fix)
+
+Phase51 CI commit `e5161e31541b48c821c5a8927f59c1e94340bc78`: Validate Climboria run **43445170719** success; CLIMBX release safety run **43445170675** failed at PostgreSQL setup with `psycopg.errors.SyntaxError: syntax error at or near "$"`. Root cause: previous test-role bootstrap generated `DO $ ... END $` instead of valid PostgreSQL `DO $$ ... $$`. Replaced this fragile block with role-existence query and simple `CREATE ROLE ... NOLOGIN` in isolated CI integration test commit `425c074febebc609f2ee9e0366603386607e21db`. New CI NOT YET VERIFIED. No Supabase production changes, migrations or live trading. NO-GO.
