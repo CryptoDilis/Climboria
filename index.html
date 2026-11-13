@@ -550,25 +550,22 @@ footer:first-of-type>div{
  .home-footer-col a{max-width:100%;overflow-wrap:anywhere}
  .home-footer-bottom{min-width:0;flex-wrap:wrap}
 }
-/* Desktop hero actions share one layout container; no competing absolute offsets. */
+/* Non-overlapping hero layout: artwork and action panel occupy separate flow sections. */
 @media(min-width:901px){
- .hero{min-height:780px!important;height:calc(100svh - 82px)!important;padding:0!important;overflow:hidden!important}
- .hero-action-stack{position:absolute;left:clamp(22px,3vw,56px);bottom:clamp(18px,3vh,34px);z-index:6;width:min(455px,37vw);display:flex;flex-direction:column;gap:10px}
- .hero-action-stack .launch-countdown{position:static!important;inset:auto!important;transform:none!important;float:none!important;margin:0!important;width:100%!important;max-width:none!important;padding:11px 14px!important;border-radius:15px!important}
- .hero-action-stack .launch-countdown h2{font-size:clamp(19px,1.8vw,26px)!important;line-height:1.12!important}
- .hero-action-stack .launch-kicker{font-size:8px!important}
- .hero-action-stack .launch-meta{font-size:9px!important}
- .hero-action-stack .launch-timer{gap:6px!important;margin:8px 0!important}
- .hero-action-stack .launch-time-unit{padding:5px 3px!important}
- .hero-action-stack .launch-time-unit b{font-size:22px!important}
- .hero-action-stack .launch-time-unit span{font-size:7px!important;margin-top:2px!important}
- .hero-action-stack .launch-foot{font-size:8px!important;line-height:1.35!important}
- .hero-action-stack .launch-follow{font-size:8px!important;margin-top:7px!important;padding:6px 11px!important}
+ .hero{position:relative!important;height:clamp(440px,49vw,740px)!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
+ .hero picture,.hero picture img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:center top!important}
+ .hero-action-stack{position:relative!important;inset:auto!important;z-index:5!important;box-sizing:border-box!important;display:flex!important;flex-direction:column!important;gap:12px!important;width:min(540px,calc(100% - 48px))!important;margin:0!important;padding:22px 0 32px clamp(24px,5vw,85px)!important;background:transparent!important}
+ .hero-action-stack .launch-countdown{position:static!important;inset:auto!important;transform:none!important;margin:0!important;width:100%!important;max-width:none!important;padding:16px 19px!important}
  .hero-action-stack .hero-content{position:static!important;inset:auto!important;transform:none!important;margin:0!important;padding:0!important;width:100%!important;max-width:none!important}
- .hero-action-stack .hero-buttons{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;margin:0!important}
- .hero-action-stack .hero-buttons>button{width:100%!important;min-width:0!important;padding:11px 5px!important;font-size:12px!important;letter-spacing:.7px!important}
+ .hero-action-stack .hero-buttons{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;margin:0!important}
+ .hero-action-stack .hero-buttons>button{width:100%!important;min-width:0!important;padding:12px 6px!important;font-size:12px!important;letter-spacing:.7px!important}
+ .hero-action-stack .launch-timer{margin:12px 0!important}
 }
-@media(max-width:900px){.hero-action-stack{display:contents}}
+@media(max-width:900px){
+ .hero-action-stack{position:relative;z-index:5;display:flex;flex-direction:column;gap:12px;width:min(560px,calc(100% - 32px));margin:0 auto;padding:18px 0 28px}
+ .hero-action-stack .launch-countdown,.hero-action-stack .hero-content{position:static!important;inset:auto!important;transform:none!important;margin:0!important;width:100%!important;max-width:none!important}
+ .hero-action-stack .hero-buttons{justify-content:center}
+}
 </style>
 </head>
 <body>
@@ -625,7 +622,9 @@ footer:first-of-type>div{
     <img src="./857289992_1755402102906767_7411463028840030192_n-1.webp" alt="CLIMBORIA Official Hero" loading="eager" fetchpriority="high">
   </picture>
   <div class="hero-overlay"></div>
-  <div class="hero-action-stack">
+</div>
+<div class="hero-action-stack">
+
   <section class="launch-countdown" aria-label="Climboria token launch countdown">
     <div class="launch-kicker">Planned launch target · subject to readiness</div>
     <h2>$CLIMB LAUNCH TARGET</h2>
@@ -645,10 +644,8 @@ footer:first-of-type>div{
       <button class="btn-trade" id="swapBtn">DEX</button>
       <button class="btn-launch" id="launchpadBtn">LAUNCHPAD</button>
     </div>
-  </div>  </div>
-
+  </div>
 </div>
-
 
 <section class="sec" id="climboria-signature" aria-labelledby="signature-main-title" style="padding-top:64px;padding-bottom:64px">
  <div class="label">A Climboria flagship product</div>
