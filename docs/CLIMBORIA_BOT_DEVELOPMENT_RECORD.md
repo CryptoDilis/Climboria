@@ -875,3 +875,20 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Release decision:** CLIMBX real-funds **NO-GO**. No on-chain grant, atomic caps, signed devnet swap, audited DEX-only CPI or security audit. No edits to DEX/Swap/Launchpad/game.
 
 **Next Phase97:** verify Phase96 CI and repair any failures; complete targeted call-site search across CLIMBX files using source retrieval, document any direct consumer of `allowed:true`; add enforcement tests for any found; provision Solana toolchain/local validator and begin owner-controlled devnet program only after toolchain verification. Keep permanent main-branch record updated.
+
+
+## Phase 97 — 2026-11-14 — CLIMBX static execution boundary audit
+
+**Phase96 CI all SUCCESS** on `132ac65617b72ae5baf43946874bcae15c876d2f`: Validate `43466522891`, CLIMBX release safety `43466522892`, Browser Smoke `43466522868`.
+
+**Phase97 commits** on `climbx/phase28-release-gate-ci`:
+- `2f8b5ecb15beebedc1f12275ccc26c7b3b198559`: add `climbx/audit_execution_boundary.cjs` static source scanner that flags direct calls to simulation/execution authorization APIs outside their source/test files and runtime `mayExecute:true` literals.
+- `aad99d226d63726945625d4b62750d3d2affa1c9`: four regression tests, including running the audit over CLIMBX CJS files.
+- `adfef36c25ef582158269379024adfc1c8d0b7b2`: wire audit tests into CLIMBX non-deploying CI.
+**Phase97 CI pending verification** on `adfef36c25ef582158269379024adfc1c8d0b7b2`.
+
+**Audit limits:** This scanner is intentionally narrow: only top-level CLIMBX `.cjs` files and simple static patterns. It cannot prove no dynamic calls, imports in other directories, Python consumers, indirect dispatch, or actual Solana execution. A broader automated GitHub source audit was attempted but hit tool-call limits and was **not completed**. Do not claim exhaustive review or runtime safety from this scanner.
+
+**Release status:** CLIMBX real-funds **NO-GO**. No deployed on-chain vault, signed devnet swap, reviewed DEX route or audit. No DEX/Swap/Launchpad/game changes.
+
+**Next Phase98:** verify Phase97 CI, fix any static audit failures; expand source coverage to CLIMBX Python and relevant integration paths with reviewed false-positive rules; identify actual trade execution consumers; provision pinned Rust/Solana toolchain and implement owner-signed devnet grant/revoke/caps with no router CPI until independently reviewed. Continue permanent main-branch handoff logging.
