@@ -218,3 +218,20 @@ Changed: branch `fix/dex-mobile-visible-quote-banner`, appended narrow `@media(m
 Verified: commits `32b93b8` and `7600a3f` pushed on focused branch; **exact-head CI and production browser NOT YET VERIFIED**.
 Unresolved: actual 390px live mobile Playwright viewport state/quote success, physical Redmi device, launchpad Devnet and mainnet signing release gates.
 NEXT: inspect focused PR CI and the next exact deployed production DEX desktop/mobile quote test. Merge only if green, fix real failures without weakening tests.
+
+
+### 2026-11-14 — PR #311 mobile quote fix merged; exact Pages build cancelled by newer main commit
+Scope: **DEX mobile quote accessibility** and release evidence.
+Before: PR #310 production browser failed because mobile `#showDexQuote` was hidden by the existing compact mobile `.execution-status{display:none!important}` layout.
+Changed: [PR #311](https://github.com/CryptoDilis/Climboria/pull/311) merged as `7099d2d3a54197dd6501b7eebd64695019b2d137`; CSS shows the existing read-only quote banner in mobile **Solana** view only, not Base/token-detail views. Quote arithmetic and disabled swap execution are untouched.
+Verified: exact PR head `100f8c2128b834c7d4947796e3a6b840f54bfb10` [Validate 43473664787](https://github.com/CryptoDilis/Climboria/actions/runs/43473664787) **SUCCESS**, [Browser Smoke 43473664780](https://github.com/CryptoDilis/Climboria/actions/runs/43473664780) **SUCCESS**. Postmerge [Pages 43473850249](https://github.com/CryptoDilis/Climboria/actions/runs/43473850249) **CANCELLED** when a newer main commit arrived; [DEX production smoke 43473847159](https://github.com/CryptoDilis/Climboria/actions/runs/43473847159) **FAILURE** at the exact-Pages gate, *before* real browser tests could run. This is not proof mobile UX still fails; independent deployed evidence is still missing.
+Unresolved: no completed real-origin 390px DEX mobile quote-button acceptance after PR #311 because Pages cancellation blocked the browser. Concurrent CLIMBX/Game documentation pushes may cancel exact-commit Pages builds; do not claim live mobile quote yet.
+NEXT: accept a successful newer Pages deployment only after verifying via the GitHub Compare API that the release SHA **descends from and contains** the DEX/Swap tested SHA, then run unchanged real production browser assertions. Never accept arbitrary unrelated/older successful Pages deployments.
+
+### 2026-11-14 — CI wait supports verified superseding GitHub Pages release (CI pending)
+Scope: **DEX/Swap release CI and its handoff only**; no Game, CLIMBX, Launchpad or wallet signing changes.
+Before: even a successfully deployed newer main revision containing our DEX patch could not satisfy the strict same-commit wait, causing false-negative production readiness when Pages cancelled older builds.
+Changed: branch `ci/dex-quote-allow-verified-pages-descendant`, `.github/workflows/dex-swap-production-quote.yml`: scan successful Pages runs and accept only the exact tested SHA or a GitHub Compare-verified descendant with `status=ahead|identical` and `behind_by=0`; verify SHA shape and retain 30-check bounded wait and full live Playwright assertions. No order or execute endpoints introduced.
+Verified: CI workflow commit `e87a52a` written; exact-head PR CI **PENDING**, production browser still not rerun.
+Unresolved: actual Pages provider health and mobile browser quote after deployment, plus all real-money security and Launchpad Devnet gates.
+NEXT: inspect focused CI, merge if clean, and obtain unmocked desktop/mobile Swap and DEX live quote PASS on a successful Pages build proven to contain this change.

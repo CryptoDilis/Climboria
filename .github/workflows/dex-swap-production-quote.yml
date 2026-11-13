@@ -50,25 +50,37 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Wait for successful Pages deployment of exact commit
+      - name: Wait for successful Pages deployment containing this DEX/Swap commit
         if: github.event_name == 'push'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          # A newer main commit can cancel Pages for the original SHA while
+          # still containing this DEX/Swap fix. Accept only a successful Pages
+          # build at the same SHA OR a GitHub-verified descendant of it.
+          # Actual production browser assertions must still pass afterwards.
           for attempt in $(seq 1 30); do
-            state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${GITHUB_SHA}&per_page=100" --jq '[.workflow_runs[] | select(.name == "pages build and deployment") | (.conclusion // "pending")][0] // "pending"')"
-            echo "Pages for ${GITHUB_SHA}: ${state} (check ${attempt}/30)"
-            case "$state" in
-              success) echo "Exact-head Pages deployment succeeded."; exit 0 ;;
-              failure|cancelled|timed_out|action_required|skipped)
-                echo "::error::Exact-head Pages deployment ended ${state}; production quote acceptance not run."
-                exit 1 ;;
-            esac
+            mapfile -t deployed_shas < <(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" --jq '[.workflow_runs[] | select(.name == "pages build and deployment" and .conclusion == "success") | .head_sha] | .[:15] | .[]')
+            for deployed_sha in "${deployed_shas[@]}"; do
+              if ! [[ "$deployed_sha" =~ ^[a-f0-9]{40}$ ]]; then
+                continue
+              fi
+              if [[ "$deployed_sha" == "$GITHUB_SHA" ]]; then
+                echo "Pages successfully deployed exact DEX/Swap SHA ${GITHUB_SHA}."
+                exit 0
+              fi
+              relation="$(gh api "repos/${GITHUB_REPOSITORY}/compare/${GITHUB_SHA}...${deployed_sha}" --jq '[.status,.behind_by] | @tsv' 2>/dev/null || true)"
+              if [[ "$relation" == $'ahead\t0' || "$relation" == $'identical\t0' ]]; then
+                echo "Pages deployed verified descendant ${deployed_sha} containing DEX/Swap SHA ${GITHUB_SHA}."
+                exit 0
+              fi
+            done
+            echo "No successful exact-or-descendant Pages release yet for ${GITHUB_SHA} (check ${attempt}/30)."
             sleep 10
           done
-          echo "::error::Timed out waiting for a successful Pages deployment of ${GITHUB_SHA}."
+          echo "::error::No successful Pages release containing DEX/Swap SHA ${GITHUB_SHA}."
           exit 1
       - name: Install Playwright Chromium
         run: |
