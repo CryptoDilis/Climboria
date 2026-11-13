@@ -593,3 +593,8 @@ Verified Phase75 CLIMBX CI `43455166968` and Validate `43455166908` successful. 
 ## Phase 77 checkpoint — 2026-11-13 (responsive non-functional CLIMBX dashboard preview)
 
 Verified Phase76 DEX preview CI: Validate `43455577079`, CLIMBX release safety `43455577199`, Browser Smoke `43455576988`, all successful. Added responsive static preview at `dex/climbx/index.html`, commit `8fe283b7adeeff736982a7007c820f75b1b6b1ba`: bot status, 5 empty slots, planned strategies, fee/risk disclosures, disabled wallet and trade controls. Updated DEX CLIMBX card to link to `/dex/climbx/`, commit `3d67dd3a2935cda04fe0dfce21045b9817861da0`. Draft branch only, not deployed; new CI not verified. No wallet integration, trading, backend connection or live authorization. Further desktop/mobile visual QA required. CLIMBX NO-GO.
+
+
+## Phase 78 checkpoint — 2026-11-13 (preview safety regression CI)
+
+Verified Phase77 CI: Validate `43455914831`, CLIMBX release safety `43455914721`, Browser Smoke `43455914688`, all successful. Added `climbx/dashboard_preview.test.cjs` with six static safety tests asserting preview NOT LIVE disclosure, disabled controls, no scripts/forms/inline handlers, five slots, fee/risk disclosure and DEX preview link; commit `0c8ea6292d2eba7858e717ae78923e2022384bfa`. Wired tests to CLIMBX release CI and added DEX preview paths to push/PR triggers, commit `5ad7a01ddc12162bd0905fab9eced239b53b1f51`. CI not yet verified. This is static regression coverage only, not a live browser interaction/security audit; CLIMBX NO-GO.
