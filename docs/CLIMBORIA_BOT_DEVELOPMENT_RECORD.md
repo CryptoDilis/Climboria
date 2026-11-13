@@ -766,3 +766,22 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Release status:** CLIMBX real-funds **NO-GO**. This is a pure off-chain deny-all guard, not a Solana program, not actual DEX route inspection, and not a signed swap. No edits to Swap/DEX/Launchpad/game files.
 
 **Next phase:** (1) verify Phase90 CI for `1b4c37665bc3e29c49cd9303dace4ddc7f4ff599` and fix failures; (2) provision controlled Rust/Cargo/Solana CLI/validator/Anchor environment and record versions; (3) obtain exact DEX route program IDs/instruction schemas read-only from other workstream; (4) build owner-controlled devnet program create/revoke/expiry/caps first, with deny-all CPI until audited; (5) run adversarial local validator and signed devnet tests, independent audit and explicit owner release decision. Keep recording each phase in this main-branch file. CLIMBX only.
+
+
+## Phase 91 — 2026-11-14 — CLIMBX paper journal conflicting retry hardening (PAPER ONLY)
+
+**Scope:** CLIMBX-only offline SQLite paper-trading simulation. No Game, DEX, Swap backend, Launchpad, real execution, wallet signer, or production deployment files modified.
+
+**Baseline / predecessor:** Phase87 head `a12a3eb5808fbf52691597a49f3215931184c327` passed all three exact-head CI runs: [CLIMBX release safety 43461781440](https://github.com/CryptoDilis/Climboria/actions/runs/43461781440), [Validate Climboria 43461781506](https://github.com/CryptoDilis/Climboria/actions/runs/43461781506), [Browser Smoke 43461781480](https://github.com/CryptoDilis/Climboria/actions/runs/43461781480), all SUCCESS. Other CLIMBX developer commits to the parent branch were detected and retained; work was isolated in its own branch to avoid overwrites.
+
+**Files changed:** `climbx/paper_journal.py` and `climbx/test_paper_journal.py` only.
+
+**Completed:** Reject same order ID with different slot/mint/amount (`ORDER_CONFLICT`), conflicting post-submission or UNKNOWN signatures (`SIGNATURE_CONFLICT`), and contradictory settled reconciliation results (`OUTCOME_CONFLICT`). Invalid/blank order IDs and mints, non-string signatures, and negative timestamps fail closed. Identical retries remain idempotent. Seven new regression tests cover replay after restart, two SQLite connections, signature uniqueness, and no double reservation/debit.
+
+**Branch/PR/commits:** `climbx/phase88-paper-journal-idempotency`; [stacked PR #299](https://github.com/CryptoDilis/Climboria/pull/299) targeted existing CLIMBX development branch `climbx/phase28-release-gate-ci` (NOT production main). Implementation commit `ee31041a0985c580ad8d79ea5a225990540965dc`; tests commit `2e49ab02f6147985480c5195a1b2da7c41d6a562`; squash merge into CLIMBX branch `0654cea890ccaa61957f9ac660c467607ae6e539`.
+
+**Verified:** [CLIMBX release safety run 43462945532](https://github.com/CryptoDilis/Climboria/actions/runs/43462945532) completed SUCCESS on exact test head `2e49ab0`. Following stacked-PR merge, CLIMBX release safety [43463219412](https://github.com/CryptoDilis/Climboria/actions/runs/43463219412), Validate [43463219401](https://github.com/CryptoDilis/Climboria/actions/runs/43463219401) and Browser Smoke [43463219306](https://github.com/CryptoDilis/Climboria/actions/runs/43463219306) were still IN PROGRESS when checked. Do not claim post-merge success until terminal results are verified.
+
+**Remaining risks:** All code is PAPER ONLY, not live Solana order processing; SQLite journal models one simulated wallet and does not enforce scoped delegated authority, real-chain finality, crash-safe submission/reconciliation, or multi-host concurrency. CLIMBX real-funds GO/NO-GO = **NO-GO**. The separate devnet toolchain and deny-all router preparation in Phases 89–90 are not live execution.
+
+**EXACT NEXT:** (1) verify CLIMBX parent-branch CI runs 43463219412 / 43463219401 / 43463219306; fix failures if any and record terminal results; (2) evaluate paper journal crash-safe outbox and reconciliation-before-retry with adversarial tests, CLIMBX-only; (3) continue controlled toolchain provisioning/on-chain scoped-grant prototype in a separate devnet environment, keeping all real trades and third-party routing disabled until independently reviewed.
