@@ -245,7 +245,7 @@ function previewRender(){
 }
 function startHeroPreview(){
  if(previewLoaded){previewRender();editorButtons();return}
- if(previewLoading)return;
+ if(previewLoading){previewRender();return}
  previewLoading=true;heroStatus.textContent='Loading the official hero model…';
  try{
   if(!window.THREE||!THREE.GLTFLoader)throw Error('3D renderer unavailable');
@@ -305,6 +305,8 @@ heroCanvas.addEventListener('pointermove',e=>{if(pointerStart!==null){previewAng
 heroCanvas.addEventListener('pointerup',()=>pointerStart=null);
 heroCanvas.addEventListener('pointercancel',()=>pointerStart=null);
 heroCanvas.addEventListener('wheel',e=>{e.preventDefault();previewDistance=Math.max(2.3,Math.min(7,previewDistance+Math.sign(e.deltaY)*.3))},{passive:false});
+heroCanvas.addEventListener('touchmove',e=>{if(e.touches.length===2){e.preventDefault();const a=e.touches[0],b=e.touches[1],dist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);if(previewTouchDistance!==null)previewDistance=Math.max(2.3,Math.min(7,previewDistance+(previewTouchDistance-dist)*.01));previewTouchDistance=dist}},{passive:false});
+heroCanvas.addEventListener('touchend',()=>{previewTouchDistance=null});
 updateHeroCard();
 
 const shopProducts=[["⛏","Climber's Pick","250 Demo Coins"],["🪖","Ridgeguard Armor","500 Demo Coins"],["🎭","Wilderness Skin","750 Demo Coins"],["📿","Grip Charm","300 Demo Coins"],["🥾","Trail Boots","400 Demo Coins"],["🧤","Grip Gloves","350 Demo Coins"]];
