@@ -136,5 +136,13 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - BLOCKED: signed local-validator tests, SBF build, scoped DEX-only execution, reconciliation, audit, explicit approval. **REAL-FUNDS NO-GO**.
 - No DEX, Swap, Launchpad or Game files changed.
 
+## Phase 141 — 2026-11-14 — verified dependency inventory and owner-only authorization tightening
+- DONE: CLIMBX commit `3387a5d4c97584b114d05997390aa8e2bb2b823f` release run `43505349981` SUCCESS; inventory export/upload, SHA fingerprint, --locked compilation passed. Validate `43505349903` and Browser Smoke `43505349946` SUCCESS.
+- DONE: reviewed actual `climbx/programs/climbx-authorization/src/lib.rs` grant/revoke development scaffold. No trade execution exists; placeholder program ID remains.
+- DONE: CLIMBX-only code commit `e581e0ec00f1f10aeda195d54858d973ca9f4251` adds owner-signed `tighten_grant` using existing owner-linked PDA account validation. Only permits lowering per-order/cumulative caps and shortening expiry, never expanding authority. Rejects revoked grants, invalid cap combinations and already-revoked duplicate revocation. No execution enabled.
+- PENDING: compile and test this Rust change in CI; signed local-validator tests and permanent Cargo.lock still missing. No claim of deployment or audit.
+- BLOCKED: SBF build, DEX-only on-chain execution, settlement reconciliation, independent audit and owner release approval. **REAL-FUNDS NO-GO**.
+- No DEX, Swap, Launchpad or Game edits.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
