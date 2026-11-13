@@ -83,8 +83,8 @@ test("probe fails when a configured provider search or quote is unavailable", as
 // Regression for the Nov 13 race: live probe started while Wrangler was still deploying.
 test("production smoke is triggered after a successful Worker deployment, not by main push", () => {
   const workflow = readFileSync(new URL("../workflows/api-production-readiness.yml", import.meta.url), "utf8");
-  assert.match(workflow, /workflow_run:\\n\\s+workflows: \\["Deploy Climboria API"\\]/);
-  assert.match(workflow, /github\\.event\\.workflow_run\\.conclusion == 'success'/);
-  assert.match(workflow, /github\\.event\\.workflow_run\\.head_branch == 'main'/);
-  assert.doesNotMatch(workflow, /github\\.event_name == 'push'/);
+  assert.match(workflow, /workflow_run:\n\s+workflows: \["Deploy Climboria API"\]/);
+  assert.match(workflow, /github\.event\.workflow_run\.conclusion == 'success'/);
+  assert.match(workflow, /github\.event\.workflow_run\.head_branch == 'main'/);
+  assert.doesNotMatch(workflow, /github\.event_name == 'push'/);
 });
