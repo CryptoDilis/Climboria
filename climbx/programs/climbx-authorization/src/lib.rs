@@ -18,16 +18,7 @@ pub mod climbx_authorization {
         cumulative_cap: u64,
     ) -> Result<()> {
         let now = Clock::get()?.unix_timestamp;
-        require!(allowed_mints.len() >= 1 && allowed_mints.len() <= 5, GrantError::InvalidMintCount);
-        require!(expires_at > now, GrantError::InvalidExpiry);
-        let max_expiry = now.checked_add(24 * 60 * 60).ok_or(GrantError::InvalidExpiry)?;
-        require!(expires_at <= max_expiry, GrantError::ExpiryTooLong);
-        require!(per_order_cap > 0 && cumulative_cap >= per_order_cap, GrantError::InvalidCap);
-        require!(executor != Pubkey::default(), GrantError::InvalidExecutor);
-        for (index, mint) in allowed_mints.iter().enumerate() {
-            require!(*mint != Pubkey::default(), GrantError::InvalidMint);
-            require!(!allowed_mints[..index].contains(mint), GrantError::DuplicateMint);
-        }
+        validate_new_grant(executor, &allowed_mints, expires_at, per_order_cap, cumulative_cap, now)?;
         let grant = &mut ctx.accounts.grant;
         grant.owner = ctx.accounts.owner.key();
         grant.executor = executor;
@@ -73,6 +64,28 @@ pub mod climbx_authorization {
     }
 }
 
+// Deterministic validation shared by the on-chain instruction and unit tests.
+fn validate_new_grant(
+    executor: Pubkey,
+    allowed_mints: &[Pubkey],
+    expires_at: i64,
+    per_order_cap: u64,
+    cumulative_cap: u64,
+    now: i64,
+) -> Result<()> {
+    require!((1..=5).contains(&allowed_mints.len()), GrantError::InvalidMintCount);
+    require!(expires_at > now, GrantError::InvalidExpiry);
+    let max_expiry = now.checked_add(24 * 60 * 60).ok_or(GrantError::InvalidExpiry)?;
+    require!(expires_at <= max_expiry, GrantError::ExpiryTooLong);
+    require!(per_order_cap > 0 && cumulative_cap >= per_order_cap, GrantError::InvalidCap);
+    require!(executor != Pubkey::default(), GrantError::InvalidExecutor);
+    for (index, mint) in allowed_mints.iter().enumerate() {
+        require!(*mint != Pubkey::default(), GrantError::InvalidMint);
+        require!(!allowed_mints[..index].contains(mint), GrantError::DuplicateMint);
+    }
+    Ok(())
+}
+
 // Pure policy function for deterministic negative-case tests. The account context
 // separately enforces owner signature and PDA ownership before this is called.
 fn validate_tightening(
@@ -96,6 +109,23 @@ fn validate_tightening(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn new_grant_policy_rejects_invalid_mints_caps_and_expiry() {
+        let executor = Pubkey::new_unique();
+        let mint = Pubkey::new_unique();
+        assert!(validate_new_grant(executor, &[mint], 1000, 10, 100, 500).is_ok());
+        assert!(validate_new_grant(executor, &[], 1000, 10, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint; 6], 1000, 10, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint, mint], 1000, 10, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[Pubkey::default()], 1000, 10, 100, 500).is_err());
+        assert!(validate_new_grant(Pubkey::default(), &[mint], 1000, 10, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint], 500, 10, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint], 500 + 86401, 10, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint], 1000, 0, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint], 1000, 101, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint], i64::MAX, 10, 100, i64::MAX - 1).is_err());
+    }
 
     #[test]
     fn tightening_policy_rejects_expansion_and_revocation() {
