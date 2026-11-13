@@ -214,7 +214,7 @@ const heroEnterButton=document.getElementById('heroEnterButton');
 const heroFeedback=document.getElementById('heroCreateFeedback');
 const heroStatus=document.getElementById('heroPreviewStatus');
 const heroCanvas=document.getElementById('heroPreviewCanvas');
-let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.0,previewTouchX=null,previewTouchDistance=null;
+let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewSeat=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.0,previewTouchX=null,previewTouchDistance=null;
 const validHeroName=name=>/^[A-Za-z0-9 _-]{2,24}$/.test(name)&&/[A-Za-z0-9]/.test(name);
 function savedHero(){
  try{const h=JSON.parse(localStorage.getItem(HERO_RECORD_KEY)||'null');return h&&h.model==='Adventurer'&&typeof h.name==='string'&&validHeroName(h.name)?h:null}catch(_){return null}
@@ -239,7 +239,7 @@ function previewRender(){
   const w=Math.max(1,Math.round(area.width)),h=Math.max(1,Math.round(area.height));
   if(heroCanvas.width!==w||heroCanvas.height!==h){previewRenderer.setSize(w,h,false);previewCamera.aspect=w/h;previewCamera.updateProjectionMatrix();}
  }
- if(previewModel){previewModel.rotation.y=previewAngle;previewCamera.position.set(0,1.0,previewDistance);previewCamera.lookAt(0,1.0,0);}
+ if(previewModel){previewModel.rotation.y=previewAngle;if(previewSeat)previewSeat.rotation.y=previewAngle;previewCamera.position.set(0,1.0,previewDistance);previewCamera.lookAt(0,1.0,0);}
  if(previewMixer&&previewClock)previewMixer.update(Math.min(previewClock.getDelta(),.06));
  previewRenderer.render(previewScene,previewCamera);
 }
@@ -262,20 +262,26 @@ function startHeroPreview(){
    const scale=1.9/Math.max(.001,size.y);previewModel.scale.setScalar(scale);
    const ground=new THREE.Box3().setFromObject(previewModel);previewModel.position.y=-ground.min.y;
    previewScene.add(previewModel);
-   // Preview-only resting perch: the GLB's seated animation has no chair mesh.
-   // Simple meshes give the seated figure a visible support without modifying
-   // the approved character asset or its gameplay skeleton/animations.
-   const perch=new THREE.Group();perch.name='ClimboriaHeroPreviewSeat';
-   const seatWood=new THREE.MeshStandardMaterial({color:0x745537,roughness:0.87,metalness:0});
-   const seatTrim=new THREE.MeshStandardMaterial({color:0xc2a06a,roughness:0.66,metalness:0.12});
-   const addSeatPart=(geometry,material,x,y,z)=>{
-    const part=new THREE.Mesh(geometry,material);part.position.set(x,y,z);perch.add(part);return part;
+   // The original GLB's seated clip contains no chair mesh. Use a small
+   // OPEN-FRAME bench behind the legs: a broad pedestal occluded most of the
+   // hero in real screenshots. This remains preview-only and rotates with her.
+   previewSeat=new THREE.Group();previewSeat.name='ClimboriaHeroPreviewSeat';
+   const seatWood=new THREE.MeshBasicMaterial({color:0x64452b});
+   const seatTrim=new THREE.MeshBasicMaterial({color:0x967344});
+   const seatPart=(geometry,material,x,y,z)=>{
+    const part=new THREE.Mesh(geometry,material);part.position.set(x,y,z);previewSeat.add(part);
    };
-   addSeatPart(new THREE.CylinderGeometry(.43,.43,.10,24),seatWood,0,.86,.05);
-   addSeatPart(new THREE.CylinderGeometry(.34,.39,.76,12),seatWood,0,.43,.05);
-   addSeatPart(new THREE.CylinderGeometry(.46,.46,.07,24),seatTrim,0,.065,.05);
-   previewScene.add(perch);
-   document.documentElement.dataset.climboriaHeroPreviewSeat='visible';
+   // A thin seat behind the model's hips, not a slab in front of the torso.
+   seatPart(new THREE.BoxGeometry(.74,.065,.38),seatWood,0,.72,-.27);
+   for(const x of [-.30,.30]){
+    for(const z of [-.42,-.12]){
+     seatPart(new THREE.BoxGeometry(.05,.68,.055),seatWood,x,.34,z);
+    }
+    seatPart(new THREE.BoxGeometry(.05,.48,.055),seatWood,x,.97,-.45);
+   }
+   seatPart(new THREE.BoxGeometry(.66,.10,.05),seatTrim,0,1.16,-.45);
+   previewScene.add(previewSeat);
+   document.documentElement.dataset.climboriaHeroPreviewSeat='open-frame-bench';
    if(gltf.animations&&gltf.animations.length){
     previewMixer=new THREE.AnimationMixer(previewModel);
     // The bundled hero has a real seated rest clip. Do not choose the first
