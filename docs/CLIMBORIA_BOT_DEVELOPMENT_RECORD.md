@@ -680,3 +680,354 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 5. Add CLIMBX strategy engine, risk controls, learning recommendations requiring owner approval, and high-water-mark fee ledger as isolated testable modules.
 6. Verify independent review and explicit owner release decision before real-funds trading. Record every phase, commits, exact CI and next steps in this file.
 
+
+
+## Phase 85 — 2026-11-14 — CLIMBX-only policy boundary hardening
+
+**Phase84 CI confirmed successful** on commit `7251260ae71df1ba78871d6cad897005c51b0726`: Validate `43459440974`, CLIMBX release safety `43459440899`, Browser Smoke `43459441053`, all success.
+
+**Phase85 branch:** `climbx/phase28-release-gate-ci` (draft PR #282).
+- `a20628aede755489606d425def2ebd8ea1e43b0f`: harden `climbx/authorization_policy_simulation.cjs` against negative/unsafe timestamps, empty/duplicate/malformed or >5 authorized mint allowlists, and already overspent cumulative budgets.
+- `22ed2cf58662389f1e191379880c57c915c3322e`: add 14 regression tests for malformed inputs, exact cumulative-cap equality and last-30-minute cutoff boundary. The CI workflow already runs this test file.
+- **Phase85 CI pending:** GitHub returned no runs for test commit at time of check. Do not claim passing until verified.
+
+**Scope and release:** off-chain simulator only. No Solana program, signed devnet swap, wallet trading authority, or real-funds bot. **NO-GO** remains. Other modules untouched.
+
+**Next steps for next session:** (1) check CI runs for `22ed2cf58662389f1e191379880c57c915c3322e`; fix any failure, log exact run IDs; (2) assess remaining policy fail-closed edges (slot state, mint identity, large amounts) and run local node tests if available; (3) verify actual Solana toolchain and devnet availability; (4) select reviewed on-chain authority architecture and prototype on devnet with on-chain revocation/caps and exact DEX-only execution; (5) independent security review and explicit owner go/no-go. Record all next steps and commits here after every phase; CLIMBX only.
+
+
+## Phase 86 — 2026-11-14 — CI failure diagnosed and corrected (CLIMBX only)
+
+**Branch:** `climbx/phase28-release-gate-ci`, draft PR #282.
+
+**Phase85 CI evidence on `22ed2cf58662389f1e191379880c57c915c3322e`:** Browser Smoke `43461223738` SUCCESS; Validate `43461223594` SUCCESS; CLIMBX release safety `43461223433` **FAILURE** (job `132008347061`). Exact Node test summary: 241 total, 240 pass, 1 fail. The failed test `zero issued timestamp with current time before issuance` expected `OUTSIDE_GRANT` for `nowMs=-1`, while the stricter Phase85 policy correctly returns `INVALID` for negative current timestamps. This is a **test expectation mismatch**, not evidence of live trading.
+
+**Fix commit:** `aa46aeda0eb8a6243337102a595784cb1d10a048` — update that test to explicitly expect `INVALID` and rename it to describe the negative-clock case. No policy relaxation or trading enablement. At initial check, GitHub had not yet returned new CI runs; **CI status pending verification**.
+
+**Next actions:** (1) verify workflow runs for `aa46aeda0eb8a6243337102a595784cb1d10a048`, fix any remaining failures and record exact run IDs; (2) remove redundant tests only if safe, and strengthen missing-authorization/slot policy cases; (3) verify Solana devnet CLI and infrastructure before claiming on-chain tests; (4) design/implement reviewed devnet-only on-chain authorization; (5) independent security review and explicit owner GO/NO-GO. CLIMBX only, never enable real funds. Keep appending exact commits/CI/next steps to this main-branch record.
+
+
+## Phase 87 — 2026-11-14 — cross-slot fail-closed policy hardening
+
+**Scope:** CLIMBX only, branch `climbx/phase28-release-gate-ci`, draft PR #282. No DEX/Swap/Launchpad/game changes.
+
+**Phase86 CI on `aa46aeda0eb8a6243337102a595784cb1d10a048`:** CLIMBX safety `43461555537` SUCCESS; Validate `43461555874` SUCCESS; Browser Smoke `43461555632` still in progress at time checked.
+
+**Phase87 commits:**
+- `11664ed6c07ea3da4eb89261fb705c166ff3136c`: `climbx/authorization_policy_simulation.cjs` now rejects array-shaped grant/entry objects, empty entry mint, and any unselected slot with an unknown/malformed `openPosition` state. A selected occupied slot still returns `SLOT_OCCUPIED`.
+- `a12a3eb5808fbf52691597a49f3215931184c327`: `climbx/authorization_policy_simulation.test.cjs` adds five matching negative tests. Existing CLIMBX CI workflow already includes this test file.
+- **Phase87 CI not yet observed** at initial GitHub check (zero runs returned); do not claim pass until verified.
+
+**Security limitations:** This remains a non-deploying **off-chain policy simulation**; no on-chain permissioned vault/program, no signed bot swaps, no real-money authorization, no independent security review. **CLIMBX NO-GO** remains unchanged.
+
+**Next actions (start here):** (1) verify exact CI runs for `a12a3eb5808fbf52691597a49f3215931184c327` and pending Browser Smoke `43461555632`; inspect failures and fix; (2) verify actual Solana CLI/local validator/Rust/Anchor tooling and devnet access; (3) document selected owner-revocable on-chain authority architecture and precise allowlisted DEX instruction semantics; (4) implement isolated devnet proof with owner caps, 24h expiry, revocation, five-slot isolation, and malicious transaction rejection; (5) independent review and owner GO/NO-GO. Continue CLIMBX only, append exact commits and next steps here after each phase.
+
+
+## Phase 88 — 2026-11-14 — devnet authority architecture proposal (CLIMBX only)
+
+**Phase87 CI confirmed ALL SUCCESS on `a12a3eb5808fbf52691597a49f3215931184c327`:** CLIMBX safety `43461781440`, Validate `43461781506`, Browser Smoke `43461781480`. Historical Phase86 Browser Smoke `43461555632` failed, but Phase87 Browser Smoke succeeded; do not conceal the older failure.
+
+**Phase88 commit:** `9638b0ac3db291daa85883c3ddb03e0cd01988a7` added `climbx/DEVNET_AUTHORIZATION_ARCHITECTURE.md` on `climbx/phase28-release-gate-ci` (draft PR #282). Proposed owner-controlled Solana program vault with grant/slot PDAs, owner-only create/revoke/withdraw, executor-only scoped order flow, atomic caps, expiry, last-30-minute entry stop, anti-replay, exact DEX router/CPI/ALT/account constraints, independent finalized settlement and native SOL budgeting. This is a **proposal only**, not a deployed program or proven DEX-only mechanism.
+
+**Critical blockers:** Actual Solana CLI/Rust/Anchor/local-validator/devnet tooling NOT verified; exact Climboria Signature DEX router program IDs and transaction schema NOT verified; no signed devnet swap, no independent security audit. CLIMBX real-funds **NO-GO**. Do not touch other teams' DEX/Swap/Launchpad/game files.
+
+**Next steps:** (1) check Phase88 CI on commit `9638b0ac3db291daa85883c3ddb03e0cd01988a7` and record exact results; (2) inspect real Solana tooling/environment and document versions; (3) obtain concrete DEX router schema from other workstream read-only, implement deny-all until reviewed allowlist exists; (4) prototype on-chain owner create/revoke/expiry/caps with local validator and devnet tests; (5) independently review authority/settlement before any live funds. Continue to append commits, tests, CI, blockers and next steps here each phase.
+
+
+## Phase 89 — 2026-11-14 — verified local toolchain gap and non-deploying readiness check (CLIMBX only)
+
+**Phase88 CI all SUCCESS on `9638b0ac3db291daa85883c3ddb03e0cd01988a7`:** Validate `43462161897`, Browser Smoke `43462151834`, CLIMBX release safety `43462151685`.
+
+**Actual toolchain inspection in current assistant container:** Node `v22.16.0` available. `rustc`, `cargo`, `solana`, `solana-test-validator`, `anchor` **NOT INSTALLED**. This describes only the current working container, not GitHub Actions runners or a user's computer. No devnet RPC probe, on-chain deployment, or signed swap was performed.
+
+**Phase89 commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `301eb31dd423f735e687b94c3113bc77c6596bf2`: `climbx/devnet_toolchain_check.cjs`, fail-closed, read-only version probe for required Rust/Cargo/Solana/validator/Anchor commands; even all tools present is `TOOLCHAIN_PRESENT_NOT_CHAIN_VERIFIED` and `realFundsAllowed:false`.
+- `30225cf9c5b4164e9e152ad72445aeed49519564`: `climbx/devnet_toolchain_check.test.cjs`, five mocked command-probe tests.
+- `9c57cbaaa31d30ae4b25fbe702ac8aac583a4d82`: wire readiness tests into CLIMBX release-safety GitHub Actions workflow.
+- **Phase89 CI pending**: GitHub returned no runs for latest commit at first check; do not claim pass until verified.
+
+**Release gate:** real-funds CLIMBX **NO-GO**. Readiness checks are not a deployed Solana program, audited grant, DEX-only route enforcement, or end-to-end signed devnet execution. No changes to Swap/DEX/Launchpad/game code.
+
+**Next phase handoff:** (1) verify Phase89 workflow runs for `9c57cbaaa31d30ae4b25fbe702ac8aac583a4d82`, fix failures and log exact passing IDs; (2) provision or identify a controlled devnet development environment with Rust/Cargo/Solana CLI/local validator/Anchor and record verified versions; (3) read-only identify the concrete Signature DEX router transaction schema; do not touch DEX files; (4) create devnet-only on-chain grant/revoke/caps prototype with atomic tests and strict deny-all router until reviewed; (5) signed devnet lifecycle, independent audit and explicit owner release decision. Append exact commits/CI/blockers/next actions to this main-branch record each phase.
+
+
+## Phase 90 — 2026-11-14 — deny-all devnet route preflight (CLIMBX only)
+
+**Phase89 CI all SUCCESS** on `9c57cbaaa31d30ae4b25fbe702ac8aac583a4d82`: CLIMBX release safety `43462689739`, Validate `43462689296`, Browser Smoke `43462689071`.
+
+**Toolchain actually checked in this assistant container:** Node v22.16.0 present; rustc, cargo, solana, solana-test-validator and anchor absent. No on-chain build or devnet deployment was performed.
+
+**Phase90 commits on `climbx/phase28-release-gate-ci` (draft PR #282):**
+- `4c5742153d6cd95912b8e7eb746ba1e6cc389616`: `climbx/devnet_route_preflight.cjs` denies all execution even when owner/executor/grant/router/schema/cluster fields match, because exact on-chain enforcement and audited route allowlist are not verified. Rejects mainnet, missing reviewed route and mismatches. **Never use this as a production authorization system.**
+- `b8df7f26e181b7572c39f1993d76b046e0b74500`: `climbx/devnet_route_preflight.test.cjs` adds 12 adversarial fail-closed tests.
+- `1b4c37665bc3e29c49cd9303dace4ddc7f4ff599`: adds Phase90 tests to CLIMBX non-deploying CI workflow.
+**Phase90 CI not yet verified at record time**; check exact latest-commit workflow runs before claiming success.
+
+**Release status:** CLIMBX real-funds **NO-GO**. This is a pure off-chain deny-all guard, not a Solana program, not actual DEX route inspection, and not a signed swap. No edits to Swap/DEX/Launchpad/game files.
+
+**Next phase:** (1) verify Phase90 CI for `1b4c37665bc3e29c49cd9303dace4ddc7f4ff599` and fix failures; (2) provision controlled Rust/Cargo/Solana CLI/validator/Anchor environment and record versions; (3) obtain exact DEX route program IDs/instruction schemas read-only from other workstream; (4) build owner-controlled devnet program create/revoke/expiry/caps first, with deny-all CPI until audited; (5) run adversarial local validator and signed devnet tests, independent audit and explicit owner release decision. Keep recording each phase in this main-branch file. CLIMBX only.
+
+
+## Phase 91 — 2026-11-14 — CLIMBX paper journal conflicting retry hardening (PAPER ONLY)
+
+**Scope:** CLIMBX-only offline SQLite paper-trading simulation. No Game, DEX, Swap backend, Launchpad, real execution, wallet signer, or production deployment files modified.
+
+**Baseline / predecessor:** Phase87 head `a12a3eb5808fbf52691597a49f3215931184c327` passed all three exact-head CI runs: [CLIMBX release safety 43461781440](https://github.com/CryptoDilis/Climboria/actions/runs/43461781440), [Validate Climboria 43461781506](https://github.com/CryptoDilis/Climboria/actions/runs/43461781506), [Browser Smoke 43461781480](https://github.com/CryptoDilis/Climboria/actions/runs/43461781480), all SUCCESS. Other CLIMBX developer commits to the parent branch were detected and retained; work was isolated in its own branch to avoid overwrites.
+
+**Files changed:** `climbx/paper_journal.py` and `climbx/test_paper_journal.py` only.
+
+**Completed:** Reject same order ID with different slot/mint/amount (`ORDER_CONFLICT`), conflicting post-submission or UNKNOWN signatures (`SIGNATURE_CONFLICT`), and contradictory settled reconciliation results (`OUTCOME_CONFLICT`). Invalid/blank order IDs and mints, non-string signatures, and negative timestamps fail closed. Identical retries remain idempotent. Seven new regression tests cover replay after restart, two SQLite connections, signature uniqueness, and no double reservation/debit.
+
+**Branch/PR/commits:** `climbx/phase88-paper-journal-idempotency`; [stacked PR #299](https://github.com/CryptoDilis/Climboria/pull/299) targeted existing CLIMBX development branch `climbx/phase28-release-gate-ci` (NOT production main). Implementation commit `ee31041a0985c580ad8d79ea5a225990540965dc`; tests commit `2e49ab02f6147985480c5195a1b2da7c41d6a562`; squash merge into CLIMBX branch `0654cea890ccaa61957f9ac660c467607ae6e539`.
+
+**Verified:** [CLIMBX release safety run 43462945532](https://github.com/CryptoDilis/Climboria/actions/runs/43462945532) completed SUCCESS on exact test head `2e49ab0`. Following stacked-PR merge, CLIMBX release safety [43463219412](https://github.com/CryptoDilis/Climboria/actions/runs/43463219412), Validate [43463219401](https://github.com/CryptoDilis/Climboria/actions/runs/43463219401) and Browser Smoke [43463219306](https://github.com/CryptoDilis/Climboria/actions/runs/43463219306) have all COMPLETED SUCCESSFULLY on exact merged CLIMBX branch head `0654cea8`; release gate is non-deploying (still **NO-GO** for real funds).
+
+**Remaining risks:** All code is PAPER ONLY, not live Solana order processing; SQLite journal models one simulated wallet and does not enforce scoped delegated authority, real-chain finality, crash-safe submission/reconciliation, or multi-host concurrency. CLIMBX real-funds GO/NO-GO = **NO-GO**. The separate devnet toolchain and deny-all router preparation in Phases 89–90 are not live execution.
+
+**EXACT NEXT:** (1) evaluate paper journal crash-safe intent-before-submit outbox and reconciliation-before-retry with adversarial fault-injection tests, CLIMBX-only; (2) continue controlled toolchain provisioning and devnet-only scoped-grant prototype, with reviewed router allowlist; (3) keep all real trades and third-party routing disabled pending independent audit and owner approval.
+
+
+## Phase 91 — 2026-11-14 — verified Phase90 CI and devnet implementation blocker (CLIMBX only)
+
+**Phase90 CI all SUCCESS** on `1b4c37665bc3e29c49cd9303dace4ddc7f4ff599`: Browser Smoke `43462968639`, CLIMBX release safety `43462968563`, Validate `43462969221`.
+
+**Verified toolchain in assistant container:** `node` v22.16.0 available; `rustc`, `cargo`, `solana`, `solana-test-validator`, `anchor` not found by executable-path inspection. This is not a statement about user/CI machines; no RPC connectivity or Solana deployment verified.
+
+**Phase91 branch commit:** `8f08f484a8b792b3684bd96e76d2307780160531` creates `climbx/DEVNET_PROGRAM_IMPLEMENTATION_GATE.md`, documenting environment, owner-controlled grant/vault prerequisites, DEX route review dependency, required adversarial local-validator tests and independent audit. **Documentation only**, not a working Solana program. No DEX/Swap/Launchpad/game edits. Real-funds **NO-GO**.
+
+**Next Phase92:** (1) verify Phase91 CI on commit `8f08f484a8b792b3684bd96e76d2307780160531`; (2) establish a controlled Solana devnet build/validator environment with pinned tool versions (or document inability); (3) read-only review DEX router transaction schema; (4) implement and test owner grant/revoke/caps on devnet, deny all swaps until exact route constraints are verified; (5) independent review, signed settlement evidence, explicit owner release decision. Keep append-only progress record on main after every phase.
+
+
+## Phase 92 — 2026-11-14 — CLIMBX grant lifecycle simulator (non-deploying)
+
+**Phase91 CI all SUCCESS** on `8f08f484a8b792b3684bd96e76d2307780160531`: Validate `43463474332`, CLIMBX safety `43463474298`, Browser Smoke `43463474296`.
+
+**Phase92 CLIMBX-only branch commits:**
+- `0002cbfcfb2922e5781011746c6fe57723428e49`: `climbx/devnet_grant_state_simulation.cjs` models owner/executor grant, nonce, <=24h expiry, <=5 unique allowed mints, per-trade/cumulative caps, owner-only revoke, bot-only order checks, last-30-minute cutoff, position state and sequence replay rejection. **Pure JavaScript simulation, not an on-chain Solana program or atomic settlement.**
+- `c4f3e668a9ed2a65ac9d5f1279bcb34dc945013c`: 18 grant/revoke/expiry/replay/cap tests in `climbx/devnet_grant_state_simulation.test.cjs`.
+- `bc51db923897f698c6cdbf48cbe8e3370aeb9591`: wire tests into CLIMBX non-deploying release gate.
+**Phase92 CI not yet verified** at log time. Check exact commit workflow runs before claiming pass.
+
+**Critical limits:** Simulated revoke has no blockchain effect; no state mutation after orders; no on-chain caps, transaction signing, DEX router CPI, devnet deployment or independent audit. Current assistant container lacks Rust/Cargo/Solana CLI/local validator/Anchor. CLIMBX real-funds **NO-GO**. No DEX/Swap/Launchpad/game files modified.
+
+**Next Phase93:** (1) verify Phase92 CI on `bc51db923897f698c6cdbf48cbe8e3370aeb9591`, investigate failures; (2) add adversarial grant lifecycle tests for nonce reuse and atomicity limitations, explicitly document that off-chain simulations cannot enforce them; (3) provision controlled Solana devnet build environment, pinned versions and local validator; (4) implement owner-signed on-chain grant/revoke/caps with deny-all swaps until concrete reviewed DEX route exists; (5) independent review and explicit owner GO/NO-GO. Continue CLIMBX-only append-only handoff.
+
+
+## Phase 93 — 2026-11-14 — malformed persisted grant hardening and nonce/atomicity limits (CLIMBX only)
+
+**Phase92 CI all SUCCESS** for `bc51db923897f698c6cdbf48cbe8e3370aeb9591`: CLIMBX release safety `43463837926`, Browser Smoke `43463837906`, Validate `43463837986`.
+
+**Phase93 branch commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `00fc02fc71e6adbdd79dd553cd586fdcdf687c3b`: harden `climbx/devnet_grant_state_simulation.cjs` against malformed persisted owner/executor/nonce, expiry, mint allowlist, sequence, array-shaped grant, and revoke input. This is still off-chain simulation.
+- `bcf6c3068fe5b22b40bf297d8f09e3d7d8d84ad8`: add ten tests, including invalid grants and **explicit demonstrations** that independent create calls can reuse the same nonce and that evaluating an order does not atomically consume sequence/spending caps. These two tests document vulnerabilities that **must be solved on-chain**; they are not passing evidence of replay safety.
+
+**Phase93 CI pending** on `bcf6c3068fe5b22b40bf297d8f09e3d7d8d84ad8` (no runs returned at first check). Do not claim pass until verified.
+
+**Release status:** real-funds CLIMBX **NO-GO**. No Solana program, signed devnet trade, on-chain nonce uniqueness or atomic cap accounting, verified DEX-only CPI constraints, or independent audit. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase94:** (1) verify exact Phase93 CI and fix any failure; (2) make nonce uniqueness/atomic cap limitations impossible to confuse with an authorized trade, retaining simulation-only interfaces; (3) provision Rust/Cargo/Solana CLI/validator/Anchor and capture versions; (4) implement owner-only create/revoke and nonce PDA uniqueness with atomic on-chain spend/sequence updates on local validator, DEX CPI deny-all until route review; (5) devnet evidence, independent review and explicit owner GO/NO-GO. Continue append-only record on main.
+
+
+## Phase 94 — 2026-11-14 — explicit non-executable simulator results (CLIMBX only)
+
+**Phase93 CI all SUCCESS** on `bcf6c3068fe5b22b40bf297d8f09e3d7d8d84ad8`: Validate `43464241957`, CLIMBX release safety `43464241977`, Browser Smoke `43464242688`.
+
+**Phase94 branch commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `3731ff94fa550b2817e0dd6d0ee6c9a901b09df1`: successful `createGrant`, `revokeGrant`, and `evaluateOrder` simulations explicitly return `simulationOnly:true`, `mayExecute:false`. The `ok:true` field means only that a local policy simulation passed; it must never be used as trade authorization.
+- `eab5b409d5021469f6b506c7cb2b04ead509559d`: update prior success assertion and add three regression tests that no successful simulation grants execution permission.
+**Phase94 CI pending** for `eab5b409d5021469f6b506c7cb2b04ead509559d` at record time. Workflow already includes this test file.
+
+**Blockers unchanged:** no deployed Solana grant/vault program, no atomic on-chain nonce/spend/sequence accounting, no verified Signature DEX CPI/account allowlist, no signed devnet swap or independent audit. Current assistant container lacks Rust/Cargo/Solana CLI/local validator/Anchor. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase95:** verify Phase94 CI; inspect CLIMBX call sites for consumers that might mistake `ok:true` for execution permission; if found, fail closed and add regression tests. Establish actual Solana toolchain and local validator before claiming on-chain work; obtain DEX router constraints read-only; implement owner-signed on-chain grant/revoke/caps and independent audit. Append next phase here.
+
+
+## Phase 95 — 2026-11-14 — CLIMBX execution authorization boundary (non-deploying)
+
+**Phase94 CI all SUCCESS** on `eab5b409d5021469f6b506c7cb2b04ead509559d`: CLIMBX release safety `43465096110`, Browser Smoke `43465096010`, Validate `43465096500`.
+
+**CLIMBX-only branch inspection:** fetched recursive Git tree for Phase94 commit; reviewed CLIMBX file paths. No evidence from this filename inspection that simulator is wired to a live executor; it is **not** a complete semantic call-site audit.
+
+**Phase95 branch commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `3752511020548b72ed229ef35836552ce92eb222`: `climbx/execution_authorization_boundary.cjs`, explicit fail-closed `authorizeBotExecution` that never returns execution permission, even for verified wallet, passing policy simulation, matching devnet simulation or spoofed caller-provided on-chain proof. This is a safety interface, **not a real on-chain authorization verifier**.
+- `6b3ceb5619235f2102f4c439394bbda4c5178449`: eight tests for simulated/spoofed authorization and missing inputs.
+- `1ea86e78fac494ccda59ca7b57bcc2a5ea7e0009`: include execution boundary tests in non-deploying CLIMBX CI.
+**Phase95 CI pending** on `1ea86e78fac494ccda59ca7b57bcc2a5ea7e0009` (no runs returned at first check).
+
+**Status:** CLIMBX real-funds **NO-GO**. No Solana grant/vault program, signed devnet swap, atomic on-chain caps, verified DEX router CPI, or independent audit. No Swap/DEX/Launchpad/game files changed.
+
+**Next Phase96:** verify Phase95 CI and fix failures; conduct targeted CLIMBX source-level call-site audit for `evaluateClimbxEntry`, `evaluateOrder`, `authorizeBotExecution`, `mayExecute` and any trade execution paths; add regression tests for actual consumers if found. Provision Solana build/validator environment and reviewed DEX route schema before devnet on-chain implementation. Continue main-branch handoff logging.
+
+
+## Phase 96 — 2026-11-14 — policy simulation execution boundary hardening (CLIMBX only)
+
+**Phase95 CI all SUCCESS** on `1ea86e78fac494ccda59ca7b57bcc2a5ea7e0009`: Validate `43465772196`, CLIMBX release safety `43465772285`, Browser Smoke `43465772264`.
+
+**Source review:** inspected `climbx/authorization_policy_simulation.cjs`, `devnet_grant_state_simulation.cjs`, `execution_authorization_boundary.cjs`, `wallet_api_factory.cjs`, `README.md` and recursive branch tree. Wallet API composes challenge/bind, not a trading executor. Policy simulator previously returned `allowed:true` without explicit `mayExecute:false`; this could be misread by future consumers. This is a targeted source review, **not** a proof of absence of every execution call site in the entire repository.
+
+**Phase96 branch commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `fc9d417c6b583ccb2e0b0cbb9ee09f64b87e3174`: successful `evaluateClimbxEntry` now explicitly returns `simulationOnly:true,mayExecute:false`.
+- `ffa25da30b5c4e528f63fb75a7161fff6a2a614c`: update policy assertions and add regression test.
+- `6fcca54994bb84512db8e235881845b73e614339`: `authorizeBotExecution` rejects legacy/spoofed policy results lacking explicit non-executable markers.
+- `132ac65617b72ae5baf43946874bcae15c876d2f`: add two execution-boundary regression tests.
+**Phase96 CI pending** on latest commit `132ac65617b72ae5baf43946874bcae15c876d2f` (no runs returned on initial check). Existing CI runs both test files.
+
+**Release decision:** CLIMBX real-funds **NO-GO**. No on-chain grant, atomic caps, signed devnet swap, audited DEX-only CPI or security audit. No edits to DEX/Swap/Launchpad/game.
+
+**Next Phase97:** verify Phase96 CI and repair any failures; complete targeted call-site search across CLIMBX files using source retrieval, document any direct consumer of `allowed:true`; add enforcement tests for any found; provision Solana toolchain/local validator and begin owner-controlled devnet program only after toolchain verification. Keep permanent main-branch record updated.
+
+
+## Phase 97 — 2026-11-14 — CLIMBX static execution boundary audit
+
+**Phase96 CI all SUCCESS** on `132ac65617b72ae5baf43946874bcae15c876d2f`: Validate `43466522891`, CLIMBX release safety `43466522892`, Browser Smoke `43466522868`.
+
+**Phase97 commits** on `climbx/phase28-release-gate-ci`:
+- `2f8b5ecb15beebedc1f12275ccc26c7b3b198559`: add `climbx/audit_execution_boundary.cjs` static source scanner that flags direct calls to simulation/execution authorization APIs outside their source/test files and runtime `mayExecute:true` literals.
+- `aad99d226d63726945625d4b62750d3d2affa1c9`: four regression tests, including running the audit over CLIMBX CJS files.
+- `adfef36c25ef582158269379024adfc1c8d0b7b2`: wire audit tests into CLIMBX non-deploying CI.
+**Phase97 CI pending verification** on `adfef36c25ef582158269379024adfc1c8d0b7b2`.
+
+**Audit limits:** This scanner is intentionally narrow: only top-level CLIMBX `.cjs` files and simple static patterns. It cannot prove no dynamic calls, imports in other directories, Python consumers, indirect dispatch, or actual Solana execution. A broader automated GitHub source audit was attempted but hit tool-call limits and was **not completed**. Do not claim exhaustive review or runtime safety from this scanner.
+
+**Release status:** CLIMBX real-funds **NO-GO**. No deployed on-chain vault, signed devnet swap, reviewed DEX route or audit. No DEX/Swap/Launchpad/game changes.
+
+**Next Phase98:** verify Phase97 CI, fix any static audit failures; expand source coverage to CLIMBX Python and relevant integration paths with reviewed false-positive rules; identify actual trade execution consumers; provision pinned Rust/Solana toolchain and implement owner-signed devnet grant/revoke/caps with no router CPI until independently reviewed. Continue permanent main-branch handoff logging.
+
+
+## Phase 98 — 2026-11-14 — expanded CLIMBX static audit to Python
+
+**Phase97 CI on `adfef36c25ef582158269379024adfc1c8d0b7b2`:** CLIMBX release safety `43466986647` SUCCESS, Validate `43466986763` SUCCESS, Browser Smoke `43466987555` IN_PROGRESS at first check. Do not claim all passed until rechecked.
+
+**Phase98 branch commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `b72a7eecb07c446cfa1818f355306e02736e94e4`: `climbx/audit_execution_boundary.cjs` now scans top-level CLIMBX `.py` in addition to `.cjs` for known direct authorization call sites and executable flags.
+- `ecd131d3ed9fed402fd82ed2abdc6fec7c1b2266`: two regression tests for Python direct call and executable-flag detection. Existing CLIMBX release-safety CI runs audit tests.
+**Phase98 CI pending** on `ecd131d3ed9fed402fd82ed2abdc6fec7c1b2266` at record time.
+
+**Audit limitations:** regex-based, top-level CLIMBX CJS/Python only; does not inspect nested folders, other repository modules, dynamic calls, aliased imports, or distinguish every comment/string false positive. It is not an execution security proof. No on-chain Solana grant/vault, signed devnet swap, audited router or independent security review. CLIMBX real-funds **NO-GO**. No edits to Swap/DEX/Launchpad/game.
+
+**Next Phase99:** verify Phase97 Browser Smoke and Phase98 CI; investigate any audit failures and avoid suppressing real findings; improve recursive scan and import-aware review if needed; verify Solana toolchain and implement owner-only grant/revoke/caps in a controlled local validator before claiming devnet readiness. Continue append-only main-branch progress recording.
+
+
+## Phase 99 — 2026-11-14 — recursive CLIMBX source audit (non-deploying)
+
+**Phase97 CI all SUCCESS** on `adfef36c25ef582158269379024adfc1c8d0b7b2`: Browser Smoke `43466987555`, Validate `43466986763`, CLIMBX safety `43466986647`.
+**Phase98 CI all SUCCESS** on `ecd131d3ed9fed402fd82ed2abdc6fec7c1b2266`: Browser Smoke `43467187338`, Validate `43467188105`, CLIMBX safety `43467187459`.
+
+**Phase99 CLIMBX branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `871a9c83d694fa336ea126aeed19930ea68c53b0`: recursively scan nested `.cjs` and `.py` under CLIMBX for known simulation/execution call sites and executable flags; skip symlinks, preserve relative paths and sort results.
+- `96b481e8c0a3513495c321fda081df01024e2130`: three regression tests for nested listing, nested call-site detection, and symlink isolation. Existing CLIMBX CI invokes the audit test file.
+**Phase99 CI pending** on `96b481e8c0a3513495c321fda081df01024e2130` at first check.
+
+**Limits:** regex-only static review, scoped to CLIMBX `.cjs`/`.py`; no JavaScript ESM/TS, cross-directory call graph, alias analysis, dynamic dispatch or runtime verification. Passing CI is not proof of trade authorization. No on-chain vault/program, audited router CPI, signed devnet swap, or independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase100:** verify Phase99 CI, repair failures; evaluate expanding to `.js`/`.ts` files and strengthen parser-aware checks with low false-positive risk; continue on-chain toolchain readiness and owner-controlled Solana grant/revoke/caps development only after actual toolchain and validator verification. Append further handoff entries on main.
+
+
+## Phase 100 — 2026-11-14 — multi-language CLIMBX execution boundary static audit
+
+**Phase99 CI all SUCCESS** on `96b481e8c0a3513495c321fda081df01024e2130`: Browser Smoke `43467504088`, Validate `43467504148`, CLIMBX release safety `43467504099`.
+
+**Phase100 commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `56764d1f053bcd2c0da65057ca65236ede47b5cd`: extend recursive CLIMBX scanner to `.js`, `.mjs`, `.jsx`, `.ts`, `.tsx`, `.cjs`, `.py` source.
+- `6cf5baebca87bfd086fe58363d146a2482033f65`: three regression tests for extension listing, TypeScript direct call and ESM executable flag. Existing CLIMBX CI includes the scanner tests.
+**Phase100 CI pending** on `6cf5baebca87bfd086fe58363d146a2482033f65` at first check.
+
+**Security boundaries unchanged:** static regex patterns only; not AST, taint analysis, dynamic calls, cross-repository import tracing, or runtime/on-chain verification. Scope limited to CLIMBX subtree. No on-chain Solana grant/vault, atomic cap/replay enforcement, signed devnet trade, verified Signature DEX router CPI or independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase101:** verify Phase100 CI; evaluate static scanner false positives and nested files; add detection of aliased imports and authorization consumer patterns without treating regex results as security proof; establish actual Solana toolchain/validator for devnet program implementation. Keep main-branch handoff updated.
+
+
+## Phase 101 — 2026-11-14 — CLIMBX aliased authorization import review
+
+**Phase100 CI all SUCCESS** on `6cf5baebca87bfd086fe58363d146a2482033f65`: Validate `43467976479`, Browser Smoke `43467976485`, CLIMBX release safety `43467976393`.
+
+**Phase101 commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `2a7296336e844efd51153ae3f5b50c0ebe4f65cf`: extend recursive CLIMBX static scanner with a `REVIEW_ALIASED_AUTHORIZATION_IMPORT` finding for known authorization function aliases in JS/TS and Python source. Findings require human review; regex detection is not AST or taint analysis.
+- `3ef5cda157034655df90f92ac5d35ff068216199`: four regression tests covering CommonJS destructuring alias, ESM alias, Python alias, and unrelated imports.
+**Phase101 CI pending** on `3ef5cda157034655df90f92ac5d35ff068216199` at initial check. Existing CLIMBX CI invokes audit tests.
+
+**Status:** real-funds CLIMBX **NO-GO**. No Solana on-chain program, atomic cap/nonce enforcement, signed devnet swap, verified DEX CPI constraints or independent audit. No DEX/Swap/Launchpad/game changes.
+
+**Next Phase102:** verify Phase101 CI; investigate and fix any scanner failures; improve detection of dynamic property access and assignment only with well-defined false-positive handling; prioritize actual Solana toolchain and local validator verification for on-chain devnet grant/revoke implementation. Continue main-branch permanent record.
+
+
+## Phase 102 — 2026-11-14 — dynamic authorization property review (CLIMBX only)
+
+**Phase101 CI all SUCCESS** on `3ef5cda157034655df90f92ac5d35ff068216199`: Browser Smoke `43468312638`, Validate `43468312671`, CLIMBX release safety `43468312679`.
+
+**Phase102 commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `3d0e17bfd8ecff66d56b9aef22d0a60903d0b278`: static scanner flags computed property access to authorization functions and computed executable-flag assignments for manual review.
+- `1761430bd05f67f6d126182bcfbb1eaa286783bf`: four regression tests for dynamic authorization and flag patterns.
+- `ceed03629b4bc770fbc831f2baa7733d515a2261`: correct regex to recognize quoted computed flag assignments.
+**Phase102 CI pending** on `ceed03629b4bc770fbc831f2baa7733d515a2261` at initial check. CI already runs the static audit test suite.
+
+**Limitations:** scanner remains regex-based and scoped to CLIMBX source, cannot prove absence of dynamically generated calls, aliases, on-chain authority or malicious code. No deployed Solana vault/grant program, no atomic nonce/cap enforcement, signed devnet swap, audited DEX CPI or independent review. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase103:** verify Phase102 CI; inspect any failures; add focused security tests for bypass patterns without treating static scanning as proof; prioritize pinned Rust/Cargo/Solana toolchain and validator, owner-signed grant/revoke/caps prototype on localnet, devnet evidence and independent audit. Append next phase to main log.
+
+
+## Phase 103 — 2026-11-14 — fail-closed authorization input handling
+
+**Phase102 CI all SUCCESS** on `ceed03629b4bc770fbc831f2baa7733d515a2261`: CLIMBX release safety `43468760124`, Browser Smoke `43468760261`, Validate `43468760055`.
+
+**Phase103 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `b679467147c844f0416167bc1e6591a996be7548`: wrap deny-only `authorizeBotExecution` input access in try/catch; throwing getters/proxies return `{authorized:false,mayExecute:false,reason:'INVALID_AUTHORIZATION_INPUT'}` instead of escaping as exceptions. Does not authorize or execute transactions.
+- `e9f6be3cca5140371d0efd48d11d81fb2c62810b`: four regression tests for throwing wallet getter, policy getter, route getter and hostile proxy.
+**Phase103 CI pending** on `e9f6be3cca5140371d0efd48d11d81fb2c62810b` at initial check. Existing CLIMBX CI includes authorization boundary tests.
+
+**Real-funds trading NO-GO.** This is off-chain error hardening, not an on-chain grant program. No signed devnet transaction, atomic cap/nonce enforcement, owner-controlled vault, verified DEX-only CPI route or independent security review. No edits to Swap/DEX/Launchpad/game.
+
+**Next Phase104:** verify Phase103 CI and resolve failures; evaluate null/malformed input fail-closed behavior and explicitly bound authorization inputs; prioritize actual Solana/Rust toolchain and local validator before designing claims of real on-chain execution. Keep permanent main record updated.
+
+
+## Phase 104 — 2026-11-14 — CLIMBX grant simulation success marker and malformed input tests
+
+**Phase103 CI all SUCCESS** on `e9f6be3cca5140371d0efd48d11d81fb2c62810b`: CLIMBX release safety `43469252314`, Validate `43469252397`, Browser Smoke `43469252189`.
+
+**Phase104 commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `79edb68bb123cb417f749e281ab94e5e02bdc31d`: deny-only `authorizeBotExecution` now also requires `grantSimulation.ok === true` alongside `simulationOnly === true` and `mayExecute === false` before reaching the explicit on-chain-not-implemented denial. This never enables transactions.
+- `7c925350c6f4e37612fb2f78c91192a1bd1f2f1f`: four regression tests for failed/missing grant success markers, malformed primitive inputs across all authorization objects, and ignored hostile caller-provided on-chain proof.
+**Phase104 CI pending** on `7c925350c6f4e37612fb2f78c91192a1bd1f2f1f` at first check.
+
+**Status:** CLIMBX real-funds trading **NO-GO**. Off-chain safety hardening is not a Solana on-chain vault, atomic cap/nonce enforcement, signed devnet swap, DEX-only CPI router or independent audit. No edits to Swap/DEX/Launchpad/game.
+
+**Next Phase105:** verify Phase104 CI and fix failures; review off-chain boundary for mutation/side-effect risks; prioritize actual Rust/Cargo/Solana CLI and local validator availability before any on-chain grant/revoke prototype; keep main log updated.
+
+
+## Phase 105 — 2026-11-14 — CLIMBX deny-only boundary side-effect regression
+
+**Phase104 CI all SUCCESS** on `7c925350c6f4e37612fb2f78c91192a1bd1f2f1f`: CLIMBX release safety `43469549615`, Validate `43469549758`, Browser Smoke `43469550133`.
+
+**Phase105 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `02a0a5a320961d3a1e021f0ac73d796168267be8`: four regression tests for frozen authorization inputs, proxy setter avoidance, caller proof getter avoidance, and repeated deny-only calls leaving grant sequence/spend unchanged.
+- `4fda4b71cb3620240f27ae16beb247fe55930a7d`: document explicit read-only contract on the deny-only execution authorization boundary. No runtime permission grant or execution code added.
+**Phase105 CI pending** on `4fda4b71cb3620240f27ae16beb247fe55930a7d` at first check.
+
+**Limits:** tests assert side-effect absence for the tested objects, not proof of universal absence of effects or Solana authority. CLIMBX real-funds **NO-GO**. No on-chain vault/grant, atomic cap/nonce enforcement, signed devnet swap, verified Signature DEX-only CPI, independent security audit. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase106:** verify Phase105 CI and fix any failures; inspect CI coverage and add negative tests for grant and policy input stability; prioritize Rust/Cargo/Solana CLI + local validator availability before implementing owner-controlled grant/revoke/caps on-chain. Keep main progress record append-only.
+
+
+## Phase 106 — 2026-11-14 — CLIMBX policy/grant stability and short-circuit regression
+
+**Phase105 CI all SUCCESS** on `4fda4b71cb3620240f27ae16beb247fe55930a7d`: CLIMBX release safety `43469836604`, Validate `43469836318`, Browser Smoke `43469836323`.
+
+**Phase106 branch commit** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `544bb2c1e60f1b8b69ec199a44b47cb9064595db`: four new authorization boundary regression tests verifying repeated denials preserve frozen policy/grant simulation inputs and counters; failed grant avoids later route getter; failed policy avoids later grant getter; and executable grant marker is rejected even if `ok:true`.
+**Phase106 CI pending** on `544bb2c1e60f1b8b69ec199a44b47cb9064595db` at first check. No production runtime logic changed this phase.
+
+**Security state:** off-chain deny-only, simulation-only. No on-chain owner-controlled Solana grant/vault, atomic nonce/spend enforcement, signed devnet transaction, verified DEX-only route or independent audit. CLIMBX real-funds **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase107:** verify Phase106 CI, investigate any failure; prioritize actual Solana toolchain availability, local validator and owner-signed on-chain grant/revoke/caps prototype with deterministic tests rather than further repetitive off-chain assertions; maintain main progress record.
+
+
+## Phase 107 — 2026-11-14 — verified Solana local-validator toolchain blocker
+
+**Phase106 CI all SUCCESS** on `544bb2c1e60f1b8b69ec199a44b47cb9064595db`: CLIMBX release safety `43470310467`, Validate `43470310333`, Browser Smoke `43470310320`.
+
+**Phase107 branch commit** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `9ca0aead9594bc36d4f89aef6276d8f3093f028b`: added `climbx/LOCAL_VALIDATOR_READINESS.md`, documenting actual toolchain probe and the owner-signed local-validator authorization gate.
+
+**Toolchain probe in assistant execution environment:** `rustc`, `cargo`, `solana`, `solana-test-validator`, `anchor` all MISSING; Node v22.16.0 available. This does **not** establish what tools are installed on other CI runners or the user's machine. No local validator or signed devnet transaction run. No production code changed; Phase107 CI not yet verified at record time.
+
+**Next Phase108:** verify Phase107 CI; provision pinned compatible Rust/Solana/Anchor toolchain on a suitable runner; capture command versions and actual local-validator startup; implement and test minimal owner-signed on-chain grant/revoke with nonce/cap enforcement, then route restrictions. Do not infer toolchain availability from simulation CI. Real-funds trading **NO-GO**; no Swap/DEX/Launchpad/game edits.

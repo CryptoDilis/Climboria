@@ -323,6 +323,9 @@ jobs:
           console.log('PASS: public DEX exposes no Jupiter credential; wallet signing and execution require explicit backend feature enablement; security gates documented.');
           JS
 
+      - name: Validate exact raw Solana input amount arithmetic
+        run: node --test .github/scripts/swap-amount.test.mjs
+
       - name: Test standalone Swap interface
         run: |
           node <<'JS'
@@ -338,6 +341,18 @@ jobs:
               for(const selector of ['#connectWallet','#quoteAmount','#quoteFromSearch','#quoteFromSearch','#getQuote','#prepareSwap','#quoteStatus']) if(await page.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
               const heading=await page.locator('h1').first().innerText();
               if(!heading.toLowerCase().includes('swap')) throw new Error('Unexpected Swap page heading: '+heading);
+              // Regression: 0.0000157 SOL is exactly 15,700 lamports.
+              // Float multiplication followed by floor previously produced 15,699.
+              let requestedRawAmount=null;
+              await page.route('https://api.climboria.fun/api/swap/quote**',route=>{
+                requestedRawAmount=new URL(route.request().url()).searchParams.get('amount');
+                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({requestId:'test-quote',inAmount:requestedRawAmount,outAmount:'1234567',router:'Exact amount fixture'})});
+              });
+              await page.locator('#quoteAmount').fill('0.0000157');
+              await page.locator('#getQuote').click();
+              await page.waitForFunction(()=>document.querySelector('#quoteStatus')?.textContent.includes('Quote received'),null,{timeout:15000});
+              if(requestedRawAmount!=='15700') throw new Error('Swap quote used rounded/truncated raw input units: '+requestedRawAmount);
+              if(!await page.locator('#quoteResults').textContent().then(x=>x.includes('1.234567'))) throw new Error('Swap exact-amount quote output was not rendered');
               if(errors.length) throw new Error('Swap browser errors: '+errors.join(' | '));
               console.log('PASS standalone Swap route, wallet, token search, quote and feature-gated execution controls.');
             } finally { await browser.close(); }
@@ -467,6 +482,49 @@ jobs:
               if(!persistedLabel.includes('TST')||!persistedLabel.includes('Test Solana')) throw new Error('Watchlist symbol metadata did not persist after reload: '+persistedLabel);
               await page.locator('#watchlistItems [data-watch-remove="'+mint+'"]').click();
               if(await page.locator('#watchlistItems a').count()!==0) throw new Error('Watchlist remove action did not remove saved mint');
+              // DEX quote UX: a slow provider response must never overwrite a newer
+              // amount, and a provider quote with the wrong inAmount must fail closed.
+              let quoteCalls=0,releaseOldQuote,oldQuoteStarted;
+              const oldQuoteGate=new Promise(resolve=>{releaseOldQuote=resolve});
+              const oldQuoteObserved=new Promise(resolve=>{oldQuoteStarted=resolve});
+              await page.route('https://api.climboria.fun/api/swap/quote**',async route=>{
+                const amount=new URL(route.request().url()).searchParams.get('amount');
+                quoteCalls++;
+                if(quoteCalls===1){
+                  oldQuoteStarted();
+                  await oldQuoteGate;
+                  return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'100000000',outAmount:'1111111',router:'STALE FIRST QUOTE'})});
+                }
+                if(amount==='200000000')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:amount,outAmount:'2222222',router:'CURRENT SECOND QUOTE'})});
+                if(amount==='15700')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:amount,outAmount:'1234567',router:'PRECISION QUOTE'})});
+                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'999999',outAmount:'3333333',router:'INVALID MISMATCHED QUOTE'})});
+              });
+              // DEX quote panel is intentionally hidden until its UI path is selected.
+              // Expose it in this isolated browser test to exercise quote logic
+              // without touching production trading-gate / visibility controls.
+              await page.evaluate(()=>{document.querySelector('#swapQuote').hidden=false});
+              await page.locator('#quoteAmount').fill('0.1');
+              await page.locator('#getQuote').click();
+              await oldQuoteObserved;
+              await page.locator('#quoteAmount').fill('0.2');
+              const invalidated=await page.evaluate(()=>({result:document.querySelector('#quoteResults')?.textContent,status:document.querySelector('#quoteStatus')?.textContent}));
+              if(!invalidated.result.includes('No current quote')||!invalidated.status.includes('Amount changed'))throw new Error('Edited amount retained a stale quote: '+JSON.stringify(invalidated));
+              await page.locator('#getQuote').click();
+              await page.waitForFunction(()=>document.querySelector('#quoteResults')?.textContent.includes('CURRENT SECOND QUOTE')&&document.querySelector('#quoteStatus')?.textContent.includes('Quote received'),null,{timeout:15000});
+              releaseOldQuote();
+              await page.waitForTimeout(350);
+              const afterOld=await page.evaluate(()=>({result:document.querySelector('#quoteResults')?.textContent,status:document.querySelector('#quoteStatus')?.textContent}));
+              if(!afterOld.result.includes('CURRENT SECOND QUOTE')||afterOld.result.includes('STALE FIRST QUOTE'))throw new Error('Stale DEX quote overwrote the latest amount: '+JSON.stringify(afterOld));
+              await page.locator('#quoteAmount').fill('0.3');
+              await page.locator('#getQuote').click();
+              await page.waitForFunction(()=>document.querySelector('#quoteStatus')?.textContent.includes('Quote unavailable'),null,{timeout:15000});
+              const rejected=await page.evaluate(()=>document.querySelector('#quoteResults')?.textContent);
+              if(!rejected.includes('inconsistent quote')||rejected.includes('INVALID MISMATCHED QUOTE'))throw new Error('DEX accepted an incorrectly sized Jupiter quote: '+rejected);
+              await page.locator('#quoteAmount').fill('0.0000157');
+              await page.locator('#getQuote').click();
+              await page.waitForFunction(()=>document.querySelector('#quoteResults')?.textContent.includes('PRECISION QUOTE')&&document.querySelector('#quoteStatus')?.textContent.includes('Quote received'),null,{timeout:15000});
+              if(!page.url().includes('/dex/'))throw new Error('DEX quote regression navigated away from market terminal');
+              console.log('PASS DEX stale quote invalidation, newest-request wins, and provider input-amount consistency.');
               if(errors.length) throw new Error('DEX history/watchlist browser errors: '+errors.join(' | '));
               console.log('PASS local DEX route, market explorer, search, wallet and quote-preview controls; token/pool URL and browser back/forward restore.');
             } finally { await browser.close(); }

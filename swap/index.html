@@ -423,6 +423,7 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 <section class="side-panel selected-panel"><div class="chart-terminal-head"><div><span class="side-kicker">PRO SPOT TERMINAL</span><h2>Market chart</h2></div><span class="live-tag"><i></i> LIVE POOL</span></div><div class="side-head"><div><span class="side-kicker">ASSET INTELLIGENCE</span><h2 id="selectedAssetTitle">SOL · Solana</h2></div><span class="live-tag">SELECTED</span></div><div class="selected-price"><b id="selectedAssetPrice">—</b><span id="selectedAssetChange">—</span></div><div class="selected-chart-wrap premium-chart-wrap"><iframe id="selectedAssetChart" title="Selected token price chart" loading="lazy" referrerpolicy="no-referrer"></iframe><div class="chart-empty" id="selectedChartEmpty">Choose a Solana token to load its pool chart.</div></div><div class="asset-stats"><div><small>24H VOLUME</small><b id="selectedAssetVolume">—</b></div><div><small>MARKET CAP / FDV</small><b id="selectedAssetMcap">—</b></div><div><small>POOL LIQUIDITY</small><b id="selectedAssetLiquidity">—</b></div><div><small>POOL</small><b id="selectedAssetVenue">—</b></div></div><div class="market-foot" id="selectedAssetNote">Metrics are provider-reported and may be incomplete.</div></section>
 <section class="side-panel trust-panel"><h2>Trade with clarity.</h2><p>Non-custodial by design. Quotes first, transaction review before any wallet approval.</p><div class="side-item"><b><i class="status-dot"></i>Wallet stays yours</b><span>Climboria never asks for your seed phrase or private key.</span></div><div class="side-item"><b><i class="status-dot"></i>Review before approval</b><span>Check the transaction details in your wallet.</span></div><div class="side-item"><b><i class="status-dot"></i>Execution gate active</b><span>Real swaps remain locked until release checks pass.</span></div></section></aside></div>
 <p class="foot">CLIMBORIA SWAP · SOLANA NETWORK · ROUTING BY JUPITER · <a href="/support/">CUSTOMER SUPPORT</a></p></main></div>
+<script src="/dex/swap-amount.js"></script>
 <script src="/swap-config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
@@ -543,8 +544,9 @@ async function prepareJupiterSwap(){
  if(!swapExecutionReady()){status.textContent='Swap execution is safely disabled until the Climboria backend is deployed and verified.';return;}
  const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
  if(!Number.isFinite(amount)||amount<=0||from.id===to.id){status.textContent='Enter a valid amount and choose two different token mints.';return;}
- const raw=Math.floor(amount*Math.pow(10,from.decimals));
- if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
+ let raw;
+ try{raw=window.ClimboriaSwapAmount.toRaw($('quoteAmount').value,from.decimals);}
+ catch(e){status.textContent=e.message;return;}
  button.disabled=true;button.textContent='Preparing…';pendingSwapOrder=null;review.hidden=true;
  try{
   const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({inputMint:from.id,outputMint:to.id,amount:String(raw),taker:connectedWallet})});
@@ -601,8 +603,9 @@ async function requestJupiterQuote(){
  const amount=Number($('quoteAmount').value),from={...quoteTokens.from},to={...quoteTokens.to};
  if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return}
  if(from.id===to.id){status.textContent='Choose two different token mints.';return}
- const raw=Math.floor(amount*Math.pow(10,from.decimals));
- if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return}
+ let raw;
+ try{raw=window.ClimboriaSwapAmount.toRaw($('quoteAmount').value,from.decimals);}
+ catch(e){status.textContent=e.message;return;}
  button.disabled=true;button.textContent='Quoting…';status.textContent='Requesting a fresh Jupiter route quote…';$('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';
  try{
   const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});
@@ -613,7 +616,8 @@ async function requestJupiterQuote(){
   if(request!==quoteRequestSequence||from.id!==quoteTokens.from.id||to.id!==quoteTokens.to.id||amount!==Number($('quoteAmount').value))return;
   if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');
   if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);
-  if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote; no fallback will be shown');
+  if(data.inAmount!==String(raw)||typeof data.outAmount!=='string'||!(/^[1-9][0-9]*$/).test(data.outAmount))
+    throw new Error('Jupiter returned an inconsistent quote for this amount; no fallback will be shown');
   const out=Number(data.outAmount)/Math.pow(10,to.decimals);
   if(!Number.isFinite(out)||out<=0)throw new Error('Jupiter returned an invalid output amount');
   const impact=data.priceImpactPct??data.priceImpact??null;
