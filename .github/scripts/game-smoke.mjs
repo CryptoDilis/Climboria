@@ -66,7 +66,9 @@ try {
     visible: !!document.querySelector('canvas') && !!window.__climboriaCameraOrbit,
   }));
   if (heroAssetAudit.identity !== 'adventurer' || heroAssetAudit.renderer !== 'glb' || !heroAssetAudit.visible) errors.push('Original Climboria Meshy GLB did not initialize: ' + JSON.stringify(heroAssetAudit));
-  await page.waitForTimeout(500);
+  // Sample a full second: a half-second window can land near a sine-wave's
+  // turning point and under-report a real but deliberately subtle idle motion.
+  await page.waitForTimeout(1000);
 
   const jumpControllerAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.jumpControllerAudit?.() ?? null);
   if (!jumpControllerAudit?.ok) errors.push('Ground jump takeoff/airtime/landing or water-surface separation failed: ' + JSON.stringify(jumpControllerAudit));

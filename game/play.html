@@ -1121,9 +1121,9 @@ function animateAssetFallback(t,state,speed){
   // Keep the feet locked by moving only the upper body: a low-amplitude breath,
   // torso weight shift and gentle head motion make the fallback feel alive.
   const breath=Math.sin(t*2.15),sway=Math.sin(t*.72),look=Math.sin(t*.58);
-  if(assetRig.spine){const b=assetRig.spine.bone;b.quaternion.copy(assetRig.spine.baseQuaternion);b.rotateX(breath*.012);b.rotateZ(sway*.009);}
-  if(assetRig.head){const b=assetRig.head.bone;b.quaternion.copy(assetRig.head.baseQuaternion);b.rotateY(look*.032);b.rotateZ(sway*.006);}
-  if(assetRig.hips){const b=assetRig.hips.bone;b.quaternion.copy(assetRig.hips.baseQuaternion);b.rotateZ(sway*.004);}
+  if(assetRig.spine){const b=assetRig.spine.bone;b.quaternion.copy(assetRig.spine.baseQuaternion);b.rotateX(breath*.016);b.rotateZ(sway*.012);}
+  if(assetRig.head){const b=assetRig.head.bone;b.quaternion.copy(assetRig.head.baseQuaternion);b.rotateY(look*.042);b.rotateZ(sway*.008);}
+  if(assetRig.hips){const b=assetRig.hips.bone;b.quaternion.copy(assetRig.hips.baseQuaternion);b.rotateZ(sway*.005);}
  }else{
   if(assetRig.spine)assetRig.spine.bone.rotation.x=landing?.12:jumping?-.08:0;
   if(assetRig.hips)assetRig.hips.bone.rotation.y=moving?Math.sin(phase)*.025:0;
