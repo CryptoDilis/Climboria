@@ -262,8 +262,23 @@ function startHeroPreview(){
    const scale=1.9/Math.max(.001,size.y);previewModel.scale.setScalar(scale);
    const ground=new THREE.Box3().setFromObject(previewModel);previewModel.position.y=-ground.min.y;
    previewScene.add(previewModel);
-   if(gltf.animations&&gltf.animations.length){previewMixer=new THREE.AnimationMixer(previewModel);const idle=gltf.animations.find(a=>/idle/i.test(a.name))||gltf.animations[0];previewMixer.clipAction(idle).play();}
-   previewLoaded=true;previewLoading=false;heroStatus.textContent='LIVE 3D PREVIEW · Drag to rotate · Scroll / pinch to zoom';
+   if(gltf.animations&&gltf.animations.length){
+    previewMixer=new THREE.AnimationMixer(previewModel);
+    // The bundled hero has a real seated rest clip. Do not choose the first
+    // animation (Running), which made the Create Hero preview look like a gait.
+    const seated=gltf.animations.find(a=>a.name==='Chair_Sit_Idle_F')
+      ||gltf.animations.find(a=>/(?:chair|sit|seated).*idle|idle.*(?:chair|sit|seated)/i.test(a.name));
+    const standing=gltf.animations.find(a=>/standing[_ -]?idle|idle[_ -]?standing/i.test(a.name));
+    const previewClip=seated||standing;
+    if(previewClip){
+      const action=previewMixer.clipAction(previewClip);action.reset().play();
+      document.documentElement.dataset.climboriaHeroPreviewClip=previewClip.name;
+    }else{
+      document.documentElement.dataset.climboriaHeroPreviewClip='static-rest';
+      console.info('[Climboria] No seated/resting clip found; keeping hero static instead of playing locomotion.');
+    }
+   }
+   previewLoaded=true;previewLoading=false;heroStatus.textContent='LIVE 3D PREVIEW · Seated pose · Drag to rotate · Scroll / pinch to zoom';
    editorButtons();heroFeedback.textContent='Official hero is ready. Choose and save your hero name.';
   },progress=>{
    if(progress.total>0)heroStatus.textContent='Loading hero model · '+Math.min(100,Math.round(progress.loaded/progress.total*100))+'%';
