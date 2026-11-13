@@ -4254,3 +4254,41 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - [ ] Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and all signing/execution kill switches closed.
 
 Repository state note: this is a documentation-only checkpoint on `main`. The PR branch remains open/draft/unmerged; the PR code head tested above is `2f5dbddb94aef7938909cf92decb6076c9f38604`. No merge, production deployment, Devnet settlement acceptance, independent security approval, or LIVE Swap claim is made.
+
+
+## 2026-11-13 — PR #269 multi-step Jupiter/Meteora discovery implementation (PR head 1137dd4)
+
+### Code changes
+
+- [x] `9ec25ad976a141d69314cc7b0bc661822e511971` adds `minRoutePlanCount` to finalized Jupiter/Meteora discovery (default 1 preserves prior behavior), plus explicit counters for candidate instructions, unrecognized route headers, skipped unrecognized headers, and recognized routes below the minimum.
+- [x] `cea944066ad26f523f2a51e067a11610382ec1b6` adds a regression test with a known single-step Jupiter route followed by a known four-step route. It asserts the first match is skipped, pagination continues, the second is retained, skip counters are correct, and `nextBefore` preserves the qualifying transaction cursor.
+- [x] `1137dd496b27caa12ede72637c62e675afcf1c2c` updates the CPI audit workflow to request a bounded 250-transaction scan, retain only routes with at least two decoded route-plan steps, use a 12-minute discovery timeout / 20-minute job timeout, report the new counters, and fail the evidence step if transaction fetching is incomplete. No route assertions or security gates were weakened.
+- [x] Latest-head CPI unit-test steps 4 and 5 passed in run `43356405140` on exact PR head `1137dd496b27caa12ede72637c62e675afcf1c2c`.
+
+### Exact-head workflow checkpoint
+
+| Workflow | Run | Exact head | Latest status at checkpoint |
+|---|---:|---|---|
+| Validate Climboria | `43356405086` | `1137dd4` | **SUCCESS** |
+| Climboria Browser Smoke | `43356405200` | `1137dd4` | IN PROGRESS — strict Jarrell's Peak desktop/mobile smoke |
+| Jupiter V6 CPI Trace Audit | `43356405140` | `1137dd4` | IN PROGRESS — bounded finalized public-RPC scan |
+| Jupiter IDL History Audit | `43356405126` | `1137dd4` | IN PROGRESS — direct on-chain Jupiter IDL reconstruction |
+
+- The CPI route discovery step is configured with `JUPITER_AUDIT_MIN_ROUTE_PLAN_COUNT=2`, `MAX_TRANSACTIONS=250`, `MAX_MATCHES=5`, and `DELAY_MS=100`. The result must still report transaction-fetch completeness; a rate-limited, unavailable, or exhausted transport scan fails the evidence step instead of presenting partial results as a complete sample.
+- Browser Smoke has no failed steps at this checkpoint; it is still in the strict gameplay step. Validate passed on the exact head.
+- CPI unit tests passed; the live scan and artifact are not yet complete. No multi-step route is claimed until the artifact is inspected.
+- IDL History on older code/documentation heads is also still running: `43353746705` on `7516d1c` and `43354342003` on `2f5dbdd`. These are separate historical runs, not evidence for the latest head. Latest-head IDL run is `43356405126`.
+- These long-running IDL reconstructions use the bounded 30-minute step and 50-minute job timeout. Previous successful public-RPC reconstruction required about 28m51s. Do not classify an in-progress step as a failure before it reaches terminal state.
+- No workflow has failed on PR head `1137dd4` at this checkpoint. If a terminal failure occurs, inspect the exact failed step, complete job log and artifact; identify whether the cause is source logic, fixture, runner, provider/RPC, timeout, or workflow configuration before choosing a distinct counter-fix.
+
+### Top-priority checklist
+
+- [x] P1 supporting validation: Validate on latest head passed; route filter/pagination unit tests passed.
+- [ ] P1 supporting validation: complete latest-head Browser Smoke and inspect gameplay screenshots/summary.
+- [ ] P1 supporting validation: complete latest-head 250-transaction CPI scan; inspect whether any qualifying multi-step routes were found and verify cursor/completeness metadata.
+- [ ] P1 supporting validation: complete latest-head IDL reconstruction, candidate-slot unique provenance, Rust static tests, disassembly/CFG and artifact upload.
+- [ ] P1 Live Swap release: runtime CPI account slicing, CPI-requested signer/writable privileges, adapter-specific provenance, independent security review, controlled Devnet wallet-sign → Worker-verify → submit → confirm → balance reconciliation, production Worker deployment/monitoring.
+- [ ] P2 Live DEX production acceptance; P3 all real login providers/account lifecycle; P4 fully live game acceptance; P5 live Launchpad last.
+- [ ] Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and signing/execution disabled.
+
+Repository state: the PR remains open, draft, and unmerged. Latest PR code head is `1137dd496b27caa12ede72637c62e675afcf1c2c`. The PR branch has not been rebased/merged into main as part of this checkpoint. No production deployment, Devnet settlement acceptance, independent security approval, or LIVE Swap claim is made.
