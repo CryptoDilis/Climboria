@@ -353,7 +353,7 @@ test("discovery rejects a later pool nonce, vault reassignment or mismatched mar
 
 test("operator discovery rejects malformed pool keys and unsafe RPC configuration before fetching", async () => {
   for (const { input, error } of [
-    { input: { poolAddress: "1" }, error: /canonical 32-byte/i },
+    { input: { poolAddress: "1" }, error: /pool must be a canonical (?:32-byte )?public key/i },
     { input: { network: "testnet" }, error: /unsupported or unspecified Raydium network/i },
     { input: { minContextSlot: -1 }, error: /minimum finalized context slot/i },
     { input: { rpcUrl: "http://127.0.0.1:8899" }, error: /public HTTPS endpoint/i }
