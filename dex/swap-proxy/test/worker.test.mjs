@@ -188,8 +188,12 @@ test("rejects mismatched, nonnumeric, zero, or incomplete Jupiter quotes", async
     ["numeric input instead of raw integer string", { ...good, inAmount: 100000000 }],
     ["zero output", { ...good, outAmount: "0" }],
     ["negative output", { ...good, outAmount: "-5" }],
+    ["numeric output instead of raw integer string", { ...good, outAmount: 1234567 }],
+    ["leading-zero output", { ...good, outAmount: "01234567" }],
+    ["output exceeds Solana u64", { ...good, outAmount: "18446744073709551616" }],
     ["missing output", { ...good, outAmount: null }],
     ["blank request ID", { ...good, requestId: " " }],
+    ["oversized request ID", { ...good, requestId: "x".repeat(257) }],
     ["missing response", null]
   ];
   try {
