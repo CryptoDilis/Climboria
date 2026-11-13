@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { decodeLegacyAnchorIdlAccount, encodeBase58 } from "./legacy-anchor-idl-account.mjs";
 import { decodeSplTokenAccountSummary } from "./spl-token-account-summary.mjs";
@@ -237,7 +237,9 @@ function findIdlCandidates(value, path = "$", found = [], rootMetadata = {}) {
       found.push({
         path: `${path}.content`,
         sourceType: value.type ?? null,
-        metadataAccountAddress: rootMetadata.anchorAddress ?? null,
+        metadataAccountAddress: value.metadataAccountAddress
+          ?? (value.type === "pmp" ? rootMetadata.pmpAddress : rootMetadata.anchorAddress)
+          ?? null,
         pmpMetadataAccountAddress: rootMetadata.pmpAddress ?? null,
         authority: value.authority ?? null,
         recordVersion: value.version ?? null,
@@ -286,7 +288,7 @@ function isActiveAtSlot(candidate, slot) {
   return start <= target && (end === null || target < end);
 }
 
-async function request(name, endpoint) {
+async function request(name, endpoint, options = {}) {
   const url = new URL(endpoint, baseUrl);
   url.searchParams.set("programId", programId);
   url.searchParams.set("cluster", "mainnet-beta");
@@ -308,8 +310,8 @@ async function request(name, endpoint) {
     const fetched = await fetchWithRetry(
       fetch,
       url,
-      () => ({ signal: AbortSignal.timeout(30_000) }),
-      { maxAttempts: 4, baseDelayMs: 500, maxDelayMs: 4000 },
+      () => ({ signal: AbortSignal.timeout(options.timeoutMs ?? 30_000) }),
+      { maxAttempts: options.maxAttempts ?? 4, baseDelayMs: 500, maxDelayMs: 4000 },
     );
     record.retryAttempts = fetched.attempts;
     const response = fetched.response;
@@ -769,15 +771,73 @@ async function auditRaydiumLaunchlabCandidateAccountState() {
 const raydiumLaunchlabCandidateAccountAudit = await auditRaydiumLaunchlabCandidateAccountState();
 
 const latest = await request("latest", "/api/latest");
-const history = await request("history", "/api/history");
-const matchingHistory = history.candidates.filter((candidate) =>
+const history = await request("history", "/api/history", { maxAttempts: 1, timeoutMs: 15_000 });
+
+async function loadOfficialJupiterHistory() {
+  try {
+    const raw = await readFile(join(outDir, "official-jupiter-history.json"), "utf8");
+    const parsed = parseJson(raw);
+    if (parsed?.status === "ok") return parsed;
+    return { status: "error", error: "Official history report is missing its success status" };
+  } catch (error) {
+    try {
+      const rawError = await readFile(join(outDir, "official-jupiter-history-error.json"), "utf8");
+      const parsedError = parseJson(rawError);
+      return parsedError?.status === "error"
+        ? parsedError
+        : { status: "error", error: error instanceof Error ? error.message : String(error) };
+    } catch {
+      return { status: "unavailable", error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+}
+
+const officialHistory = await loadOfficialJupiterHistory();
+const officialHistoryAvailable = officialHistory.status === "ok";
+const officialHistoryCandidates = [];
+if (officialHistoryAvailable) {
+  const officialMetadata = {
+    anchorAddress: officialHistory.anchorAddress ?? latest.metadataAccounts?.anchorAddress ?? null,
+    pmpAddress: officialHistory.pmpAddress ?? latest.metadataAccounts?.pmpAddress ?? null,
+  };
+  for (const sourceType of ["anchor", "pmp"]) {
+    for (const revision of officialHistory.histories?.[sourceType] ?? []) {
+      const wrapper = {
+        content: revision.content,
+        type: sourceType,
+        version: revision.version,
+        slot: revision.slot,
+        time: revision.time,
+        activeFrom: revision.activeFrom,
+        activeTo: revision.activeTo,
+        valid: true,
+        metadataAccountAddress: sourceType === "pmp"
+          ? officialMetadata.pmpAddress
+          : officialMetadata.anchorAddress,
+      };
+      officialHistoryCandidates.push(...findIdlCandidates(
+        wrapper,
+        `$.officialHistory.${sourceType}`,
+        [],
+        officialMetadata,
+      ));
+    }
+  }
+}
+const selectedHistoryCandidates = officialHistoryAvailable
+  ? officialHistoryCandidates
+  : history.candidates;
+const matchingHistory = selectedHistoryCandidates.filter((candidate) =>
   candidate.routeV2?.discriminatorHex === expectedRouteV2Discriminator
 );
 const activeHistory = matchingHistory.filter((candidate) =>
   isActiveAtSlot(candidate, candidateTransactionSlot)
 );
 const activeRevision = activeHistory.length === 1 ? activeHistory[0] : null;
-const anchorAddress = history.metadataAccounts?.anchorAddress ?? latest.metadataAccounts?.anchorAddress ?? null;
+const anchorAddress = officialHistory.anchorAddress
+  ?? history.metadataAccounts?.anchorAddress
+  ?? latest.metadataAccounts?.anchorAddress
+  ?? null;
 const onChainProvenance = await auditOnChainProvenance(anchorAddress, activeRevision);
 const summary = {
   programId,
@@ -786,6 +846,17 @@ const summary = {
   expectedCandidateRouteV2Discriminator: expectedRouteV2Discriminator,
   fetchedAt: new Date().toISOString(),
   requests: [latest, history],
+  officialHistory: {
+    status: officialHistory.status,
+    provider: officialHistory.provider ?? null,
+    rpcHost: officialHistory.rpcHost ?? null,
+    anchorAddress: officialHistory.anchorAddress ?? null,
+    pmpAddress: officialHistory.pmpAddress ?? null,
+    summary: officialHistory.summary ?? null,
+    error: officialHistory.error ?? null,
+    candidateCount: officialHistoryCandidates.length,
+  },
+  selectedHistorySource: officialHistoryAvailable ? "@solana/idl@0.3.0 private RPC" : "IDL Explorer HTTP API fallback",
   onChainProvenance,
   dexCpiIdlHistory,
   raydiumLaunchlabCandidateAccountAudit,
@@ -807,11 +878,16 @@ const summary = {
   } : null,
   assessment: {
     anyHttpOrTransportFailure: [latest, history].some((item) => !item.ok),
-    anyCandidateIdl: [latest, history].some((item) => item.candidates.length > 0),
+    externalHistoryProviderFailure: !history.ok,
+    officialHistoryReconstructionSucceeded: officialHistoryAvailable,
+    requiredHistorySourceAvailable: officialHistoryAvailable || history.ok,
+    anyCandidateIdl: [latest, history].some((item) => item.candidates.length > 0) || officialHistoryCandidates.length > 0,
     candidateSchemaMatchesExpectedDiscriminator: [latest, history].some((item) =>
       item.candidates.some((candidate) =>
         candidate.routeV2?.discriminatorHex === expectedRouteV2Discriminator
       )
+    ) || officialHistoryCandidates.some((candidate) =>
+      candidate.routeV2?.discriminatorHex === expectedRouteV2Discriminator
     ),
     matchingHistoricalRevisionCount: matchingHistory.length,
     activeHistoricalRevisionCount: activeHistory.length,
@@ -841,6 +917,6 @@ const summary = {
 await writeFile(join(outDir, "summary.json"), JSON.stringify(summary, null, 2) + "\n");
 console.log(JSON.stringify(summary, null, 2));
 
-if (summary.assessment.anyHttpOrTransportFailure || !summary.assessment.exactlyOneRevisionCoversCandidateSlot) {
+if (!latest.ok || !summary.assessment.requiredHistorySourceAvailable || !summary.assessment.exactlyOneRevisionCoversCandidateSlot) {
   process.exitCode = 1;
 }
