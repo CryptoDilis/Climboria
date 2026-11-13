@@ -57,3 +57,9 @@ test('CommonJS destructured authorization alias is flagged',()=>assert.deepEqual
 test('ESM authorization import alias is flagged',()=>assert.deepEqual(scanSource(['climbx/worker.ts'],()=> "import {authorizeBotExecution as permit} from './execution_authorization_boundary.cjs'"),[{file:'climbx/worker.ts',reason:'REVIEW_ALIASED_AUTHORIZATION_IMPORT'}]));
 test('Python authorization alias is flagged',()=>assert.deepEqual(scanSource(['climbx/worker.py'],()=> "from climbx import evaluateOrder as permit"),[{file:'climbx/worker.py',reason:'REVIEW_ALIASED_AUTHORIZATION_IMPORT'}]));
 test('non-authorization import is not flagged',()=>assert.deepEqual(scanSource(['climbx/worker.ts'],()=> "import {formatAmount as format} from './utils'"),[]));
+
+
+test('dynamic authorization property access flagged',()=>assert.deepEqual(scanSource(['climbx/worker.ts'],()=> "const fn=policy['evaluateOrder'];"),[{file:'climbx/worker.ts',reason:'REVIEW_DYNAMIC_AUTHORIZATION_ACCESS'}]));
+test('dynamic authorization access with double quotes flagged',()=>assert.deepEqual(scanSource(['climbx/worker.js'],()=> 'const fn=policy["authorizeBotExecution"];'),[{file:'climbx/worker.js',reason:'REVIEW_DYNAMIC_AUTHORIZATION_ACCESS'}]));
+test('computed execution flag assignment flagged',()=>assert.deepEqual(scanSource(['climbx/worker.js'],()=> "state['mayExecute'] = true;"),[{file:'climbx/worker.js',reason:'REVIEW_DYNAMIC_EXECUTION_FLAG'}]));
+test('unrelated dynamic property access ignored',()=>assert.deepEqual(scanSource(['climbx/worker.ts'],()=> "const x=state['displayName'];"),[]));
