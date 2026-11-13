@@ -20,7 +20,20 @@ jobs:
         with:
           python-version: '3.13'
       - name: Unit tests
-        run: python -m unittest discover -s climbx -p 'test_*.py' -v
+        run: |
+          python - <<'PY'
+          import sys
+          import unittest
+          sys.path.insert(0, "climbx")
+          suite = unittest.defaultTestLoader.discover("climbx", pattern="test_*.py")
+          count = suite.countTestCases()
+          if count < 10:
+              raise SystemExit(f"Test collection unexpectedly shrank: {count} < 10")
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          if not result.wasSuccessful():
+              raise SystemExit(1)
+          print(f"Verified {count} CLIMBX repository tests.")
+          PY
       - name: Verify exact fail-closed release decision
         run: |
           python - <<'PY'
