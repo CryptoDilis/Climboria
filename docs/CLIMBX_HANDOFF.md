@@ -45,5 +45,15 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - BLOCKED: no reviewed Cargo.lock or pinned toolchain, no `cargo check --locked` validation, no signed local-validator tests. Real-funds **NO-GO**.
 - NEXT: inspect workflow runs for commit `374111e8`; resolve any test failures; then prepare pinned Rust toolchain and reviewed lockfile with reproducible CI evidence.
 
+## Phase 130 — 2026-11-14 — verified prerequisite tests and new authorization safety regressions
+- DONE: exact commit `374111e8db200fbf572df65cd74e77c21a366a6a` CLIMBX release safety run `43500404206` SUCCESS. Rust job `132144360792` includes completed SUCCESS step `CLIMBX build prerequisite regression tests (non-deploying)`. Validate `43500404371` and Browser Smoke `43500404293` also SUCCESS.
+- DONE: inspected actual CLIMBX Anchor source. It contains owner signer grant, owner-linked revoke, five mint limit, bounded expiry, spend cap checks and duplicate mint rejection. It still uses the all-ones placeholder program ID and implements NO swap/trade execution.
+- DONE on `climbx/phase28-release-gate-ci`: added `climbx/check_anchor_safety_boundary.cjs` (commit `e3d41945153f64693d4b5ee3d8963368ce3cb1b2`) and `climbx/check_anchor_safety_boundary.test.cjs` (commit `82c688178eed86af248b029a807f679249afde53`). These are static safety regression checks, NOT runtime security proof.
+- DONE: wired new safety tests into the CLIMBX Rust CI job, commit `8f4809bc9930e83198d3ff05ac8f47b68e695662`.
+- PENDING: CI for commit `8f4809bc` had no discoverable runs at immediate lookup. Inspect before declaring tests passed.
+- BLOCKED: reproducible pinned lockfile/toolchain build; signed local-validator grant/revoke; real restricted DEX-only execution and reconciliation; audit; explicit release approval. **REAL-FUNDS NO-GO**.
+- NEXT: verify new security CI; fix test failures; obtain compatible pinned Rust toolchain and reviewed Cargo.lock; create real signed local-validator grant/revoke integration tests. Never deploy placeholder program ID.
+- Ownership: no DEX, Swap, Launchpad or Game code modified.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
