@@ -1,0 +1,15 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const {withDeadline}=require('./deadline.cjs');
+test('returns resolved operation',async()=>assert.equal(await withDeadline(async x=>x+1)(3),4));
+test('passes abort signal',async()=>{let seen;await withDeadline(async(_x,signal)=>{seen=signal;return 1;})(0);assert.equal(seen.aborted,false);});
+test('rejects hung operation on deadline',async()=>{const run=withDeadline(()=>new Promise(()=>{}),{timeoutMs:100});await assert.rejects(run(),e=>e.code==='CLIMBX_DEADLINE');});
+test('aborts signal on deadline',async()=>{let signal;const run=withDeadline((_x,s)=>{signal=s;return new Promise(()=>{});},{timeoutMs:100});await assert.rejects(run(1));assert.equal(signal.aborted,true);});
+test('propagates errors',async()=>await assert.rejects(withDeadline(async()=>{throw Error('bad');})(),/bad/));
+test('catches synchronous errors',async()=>await assert.rejects(withDeadline(()=>{throw Error('sync');})(),/sync/));
+test('rejects missing operation',()=>assert.throws(()=>withDeadline(null)));
+test('rejects too short timeout',()=>assert.throws(()=>withDeadline(()=>{}, {timeoutMs:1})));
+test('rejects excessive timeout',()=>assert.throws(()=>withDeadline(()=>{}, {timeoutMs:30001})));
+test('rejects fractional timeout',()=>assert.throws(()=>withDeadline(()=>{}, {timeoutMs:100.5})));
+test('clears timer on successful completion',async()=>{let cleared=false;await withDeadline(async()=>1,{clearTimeoutFn:t=>{cleared=true;clearTimeout(t);}})();assert.equal(cleared,true);});
+test('clears timer on rejection',async()=>{let cleared=false;await assert.rejects(withDeadline(async()=>{throw Error('no');},{clearTimeoutFn:t=>{cleared=true;clearTimeout(t);}})());assert.equal(cleared,true);});
