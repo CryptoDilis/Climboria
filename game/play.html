@@ -2603,8 +2603,16 @@ function caveApproachGroundAudit(){
  const ground=caveG?.getObjectByName('JarrellCaveNaturalApproachGround');
  const rocks=caveG?.getObjectByName('JarrellCaveApproachLoosePebbles');
  const attr=ground?.geometry?.getAttribute('color');
- const center=Math.floor((46/2)*29+14);
+ const center=Math.floor((46/2)*29+14),positions=ground?.geometry?.getAttribute('position');
+ let terrainGap=null;
+ if(positions&&caveG){
+  const x=positions.getX(center),z=positions.getZ(center),yaw=caveG.rotation.y;
+  const worldX=caveG.position.x+x*Math.cos(yaw)+z*Math.sin(yaw);
+  const worldZ=caveG.position.z-x*Math.sin(yaw)+z*Math.cos(yaw);
+  terrainGap=Math.abs(positions.getY(center)-(groundAt(worldX,worldZ)-caveG.position.y+.065));
+ }
  return {ground:!!ground,rockInstances:rocks?.count||0,
+  frustumCulled:ground?.frustumCulled===true,terrainGap,
   vertices:ground?.geometry?.getAttribute('position')?.count||0,
   alphaComponents:attr?.itemSize||0,
   edgeAlpha:attr?.getW(0)??null,centerAlpha:attr?.getW(center)??null,
