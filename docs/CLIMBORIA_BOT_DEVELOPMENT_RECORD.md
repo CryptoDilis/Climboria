@@ -655,3 +655,28 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 4. Select an on-chain owner-revocable scoped authority mechanism, design exact CPI/ALT/program allowlist and spend accounting, build a devnet-only prototype and adversarial end-to-end tests.
 5. Independently review all code that could authorize real funds; require explicit owner release approval. Never flip real-trading gates.
 6. Append future progress, exact commits, CI and next actions to this main-branch record each phase. CLIMBX-only scope.
+
+
+## Phase 85 — 2026-11-14 — CI verification and authorization boundary regression tests
+
+**Exclusive scope:** CLIMBX only. Branch `climbx/phase28-release-gate-ci`, draft PR [#282](https://github.com/CryptoDilis/Climboria/pull/282). No edits to shared DEX/Swap/Launchpad/Game code.
+
+**Verified Phase84 CI (all SUCCESS):**
+- [Validate Climboria — run 43459440974](https://github.com/CryptoDilis/Climboria/actions/runs/43459440974)
+- [CLIMBX release safety — run 43459440899](https://github.com/CryptoDilis/Climboria/actions/runs/43459440899)
+- [Climboria Browser Smoke — run 43459441053](https://github.com/CryptoDilis/Climboria/actions/runs/43459441053)
+
+**Phase85 commit:** `f02810746bd8d3a3e247865f0d5f857d58afac94` updates `climbx/authorization_policy_simulation.test.cjs` with 13 additional boundary cases: zero/negative/unsafe timestamps, non-array authorized mint set, null/empty slots, NaN/unsafe amount, negative/unsafe spent counters, exact cap equality and one-millisecond-before-cutoff behavior. Tests are wired by the existing CLIMBX release-gate workflow. **Phase85 CI was not yet visible at time of record; do not claim it passed.**
+
+**Actual implementation status:** Python CLIMBX unit and PostgreSQL integration coverage, server-side wallet challenge/bind and reconciliation, static disabled dashboard, devnet-only wallet service composition, release gate and off-chain authorization policy simulation exist. Not production deployed; no signed devnet bot swap, independently verified on-chain authorization, production strategy executor, full learning/fee settlement, or independent fund-authorizing program review. **REAL-FUNDS NO-GO.**
+
+**Risks/blockers:** Off-chain `allowed:true` is NOT a trade authorization; Solana SPL delegation does not enforce approved venue, scoped native SOL, atomic caps or revocation. Promise deadlines do not cancel DB work. External DEX routing must never be enabled through CLIMBX. DEX/Swap lead owns underlying execution path; CLIMBX should document integration requirements without editing shared execution files.
+
+**EXACT NEXT TASKS (do not repeat Phase84/85):**
+1. Check CI for Phase85 commit `f02810746bd8d3a3e247865f0d5f857d58afac94`; inspect and fix any failed CLIMBX tests, then record exact run URLs and status.
+2. Verify Solana CLI, local validator, Rust/Anchor and devnet RPC availability; record actual version outputs, missing tools and infrastructure. Do not claim a devnet deployment without transaction evidence.
+3. Add CLIMBX-only security architecture decision record comparing owner-revocable smart account/vault versus custom program, with executable CPI/account/ALT constraints, atomic spend limits, and DEX-only routing integration contract to hand off to DEX lead.
+4. Implement devnet-only scoped authorization prototype and adversarial tests; no mainnet activation.
+5. Add CLIMBX strategy engine, risk controls, learning recommendations requiring owner approval, and high-water-mark fee ledger as isolated testable modules.
+6. Verify independent review and explicit owner release decision before real-funds trading. Record every phase, commits, exact CI and next steps in this file.
+
