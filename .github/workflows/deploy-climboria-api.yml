@@ -2,6 +2,12 @@ name: Deploy Climboria API
 
 on:
   workflow_dispatch:
+  # Ship the quote-only Worker once when this guarded release workflow lands
+  # on main. Later source changes never silently enable mainnet trading.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-climboria-api.yml'
 
 permissions:
   contents: read
@@ -50,6 +56,9 @@ jobs:
           grep -Fqx 'name = "climboria-swap-proxy"' wrangler.toml
           grep -Fqx 'ALLOWED_ORIGINS = "https://climboria.fun,https://www.climboria.fun"' wrangler.toml
           grep -Fqx 'EXECUTION_ENABLED = "false"' wrangler.toml
+          grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' src/index.mjs
+          grep -Fqx 'const EXECUTION_SECURITY_REVIEW_COMPLETE = false;' src/index.mjs
+          grep -Eq '^[[:space:]]*enabled:[[:space:]]*false' ../../swap-config.js
           grep -Fqx 'pattern = "api.climboria.fun"' wrangler.toml
           grep -Fqx 'custom_domain = true' wrangler.toml
           grep -Fqx 'name = "RATE_LIMITER"' wrangler.toml
@@ -122,3 +131,6 @@ jobs:
           curl --fail --silent --show-error -X OPTIONS https://api.climboria.fun/api/swap/order -H 'Origin: https://climboria.fun' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' -o /dev/null -D /tmp/climboria-cors-headers
           grep -qi '^access-control-allow-origin: https://climboria.fun' /tmp/climboria-cors-headers
           echo "Worker CORS preflight verified for https://climboria.fun."
+
+      - name: Verify production API quote, token search, and closed transaction gates
+        run: node .github/scripts/api-production-readiness.mjs
