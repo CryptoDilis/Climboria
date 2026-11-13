@@ -34,10 +34,9 @@ test("production acceptance probe verifies real quote preview but never signs or
   const { fakeFetch, calls } = fixture();
   const result = await probeProductionApi({ fetchImpl: fakeFetch });
   assert.equal(result.ok, true);
-  assert.equal(result.checks.length, 7);
-  assert.deepEqual(calls.filter(c => c.method === "POST").map(c => c.url), ["/api/swap/order", "/api/swap/execute"]);
-  const order = calls.find(c => c.url === "/api/swap/order");
-  assert.equal(JSON.parse(order.body).amount, "1000000");
+  assert.equal(result.checks.length, 6);
+  assert.deepEqual(calls.filter(c => c.method === "POST").map(c => c.url), ["/api/swap/execute"]);
+  assert.ok(!calls.some(c => c.url === "/api/swap/order"), "Never create wallet-signable orders in production monitoring");
   assert.equal(calls.find(c => c.url === "/api/swap/execute").body, "{}");
   assert.ok(calls.every(c => c.origin === ORIGIN || c.origin === "https://unauthorized.example"));
 });
@@ -54,11 +53,6 @@ test("probe blocks accidental production execution flag enablement", async () =>
 test("probe rejects a quote for a different input amount", async () => {
   const { fakeFetch } = fixture({ quote: Response.json({ inAmount: "1000001", outAmount: "1234", requestId: "wrong" }, { headers: { "access-control-allow-origin": ORIGIN } }) });
   await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), /input amount differs/);
-});
-
-test("probe fails if wallet-signable orders become available", async () => {
-  const { fakeFetch } = fixture({ order: Response.json({ transaction: "not-safe" }, { headers: { "access-control-allow-origin": ORIGIN } }) });
-  await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), /Wallet-signable order/);
 });
 
 test("probe fails when a configured provider search or quote is unavailable", async () => {
