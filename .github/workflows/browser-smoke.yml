@@ -305,6 +305,9 @@ jobs:
           })().catch(e=>{console.error(e);process.exit(1)});
           JS
 
+      - name: Test DEX Market Leader hierarchy on desktop and mobile
+        run: node .github/scripts/dex-market-leader-smoke.mjs
+
       - name: Test Cloudflare DEX swap proxy
         run: node --test dex/swap-proxy/test/worker.test.mjs
 
@@ -737,6 +740,8 @@ jobs:
             climboria-mobile-cave-interior.png
             climboria-dex-token-socials.png
             climboria-dex-token-socials-mobile.png
+            climboria-dex-market-leader-desktop.png
+            climboria-dex-market-leader-mobile.png
             freshwater-*.png
           if-no-files-found: warn
           retention-days: 7
