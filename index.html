@@ -478,149 +478,44 @@ footer:first-of-type>div{
 }
 @media(prefers-reduced-motion:reduce){.mobile-menu,.hamburger span,.navl>a,.navl>button{transition:none!important}}
 
-/* Reference-inspired layout only: floating capsule header and left-aligned hero panel.
-   Existing colors, copy, assets, routes and authentication remain unchanged. */
-@media(min-width:1450px){
- nav{top:12px!important;left:clamp(18px,3vw,48px)!important;right:clamp(18px,3vw,48px)!important;width:auto!important;max-width:1500px;margin-inline:auto;padding:12px 22px!important;border:1px solid rgba(245,197,91,.30)!important;border-radius:999px!important;background:rgba(7,10,20,.88)!important;box-shadow:0 18px 50px rgba(0,0,0,.32)!important}
- .navl>a:not([target]),.navl>.hub-link,.navl>.btn-gold,.navl>.nav-x-link{height:40px!important;min-height:40px!important;border-radius:999px!important}
-}
-@media(min-width:901px) and (max-width:1449px){
- nav{top:12px!important;left:18px!important;right:18px!important;width:auto!important;padding:12px 20px!important;border:1px solid rgba(245,197,91,.30)!important;border-radius:999px!important;background:rgba(7,10,20,.9)!important;box-shadow:0 18px 50px rgba(0,0,0,.32)!important}
-}
-@media(max-width:900px){
- nav{top:8px!important;left:10px!important;right:10px!important;width:auto!important;padding:12px 16px!important;border:1px solid rgba(245,197,91,.28)!important;border-radius:24px!important;background:rgba(7,10,20,.92)!important}
-}
+/* Canonical homepage layout: replaces prior experimental overrides rather than stacking them. */
 @media(min-width:901px){
- .hero{min-height:780px!important;height:max(100svh,780px)!important}
- .hero-overlay{background:linear-gradient(90deg,rgba(7,10,20,.82) 0%,rgba(7,10,20,.55) 37%,rgba(7,10,20,.08) 75%),linear-gradient(0deg,rgba(7,10,20,.96),transparent 45%,rgba(7,10,20,.22))!important}
- .launch-countdown{left:clamp(32px,6vw,120px)!important;top:46%!important;transform:translateY(-50%)!important;width:min(540px,42vw)!important;text-align:left!important}
- .launch-kicker{justify-content:flex-start!important}
- .hero-content{bottom:clamp(24px,5vh,60px)!important;padding-left:clamp(32px,6vw,120px)!important;padding-right:clamp(32px,6vw,120px)!important;text-align:left!important}
- .hero-buttons{justify-content:flex-start!important}
-}
-@media(max-width:900px){
- .hero{min-height:760px!important}
- .launch-countdown{max-width:calc(100% - 24px)!important}
-}
-
-/* Reference layout polish: align the timer content and action rail as one column. */
-@media(min-width:901px){
+ nav{position:relative!important;inset:auto!important;display:flex!important;align-items:center!important;gap:18px!important;box-sizing:border-box!important;width:calc(100% - 48px)!important;max-width:1400px!important;min-height:64px!important;margin:14px auto 0!important;padding:9px 16px!important;border:1px solid rgba(221,181,121,.55)!important;border-radius:999px!important;background:linear-gradient(100deg,rgba(15,29,48,.96),rgba(25,41,64,.96))!important;box-shadow:0 10px 30px rgba(0,0,0,.2)!important;z-index:20!important}
+ nav>.logo{flex:0 0 auto!important;font-size:clamp(16px,1.45vw,20px)!important;letter-spacing:1.5px!important;white-space:nowrap!important}
+ .hero{position:relative!important;height:auto!important;min-height:1020px!important;margin-top:0!important;padding:0 0 70px!important;isolation:isolate}
+ .hero picture,.hero picture img{pointer-events:none}
+ .hero-overlay{pointer-events:none!important;z-index:1!important}
+ .launch-countdown{position:relative!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;box-sizing:border-box!important;width:min(540px,44vw)!important;margin:clamp(410px,43vw,530px) 0 0 clamp(24px,5vw,85px)!important;text-align:left!important;z-index:3!important}
  .launch-countdown .launch-timer{margin-left:0!important;margin-right:0!important}
  .launch-countdown .launch-foot{justify-content:flex-start!important;text-align:left!important}
- .launch-countdown .launch-follow{margin-left:0!important}
- .hero-content{left:clamp(32px,6vw,120px)!important;right:auto!important;width:min(540px,42vw)!important;bottom:clamp(32px,6vh,76px)!important;padding:0!important}
+ .hero-content{position:relative!important;inset:auto!important;box-sizing:border-box!important;width:min(540px,44vw)!important;margin:14px 0 0 clamp(24px,5vw,85px)!important;padding:0!important;text-align:left!important;z-index:3!important}
  .hero-buttons{justify-content:flex-start!important;gap:12px!important}
  .hero-buttons>button{flex:1 1 0;min-width:0;white-space:nowrap}
-}
-@media(min-width:901px) and (max-height:850px){
- .hero{min-height:850px!important}
- .launch-countdown{top:40%!important}
-}
-@media(max-width:900px){
- .mobile-menu{padding-top:100px!important}
- .hero-content{bottom:clamp(20px,5vh,48px)!important}
- .hero-buttons{gap:10px!important}
-}
-@media(max-width:560px){
- .hero-buttons>button{padding-left:15px!important;padding-right:15px!important;letter-spacing:1px!important}
- .launch-countdown{padding:18px 15px!important}
-}
-
-/* Reference homepage layout: reserved header row, hero editorial column, then launch card and actions. */
-nav{position:relative!important;top:auto!important;left:auto!important;right:auto!important;max-width:1380px!important;width:calc(100% - 32px)!important;margin:12px auto 0!important;border-radius:999px!important;z-index:99!important}
-.hero{height:auto!important;min-height:940px!important;overflow:hidden!important;margin-top:-78px!important;padding-top:125px!important}
-.hero picture,.hero picture img{z-index:0}
-.hero-overlay{z-index:1}
-.reference-hero-intro{position:relative;z-index:4;width:min(670px,calc(100% - 48px));margin:clamp(12px,3vh,40px) 0 0 clamp(24px,6vw,110px);text-align:left}
-.reference-hero-status{display:flex;align-items:center;flex-wrap:wrap;gap:14px;width:fit-content;padding:8px 12px;border:1px solid rgba(245,197,91,.42);border-radius:999px;background:rgba(5,8,16,.62);font-size:10px;font-weight:800;letter-spacing:1.7px;color:#f5d99d}
-.reference-hero-status span{color:#b4e8c5;font-size:9px}
-.reference-hero-eyebrow{margin-top:25px;color:#e8b86d;font-size:12px;font-weight:800;letter-spacing:4px}
-.reference-hero-title{margin-top:12px;font-family:Cinzel,serif;font-weight:900;font-size:clamp(78px,10vw,150px);line-height:.85;letter-spacing:2px;background:linear-gradient(120deg,#fff2c9,#e8b86d 55%,#b58b3e);background-clip:text;-webkit-background-clip:text;color:transparent;text-shadow:0 14px 50px rgba(0,0,0,.24)}
-.reference-hero-tagline{margin-top:22px;font-family:Georgia,serif;font-size:clamp(22px,2.7vw,34px);font-style:italic;color:#f5e7c6}
-.reference-hero-description{max-width:530px;margin-top:12px;color:#e0d9ca;font-size:clamp(14px,1.2vw,17px);line-height:1.65}
-@media(min-width:901px){
- .hero{min-height:1050px!important;margin-top:-78px!important;padding-top:125px!important}
- .launch-countdown{position:relative!important;top:auto!important;left:auto!important;transform:none!important;width:min(540px,calc(100% - 48px))!important;margin:24px 0 0 clamp(24px,6vw,110px)!important}
- .hero-content{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;width:min(540px,calc(100% - 48px))!important;margin:20px 0 80px clamp(24px,6vw,110px)!important;padding:0!important}
-}
-@media(max-width:900px){
- nav{width:calc(100% - 20px)!important;margin:8px auto 0!important;border-radius:24px!important}
- .hero{height:auto!important;min-height:920px!important;margin-top:-74px!important;padding-top:125px!important;padding-bottom:90px!important}
- .reference-hero-intro{margin:10px 16px 0!important;width:calc(100% - 32px)!important}
- .reference-hero-title{font-size:clamp(65px,15vw,108px)}
- .reference-hero-status{font-size:9px;letter-spacing:1px}
- .launch-countdown{position:relative!important;top:auto!important;left:auto!important;transform:none!important;margin:24px auto 0!important;width:calc(100% - 32px)!important}
- .hero-content{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;width:calc(100% - 32px)!important;margin:20px auto 0!important;padding:0!important}
-}
-@media(prefers-reduced-motion:reduce){.hero img{animation:none!important}}
-
-/* Overlap guard: keep header and hero in separate flow rows.
-   Gradient overlay stays behind hero text, not over navigation or controls. */
-.hero{margin-top:0!important;padding-top:clamp(42px,6vw,88px)!important;isolation:isolate}
-.hero picture,.hero picture img{pointer-events:none}
-.hero-overlay{pointer-events:none!important}
-.reference-hero-intro,.launch-countdown,.hero-content{isolation:isolate}
-@media(min-width:901px){
- .hero{margin-top:0!important;padding-top:clamp(42px,6vw,88px)!important}
- .reference-hero-intro{margin-top:0!important}
-}
-@media(max-width:900px){
- .hero{margin-top:0!important;padding-top:36px!important}
- .reference-hero-intro{margin-top:0!important}
-}
-
-/* Desktop-only Meta reference navigation: one continuous slim bar, not individual cards. */
-@media(min-width:1450px){
- nav{display:flex!important;align-items:center!important;gap:24px!important;padding:10px 20px!important;min-height:68px!important;background:linear-gradient(100deg,rgba(16,31,50,.96),rgba(26,36,56,.94) 70%,rgba(85,63,72,.9))!important;border:1px solid rgba(217,185,142,.4)!important;box-shadow:0 14px 35px rgba(0,0,0,.2)!important}
- nav>.logo{font-size:19px!important;letter-spacing:2px!important;flex-shrink:0!important}
- .navl{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:clamp(9px,1vw,19px)!important;min-width:0!important}
- .navl>a:not([target]),.navl>.hub-link{width:auto!important;min-width:0!important;height:40px!important;min-height:40px!important;padding:0 2px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;font-size:clamp(9px,.69vw,11px)!important;letter-spacing:.6px!important;white-space:nowrap!important}
- .navl>.hub-link .climboria-icon{width:13px!important;height:13px!important;flex-basis:13px!important}
- .navl>.btn-gold{flex:0 0 auto!important;width:auto!important;min-width:86px!important;padding:0 16px!important;border:1px solid rgba(248,220,171,.7)!important;border-radius:999px!important;background:rgba(255,255,255,.08)!important;font-size:11px!important}
- .navl>.nav-x-link{flex:0 0 42px!important;width:42px!important;min-width:42px!important;height:42px!important;border:0!important;border-radius:50%!important;background:rgba(12,20,37,.5)!important}
- .navl>a:not([target]):hover,.navl>.hub-link:hover{color:#fff5db!important;background:transparent!important}
- .reference-hero-intro{margin-top:0!important}
- .reference-hero-eyebrow{margin-top:12px!important}
- .reference-hero-tagline{margin-top:12px!important}
- .launch-countdown{margin-top:16px!important}
- .hero-content{margin-top:14px!important}
-}
-@media(min-width:901px) and (max-width:1449px){
- .reference-hero-intro{margin-top:0!important}
- .reference-hero-eyebrow{margin-top:12px!important}
- .reference-hero-tagline{margin-top:12px!important}
- .launch-countdown{margin-top:16px!important}
-}
-
-/* Desktop-only visual cleanup based on supplied reference screenshots. */
-@media(min-width:901px){
- .hero{padding-top:clamp(36px,4.5vw,66px)!important;min-height:780px!important}
- .launch-countdown{margin-top:0!important;margin-left:clamp(24px,6vw,110px)!important}
- .hero-content{margin-top:14px!important}
- #game{padding-top:72px!important;padding-bottom:72px!important}
- #game .menu-destinations{max-width:960px;margin:28px auto 0;padding:20px 24px}
+ #game .menu-destinations{max-width:940px;margin:26px auto 0;padding:20px 22px}
  #game .menu-destination-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
- #game .menu-destination{min-height:124px;padding:15px}
- #game .menu-destinations-head{margin-bottom:12px}
+ #game .menu-destination{min-height:120px;padding:15px}
  #game .grid3{margin-top:24px}
 }
 @media(min-width:1450px){
- nav{min-height:64px!important;padding:10px 18px!important}
- .navl{gap:clamp(5px,.45vw,9px)!important}
- .navl>a:not([target]),.navl>.hub-link,.navl>.btn-gold,.navl>.nav-x-link{
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  width:auto!important;min-width:0!important;flex:0 0 auto!important;height:34px!important;min-height:34px!important;
-  padding:0 clamp(8px,.75vw,13px)!important;border:1px solid rgba(225,181,116,.55)!important;
-  border-radius:999px!important;background:rgba(15,26,44,.48)!important;box-shadow:none!important;
-  font:700 clamp(9px,.67vw,11px)/1 Inter,system-ui,sans-serif!important;letter-spacing:.15px!important;
-  color:#f1d49f!important;white-space:nowrap!important;
- }
+ .navl{display:flex!important;flex:1 1 auto!important;align-items:center!important;justify-content:flex-end!important;gap:clamp(5px,.48vw,10px)!important;min-width:0!important}
+ .navl>a:not([target]),.navl>.hub-link,.navl>.btn-gold,.navl>.nav-x-link{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;width:auto!important;min-width:0!important;height:34px!important;min-height:34px!important;margin:0!important;padding:0 clamp(8px,.75vw,13px)!important;border:1px solid rgba(223,183,125,.65)!important;border-radius:999px!important;background:rgba(9,19,35,.4)!important;box-shadow:none!important;color:#f5dba8!important;font:700 clamp(9px,.67vw,11px)/1 Inter,system-ui,sans-serif!important;letter-spacing:.1px!important;white-space:nowrap!important;text-transform:uppercase!important}
  .navl>.hub-link .climboria-icon{display:none!important}
- .navl>.btn-gold{background:rgba(245,197,91,.12)!important;color:#ffe4b0!important}
- .navl>.nav-x-link{min-width:34px!important;width:34px!important;padding:0!important;font-size:15px!important}
- .navl>a:not([target]):hover,.navl>.hub-link:hover,.navl>.btn-gold:hover{border-color:#ffe1a1!important;background:rgba(245,197,91,.16)!important}
+ .navl>.btn-gold{background:rgba(245,197,91,.1)!important}
+ .navl>.nav-x-link{width:34px!important;min-width:34px!important;padding:0!important;font-size:15px!important}
+ .navl>a:not([target]):hover,.navl>.hub-link:hover,.navl>.btn-gold:hover{border-color:#ffe2a8!important;background:rgba(245,197,91,.16)!important}
+ .hamburger{display:none!important}
 }
-.home-final-cta{max-width:1300px;margin:0 auto;padding:95px 24px 90px;text-align:center;border-top:1px solid rgba(245,197,91,.13)}
+@media(min-width:901px) and (max-width:1449px){
+ .navl{display:none!important}
+ .hamburger{display:flex!important}
+ #xLogo{display:flex!important}
+}
+@media(max-width:900px){
+ nav{position:relative!important;inset:auto!important;width:calc(100% - 20px)!important;margin:8px auto 0!important;border-radius:24px!important;z-index:20!important}
+ .hero{margin-top:0!important}
+ .hero-overlay{pointer-events:none!important}
+}
+.home-final-cta{max-width:1300px;margin:0 auto;padding:95px 24px 85px;text-align:center;border-top:1px solid rgba(245,197,91,.13)}
 .home-final-kicker{font-size:11px;font-weight:800;letter-spacing:3px;color:#dcb36c}
 .home-final-cta h2{margin:16px 0;font:900 clamp(42px,6vw,82px)/1.1 Cinzel,serif;color:#fff4e5}
 .home-final-cta h2 span{color:#e6b552}
@@ -628,7 +523,15 @@ nav{position:relative!important;top:auto!important;left:auto!important;right:aut
 .home-final-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:25px}
 .home-final-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:12px 22px;border:1px solid rgba(242,212,164,.48);border-radius:999px;color:#f5e8d0;text-decoration:none;font-size:11px;font-weight:800;letter-spacing:1px}
 .home-final-actions a:first-child{background:linear-gradient(120deg,#ffe9a5,#e9af48);color:#221b12}
-@media(max-width:900px){.home-final-cta{padding:70px 20px}}
+.home-footer{max-width:1300px;margin:0 auto;padding:38px 40px 30px!important;display:grid!important;grid-template-columns:minmax(0,2fr) 1fr 1fr;gap:32px;border-top:1px solid rgba(245,197,91,.18);color:#d7d1c6}
+.home-footer-brand strong{display:block;font:800 23px Cinzel,serif;letter-spacing:2px;color:#e8b968}
+.home-footer-brand p{max-width:470px;margin-top:10px;font-size:13px;line-height:1.65;color:#b7b6c1}
+.home-footer-col h3{margin:0 0 14px;font-size:10px;letter-spacing:2px;color:#d9d3c8}
+.home-footer-col a{display:block;width:fit-content;margin:0 0 10px;font-size:13px;color:#c9c7d0;text-decoration:none}
+.home-footer-col a:hover{color:#f5d99d}
+.home-footer-bottom{max-width:1300px;margin:0 auto;padding:18px 40px 26px!important;display:flex!important;justify-content:space-between!important;gap:20px;border-top:1px solid rgba(245,197,91,.13);color:#9994a0;font-size:11px}
+@media(max-width:700px){.home-final-cta{padding:65px 18px}.home-footer{grid-template-columns:1fr 1fr;padding:30px 20px!important}.home-footer-brand{grid-column:1/-1}.home-footer-bottom{padding:18px 20px!important;flex-wrap:wrap}}
+
 </style>
 </head>
 <body>
@@ -864,7 +767,11 @@ nav{position:relative!important;top:auto!important;left:auto!important;right:aut
   <p>Watch the countdown. Read the rules. Follow only official channels — and decide for yourself.</p>
   <div class="home-final-actions"><a href="/game/">EXPLORE JARRELL'S PEAK</a><a href="/dex/">PREVIEW THE DEX</a></div>
 </section>
-<footer style="display:flex;justify-content:space-between"><div>© 2026 Climboria. All rights reserved.</div></footer>
+<footer class="home-footer">
+ <div class="home-footer-brand"><strong>CLIMBORIA</strong><p>Planned target only — verify launch links and token addresses on official channels. Nothing here is financial advice.</p></div>
+ <div class="home-footer-col"><h3>EXPLORE</h3><a href="/game/">Game</a><a href="/dex/">DEX</a><a href="/swap/">Swap</a><a href="/launchpad/">Launchpad</a></div>
+ <div class="home-footer-col"><h3>SOCIAL & SUPPORT</h3><a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer">@CLIMBORIAHQ</a><a href="/support/">Support</a><a href="/whitepaper/">Whitepaper</a><a href="./terms/">Terms of Use</a></div>
+</footer><div class="home-footer-bottom"><span>© 2026 CLIMBORIA. All rights reserved.</span><span>VENGEANCE IS ALWAYS AN OPTION.</span></div>
 <footer class="site-status">GAME DEVELOPMENT • SOLANA ECOSYSTEM PLANNED • <a href="./terms/" style="color:#fbbf24;text-decoration:underline">TERMS OF USE</a> • <a href="/support/" style="color:#fbbf24;text-decoration:underline">CUSTOMER SUPPORT</a></footer>
 
 <script>
