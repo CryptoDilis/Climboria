@@ -173,6 +173,11 @@ Do not submit estimated, placeholder, or unverified token facts as final disclos
 
 ## 15. Detailed player experience and free-to-play progression
 
+### Browser-first access and mobile direction
+
+The core adventure is intended to run in a desktop and mobile browser, with touch controls treated as a first-class experience. A dedicated Climboria mobile app is a future possibility, not a released product or a dated commitment. The priority is to stabilize the browser game, touch controls, performance, and account experience before preparing and testing any app release. The core game should remain accessible to non-crypto players without requiring a wallet.
+
+
 - The core game is intended to be playable without purchases or a crypto wallet.
 - The planned free starting choice is a male or female adult hero in a mid-30s age style.
 - Each player is intended to receive one free starter tool. It is designed to be non-sellable, non-transferable, and non-mintable.
@@ -182,11 +187,21 @@ Do not submit estimated, placeholder, or unverified token facts as final disclos
 
 ## 16. Treasure discovery and reward design
 
+### Discovery and public records
+
+The treasure design uses randomly placed chests across the wilderness, including remote and hidden areas. Chest coordinates are intended to remain private until discovery. After a valid discovery, the project may publish a discovery announcement and a public record containing the disclosed location and contents. The design does not impose a daily or weekly claim cap; this is a gameplay design note, not an unlimited or guaranteed token distribution. Contents, odds or deterministic rules, funding, eligibility, anti-cheat, duplicate-account controls, and payout verification must be disclosed before activation.
+
+
 Random chests may contain $CLIMB, ingredients, gear, or eligible digital items. Their locations are intended to remain hidden until discovered, after which discovery and disclosed contents may be announced and recorded. The design has no daily/weekly claim cap; this is not an active unlimited payout promise. Reward odds or content rules, funding, eligibility, anti-cheat, account-abuse controls, and payout verification must be published before activation.
 
 The planned leaderboard structure is a permanent All-Time Top Gainers board and a separate Weekly Top Gainers board. Scoring is intended to combine eligible $CLIMB earnings, eligible treasure value, and transparent rarity/difficulty bonuses. Weekly payout timing, if funded and activated, is Friday at 03:00 UTC (11:00 AM Philippine time). No summit ranking or badge system is planned. CLIMB Points and leaderboard scores are not tokens and do not guarantee a payout.
 
 ## 17. Arena, Guild Battles, and wagers
+
+### Arena format and event operations
+
+The Arena is a separate future public forest map, accessible as a future destination from the game menu. It is intended to support free-for-all combat, Guild Battles, and sponsored tournaments. Casual fights are free and carry no rewards. During a Guild Battle, the whole Arena becomes the battlefield for the two participating guilds while other players spectate. Any guild member may request a battle; guild leadership approval is required before scheduling or activation.
+
 
 Arena is a separate future public forest battle/event map. Planned modes include free-for-all fights, Guild Battles, and sponsored tournaments. Casual fights are intended to be free and carry no rewards. During a Guild Battle, the whole Arena becomes the battlefield for the two participating guilds while others spectate. A guild member may request a battle; guild leadership approval is required.
 
@@ -194,14 +209,34 @@ A shared-world target above 1,000 concurrent players is a design ambition, not a
 
 ## 18. Climboria Signature, sponsorship, and funding
 
+### Launchpad review and creator safeguards
+
+Climboria Signature is the responsible-launch approach behind the planned Launchpad. Project review is intended to cover team and official links, token configuration, tokenomics, utility, distribution, liquidity approach, authorities, and available security evidence. Creator-lock rules, sell-limit safeguards, and transparent launch conditions are design requirements still subject to implementation and review. No review is an endorsement or guarantee of legitimacy, safety, liquidity, listing, or returns.
+
+
 Climboria Signature represents a responsible-launch philosophy. Planned Launchpad safeguards include project identity and official-link review, token configuration and disclosure review, creator-lock rules, sell-limit safeguards, and clear launch terms. These safeguards remain in development; review is not a guarantee of safety, legitimacy, liquidity, or profit.
 
-Climboria administration retains final sponsor approval. Sponsorship requires a written agreement covering the package, full fees, complete prize pool, duration, exclusivity, placements, cancellation/refund, postponement, force majeure, renewal, and prize protection. The full agreed fee and prize pool must be received and verified before announcement, branding, or event activation. Any expedited sponsor review is not an exemption from fraud, impersonation, illegal promotion, or misleading-claim checks.
+Climboria administration retains final sponsor approval. Sponsorship requires an eligibility review and a written agreement covering the package, full fees, complete prize pool, duration, exclusivity, placements, cancellation/refund, postponement, force majeure, renewal, and prize protection. Launchpad-created projects may receive expedited sponsor review after basic eligibility, payment, and event checks; other crypto and non-crypto sponsors receive review appropriate to their risk. Expedited review is not an exemption from fraud, impersonation, illegal promotions, or misleading claims. The full agreed fee and prize pool must be received and verified before announcement, branding, or event activation. Any expedited sponsor review is not an exemption from fraud, impersonation, illegal promotion, or misleading-claim checks.
 
 A disclosed portion of eligible future DEX and Launchpad fees is intended to support Jarrell’s Peak, but exact percentages are not finalized. Optional project donations of $1–$1,000 worth of SOL have been discussed; conversion to $CLIMB requires a safe verified route, otherwise funds remain in a SOL reserve. This is separate from marketplace fee accounting.
 
 ## 19. Chatworld, guilds, and Social Lobby
 
+### Community participation and campaign tools
+
+Guilds are intended to let players create or join teams, coordinate limited-time events, complete shared challenges, and participate in competitions. Referrals, community campaigns, and a campaign/reward tracker may show participation, challenge progress, and eligibility. These systems require published event schedules, scoring, eligibility, anti-abuse rules, and funded reward details before a campaign begins.
+
+
 Future communication includes Global Chat, Proximity Chat, and Private Messages, with mute, block, report, anti-spam, and moderator tools. Server-side identity, permissions, message delivery, persistence, and moderation are prerequisites. Guilds, shared challenges, referrals, limited-time events, and a campaign/reward tracker are planned and require published rules.
 
 A Social Lobby is planned for meeting, chatting, displaying characters/tools, and finding other players. A future in-lobby trading terminal may combine token search/watchlists with an order book and candlestick chart. This requires reliable market data, wallet integration, order handling, security, and moderation.
+
+
+## 20. Item ownership and NFT eligibility
+
+The design direction is for items earned or obtained through gameplay to be eligible for optional NFT minting where the item type, ownership model, game economy, and technical implementation support it. Items should remain usable in-game without minting. An item becomes externally tradable only after it is minted and supported by the relevant marketplace and network; minting does not itself guarantee liquidity or a buyer. Climboria intends no platform minting fee, while the player pays network gas. The free starter tool is excluded: it is intended to remain non-sellable, non-transferable, and non-mintable. Ownership, metadata, burn/upgrade behavior, anti-duplication, custody, and transfer rules must be implemented and published before activation.
+
+## 21. Product access, identity, and wallet boundaries
+
+The browser game is intended to welcome crypto and non-crypto players. Wallet connection should be required only for features that genuinely need an on-chain action, such as supported swaps, token settlement, or NFT operations. Guest and other login methods remain subject to the engineering release priorities and secure session implementation. A connected wallet is not proof of identity for every off-chain feature, and the project must clearly explain which account or wallet controls each asset and action.
+
