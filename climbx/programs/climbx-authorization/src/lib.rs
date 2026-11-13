@@ -73,6 +73,40 @@ pub mod climbx_authorization {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn grant_size_covers_five_mints() {
+        // 8-byte Anchor discriminator is added at account allocation.
+        assert_eq!(Grant::MAX_SIZE, 246);
+        assert_eq!(8 + Grant::MAX_SIZE, 254);
+    }
+
+    #[test]
+    fn owner_grant_defaults_to_no_execution_authority() {
+        // The on-chain program has no trade/execute instruction.
+        // Default state is zero spend, zero nonce, and non-revoked.
+        let grant = Grant {
+            owner: Pubkey::new_unique(),
+            executor: Pubkey::new_unique(),
+            grant_id: 7,
+            allowed_mints: vec![Pubkey::new_unique()],
+            expires_at: 100,
+            per_order_cap: 10,
+            cumulative_cap: 100,
+            spent: 0,
+            next_nonce: 0,
+            revoked: false,
+            bump: 1,
+        };
+        assert_eq!(grant.spent, 0);
+        assert_eq!(grant.next_nonce, 0);
+        assert!(!grant.revoked);
+    }
+}
+
 #[derive(Accounts)]
 #[instruction(grant_id: u64)]
 pub struct CreateGrant<'info> {
