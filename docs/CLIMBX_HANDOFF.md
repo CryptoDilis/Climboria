@@ -202,5 +202,11 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - PENDING: CI verification of exact branch head (GitHub workflow lookup returned no runs for recent commits); static structural gate is not a signed validator test or independent audit. Next: verify Node/Rust CI and signed local-validator authorization tests.
 - No DEX, Swap, Launchpad or Game edits. **REAL-FUNDS NO-GO**.
 
+## Phase 151 — 2026-11-14 — branch divergence and CI visibility diagnosis
+- VERIFIED via GitHub compare `main...climbx/phase28-release-gate-ci`: branch is **252 commits ahead, 392 behind** main; 103 changed files. This is a substantial merge/conflict risk; do not blindly merge or overwrite main.
+- VERIFIED: GitHub connector `fetch_commit_workflow_runs` explicitly filters to **pull-request-triggered** runs. Empty results for recent CLIMBX commits do NOT prove no push CI ran. Combined commit status API returned an empty statuses array for `07b7ee240146fa323379315e1b88c9534ad9b373`; still insufficient to establish exact-head CI success.
+- NEXT: obtain exact-head CI evidence using GitHub Actions UI or an API capable of listing push runs/check-runs; verify Node and Rust tests. Then prepare a fresh-main CLIMBX-only integration branch and cherry-pick/reapply narrowly reviewed CLIMBX files; keep DEX/Swap/Launchpad/Game out of the merge. Do not mark CI passed until observed.
+- No trading permissions or non-CLIMBX product files changed. **REAL-FUNDS NO-GO**.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
