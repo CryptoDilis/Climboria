@@ -65,8 +65,12 @@ test("rejects unknown top-level programs, extra signers and unsupported route va
 });
 
 test("rejects wrong taker, output mint, amounts, fee and excessive slippage", () => {
-  assert.throws(() => validate(parsed({ takerKey: source })), /account roles/);
-  assert.throws(() => validate(parsed({ outMint: source })), /account roles/);
+  // Wrong-role negative cases must NOT also duplicate another key: test
+  // role validation independently from the new duplicate-key safety gate.
+  const unrelatedWallet = encodeBase58(new Uint8Array(32).fill(24));
+  const unrelatedMint = encodeBase58(new Uint8Array(32).fill(25));
+  assert.throws(() => validate(parsed({ takerKey: unrelatedWallet })), /account roles/);
+  assert.throws(() => validate(parsed({ outMint: unrelatedMint })), /account roles/);
   assert.throws(() => validate(parsed({ data: routeData({ inAmount: 1001 }) })), /amounts do not match/);
   assert.throws(() => validate(parsed({ data: routeData({ fee: 1 }) })), /platform fees/);
   assert.throws(() => validate(parsed({ data: routeData({ slippage: 501 }) })), /5% safety cap/);
@@ -76,14 +80,25 @@ test("rejects invalid split percentages, route indexes and missing DEX program a
   assert.throws(() => decodeJupiterV6Route(routeData({ percent: 99 })), /total 100/);
   assert.throws(() => decodeJupiterV6Route(routeData({ inputIndex: 1, outputIndex: 1 })), /token index/);
   const p = parsed();
-  p.staticAccountKeys[6] = decodeBase58(compute);
+  p.staticAccountKeys[6] = decodeBase58(encodeBase58(new Uint8Array(32).fill(24)));
   assert.throws(() => validate(p), /missing its approved DEX program/);
 });
 
 test("rejects unexpected writable privileges on route authority and fee placeholders", () => {
   const p = parsed();
   p.readonlyUnsignedAccounts = 4;
-  assert.throws(() => validate(p), /signer\/writable privileges/);
+  assert.throws(() => validate(p), /known executable program/i,
+    "An executable token program must be readonly, even if an outer route also has writable role errors");
+
+  // Isolate a writable output-mint privilege violation without turning any
+  // known program into writable or duplicating a resolved pubkey.
+  const outputMintWritableViaAlt = parsed();
+  outputMintWritableViaAlt.staticAccountKeys[4] = decodeBase58(encodeBase58(new Uint8Array(32).fill(26)));
+  outputMintWritableViaAlt.instructions[0].accountIndexes[5] = 9;
+  assert.throws(
+    () => validate(outputMintWritableViaAlt, { loadedWritable: [outputMint] }),
+    /signer\/writable privileges/i
+  );
 });
 
 test("rejects Compute Budget instructions that carry account metas or unsupported opcodes", () => {
