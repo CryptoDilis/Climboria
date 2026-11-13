@@ -15,6 +15,17 @@ const SUPPORTED_SWAP_VARIANTS = new Map([
   [61, { name: "SolFi", payloadBytes: 1, programId: "SoLFiHG9TfgtdUXUjWAxi3LtvYuFyDLVhBWxdMZxyCe" }]
 ]);
 
+// Known executable programs must never receive writable or signer privileges
+// from either static keys or resolved ALT entries. Checking only the first
+// matching remaining account is insufficient when an upstream transaction
+// supplies duplicate aliases.
+const APPROVED_READONLY_PROGRAM_IDS = new Set([
+  TOKEN_PROGRAM_ID,
+  COMPUTE_BUDGET_PROGRAM_ID,
+  JUPITER_V6_PROGRAM_ID,
+  ...[...SUPPORTED_SWAP_VARIANTS.values()].map(variant => variant.programId)
+]);
+
 function fail(message) { throw new Error(message); }
 function readU32(bytes, offset) {
   if (offset + 4 > bytes.length) fail("Truncated Jupiter route instruction");
@@ -129,6 +140,19 @@ export function validateJupiterV6Transaction({
 }) {
   if (!parsed || parsed.requiredSignatures !== 1) fail("Only single-taker-signature transactions are supported");
   const keys = buildAccountKeys(parsed, loadedWritable, loadedReadonly);
+  // Solana v0 address lookups and static account references share one resolved
+  // key space. Reject duplicate pubkey aliases rather than relying on
+  // accountIndexes.indexOf(), which can inspect only the first occurrence.
+  if (new Set(keys).size !== keys.length) {
+    fail("Jupiter transaction contains duplicate resolved account pubkeys");
+  }
+  for (let index = 0; index < keys.length; index++) {
+    if (!APPROVED_READONLY_PROGRAM_IDS.has(keys[index])) continue;
+    const privilege = metaFor(parsed, index, loadedWritable, loadedReadonly);
+    if (privilege.signer || privilege.writable) {
+      fail("Jupiter transaction grants signer or writable privileges to a known executable program");
+    }
+  }
   const routeInstructions = [];
   for (const instruction of parsed.instructions) {
     const programId = keys[instruction.programIdIndex];
