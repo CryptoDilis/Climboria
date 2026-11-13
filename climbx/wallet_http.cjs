@@ -2,7 +2,6 @@
 // Caller MUST supply a trusted server-side wallet service; no private DB
 // credentials or Supabase service-role secrets may reach the browser.
 // Mount only behind HTTPS and a reviewed deployment/rate-limiting policy.
-const http=require('node:http');
 const {URL}=require('node:url');
 const MAX_BYTES=4096;
 function createWalletHttpHandler({service,origin='https://climboria.fun',rateLimit}){
@@ -22,6 +21,10 @@ function createWalletHttpHandler({service,origin='https://climboria.fun',rateLim
   let permitted=false;
   try{permitted=await rateLimit({token,path:req.url});}catch{send(503,{status:'RATE_LIMIT_UNAVAILABLE'});return;}
   if(!permitted){send(429,{status:'RATE_LIMITED'});return;}
+  const declaredLength=req.headers['content-length'];
+  if(declaredLength!==undefined && (!/^(0|[1-9][0-9]*)$/.test(String(declaredLength)) || Number(declaredLength)>MAX_BYTES)){
+   send(413,{status:'TOO_LARGE'});return;
+  }
   let bytes=0,chunks=[];
   try{
    for await(const chunk of req){bytes+=chunk.length;if(bytes>MAX_BYTES){send(413,{status:'TOO_LARGE'});return;}chunks.push(chunk);}
