@@ -3,6 +3,7 @@
 // canonical challenge from DB, Ed25519 verifier, and a privileged server pool.
 // Never expose pool credentials or trust userId from browser JSON.
 const {verifySolanaMessage}=require('./solana_signature.cjs');
+const {canonicalChallenge}=require('./canonical_challenge.cjs');
 async function bindVerifiedWallet({pool,userId,nonce,wallet,domain,chain,now,signature}) {
   if (!pool || typeof pool.connect!=='function') throw new TypeError('server pool required');
   if (![userId,nonce,wallet,domain,chain,signature].every(x=>typeof x==='string'&&x.length>0)) return 'INVALID';
@@ -21,7 +22,17 @@ async function bindVerifiedWallet({pool,userId,nonce,wallet,domain,chain,now,sig
     if(!same) {await client.query('ROLLBACK');inTransaction=false;return 'MISMATCH';}
     if(row.consumed_at!==null) {await client.query('ROLLBACK');inTransaction=false;return 'REPLAY';}
     if(!(issued<=now && now<expiry)) {await client.query('ROLLBACK');inTransaction=false;return 'EXPIRED';}
-    if(!verifySolanaMessage({wallet,message:row.canonical_message,signature})) {
+    let expectedMessage;
+    try {
+      const issuedAt=issued.getTime()/1000, expiresAt=expiry.getTime()/1000;
+      expectedMessage=canonicalChallenge({userId,wallet,nonce,domain,chain,issuedAt,expiresAt});
+    } catch {
+      await client.query('ROLLBACK');inTransaction=false;return 'INVALID_CHALLENGE';
+    }
+    if(row.canonical_message!==expectedMessage) {
+      await client.query('ROLLBACK');inTransaction=false;return 'INVALID_CHALLENGE';
+    }
+    if(!verifySolanaMessage({wallet,message:expectedMessage,signature})) {
       await client.query('ROLLBACK');inTransaction=false;return 'BAD_SIGNATURE';
     }
     // Wallet uniqueness index from 004_unique_wallet_owner.sql must exist.
