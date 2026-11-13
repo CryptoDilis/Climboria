@@ -352,6 +352,9 @@ try {
   if (!idleAnimationAudit || idleAnimationAudit.forbiddenRestClip || /(?:^|[_\\s-])(sit|sitting|seated|crouch|kneel|prone|sleep|lying|lie|fall|death|swim|swimming)(?:$|[_\\s-])/i.test(idleAnimationAudit.activeClip)) {
     errors.push('Hero idle selected a forbidden seated/fallen pose: ' + JSON.stringify(idleAnimationAudit));
   }
+  if (!idleAnimationAudit?.shoulderDrops || idleAnimationAudit.shoulderDrops.length !== 2 || idleAnimationAudit.shoulderDrops.some(arm => !arm.upperArm || !Number.isFinite(arm.downwardFraction) || arm.downwardFraction < .45)) {
+    errors.push('Hero standing idle retained an A-pose instead of relaxed downward shoulders: ' + JSON.stringify(idleAnimationAudit?.shoulderDrops));
+  }
   console.log('Hero standing-idle animation audit:',JSON.stringify(idleAnimationAudit));
   await page.keyboard.down('w');
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'walk', undefined, { timeout: 10000 });
