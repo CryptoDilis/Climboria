@@ -197,6 +197,7 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
 <script>
 (()=>{
 let chunkReady=false,renderReady=false,heroReady=false;
+window.__climboriaGLBLoadDiagnostics={phase:'idle',choice:null,asset:null,startedAt:null,loaded:0,total:0,percent:0,loadCallbackAt:null,readyAt:null,error:null};
 window.__climboriaGameReady=false;
 const T3=THREE,L=h=>new T3.Color(h).convertSRGBToLinear();
 /* ---------- noise ---------- */
@@ -1088,28 +1089,54 @@ let heroLoadError='',heroLoadRequest=0;
 function loadAssetHero(choice='ClimboriaHero'){
  if(choice==='ClimboriaHero'||!assetChoices[choice])choice='Adventurer';
  const requestId=++heroLoadRequest;
- if(!T3.GLTFLoader){heroLoadError='GLTFLoader unavailable';document.documentElement.dataset.climboriaHero='load-error';document.documentElement.dataset.climboriaHeroRenderer='fallback';hero.visible=false;heroReady=true;console.warn('[Climboria] '+heroLoadError);return}
+ const loadStartedAt=performance.now();
+ const loadDiagnostics=window.__climboriaGLBLoadDiagnostics={
+  phase:'downloading',choice,asset:assetChoices[choice],startedAt:loadStartedAt,
+  loaded:0,total:0,percent:0,loadCallbackAt:null,readyAt:null,error:null
+ };
+ if(!T3.GLTFLoader){heroLoadError='GLTFLoader unavailable';loadDiagnostics.phase='unavailable';loadDiagnostics.error=heroLoadError;document.documentElement.dataset.climboriaHero='load-error';document.documentElement.dataset.climboriaHeroRenderer='fallback';hero.visible=false;heroReady=true;console.warn('[Climboria] '+heroLoadError);return}
  document.documentElement.dataset.climboriaHero='loading-'+choice.toLowerCase();
  new T3.GLTFLoader().load(assetChoices[choice],gltf=>{
-  // Ignore late responses from an earlier character selection; the most recent choice always wins.
-  if(requestId!==heroLoadRequest){gltf.scene.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}});return}
-  if(assetHero){if(assetMixer)assetMixer.stopAllAction();scene.remove(assetHero);assetHero.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}})}
-  assetHero=gltf.scene;assetHero.name='Climboria_'+choice+'_PhysicsCharacter';assetHeroUsesAuthoredAnimations=choice==='Adventurer';
-  const box=new T3.Box3().setFromObject(assetHero),size=box.getSize(new T3.Vector3());
-  const scale=1.9/Math.max(size.y,.001);assetHero.scale.setScalar(scale);
-  const scaledBox=new T3.Box3().setFromObject(assetHero);assetHeroGroundOffset=-scaledBox.min.y;assetHero.position.y=assetHeroGroundOffset;
-  assetHero.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
-  scene.add(assetHero);hero.visible=false;hero.traverse(o=>{o.visible=false});
-  assetMixer=gltf.animations&&gltf.animations.length?new T3.AnimationMixer(assetHero):null;
-  assetActions=gltf.animations||[];assetActive=null;assetAnimState='';cacheAssetRig(assetHero);chooseAssetAnimation('idle');
-  document.documentElement.dataset.climboriaHero=choice.toLowerCase().replace(/[^a-z]/g,'-');document.documentElement.dataset.climboriaHeroAsset=assetChoices[choice];document.documentElement.dataset.climboriaHeroRenderer='glb';
-  window.__climboriaGLBRenderer=true;
-  document.documentElement.dataset.climboriaAnimations=assetActions.map(a=>a.name).join('|')||'none';
-heroReady=true;
-  console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
- },undefined,error=>{
+  if(requestId!==heroLoadRequest){loadDiagnostics.phase='superseded';gltf.scene.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}});return}
+  loadDiagnostics.phase='assembling';
+  loadDiagnostics.loadCallbackAt=performance.now();
+  try{
+   if(assetHero){if(assetMixer)assetMixer.stopAllAction();scene.remove(assetHero);assetHero.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}})}
+   assetHero=gltf.scene;assetHero.name='Climboria_'+choice+'_PhysicsCharacter';assetHeroUsesAuthoredAnimations=choice==='Adventurer';
+   const box=new T3.Box3().setFromObject(assetHero),size=box.getSize(new T3.Vector3());
+   const scale=1.9/Math.max(size.y,.001);assetHero.scale.setScalar(scale);
+   const scaledBox=new T3.Box3().setFromObject(assetHero);assetHeroGroundOffset=-scaledBox.min.y;assetHero.position.y=assetHeroGroundOffset;
+   assetHero.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+   scene.add(assetHero);hero.visible=false;hero.traverse(o=>{o.visible=false});
+   assetMixer=gltf.animations&&gltf.animations.length?new T3.AnimationMixer(assetHero):null;
+   assetActions=gltf.animations||[];assetActive=null;assetAnimState='';cacheAssetRig(assetHero);chooseAssetAnimation('idle');
+   document.documentElement.dataset.climboriaHero=choice.toLowerCase().replace(/[^a-z]/g,'-');document.documentElement.dataset.climboriaHeroAsset=assetChoices[choice];document.documentElement.dataset.climboriaHeroRenderer='glb';
+   window.__climboriaGLBRenderer=true;
+   document.documentElement.dataset.climboriaAnimations=assetActions.map(a=>a.name).join('|')||'none';
+   heroReady=true;
+   loadDiagnostics.phase='ready';
+   loadDiagnostics.readyAt=performance.now();
+   loadDiagnostics.totalElapsedMs=Math.round(loadDiagnostics.readyAt-loadStartedAt);
+   loadDiagnostics.parseAndAssemblyMs=Math.round(loadDiagnostics.readyAt-loadDiagnostics.loadCallbackAt);
+   console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
+  }catch(error){
+   loadDiagnostics.phase='callback-error';
+   loadDiagnostics.error=String(error&&error.stack||error&&error.message||error);
+   loadDiagnostics.errorAt=performance.now();
+   throw error;
+  }
+ },progress=>{
+  loadDiagnostics.loaded=Number(progress&&progress.loaded)||0;
+  loadDiagnostics.total=Number(progress&&progress.total)||0;
+  loadDiagnostics.percent=loadDiagnostics.total>0?Math.round(loadDiagnostics.loaded/loadDiagnostics.total*10000)/100:0;
+  loadDiagnostics.phase=loadDiagnostics.total>0&&loadDiagnostics.loaded>=loadDiagnostics.total?'parsing':'downloading';
+  loadDiagnostics.progressAt=performance.now();
+ },error=>{
   if(requestId!==heroLoadRequest)return;
   heroLoadError=String(error&&error.message||error);
+  loadDiagnostics.phase='error';
+  loadDiagnostics.error=String(error&&error.stack||error&&error.message||error);
+  loadDiagnostics.errorAt=performance.now();
   document.documentElement.dataset.climboriaHero='load-error';
   document.documentElement.dataset.climboriaHeroRenderer='fallback';
   window.__climboriaGLBRenderer=false;

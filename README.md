@@ -40,6 +40,17 @@
 
 ---
 
+## 2026-11-13 — P1 Swap semantic-schema hardening and current-main synchronization
+
+- [x] Commit `97f4652f49700c745d24d59f34208a7ce77e03c9` adds the versioned `v1-unverified-dex-schemas-rejected` policy state. An otherwise shape-valid Jupiter route now fails closed unless every adapter has an independently verified per-DEX semantic account schema; a readonly program ID and route label are insufficient proof of account slicing, token movement, or fee destination safety.
+- [x] Isolated exact-commit test: `node --test dex/swap-proxy/test/jupiter-v6-policy.test.mjs` passed **24/24**. The former Raydium acceptance fixture is now explicitly rejected pending semantic-schema evidence; existing adversarial privilege, fee, minimum-output, unknown-program, route-graph, RPC-audit, and Meteora-evidence tests remain covered.
+- [x] The stale PR #268 documentation conflicts were reconciled by retaining the current `main` product-priority and handoff record, while preserving the branch's P1 implementation, policy tests, security review, research tooling, and evidence files.
+- [x] Exact-head GitHub Actions on synchronization commit `671489f6cd1593588f5283b50563783db5eeafe2` are all green: Validate `43432130651`; Browser Smoke `43432130621`; strict Jarrell's Peak Game Browser Smoke `43432131006`; Jupiter V6 CPI Trace Audit `43432131782`; Jupiter IDL History Audit `43432131235`. The game smoke's real desktop/mobile step completed in 6m34s, then uploaded artifact `14041895391`.
+- [!] Passing structural, browser, gameplay, and read-only evidence checks verifies this hardening change; it does not establish per-DEX runtime semantic schemas, independent security approval, controlled Devnet settlement, production deployment, or authorize signing/execution. All related flags remain `false`.
+- [ ] Next: obtain versioned, independently reviewed per-DEX account-slice/token-movement/fee-destination schemas before any adapter can become signable; continue P2 DEX only after that P1 release blocker is resolved or explicitly reprioritized.
+
+---
+
 ## 2026-11-11 21:45 +08 — PR #268 synchronized; exact-new-head ecosystem CI passed
 
 - [x] Resolved PR #268 base drift without dropping its changes: merged current main `cd42569a9fbe471f2b3df8579cc384d6e461fd66` into branch `codex/swap-jupiter-fixed-account-roles-2026-11-11` with merge commit `9df06f90ae6377b21883e935dff24e75d922614c`.

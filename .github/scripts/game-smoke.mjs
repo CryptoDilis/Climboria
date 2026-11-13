@@ -465,6 +465,14 @@ try {
   await page.screenshot({path:'climboria-desktop-cave-interior.png'});
   console.log('Desktop cave interior visual capture:',JSON.stringify(desktopCaveInterior));
 
+  // The desktop smoke page has finished all assertions and screenshots. Close its
+  // WebGL renderer and release the 43 MB GLB/decoded scene before starting the
+  // independent mobile context; keeping both full worlds alive caused the mobile
+  // GLTFLoader to stall after the complete download, before its parse callback.
+  await page.close();
+  await desktop.close();
+  console.log('Released desktop WebGL context and scene resources before mobile GLB startup.');
+
   const mobile = await browser.newPage({
     // Start portrait to verify the rotate gate, then switch to landscape for gameplay evidence.
     viewport: { width: 390, height: 844 },
@@ -690,7 +698,11 @@ try {
     canvas: !!document.querySelector('canvas'),
     glbResources: performance.getEntriesByType('resource')
       .filter(entry => /Climboria_Hero\.glb/i.test(entry.name))
-      .map(entry => ({ name: entry.name, duration: Math.round(entry.duration), transferSize: entry.transferSize, decodedBodySize: entry.decodedBodySize }))
+      .map(entry => ({ name: entry.name, duration: Math.round(entry.duration), transferSize: entry.transferSize, decodedBodySize: entry.decodedBodySize })),
+    glbLoadDiagnostics: window.__climboriaGLBLoadDiagnostics ? {
+      ...window.__climboriaGLBLoadDiagnostics,
+      ageMs: window.__climboriaGLBLoadDiagnostics.startedAt===null ? null : Math.round(performance.now()-window.__climboriaGLBLoadDiagnostics.startedAt)
+    } : null
   }));
   const mobileGlbWaitStartedAt = Date.now();
   try {
@@ -710,7 +722,7 @@ try {
     }
     console.log('Mobile GLB readiness confirmed at timeout boundary; strict GLB invariants remain satisfied:', JSON.stringify({ ...diagnostic, elapsedMs: Date.now() - mobileGlbWaitStartedAt }));
   }
-  const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero }));
+  const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero, glbLoadDiagnostics: window.__climboriaGLBLoadDiagnostics ?? null }));
   if (!mobileHeroReady.readiness.chunk || !mobileHeroReady.readiness.render || !mobileHeroReady.readiness.hero || mobileHeroReady.renderer !== true || !mobileHeroReady.heroUsesGlb) throw new Error('Mobile saved GLB hero did not become fully ready: ' + JSON.stringify(mobileHeroReady));
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
   await mobile.keyboard.press('w');

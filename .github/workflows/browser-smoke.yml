@@ -1,7 +1,7 @@
 name: Climboria Browser Smoke Test
 
 concurrency:
-  group: climboria-browser-smoke-${{ github.ref }}
+  group: climboria-browser-smoke-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 on:
@@ -13,10 +13,6 @@ on:
       - "swap/**"
       - "launchpad/**"
       - "climboria-favicon.png"
-      - "game/assets/music/TRACK_01.mp3"
-      - "game/play.html"
-      - "game/index.html"
-      - ".github/scripts/game-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
   pull_request:
     branches: [main]
@@ -27,9 +23,6 @@ on:
       - "launchpad/**"
       - "swap-config.js"
       - "climboria-favicon.png"
-      - "game/assets/music/TRACK_01.mp3"
-      - "game/play.html"
-      - ".github/scripts/game-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
 
   workflow_dispatch:
@@ -405,7 +398,7 @@ jobs:
               await page.setViewportSize({width:1365,height:900});
               await page.locator('#detailPairs button[data-pool="'+poolB+'"]').waitFor({state:'visible',timeout:15000});
               if(new URL(page.url()).searchParams.get('pool')!==poolA) throw new Error('DEX initial token selection did not persist its best pool in URL');
-              await page.evaluate(pool=>{const u=new URL(location.href);u.searchParams.set('pool',pool);history.pushState({climboriaDex:true},'',u);},poolA);
+              await page.evaluate(()=>{window.__climboriaDexHistoryEvents=[];window.addEventListener('popstate',()=>window.__climboriaDexHistoryEvents.push({url:location.href,state:history.state}));});
               await page.locator('#detailPairs button[data-pool="'+poolB+'"]').click();
               if(new URL(page.url()).searchParams.get('pool')!==poolB) throw new Error('DEX pool selection did not update URL');
               const assertSelectedPool=(pool,expected)=>page.evaluate(({pool,expected})=>{
@@ -421,13 +414,15 @@ jobs:
               const poolAExpected={price:'$1.00000',volume:'$50.0K',liquidity:'$200.0K',change:'+1.00%',flow:'10 / 5'};
               const poolBState=await assertSelectedPool(poolB,poolBExpected);
               if(!poolBState.passed)throw new Error('Selecting pool B did not synchronize chart, external link and provider metrics: '+JSON.stringify(poolBState));
-              await page.goBack();
-              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolA,{timeout:10000});
+              // DEX pool selection uses pushState/replaceState; exercise same-document history without waiting for a new document load.
+              await page.evaluate(()=>history.back());
+              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolA,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,historyLength:history.length,historyState:history.state,events:window.__climboriaDexHistoryEvents,selectedPool:document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair,activeMint:window.activeDetailMint||null}));throw new Error('DEX Back URL restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolA,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>({pair:x.dataset.pair,selected:x.classList.contains('selected')})),title:document.querySelector('#detailTitle')?.textContent}));throw new Error('DEX Back selected-pool restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
               const poolABackState=await assertSelectedPool(poolA,poolAExpected);
               if(!poolABackState.passed)throw new Error('Browser Back restored pool A URL/row but not its chart and metrics: '+JSON.stringify(poolABackState));
-              await page.goForward();
-              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolB,{timeout:10000});
+              // popstate is the application contract; a cross-origin chart iframe must not gate this history assertion on load.
+              await page.evaluate(()=>history.forward());
+              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolB,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,historyLength:history.length,historyState:history.state,events:window.__climboriaDexHistoryEvents,selectedPool:document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair,activeMint:window.activeDetailMint||null}));throw new Error('DEX Forward URL restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolB,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,activeMint:window.activeDetailMint||null,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>({pair:x.dataset.pair,selected:x.classList.contains('selected')})),title:document.querySelector('#detailTitle')?.textContent}));throw new Error('DEX Forward selected-pool restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
               const poolBForwardState=await assertSelectedPool(poolB,poolBExpected);
               if(!poolBForwardState.passed)throw new Error('Browser Forward restored pool B URL/row but not its chart and metrics: '+JSON.stringify(poolBForwardState));
@@ -623,6 +618,26 @@ jobs:
                 // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
                 const closeDetail=dex.locator('#closeDetail');
                 await closeDetail.waitFor({state:'visible',timeout:5000});
+                // openToken() intentionally scrolls the detail panel into view smoothly.
+                // Wait for the close button and page scroll position to stop moving before
+                // tapping; otherwise the tap point can drift into the cross-origin chart iframe.
+                await dex.evaluate(async()=>{
+                  const el=document.querySelector('#closeDetail');
+                  if(!el)throw new Error('Mobile token close control disappeared before tap');
+                  const deadline=performance.now()+5000;
+                  let previous=null,stableFrames=0;
+                  while(performance.now()<deadline&&stableFrames<8){
+                    await new Promise(requestAnimationFrame);
+                    const r=el.getBoundingClientRect();
+                    const next={x:r.x,y:r.y,width:r.width,height:r.height,scrollY:window.scrollY};
+                    if(previous&&Math.abs(next.x-previous.x)<0.25&&Math.abs(next.y-previous.y)<0.25&&Math.abs(next.width-previous.width)<0.25&&Math.abs(next.height-previous.height)<0.25&&Math.abs(next.scrollY-previous.scrollY)<0.25)stableFrames++;
+                    else stableFrames=0;
+                    previous=next;
+                  }
+                  if(stableFrames<8)throw new Error('Mobile detail scroll did not settle before close tap: '+JSON.stringify({stableFrames,rect:el.getBoundingClientRect().toJSON(),scrollY:window.scrollY}));
+                  const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+                  if(hit!==el&&!el.contains(hit))throw new Error('Mobile close control is not the top hit target after scroll settled: '+JSON.stringify({hit:hit?{tag:hit.tagName,id:hit.id,classes:String(hit.className)}:null,rect:r.toJSON(),scrollY:window.scrollY}));
+                });
                 const closeBefore=await closeDetail.evaluate(el=>{const r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},disabled:el.disabled,display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,pointerEvents:getComputedStyle(el).pointerEvents,topElement:top?{tag:top.tagName,id:top.id,classes:String(top.className)}:null}});
                 if(closeBefore.disabled||closeBefore.rect.width===0)throw new Error('Mobile token close control is not actionable: '+JSON.stringify(closeBefore));
                 await dex.evaluate(()=>{
@@ -715,12 +730,6 @@ jobs:
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
 
-      - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
-        timeout-minutes: 21
-        run: |
-          echo 'Starting bounded Jarrell desktop/mobile gameplay smoke test.'
-          timeout --signal=TERM --kill-after=30s 20m node .github/scripts/game-smoke.mjs
-
       - name: Upload browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -729,12 +738,6 @@ jobs:
           path: |
             climboria-desktop-home.png
             climboria-mobile-home.png
-            climboria-desktop-gameplay.png
-            climboria-mobile-gameplay.png
-            climboria-desktop-cave-entrance.png
-            climboria-mobile-cave-entrance.png
-            climboria-desktop-cave-interior.png
-            climboria-mobile-cave-interior.png
             climboria-dex-token-socials.png
             climboria-dex-token-socials-mobile.png
             freshwater-*.png

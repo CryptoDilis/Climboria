@@ -3,6 +3,10 @@ import { encodeBase58 } from "./transaction-validation.mjs";
 export const JUPITER_V6_PROGRAM_ID = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 export const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 export const COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111";
+export const JUPITER_V6_EVENT_AUTHORITY = "D8cy77BBepLMngZx6ZukaTff5hCt1HrWyKk3Hnd9oitf";
+// A route can become executable only after every adapter has a reviewed account schema.
+// This version is intentionally deny-by-default while that evidence is incomplete.
+export const JUPITER_V6_SEMANTIC_POLICY_VERSION = "v1-unverified-dex-schemas-rejected";
 
 const ROUTE_DISCRIMINATOR = [229, 23, 203, 151, 122, 227, 173, 42];
 const SUPPORTED_SWAP_VARIANTS = new Map([
@@ -12,10 +16,16 @@ const SUPPORTED_SWAP_VARIANTS = new Map([
   [38, { name: "MeteoraDlmm", payloadBytes: 0, programId: "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo" }],
   [40, { name: "RaydiumClmmV2", payloadBytes: 0, programId: "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK" }],
   [46, { name: "RaydiumCP", payloadBytes: 0, programId: "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C" }],
-  [61, { name: "SolFi", payloadBytes: 1, programId: "SoLFiHG9TfgtdUXUjWAxi3LtvYuFyDLVhBWxdMZxyCe" }]
 ]);
 
 function fail(message) { throw new Error(message); }
+function requireVerifiedDexSemanticSchemas(route) {
+  // Route-plan enum names and readonly program IDs are insufficient to establish
+  // CPI account cursor boundaries, token movement, or fee destinations. Keep
+  // the validator closed until a versioned adapter schema is independently proven.
+  const missing = [...new Set(route.steps.map(step => step.dex))];
+  fail("Jupiter route has no verified per-DEX semantic account schema: " + missing.join(", "));
+}
 function readU32(bytes, offset) {
   if (offset + 4 > bytes.length) fail("Truncated Jupiter route instruction");
   return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(offset, true);
@@ -41,6 +51,7 @@ export function decodeJupiterV6Route(data) {
   if (count < 1 || count > 16) fail("Jupiter route plan step count is outside the supported range");
   const steps = [];
   const percentByInput = new Map();
+  const producedTokenIndexes = new Set();
   const dexProgramIds = new Set();
   for (let i = 0; i < count; i++) {
     if (offset >= data.length) fail("Truncated Jupiter route step");
@@ -49,7 +60,7 @@ export function decodeJupiterV6Route(data) {
     if (!support) fail("Jupiter route contains an unsupported DEX variant: " + variant);
     if (offset + support.payloadBytes + 3 > data.length) fail("Truncated Jupiter route step payload");
     const payload = data.slice(offset, offset + support.payloadBytes);
-    if (payload.some(value => value > 1) && (variant === 17 || variant === 61)) {
+    if (payload.some(value => value > 1) && variant === 17) {
       fail("Jupiter route contains an invalid boolean variant payload");
     }
     offset += support.payloadBytes;
@@ -59,7 +70,11 @@ export function decodeJupiterV6Route(data) {
     if (percent < 1 || percent > 100 || inputIndex >= outputIndex || outputIndex > count) {
       fail("Jupiter route contains an invalid split percentage or token index");
     }
+    if (inputIndex !== 0 && !producedTokenIndexes.has(inputIndex)) {
+      fail("Jupiter route input token index must be produced by an earlier topologically ordered step");
+    }
     percentByInput.set(inputIndex, (percentByInput.get(inputIndex) || 0) + percent);
+    producedTokenIndexes.add(outputIndex);
     steps.push({ variant, dex: support.name, percent, inputIndex, outputIndex });
     dexProgramIds.add(support.programId);
   }
@@ -71,6 +86,18 @@ export function decodeJupiterV6Route(data) {
   if (!percentByInput.has(0) || steps.every(step => step.outputIndex !== count)) {
     fail("Jupiter route plan does not connect input to final output");
   }
+  // Jupiter defines routePlan as a topologically sorted trade DAG. Walk it
+  // backwards from the final output to reject dead-end swaps that do not
+  // contribute to the user-visible output amount.
+  const outputReachableIndexes = new Set([count]);
+  for (let i = steps.length - 1; i >= 0; i--) {
+    const step = steps[i];
+    if (!outputReachableIndexes.has(step.outputIndex)) {
+      fail("Jupiter route plan contains a dead-end branch disconnected from the final output");
+    }
+    outputReachableIndexes.add(step.inputIndex);
+  }
+  if (!outputReachableIndexes.has(0)) fail("Jupiter route plan has no path from the input token to the final output");
   for (const [inputIndex, percent] of percentByInput) {
     if (percent !== 100) fail("Jupiter route split percentages must total 100 for each input index");
   }
@@ -147,29 +174,40 @@ export function validateJupiterV6Transaction({
   }
   const accountKeys = instruction.accountIndexes.map(index => keys[index]);
   const accountMetas = instruction.accountIndexes.map(index => metaFor(parsed, index, loadedWritable, loadedReadonly));
-  if (accountKeys.length < 8) fail("Jupiter route instruction is missing required accounts");
+  if (accountKeys.length < 10) fail("Jupiter route instruction is missing required fixed or DEX accounts");
   // For the supported no-fee/no-extra-destination-account route shape, Anchor encodes
   // both absent optional accounts (destinationTokenAccount and platformFeeAccount)
   // as the Jupiter program ID sentinel. The top-level program ID is instruction.programIdIndex,
   // not an account meta in this fixed account list.
   if (accountKeys[0] !== TOKEN_PROGRAM_ID || accountKeys[1] !== taker ||
       accountKeys[5] !== outputMint || accountKeys[4] !== JUPITER_V6_PROGRAM_ID ||
-      accountKeys[6] !== JUPITER_V6_PROGRAM_ID) {
-    fail("Jupiter route account roles do not match the taker, token program and output mint");
+      accountKeys[6] !== JUPITER_V6_PROGRAM_ID ||
+      accountKeys[7] !== JUPITER_V6_EVENT_AUTHORITY ||
+      accountKeys[8] !== JUPITER_V6_PROGRAM_ID) {
+    fail("Jupiter route fixed account roles do not match the taker, token program, output mint, event authority and program");
   }
   if (!accountMetas[1].signer || accountMetas[2].signer || accountMetas[3].signer || !accountMetas[2].writable || !accountMetas[3].writable ||
       accountMetas[0].signer || accountMetas[0].writable || accountMetas[5].writable ||
-      accountMetas[4].writable || accountMetas[6].writable) {
+      accountMetas[4].writable || accountMetas[6].writable ||
+      accountMetas[7].signer || accountMetas[7].writable ||
+      accountMetas[8].signer || accountMetas[8].writable) {
     fail("Jupiter route account signer/writable privileges are unexpected");
   }
-  for (let i = 7; i < accountMetas.length; i++) {
+  for (let i = 9; i < accountMetas.length; i++) {
     if (accountMetas[i].signer) fail("DEX remaining accounts must not introduce additional signers");
   }
-  const remainingAccountKeys = instruction.accountIndexes.slice(7).map(index => keys[index]);
+  const remainingAccountKeys = instruction.accountIndexes.slice(9).map(index => keys[index]);
   for (const dexProgramId of route.dexProgramIds) {
-    const relativeIndex = remainingAccountKeys.indexOf(dexProgramId);
-    if (relativeIndex < 0) fail("Jupiter route is missing its approved DEX program account: " + dexProgramId);
-    if (accountMetas[7 + relativeIndex].writable) fail("DEX program accounts must be readonly");
+    const matchingIndexes = remainingAccountKeys
+      .map((key, index) => key === dexProgramId ? index : -1)
+      .filter(index => index >= 0);
+    if (matchingIndexes.length === 0) fail("Jupiter route is missing its approved DEX program account: " + dexProgramId);
+    // Check every occurrence, not only the first. A duplicate program key can
+    // otherwise hide a writable alias later in the remaining-account list.
+    for (const relativeIndex of matchingIndexes) {
+      if (accountMetas[9 + relativeIndex].writable) fail("DEX program accounts must be readonly");
+    }
   }
+  requireVerifiedDexSemanticSchemas(route);
   return { ok: true, route, sourceTokenAccount: accountKeys[2], destinationTokenAccount: accountKeys[3] };
 }

@@ -1,0 +1,48 @@
+name: Jupiter IDL History Audit
+
+on:
+  push:
+    branches:
+      - codex/swap-jupiter-fixed-account-roles-2026-11-11
+    paths:
+      - "dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs"
+      - ".github/workflows/jupiter-idl-history-audit.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs"
+      - ".github/workflows/jupiter-idl-history-audit.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: jupiter-idl-history-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-idl-history:
+    name: Fetch current and historical Jupiter IDLs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax-check IDL history audit utility
+        run: node --check dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
+      - name: Fetch Jupiter and DEX CPI IDL history records
+        run: node dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
+      - name: Upload raw responses and schema summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jupiter-idl-history
+          path: artifacts/jupiter-idl-history/
+          if-no-files-found: warn
+          retention-days: 30
