@@ -488,19 +488,19 @@ jobs:
               // without touching production trading-gate / visibility controls.
               await page.evaluate(()=>{document.querySelector('#swapQuote').hidden=false});
               await page.locator('#quoteAmount').fill('0.1');
-              await page.evaluate(()=>{void requestJupiterQuote()});
+              await page.locator('#getQuote').click();
               await oldQuoteObserved;
               await page.locator('#quoteAmount').fill('0.2');
               const invalidated=await page.evaluate(()=>({result:document.querySelector('#quoteResults')?.textContent,status:document.querySelector('#quoteStatus')?.textContent}));
               if(!invalidated.result.includes('No current quote')||!invalidated.status.includes('Amount changed'))throw new Error('Edited amount retained a stale quote: '+JSON.stringify(invalidated));
-              await page.evaluate(()=>{void requestJupiterQuote()});
+              await page.locator('#getQuote').click();
               await page.waitForFunction(()=>document.querySelector('#quoteResults')?.textContent.includes('CURRENT SECOND QUOTE')&&document.querySelector('#quoteStatus')?.textContent.includes('Quote received'),null,{timeout:15000});
               releaseOldQuote();
               await page.waitForTimeout(350);
               const afterOld=await page.evaluate(()=>({result:document.querySelector('#quoteResults')?.textContent,status:document.querySelector('#quoteStatus')?.textContent}));
               if(!afterOld.result.includes('CURRENT SECOND QUOTE')||afterOld.result.includes('STALE FIRST QUOTE'))throw new Error('Stale DEX quote overwrote the latest amount: '+JSON.stringify(afterOld));
               await page.locator('#quoteAmount').fill('0.3');
-              await page.evaluate(()=>{void requestJupiterQuote()});
+              await page.locator('#getQuote').click();
               await page.waitForFunction(()=>document.querySelector('#quoteStatus')?.textContent.includes('Quote unavailable'),null,{timeout:15000});
               const rejected=await page.evaluate(()=>document.querySelector('#quoteResults')?.textContent);
               if(!rejected.includes('inconsistent quote')||rejected.includes('INVALID MISMATCHED QUOTE'))throw new Error('DEX accepted an incorrectly sized Jupiter quote: '+rejected);
