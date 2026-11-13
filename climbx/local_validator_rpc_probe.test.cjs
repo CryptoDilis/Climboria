@@ -24,3 +24,9 @@ test('local getHealth ok response is health evidence only',async()=>withServer((
 test('unhealthy local RPC fails closed',async()=>withServer((req,res)=>{res.writeHead(200);res.end(JSON.stringify({jsonrpc:'2.0',id:1,result:'behind'}))},async port=>assert.equal((await probeLocalValidator({port})).healthy,false)));
 test('malformed JSON fails closed',async()=>withServer((req,res)=>res.end('not-json'),async port=>assert.equal((await probeLocalValidator({port})).reason,'INVALID_RPC_RESPONSE')));
 test('wrong response ID fails closed',async()=>withServer((req,res)=>res.end(JSON.stringify({jsonrpc:'2.0',id:2,result:'ok'})),async port=>assert.equal((await probeLocalValidator({port})).healthy,false)));
+
+
+test('null options fail closed without throwing',async()=>assert.deepEqual(await probeLocalValidator(null),{healthy:false,mayExecute:false,reason:'INVALID_LOCAL_ENDPOINT'}));
+test('hostile options getter fails closed',async()=>{const input=Object.defineProperty({},'host',{get(){throw Error('hostile')}});assert.equal((await probeLocalValidator(input)).healthy,false)});
+test('non-ok RPC health reports unhealthy',async()=>withServer((req,res)=>res.end(JSON.stringify({jsonrpc:'2.0',id:1,result:'behind'})),async port=>assert.deepEqual(await probeLocalValidator({port}),{healthy:false,mayExecute:false,reason:'RPC_UNHEALTHY'})));
+test('stalled local RPC response times out',async()=>withServer((req,res)=>{res.writeHead(200,{'content-type':'application/json'});res.write(' ');},async port=>{const result=await probeLocalValidator({port,timeoutMs:150});assert.equal(result.healthy,false);assert.equal(result.mayExecute,false);assert.equal(result.reason,'RPC_TIMEOUT')}));
