@@ -1,4 +1,28 @@
+import { writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
+
+async function captureSmokeScreenshot(page, path, label) {
+  const fontState = await page.evaluate(() => ({
+    status: document.fonts?.status ?? 'unavailable',
+    faces: document.fonts ? [...document.fonts].map(({ family, status }) => ({ family, status })) : [],
+  }));
+  const session = await page.context().newCDPSession(page);
+  try {
+    const result = await session.send('Page.captureScreenshot', {
+      format: 'png',
+      fromSurface: true,
+      captureBeyondViewport: false,
+    });
+    const image = Buffer.from(result.data || '', 'base64');
+    if (image.length < 1024) {
+      throw new Error('Chromium returned an incomplete PNG payload (' + image.length + ' bytes).');
+    }
+    await writeFile(path, image);
+    console.log('Smoke screenshot captured:', JSON.stringify({ label, path, bytes: image.length, fontState }));
+  } finally {
+    await session.detach();
+  }
+}
 
 const errors = [];
 const browser = await chromium.launch({
@@ -452,17 +476,17 @@ try {
   }));
   console.log('Desktop visual capture normalized to Sanctuary:',JSON.stringify(desktopVisualCapture));
   if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
-  await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
+  await captureSmokeScreenshot(page, 'climboria-desktop-gameplay.png', 'desktop-sanctuary');
   const desktopCaveView=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
   const caveAngleDelta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
   if(!desktopCaveView||Math.abs(desktopCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(desktopCaveView.playerYaw,desktopCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.playerYaw)-Math.PI)>.01) errors.push('Desktop cave entrance visual position/orientation could not be prepared: '+JSON.stringify(desktopCaveView));
   await page.waitForTimeout(1200);
-  await page.screenshot({ path: 'climboria-desktop-cave-entrance.png' });
+  await captureSmokeScreenshot(page, 'climboria-desktop-cave-entrance.png', 'desktop-cave-entrance');
   console.log('Desktop cave entrance visual capture:',JSON.stringify(desktopCaveView));
   const desktopCaveInterior=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveInteriorForSmoke?.()??null);
   if(!desktopCaveInterior||Math.abs(desktopCaveInterior.local.x-30)>.01||Math.abs(desktopCaveInterior.local.z-25)>.01) errors.push('Desktop cave interior visual position could not be prepared: '+JSON.stringify(desktopCaveInterior));
   await page.waitForTimeout(1200);
-  await page.screenshot({path:'climboria-desktop-cave-interior.png'});
+  await captureSmokeScreenshot(page, 'climboria-desktop-cave-interior.png', 'desktop-cave-interior');
   console.log('Desktop cave interior visual capture:',JSON.stringify(desktopCaveInterior));
 
   const mobile = await browser.newPage({
@@ -833,15 +857,15 @@ try {
   }));
   console.log('Mobile visual capture normalized to Sanctuary:',JSON.stringify(mobileVisualCapture));
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
-  await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
+  await captureSmokeScreenshot(mobile, 'climboria-mobile-gameplay.png', 'mobile-sanctuary');
   const mobileCaveView=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
   if(!mobileCaveView||Math.abs(mobileCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(mobileCaveView.playerYaw,mobileCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.playerYaw)-Math.PI)>.01) errors.push('Mobile cave entrance visual position/orientation could not be prepared: '+JSON.stringify(mobileCaveView));
   await mobile.waitForTimeout(1200);
-  await mobile.screenshot({ path: 'climboria-mobile-cave-entrance.png' });
+  await captureSmokeScreenshot(mobile, 'climboria-mobile-cave-entrance.png', 'mobile-cave-entrance');
   const mobileCaveInterior=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveInteriorForSmoke?.()??null);
   if(!mobileCaveInterior||Math.abs(mobileCaveInterior.local.x-30)>.01||Math.abs(mobileCaveInterior.local.z-25)>.01) errors.push('Mobile cave interior visual position could not be prepared: '+JSON.stringify(mobileCaveInterior));
   await mobile.waitForTimeout(1200);
-  await mobile.screenshot({path:'climboria-mobile-cave-interior.png'});
+  await captureSmokeScreenshot(mobile, 'climboria-mobile-cave-interior.png', 'mobile-cave-interior');
   console.log('Mobile cave interior visual capture:',JSON.stringify(mobileCaveInterior));
   console.log('Mobile cave entrance visual capture:',JSON.stringify(mobileCaveView));
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));
