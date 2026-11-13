@@ -136,3 +136,12 @@ Last updated: 2026-11-13.
 - [ ] Do not share wallet seed phrases/private keys, token treasury access, exchange credentials, or X account admin access during initial evaluation.
 - [ ] Do not promise token allocation, payment, or revenue share unless separately approved and documented.
 
+
+## J. Browser Smoke failure diagnosis and counter-fix
+
+- [x] Exact failing run reviewed: Browser Smoke run 43364182457, job 131684675019, step 17 (Jarrell's Peak desktop/mobile gameplay smoke); Validate Climboria passed on the same PR head.
+- [x] Confirmed steps covering Supabase auth/cloud-save isolation, homepage/mobile navigation, Swap, DEX, provider-error and true-empty states passed before the gameplay failure.
+- [x] Root-cause finding: the mobile smoke harness used `mobile.keyboard.press('w')` and `keyboard.down('w')` as mobile movement inputs, even though the production mobile game exposes a touch joystick on the left side and action buttons on the right. This was a platform-mismatched test stimulus, not evidence that desktop keyboard movement was broken.
+- [x] Counter-fix committed: mobile smoke now verifies the ready/walk state directly after GLB readiness and exercises the real touch-joystick event path for movement and camera-relative facing instead of relying on a hardware keyboard key.
+- [ ] Validate the new smoke harness on the exact fix commit and inspect resulting diagnostics/screenshots; do not mark gameplay passed until the new run succeeds.
+
