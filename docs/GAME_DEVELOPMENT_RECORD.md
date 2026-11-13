@@ -62,7 +62,7 @@
 **Owner decision:** The **Create Hero card belongs in the Expedition/Game hub**. Players must not start Jarrell's Peak without first creating a hero. Players can edit a saved name, see a complete 3D live preview, and enter only when their hero is valid and saved. The GLB is a bundled official model, **not a required file upload**. This task takes priority over earlier gameplay performance work; Arena remains planned.
 
 ### Actual code changes, committed on `game/hero-creation-gate-2026-11-14`
-- `game/index.html` — added independent hero creation card and accessible editor modal, 3D full-body model loaded from `../assets/characters/Climboria_Hero.glb`, rotate/zoom preview, name input/validation, local browser save/edit and launch-gate navigation. No additional world destination added. Commit `047130789462cace299a44b57d484c82706e52de`, follow-up loader fix `ed36d257bdbac21e75eeeb25c71f6aded657b7d2`.
+- `game/index.html` — added independent hero creation card and accessible editor modal, 3D full-body model loaded from `../assets/characters/Climboria_Hero.glb`, rotate/zoom preview, name input/validation, local browser save/edit and launch-gate navigation. No additional world destination added. Commit `047130789462cace299a44b57d484c82706e52de`, follow-up loader fix `ed36d257bdbac21e75eeeb25c71f6aded657b7d2`, preview reopen and pinch fix `c725e8815d615d8e905ac045143969a5fb328520`.
 - `game/play.html` — direct URL preflight requires a valid locally saved hero; denies world setup otherwise, returns to menu, and displays saved hero name on in-game HUD. Commits `726019d1f2cb948346dc7d5544f02c52817abf3e` and `8dc057fad114fbce5898808435c31ecba463cac1`.
 - `.github/scripts/game-smoke.mjs` — negative test for anonymous direct-world entry, valid desktop/mobile local hero fixtures, and menu card gating coverage. Commit `2a4166f1ac0702aea28029385537ada157f52f69`.
 - `docs/GAME_DEVELOPMENT_RECORD.md` — updated durable task handoff on the active branch; commit SHA on GitHub file history.
@@ -75,8 +75,8 @@
 - `game/character-lab.html` remains an independent developer test utility, not part of player create-hero flow.
 
 ### Tests / PR / status
-- Static inspection of source and previous regression test source complete. **New exact-head Playwright, GitHub Actions and physical mobile-device results have not been observed yet**; therefore implementation is not considered complete or production-ready.
-- Current Game PR: to be added after creating this record. Required checks must pass before merge.
+- Static inline JavaScript syntax parsing for `game/index.html` and `game/play.html`, and async-wrapped syntax parsing for `.github/scripts/game-smoke.mjs`, completed successfully via JavaScript parser on this branch. **These are syntax-only checks**, not browser execution. Static inspection of source and previous regression test source complete. **New exact-head Playwright, GitHub Actions and physical mobile-device results have not been observed yet**; therefore implementation is not considered complete or production-ready.
+- Current Game PR: [#297](https://github.com/CryptoDilis/Climboria/pull/297) (draft, unmerged). Exact-head initial GitHub Actions [Browser Smoke run 43461952553](https://github.com/CryptoDilis/Climboria/actions/runs/43461952553) and [Jarrell gameplay run 43461952694](https://github.com/CryptoDilis/Climboria/actions/runs/43461952694) were **QUEUED** when observed on commit `bbda6718d5558946beea68ed6e07ae1fa34191e5`. These do NOT verify the later preview-pinch fix commit `c725e8815d615d8e905ac045143969a5fb328520`; inspect new exact-head CI and final results before merge.
 - No changes to DEX, Swap, Launchpad or their progress record.
 
 ### Precise next task (highest priority)
@@ -110,3 +110,9 @@
 | --- | --- | --- | --- | --- | --- |
 | 2026-11-14 | `game/development-record-2026-11-14` / no PR | `3287bb92159e6f9ad827f1e1f631e919f343c7b5` | `docs/GAME_DEVELOPMENT_RECORD.md` | GitHub source/PR/history audit; no new CI | Baseline recorded | 
 | 2026-11-14 | `game/development-record-2026-11-14` / PR #295 (draft) | `ef57267b9325d1889f9179114f5ee8f09e224727` | `docs/GAME_DEVELOPMENT_RECORD.md` | Game smoke source reviewed; dedicated workflow guessed path returned 404; CI not run | Determine correct workflow path and exact-head CI, then targeted game fixes |
+
+### 2026-11-14 supplemental handoff checkpoint
+- Branch: `game/hero-creation-gate-2026-11-14`; draft PR: #297; latest observed code commit: `c725e8815d615d8e905ac045143969a5fb328520`.
+- Affected files for latest fix: `game/index.html`. Resumes the preview render loop if editor was closed during GLB loading; adds mobile two-finger pinch zoom.
+- Exact-head CI for latest fix: pending; do not mark old queued runs green for newer head. No live deployment/physical-device test claimed.
+- Next: inspect exact-head #297 CI conclusions and browser screenshots, then diagnose and fix failing test or runtime behavior.
