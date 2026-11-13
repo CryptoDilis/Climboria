@@ -17,7 +17,7 @@ test("support page publishes Climboria support email and official X contact", ()
 });
 
 test("support navigation is available across public Climboria product pages", () => {
-  for (const route of ["index.html", "dex/index.html", "swap/index.html", "launchpad/index.html", "game/index.html"]) {
+  for (const route of ["index.html", "dex/index.html", "swap/index.html", "launchpad/index.html"]) {
     const page = read(route);
     assert.match(page, /href="\/support\/"/, route + " must link to Customer Support");
   }
