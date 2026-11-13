@@ -2,6 +2,7 @@ import { SwapOrderStore } from "./order-store.mjs";
 import { parseSolanaV0Transaction, validateJupiterOrderMetadata } from "./transaction-validation.mjs";
 import { resolveTransactionLookups, verifyJupiterTokenAccounts } from "./solana-rpc.mjs";
 import { validateJupiterV6Transaction } from "./jupiter-v6-policy.mjs";
+import { requireReviewedJupiterV6CpiSemantics } from "./jupiter-v6-cpi-review.mjs";
 export { SwapOrderStore };
 
 const JSON_HEADERS = {
@@ -182,6 +183,10 @@ async function handleOrder(request, env) {
       outAmount: data.outAmount,
       otherAmountThreshold: data.otherAmountThreshold
     });
+    // Structural validation is NOT authorization for unreviewed DEX CPIs.
+    // This independent, versioned source guard must fail closed even if
+    // a separate /order release switch were mistakenly enabled.
+    requireReviewedJupiterV6CpiSemantics(policyResult.route);
     tokenAccountVerification = await verifyJupiterTokenAccounts({
       sourceTokenAccount: policyResult.sourceTokenAccount,
       destinationTokenAccount: policyResult.destinationTokenAccount,

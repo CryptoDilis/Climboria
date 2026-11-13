@@ -321,3 +321,49 @@ test("accepts distinct canonical Compute Budget settings once each", () => {
   );
   assert.equal(validate(p).ok, true);
 });
+
+
+test("rejects fully connected but non-topologically ordered raw Jupiter V6 route plans", () => {
+  // Jupiter IDL requires a topologically sorted trade DAG. A graph can be
+  // connected and still be invalid if a hop consumes an intermediate token
+  // before a prior step has produced it.
+  const reversedTwoHop = routePlanData([
+    { inputIndex: 1, outputIndex: 2, percent: 100 },
+    { inputIndex: 0, outputIndex: 1, percent: 100 }
+  ]);
+  assert.throws(
+    () => decodeJupiterV6Route(reversedTwoHop),
+    /topologically sorted/i
+  );
+  assert.throws(
+    () => validate(parsed({ data: reversedTwoHop })),
+    /topologically sorted/i
+  );
+
+  // Split percentages, connectivity and terminal output are all valid,
+  // but index 1 is referenced before its first producer is processed.
+  const lateProducer = routePlanData([
+    { inputIndex: 0, outputIndex: 3, percent: 55 },
+    { inputIndex: 1, outputIndex: 3, percent: 100 },
+    { inputIndex: 0, outputIndex: 1, percent: 45 }
+  ]);
+  assert.throws(
+    () => decodeJupiterV6Route(lateProducer),
+    /topologically sorted/i
+  );
+  assert.throws(
+    () => validate(parsed({ data: lateProducer })),
+    /topologically sorted/i
+  );
+});
+
+test("accepts ordered branched Jupiter V6 route even when intermediate hops are interleaved", () => {
+  const orderedBranch = routePlanData([
+    { inputIndex: 0, outputIndex: 1, percent: 35 },
+    { inputIndex: 0, outputIndex: 4, percent: 65 },
+    { inputIndex: 1, outputIndex: 2, percent: 100 },
+    { inputIndex: 2, outputIndex: 4, percent: 100 }
+  ]);
+  assert.equal(decodeJupiterV6Route(orderedBranch).steps.length, 4);
+  assert.equal(validate(parsed({ data: orderedBranch })).ok, true);
+});
