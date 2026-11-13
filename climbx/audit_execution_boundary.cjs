@@ -13,6 +13,13 @@ function scanSource(files,readFile){
    findings.push({file,reason:'REVIEW_CALL_SITE'});
   }
   if(/\bmayExecute\s*[:=]\s*true\b/.test(source)&&!file.endsWith('.test.cjs'))findings.push({file,reason:'EXECUTABLE_FLAG'});
+  // Flag import aliases for manual review. Regex is deliberately conservative,
+  // not an AST/call graph; false positives are review findings, not proof.
+  if(!file.endsWith('.test.cjs')&&!/(?:authorization_policy_simulation|devnet_grant_state_simulation|execution_authorization_boundary)\.cjs$/.test(file)){
+   const imported=/\b(?:evaluateClimbxEntry|evaluateOrder|authorizeBotExecution)\s*(?:as|:)\s*[A-Za-z_$][\w$]*/.test(source);
+   const pythonAlias=/\bimport\s+(?:evaluateClimbxEntry|evaluateOrder|authorizeBotExecution)\s+as\s+[A-Za-z_]\w*/.test(source);
+   if(imported||pythonAlias)findings.push({file,reason:'REVIEW_ALIASED_AUTHORIZATION_IMPORT'});
+  }
  }
  return findings;
 }
