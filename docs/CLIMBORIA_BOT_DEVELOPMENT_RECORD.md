@@ -239,3 +239,12 @@ V6 adds persisted three-stage TP ladder (TP1/TP2/TP3), per-stage partial exit in
 ## CLIMBX official visual identity — 2026-11-13
 
 **Owner selected the uploaded artwork as the official CLIMBX bot icon:** a dark emerald-green futuristic robotic helmet, glowing gold eyes, gold mountain-peak crown, circular gold ring, near-black background. **Use the exact owner-provided image**, not a regenerated replacement. Apply it to desktop/mobile CLIMBX promo cards, bot navigation/dashboard avatar, and website User's Manual header. Keep artwork proportions and legibility on small screens; prefer square responsive image variants. The original image was supplied in the conversation; locally exported WebP sizes 64/128/256/512 and original were packaged as `climbx-brand-assets.zip` conversation artifact. **These binary image assets have NOT been committed to GitHub or published on the website.** Upload assets to a first-party site asset path during approved UI integration; add alt text `CLIMBX emerald-and-gold mountain robot emblem`. Existing website card/manual navigation are not yet deployed.
+
+
+## Phase 16 checkpoint — 2026-11-13 (CLIMBX paper engine V7)
+
+**Verified locally:** 44/44 Python unittest tests passed (36 V3–V6 regression tests + 8 new V7 recovery tests). Verified local ZIP `climbx-paper-v7.zip` contains source/tests/README; **executable source is NOT committed to GitHub**. No production deployment or real funds used.
+
+V7 introduces `recovery_v7.py`: SQLite persisted PREPARED intent-before-send *simulation*, UNKNOWN state and restart recovery queue, terminal-only intent resolution, conservative locking after ambiguous simulated send, and explicit new-ID retry of verified FAILED exits only. Tests cover restart, uncertain buy/sell, lock retention, retry restrictions, idempotent preparation, and no premature resolution.
+
+**Scope/limitations:** The outbox has no real transaction builder, signer, network send, trusted chain reconciler, or verified finality. Caller-supplied simulated outcomes are not evidence of execution. No exactly-once guarantee across actual network crash windows; no real Solana delegated authority, auto re-entry, fee high-water-mark, or website UI. Owner-approved official CLIMBX icon and website manual/card remain recorded requirements, **not deployed**. Next Phase 17: mock external reconciler with injected send/crash outcomes, strict authorization boundary tests, balance/fee conservation, then owner-approved UI integration; keep live execution disabled.
