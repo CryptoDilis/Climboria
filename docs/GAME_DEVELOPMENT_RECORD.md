@@ -6,7 +6,7 @@
 **Working branch:** `game/development-record-2026-11-14`  
 **Status:** Baseline audit recorded; current-head gameplay and physical-device readiness **not yet verified**.  
 **Default branch observed:** `main` (reviewed at recent indexed commit `0749b47190b3d8f032856462aa35328c4e820a05`; confirm exact remote HEAD before integrating).  
-**Tracking PR:** none yet; initial record commit: `3287bb92159e6f9ad827f1e1f631e919f343c7b5`.
+**Tracking PR:** [#295](https://github.com/CryptoDilis/Climboria/pull/295) (draft, unmerged); initial record commit: `3287bb92159e6f9ad827f1e1f631e919f343c7b5`.
 
 ## Strict scope and resumption rules
 
@@ -78,4 +78,4 @@
 | Date (PHT) | Branch / PR | Commit | Affected files | Verification | Result / Next |
 | --- | --- | --- | --- | --- | --- |
 | 2026-11-14 | `game/development-record-2026-11-14` / no PR | `3287bb92159e6f9ad827f1e1f631e919f343c7b5` | `docs/GAME_DEVELOPMENT_RECORD.md` | GitHub source/PR/history audit; no new CI | Baseline recorded | 
-| 2026-11-14 | `game/development-record-2026-11-14` / no PR | This record update (see file history) | `docs/GAME_DEVELOPMENT_RECORD.md` | Game smoke source reviewed; dedicated workflow guessed path returned 404; CI not run | Determine correct workflow path and exact-head CI, then targeted game fixes |
+| 2026-11-14 | `game/development-record-2026-11-14` / PR #295 (draft) | `ef57267b9325d1889f9179114f5ee8f09e224727` | `docs/GAME_DEVELOPMENT_RECORD.md` | Game smoke source reviewed; dedicated workflow guessed path returned 404; CI not run | Determine correct workflow path and exact-head CI, then targeted game fixes |
