@@ -715,8 +715,25 @@ try {
   const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero }));
   if (!mobileHeroReady.readiness.chunk || !mobileHeroReady.readiness.render || !mobileHeroReady.readiness.hero || mobileHeroReady.renderer !== true || !mobileHeroReady.heroUsesGlb) throw new Error('Mobile saved GLB hero did not become fully ready: ' + JSON.stringify(mobileHeroReady));
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
+  // The mobile game may need several rendered frames after the hero becomes ready
+  // before movement mode settles. Diagnose failures instead of silently skipping.
   await mobile.keyboard.press('w');
-  await mobile.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.mode === 'walk', undefined, { timeout: 10000 });
+  try {
+    await mobile.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.mode === 'walk', undefined, { timeout: 30000 });
+  } catch (error) {
+    const diagnostic = await mobile.evaluate(() => ({
+      mode: window.__climboriaJarrellsPeak?.player?.mode,
+      position: window.__climboriaJarrellsPeak?.player && {
+        x: window.__climboriaJarrellsPeak.player.x,
+        y: window.__climboriaJarrellsPeak.player.y,
+        z: window.__climboriaJarrellsPeak.player.z,
+      },
+      frames: window.__climboriaRenderState?.frames,
+      readiness: window.__climboriaReadiness,
+      hero: document.documentElement.dataset.climboriaHero,
+    }));
+    throw new Error('Mobile movement did not enter walk mode: ' + JSON.stringify(diagnostic) + '; ' + error.message);
+  }
   const mobileOrbit = await mobile.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw,hero:api?.heroYaw,glb:api?.heroUsesGlb};
     const target=document.body;
