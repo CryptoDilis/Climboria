@@ -12,6 +12,31 @@ try {
   await anonymous.goto('http://127.0.0.1:4173/game/play.html?smoke=gate',{waitUntil:'domcontentloaded'});
   await anonymous.waitForURL('**/game/index.html?hero=required',{timeout:10000});
   if(!anonymous.url().includes('hero=required')) errors.push('Missing hero did not redirect to Game hub');
+  // Exercise the real Create Hero UI before any gameplay WebGL context opens.
+  await anonymous.locator('#openHeroCreator').click();
+  if(!(await anonymous.locator('#heroEditor').isVisible())) errors.push('Hero editor did not open from the Expedition card');
+  if(await anonymous.locator('#heroEditor input[type="file"]').count()) errors.push('Hero editor still asks players to upload a GLB');
+  await anonymous.locator('#heroNameInput').fill('Smoke Explorer');
+  if(!(await anonymous.locator('#saveHeroButton').isDisabled())) errors.push('Save Hero enabled before model preview is ready');
+  await anonymous.waitForFunction(() => document.querySelector('#heroPreviewStatus')?.textContent?.includes('LIVE 3D PREVIEW'), undefined, { timeout: 120000 });
+  const creatorVisual=await anonymous.evaluate(()=>{
+    const canvas=document.querySelector('#heroPreviewCanvas'),stage=document.querySelector('.hero-editor-stage');
+    return {canvasWidth:canvas?.width||0,canvasHeight:canvas?.height||0,stageWidth:stage?.clientWidth||0,stageHeight:stage?.clientHeight||0,
+      loaded:!!document.querySelector('#heroPreviewStatus')?.textContent?.includes('LIVE 3D PREVIEW')};
+  });
+  if(!creatorVisual.loaded||creatorVisual.canvasWidth<200||creatorVisual.canvasHeight<250) errors.push('Full-body 3D Hero preview canvas did not render at playable size: '+JSON.stringify(creatorVisual));
+  await anonymous.locator('#heroPreviewCanvas').hover();
+  await anonymous.mouse.wheel(0,150);
+  await anonymous.locator('#saveHeroButton').click();
+  const created=await anonymous.evaluate(()=>JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null'));
+  if(created?.name!=='Smoke Explorer'||created?.model!=='Adventurer') errors.push('Create Hero UI did not persist expected hero: '+JSON.stringify(created));
+  await anonymous.locator('#closeHeroEditor').click();
+  await anonymous.locator('#openHeroCreator').click();
+  if(await anonymous.locator('#heroNameInput').inputValue()!=='Smoke Explorer') errors.push('Edit Hero did not restore the saved name');
+  await anonymous.locator('#heroNameInput').fill('Smoke Hero');
+  await anonymous.locator('#saveHeroButton').click();
+  const edited=await anonymous.evaluate(()=>JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null'));
+  if(edited?.name!=='Smoke Hero') errors.push('Edit Hero failed to save name: '+JSON.stringify(edited));
   await anonymous.close();
   const desktop = await browser.newContext({ viewport: { width: 1365, height: 900 } });
   await desktop.addInitScript(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Smoke Explorer',model:'Adventurer',createdAt:'2026-11-14T00:00:00Z'})));
