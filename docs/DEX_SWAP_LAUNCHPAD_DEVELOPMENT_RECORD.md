@@ -183,3 +183,12 @@ Changed: branch `ci/trigger-production-browser-after-exact-pages`, workflow `.gi
 Verified: commit `18697b9` created; exact-head CI and real production browser **PENDING**.
 Unresolved: possible Pages cancellation on concurrent pushes; actual provider CORS/availability; quote diagnostic DEX panel still hidden to users. No trading or token mint/launch is enabled.
 NEXT: validate new workflow via focused PR, merge if green; inspect exact Pages and production-browser run conclusions and failure logs. Record actual deployment evidence, not assumptions.
+
+
+### 2026-11-14 — Exact production-origin DEX/Swap quote browser acceptance PASS; mobile DEX extension pending
+Scope: **DEX and Swap only**; no Game, CLIMBX, wallet execution, or Launchpad runtime changes.
+Before: `main` `a84b7bd12b2495c68ee65dea87ef3bd6a2e09764` (merged PR #306), after prior Pages-trigger sequencing failure.
+Changed: merged [PR #306](https://github.com/CryptoDilis/Climboria/pull/306) introduces push-path smoke with exact Pages deployment check. Branch `test/dex-mobile-real-origin-acceptance` adds real mobile DEX quote+DexScreener coverage to the independent smoke script; committed `3f6dc06` (CI pending).
+Verified: exact commit [Pages deployment 43471247172](https://github.com/CryptoDilis/Climboria/actions/runs/43471247172) **SUCCESS**; [production quote browser workflow 43471247159](https://github.com/CryptoDilis/Climboria/actions/runs/43471247159) **SUCCESS**, including exact-head Pages gate. Production browser job `132043517171` logs confirm real Jupiter proxy quoted SOL/USDC on **Swap desktop, Swap mobile and diagnostic DEX desktop**, plus a real HTTP 200 DexScreener market response and no wallet-signable transaction. **DEX quote panel was made visible inside the diagnostic test; do NOT claim user-visible DEX quote panel live**.
+Unresolved: new mobile DEX test unverified, production market freshness/pool chart identity and real physical devices unverified; signable Swap and on-chain execution still fail-closed, Launchpad preview-only.
+NEXT: inspect exact-head PR CI for mobile DEX test, merge only if clean, then obtain a successful post-Pages real browser run covering mobile DEX. Diagnose real failures rather than weaken provider assertions. Continue LaunchLab read-only provenance separately before any Devnet creator signing.
