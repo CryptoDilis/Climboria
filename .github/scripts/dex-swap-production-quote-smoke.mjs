@@ -2,8 +2,8 @@
 /**
  * Read-only production-origin browser acceptance for Climboria DEX and Swap.
  * No wallet connection, transaction creation, signing, /order or /execute calls.
- * DEX quote panel is currently hidden in production; opening it here is a
- * diagnostic of the quote code path, NOT evidence that users can access it.
+ * DEX quote panel must be opened by the visible user-facing quote button.
+ * This verifies read-only user access, NOT wallet-signing or trade execution.
  */
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
@@ -51,11 +51,13 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
 
     if (name === "DEX") {
       await page.locator("#markets").waitFor({ state: "visible", timeout: 20000 });
-      // The DEX panel is deliberately hidden for users. This verifies only the
-      // underlying quote path; product UI acceptance remains a separate gate.
-      const hidden = await page.locator("#swapQuote").evaluate(el => el.hidden);
-      assert.equal(hidden, true, "DEX quote panel visibility policy changed; review smoke expectations");
-      await page.locator("#swapQuote").evaluate(el => { el.hidden = false; });
+      // Exercise the actual visible quote control, not a test-only DOM override.
+      const toggle = page.locator("#showDexQuote");
+      await toggle.waitFor({ state: "visible", timeout: 15000 });
+      assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+      await toggle.click({ timeout: 15000 });
+      assert.equal(await toggle.getAttribute("aria-expanded"), "true");
+      assert.equal(await page.locator("#swapQuote").isVisible(), true, "DEX quote UI did not open");
     }
 
     assert.equal(await page.locator("#quoteAmount").inputValue(), "0.1");
