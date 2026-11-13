@@ -63,5 +63,15 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - BLOCKED: pinned toolchain/lockfile, signed validator tests, on-chain execution, audit, release approval. **REAL-FUNDS NO-GO**.
 - NEXT: inspect latest CI; then prepare pinned reproducible build and real signed local-validator tests, avoiding placeholder program deployment and all DEX/Swap/Launchpad/Game edits.
 
+## Phase 132 — 2026-11-14 — exact security CI and pinned compiler
+- DONE: verified CLIMBX release safety run `43501500766` SUCCESS at `fc728ac1764ee7a550c18b150e81a07d95a855d3`; Rust job `132148166060` passed prerequisite tests, Anchor security regression tests, and Cargo compilation. Validate `43501500752` and Browser Smoke `43501500797` SUCCESS.
+- DONE: Rust job log identified working `rustc 1.99.1` and `cargo 1.99.1`; this is observed toolchain evidence, not a dependency lock.
+- DONE: committed CLIMBX-only `climbx/programs/climbx-authorization/rust-toolchain.toml` pinned to 1.99.1 (commit `1a59808ad52017e6acee4f04a87356318fa7f333`).
+- DONE: updated both CLIMBX Rust compile workflows to install and explicitly use Rust 1.99.1: `.github/workflows/climbx-release-gate.yml` commit `b1c4fc3c62587ea0630938dbf0b7155725a51bea`; `.github/workflows/climbx-rust-compile.yml` commit `07428847ad5a75c9e44e1ccbb7f977858a3cc876`.
+- PENDING: exact-head CI of pinned compiler changes not yet observed; do not claim pinned compile passed.
+- BLOCKED: no reviewed Cargo.lock and `--locked` CI; signed local-validator tests, SBF build, restricted DEX-only trade execution, independent audit, owner release approval. **REAL-FUNDS NO-GO**.
+- NEXT: inspect latest CI for pinned toolchain; fix CLIMBX-only failures, then generate and review Cargo.lock and require `cargo check --locked`; proceed to signed local-validator tests.
+- No DEX, Swap, Launchpad or Game files modified.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
