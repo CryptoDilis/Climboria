@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { decodeBase58, encodeBase58 } from "../src/transaction-validation.mjs";
-import { validateJupiterV6Transaction, decodeJupiterV6Route, JUPITER_V6_PROGRAM_ID, TOKEN_PROGRAM_ID } from "../src/jupiter-v6-policy.mjs";
+import { validateJupiterV6Transaction, decodeJupiterV6Route, JUPITER_V6_PROGRAM_ID, TOKEN_PROGRAM_ID, UNSUPPORTED_TOKEN_2022_PROGRAM_ID } from "../src/jupiter-v6-policy.mjs";
 
 const taker = "11111111111111111111111111111111";
 const inputMint = "So11111111111111111111111111111111111111112";
@@ -67,9 +67,11 @@ test("rejects unknown top-level programs, extra signers and unsupported route va
 test("rejects wrong taker, output mint, amounts, fee and excessive slippage", () => {
   // Wrong-role negative cases must NOT also duplicate another key: test
   // role validation independently from the new duplicate-key safety gate.
-  const unrelatedWallet = encodeBase58(new Uint8Array(32).fill(24));
   const unrelatedMint = encodeBase58(new Uint8Array(32).fill(25));
-  assert.throws(() => validate(parsed({ takerKey: unrelatedWallet })), /account roles/);
+  // Keep fee payer correct while substituting the route's transfer authority.
+  const wrongAuthority = parsed();
+  wrongAuthority.instructions[0].accountIndexes[1] = 1;
+  assert.throws(() => validate(wrongAuthority), /account roles/);
   assert.throws(() => validate(parsed({ outMint: unrelatedMint })), /account roles/);
   assert.throws(() => validate(parsed({ data: routeData({ inAmount: 1001 }) })), /amounts do not match/);
   assert.throws(() => validate(parsed({ data: routeData({ fee: 1 }) })), /platform fees/);
@@ -253,4 +255,69 @@ test("rejects out-of-bounds ALT and static account indexes before any route acce
   const malicious = parsed();
   malicious.instructions[0].accountIndexes[7] = 255;
   assert.throws(() => validate(malicious), /account index is outside the resolved key list/i);
+});
+
+
+test("fee payer must match the requested taker, independent of route transfer-authority roles", () => {
+  const differentPayer = encodeBase58(new Uint8Array(32).fill(24));
+  const p = parsed({ takerKey: differentPayer });
+  assert.throws(
+    () => validate(p),
+    /fee payer must match the requested taker/i,
+    "Upstream transactions paid by a different wallet must not reach signable order storage"
+  );
+  assert.equal(validate().ok, true);
+});
+
+test("rejects Token-2022 program even when only an intermediate CPI account could use it", () => {
+  const extraReadonly = parsed();
+  extraReadonly.staticAccountKeys[8] = decodeBase58(UNSUPPORTED_TOKEN_2022_PROGRAM_ID);
+  assert.throws(() => validate(extraReadonly), /Token-2022 program accounts are unsupported/i);
+
+  const referencedReadonly = parsed();
+  referencedReadonly.staticAccountKeys[8] = decodeBase58(UNSUPPORTED_TOKEN_2022_PROGRAM_ID);
+  referencedReadonly.instructions[0].accountIndexes.push(8);
+  assert.throws(() => validate(referencedReadonly), /Token-2022 program accounts are unsupported/i);
+
+  assert.throws(
+    () => validate(parsed(), { loadedReadonly: [UNSUPPORTED_TOKEN_2022_PROGRAM_ID] }),
+    /Token-2022 program accounts are unsupported/i,
+    "An unsupported token program cannot bypass the check by moving to an ALT"
+  );
+  assert.throws(
+    () => validate(parsed(), { loadedWritable: [UNSUPPORTED_TOKEN_2022_PROGRAM_ID] }),
+    /Token-2022 program accounts are unsupported/i
+  );
+});
+
+test("rejects repeated Compute Budget price, limit or loaded-data settings", () => {
+  const cases = [
+    { name: "unit limit", bytes: [2, ...u32(250000)] },
+    { name: "unit price", bytes: [3, ...u64(200)] },
+    { name: "loaded-account data size", bytes: [4, ...u32(32768)] }
+  ];
+  for (const item of cases) {
+    const p = parsed();
+    const budget = () => ({
+      programIdIndex: 7,
+      accountIndexes: [],
+      data: new Uint8Array(item.bytes)
+    });
+    p.instructions.unshift(budget(), budget());
+    assert.throws(
+      () => validate(p),
+      /duplicate Compute Budget instruction type/i,
+      `Two ${item.name} settings must be rejected before signing`
+    );
+  }
+});
+
+test("accepts distinct canonical Compute Budget settings once each", () => {
+  const p = parsed();
+  p.instructions.unshift(
+    { programIdIndex: 7, accountIndexes: [], data: new Uint8Array([2, ...u32(250000)]) },
+    { programIdIndex: 7, accountIndexes: [], data: new Uint8Array([3, ...u64(200)]) },
+    { programIdIndex: 7, accountIndexes: [], data: new Uint8Array([4, ...u32(32768)]) }
+  );
+  assert.equal(validate(p).ok, true);
 });
