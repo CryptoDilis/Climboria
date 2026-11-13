@@ -44,7 +44,31 @@ pub mod climbx_authorization {
     }
 
     pub fn revoke_grant(ctx: Context<RevokeGrant>) -> Result<()> {
+        require!(!ctx.accounts.grant.revoked, GrantError::AlreadyRevoked);
         ctx.accounts.grant.revoked = true;
+        Ok(())
+    }
+
+    // Owner-only emergency tightening. Cannot raise spend caps or extend expiry.
+    // Existing authorization stays revoked if already revoked.
+    pub fn tighten_grant(
+        ctx: Context<RevokeGrant>,
+        new_per_order_cap: u64,
+        new_cumulative_cap: u64,
+        new_expires_at: i64,
+    ) -> Result<()> {
+        let grant = &mut ctx.accounts.grant;
+        require!(!grant.revoked, GrantError::AlreadyRevoked);
+        require!(new_per_order_cap > 0, GrantError::InvalidCap);
+        require!(new_per_order_cap <= grant.per_order_cap, GrantError::CannotExpandGrant);
+        require!(new_cumulative_cap >= grant.spent, GrantError::InvalidCap);
+        require!(new_cumulative_cap <= grant.cumulative_cap, GrantError::CannotExpandGrant);
+        require!(new_cumulative_cap >= new_per_order_cap, GrantError::InvalidCap);
+        require!(new_expires_at <= grant.expires_at, GrantError::CannotExpandGrant);
+        require!(new_expires_at > Clock::get()?.unix_timestamp, GrantError::InvalidExpiry);
+        grant.per_order_cap = new_per_order_cap;
+        grant.cumulative_cap = new_cumulative_cap;
+        grant.expires_at = new_expires_at;
         Ok(())
     }
 }
@@ -113,4 +137,8 @@ pub enum GrantError {
     InvalidMint,
     #[msg("Duplicate token mint")]
     DuplicateMint,
+    #[msg("Grant is already revoked")]
+    AlreadyRevoked,
+    #[msg("Grant updates may only tighten authorization")]
+    CannotExpandGrant,
 }
