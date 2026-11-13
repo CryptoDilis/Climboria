@@ -248,3 +248,12 @@ V6 adds persisted three-stage TP ladder (TP1/TP2/TP3), per-stage partial exit in
 V7 introduces `recovery_v7.py`: SQLite persisted PREPARED intent-before-send *simulation*, UNKNOWN state and restart recovery queue, terminal-only intent resolution, conservative locking after ambiguous simulated send, and explicit new-ID retry of verified FAILED exits only. Tests cover restart, uncertain buy/sell, lock retention, retry restrictions, idempotent preparation, and no premature resolution.
 
 **Scope/limitations:** The outbox has no real transaction builder, signer, network send, trusted chain reconciler, or verified finality. Caller-supplied simulated outcomes are not evidence of execution. No exactly-once guarantee across actual network crash windows; no real Solana delegated authority, auto re-entry, fee high-water-mark, or website UI. Owner-approved official CLIMBX icon and website manual/card remain recorded requirements, **not deployed**. Next Phase 17: mock external reconciler with injected send/crash outcomes, strict authorization boundary tests, balance/fee conservation, then owner-approved UI integration; keep live execution disabled.
+
+
+## Phase 17 checkpoint — 2026-11-13 (CLIMBX mock reconciler V8)
+
+**Verified locally:** 54/54 Python unittest tests passed (44 V3–V7 regression + 10 V8 tests); ZIP `climbx-paper-v8.zip` integrity checked. **Executable source remains a local conversation artifact, not committed to GitHub.** No real trades, deployment, wallet keys, or DEX flag changes.
+
+V8 adds `reconciler_v8.py`: deterministic `MockEvidence` fixture (NOT real chain evidence), terminal-only reconciliation of already UNKNOWN/SUBMITTED paper intents, lock retention on missing/invalid evidence, idempotent confirmation/failure, restart recovery sweep, and explicit refusal to settle a PREPARED order. V8 refuses nonzero buy fees because inherited V4 buy settlement does not account for them; paper sell-side fee handling is inherited from V5. Tests verify these behaviors. **Do not interpret `MockEvidence` type checks as trusted provenance or cryptographic proof.**
+
+**Next Phase 18:** address buy-side fee and reserve conservation, build independent fake-chain adapter with signatures/finality/reorg/expiry scenarios and injected crash boundaries, review transaction state machine and atomicity, and prepare UI integration plan for owner-approved CLIMBX icon, desktop/mobile card, and website User's Manual. Real Solana delegated authorization, audited execution and production rollout remain blocked.
