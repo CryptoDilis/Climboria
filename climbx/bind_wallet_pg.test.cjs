@@ -34,3 +34,13 @@ test('release connection',async()=>{const f=fixture();await bindVerifiedWallet(f
 
 test('tampered stored canonical message rejected',async()=>{const f=fixture({row:{canonical_message:'CLIMBX wallet ownership verification\\nTampered'}});assert.equal(await bindVerifiedWallet(f.args),'INVALID_CHALLENGE');assert.ok(f.calls.some(x=>x[0]==='ROLLBACK'));});
 test('non-second-aligned timestamps rejected',async()=>{const f=fixture({row:{issued_at:new Date(100001)}});assert.equal(await bindVerifiedWallet(f.args),'INVALID_CHALLENGE');});
+
+test('binding installs transaction-local PostgreSQL timeout settings before challenge read',async()=>{
+ const f=fixture();await bindVerifiedWallet(f.args);
+ const begin=f.calls.findIndex(x=>x[0]==='BEGIN');
+ const timeout=f.calls.findIndex(x=>x[0].includes("set_config('statement_timeout'"));
+ const read=f.calls.findIndex(x=>x[0].startsWith('SELECT user_id'));
+ assert.ok(begin>=0&&timeout>begin&&read>timeout);
+ assert.match(f.calls[timeout][0],/lock_timeout/);
+ assert.match(f.calls[timeout][0],/idle_in_transaction_session_timeout/);
+});
