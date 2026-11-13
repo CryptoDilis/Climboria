@@ -31,7 +31,7 @@ The pillars are designed to complement one another, but each has separate techni
 
 ## 3. Game: Jarrell's Peak
 
-Jarrell's Peak is Climboria's primary open-world survival and exploration experience. It is not one level in an eleven-mountain campaign. Players explore a wilderness of rivers, forests, cliffs, caves, camps, coastlines, landmarks, and hidden treasure routes. Fishing, swimming, resource discovery, and survival are part of the intended world loop.
+Jarrell's Peak is Climboria's primary open-world survival and exploration experience. The approved game-world scope comprises Jarrell's Peak and Arena only. Players explore a wilderness of rivers, forests, cliffs, caves, camps, coastlines, landmarks, and hidden treasure routes. Fishing, swimming, resource discovery, and survival are part of the intended world loop.
 
 The core risk/reward idea is simple: the farther a player ventures into dangerous territory, the more valuable the potential discoveries may become—but the risk of losing carried loot also increases. Players may cooperate, form parties, or compete over discoveries. Trust and betrayal are part of the intended high-risk social dynamic.
 
