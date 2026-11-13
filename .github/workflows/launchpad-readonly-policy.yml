@@ -1,0 +1,52 @@
+name: Launchpad Read-only Network and Token Program Policy
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/launchlab-program-policy.mjs"
+      - ".github/scripts/launchlab-program-policy.test.mjs"
+      - ".github/workflows/launchpad-readonly-policy.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/scripts/launchlab-program-policy.mjs"
+      - ".github/scripts/launchlab-program-policy.test.mjs"
+      - ".github/workflows/launchpad-readonly-policy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: launchpad-readonly-policy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Reject wrong CPMM cluster, token programs, and config owners
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax and fail-closed ownership tests
+        run: |
+          node --check .github/scripts/launchlab-program-policy.mjs
+          node --test .github/scripts/launchlab-program-policy.test.mjs
+
+  live-readonly:
+    name: Read finalized Mainnet and Devnet program and migration-config owners
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Inspect finalized account owners and upgrade authorities (no signing)
+        run: node .github/scripts/launchlab-program-policy.mjs
