@@ -65,8 +65,12 @@ test("rejects unknown top-level programs, extra signers and unsupported route va
 });
 
 test("rejects wrong taker, output mint, amounts, fee and excessive slippage", () => {
-  assert.throws(() => validate(parsed({ takerKey: source })), /account roles/);
-  assert.throws(() => validate(parsed({ outMint: source })), /account roles/);
+  // Wrong-role negative cases must NOT also duplicate another key: test
+  // role validation independently from the new duplicate-key safety gate.
+  const unrelatedWallet = encodeBase58(new Uint8Array(32).fill(24));
+  const unrelatedMint = encodeBase58(new Uint8Array(32).fill(25));
+  assert.throws(() => validate(parsed({ takerKey: unrelatedWallet })), /account roles/);
+  assert.throws(() => validate(parsed({ outMint: unrelatedMint })), /account roles/);
   assert.throws(() => validate(parsed({ data: routeData({ inAmount: 1001 }) })), /amounts do not match/);
   assert.throws(() => validate(parsed({ data: routeData({ fee: 1 }) })), /platform fees/);
   assert.throws(() => validate(parsed({ data: routeData({ slippage: 501 }) })), /5% safety cap/);
@@ -76,14 +80,25 @@ test("rejects invalid split percentages, route indexes and missing DEX program a
   assert.throws(() => decodeJupiterV6Route(routeData({ percent: 99 })), /total 100/);
   assert.throws(() => decodeJupiterV6Route(routeData({ inputIndex: 1, outputIndex: 1 })), /token index/);
   const p = parsed();
-  p.staticAccountKeys[6] = decodeBase58(compute);
+  p.staticAccountKeys[6] = decodeBase58(encodeBase58(new Uint8Array(32).fill(24)));
   assert.throws(() => validate(p), /missing its approved DEX program/);
 });
 
 test("rejects unexpected writable privileges on route authority and fee placeholders", () => {
   const p = parsed();
   p.readonlyUnsignedAccounts = 4;
-  assert.throws(() => validate(p), /signer\/writable privileges/);
+  assert.throws(() => validate(p), /known executable program/i,
+    "An executable token program must be readonly, even if an outer route also has writable role errors");
+
+  // Isolate a writable output-mint privilege violation without turning any
+  // known program into writable or duplicating a resolved pubkey.
+  const outputMintWritableViaAlt = parsed();
+  outputMintWritableViaAlt.staticAccountKeys[4] = decodeBase58(encodeBase58(new Uint8Array(32).fill(26)));
+  outputMintWritableViaAlt.instructions[0].accountIndexes[5] = 9;
+  assert.throws(
+    () => validate(outputMintWritableViaAlt, { loadedWritable: [outputMint] }),
+    /signer\/writable privileges/i
+  );
 });
 
 test("rejects Compute Budget instructions that carry account metas or unsupported opcodes", () => {
@@ -170,4 +185,72 @@ test("rejects orphaned Jupiter intermediate output even with a valid final-outpu
     { inputIndex: 1, outputIndex: 3, percent: 100 }
   ]);
   assert.throws(() => decodeJupiterV6Route(dangling), /unconsumed intermediate output/i);
+});
+
+
+test("rejects duplicate account pubkeys in resolved static keys and ALT entries", () => {
+  const repeatedSourceAndDestination = parsed();
+  repeatedSourceAndDestination.staticAccountKeys[2] = decodeBase58(source);
+  assert.throws(
+    () => validate(repeatedSourceAndDestination),
+    /duplicate resolved account pubkeys/i,
+    "A source/destination alias must never become a legitimate token-movement route"
+  );
+
+  const repeatedExecutableProgram = parsed();
+  repeatedExecutableProgram.staticAccountKeys[8] = decodeBase58(raydium);
+  assert.throws(
+    () => validate(repeatedExecutableProgram),
+    /duplicate resolved account pubkeys/i,
+    "Duplicating a DEX executable pubkey can hide a later writable alias"
+  );
+
+  assert.throws(
+    () => validate(parsed(), { loadedReadonly: [raydium] }),
+    /duplicate resolved account pubkeys/i,
+    "An ALT readonly key must not alias any existing static account key"
+  );
+  const other = encodeBase58(new Uint8Array(32).fill(24));
+  assert.throws(
+    () => validate(parsed(), { loadedWritable: [other], loadedReadonly: [other] }),
+    /duplicate resolved account pubkeys/i,
+    "Resolved ALT writable/readonly indexes must not alias each other"
+  );
+});
+
+test("rejects executable program writable privileges even outside active route metas", () => {
+  const whirlpool = "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc";
+  assert.throws(
+    () => validate(parsed(), { loadedWritable: [whirlpool] }),
+    /grants signer or writable privileges to a known executable program/i,
+    "An approved but unused executable DEX program cannot be writable in ALT keys"
+  );
+
+  // Remove the static Raydium pubkey; reference the same program as a
+  // resolved ALT writable account rather than merely duplicating it.
+  const viaWritableAlt = parsed();
+  viaWritableAlt.staticAccountKeys[6] = decodeBase58(encodeBase58(new Uint8Array(32).fill(25)));
+  viaWritableAlt.instructions[0].accountIndexes[7] = 9;
+  assert.throws(
+    () => validate(viaWritableAlt, { loadedWritable: [raydium] }),
+    /grants signer or writable privileges to a known executable program/i,
+    "Moving a route's program meta to a writable ALT must be rejected"
+  );
+});
+
+test("accepts a uniquely resolved readonly ALT DEX program without widening security policy", () => {
+  const viaReadonlyAlt = parsed();
+  viaReadonlyAlt.staticAccountKeys[6] = decodeBase58(encodeBase58(new Uint8Array(32).fill(25)));
+  viaReadonlyAlt.instructions[0].accountIndexes[7] = 9;
+  const accepted = validate(viaReadonlyAlt, { loadedReadonly: [raydium] });
+  assert.equal(accepted.ok, true);
+  assert.equal(accepted.route.steps[0].dex, "Raydium");
+  // This is only a mocked structural acceptance; CPI and asset flows are
+  // still not proven, and signing/execute release gates remain hard-disabled.
+});
+
+test("rejects out-of-bounds ALT and static account indexes before any route acceptance", () => {
+  const malicious = parsed();
+  malicious.instructions[0].accountIndexes[7] = 255;
+  assert.throws(() => validate(malicious), /account index is outside the resolved key list/i);
 });
