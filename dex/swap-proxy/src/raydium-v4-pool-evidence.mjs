@@ -208,6 +208,7 @@ export function inspectRaydiumV4FinalizedPoolSnapshot({
  */
 export async function fetchRaydiumV4FinalizedPoolEvidence({
   network, addresses, expectedAuthority, rpcUrl, minContextSlot = null,
+  expectedPoolAccountData = null,
   fetchImpl = globalThis.fetch
 } = {}) {
   if (typeof fetchImpl !== "function") fail("configured RPC transport is unavailable");
@@ -240,6 +241,15 @@ export async function fetchRaydiumV4FinalizedPoolEvidence({
       (minContextSlot !== null && contextSlot < minContextSlot) ||
       !Array.isArray(payload?.result?.value) || payload.result.value.length !== ROLES.length) {
     fail("incomplete, mismatched or stale finalized Solana RPC snapshot");
+  }
+  if (expectedPoolAccountData !== null) {
+    // Used by two-phase, pool-address-only discovery: compare the ENTIRE
+    // canonical raw 752-byte pool account image, including unparsed fields.
+    // Never accept a second finalized slot containing a different AMM state.
+    if (typeof expectedPoolAccountData !== "string" ||
+        payload.result.value[0]?.data?.[0] !== expectedPoolAccountData) {
+      fail("AMM pool raw account bytes changed between finalized reads");
+    }
   }
   const verdict = inspectRaydiumV4FinalizedPoolSnapshot({
     network, addresses, expectedAuthority, accounts: payload.result.value, contextSlot
