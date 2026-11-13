@@ -94,7 +94,6 @@ function bind(){
  const verify=document.createElement('a');verify.className='detail-verify-solscan';verify.target='_blank';verify.rel='noopener';verify.textContent='Verify mint on Solscan ↗';verify.href='https://solscan.io/';
  detailMint?.parentNode?.insertBefore(verify,detailMint.nextSibling);
  if(detailMint){const observer=new MutationObserver(()=>{const match=detailMint.textContent.match(/[1-9A-HJ-NP-Za-km-z]{32,50}/);if(match)verify.href='https://solscan.io/token/'+encodeURIComponent(match[0])});observer.observe(detailMint,{childList:true,characterData:true,subtree:true});}
- const copy=$('copyTokenMint');copy?.addEventListener('click',()=>{const original='Copy token mint';copy.textContent='Copied ✓';setTimeout(()=>{if(copy.textContent==='Copied ✓')copy.textContent=original},1600)});
 }
 bind();loadHero();loadTrending();setInterval(()=>{if(document.visibilityState==='visible'){loadHero();loadTrending()}},60000);
 })();

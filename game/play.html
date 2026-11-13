@@ -1085,30 +1085,74 @@ function animateAssetFallback(t,state,speed){
 }
 const assetChoices={Adventurer:'../assets/characters/Climboria_Hero.glb'};
 let heroLoadError='',heroLoadRequest=0;
+// Diagnostic-only phase telemetry: records where a large saved GLB load is spending time.
+const heroLoadDiagnostics=window.__climboriaHeroLoadDiagnostics={phase:'idle',startedAt:null,progressLoaded:0,progressTotal:0,parseStartedAt:null,parseDurationMs:null,sceneSetupStartedAt:null,sceneSetupDurationMs:null,lastUpdatedAt:null,error:null};
+function markHeroLoadPhase(phase,extra={}){heroLoadDiagnostics.phase=phase;heroLoadDiagnostics.lastUpdatedAt=performance.now();Object.assign(heroLoadDiagnostics,extra)}
+function inspectHeroGlbContainer(data){
+ try{
+  if(!(data instanceof ArrayBuffer)||data.byteLength<20)return{available:false,reason:'invalid-arraybuffer'};
+  const view=new DataView(data),magic=view.getUint32(0,true),version=view.getUint32(4,true),jsonBytes=view.getUint32(12,true),jsonType=view.getUint32(16,true);
+  if(magic!==0x46546c67||jsonType!==0x4e4f534a||jsonBytes>data.byteLength-20)return{available:false,reason:'invalid-glb-header',magic,version,jsonBytes,jsonType};
+  const json=JSON.parse(new TextDecoder().decode(new Uint8Array(data,20,jsonBytes)).replace(/\\0+$/,'').trim());
+  const views=json.bufferViews||[],images=json.images||[],meshes=json.meshes||[];
+  return{available:true,version,jsonBytes,extensionsUsed:json.extensionsUsed||[],extensionsRequired:json.extensionsRequired||[],nodeCount:(json.nodes||[]).length,meshCount:meshes.length,primitiveCount:meshes.reduce((n,m)=>n+(m.primitives||[]).length,0),materialCount:(json.materials||[]).length,textureCount:(json.textures||[]).length,imageCount:images.length,animationCount:(json.animations||[]).length,accessorCount:(json.accessors||[]).length,bufferViewCount:views.length,images:images.map(i=>({mimeType:i.mimeType||null,bufferViewBytes:Number.isInteger(i.bufferView)?views[i.bufferView]?.byteLength??null:null,uriKind:i.uri?(i.uri.startsWith('data:')?'data-uri':'external'):null})),accessorTypes:(json.accessors||[]).reduce((a,x)=>(a[x.type]=(a[x.type]||0)+1,a),{})};
+ }catch(error){return{available:false,error:String(error?.message||error)}}
+}
 function loadAssetHero(choice='ClimboriaHero'){
  if(choice==='ClimboriaHero'||!assetChoices[choice])choice='Adventurer';
  const requestId=++heroLoadRequest;
  if(!T3.GLTFLoader){heroLoadError='GLTFLoader unavailable';document.documentElement.dataset.climboriaHero='load-error';document.documentElement.dataset.climboriaHeroRenderer='fallback';hero.visible=false;heroReady=true;console.warn('[Climboria] '+heroLoadError);return}
  document.documentElement.dataset.climboriaHero='loading-'+choice.toLowerCase();
- new T3.GLTFLoader().load(assetChoices[choice],gltf=>{
+ heroLoadDiagnostics.startedAt=performance.now();markHeroLoadPhase('requesting',{choice,url:assetChoices[choice]});
+ const loader=new T3.GLTFLoader(),originalParse=loader.parse.bind(loader);
+ loader.parse=function(data,path,onLoad,onError){
+  const textureStats={started:0,completed:0,failed:0,pending:0,lastDurationMs:null,lastUrl:null};
+  const texturePrototype=T3.TextureLoader?.prototype,originalTextureLoad=texturePrototype?.load;
+  let trackedTextureLoad=null;
+  if(typeof originalTextureLoad==='function'){
+   trackedTextureLoad=function(url,textureOnLoad,progressOnLoad,textureOnError){
+    textureStats.started++;textureStats.pending++;textureStats.lastUrl=String(url||'').slice(0,180);
+    const started=performance.now();
+    return originalTextureLoad.call(this,url,texture=>{textureStats.completed++;textureStats.pending=Math.max(0,textureStats.pending-1);textureStats.lastDurationMs=Math.round(performance.now()-started);if(textureOnLoad)textureOnLoad(texture)},progressOnLoad,error=>{textureStats.failed++;textureStats.pending=Math.max(0,textureStats.pending-1);textureStats.lastDurationMs=Math.round(performance.now()-started);if(textureOnError)textureOnError(error)});
+   };
+   texturePrototype.load=trackedTextureLoad;
+  }
+  const restoreTextureTracking=()=>{if(trackedTextureLoad&&texturePrototype.load===trackedTextureLoad)texturePrototype.load=originalTextureLoad};
+  const glbSummary=inspectHeroGlbContainer(data);
+  heroLoadDiagnostics.textureLoads=textureStats;
+  markHeroLoadPhase('parse-start',{parseStartedAt:performance.now(),bufferBytes:data?.byteLength??null,glbSummary});
+  return originalParse(data,path,gltf=>{restoreTextureTracking();markHeroLoadPhase('parse-complete',{parseDurationMs:Math.round(performance.now()-heroLoadDiagnostics.parseStartedAt)});onLoad(gltf)},error=>{restoreTextureTracking();markHeroLoadPhase('parse-error',{error:String(error?.message||error)});onError(error)});
+ };
+ loader.load(assetChoices[choice],gltf=>{
+  markHeroLoadPhase('scene-setup',{sceneSetupStartedAt:performance.now()});
   // Ignore late responses from an earlier character selection; the most recent choice always wins.
   if(requestId!==heroLoadRequest){gltf.scene.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}});return}
   if(assetHero){if(assetMixer)assetMixer.stopAllAction();scene.remove(assetHero);assetHero.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}})}
   assetHero=gltf.scene;assetHero.name='Climboria_'+choice+'_PhysicsCharacter';assetHeroUsesAuthoredAnimations=choice==='Adventurer';
+  markHeroLoadPhase('bounds-compute');
   const box=new T3.Box3().setFromObject(assetHero),size=box.getSize(new T3.Vector3());
+  markHeroLoadPhase('scale-model',{boundsSize:{x:size.x,y:size.y,z:size.z},animationCount:gltf.animations?.length??0});
   const scale=1.9/Math.max(size.y,.001);assetHero.scale.setScalar(scale);
   const scaledBox=new T3.Box3().setFromObject(assetHero);assetHeroGroundOffset=-scaledBox.min.y;assetHero.position.y=assetHeroGroundOffset;
+  markHeroLoadPhase('mesh-traverse');
   assetHero.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+  markHeroLoadPhase('attach-scene');
   scene.add(assetHero);hero.visible=false;hero.traverse(o=>{o.visible=false});
+  markHeroLoadPhase('animation-rig');
   assetMixer=gltf.animations&&gltf.animations.length?new T3.AnimationMixer(assetHero):null;
   assetActions=gltf.animations||[];assetActive=null;assetAnimState='';cacheAssetRig(assetHero);chooseAssetAnimation('idle');
   document.documentElement.dataset.climboriaHero=choice.toLowerCase().replace(/[^a-z]/g,'-');document.documentElement.dataset.climboriaHeroAsset=assetChoices[choice];document.documentElement.dataset.climboriaHeroRenderer='glb';
   window.__climboriaGLBRenderer=true;
   document.documentElement.dataset.climboriaAnimations=assetActions.map(a=>a.name).join('|')||'none';
-heroReady=true;
-  console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
- },undefined,error=>{
+  heroReady=true;
+  heroLoadDiagnostics.sceneSetupDurationMs=Math.round(performance.now()-heroLoadDiagnostics.sceneSetupStartedAt);
+  markHeroLoadPhase('ready',{sceneSetupDurationMs:heroLoadDiagnostics.sceneSetupDurationMs,meshCount:(()=>{let n=0;assetHero.traverse(o=>{if(o.isMesh)n++});return n})()});
+  console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length,'diagnostics',heroLoadDiagnostics);
+ },xhr=>{
+  markHeroLoadPhase('downloading',{progressLoaded:xhr.loaded??0,progressTotal:xhr.total??0,progressComputable:!!xhr.lengthComputable});
+ },error=>{
   if(requestId!==heroLoadRequest)return;
+  markHeroLoadPhase('loader-error',{error:String(error&&error.message||error)});
   heroLoadError=String(error&&error.message||error);
   document.documentElement.dataset.climboriaHero='load-error';
   document.documentElement.dataset.climboriaHeroRenderer='fallback';

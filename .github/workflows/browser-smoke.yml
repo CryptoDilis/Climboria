@@ -495,8 +495,16 @@ jobs:
               assert(cards.length===2&&!cards.some(card=>card.mint===mintC),'Non-Solana boost/profile entries must never appear in Solana discovery');
               assert(cards.every(c=>c.text.includes('discovery')&&c.text.includes('not a global market ranking')),'Cards must disclose discovery provenance and limited ranking scope');
               assert(calls.includes('/token-profiles/latest/v1')&&calls.includes('/token-boosts/top/v1')&&calls.some(p=>p.startsWith('/tokens/v1/solana/')),'Expected profile, boost and batched token-pair requests');
+              await page.addInitScript(()=>{window.__clipboardWrites=[];let finish;Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:text=>{window.__clipboardWrites.push(text);return new Promise(resolve=>{finish=resolve})}}});window.__finishClipboardWrite=()=>finish?.()});
               await page.locator('#premiumTrendingGrid [data-premium-mint="'+mintA+'"]').click();
-              await page.waitForFunction(m=>new URL(location.href).searchParams.get('token')===m,mintA,{timeout:10000});
+              await page.waitForFunction(m=>new URL(location.href).searchParams.get('token')===m&&document.querySelector('#tokenDetail')?.classList.contains('open'),mintA,{timeout:10000});
+              await page.locator('#copyTokenMint').click();
+              const pendingCopyLabel=await page.locator('#copyTokenMint').textContent();
+              assert(!/copied/i.test(pendingCopyLabel),'Mint copy must not claim success before navigator.clipboard.writeText resolves: '+pendingCopyLabel);
+              await page.evaluate(()=>window.__finishClipboardWrite());
+              await page.waitForFunction(()=>document.querySelector('#copyTokenMint')?.textContent==='Copied',null,{timeout:3000});
+              const copied=await page.evaluate(()=>window.__clipboardWrites);
+              assert(copied.length===1&&copied[0]===mintA,'Copy mint must write the exact active token mint to the clipboard');
               await page.close();
 
               const failed=await browser.newPage();
@@ -623,8 +631,10 @@ jobs:
                 // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
                 const closeDetail=dex.locator('#closeDetail');
                 await closeDetail.waitFor({state:'visible',timeout:5000});
+                // Wait for openToken() smooth scrolling to settle before computing the physical tap point.
+                await dex.evaluate(()=>new Promise(resolve=>{let stableFrames=0,previousY=window.scrollY;const poll=()=>{const y=window.scrollY;if(Math.abs(y-previousY)<.5)stableFrames++;else stableFrames=0;previousY=y;if(stableFrames>=4)resolve();else requestAnimationFrame(poll)};poll()}));
                 const closeBefore=await closeDetail.evaluate(el=>{const r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},disabled:el.disabled,display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,pointerEvents:getComputedStyle(el).pointerEvents,topElement:top?{tag:top.tagName,id:top.id,classes:String(top.className)}:null}});
-                if(closeBefore.disabled||closeBefore.rect.width===0)throw new Error('Mobile token close control is not actionable: '+JSON.stringify(closeBefore));
+                if(closeBefore.disabled||closeBefore.rect.width===0||closeBefore.topElement?.id!=='closeDetail')throw new Error('Mobile token close control is not the stable topmost hit target: '+JSON.stringify(closeBefore));
                 await dex.evaluate(()=>{
                   window.__closeDetailEvents=[];
                   for(const type of ['pointerdown','pointerup','pointercancel','touchstart','touchend','click']){

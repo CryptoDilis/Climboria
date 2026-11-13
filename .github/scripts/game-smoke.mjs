@@ -690,7 +690,8 @@ try {
     canvas: !!document.querySelector('canvas'),
     glbResources: performance.getEntriesByType('resource')
       .filter(entry => /Climboria_Hero\.glb/i.test(entry.name))
-      .map(entry => ({ name: entry.name, duration: Math.round(entry.duration), transferSize: entry.transferSize, decodedBodySize: entry.decodedBodySize }))
+      .map(entry => ({ name: entry.name, duration: Math.round(entry.duration), transferSize: entry.transferSize, decodedBodySize: entry.decodedBodySize })),
+    loaderDiagnostics: window.__climboriaHeroLoadDiagnostics ? {...window.__climboriaHeroLoadDiagnostics,elapsedMs:window.__climboriaHeroLoadDiagnostics.startedAt==null?null:Math.round(performance.now()-window.__climboriaHeroLoadDiagnostics.startedAt)} : null
   }));
   const mobileGlbWaitStartedAt = Date.now();
   try {
