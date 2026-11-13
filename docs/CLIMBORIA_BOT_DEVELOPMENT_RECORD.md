@@ -583,3 +583,8 @@ Verified Phase73 CI: CLIMBX `43454354453` and Validate `43454354458` successful.
 ## Phase 75 checkpoint — 2026-11-13 (real PostgreSQL reconciliation-state checks)
 
 Verified Phase74 CLIMBX release safety `43454707112` and Validate Climboria `43454707139` both successful. Added three isolated real PostgreSQL integration checks to `climbx/test_postgres_integration.py`, commit `81733b97f263f52968b67a7d84d7effcdf26867e`: confirmed consumed nonce plus same-owner wallet binding, consumed nonce without binding, and nonce for user1 with wallet bound to user2. These are direct SQL state checks, **not** a JS-to-PostgreSQL integration of the reconciliation helper or lost-commit-response simulation. CI pending verification. Keep wallet API unmounted and CLIMBX NO-GO.
+
+
+## Phase 76 checkpoint — 2026-11-13 (DEX CLIMBX preview placement)
+
+Verified Phase75 CLIMBX CI `43455166968` and Validate `43455166908` successful. Inspected draft `dex/index.html`: no CLIMBX preview existed. Added an explicitly **NOT LIVE** CLIMBX preview panel immediately before the DEX Market Explorer, commit `858469fcc5b243e98c6171bec638dc40434d064d`, describing free personal bot, up to five assets, approval-based learning, exclusive Signature DEX routing, proposed 10% high-water-mark fee, network costs, risk, and link to Overview project brief. This is a static preview only, not the actual bot dashboard; it is in the draft branch, not deployed. CI for new commit not yet verified. Future: desktop right-side/mobile after-overview layout refinement, real bot dashboard only after reviewed security and on-chain authorization. CLIMBX NO-GO.
