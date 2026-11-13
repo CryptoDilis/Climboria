@@ -2,7 +2,7 @@
 
 **Last reviewed:** 2026-11-14 (Philippine time)
 **Repository:** `CryptoDilis/Climboria`
-**Initial baseline:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`; **latest merged DEX/Swap change:** `19d5afba669934f7bc3ffedeab7e8fd03e8178bd` (PR #305; refresh current `main` on every resume)
+**Initial baseline:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`; **latest merged DEX/Swap change:** `a84b7bd12b2495c68ee65dea87ef3bd6a2e09764` (PR #306; refresh current `main` on every resume)
 **Owner-directed scope:** **DEX, Swap, Launchpad ONLY.** The Game is owned by a separate chat/developer. This file supersedes older cross-project priority instructions **for this workstream only**.
 **State:** active development; **not** evidence that signed mainnet swaps or token launches are live.
 
@@ -183,3 +183,20 @@ Changed: branch `ci/trigger-production-browser-after-exact-pages`, workflow `.gi
 Verified: commit `18697b9` created; exact-head CI and real production browser **PENDING**.
 Unresolved: possible Pages cancellation on concurrent pushes; actual provider CORS/availability; quote diagnostic DEX panel still hidden to users. No trading or token mint/launch is enabled.
 NEXT: validate new workflow via focused PR, merge if green; inspect exact Pages and production-browser run conclusions and failure logs. Record actual deployment evidence, not assumptions.
+
+
+### 2026-11-14 — Production browser quote accepted on real deployed origin (PR #306)
+Scope: **DEX and Swap quote-only verification**, not trading.
+Before: PR #304 browser smoke existed but GitHub-built-in Pages `workflow_run` did not trigger. The Pages readiness evidence did not yet prove a browser quote.
+Changed: [PR #306](https://github.com/CryptoDilis/Climboria/pull/306) merged as `a84b7bd12b2495c68ee65dea87ef3bd6a2e09764`, replacing absent workflow_run with a DEX/Swap-path main-push workflow gated on `pages build and deployment` **SUCCESS for the exact same commit SHA**.
+Verified: PR head `12b83f76ef3aef3f203ebcb4dd5f74ee855c9ab9` [workflow syntax 43471140938](https://github.com/CryptoDilis/Climboria/actions/runs/43471140938) **SUCCESS** (live job skipped on PR), [Validate 43471140599](https://github.com/CryptoDilis/Climboria/actions/runs/43471140599) **SUCCESS**. [Pages 43471247172](https://github.com/CryptoDilis/Climboria/actions/runs/43471247172) **SUCCESS**; [real production browser smoke 43471247159](https://github.com/CryptoDilis/Climboria/actions/runs/43471247159) **SUCCESS**, confirming live Jupiter quotes through `api.climboria.fun` for desktop Swap, 390px mobile Swap, and DEX quote **diagnostic** with exact SOL/USDC mint addresses and 100,000,000 raw input lamports (0.1 SOL), positive output, request ID, no signable transaction, and at least one successful DexScreener market response. Logs include explicit PASS markers for all four. No wallet signing, /order or /execute calls.
+Unresolved: DEX quote panel was hidden to users during this successful run and was exposed by test-only DOM manipulation; this proves only its underlying code path. Real swap execution remains hard-disabled; provider point-in-time success is not an uptime SLA. Launchpad mint/bonding/migration still unverified.
+NEXT: expose the existing **read-only** DEX quote panel through a visible, accessible control while keeping transaction execution disabled, then rerun exact-head and real production-browser acceptance.
+
+### 2026-11-14 — User-visible DEX live quote toggle (CI pending)
+Scope: **DEX read-only quote UI and DEX/Swap test harness only**.
+Before: DEX market data and Jupiter quote API worked in production, but `#swapQuote` stayed hidden to normal users; the successful production smoke had to unhide the panel by test-only DOM manipulation.
+Changed: branch `feat/dex-visible-readonly-quote-toggle`: `dex/index.html` now has a user-facing `GET LIVE QUOTE · NO TRADING` button with `aria-controls`, `aria-expanded`, toggle open/close, and existing trade-panel synchronization. The production browser smoke must **click that real visible control** instead of overriding `hidden`. `.github/scripts/swap-amount.test.mjs` tests actual toggle handler state transitions. Quote route and disabled signing/execution gates remain unchanged.
+Verified: GitHub commits `8701176`, `66e21f7`, `dcad58d` created; **exact-head CI and deployed UI not yet verified**.
+Unresolved: mobile touch/visual placement and production quote integration after the UI change still require evidence; mainnet financial execution and Launchpad remain blocked.
+NEXT: validate focused PR, merge only when tests are green, then inspect exact-head Pages and real-origin DEX/Swap browser smoke results to verify the quote button genuinely opens and obtains provider-backed data.
