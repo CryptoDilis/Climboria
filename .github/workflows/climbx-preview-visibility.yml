@@ -1,0 +1,27 @@
+name: CLIMBX public preview visibility (non-trading)
+on:
+  push:
+    paths:
+      - 'dex/index.html'
+      - 'dex/climbx/index.html'
+      - 'climbx/test_dex_preview_visibility.cjs'
+      - '.github/workflows/climbx-preview-visibility.yml'
+  pull_request:
+    paths:
+      - 'dex/index.html'
+      - 'dex/climbx/index.html'
+      - 'climbx/test_dex_preview_visibility.cjs'
+      - '.github/workflows/climbx-preview-visibility.yml'
+permissions:
+  contents: read
+jobs:
+  preview-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify visible CLIMBX preview and disabled controls
+        run: node climbx/test_dex_preview_visibility.cjs
