@@ -732,3 +732,20 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Critical blockers:** Actual Solana CLI/Rust/Anchor/local-validator/devnet tooling NOT verified; exact Climboria Signature DEX router program IDs and transaction schema NOT verified; no signed devnet swap, no independent security audit. CLIMBX real-funds **NO-GO**. Do not touch other teams' DEX/Swap/Launchpad/game files.
 
 **Next steps:** (1) check Phase88 CI on commit `9638b0ac3db291daa85883c3ddb03e0cd01988a7` and record exact results; (2) inspect real Solana tooling/environment and document versions; (3) obtain concrete DEX router schema from other workstream read-only, implement deny-all until reviewed allowlist exists; (4) prototype on-chain owner create/revoke/expiry/caps with local validator and devnet tests; (5) independently review authority/settlement before any live funds. Continue to append commits, tests, CI, blockers and next steps here each phase.
+
+
+## Phase 89 — 2026-11-14 — verified local toolchain gap and non-deploying readiness check (CLIMBX only)
+
+**Phase88 CI all SUCCESS on `9638b0ac3db291daa85883c3ddb03e0cd01988a7`:** Validate `43462161897`, Browser Smoke `43462151834`, CLIMBX release safety `43462151685`.
+
+**Actual toolchain inspection in current assistant container:** Node `v22.16.0` available. `rustc`, `cargo`, `solana`, `solana-test-validator`, `anchor` **NOT INSTALLED**. This describes only the current working container, not GitHub Actions runners or a user's computer. No devnet RPC probe, on-chain deployment, or signed swap was performed.
+
+**Phase89 commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `301eb31dd423f735e687b94c3113bc77c6596bf2`: `climbx/devnet_toolchain_check.cjs`, fail-closed, read-only version probe for required Rust/Cargo/Solana/validator/Anchor commands; even all tools present is `TOOLCHAIN_PRESENT_NOT_CHAIN_VERIFIED` and `realFundsAllowed:false`.
+- `30225cf9c5b4164e9e152ad72445aeed49519564`: `climbx/devnet_toolchain_check.test.cjs`, five mocked command-probe tests.
+- `9c57cbaaa31d30ae4b25fbe702ac8aac583a4d82`: wire readiness tests into CLIMBX release-safety GitHub Actions workflow.
+- **Phase89 CI pending**: GitHub returned no runs for latest commit at first check; do not claim pass until verified.
+
+**Release gate:** real-funds CLIMBX **NO-GO**. Readiness checks are not a deployed Solana program, audited grant, DEX-only route enforcement, or end-to-end signed devnet execution. No changes to Swap/DEX/Launchpad/game code.
+
+**Next phase handoff:** (1) verify Phase89 workflow runs for `9c57cbaaa31d30ae4b25fbe702ac8aac583a4d82`, fix failures and log exact passing IDs; (2) provision or identify a controlled devnet development environment with Rust/Cargo/Solana CLI/local validator/Anchor and record verified versions; (3) read-only identify the concrete Signature DEX router transaction schema; do not touch DEX files; (4) create devnet-only on-chain grant/revoke/caps prototype with atomic tests and strict deny-all router until reviewed; (5) signed devnet lifecycle, independent audit and explicit owner release decision. Append exact commits/CI/blockers/next actions to this main-branch record each phase.
