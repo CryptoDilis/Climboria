@@ -1046,3 +1046,19 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Actual assistant environment probe:** rustc, cargo, solana, solana-test-validator, anchor unavailable; Node v22.16.0 available. No validator started and no signed on-chain transactions. Existing deny-only boundary remains intact; real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase109:** verify Phase108 CI and fix any failures; obtain approved pinned Solana toolchain environment and collect actual command outputs; only then start owner-signed local-validator grant/revoke/cap prototype and test replay/races/route enforcement. Continue append-only main record.
+
+
+## Phase 109 — 2026-11-14 — fail-closed Solana toolchain version evidence
+
+**Phase108 CI all SUCCESS** on `bca363eb54068548efc338cf305fdc892cb08b79`: Browser Smoke `43471644157`, Validate `43471644201`, CLIMBX release safety `43471644243`.
+
+**Actual environment probe rechecked Phase109:** `rustc`, `cargo`, `solana`, `solana-test-validator`, `anchor` all MISSING; Node `v22.16.0` present. No toolchain installed and no local validator run.
+
+**Phase109 branch commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `6a21a29ae0e51a9480830eacbfa9bea150aed0e9`: read-only Solana toolchain probe now requires nonempty version evidence even on zero exit.
+- `8d7716474accbaac57e6a7edb46ef62e894d0c89`: three unit tests for empty/whitespace-only version output and bounded no-shell command invocation.
+**Phase109 CI in progress** on `8d7716474accbaac57e6a7edb46ef62e894d0c89` at first check: CLIMBX release safety `43472120068` in_progress, Validate `43472120479` pending, Browser Smoke `43472120486` pending.
+
+**Security boundary:** this checks executable availability only; it does not pin compatible versions, validate binary provenance, start a validator, deploy a program, or prove on-chain authorization. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase110:** verify Phase109 CI and repair any failure; obtain a supported runner with pinned Rust/Solana/Anchor versions and capture actual toolchain and local validator evidence; then begin minimal owner-signed on-chain grant/revoke prototype with nonce/cap/replay tests. Keep append-only main record.
