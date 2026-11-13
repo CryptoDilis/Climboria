@@ -7,7 +7,7 @@ function inspect(source = fs.readFileSync(programPath, 'utf8')) {
   const checks = {
     ownerSignerRequired: /pub owner:\s*Signer<'info>/.test(source),
     ownerRevokeRequired: /has_one\s*=\s*owner/.test(source),
-    fiveMintLimit: /allowed_mints\.len\(\)\s*<=\s*5/.test(source),
+    fiveMintLimit: /\(1\.\.=5\)\.contains\(&allowed_mints\.len\(\)\)/.test(source) || /allowed_mints\.len\(\)\s*<=\s*5/.test(source),
     expirationBound: /expires_at\s*<=\s*max_expiry/.test(source),
     perOrderCap: /per_order_cap\s*>\s*0/.test(source),
     cumulativeCap: /cumulative_cap\s*>=\s*per_order_cap/.test(source),
