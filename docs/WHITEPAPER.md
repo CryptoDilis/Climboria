@@ -1,6 +1,6 @@
 # CLIMBORIA — Full Ecosystem Whitepaper
 
-**Version:** 1.2  
+**Version:** 1.3  
 **Updated:** 13 November 2026  
 **Official website:** https://climboria.fun  
 **Official X:** https://x.com/ClimboriaHQ
