@@ -57,6 +57,12 @@ function base58DecodedLength(value) {
   return zeros + (bytes.length === 1 && bytes[0] === 0 ? 0 : bytes.length);
 }
 function validPubkey(value) { return base58DecodedLength(value) === 32; }
+// A missing fee is unknown, not zero. Accept only explicitly supplied integer bps.
+function optionalFeeBps(value) {
+  if (typeof value !== "number" && (typeof value !== "string" || !value.trim())) return null;
+  const bps = Number(value);
+  return Number.isInteger(bps) && bps >= 0 && bps <= 10000 ? bps : null;
+}
 async function readJson(request, maxBytes = 40000) {
   const contentType = String(request.headers.get("content-type") || "").toLowerCase();
   if (!contentType.startsWith("application/json")) throw new Error("Content-Type must be application/json");
@@ -201,7 +207,7 @@ async function handleOrder(request, env) {
     outAmount: data.outAmount || null,
     router: data.router || null,
     mode: data.mode || null,
-    feeBps: Number.isFinite(Number(data.feeBps)) ? Number(data.feeBps) : null,
+    feeBps: optionalFeeBps(data.feeBps),
     feeMint: data.feeMint || null,
     transactionVersion: data.transactionVersion ?? null,
     lastValidBlockHeight: data.lastValidBlockHeight ?? null,
@@ -236,7 +242,7 @@ async function handleQuote(request, env) {
   return json({
     requestId: data.requestId, inAmount: data.inAmount, outAmount: data.outAmount,
     router: data.router || null, mode: data.mode || null,
-    feeBps: Number.isFinite(Number(data.feeBps)) ? Number(data.feeBps) : null,
+    feeBps: optionalFeeBps(data.feeBps),
     feeMint: data.feeMint || null, priceImpactPct: data.priceImpactPct ?? null
   });
 }
