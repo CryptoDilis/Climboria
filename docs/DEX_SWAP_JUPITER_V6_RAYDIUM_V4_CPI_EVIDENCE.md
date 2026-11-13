@@ -98,3 +98,27 @@ A new **offline evidence-only module**, `dex/swap-proxy/src/raydium-v4-direct-ev
 **Limitations are explicit and important:** matching caller-supplied expected addresses does not prove those addresses are trustworthy, pool account data is valid, vault token accounts have the right owner/mint, fee recipient is correct, the mainnet executable matches this source, or the CPI uses the direct 17-account builder shape. The parser does **NOT** fetch RPC state, build or submit transactions, modify the release gates, or grant any route approval. Jupiter V6 **remaining accounts** and signer forwarding have not been independently mapped. The existing separate `jupiter-v6-cpi-review.mjs` deny guard remains the sole order-path review boundary, hard-denying **every** supported DEX variant.
 
 **NEXT:** independently pin Jupiter V6's deployed CPI account forwarding and Raydium V4's program/AMM/market/vault ownership; build finalized RPC pool/market/token-mint authority proofs tied to trusted program-specific account layouts, then adversarial CPI and controlled chain balance-reconciliation tests. Keep signing/execute and Launchpad disabled until reviewed.
+
+## 7. Read-only operator pool-address discovery (2026-11-14)
+
+The latest read-only forensic path accepts a **single externally corroborated Raydium V4 pool public key**, an explicitly chosen network and a separately configured operator-only HTTPS Solana RPC URL. The new `dex/swap-proxy/src/raydium-v4-pool-discovery.mjs` performs two **finalized read-only RPC** requests; it NEVER prepares a swap.
+
+1. `getAccountInfo(poolAddress, commitment: finalized)`: validate the strict **752-byte Raydium V4 AMM image**, owner/program for the selected network, status, nonce, fee and mint/market pointers. Derive the expected AMM authority PDA from program ID + nonce.
+2. `getMultipleAccounts([pool, coinVault, pcVault, coinMint, pcMint, openOrders, market, marketProgram], commitment: finalized, minContextSlot: firstContextSlot)`: get all eight final accounts in **one finalized context**. Check strict raw-token layout, vault/mint roles and the independently derived PDA via the existing evidence validator.
+3. Require the **entire original 752-byte AMM account image** to match the second finalized sample, including fields the verifier has not semantically decoded. Reject any cross-slot pool-state drift, owner mismatch, invalid account role or stale/failed RPC reply. Also retain individual parsed-field comparisons as defense in depth.
+
+The corresponding operator-only CLI is `dex/swap-proxy/tools/raydium-v4-finalized-pool-report.mjs`. Run only in a trusted operator environment; provide a pool public key from **independently corroborated** Raydium pool metadata and do not commit or print private RPC URLs/API keys:
+
+```bash
+# Set CLIMBORIA_SOLANA_RPC_URL via a local secret manager/environment;
+# NEVER commit it, or print a keyed URL into GitHub CI logs.
+node dex/swap-proxy/tools/raydium-v4-finalized-pool-report.mjs \
+  --network mainnet-beta \
+  --pool YOUR_INDEPENDENTLY_VERIFIED_PUBLIC_RAYDIUM_V4_POOL_ADDRESS
+```
+
+The CLI requires `CLIMBORIA_SOLANA_RPC_URL` to be set out of band. It prints **public account keys/slots and explicit nonapproval flags only**; not the RPC URL, raw account data or wallet material. The collector intentionally sets `poolAddressIndependentlyCorroborated:false` and `rpcSourceIndependentlyAudited:false` because code **cannot prove those operator trust decisions**. It also returns `approvedForJupiterCpi:false`, `deployedProgramBytecodeVerified:false` and `jupiterCpiAccountMappingVerified:false`.
+
+**LIMITS:** The two finalized calls may reflect different slots; the full-byte AMM equality check and a nondecreasing second context prevent combining a changed AMM pool image, but cannot attest to arbitrary off-RPC changes or a dishonest RPC node. Pool selection/source identity, market/OpenBook internal decoding, program upgrade authority, Jupiter inner CPI account mapping, intermediate token flows, fees and actual settlements remain unverified. There is NO CI automation contacting an external Solana RPC: deterministic tests supply mocked two-stage finalized responses and adversarial mismatches.
+
+**Next real step:** An authorized operator must supply a corroborated pool public address and trustworthy network RPC, run this **read-only** CLI externally, retain redacted/public-only evidence, and independently corroborate it against a second trusted source before any claim of actual on-chain verification. This NEVER flips the signable-order or execution gates.

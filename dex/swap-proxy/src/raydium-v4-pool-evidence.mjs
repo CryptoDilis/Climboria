@@ -1,6 +1,7 @@
 import { encodeBase58, decodeBase58 } from "./transaction-validation.mjs";
 import { validateRpcUrl, readBoundedBody } from "./solana-rpc.mjs";
 import { RAYDIUM_V4_PROGRAM_IDS, RAYDIUM_V4_CLASSIC_TOKEN_PROGRAM } from "./raydium-v4-direct-evidence.mjs";
+import { deriveRaydiumV4AmmAuthorityPda } from "./raydium-v4-authority-pda.mjs";
 
 /**
  * Read-only, single-finalized-context Raydium V4 AMM/pool/vault evidence.
@@ -13,7 +14,7 @@ import { RAYDIUM_V4_PROGRAM_IDS, RAYDIUM_V4_CLASSIC_TOKEN_PROGRAM } from "./rayd
  *
  * This verifies ONLY the public RPC snapshot relationships enumerated below,
  * NOT Jupiter CPI account ordering, market data, program bytecode parity,
- * Raydium authority PDA derivation, fee collection or token transfers.
+ * fee collection or token transfers. The async RPC collector additionally\n * verifies the authority PDA from raw on-chain AMM nonce; the synchronous\n * inspector does not, and explicitly reports it as unverified.
  * Not imported by the Worker order/execute path. Never an approval token.
  */
 const SPL_TOKEN = RAYDIUM_V4_CLASSIC_TOKEN_PROGRAM;
@@ -124,6 +125,21 @@ function parseMint(account, role) {
   };
 }
 
+/**
+ * Decode one direct Raydium V4 pool account without trusting an RPC-provided
+ * jsonParsed representation. Caller MUST pin the network and independently
+ * corroborate the pool public key: state consistency alone cannot prove
+ * that a pool is legitimate or that it matches an intended trading pair.
+ *
+ * Only used for read-only discovery; does not authorize any Jupiter CPI.
+ */
+export function inspectRaydiumV4RawPoolAccount({ network, account } = {}) {
+  if (!Object.hasOwn(RAYDIUM_V4_PROGRAM_IDS, network)) {
+    fail("unsupported or unspecified network");
+  }
+  return Object.freeze(parsePool(account, RAYDIUM_V4_PROGRAM_IDS[network]));
+}
+
 /** Deterministic proof for an already retrieved single finalized-context snapshot. */
 export function inspectRaydiumV4FinalizedPoolSnapshot({
   network, addresses, expectedAuthority, accounts, contextSlot
@@ -192,6 +208,7 @@ export function inspectRaydiumV4FinalizedPoolSnapshot({
  */
 export async function fetchRaydiumV4FinalizedPoolEvidence({
   network, addresses, expectedAuthority, rpcUrl, minContextSlot = null,
+  expectedPoolAccountData = null,
   fetchImpl = globalThis.fetch
 } = {}) {
   if (typeof fetchImpl !== "function") fail("configured RPC transport is unavailable");
@@ -225,8 +242,38 @@ export async function fetchRaydiumV4FinalizedPoolEvidence({
       !Array.isArray(payload?.result?.value) || payload.result.value.length !== ROLES.length) {
     fail("incomplete, mismatched or stale finalized Solana RPC snapshot");
   }
+  if (expectedPoolAccountData !== null) {
+    // Used by two-phase, pool-address-only discovery: compare the ENTIRE
+    // canonical raw 752-byte pool account image, including unparsed fields.
+    // Never accept a second finalized slot containing a different AMM state.
+    if (typeof expectedPoolAccountData !== "string" ||
+        payload.result.value[0]?.data?.[0] !== expectedPoolAccountData) {
+      fail("AMM pool raw account bytes changed between finalized reads");
+    }
+  }
   const verdict = inspectRaydiumV4FinalizedPoolSnapshot({
     network, addresses, expectedAuthority, accounts: payload.result.value, contextSlot
   });
-  return Object.freeze({ ...verdict, rpcFinalizedAccountSnapshotRead: true });
+  // Independently derive the Raydium AMM vault authority using the nonce
+  // embedded in the fetched pool's raw 752-byte state. An arbitrary
+  // caller-supplied expectedAuthority is NOT a cryptographic proof.
+  // This is read-only: it must never promote this evidence to Jupiter
+  // CPI approval or permit wallet-signable orders.
+  const pda = await deriveRaydiumV4AmmAuthorityPda({
+    network, nonce: verdict.pool.nonce
+  });
+  if (pda.authority !== expectedAuthority ||
+      verdict.coinVault.owner !== pda.authority ||
+      verdict.pcVault.owner !== pda.authority) {
+    fail("supplied AMM authority and vault owners do not match the independently derived PDA");
+  }
+  return Object.freeze({
+    ...verdict,
+    expectedAuthority: pda.authority,
+    ammAuthorityPdaIndependentlyVerified: true,
+    authorityPdaSeed: pda.seed,
+    rpcFinalizedAccountSnapshotRead: true,
+    // This flag must never become true from merely reading pool RPC data.
+    approvedForJupiterCpi: false
+  });
 }
