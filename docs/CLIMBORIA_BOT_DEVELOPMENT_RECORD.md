@@ -785,3 +785,14 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Remaining risks:** All code is PAPER ONLY, not live Solana order processing; SQLite journal models one simulated wallet and does not enforce scoped delegated authority, real-chain finality, crash-safe submission/reconciliation, or multi-host concurrency. CLIMBX real-funds GO/NO-GO = **NO-GO**. The separate devnet toolchain and deny-all router preparation in Phases 89–90 are not live execution.
 
 **EXACT NEXT:** (1) evaluate paper journal crash-safe intent-before-submit outbox and reconciliation-before-retry with adversarial fault-injection tests, CLIMBX-only; (2) continue controlled toolchain provisioning and devnet-only scoped-grant prototype, with reviewed router allowlist; (3) keep all real trades and third-party routing disabled pending independent audit and owner approval.
+
+
+## Phase 91 — 2026-11-14 — verified Phase90 CI and devnet implementation blocker (CLIMBX only)
+
+**Phase90 CI all SUCCESS** on `1b4c37665bc3e29c49cd9303dace4ddc7f4ff599`: Browser Smoke `43462968639`, CLIMBX release safety `43462968563`, Validate `43462969221`.
+
+**Verified toolchain in assistant container:** `node` v22.16.0 available; `rustc`, `cargo`, `solana`, `solana-test-validator`, `anchor` not found by executable-path inspection. This is not a statement about user/CI machines; no RPC connectivity or Solana deployment verified.
+
+**Phase91 branch commit:** `8f08f484a8b792b3684bd96e76d2307780160531` creates `climbx/DEVNET_PROGRAM_IMPLEMENTATION_GATE.md`, documenting environment, owner-controlled grant/vault prerequisites, DEX route review dependency, required adversarial local-validator tests and independent audit. **Documentation only**, not a working Solana program. No DEX/Swap/Launchpad/game edits. Real-funds **NO-GO**.
+
+**Next Phase92:** (1) verify Phase91 CI on commit `8f08f484a8b792b3684bd96e76d2307780160531`; (2) establish a controlled Solana devnet build/validator environment with pinned tool versions (or document inability); (3) read-only review DEX router transaction schema; (4) implement and test owner grant/revoke/caps on devnet, deny all swaps until exact route constraints are verified; (5) independent review, signed settlement evidence, explicit owner release decision. Keep append-only progress record on main after every phase.
