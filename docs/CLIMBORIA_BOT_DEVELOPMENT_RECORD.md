@@ -353,3 +353,8 @@ V16 adds `authorization_gate_v16.py`, an offline fail-closed policy evaluator fo
 ## Phase 28 checkpoint — 2026-11-13 (first executable CLIMBX gate on GitHub)
 
 **Draft PR #282:** https://github.com/CryptoDilis/Climboria/pull/282 on branch `climbx/phase28-release-gate-ci`. Four text files added: `climbx/release_gate.py`, `climbx/test_release_gate.py`, `climbx/README.md`, and `.github/workflows/climbx-release-gate.yml`. This is a non-deploying, fail-closed evidence gate with five unit-test cases; CI is designed to assert NO_GO when evidence is absent. **GitHub Actions passing status has not yet been independently confirmed.** It does not contain the local V16/V27 paper engine, cryptographic Solana authority or devnet transaction tests. Do not merge on assumption of release readiness. Existing DEX execution remains disabled; live CLIMBX **NO-GO**.
+
+
+## Phase 29 checkpoint — 2026-11-13 (verified GitHub CI, real-chain acceptance criteria)
+
+Verified GitHub Actions for Phase 28 PR branch commit `249f0b73d1695e8ec4c9ab63002692cdaa5dfc92`: CLIMBX non-deploying safety workflow run **43434485090 completed/success**, and Validate Climboria run **43434485080 completed/success**. Draft PR https://github.com/CryptoDilis/Climboria/pull/282 now includes `climbx/PHASE29_VALIDATED_CI_AND_DEVNET_PLAN.md` documenting precise real Solana validator/devnet acceptance criteria. These successful checks cover only the repository release gate, **not** the locally developed 141-test paper suite; executable paper engine still has not been committed. **No real Solana authority or signed transaction proof; live release NO-GO.**
