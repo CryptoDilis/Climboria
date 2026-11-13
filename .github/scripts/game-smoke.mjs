@@ -302,6 +302,13 @@ try {
     coastRoute.outward.distance<260||coastRoute.returnTrip.distance<260)
     errors.push('Real cave-to-coast route was not traversable in both directions: '+JSON.stringify(coastRoute));
   console.log('Cave-to-shore two-way traversal:',JSON.stringify(coastRoute));
+  const caveGround=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveApproachGroundAudit?.()??null);
+  if(!caveGround?.ground||caveGround.rockInstances<30||caveGround.vertices!==1363||
+    caveGround.alphaComponents!==4||caveGround.edgeAlpha>.05||
+    caveGround.centerAlpha<.7||!caveGround.hasColorTexture||
+    !caveGround.hasBumpTexture||caveGround.textureRepeat!==7)
+    errors.push('Cave entrance terrain detail failed alpha edges, texture, or budget invariant: '+JSON.stringify(caveGround));
+  console.log('Cave entrance detailed ground audit:',JSON.stringify(caveGround));
   const sanctuaryPillars=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryPillarCollisionAudit?.()??null);
   if(!sanctuaryPillars?.ok||sanctuaryPillars.pillars?.length!==12||
     sanctuaryPillars.pillars.some(p=>!p.collider||!p.blocked)||sanctuaryPillars.walkwayBlocked?.length)
