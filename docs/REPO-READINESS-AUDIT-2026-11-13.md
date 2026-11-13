@@ -372,3 +372,13 @@ The 50-transaction sample is bounded evidence, not exhaustive route coverage. It
 1. Inspect terminal status and artifact for IDL History run `43336735508`; verify the official history report has a unique candidate-slot revision and record its slot range/hash. If it fails on public RPC limits or missing historical data, request only the owner-side encrypted `SOLANA_RPC_URL` configuration (never its value).
 2. Inspect Browser Smoke run `43336735421` terminal status and screenshots.
 3. Continue the 19-account CPI evidence audit and multi-hop/split route discovery. Keep all execution gates disabled.
+
+
+### Documentation commit / read-back verification — 2026-11-13
+
+- [x] Readiness audit update committed: `297933b1ff230f078881ba0888a5d275c45043e4`.
+- [x] Live DEX/Swap/Login audit sync committed: `b6f1518f19a21293c11feb235649fe60824f4b74`.
+- [x] Read-back confirms the live audit is present on main (blob `bd290ef67fd04d43483682bde2048a9b6e3c05c7`).
+- [x] Current main HEAD after these documentation commits: `b6f1518f19a21293c11feb235649fe60824f4b74`.
+- [!] These were documentation-only commits. They do not deploy Cloudflare, change Supabase settings, expose secrets, or enable swap execution.
+- [ ] Continue from the exact next task above; update this file again only after the in-progress IDL History and Browser Smoke runs reach terminal status or a new root cause is confirmed.
