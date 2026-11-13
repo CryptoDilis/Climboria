@@ -1,25 +1,48 @@
 (()=>{'use strict';
 const API='https://api.dexscreener.com';
 const SOL='So11111111111111111111111111111111111111112';
+const USDC='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+const HERO_MARKET_STALE_AFTER_MS=90_000;
+let heroMarketFetchedAt=0;
+let heroMarketRequest=0;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>{const v=Number(n);if(!Number.isFinite(v))return 'Unavailable';return v>=1e9?'$'+(v/1e9).toFixed(2)+'B':v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':'$'+v.toFixed(2)};
 const price=n=>{const v=Number(n);if(!Number.isFinite(v))return 'Unavailable';return '$'+(v<.0001?v.toExponential(2):v<1?v.toPrecision(4):v.toLocaleString('en-US',{maximumFractionDigits:4}))};
 async function get(path){const r=await fetch(API+path,{headers:{accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(9000)});if(!r.ok)throw new Error('DexScreener HTTP '+r.status);return r.json()}
 function setFlash(el,next){if(!el)return;const old=el.dataset.lastValue;if(old&&old!==next){el.classList.remove('price-flash-up','price-flash-down');void el.offsetWidth;el.classList.add(Number(next.replace(/[^0-9.+-]/g,''))>=Number(old.replace(/[^0-9.+-]/g,''))?'price-flash-up':'price-flash-down');}el.dataset.lastValue=next;el.textContent=next}
+function renderHeroUnavailable(el,detail='Retrying with next market refresh'){
+ heroMarketFetchedAt=0;
+ el.dataset.marketState='unavailable';
+ delete el.dataset.marketLeaderPool;
+ delete el.dataset.marketFetchedAt;
+ el.innerHTML='<div><small>MARKET LEADER · SOL / USDC</small><b>Live price temporarily unavailable</b></div><div class="hero-market-change muted">No cached or estimated price shown</div><span class="hero-market-source">'+esc(detail)+'</span>';
+}
+function isSolanaAddress(value){return typeof value==='string'&&/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value)}
+function hideStaleHeroMarket(){
+ const el=$('heroMarket');
+ if(el&&heroMarketFetchedAt&&Date.now()-heroMarketFetchedAt>HERO_MARKET_STALE_AFTER_MS)renderHeroUnavailable(el,'Refreshing verified SOL/USDC market data');
+}
 async function loadHero(){
  const el=$('heroMarket');if(!el)return;
+ const request=++heroMarketRequest;
  try{
   const data=await get('/latest/dex/tokens/'+SOL);
-  const pairs=(data.pairs||[]).filter(p=>p.chainId==='solana'&&p.baseToken?.address===SOL&&p.priceUsd);
+  const fetchedAt=Date.now();
+  const pairs=(data.pairs||[]).filter(p=>p?.chainId==='solana'&&p.baseToken?.address===SOL&&p.quoteToken?.address===USDC&&isSolanaAddress(p.pairAddress)&&Number.isFinite(Number(p.priceUsd))&&Number(p.priceUsd)>0&&Number(p.liquidity?.usd)>0);
   pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
-  const p=pairs[0];if(!p)throw new Error('No wrapped-SOL base pair returned');
+  const p=pairs[0];if(!p)throw new Error('No verified wrapped-SOL/USDC pool returned');
+  if(request!==heroMarketRequest)return;
   const change=Number(p.priceChange?.h24),changeText=Number.isFinite(change)?(change>0?'+':'')+change.toFixed(2)+'%':'24h change unavailable';
   const changeClass=Number.isFinite(change)?(change>=0?'positive':'negative'):'muted';
   const previous=Number(el.dataset.lastPrice),current=Number(p.priceUsd),flash=Number.isFinite(previous)&&Number.isFinite(current)&&current!==previous?(current>previous?'price-flash-up':'price-flash-down'):'';
+  heroMarketFetchedAt=fetchedAt;
+  el.dataset.marketState='fresh';
+  el.dataset.marketLeaderPool=p.pairAddress;
+  el.dataset.marketFetchedAt=String(fetchedAt);
   el.dataset.lastPrice=String(current);
-  el.innerHTML='<div><small>MARKET LEADER · SOL / '+esc(p.quoteToken?.symbol||'PAIR')+'</small><b id="heroSolPrice" class="'+flash+'">'+price(p.priceUsd)+'</b></div><div class="hero-market-change '+changeClass+'" id="heroSolChange">'+changeText+'</div><span class="hero-market-source">DexScreener · '+new Date().toLocaleTimeString()+'</span>';
- }catch(e){el.innerHTML='<div><small>MARKET LEADER · WRAPPED SOL</small><b>Live price temporarily unavailable</b></div><div class="hero-market-change muted">No cached or estimated price shown</div><span class="hero-market-source">Retrying with next market refresh</span>'}
+  el.innerHTML='<div><small>MARKET LEADER · SOL / USDC</small><b id="heroSolPrice" class="'+flash+'">'+price(p.priceUsd)+'</b></div><div class="hero-market-change '+changeClass+'" id="heroSolChange">'+changeText+'</div><span class="hero-market-source">DexScreener · fetched '+new Date(fetchedAt).toLocaleTimeString()+' · verified SOL/USDC pool</span>';
+ }catch(e){if(request===heroMarketRequest)renderHeroUnavailable(el)}
 }
 async function loadTrending(){
  const grid=$('premiumTrendingGrid');if(!grid)return;
@@ -96,5 +119,5 @@ function bind(){
  if(detailMint){const observer=new MutationObserver(()=>{const match=detailMint.textContent.match(/[1-9A-HJ-NP-Za-km-z]{32,50}/);if(match)verify.href='https://solscan.io/token/'+encodeURIComponent(match[0])});observer.observe(detailMint,{childList:true,characterData:true,subtree:true});}
  const copy=$('copyTokenMint');copy?.addEventListener('click',()=>{const original='Copy token mint';copy.textContent='Copied ✓';setTimeout(()=>{if(copy.textContent==='Copied ✓')copy.textContent=original},1600)});
 }
-bind();loadHero();loadTrending();setInterval(()=>{if(document.visibilityState==='visible'){loadHero();loadTrending()}},60000);
+bind();loadHero();loadTrending();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){hideStaleHeroMarket();loadHero();loadTrending()}});setInterval(()=>{if(document.visibilityState==='visible'){hideStaleHeroMarket();loadHero();loadTrending()}},60000);
 })();
