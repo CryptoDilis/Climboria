@@ -20,7 +20,13 @@ try {
     }})};`
   }));
   await authPage.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
-  await authPage.locator('[data-open-auth]:visible').first().click();
+  const desktopAuth = authPage.locator('.navl [data-open-auth]');
+  if (await desktopAuth.isVisible()) {
+    await desktopAuth.click();
+  } else {
+    await authPage.locator('#hamburger').click();
+    await authPage.locator('#mobileMenu [data-open-auth]').click();
+  }
   await authPage.locator("#authEmailForm").waitFor({ state: "visible" });
   for (const selector of ["#authSolana", "#authEthereum", "#authGoogle", "#authX", "#authEmail", "#authPassword", "#authSignIn", "#authSignUp", "#authSignOut"]) {
     if (selector === "#authSignOut") continue;
