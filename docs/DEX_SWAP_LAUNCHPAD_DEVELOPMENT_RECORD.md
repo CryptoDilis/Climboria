@@ -227,3 +227,12 @@ Changed: rebased focused branch `fix/dex-discard-quote-on-close-after-mobile-fix
 Verified: new branch commits created; **exact-head CI and real-origin browser NOT YET VERIFIED**. Mainnet financial execution remains fail-closed.
 Unresolved: PR #311 real mobile production success and updated preview-close production acceptance require exact-head evidence, plus physical device and Launchpad Devnet lifecycle.
 NEXT: run exact-head unit/Browser CI for the focused PR and inspect post-Pages live-browser logs. Keep any merged mobile CSS fix intact; do not bypass visibility assertions.
+
+
+### 2026-11-14 — Reconciled prior mobile DEX diagnostic evidence (supersedes old docs PR #309)
+Scope: DEX/Swap evidence only.
+Before: PR #309 records prior successful read-only mobile diagnostic acceptance but is based on older main and conflicts with newer DEX handoffs.
+Changed: reconcile the relevant evidence here so the old docs-only PR can close without discarding results.
+Verified: [PR #307](https://github.com/CryptoDilis/Climboria/pull/307) merged as `ff737a32f56e1174f15c327131d9aa52d41e2238`; [Pages 43472031213](https://github.com/CryptoDilis/Climboria/actions/runs/43472031213) **SUCCESS**, [Validate 43472032568](https://github.com/CryptoDilis/Climboria/actions/runs/43472032568) **SUCCESS** and [production browser 43472032305](https://github.com/CryptoDilis/Climboria/actions/runs/43472032305) **SUCCESS**. Live-browser job `132046186362` logs: Swap desktop/mobile and diagnostic DEX desktop/mobile Jupiter quote PASS; DEX live DexScreener market response PASS; no wallet-signable transaction. **DEX quote panel was unhidden by the test at that time; user-visible DEX quote access is proven only after subsequent PR #310/#311 release checks pass.**
+Unresolved: prior diagnostic acceptance does not establish actual mobile button visibility; PR #310's later real browser run specifically failed on that point. Security gates remain closed.
+NEXT: inspect exact production-browser acceptance for latest user-visible DEX control and keep the stale-quote invalidation regression.
