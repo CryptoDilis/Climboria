@@ -6,7 +6,7 @@
 **Working branch:** `game/development-record-2026-11-14`  
 **Status:** Baseline audit recorded; current-head gameplay and physical-device readiness **not yet verified**.  
 **Default branch observed:** `main` (reviewed at recent indexed commit `0749b47190b3d8f032856462aa35328c4e820a05`; confirm exact remote HEAD before integrating).  
-**Tracking PR:** none yet; record commit SHA: see commit history for this file until a subsequent record update adds it.
+**Tracking PR:** none yet; initial record commit: `3287bb92159e6f9ad827f1e1f631e919f343c7b5`.
 
 ## Strict scope and resumption rules
 
@@ -50,6 +50,12 @@
 | Multiplayer/chat, marketplace and rewards | Planned/demo; not certified live |
 | 11 Mountains | Out of scope, no restoration |
 
+## Follow-up inspection on 2026-11-14
+
+- Reviewed `.github/scripts/game-smoke.mjs` (main blob `be64f179cd4aec77f460c9c8ae131f3bb5f3c2b4`): browser smoke uses Chromium/SwiftShader and asserts 3D render readiness, original adventurer GLB identity, jump/landing, terrain/water/landmarks and additional gameplay state. Source inspection only; **not run here**.
+- Attempted fetch of `.github/workflows/game-browser-smoke.yml` on main: **404 NOT_FOUND**. Its existence/name must not be assumed from PR #284. Confirm whether standalone gameplay workflow exists under another path or gameplay still runs from `.github/workflows/browser-smoke.yml` before dispatch or edits.
+- No new Actions run was launched; exact-head Game CI still pending. Initial record committed at `3287bb92159e6f9ad827f1e1f631e919f343c7b5`.
+
 ## Remaining bugs, risks, blockers
 
 - No current-head end-to-end gameplay execution performed for this record task, so remaining runtime bugs are **unknown**, not zero.
@@ -60,7 +66,7 @@
 
 ## Exact next steps (in order)
 
-1. **P0: Validate current Game baseline.** Read current dedicated `.github/workflows/game-browser-smoke.yml` (if present), `.github/scripts/game-smoke.mjs`, complete `game/play.html`, and recent game-specific PR status. Verify the latest exact-head gameplay Actions workflow and inspect failed job logs if any. Document run URL, SHA and individual desktop/mobile results here.
+1. **P0: Validate current Game baseline.** Determine actual dedicated Game workflow path (the assumed `game-browser-smoke.yml` returned 404), review `.github/scripts/game-smoke.mjs`, complete `game/play.html`, and recent game-specific PR status. Verify the latest exact-head gameplay Actions workflow and inspect failed job logs if any. Document run URL, SHA and individual desktop/mobile results here.
 2. **P0: Run targeted game smoke.** Execute the existing desktop/mobile Playwright flows against the game branch/current main (or dispatch dedicated workflow safely), validating Game hub → character entry → Jarrell spawn → movement/camera/climb/collision/swim/fishing/treasure/respawn/settings → menu; confirm screenshot artifacts. Record what the script actually asserts, not desired coverage.
 3. **P1: Fix first reproducible Game-only failure.** Change only necessary `game/**` or game-specific test files, preserve game mechanics/art and original music, add regression coverage, verify green exact-head CI.
 4. **P1: Mobile usability/performance.** Test landscape touch, HUD and safe areas, sustained WebGL performance and memory behavior; distinguish emulated browser from actual Redmi 14 5G testing.
@@ -71,4 +77,5 @@
 
 | Date (PHT) | Branch / PR | Commit | Affected files | Verification | Result / Next |
 | --- | --- | --- | --- | --- | --- |
-| 2026-11-14 | `game/development-record-2026-11-14` / no PR | Initial record creation; lookup GitHub commit history | `docs/GAME_DEVELOPMENT_RECORD.md` | GitHub source/PR/history audit; no new CI | Baseline recorded; next: inspect dedicated gameplay workflow and current-head CI |
+| 2026-11-14 | `game/development-record-2026-11-14` / no PR | `3287bb92159e6f9ad827f1e1f631e919f343c7b5` | `docs/GAME_DEVELOPMENT_RECORD.md` | GitHub source/PR/history audit; no new CI | Baseline recorded | 
+| 2026-11-14 | `game/development-record-2026-11-14` / no PR | This record update (see file history) | `docs/GAME_DEVELOPMENT_RECORD.md` | Game smoke source reviewed; dedicated workflow guessed path returned 404; CI not run | Determine correct workflow path and exact-head CI, then targeted game fixes |
