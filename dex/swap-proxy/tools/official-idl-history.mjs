@@ -26,8 +26,8 @@ function idlVersion(content) {
 export function buildOfficialIdlHistoryRevisions(snapshots) {
   if (!Array.isArray(snapshots)) throw new TypeError("IDL history snapshots must be an array");
   const ordered = snapshots.map((snapshot, index) => ({ snapshot, index })).sort((a, b) => {
-    const left = BigInt(a.snapshot.slot);
-    const right = BigInt(b.snapshot.slot);
+    const left = BigInt(toSlot(a.snapshot.slot, "revision"));
+    const right = BigInt(toSlot(b.snapshot.slot, "revision"));
     return left < right ? -1 : left > right ? 1 : a.index - b.index;
   });
   const versions = [];
