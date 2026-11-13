@@ -19,26 +19,45 @@ permissions:
 
 concurrency:
   group: dex-swap-production-quote-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   syntax:
     name: Validate read-only browser smoke
+    outputs:
+      relevant: ${{ steps.scope.outputs.relevant }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Validate smoke syntax
         run: node --check .github/scripts/dex-swap-production-quote-smoke.mjs
+      - name: Skip expensive production browser tests for Game/ClimbX-only pushes
+        id: scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            if git diff --name-only HEAD^ HEAD | grep -Eq '^(dex/|swap/|swap-config\.js$|\.github/scripts/dex-swap-production-quote-smoke\.mjs$|\.github/workflows/dex-swap-production-quote\.yml$)'; then
+              echo "relevant=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "relevant=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+          fi
 
   production-browser:
     name: Verify deployed DEX and Swap Jupiter quote UI
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && needs.syntax.outputs.relevant == 'true')
     needs: syntax
     runs-on: ubuntu-latest
     timeout-minutes: 12

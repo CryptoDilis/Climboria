@@ -2,7 +2,7 @@
 
 **Last reviewed:** 2026-11-14 (Philippine time)
 **Repository:** `CryptoDilis/Climboria`
-**Initial baseline:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`; **latest merged DEX/Swap change:** `e3157105b6b628352da6ae878d6577a0a799cb13` (PR #303; refresh current `main` on every resume)
+**Initial baseline:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`; **latest merged DEX/Swap change:** `b6884cb5d498dd3a4e1894270e7db1989565891d` (PR #304; refresh current `main` on every resume)
 **Owner-directed scope:** **DEX, Swap, Launchpad ONLY.** The Game is owned by a separate chat/developer. This file supersedes older cross-project priority instructions **for this workstream only**.
 **State:** active development; **not** evidence that signed mainnet swaps or token launches are live.
 
@@ -149,3 +149,20 @@ Changed: branch `test/production-dex-swap-browser-quote-smoke`; added `.github/s
 Verified: GitHub commits `9248542` and `114e8f4` created; exact-head GitHub Actions and real production-browser check **NOT YET VERIFIED**.
 Unresolved: real API/market provider availability, current Pages timing, UX/visibility of the DEX quote panel, route/trade security gates, and Launchpad Devnet readiness.
 NEXT: inspect PR exact-head syntax/workflow and confirm new `workflow_run` starts after a successful Pages deployment. If live browser assertions fail, inspect logs and fix the actual provider/UI root cause; never substitute fixtures or mark execution live.
+
+
+### 2026-11-14 — PR #304 merged and Pages deployed; production browser trigger not yet observed
+Scope: **DEX/Swap read-only browser acceptance only**.
+Before: no isolated production-origin quote test; existing shared live-site workflow cannot be modified under the Game ownership boundary.
+Changed: [PR #304](https://github.com/CryptoDilis/Climboria/pull/304) merged as `b6884cb5d498dd3a4e1894270e7db1989565891d`. Includes independent Playwright browser acceptance for two user-visible Swap layouts and hidden DEX quote path (diagnostic only), genuine Jupiter response and DexScreener response assertions; no financial execution.
+Verified: PR head `e61f7d4e05c2126fab5895395d6a87cae01341db` [syntax job 43469546783](https://github.com/CryptoDilis/Climboria/actions/runs/43469546783) **SUCCESS** (live job intentionally **SKIPPED on PR**); [Validate 43469546689](https://github.com/CryptoDilis/Climboria/actions/runs/43469546689) **SUCCESS**. Post-merge [Validate 43469715040](https://github.com/CryptoDilis/Climboria/actions/runs/43469715040) **SUCCESS** and [Pages 43469714846](https://github.com/CryptoDilis/Climboria/actions/runs/43469714846) **SUCCESS**.
+Unresolved: no real `workflow_run` of this **new** production browser workflow had been observed at this checkpoint. Passing syntax and Pages does NOT establish the external provider quote acceptance. Launchpad preview-only; all Swap execution kill switches unchanged.
+NEXT: verify new `workflow_run` starts on a related successful Pages deploy and inspect real browser job logs before claiming provider acceptance.
+
+### 2026-11-14 — Reduce zero-budget GitHub Actions consumption for real-origin smoke (pending CI)
+Scope: **DEX/Swap test workflow only**.
+Before: new workflow would install Playwright/Chromium after **every** successful Pages deployment, including numerous unrelated Game/CLIMBX documentation pushes; unnecessary hosted-runner minutes on a zero-budget project.
+Changed: branch `ci/scope-production-quote-browser-to-dex-swap`, `.github/workflows/dex-swap-production-quote.yml`: checkout two commits, inspect the exact deployed commit diff; only run expensive live quote browser job after relevant `dex/`, `swap/`, `swap-config.js` or the workflow/script itself changes (or explicit manual dispatch). Concurrent stale runs cancel. PRs still validate syntax without sending production quotes.
+Verified: commit `77411c7` written; exact-head GitHub Actions **NOT YET VERIFIED**.
+Unresolved: a merge commit or deploy event can still have provider/asset timing differences; deployed-origin real browser evidence pending. No actual wallet transaction was triggered.
+NEXT: validate this workflow on a focused PR, merge if green, then read the next related Pages-triggered live browser smoke results; fix any genuine production error rather than bypassing assertions.
