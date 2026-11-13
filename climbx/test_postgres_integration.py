@@ -1,0 +1,213 @@
+"""Real PostgreSQL integration checks for CLIMBX schema migrations.
+Run only against an isolated throwaway DB; never production.
+Requires CLIMBX_TEST_DATABASE_URL and psycopg (pip install 'psycopg[binary]').
+"""
+import os
+import pathlib
+import uuid
+import unittest
+
+try:
+    import psycopg
+except ImportError:
+    psycopg = None
+
+ROOT=pathlib.Path(__file__).parent
+URL=os.environ.get("CLIMBX_TEST_DATABASE_URL")
+
+@unittest.skipUnless(URL and psycopg, "requires isolated PostgreSQL test DB")
+class PostgresMigrationIntegration(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.db=psycopg.connect(URL,autocommit=True)
+        # Supabase normally supplies these roles; isolated PostgreSQL does not.
+        # Non-login roles exist only inside the throwaway CI database.
+        for role in ("anon", "authenticated"):
+            if not cls.db.execute("SELECT 1 FROM pg_roles WHERE rolname=%s", (role,)).fetchone():
+                cls.db.execute("CREATE ROLE " + role + " NOLOGIN")
+        cls.db.execute("CREATE SCHEMA IF NOT EXISTS auth")
+        cls.db.execute("CREATE TABLE IF NOT EXISTS auth.users (id uuid PRIMARY KEY)")
+        cls.db.execute("CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT null::uuid $$")
+        for migration in ("001_learning_memory.sql","003_wallet_challenges.sql","004_unique_wallet_owner.sql","005_wallet_api_rate_limits.sql"):
+            cls.db.execute((ROOT/"supabase"/migration).read_text())
+    @classmethod
+    def tearDownClass(cls):
+        cls.db.close()
+    def setUp(self):
+        self.user1,self.user2=uuid.uuid4(),uuid.uuid4()
+        self.db.execute("INSERT INTO auth.users(id) VALUES (%s),(%s)",(self.user1,self.user2))
+        self.wallet="Wallet"+uuid.uuid4().hex+"A"
+    def tearDown(self):
+        self.db.execute("DELETE FROM auth.users WHERE id IN (%s,%s)",(self.user1,self.user2))
+    def test_one_wallet_one_owner(self):
+        self.db.execute("INSERT INTO climbx.wallet_bindings(user_id,wallet_address,verified_at) VALUES(%s,%s,now())",(self.user1,self.wallet))
+        with self.assertRaises(psycopg.errors.UniqueViolation):
+            self.db.execute("INSERT INTO climbx.wallet_bindings(user_id,wallet_address,verified_at) VALUES(%s,%s,now())",(self.user2,self.wallet))
+    def test_challenge_atomic_single_consume(self):
+        nonce=uuid.uuid4().hex
+        self.db.execute("""INSERT INTO climbx.wallet_challenges
+          (nonce,user_id,wallet_address,domain,chain,canonical_message,issued_at,expires_at)
+          VALUES (%s,%s,%s,'climboria.fun','solana:devnet','test-message',now(),now()+interval '4 minutes')""",
+          (nonce,self.user1,self.wallet))
+        sql="""UPDATE climbx.wallet_challenges SET consumed_at=now()
+          WHERE nonce=%s AND user_id=%s AND wallet_address=%s AND consumed_at IS NULL
+          AND issued_at<=now() AND expires_at>now() RETURNING nonce"""
+        assert self.db.execute(sql,(nonce,self.user1,self.wallet)).fetchone()
+        self.assertIsNone(self.db.execute(sql,(nonce,self.user1,self.wallet)).fetchone())
+    def test_wrong_user_cannot_consume(self):
+        nonce=uuid.uuid4().hex
+        self.db.execute("""INSERT INTO climbx.wallet_challenges
+          (nonce,user_id,wallet_address,domain,chain,canonical_message,issued_at,expires_at)
+          VALUES (%s,%s,%s,'climboria.fun','solana:devnet','test-message',now(),now()+interval '4 minutes')""",
+          (nonce,self.user1,self.wallet))
+        result=self.db.execute("""UPDATE climbx.wallet_challenges SET consumed_at=now()
+          WHERE nonce=%s AND user_id=%s AND consumed_at IS NULL RETURNING nonce""",(nonce,self.user2))
+        self.assertIsNone(result.fetchone())
+    def test_expired_challenge_not_consumable(self):
+        nonce=uuid.uuid4().hex
+        self.db.execute("""INSERT INTO climbx.wallet_challenges
+          (nonce,user_id,wallet_address,domain,chain,canonical_message,issued_at,expires_at)
+          VALUES (%s,%s,%s,'climboria.fun','solana:devnet','test-message',
+          now()-interval '6 minutes',now()-interval '2 minutes')""",
+          (nonce,self.user1,self.wallet))
+        self.assertIsNone(self.db.execute("""UPDATE climbx.wallet_challenges SET consumed_at=now()
+          WHERE nonce=%s AND consumed_at IS NULL AND expires_at>now() RETURNING nonce""",(nonce,)).fetchone())
+
+    def test_atomic_rollback_keeps_nonce_unconsumed(self):
+        """If binding fails, nonce consumption must roll back too."""
+        nonce=uuid.uuid4().hex
+        self.db.execute("""INSERT INTO climbx.wallet_challenges
+          (nonce,user_id,wallet_address,domain,chain,canonical_message,issued_at,expires_at)
+          VALUES (%s,%s,%s,'climboria.fun','solana:devnet','test-message',now(),now()+interval '4 minutes')""",
+          (nonce,self.user1,self.wallet))
+        self.db.execute("INSERT INTO climbx.wallet_bindings(user_id,wallet_address,verified_at) VALUES(%s,%s,now())",(self.user2,self.wallet))
+        with psycopg.connect(URL) as conn:
+            with self.assertRaises(psycopg.errors.UniqueViolation):
+                with conn.transaction():
+                    conn.execute("UPDATE climbx.wallet_challenges SET consumed_at=now() WHERE nonce=%s",(nonce,))
+                    conn.execute("INSERT INTO climbx.wallet_bindings(user_id,wallet_address,verified_at) VALUES(%s,%s,now())",(self.user1,self.wallet))
+        self.assertIsNone(self.db.execute("SELECT consumed_at FROM climbx.wallet_challenges WHERE nonce=%s",(nonce,)).fetchone()[0])
+    def test_private_challenge_table_has_rls(self):
+        enabled=self.db.execute("""SELECT relrowsecurity FROM pg_class
+          WHERE oid='climbx.wallet_challenges'::regclass""").fetchone()[0]
+        self.assertTrue(enabled)
+    def test_anon_cannot_read_challenges(self):
+        grant=self.db.execute("""SELECT has_table_privilege('anon','climbx.wallet_challenges','SELECT')""").fetchone()[0]
+        self.assertFalse(grant)
+
+
+    def test_rate_limit_table_private_rls(self):
+        enabled=self.db.execute("""SELECT relrowsecurity FROM pg_class
+          WHERE oid='climbx.wallet_api_rate_limits'::regclass""").fetchone()[0]
+        self.assertTrue(enabled)
+        self.assertFalse(self.db.execute("""SELECT has_table_privilege(
+          'anon','climbx.wallet_api_rate_limits','SELECT')""").fetchone()[0])
+        self.assertFalse(self.db.execute("""SELECT has_table_privilege(
+          'authenticated','climbx.wallet_api_rate_limits','INSERT')""").fetchone()[0])
+
+    def test_rate_limit_atomic_upsert_threshold(self):
+        import hashlib
+        key=hashlib.sha256(uuid.uuid4().bytes).hexdigest()
+        sql="""INSERT INTO climbx.wallet_api_rate_limits(key_hash,window_start,request_count)
+          VALUES (%s,date_trunc('minute',now()),1)
+          ON CONFLICT (key_hash) DO UPDATE SET
+          request_count=CASE WHEN climbx.wallet_api_rate_limits.window_start=
+            date_trunc('minute',now()) THEN climbx.wallet_api_rate_limits.request_count+1 ELSE 1 END,
+          window_start=date_trunc('minute',now()),updated_at=now()
+          RETURNING request_count"""
+        self.assertEqual([self.db.execute(sql,(key,)).fetchone()[0] for _ in range(4)],[1,2,3,4])
+
+    def test_rate_limit_window_reset(self):
+        import hashlib
+        key=hashlib.sha256(uuid.uuid4().bytes).hexdigest()
+        self.db.execute("""INSERT INTO climbx.wallet_api_rate_limits
+          (key_hash,window_start,request_count) VALUES (%s,now()-interval '2 minutes',9)""",(key,))
+        count=self.db.execute("""INSERT INTO climbx.wallet_api_rate_limits
+          (key_hash,window_start,request_count) VALUES (%s,date_trunc('minute',now()),1)
+          ON CONFLICT (key_hash) DO UPDATE SET
+          request_count=CASE WHEN climbx.wallet_api_rate_limits.window_start=
+            date_trunc('minute',now()) THEN climbx.wallet_api_rate_limits.request_count+1 ELSE 1 END,
+          window_start=date_trunc('minute',now()),updated_at=now()
+          RETURNING request_count""",(key,)).fetchone()[0]
+        self.assertEqual(count,1)
+
+    def test_rate_limit_rejects_invalid_hash(self):
+        with self.assertRaises(psycopg.errors.CheckViolation):
+            self.db.execute("""INSERT INTO climbx.wallet_api_rate_limits
+              (key_hash,window_start,request_count) VALUES ('bad',now(),1)""")
+
+    def test_statement_timeout_rolls_back_transactional_nonce_write(self):
+        """A DB-enforced statement timeout must abort the enclosing transaction."""
+        nonce=uuid.uuid4().hex
+        self.db.execute("""INSERT INTO climbx.wallet_challenges
+          (nonce,user_id,wallet_address,domain,chain,canonical_message,issued_at,expires_at)
+          VALUES (%s,%s,%s,'climboria.fun','solana:devnet','test-message',now(),now()+interval '4 minutes')""",
+          (nonce,self.user1,self.wallet))
+        with psycopg.connect(URL) as conn:
+            with self.assertRaises(psycopg.errors.QueryCanceled):
+                with conn.transaction():
+                    conn.execute("SET LOCAL statement_timeout = '100ms'")
+                    conn.execute("UPDATE climbx.wallet_challenges SET consumed_at=now() WHERE nonce=%s",(nonce,))
+                    conn.execute("SELECT pg_sleep(0.5)")
+        self.assertIsNone(self.db.execute(
+            "SELECT consumed_at FROM climbx.wallet_challenges WHERE nonce=%s",(nonce,)).fetchone()[0])
+
+    def test_lock_timeout_aborts_blocked_binding_update(self):
+        """A DB lock timeout must not commit a blocked binding update."""
+        self.db.execute("INSERT INTO climbx.wallet_bindings(user_id,wallet_address,verified_at) VALUES(%s,%s,now())",
+                        (self.user1,self.wallet))
+        with psycopg.connect(URL) as locker, psycopg.connect(URL) as waiter:
+            with locker.transaction():
+                locker.execute("SELECT id FROM climbx.wallet_bindings WHERE wallet_address=%s FOR UPDATE",(self.wallet,))
+                with self.assertRaises(psycopg.errors.LockNotAvailable):
+                    with waiter.transaction():
+                        waiter.execute("SET LOCAL lock_timeout = '100ms'")
+                        waiter.execute("UPDATE climbx.wallet_bindings SET user_id=%s WHERE wallet_address=%s",
+                                       (self.user2,self.wallet))
+        self.assertEqual(self.db.execute("SELECT user_id FROM climbx.wallet_bindings WHERE wallet_address=%s",
+                                         (self.wallet,)).fetchone()[0],self.user1)
+
+    def test_reconcile_confirmed_consumed_challenge_and_owner(self):
+        """Real DB: matching consumed nonce and wallet owner confirm binding."""
+        nonce=uuid.uuid4().hex
+        self.db.execute("""INSERT INTO climbx.wallet_challenges
+          (nonce,user_id,wallet_address,domain,chain,canonical_message,issued_at,expires_at,consumed_at)
+          VALUES (%s,%s,%s,'climboria.fun','solana:devnet','test-message',now()-interval '1 minute',now()+interval '4 minutes',now())""",
+          (nonce,self.user1,self.wallet))
+        self.db.execute("INSERT INTO climbx.wallet_bindings(user_id,wallet_address,verified_at) VALUES(%s,%s,now())",
+                        (self.user1,self.wallet))
+        with psycopg.connect(URL) as conn:
+            with conn.transaction():
+                conn.execute("SET TRANSACTION READ ONLY")
+                challenge=conn.execute("SELECT user_id,wallet_address,consumed_at FROM climbx.wallet_challenges WHERE nonce=%s",(nonce,)).fetchone()
+                binding=conn.execute("SELECT user_id FROM climbx.wallet_bindings WHERE wallet_address=%s",(self.wallet,)).fetchone()
+        self.assertEqual(challenge[0],self.user1)
+        self.assertEqual(challenge[1],self.wallet)
+        self.assertIsNotNone(challenge[2])
+        self.assertEqual(binding[0],self.user1)
+
+    def test_reconcile_missing_binding_is_not_confirmed(self):
+        """Real DB: consumed nonce alone cannot prove wallet binding."""
+        nonce=uuid.uuid4().hex
+        self.db.execute("""INSERT INTO climbx.wallet_challenges
+          (nonce,user_id,wallet_address,domain,chain,canonical_message,issued_at,expires_at,consumed_at)
+          VALUES (%s,%s,%s,'climboria.fun','solana:devnet','test-message',now()-interval '1 minute',now()+interval '4 minutes',now())""",
+          (nonce,self.user1,self.wallet))
+        challenge=self.db.execute("SELECT consumed_at FROM climbx.wallet_challenges WHERE nonce=%s",(nonce,)).fetchone()
+        binding=self.db.execute("SELECT user_id FROM climbx.wallet_bindings WHERE wallet_address=%s",(self.wallet,)).fetchone()
+        self.assertIsNotNone(challenge[0])
+        self.assertIsNone(binding)
+
+    def test_reconcile_foreign_wallet_owner_not_confirmed(self):
+        """Real DB: ownership mismatch must never count as successful binding."""
+        nonce=uuid.uuid4().hex
+        self.db.execute("""INSERT INTO climbx.wallet_challenges
+          (nonce,user_id,wallet_address,domain,chain,canonical_message,issued_at,expires_at,consumed_at)
+          VALUES (%s,%s,%s,'climboria.fun','solana:devnet','test-message',now()-interval '1 minute',now()+interval '4 minutes',now())""",
+          (nonce,self.user1,self.wallet))
+        self.db.execute("INSERT INTO climbx.wallet_bindings(user_id,wallet_address,verified_at) VALUES(%s,%s,now())",
+                        (self.user2,self.wallet))
+        owner=self.db.execute("SELECT user_id FROM climbx.wallet_bindings WHERE wallet_address=%s",(self.wallet,)).fetchone()[0]
+        self.assertNotEqual(owner,self.user1)
+
+if __name__=="__main__":unittest.main()

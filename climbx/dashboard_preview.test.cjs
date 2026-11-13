@@ -1,0 +1,12 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const page=fs.readFileSync(path.join(__dirname,'../dex/climbx/index.html'),'utf8');
+const dex=fs.readFileSync(path.join(__dirname,'../dex/index.html'),'utf8');
+test('preview explicitly states not live',()=>{assert.match(page,/DEVELOPMENT PREVIEW · NOT LIVE/);assert.match(page,/does not connect to a wallet, hold funds, place orders/);});
+test('wallet and bot controls are physically disabled',()=>{for(const name of ['Connect wallet','Start bot','Approve strategy'])assert.ok(page.includes('disabled aria-disabled="true">'+name));});
+test('preview contains no transaction execution scripts',()=>{assert.doesNotMatch(page,/<script\b/i);assert.doesNotMatch(page,/<form\b/i);assert.doesNotMatch(page,/onclick\s*=/i);});
+test('preview has all five empty slots',()=>{for(let i=1;i<=5;i++)assert.ok(page.includes('Slot '+i+' ·'));});
+test('preview discloses risk and network costs',()=>{assert.match(page,/network costs still apply/i);assert.match(page,/No profits are guaranteed/);});
+test('DEX card links to disabled dashboard',()=>{assert.match(dex,/id="climbx-preview"/);assert.match(dex,/href="\/dex\/climbx\/"/);assert.match(dex,/NOT LIVE/);});

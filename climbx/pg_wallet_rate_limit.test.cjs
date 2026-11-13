@@ -1,0 +1,21 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const {createPgWalletRateLimiter}=require('./pg_wallet_rate_limit.cjs');
+const token='a'.repeat(40),path='/api/climbx/wallet/challenge';
+function setup(count=1){const calls=[];const pool={query:async(sql,params)=>{calls.push({sql,params});return {rows:[{request_count:count}]};}};return {calls,pool,limit:createPgWalletRateLimiter({pool,maxRequests:3,windowSeconds:60,now:()=>new Date(123456)})};}
+test('allows first request',async()=>assert.equal(await setup(1).limit({token,path}),true));
+test('allows at threshold',async()=>assert.equal(await setup(3).limit({token,path}),true));
+test('blocks above threshold',async()=>assert.equal(await setup(4).limit({token,path}),false));
+test('hashes token and never stores bearer',async()=>{const f=setup();await f.limit({token,path});assert.match(f.calls[0].params[0],/^[0-9a-f]{64}$/);assert.ok(!JSON.stringify(f.calls).includes(token));});
+test('uses atomic upsert',async()=>{const f=setup();await f.limit({token,path});assert.match(f.calls[0].sql,/ON CONFLICT/);assert.match(f.calls[0].sql,/RETURNING request_count/);});
+test('uses deterministic UTC bucket',async()=>{const f=setup();await f.limit({token,path});assert.equal(f.calls[0].params[1].getTime(),120000);});
+test('route-scoped hash differs',async()=>{const f=setup();await f.limit({token,path});await f.limit({token,path:'/api/climbx/wallet/bind'});assert.notEqual(f.calls[0].params[0],f.calls[1].params[0]);});
+test('token-scoped hash differs',async()=>{const f=setup();await f.limit({token,path});await f.limit({token:'b'.repeat(40),path});assert.notEqual(f.calls[0].params[0],f.calls[1].params[0]);});
+test('rejects short token without DB',async()=>{const f=setup();assert.equal(await f.limit({token:'bad',path}),false);assert.equal(f.calls.length,0);});
+test('rejects unknown route without DB',async()=>{const f=setup();assert.equal(await f.limit({token,path:'/admin'}),false);assert.equal(f.calls.length,0);});
+test('fails closed on missing row',async()=>{const f=setup();f.pool.query=async()=>({rows:[]});assert.equal(await f.limit({token,path}),false);});
+test('database outage propagates to HTTP 503 handler',async()=>{const f=setup();f.pool.query=async()=>{throw Error('offline');};await assert.rejects(()=>f.limit({token,path}),/offline/);});
+test('rejects invalid maxRequests',()=>assert.throws(()=>createPgWalletRateLimiter({pool:setup().pool,maxRequests:0})));
+test('rejects invalid window',()=>assert.throws(()=>createPgWalletRateLimiter({pool:setup().pool,windowSeconds:0})));
+test('rejects missing pool',()=>assert.throws(()=>createPgWalletRateLimiter({})));
+test('rejects invalid clock',async()=>{const f=setup();const l=createPgWalletRateLimiter({pool:f.pool,now:()=>new Date(NaN)});assert.equal(await l({token,path}),false);});

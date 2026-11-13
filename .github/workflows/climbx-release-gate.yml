@@ -1,0 +1,154 @@
+name: CLIMBX release safety (non-deploying)
+on:
+  push:
+    paths:
+      - 'climbx/**'
+      - 'dex/climbx/**'
+      - 'dex/index.html'
+      - '.github/workflows/climbx-release-gate.yml'
+  pull_request:
+    paths:
+      - 'climbx/**'
+      - '.github/workflows/climbx-release-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: climbx_test
+          POSTGRES_PASSWORD: climbx_test_only
+          POSTGRES_DB: climbx_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U climbx_test -d climbx_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Unit tests
+        run: |
+          python - <<'PY'
+          import sys
+          import unittest
+          sys.path.insert(0, "climbx")
+          suite = unittest.defaultTestLoader.discover("climbx", pattern="test_*.py")
+          count = suite.countTestCases()
+          if count < 121:
+              raise SystemExit(f"Test collection unexpectedly shrank: {count} < 121")
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          if not result.wasSuccessful():
+              raise SystemExit(1)
+          print(f"Verified {count} CLIMBX repository tests.")
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Real PostgreSQL migration and nonce tests (isolated CI database)
+        env:
+          CLIMBX_TEST_DATABASE_URL: postgresql://climbx_test:climbx_test_only@localhost:5432/climbx_test
+        run: |
+          python -m pip install 'psycopg[binary]>=3.2,<4'
+          python -m unittest climbx.test_postgres_integration -v
+      - name: Solana Ed25519 signature tests
+        run: node --test climbx/solana_signature.test.cjs climbx/verify_challenge.test.cjs climbx/bind_wallet_pg.test.cjs climbx/canonical_challenge.test.cjs climbx/issue_challenge_pg.test.cjs climbx/supabase_auth.test.cjs climbx/authenticated_wallet_service.test.cjs climbx/wallet_http.test.cjs climbx/pg_wallet_rate_limit.test.cjs climbx/wallet_api_factory.test.cjs climbx/deadline.test.cjs climbx/reconcile_wallet_binding_pg.test.cjs climbx/dashboard_preview.test.cjs climbx/authorization_policy_simulation.test.cjs climbx/devnet_toolchain_check.test.cjs climbx/devnet_route_preflight.test.cjs climbx/devnet_grant_state_simulation.test.cjs climbx/execution_authorization_boundary.test.cjs climbx/audit_execution_boundary.test.cjs climbx/probe_solana_toolchain.test.cjs climbx/local_validator_evidence_gate.test.cjs climbx/local_validator_rpc_probe.test.cjs climbx/collect_local_readiness.test.cjs climbx/check_anchor_scaffold.test.cjs climbx/verify_anchor_cargo_build.test.cjs
+      - name: Verify exact fail-closed release decision
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          import sys
+
+          result = subprocess.run(
+              [sys.executable, "climbx/release_gate.py",
+               "--evidence", "climbx/release_evidence.json"],
+              text=True, capture_output=True, check=False,
+          )
+          if result.returncode != 1:
+              raise SystemExit(f"Expected NO_GO exit 1; got {result.returncode}: {result.stderr}")
+          try:
+              decision = json.loads(result.stdout)
+          except json.JSONDecodeError as exc:
+              raise SystemExit(f"Release gate did not return JSON: {exc}")
+          if decision.get("decision") != "NO_GO" or not decision.get("missing"):
+              raise SystemExit(f"Expected explicit NO_GO with missing evidence; got {decision}")
+          print("Verified NO_GO and missing evidence; no deployment performed.")
+          PY
+
+  rust-compile-probe:
+    name: Rust grant/revoke compilation (non-deploying)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: CLIMBX build prerequisite regression tests (non-deploying)
+        run: node --test climbx/check_reproducible_build.test.cjs
+      - name: CLIMBX Anchor scaffold safety boundary tests (non-deploying)
+        run: node --test climbx/check_anchor_safety_boundary.test.cjs
+      - name: Install pinned CLIMBX Rust toolchain
+        run: rustup toolchain install 1.99.1 --profile minimal
+      - name: Verify pinned CLIMBX Rust toolchain
+        run: |
+          rustc +1.99.1 --version
+          cargo +1.99.1 --version
+      - name: Test CLIMBX lockfile integrity gate (non-deploying)
+        run: python3 -m unittest discover -s climbx -p test_check_cargo_lock.py -v
+      - name: Generate reviewable CLIMBX Cargo lockfile candidate (non-deploying)
+        run: |
+          cargo +1.99.1 generate-lockfile --manifest-path climbx/programs/climbx-authorization/Cargo.toml
+          test -s climbx/programs/climbx-authorization/Cargo.lock
+          cargo +1.99.1 metadata --locked --format-version 1 --manifest-path climbx/programs/climbx-authorization/Cargo.toml --no-deps > /dev/null
+      - name: Check candidate lockfile is stable across regeneration (non-deploying)
+        run: |
+          cp climbx/programs/climbx-authorization/Cargo.lock /tmp/climbx-first-Cargo.lock
+          cargo +1.99.1 generate-lockfile --manifest-path climbx/programs/climbx-authorization/Cargo.toml
+          cmp /tmp/climbx-first-Cargo.lock climbx/programs/climbx-authorization/Cargo.lock
+          sha256sum climbx/programs/climbx-authorization/Cargo.lock
+      - name: Verify exact CLIMBX dependency candidate fingerprint (non-deploying)
+        run: |
+          echo "f868ffce588a34a789c688589c78a5f9b7f8e933c7292cbbb2ee97ffbb4b39b9  climbx/programs/climbx-authorization/Cargo.lock" | sha256sum --check --status
+      - name: Validate CLIMBX Cargo lockfile integrity (not vulnerability audit)
+        run: python3 climbx/check_cargo_lock.py climbx/programs/climbx-authorization/Cargo.lock
+      - name: Export CLIMBX dependency inventory for review (non-deploying)
+        run: |
+          cargo +1.99.1 metadata --locked --format-version 1 --manifest-path climbx/programs/climbx-authorization/Cargo.toml --no-deps > climbx-program-metadata.json
+          python3 - <<'PY'
+          import json
+          import pathlib
+          import tomllib
+          lock = pathlib.Path("climbx/programs/climbx-authorization/Cargo.lock")
+          packages = tomllib.loads(lock.read_text())["package"]
+          inventory = [{"name": p["name"], "version": p["version"], "source": p.get("source", "workspace")} for p in packages]
+          pathlib.Path("climbx-dependency-inventory.json").write_text(json.dumps(inventory, indent=2, sort_keys=True) + "\n")
+          print(f"Inventory exported: {len(inventory)} packages")
+          PY
+      - name: Upload CLIMBX dependency inventory for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: climbx-dependency-inventory
+          path: |
+            climbx-dependency-inventory.json
+            climbx-program-metadata.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Upload lockfile candidate for independent dependency review
+        uses: actions/upload-artifact@v4
+        with:
+          name: climbx-cargo-lockfile-candidate
+          path: climbx/programs/climbx-authorization/Cargo.lock
+          retention-days: 14
+          if-no-files-found: error
+      - name: Compile isolated Anchor grant/revoke source with candidate lockfile
+        run: cargo +1.99.1 check --locked --manifest-path climbx/programs/climbx-authorization/Cargo.toml
+      - name: State security boundary
+        if: always()
+        run: echo "Cargo check is not a Solana validator test, audit, deploy, or execution approval."

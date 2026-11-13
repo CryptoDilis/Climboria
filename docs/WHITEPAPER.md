@@ -54,6 +54,32 @@ After payment verification, announcements may appear on X.com, the homepage, gam
 
 Solana is the initial chain focus; Base is a later possibility. $CLIMB is the intended ticker, not proof of an official token. A token address must be verified through Climboria’s official channels. Launchpad, DEX, swap, liquidity, marketplace, NFTs, Chatworld, Arena, wagers, sponsor management, and on-chain rewards are planned until implemented, tested, and officially released.
 
+## 9A. CLIMBX by Climboria — Signature DEX trading assistant (planned)
+
+**You Dictate. It Climbs. It Learns.** CLIMBX is the proposed free personal automated trading assistant built exclusively for **Climboria Signature DEX**. This is a product specification, **not** a statement that live automated trading is deployed, safe to use with real funds, or profitable.
+
+- **Free access:** one personal CLIMBX bot per eligible wallet, with no subscription charge. Solana network fees and other disclosed transaction costs still apply.
+- **Up to five token slots:** a bot can hold or manage up to five distinct token assets, subject to available funds, supported markets and risk controls. No duplicate mint across active slots; each slot is limited to one position under the intended design.
+- **Trading approaches:** Sniper, Safe, Whale, Scalper and Custom/Learner are proposed configurable approaches, with Normal, Fast and Turbo operating modes. These labels do not imply guaranteed execution speed or returns.
+- **Learning with user approval:** the bot may analyze completed trades and propose strategy changes after at least 20 completed trades. A proposed change requires explicit **YES/NO** approval; learning does not grant permission to expand spending or bypass safeguards.
+- **Wallet control and safety:** proposed manually renewed authorization lasts no more than 24 hours, stops new entries during its final 30 minutes, and supports revocation, per-wallet caps, spending reservations, balance rechecks, transaction reconciliation and fail-closed behavior. No seed phrase or private key should be collected by the bot.
+- **Exclusive execution:** any automated trade must route and execute through **Climboria Signature DEX**, never an external DEX. Integration and real execution remain subject to technical validation.
+- **Performance fee:** intended platform fee is **10% of eligible cumulative net realized profit above the previous high-water mark**, with loss carryforward across the bot's slots. No performance fee is due while losses have not been recovered or there is no new eligible net profit. Any fee settlement requires separate authorization. Network and applicable transaction fees are distinct from the performance fee.
+
+**Release status and risks:** CLIMBX is in non-deploying development and is **NO-GO for live automated trading**. Passing offline tests and GitHub CI does not establish on-chain safety. A reviewed permissioned Solana smart-account/program architecture, safe transaction cancellation/timeout semantics, production database migrations, devnet end-to-end execution, independent security review and explicit release approval are required before enabling real-fund trading. Automated trading can lose the full amount allocated, encounter slippage or failed transactions, and incur network fees. No yield, profit, or availability is guaranteed.
+
+### CLIMBX: fees, learning and safety at a glance
+
+**Is CLIMBX free?** The intended personal bot has no subscription or activation fee. Each wallet is eligible for one bot; users still pay applicable network and execution costs. Infrastructure costs are borne by the platform and may require capacity limits or staged access; free access does not promise unlimited availability.
+
+**When is the 10% fee charged?** Only after cumulative **net realized profit** across the bot's slots exceeds its previous high-water mark, with prior losses carried forward. Unrealized gains do not trigger the performance fee. Any settlement must be separately authorized; exact accounting and fee collection must be validated before launch.
+
+**Does CLIMBX change strategy without permission?** It may propose changes after at least 20 completed trades, but requires an explicit YES/NO decision before applying a proposed strategy update. Learning cannot override authorization expiry, spending caps or other risk controls.
+
+**Can it trade through other DEXs?** No. The planned bot is exclusive to Climboria Signature DEX, and no external DEX execution is permitted.
+
+**Is the bot ready to trade?** No. The current implementation is development-only and **NO-GO** for live execution. Independent security review, real on-chain authorization, transaction safety and devnet validation remain prerequisites. No profit is guaranteed.
+
 ## 10. Roadmap principles
 
 1. Protect and verify existing Jarrell’s Peak gameplay.

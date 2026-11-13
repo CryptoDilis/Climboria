@@ -1,0 +1,46 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const {Readable}=require('node:stream');
+const {createWalletHttpHandler}=require('./wallet_http.cjs');
+const token='a'.repeat(40);
+function setup({origin='https://climboria.fun',body={wallet:'w'},path='/api/climbx/wallet/challenge',method='POST',headers={},limit=async()=>true,service}={}){
+ const calls=[];
+ const svc=service||{issue:async args=>{calls.push(args);return {status:'ISSUED',nonce:'n',message:'m',expiresAt:300};},bind:async args=>{calls.push(args);return {status:'BOUND'};}};
+ const payload=typeof body==='string'?body:JSON.stringify(body);
+ const req=Readable.from([Buffer.from(payload)]);
+ req.method=method;req.url=path;req.headers={origin,'content-type':'application/json',authorization:'Bearer '+token,...headers};
+ const res={status:null,payload:null,writableEnded:false,writeHead(s,h){this.status=s;this.headers=h;},end(s){this.payload=JSON.parse(s);this.writableEnded=true;}};
+ return {calls,req,res,run:()=>createWalletHttpHandler({service:svc,rateLimit:limit})(req,res)};
+}
+test('issues challenge for valid authenticated request',async()=>{const f=setup();await f.run();assert.equal(f.res.status,200);assert.equal(f.res.payload.status,'ISSUED');assert.equal(f.calls[0].accessToken,token);});
+test('binds verified wallet',async()=>{const f=setup({path:'/api/climbx/wallet/bind',body:{wallet:'w',nonce:'n',signature:'s'}});await f.run();assert.equal(f.res.status,200);assert.equal(f.res.payload.status,'BOUND');});
+test('blocks foreign origin',async()=>{const f=setup({origin:'https://evil.test'});await f.run();assert.equal(f.res.status,403);assert.equal(f.calls.length,0);});
+test('blocks missing origin',async()=>{const f=setup({origin:undefined,headers:{origin:''}});await f.run();assert.equal(f.res.status,403);});
+test('blocks GET',async()=>{const f=setup({method:'GET'});await f.run();assert.equal(f.res.status,404);});
+test('blocks unknown route',async()=>{const f=setup({path:'/api/unknown'});await f.run();assert.equal(f.res.status,404);});
+test('blocks invalid content type',async()=>{const f=setup({headers:{'content-type':'text/plain'}});await f.run();assert.equal(f.res.status,415);});
+test('blocks missing bearer',async()=>{const f=setup({headers:{authorization:''}});await f.run();assert.equal(f.res.status,401);});
+test('blocks rate limit',async()=>{const f=setup({limit:async()=>false});await f.run();assert.equal(f.res.status,429);});
+test('fails closed on limiter outage',async()=>{const f=setup({limit:async()=>{throw Error('down');}});await f.run();assert.equal(f.res.status,503);});
+test('rejects extra userId',async()=>{const f=setup({body:{wallet:'w',userId:'attacker'}});await f.run();assert.equal(f.res.status,400);});
+test('rejects browser supplied nonce on issue',async()=>{const f=setup({body:{wallet:'w',nonce:'attacker'}});await f.run();assert.equal(f.res.status,400);});
+test('rejects missing signature on bind',async()=>{const f=setup({path:'/api/climbx/wallet/bind',body:{wallet:'w',nonce:'n'}});await f.run();assert.equal(f.res.status,400);});
+test('rejects malformed JSON',async()=>{const f=setup({body:'{oops'});await f.run();assert.equal(f.res.status,400);});
+test('rejects oversized body',async()=>{const f=setup({body:'x'.repeat(4100)});await f.run();assert.equal(f.res.status,413);});
+test('does not leak errors',async()=>{const f=setup({service:{issue:async()=>{throw Error('private database password');},bind:async()=>({status:'BOUND'})}});await f.run();assert.equal(f.res.status,503);assert.doesNotMatch(JSON.stringify(f.res.payload),/password/);});
+test('rejects invalid origin configuration',()=>assert.throws(()=>createWalletHttpHandler({service:{issue(){},bind(){}},rateLimit:async()=>true,origin:'http://climboria.fun'})));
+test('requires rate limiter',()=>assert.throws(()=>createWalletHttpHandler({service:{issue(){},bind(){}}})));
+test('requires service',()=>assert.throws(()=>createWalletHttpHandler({rateLimit:async()=>true})));
+test('no-store responses',async()=>{const f=setup();await f.run();assert.equal(f.res.headers['Cache-Control'],'no-store');});
+
+test('rejects declared body over limit before service',async()=>{const f=setup({headers:{'content-length':'99999'}});await f.run();assert.equal(f.res.status,413);assert.equal(f.calls.length,0);});
+test('rejects invalid declared body length',async()=>{const f=setup({headers:{'content-length':'-1'}});await f.run();assert.equal(f.res.status,413);});
+test('rejects nonnumeric declared body length',async()=>{const f=setup({headers:{'content-length':'abc'}});await f.run();assert.equal(f.res.status,413);});
+test('accepts small declared body length',async()=>{const f=setup({headers:{'content-length':'14'}});await f.run();assert.equal(f.res.status,200);});
+
+for(const outcome of ['COMMIT_OUTCOME_UNKNOWN','ROLLBACK_OUTCOME_UNKNOWN']){
+ test('maps '+outcome+' to explicit non-success outcome',async()=>{
+  const f=setup({path:'/api/climbx/wallet/bind',body:{wallet:'w',nonce:'n',signature:'s'},service:{issue:async()=>({status:'ISSUED'}),bind:async()=>({status:outcome})}});
+  await f.run();assert.equal(f.res.status,503);assert.equal(f.res.payload.status,'OUTCOME_UNKNOWN');
+ });
+}
