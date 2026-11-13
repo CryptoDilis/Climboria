@@ -8,7 +8,8 @@ export const SOL = "So11111111111111111111111111111111111111112";
 export const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const ORIGIN = "https://climboria.fun";
 const SEARCH = "/api/tokens/search?query=SOL";
-const QUOTE = "/api/swap/quote?inputMint=" + SOL + "&outputMint=" + USDC + "&amount=1000000";
+const quotePath = (amount) => "/api/swap/quote?inputMint=" + SOL + "&outputMint=" + USDC + "&amount=" + amount;
+const QUOTE = quotePath("1000000");
 
 export async function probeProductionApi({ baseUrl = "https://api.climboria.fun", fetchImpl = globalThis.fetch } = {}) {
   const base = new URL(baseUrl);
@@ -73,6 +74,19 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
     "Live quote has no provider request ID");
   assert.equal(quote.data?.transaction, undefined, "Read-only quote must never expose a signable transaction");
   checks.push("Real Jupiter SOL/USDC quote preview (no transaction)");
+
+  // 0.0000157 SOL must be quoted as exactly 15,700 lamports. The frontend
+  // converts the decimal string, while this checks the live backend/provider
+  // response preserves that raw amount instead of silently rounding it.
+  const smallQuote = await request(quotePath("15700"));
+  assert.equal(smallQuote.response.status, 200, "Small-amount live quote is not available");
+  assert.equal(smallQuote.data?.inAmount, "15700", "Small quote input amount differs from requested raw units");
+  assert.ok(typeof smallQuote.data?.outAmount === "string" && /^[1-9][0-9]*$/.test(smallQuote.data.outAmount),
+    "Small live quote output is missing or invalid");
+  assert.ok(typeof smallQuote.data?.requestId === "string" && smallQuote.data.requestId.trim().length > 0,
+    "Small live quote has no provider request ID");
+  assert.equal(smallQuote.data?.transaction, undefined, "Small read-only quote must never expose a signable transaction");
+  checks.push("Exact small-amount SOL/USDC quote preview (15,700 lamports; no transaction)");
 
   // Never call /api/swap/order from a live monitoring probe. Even with
   // execution disabled, a separately enabled order route could generate a
