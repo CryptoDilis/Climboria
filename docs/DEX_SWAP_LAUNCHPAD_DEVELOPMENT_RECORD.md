@@ -218,3 +218,12 @@ Changed: branch `fix/dex-mobile-visible-quote-banner`, appended narrow `@media(m
 Verified: commits `32b93b8` and `7600a3f` pushed on focused branch; **exact-head CI and production browser NOT YET VERIFIED**.
 Unresolved: actual 390px live mobile Playwright viewport state/quote success, physical Redmi device, launchpad Devnet and mainnet signing release gates.
 NEXT: inspect focused PR CI and the next exact deployed production DEX desktop/mobile quote test. Merge only if green, fix real failures without weakening tests.
+
+
+### 2026-11-14 — Preserve mobile banner fix; invalidate Jupiter quote on close (CI pending)
+Scope: **DEX only**, no Game, CLIMBX, wallet transaction signing or Launchpad runtime.
+Before: latest main includes [PR #311](https://github.com/CryptoDilis/Climboria/pull/311) merged as `7099d2d3a54197dd6501b7eebd64695019b2d137`, which restores mobile Solana quote banner visibility. Earlier branch PR #312 duplicated the mobile layout fix and became conflicted; it must NOT be merged over #311.
+Changed: rebased focused branch `fix/dex-discard-quote-on-close-after-mobile-fix` changes only existing `dex/index.html` toggle behavior: closing the read-only quote panel invalidates cached and pending Jupiter quote via existing request-sequence guard, so reopening requires a fresh quote. Node VM unit test and actual desktop/mobile DEX production-browser checks now assert close→clear→reopen with no order/execute calls.
+Verified: new branch commits created; **exact-head CI and real-origin browser NOT YET VERIFIED**. Mainnet financial execution remains fail-closed.
+Unresolved: PR #311 real mobile production success and updated preview-close production acceptance require exact-head evidence, plus physical device and Launchpad Devnet lifecycle.
+NEXT: run exact-head unit/Browser CI for the focused PR and inspect post-Pages live-browser logs. Keep any merged mobile CSS fix intact; do not bypass visibility assertions.
