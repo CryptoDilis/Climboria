@@ -44,7 +44,7 @@ test('rejects scaffold without overflow-checked expiry bound',()=>{
 
 test('rejects missing owner signer on grant creation',()=>{
  const result=checkScaffold({read:mockRead(source.replaceAll("pub owner: Signer<'info>","pub owner: UncheckedAccount<'info>"))});
- assert.equal(result.reason,'MISSING_OWNER_SIGNATURE');
+ assert.equal(result.reason,'MISSING_CREATE_OWNER_SIGNATURE');
 });
 test('rejects removed revoke owner binding',()=>{
  const result=checkScaffold({read:mockRead(source.replace('has_one = owner','constraint = true'))});
@@ -57,4 +57,10 @@ test('rejects changed grant creation PDA seeds',()=>{
 test('rejects changed revoke PDA seeds',()=>{
  const result=checkScaffold({read:mockRead(source.replace('seeds = [b"grant", owner.key().as_ref(), &grant.grant_id.to_le_bytes()]','seeds = [b"grant", &grant.grant_id.to_le_bytes()]'))});
  assert.equal(result.reason,'MISSING_REVOKE_GRANT_PDA');
+});
+
+test('rejects missing owner signer on grant revocation even when create signer remains',()=>{
+ const modified=source.replace(/(pub struct RevokeGrant<'info>\\s*\\{[\\s\\S]*?)pub owner: Signer<'info>/, "$1pub owner: UncheckedAccount<'info>");
+ const result=checkScaffold({read:mockRead(modified)});
+ assert.equal(result.reason,'MISSING_REVOKE_OWNER_SIGNATURE');
 });
