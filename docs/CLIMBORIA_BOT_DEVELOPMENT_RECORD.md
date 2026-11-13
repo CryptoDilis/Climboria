@@ -578,3 +578,8 @@ Verified Phase72 CI CLIMBX `43453941485` and Validate `43453941619` both success
 ## Phase 74 checkpoint — 2026-11-13 (read-only wallet binding reconciliation)
 
 Verified Phase73 CI: CLIMBX `43454354453` and Validate `43454354458` successful. Added server-only read-only reconciliation helper `climbx/reconcile_wallet_binding_pg.cjs` commit `85e9992ca04b83d9b4a5c9bd0a62c2f417bd9797`: separate PostgreSQL connection, bounded read-only transaction, compare stored challenge owner/wallet/consumed state and wallet binding owner, confirm `BOUND_CONFIRMED` only for matching consumed challenge and same-owner binding. All absent/incomplete outcomes are `INDETERMINATE` with `safeToRetry:false` (a timed-out original transaction may still commit). Added 10 mocked tests commit `31c7b005e02dc1cd8c7b8e52e208bde1be9b9247`, wired CI commit `34dde7b7eb164ad37d2e20a2855b4c74daf6321b`. CI not yet verified. Helper is NOT wired into production API; no automatic retries; still needs real PostgreSQL concurrency/commit-loss integration and user-visible recovery UX. CLIMBX NO-GO.
+
+
+## Phase 75 checkpoint — 2026-11-13 (real PostgreSQL reconciliation-state checks)
+
+Verified Phase74 CLIMBX release safety `43454707112` and Validate Climboria `43454707139` both successful. Added three isolated real PostgreSQL integration checks to `climbx/test_postgres_integration.py`, commit `81733b97f263f52968b67a7d84d7effcdf26867e`: confirmed consumed nonce plus same-owner wallet binding, consumed nonce without binding, and nonce for user1 with wallet bound to user2. These are direct SQL state checks, **not** a JS-to-PostgreSQL integration of the reconciliation helper or lost-commit-response simulation. CI pending verification. Keep wallet API unmounted and CLIMBX NO-GO.
