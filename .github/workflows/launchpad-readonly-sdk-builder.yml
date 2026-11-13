@@ -1,0 +1,69 @@
+name: Launchpad Read-only Official SDK Builder Evidence
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/launchlab-sdk-builder-evidence.mjs"
+      - ".github/scripts/launchlab-sdk-builder-evidence.test.mjs"
+      - ".github/workflows/launchpad-readonly-sdk-builder.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/scripts/launchlab-sdk-builder-evidence.mjs"
+      - ".github/scripts/launchlab-sdk-builder-evidence.test.mjs"
+      - ".github/workflows/launchpad-readonly-sdk-builder.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: launchpad-sdk-builder-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Fail closed on modified SDK account flags and source shapes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate source parser and static account meta tests
+        run: |
+          node --check .github/scripts/launchlab-sdk-builder-evidence.mjs
+          node --test .github/scripts/launchlab-sdk-builder-evidence.test.mjs
+
+  official-source-readonly:
+    name: Report pinned Raydium SDK/IDL builder differences (no transactions)
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Retrieve immutable official Raydium source
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/launchlab-sdk-builder-sources
+          curl --fail --silent --show-error --location --retry 3 --max-time 30 \
+            "https://raw.githubusercontent.com/raydium-io/raydium-sdk-V2/1cf5bb129dbbb1c76dab67819c3d478349c8ed25/src/raydium/launchpad/instrument.ts" \
+            -o /tmp/launchlab-sdk-builder-sources/instrument.ts
+          curl --fail --silent --show-error --location --retry 3 --max-time 30 \
+            "https://raw.githubusercontent.com/raydium-io/raydium-idl/e7e0c96fe77bcf6a020b84a44c47a722aac8e359/raydium_launchpad/raydium_launchpad.json" \
+            -o /tmp/launchlab-sdk-builder-sources/raydium_launchpad.json
+      - name: Verify immutable source hashes and inspect source-only security evidence
+        run: |
+          set -euo pipefail
+          printf '%s  %s\n' \
+            "177d418defd36a173d43fafb29a06019a8754c7abe599365885d0b46c1fd8274" "/tmp/launchlab-sdk-builder-sources/instrument.ts" \
+            "963189409945069409f32e345d4adf2892e0b3ca1be504372577fe34a23c6cdb" "/tmp/launchlab-sdk-builder-sources/raydium_launchpad.json" | sha256sum --check
+          node .github/scripts/launchlab-sdk-builder-evidence.mjs \
+            /tmp/launchlab-sdk-builder-sources/instrument.ts \
+            /tmp/launchlab-sdk-builder-sources/raydium_launchpad.json
