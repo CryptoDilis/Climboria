@@ -70,6 +70,21 @@ try {
   // turning point and under-report a real but deliberately subtle idle motion.
   await page.waitForTimeout(1000);
 
+  const weatherAudit=await page.evaluate(()=>window.__climboriaJarrellsPeak?.automaticWeatherAudit?.()??null);
+  if(!weatherAudit||weatherAudit.intervalMs!==900000||
+    weatherAudit.justBefore?.index!==0||weatherAudit.justBefore?.elapsedMs!==899999||
+    weatherAudit.at15Min?.index!==1||weatherAudit.at15Min?.elapsedMs!==0||
+    weatherAudit.at30Min?.index!==2||weatherAudit.at45Min?.index!==0||
+    weatherAudit.resumable?.index!==2||weatherAudit.resumable?.elapsedMs!==420000||
+    weatherAudit.longJump?.index!==0||weatherAudit.longJump?.elapsedMs!==450000||
+    weatherAudit.noFakeElapsed?.index!==1||weatherAudit.noFakeElapsed?.elapsedMs!==200000||
+    !weatherAudit.manualWeatherControlMissing)
+    errors.push('Automatic 15-minute weather cycle, resume, and manual control removal failed: '+JSON.stringify(weatherAudit));
+  const weatherBefore=await page.evaluate(()=>document.documentElement.dataset.climboriaWeather);
+  await page.keyboard.press('r');
+  const weatherAfter=await page.evaluate(()=>document.documentElement.dataset.climboriaWeather);
+  if(weatherAfter!==weatherBefore)errors.push('Regular players can still manually switch weather with R: '+JSON.stringify({weatherBefore,weatherAfter}));
+  console.log('Jarrell automatic weather-cycle audit:',JSON.stringify(weatherAudit));
   const jumpControllerAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.jumpControllerAudit?.() ?? null);
   if (!jumpControllerAudit?.ok) errors.push('Ground jump takeoff/airtime/landing or water-surface separation failed: ' + JSON.stringify(jumpControllerAudit));
 
