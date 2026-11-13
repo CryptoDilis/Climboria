@@ -1032,19 +1032,24 @@ hp(axe,hBox,metal,0,.8,0,.5,.07,.08);hp(axe,hBox,metal,-.22,.75,0,.12,.16,.08);
 for(let i=0;i<4;i++)hp(axe,hCyl,leather,0,.1+i*.09,-.005,.05,.025,.05);
 hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='awaiting-saved-glb';document.documentElement.dataset.climboriaHeroRenderer='glb-only';
 /* Character model integration is paused until replacement Meshy GLBs are supplied. */
-let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null},assetAnimState='',assetHeroGroundOffset=0,assetHeroUsesAuthoredAnimations=false;
+let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null,head:null},assetAnimState='',assetHeroGroundOffset=0,assetHeroUsesAuthoredAnimations=false;
 function cacheAssetRig(root){
- assetRig={legs:[],arms:[],hips:null,spine:null};
+ assetRig={legs:[],arms:[],hips:null,spine:null,head:null};
  root.traverse(o=>{
   if(!o.isBone)return;
   const n=o.name.toLowerCase();
-  if(/hip|pelvis/.test(n))assetRig.hips=o;
-  if(/spine|chest/.test(n)&&!assetRig.spine)assetRig.spine=o;
-  if(/thigh|upleg|calf|lowerleg|knee|leg/.test(n))assetRig.legs.push({bone:o,base:o.rotation.x,side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.legs.length%2? -1:1});
-  if(/upperarm|lowerarm|arm|shoulder|forearm/.test(n))assetRig.arms.push({bone:o,base:o.rotation.x,baseY:o.rotation.y,baseZ:o.rotation.z,shoulder:/shoulder/.test(n),lower:/lower|forearm/.test(n),side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.arms.length%2? -1:1});
+  if(/hip|pelvis/.test(n))assetRig.hips={bone:o,baseQuaternion:o.quaternion.clone()};
+  if(/spine|chest/.test(n)&&!assetRig.spine)assetRig.spine={bone:o,baseQuaternion:o.quaternion.clone()};
+  if(n==='head'&&!assetRig.head)assetRig.head={bone:o,baseQuaternion:o.quaternion.clone()};
+  if(/thigh|upleg|calf|lowerleg|knee|leg/.test(n))assetRig.legs.push({bone:o,base:o.rotation.x,baseQuaternion:o.quaternion.clone(),side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.legs.length%2? -1:1});
+  if(/upperarm|lowerarm|arm|shoulder|forearm/.test(n))assetRig.arms.push({bone:o,base:o.rotation.x,baseY:o.rotation.y,baseZ:o.rotation.z,baseQuaternion:o.quaternion.clone(),shoulder:/shoulder/.test(n),lower:/lower|forearm/.test(n),side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.arms.length%2? -1:1});
  });
 }
 const FORBIDDEN_REST_CLIP=/(?:^|[_\\s-])(sit|sitting|seated|crouch|kneel|prone|sleep|lying|lie|fall|death)(?:$|[_\\s-])/i;
+// The original Climboria GLB has no authored standing-idle clip. Its bind
+// shoulders are an A-pose, so use a small local shoulder rotation only while
+// procedural idle is active. Authored locomotion clips remain untouched.
+const NATURAL_STANDING_SHOULDER_DROP=-.6;
 function findStandingRestClip(){
  const safe=assetActions.filter(a=>!FORBIDDEN_REST_CLIP.test(a.name)&&!/(swim|swimming|combat|weapon|rifle|sword|aim|attack)/i.test(a.name));
  const preferred=['Standing_Idle','Idle_Standing','Standing','Idle','Idle_01','Breathing_Idle','Idle_Breathing'];
@@ -1072,13 +1077,25 @@ function chooseAssetAnimation(state,speed=0){
 }
 function heroAnimationAudit(){
  const active=assetActive?.getClip()?.name||'procedural-fallback';
- return {state:assetAnimState,activeClip:active,availableClips:assetActions.map(a=>a.name),forbiddenRestClip:FORBIDDEN_REST_CLIP.test(active),idleCandidate:findStandingRestClip()?.name||'procedural-fallback',armBones:assetRig.arms.map(({bone,base,baseZ,shoulder,lower,side})=>({name:bone.name,parent:bone.parent?.name||'',shoulder,lower,side,baseX:base,baseZ,rotation:{x:bone.rotation.x,y:bone.rotation.y,z:bone.rotation.z},position:{x:bone.position.x,y:bone.position.y,z:bone.position.z}})),legBones:assetRig.legs.map(({bone,base,side})=>({name:bone.name,parent:bone.parent?.name||'',side,baseX:base,rotation:{x:bone.rotation.x,y:bone.rotation.y,z:bone.rotation.z}}))};
+ assetHero?.updateMatrixWorld(true);
+ const armBones=assetRig.arms.map(({bone,base,baseZ,shoulder,lower,side})=>{
+  const world=bone.getWorldPosition(new T3.Vector3());
+  return {name:bone.name,parent:bone.parent?.name||'',shoulder,lower,side,baseX:base,baseZ,rotation:{x:bone.rotation.x,y:bone.rotation.y,z:bone.rotation.z},position:{x:bone.position.x,y:bone.position.y,z:bone.position.z},worldPosition:{x:world.x,y:world.y,z:world.z}};
+ });
+ const shoulderDrops=armBones.filter(b=>b.shoulder).map(shoulder=>{
+  const upper=armBones.find(b=>b.parent===shoulder.name),dx=(upper?.worldPosition.x??0)-shoulder.worldPosition.x,dy=(upper?.worldPosition.y??0)-shoulder.worldPosition.y,dz=(upper?.worldPosition.z??0)-shoulder.worldPosition.z,length=Math.hypot(dx,dy,dz);
+  return {shoulder:shoulder.name,upperArm:upper?.name||null,verticalDrop:dy*-1,segmentLength:length,downwardFraction:length?dy*-1/length:0};
+ });
+ const motionBone=entry=>entry?{name:entry.bone.name,rotation:{x:entry.bone.rotation.x,y:entry.bone.rotation.y,z:entry.bone.rotation.z}}:null;
+ return {state:assetAnimState,activeClip:active,availableClips:assetActions.map(a=>a.name),forbiddenRestClip:FORBIDDEN_REST_CLIP.test(active),idleCandidate:findStandingRestClip()?.name||'procedural-fallback',naturalStandingShoulderDrop:NATURAL_STANDING_SHOULDER_DROP,shoulderDrops,idleMotion:{hips:motionBone(assetRig.hips),spine:motionBone(assetRig.spine),head:motionBone(assetRig.head)},armBones,legBones:assetRig.legs.map(({bone,base,side})=>({name:bone.name,parent:bone.parent?.name||'',side,baseX:base,rotation:{x:bone.rotation.x,y:bone.rotation.y,z:bone.rotation.z}}))};
 }
 function animateAssetFallback(t,state,speed){
  const moving=state==='walk'||state==='run',swimming=state==='swim',jumping=state==='jump',landing=state==='land';
+ const resting=!moving&&!swimming&&!jumping&&!landing;
  const amp=moving?(state==='run'?.72:.42):0,phase=t*(state==='run'?11:8.5);
  for(const item of assetRig.legs){
   const b=item.bone;
+  if(resting){b.quaternion.copy(item.baseQuaternion);continue;}
   if(swimming)b.rotation.x=item.base+Math.sin(phase+item.side)*.28;
   else if(jumping)b.rotation.x=item.base-.28;
   else if(landing)b.rotation.x=item.base+.16;
@@ -1086,6 +1103,11 @@ function animateAssetFallback(t,state,speed){
  }
  for(const item of assetRig.arms){
   const b=item.bone;
+  if(resting){
+   b.quaternion.copy(item.baseQuaternion);
+   if(item.shoulder)b.rotateX(NATURAL_STANDING_SHOULDER_DROP);
+   continue;
+  }
   if(swimming)b.rotation.x=item.base+Math.PI*.42+Math.sin(phase+item.side)*.16;
   else if(jumping)b.rotation.x=item.base-.52;
   else if(landing)b.rotation.x=item.base+.22;
@@ -1095,8 +1117,17 @@ function animateAssetFallback(t,state,speed){
   if(item.shoulder)b.rotation.z=item.baseZ;
   else if(!item.lower)b.rotation.y=item.baseY;
  }
- if(assetRig.spine)assetRig.spine.rotation.x=landing?.12:jumping?-.08:0;
- if(assetRig.hips)assetRig.hips.rotation.y=moving?Math.sin(phase)*.025:0;
+ if(resting){
+  // Keep the feet locked by moving only the upper body: a low-amplitude breath,
+  // torso weight shift and gentle head motion make the fallback feel alive.
+  const breath=Math.sin(t*2.15),sway=Math.sin(t*.72),look=Math.sin(t*.58);
+  if(assetRig.spine){const b=assetRig.spine.bone;b.quaternion.copy(assetRig.spine.baseQuaternion);b.rotateX(breath*.016);b.rotateZ(sway*.012);}
+  if(assetRig.head){const b=assetRig.head.bone;b.quaternion.copy(assetRig.head.baseQuaternion);b.rotateY(look*.042);b.rotateZ(sway*.008);}
+  if(assetRig.hips){const b=assetRig.hips.bone;b.quaternion.copy(assetRig.hips.baseQuaternion);b.rotateZ(sway*.005);}
+ }else{
+  if(assetRig.spine)assetRig.spine.bone.rotation.x=landing?.12:jumping?-.08:0;
+  if(assetRig.hips)assetRig.hips.bone.rotation.y=moving?Math.sin(phase)*.025:0;
+ }
 }
 const assetChoices={Adventurer:'../assets/characters/Climboria_Hero.glb'};
 let heroLoadError='',heroLoadRequest=0;
