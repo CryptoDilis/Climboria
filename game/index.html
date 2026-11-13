@@ -144,6 +144,7 @@ h2{font:700 18px/1.18 Cinzel,serif;margin:20px 40px 8px 0;min-height:2.36em;disp
 .hero-editor-stage{position:relative;height:clamp(340px,55vh,540px);border:1px solid #b89a5d80;border-radius:14px;background:radial-gradient(ellipse at 50% 60%,#2c3d4d,#101827 60%,#080d15);overflow:hidden}
 #heroPreviewCanvas{display:block;width:100%;height:100%;touch-action:none}
 #heroPreviewStatus{position:absolute;bottom:12px;left:12px;right:12px;padding:8px;background:#09101bdc;border-radius:8px;color:#e3cf95;font:12px system-ui,sans-serif;text-align:center}
+#heroPreviewStatus.ready{bottom:auto;top:10px;left:10px;right:auto;max-width:43%;padding:6px 8px;font-size:10px;line-height:1.35;text-align:left;pointer-events:none}
 .hero-editor-fields{display:flex;flex-direction:column;gap:12px;justify-content:center}
 .hero-editor-fields label{color:#f3d38c;font:800 12px system-ui,sans-serif}
 .hero-editor-fields input{width:100%;padding:13px 14px;background:#0b1320;color:white;border:1px solid #a08a5d;border-radius:9px;font:16px system-ui,sans-serif}
@@ -246,7 +247,7 @@ function previewRender(){
 function startHeroPreview(){
  if(previewLoaded){previewRender();editorButtons();return}
  if(previewLoading){previewRender();return}
- previewLoading=true;heroStatus.textContent='Loading the official hero model…';
+ previewLoading=true;heroStatus.classList.remove('ready');heroStatus.textContent='Loading the official hero model…';
  try{
   if(!window.THREE||!THREE.GLTFLoader)throw Error('3D renderer unavailable');
   previewScene=new THREE.Scene();
@@ -318,7 +319,7 @@ function startHeroPreview(){
     leftLeg:directionBetween('LeftUpperLeg','LeftLowerLeg'),
     rightLeg:directionBetween('RightUpperLeg','RightLowerLeg')
    };
-   previewLoaded=true;previewLoading=false;heroStatus.textContent='LIVE 3D PREVIEW · A-POSE · Drag to rotate · Scroll / pinch to zoom';
+   previewLoaded=true;previewLoading=false;heroStatus.classList.add('ready');heroStatus.textContent='LIVE 3D PREVIEW · A-POSE';
    editorButtons();heroFeedback.textContent='Official hero is ready. Choose and save your hero name.';
   },progress=>{
    if(progress.total>0)heroStatus.textContent='Loading hero model · '+Math.min(100,Math.round(progress.loaded/progress.total*100))+'%';
