@@ -1378,6 +1378,10 @@ window.addEventListener('storage',e=>{if(e.key===CLIMBORIA_WATCHLIST_KEY)renderC
 
 
 /* DEX trading terminal wiring: Jupiter quote preview + guarded wallet-reviewed execution */
+// Independent fail-closed UI gate. Mint/RPC success is NOT permission to
+// activate the trading terminal. The separate Jupiter quote preview remains
+// available; signing/order preparation needs its own security release.
+const DEX_TRADE_TERMINAL_INTERACTION_ENABLED=false;
 let dexTradeSide='buy',dexTradeOrderType='market',dexTradeToken=null;
 let dexTradeTokenSelectionSequence=0;
 function discardDexTradeQuote(reason){
@@ -1411,8 +1415,9 @@ async function dexTradeSyncToken(pair){
   const decimals=Number(data.result?.value?.decimals);
   if(!Number.isInteger(decimals)||decimals<0||decimals>18)throw new Error('The selected mint did not return valid on-chain decimals.');
   dexTradeToken.decimals=decimals;dexTradeApplyDirection();
-  $('dexTradeGetQuote').disabled=false;$('dexTradePrepare').disabled=false;
-  dexTradeSetStatus('On-chain mint verified · '+decimals+' decimals. Jupiter market quote is available; execution remains backend-gated.');
+  $('dexTradeGetQuote').disabled=!DEX_TRADE_TERMINAL_INTERACTION_ENABLED;
+  $('dexTradePrepare').disabled=!DEX_TRADE_TERMINAL_INTERACTION_ENABLED;
+  dexTradeSetStatus('On-chain mint verified · '+decimals+' decimals. Use read-only Quote Preview; trading terminal remains disabled until its independent security release.');
  }catch(error){if(selection===dexTradeTokenSelectionSequence)dexTradeSetStatus('Trading unavailable: '+error.message+' No guessed decimals will be used.')}
 }
 function dexTradeApplyDirection(){
@@ -1443,8 +1448,8 @@ document.querySelectorAll('[data-dex-order]').forEach(button=>button.addEventLis
  discardDexTradeQuote('Order mode changed. Old estimate discarded; request a fresh quote.');
  dexTradeOrderType=button.dataset.dexOrder;document.querySelectorAll('[data-dex-order]').forEach(item=>item.classList.toggle('active',item===button));
  $('dexLimitFields').hidden=dexTradeOrderType!=='limit';
- $('dexTradeGetQuote').disabled=dexTradeOrderType==='limit'||!Number.isInteger(dexTradeToken?.decimals);
- $('dexTradePrepare').disabled=dexTradeOrderType==='limit'||!Number.isInteger(dexTradeToken?.decimals);
+ $('dexTradeGetQuote').disabled=!DEX_TRADE_TERMINAL_INTERACTION_ENABLED||dexTradeOrderType==='limit'||!Number.isInteger(dexTradeToken?.decimals);
+ $('dexTradePrepare').disabled=!DEX_TRADE_TERMINAL_INTERACTION_ENABLED||dexTradeOrderType==='limit'||!Number.isInteger(dexTradeToken?.decimals);
  dexTradeSetStatus(dexTradeOrderType==='limit'?'Limit order preview only. No on-chain order program is deployed or enabled.':'Market route via Jupiter. Get a fresh quote, then review the wallet transaction if backend execution is enabled.');
 }));
 document.querySelectorAll('[data-dex-percent]').forEach(button=>button.addEventListener('click',async()=>{
