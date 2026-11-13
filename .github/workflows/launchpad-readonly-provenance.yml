@@ -8,6 +8,8 @@ on:
       - ".github/scripts/launchlab-provenance.test.mjs"
       - ".github/scripts/launchlab-curve-economics.mjs"
       - ".github/scripts/launchlab-curve-economics.test.mjs"
+      - ".github/scripts/launchlab-live-config.mjs"
+      - ".github/scripts/launchlab-live-config.test.mjs"
       - ".github/workflows/launchpad-readonly-provenance.yml"
   push:
     branches: [main]
@@ -16,6 +18,8 @@ on:
       - ".github/scripts/launchlab-provenance.test.mjs"
       - ".github/scripts/launchlab-curve-economics.mjs"
       - ".github/scripts/launchlab-curve-economics.test.mjs"
+      - ".github/scripts/launchlab-live-config.mjs"
+      - ".github/scripts/launchlab-live-config.test.mjs"
       - ".github/workflows/launchpad-readonly-provenance.yml"
   workflow_dispatch:
 
@@ -42,6 +46,8 @@ jobs:
           node --test .github/scripts/launchlab-provenance.test.mjs
           node --check .github/scripts/launchlab-curve-economics.mjs
           node --test .github/scripts/launchlab-curve-economics.test.mjs
+          node --check .github/scripts/launchlab-live-config.mjs
+          node --test .github/scripts/launchlab-live-config.test.mjs
 
   live-readonly:
     name: Verify public Raydium programs on mainnet and devnet
@@ -56,3 +62,5 @@ jobs:
           node-version: 22
       - name: Read-only Raydium API and finalized Solana ProgramData checks
         run: node .github/scripts/launchlab-provenance.mjs
+      - name: Read-only Raydium LaunchLab API versus finalized on-chain configurations
+        run: node .github/scripts/launchlab-live-config.mjs
