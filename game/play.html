@@ -897,7 +897,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  function caveApproachHeight(x,z){
   const wx=g.position.x+x*soilCos+z*soilSin;
   const wz=g.position.z-x*soilSin+z*soilCos;
-  return heightAt(wx,wz)-g.position.y+.045;
+  return groundAt(wx,wz)-g.position.y+.065;
  }
  for(let iz=0;iz<=soilGrid.rows;iz++){
   const vz=iz/soilGrid.rows,z=mix(soilGrid.minZ,soilGrid.maxZ,vz);
@@ -920,7 +920,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  soilGeo.setIndex(soilIndices);soilGeo.computeVertexNormals();
  const soilMesh=new T3.Mesh(soilGeo,entranceSoil);
  soilMesh.name='JarrellCaveNaturalApproachGround';soilMesh.receiveShadow=true;
- soilMesh.frustumCulled=false;g.add(soilMesh);
+ soilMesh.frustumCulled=true;g.add(soilMesh);
  // Batched, purely visual pebbles around the entrance. Keep centerline clear.
  const gravelRand=rng(41871),gravelCount=MOB?36:86;
  const gravel=new T3.InstancedMesh(new T3.IcosahedronGeometry(1,0),caveFloorMat,gravelCount);
