@@ -13,7 +13,8 @@ import { WSOL } from './launchlab-curve-economics.mjs';
 
 export const TOKEN_PROGRAMS = Object.freeze({
   spl: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-  token2022: 'TokenzQdBNbLqP5VEhdkAS6EPFJGYtTLtqk9vuD7hJp'
+  // Official source: solana-program/token-2022 interface/src/lib.rs @ e8ca680ca8aeb12f9598524b003c776c6a4168f2
+  token2022: 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'
 });
 export const LEGACY_BPF_LOADER = 'BPFLoader2111111111111111111111111111111111';
 const allowedTokenLoaders = new Set([LOADER, LEGACY_BPF_LOADER]);
