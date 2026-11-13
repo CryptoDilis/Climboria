@@ -13,7 +13,10 @@ function checkScaffold({read=fs.readFileSync}={}){
   if(!source.includes('declare_id!("11111111111111111111111111111111")'))return blocked('UNREVIEWED_PROGRAM_ID');
   if(!/pub fn create_grant\s*\(/.test(source)||!/pub fn revoke_grant\s*\(/.test(source))return blocked('MISSING_GRANT_LIFECYCLE');
   // Structural guard only: not a substitute for Anchor account validation or signed validator tests.
-  if(!/pub owner:\s*Signer<'info>/.test(source))return blocked('MISSING_OWNER_SIGNATURE');
+  const createAccounts=source.match(/pub struct CreateGrant<'info>\\s*\\{([\\s\\S]*?)\\n\\}/)?.[1];
+  const revokeAccounts=source.match(/pub struct RevokeGrant<'info>\\s*\\{([\\s\\S]*?)\\n\\}/)?.[1];
+  if(!createAccounts||!/pub owner:\\s*Signer<'info>/.test(createAccounts))return blocked('MISSING_CREATE_OWNER_SIGNATURE');
+  if(!revokeAccounts||!/pub owner:\\s*Signer<'info>/.test(revokeAccounts))return blocked('MISSING_REVOKE_OWNER_SIGNATURE');
   if(!source.includes('has_one = owner'))return blocked('MISSING_REVOKE_OWNER_BINDING');
   if(!source.includes('seeds = [b"grant", owner.key().as_ref(), &grant_id.to_le_bytes()]'))return blocked('MISSING_CREATE_GRANT_PDA');
   if(!source.includes('seeds = [b"grant", owner.key().as_ref(), &grant.grant_id.to_le_bytes()]'))return blocked('MISSING_REVOKE_GRANT_PDA');
