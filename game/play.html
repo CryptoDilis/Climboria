@@ -192,6 +192,18 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
 
 <div id="help">WASD move · Shift sprint · Space jump · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · R weather · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
 
+<script>
+/* Client-side preflight: do not boot the 3D world before a named hero exists. */
+(function(){
+ var valid=false,hero=null;
+ try{
+  hero=JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null');
+  valid=!!hero&&hero.model==='Adventurer'&&typeof hero.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(hero.name)&&/[A-Za-z0-9]/.test(hero.name);
+ }catch(_){}
+ if(!valid){location.replace('./index.html?hero=required');return}
+ window.__climboriaCreatedHero=hero;
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
