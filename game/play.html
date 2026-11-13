@@ -1459,7 +1459,7 @@ function toggleInventory(){renderInventory();const opening=invPanel.style.displa
 document.getElementById('player-card').addEventListener('click',toggleInventory);
 
 const mapToggle=document.getElementById('world-map-toggle'),mapPanel=document.getElementById('world-map-panel'),mapCanvas=document.getElementById('world-map'),mapCtx=mapCanvas.getContext('2d');
-function toggleWorldMap(){mapPanel.classList.toggle('map-expanded');drawWorldMap()}
+function toggleWorldMap(){mapPanel.classList.toggle('map-expanded');drawWorldMap();drawWorldMapPlayer()}
 mapPanel.style.display='block';
 function drawWorldMap(){
  const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.clearRect(0,0,w,h);
