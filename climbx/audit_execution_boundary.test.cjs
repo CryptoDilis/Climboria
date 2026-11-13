@@ -5,3 +5,6 @@ test('call site outside source/test implementation is flagged',()=>assert.deepEq
 test('executable true flag in runtime source is flagged',()=>assert.deepEqual(scanSource(['executor.cjs'],()=> 'const x={mayExecute:true};'),[{file:'executor.cjs',reason:'EXECUTABLE_FLAG'}]));
 test('no suspicious source returns empty findings',()=>assert.deepEqual(scanSource(['safe.cjs'],()=> 'module.exports={mayExecute:false}'),[]));
 test('audit own CLIMBX CJS directory',()=>assert.deepEqual(auditDirectory(),[]));
+
+test('Python source call site is flagged',()=>assert.deepEqual(scanSource(['climbx/runner.py'],()=> 'authorizeBotExecution(order)'),[{file:'climbx/runner.py',reason:'REVIEW_CALL_SITE'}]));
+test('Python executable flag is flagged',()=>assert.deepEqual(scanSource(['climbx/runner.py'],()=> 'mayExecute = true'),[{file:'climbx/runner.py',reason:'EXECUTABLE_FLAG'}]));
