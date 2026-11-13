@@ -715,8 +715,21 @@ try {
   const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero }));
   if (!mobileHeroReady.readiness.chunk || !mobileHeroReady.readiness.render || !mobileHeroReady.readiness.hero || mobileHeroReady.renderer !== true || !mobileHeroReady.heroUsesGlb) throw new Error('Mobile saved GLB hero did not become fully ready: ' + JSON.stringify(mobileHeroReady));
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
-  await mobile.keyboard.press('w');
-  await mobile.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.mode === 'walk', undefined, { timeout: 10000 });
+  // Mobile gameplay is controlled by the on-screen touch joystick, not a hardware
+  // keyboard. Do not use a synthetic W key to prove that the mobile game entered
+  // walk mode; verify the real player state after the GLB and render gates pass.
+  const mobileEntryMode = await mobile.evaluate(() => ({
+    mode: window.__climboriaJarrellsPeak?.player?.mode ?? null,
+    gameReady: window.__climboriaGameReady === true,
+    heroReady: window.__climboriaReadiness?.heroReady === true,
+    player: window.__climboriaJarrellsPeak?.player ? {
+      x: window.__climboriaJarrellsPeak.player.x,
+      z: window.__climboriaJarrellsPeak.player.z
+    } : null
+  }));
+  if (mobileEntryMode.mode !== 'walk' || !mobileEntryMode.gameReady || !mobileEntryMode.heroReady) {
+    throw new Error('Mobile gameplay did not enter the expected ready/walk state: ' + JSON.stringify(mobileEntryMode));
+  }
   const mobileOrbit = await mobile.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw,hero:api?.heroYaw,glb:api?.heroUsesGlb};
     const target=document.body;
@@ -747,12 +760,35 @@ try {
   });
   if(!(mobilePinchZoom.zoomIn<mobilePinchZoom.before&&mobilePinchZoom.zoomOut>mobilePinchZoom.zoomIn))errors.push('Mobile two-finger pinch did not zoom camera in and out: '+JSON.stringify(mobilePinchZoom));
 
-  const mobileHeadingBeforeMove=await mobile.evaluate(()=>({player:window.__climboriaCameraOrbit?.playerYaw,camera:window.__climboriaCameraOrbit?.yaw}));
-  await mobile.keyboard.down('w');
-  await mobile.waitForFunction(()=>{const api=window.__climboriaCameraOrbit;if(!api)return false;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return Math.abs(delta)<.08;}, undefined, {timeout:2000}).catch(()=>{});
-  await mobile.keyboard.up('w');
-  const mobileMovementFacing=await mobile.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
-  if(Math.abs(mobileMovementFacing.player-mobileHeadingBeforeMove.player)<.05||!mobileMovementFacing.aligned) errors.push('Mobile hero did not turn toward camera-relative movement direction: '+JSON.stringify({mobileHeadingBeforeMove,mobileMovementFacing}));
+  const mobileHeadingBeforeMove=await mobile.evaluate(()=>({
+    player:window.__climboriaCameraOrbit?.playerYaw,
+    camera:window.__climboriaCameraOrbit?.yaw,
+    x:window.__climboriaJarrellsPeak?.player?.x,
+    z:window.__climboriaJarrellsPeak?.player?.z
+  }));
+  // Exercise the actual mobile joystick path with a touch held on the left half
+  // of the viewport. A keyboard W press is not a valid mobile-control test.
+  const mobileJoystickMovement=await mobile.evaluate(async()=>{
+    const target=document.body, id=94, startX=Math.max(80,Math.round(innerWidth*.18)), startY=Math.round(innerHeight*.55);
+    const start=new Touch({identifier:id,target,clientX:startX,clientY:startY});
+    const moved=new Touch({identifier:id,target,clientX:startX,clientY:startY-65});
+    window.dispatchEvent(new TouchEvent('touchstart',{bubbles:true,changedTouches:[start],touches:[start]}));
+    window.dispatchEvent(new TouchEvent('touchmove',{bubbles:true,changedTouches:[moved],touches:[moved]}));
+    await new Promise(resolve=>setTimeout(resolve,650));
+    const api=window.__climboriaCameraOrbit, player=window.__climboriaJarrellsPeak?.player;
+    const result={mode:player?.mode??null,x:player?.x??null,z:player?.z??null,playerYaw:api?.playerYaw??null,cameraYaw:api?.yaw??null};
+    window.dispatchEvent(new TouchEvent('touchend',{bubbles:true,changedTouches:[moved],touches:[]}));
+    return result;
+  });
+  const mobileMovementFacing={
+    player:mobileJoystickMovement.playerYaw,
+    camera:mobileJoystickMovement.cameraYaw,
+    hero:await mobile.evaluate(()=>window.__climboriaCameraOrbit?.heroYaw),
+    aligned:Math.abs(Math.atan2(Math.sin(mobileJoystickMovement.playerYaw-mobileJoystickMovement.cameraYaw),Math.cos(mobileJoystickMovement.playerYaw-mobileJoystickMovement.cameraYaw)))<.08,
+    moved:Math.hypot(mobileJoystickMovement.x-mobileHeadingBeforeMove.x,mobileJoystickMovement.z-mobileHeadingBeforeMove.z)>.05,
+    mode:mobileJoystickMovement.mode
+  };
+  if(!mobileMovementFacing.moved||!mobileMovementFacing.aligned||mobileMovementFacing.mode!=='walk') errors.push('Mobile touch joystick did not move the player in the camera-relative direction: '+JSON.stringify({mobileHeadingBeforeMove,mobileJoystickMovement,mobileMovementFacing}));
   const mobileHeroStability=await mobile.evaluate(()=>({identity:document.documentElement.dataset.climboriaHero||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',cameraApi:!!window.__climboriaCameraOrbit}));
   if(mobileHeroStability.identity!=='adventurer'||mobileHeroStability.renderer!=='glb'||!mobileHeroStability.cameraApi) errors.push('Mobile movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(mobileHeroStability));
   const mobileState = await mobile.evaluate(() => {
