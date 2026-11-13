@@ -19,6 +19,20 @@ function routeData({ variant = 7, percent = 100, inputIndex = 0, outputIndex = 1
   const payload = variant === 17 || variant === 61 ? [1] : [];
   return new Uint8Array([...discriminator, ...u32(1), variant, ...payload, percent, inputIndex, outputIndex, ...u64(inAmount), ...u64(outAmount), ...u16(slippage), fee]);
 }
+// Deliberately raw, pinned V6 route-plan fixtures: no third-party SDK or
+// network calls, so malformed graph shapes remain reproducible in CI.
+function routePlanData(steps, { inAmount = 1000, outAmount = 950, slippage = 50, fee = 0 } = {}) {
+  const discriminator = [229, 23, 203, 151, 122, 227, 173, 42];
+  const payload = steps.flatMap(({ variant = 7, percent = 100, inputIndex, outputIndex }) => [
+    variant, ...(variant === 17 || variant === 61 ? [1] : []),
+    percent, inputIndex, outputIndex
+  ]);
+  return new Uint8Array([
+    ...discriminator, ...u32(steps.length), ...payload,
+    ...u64(inAmount), ...u64(outAmount), ...u16(slippage), fee
+  ]);
+}
+
 function parsed({ data = routeData(), extraProgram = false, takerKey = taker, outMint = outputMint, requiredSignatures = 1 } = {}) {
   const unknownProgram = encodeBase58(new Uint8Array(32).fill(23));
   const keys = [takerKey, source, destination, TOKEN_PROGRAM_ID, outMint, JUPITER_V6_PROGRAM_ID, raydium, compute, unknownProgram];
@@ -95,4 +109,65 @@ test("binds Jupiter minimum output to the route instruction slippage floor", () 
   assert.throws(() => validate(parsed(), { otherAmountThreshold: "944" }), /weaker than the route slippage limit/i);
   assert.throws(() => validate(parsed(), { otherAmountThreshold: "951" }), /weaker than the route slippage limit/i);
   assert.throws(() => validate(parsed(), { otherAmountThreshold: "0" }), /positive integer string/i);
+});
+
+
+test("accepts structurally connected multi-hop and split Jupiter routes", () => {
+  const multihop = routePlanData([
+    { inputIndex: 0, outputIndex: 1 },
+    { inputIndex: 1, outputIndex: 2 }
+  ]);
+  assert.equal(decodeJupiterV6Route(multihop).steps.length, 2);
+  assert.equal(validate(parsed({ data: multihop })).ok, true);
+
+  // Two branches of the source: one arrives directly at the terminal,
+  // the other passes through an intermediate token before arriving.
+  const split = routePlanData([
+    { inputIndex: 0, outputIndex: 1, percent: 40 },
+    { inputIndex: 0, outputIndex: 3, percent: 60 },
+    { inputIndex: 1, outputIndex: 3, percent: 100 }
+  ]);
+  assert.equal(decodeJupiterV6Route(split).steps.length, 3);
+  assert.equal(validate(parsed({ data: split })).ok, true);
+});
+
+test("rejects disconnected Jupiter route-plan inputs even when each split totals 100%", () => {
+  // The 0→3 path is valid, but the 1→2→3 branch has no producer for
+  // token index 1. The old structural decoder incorrectly accepted it.
+  const injectedBranch = routePlanData([
+    { inputIndex: 0, outputIndex: 3, percent: 100 },
+    { inputIndex: 1, outputIndex: 2, percent: 100 },
+    { inputIndex: 2, outputIndex: 3, percent: 100 }
+  ]);
+  assert.throws(() => decodeJupiterV6Route(injectedBranch), /unreachable intermediate input/i);
+  assert.throws(() => validate(parsed({ data: injectedBranch })), /unreachable intermediate input/i);
+
+  // More than one incoming edge does not make an unproduced source valid.
+  const isolatedSource = routePlanData([
+    { inputIndex: 0, outputIndex: 3, percent: 100 },
+    { inputIndex: 2, outputIndex: 3, percent: 50 },
+    { inputIndex: 2, outputIndex: 3, percent: 50 }
+  ]);
+  assert.throws(() => decodeJupiterV6Route(isolatedSource), /unreachable intermediate input/i);
+});
+
+test("rejects orphaned Jupiter intermediate output even with a valid final-output edge", () => {
+  // 25% of token 0 flows to index 1, where no step consumes it.
+  // The remaining 75% reaches terminal index 3, so the old
+  // 'has source and terminal' check incorrectly accepted the plan.
+  const abandonedBranch = routePlanData([
+    { inputIndex: 0, outputIndex: 1, percent: 25 },
+    { inputIndex: 0, outputIndex: 3, percent: 35 },
+    { inputIndex: 0, outputIndex: 3, percent: 40 }
+  ]);
+  assert.throws(() => decodeJupiterV6Route(abandonedBranch), /unconsumed intermediate output/i);
+  assert.throws(() => validate(parsed({ data: abandonedBranch })), /unconsumed intermediate output/i);
+
+  // A connected route can still have one unused branch: fail closed.
+  const dangling = routePlanData([
+    { inputIndex: 0, outputIndex: 1, percent: 50 },
+    { inputIndex: 0, outputIndex: 2, percent: 50 },
+    { inputIndex: 1, outputIndex: 3, percent: 100 }
+  ]);
+  assert.throws(() => decodeJupiterV6Route(dangling), /unconsumed intermediate output/i);
 });
