@@ -568,6 +568,29 @@ nav{position:relative!important;top:auto!important;left:auto!important;right:aut
  .hero{margin-top:0!important;padding-top:36px!important}
  .reference-hero-intro{margin-top:0!important}
 }
+
+/* Desktop-only Meta reference navigation: one continuous slim bar, not individual cards. */
+@media(min-width:1450px){
+ nav{display:flex!important;align-items:center!important;gap:24px!important;padding:10px 20px!important;min-height:68px!important;background:linear-gradient(100deg,rgba(16,31,50,.96),rgba(26,36,56,.94) 70%,rgba(85,63,72,.9))!important;border:1px solid rgba(217,185,142,.4)!important;box-shadow:0 14px 35px rgba(0,0,0,.2)!important}
+ nav>.logo{font-size:19px!important;letter-spacing:2px!important;flex-shrink:0!important}
+ .navl{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:clamp(9px,1vw,19px)!important;min-width:0!important}
+ .navl>a:not([target]),.navl>.hub-link{width:auto!important;min-width:0!important;height:40px!important;min-height:40px!important;padding:0 2px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;font-size:clamp(9px,.69vw,11px)!important;letter-spacing:.6px!important;white-space:nowrap!important}
+ .navl>.hub-link .climboria-icon{width:13px!important;height:13px!important;flex-basis:13px!important}
+ .navl>.btn-gold{flex:0 0 auto!important;width:auto!important;min-width:86px!important;padding:0 16px!important;border:1px solid rgba(248,220,171,.7)!important;border-radius:999px!important;background:rgba(255,255,255,.08)!important;font-size:11px!important}
+ .navl>.nav-x-link{flex:0 0 42px!important;width:42px!important;min-width:42px!important;height:42px!important;border:0!important;border-radius:50%!important;background:rgba(12,20,37,.5)!important}
+ .navl>a:not([target]):hover,.navl>.hub-link:hover{color:#fff5db!important;background:transparent!important}
+ .reference-hero-intro{margin-top:0!important}
+ .reference-hero-eyebrow{margin-top:12px!important}
+ .reference-hero-tagline{margin-top:12px!important}
+ .launch-countdown{margin-top:16px!important}
+ .hero-content{margin-top:14px!important}
+}
+@media(min-width:901px) and (max-width:1449px){
+ .reference-hero-intro{margin-top:0!important}
+ .reference-hero-eyebrow{margin-top:12px!important}
+ .reference-hero-tagline{margin-top:12px!important}
+ .launch-countdown{margin-top:16px!important}
+}
 </style>
 </head>
 <body>
@@ -627,7 +650,6 @@ nav{position:relative!important;top:auto!important;left:auto!important;right:aut
   <div class="reference-hero-intro">
     <div class="reference-hero-status">A WORLD BUILT TO BE EARNED <span>● IN DEVELOPMENT</span></div>
     <p class="reference-hero-eyebrow">EXPLORE · SURVIVE · ASCEND</p>
-    <div class="reference-hero-title" aria-hidden="true">CLIMB<br>ORIA</div>
     <p class="reference-hero-tagline">Vengeance is always an option.</p>
     <p class="reference-hero-description">A cinematic climbing adventure where every route is a decision, every summit is a story, and the mountain remembers your ascent.</p>
   </div>
