@@ -31,3 +31,19 @@ test('hostile proxy fails closed without propagating exception',()=>{
  const walletBinding=new Proxy({}, {get(){throw Error('proxy access denied')}});
  assert.equal(authorizeBotExecution({...good,walletBinding}).mayExecute,false);
 });
+
+
+test('failed grant simulation cannot pass grant boundary',()=>assert.equal(authorizeBotExecution({...good,grantSimulation:{ok:false,simulationOnly:true,mayExecute:false}}).reason,'INVALID_SIMULATION_BOUNDARY'));
+test('missing grant success marker cannot pass grant boundary',()=>assert.equal(authorizeBotExecution({...good,grantSimulation:{simulationOnly:true,mayExecute:false}}).reason,'INVALID_SIMULATION_BOUNDARY'));
+test('malformed primitive authorization inputs deny execution',()=>{
+ for(const value of [null,false,0,'BOUND_CONFIRMED',[],42]){
+  assert.equal(authorizeBotExecution({...good,walletBinding:value}).mayExecute,false);
+  assert.equal(authorizeBotExecution({...good,policySimulation:value}).mayExecute,false);
+  assert.equal(authorizeBotExecution({...good,grantSimulation:value}).mayExecute,false);
+  assert.equal(authorizeBotExecution({...good,routePreflight:value}).mayExecute,false);
+ }
+});
+test('spoofed on-chain proof with throwing getter remains untrusted',()=>{
+ const onChainProof=Object.defineProperty({},'verified',{get(){throw Error('must never inspect caller proof')}});
+ assert.deepEqual(authorizeBotExecution({...good,onChainProof}),{authorized:false,mayExecute:false,reason:'ON_CHAIN_AUTHORIZATION_NOT_IMPLEMENTED'});
+});
