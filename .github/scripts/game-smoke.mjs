@@ -17,7 +17,7 @@ try {
   if(!(await anonymous.locator('#heroEditor').isVisible())) errors.push('Hero editor did not open from the Expedition card');
   if(await anonymous.locator('#heroEditor input[type="file"]').count()) errors.push('Hero editor still asks players to upload a GLB');
   await anonymous.locator('#heroNameInput').fill('Smoke Explorer');
-  if(!(await anonymous.locator('#saveHeroButton').isDisabled())) errors.push('Save Hero enabled before model preview is ready');
+  if(!(await anonymous.locator('#saveHeroButton').isDisabled()) && !(await anonymous.locator('#heroPreviewStatus').textContent()).includes('LIVE 3D PREVIEW')) errors.push('Save Hero enabled before model preview is ready');
   await anonymous.waitForFunction(() => document.querySelector('#heroPreviewStatus')?.textContent?.includes('LIVE 3D PREVIEW'), undefined, { timeout: 120000 });
   const creatorVisual=await anonymous.evaluate(()=>{
     const canvas=document.querySelector('#heroPreviewCanvas'),stage=document.querySelector('.hero-editor-stage');
