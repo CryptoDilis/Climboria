@@ -1779,6 +1779,7 @@ function deathLootLifecycleAudit(){
   }:null;
   const inventoryCleared=inventory.length===0;
   const respawned=P.hp===P.maxHp&&P.x===0&&P.z===-30;
+  const mapAfterDeath=deathLootMapMarkerAudit();
   const serialized=JSON.parse(localStorage.getItem(deathLootStorageKey())||'null');
   const persisted=serialized?.version===1&&serialized.items?.[0]?.qty===2&&serialized.x===125&&
    serialized.z===125&&serialized.expiresAt===deathLootBag?.expiresAt;
@@ -1790,22 +1791,30 @@ function deathLootLifecycleAudit(){
   inventoryStorageKey=savedScope;
   const rehydrated=loadDeathLootBag()&&deathLootBag?.expiresAt===serialized?.expiresAt&&
     deathLootBag?.group.parent===scene;
+  const mapAfterReload=deathLootMapMarkerAudit();
   P.x=125;P.z=125;P.y=groundAt(P.x,P.z)+1.75;P.mode='walk';
   interact();
   const recovered=deathLootBag===null&&inventory.length===1&&inventory[0].name==='Smoke Recovery Relic'&&inventory[0].qty===2;
   const recoveredStored=readInventory(inventoryStorageKey)?.some(item=>item.name==='Smoke Recovery Relic'&&item.qty===2);
   const clearedOnRecovery=localStorage.getItem(deathLootStorageKey())===null;
+  const mapAfterRecovery=deathLootMapMarkerAudit();
   P.x=126;P.z=126;dropDeathLoot();
   if(deathLootBag)deathLootBag.expiresAt=Date.now()-1;
   updateDeathLootBag();
   const expired=deathLootBag===null&&!inventory.length&&deathLootPrompt.style.display==='none'&&
    localStorage.getItem(deathLootStorageKey())===null;
+  const mapAfterExpiry=deathLootMapMarkerAudit();
   return {ok:!!dropped&&dropped.stacks===1&&dropped.qty===2&&dropped.markerVisible&&
     dropped.ttl>0&&dropped.ttl<=180000&&inventoryCleared&&respawned&&persisted&&
     survivesUnload&&isolated&&rehydrated&&recovered&&recoveredStored&&
-    clearedOnRecovery&&expired&&droppedEvents===2&&recoveredEvents===1,
+    clearedOnRecovery&&expired&&droppedEvents===2&&recoveredEvents===1&&
+    mapAfterDeath.visible&&mapAfterDeath.orange&&mapAfterDeath.x===125&&mapAfterDeath.z===125&&
+    mapAfterDeath.legend.includes('Orange')&&
+    mapAfterReload.visible&&mapAfterReload.orange&&
+    !mapAfterRecovery.visible&&!mapAfterExpiry.visible,
    dropped,inventoryCleared,respawned,persisted,survivesUnload,isolated,rehydrated,
-   recovered,recoveredStored,clearedOnRecovery,expired,droppedEvents,recoveredEvents,hadPriorDeathLoot};
+   recovered,recoveredStored,clearedOnRecovery,expired,droppedEvents,recoveredEvents,hadPriorDeathLoot,
+   mapAfterDeath,mapAfterReload,mapAfterRecovery,mapAfterExpiry};
  }finally{
   inventoryStorageKey=savedScope;
   clearDeathLootBag();
