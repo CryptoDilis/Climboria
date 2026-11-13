@@ -1,0 +1,23 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const {createSupabaseTokenVerifier}=require('./supabase_auth.cjs');
+const id='00000000-0000-4000-8000-000000000001',token='a'.repeat(40);
+const base='https://example.supabase.co';
+function make(fetchImpl){return createSupabaseTokenVerifier({supabaseUrl:base,fetchImpl});}
+test('verified identity from Supabase user endpoint',async()=>{let called;const v=make(async(...args)=>{called=args;return {status:200,json:async()=>({id})};});assert.deepEqual(await v(token),{status:'VERIFIED',userId:id});assert.equal(called[0],base+'/auth/v1/user');assert.equal(called[1].headers.Authorization,'Bearer '+token);assert.equal(called[1].redirect,'error');});
+test('rejects 401',async()=>assert.equal((await make(async()=>({status:401}))(token)).status,'UNAUTHORIZED'));
+test('rejects 403',async()=>assert.equal((await make(async()=>({status:403}))(token)).status,'UNAUTHORIZED'));
+test('fails closed on 500',async()=>assert.equal((await make(async()=>({status:500}))(token)).status,'AUTH_UNAVAILABLE'));
+test('fails closed on network error',async()=>assert.equal((await make(async()=>{throw Error('offline');})(token)).status,'AUTH_UNAVAILABLE'));
+test('fails closed on malformed JSON',async()=>assert.equal((await make(async()=>({status:200,json:async()=>{throw Error('json');}}))(token)).status,'AUTH_UNAVAILABLE'));
+test('rejects missing user ID',async()=>assert.equal((await make(async()=>({status:200,json:async()=>({})}))(token)).status,'UNAUTHORIZED'));
+test('rejects malformed user ID',async()=>assert.equal((await make(async()=>({status:200,json:async()=>({id:'attacker'})}))(token)).status,'UNAUTHORIZED'));
+test('rejects empty token without fetch',async()=>{let n=0;const v=make(async()=>{n++;});assert.equal((await v('')).status,'UNAUTHORIZED');assert.equal(n,0);});
+test('rejects header injection',async()=>assert.equal((await make(async()=>{throw Error('should not fetch');})('a'.repeat(25)+'\nX:evil')).status,'UNAUTHORIZED'));
+test('rejects oversized token',async()=>assert.equal((await make(async()=>{})('a'.repeat(8193))).status,'UNAUTHORIZED'));
+test('rejects non-https URL',()=>assert.throws(()=>createSupabaseTokenVerifier({supabaseUrl:'http://example.supabase.co'})));
+test('rejects foreign host',()=>assert.throws(()=>createSupabaseTokenVerifier({supabaseUrl:'https://example.supabase.co.evil.com'})));
+test('rejects URL credentials',()=>assert.throws(()=>createSupabaseTokenVerifier({supabaseUrl:'https://user:pass@example.supabase.co'})));
+test('rejects URL path',()=>assert.throws(()=>createSupabaseTokenVerifier({supabaseUrl:'https://example.supabase.co/other'})));
+test('rejects URL query',()=>assert.throws(()=>createSupabaseTokenVerifier({supabaseUrl:'https://example.supabase.co/?redirect=evil'})));
+test('rejects invalid timeout',()=>assert.throws(()=>createSupabaseTokenVerifier({supabaseUrl:base,timeoutMs:0})));
