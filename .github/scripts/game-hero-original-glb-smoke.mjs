@@ -47,6 +47,15 @@ try{
    const validLeg=v=>Array.isArray(v)&&v.length===3&&v[1]<-.9&&Math.abs(v[0])<.25;
    if(!limbs||!validArm(limbs.leftArm,1)||!validArm(limbs.rightArm,-1)||!validLeg(limbs.leftLeg)||!validLeg(limbs.rightLeg))
      throw Error('Preview joints do not form upright symmetric A-pose: '+JSON.stringify(limbs));
+   const labelPlacement=await page.evaluate(()=>{
+     const stage=document.querySelector('.hero-editor-stage').getBoundingClientRect();
+     const label=document.querySelector('#heroPreviewStatus');
+     const box=label.getBoundingClientRect();
+     return {ready:label.classList.contains('ready'),stageTop:stage.top,stageBottom:stage.bottom,labelTop:box.top,labelBottom:box.bottom};
+   });
+   if(!labelPlacement.ready||labelPlacement.labelTop<labelPlacement.stageTop||
+     labelPlacement.labelBottom>labelPlacement.stageTop+95)
+     throw Error('Hero preview label must stay in top corner and not cover boots: '+JSON.stringify(labelPlacement));
    if(layout.canvas.width<250||layout.canvas.height<250)throw Error('Full body canvas is too small: '+JSON.stringify(layout));
    if(layout.modal.scrollWidth>layout.modal.clientWidth+3)throw Error('Hero editor overflows horizontally: '+JSON.stringify(layout));
    if(config.isMobile){
