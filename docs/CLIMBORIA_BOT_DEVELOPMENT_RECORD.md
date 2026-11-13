@@ -498,3 +498,8 @@ Verified Phase56 CI commit `6627b1c066f0684af6ddd1be97f6c069b402ee54`: CLIMBX re
 ## Phase 58 checkpoint — 2026-11-13 (persistent rate limiting)
 
 Verified Phase57 CI commit `10d7892a84ab3d1abac3750d83252b700777c0b3`: CLIMBX release safety run **43447124124** success and Validate Climboria **43447124105** success; baseline 252 tests. Added DRAFT unapplied private PostgreSQL migration `005_wallet_api_rate_limits.sql` commit `3fc4538f3249944f5bf668bbc9805a0bbd2ad34d`, server-only atomic UPSERT `climbx/pg_wallet_rate_limit.cjs` commit `a9701d5c85c89c1560284dff421b376165aaf08f`, 16 mock tests commit `9e8cdbe1348d06be760df34f03320a1db51fe6fd`, CI wiring `f04d858878452b232099f1844d1565340206b50e`. Target **268 tests**, latest CI NOT YET VERIFIED. Limiter must be injected into HTTP adapter; no production server mounted. Further real PostgreSQL migration/concurrency integration tests, cleanup job, shared per-IP abuse controls, HTTP deadlines and deployment security review required. NO-GO.
+
+
+## Phase 59 checkpoint — 2026-11-13 (real PostgreSQL limiter integration tests)
+
+Phase58 workflow status for commit `f04d858878452b232099f1844d1565340206b50e` returned no runs on initial checks; do not claim 268 passed without verified CI. Added migration 005 to isolated PostgreSQL setup and four actual DB integration checks in `climbx/test_postgres_integration.py`, commit `8f8124441243bafbbc04ea51f11f0790d20798ce`: RLS/revoked privileges, atomic UPSERT counter, window reset, invalid hash CHECK constraint. Target 272 tests (121 offline Python, 11 real PostgreSQL, 140 Node) pending verified CI. No production migration applied, no live server, no Solana on-chain authorization; NO-GO.
