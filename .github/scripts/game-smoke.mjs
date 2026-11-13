@@ -296,6 +296,7 @@ try {
     !deathLoot.recoveredStored||!deathLoot.clearedOnRecovery||!deathLoot.expired||
     !deathLoot.mapAfterDeath?.visible||!deathLoot.mapAfterDeath?.orange||
     !deathLoot.mapAfterReload?.visible||!deathLoot.mapAfterReload?.orange||
+    !deathLoot.farDirectionVisible||!deathLoot.nearDirectionVisible||
     deathLoot.mapAfterRecovery?.visible||deathLoot.mapAfterExpiry?.visible||
     deathLoot.droppedEvents!==2||deathLoot.recoveredEvents!==1)
     errors.push('Jarrell death carried-loot drop/E recover/3-minute expiry lifecycle failed: '+JSON.stringify(deathLoot));
@@ -303,8 +304,9 @@ try {
   const lootDirection=await page.evaluate(()=>window.__climboriaJarrellsPeak?.lootRecoveryDirectionAudit?.()??null);
   if(!lootDirection||lootDirection.front?.arrow!=='↑'||lootDirection.right?.arrow!=='→'||
     lootDirection.left?.arrow!=='←'||lootDirection.back?.arrow!=='↓'||
-    lootDirection.diagonal?.arrow!=='↗'||lootDirection.rotatedFront?.arrow!=='↑'||
-    Object.values(lootDirection).some(v=>v?.meters!==20&&v?.arrow!=='↗'))
+    lootDirection.diagonal?.arrow!=='↗'||lootDirection.diagonal?.meters!==14||
+    lootDirection.rotatedFront?.arrow!=='↑'||
+    ['front','right','left','back','rotatedFront'].some(key=>lootDirection[key]?.meters!==20))
     errors.push('Camera-relative dropped-loot direction cue failed cardinal/diagonal/rotated views: '+JSON.stringify(lootDirection));
   console.log('Jarrell dropped-loot direction audit:',JSON.stringify(lootDirection));
 
