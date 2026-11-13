@@ -33,6 +33,12 @@ function fixture(cluster = 'devnet') {
   };
 }
 
+test('Token-2022 program ID is the official solana-program/token-2022 interface address', () => {
+  // Source: https://github.com/solana-program/token-2022/blob/e8ca680ca8aeb12f9598524b003c776c6a4168f2/interface/src/lib.rs
+  assert.equal(TOKEN_PROGRAMS.token2022, 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+  assert.notEqual(TOKEN_PROGRAMS.token2022, 'TokenzQdBNbLqP5VEhdkAS6EPFJGYtTLtqk9vuD7hJp');
+});
+
 test('cluster CPMM, Token/Token-2022 and WSOL are bound without granting launch approval', () => {
   for (const cluster of ['mainnet','devnet']) {
     const result = inspectMigrationPolicySnapshot(cluster, fixture(cluster));
