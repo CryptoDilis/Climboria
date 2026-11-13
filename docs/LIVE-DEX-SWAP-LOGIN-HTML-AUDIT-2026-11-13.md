@@ -134,3 +134,57 @@ Observed:
 2. Build a real production-origin smoke suite for DEX market data and Jupiter token search/quote.
 3. Implement the missing Login lifecycle items (password recovery, guest CAPTCHA, secure guest linking, provider verification) and replace mock-only auth checks with real staging end-to-end tests.
 4. Continue route semantic/security validation before considering any Swap execution enablement.
+
+
+---
+
+## Owner priority update — 2026-11-13 (continuation checkpoint)
+
+The owner clarified that the account/provider setup may already have been supplied in earlier conversations. Do **not** ask for credentials again by default. First reconcile repository configuration, prior setup evidence, and safe live checks. Never display, copy into source, or request secret values in chat.
+
+### Account/provider readiness ledger (evidence-based)
+
+| Dependency | Latest safe evidence available | Status / next action |
+|---|---|---|
+| Cloudflare Account ID | Previously reported present in GitHub Actions secrets; never expose the value | **Reported configured** — validate through deployment workflow, not by printing it |
+| Cloudflare API token | Screenshot-based prior report says `CLOUDFLARE_API_TOKEN` existed | **Reported configured; authorization not revalidated** — use the existing encrypted secret and let the workflow validate access |
+| Jupiter API key | Screenshot-based prior report says `JUPITER_API_KEY` was added; earlier deployment report says Worker secret upload succeeded | **Reported configured** — confirm current deployment health and key readiness through the workflow |
+| Cloudflare rate-limit namespace | Previously reported repository variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` was added | **Reported configured** — workflow validates positive integer; verify it is account-correct |
+| Solana RPC URL | No reliable confirmation found in the available prior records | **Unverified** — workflow will tell us if the encrypted `SOLANA_RPC_URL` is missing/invalid; do not ask owner to resend unless that exact check fails |
+| Cloudflare Worker/custom domain | A prior deployment was reported successful, but `api.climboria.fun` health/DNS failed at that time; current tracked deployment guide still says Worker not deployed | **NOT production-verified** — resolve this evidence conflict by checking DNS/TLS and `GET /health` after a controlled workflow run. Do not claim deployed/live until the live endpoint passes |
+| Uniswap API key | No evidence found that a key was supplied or configured | **Not verified / likely outstanding** — implement Base adapter and key handling first; request owner action only if required after code-side preparation |
+| Google OAuth credentials/provider | No evidence found of credentials or Supabase Google provider being configured and tested | **Not verified** — inspect Supabase/provider configuration and run real callback test |
+| X (Twitter) OAuth credentials/provider | No evidence found of credentials or Supabase X provider being configured and tested | **Not verified** — inspect Supabase/provider configuration and run real callback test |
+| Supabase dashboard/provider configuration | Client code exists; no reliable evidence of production dashboard settings, callback allowlists, SMTP, CAPTCHA or RLS acceptance | **Not production-verified** — verify each setting in dashboard and test real flows |
+| Real test accounts | No evidence found of completed real production/staging end-to-end account tests | **Not verified** — create/use controlled test identities for email, Google, X and wallet login |
+| Wallet approvals / signed transactions | No evidence found of owner-approved real wallet lifecycle tests | **Not verified** — only request approvals when the controlled Devnet test stage is ready; never request seed phrases/private keys |
+
+**Important reconciliation note:** Earlier records report that Cloudflare secrets and a Worker deployment step were completed, but the same historical deployment attempt failed its custom-domain health/DNS check. The current main-branch deployment guide still describes the Worker as not deployed. Therefore, secret presence is treated as *reported*, not re-proven; Worker production readiness is *unverified* until the current endpoint health check passes.
+
+### Owner-approved execution order
+
+1. **P1 — Reconcile Cloudflare authorization and existing encrypted secrets.** Reuse existing `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `JUPITER_API_KEY`, and `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` if still present. Check `SOLANA_RPC_URL` without exposing it. Inspect Cloudflare zone/custom-domain/DNS state. Run **Actions → Deploy Climboria API** only after source tests pass; keep execution disabled. Verify TLS, CORS, rate limiter, Durable Object, Jupiter search/quote and production `/health`.
+2. **P2 — Complete safe Jupiter/Solana Swap readiness.** Fix any deployment/health failures from their exact logs; verify order persistence, expiry, replay rejection, request-to-wallet binding, failure reconciliation and quote/order behavior. Complete route-level transaction semantics, independent security review and controlled Devnet sign→execute→confirm→balance tests. Keep mainnet execution gates closed until every gate passes.
+3. **P3 — Implement Base Uniswap Swap.** Build a separate Base adapter (chain-aware token metadata, quote, allowance/check-approval, calldata/transaction preparation, wallet signing, broadcast, receipt/finality and error reconciliation). Keep API keys server-side. Add tests and never route Base execution through the Solana Jupiter adapter. Uniswap API-key status is currently unverified.
+4. **P4 — Verify DEX production data.** Validate actual Solana/Base pool identity, mint/chain identity, pair orientation, liquidity/volume/price freshness, exact-pool chart mapping, rate limits, provider outages, stale states and mobile/desktop behavior from the production origin. Clearly distinguish Base market discovery from Base swap execution.
+5. **P5 — Complete Login providers and account lifecycle.** Verify Supabase production URL/redirect allowlists, email/SMTP confirmation and password recovery; configure and test Google and X OAuth callbacks; verify Solana/Ethereum signature challenge and replay protection; implement/verify CAPTCHA guest login and secure guest-to-account linking; test profile/game-save persistence, RLS, account isolation, session refresh and sign-out.
+6. **P6 — Real end-to-end acceptance.** Use controlled real test accounts and owner-approved wallet interactions only after staging/Devnet checks pass. Capture evidence for every supported login and swap route; only then mark each feature LIVE.
+
+### Per-commit progress record
+
+For every successful implementation commit, append a dated checkpoint here containing:
+- priority/task ID and concise change summary;
+- exact commit SHA and changed paths;
+- exact workflow run IDs and terminal conclusion for the exact commit head;
+- test counts and relevant production/staging verification evidence;
+- blockers or failed checks with the failing job/step, root cause, targeted counter-fix and rerun evidence;
+- the single exact next task.
+
+A code commit is not a live-release success by itself. A workflow pass is not production-provider acceptance. Never record a credential value, wallet secret, or fabricated success.
+
+### Current continuation checkpoint
+
+- [x] Reconciled available prior conversation evidence: Cloudflare account ID/API token, Jupiter key and rate-limit namespace were previously reported present; do not ask for them again unless automated validation proves one missing or invalid.
+- [x] Identified unresolved historical discrepancy: a prior Worker deploy was reported successful, but production custom-domain health/DNS failed and current deployment docs still say not deployed.
+- [x] Recorded Uniswap key, Google/X OAuth setup, Supabase dashboard/provider acceptance, real test accounts and wallet approvals as unverified rather than assuming they were supplied.
+- [ ] **Next exact task:** inspect the latest main-branch deployment workflow runs and current live `https://api.climboria.fun/health`/DNS evidence; if the endpoint is not healthy, inspect the exact deployment job logs and fix the actual root cause before any redeploy. Keep all swap execution gates disabled.
