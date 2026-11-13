@@ -25,6 +25,7 @@ try {
       loaded:!!document.querySelector('#heroPreviewStatus')?.textContent?.includes('LIVE 3D PREVIEW')};
   });
   if(!creatorVisual.loaded||creatorVisual.canvasWidth<200||creatorVisual.canvasHeight<250) errors.push('Full-body 3D Hero preview canvas did not render at playable size: '+JSON.stringify(creatorVisual));
+  await anonymous.screenshot({path:'climboria-hero-creator-desktop.png'});
   await anonymous.locator('#heroPreviewCanvas').hover();
   await anonymous.mouse.wheel(0,150);
   await anonymous.locator('#saveHeroButton').click();
