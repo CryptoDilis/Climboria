@@ -1461,3 +1461,37 @@ The immediate failure is an upstream availability/coverage problem: the IDL Expl
 - [ ] Keep Jupiter/Worker execution disabled until provenance, account-meta, Devnet settlement and independent security gates pass.
 
 Release posture: the gameplay run itself passed its assertions, but the workflow was red due to a confirmed harness bug. The targeted fix is committed but not yet verified by a rerun. CPI trace evidence is green but limited to two single-route matches. IDL history remains pending. No production Swap deployment or live transaction execution is claimed.
+
+## 2026-11-13 — post-fix exact-head rerun status (PR #269)
+
+### Results observed after gameplay JSON writer fix
+
+| Workflow | Run | Job | Terminal status / observation |
+|---|---:|---:|---|
+| Validate Climboria | 43338793948 | 131601650304 | SUCCESS — all 25 steps completed; security/API tests, Wrangler dry-run, auth syntax, homepage, DEX/Swap and game syntax checks passed |
+| Browser Smoke | 43338792628 | 131601677270 | CANCELLED during step 9, Start local web server; Playwright install and both live provider contract captures completed successfully; downstream checks skipped |
+| Jupiter V6 CPI Trace | 43338792615 | 131601744651 | CANCELLED during step 6, finalized public Jupiter V6 route trace fetch; account-key mapping and pagination/rate-limit tests passed |
+| Jupiter IDL History | 43338792634 | 131601636785 | IN PROGRESS at direct on-chain history reconstruction; steps 1–6 succeeded, no terminal evidence yet |
+
+### Cancellation diagnosis boundaries
+
+- Browser Smoke run 43338792628 did not reach the local web server, gameplay script, or JSON summary parser. The log ends with cleanup and orphan-process termination; it does not identify the cancellation initiator. This run therefore does not verify or refute the committed JSON newline fix.
+- CPI Trace run 43338792615 reached the finalized public Jupiter V6 trace fetch after both deterministic tests passed. The log ends with the explicit GitHub Actions message "The operation was canceled." No report-upload step ran. The evidence fetch is incomplete, not a code assertion failure. The exact cancellation initiator is not established by the available job log.
+- Both cancelled jobs were rerun once by job ID. Those retries started as new jobs (Browser job 131601953375; Validate job 131601989316; CPI job 131601457513), but the branch's later workflow activity again superseded/cancelled Browser and CPI before their substantive checks completed. The exact actor/cause is not asserted without event-level evidence.
+- Validate rerun job 131601650304 completed successfully, confirming the branch's configured validation suite after the JSON-writer change is syntactically valid. This does not replace the Browser Smoke end-to-end parser verification.
+- IDL History job 131601636785 was still running at the latest inspection. Its direct reconstruction step remains the critical evidence dependency; do not launch duplicate IDL runs while this one is active.
+
+### Current top-priority checklist
+
+- [x] Identify and commit the gameplay summary JSON newline correction.
+- [x] Record the earlier gameplay assertions PASS and distinguish the harness serialization failure.
+- [x] Validate Climboria rerun passed (run 43338793948).
+- [x] Deep-inspect Browser Smoke cancellation: stopped before local server/gameplay/parser; no gameplay failure inferred.
+- [x] Deep-inspect CPI Trace cancellation: stopped during finalized trace fetch; no report produced; no assertion failure inferred.
+- [ ] Obtain one uninterrupted Browser Smoke run on the corrected head; require the full job, valid summary JSON, and screenshot artifact.
+- [ ] Obtain uninterrupted finalized CPI trace evidence; extend beyond single-route examples to multi-hop/split cases.
+- [ ] Finish IDL History run 43338792634; verify unique historical revision coverage for candidate slot 468153382.
+- [ ] If on-chain reconstruction cannot proceed because Actions secret SOLANA_RPC_URL is absent or endpoint is not archival-capable, repository owner must configure that encrypted secret outside chat.
+- [ ] Preserve all signing/execution kill switches until IDL provenance, account privileges, Devnet settlement and independent security review pass.
+
+Release posture: Validate is green. Browser Smoke and CPI Trace remain incomplete because their reruns were cancelled before the relevant assertions/evidence capture. The gameplay summary fix is committed but still awaits an uninterrupted end-to-end browser run. IDL History is still in progress. No production deployment or live transaction execution is claimed.
