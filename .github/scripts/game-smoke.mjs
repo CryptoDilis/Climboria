@@ -306,7 +306,8 @@ try {
   if(!caveGround?.ground||caveGround.rockInstances<30||caveGround.vertices!==1363||
     caveGround.alphaComponents!==4||caveGround.edgeAlpha>.05||
     caveGround.centerAlpha<.7||!caveGround.hasColorTexture||
-    !caveGround.hasBumpTexture||caveGround.textureRepeat!==7)
+    !caveGround.hasBumpTexture||caveGround.textureRepeat!==7||
+    !caveGround.frustumCulled||caveGround.terrainGap>0.001)
     errors.push('Cave entrance terrain detail failed alpha edges, texture, or budget invariant: '+JSON.stringify(caveGround));
   console.log('Cave entrance detailed ground audit:',JSON.stringify(caveGround));
   const sanctuaryPillars=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryPillarCollisionAudit?.()??null);
