@@ -410,6 +410,17 @@ const TOD=[
 let todI=0,wx=0,flash=0,thT=5;const weatherNames=['Clear','Rain','Thunderstorm'];
 const WEATHER_INTERVAL_MS=900000,WEATHER_STORAGE_KEY='climboria_jarrell_weather_v1';
 let weatherElapsedMs=0,weatherVisual=0,weatherSaveMs=0;
+let weatherLastFrameTime=performance.now();
+// Physics is clamped to 50 ms/frame; weather uses independent REAL VISIBLE
+// elapsed time so weak mobiles still change weather after 15 minutes.
+function visibleWeatherDeltaMs(now,previous,hidden,ready){
+ if(hidden||!ready||!Number.isFinite(previous))return 0;
+ return Math.max(0,Math.min(10000,now-previous));
+}
+addEventListener('visibilitychange',()=>{
+ weatherLastFrameTime=performance.now();
+ if(document.hidden)persistWeather();
+});
 try{
  const stored=JSON.parse(localStorage.getItem(WEATHER_STORAGE_KEY)||'null');
  if(stored?.version===1&&Number.isInteger(stored.index)&&stored.index>=0&&stored.index<weatherNames.length&&
@@ -427,10 +438,13 @@ function weatherPhaseStep(index,elapsedMs,deltaMs){
 function persistWeather(){
  try{localStorage.setItem(WEATHER_STORAGE_KEY,JSON.stringify({version:1,index:wx,elapsedMs:weatherElapsedMs}))}catch(_){}
 }
-function advanceWeather(seconds){
- const state=weatherPhaseStep(wx,weatherElapsedMs,Math.max(0,seconds)*1000);
+function advanceWeather(){
+ const now=performance.now();
+ const deltaMs=visibleWeatherDeltaMs(now,weatherLastFrameTime,document.hidden,window.__climboriaGameReady===true);
+ weatherLastFrameTime=now;
+ const state=weatherPhaseStep(wx,weatherElapsedMs,deltaMs);
  wx=state.index;weatherElapsedMs=state.elapsedMs;
- weatherSaveMs+=Math.max(0,seconds)*1000;
+ weatherSaveMs+=deltaMs;
  if(state.changes||weatherSaveMs>=30000){
   weatherSaveMs=0;persistWeather();
   if(state.changes)emit('weather-change',{weather:weatherNames[wx],changes:state.changes});
@@ -447,6 +461,9 @@ function automaticWeatherAudit(){
  const longJump=weatherPhaseStep(1,450000,1800000);
  const noFakeElapsed=weatherPhaseStep(1,200000,0);
  return {intervalMs:WEATHER_INTERVAL_MS,justBefore,at15Min,at30Min,at45Min,resumable,longJump,noFakeElapsed,
+  slowFrameElapsed:visibleWeatherDeltaMs(1500,1000,false,true),
+  backgroundElapsed:visibleWeatherDeltaMs(1500,1000,true,true),
+  notReadyElapsed:visibleWeatherDeltaMs(1500,1000,false,false),
   manualWeatherControlMissing:!document.getElementById('weather-cycle-control'),restoredWeatherIndex:wx,storedElapsedMs:weatherElapsedMs};
 }
 const cur={top:TOD[0].top.clone(),hor:TOD[0].hor.clone(),sun:TOD[0].sun.clone(),si:2.2,hi:.55,nt:0,el:.17,az:2.2};
@@ -2138,7 +2155,7 @@ function gameTick(dt,cp){
  // Recomputing 240x240 height + multi-octave noise samples every frame stalls gameplay.
 
  // Natural weather changes every 900 active gameplay seconds, never via settings.
- advanceWeather(dt);
+ advanceWeather();
  weatherVisual+=(wx-weatherVisual)*Math.min(1,dt/8);
  const wetness=Math.max(0,Math.min(1,weatherVisual));
  scene.fog.color.copy(cur.hor).lerp(new T3.Color('#71869a'),.38*wetness);
