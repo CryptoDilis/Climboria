@@ -1,6 +1,7 @@
 import { encodeBase58, decodeBase58 } from "./transaction-validation.mjs";
 import { validateRpcUrl, readBoundedBody } from "./solana-rpc.mjs";
 import { RAYDIUM_V4_PROGRAM_IDS, RAYDIUM_V4_CLASSIC_TOKEN_PROGRAM } from "./raydium-v4-direct-evidence.mjs";
+import { deriveRaydiumV4AmmAuthorityPda } from "./raydium-v4-authority-pda.mjs";
 
 /**
  * Read-only, single-finalized-context Raydium V4 AMM/pool/vault evidence.
@@ -13,7 +14,7 @@ import { RAYDIUM_V4_PROGRAM_IDS, RAYDIUM_V4_CLASSIC_TOKEN_PROGRAM } from "./rayd
  *
  * This verifies ONLY the public RPC snapshot relationships enumerated below,
  * NOT Jupiter CPI account ordering, market data, program bytecode parity,
- * Raydium authority PDA derivation, fee collection or token transfers.
+ * fee collection or token transfers. The async RPC collector additionally\n * verifies the authority PDA from raw on-chain AMM nonce; the synchronous\n * inspector does not, and explicitly reports it as unverified.
  * Not imported by the Worker order/execute path. Never an approval token.
  */
 const SPL_TOKEN = RAYDIUM_V4_CLASSIC_TOKEN_PROGRAM;
@@ -228,5 +229,26 @@ export async function fetchRaydiumV4FinalizedPoolEvidence({
   const verdict = inspectRaydiumV4FinalizedPoolSnapshot({
     network, addresses, expectedAuthority, accounts: payload.result.value, contextSlot
   });
-  return Object.freeze({ ...verdict, rpcFinalizedAccountSnapshotRead: true });
+  // Independently derive the Raydium AMM vault authority using the nonce
+  // embedded in the fetched pool's raw 752-byte state. An arbitrary
+  // caller-supplied expectedAuthority is NOT a cryptographic proof.
+  // This is read-only: it must never promote this evidence to Jupiter
+  // CPI approval or permit wallet-signable orders.
+  const pda = await deriveRaydiumV4AmmAuthorityPda({
+    network, nonce: verdict.pool.nonce
+  });
+  if (pda.authority !== expectedAuthority ||
+      verdict.coinVault.owner !== pda.authority ||
+      verdict.pcVault.owner !== pda.authority) {
+    fail("supplied AMM authority and vault owners do not match the independently derived PDA");
+  }
+  return Object.freeze({
+    ...verdict,
+    expectedAuthority: pda.authority,
+    ammAuthorityPdaIndependentlyVerified: true,
+    authorityPdaSeed: pda.seed,
+    rpcFinalizedAccountSnapshotRead: true,
+    // This flag must never become true from merely reading pool RPC data.
+    approvedForJupiterCpi: false
+  });
 }
