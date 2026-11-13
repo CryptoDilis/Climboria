@@ -1,6 +1,8 @@
 'use strict';
 // Phase95: CLIMBX-only execution boundary. No transaction execution capability exists.
 // Neither wallet ownership, local simulation, nor devnet tool presence can authorize a swap.
+// This function is read-only: it must not mutate grant counters, sign, submit,
+// inspect caller-supplied proof objects, or imply that a transaction is approved.
 function authorizeBotExecution({walletBinding,policySimulation,grantSimulation,routePreflight,onChainProof}={}){
  const blocked=reason=>({authorized:false,mayExecute:false,reason});
  try {
