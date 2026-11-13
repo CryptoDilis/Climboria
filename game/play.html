@@ -285,7 +285,9 @@ function caveCoastalFloorAt(localZ){
 function caveCoastalTerrainAt(x,z){
  const local=caveLocalCoords(x,z),r=CAVE_COASTAL_ROUTE;
  const cross=1-ss(r.walkHalfWidth,10.5,Math.abs(local.x-r.localX));
- const start=ss(-45,-52,local.z),end=1-ss(r.exitZ,r.exitZ-20,local.z);
+ // Fully flatten the existing north-chamber threshold before the descent:
+ // leaving the blend at -50 previously made a 6.9-grade upward seam at -50.08.
+ const start=ss(-38,-43,local.z),end=1-ss(r.exitZ,r.exitZ-20,local.z);
  return {local,mask:cross*start*end,floor:caveCoastalFloorAt(local.z)};
 }
 function caveNorthChamberTerrainMask(localX,localZ){
