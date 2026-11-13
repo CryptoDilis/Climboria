@@ -1581,3 +1581,44 @@ All steps in all four jobs completed successfully. The IDL job completed on-chai
 - Reconcile PR #269 with latest main: PR remains open/draft/unmerged, GitHub reports mergeable=false, and base SHA is `0fa8e987aec4d6e6bc7590363efa7d20fde79422`.
 - Expand finalized CPI traces to multi-hop/split routes, DEX order permutations, transfer-hook slices and variable Meteora BinArray counts; establish runtime cursor behavior and CPI-requested privileges; complete adapter-specific provenance.
 - Keep signing/execution disabled and both security-review flags false. No production deployment, Devnet settlement acceptance, independent review, or LIVE Swap claim is established.
+
+
+## 2026-11-13 — PR #269 mainline sync and reconciled exact-head verification (code head 7516d1c)
+
+### Safe mainline reconciliation
+
+- [x] Reconciled the feature branch with current main after auditing all 28 commits from the original merge base. The mainline-only delta was documentation-only.
+- [x] Synced current main versions of `README.md`, `docs/REPO-READINESS-AUDIT-2026-11-13.md`, `docs/ACTIVE-HANDOFF-2026-11-11.md`, and `docs/LIVE-DEX-SWAP-LOGIN-HTML-AUDIT-2026-11-13.md`. Preserved PR-specific README history in `docs/archive/PR-269-README-HISTORICAL-LOG-2026-11-13.md`; archive explicitly states it is not a priority authority.
+- [x] Compared recursive Git trees: all 96 paths from current main are present in the PR tree; no mainline path is missing. The 9 differing code/workflow blobs are PR implementation changes; the inspected mainline commits did not modify those files.
+- [x] Created merge-sync commit `7516d1c83997dfbba79c4eb4c7f157b2e0439bb2` with parents PR branch `84b9e028cfc96c7fa94d2e367e892ffe704a1946` and current main `c4244e709a875ff604df1e5c7d563a1db2479061`. Compare now reports **210 ahead / 0 behind**, merge base equals current main, GitHub reports mergeable=true. PR remains draft and unmerged.
+
+### Reconciled exact-head workflow status
+
+All four workflow runs target tested code head `7516d1c83997dfbba79c4eb4c7f157b2e0439bb2`:
+
+| Workflow | Run | Job | Current result |
+|---|---:|---:|---|
+| Validate Climboria | 43353746679 | 131650714866 | **SUCCESS** |
+| Jupiter V6 CPI Trace Audit | 43353746718 | 131650807074 | **SUCCESS** |
+| Climboria Browser Smoke Test | 43353746700 | 131650760316 | IN PROGRESS |
+| Jupiter IDL History Audit | 43353746705 | 131650715043 | IN PROGRESS |
+
+- Validate: all 14 job steps passed, including Worker security/API tests, Wrangler dry-run, auth/cloud-save syntax, homepage/token copy and DEX/Swap/game HTML/JS checks.
+- CPI Trace: all 10 job steps passed, including duplicate account-key mapping, finalized route pagination/rate-limit recovery, trace fetch and artifact upload. Artifact `14004912793` downloaded. The 50-transaction bounded scan still returned two matching Jupiter/Meteora route headers, both single-step (`routePlanCount=1)); this is not multi-hop/split proof.
+- Browser Smoke: 21 steps passed. At checkpoint, strict Jarrell's Peak desktop/mobile gameplay smoke was still running; no failed step. Provider contract captures, auth isolation, DEX/Swap paths, mobile layouts and provider empty/error states passed.
+- IDL History: setup, syntax, and adapter/LaunchLab audit tests passed. Direct Jupiter IDL reconstruction was still running; no failed step. Do not infer a failure from a long-running public-RPC reconstruction.
+
+### Deeper artifact review and evidence limits
+
+- Re-inspected the prior exact-head Jupiter IDL artifact `14002604160` and CPI artifact `14001114756`. Jupiter route_v2 candidate slot `468153382` remains supported by 75 official Anchor revisions / 91 snapshots, 27 matching history records, exactly one active revision at candidate slot, on-chain IDL owner/payload/discriminator match, and ProgramData deployment slot `468023491` before candidate.
+- Adapter classification from artifact: Kipseli incomplete (no active historical IDL, current ProgramData deployment after candidate, metadata account unavailable); Orca Whirlpool incomplete (on-chain IDL payload/instruction schema mismatch); Meteora DLMM incomplete (latest/history and on-chain payload/schema disagreement); Raydium LaunchLab supported for candidate-slot IDL provenance, with two active revisions that agree and an on-chain payload matching an active history revision. This is not runtime CPI compatibility.
+- The candidate route_v2 transaction contains four route-plan steps and four direct stack-height-2 DEX CPIs (Kipseli, Whirlpool, Meteora DLMM, Raydium LaunchLab). Nested stack-height-3 Token/Token-2022 and Meteora CPIs are separately visible. Parent-account sequence correlation is unique for Kipseli, Whirlpool and Meteora, but not LaunchLab. These are transaction-specific observations, not universal account-cursor proof.
+- Pinned Jupiter ELF static analysis reports 2,435,522 instructions, 1,188 function-registry entries, 40,664 CFG blocks, 9,610 immediate calls and 136 indirect register calls whose target register values remain unresolved. Static analysis explicitly does not recover execution or CPI privileges; therefore it does not establish the runtime handler's DEX account-slice cursor.
+- No workflow has failed on reconciled head at this checkpoint. No root cause or counter-fix is invented. If Browser or IDL terminates unsuccessfully, inspect the exact failed step and full job log/artifact before choosing a distinct counter-fix.
+
+### Next exact tasks
+
+- [ ] Wait for Browser Smoke run `43353746700` and IDL History run `43353746705` to reach terminal state; inspect all steps/logs/artifacts.
+- [ ] For CPI evidence, extend route discovery to select multi-step route headers (`routePlanCount >= 2`) instead of stopping after a few single-step Meteora matches; preserve the continuation cursor and report skipped single-step matches explicitly.
+- [ ] Decode discovered route-plan graphs and correlate each DEX CPI, nested Token-2022/transfer-hook CPI, and variable Meteora BinArray slice without inferring privileges from outer account metas.
+- [ ] Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and signing/execution disabled until independent review and controlled Devnet settlement acceptance.
