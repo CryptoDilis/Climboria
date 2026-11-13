@@ -1,0 +1,75 @@
+name: Launchpad Read-only Anchor IDL Compatibility
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/launchlab-onchain-idl-check.mjs"
+      - ".github/scripts/launchlab-onchain-idl-check.test.mjs"
+      - ".github/workflows/launchpad-readonly-idl.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/scripts/launchlab-onchain-idl-check.mjs"
+      - ".github/scripts/launchlab-onchain-idl-check.test.mjs"
+      - ".github/workflows/launchpad-readonly-idl.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: launchpad-anchor-idl-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Reject changed instruction discriminators and account layouts
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install temporary pinned Solana public-key library (no repo lockfile changes)
+        run: npm install --prefix /tmp/launchlab-idl-tools --no-save --ignore-scripts @solana/web3.js@1.98.4
+      - name: Syntax and fail-closed IDL/SDK regression tests
+        env:
+          LAUNCHLAB_TOOLS_PREFIX: /tmp/launchlab-idl-tools
+        run: |
+          node --check .github/scripts/launchlab-onchain-idl-check.mjs
+          node --test .github/scripts/launchlab-onchain-idl-check.test.mjs
+
+  live-readonly:
+    name: Compare official pinned SDK/IDL against finalized Mainnet and Devnet IDLs
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download immutable official Raydium SDK and IDL reference files
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/launchlab-idl-sources
+          curl --fail --silent --show-error --location --retry 3 --max-time 30 "https://raw.githubusercontent.com/raydium-io/raydium-idl/e7e0c96fe77bcf6a020b84a44c47a722aac8e359/raydium_launchpad/raydium_launchpad.json" -o /tmp/launchlab-idl-sources/launchpad-idl.json
+          curl --fail --silent --show-error --location --retry 3 --max-time 30 "https://raw.githubusercontent.com/raydium-io/raydium-sdk-V2/1cf5bb129dbbb1c76dab67819c3d478349c8ed25/src/raydium/launchpad/layout.ts" -o /tmp/launchlab-idl-sources/layout.ts
+          curl --fail --silent --show-error --location --retry 3 --max-time 30 "https://raw.githubusercontent.com/raydium-io/raydium-sdk-V2/1cf5bb129dbbb1c76dab67819c3d478349c8ed25/src/raydium/launchpad/instrument.ts" -o /tmp/launchlab-idl-sources/instrument.ts
+      - name: Verify downloaded official source hashes before reading RPC
+        run: |
+          set -euo pipefail
+          printf '%s  %s\n' \
+            "963189409945069409f32e345d4adf2892e0b3ca1be504372577fe34a23c6cdb" "/tmp/launchlab-idl-sources/launchpad-idl.json" \
+            "a422af7572b3b0f567ff7ad39f4b099eaf8a551257a77f89a61a3fe603ec2256" "/tmp/launchlab-idl-sources/layout.ts" \
+            "177d418defd36a173d43fafb29a06019a8754c7abe599365885d0b46c1fd8274" "/tmp/launchlab-idl-sources/instrument.ts" | sha256sum --check
+      - name: Install temporary pinned Solana public-key library
+        run: npm install --prefix /tmp/launchlab-idl-tools --no-save --ignore-scripts @solana/web3.js@1.98.4
+      - name: Read finalized Anchor IDL accounts and compare critical SDK/IDL schemas
+        env:
+          LAUNCHLAB_TOOLS_PREFIX: /tmp/launchlab-idl-tools
+        run: |
+          node .github/scripts/launchlab-onchain-idl-check.mjs /tmp/launchlab-idl-sources/launchpad-idl.json /tmp/launchlab-idl-sources/layout.ts /tmp/launchlab-idl-sources/instrument.ts

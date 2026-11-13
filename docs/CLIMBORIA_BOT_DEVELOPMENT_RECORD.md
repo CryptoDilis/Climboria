@@ -1088,3 +1088,205 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Phase111 CI not yet verified.** No DEX code changes; no actual toolchain/validator installed or on-chain execution. CLIMBX real-funds **NO-GO**.
 
 **Next Phase112:** verify browser rerun and Phase111 CI; if DEX browser regression persists, notify DEX owner without modifying their workstream. Provision independently verified Solana local-validator toolchain, then owner-signed grant/revoke/cap prototype with atomicity/replay tests. Continue append-only record.
+
+
+## Phase 111 — 2026-11-14 — validator evidence provenance marker and cancelled CI retry
+
+**Phase110 CI** on `f5d745050fb3eb76044d13904e80ff4050878547`: Validate `43472642377` SUCCESS; CLIMBX release safety `43472642050` SUCCESS; Browser Smoke `43472642088` CANCELLED (not passed). Retried cancelled browser-smoke job `132052133476` via GitHub rerun; accepted, completion pending.
+
+**Phase111 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `014bded599fc6cc87875e52afc15bb204096d691`: require validator evidence source marker `LOCAL_PROBE` in the Phase110 checklist gate; missing or alternate source fails closed.
+- `37e8307956a11835cea46c33f0d6363042938e49`: update existing fixtures and add three tests for missing/remote provenance and explicit `mayExecute:false` even when callers claim trade authorization.
+**Phase111 CI pending** at first check. Note: `source:'LOCAL_PROBE'` is still a **caller-supplied string, not independent attestation**; must not treat as verified validator health, nor use as a release gate for real funds.
+
+**Blockers:** no Rust/Solana/Anchor toolchain available in assistant environment, no real local validator start/RPC probe, no owner-signed on-chain grant/revoke/cap program, no signed devnet execution, no independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase112:** verify Phase111 CI and cancelled Browser Smoke retry; replace self-reported evidence with a runner-executed local validator process and RPC checks in a provisioned toolchain environment; then begin on-chain authorization program. Keep append-only main record.
+
+
+## Phase 112 — 2026-11-14 — read-only localhost Solana validator RPC probe
+
+**Phase111 CI all SUCCESS** on `37e8307956a11835cea46c33f0d6363042938e49`: CLIMBX release safety `43480095143`, Browser Smoke `43480095191`, Validate `43480095074`. Historical Phase110 browser rerun job `132073822052` remains CANCELLED; latest Phase111 browser smoke passed.
+
+**Phase112 commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `0ede584e643e389d8e4061e0ec52488270afaad4`: read-only `climbx/local_validator_rpc_probe.cjs` sends `getHealth` JSON-RPC to explicitly loopback `127.0.0.1` only, bounds timeout/response, and always returns `mayExecute:false`. Does not install tools, start validator, sign or submit transactions.
+- `fab726a0cd6ce27c85953fcf1c42dd5914426a5e`: six mocked local HTTP tests covering success, invalid endpoint, malformed/wrong-id response, unhealthy validator.
+- `6542f0cd75c97d607f03bd93a57e84a54e98fb20`: add probe tests to CLIMBX non-deploying CI.
+**Phase112 CI pending** at first check.
+
+**Actual assistant environment:** rustc/cargo/solana/solana-test-validator/anchor all missing; Node v22.16.0. No validator started; mock HTTP test does not prove real validator availability. Even successful `getHealth` is not program authorization. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase113:** verify Phase112 CI, fix failures; provision approved pinned toolchain and actually start disposable local validator, capture RPC health/version and deterministic on-chain grant/revoke/cap tests. Maintain append-only main record.
+
+
+## Phase 113 — 2026-11-14 — localhost RPC fail-closed response hardening
+
+**Phase112 CI** on `6542f0cd75c97d607f03bd93a57e84a54e98fb20`: CLIMBX release safety `43484986731` SUCCESS, Browser Smoke `43484986696` SUCCESS, Validate `43484986780` PENDING at first Phase113 check. Do not claim all passed until Validate completes.
+
+**Phase113 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `0f27d188cf86f1171c24aa69e087da8f606a2f03`: fail-closed handling for null/hostile RPC probe options; timeout on stalled response stream; explicit `RPC_UNHEALTHY` reason instead of labeling unsuccessful health checks `RPC_HEALTH_CHECK`.
+- `cfdbc55e5f30cbd8b76468b31b30937dbedce592`: four tests for null/hostile options, unhealthy RPC result and stalled local response timeout.
+**Phase113 CI pending** at first check.
+
+**Limits:** localhost test server is mocked, not a running Solana validator. No Rust/Cargo/Solana/Anchor toolchain or on-chain grant/revoke/cap prototype verified. No real-funds trading (**NO-GO**), no Swap/DEX/Launchpad/game edits.
+
+**Next Phase114:** verify Phase112 Validate and Phase113 CI, inspect failures; obtain pinned toolchain and run actual local validator/RPC test; prioritize signed grant/revoke/cap prototype and on-chain replay protection. Maintain append-only main record.
+
+
+## Phase 114 — 2026-11-14 — compose local command + localhost RPC readiness
+
+**Prior CI:** Phase112 `6542f0cd75c97d607f03bd93a57e84a54e98fb20`: CLIMBX release safety `43484986731` SUCCESS, Browser Smoke `43484986696` SUCCESS, Validate `43484986780` CANCELLED. Phase113 `cfdbc55e5f30cbd8b76468b31b30937dbedce592`: CLIMBX release safety `43485176798` SUCCESS, Browser Smoke `43485176714` SUCCESS, Validate `43485176620` PENDING at Phase114 check. Neither phase should be described as all green.
+
+**Phase114 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `d8c2177d53a31ec7a5da7ac9095ed5c8abf22051`: new `climbx/collect_local_readiness.cjs` combines actual local executable `--version` probes and localhost `getHealth` RPC; skips RPC when any tool missing; always returns `mayExecute:false`. Runnable via `node climbx/collect_local_readiness.cjs` on a provisioned machine. Does not start validator, prove validator identity, or authorize trading.
+- `c4fcd0b1c6745fe77266d0786d2487dac62a1617`: five deterministic tests covering missing tool, healthy/unhealthy RPC, exception and caller-claimed execution.
+- `8a21fec97d67f6b15797943a6af5025954db5283`: wire collector tests into non-deploying CLIMBX CI.
+**Phase114 CI pending** at first check. CI unit tests mock command and RPC outcomes; no real validator test claimed.
+
+**Blockers:** Rust/Cargo/Solana/Anchor unavailable in assistant environment; no actual validator, signed grant/revoke program, atomic cap/nonce enforcement, devnet signed E2E or independent audit. Real-funds trading **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase115:** verify Phase113 Validate and Phase114 CI, inspect failures; run collector on a provisioned local validator machine and capture real outputs; then build on-chain owner-grant prototype with deterministic validator tests. Keep append-only main record.
+
+
+## Phase 115 — 2026-11-14 — absolute local RPC deadline against trickle responses
+
+**Phase114 CI all SUCCESS** on `8a21fec97d67f6b15797943a6af5025954db5283`: Validate `43485737667`, CLIMBX release safety `43485737288`, Browser Smoke `43485737311`. Historical Phase113 Validate `43485176620` CANCELLED.
+
+**Phase115 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `82196c6e974ef48f2d8b84221987acb6fdc374f3`: enforce absolute timeout in localhost RPC health probe; prior socket inactivity timeout could be bypassed by trickling bytes. Timer cleared after terminal result.
+- `9b3417473cd756d01ab4c9787825efa39fe7717b`: add two regression tests for trickling response and oversized RPC payload.
+**Phase115 CI pending** at first check. These are mock HTTP tests; no actual Solana validator started.
+
+**Security state:** read-only probes and off-chain simulations, no Rust/Cargo/Solana/Anchor available in assistant environment, no signed on-chain grant/revoke/cap program, no verified devnet trading, no audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase116:** verify Phase115 CI, fix any failures; provision compatible pinned Solana toolchain and actually run disposable validator with captured version/RPC evidence; proceed to owner-controlled on-chain grant/revoke and atomic cap/replay tests. Keep append-only main record.
+
+
+## Phase 116 — 2026-11-14 — fail-closed readiness collector hostile inputs
+
+**Phase115 CI all SUCCESS** on `9b3417473cd756d01ab4c9787825efa39fe7717b`: CLIMBX release safety `43486192473`, Validate `43486192790`, Browser Smoke `43486192432`.
+
+**Phase116 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `16ae295a1452c3f13b545d6f9b5f403286b249f8`: harden `climbx/collect_local_readiness.cjs` against null/primitive/array options, hostile getters, non-function probe dependencies, null or hostile RPC responses. Always fail closed and `mayExecute:false`.
+- `9133493cbbabdea0aebc650382d55818220074a8`: five regression tests for invalid/hostile readiness inputs and RPC outputs.
+**Phase116 CI pending** at first check. Existing CLIMBX workflow includes collector tests. No actual validator has been started by this work.
+
+**Security state:** off-chain, read-only tooling and mocks only. No verified Rust/Cargo/Solana/Anchor toolchain, owner-controlled on-chain grant/revoke/cap program, signed devnet E2E or independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase117:** verify Phase116 CI, inspect failures; execute readiness command on a pinned Solana toolchain with an actual disposable validator; prioritize atomic on-chain grant/revoke/nonce/cap enforcement and signed devnet tests. Maintain append-only main record.
+
+
+## Phase 117 — 2026-11-14 — localhost RPC peer enforcement
+
+**Phase116 CI all SUCCESS** on `9133493cbbabdea0aebc650382d55818220074a8`: CLIMBX release safety `43486569017`, Validate `43486568776`, Browser Smoke `43486568959`.
+
+**Phase117 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `95050f604a45ff1489dc8297d4794a31f4c95139`: require actual TCP RPC peer address `127.0.0.1` and disable HTTP agent reuse in the read-only localhost health probe. If peer is not loopback, fail closed. This is still only local network health, not Solana validator identity or authorization.
+- `93befe9794e9ead42b6dd23eb431ca3c2d414b92`: add localhost socket peer regression test.
+**Phase117 CI pending** at first check. Existing CLIMBX non-deploying workflow covers the probe test suite.
+
+**Security state:** no actual Solana local validator started or proven, no Rust/Cargo/Solana/Anchor toolchain verified, no on-chain owner grant/revoke/cap/nonce program, no signed devnet E2E or audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase118:** verify Phase117 CI; provision pinned toolchain on runner or controlled development host and run real disposable validator; collect actual command versions and RPC evidence; begin on-chain grant/revoke prototype and atomic tests. Maintain append-only main record.
+
+
+## Phase 118 — 2026-11-14 — owner-controlled on-chain authorization implementation specification
+
+**Phase117 CI all SUCCESS** on `93befe9794e9ead42b6dd23eb431ca3c2d414b92`: Validate `43486842646`, CLIMBX release safety `43486842433`, Browser Smoke `43486842583`.
+
+**Phase118 branch commit** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `7660e6e80c3179ea4cfd09b72e5c38d85442dbc1`: new `climbx/ONCHAIN_AUTHORIZATION_PROGRAM_SPEC.md`, specifying owner-signed grant/revoke, grant/receipt PDAs, program-controlled token vaults, max five mints, executor signature, expiry and last-30-minute entry lock, atomic nonce and spend cap enforcement with restricted DEX-only CPI, replay protection, owner withdrawal, reconciliation, and adversarial local-validator/devnet tests.
+**Phase118 is a design-only documentation commit**; no executable program or new test CI required. Do not claim a working Solana program or successful local validator test.
+
+**Blockers:** Rust/Cargo/Solana/Anchor toolchain not verified in assistant environment; no local validator started, no reviewed on-chain program, no signed devnet E2E, no independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase119:** turn the spec into an isolated Anchor/Rust program scaffold with owner-signed grant/revoke and tests when toolchain is available; verify CLIMBX CI and capture real local-validator evidence. Keep append-only main record.
+
+
+## Phase 119 — 2026-11-14 — isolated Anchor grant/revoke Rust scaffold
+
+**Phase118 CI all SUCCESS** on `7660e6e80c3179ea4cfd09b72e5c38d85442dbc1`: Validate `43487544097`, CLIMBX release safety `43487544128`, Browser Smoke `43487544032`.
+
+**Phase119 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `765f892952522fd2e54e62d07a37b26cb526241f`: isolated Anchor 0.30.1 Cargo manifest `climbx/programs/climbx-authorization/Cargo.toml`.
+- `785ae4b6cde64d9c50118181fac283fc431b60bd`: `src/lib.rs` owner-signed grant creation/revocation with grant PDA, max-five distinct mint validation, expiry/cap validation and stored grant fields; **no execute or swap instruction**.
+- `015450e41b0b542285270ae8e4978c67a3cbbc32`: README explicitly marks uncompiled/unverified, placeholder System Program ID to replace before deployment, and missing custody/CPI/receipt/nonce/settlement tests.
+**Phase119 CI pending** at first check. Existing JS CI does NOT compile Rust; a green JS workflow is not Rust build evidence.
+
+**Blockers:** no compatible Rust/Cargo/Solana/Anchor toolchain verified, no actual validator started, no signed local-validator E2E, no restricted DEX CPI implementation, no independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase120:** replace placeholder ID with uniquely generated devnet program key, run pinned Cargo/Anchor build and owner-signature/PDA tests on disposable validator; then design and implement strictly constrained execution only after security review. Maintain append-only main record.
+
+
+## Phase 120 — 2026-11-14 — grant-only Anchor scaffold static guard
+
+**Phase119 CI all SUCCESS** on `015450e41b0b542285270ae8e4978c67a3cbbc32`: Validate `43488298364`, Browser Smoke `43488298393`, CLIMBX release safety `43488298085`. These checks do not compile Rust.
+
+**Phase120 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `929a999cf715ae90730542d66bb7e56bf84ac5b1`: `climbx/check_anchor_scaffold.cjs` checks presence of pinned Anchor dependency, placeholder program ID, owner grant/revoke functions and absence of recognized execute/swap/trade/withdraw/transfer function names. Always reports `safeForDeployment:false`, `compiled:false`, `mayExecute:false`. Static guard is narrow and cannot prove code safety.
+- `e6e0067875867d689013a01a7e2d03f671644a9d`: six static guard regression tests.
+- `fbc7b57da2737113ad38150bf9e86a8699052084`: include static guard tests in non-deploying CLIMBX CI.
+**Phase120 CI pending** at first check. Runtime toolchain check in assistant container: Node available; `cargo`, `rustc`, `solana-test-validator`, `anchor` not found. No Rust compilation, validator or deployment claimed.
+
+**Critical:** placeholder `declare_id!("11111111111111111111111111111111")` is System Program ID, intentionally blocks any credible deployment; do not deploy with it. A valid program ID requires an actual program keypair, controlled securely on an approved development host, not an arbitrary generated string. Do not treat static test success as Rust compilation or authorization.
+
+**Next Phase121:** verify Phase120 CI and fix failures. Set up pinned compatible Rust/Solana/Anchor build on approved CI/dev host with disposable keys; replace placeholder only with a properly generated program keypair public key; run `cargo check` and signed local validator grant/revoke tests. Real-funds CLIMBX **NO-GO**; no Swap/DEX/Launchpad/game edits.
+
+
+## Phase 121 — 2026-11-14 — local-only offline Cargo verification gate
+
+**Phase120 CI all SUCCESS** on `fbc7b57da2737113ad38150bf9e86a8699052084`: Validate `43488607519`, CLIMBX release safety `43488607188`, Browser Smoke `43488607255`.
+
+**Phase121 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `fec008960c0dcbd0f58575a33f4a9b4a50578b4d`: `climbx/verify_anchor_cargo_build.cjs`, local-only `cargo check --locked --offline --manifest-path ...` with bounded timeout, no installation or deployment. Returns `mayExecute:false` and `safeForDeployment:false` even on successful compilation.
+- `352d5a8ef73556ba96a50caf4e2f7a8b205b454c`: six mock runner tests covering success, missing Cargo, failed/killed run, hostile runner and invalid runner.
+- `9148052f3d3eaeceb0d557ad70762c3d61923d75`: add verifier **unit tests** to non-deploying CLIMBX CI. CI does **not** invoke actual `cargo check`.
+- `206b8e76346eca3fc2217d074a55a0cfcc622162`: README documents controlled-host prerequisites: reviewed Cargo.lock and cached dependencies. Neither is currently provisioned; offline locked build is expected to fail until then.
+**Phase121 CI pending** at first check. No Rust compilation, Anchor build, actual validator, key generation or deployment claimed.
+
+**Blockers:** compatible toolchain and lockfile not provisioned; no signed local-validator tests, restricted DEX CPI, grant execution, audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase122:** verify Phase121 CI and fix failures; on approved host generate and review Cargo.lock with pinned toolchain, cache dependencies, run actual offline cargo check and capture output, then signed local validator grant/revoke tests. Keep append-only main record.
+
+
+## Phase 122 — 2026-11-14 — enforce max 24-hour grant creation duration
+
+**Phase121 CI all SUCCESS** on `206b8e76346eca3fc2217d074a55a0cfcc622162`: Browser Smoke `43488944723`, CLIMBX release safety `43488944901`, Validate `43488944761`.
+
+**Phase122 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `8ead6287103f6f4a008dcdd26aa6dd326929c69c`: Rust grant creation rejects expiry beyond 24 hours from on-chain clock using checked timestamp addition and dedicated `ExpiryTooLong` error.
+- `6cb88c8aa3ad913041b73cb9634fcf2882288b77`: static scaffold gate checks presence of 24-hour duration cap and overflow-safe addition.
+- `33a89bc28685785d035bdbf98fe16817a18c65d1`: two static guard regression tests for removed/insecure expiry cap.
+- `d6454b8b84c3b2831640602d0ccd83ee52af771c`: document expiry cap and remaining absence of execution-time enforcement.
+**Phase122 CI pending** at first check. Existing CI executes static JavaScript guard tests; does not compile Rust or run a Solana validator.
+
+**Toolchain probe on assistant container:** `cargo`, `rustc`, `solana-test-validator`, `anchor` absent. No real Rust build, signed local-validator test, devnet deployment, DEX CPI, or audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase123:** verify Phase122 CI, fix failures; set up approved pinned Rust/Solana/Anchor build host, generate reviewed Cargo.lock, run actual cargo check and signed local-validator grant/revoke tests. Keep append-only main record.
+
+
+## Phase 123 — 2026-11-14 — owner signer and PDA structural regression guard
+
+**Phase122 CI all SUCCESS** on `d6454b8b84c3b2831640602d0ccd83ee52af771c`: CLIMBX release safety `43491853719`, Validate `43491853713`, Browser Smoke `43491853736`.
+
+**Phase123 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `7e1f217013f4024315f425ce1d8fa9414c20fb12`: `climbx/check_anchor_scaffold.cjs` now fails closed when source lacks Anchor owner Signer, revoke `has_one = owner`, or owner-bound create/revoke PDA seeds.
+- `78f7a88f80ca014638b46e437a59ad5bee4577a7`: four regression tests for absent owner signature, removed revoke owner binding, and altered create/revoke PDA seeds. Existing CI includes this test file.
+**Phase123 CI pending** at first check. This is a narrow textual regression guard only, not proof that Anchor constraints are safe or Rust compiles.
+
+**Direct environment probe 2026-11-14:** `cargo`, `rustc`, `anchor`, `solana-test-validator` all unavailable. No actual Rust compilation, validator, signed devnet test, deployment, or audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase124:** verify Phase123 CI and fix any failure. Prioritize provisioning an approved pinned Rust/Solana/Anchor toolchain, reviewed Cargo.lock, actual `cargo check` and owner-signed validator grant/revoke tests. Avoid claiming mock/static tests are on-chain verification.
+
+
+## Phase 124 — 2026-11-14 — fix Phase123 CI regression failure
+
+**Phase123 CI** on `78f7a88f80ca014638b46e437a59ad5bee4577a7`: Browser Smoke SUCCESS `43492736787`, Validate SUCCESS `43492736075`, **CLIMBX release safety FAILED** `43492736071`. Job `132117884917` showed test #129 `rejects missing owner signer on grant creation` expected `MISSING_OWNER_SIGNATURE` but received `UNCOMPILED_GRANT_ONLY_SCAFFOLD`. Root cause: the test changed only the first of two owner Signer occurrences; the second occurrence still satisfied the textual static guard. This is a test setup error, not evidence of Rust compilation or deployment.
+
+**Phase124 branch commit** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `9bfe9325ceade18d069f3d84be2beef330e1cdfa`: test now uses `replaceAll` to remove both owner Signer occurrences, ensuring the guard is actually exercised.
+**Phase124 CI pending** at first check. Static source check remains narrow; future tests should validate specific account blocks rather than merely searching for a Signer anywhere.
+
+**Blockers:** no verified Rust/Cargo/Solana/Anchor toolchain, no Cargo.lock, no actual compilation or signed validator test. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase125:** verify Phase124 CI and fix any failures; prioritize genuine pinned Rust compilation and owner-signed validator tests on approved build host.
