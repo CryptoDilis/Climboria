@@ -34,6 +34,8 @@ try{
       deviceMemory:navigator.deviceMemory||null};
    });
    if(!layout.modelReady||!layout.saveEnabled||!layout.enterDisabled||layout.hasUpload)throw Error('Hero creator state incorrect: '+JSON.stringify(layout));
+   const previewClip=await page.evaluate(()=>document.documentElement.dataset.climboriaHeroPreviewClip||null);
+   if(previewClip!=='Chair_Sit_Idle_F')throw Error('Hero preview must play official seated idle clip instead of Running: '+previewClip);
    if(layout.canvas.width<250||layout.canvas.height<250)throw Error('Full body canvas is too small: '+JSON.stringify(layout));
    if(layout.modal.scrollWidth>layout.modal.clientWidth+3)throw Error('Hero editor overflows horizontally: '+JSON.stringify(layout));
    if(config.isMobile){
