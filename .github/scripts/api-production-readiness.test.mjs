@@ -39,6 +39,7 @@ test("production acceptance probe verifies real quote preview but never signs or
   const result = await probeProductionApi({ fetchImpl: fakeFetch });
   assert.equal(result.ok, true);
   assert.equal(result.checks.length, 7);
+  assert.deepEqual(result.observations, []);
   assert.equal(calls.filter(c => c.url === "/api/swap/quote" && c.method === "GET").length, 2);
   assert.deepEqual(calls.filter(c => c.method === "POST").map(c => c.url), ["/api/swap/execute"]);
   assert.ok(!calls.some(c => c.url === "/api/swap/order"), "Never create wallet-signable orders in production monitoring");
@@ -84,6 +85,20 @@ test("small-amount live quote rejects mismatched lamports or signable transactio
   await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), /Small quote input amount differs/);
   const second = fixture({ smallQuote: Response.json({ inAmount: "15700", outAmount: "25", requestId: "bad", transaction: "not-allowed" }, { headers: { "access-control-allow-origin": ORIGIN } }) });
   await assert.rejects(probeProductionApi({ fetchImpl: second.fakeFetch }), /must never expose a signable transaction/);
+});
+
+test("legitimate unavailable tiny route is recorded without claiming quote success", async () => {
+  const { fakeFetch, calls } = fixture({ smallQuote: Response.json({ error: "Jupiter quote request failed", upstreamStatus: 400, details: "No route" }, { status: 400, headers: { "access-control-allow-origin": ORIGIN } }) });
+  const result = await probeProductionApi({ fetchImpl: fakeFetch });
+  assert.equal(result.ok, true);
+  assert.equal(result.checks.length, 6);
+  assert.match(result.observations[0], /NOT available \(HTTP 400\)/);
+  assert.ok(!calls.some(c => c.url === "/api/swap/order"));
+});
+
+test("failed tiny quote cannot return a signed or signable transaction", async () => {
+  const { fakeFetch } = fixture({ smallQuote: Response.json({ error: "No route", transaction: "unsafe" }, { status: 422, headers: { "access-control-allow-origin": ORIGIN } }) });
+  await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), /must never expose a signable transaction/);
 });
 
 test("probe fails when a configured provider search or quote is unavailable", async () => {
