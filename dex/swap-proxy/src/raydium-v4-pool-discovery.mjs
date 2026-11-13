@@ -91,16 +91,18 @@ export async function fetchRaydiumV4EvidenceFromPoolAddress({
   });
   const result = await fetchRaydiumV4FinalizedPoolEvidence({
     network, addresses, expectedAuthority: pda.authority,
-    rpcUrl: url.toString(), minContextSlot: firstSlot, fetchImpl
+    rpcUrl: url.toString(), minContextSlot: firstSlot,
+    expectedPoolAccountData: initialAccount.data[0], fetchImpl
   });
   if (result.contextSlot < firstSlot) fail("snapshot is older than initial AMM account observation");
 
   // Pool state might change between the bootstrap RPC and the 8-account
   // snapshot. Compare the full account bytes and owner, not merely parsed
   // vault addresses, to avoid mixing fee/nonce/status and custody contexts.
-  // The final account array was already strictly parsed and validated by
-  // fetchRaydiumV4FinalizedPoolEvidence, but is intentionally not returned.
-  // Independently re-read the final pool state from its verified result:
+  // fetchRaydiumV4FinalizedPoolEvidence also compares the ENTIRE original
+  // raw AMM account image against the second finalized snapshot, including
+  // fields not yet semantically decoded. These parsed assertions are
+  // defense-in-depth and provide explicit failure-class diagnostics:
   for (const field of [
     "status", "nonce", "coinDecimals", "pcDecimals",
     "swapFeeNumerator", "swapFeeDenominator", "poolOpenTime",
