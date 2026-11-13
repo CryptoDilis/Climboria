@@ -389,6 +389,30 @@ try {
   if(desktopHeroStability.identity!=='adventurer'||desktopHeroStability.renderer!=='glb'||!desktopHeroStability.cameraApi) errors.push('Desktop movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(desktopHeroStability));
 
   if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || spawnCheck.heroAsset !== 'adventurer') errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
+  const heroNameInWorld=await page.locator('#player-name').innerText();
+  if(heroNameInWorld!=='Smoke Explorer')errors.push('Saved Create Hero name did not appear in live Jarrell HUD: '+heroNameInWorld);
+  const staminaAudit=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sprintStaminaAudit?.());
+  if(!staminaAudit||!staminaAudit.started.sprinting||staminaAudit.started.stamina>=200||
+    !staminaAudit.empty.exhausted||staminaAudit.empty.stamina!==0||
+    staminaAudit.recovering.sprinting||staminaAudit.recovering.stamina<=0||
+    !staminaAudit.restored.sprinting||staminaAudit.restored.exhausted)
+    errors.push('Jarrell survival sprint drain/exhaustion/recovery invariant failed: '+JSON.stringify(staminaAudit));
+  const staminaBeforeRun=await page.evaluate(()=>window.__climboriaJarrellsPeak?.player?.stamina??null);
+  await page.keyboard.down('w');await page.keyboard.down('Shift');
+  let staminaDuringRun=null;
+  try{
+    await page.waitForFunction(before=>{
+      const p=window.__climboriaJarrellsPeak?.player;
+      return p&&p.stamina<before-2&&document.documentElement.dataset.climboriaSprint==='running';
+    },staminaBeforeRun,{timeout:7000});
+    staminaDuringRun=await page.evaluate(()=>window.__climboriaJarrellsPeak.player.stamina);
+  }finally{
+    await page.keyboard.up('Shift');await page.keyboard.up('w');
+  }
+  await page.waitForFunction(before=>window.__climboriaJarrellsPeak?.player?.stamina>before+1,
+    staminaDuringRun,{timeout:7000});
+  if(!(staminaDuringRun<staminaBeforeRun))errors.push('Sprinting did not drain the live stamina resource');
+
   const hudUi = await page.evaluate(() => ({
     playerName: !!document.querySelector('#player-name'),
     statusBars: !!document.querySelector('#health-fill') && !!document.querySelector('#stamina-fill'),
