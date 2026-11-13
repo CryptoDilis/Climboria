@@ -58,7 +58,7 @@ jobs:
           python -m pip install 'psycopg[binary]>=3.2,<4'
           python -m unittest climbx.test_postgres_integration -v
       - name: Solana Ed25519 signature tests
-        run: node --test climbx/solana_signature.test.cjs climbx/verify_challenge.test.cjs climbx/bind_wallet_pg.test.cjs climbx/canonical_challenge.test.cjs climbx/issue_challenge_pg.test.cjs
+        run: node --test climbx/solana_signature.test.cjs climbx/verify_challenge.test.cjs climbx/bind_wallet_pg.test.cjs climbx/canonical_challenge.test.cjs climbx/issue_challenge_pg.test.cjs climbx/supabase_auth.test.cjs
       - name: Verify exact fail-closed release decision
         run: |
           python - <<'PY'
