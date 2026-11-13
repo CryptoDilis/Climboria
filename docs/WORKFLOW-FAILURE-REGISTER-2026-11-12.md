@@ -1382,3 +1382,44 @@ The immediate failure is an upstream availability/coverage problem: the IDL Expl
 - Browser Smoke `43335206298`: CANCELLED during gameplay; 21 preceding checks passed; gameplay remains unverified.
 - No execution/security gate was weakened. Worker/Jupiter transaction execution remains disabled.
 - **Next exact tasks:** (1) rerun only Browser Smoke job `131590999082` and inspect gameplay; (2) source independent historical Jupiter IDL/binary provenance rather than retrying the same timed-out endpoint; (3) retain the 3 incomplete adapter states as excluded; (4) continue production-origin login/DEX/read-only Swap verification only after the relevant account configuration is available. Keep all production execution gates closed.
+
+
+## 2026-11-13 — follow-up exact-head audit (head 18ec7b629cce751f3a2f23c7dcf8b9e21ed0b89b)
+
+### New exact-head workflow batch
+
+| Workflow | Run | Job | Result |
+|---|---:|---:|---|
+| Validate Climboria | 43336468840 | — | SUCCESS |
+| Jupiter V6 CPI Trace Audit | 43336469372 | 131593812137 | CANCELLED during finalized public Jupiter V6 route trace fetch |
+| Jupiter IDL History Audit | 43336468750 | 131593789365 | FAILURE at IDL evidence gate |
+| Climboria Browser Smoke Test | 43336469106 | — | CANCELLED before a job was created (Jobs API returned empty list) |
+
+### Jupiter IDL History — run 43336468750
+
+- **Exact head:** `18ec7b629cce751f3a2f23c7dcf8b9e21ed0b89b`; failed job `131593789365`; failed step `Fetch Jupiter and DEX CPI IDL history records`. Syntax checks and all configured Node regression tests passed. The on-chain reconstruction step also ran but was marked `continue-on-error` and exited nonzero because the encrypted Actions secret `SOLANA_RPC_URL` is not configured: `Missing encrypted Actions secret SOLANA_RPC_URL`.
+- **Independent reconstruction status:** the code path was not actually able to query an independent archival RPC; do not describe this run as a completed reconstruction. The workflow did install `@solana/idl@0.3.0` and `@solana/kit@8.5.0`, but the missing secret prevented calling `fetchAllHistories`.
+- **External provider status:** IDL Explorer returned metadata addresses for the candidate and DEX programs, but Jupiter history still timed out on all four bounded attempts. The artifact records the timeout and retry history. Artifact `13996149907`, 720,401 bytes, SHA-256 `4cfed582b7979f2a162998fe48b0f91cbb2d4a8645e8a63378648905b2cce415`.
+- **Evidence gate:** `anyHttpOrTransportFailure=true`, `externalHistoryProviderFailure=true`, `officialHistoryReconstructionSucceeded=false`, `requiredHistorySourceAvailable=false`, `matchingHistoricalRevisionCount=0`, `exactlyOneRevisionCoversCandidateSlot=false`, `onChainIdlPayloadMatchesActiveHistory=false`. The candidate schema/discriminator and ProgramData chronology checks pass, but they do not prove historical IDL/binary or CPI account slicing. DEX adapter classification remains `1 supported / 3 incomplete` for IDL provenance only; LaunchLab account checks are matched, but candidate-slot IDL provenance is not unique.
+- **Root cause separation:** (1) account-owner configuration blocker: missing Actions secret `SOLANA_RPC_URL` prevents the independent on-chain history reconstruction; (2) upstream dependency blocker: IDL Explorer history endpoint times out after the retry budget; (3) actual evidence blocker: no unique Jupiter IDL revision is established for candidate slot `468153382`. These are distinct; fixing the secret alone does not guarantee a passing audit.
+- **Counter-fix / next action:** no further code retry change is justified. Repository owner must add a dedicated HTTPS archive-capable Solana RPC URL as the GitHub Actions secret `SOLANA_RPC_URL` (do not paste it into chat or commit it). Then rerun the IDL workflow and inspect the reconstructed history report, account snapshots and revision coverage. Continue to require a unique revision and all existing provenance gates; do not weaken them.
+
+### Browser Smoke / CPI Trace cancellations
+
+- Browser Smoke run `43335206298`, job `131593829383`, was cancelled during the Playwright installation step after npm install succeeded and Chromium/Headless Shell downloads completed. No test step ran; subsequent evidence uploads correctly warned that expected capture files did not exist. This is not a test assertion failure. A branch update/new exact-head PR run occurred in the same period; cancellation is consistent with concurrency supersession, but the log only says `The operation was canceled`, so the exact cancellation initiator is not proven.
+- On exact head `18ec7...`, Browser Smoke run `43336469106` was cancelled before a job was created (empty Jobs API result). No test assertions ran; classify as workflow-level cancellation/incomplete verification, not product failure.
+- CPI Trace run `43336469372`, job `131593812137`: both local CPI mapping and finalized-route pagination/rate-limit tests passed; the finalized public route trace fetch was cancelled before report upload. The log ends with `The operation was canceled`, without an assertion failure. This is incomplete evidence, not a code failure.
+- Do not count these cancellations as code failures. Avoid repeated reruns while another PR/dispatch run shares the same concurrency group. Next run these checks once on the stable branch head, one workflow at a time, after all source changes are paused; inspect terminal artifacts before marking complete.
+
+### Updated top-priority checklist
+
+- [x] Exact-head Validate passed on `18ec7...`.
+- [x] Inspect IDL audit terminal logs and artifact; separate missing-secret, upstream timeout, and provenance blockers.
+- [x] Record all new workflow results and cancellation classifications.
+- [ ] Repository owner: configure GitHub Actions secret `SOLANA_RPC_URL` with a dedicated HTTPS archival-capable RPC endpoint; never share credentials in chat.
+- [ ] Rerun IDL History after secret configuration; inspect direct on-chain history reconstruction and candidate-slot revision coverage.
+- [ ] Rerun Browser Smoke on stable exact head without overlapping branch/dispatch attempts; require Jarrell's Peak desktop/mobile step to pass.
+- [ ] Rerun CPI Trace after stable concurrency; require finalized trace artifact upload.
+- [ ] Preserve incomplete adapter exclusions and all execution kill switches.
+
+**Release posture:** still not production-ready for transaction execution. CI Validate is green, but IDL evidence remains incomplete; Browser Smoke and CPI Trace are cancelled/incomplete on this exact head. No live swap or production deployment is claimed.
