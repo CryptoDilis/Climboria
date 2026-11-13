@@ -749,3 +749,20 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Release gate:** real-funds CLIMBX **NO-GO**. Readiness checks are not a deployed Solana program, audited grant, DEX-only route enforcement, or end-to-end signed devnet execution. No changes to Swap/DEX/Launchpad/game code.
 
 **Next phase handoff:** (1) verify Phase89 workflow runs for `9c57cbaaa31d30ae4b25fbe702ac8aac583a4d82`, fix failures and log exact passing IDs; (2) provision or identify a controlled devnet development environment with Rust/Cargo/Solana CLI/local validator/Anchor and record verified versions; (3) read-only identify the concrete Signature DEX router transaction schema; do not touch DEX files; (4) create devnet-only on-chain grant/revoke/caps prototype with atomic tests and strict deny-all router until reviewed; (5) signed devnet lifecycle, independent audit and explicit owner release decision. Append exact commits/CI/blockers/next actions to this main-branch record each phase.
+
+
+## Phase 90 — 2026-11-14 — deny-all devnet route preflight (CLIMBX only)
+
+**Phase89 CI all SUCCESS** on `9c57cbaaa31d30ae4b25fbe702ac8aac583a4d82`: CLIMBX release safety `43462689739`, Validate `43462689296`, Browser Smoke `43462689071`.
+
+**Toolchain actually checked in this assistant container:** Node v22.16.0 present; rustc, cargo, solana, solana-test-validator and anchor absent. No on-chain build or devnet deployment was performed.
+
+**Phase90 commits on `climbx/phase28-release-gate-ci` (draft PR #282):**
+- `4c5742153d6cd95912b8e7eb746ba1e6cc389616`: `climbx/devnet_route_preflight.cjs` denies all execution even when owner/executor/grant/router/schema/cluster fields match, because exact on-chain enforcement and audited route allowlist are not verified. Rejects mainnet, missing reviewed route and mismatches. **Never use this as a production authorization system.**
+- `b8df7f26e181b7572c39f1993d76b046e0b74500`: `climbx/devnet_route_preflight.test.cjs` adds 12 adversarial fail-closed tests.
+- `1b4c37665bc3e29c49cd9303dace4ddc7f4ff599`: adds Phase90 tests to CLIMBX non-deploying CI workflow.
+**Phase90 CI not yet verified at record time**; check exact latest-commit workflow runs before claiming success.
+
+**Release status:** CLIMBX real-funds **NO-GO**. This is a pure off-chain deny-all guard, not a Solana program, not actual DEX route inspection, and not a signed swap. No edits to Swap/DEX/Launchpad/game files.
+
+**Next phase:** (1) verify Phase90 CI for `1b4c37665bc3e29c49cd9303dace4ddc7f4ff599` and fix failures; (2) provision controlled Rust/Cargo/Solana CLI/validator/Anchor environment and record versions; (3) obtain exact DEX route program IDs/instruction schemas read-only from other workstream; (4) build owner-controlled devnet program create/revoke/expiry/caps first, with deny-all CPI until audited; (5) run adversarial local validator and signed devnet tests, independent audit and explicit owner release decision. Keep recording each phase in this main-branch file. CLIMBX only.
