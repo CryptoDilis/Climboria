@@ -964,3 +964,17 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Limitations:** scanner remains regex-based and scoped to CLIMBX source, cannot prove absence of dynamically generated calls, aliases, on-chain authority or malicious code. No deployed Solana vault/grant program, no atomic nonce/cap enforcement, signed devnet swap, audited DEX CPI or independent review. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase103:** verify Phase102 CI; inspect any failures; add focused security tests for bypass patterns without treating static scanning as proof; prioritize pinned Rust/Cargo/Solana toolchain and validator, owner-signed grant/revoke/caps prototype on localnet, devnet evidence and independent audit. Append next phase to main log.
+
+
+## Phase 103 — 2026-11-14 — fail-closed authorization input handling
+
+**Phase102 CI all SUCCESS** on `ceed03629b4bc770fbc831f2baa7733d515a2261`: CLIMBX release safety `43468760124`, Browser Smoke `43468760261`, Validate `43468760055`.
+
+**Phase103 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `b679467147c844f0416167bc1e6591a996be7548`: wrap deny-only `authorizeBotExecution` input access in try/catch; throwing getters/proxies return `{authorized:false,mayExecute:false,reason:'INVALID_AUTHORIZATION_INPUT'}` instead of escaping as exceptions. Does not authorize or execute transactions.
+- `e9f6be3cca5140371d0efd48d11d81fb2c62810b`: four regression tests for throwing wallet getter, policy getter, route getter and hostile proxy.
+**Phase103 CI pending** on `e9f6be3cca5140371d0efd48d11d81fb2c62810b` at initial check. Existing CLIMBX CI includes authorization boundary tests.
+
+**Real-funds trading NO-GO.** This is off-chain error hardening, not an on-chain grant program. No signed devnet transaction, atomic cap/nonce enforcement, owner-controlled vault, verified DEX-only CPI route or independent security review. No edits to Swap/DEX/Launchpad/game.
+
+**Next Phase104:** verify Phase103 CI and resolve failures; evaluate null/malformed input fail-closed behavior and explicitly bound authorization inputs; prioritize actual Solana/Rust toolchain and local validator before designing claims of real on-chain execution. Keep permanent main record updated.
