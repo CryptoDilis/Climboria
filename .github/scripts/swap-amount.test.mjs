@@ -105,6 +105,15 @@ test("DEX exposes a keyboard-accessible read-only quote toggle without enabling 
   const html = readFileSync(new URL("../../dex/index.html", import.meta.url), "utf8");
   assert.match(html, /<button[^>]+id="showDexQuote"[^>]+aria-controls="swapQuote"[^>]+aria-expanded="false"/);
   assert.match(html, /GET LIVE QUOTE · NO TRADING/);
+  // Mobile CSS intentionally hides .execution-status. Keep the real quote
+  // action outside that ancestor, so a visible button exists at 390px.
+  const statusStart = html.indexOf('class="execution-status"');
+  const statusEnd = html.indexOf("</section>", statusStart);
+  const quoteEntry = html.indexOf('class="dex-quote-entry"');
+  const quoteButton = html.indexOf('id="showDexQuote"');
+  assert.ok(statusStart >= 0 && statusEnd > statusStart);
+  assert.ok(quoteEntry > statusEnd && quoteButton > quoteEntry, "Quote action must not be inside mobile-hidden execution status");
+  assert.match(html, /@media\(max-width:820px\)\{\.dex-quote-entry\{display:flex!important/);
   const start = html.indexOf("$('showDexQuote').addEventListener('click',()=>{");
   const end = html.indexOf("\n});", start);
   assert.ok(start >= 0 && end > start, "Read-only quote toggle handler missing");
