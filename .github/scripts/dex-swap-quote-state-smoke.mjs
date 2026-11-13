@@ -66,7 +66,7 @@ async function mockResult(ctx,metadata) {
     (document.querySelector('#quoteStatus')?.textContent||'').includes('Quote received from Jupiter'),
     null,{timeout:10000});
   const result = await page.locator('#quoteResults').innerText();
-  assert.match(result,/Estimated output/);
+  assert.match(result,/Estimated output/i);
   assert.match(result,/Not requested/);
   assert.match(result,/Not supplied/);
   assert.doesNotMatch(result,/NaN%|null bps|\[object Object\]|undefined bps/);
@@ -131,7 +131,7 @@ try {
             s.value='50';s.dispatchEvent(new Event('change',{bubbles:true}));
           });
           assert.equal(await page.locator('#getQuote').isDisabled(),false);
-        },{assertStatus:/Slippage changed/,assertResult:/Estimated output/});
+        },{assertStatus:/Slippage changed/i,assertResult:/Estimated output/i});
         console.log('PASS Swap '+label+': slippage change discards response and re-enables quote control');
       } finally {await ctx.page.close();}
     }
