@@ -37,9 +37,13 @@ try {
       const negative = sample("hero-market-change negative");
       change.className = originalClass;
 
+      // Skeleton loading state intentionally masks text with transparent color.
+      // Audit the final price styling without depending on live provider timing.
+      const wasSkeleton = price.classList.contains("skeleton-value");
+      if (wasSkeleton) price.classList.remove("skeleton-value");
       const cardStyle = getComputedStyle(card);
       const priceStyle = getComputedStyle(price);
-      return {
+      const result = {
         cardDisplay: cardStyle.display,
         cardGap: cardStyle.gap,
         cardPadding: cardStyle.padding,
@@ -55,6 +59,8 @@ try {
         positive,
         negative
       };
+      if (wasSkeleton) price.classList.add("skeleton-value");
+      return result;
     });
 
     assert.ok(audit, target.name + " Market Leader card is missing");
