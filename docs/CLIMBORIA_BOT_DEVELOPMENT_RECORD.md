@@ -163,3 +163,11 @@ Other chat/developer work owns Climboria DEX live swap, launchpad, authenticatio
 
 ---
 **Handoff rule:** This file is the canonical Climboria Signature Bot continuity record. When a chat ends, resume from the latest dated milestone and verified repository state, not assumptions or previous chat claims.
+
+## 2026-11-13 — Phase 10 local prototype checkpoint
+
+**Verified local work (NOT committed to this repository):** Created a standalone Node.js paper engine (`engine.mjs`), tests (`engine.test.mjs`), and README. Ran `node --test engine.test.mjs`: **8 passed, 0 failed**. Cases: five sequential simultaneous-intent buy allocations against one simulated balance, duplicate signal, duplicate token across slots, partial/final exits, expiry/revocation, JSON snapshot/restart idempotency, manual balance reduction, and paused slot.
+
+**Limits:** This is a local deterministic simulation, NOT a real concurrent multi-worker test or production backend. No real RPC, Jupiter, wallet delegation, fee ledger, TP/SL triggers, auto re-entry, or live trading. No executable code has been committed or deployed. Local prototype was delivered as a ZIP attachment in the chat; to adopt into repo, explicitly authorize a separate code review/commit.
+
+**Next:** Extend paper engine with durable asynchronous wallet-scoped reservations, pending order states and reconciliation, TP/SL/time exit, auto re-entry, and high-water-mark fee accounting. Add adversarial concurrent-worker and crash-recovery tests. Separately validate Solana restricted delegation before any real-fund work.
