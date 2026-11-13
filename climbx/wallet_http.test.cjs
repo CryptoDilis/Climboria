@@ -37,3 +37,10 @@ test('rejects declared body over limit before service',async()=>{const f=setup({
 test('rejects invalid declared body length',async()=>{const f=setup({headers:{'content-length':'-1'}});await f.run();assert.equal(f.res.status,413);});
 test('rejects nonnumeric declared body length',async()=>{const f=setup({headers:{'content-length':'abc'}});await f.run();assert.equal(f.res.status,413);});
 test('accepts small declared body length',async()=>{const f=setup({headers:{'content-length':'14'}});await f.run();assert.equal(f.res.status,200);});
+
+for(const outcome of ['COMMIT_OUTCOME_UNKNOWN','ROLLBACK_OUTCOME_UNKNOWN']){
+ test('maps '+outcome+' to explicit non-success outcome',async()=>{
+  const f=setup({path:'/api/climbx/wallet/bind',body:{wallet:'w',nonce:'n',signature:'s'},service:{issue:async()=>({status:'ISSUED'}),bind:async()=>({status:outcome})}});
+  await f.run();assert.equal(f.res.status,503);assert.equal(f.res.payload.status,'OUTCOME_UNKNOWN');
+ });
+}
