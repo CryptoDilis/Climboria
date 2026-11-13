@@ -1325,3 +1325,36 @@ The IDL-history workflow depends on an external IDL Explorer service. At this ru
 - [x] The bounded sample found 2 successful matching Jupiter/Meteora transactions. Both were single-step Jupiter `route` plans (`routePlanCount=1`), variant 75, each with one 19-account Meteora `swap2` CPI and the same ordered program sequence (Meteora, Tokenkeg, Token-2022, Meteora self-calls, Jupiter event self-CPI).
 - [!] This 50-transaction sample still did **not** produce a multi-hop/split route example. It does not establish general account-slice cursor behavior or CPI-requested privileges. The 19-account vectors remain candidate-specific; do not infer every trailing account role from count alone.
 - [ ] Next route-evidence task: inspect all 19 CPI accounts for both signatures using finalized, slot-aware account owner/data/discriminator evidence; classify BinArray/bitmap/dynamic-tail accounts only where the on-chain account data and pool linkage prove it. Continue a paginated bounded search for actual multi-hop/split and transfer-hook examples. Keep outer transaction privileges distinct from CPI-requested AccountMeta flags.
+
+
+## 2026-11-13 — Jupiter IDL History Audit: transient upstream HTTP 500
+
+### Failed run and exact evidence
+- Workflow: **Jupiter IDL History Audit**
+- Failed run: `43334500101` (branch commit `d0ee34053d42b57fa316590966feb944ab2cb16e`)
+- Failed job: `Fetch current and historical Jupiter IDLs`
+- Failed step: `Fetch Jupiter and DEX CPI IDL history records`
+- Exit: process exit code 1 from the audit's evidence gate, not from syntax or unit tests.
+- Local verification preceding the network audit: **14/14 tests passed** (`dex-adapter-idl-status` and `raydium-launchlab-account-audit`).
+- Exact external response captured in the job log: both Jupiter IDL Explorer endpoints (`/api/latest` and `/api/history`) returned **HTTP 500**, with empty candidate arrays and no metadata-account addresses.
+- The Solana finalized RPC did not find the Jupiter Anchor IDL metadata account. The audit therefore correctly classified the candidate evidence as incomplete rather than trusting the latest schema.
+- Other evidence gaps in the same report: candidate transaction slot `468153382`; current ProgramData deployment slot `468473152` (later than the candidate); no active historical Jupiter IDL revision; and the LaunchLab candidate account audit could not establish a trusted PoolState layout. Four DEX adapter provenance classifications remained incomplete; zero were supported. This is not evidence that those programs are incompatible, but it is not release evidence either.
+- The failing command produced and uploaded the raw JSON report/artifact successfully; the upload action was not the failure.
+
+### Root cause
+The immediate failure is an upstream availability/coverage problem: the IDL Explorer returned HTTP 500 for both Jupiter endpoints. The existing fetch utility treated a single unsuccessful HTTP response as a terminal evidence failure and did not retry transient provider errors. The deeper release blocker is independent of retries: the candidate-slot IDL and deployed-program provenance are not established, and the current ProgramData account reflects a deployment after the preserved candidate transaction slot. A successful retry cannot retroactively prove the historical schema or historical binary.
+
+### Targeted counter-fix committed on the audit branch
+- Added `dex/swap-proxy/tools/fetch-with-retry.mjs`: bounded retry for HTTP 408/425/429/500/502/503/504 and transient fetch transport errors; honors `Retry-After` with a cap; records each attempt; does not retry ordinary 4xx responses.
+- Updated `dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs` to use the retry helper with four attempts, 30-second per-attempt timeout and bounded backoff; the report records retry attempts. Persistent 500 responses remain visible and continue to fail the evidence gate.
+- Added `dex/swap-proxy/test/fetch-with-retry.test.mjs` for transient 500 recovery, persistent 500, non-retryable 404, transient transport failure and capped `Retry-After`.
+- Updated `.github/workflows/jupiter-idl-history-audit.yml` path filters, syntax validation and Node test command to include the helper and regression tests.
+- The counter-fix is deliberately availability-only. It does not synthesize IDL evidence, lower the release gate, classify incomplete provenance as supported, or enable transaction execution.
+
+### Rerun status and next action
+- New exact-head run after the retry change: Jupiter IDL History Audit `43334821887` on commit `48f6cfb688998a26091c76a69510d102c1da5a70`. At the time this entry was written, the fetch step was still **in progress**; do not call the counter-fix verified until the full job and artifact have been inspected.
+- Exact-head Validate `43334821860` completed **success**.
+- Exact-head Jupiter V6 CPI Trace Audit `43334821794` completed **success**.
+- Exact-head Browser Smoke `43334821774` was still running its Jarrell's Peak desktop/mobile gameplay step; no failed step had been reported at the last poll.
+- The earlier runs `43334500033`, `43334500063`, `43334500089`, and `43334500101` were marked cancelled after a newer commit arrived. Cancellation is not counted as a code failure.
+- Next: inspect the terminal IDL rerun and its raw artifact; if HTTP 500 persists, preserve it as an upstream-provider outage and obtain historical IDL provenance from a separate authoritative source (verified on-chain metadata/archive or independently pinned source history). Do not change candidate slot or bypass the evidence gate just to make CI green.
