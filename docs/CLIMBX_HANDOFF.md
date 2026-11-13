@@ -252,5 +252,12 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - PENDING: new exact-head PR CI green evidence; Rust unit-test job and main Validate workflow status; do not move to next feature until checked.
 - No live trade enablement. **REAL-FUNDS NO-GO**.
 
+## Phase 158 — 2026-11-14 — exact-head CI GREEN verified
+- VERIFIED: draft PR #353 integration branch commit `37d353a96b676c529ac3c0d08c5911a129ab8f20` has completed successful GitHub Actions runs:
+  - CLIMBX isolated authorization checks run `43515574829`: `static-boundaries` job `132196578070` **success**, `rust-unit-tests` job `132196577859` **success**.
+  - Validate Climboria run `43515574513`: `validate` job `132196576217` **success**.
+- Prior static failure fixed in commit `37d353a`; the new exact-head checks are green. This satisfies the user's request to repair failed workflows before switching tasks.
+- NEXT: owner may assign another task; PR remains draft and unmerged pending independent review. Green CI is NOT signed validator proof, audit, deployment approval or real-money readiness. **REAL-FUNDS NO-GO**.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
