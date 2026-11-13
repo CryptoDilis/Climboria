@@ -118,7 +118,7 @@ try {
         await pendingQuote(ctx,async page=>{
           await page.locator('#chainBase').click();
           assert.equal(await page.locator('#getQuote').isDisabled(),true);
-        },{assertStatus:/Base network selected/,assertResult:/Base quote provider not configured/});
+        },{assertStatus:/Base ERC-20 swap is not yet connected/,assertResult:/Base quote provider not configured/});
         console.log('PASS Swap '+label+': Solana response cannot override Base network state');
       } finally {await ctx.page.close();}
     }
