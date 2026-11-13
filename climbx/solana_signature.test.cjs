@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { generateKeyPairSync, sign } = require('node:crypto');
-const { decodeBase58, verifySolanaMessage } = require('./solana_signature');
+const { decodeBase58, verifySolanaMessage } = require('./solana_signature.cjs');
 
 const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 function encode58(buf) {
