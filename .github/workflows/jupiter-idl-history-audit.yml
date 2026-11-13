@@ -1,0 +1,99 @@
+name: Jupiter IDL History Audit
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs"
+      - "dex/swap-proxy/tools/fetch-with-retry.mjs"
+      - "dex/swap-proxy/test/fetch-with-retry.test.mjs"
+      - "dex/swap-proxy/tools/official-idl-history.mjs"
+      - "dex/swap-proxy/tools/reconstruct-jupiter-idl-history.mjs"
+      - "dex/swap-proxy/test/official-idl-history.test.mjs"
+      - "dex/swap-proxy/tools/dex-adapter-idl-status.mjs"
+      - "dex/swap-proxy/test/dex-adapter-idl-status.test.mjs"
+      - "dex/swap-proxy/tools/legacy-anchor-idl-account.mjs"
+      - "dex/swap-proxy/tools/spl-token-account-summary.mjs"
+      - "dex/swap-proxy/tools/raydium-launchlab-account-audit.mjs"
+      - "dex/swap-proxy/test/raydium-launchlab-account-audit.test.mjs"
+      - "dex/swap-proxy/tools/jupiter-sbf-static-audit/**"
+      - ".github/workflows/jupiter-idl-history-audit.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs"
+      - "dex/swap-proxy/tools/fetch-with-retry.mjs"
+      - "dex/swap-proxy/test/fetch-with-retry.test.mjs"
+      - "dex/swap-proxy/tools/official-idl-history.mjs"
+      - "dex/swap-proxy/tools/reconstruct-jupiter-idl-history.mjs"
+      - "dex/swap-proxy/test/official-idl-history.test.mjs"
+      - "dex/swap-proxy/tools/dex-adapter-idl-status.mjs"
+      - "dex/swap-proxy/test/dex-adapter-idl-status.test.mjs"
+      - "dex/swap-proxy/tools/jupiter-sbf-static-audit/**"
+      - ".github/workflows/jupiter-idl-history-audit.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: jupiter-idl-history-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-idl-history:
+    name: Fetch current and historical Jupiter IDLs
+    runs-on: ubuntu-latest
+    timeout-minutes: 50 # Public-RPC historical reconstruction can be slower; preserve time for downstream audits
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned on-chain IDL history tooling
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @solana/idl@0.3.0 @solana/kit@8.5.0
+      - name: Syntax-check IDL history audit utility
+        run: |
+          node --check dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
+          node --check dex/swap-proxy/tools/fetch-with-retry.mjs
+          node --check dex/swap-proxy/tools/official-idl-history.mjs
+          node --check dex/swap-proxy/tools/reconstruct-jupiter-idl-history.mjs
+          node --check dex/swap-proxy/tools/raydium-launchlab-account-audit.mjs
+      - name: Test DEX adapter IDL evidence classifications and LaunchLab account audit
+        run: node --test dex/swap-proxy/test/dex-adapter-idl-status.test.mjs dex/swap-proxy/test/raydium-launchlab-account-audit.test.mjs dex/swap-proxy/test/fetch-with-retry.test.mjs dex/swap-proxy/test/official-idl-history.test.mjs
+      - name: Reconstruct Jupiter IDL history directly from on-chain transactions
+        timeout-minutes: 30
+        continue-on-error: true
+        env:
+          SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
+        run: node dex/swap-proxy/tools/reconstruct-jupiter-idl-history.mjs
+      - name: Fetch Jupiter and DEX CPI IDL history records
+        run: node dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
+      - name: Set up Rust toolchain for pinned sBPF static analysis
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: 1.99.1
+      - name: Run pinned sBPF static-audit unit tests
+        run: cargo test --locked --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml
+      - name: Generate pinned sBPF disassembly and control-flow summary
+        timeout-minutes: 10
+        run: |
+          cargo run --locked --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml --release -- \
+            artifacts/jupiter-idl-history/jupiter-programdata-elf.so \
+            artifacts/jupiter-sbf-static-audit
+          sha256sum artifacts/jupiter-idl-history/jupiter-programdata-elf.so
+      - name: Upload raw responses, schema summary, and sBPF static analysis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jupiter-idl-history
+          path: |
+            artifacts/jupiter-idl-history/
+            artifacts/jupiter-sbf-static-audit/
+            dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.lock
+          if-no-files-found: warn
+          retention-days: 30

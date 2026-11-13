@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { writeFile } from 'node:fs/promises';
 
 const errors = [];
 const browser = await chromium.launch({
@@ -465,6 +466,14 @@ try {
   await page.screenshot({path:'climboria-desktop-cave-interior.png'});
   console.log('Desktop cave interior visual capture:',JSON.stringify(desktopCaveInterior));
 
+  // The desktop smoke page has finished all assertions and screenshots. Close its
+  // WebGL renderer and release the 43 MB GLB/decoded scene before starting the
+  // independent mobile context; keeping both full worlds alive caused the mobile
+  // GLTFLoader to stall after the complete download, before its parse callback.
+  await page.close();
+  await desktop.close();
+  console.log('Released desktop WebGL context and scene resources before mobile GLB startup.');
+
   const mobile = await browser.newPage({
     // Start portrait to verify the rotate gate, then switch to landscape for gameplay evidence.
     viewport: { width: 390, height: 844 },
@@ -690,7 +699,11 @@ try {
     canvas: !!document.querySelector('canvas'),
     glbResources: performance.getEntriesByType('resource')
       .filter(entry => /Climboria_Hero\.glb/i.test(entry.name))
-      .map(entry => ({ name: entry.name, duration: Math.round(entry.duration), transferSize: entry.transferSize, decodedBodySize: entry.decodedBodySize }))
+      .map(entry => ({ name: entry.name, duration: Math.round(entry.duration), transferSize: entry.transferSize, decodedBodySize: entry.decodedBodySize })),
+    glbLoadDiagnostics: window.__climboriaGLBLoadDiagnostics ? {
+      ...window.__climboriaGLBLoadDiagnostics,
+      ageMs: window.__climboriaGLBLoadDiagnostics.startedAt===null ? null : Math.round(performance.now()-window.__climboriaGLBLoadDiagnostics.startedAt)
+    } : null
   }));
   const mobileGlbWaitStartedAt = Date.now();
   try {
@@ -710,7 +723,7 @@ try {
     }
     console.log('Mobile GLB readiness confirmed at timeout boundary; strict GLB invariants remain satisfied:', JSON.stringify({ ...diagnostic, elapsedMs: Date.now() - mobileGlbWaitStartedAt }));
   }
-  const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero }));
+  const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero, glbLoadDiagnostics: window.__climboriaGLBLoadDiagnostics ?? null }));
   if (!mobileHeroReady.readiness.chunk || !mobileHeroReady.readiness.render || !mobileHeroReady.readiness.hero || mobileHeroReady.renderer !== true || !mobileHeroReady.heroUsesGlb) throw new Error('Mobile saved GLB hero did not become fully ready: ' + JSON.stringify(mobileHeroReady));
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
   await mobile.keyboard.press('w');
@@ -809,7 +822,31 @@ try {
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));
 
   if (errors.length) throw new Error(errors.join('\n'));
+  const smokeSummary = {
+    status: 'passed',
+    completedAt: new Date().toISOString(),
+    errorCount: errors.length,
+    desktopReady: true,
+    mobileReady: true,
+    desktopRenderFrames: renderState?.frames ?? null,
+    mobileRenderFrames: mobileState.renderFrames,
+    mobileViewportWidth: mobileState.viewport,
+    mobileDocumentWidth: mobileState.document,
+    mobileControlsReady: mobileState.controls && mobileState.mobileActions.length === 4 && mobileState.mobileActions.every(action => action.visible),
+    screenshots: [
+      'climboria-desktop-home.png',
+      'climboria-mobile-home.png',
+      'climboria-desktop-gameplay.png',
+      'climboria-mobile-gameplay.png',
+      'climboria-desktop-cave-entrance.png',
+      'climboria-mobile-cave-entrance.png',
+      'climboria-desktop-cave-interior.png',
+      'climboria-mobile-cave-interior.png',
+    ],
+  };
+  await writeFile('game-smoke-summary.json', JSON.stringify(smokeSummary, null, 2) + '\n');
   console.log('PASS: cinematic Jarrell’s Peak boot, terrain, landmarks, chests, facilities, desktop controls, and mobile controls (all wildlife temporarily disabled).');
+  console.log('GAME_SMOKE_SUMMARY:', JSON.stringify(smokeSummary));
 } finally {
   await browser.close();
 }

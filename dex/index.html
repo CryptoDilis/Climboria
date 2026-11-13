@@ -787,6 +787,7 @@ const API='https://api.dexscreener.com';
 const $=id=>document.getElementById(id);
 const state={mode:'trending',pairs:[],profiles:[],graduations:[],graduationStatus:'not loaded',search:'',last:0,busy:false,loadError:null};
 let basePairs=[];let baseBusy=false;let baseLoadError=null;let basePartialFailures=0;let baseMode="trending";let mobileMarketLimit=12,baseMarketLimit=12;
+let baseSearchPairs=[],baseSearchError=null,baseSearchLoading=false,baseSearchRequestId=0,baseSearchTimer=null;
 const fmt=(n)=>{if(n===null||n===undefined||!Number.isFinite(Number(n)))return '—';n=Number(n);return n>=1e9?'$'+(n/1e9).toFixed(2)+'B':n>=1e6?'$'+(n/1e6).toFixed(2)+'M':n>=1e3?'$'+(n/1e3).toFixed(1)+'K':'$'+n.toFixed(n<1?6:2)};
 const price=n=>{if(n===null||n===undefined||!Number.isFinite(Number(n)))return '—';n=Number(n);return '$'+(n<0.0001?n.toExponential(2):n<1?n.toPrecision(4):n.toLocaleString('en-US',{maximumFractionDigits:4}))};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -804,12 +805,38 @@ async function loadBaseMarkets(){
   const all=successful.flatMap(result=>Array.isArray(result.data?.pairs)?result.data.pairs:[]).filter(p=>p&&p.chainId==='base'&&p.baseToken&&p.quoteToken&&p.pairAddress);
   const map=new Map();for(const p of all){const k=p.pairAddress;if(!map.has(k))map.set(k,p)}
   basePairs=[...map.values()];renderBaseMarkets();
- }catch(e){baseLoadError=e.message||'Base market provider unavailable';renderBaseMarkets();$('baseCoverage').textContent=basePairs.length?'Base refresh failed; showing last successful provider data. '+baseLoadError:'Base data unavailable: '+baseLoadError}
+ }catch(e){baseLoadError=e.message||'Base market provider unavailable';renderBaseMarkets();$('baseCoverage').textContent=basePairs.length?'Base refresh failed; showing the last successful provider data. '+baseLoadError:'Base data unavailable: '+baseLoadError}
  finally{baseBusy=false}
+}
+async function searchBaseMarkets(query,requestId){
+ baseSearchLoading=true;baseSearchError=null;renderBaseMarkets();
+ try{
+  const payload=await get('/latest/dex/search?q='+encodeURIComponent(query));
+  if(requestId!==baseSearchRequestId)return;
+  const raw=Array.isArray(payload?.pairs)?payload.pairs:[];
+  const map=new Map();
+  for(const pair of raw){if(!pair||pair.chainId!=='base'||!pair.baseToken||!pair.quoteToken||!pair.pairAddress)continue;map.set(pair.pairAddress,pair);}
+  baseSearchPairs=[...map.values()];
+ }catch(error){
+  if(requestId!==baseSearchRequestId)return;
+  baseSearchPairs=[];baseSearchError=error.message||'Base live search provider unavailable';
+ }finally{
+  if(requestId===baseSearchRequestId){baseSearchLoading=false;renderBaseMarkets();}
+ }
+}
+function updateBaseSearch(){
+ clearTimeout(baseSearchTimer);
+ const query=$('baseSearch').value.trim(),requestId=++baseSearchRequestId;
+ baseSearchPairs=[];baseSearchError=null;baseSearchLoading=false;
+ if(query.length<2){renderBaseMarkets();return;}
+ if(query.length>64){baseSearchError='Search query must be 2 to 64 characters';renderBaseMarkets();return;}
+ baseSearchLoading=true;renderBaseMarkets();
+ baseSearchTimer=setTimeout(()=>searchBaseMarkets(query,requestId),350);
 }
 function renderBaseMarkets(){
  const q=$('baseSearch').value.trim().toLowerCase(),sort=$('baseSort').value;
- let list=basePairs.filter(p=>!q||[p.baseToken.name,p.baseToken.symbol,p.baseToken.address,p.quoteToken.symbol].some(v=>String(v||'').toLowerCase().includes(q)));
+ const pairMap=new Map();for(const p of basePairs)pairMap.set(p.pairAddress,p);for(const p of baseSearchPairs)pairMap.set(p.pairAddress,p);
+ let list=[...pairMap.values()].filter(p=>!q||[p.baseToken.name,p.baseToken.symbol,p.baseToken.address,p.quoteToken.symbol].some(v=>String(v||'').toLowerCase().includes(q)));
  const val=(p,k)=>{const v=k==='change'?p.priceChange?.h24:k==='volume'?p.volume?.h24:k==='liquidity'?p.liquidity?.usd:p.pairCreatedAt;return v===null||v===undefined||v===''?NaN:Number(v)};
  const desc=(k)=>(a,b)=>{const x=val(a,k),y=val(b,k);if(!Number.isFinite(x))return 1;if(!Number.isFinite(y))return -1;return y-x};
  const asc=(k)=>(a,b)=>{const x=val(a,k),y=val(b,k);if(!Number.isFinite(x))return 1;if(!Number.isFinite(y))return -1;return x-y};
@@ -824,10 +851,14 @@ function renderBaseMarkets(){
  else if(sort==='change'||sort==='gainers')list=list.filter(p=>Number.isFinite(val(p,'change'))).sort(desc('change'));
  else if(sort==='losers')list=list.filter(p=>Number.isFinite(val(p,'change'))).sort(asc('change'));
  else if(sort==='age')list.sort(desc('age'));
- if(!(baseLoadError&&!basePairs.length))$('baseRows').innerHTML=list.length?list.slice(0,window.matchMedia('(max-width:760px)').matches?baseMarketLimit:60).map(p=>{const ch=p.priceChange?.h24,change=ch===null||ch===undefined||ch===''?NaN:Number(ch),cls=Number.isFinite(change)?(change>=0?'positive':'negative'):'muted';return '<tr><td><b>'+esc(p.baseToken.symbol||'TOKEN')+' / '+esc(p.quoteToken.symbol||'—')+'</b><small style="display:block;color:#91a0b6">'+esc(p.baseToken.name||'Unknown')+' · '+esc(p.baseToken.address||'')+'</small></td><td>'+price(p.priceUsd)+'</td><td class="'+cls+'">'+(Number.isFinite(change)?(change>0?'+':'')+change.toFixed(2)+'%':'N/A')+'</td><td>'+fmt(p.volume?.h24)+'</td><td>'+fmt(p.liquidity?.usd)+'</td><td class="pair-age">'+pairAge(p.pairCreatedAt)+'</td><td>'+esc(p.dexId||'—')+'</td></tr>'}).join(''):'<tr><td colspan="7"><div class="empty">No Base pairs match this category in the currently loaded discovery dataset.</div></td></tr>';
+ $('baseRows').innerHTML=list.length?list.slice(0,window.matchMedia('(max-width:760px)').matches?baseMarketLimit:60).map(p=>{const ch=p.priceChange?.h24,change=ch===null||ch===undefined||ch===''?NaN:Number(ch),cls=Number.isFinite(change)?(change>=0?'positive':'negative'):'muted';return '<tr><td><b>'+esc(p.baseToken.symbol||'TOKEN')+' / '+esc(p.quoteToken.symbol||'—')+'</b><small style="display:block;color:#91a0b6">'+esc(p.baseToken.name||'Unknown')+' · '+esc(p.baseToken.address||'')+'</small></td><td>'+price(p.priceUsd)+'</td><td class="'+cls+'">'+(Number.isFinite(change)?(change>0?'+':'')+change.toFixed(2)+'%':'N/A')+'</td><td>'+fmt(p.volume?.h24)+'</td><td>'+fmt(p.liquidity?.usd)+'</td><td class="pair-age">'+pairAge(p.pairCreatedAt)+'</td><td>'+esc(p.dexId||'—')+'</td></tr>'}).join(''):'<tr><td colspan="7"><div class="empty">'+(baseSearchError?'Live Base search failed; no unverified results are shown.':baseSearchLoading?'Searching live Base token and pool data…':q.length>=2?'No Base pairs returned by live provider search for this query.':'No Base pairs match this category in the currently loaded discovery dataset.')+'</div></td></tr>';
  const labels={trending:'Trending · ranked by reported 24h volume',volume:'Highest reported 24h volume',gainers:'Top reported 24h gainers',losers:'Top reported 24h losers',movers:'Largest absolute reported 24h moves',new:'Newest discovered Base pools',liquidity:'Highest reported pool liquidity'};
- $('baseCoverage').textContent='Base network · '+(labels[baseMode]||'Market results')+' · '+list.length+' matching pairs from '+basePairs.length+' discovered results. Query-based discovery, not exhaustive ERC-20 coverage; provider metrics may be delayed or incomplete.';
-const mobileCards=$('baseMobileCards');if(mobileCards){const mobileNotice=baseLoadError&&basePairs.length?'<div class="empty mobile-market-state" role="status">Refresh failed. Showing the last successful Base market results.</div>':basePartialFailures?'<div class="empty mobile-market-state" role="status">Some Base discovery requests failed. Results may be incomplete.</div>':'';mobileCards.innerHTML=mobileNotice+(list.length?list.slice(0,baseMarketLimit).map(p=>{const raw=p.priceChange?.h24,change=raw===null||raw===undefined||raw===''?NaN:Number(raw),cls=Number.isFinite(change)?(change>=0?'positive':'negative'):'muted',changeLabel=Number.isFinite(change)?(change>0?'+':'')+change.toFixed(2)+'%':'N/A',symbol=p.baseToken?.symbol||'TOKEN',quote=p.quoteToken?.symbol||'—',name=p.baseToken?.name||'Unknown token',address=p.baseToken?.address||'',pair=p.pairAddress||'',href='https://dexscreener.com/base/'+encodeURIComponent(pair);return '<a class="mobile-market-card base-mobile-market-card" href="'+esc(href)+'" target="_blank" rel="noopener noreferrer" aria-label="View '+esc(symbol)+' Base pool on DexScreener"><span class="mobile-market-card-main"><span class="mobile-market-card-icon">'+esc(symbol.slice(0,2))+'</span><span class="mobile-market-card-identity"><b>'+esc(symbol)+' / '+esc(quote)+'</b><small>'+esc(name)+'</small><small class="mobile-market-card-mint">'+esc(address.slice(0,5)+'…'+address.slice(-5))+' · Base · '+esc(p.dexId||'Unknown venue')+'</small></span></span><span class="mobile-market-card-values"><b>'+price(p.priceUsd)+'</b><strong class="'+cls+'">'+changeLabel+'</strong><small>24h Vol '+fmt(p.volume?.h24)+' · Liq '+fmt(p.liquidity?.usd)+' · '+esc(pairAge(p.pairCreatedAt))+'</small></span></a>'}).join(''):'<div class="empty mobile-market-state" role="status">'+(baseLoadError?'Base market provider unavailable. Tap Refresh Base to try again.':basePartialFailures?'Some Base discovery requests failed; no matching pairs were returned by the successful requests.':'No Base pairs match this category in the currently loaded discovery dataset.')+'</div>')};const more=$('mobileBaseMore');if(more){const limit=window.matchMedia('(max-width:760px)').matches?baseMarketLimit:60;more.hidden=!(window.matchMedia('(max-width:760px)').matches&&list.length>limit);more.textContent='Load more Base tokens · '+Math.min(limit,list.length)+' / '+list.length;}}
+ const searchStatus=baseSearchLoading?' · Live provider search in progress':baseSearchError?' · Live search failed: '+baseSearchError+'; showing loaded results only':q.length>=2?' · Live provider search completed':' · Search queries the live provider';
+ $('baseCoverage').textContent='Base network · '+(labels[baseMode]||'Market results')+' · '+list.length+' matching pairs from '+pairMap.size+' loaded/discovered results'+searchStatus+'. Results are query-based, not exhaustive ERC-20 coverage; provider metrics may be delayed or incomplete.';
+ const mobileCards=$('baseMobileCards');if(mobileCards){const mobileNotice=baseSearchError?'<div class="empty mobile-market-state" role="status">Live Base search failed. Only previously loaded provider results are shown.</div>':baseSearchLoading?'<div class="empty mobile-market-state" role="status">Searching live Base token and pool data…</div>':baseLoadError&&basePairs.length?'<div class="empty mobile-market-state" role="status">Refresh failed. Showing the last successful Base market results.</div>':basePartialFailures?'<div class="empty mobile-market-state" role="status">Some Base discovery requests failed. Results may be incomplete.</div>':'';
+ mobileCards.innerHTML=mobileNotice+(list.length?list.slice(0,baseMarketLimit).map(p=>{const raw=p.priceChange?.h24,change=raw===null||raw===undefined||raw===''?NaN:Number(raw),cls=Number.isFinite(change)?(change>=0?'positive':'negative'):'muted',changeLabel=Number.isFinite(change)?(change>0?'+':'')+change.toFixed(2)+'%':'N/A',symbol=p.baseToken?.symbol||'TOKEN',quote=p.quoteToken?.symbol||'—',name=p.baseToken?.name||'Unknown token',address=p.baseToken?.address||'',pair=p.pairAddress||'',href='https://dexscreener.com/base/'+encodeURIComponent(pair);return '<a class="mobile-market-card base-mobile-market-card" href="'+esc(href)+'" target="_blank" rel="noopener noreferrer" aria-label="View '+esc(symbol)+' Base pool on DexScreener"><span class="mobile-market-card-main"><span class="mobile-market-card-icon">'+esc(symbol.slice(0,2))+'</span><span class="mobile-market-card-identity"><b>'+esc(symbol)+' / '+esc(quote)+'</b><small>'+esc(name)+'</small><small class="mobile-market-card-mint">'+esc(address.slice(0,5)+'…'+address.slice(-5))+' · Base · '+esc(p.dexId||'Unknown venue')+'</small></span></span><span class="mobile-market-card-values"><b>'+price(p.priceUsd)+'</b><strong class="'+cls+'">'+changeLabel+'</strong><small>24h Vol '+fmt(p.volume?.h24)+' · Liq '+fmt(p.liquidity?.usd)+' · '+esc(pairAge(p.pairCreatedAt))+'</small></span></a>'}).join(''):'<div class="empty mobile-market-state" role="status">'+(baseSearchError?'Live Base search failed; no unverified results are shown.':baseSearchLoading?'Searching live Base token and pool data…':q.length>=2?'No Base pairs returned by live provider search for this query.':baseLoadError?'Base market provider unavailable. Tap Refresh Base to try again.':basePartialFailures?'Some Base discovery requests failed; no matching pairs were returned by the successful requests.':'No Base pairs match this category in the currently loaded discovery dataset.')+'</div>')};
+ const more=$('mobileBaseMore');if(more){const limit=window.matchMedia('(max-width:760px)').matches?baseMarketLimit:60;more.hidden=!(window.matchMedia('(max-width:760px)').matches&&list.length>limit);more.textContent='Load more Base tokens · '+Math.min(limit,list.length)+' / '+list.length;}
+}
 
 async function load(){if(state.busy)return;state.busy=true;$('status').textContent='Refreshing Solana market data…';try{
 const [profiles,searchResults]=await Promise.all([get('/token-profiles/latest/v1'),Promise.all(['SOL','USDC','BONK','JUP','WIF','RAY','ORCA','PYTH'].map(q=>get('/latest/dex/search?q='+encodeURIComponent(q)).then(data=>({ok:true,data})).catch(error=>({ok:false,error}))))]);
@@ -887,7 +918,13 @@ function normalizeGraduation(row){
 }
 async function loadGraduations(){
  const now=Date.now(),since=now-86400000,days=[utcDayOffset(0),utcDayOffset(1)];
- const results=await Promise.all(days.map(day=>fetch('https://pumpdata.fun/graduations/'+day+'.json',{headers:{accept:'application/json'}}).then(r=>{if(!r.ok)throw new Error('Graduation feed HTTP '+r.status);return r.json()})));
+ const results=await Promise.all(days.map(day=>fetch('https://pumpdata.fun/graduations/'+day+'.json',{headers:{accept:'application/json'}}).then(r=>{
+  // The provider publishes daily files independently. A missing day is an empty day,
+  // not a failure of the previous day's valid graduation records.
+  if(r.status===404)return [];
+  if(!r.ok)throw new Error('Graduation feed HTTP '+r.status);
+  return r.json();
+})));
  const rows=results.flatMap(data=>Array.isArray(data)?data:(Array.isArray(data.graduations)?data.graduations:Array.isArray(data.items)?data.items:Array.isArray(data.data)?data.data:[]));
  const unique=new Map();for(const row of rows){const item=normalizeGraduation(row);if(item&&item.graduatedAt>=since&&item.graduatedAt<=now+300000)unique.set(item.mint,item)}
  state.graduations=[...unique.values()].sort((a,b)=>b.graduatedAt-a.graduatedAt);state.graduationStatus='connected';
@@ -1081,16 +1118,16 @@ async function loadMintAuthorityEvidence(mint){
   $('signalGrid').innerHTML=current+'<div class="signalitem missing"><b>Unknown · Mint authority</b><small>'+esc(error.message)+'</small></div><div class="signalitem missing"><b>Unknown · Freeze authority</b><small>Parsed mint authority data unavailable.</small></div><div class="signalitem missing"><b>Unknown · LP burned / locked</b><small>Not independently verified.</small></div>';
  }
 }
-function renderPoolFailure(mint,message,meta){
+function renderPoolFailure(mint,message,meta,description='No exact base-token pool was returned for this mint.') {
  ['tokenOverviewPrice','tokenOverviewChange','tokenOverviewVolume','tokenOverviewLiquidity','tokenOverviewVenue','detailPrice','detailVolume','detailLiquidity','detailChange','flowBuySell','flowImbalance','flowTurnover','flowShare'].forEach(id=>{const el=$(id);if(el){el.classList.remove('skeleton-value');el.textContent='Unavailable';}});
  const state=$('tokenLoadState');state.hidden=false;
  const dex='https://dexscreener.com/solana/'+encodeURIComponent(mint),sol='https://solscan.io/token/'+encodeURIComponent(mint);
- state.innerHTML='<div class="token-load-error"><b>Couldn\'t load this pool.</b><p>This pool may have low liquidity, migrated, or have no DexScreener coverage.</p><small>'+esc(message||'Market data provider did not return a usable Solana pool.')+'</small><div class="token-load-actions"><button type="button" id="retryTokenLoad">↻ Retry</button><a href="'+dex+'" target="_blank" rel="noopener">View on DexScreener ↗</a><a href="'+sol+'" target="_blank" rel="noopener">View on Solscan ↗</a></div></div>';
+ state.innerHTML='<div class="token-load-error"><b>Couldn\'t load this pool.</b><p>'+esc(description)+'</p><small>'+esc(message||'Market data provider did not return a usable Solana pool.')+'</small><div class="token-load-actions"><button type="button" id="retryTokenLoad">↻ Retry</button><a href="'+dex+'" target="_blank" rel="noopener">View on DexScreener ↗</a><a href="'+sol+'" target="_blank" rel="noopener">View on Solscan ↗</a></div></div>';
  $('retryTokenLoad').addEventListener('click',()=>openToken(mint,{refresh:true}));
  if(meta)renderPumpProfile(mint,meta);
 }
 async function openToken(mint,options={}){
- const requestId=++detailRequestId;activeDetailMint=mint;if(!options.fromUrl)setDexUrl(mint,null);openTokenRoom(mint);
+ const requestId=++detailRequestId,previousMint=activeDetailMint;activeDetailMint=mint;if(!options.refresh||previousMint!==mint){activeDetailPairs=[];$('detailChart').src='about:blank';$('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(mint);}if(!options.fromUrl)setDexUrl(mint,null);openTokenRoom(mint);
  const box=$('tokenDetail');box.classList.add('open');document.body.classList.add('mobile-token-view');document.body.classList.remove('mobile-base-view');$('tokenLoadState').hidden=true;
  if(!options.refresh)box.scrollIntoView({behavior:'smooth',block:'start'});
  $('detailTitle').textContent='Loading token…';$('detailMint').textContent='Mint: '+mint;
@@ -1117,16 +1154,23 @@ async function openToken(mint,options={}){
   return;
  }
  const data=dexResult.value;
- const pairs=solPairs(data.pairs||[]).sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+ const returnedPairs=solPairs(data.pairs||[]);
+ // The selected mint must be the pair's base token before displaying its price or attaching its chart.
+ // Quote-side pools remain undisplayed until their price orientation and pool-metric semantics are independently verified.
+ const pairs=returnedPairs.filter(p=>p.baseToken.address===mint).sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+ const quoteSidePairs=returnedPairs.filter(p=>p.quoteToken.address===mint);
  activeDetailPairs=pairs;
  if(pairs[0]?.baseToken?.symbol)rememberClimboriaTokenMeta(mint,pairs[0].baseToken.symbol,pairs[0].baseToken.name||'');
  if(!pairs.length){
   $('detailTitle').textContent=pumpMeta?(pumpMeta.name||'Unknown token')+' ('+(pumpMeta.symbol||'TOKEN')+')':'Token metadata';
   $('detailUpdated').textContent='No indexed Solana pool · '+new Date().toLocaleTimeString();
   $('detailChart').src='about:blank';$('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(mint);
-  $('detailPairs').innerHTML='<div class="notice">No active Solana pools were returned for this mint.</div>';
-  $('signalGrid').innerHTML='<div class="notice">Pool evidence unavailable until a pool is discovered.</div>';
-  renderPoolFailure(mint,'No Solana pools returned for this mint.',pumpMeta);
+  const emptyPoolMessage=quoteSidePairs.length
+   ? 'Provider returned '+quoteSidePairs.length+' pool(s) where this mint is the quote token. Climboria is withholding these pools until quote-side price orientation and metric semantics are verified; no other token\'s chart or price is shown as this mint.'
+   : 'No active Solana pools were returned for this mint.';
+  $('detailPairs').innerHTML='<div class="notice">'+esc(emptyPoolMessage)+'</div>';
+  $('signalGrid').innerHTML='<div class="notice">Pool evidence unavailable until an exact base-token pool is discovered.</div>';
+  renderPoolFailure(mint,quoteSidePairs.length?'Quote-side pool data was withheld because selected-token price and metric orientation are not yet verified.':'No exact base-token Solana pool returned for this mint.',pumpMeta,quoteSidePairs.length?'A pool was returned with the selected mint on the quote side. Climboria does not yet normalize quote-side pricing or chart orientation, so it safely withholds the pool instead of showing the base token as the selected asset.':'No exact base-token pool was returned for this mint.');
   if(!pumpMeta)$('tokenProfile').innerHTML='<div class="notice">pump.fun metadata fallback unavailable. No unverified metadata is guessed.</div>';
   return;
  }
@@ -1282,7 +1326,7 @@ $('search').addEventListener('input',e=>{
  const requestId=++dexSearchRequestId;
  if(query.length<2)return;
  dexSearchTimer=setTimeout(()=>discoverDexSearch(query,requestId),350);
-});$('sort').addEventListener('change',render);$('refresh').addEventListener('click',load);$('refreshBase').addEventListener('click',loadBaseMarkets);$('baseSearch').addEventListener('input',renderBaseMarkets);$('baseSort').addEventListener('change',renderBaseMarkets);$('baseTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-base-mode]');if(!b)return;baseMode=b.dataset.baseMode;document.querySelectorAll('#baseTabs [data-base-mode]').forEach(x=>x.classList.toggle('active',x===b));$('baseSort').value='mode';renderBaseMarkets()});$('tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-mode]');if(!b)return;state.mode=b.dataset.mode;document.querySelectorAll('.tab[data-mode]').forEach(x=>x.classList.toggle('active',x===b));render()});
+});$('sort').addEventListener('change',render);$('refresh').addEventListener('click',load);$('refreshBase').addEventListener('click',loadBaseMarkets);$('baseSearch').addEventListener('input',updateBaseSearch);$('baseSort').addEventListener('change',renderBaseMarkets);$('baseTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-base-mode]');if(!b)return;baseMode=b.dataset.baseMode;document.querySelectorAll('#baseTabs [data-base-mode]').forEach(x=>x.classList.toggle('active',x===b));$('baseSort').value='mode';renderBaseMarkets()});$('tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-mode]');if(!b)return;state.mode=b.dataset.mode;document.querySelectorAll('.tab[data-mode]').forEach(x=>x.classList.toggle('active',x===b));render()});
 load();loadBaseMarkets();const dp=new URLSearchParams(location.search),im=dp.get('token');if(im&&/^[1-9A-HJ-NP-Za-km-z]{32,50}$/.test(im))openToken(im,{fromUrl:true});setInterval(load,60000);setInterval(loadBaseMarkets,60000);setInterval(()=>{if(activeDetailMint&&document.visibilityState==='visible')openToken(activeDetailMint,{refresh:true,fromUrl:true});},20000);
 
 const CLIMBORIA_WATCHLIST_KEY='climboria:dex:watchlist:v1';

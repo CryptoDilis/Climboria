@@ -49,3 +49,22 @@ Status: **quote-only; execution intentionally disabled**.
 - Jupiter's `/execute` accepts the signed transaction and matching request ID and returns an execution status.
 - A successful RPC submission alone is not confirmation. Do not display a successful swap unless the selected execution/confirmation provider reports a verified success.
 - The public frontend must not contain a Jupiter API key. A static-site-only implementation cannot safely conceal a provider credential.
+
+
+## 2026-11-13 — exact-head security readiness recheck (PR #269)
+
+- Exact branch/head: `codex/swap-security-evidence-current-main-2026-11-12` / `1e682785dc1143b1eddbacc7ffaf15c5c8c18163`; PR #269 is still draft and unmerged.
+- Exact-head Validate `43281005199`, Browser Smoke `43281005185`, Jupiter V6 CPI Trace `43281005219`, and Jupiter IDL History `43281005200` all completed SUCCESS. These checks validate the tested code and audit paths; they do not constitute a security approval or production deployment.
+- Implemented groundwork on this branch includes server-bound order/request binding, v0 message/signature checks, one-time order claims/replay controls, ALT resolution, restricted Metis v0 route decoding and finalized token-account/mint/source-balance verification.
+- Remaining execution blockers: full supported per-DEX CPI account-role and cursor/slice validation; CPI-requested signer/writable proof; resulting token-movement and fee-destination proof; controlled deployed Devnet wallet-sign → Worker-verify → Jupiter-submit → chain-confirm → final-balance lifecycle; production Cloudflare Worker/DO/health/CORS/rate-limit/monitoring/rollback verification; and independent Solana transaction-security review.
+- Both source-level review constants remain false; Wrangler execution and public frontend execution remain disabled. No signing or submission is approved.
+- This is a readiness recheck only. It does not change the active November 15 sprint order (DEX → Swap → Game → Launchpad last) or supersede the launch-readiness checklist's current DEX task.
+
+
+## 2026-11-13 — chart/provider readiness boundary
+
+- Current DexScreener iframe is bound to the selected exact base-side pair address. Browser tests prove URL and selection synchronization, not cross-origin candle correctness or freshness.
+- Official DexScreener pair API documentation does not define an OHLCV response or per-response observation timestamp/cache freshness guarantee. The UI's local “Updated” time is client receipt time only.
+- GeckoTerminal official API docs expose pool OHLCV with base/quote orientation, but the candidate has not yet been validated against a live Solana pair in this repository.
+- DEX remains non-production-live. Keep the current exact base-side filter and quote-side withholding. No chart adapter switch or reciprocal normalization is approved by this audit.
+- Next task: bounded live GeckoTerminal OHLCV capture for a known Solana pool in both orientations; inspect schema, timestamp ordering, response headers and cache/rate constraints before coding.
