@@ -1358,3 +1358,27 @@ The immediate failure is an upstream availability/coverage problem: the IDL Expl
 - Exact-head Browser Smoke `43334821774` was still running its Jarrell's Peak desktop/mobile gameplay step; no failed step had been reported at the last poll.
 - The earlier runs `43334500033`, `43334500063`, `43334500089`, and `43334500101` were marked cancelled after a newer commit arrived. Cancellation is not counted as a code failure.
 - Next: inspect the terminal IDL rerun and its raw artifact; if HTTP 500 persists, preserve it as an upstream-provider outage and obtain historical IDL provenance from a separate authoritative source (verified on-chain metadata/archive or independently pinned source history). Do not change candidate slot or bypass the evidence gate just to make CI green.
+
+
+## 2026-11-13 — exact-head retry audit closeout (head bb4657ac2b3b5265f11b7ad0a9e4dce4340a6dcb)
+
+### IDL History Audit — run 43335206225
+- **Terminal result:** FAILED; job `131590924893`; failed step `Fetch Jupiter and DEX CPI IDL history records`. Syntax validation and the local adapter/LaunchLab tests preceding the fetch completed successfully. Raw evidence artifact `13996124526` uploaded (719,806 bytes; SHA-256 `7d231bd74e8c2de0b6304c738e82c59e25e96cc31ffc50c324ac99d12a58c6b4`).
+- **Retry counter-fix verified for behavior, not provider recovery:** the report records four attempts for the Jupiter history endpoint; all attempts timed out (`The operation was aborted due to timeout`). The bounded retry helper worked as designed by preserving attempt-level errors and returning an incomplete result; it did not manufacture an IDL candidate or suppress the evidence gate.
+- **Independent provenance blockers:** candidate transaction slot remains `468153382`; the audit reports `matchingHistoricalRevisionCount=0`, `exactlyOneRevisionCoversCandidateSlot=false`, and `onChainIdlPayloadMatchesActiveHistory=false`. Candidate schema/discriminator and ProgramData chronology checks alone do not prove the historical binary or the runtime CPI account slice. Adapter classification in this artifact is `1 supported / 3 incomplete` for candidate-slot IDL provenance only; it is not transaction-safety approval. The LaunchLab candidate account structural checks are matched, but the audit still reports `idlProvenanceUniqueAtCandidateSlot=false`.
+- **Root cause:** upstream IDL Explorer history endpoint timed out across the configured retry budget, and the evidence set still lacks a unique historical revision tied to the preserved candidate slot. The failure is an intentional fail-closed evidence gate after provider timeout and missing historical proof, not a local syntax/test regression.
+- **Counter-fix status:** bounded retry is validated as an availability-resilience improvement; historical provenance remains unresolved. Do not repeat the same endpoint retry without a changed source/provider or new evidence. Next obtain an independent authoritative archive/pinned historical source and correlate it to the candidate slot and deployed binary; if no such evidence is obtainable, retain the adapter as incomplete and exclude it from execution.
+
+### Browser Smoke — run 43335206298
+- **Terminal result:** CANCELLED; job `131590999082`; the cancellation occurred during `Run Jarrell's Peak desktop and mobile gameplay smoke tests`. The preceding 21 browser/provider/auth/DEX/Swap/mobile checks all completed successfully. Provider contract captures and screenshots uploaded successfully: artifacts `13997062160`, `13997022653`, and `13997496137`.
+- **Log evidence:** gameplay diagnostics progressed through world/terrain route checks and hero animation inspection; then the runner emitted `The operation was canceled`. No gameplay assertion failure or test timeout is recorded before cancellation. This is an incomplete/cancelled verification, not a product-code failure. Do not infer that gameplay passed.
+- **Next action:** rerun the cancelled Browser Smoke job alone on the unchanged exact head, then inspect the terminal gameplay result and screenshot artifact. Avoid committing while it runs because branch workflow concurrency uses cancel-in-progress.
+
+### Exact-head summary and next priority
+- Exact head: `bb4657ac2b3b5265f11b7ad0a9e4dce4340a6dcb`.
+- Validate Climboria `43335206392`: SUCCESS.
+- Jupiter V6 CPI Trace Audit `43335206263`: SUCCESS.
+- Jupiter IDL History Audit `43335206225`: FAILED for provider timeout + unresolved candidate-slot provenance as detailed above.
+- Browser Smoke `43335206298`: CANCELLED during gameplay; 21 preceding checks passed; gameplay remains unverified.
+- No execution/security gate was weakened. Worker/Jupiter transaction execution remains disabled.
+- **Next exact tasks:** (1) rerun only Browser Smoke job `131590999082` and inspect gameplay; (2) source independent historical Jupiter IDL/binary provenance rather than retrying the same timed-out endpoint; (3) retain the 3 incomplete adapter states as excluded; (4) continue production-origin login/DEX/read-only Swap verification only after the relevant account configuration is available. Keep all production execution gates closed.
