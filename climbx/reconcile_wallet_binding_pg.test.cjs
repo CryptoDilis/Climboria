@@ -18,3 +18,18 @@ test('database read error requires review',async()=>assert.equal((await check({f
 test('uses read-only transaction and timeouts',async()=>{const x=await check({});assert.equal(x.calls[0],'BEGIN READ ONLY');assert.match(x.calls[1],/statement_timeout/);assert.equal(x.calls.at(-2),'COMMIT');assert.equal(x.calls.at(-1),'RELEASE');});
 test('rejects invalid pool',async()=>await assert.rejects(()=>reconcileWalletBinding({pool:null,userId,wallet,nonce})));
 test('rejects missing nonce',async()=>assert.equal((await reconcileWalletBinding({pool:setup().pool,userId,wallet,nonce:''})).status,'INVALID'));
+
+test('missing consumed timestamp cannot confirm wallet ownership',async()=>{
+ const x=await check({challenge:{user_id:userId,wallet_address:wallet}});
+ assert.deepEqual(x.result,{status:'INDETERMINATE',safeToRetry:false});
+});
+test('invalid consumed timestamp cannot confirm wallet ownership',async()=>{
+ for(const value of ['', 'not-a-date', new Date(NaN), 1]){
+  const x=await check({challenge:{user_id:userId,wallet_address:wallet,consumed_at:value}});
+  assert.deepEqual(x.result,{status:'INDETERMINATE',safeToRetry:false});
+ }
+});
+test('unrelated wallet cannot be confirmed even with matching user',async()=>{
+ const x=await check({challenge:{user_id:userId,wallet_address:'another-wallet',consumed_at:new Date()}});
+ assert.equal(x.result.status,'REVIEW_REQUIRED');
+});
