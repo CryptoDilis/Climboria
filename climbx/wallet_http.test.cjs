@@ -32,3 +32,8 @@ test('rejects invalid origin configuration',()=>assert.throws(()=>createWalletHt
 test('requires rate limiter',()=>assert.throws(()=>createWalletHttpHandler({service:{issue(){},bind(){}}})));
 test('requires service',()=>assert.throws(()=>createWalletHttpHandler({rateLimit:async()=>true})));
 test('no-store responses',async()=>{const f=setup();await f.run();assert.equal(f.res.headers['Cache-Control'],'no-store');});
+
+test('rejects declared body over limit before service',async()=>{const f=setup({headers:{'content-length':'99999'}});await f.run();assert.equal(f.res.status,413);assert.equal(f.calls.length,0);});
+test('rejects invalid declared body length',async()=>{const f=setup({headers:{'content-length':'-1'}});await f.run();assert.equal(f.res.status,413);});
+test('rejects nonnumeric declared body length',async()=>{const f=setup({headers:{'content-length':'abc'}});await f.run();assert.equal(f.res.status,413);});
+test('accepts small declared body length',async()=>{const f=setup({headers:{'content-length':'14'}});await f.run();assert.equal(f.res.status,200);});
