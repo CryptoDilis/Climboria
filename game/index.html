@@ -307,6 +307,17 @@ function startHeroPreview(){
    document.documentElement.dataset.climboriaHeroPreviewPose='a-pose';
    document.documentElement.dataset.climboriaHeroPreviewClip='none-static';
    document.documentElement.dataset.climboriaHeroPreviewSeat='none';
+   const directionBetween=(a,b)=>{
+    const start=previewModel.getObjectByName(a),end=previewModel.getObjectByName(b);
+    return end.getWorldPosition(new THREE.Vector3())
+     .sub(start.getWorldPosition(new THREE.Vector3())).normalize().toArray();
+   };
+   window.__climboriaHeroAPoseAudit={
+    leftArm:directionBetween('LeftUpperArm','LeftLowerArm'),
+    rightArm:directionBetween('RightUpperArm','RightLowerArm'),
+    leftLeg:directionBetween('LeftUpperLeg','LeftLowerLeg'),
+    rightLeg:directionBetween('RightUpperLeg','RightLowerLeg')
+   };
    previewLoaded=true;previewLoading=false;heroStatus.textContent='LIVE 3D PREVIEW · A-POSE · Drag to rotate · Scroll / pinch to zoom';
    editorButtons();heroFeedback.textContent='Official hero is ready. Choose and save your hero name.';
   },progress=>{
