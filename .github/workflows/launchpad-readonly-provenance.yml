@@ -6,12 +6,16 @@ on:
     paths:
       - ".github/scripts/launchlab-provenance.mjs"
       - ".github/scripts/launchlab-provenance.test.mjs"
+      - ".github/scripts/launchlab-curve-economics.mjs"
+      - ".github/scripts/launchlab-curve-economics.test.mjs"
       - ".github/workflows/launchpad-readonly-provenance.yml"
   push:
     branches: [main]
     paths:
       - ".github/scripts/launchlab-provenance.mjs"
       - ".github/scripts/launchlab-provenance.test.mjs"
+      - ".github/scripts/launchlab-curve-economics.mjs"
+      - ".github/scripts/launchlab-curve-economics.test.mjs"
       - ".github/workflows/launchpad-readonly-provenance.yml"
   workflow_dispatch:
 
@@ -36,6 +40,8 @@ jobs:
         run: |
           node --check .github/scripts/launchlab-provenance.mjs
           node --test .github/scripts/launchlab-provenance.test.mjs
+          node --check .github/scripts/launchlab-curve-economics.mjs
+          node --test .github/scripts/launchlab-curve-economics.test.mjs
 
   live-readonly:
     name: Verify public Raydium programs on mainnet and devnet
