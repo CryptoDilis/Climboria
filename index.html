@@ -591,6 +591,44 @@ nav{position:relative!important;top:auto!important;left:auto!important;right:aut
  .reference-hero-tagline{margin-top:12px!important}
  .launch-countdown{margin-top:16px!important}
 }
+
+/* Desktop-only visual cleanup based on supplied reference screenshots. */
+@media(min-width:901px){
+ .hero{padding-top:clamp(36px,4.5vw,66px)!important;min-height:780px!important}
+ .launch-countdown{margin-top:0!important;margin-left:clamp(24px,6vw,110px)!important}
+ .hero-content{margin-top:14px!important}
+ #game{padding-top:72px!important;padding-bottom:72px!important}
+ #game .menu-destinations{max-width:960px;margin:28px auto 0;padding:20px 24px}
+ #game .menu-destination-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+ #game .menu-destination{min-height:124px;padding:15px}
+ #game .menu-destinations-head{margin-bottom:12px}
+ #game .grid3{margin-top:24px}
+}
+@media(min-width:1450px){
+ nav{min-height:64px!important;padding:10px 18px!important}
+ .navl{gap:clamp(5px,.45vw,9px)!important}
+ .navl>a:not([target]),.navl>.hub-link,.navl>.btn-gold,.navl>.nav-x-link{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:auto!important;min-width:0!important;flex:0 0 auto!important;height:34px!important;min-height:34px!important;
+  padding:0 clamp(8px,.75vw,13px)!important;border:1px solid rgba(225,181,116,.55)!important;
+  border-radius:999px!important;background:rgba(15,26,44,.48)!important;box-shadow:none!important;
+  font:700 clamp(9px,.67vw,11px)/1 Inter,system-ui,sans-serif!important;letter-spacing:.15px!important;
+  color:#f1d49f!important;white-space:nowrap!important;
+ }
+ .navl>.hub-link .climboria-icon{display:none!important}
+ .navl>.btn-gold{background:rgba(245,197,91,.12)!important;color:#ffe4b0!important}
+ .navl>.nav-x-link{min-width:34px!important;width:34px!important;padding:0!important;font-size:15px!important}
+ .navl>a:not([target]):hover,.navl>.hub-link:hover,.navl>.btn-gold:hover{border-color:#ffe1a1!important;background:rgba(245,197,91,.16)!important}
+}
+.home-final-cta{max-width:1300px;margin:0 auto;padding:95px 24px 90px;text-align:center;border-top:1px solid rgba(245,197,91,.13)}
+.home-final-kicker{font-size:11px;font-weight:800;letter-spacing:3px;color:#dcb36c}
+.home-final-cta h2{margin:16px 0;font:900 clamp(42px,6vw,82px)/1.1 Cinzel,serif;color:#fff4e5}
+.home-final-cta h2 span{color:#e6b552}
+.home-final-cta p{max-width:510px;margin:0 auto;color:#c6c4c9;line-height:1.7}
+.home-final-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:25px}
+.home-final-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:12px 22px;border:1px solid rgba(242,212,164,.48);border-radius:999px;color:#f5e8d0;text-decoration:none;font-size:11px;font-weight:800;letter-spacing:1px}
+.home-final-actions a:first-child{background:linear-gradient(120deg,#ffe9a5,#e9af48);color:#221b12}
+@media(max-width:900px){.home-final-cta{padding:70px 20px}}
 </style>
 </head>
 <body>
@@ -647,12 +685,6 @@ nav{position:relative!important;top:auto!important;left:auto!important;right:aut
     <img src="./857289992_1755402102906767_7411463028840030192_n-1.webp" alt="CLIMBORIA Official Hero" loading="eager" fetchpriority="high">
   </picture>
   <div class="hero-overlay"></div>
-  <div class="reference-hero-intro">
-    <div class="reference-hero-status">A WORLD BUILT TO BE EARNED <span>● IN DEVELOPMENT</span></div>
-    <p class="reference-hero-eyebrow">EXPLORE · SURVIVE · ASCEND</p>
-    <p class="reference-hero-tagline">Vengeance is always an option.</p>
-    <p class="reference-hero-description">A cinematic climbing adventure where every route is a decision, every summit is a story, and the mountain remembers your ascent.</p>
-  </div>
   <section class="launch-countdown" aria-label="Climboria token launch countdown">
     <div class="launch-kicker">Planned launch target · subject to readiness</div>
     <h2>$CLIMB LAUNCH TARGET</h2>
@@ -826,6 +858,12 @@ nav{position:relative!important;top:auto!important;left:auto!important;right:aut
   </div>
 </div>
 
+<section class="home-final-cta" aria-labelledby="home-final-cta-title">
+  <div class="home-final-kicker">THE MOUNTAIN IS WAITING</div>
+  <h2 id="home-final-cta-title">BEGIN THE <span>ASCENT.</span></h2>
+  <p>Watch the countdown. Read the rules. Follow only official channels — and decide for yourself.</p>
+  <div class="home-final-actions"><a href="/game/">EXPLORE JARRELL'S PEAK</a><a href="/dex/">PREVIEW THE DEX</a></div>
+</section>
 <footer style="display:flex;justify-content:space-between"><div>© 2026 Climboria. All rights reserved.</div></footer>
 <footer class="site-status">GAME DEVELOPMENT • SOLANA ECOSYSTEM PLANNED • <a href="./terms/" style="color:#fbbf24;text-decoration:underline">TERMS OF USE</a> • <a href="/support/" style="color:#fbbf24;text-decoration:underline">CUSTOMER SUPPORT</a></footer>
 
