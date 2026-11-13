@@ -40,3 +40,21 @@ test('rejects scaffold without overflow-checked expiry bound',()=>{
  const result=checkScaffold({read:mockRead(source.replace('now.checked_add(24 * 60 * 60)','now + 24 * 60 * 60'))});
  assert.equal(result.reason,'MISSING_24H_GRANT_CAP');
 });
+
+
+test('rejects missing owner signer on grant creation',()=>{
+ const result=checkScaffold({read:mockRead(source.replace("pub owner: Signer<'info>","pub owner: UncheckedAccount<'info>"))});
+ assert.equal(result.reason,'MISSING_OWNER_SIGNATURE');
+});
+test('rejects removed revoke owner binding',()=>{
+ const result=checkScaffold({read:mockRead(source.replace('has_one = owner','constraint = true'))});
+ assert.equal(result.reason,'MISSING_REVOKE_OWNER_BINDING');
+});
+test('rejects changed grant creation PDA seeds',()=>{
+ const result=checkScaffold({read:mockRead(source.replace('seeds = [b"grant", owner.key().as_ref(), &grant_id.to_le_bytes()]','seeds = [b"grant", &grant_id.to_le_bytes()]'))});
+ assert.equal(result.reason,'MISSING_CREATE_GRANT_PDA');
+});
+test('rejects changed revoke PDA seeds',()=>{
+ const result=checkScaffold({read:mockRead(source.replace('seeds = [b"grant", owner.key().as_ref(), &grant.grant_id.to_le_bytes()]','seeds = [b"grant", &grant.grant_id.to_le_bytes()]'))});
+ assert.equal(result.reason,'MISSING_REVOKE_GRANT_PDA');
+});
