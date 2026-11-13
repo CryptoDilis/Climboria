@@ -816,8 +816,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  [[-3.8,4.35,1.35,1.25],[-2.65,5.05,1.25,1.2],[-1.35,5.45,1.2,1.1],[0,5.55,1.2,1.05],[1.35,5.45,1.2,1.1],[2.65,5.05,1.25,1.2],[3.8,4.35,1.35,1.25]].forEach(([x,y,sy,sx],i)=>{
   portalRock(x,y,-2.05,sx,sy,2.2,(i-3)*.11);
  });
- const caveMouth=new T3.Mesh(new T3.PlaneGeometry(8.6,4.9),new T3.MeshStandardMaterial({color:L('#20272a'),emissive:L('#293438'),emissiveIntensity:.22,roughness:1,side:T3.DoubleSide}));
- caveMouth.position.set(0,2.75,3.9);g.add(caveMouth);
+ // Real walk-through portal: no opaque painted plane across the entrance.
  const caveFloorMat=registerCaveRockMaterial(caveRockMaterial('#625b50',4110,.11)),caveDampFloorMat=registerCaveRockMaterial(caveRockMaterial('#4f5b5c',4112,.14)),caveRoofMat=registerCaveRockMaterial(caveRockMaterial('#383f43',4114,.2));
  const caveFloorLip=mk(BOX,caveFloorMat,0,.12,-1.1,g);sc(caveFloorLip,9.4,.24,5.8,g);
  // Low, irregular rubble blends the threshold into the natural approach apron.
@@ -964,7 +963,9 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  caveWall(-68,-30,-58,-30,'north-chamber-south-west');
  caveWall(-52,-30,-42,-30,'north-chamber-south-east');
  caveWall(-68,-30,-68,-50,'north-chamber-west');
- caveWall(-68,-50,-42,-50,'north-chamber-north');
+ // Open the north wall to a continuous sloped coastal tunnel.
+ caveWall(-68,-50,-58,-50,'north-chamber-north-west');
+ caveWall(-52,-50,-42,-50,'north-chamber-north-east');
  caveWall(-42,-50,-42,-30,'north-chamber-east');
  const northPassageFloor=mk(BOX,M('#625b50'),-55,.08,-25,g);sc(northPassageFloor,6,.16,10,g);
  const northChamberFloor=mk(BOX,M('#625b50'),-55,.08,-40,g);sc(northChamberFloor,26,.16,20,g);
