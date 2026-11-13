@@ -16,7 +16,9 @@ function sample() {
     pool: pk(1), coinVault: pk(2), pcVault: pk(3), coinMint: pk(4),
     pcMint: pk(5), openOrders: pk(6), market: pk(7), marketProgram: pk(8)
   };
-  const expectedAuthority = pk(9);
+  // Independent cross-check vector: Raydium V4 mainnet processor seed
+  // "amm authority" with program ID 675k... and nonce 254.
+  const expectedAuthority = "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1";
   const poolBytes = new Uint8Array(752);
   u64(poolBytes, 0, 6);
   u64(poolBytes, 8, 254);
@@ -80,7 +82,7 @@ test("valid raw 752-byte Raydium V4 AMM plus classic SPL vault/mint and market e
   assert.equal(r.pool.swapFeeDenominator, "10000");
   assert.equal(r.pool.coinVault, pk(2));
   assert.equal(r.pool.pcVault, pk(3));
-  assert.equal(r.coinVault.owner, pk(9));
+  assert.equal(r.coinVault.owner, "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1");
   assert.equal(r.pcVault.mint, pk(5));
   assert.equal(r.coinMint.decimals, 6);
   assert.equal(r.pcMint.decimals, 9);
@@ -167,6 +169,8 @@ test("one finalized context RPC call for eight accounts; preserve slot and never
   assert.equal(request[0].init.redirect, "error");
   assert.equal(result.contextSlot, 120);
   assert.equal(result.rpcFinalizedAccountSnapshotRead, true);
+  assert.equal(result.ammAuthorityPdaIndependentlyVerified, true);
+  assert.equal(result.expectedAuthority, v.expectedAuthority);
   assert.equal(result.approvedForJupiterCpi, false);
 });
 
@@ -187,4 +191,45 @@ test("finalized RPC transport rejects stale slot, wrong ids, missing accounts an
   await assert.rejects(() => query(x => { x.error = {code:-1,message:"failed"}; return x; }), /incomplete/i);
   await assert.rejects(() => query(x => x,"http://127.0.0.1:8899"), /public HTTPS endpoint/i);
   await assert.rejects(() => query(x => x,"https://localhost"), /public HTTPS endpoint/i);
+});
+
+
+test("rejects a forged but internally consistent pool/vault authority not matching the Raydium PDA", async () => {
+  const v = sample();
+  const claimed = pk(9);
+  v.expectedAuthority = claimed;
+  for (const index of [1, 2]) mutateRaw(v, index, b => pubkey(b, 32, claimed));
+  // The older synchronous inspector can only establish the claim matches
+  // the vault fields, NOT that the claim is the actual program-derived PDA.
+  assert.equal(inspectRaydiumV4FinalizedPoolSnapshot(v).ammAuthorityPdaIndependentlyVerified, false);
+  await assert.rejects(
+    () => fetchRaydiumV4FinalizedPoolEvidence({
+      network: v.network, addresses: v.addresses, expectedAuthority: claimed,
+      rpcUrl: "https://solana-rpc.example",
+      fetchImpl: async () => new Response(JSON.stringify({
+        jsonrpc: "2.0", id: "climboria-raydium-v4-finalized-evidence",
+        result: { context: { slot: v.contextSlot }, value: v.accounts }
+      }), { status: 200 })
+    }),
+    /independently derived PDA/i,
+    "Internal consistency with a caller claim must not impersonate AMM PDA proof"
+  );
+});
+
+test("rejects wrong on-chain nonce even when pool and claimed vault authority remain consistent", async () => {
+  const v = sample();
+  mutateRaw(v, 0, b => u64(b, 8, 255));
+  assert.equal(inspectRaydiumV4FinalizedPoolSnapshot(v).pool.nonce, 255);
+  await assert.rejects(
+    () => fetchRaydiumV4FinalizedPoolEvidence({
+      network: v.network, addresses: v.addresses, expectedAuthority: v.expectedAuthority,
+      rpcUrl: "https://solana-rpc.example",
+      fetchImpl: async () => new Response(JSON.stringify({
+        jsonrpc: "2.0", id: "climboria-raydium-v4-finalized-evidence",
+        result: { context: { slot: v.contextSlot }, value: v.accounts }
+      }), { status: 200 })
+    }),
+    /on-curve or ambiguous address/i,
+    "A nonce with an on-curve hash cannot yield a valid Solana PDA"
+  );
 });
