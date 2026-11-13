@@ -423,3 +423,8 @@ Verified PR #282 commit `bcdaf87419ce3930b23ce6eb3e1844441629a464`: CLIMBX relea
 ## Phase 43 checkpoint — 2026-11-13 (first Node CI failure diagnosed and fixed)
 
 PR #282 commit `5ec1a525c98df2632ed1503519f57d83b3301c0d` ran GitHub Actions: Validate Climboria **43442543744** completed/success, but CLIMBX release safety **43442543592** completed/**failure**. Examined failing job **131943555457** logs: Python unit tests passed; Node Ed25519 test failed at module resolution (`Cannot find module './solana_signature'`) because the module filename is `solana_signature.cjs`. Fixed test import to explicit `.cjs` in commit `55ac6796ffdeeecca8386112e2c9029f435ca083`. New runs **43442694904** (CLIMBX) and **43442694675** (Validate) were both **in_progress** at checkpoint, NOT yet verified passing. No live wallet auth or Supabase connection; NO-GO.
+
+
+## Phase 44 checkpoint — 2026-11-13 (verified CI and signed challenge integration tests)
+
+Phase43 fix commit `55ac6796ffdeeecca8386112e2c9029f435ca083` verified successful on both CLIMBX release safety run **43442694904** and Validate Climboria run **43442694675**. Added `climbx/verify_challenge.cjs` commit `3390c6fa306137e1c15abc9dfe0cf77850d9bfa3`, integrating exact stored canonical message Ed25519 verification with trusted store interface and atomic nonce consumption; added 15 Node tests `climbx/verify_challenge.test.cjs` commit `054386460bd0ab586b0ba1f9babe560383610ddd`, wired into CI commit `934d46c98855df16a9b12398163424602c2fc5fd`. **New 29-test Node CI not yet verified.** The store is an in-memory test fake; a real authenticated Supabase backend, durable atomic nonce consumption, signature/wallet linking, and DB integration remain outstanding. NO-GO.
