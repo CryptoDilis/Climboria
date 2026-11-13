@@ -48,7 +48,7 @@ test("probe rejects non-HTTPS origins before making requests", async () => {
 
 test("probe blocks accidental production execution flag enablement", async () => {
   const { fakeFetch, respond } = fixture({ health: Response.json({ ...health, execution: "enabled", configured: { ...health.configured, executionEnabled: true } }, { headers: { "access-control-allow-origin": ORIGIN } }) });
-  await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), /execution/i);
+  await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), /executable trading enabled/i);
 });
 
 test("probe rejects a quote for a different input amount", async () => {
