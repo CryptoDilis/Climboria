@@ -1031,3 +1031,18 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Toolchain probe in assistant execution environment:** `rustc`, `cargo`, `solana`, `solana-test-validator`, `anchor` all MISSING; Node v22.16.0 available. This does **not** establish what tools are installed on other CI runners or the user's machine. No local validator or signed devnet transaction run. No production code changed; Phase107 CI not yet verified at record time.
 
 **Next Phase108:** verify Phase107 CI; provision pinned compatible Rust/Solana/Anchor toolchain on a suitable runner; capture command versions and actual local-validator startup; implement and test minimal owner-signed on-chain grant/revoke with nonce/cap enforcement, then route restrictions. Do not infer toolchain availability from simulation CI. Real-funds trading **NO-GO**; no Swap/DEX/Launchpad/game edits.
+
+
+## Phase 108 — 2026-11-14 — read-only Solana toolchain verification gate
+
+**Phase107 CI all SUCCESS** on `9ca0aead9594bc36d4f89aef6276d8f3093f028b`: Validate `43470777036`, CLIMBX release safety `43470777044`, Browser Smoke `43470777108`.
+
+**Phase108 commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `4be15c370e9023a045f01f72a8d936d225a19d54`: new read-only `climbx/probe_solana_toolchain.cjs` checks version command status of rustc, cargo, solana, solana-test-validator, anchor, outputs structured availability, exits nonzero when incomplete. It does not install tools, access secrets, launch validator or authorize trades.
+- `68d4423d76500dc680477239332aff82edc02555`: six deterministic unit tests using mocked command runners.
+- `bca363eb54068548efc338cf305fdc892cb08b79`: include probe tests in existing CLIMBX non-deploying CI. **Do not execute the real toolchain probe as a required CI gate** until a pinned toolchain runner is provisioned; the unit tests are runner-independent.
+**Phase108 CI pending** on `bca363eb54068548efc338cf305fdc892cb08b79` at first check.
+
+**Actual assistant environment probe:** rustc, cargo, solana, solana-test-validator, anchor unavailable; Node v22.16.0 available. No validator started and no signed on-chain transactions. Existing deny-only boundary remains intact; real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase109:** verify Phase108 CI and fix any failures; obtain approved pinned Solana toolchain environment and collect actual command outputs; only then start owner-signed local-validator grant/revoke/cap prototype and test replay/races/route enforcement. Continue append-only main record.
