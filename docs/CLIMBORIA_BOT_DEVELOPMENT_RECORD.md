@@ -840,3 +840,20 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Blockers unchanged:** no deployed Solana grant/vault program, no atomic on-chain nonce/spend/sequence accounting, no verified Signature DEX CPI/account allowlist, no signed devnet swap or independent audit. Current assistant container lacks Rust/Cargo/Solana CLI/local validator/Anchor. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
 
 **Next Phase95:** verify Phase94 CI; inspect CLIMBX call sites for consumers that might mistake `ok:true` for execution permission; if found, fail closed and add regression tests. Establish actual Solana toolchain and local validator before claiming on-chain work; obtain DEX router constraints read-only; implement owner-signed on-chain grant/revoke/caps and independent audit. Append next phase here.
+
+
+## Phase 95 — 2026-11-14 — CLIMBX execution authorization boundary (non-deploying)
+
+**Phase94 CI all SUCCESS** on `eab5b409d5021469f6b506c7cb2b04ead509559d`: CLIMBX release safety `43465096110`, Browser Smoke `43465096010`, Validate `43465096500`.
+
+**CLIMBX-only branch inspection:** fetched recursive Git tree for Phase94 commit; reviewed CLIMBX file paths. No evidence from this filename inspection that simulator is wired to a live executor; it is **not** a complete semantic call-site audit.
+
+**Phase95 branch commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `3752511020548b72ed229ef35836552ce92eb222`: `climbx/execution_authorization_boundary.cjs`, explicit fail-closed `authorizeBotExecution` that never returns execution permission, even for verified wallet, passing policy simulation, matching devnet simulation or spoofed caller-provided on-chain proof. This is a safety interface, **not a real on-chain authorization verifier**.
+- `6b3ceb5619235f2102f4c439394bbda4c5178449`: eight tests for simulated/spoofed authorization and missing inputs.
+- `1ea86e78fac494ccda59ca7b57bcc2a5ea7e0009`: include execution boundary tests in non-deploying CLIMBX CI.
+**Phase95 CI pending** on `1ea86e78fac494ccda59ca7b57bcc2a5ea7e0009` (no runs returned at first check).
+
+**Status:** CLIMBX real-funds **NO-GO**. No Solana grant/vault program, signed devnet swap, atomic on-chain caps, verified DEX router CPI, or independent audit. No Swap/DEX/Launchpad/game files changed.
+
+**Next Phase96:** verify Phase95 CI and fix failures; conduct targeted CLIMBX source-level call-site audit for `evaluateClimbxEntry`, `evaluateOrder`, `authorizeBotExecution`, `mayExecute` and any trade execution paths; add regression tests for actual consumers if found. Provision Solana build/validator environment and reviewed DEX route schema before devnet on-chain implementation. Continue main-branch handoff logging.
