@@ -92,6 +92,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: CLIMBX build prerequisite regression tests (non-deploying)
         run: node --test climbx/check_reproducible_build.test.cjs
+      - name: CLIMBX Anchor scaffold safety boundary tests (non-deploying)
+        run: node --test climbx/check_anchor_safety_boundary.test.cjs
       - name: Report installed Rust toolchain
         run: |
           rustc --version
