@@ -21,6 +21,16 @@ function checkScaffold({read=fs.readFileSync}={}){
   if(!source.includes('seeds = [b"grant", owner.key().as_ref(), &grant_id.to_le_bytes()]'))return blocked('MISSING_CREATE_GRANT_PDA');
   if(!source.includes('seeds = [b"grant", owner.key().as_ref(), &grant.grant_id.to_le_bytes()]'))return blocked('MISSING_REVOKE_GRANT_PDA');
   if(!source.includes('now.checked_add(24 * 60 * 60)')||!source.includes('expires_at <= max_expiry'))return blocked('MISSING_24H_GRANT_CAP');
+  // The tightening instruction must remain owner-bound and never bypass the policy.
+  const tighten=source.match(/pub fn tighten_grant\s*\(([\s\S]*?)\n    \}/)?.[1];
+  if(!tighten || !/ctx:\s*Context<RevokeGrant>/.test(tighten) ||
+     !/validate_tightening\s*\(/.test(tighten))return blocked('UNSAFE_GRANT_TIGHTENING');
+  const policy=source.match(/fn validate_tightening\s*\(([\s\S]*?)\n\}/)?.[1];
+  if(!policy || !policy.includes('!grant.revoked') ||
+     !policy.includes('per_order <= grant.per_order_cap') ||
+     !policy.includes('cumulative >= grant.spent') ||
+     !policy.includes('cumulative <= grant.cumulative_cap') ||
+     !policy.includes('expiry <= grant.expires_at'))return blocked('UNSAFE_GRANT_TIGHTENING');
   if(/pub fn (?:execute|swap|trade|withdraw|transfer)\w*\s*\(/.test(source))return blocked('UNREVIEWED_EXECUTION_INSTRUCTION');
   return blocked('UNCOMPILED_GRANT_ONLY_SCAFFOLD');
  }catch{return blocked('INVALID_SCAFFOLD')}
