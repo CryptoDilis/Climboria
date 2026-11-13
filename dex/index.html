@@ -1372,10 +1372,14 @@ window.addEventListener('storage',e=>{if(e.key===CLIMBORIA_WATCHLIST_KEY)renderC
 
 /* DEX trading terminal wiring: Jupiter quote preview + guarded wallet-reviewed execution */
 let dexTradeSide='buy',dexTradeOrderType='market',dexTradeToken=null;
+let dexTradeTokenSelectionSequence=0;
 function dexTradeSetStatus(message){$('dexTradeStatus').textContent=message}
 const DEX_SOL_TOKEN={id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9,isVerified:true};
 async function dexTradeSyncToken(pair){
  const token=pair?.baseToken;if(!token?.address)return;
+ const selection=++dexTradeTokenSelectionSequence;
+ // A new market makes every earlier quote and mint-supply RPC result obsolete.
+ invalidateDexQuote('Selected market changed. Confirm exact mint decimals and request a fresh quote.');
  dexTradeToken={id:token.address,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:null,isVerified:false};
  $('dexTradeTokenSymbol').textContent=dexTradeToken.symbol;$('dexTradeTokenMint').textContent=dexTradeToken.id;
  const price=Number(pair.priceUsd),change=Number(pair.priceChange?.h24);
@@ -1391,14 +1395,15 @@ async function dexTradeSyncToken(pair){
  try{
   const rpcEndpoints=['https://api.mainnet-beta.solana.com','https://solana-rpc.publicnode.com','https://rpc.ankr.com/solana'];
   let data=null,lastRpcError='No Solana RPC responded';
-  for(const endpoint of rpcEndpoints){try{const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenSupply',params:[token.address,{commitment:'confirmed'}]})});if(!response.ok)throw new Error('HTTP '+response.status);const payload=await response.json();if(payload.error)throw new Error(payload.error.message||'RPC error');if(!payload.result?.value)throw new Error('Mint supply not returned');data=payload;break;}catch(rpcError){lastRpcError=endpoint+' · '+rpcError.message;}}
+  for(const endpoint of rpcEndpoints){try{const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenSupply',params:[token.address,{commitment:'confirmed'}]})});if(selection!==dexTradeTokenSelectionSequence)return;if(!response.ok)throw new Error('HTTP '+response.status);const payload=await response.json();if(selection!==dexTradeTokenSelectionSequence)return;if(payload.error)throw new Error(payload.error.message||'RPC error');if(!payload.result?.value)throw new Error('Mint supply not returned');data=payload;break;}catch(rpcError){lastRpcError=endpoint+' · '+rpcError.message;}}
+  if(selection!==dexTradeTokenSelectionSequence)return;
   if(!data)throw new Error('All public Solana RPCs failed. '+lastRpcError);
   const decimals=Number(data.result?.value?.decimals);
   if(!Number.isInteger(decimals)||decimals<0||decimals>18)throw new Error('The selected mint did not return valid on-chain decimals.');
   dexTradeToken.decimals=decimals;dexTradeApplyDirection();
   $('dexTradeGetQuote').disabled=false;$('dexTradePrepare').disabled=false;
   dexTradeSetStatus('On-chain mint verified · '+decimals+' decimals. Jupiter market quote is available; execution remains backend-gated.');
- }catch(error){dexTradeSetStatus('Trading unavailable: '+error.message+' No guessed decimals will be used.')}
+ }catch(error){if(selection===dexTradeTokenSelectionSequence)dexTradeSetStatus('Trading unavailable: '+error.message+' No guessed decimals will be used.')}
 }
 function dexTradeApplyDirection(){
  if(!dexTradeToken)return false;
@@ -1420,10 +1425,12 @@ async function dexTradeWalletBalance(){
  return (data.result?.value||[]).reduce((sum,row)=>sum+Number(row.account?.data?.parsed?.info?.tokenAmount?.uiAmountString||0),0);
 }
 document.querySelectorAll('[data-dex-side]').forEach(button=>button.addEventListener('click',()=>{
+ invalidateDexQuote('Trade direction changed. Old estimate discarded; request a fresh quote.');
  dexTradeSide=button.dataset.dexSide;document.querySelectorAll('[data-dex-side]').forEach(item=>item.classList.toggle('active',item===button));
  dexTradeApplyDirection();$('dexTradeAmount').value='';dexTradeSetStatus((dexTradeSide==='buy'?'Buy':'Sell')+' '+(dexTradeToken?.symbol||'selected token')+' · enter amount or choose a wallet balance percentage.');
 }));
 document.querySelectorAll('[data-dex-order]').forEach(button=>button.addEventListener('click',()=>{
+ invalidateDexQuote('Order mode changed. Old estimate discarded; request a fresh quote.');
  dexTradeOrderType=button.dataset.dexOrder;document.querySelectorAll('[data-dex-order]').forEach(item=>item.classList.toggle('active',item===button));
  $('dexLimitFields').hidden=dexTradeOrderType!=='limit';
  $('dexTradeGetQuote').disabled=dexTradeOrderType==='limit'||!Number.isInteger(dexTradeToken?.decimals);
