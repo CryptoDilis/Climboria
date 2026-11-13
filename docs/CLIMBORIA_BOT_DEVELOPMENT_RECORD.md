@@ -1188,3 +1188,16 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Security state:** no actual Solana local validator started or proven, no Rust/Cargo/Solana/Anchor toolchain verified, no on-chain owner grant/revoke/cap/nonce program, no signed devnet E2E or audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
 
 **Next Phase118:** verify Phase117 CI; provision pinned toolchain on runner or controlled development host and run real disposable validator; collect actual command versions and RPC evidence; begin on-chain grant/revoke prototype and atomic tests. Maintain append-only main record.
+
+
+## Phase 118 — 2026-11-14 — owner-controlled on-chain authorization implementation specification
+
+**Phase117 CI all SUCCESS** on `93befe9794e9ead42b6dd23eb431ca3c2d414b92`: Validate `43486842646`, CLIMBX release safety `43486842433`, Browser Smoke `43486842583`.
+
+**Phase118 branch commit** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `7660e6e80c3179ea4cfd09b72e5c38d85442dbc1`: new `climbx/ONCHAIN_AUTHORIZATION_PROGRAM_SPEC.md`, specifying owner-signed grant/revoke, grant/receipt PDAs, program-controlled token vaults, max five mints, executor signature, expiry and last-30-minute entry lock, atomic nonce and spend cap enforcement with restricted DEX-only CPI, replay protection, owner withdrawal, reconciliation, and adversarial local-validator/devnet tests.
+**Phase118 is a design-only documentation commit**; no executable program or new test CI required. Do not claim a working Solana program or successful local validator test.
+
+**Blockers:** Rust/Cargo/Solana/Anchor toolchain not verified in assistant environment; no local validator started, no reviewed on-chain program, no signed devnet E2E, no independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase119:** turn the spec into an isolated Anchor/Rust program scaffold with owner-signed grant/revoke and tests when toolchain is available; verify CLIMBX CI and capture real local-validator evidence. Keep append-only main record.
