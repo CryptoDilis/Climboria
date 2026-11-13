@@ -113,6 +113,9 @@ jobs:
           cargo +1.99.1 generate-lockfile --manifest-path climbx/programs/climbx-authorization/Cargo.toml
           cmp /tmp/climbx-first-Cargo.lock climbx/programs/climbx-authorization/Cargo.lock
           sha256sum climbx/programs/climbx-authorization/Cargo.lock
+      - name: Verify exact CLIMBX dependency candidate fingerprint (non-deploying)
+        run: |
+          echo "f868ffce588a34a789c688589c78a5f9b7f8e933c7292cbbb2ee97ffbb4b39b9  climbx/programs/climbx-authorization/Cargo.lock" | sha256sum --check --status
       - name: Validate CLIMBX Cargo lockfile integrity (not vulnerability audit)
         run: python3 climbx/check_cargo_lock.py climbx/programs/climbx-authorization/Cargo.lock
       - name: Upload lockfile candidate for independent dependency review
