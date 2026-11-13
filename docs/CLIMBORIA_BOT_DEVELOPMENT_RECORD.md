@@ -627,3 +627,12 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 6. Seek independent security review before enabling any real-funds automated trading. No silent activation of swap or bot feature gates.
 7. After **every** future phase, append exact commits, tests/CI statuses, blockers and next steps to **this file on main**; preserve old history. The user explicitly requests continuity across chats.
 
+
+
+## Phase 83 — 2026-11-14 — scoped Solana authorization design (CLIMBX only)
+
+**Phase 82 CI verified SUCCESS:** CLIMBX release safety `43458426921`, Validate Climboria `43458427033`, Browser Smoke `43458426940`. All three complete and successful.
+
+**Phase 83 commit:** `44f8d59a2cceb9e15c470699c4796621cecb693d` added `climbx/SOLANA_AUTHORIZATION_THREAT_MODEL.md` on branch `climbx/phase28-release-gate-ci` (draft PR #282). Design specifies one bot/wallet, five distinct slots, 24-hour owner-signed grants, last-30-minute no-new-entry rule, on-chain caps and revocation, DEX-only venue enforcement, safe native SOL handling, replay protection, exact CPI/program/ALT validation, net realized profit high-water-mark fee, and adversarial devnet acceptance criteria. **Design only, no deployed program, no real signed Solana swap, no independent audit.** CLIMBX real-funds release **NO-GO**.
+
+**Next steps — start here in a future session:** (1) add CLIMBX-only off-chain policy negative tests for slots, caps, expiry, revocation and cutoff, explicitly not misrepresenting these as on-chain controls; (2) verify actual Solana CLI/validator/Rust/Anchor availability and devnet infrastructure; (3) choose scoped on-chain authorization architecture and build devnet-only proof; (4) verify signed swap, finality and independent reconciliation; (5) independent security review and owner release decision. Keep the other chat's Swap/DEX/Launchpad files untouched. Append each new phase with exact commits, CI and next steps to this main-branch record.
