@@ -1254,8 +1254,8 @@ const readInventory = (key) => {
 };
 let inventoryStorageKey = INVENTORY_KEY;
 const inventory=readInventory(INVENTORY_KEY) || [];
-/* Single-player carried-loot recovery: one local-session bag, 3-minute timer.
-   This is NOT server inventory, not a multiplayer drop, and not cloud custody. */
+/* Single-player carried-loot recovery, saved per local guest/account scope.
+   Not server inventory, cross-player drops, or cloud custody. */
 const DEATH_LOOT_RECOVERY_SECONDS=180;
 let deathLootBag=null;
 const deathLootPrompt=document.createElement('div');
@@ -1263,22 +1263,28 @@ deathLootPrompt.id='climboria-death-loot-prompt';
 deathLootPrompt.setAttribute('role','status');
 deathLootPrompt.style.cssText='position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:11;max-width:calc(100vw - 24px);padding:8px 12px;border:1px solid #dfae6388;border-radius:9px;background:#10191fe8;color:#ffe3a3;font:700 12px/1.4 system-ui;text-align:center;pointer-events:none;display:none';
 document.body.appendChild(deathLootPrompt);
-function clearDeathLootBag(){
- if(!deathLootBag)return;
- const group=deathLootBag.group;
- scene.remove(group);
- group.traverse(o=>{
-  if(o.geometry)o.geometry.dispose();
-  if(o.material){const materials=Array.isArray(o.material)?o.material:[o.material];materials.forEach(m=>m.dispose());}
- });
+const deathLootStorageKey=()=>inventoryStorageKey+':death-loot-v1';
+function saveDeathLootBag(){
+ try{
+  if(!deathLootBag){localStorage.removeItem(deathLootStorageKey());return;}
+  const {items,x,z,expiresAt}=deathLootBag;
+  localStorage.setItem(deathLootStorageKey(),JSON.stringify({version:1,items,x,z,expiresAt}));
+ }catch(error){console.warn('[Climboria] Could not persist local death loot:',error)}
+}
+function clearDeathLootBag(preserveStored=false){
+ if(deathLootBag){
+  const group=deathLootBag.group;
+  scene.remove(group);
+  group.traverse(o=>{
+   if(o.geometry)o.geometry.dispose();
+   if(o.material){const materials=Array.isArray(o.material)?o.material:[o.material];materials.forEach(m=>m.dispose());}
+  });
+ }
  deathLootBag=null;
  deathLootPrompt.style.display='none';
+ if(!preserveStored)saveDeathLootBag();
 }
-function dropDeathLoot(){
- if(!inventory.length)return 0;
- // A second death replaces the previous unrecovered bag.
- clearDeathLootBag();
- const items=inventory.map(item=>({name:item.name,qty:item.qty}));
+function placeDeathLootBag(items,x,z,expiresAt){
  const group=new T3.Group();
  const mat=new T3.MeshLambertMaterial({color:0x8c6038});
  const trim=new T3.MeshLambertMaterial({color:0xe0ad55});
@@ -1286,9 +1292,35 @@ function dropDeathLoot(){
  sack.scale.set(1,.82,.76);sack.position.y=.43;group.add(sack);
  const ribbon=new T3.Mesh(new T3.TorusGeometry(.18,.065,6,10),trim);
  ribbon.rotation.x=Math.PI/2;ribbon.position.y=.75;group.add(ribbon);
- group.position.set(P.x,groundAt(P.x,P.z),P.z);
+ group.position.set(x,groundAt(x,z),z);
  scene.add(group);
- deathLootBag={items,group,x:P.x,z:P.z,expiresAt:Date.now()+DEATH_LOOT_RECOVERY_SECONDS*1000};
+ deathLootBag={items,group,x,z,expiresAt};
+}
+function loadDeathLootBag(){
+ clearDeathLootBag(true);
+ let data=null;
+ try{data=JSON.parse(localStorage.getItem(deathLootStorageKey())||'null')}catch(_){}
+ const now=Date.now();
+ const valid=data?.version===1&&Number.isFinite(data.x)&&Number.isFinite(data.z)&&
+  Math.abs(data.x)<=100000&&Math.abs(data.z)<=100000&&
+  Number.isFinite(data.expiresAt)&&data.expiresAt>now&&data.expiresAt<=now+DEATH_LOOT_RECOVERY_SECONDS*1000&&
+  Array.isArray(data.items)&&data.items.length>0&&data.items.length<=50&&
+  data.items.every(item=>item&&typeof item.name==='string'&&item.name.length>0&&item.name.length<=64&&
+   Number.isInteger(item.qty)&&item.qty>0&&item.qty<=9999);
+ if(!valid){
+  try{localStorage.removeItem(deathLootStorageKey())}catch(_){}
+  return false;
+ }
+ placeDeathLootBag(data.items.map(item=>({name:item.name,qty:item.qty})),data.x,data.z,data.expiresAt);
+ return true;
+}
+function dropDeathLoot(){
+ if(!inventory.length)return 0;
+ // A second death with carried items replaces the previous unrecovered bag.
+ clearDeathLootBag();
+ const items=inventory.map(item=>({name:item.name,qty:item.qty}));
+ placeDeathLootBag(items,P.x,P.z,Date.now()+DEATH_LOOT_RECOVERY_SECONDS*1000);
+ saveDeathLootBag();
  inventory.splice(0,inventory.length);
  saveInventory();renderInventory();
  emit('death-loot-dropped',{x:P.x,z:P.z,itemCount:items.length,expiresAt:deathLootBag.expiresAt});
@@ -1320,9 +1352,10 @@ function updateDeathLootBag(){
  if(P.mode!=='walk'){deathLootPrompt.style.display='none';return;}
  const meters=Math.round(Math.hypot(P.x-deathLootBag.x,P.z-deathLootBag.z));
  deathLootPrompt.textContent=meters<=4?'E · RECOVER DROPPED LOOT ('+remaining+'s)':
-   'DROPPED LOOT · '+meters+'m away · '+Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0')+' remaining';
+  'DROPPED LOOT · '+meters+'m away · '+Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0')+' remaining';
  deathLootPrompt.style.display='block';
 }
+loadDeathLootBag();
 const invPanel=css(document.createElement('section'),'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);right:auto;z-index:1002;width:min(620px,calc(100vw - 28px));max-height:82vh;overflow:auto;padding:14px 16px;background:rgba(8,13,20,.94);border:1px solid #d8b46b88;border-radius:12px;box-shadow:0 12px 40px #000b;color:#f4ecd8;font:13px/1.5 system-ui;display:none;backdrop-filter:blur(12px)');
 invPanel.id='climboriaInventoryPanel';
 const invToggle={addEventListener:()=>{}};
@@ -1353,7 +1386,7 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
       ? previousItems.length
       : 0;
     if (targetKey === previousKey) return { unclaimedLocalItems: 0 };
-    clearDeathLootBag(); // Never leak a guest/account death bag across identities.
+    clearDeathLootBag(true); // Preserve prior identity's stored bag; only unload its mesh.
 
     const cached = readInventory(targetKey);
     let nextItems = cached || [];
@@ -1363,6 +1396,7 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
     }
 
     inventoryStorageKey = targetKey;
+    loadDeathLootBag(); // Restore only the new identity's unexpired local bag.
     inventory.splice(0, inventory.length, ...nextItems);
     saveInventory();
     renderInventory();
