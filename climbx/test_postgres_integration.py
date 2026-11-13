@@ -23,7 +23,8 @@ class PostgresMigrationIntegration(unittest.TestCase):
         # Supabase normally supplies these roles; isolated PostgreSQL does not.
         # Non-login roles exist only inside the throwaway CI database.
         for role in ("anon", "authenticated"):
-            cls.db.execute("DO $ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '" + role + "') THEN CREATE ROLE " + role + " NOLOGIN; END IF; END $")
+            if not cls.db.execute("SELECT 1 FROM pg_roles WHERE rolname=%s", (role,)).fetchone():
+                cls.db.execute("CREATE ROLE " + role + " NOLOGIN")
         cls.db.execute("CREATE SCHEMA IF NOT EXISTS auth")
         cls.db.execute("CREATE TABLE IF NOT EXISTS auth.users (id uuid PRIMARY KEY)")
         cls.db.execute("CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT null::uuid $$")
