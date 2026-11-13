@@ -196,5 +196,11 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - PENDING: exact-commit Rust CI result (GitHub workflow lookup has not returned runs for recent CLIMBX branch commits). These tests are committed but **not claimed passed**. Verify compilation/tests, fix failures, then signed local-validator owner/PDA authorization tests.
 - No DEX, Swap, Launchpad or Game edits. **REAL-FUNDS NO-GO**.
 
+## Phase 150 — 2026-11-14 — owner-only tightening regression gate
+- DONE: CLIMBX branch commit `3bc5b0f5367849d761d2de923548af84c65cadcc` extends static Anchor scaffold safety gate to reject tightening without the owner-bound RevokeGrant context or without policy checks on revocation, per-order cap, cumulative cap, spent funds and expiry.
+- DONE: branch commit `07b7ee240146fa323379315e1b88c9534ad9b373` adds five negative mutation tests for owner-context bypass, policy bypass, cap expansion, ignoring spent funds and expiry extension.
+- PENDING: CI verification of exact branch head (GitHub workflow lookup returned no runs for recent commits); static structural gate is not a signed validator test or independent audit. Next: verify Node/Rust CI and signed local-validator authorization tests.
+- No DEX, Swap, Launchpad or Game edits. **REAL-FUNDS NO-GO**.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
