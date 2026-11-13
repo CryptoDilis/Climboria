@@ -28,7 +28,7 @@ class PostgresMigrationIntegration(unittest.TestCase):
         cls.db.execute("CREATE SCHEMA IF NOT EXISTS auth")
         cls.db.execute("CREATE TABLE IF NOT EXISTS auth.users (id uuid PRIMARY KEY)")
         cls.db.execute("CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT null::uuid $$")
-        for migration in ("001_learning_memory.sql","003_wallet_challenges.sql","004_unique_wallet_owner.sql"):
+        for migration in ("001_learning_memory.sql","003_wallet_challenges.sql","004_unique_wallet_owner.sql","005_wallet_api_rate_limits.sql"):
             cls.db.execute((ROOT/"supabase"/migration).read_text())
     @classmethod
     def tearDownClass(cls):
@@ -94,5 +94,46 @@ class PostgresMigrationIntegration(unittest.TestCase):
     def test_anon_cannot_read_challenges(self):
         grant=self.db.execute("""SELECT has_table_privilege('anon','climbx.wallet_challenges','SELECT')""").fetchone()[0]
         self.assertFalse(grant)
+
+
+    def test_rate_limit_table_private_rls(self):
+        enabled=self.db.execute("""SELECT relrowsecurity FROM pg_class
+          WHERE oid='climbx.wallet_api_rate_limits'::regclass""").fetchone()[0]
+        self.assertTrue(enabled)
+        self.assertFalse(self.db.execute("""SELECT has_table_privilege(
+          'anon','climbx.wallet_api_rate_limits','SELECT')""").fetchone()[0])
+        self.assertFalse(self.db.execute("""SELECT has_table_privilege(
+          'authenticated','climbx.wallet_api_rate_limits','INSERT')""").fetchone()[0])
+
+    def test_rate_limit_atomic_upsert_threshold(self):
+        import hashlib
+        key=hashlib.sha256(uuid.uuid4().bytes).hexdigest()
+        sql="""INSERT INTO climbx.wallet_api_rate_limits(key_hash,window_start,request_count)
+          VALUES (%s,date_trunc('minute',now()),1)
+          ON CONFLICT (key_hash) DO UPDATE SET
+          request_count=CASE WHEN climbx.wallet_api_rate_limits.window_start=
+            date_trunc('minute',now()) THEN climbx.wallet_api_rate_limits.request_count+1 ELSE 1 END,
+          window_start=date_trunc('minute',now()),updated_at=now()
+          RETURNING request_count"""
+        self.assertEqual([self.db.execute(sql,(key,)).fetchone()[0] for _ in range(4)],[1,2,3,4])
+
+    def test_rate_limit_window_reset(self):
+        import hashlib
+        key=hashlib.sha256(uuid.uuid4().bytes).hexdigest()
+        self.db.execute("""INSERT INTO climbx.wallet_api_rate_limits
+          (key_hash,window_start,request_count) VALUES (%s,now()-interval '2 minutes',9)""",(key,))
+        count=self.db.execute("""INSERT INTO climbx.wallet_api_rate_limits
+          (key_hash,window_start,request_count) VALUES (%s,date_trunc('minute',now()),1)
+          ON CONFLICT (key_hash) DO UPDATE SET
+          request_count=CASE WHEN climbx.wallet_api_rate_limits.window_start=
+            date_trunc('minute',now()) THEN climbx.wallet_api_rate_limits.request_count+1 ELSE 1 END,
+          window_start=date_trunc('minute',now()),updated_at=now()
+          RETURNING request_count""",(key,)).fetchone()[0]
+        self.assertEqual(count,1)
+
+    def test_rate_limit_rejects_invalid_hash(self):
+        with self.assertRaises(psycopg.errors.CheckViolation):
+            self.db.execute("""INSERT INTO climbx.wallet_api_rate_limits
+              (key_hash,window_start,request_count) VALUES ('bad',now(),1)""")
 
 if __name__=="__main__":unittest.main()
