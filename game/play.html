@@ -269,6 +269,35 @@ function caveApproachMask(x,z){
  const along=ss(-145,-98,lz)*(1-ss(-12,9,lz));
  return across*along;
 }
+/* A genuine underground coastal passage exits the northern cave chamber.
+   The terrain and movement floor use the same local-space sloped centerline.
+   Open-air coastline begins beyond the rock roof; no teleport or painted exit. */
+const CAVE_COASTAL_ROUTE={localX:-55,startZ:-50,exitZ:-313,exitFloor:3,walkHalfWidth:5.6};
+function caveLocalCoords(x,z){
+ const p=POI.cave,yaw=Math.atan2(-p.x,-p.z),cs=Math.cos(yaw),sn=Math.sin(yaw);
+ const dx=x-p.x,dz=z-p.z;
+ return {x:dx*cs-dz*sn,z:dx*sn+dz*cs};
+}
+function caveCoastalFloorAt(localZ){
+ const r=CAVE_COASTAL_ROUTE;
+ return mix(POI.cave.h,r.exitFloor,Math.max(0,Math.min(1,(r.startZ-localZ)/(r.startZ-r.exitZ))));
+}
+function caveCoastalTerrainAt(x,z){
+ const local=caveLocalCoords(x,z),r=CAVE_COASTAL_ROUTE;
+ const cross=1-ss(r.walkHalfWidth,10.5,Math.abs(local.x-r.localX));
+ const start=ss(-45,-52,local.z),end=1-ss(r.exitZ,r.exitZ-20,local.z);
+ return {local,mask:cross*start*end,floor:caveCoastalFloorAt(local.z)};
+}
+function caveNorthChamberTerrainMask(localX,localZ){
+ // Interior chambers must sit BELOW the mountain, not poke into the exterior.
+ const rooms=[[-63,-41,-20,5],[-69,-41,-51,-29],[-60,-50,-30,-18],[-43,-29,-12,-4]];
+ let weight=0;
+ for(const [minX,maxX,minZ,maxZ] of rooms){
+  const edge=Math.min(localX-minX,maxX-localX,localZ-minZ,maxZ-localZ);
+  weight=Math.max(weight,ss(-2,2,edge));
+ }
+ return weight;
+}
 function heightAt(x,z){
  let h=rawH(x,z);
  for(const k of FLAT){const p=POI[k],d=Math.hypot(x-p.x,z-p.z);if(d<p.r*1.7)h=mix(h,p.h,1-ss(p.r*.8,p.r*1.7,d))}
@@ -276,6 +305,10 @@ function heightAt(x,z){
  // mountain ridge cannot form a high brown wall across the portal approach.
  const apron=caveApproachMask(x,z);
  if(apron>0)h=mix(h,POI.cave.h,apron);
+ const coast=caveCoastalTerrainAt(x,z);
+ if(coast.mask>0)h=mix(h,coast.floor,coast.mask);
+ const interior=caveNorthChamberTerrainMask(coast.local.x,coast.local.z);
+ if(interior>0)h=mix(h,POI.cave.h,interior);
  return h;
 }
 // Match the rendered terrain's 5-unit triangle grid exactly. Sampling the smooth
@@ -283,7 +316,8 @@ function heightAt(x,z){
 const TERRAIN_STEP=5;
 function waterBodyAt(x,z){
  const sea=ss(-900,-1180,x+(fbm(x*.002,z*.002,3)-.5)*260);
- if(sea>.5)return WATER_BODIES.find(b=>b.id==='open_sea');
+ // The ocean begins where terrain is below sea level, not on the cliff above it.
+ if(sea>.5&&heightAt(x,z)<-.2)return WATER_BODIES.find(b=>b.id==='open_sea');
  // Cave-local bounded water volume; query in the same rotated coordinate space as its geometry.
  if(caveG){
   const dx=x-caveG.position.x,dz=z-caveG.position.z,ry=caveG.rotation.y,cs=Math.cos(ry),sn=Math.sin(ry);
