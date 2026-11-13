@@ -1508,3 +1508,48 @@ Release posture: Validate is green. Browser Smoke and CPI Trace remain incomplet
 - **Failure analysis:** no workflow failed on this exact head; all four terminated SUCCESS. The earlier Browser Smoke JSON serialization defect was recovered by the targeted newline fix and is now verified by the full browser run. The earlier cancellations are not counted as failures. No acceptance assertion, security gate, timeout or fail-closed behavior was weakened to obtain green CI.
 - **Next engineering tasks:** (1) expand finalized CPI trace evidence to multi-hop/split plans, DEX order permutations, transfer-hook slices and variable Meteora BinArray counts; current 50-transaction sample contains only single-step route headers. (2) establish authoritative CPI-requested signer/writable AccountMeta privileges and Jupiter runtime remaining-account cursor behavior; IDL, ELF static analysis and ordered account correlation are not substitutes for this proof. (3) complete adapter-specific provenance where currently incomplete. (4) run independent Devnet wallet-sign → execute → confirmed settlement/balance-change tests and independent security review before considering any execution gate change.
 - **Release posture unchanged:** keep `route_v2` excluded from production validation; keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and Wrangler/frontend execution disabled. No production Worker deployment, signing, transaction submission, Devnet settlement acceptance or LIVE Swap claim is made. PR #269 remains draft/unmerged.
+
+
+## 2026-11-13 — PR #269 exact-head IDL audit failure and counter-fix (head 7ddc437)
+
+### Exact-head workflow results
+
+All four runs below targeted commit `7ddc4377331799f770b0150829f9ede6647ed933`:
+
+| Workflow | Run | Job | Result |
+|---|---:|---:|---|
+| Validate Climboria | 43343018285 | 131615632142 | **SUCCESS** |
+| Climboria Browser Smoke Test | 43343018286 | 131615631773 | **SUCCESS** — all 51 steps completed |
+| Jupiter V6 CPI Trace Audit | 43343018325 | 131615631994 | **SUCCESS** |
+| Jupiter IDL History Audit | 43343018398 | 131615632160 | **FAILURE** — step 8 exited 1 |
+
+### Deep failure diagnosis — Jupiter IDL History Audit
+
+- Steps 1–6 completed successfully: runner setup, checkout, Node setup, pinned `@solana/idl@0.3.0` / `@solana/kit@8.5.0` install, syntax checks, and DEX adapter / LaunchLab / retry / history unit tests.
+- Step 7, **Reconstruct Jupiter IDL history directly from on-chain transactions**, exceeded its explicit 20-minute step timeout at `2026-11-13T01:32:05Z`. Its `continue-on-error: true` setting allowed the job to proceed; it did not convert the reconstruction into successful evidence.
+- The job environment showed `SOLANA_RPC_URL` empty. The reconstruction utility therefore selected `https://api.mainnet-beta.solana.com` and logged that it was using the public mainnet RPC fallback. The same workflow had previously completed public-RPC reconstruction on exact head `fa764c62e9d285b1a35910d975d2d43696735151`, so the evidence supports a bounded-timeout / variable public-RPC completion issue, not a deterministic code syntax failure.
+- Step 8, **Fetch Jupiter and DEX CPI IDL history records**, ran after the timed-out reconstruction and exited 1. Its generated assessment recorded `officialHistoryReconstructionSucceeded=false`, `requiredHistorySourceAvailable=false`, `matchingHistoricalRevisionCount=0`, `activeHistoricalRevisionCount=0`, and `exactlyOneRevisionCoversCandidateSlot=false` for Jupiter route_v2 candidate slot `468153382`. The external-history fallback did not establish the required historical revision for this run. The gate correctly refused to pass on a matching discriminator alone or on a current on-chain metadata payload without unique historical coverage.
+- The on-chain candidate metadata still showed the expected route_v2 discriminator and Jupiter program ownership, and ProgramData deployment chronology covered the candidate slot. Those facts do **not** substitute for the missing unique active historical revision and payload match.
+- Because step 8 failed, Rust setup, sBPF static-audit unit tests, and disassembly generation were skipped. Artifact upload still succeeded: artifact `14001656648`, ZIP SHA-256 `bd471ccdac606ab1ac7672b2a458797cb68288821c1aef4273b9bbface818dbd` (720,020 bytes). This preserves the failed-run diagnostics.
+- Non-causal warnings: Node.js 20 action deprecation and Node `punycode` / `url.parse()` deprecation notices did not cause the failing exit. No code assertion was weakened and no security gate was bypassed.
+
+### Root cause and targeted counter-fix
+
+- **Primary root cause:** the 20-minute hard timeout on full on-chain historical reconstruction was too tight for this public-RPC fallback run. With no configured private/archival `SOLANA_RPC_URL`, the step timed out before writing a successful official history report; the next step then correctly failed the unique candidate-slot history gate.
+- **Counter-fix committed:** `d390388dd8b9cab090f7bb326ea9bb8784f90350` increases only the reconstruction step timeout from 20 to 30 minutes and the enclosing job timeout from 35 to 50 minutes, leaving time for the downstream IDL fetch, Rust tests, static analysis, and artifact upload. No provenance assertion, candidate-slot requirement, test, or execution kill switch was changed.
+- **Verification required:** the workflow change is included in the PR branch and must pass a new exact-head Jupiter IDL History Audit. A timeout increase is a mitigation, not proof that the public endpoint will finish; if it times out again, the durable fix is for the repository owner to configure an HTTPS archival-capable GitHub Actions secret `SOLANA_RPC_URL` (never paste the secret into chat). Do not claim recovery until the new run completes the history reconstruction, unique revision gate, Rust tests, disassembly, and artifact upload.
+
+### Top-priority checklist after counter-fix
+
+- [x] Validate exact head `7ddc437...` passed.
+- [x] Browser Smoke exact head `7ddc437...` passed all 51 steps.
+- [x] CPI Trace exact head `7ddc437...` passed.
+- [x] Inspect IDL failure logs and identify the 20-minute reconstruction timeout as the first causal failure.
+- [x] Preserve artifact `14001656648` and its SHA-256 in this register.
+- [x] Commit a bounded timeout increase (20→30 minute step; 35→50 minute job) without weakening acceptance criteria.
+- [ ] Verify the new exact-head IDL workflow completes reconstruction and the historical candidate-slot gate.
+- [ ] Confirm Rust static-audit tests, disassembly, and artifact upload execute after the IDL gate passes.
+- [ ] Continue CPI multi-hop/split-route and CPI-requested signer/writable privilege evidence work.
+- [ ] Keep production signing/execution disabled pending complete provenance, Devnet settlement and independent security review.
+
+Release posture: three of four exact-head workflows passed; IDL History is red for missing unique historical provenance after the on-chain reconstruction timeout. PR #269 remains open and unmerged. No production Worker deployment, signing, transaction submission, Devnet settlement acceptance, or LIVE Swap claim is made.
