@@ -23,7 +23,10 @@ function fixture(overrides = {}) {
     if (u.pathname === "/api/swap/quote" && init.method === "OPTIONS")
       return overrides.preflight || new Response(null, { status: 204, headers: { "access-control-allow-origin": ORIGIN } });
     if (u.pathname === "/api/tokens/search") return overrides.tokens || respond([{ id: SOL, decimals: 9, symbol: "SOL" }]);
-    if (u.pathname === "/api/swap/quote") return overrides.quote || respond({ inAmount: "1000000", outAmount: "1234", requestId: "test-request-id" });
+    if (u.pathname === "/api/swap/quote") {
+      if (u.searchParams.get("amount") === "15700") return overrides.smallQuote || respond({ inAmount: "15700", outAmount: "25", requestId: "test-small-request-id" });
+      return overrides.quote || respond({ inAmount: "1000000", outAmount: "1234", requestId: "test-request-id" });
+    }
     if (u.pathname === "/api/swap/order") return overrides.order || respond({ error: "wallet-signable orders disabled" }, 503);
     if (u.pathname === "/api/swap/execute") return overrides.execute || respond({ error: "execution disabled" }, 503);
     throw new Error("Unexpected route " + u.pathname);
@@ -35,7 +38,8 @@ test("production acceptance probe verifies real quote preview but never signs or
   const { fakeFetch, calls } = fixture();
   const result = await probeProductionApi({ fetchImpl: fakeFetch });
   assert.equal(result.ok, true);
-  assert.equal(result.checks.length, 6);
+  assert.equal(result.checks.length, 7);
+  assert.equal(calls.filter(c => c.url === "/api/swap/quote" && c.method === "GET").length, 2);
   assert.deepEqual(calls.filter(c => c.method === "POST").map(c => c.url), ["/api/swap/execute"]);
   assert.ok(!calls.some(c => c.url === "/api/swap/order"), "Never create wallet-signable orders in production monitoring");
   assert.equal(calls.find(c => c.url === "/api/swap/execute").body, "{}");
@@ -73,6 +77,13 @@ test("probe blocks accidental production execution flag enablement", async () =>
 test("probe rejects a quote for a different input amount", async () => {
   const { fakeFetch } = fixture({ quote: Response.json({ inAmount: "1000001", outAmount: "1234", requestId: "wrong" }, { headers: { "access-control-allow-origin": ORIGIN } }) });
   await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), /input amount differs/);
+});
+
+test("small-amount live quote rejects mismatched lamports or signable transactions", async () => {
+  const { fakeFetch } = fixture({ smallQuote: Response.json({ inAmount: "15699", outAmount: "25", requestId: "bad" }, { headers: { "access-control-allow-origin": ORIGIN } }) });
+  await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), /Small quote input amount differs/);
+  const second = fixture({ smallQuote: Response.json({ inAmount: "15700", outAmount: "25", requestId: "bad", transaction: "not-allowed" }, { headers: { "access-control-allow-origin": ORIGIN } }) });
+  await assert.rejects(probeProductionApi({ fetchImpl: second.fakeFetch }), /must never expose a signable transaction/);
 });
 
 test("probe fails when a configured provider search or quote is unavailable", async () => {
