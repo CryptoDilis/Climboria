@@ -8,7 +8,9 @@ const programId = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 const outputDir = join(process.cwd(), "artifacts", "jupiter-idl-history");
 const outputPath = join(outputDir, "official-jupiter-history.json");
 const errorPath = join(outputDir, "official-jupiter-history-error.json");
-const rpcUrl = process.env.SOLANA_RPC_URL;
+const configuredRpcUrl = process.env.SOLANA_RPC_URL?.trim() || null;
+const rpcUrl = configuredRpcUrl || "https://api.mainnet-beta.solana.com";
+const rpcSource = configuredRpcUrl ? "configured-private-rpc" : "public-mainnet-fallback";
 
 function safeError(error) {
   const message = error instanceof Error ? error.message : String(error);
@@ -18,7 +20,9 @@ function safeError(error) {
 await mkdir(outputDir, { recursive: true });
 
 try {
-  if (!rpcUrl) throw new Error("Missing encrypted Actions secret SOLANA_RPC_URL");
+  if (!configuredRpcUrl) {
+    console.warn("SOLANA_RPC_URL is not configured; using the public mainnet RPC as a bounded fallback. A private archival RPC remains preferred for full history.");
+  }
   const parsedUrl = new URL(rpcUrl);
   if (parsedUrl.protocol !== "https:" || parsedUrl.username || parsedUrl.password) {
     throw new Error("SOLANA_RPC_URL must be an HTTPS endpoint without URL-embedded credentials");
@@ -33,6 +37,8 @@ try {
     status: "ok",
     provider: "@solana/idl@0.3.0",
     reconstruction: "direct on-chain Anchor and Program Metadata history replay",
+    rpcSource,
+    privateRpcConfigured: Boolean(configuredRpcUrl),
     programId,
     rpcHost: parsedUrl.host,
     fetchedAt: new Date().toISOString(),
@@ -54,6 +60,8 @@ try {
     provider: report.provider,
     programId: report.programId,
     rpcHost: report.rpcHost,
+    rpcSource: report.rpcSource,
+    privateRpcConfigured: report.privateRpcConfigured,
     anchorAddress: report.anchorAddress,
     pmpAddress: report.pmpAddress,
     summary: report.summary,
@@ -64,6 +72,9 @@ try {
     status: "error",
     provider: "@solana/idl@0.3.0",
     programId,
+    rpcHost: (() => { try { return new URL(rpcUrl).host; } catch { return null; } })(),
+    rpcSource,
+    privateRpcConfigured: Boolean(configuredRpcUrl),
     fetchedAt: new Date().toISOString(),
     error: safeError(error),
   };
