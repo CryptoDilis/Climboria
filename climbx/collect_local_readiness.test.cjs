@@ -30,3 +30,26 @@ test('RPC result claiming execution authority cannot pass',async()=>{
  assert.equal(result.readyForLocalDevelopment,false);
  assert.equal(result.mayExecute,false);
 });
+
+
+test('null readiness options fail closed',async()=>assert.deepEqual(await collectLocalReadiness(null),{readyForLocalDevelopment:false,mayExecute:false,toolchain:[],rpc:{healthy:false,mayExecute:false,reason:'INVALID_READINESS_INPUT'}}));
+test('hostile options getter fails closed',async()=>{
+ const input=Object.defineProperty({},'run',{get(){throw Error('hostile')}});
+ const result=await collectLocalReadiness(input);
+ assert.equal(result.readyForLocalDevelopment,false);
+ assert.equal(result.mayExecute,false);
+});
+test('invalid probe dependency is rejected without execution',async()=>{
+ const result=await collectLocalReadiness({run:present,probeRpc:42});
+ assert.equal(result.rpc.reason,'INVALID_READINESS_INPUT');
+});
+test('null RPC probe response fails closed',async()=>{
+ const result=await collectLocalReadiness({run:present,probeRpc:async()=>null});
+ assert.equal(result.readyForLocalDevelopment,false);
+ assert.equal(result.mayExecute,false);
+});
+test('hostile RPC result getter fails closed',async()=>{
+ const result=await collectLocalReadiness({run:present,probeRpc:async()=>Object.defineProperty({},'healthy',{get(){throw Error('hostile')}})});
+ assert.equal(result.readyForLocalDevelopment,false);
+ assert.equal(result.mayExecute,false);
+});
