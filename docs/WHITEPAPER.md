@@ -66,3 +66,34 @@ Solana is the initial chain focus; Base is a later possibility. $CLIMB is the in
 8. Reconsider additional maps and badges only after token launch and budget review.
 
 This document describes intended rules and future plans. It does not guarantee token value, liquidity, profits, prize availability, delivery dates, or multiplayer capacity.
+
+## 11. CLIMBX — personal trading bot (planned; not live)
+
+**You Dictate. It Climbs. It Learns.** CLIMBX is a planned, free-to-access personal automated trading assistant exclusively for **Climboria Signature DEX**. Its purpose is to give users explicit control over trading rules while placing capital protection ahead of trade frequency or profit-seeking. It is not an investment adviser, profit guarantee, or loss-prevention guarantee.
+
+### How CLIMBX is intended to work
+
+1. A wallet owner connects and configures **one personal bot per wallet** with up to **five token assets**. Only trades routed and executed through Climboria Signature DEX are eligible; the bot must not silently route to external DEXs.
+2. The owner chooses a strategy and risk parameters, including maximum trade size, aggregate spending limits, acceptable slippage, loss limits, and a pause/stop option. Strategy names and speed presets in previews are concepts, not verified live capabilities.
+3. **Initial release: paper trading only.** The bot would simulate orders and display hypothetical performance, fees, slippage assumptions, and risk events without moving real funds. Simulated fills and returns may differ materially from real trading.
+4. Future live trading, **if separately approved and released**, requires explicit wallet authorization and verified, limited on-chain permissions. Each order must pass authorization, token allowlist, spending cap, expiry, route, and risk checks before execution. A wallet owner must be able to revoke authorization and stop new orders; already-submitted transactions may not be reversible.
+5. A proposed learning system may analyze completed trades and suggest changes. **Learning must not autonomously expand permissions or alter approved strategy settings.** Recommendations require the user's clear YES/NO approval; the current preview describes recommendations after at least 20 completed trades, a design target rather than an active feature.
+
+### Risk controls and security requirements
+
+- **Capital first:** configurable stop-loss, daily and cumulative loss limits, per-trade and total spending caps, maximum exposure, and automatic pause after risk thresholds are breached. These are design requirements, **not all implemented or independently validated today**.
+- **Token and execution screening:** planned checks for suspicious token behavior, honeypots, liquidity concentration, price manipulation, stale quotes, excessive slippage, transaction failures, and abnormal market conditions. Screening cannot detect every scam or prevent every loss.
+- **Wallet safety:** no seed phrase or private-key collection; owner-signed authorization with restricted scope, expiry, nonce/replay protection, and revocation. No unlimited blanket spending permission. On-chain implementation, signed validator testing, settlement reconciliation, and independent security review are required before real-money release.
+- **Learning safety:** user approval before applying strategy updates, hard risk limits that learning cannot override, traceable recommendations, and a way to pause the bot.
+- **Transparency:** show orders, simulated versus real results, transaction costs, failed trades, exposure, losses, authorization status, and the reason for any automatic pause. Do not represent simulated results as actual earnings.
+
+**Important risks:** Trading volatile crypto assets can result in partial or total loss. Stop-loss orders may execute at worse prices or fail in illiquid or fast markets. Rug pulls, honeypots, MEV, smart-contract vulnerabilities, outages, slippage, and faulty strategies can cause losses even when controls exist. No bot can promise consistent profits, prevent every exploit, or guarantee that users will not lose money.
+
+### Release stages and current status
+
+- **Current:** informational CLIMBX DEX preview only; wallet connection, automated orders, strategy learning, and live execution are disabled. Authorization code and security tests are under development, not deployed proof.
+- **First intended usable release:** paper-trading beta with clear simulation labeling and observable risk controls.
+- **Possible later stage:** limited real-money beta only after end-to-end tests, signed local-validator and devnet evidence, secure DEX-only routing, audited on-chain authorization, reconciled accounting, and explicit release approval. **Real-funds status: NO-GO.**
+
+Bot access is intended to be free. A **proposed** fee model for any future live product is 10% of eligible *new cumulative net realized profit* above a high-water mark, with prior losses carried forward; network fees may still apply. This is not an active fee, finalized commercial term, or promise of profit.
+
