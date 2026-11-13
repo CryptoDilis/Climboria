@@ -208,5 +208,12 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - NEXT: obtain exact-head CI evidence using GitHub Actions UI or an API capable of listing push runs/check-runs; verify Node and Rust tests. Then prepare a fresh-main CLIMBX-only integration branch and cherry-pick/reapply narrowly reviewed CLIMBX files; keep DEX/Swap/Launchpad/Game out of the merge. Do not mark CI passed until observed.
 - No trading permissions or non-CLIMBX product files changed. **REAL-FUNDS NO-GO**.
 
+## Phase 152 — 2026-11-14 — fresh-main CLIMBX integration branch
+- DONE: created branch `climbx/mainline-integration-20261114` directly from current `main`, avoiding a wholesale merge of legacy CLIMBX branch (252 ahead / 392 behind, 103 changed paths at baseline).
+- DONE: integration branch commit `39e3b765d4860247805e3a8fd57da9356e96e594` creates `climbx/MAINLINE_INTEGRATION_PLAN.md` with dependency-aware migration sequence, scoped files, tests, draft PR requirement and NO-GO safety restrictions.
+- VERIFIED: CLIMBX Anchor scaffold, structural checker and CLIMBX release CI workflow are not currently present on main, so migrating isolated files without dependencies would break tests. **No bot runtime code has been migrated yet**.
+- NEXT: inventory dependency graph and move one complete CLIMBX-only testable module group, then run exact-head CI and open draft PR. Do not merge legacy branch wholesale.
+- No DEX, Swap, Launchpad or Game edits. **REAL-FUNDS NO-GO**.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
