@@ -36,7 +36,7 @@ function harness(){
     $,
     fmt:n=>String(n),
     dexTradeSetStatus:msg=>{statuses.push(msg);$('dexTradeStatus').textContent=msg;},
-    invalidateDexQuote:msg=>invalidations.push(msg),
+    discardDexTradeQuote:msg=>invalidations.push(msg),
     dexTradeApplyDirection:()=>{
       updates.push(api.inspect());
       return true;
