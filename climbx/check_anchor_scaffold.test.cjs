@@ -64,3 +64,24 @@ test('rejects missing owner signer on grant revocation even when create signer r
  const result=checkScaffold({read:mockRead(modified)});
  assert.equal(result.reason,'MISSING_REVOKE_OWNER_SIGNATURE');
 });
+
+test('rejects tightening that bypasses owner-bound grant context',()=>{
+ const modified=source.replace('ctx: Context<RevokeGrant>,\n        new_per_order_cap','ctx: Context<CreateGrant>,\n        new_per_order_cap');
+ assert.equal(checkScaffold({read:mockRead(modified)}).reason,'UNSAFE_GRANT_TIGHTENING');
+});
+test('rejects tightening that skips policy validation',()=>{
+ const modified=source.replace('validate_tightening(\n            grant,','unverified_tightening(\n            grant,');
+ assert.equal(checkScaffold({read:mockRead(modified)}).reason,'UNSAFE_GRANT_TIGHTENING');
+});
+test('rejects tightening that allows cap expansion',()=>{
+ const modified=source.replace('per_order <= grant.per_order_cap','per_order >= grant.per_order_cap');
+ assert.equal(checkScaffold({read:mockRead(modified)}).reason,'UNSAFE_GRANT_TIGHTENING');
+});
+test('rejects tightening that ignores spent balance',()=>{
+ const modified=source.replace('cumulative >= grant.spent','cumulative >= 0');
+ assert.equal(checkScaffold({read:mockRead(modified)}).reason,'UNSAFE_GRANT_TIGHTENING');
+});
+test('rejects tightening that extends authorization expiry',()=>{
+ const modified=source.replace('expiry <= grant.expires_at','expiry >= grant.expires_at');
+ assert.equal(checkScaffold({read:mockRead(modified)}).reason,'UNSAFE_GRANT_TIGHTENING');
+});
