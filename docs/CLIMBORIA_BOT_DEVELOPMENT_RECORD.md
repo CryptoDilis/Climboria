@@ -1062,3 +1062,18 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Security boundary:** this checks executable availability only; it does not pin compatible versions, validate binary provenance, start a validator, deploy a program, or prove on-chain authorization. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
 
 **Next Phase110:** verify Phase109 CI and repair any failure; obtain a supported runner with pinned Rust/Solana/Anchor versions and capture actual toolchain and local validator evidence; then begin minimal owner-signed on-chain grant/revoke prototype with nonce/cap/replay tests. Keep append-only main record.
+
+
+## Phase 110 — 2026-11-14 — CLIMBX local validator evidence gate
+
+**Phase109 CI all SUCCESS** on `8d7716474accbaac57e6a7edb46ef62e894d0c89`: Validate `43472120479`, Browser Smoke `43472120486`, CLIMBX release safety `43472120068`.
+
+**Phase110 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `1e0ab94b8d84450f8d5b828b197e4fd851b81a62`: `climbx/local_validator_evidence_gate.cjs` validates supplied Rust/Solana/Anchor toolchain version entries and local validator startup/RPC/disposable-key flags, fails closed, and always returns `mayExecute:false`. **Evidence gate only**; flags are caller-provided, not independently attested, and no validator was started.
+- `00ebee496384f1a321e0adc3660374c9a332f66a`: nine deterministic tests for completeness, duplicates, simulated evidence, RPC and key safety, hostile input.
+- `f5d745050fb3eb76044d13904e80ff4050878547`: wire tests into non-deploying CLIMBX CI.
+**Phase110 CI pending** on `f5d745050fb3eb76044d13904e80ff4050878547` at first check.
+
+**Blockers:** assistant environment lacks rustc/cargo/solana/solana-test-validator/anchor; no installed on-chain program, signed local-validator/devnet tests, independently audited DEX-only execution or atomic cap/replay enforcement. No real-funds trading (**NO-GO**). No Swap/DEX/Launchpad/game edits.
+
+**Next Phase111:** verify Phase110 CI; independently capture actual tool versions and validator RPC health in a provisioned runner (do not trust caller-supplied flags as proof); begin a minimal Solana program only after toolchain readiness. Keep append-only main record.
