@@ -978,3 +978,17 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Real-funds trading NO-GO.** This is off-chain error hardening, not an on-chain grant program. No signed devnet transaction, atomic cap/nonce enforcement, owner-controlled vault, verified DEX-only CPI route or independent security review. No edits to Swap/DEX/Launchpad/game.
 
 **Next Phase104:** verify Phase103 CI and resolve failures; evaluate null/malformed input fail-closed behavior and explicitly bound authorization inputs; prioritize actual Solana/Rust toolchain and local validator before designing claims of real on-chain execution. Keep permanent main record updated.
+
+
+## Phase 104 — 2026-11-14 — CLIMBX grant simulation success marker and malformed input tests
+
+**Phase103 CI all SUCCESS** on `e9f6be3cca5140371d0efd48d11d81fb2c62810b`: CLIMBX release safety `43469252314`, Validate `43469252397`, Browser Smoke `43469252189`.
+
+**Phase104 commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `79edb68bb123cb417f749e281ab94e5e02bdc31d`: deny-only `authorizeBotExecution` now also requires `grantSimulation.ok === true` alongside `simulationOnly === true` and `mayExecute === false` before reaching the explicit on-chain-not-implemented denial. This never enables transactions.
+- `7c925350c6f4e37612fb2f78c91192a1bd1f2f1f`: four regression tests for failed/missing grant success markers, malformed primitive inputs across all authorization objects, and ignored hostile caller-provided on-chain proof.
+**Phase104 CI pending** on `7c925350c6f4e37612fb2f78c91192a1bd1f2f1f` at first check.
+
+**Status:** CLIMBX real-funds trading **NO-GO**. Off-chain safety hardening is not a Solana on-chain vault, atomic cap/nonce enforcement, signed devnet swap, DEX-only CPI router or independent audit. No edits to Swap/DEX/Launchpad/game.
+
+**Next Phase105:** verify Phase104 CI and fix failures; review off-chain boundary for mutation/side-effect risks; prioritize actual Rust/Cargo/Solana CLI and local validator availability before any on-chain grant/revoke prototype; keep main log updated.
