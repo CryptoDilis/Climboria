@@ -88,5 +88,12 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - NEXT: inspect Phase 134 workflow results and lockfile artifact; audit dependency versions, commit reviewed lockfile, change workflow to require committed lockfile (no auto-generation) and verify `--locked` on clean checkout.
 - No DEX, Swap, Launchpad or Game files changed.
 
+## Phase 135 — 2026-11-14 — locked-build CI and candidate artifact inspected
+- DONE: commit `45b6288e736f2feae5bf2540d6a96c8d337c7d6d` CLIMBX run `43503537321` SUCCESS; Rust job `132155196392` passed generation, artifact upload and `cargo +1.99.1 check --locked`. Validate `43503537523` and Browser Smoke `43503537314` SUCCESS.
+- DONE: fetched workflow artifact `climbx-cargo-lockfile-candidate`, artifact ID `14075152596`, SHA256 archive digest `91cc2cf7ac6ccc9fae4f92197694f2682500df71de436177a452d24d86a0963a`. ZIP contains `Cargo.lock`, Cargo lock format version 4, 1,939 lines, 195 package entries, registry checksums present. This is an initial structural inspection, NOT a security audit of dependencies.
+- PENDING: generated Cargo.lock is NOT yet committed to CLIMBX branch; CI currently regenerates it. Need dependency review, commit exact artifact and change CI to require existing lockfile on clean checkout (no generation), then rerun locked build.
+- BLOCKED: signed validator tests, SBF build, restricted DEX-only execution, reconciliation, audit and explicit owner release approval. **REAL-FUNDS NO-GO**.
+- No DEX, Swap, Launchpad or Game files modified.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
