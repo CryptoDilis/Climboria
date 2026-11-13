@@ -7,7 +7,14 @@ const browser = await chromium.launch({
 });
 
 try {
+  // New-game gating: no created hero must never start the scene, including direct URLs.
+  const anonymous=await browser.newPage();
+  await anonymous.goto('http://127.0.0.1:4173/game/play.html?smoke=gate',{waitUntil:'domcontentloaded'});
+  await anonymous.waitForURL('**/game/index.html?hero=required',{timeout:10000});
+  if(!anonymous.url().includes('hero=required')) errors.push('Missing hero did not redirect to Game hub');
+  await anonymous.close();
   const desktop = await browser.newContext({ viewport: { width: 1365, height: 900 } });
+  await desktop.addInitScript(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Smoke Explorer',model:'Adventurer',createdAt:'2026-11-14T00:00:00Z'})));
   const page = await desktop.newPage();
   page.on('pageerror', error => errors.push('desktop pageerror: ' + (error.stack || error.message)));
   page.on('console', message => { if (message.type() === 'error') errors.push('desktop console: ' + message.text()); });
@@ -380,13 +387,20 @@ try {
   const menu=await browser.newPage({viewport:{width:1365,height:900}});
   await menu.goto('http://127.0.0.1:4173/game/index.html',{waitUntil:'domcontentloaded'});
   const createHero=menu.locator('#menuCreateHero');
-  if(await createHero.count()!==1 || !(await createHero.isVisible()) || await createHero.getAttribute('href')!=='./character-lab.html') errors.push('Hub Create Hero header action is missing, hidden, or points to the wrong page');
+  if(await createHero.count()!==1 || !(await createHero.isVisible()) || await createHero.getAttribute('type')!=='button') errors.push('Hub Create Hero action is missing or not an editor button');
+   if(await menu.locator('#openHeroCreator, #heroEditor, #heroNameInput, #heroPreviewCanvas').count()!==4) errors.push('Hero creator card, modal, name input or live preview canvas is missing');
   if(await menu.locator('.grid > .card').count()!==4) errors.push('Hub must contain exactly four destination cards');
   if(await menu.locator('.grid #menuCreateHero, .grid .create-hero-card').count()) errors.push('Create Hero must not appear as a destination grid card');
   if(await menu.locator('.card[data-level="11"]').count()!==1) errors.push('Jarrell’s Peak launch card is missing');
   // The launch card performs a full document navigation. Playwright's click()
   // already waits for that navigation; a concurrent waitForURL can miss the
   // same-document/fast navigation edge and time out after the target URL loaded.
+  // The menu must gate entry for guests, then unlock for a stored valid hero.
+  await menu.locator('.card[data-level="11"]').click();
+  if(!(await menu.locator('#heroEditor').isVisible())) errors.push('Jarrell launch card did not open Create Hero for a guest');
+  await menu.locator('#closeHeroEditor').click();
+  await menu.evaluate(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Smoke Explorer',model:'Adventurer',createdAt:'2026-11-14T00:00:00Z'})));
+  await menu.reload({waitUntil:'domcontentloaded'});
   await menu.locator('.card[data-level="11"]').click();
   await menu.waitForLoadState('domcontentloaded');
   const launchUrl=new URL(menu.url());
@@ -506,6 +520,7 @@ try {
       Object.defineProperty(Object.getPrototypeOf(screen), 'orientation', { configurable: true, get: () => mockedOrientation });
     }
   });
+  await mobile.addInitScript(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Smoke Explorer',model:'Adventurer',createdAt:'2026-11-14T00:00:00Z'})));
   await mobile.goto('http://127.0.0.1:4173/game/play.html?smoke=mobile', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
