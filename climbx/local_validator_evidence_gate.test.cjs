@@ -2,7 +2,7 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const {REQUIRED,checkLocalValidatorEvidence}=require('./local_validator_evidence_gate.cjs');
-const evidence=()=>({simulationOnly:false,toolchain:REQUIRED.map(name=>({name,available:true,version:name+' 1.0'})),validator:{started:true,rpcHealthy:true,disposableKeysOnly:true}});
+const evidence=()=>({simulationOnly:false,toolchain:REQUIRED.map(name=>({name,available:true,version:name+' 1.0'})),validator:{started:true,rpcHealthy:true,disposableKeysOnly:true,source:'LOCAL_PROBE'}});
 test('complete local validator evidence is readiness only, never execution permission',()=>assert.deepEqual(checkLocalValidatorEvidence(evidence()),{ready:true,mayExecute:false,reason:'LOCAL_VALIDATOR_EVIDENCE_ONLY'}));
 test('missing evidence fails closed',()=>assert.equal(checkLocalValidatorEvidence(null).ready,false));
 test('simulated evidence cannot establish validator readiness',()=>assert.equal(checkLocalValidatorEvidence({...evidence(),simulationOnly:true}).reason,'SIMULATION_EVIDENCE'));
@@ -12,3 +12,7 @@ test('empty version is not accepted',()=>{const e=evidence();e.toolchain[0].vers
 test('validator startup alone is insufficient',()=>{const e=evidence();e.validator.rpcHealthy=false;assert.equal(checkLocalValidatorEvidence(e).reason,'VALIDATOR_NOT_VERIFIED')});
 test('non-disposable keys fail readiness',()=>{const e=evidence();e.validator.disposableKeysOnly=false;assert.equal(checkLocalValidatorEvidence(e).ready,false)});
 test('hostile evidence getter fails closed',()=>{const e=evidence();Object.defineProperty(e,'toolchain',{get(){throw Error('bad')}});assert.deepEqual(checkLocalValidatorEvidence(e),{ready:false,mayExecute:false,reason:'INVALID_EVIDENCE'})});
+
+test('caller evidence without local probe provenance is rejected',()=>{const e=evidence();delete e.validator.source;assert.equal(checkLocalValidatorEvidence(e).reason,'UNVERIFIED_VALIDATOR_SOURCE')});
+test('remote or simulated provenance is rejected',()=>{const e=evidence();e.validator.source='REMOTE_CLAIM';assert.equal(checkLocalValidatorEvidence(e).ready,false)});
+test('validator evidence is never trade authorization',()=>{const e=evidence();e.authorized=true;e.mayExecute=true;const result=checkLocalValidatorEvidence(e);assert.equal(result.mayExecute,false)});
