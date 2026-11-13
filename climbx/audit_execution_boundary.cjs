@@ -22,7 +22,7 @@ function listSourceFiles(dir,base=dir){
   if(entry.isSymbolicLink())continue; // Never traverse external trees.
   const full=path.join(dir,entry.name);
   if(entry.isDirectory()){files.push(...listSourceFiles(full,base));continue;}
-  if(!entry.isFile()||(!entry.name.endsWith('.cjs')&&!entry.name.endsWith('.py')))continue;
+  if(!entry.isFile()||(!/\.(?:cjs|mjs|js|jsx|ts|tsx|py)$/.test(entry.name)))continue;
   const relative=path.relative(base,full).split(path.sep).join('/');
   if(EXEMPT.has(relative))continue;
   files.push(relative);
@@ -35,7 +35,7 @@ function auditDirectory(dir=root){
 }
 if(require.main===module){
  const findings=auditDirectory();
- process.stdout.write(JSON.stringify({status:findings.length?'REVIEW_REQUIRED':'NO_MATCHING_CALL_SITES_IN_CLIMBX_CJS_PY',files:findings},null,2)+'\n');
+ process.stdout.write(JSON.stringify({status:findings.length?'REVIEW_REQUIRED':'NO_MATCHING_CALL_SITES_IN_CLIMBX_SOURCE',files:findings},null,2)+'\n');
  if(findings.length)process.exitCode=1;
 }
 module.exports={scanSource,auditDirectory,listSourceFiles};
