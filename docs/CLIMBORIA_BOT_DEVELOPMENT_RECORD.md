@@ -857,3 +857,21 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Status:** CLIMBX real-funds **NO-GO**. No Solana grant/vault program, signed devnet swap, atomic on-chain caps, verified DEX router CPI, or independent audit. No Swap/DEX/Launchpad/game files changed.
 
 **Next Phase96:** verify Phase95 CI and fix failures; conduct targeted CLIMBX source-level call-site audit for `evaluateClimbxEntry`, `evaluateOrder`, `authorizeBotExecution`, `mayExecute` and any trade execution paths; add regression tests for actual consumers if found. Provision Solana build/validator environment and reviewed DEX route schema before devnet on-chain implementation. Continue main-branch handoff logging.
+
+
+## Phase 96 — 2026-11-14 — policy simulation execution boundary hardening (CLIMBX only)
+
+**Phase95 CI all SUCCESS** on `1ea86e78fac494ccda59ca7b57bcc2a5ea7e0009`: Validate `43465772196`, CLIMBX release safety `43465772285`, Browser Smoke `43465772264`.
+
+**Source review:** inspected `climbx/authorization_policy_simulation.cjs`, `devnet_grant_state_simulation.cjs`, `execution_authorization_boundary.cjs`, `wallet_api_factory.cjs`, `README.md` and recursive branch tree. Wallet API composes challenge/bind, not a trading executor. Policy simulator previously returned `allowed:true` without explicit `mayExecute:false`; this could be misread by future consumers. This is a targeted source review, **not** a proof of absence of every execution call site in the entire repository.
+
+**Phase96 branch commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `fc9d417c6b583ccb2e0b0cbb9ee09f64b87e3174`: successful `evaluateClimbxEntry` now explicitly returns `simulationOnly:true,mayExecute:false`.
+- `ffa25da30b5c4e528f63fb75a7161fff6a2a614c`: update policy assertions and add regression test.
+- `6fcca54994bb84512db8e235881845b73e614339`: `authorizeBotExecution` rejects legacy/spoofed policy results lacking explicit non-executable markers.
+- `132ac65617b72ae5baf43946874bcae15c876d2f`: add two execution-boundary regression tests.
+**Phase96 CI pending** on latest commit `132ac65617b72ae5baf43946874bcae15c876d2f` (no runs returned on initial check). Existing CI runs both test files.
+
+**Release decision:** CLIMBX real-funds **NO-GO**. No on-chain grant, atomic caps, signed devnet swap, audited DEX-only CPI or security audit. No edits to DEX/Swap/Launchpad/game.
+
+**Next Phase97:** verify Phase96 CI and repair any failures; complete targeted call-site search across CLIMBX files using source retrieval, document any direct consumer of `allowed:true`; add enforcement tests for any found; provision Solana toolchain/local validator and begin owner-controlled devnet program only after toolchain verification. Keep permanent main-branch record updated.
