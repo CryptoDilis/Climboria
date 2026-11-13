@@ -4292,3 +4292,42 @@ Repository state note: this is a documentation-only checkpoint on `main`. The PR
 - [ ] Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and signing/execution disabled.
 
 Repository state: the PR remains open, draft, and unmerged. Latest PR code head is `1137dd496b27caa12ede72637c62e675afcf1c2c`. The PR branch has not been rebased/merged into main as part of this checkpoint. No production deployment, Devnet settlement acceptance, independent security approval, or LIVE Swap claim is made.
+
+
+## 2026-11-13 — PR #269 latest-head CI, multi-step route evidence, and IDL timeout diagnosis
+
+### Latest PR head: 1137dd496b27caa12ede72637c62e675afcf1c2c
+
+- [x] Validate run 43356405086 — SUCCESS.
+- [x] Browser Smoke run 43356405200 — SUCCESS, all 25 steps. Artifact 14006726595 was downloaded and inspected: game-smoke-summary.json reports status=passed, errorCount=0, desktop/mobile ready, mobile controls ready, 100 desktop frames, 73 mobile frames, and all 8 gameplay screenshots. Artifact SHA-256: 1a8c961b9039a592b1facd605308a21aa3426bfae9aef28f60fcf8aeb5856df7.
+- [x] Jupiter CPI Trace run 43356405140 — SUCCESS. Unit steps 4–5 passed. Live scan artifact 14005899738 (31,384 bytes; SHA-256 f5c439f122c4ae453766ef56c781af8ca8e5e2c5c5857b1d0df5daeb395e758f) downloaded and inspected.
+- [ ] Jupiter IDL History run 43356405126 — still in progress at step 7 (direct on-chain Jupiter IDL reconstruction); no failed step at this checkpoint.
+
+### Multi-step CPI artifact findings
+
+- The bounded finalized scan requested and fetched 250/250 transactions across 10 pages. transactionFetchComplete=true; no rate limiting, RPC failure, or unavailable signatures. It stopped at the configured transaction bound, so this is not exhaustive history.
+- It observed 11 Jupiter/Meteora candidate instructions; skipped 6 recognized single-step route headers and 2 unrecognized route headers; retained 3 routes, each with decoded routePlanCount=2.
+- The three retained transactions are successful and show two direct stack-height-2 DEX program invocations in the Jupiter route: Pump AMM (pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA) and Meteora DLMM (LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo). The Meteora Swap2 CPI has 19 accounts in these traces, with a unique contiguous parent-account sequence correlation at outer position 30.
+- This is concrete two-step route evidence for the observed transactions. It does not prove split-route behavior, all route permutations, runtime remaining-account cursor behavior, or CPI-requested signer/writable privileges. Parent account correlation remains observational only.
+
+### Deep diagnosis — older IDL History failure on code head 7516d1c83997dfbba79c4eb4c7f157b2e0439bb2
+
+- **Run/job:** 43353746705 / 131650715043. Terminal result FAILURE at step 8, “Fetch Jupiter and DEX CPI IDL history records”. Artifact 14005844995 (720,021 bytes; SHA-256 2afbbc277111aebabd9f96426e5822783694587bb62f7d73bac4588b940196a2) preserved and inspected.
+- **First causal failure:** step 7, “Reconstruct Jupiter IDL history directly from on-chain transactions”, exceeded its 30-minute timeout at 2026-11-13T03:10:30Z. SOLANA_RPC_URL was empty, so the script used https://api.mainnet-beta.solana.com as the public fallback. The hard timeout left neither official-jupiter-history.json nor official-jupiter-history-error.json in the artifact; official history status was therefore unavailable, not a schema mismatch.
+- **Downstream failure mechanism:** step 8 fetched the Jupiter /api/latest response successfully (HTTP 200, 42,346 bytes), but its /api/history request was aborted after the configured 15-second timeout and one attempt. The latest-only IDL contained the expected route_v2 discriminator but cannot establish a historical revision covering candidate slot 468153382. The assessment correctly recorded requiredHistorySourceAvailable=false, zero matching/active historical revisions, no unique candidate-slot revision, and exited 1. On-chain IDL owner, route_v2 discriminator, ProgramData loader owner, and deployment chronology still matched; they do not replace the missing historical payload comparison.
+- **Classification:** public-RPC historical reconstruction latency exceeded the bounded step timeout, while the external history fallback independently timed out. This is provider/transport availability and bounded-timeout variability, not a failing unit test, bad fixture, or demonstrated source-code regression. No acceptance condition was bypassed.
+- **Same-code recovery evidence:** IDL History run 43354342003 on documentation-only successor head 2f5dbddb94aef7938909cf92decb6076c9f38604 completed SUCCESS. Its direct on-chain reconstruction finished in approximately 25m33s using the same public RPC fallback; the external /history provider still failed, but official reconstruction supplied the required history. Artifact 14006198462 (3,187,672 bytes; SHA-256 6c01f48faed572c015e0c35a59672c137ce437cfb99dd064540fa96bd681a5ac) downloaded and inspected.
+- **Recovered Jupiter candidate evidence:** official @solana/idl@0.3.0 reconstruction found 92 Anchor snapshots / 76 revisions. At candidate slot 468153382 there are 27 matching route_v2 history records and exactly one active revision. Finalized on-chain IDL owner, decompressed payload hash and route_v2 discriminator match the active revision; ProgramData deployment slot 468023491 precedes the candidate. Pinned ELF SHA-256 remains aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6.
+- **Adapter limitations remain:** Kipseli, Orca Whirlpool and Meteora DLMM IDL provenance are classified incomplete. Raydium LaunchLab is supported for candidate-slot IDL provenance, but two active revisions cover the slot; do not claim unique revision provenance or runtime CPI compatibility. LaunchLab account-state audit matched.
+- **Counter-fix decision:** do not blindly rerun or change assertions. The same code completed successfully on the successor run, proving the timeout is variable. The durable reliability improvement is to configure a private archival-capable GitHub Actions secret SOLANA_RPC_URL; no secret was read, exposed, or modified. Keep the existing 30-minute bounded step until the latest-head run completes; if it again times out, reassess provider configuration/timeout using its exact logs rather than weakening provenance requirements.
+
+### Top-priority checklist
+
+- [x] Latest-head Validate and Browser Smoke passed.
+- [x] Latest-head CPI audit passed and produced three observed two-step routes from a complete 250-transaction bounded sample.
+- [x] Diagnose and preserve older-head IDL timeout failure and same-code successor recovery evidence.
+- [ ] Latest-head IDL run 43356405126 must complete candidate-slot history gate, Rust static tests, disassembly/CFG and artifact upload.
+- [ ] Continue runtime account-slice/CPI privilege proof, adapter-specific IDL provenance gaps, independent security review, and controlled Devnet settlement acceptance.
+- [ ] Keep EXECUTION_SECURITY_REVIEW_COMPLETE=false, SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false, and signing/execution disabled.
+
+The PR remains open, draft and unmerged. Latest PR code head is 1137dd496b27caa12ede72637c62e675afcf1c2c. No production deployment, independent security approval, Devnet settlement acceptance, or LIVE Swap claim is made.
