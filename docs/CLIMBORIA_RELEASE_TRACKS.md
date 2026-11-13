@@ -32,3 +32,17 @@ Commit `5ad7a01ddc12162bd0905fab9eced239b53b1f51`:
 5. Record verified findings and request owner release decision only after independent checks.
 
 Professional audits are not universally mandated by Solana, but a project-owner decision does not replace security evidence or applicable legal obligations.
+
+## Phase 80 — source-backed release blocker review (2026-11-13)
+
+Reviewed repository sources: `dex/EXECUTION_READINESS.md`, `dex/swap-proxy/DEPLOYMENT.md`, `docs/RELEASE-PRIORITY-2026-11-10.md`, and `docs/SIGNATURE-LAUNCHPAD-IMPLEMENTATION-SPEC.md`. These are repository documents, not proof of deployed production behavior.
+
+**P1 Swap:** Frontend has a wallet-reviewed order/execute path, but public `swap-config.js` has `enabled:false`; Worker `EXECUTION_ENABLED` defaults false and hard-coded `EXECUTION_SECURITY_REVIEW_COMPLETE` is false. The deployment guide states the Worker is not deployed. Explicit missing gates: semantic instruction allowlist and order binding verification, independent review, controlled devnet lifecycle, production deployment and health/monitoring. **NO-GO.** Do not flip any gate merely to meet a date.
+
+**P2 DEX:** Market discovery and quote preview are implemented, but live swap execution remains blocked by P1. Market freshness/identity, production data and mobile acceptance need separate evidence; source documentation alone does not prove readiness.
+
+**P5 Launchpad:** Dedicated `launchpad/index.html` is a static informational preview with no wallet signing, mint, pool, or liquidity lifecycle. The implementation spec says not implemented or approved for mainnet. **NO-GO.** Do not count preview cards as a working launchpad.
+
+**Priority correction:** Owner-approved order is P1 Live Swap → P2 Live DEX → P3 All Login Methods → P4 Fully Live Game → P5 Live Launchpad (last). This supersedes any earlier suggestion to launch Launchpad before Swap/DEX.
+
+**Next engineering target:** Trace Worker semantic validation and order binding source plus tests; create precise failing-case regression coverage before changing execution flags. Review production infrastructure readiness separately. Keep CLIMBX real-funds execution disabled.
