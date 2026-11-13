@@ -382,3 +382,15 @@ The 50-transaction sample is bounded evidence, not exhaustive route coverage. It
 - [x] Current main HEAD after these documentation commits: `b6f1518f19a21293c11feb235649fe60824f4b74`.
 - [!] These were documentation-only commits. They do not deploy Cloudflare, change Supabase settings, expose secrets, or enable swap execution.
 - [ ] Continue from the exact next task above; update this file again only after the in-progress IDL History and Browser Smoke runs reach terminal status or a new root cause is confirmed.
+
+
+### Browser Smoke acceptance-marker gap and counter-fix — 2026-11-13
+
+- [x] Reviewed Browser Smoke run `43336735421`, job `131594013705`. GitHub marked the job SUCCESS and uploaded screenshot artifact `13998635511`; desktop/mobile gameplay and cave screenshots were visually inspected.
+- [!] The gameplay step log also contained `The operation was canceled` and did not contain the script's final `PASS: cinematic Jarrell's Peak...` marker. The uploaded screenshots prove rendering/capture occurred, but do not independently prove the final gameplay assertions completed. Treat the prior run as a verification gap, not a full gameplay acceptance.
+- [x] Added explicit machine-readable completion evidence: `.github/scripts/game-smoke.mjs` now writes `game-smoke-summary.json` only after its error list is empty and desktop/mobile checks complete.
+- [x] Updated `.github/workflows/browser-smoke.yml` to remove any stale summary before running, require the summary after the smoke command, validate desktop/mobile readiness, render-frame counts, controls and the eight expected screenshot names, and upload the summary as an artifact. A canceled/incomplete smoke can no longer pass solely because screenshots exist.
+- [x] Counter-fix commits: `d06fd9006d0a3898bd2c18833abdb841174720ac` (summary generation) and `49a342cef18adf51dc98560a8c60c9e06f02654a` (workflow enforcement).
+- [ ] Exact-head rerun on PR #269 head `49a342cef18adf51dc98560a8c60c9e06f02654a`: Browser Smoke run `43337636485` pending; Validate `43337636118` in progress; Jupiter CPI Trace `43337635961` pending; Jupiter IDL History `43337636175` in progress. Inspect the explicit summary before accepting the gameplay smoke.
+- [ ] Continue the previous exact task: inspect the official IDL history report from runs `43336735508` and `43337636175`; public RPC fallback must produce a unique active revision at candidate slot `468153382`, otherwise require the encrypted private RPC secret.
+
