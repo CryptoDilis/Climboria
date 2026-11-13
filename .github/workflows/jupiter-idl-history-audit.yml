@@ -40,7 +40,7 @@ jobs:
   fetch-idl-history:
     name: Fetch current and historical Jupiter IDLs
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35 # Allow bounded retries and historical RPC provenance checks to finish
     steps:
       - name: Checkout
         uses: actions/checkout@v4
