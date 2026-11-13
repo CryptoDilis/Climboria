@@ -935,3 +935,17 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Security boundaries unchanged:** static regex patterns only; not AST, taint analysis, dynamic calls, cross-repository import tracing, or runtime/on-chain verification. Scope limited to CLIMBX subtree. No on-chain Solana grant/vault, atomic cap/replay enforcement, signed devnet trade, verified Signature DEX router CPI or independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase101:** verify Phase100 CI; evaluate static scanner false positives and nested files; add detection of aliased imports and authorization consumer patterns without treating regex results as security proof; establish actual Solana toolchain/validator for devnet program implementation. Keep main-branch handoff updated.
+
+
+## Phase 101 — 2026-11-14 — CLIMBX aliased authorization import review
+
+**Phase100 CI all SUCCESS** on `6cf5baebca87bfd086fe58363d146a2482033f65`: Validate `43467976479`, Browser Smoke `43467976485`, CLIMBX release safety `43467976393`.
+
+**Phase101 commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `2a7296336e844efd51153ae3f5b50c0ebe4f65cf`: extend recursive CLIMBX static scanner with a `REVIEW_ALIASED_AUTHORIZATION_IMPORT` finding for known authorization function aliases in JS/TS and Python source. Findings require human review; regex detection is not AST or taint analysis.
+- `3ef5cda157034655df90f92ac5d35ff068216199`: four regression tests covering CommonJS destructuring alias, ESM alias, Python alias, and unrelated imports.
+**Phase101 CI pending** on `3ef5cda157034655df90f92ac5d35ff068216199` at initial check. Existing CLIMBX CI invokes audit tests.
+
+**Status:** real-funds CLIMBX **NO-GO**. No Solana on-chain program, atomic cap/nonce enforcement, signed devnet swap, verified DEX CPI constraints or independent audit. No DEX/Swap/Launchpad/game changes.
+
+**Next Phase102:** verify Phase101 CI; investigate and fix any scanner failures; improve detection of dynamic property access and assignment only with well-defined false-positive handling; prioritize actual Solana toolchain and local validator verification for on-chain devnet grant/revoke implementation. Continue main-branch permanent record.
