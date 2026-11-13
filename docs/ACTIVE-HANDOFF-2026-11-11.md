@@ -127,7 +127,7 @@ All five exact-head workflows have passed. Continue **P1 Live Swap** now, preser
 **Authoritative detailed status:** [`docs/REPO-READINESS-AUDIT-2026-11-13.md`](./REPO-READINESS-AUDIT-2026-11-13.md). This section supersedes older exact-next-task notes in the historical handoff below, while preserving the owner-approved P1–P5 priority order.
 
 - Main HEAD at checkpoint: `7dd7de9192a0e4605cf2b6d1da7fcdc61dd516cb`.
-- Active Swap/security PR #269 is OPEN / DRAFT; current head `49a342cef18adf51dc98560a8c60c9e06f02654a`. It remains 11 commits behind main (main-only changes are readiness documentation); sync before merge. PR #274 also remains OPEN / DRAFT and overlaps with the security-evidence work; do not merge both independently.
+- Active Swap/security PR #269 is OPEN / DRAFT; current head `49a342cef18adf51dc98560a8c60c9e06f02654a`. It is currently 18 commits behind main (the 18 main-only commits affect only three readiness/handoff documentation files); sync before merge. PR #274 also remains OPEN / DRAFT and overlaps with the security-evidence work; do not merge both independently.
 - Exact head before the latest gameplay-summary gate: Validate `43336735429` SUCCESS (155 tests); CPI Trace `43336735443` SUCCESS (50 finalized transactions, 2 matching single-route Jupiter/Meteora transactions).
 - Browser Smoke `43336735421` was marked SUCCESS but had `The operation was canceled` and no final gameplay PASS marker. Treat it as incomplete acceptance. Added explicit `game-smoke-summary.json` generation and workflow validation in commits `d06fd9006d0a3898bd2c18833abdb841174720ac` and `49a342cef18adf51dc98560a8c60c9e06f02654a`.
 - Current exact-head runs on `49a342c`: Browser Smoke `43337636485` pending; CPI Trace `43337635961` pending; Validate `43337636118` cancelled (no failed steps; rerun required); IDL History `43337636175` in progress. Earlier IDL run `43336735508` is also still running the direct-history step.
@@ -141,3 +141,9 @@ All five exact-head workflows have passed. Continue **P1 Live Swap** now, preser
 3. Re-run Validate and CPI Trace against the latest PR head after pending/cancelled runs settle; continue exact CPI account-role and multi-hop/split-route evidence.
 4. Keep Swap execution disabled until route semantics, independent security review and controlled Devnet sign/execute/confirm/balance tests pass. Then continue P2 DEX, P3 Login, P4 game and P5 Launchpad.
 
+
+### Branch freshness correction — 2026-11-13
+
+- PR #269 head `49a342cef18adf51dc98560a8c60c9e06f02654a`: 196 ahead / 18 behind main.
+- PR #274 head `559423bdddf709cae31de06b01b2c4b461f2a482`: 203 ahead / 18 behind main.
+- Main-only delta from the shared merge base is documentation-only (three docs files); sync PR #269 before merge and keep PR #274 draft pending consolidation.
