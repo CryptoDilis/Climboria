@@ -12,6 +12,9 @@ async function bindVerifiedWallet({pool,userId,nonce,wallet,domain,chain,now,sig
   let inTransaction=false;
   try {
     await client.query('BEGIN');inTransaction=true;
+    // PostgreSQL enforces these bounds within this transaction, independent of
+    // the HTTP Promise.race deadline. They do not resolve ambiguous COMMITs.
+    await client.query("SELECT set_config('statement_timeout','4000ms',true), set_config('lock_timeout','1000ms',true), set_config('idle_in_transaction_session_timeout','5000ms',true)");
     const q=await client.query(
       'SELECT user_id, wallet_address, domain, chain, canonical_message, issued_at, expires_at, consumed_at FROM climbx.wallet_challenges WHERE nonce=$1 FOR UPDATE',
       [nonce]);
