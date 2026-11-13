@@ -127,6 +127,11 @@ export function compareCriticalIdls(repoIdl, liveIdl) {
       };
       criticalInstructionSchemaDetails.push({
         name, accountConstraintDifference: !constraintsMatch, accountDocumentationOnly: !accountsMatch && constraintsMatch,
+        // The raw first difference can be prose-only. Include the first
+        // non-documentation mismatch so release reviewers see the actual
+        // permission/address/PDA/constraint evidence, not just edited docs.
+        firstSecurityConstraintDifference: constraintsMatch ? null :
+          firstChanged(stripAccountDocs(a.accounts), stripAccountDocs(b.accounts)),
         accountMetaDifference: accountsMatch ? null : firstChanged(a.accounts, b.accounts),
         argumentDifference: argsMatch ? null : firstChanged(a.args, b.args)
       });
