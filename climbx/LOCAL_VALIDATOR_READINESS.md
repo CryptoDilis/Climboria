@@ -31,3 +31,18 @@ The current CLIMBX JavaScript policy/grant models are **simulations**; `executio
 ## Next action
 
 Provision the pinned toolchain in an approved runner, capture exact command/version evidence, then begin a minimal owner-controlled on-chain grant/revoke prototype. Do not enable live bot trading or modify Swap/DEX/Launchpad/Game in this phase.
+
+
+## Phase 111 — evidence capture protocol (non-deploying)
+
+The Phase110 `local_validator_evidence_gate.cjs` is a **shape validator**, not an independent attestation. A caller can fabricate all boolean fields. Never use its `ready:true` output to authorize a swap, claim local-validator tests passed, or unblock the real-funds release gate.
+
+When an isolated, approved runner with a pinned toolchain becomes available, a developer must capture the following evidence from actual commands, not copied or hand-edited JSON:
+
+1. Record the runner OS/architecture and pinned toolchain install sources/checksums; verify `rustc --version`, `cargo --version`, `solana --version`, `solana-test-validator --version`, and `anchor --version`. Confirm CLI and validator compatibility.
+2. Start `solana-test-validator` in a temporary, disposable ledger directory with no real wallet keys; capture startup logs, process exit status, and actual RPC health (for example `getHealth` and `getVersion`) from the local endpoint. Never expose a local RPC endpoint to the public Internet.
+3. Record local-validator slot advancement and a disposable test transaction signature with finalized/confirmed status as appropriate. Do not equate a healthy RPC response with a deployed grant program.
+4. Verify owner-signed grant and revoke and atomic caps/nonces in deterministic on-chain tests. Archive sanitized CI evidence and exact commit/versions, then request independent review.
+5. If any evidence is missing, inconsistent, or generated only from mocks, report **BLOCKED**. Keep `mayExecute:false`.
+
+Do not run these steps automatically in the current CI, which has no pinned Solana toolchain. Do not put mnemonic phrases, private keys, credentials, or real-funds addresses in logs.
