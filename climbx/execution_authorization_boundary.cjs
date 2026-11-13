@@ -5,6 +5,7 @@ function authorizeBotExecution({walletBinding,policySimulation,grantSimulation,r
  const blocked=reason=>({authorized:false,mayExecute:false,reason});
  if(walletBinding?.status!=='BOUND_CONFIRMED')return blocked('WALLET_NOT_VERIFIED');
  if(policySimulation?.allowed!==true)return blocked('POLICY_NOT_SATISFIED');
+ if(policySimulation?.simulationOnly!==true||policySimulation?.mayExecute!==false)return blocked('INVALID_POLICY_BOUNDARY');
  if(grantSimulation?.simulationOnly!==true||grantSimulation?.mayExecute!==false)return blocked('INVALID_SIMULATION_BOUNDARY');
  if(routePreflight?.mayExecute!==false)return blocked('INVALID_ROUTE_BOUNDARY');
  // No verified Solana grant program / signed finality proof is integrated.
