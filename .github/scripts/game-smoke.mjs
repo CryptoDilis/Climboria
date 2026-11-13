@@ -279,8 +279,20 @@ try {
   const caveEntrance=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveEntranceTraversalAudit?.()??null);
   if(!caveEntrance||!caveEntrance.ok||caveEntrance.walkedDistance<62||caveEntrance.blockedAt) errors.push('Cave entrance exterior-to-interior traversal failed: '+JSON.stringify(caveEntrance));
   console.log('Cave entrance traversal:',JSON.stringify(caveEntrance));
+  const coastRoute=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveCoastalTraversalAudit?.()??null);
+  if(!coastRoute?.ok||!coastRoute.outward?.ok||!coastRoute.returnTrip?.ok||
+    !coastRoute.portalGap||!coastRoute.floorMatches||!coastRoute.seaBeyond||
+    !coastRoute.covered||!coastRoute.mazeCovered||
+    coastRoute.outward.distance<260||coastRoute.returnTrip.distance<260)
+    errors.push('Real cave-to-coast route was not traversable in both directions: '+JSON.stringify(coastRoute));
+  console.log('Cave-to-shore two-way traversal:',JSON.stringify(coastRoute));
+  const sanctuaryPillars=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryPillarCollisionAudit?.()??null);
+  if(!sanctuaryPillars?.ok||sanctuaryPillars.pillars?.length!==12||
+    sanctuaryPillars.pillars.some(p=>!p.collider||!p.blocked)||sanctuaryPillars.walkwayBlocked?.length)
+    errors.push('Starting Sanctuary pillar collision or entry corridor failed: '+JSON.stringify(sanctuaryPillars));
+  console.log('Sanctuary real-pillar collision:',JSON.stringify(sanctuaryPillars));
   const cavePassage=await page.evaluate(()=>window.__climboriaJarrellsPeak?.cavePassageAudit?.()??null);
-  if(!cavePassage||cavePassage.wallCount!==46||cavePassage.passageWidth!==8||cavePassage.annexPassageWidth!==6||cavePassage.eastBranchWidth!==6||!cavePassage.clearRoute||!cavePassage.annexRoute||!cavePassage.eastBranchRoute||!cavePassage.geodeRoute||!cavePassage.geodeBlockedAcrossWall||Math.abs(cavePassage.geodeFloorY-cavePassage.caveFloorY)>.02||!cavePassage.blockedAcrossWall||!cavePassage.annexBlockedAcrossWall||!cavePassage.eastBlockedAcrossWall||!cavePassage.westRoute||!cavePassage.northMazeRoute||!cavePassage.westBlockedAcrossWall||!cavePassage.northBlockedAcrossWall) errors.push('Cave connected-maze/geode chamber route, floor or collision audit failed: '+JSON.stringify(cavePassage));
+  if(!cavePassage||cavePassage.wallCount!==49||cavePassage.passageWidth!==8||cavePassage.annexPassageWidth!==6||cavePassage.eastBranchWidth!==6||!cavePassage.clearRoute||!cavePassage.annexRoute||!cavePassage.eastBranchRoute||!cavePassage.geodeRoute||!cavePassage.geodeBlockedAcrossWall||Math.abs(cavePassage.geodeFloorY-cavePassage.caveFloorY)>.02||!cavePassage.blockedAcrossWall||!cavePassage.annexBlockedAcrossWall||!cavePassage.eastBlockedAcrossWall||!cavePassage.westRoute||!cavePassage.northMazeRoute||!cavePassage.westBlockedAcrossWall||!cavePassage.northBlockedAcrossWall) errors.push('Cave connected-maze/geode chamber route, floor or collision audit failed: '+JSON.stringify(cavePassage));
   const caveWater=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveWaterAudit?.()??null);
   if(!caveWater||!caveWater.inside||!caveWater.outside||caveWater.depth!==2.5||Math.abs(caveWater.surfaceY-(caveWater.baseY+2.8))>.001||!Number.isFinite(caveWater.ground)||Math.abs(caveWater.ground-(caveWater.baseY+.08))>.02) errors.push('Cave grotto water-volume boundary/surface/depth/floor alignment audit failed: '+JSON.stringify(caveWater));
   const grottoTraversal=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveGrottoTraversalAudit?.()??null);
@@ -577,6 +589,12 @@ try {
   await page.waitForTimeout(1200);
   await page.screenshot({path:'climboria-desktop-cave-interior.png'});
   console.log('Desktop cave interior visual capture:',JSON.stringify(desktopCaveInterior));
+  const desktopCoastalExit=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveCoastalExitForSmoke?.()??null);
+  if(!desktopCoastalExit||desktopCoastalExit.local.z>-295||desktopCoastalExit.groundY<0)
+    errors.push('Desktop shore exit camera could not be prepared: '+JSON.stringify(desktopCoastalExit));
+  await page.waitForTimeout(1200);
+  await page.screenshot({path:'climboria-desktop-cave-coastal-exit.png'});
+  console.log('Desktop coastal cave exit:',JSON.stringify(desktopCoastalExit));
 
   // Free desktop WebGL/software-renderer resources before booting the mobile
   // GLB scene. Running both heavy 3D pages together can stall the mobile loader
@@ -925,6 +943,12 @@ try {
   await mobile.waitForTimeout(1200);
   await mobile.screenshot({path:'climboria-mobile-cave-interior.png'});
   console.log('Mobile cave interior visual capture:',JSON.stringify(mobileCaveInterior));
+  const mobileCoastalExit=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveCoastalExitForSmoke?.()??null);
+  if(!mobileCoastalExit||mobileCoastalExit.local.z>-295||mobileCoastalExit.groundY<0)
+    errors.push('Mobile shore exit camera could not be prepared: '+JSON.stringify(mobileCoastalExit));
+  await mobile.waitForTimeout(1200);
+  await mobile.screenshot({path:'climboria-mobile-cave-coastal-exit.png'});
+  console.log('Mobile coastal cave exit:',JSON.stringify(mobileCoastalExit));
   console.log('Mobile cave entrance visual capture:',JSON.stringify(mobileCaveView));
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));
 

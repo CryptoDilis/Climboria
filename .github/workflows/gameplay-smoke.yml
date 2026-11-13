@@ -94,5 +94,7 @@ jobs:
             climboria-mobile-cave-entrance.png
             climboria-desktop-cave-interior.png
             climboria-mobile-cave-interior.png
+            climboria-desktop-cave-coastal-exit.png
+            climboria-mobile-cave-coastal-exit.png
           if-no-files-found: warn
           retention-days: 7
