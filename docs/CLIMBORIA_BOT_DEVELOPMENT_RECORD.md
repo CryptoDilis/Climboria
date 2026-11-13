@@ -1316,3 +1316,16 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Direct environment check:** `cargo`, `rustc`, `anchor`, and `solana-test-validator` unavailable. No actual Cargo/Anchor build, signed local-validator tests, DEX-only CPI, on-chain trade execution, devnet deployment, or audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase125:** obtain a compatible pinned Rust/Solana/Anchor toolchain and reviewed lockfile on an approved build host, compile the actual grant/revoke scaffold, run signed disposable-validator owner/PDA/expiry tests, then record exact evidence. Keep trading disabled until reviewed execution/custody and reconciliation exist.
+
+
+## Phase 125 — 2026-11-14 — first actual Rust compilation CI probe
+
+**Phase124 CI all SUCCESS** at branch head `3baad04be9f51982871c67f51c409b90a60bda77`: Validate `43496277170`, CLIMBX release safety `43496276738`, Browser Smoke `43496276813`.
+
+**Phase125 branch commit** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `2bbd7a1f395ceb1fa8bfb30046ac2541247d97da`: new isolated `.github/workflows/climbx-rust-compile.yml` runs actual `cargo check --manifest-path climbx/programs/climbx-authorization/Cargo.toml` on GitHub-hosted Ubuntu, logs Rust/Cargo versions, no deployment or validator. Trigger is push affecting Rust program or workflow on CLIMBX branch, plus workflow_dispatch. Permissions read-only; 15-minute job limit.
+**CI status:** no workflow runs returned at initial check for commit; **no successful Rust compilation claimed**. Workflow may not be activated until GitHub registers new workflow; confirm runs and inspect logs. Cargo dependencies are fetched without a committed lockfile, so success would prove only that runner's compilation, not a reproducible pinned build. Do not imply a signed validator test or deployment.
+
+**Blockers:** reviewed Cargo.lock, pinned Rust/Solana/Anchor compatibility, real local-validator tests, actual restricted DEX-only CPI, custody, reconciliation, independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase126:** inspect GitHub workflow discovery/run; fix Rust compile errors and commit reviewed Cargo.lock. Follow with signed owner/PDA/expiry tests on disposable validator. Maintain append-only main record.
