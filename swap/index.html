@@ -616,7 +616,8 @@ async function requestJupiterQuote(){
   if(request!==quoteRequestSequence||from.id!==quoteTokens.from.id||to.id!==quoteTokens.to.id||amount!==Number($('quoteAmount').value))return;
   if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');
   if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);
-  if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote; no fallback will be shown');
+  if(data.inAmount!==String(raw)||typeof data.outAmount!=='string'||!(/^[1-9][0-9]*$/).test(data.outAmount))
+    throw new Error('Jupiter returned an inconsistent quote for this amount; no fallback will be shown');
   const out=Number(data.outAmount)/Math.pow(10,to.decimals);
   if(!Number.isFinite(out)||out<=0)throw new Error('Jupiter returned an invalid output amount');
   const impact=data.priceImpactPct??data.priceImpact??null;
