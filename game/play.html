@@ -697,7 +697,7 @@ let crystal;{
   else stripes(['#ce1126','#fff']);
   const t=new T3.CanvasTexture(c);return new T3.MeshBasicMaterial({map:t,side:T3.DoubleSide});
  }
- for(let i=0;i<12;i++){const a=i/12*6.283,rr=22,pg=new T3.Group();pg.position.set(Math.sin(a)*rr,1.5,Math.cos(a)*rr);g.add(pg);
+ for(let i=0;i<12;i++){const a=(i+.5)/12*6.283,rr=22,pg=new T3.Group();pg.position.set(Math.sin(a)*rr,1.5,Math.cos(a)*rr);g.add(pg);
   const H=i%5==3?4:9;sc(mk(CYL,M('#c9c3b2'),0,H/2,0,pg),1.1,H,1.1);sc(mk(BOX,M('#b5af9f'),0,H+.3,0,pg),2.6,.6,2.6);
   if(i%5!=3)sc(mk(SPH,M('#7fe9ff',1),0,H+1.2,0,pg),.5,.5,.5) 
   const poleH=3.2,pole=mk(CYL,M('#8b8170'),.12,H+.3+poleH/2,0,pg);sc(pole,.055,poleH,.055);
@@ -1734,7 +1734,7 @@ addEventListener('touchend',tend);addEventListener('touchcancel',tend);
 const solids=[],SLOPE=3.8,PLAYER_RADIUS=.34,MAX_STEP_UP=3.0;
 
 function l2w(g,lx,lz){const r=g.rotation.y,c=Math.cos(r),n=Math.sin(r);return[g.position.x+lx*c+lz*n,g.position.z-lx*n+lz*c]}
-const solid=(x,z,r)=>solids.push({x,z,r});
+const solid=(x,z,r,label=null)=>solids.push({x,z,r,label});
 /* ---------- CC0 rainforest dressing from 3DAssets.dev ----------
    The existing streamed/instanced procedural forest remains the lightweight fallback.
    These few hero props are loaded once, cloned, and placed only on valid forest ground.
@@ -1792,7 +1792,14 @@ loadCC0ForestModel('undergrowth',cc0GroundSpots);
 loadCC0ForestModel('fallenLog',cc0LogSpots);
 
 parkFixtureSolids.forEach(s=>solid(s.x,s.z,s.r));
-for(let i=0;i<12;i++){const a=i/12*6.283;solid(POI.sanct.x+Math.sin(a)*22,POI.sanct.z+Math.cos(a)*22,1.6)}
+// Register actual pillar mesh world positions, not guessed rings; keep the
+// main south approach open by offsetting flags half a slot around the circle.
+sanctuaryGroup.updateMatrixWorld(true);
+sanctuaryFlagMeshes.forEach(({country,pillar})=>{
+ const center=pillar.getWorldPosition(new T3.Vector3());
+ solid(center.x,center.z,1.75,'sanctuary-pillar-'+country);
+});
+solid(POI.sanct.x,POI.sanct.z,2.4,'sanctuary-center-crystal');
 [[-22,-20,15],[20,-22,14],[-13,-34,5],[13,-34,5],[-30,-6,7],[30,-6,7]].forEach(([x,z,r])=>{const[w,v]=l2w(caveG,x,z);solid(w,v,r)});
 function caveWallBlocks(nx,nz,ox,oz,feet=null){
  const pointSegmentDistance=(px,pz,ax,az,bx,bz)=>{
