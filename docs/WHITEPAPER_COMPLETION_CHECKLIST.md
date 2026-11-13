@@ -183,3 +183,10 @@ Last updated: 2026-11-13.
 - [ ] Merge PR only after required checks pass; verify production deployment, Overview nav/card absence, and `/overview/` returning 404.
 
 **Scope guard:** Do not work on Sanctuary/gameplay, Browser Smoke gameplay failures, Swap, DEX, Login, or any unrelated engineering task while this Whitepaper and Overview-removal task remains open.
+
+
+## O. Climboria Signature status clarification — 13 November 2026
+
+- [x] Corrected the Whitepaper Markdown and rendered HTML to state explicitly that Climboria Signature is planned, not implemented, and not operational.
+- [x] Reframed identity, tokenomics, authority, liquidity, creator-lock, sell-limit, reviewer, and approval items as proposed requirements—not active review checks or existing controls.
+- [ ] Recheck Markdown/HTML parity and focused status-language assertions on the new exact PR head.
