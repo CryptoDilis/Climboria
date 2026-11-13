@@ -13,3 +13,7 @@ On a controlled development host with a compatible pinned Rust/Solana/Anchor too
 ## Phase121 compilation verification gate
 
 Run `node climbx/verify_anchor_cargo_build.cjs` from the repository root **only after** a controlled development host has Rust/Cargo installed and a reviewed `Cargo.lock` has been generated and committed with its dependency graph cached. The gate uses `cargo check --locked --offline` and intentionally fails if the lockfile or cached crates are missing. It does not download packages or change dependencies. A successful check only establishes host-side Rust type checking, not Anchor build, signed local-validator tests, audit, deployment readiness, or execution authorization. Existing GitHub CI runs **mocked unit tests of this gate only**, not `cargo check`.
+
+## Phase122 grant duration invariant
+
+Grant creation now rejects expiration timestamps more than **24 hours** after the validator's `Clock::get()?.unix_timestamp` and uses checked addition to avoid timestamp overflow. It still only **stores** expiry; no execution instruction exists to enforce expiry at swap time. Renewing grants requires a separately designed owner-signed instruction or creation of a new grant ID, and must never silently extend authority. The current source is still uncompiled and untested on a validator.
