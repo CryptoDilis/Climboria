@@ -37,6 +37,45 @@ export function assertTokenProgram(program, expectedId, label) {
   return { id: expectedId, owner: program.owner, executable: true };
 }
 
+/**
+ * Bind LaunchLab's selected WSOL quote mint to its actual finalized mint owner.
+ * The SDK accepts dynamic mintProgramB/tokenProgramB arguments. A caller-supplied
+ * program hint alone is NEVER evidence that the mint is owned by that program.
+ * This supports read-only configuration validation, NOT signable transactions.
+ */
+export function assertPinnedWsolQuoteBinding(cluster, globalAccount, quoteMintAccount, requestedProgram) {
+  const programId = PROGRAMS[cluster]?.launchpad;
+  const configAddress = CONFIG_TARGETS[cluster]?.globalConfig;
+  if (!programId || !configAddress) throw new Error('Unsupported LaunchLab cluster');
+  if (!globalAccount || globalAccount.owner !== programId || globalAccount.executable !== false)
+    throw new Error(cluster + ': GlobalConfig not owned by the correct LaunchLab program');
+  const config = bytes(globalAccount, 'GlobalConfig');
+  if (config.length !== 371 || !config.subarray(0,8).equals(accountDiscriminator('GlobalConfig')))
+    throw new Error(cluster + ': GlobalConfig length/discriminator mismatch');
+  if (config.readUInt8(16) !== 0 || config.readUInt16LE(17) !== 0)
+    throw new Error(cluster + ': pinned quote configuration must be constant-product curve index zero');
+  const configuredQuoteMint = encodeBase58(config.subarray(83, 115));
+  if (configuredQuoteMint !== WSOL)
+    throw new Error(cluster + ': GlobalConfig quote mint differs from pinned WSOL');
+  if (!quoteMintAccount || quoteMintAccount.executable !== false ||
+      quoteMintAccount.owner !== TOKEN_PROGRAMS.spl)
+    throw new Error(cluster + ': finalized WSOL mint owner is not classic SPL Token');
+  if (requestedProgram !== quoteMintAccount.owner)
+    throw new Error(cluster + ': SDK quote token program differs from finalized mint owner');
+  const mint = bytes(quoteMintAccount, 'WSOL mint');
+  if (mint.length !== 82 || mint[44] !== 9 || mint[45] !== 1)
+    throw new Error(cluster + ': finalized WSOL mint length/decimals/initialized state mismatch');
+  return {
+    globalConfig: configAddress,
+    configuredQuoteMint,
+    observedMintOwner: quoteMintAccount.owner,
+    resolvedQuoteTokenProgram: quoteMintAccount.owner,
+    source: 'finalized getAccountInfo (GlobalConfig and WSOL)',
+    sdkDynamicProgramArgumentMayBeTrustedWithoutOwnerCheck: false,
+    idlAndDeployedInstructionSemanticsApproved: false
+  };
+}
+
 export function inspectMigrationPolicySnapshot(cluster, accounts) {
   const programs = PROGRAMS[cluster], target = CONFIG_TARGETS[cluster];
   if (!programs || !target || !accounts) throw new Error('Unsupported cluster/snapshot');
@@ -51,11 +90,7 @@ export function inspectMigrationPolicySnapshot(cluster, accounts) {
     spl: assertTokenProgram(accounts.spl, TOKEN_PROGRAMS.spl, 'SPL Token'),
     token2022: assertTokenProgram(accounts.token2022, TOKEN_PROGRAMS.token2022, 'Token-2022')
   };
-  if (accounts.wsol?.owner !== TOKEN_PROGRAMS.spl || accounts.wsol.executable !== false)
-    throw new Error(cluster + ': WSOL mint owner is not classic SPL Token');
-  const mint = bytes(accounts.wsol, 'WSOL mint');
-  if (mint.length !== 82 || mint[44] !== 9 || mint[45] !== 1)
-    throw new Error(cluster + ': WSOL mint layout/decimals/initialized state differs');
+  const quoteMintBinding = assertPinnedWsolQuoteBinding(cluster, accounts.global, accounts.wsol, TOKEN_PROGRAMS.spl);
   const platform = accounts.platform;
   if (!platform || platform.owner !== programs.launchpad || platform.executable !== false)
     throw new Error(cluster + ': PlatformConfig is not LaunchLab-owned data');
@@ -78,6 +113,7 @@ export function inspectMigrationPolicySnapshot(cluster, accounts) {
     cpmmConfigOwner: cpConfig.owner,
     wsolMint: WSOL,
     wsolOwner: accounts.wsol.owner,
+    quoteMintBinding,
     tokenPrograms,
     // An owner/executable check cannot prove a transaction builder, migration
     // recipient, signer graph or deployed bytecode/IDL is compatible.
@@ -108,7 +144,7 @@ export async function verifyClusterPolicy(fetchImpl, cluster) {
   const bindings = {
     launchpad: programs.launchpad, cpmm: programs.cpmm,
     spl: TOKEN_PROGRAMS.spl, token2022: TOKEN_PROGRAMS.token2022,
-    wsol: WSOL, platform: target.platformConfig
+    wsol: WSOL, global: target.globalConfig, platform: target.platformConfig
   };
   const accounts = {}, slots = {};
   for (const [name, address] of Object.entries(bindings)) {
