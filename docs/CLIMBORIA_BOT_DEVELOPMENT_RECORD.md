@@ -553,3 +553,8 @@ Verified Phase66 Whitepaper CI `43451746368` and `43451745623` successful; Phase
 ## Phase 69 checkpoint — 2026-11-13 (timeout safety audit)
 
 Verified Phase68 Whitepaper FAQ commit `146fe36dc2204167a42ed076bd3990df3626bc6d`: CLIMBX release safety **43452640920** success and Validate Climboria **43452641352** success. Reviewed actual draft `climbx/wallet_api_factory.cjs`, `climbx/bind_wallet_pg.cjs` and `climbx/issue_challenge_pg.cjs`. Confirmed critical unresolved risk: `withDeadline` uses Promise.race and may return timeout while database operations continue/commit; timeout is NOT safe cancellation. Added blocking audit and remediation plan `docs/CLIMBX_TIMEOUT_SAFETY_REVIEW.md` commit `b43f3112f905d99ba7565b864d7de9a613c11537`. No code fix or production deployment claimed. Next implement database-enforced timeouts, ambiguous-outcome reconciliation and real PostgreSQL failure tests. Keep CLIMBX NO-GO.
+
+
+## Phase 70 checkpoint — 2026-11-13 (deadline regression proof)
+
+Added deterministic regression test in `climbx/deadline.test.cjs`, commit `8830c43fad0926be2330c5e37d2de602c4b161a3`, explicitly proving that a deadline rejection can be followed by an underlying write completing later. Added code warning to `climbx/deadline.cjs`, commit `03992b6256acadddf88885a9920208212370b6a6`, that response timeout is not database cancellation or rollback. Expected test count 302; CI result for new commits not yet verified. This is a documented safety regression, NOT a remediation of the actual late-commit risk. Next implement real PostgreSQL timeouts and ambiguous-outcome reconciliation; keep live API unmounted and CLIMBX NO-GO.
