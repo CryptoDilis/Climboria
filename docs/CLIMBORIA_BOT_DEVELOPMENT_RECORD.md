@@ -543,3 +543,8 @@ Added a dedicated **CLIMBX by Climboria** section to `docs/WHITEPAPER.md` on the
 ## Phase 67 checkpoint — 2026-11-13 (website project brief CLIMBX highlight)
 
 Reviewed main `overview/index.html`: its public-facing Project Brief is separate from `docs/WHITEPAPER.md`. Added a CLIMBX planned-feature article to the Overview Project Brief on the draft branch, commit `613dc5394551148f02b71eda95374dbf8917aa5c`, with free bot, five slots, owner-approved learning, exclusive DEX execution, performance fee and live NO-GO disclosure. Phase66 whitepaper commit `c035877c9a881ac6a7b9e1c3ff6a3127541bbd36` had CI runs `43451746368` and `43451745623` in progress when checked; not claimed passed. No production deployment. Need CI check for this commit, browser review and release review; do not merge bot PR merely to publish content.
+
+
+## Phase 68 checkpoint — 2026-11-13 (CLIMBX whitepaper FAQ)
+
+Verified Phase66 Whitepaper CI `43451746368` and `43451745623` successful; Phase67 Overview CI `43451880807` and `43451880780` successful. Added a plain-language CLIMBX FAQ to the draft branch whitepaper, commit `146fe36dc2204167a42ed076bd3990df3626bc6d`, explaining free access vs Solana network fees, cumulative net realized profit high-water-mark fee, approval-only learning, exclusive Signature DEX execution, and explicit NO-GO. No deployment, production migration or live bot authorization. Check CI for new commit before claiming it passed.
