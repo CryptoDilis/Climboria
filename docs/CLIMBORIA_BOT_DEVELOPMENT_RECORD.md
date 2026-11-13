@@ -1329,3 +1329,16 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Blockers:** reviewed Cargo.lock, pinned Rust/Solana/Anchor compatibility, real local-validator tests, actual restricted DEX-only CPI, custody, reconciliation, independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase126:** inspect GitHub workflow discovery/run; fix Rust compile errors and commit reviewed Cargo.lock. Follow with signed owner/PDA/expiry tests on disposable validator. Maintain append-only main record.
+
+
+## Phase 126 — 2026-11-14 — actual Cargo compilation job in established CLIMBX CI
+
+**Phase125 workflow registration issue:** standalone `.github/workflows/climbx-rust-compile.yml` added at `2bbd7a1f395ceb1fa8bfb30046ac2541247d97da` had no discoverable workflow runs at the time of inspection; no compilation result can be claimed from it.
+
+**Phase126 branch commit** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `f9d10d77f3d2d6f4abd5de3887588bbe31bc42e1`: add independent `rust-compile-probe` job to existing `.github/workflows/climbx-release-gate.yml` with real `cargo check --manifest-path climbx/programs/climbx-authorization/Cargo.toml` on GitHub-hosted Ubuntu. Read-only permissions, 15-minute timeout, no deployment or validator, reports Rust/Cargo versions. Unlike previous mocked unit tests, this job actually invokes Cargo.
+**Phase126 CI pending** at first check; no successful Rust compilation claimed. Dependencies may resolve without a committed Cargo.lock, so even success does not prove a reproducible build. If Cargo fails, inspect logs and fix rather than masking the failure.
+
+**Remaining blockers:** reviewed Cargo.lock, pinned compatible toolchain, actual signed local-validator tests, reviewed restricted DEX-only CPI/custody/nonce/settlement, independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase127:** verify exact Phase126 workflow run and rust-compile-probe job logs; fix compiler errors, commit reviewed lockfile and pinned toolchain, then signed disposable-validator grant/revoke tests. Maintain append-only main record.
