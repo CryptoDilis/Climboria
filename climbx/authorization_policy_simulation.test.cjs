@@ -68,3 +68,9 @@ test('exact 30-minute boundary denied, one millisecond earlier allowed',()=>{
  x.nowMs++;
  assert.deepEqual(evaluateClimbxEntry(x),{allowed:false,reason:'ENTRY_CUTOFF'});
 });
+
+denied('array grant is invalid',x=>x.grant=[],'INVALID');
+denied('array entry is invalid',x=>x.entry=[],'INVALID');
+denied('unselected slot with unknown position state fails closed',x=>delete x.slots[1].openPosition,'INVALID_SLOTS');
+denied('unselected slot with malformed position state fails closed',x=>x.slots[1].openPosition='false','INVALID_SLOTS');
+denied('empty entry mint',x=>x.entry.mint='','MINT_NOT_ALLOWED');
