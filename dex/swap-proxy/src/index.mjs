@@ -225,8 +225,13 @@ async function handleQuote(request, env) {
   const response = await upstream("/order?" + params.toString(), { method: "GET" }, env);
   const data = await response.json().catch(() => null);
   if (!response.ok) return json({ error: "Jupiter quote request failed", upstreamStatus: response.status, details: data?.error || data?.message || null }, response.status >= 400 && response.status < 500 ? response.status : 502);
-  if (!data || !data.inAmount || !data.outAmount || !data.requestId) {
-    return json({ error: data?.errorMessage || "Jupiter returned an incomplete quote", errorCode: data?.errorCode ?? null }, 502);
+  // A provider HTTP 200 is not proof of a usable quote. Refuse missing or
+  // mismatched raw amounts rather than displaying a price for another order.
+  const validRawAmount = value => typeof value === "string" && /^[1-9][0-9]*$/.test(value);
+  if (!data || !validRawAmount(data.inAmount) || data.inAmount !== amount ||
+      !validRawAmount(data.outAmount) || typeof data.requestId !== "string" ||
+      !data.requestId.trim()) {
+    return json({ error: "Jupiter returned an incomplete or inconsistent quote" }, 502);
   }
   return json({
     requestId: data.requestId, inAmount: data.inAmount, outAmount: data.outAmount,
