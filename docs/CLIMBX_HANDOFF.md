@@ -215,5 +215,13 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - NEXT: inventory dependency graph and move one complete CLIMBX-only testable module group, then run exact-head CI and open draft PR. Do not merge legacy branch wholesale.
 - No DEX, Swap, Launchpad or Game edits. **REAL-FUNDS NO-GO**.
 
+## Phase 153 — 2026-11-14 — first isolated CLIMBX code migrated to fresh-main branch
+- DONE: migrated isolated Anchor authorization Cargo manifest, pinned Rust toolchain, `src/lib.rs` with grant/revoke/tighten policy and Rust unit tests, and README from legacy branch to `climbx/mainline-integration-20261114`. Commits `a03b350`, `abbdd8a`, `e98f8cb`, `2d1b9d2`.
+- DONE: migrated scaffold structural checker and tests, safety-boundary checker and tests, all scoped to `climbx/`. Commits `b6f5933`, `cf33e04`, `a94c987`, `4c27a17`.
+- DONE: created dedicated non-deploying authorization CI `.github/workflows/climbx-authorization-integration.yml` commit `0d0fe3754a072e930a5e0de579f5445b5866a561`. Runs Node static checks and pinned Rust `cargo test --locked --lib` after generating temporary lockfile.
+- PENDING: exact-head CI results and review of structural check dependencies; signed validator tests, committed Cargo.lock, SBF build and independent audit. This is **not** a deployable program.
+- NEXT: verify workflow and fix any failing tests; then migrate next CLIMBX-only module group and open draft integration PR.
+- No DEX, Swap, Launchpad or Game edits. **REAL-FUNDS NO-GO**.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
