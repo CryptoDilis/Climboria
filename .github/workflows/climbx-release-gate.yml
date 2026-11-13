@@ -107,6 +107,12 @@ jobs:
           cargo +1.99.1 generate-lockfile --manifest-path climbx/programs/climbx-authorization/Cargo.toml
           test -s climbx/programs/climbx-authorization/Cargo.lock
           cargo +1.99.1 metadata --locked --format-version 1 --manifest-path climbx/programs/climbx-authorization/Cargo.toml --no-deps > /dev/null
+      - name: Check candidate lockfile is stable across regeneration (non-deploying)
+        run: |
+          cp climbx/programs/climbx-authorization/Cargo.lock /tmp/climbx-first-Cargo.lock
+          cargo +1.99.1 generate-lockfile --manifest-path climbx/programs/climbx-authorization/Cargo.toml
+          cmp /tmp/climbx-first-Cargo.lock climbx/programs/climbx-authorization/Cargo.lock
+          sha256sum climbx/programs/climbx-authorization/Cargo.lock
       - name: Validate CLIMBX Cargo lockfile integrity (not vulnerability audit)
         run: python3 climbx/check_cargo_lock.py climbx/programs/climbx-authorization/Cargo.lock
       - name: Upload lockfile candidate for independent dependency review
