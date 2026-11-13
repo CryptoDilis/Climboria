@@ -15,7 +15,7 @@ async function reconcileWalletBinding({pool,userId,wallet,nonce}){
   const ch=challenge.rows[0],owner=binding.rows[0];
   if(!ch||String(ch.user_id)!==userId||ch.wallet_address!==wallet)return {status:'REVIEW_REQUIRED'};
   if(owner&&String(owner.user_id)!==userId)return {status:'OWNED_BY_OTHER_USER'};
-  if(ch.consumed_at!==null&&owner&&String(owner.user_id)===userId)return {status:'BOUND_CONFIRMED'};
+  if(ch.consumed_at instanceof Date && Number.isFinite(ch.consumed_at.getTime()) && owner && String(owner.user_id)===userId)return {status:'BOUND_CONFIRMED'};
   // An in-flight original transaction could still commit after this read.
   return {status:'INDETERMINATE',safeToRetry:false};
  }catch{
