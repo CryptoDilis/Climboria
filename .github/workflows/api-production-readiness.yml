@@ -1,0 +1,52 @@
+name: Climboria API Production Readiness
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/api-production-readiness.mjs"
+      - ".github/scripts/api-production-readiness.test.mjs"
+      - ".github/workflows/api-production-readiness.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/scripts/api-production-readiness.mjs"
+      - ".github/scripts/api-production-readiness.test.mjs"
+      - ".github/workflows/api-production-readiness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climboria-api-readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probe-unit:
+    name: Validate API readiness probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax and fail-closed unit tests
+        run: |
+          node --check .github/scripts/api-production-readiness.mjs
+          node --test .github/scripts/api-production-readiness.test.mjs
+
+  production-probe:
+    name: Check real API production quote-only readiness
+    if: github.event_name == 'workflow_dispatch'
+    needs: probe-unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify real Worker, quote/search and disabled execution
+        run: node .github/scripts/api-production-readiness.mjs
