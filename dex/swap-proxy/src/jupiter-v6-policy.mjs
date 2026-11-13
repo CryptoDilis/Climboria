@@ -2,6 +2,10 @@ import { encodeBase58 } from "./transaction-validation.mjs";
 
 export const JUPITER_V6_PROGRAM_ID = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 export const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+// Classic SPL Token is the only supported token program in the signable
+// transaction policy. A Token-2022 CPI requires its executable program key,
+// so reject that key anywhere in the resolved message, including ALTs.
+export const UNSUPPORTED_TOKEN_2022_PROGRAM_ID = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 export const COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111";
 
 const ROUTE_DISCRIMINATOR = [229, 23, 203, 151, 122, 227, 173, 42];
@@ -139,12 +143,24 @@ export function validateJupiterV6Transaction({
   otherAmountThreshold
 }) {
   if (!parsed || parsed.requiredSignatures !== 1) fail("Only single-taker-signature transactions are supported");
+  // Defense in depth: the stored order independently verifies this again,
+  // but a policy result must never accept an upstream-paid transaction.
+  if (!Array.isArray(parsed.staticAccountKeys) || !parsed.staticAccountKeys.length ||
+      encodeBase58(parsed.staticAccountKeys[0]) !== taker) {
+    fail("Jupiter transaction fee payer must match the requested taker");
+  }
   const keys = buildAccountKeys(parsed, loadedWritable, loadedReadonly);
   // Solana v0 address lookups and static account references share one resolved
   // key space. Reject duplicate pubkey aliases rather than relying on
   // accountIndexes.indexOf(), which can inspect only the first occurrence.
   if (new Set(keys).size !== keys.length) {
     fail("Jupiter transaction contains duplicate resolved account pubkeys");
+  }
+  // Source/destination RPC evidence only proves the outer token accounts.
+  // Unsupported intermediate Token-2022 CPI must also be fail-closed, even
+  // when the token program appears as an unused or ALT-loaded account key.
+  if (keys.includes(UNSUPPORTED_TOKEN_2022_PROGRAM_ID)) {
+    fail("Token-2022 program accounts are unsupported in Jupiter route transactions");
   }
   for (let index = 0; index < keys.length; index++) {
     if (!APPROVED_READONLY_PROGRAM_IDS.has(keys[index])) continue;
@@ -154,6 +170,7 @@ export function validateJupiterV6Transaction({
     }
   }
   const routeInstructions = [];
+  const seenComputeBudgetTypes = new Set();
   for (const instruction of parsed.instructions) {
     const programId = keys[instruction.programIdIndex];
     if (programId === COMPUTE_BUDGET_PROGRAM_ID) {
@@ -169,6 +186,13 @@ export function validateJupiterV6Transaction({
       } else {
         fail("Unsupported Compute Budget instruction");
       }
+      // Solana rejects duplicate settings for the same Compute Budget field.
+      // Detect ambiguous duplicate fee/limit requests before signing, while
+      // preserving distinct limit + price + loaded-data settings.
+      if (seenComputeBudgetTypes.has(data[0])) {
+        fail("Duplicate Compute Budget instruction type is unsupported");
+      }
+      seenComputeBudgetTypes.add(data[0]);
       continue;
     }
     if (programId !== JUPITER_V6_PROGRAM_ID) fail("Transaction contains an unsupported top-level program: " + programId);
