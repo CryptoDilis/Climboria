@@ -694,3 +694,14 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Scope and release:** off-chain simulator only. No Solana program, signed devnet swap, wallet trading authority, or real-funds bot. **NO-GO** remains. Other modules untouched.
 
 **Next steps for next session:** (1) check CI runs for `22ed2cf58662389f1e191379880c57c915c3322e`; fix any failure, log exact run IDs; (2) assess remaining policy fail-closed edges (slot state, mint identity, large amounts) and run local node tests if available; (3) verify actual Solana toolchain and devnet availability; (4) select reviewed on-chain authority architecture and prototype on devnet with on-chain revocation/caps and exact DEX-only execution; (5) independent security review and explicit owner go/no-go. Record all next steps and commits here after every phase; CLIMBX only.
+
+
+## Phase 86 — 2026-11-14 — CI failure diagnosed and corrected (CLIMBX only)
+
+**Branch:** `climbx/phase28-release-gate-ci`, draft PR #282.
+
+**Phase85 CI evidence on `22ed2cf58662389f1e191379880c57c915c3322e`:** Browser Smoke `43461223738` SUCCESS; Validate `43461223594` SUCCESS; CLIMBX release safety `43461223433` **FAILURE** (job `132008347061`). Exact Node test summary: 241 total, 240 pass, 1 fail. The failed test `zero issued timestamp with current time before issuance` expected `OUTSIDE_GRANT` for `nowMs=-1`, while the stricter Phase85 policy correctly returns `INVALID` for negative current timestamps. This is a **test expectation mismatch**, not evidence of live trading.
+
+**Fix commit:** `aa46aeda0eb8a6243337102a595784cb1d10a048` — update that test to explicitly expect `INVALID` and rename it to describe the negative-clock case. No policy relaxation or trading enablement. At initial check, GitHub had not yet returned new CI runs; **CI status pending verification**.
+
+**Next actions:** (1) verify workflow runs for `aa46aeda0eb8a6243337102a595784cb1d10a048`, fix any remaining failures and record exact run IDs; (2) remove redundant tests only if safe, and strengthen missing-authorization/slot policy cases; (3) verify Solana devnet CLI and infrastructure before claiming on-chain tests; (4) design/implement reviewed devnet-only on-chain authorization; (5) independent security review and explicit owner GO/NO-GO. CLIMBX only, never enable real funds. Keep appending exact commits/CI/next steps to this main-branch record.
