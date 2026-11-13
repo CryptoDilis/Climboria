@@ -214,7 +214,7 @@ const heroEnterButton=document.getElementById('heroEnterButton');
 const heroFeedback=document.getElementById('heroCreateFeedback');
 const heroStatus=document.getElementById('heroPreviewStatus');
 const heroCanvas=document.getElementById('heroPreviewCanvas');
-let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.9,previewTouchX=null,previewTouchDistance=null;
+let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.0,previewTouchX=null,previewTouchDistance=null;
 const validHeroName=name=>/^[A-Za-z0-9 _-]{2,24}$/.test(name)&&/[A-Za-z0-9]/.test(name);
 function savedHero(){
  try{const h=JSON.parse(localStorage.getItem(HERO_RECORD_KEY)||'null');return h&&h.model==='Adventurer'&&typeof h.name==='string'&&validHeroName(h.name)?h:null}catch(_){return null}
@@ -262,6 +262,20 @@ function startHeroPreview(){
    const scale=1.9/Math.max(.001,size.y);previewModel.scale.setScalar(scale);
    const ground=new THREE.Box3().setFromObject(previewModel);previewModel.position.y=-ground.min.y;
    previewScene.add(previewModel);
+   // Preview-only resting perch: the GLB's seated animation has no chair mesh.
+   // Simple meshes give the seated figure a visible support without modifying
+   // the approved character asset or its gameplay skeleton/animations.
+   const perch=new THREE.Group();perch.name='ClimboriaHeroPreviewSeat';
+   const seatWood=new THREE.MeshStandardMaterial({color:0x745537,roughness:0.87,metalness:0});
+   const seatTrim=new THREE.MeshStandardMaterial({color:0xc2a06a,roughness:0.66,metalness:0.12});
+   const addSeatPart=(geometry,material,x,y,z)=>{
+    const part=new THREE.Mesh(geometry,material);part.position.set(x,y,z);perch.add(part);return part;
+   };
+   addSeatPart(new THREE.CylinderGeometry(.43,.43,.10,24),seatWood,0,.86,.05);
+   addSeatPart(new THREE.CylinderGeometry(.34,.39,.76,12),seatWood,0,.43,.05);
+   addSeatPart(new THREE.CylinderGeometry(.46,.46,.07,24),seatTrim,0,.065,.05);
+   previewScene.add(perch);
+   document.documentElement.dataset.climboriaHeroPreviewSeat='visible';
    if(gltf.animations&&gltf.animations.length){
     previewMixer=new THREE.AnimationMixer(previewModel);
     // The bundled hero has a real seated rest clip. Do not choose the first
@@ -319,7 +333,7 @@ heroCanvas.addEventListener('pointerdown',e=>{pointerStart=e.clientX;heroCanvas.
 heroCanvas.addEventListener('pointermove',e=>{if(pointerStart!==null){previewAngle+=(e.clientX-pointerStart)*.012;pointerStart=e.clientX}});
 heroCanvas.addEventListener('pointerup',()=>pointerStart=null);
 heroCanvas.addEventListener('pointercancel',()=>pointerStart=null);
-heroCanvas.addEventListener('wheel',e=>{e.preventDefault();previewDistance=Math.max(2.3,Math.min(7,previewDistance+Math.sign(e.deltaY)*.3))},{passive:false});
+heroCanvas.addEventListener('wheel',e=>{e.preventDefault();previewDistance=Math.max(2.4,Math.min(6.5,previewDistance+Math.sign(e.deltaY)*.3))},{passive:false});
 heroCanvas.addEventListener('touchmove',e=>{if(e.touches.length===2){e.preventDefault();const a=e.touches[0],b=e.touches[1],dist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);if(previewTouchDistance!==null)previewDistance=Math.max(2.3,Math.min(7,previewDistance+(previewTouchDistance-dist)*.01));previewTouchDistance=dist}},{passive:false});
 heroCanvas.addEventListener('touchend',()=>{previewTouchDistance=null});
 updateHeroCard();
