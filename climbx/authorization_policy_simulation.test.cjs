@@ -25,3 +25,23 @@ denied('cumulative cap',x=>{x.grant.spent=290;x.entry.amount=20},'CAP_EXCEEDED')
 denied('unreviewed venue',x=>x.entry.venue='EXTERNAL_DEX','VENUE_NOT_ALLOWED');
 denied('missing openPosition state fails closed',x=>delete x.slots[0].openPosition,'SLOT_OCCUPIED');
 denied('invalid spent counter',x=>x.grant.spent=-1,'INVALID_CAP');
+
+denied('zero issued timestamp with current time before issuance',x=>{x.grant.issuedAtMs=0;x.grant.expiresAtMs=MAX_GRANT_MS;x.nowMs=-1},'OUTSIDE_GRANT');
+denied('negative issued timestamp with oversized grant lifetime',x=>{x.grant.issuedAtMs=-1;x.grant.expiresAtMs=MAX_GRANT_MS},'INVALID_GRANT');
+denied('unsafe expiry timestamp',x=>x.grant.expiresAtMs=Number.MAX_SAFE_INTEGER+1,'INVALID_GRANT');
+denied('unsafe current timestamp',x=>x.nowMs=Number.MAX_SAFE_INTEGER+1,'INVALID');
+denied('non-array authorized mints',x=>x.grant.allowedMints='SOL','MINT_NOT_AUTHORIZED');
+denied('null slot fails closed',x=>x.slots=[null],'INVALID_SLOTS');
+denied('empty slot mint',x=>x.slots=[{mint:'',openPosition:false}],'INVALID_SLOTS');
+denied('NaN amount',x=>x.entry.amount=NaN,'INVALID_CAP');
+denied('unsafe integer amount',x=>x.entry.amount=Number.MAX_SAFE_INTEGER+1,'INVALID_CAP');
+denied('negative spent amount',x=>x.grant.spent=-1,'INVALID_CAP');
+denied('unsafe spent amount',x=>x.grant.spent=Number.MAX_SAFE_INTEGER+1,'INVALID_CAP');
+test('exact per-trade and cumulative cap equality is allowed in simulation',()=>{
+ const x=valid();x.grant.maxPerTrade=100;x.grant.maxCumulative=120;x.grant.spent=20;x.entry.amount=100;
+ assert.deepEqual(evaluateClimbxEntry(x),{allowed:true,reason:'POLICY_SIMULATION_ONLY'});
+});
+test('one millisecond before final 30 minute cutoff is allowed in simulation',()=>{
+ const x=valid();x.nowMs=x.grant.expiresAtMs-ENTRY_CUTOFF_MS-1;
+ assert.deepEqual(evaluateClimbxEntry(x),{allowed:true,reason:'POLICY_SIMULATION_ONLY'});
+});
