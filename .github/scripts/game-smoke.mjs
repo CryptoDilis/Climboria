@@ -797,15 +797,15 @@ try {
   }));
   console.log('Mobile visual capture normalized to Sanctuary:',JSON.stringify(mobileVisualCapture));
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
-  await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
+  await mobile.screenshot({ timeout: 90000, animations: 'disabled',  path: 'climboria-mobile-gameplay.png' });
   const mobileCaveView=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
   if(!mobileCaveView||Math.abs(mobileCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(mobileCaveView.playerYaw,mobileCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.playerYaw)-Math.PI)>.01) errors.push('Mobile cave entrance visual position/orientation could not be prepared: '+JSON.stringify(mobileCaveView));
   await mobile.waitForTimeout(1200);
-  await mobile.screenshot({ path: 'climboria-mobile-cave-entrance.png' });
+  await mobile.screenshot({ timeout: 90000, animations: 'disabled',  path: 'climboria-mobile-cave-entrance.png' });
   const mobileCaveInterior=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveInteriorForSmoke?.()??null);
   if(!mobileCaveInterior||Math.abs(mobileCaveInterior.local.x-30)>.01||Math.abs(mobileCaveInterior.local.z-25)>.01) errors.push('Mobile cave interior visual position could not be prepared: '+JSON.stringify(mobileCaveInterior));
   await mobile.waitForTimeout(1200);
-  await mobile.screenshot({path:'climboria-mobile-cave-interior.png'});
+  await mobile.screenshot({ timeout: 90000, animations: 'disabled', path:'climboria-mobile-cave-interior.png'});
   console.log('Mobile cave interior visual capture:',JSON.stringify(mobileCaveInterior));
   console.log('Mobile cave entrance visual capture:',JSON.stringify(mobileCaveView));
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));
