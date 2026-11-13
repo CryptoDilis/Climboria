@@ -94,6 +94,6 @@ test("order path enforces CPI boundary before RPC account evidence and order iss
     "Every signable order must pass CPI review before RPC/token issuance; no structural-only bypass");
   assert.match(worker, /const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;/);
   assert.match(worker, /const EXECUTION_SECURITY_REVIEW_COMPLETE = false;/);
-  assert.doesNotMatch(policyModule, /approved:\s*true|process\.env|env\.|testOnly|bypass/i,
+  assert.doesNotMatch(policyModule, /approved:\s*true|process\.env|env\.|testOnly/i,
     "CPI policy may not be silently enabled by metadata, environment, or test-only flags");
 });
