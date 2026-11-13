@@ -353,3 +353,123 @@ V16 adds `authorization_gate_v16.py`, an offline fail-closed policy evaluator fo
 ## Phase 28 checkpoint — 2026-11-13 (first executable CLIMBX gate on GitHub)
 
 **Draft PR #282:** https://github.com/CryptoDilis/Climboria/pull/282 on branch `climbx/phase28-release-gate-ci`. Four text files added: `climbx/release_gate.py`, `climbx/test_release_gate.py`, `climbx/README.md`, and `.github/workflows/climbx-release-gate.yml`. This is a non-deploying, fail-closed evidence gate with five unit-test cases; CI is designed to assert NO_GO when evidence is absent. **GitHub Actions passing status has not yet been independently confirmed.** It does not contain the local V16/V27 paper engine, cryptographic Solana authority or devnet transaction tests. Do not merge on assumption of release readiness. Existing DEX execution remains disabled; live CLIMBX **NO-GO**.
+
+
+## Phase 29 checkpoint — 2026-11-13 (verified GitHub CI, real-chain acceptance criteria)
+
+Verified GitHub Actions for Phase 28 PR branch commit `249f0b73d1695e8ec4c9ab63002692cdaa5dfc92`: CLIMBX non-deploying safety workflow run **43434485090 completed/success**, and Validate Climboria run **43434485080 completed/success**. Draft PR https://github.com/CryptoDilis/Climboria/pull/282 now includes `climbx/PHASE29_VALIDATED_CI_AND_DEVNET_PLAN.md` documenting precise real Solana validator/devnet acceptance criteria. These successful checks cover only the repository release gate, **not** the locally developed 141-test paper suite; executable paper engine still has not been committed. **No real Solana authority or signed transaction proof; live release NO-GO.**
+
+
+## Phase 30 checkpoint — 2026-11-13 (CI false-positive safety fix)
+
+On draft PR #282 branch `climbx/phase28-release-gate-ci`, commit `95e2c70e663cc0e3a058a25e95c77a50824f690b` changes `.github/workflows/climbx-release-gate.yml`: the workflow now checks **exactly** release-gate exit code 1, parses valid JSON, requires decision `NO_GO` and a non-empty `missing` list. Previously any failure (including a Python crash) could be incorrectly treated as successful NO-GO enforcement. **CI results for this new commit were not yet available at checkpoint time.** Local Phase 27 paper engine was rerun in the working container: **141/141 tests passed**, but remains **outside** GitHub PR and GitHub CI. This fix does not prove Solana validator/devnet authorization or live transaction execution. **Real-money CLIMBX release remains NO-GO.**
+
+
+## Phase 31 checkpoint — 2026-11-13 (verified CI fix and expanded tests)
+
+Verified GitHub Actions on PR #282 commit `95e2c70e663cc0e3a058a25e95c77a50824f690b`: CLIMBX safety workflow run **43436061723** and Validate Climboria run **43436061856**, both **completed/success**. Subsequently expanded branch `climbx/phase28-release-gate-ci` release-gate unit tests from five to ten cases in commit `9d2151c5aa23888a737184f7d1d23e45ac57d195` (new CI run **not yet verified**). Independently reran the **141/141** historical paper-engine tests locally from `/mnt/data/climbx-phase27`, but that engine is **not** yet committed to PR or exercised by GitHub CI. No validator/devnet signed transaction tests or independent security audit; **live release NO-GO**.
+
+
+## Phase 32 checkpoint — 2026-11-13 (10-test CI verified; test discovery guard)
+
+Verified PR #282 commit `9d2151c5aa23888a737184f7d1d23e45ac57d195`: CLIMBX safety workflow run **43436396987 completed/success** and Validate Climboria run **43436396925 completed/success**. Added a test discovery count guard to the PR workflow in commit `3ea9099de5afa13016e9cf2d69b16863eea68c25`: fail CI if fewer than 10 CLIMBX repository tests are discovered, or if any test fails. **New CI commit results not yet available.** This guards against a silently shrinking test suite but does not import or validate the locally developed paper engine (141 historical tests). No Solana devnet authorization or real swap proof; **NO-GO for live funds**.
+
+
+## Phase 33 checkpoint — 2026-11-13 (first paper policy source migrated into GitHub CI)
+
+Draft PR #282 branch `climbx/phase28-release-gate-ci` now contains `climbx/authorization_gate_v16.py` (the previously local offline advisory policy module) and `climbx/test_authorization_policy.py` (16 new policy boundary tests) in commits `16491c940f72c15287ae8f4fc6ed9fe5b4ebb7d4` and `11b3b815bf77178e9be8e41a0c0f0de1dca30d7f`. The GitHub Actions workflow test-discovery minimum was increased from 10 to **26** in commit `0a76e009f95f8fdbf0285bd21846ad9d8a7cca7c` (10 release-gate + 16 authorization tests). **GitHub CI status for these new commits is not yet verified.** The full 141-test local paper engine remains outside GitHub; only this small policy module has been migrated. Policy decisions are caller-supplied and not cryptographically/on-chain enforceable. No live signing, swaps, or release authorization. **NO-GO.**
+
+
+## Phase 34 checkpoint — 2026-11-13 (26-test CI verified; CLI integration safety)
+
+Verified PR #282 commit `0a76e009f95f8fdbf0285bd21846ad9d8a7cca7c`: CLIMBX release safety workflow run **43438187599** and Validate Climboria run **43438187472**, both completed/success. Added five new CLI subprocess integration tests for missing evidence file, malformed JSON, JSON null, empty requirements and complete self-reported evidence yielding only READY_FOR_MANUAL_REVIEW; committed `climbx/test_release_gate_cli.py` as `c98e7db6a8e5b2dd247517e26646b00c32ed29d8`. Raised CI discovery minimum to **31** in commit `a3fc36072def8bc3d02286b70fc8984cfbe120ea`. **CI status for 31-test commit is not yet verified.** Full paper trading engine remains local only; Solana validator/devnet execution not tested; live CLIMBX NO-GO.
+
+
+## Phase 35 checkpoint — 2026-11-13 (31-test CI verified, SQLite paper journal added)
+
+Verified GitHub Actions on PR #282 commit `a3fc36072def8bc3d02286b70fc8984cfbe120ea`: CLIMBX release safety run **43438485989** and Validate Climboria run **43438485789**, both completed/success. Added an **offline SQLite paper reservation journal** to PR #282 as `climbx/paper_journal.py` and 12 focused tests as `climbx/test_paper_journal.py` (commits `2a08cc9086fe49cfe00bc14a74f98cee82fef9cd`, `4c1abcef1016d2101c0fcae9230e6ce143f5ed6d`). This is a *new reduced journal implementation*, not a verbatim import of the complete historical engine; it models five-slot/mint reservations, durable unknown state, idempotent settlement, and concurrency in SQLite only. CI minimum increased to **43** in commit `81afbb809ce587483c5edd9882420d7d35802f77`. **Latest 43-test CI result not yet verified**. The remaining historical paper engine modules still need migration, and no Solana validator/devnet signed execution or on-chain authorization has been proven. Live CLIMBX **NO-GO**.
+
+
+## Phase 36 checkpoint — 2026-11-13 (Supabase learning memory draft)
+
+Created `climbx/supabase/001_learning_memory.sql` (commit `077b30d06e4399ad30128d1e06e464451589a6ed`) and `climbx/supabase/README.md` (commit `c3269a1155ea4b427623aced4d5d79f4453e0fac`) on draft PR #282. The migration defines a private `climbx` schema, authenticated user/wallet bindings, five-slot trade events, versioned learning snapshots and RLS read policies, with explicit revoke of client schema/table grants (no browser access by default). Wallet ownership verification, authenticated server APIs, ingestion, model logic, approval endpoint and production/staging migration **not implemented**. No Supabase secrets requested; migration **not applied**. Release **NO-GO**.
+
+
+## Phase 37 checkpoint — 2026-11-13 (43-test CI verified, schema safety tests added)
+
+Verified PR #282 commit `81afbb809ce587483c5edd9882420d7d35802f77`: CLIMBX release safety run **43438892687** and Validate Climboria run **43438892178**, both completed/success. Added `climbx/test_learning_schema.py` with 11 static migration checks (RLS, private schema/table grants, per-user read policies, no client writes, five slots, >=20-trade approval constraint, no private-key columns). Last test edit commit `0b3921b629b4203bdebfe742e3b92531126a74ec`; CI minimum increased to **54** in commit `f40e8fa47057907990bcedcbefcf14bbcc1b0321`. **54-test workflow result not yet verified.** Static source checks do not validate actual PostgreSQL policies or wallet ownership; migration has not been applied to staging or production. Live CLIMBX NO-GO.
+
+
+## Phase 38 checkpoint — 2026-11-13 (54-test CI verified; learning approval domain logic)
+
+Verified PR #282 commit `f40e8fa47057907990bcedcbefcf14bbcc1b0321`: CLIMBX release safety run **43441153177** and Validate Climboria run **43441153166**, both completed/success. Added `climbx/learning_approval.py` and 16 unit tests in `climbx/test_learning_approval.py`, commits `9b525ecd9017b255864ac49204e041bd92a291d9` and `e5bfadea78acca308df0de074cd156b9d68f0de4`. Pure policy checks authenticated identity/wallet ownership binding, five-slot bounds, >=20 completed trades for YES, existing proposal, pending-only transition, version/trade-count freshness and YES/NO semantics. This is **not** a connected HTTP backend or an atomic DB transaction; caller-supplied context is only safe when fetched from trusted auth/DB, not client JSON. Raised CI discovery minimum to **70** in commit `844a2507a333a5b551022c5b43d65d9bf325f8ac`; **70-test CI outcome not yet verified**. Supabase migration not applied. Live CLIMBX NO-GO.
+
+
+## Phase 39 checkpoint — 2026-11-13 (backend approval transaction contract)
+
+Created draft backend-only PostgreSQL approval transaction template `climbx/supabase/002_approval_transaction_template.sql` commit `c232b48483aaa0ed3e5500f533f17219a6e06d11` and implementation/security contract `climbx/supabase/APPROVAL_BACKEND_CONTRACT.md` commit `79f7a251db91b752445b2f6e3ec5467ed525c4e6`. SQL describes row locking, verified owner binding, pending-only update, >=20-trade YES threshold, latest snapshot version, rollback on zero rows; it is **not executable standalone** because it contains backend parameters and application-level abort/row-count checks. Actual HTTP backend, verified auth context, production PostgreSQL integration and concurrent snapshot serialization are **not implemented**. Prior 70-test CI run status not available from commit-workflow lookup at this checkpoint; do not claim passed. No production deployment or Supabase migration. Live CLIMBX NO-GO.
+
+
+## Phase 41 checkpoint — 2026-11-13 (85-test CI verified; offline challenge nonce lifecycle)
+
+Verified PR #282 commit `3818308d8ac8d4e94f3e0ced3e2c5e153bf32531`: CLIMBX release safety run **43442088975** and Validate Climboria run **43442089222**, both completed/success. Added `climbx/challenge_store.py` and 16 tests in `climbx/test_challenge_store.py` (commits `6549a2806d110332ab2223bd1a1ffced92e19436`, `a18f6f4d840b9869165fd26dcbb117661ab5103b`) to model random nonce issuance, domain/chain/user/wallet binding, expiry, durable single-use consumption and replay protection. **Critical limitation:** accepts caller-supplied `signature_verified=True`; NO cryptographic signature verification or authenticated API exists. This flag MUST be generated only by a reviewed trusted backend after verifying canonical message bytes and Solana public key signature. Increased CI test discovery minimum to **101** in commit `bcdaf87419ce3930b23ce6eb3e1844441629a464`; **101-test CI outcome not yet verified**. Supabase not connected, no production secrets, live bot NO-GO.
+
+
+## Phase 42 checkpoint — 2026-11-13 (Ed25519 verification module added)
+
+Verified PR #282 commit `bcdaf87419ce3930b23ce6eb3e1844441629a464`: CLIMBX release safety run **43442347487** completed/success, while Validate Climboria run **43442347433** was still in progress at check. Added real Ed25519 signature verification using Node built-in crypto and base58 decoding in `climbx/solana_signature.cjs` (commit `a360dc2dd7d18586bff0fded48fb0b81900f9e84`) with 14 test cases in `climbx/solana_signature.test.cjs` (commit `2301197e7bbdd449c1b848fea7892a9a837d7d8d`). Added Node 22 test step to CI in commit `5ec1a525c98df2632ed1503519f57d83b3301c0d`. **New Node CI outcome not yet verified**. Signature cryptographic verification is a necessary component but does NOT establish a secure login flow: the server must fetch exact canonical challenge bytes from trusted storage, verify signed challenge binding/expiry/nonce, atomically consume nonce, validate Supabase auth JWT and persist verified wallet binding. No live auth API or database integration. Live trading NO-GO.
+
+
+## Phase 43 checkpoint — 2026-11-13 (first Node CI failure diagnosed and fixed)
+
+PR #282 commit `5ec1a525c98df2632ed1503519f57d83b3301c0d` ran GitHub Actions: Validate Climboria **43442543744** completed/success, but CLIMBX release safety **43442543592** completed/**failure**. Examined failing job **131943555457** logs: Python unit tests passed; Node Ed25519 test failed at module resolution (`Cannot find module './solana_signature'`) because the module filename is `solana_signature.cjs`. Fixed test import to explicit `.cjs` in commit `55ac6796ffdeeecca8386112e2c9029f435ca083`. New runs **43442694904** (CLIMBX) and **43442694675** (Validate) were both **in_progress** at checkpoint, NOT yet verified passing. No live wallet auth or Supabase connection; NO-GO.
+
+
+## Phase 44 checkpoint — 2026-11-13 (verified CI and signed challenge integration tests)
+
+Phase43 fix commit `55ac6796ffdeeecca8386112e2c9029f435ca083` verified successful on both CLIMBX release safety run **43442694904** and Validate Climboria run **43442694675**. Added `climbx/verify_challenge.cjs` commit `3390c6fa306137e1c15abc9dfe0cf77850d9bfa3`, integrating exact stored canonical message Ed25519 verification with trusted store interface and atomic nonce consumption; added 15 Node tests `climbx/verify_challenge.test.cjs` commit `054386460bd0ab586b0ba1f9babe560383610ddd`, wired into CI commit `934d46c98855df16a9b12398163424602c2fc5fd`. **New 29-test Node CI not yet verified.** The store is an in-memory test fake; a real authenticated Supabase backend, durable atomic nonce consumption, signature/wallet linking, and DB integration remain outstanding. NO-GO.
+
+
+## Phase 45 checkpoint — 2026-11-13 (durable challenge migration draft)
+
+Phase44 CI commit `934d46c98855df16a9b12398163424602c2fc5fd`: CLIMBX release safety run **43442885110** completed/success; Validate Climboria run **43442885058** completed/success (101 Python + 29 Node tests in CI). Added draft PostgreSQL migration `climbx/supabase/003_wallet_challenges.sql` commit `d35018f2435fd4dedf95d9c2c598511e3ed8ca76`, with private RLS-protected challenge records, max 5m expiry, consumed_at replay marker, and documented conditional atomic consume. Added 12 **static** SQL checks in `climbx/test_challenge_migration.py` commit `6ca5d8d512cd7e2168402f2b1eee69b09fdf3831`. Raised CI Python test minimum to **113** commit `391b9a869921705fed852dcb99bf7a5d39a03e35`; new CI outcome NOT YET VERIFIED. SQL migration NOT applied to Supabase; conditional consume is a comment/example only; no actual authenticated backend or wallet binding transaction; live bot NO-GO.
+
+
+## Phase 46 checkpoint — 2026-11-13 (one-wallet-one-owner draft)
+
+Phase45 commit `391b9a869921705fed852dcb99bf7a5d39a03e35` verified successful: CLIMBX release safety **43443232652** and Validate Climboria **43443232567** (113 Python + 29 Node tests = 142). Added draft `climbx/supabase/004_unique_wallet_owner.sql` commit `9b268f728ad5f7e489079713844b26add19a63c0`, which aborts on preexisting wallet binding duplicates and adds unique index on wallet_address; added 8 static migration tests commit `7fb8bbc131077d6b6c3fad6df7b07182640844e2`. Raised Python CI minimum to **121** (total expected 150) commit `1ea4d3ba1d020fcad583c7dbfda286b33c1e222b`. Latest CI NOT YET VERIFIED. Migration not applied; no real PostgreSQL execution, Supabase auth service, or Solana devnet. NO-GO.
+
+
+## Phase 47 checkpoint — 2026-11-13 (transactional PostgreSQL wallet binding adapter)
+
+Verified Phase46 CI commit `1ea4d3ba1d020fcad583c7dbfda286b33c1e222b`: CLIMBX release safety run **43443500905** success and Validate Climboria run **43443501023** success (121 Python + 29 Node = 150). Added `climbx/bind_wallet_pg.cjs` commit `8ab4e8584ae7d0a4c4b6f09c1175d22964f680c4`, backend-only PostgreSQL transaction adapter that locks stored nonce, validates owner/domain/chain/time and Ed25519 signature, checks existing wallet binding, conditionally consumes nonce, and inserts binding in same transaction with rollback on conflicts. Added **16 mocked PostgreSQL driver tests** `climbx/bind_wallet_pg.test.cjs` commit `cf76bf9f162aa56400a0214d4e82644ec768171f`, wired into Node CI commit `4b566910ca8d698920e961b2190a82e27ef4e82b`. Expected 121 Python + 45 Node = **166** test cases; new CI not yet verified. Critical: real Supabase JWT validation, exact canonical challenge generation, real PostgreSQL integration/concurrency tests, wallet ownership proof and Solana devnet authorization remain outstanding. No production deployment; NO-GO.
+
+
+## Phase 48 checkpoint — 2026-11-13 (canonical challenge generation)
+
+Verified Phase47 CI commit `4b566910ca8d698920e961b2190a82e27ef4e82b`: CLIMBX release safety run **43443789817** and Validate Climboria run **43443789894** both success (121 Python + 45 Node = 166). Added strict canonical Solana wallet challenge builder `climbx/canonical_challenge.cjs` commit `73a4854c61bc3f3273e9c43c70363ae99acb1e48`, including hardcoded expected origin/network, valid UUID, 32-byte base58 public key, safe nonce and <=300s TTL; 14 tests `climbx/canonical_challenge.test.cjs` commit `50b4d2030bdd00a1bec5e818e2084aa3c2b34212`; wired CI commit `5d59cb9470c759c48e956e1a234312ebbf5eb384`. Expected 121 Python + 59 Node = **180** tests; latest CI NOT YET VERIFIED. Canonical challenge code is NOT yet called by authenticated HTTP backend; nonce creation, JWT verification, PostgreSQL migrations, real PostgreSQL tests, and Solana devnet execution remain blockers. NO-GO.
+
+
+## Phase 49 checkpoint — 2026-11-13 (canonical binding enforcement)
+
+Verified Phase48 CI commit `5d59cb9470c759c48e956e1a234312ebbf5eb384`: Validate Climboria run **43444060553** success and CLIMBX release safety run **43444060577** success (121 Python + 59 Node = 180). Hardened `climbx/bind_wallet_pg.cjs` commit `c58676e9a105d1597574edf7aa7616db581a2a91` to reconstruct canonical challenge from stored owner/wallet/nonce/domain/chain and issued/expires timestamps, rejecting mismatched stored messages before signature verification. Updated mock fixtures and added 2 negative tests commit `bdd37b2862e9992357ba73ddf75334be498337b6`. Expected total **182** tests (121 Python + 61 Node); new CI NOT YET VERIFIED. No live PostgreSQL or Supabase JWT integration; no deployment; NO-GO.
+
+
+## Phase 49/50 checkpoint — 2026-11-13 (real isolated PostgreSQL CI tests)
+
+Verified prior Phase48 CI commit `5d59cb9470c759c48e956e1a234312ebbf5eb384`: CLIMBX release safety **43444060577** and Validate Climboria **43444060553** both successful (121 Python + 59 Node = 180). Branch also now contains canonical stored-message equality enforcement in `climbx/bind_wallet_pg.cjs` and 2 regression tests (not yet separately verified in CI). Added `climbx/test_postgres_integration.py` commit `955b75c00a1c34d9e9b523681e86f763cc60d3f0`, exercising 001/003/004 migrations, one-owner unique constraint, one-time nonce consumption, wrong-user rejection and expired challenge using **real isolated PostgreSQL**, not production Supabase. Workflow now provisions Postgres 16 service and installs psycopg for dedicated integration tests commit `8b31809cfb00437cdca02ed9103a43c9c8a4400d`. CI result NOT YET VERIFIED. This does not test actual authenticated API, JWT, Solana signing on-chain, production migration rollout or devnet trading. NO-GO.
+
+
+## Phase 51 checkpoint — 2026-11-13 (PostgreSQL CI setup failure diagnosed)
+
+Phase50 PostgreSQL CI commit `8b31809cfb00437cdca02ed9103a43c9c8a4400d`: Validate Climboria **43444803858** success, but CLIMBX release safety **43444803965** failure. Logs show integration setUpClass `psycopg.errors.UndefinedObject: role "authenticated" does not exist`, because vanilla PostgreSQL service does not provide Supabase's predefined roles. Added isolated CI bootstrap of NOLOGIN `anon` and `authenticated` roles in `climbx/test_postgres_integration.py` commit `e5161e31541b48c821c5a8927f59c1e94340bc78`. This is only test-environment setup; latest CI NOT YET VERIFIED. Do not mark PostgreSQL tests passed or deploy. NO-GO.
+
+
+## Phase 52 checkpoint — 2026-11-13 (PostgreSQL CI syntax fix)
+
+Phase51 CI commit `e5161e31541b48c821c5a8927f59c1e94340bc78`: Validate Climboria run **43445170719** success; CLIMBX release safety run **43445170675** failed at PostgreSQL setup with `psycopg.errors.SyntaxError: syntax error at or near "$"`. Root cause: previous test-role bootstrap generated `DO $ ... END $` instead of valid PostgreSQL `DO $$ ... $$`. Replaced this fragile block with role-existence query and simple `CREATE ROLE ... NOLOGIN` in isolated CI integration test commit `425c074febebc609f2ee9e0366603386607e21db`. New CI NOT YET VERIFIED. No Supabase production changes, migrations or live trading. NO-GO.
+
+
+## Phase 53 checkpoint — 2026-11-13 (PostgreSQL integration green; expanded safety cases)
+
+Verified CI commit `425c074febebc609f2ee9e0366603386607e21db`: CLIMBX release safety run **43445399052** completed/success, Validate Climboria run **43445399203** completed/success. This is first successful isolated PostgreSQL 16 integration execution of migrations 001/003/004 and challenge/owner constraints. Added 3 more real PostgreSQL tests `climbx/test_postgres_integration.py` commit `5e67c8470e879ed1a8c41f7683e8d3cb7426e253` for transaction rollback preserving nonce, RLS enabled, and anon SELECT denied; new CI NOT YET VERIFIED. Tests run only in throwaway CI PostgreSQL, NOT production Supabase. Authenticated API, verified JWT, concurrency stress tests, on-chain delegated authority, Solana devnet swaps and audit remain outstanding. NO-GO.

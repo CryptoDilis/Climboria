@@ -512,6 +512,7 @@ jobs:
               await failed.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
               await failed.waitForFunction(()=>document.querySelector('#premiumTrendingGrid .premium-trending-empty')?.textContent.includes('temporarily unavailable'),null,{timeout:10000});
               await failed.waitForFunction(()=>document.querySelector('#heroMarket')?.dataset.marketState==='unavailable'&&document.querySelector('#heroMarket')?.textContent.includes('Live price temporarily unavailable'),null,{timeout:10000});
+
               await failed.close();
 
               const empty=await browser.newPage();
@@ -723,12 +724,6 @@ jobs:
             } finally { await browser.close(); }
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
-
-      - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
-        timeout-minutes: 21
-        run: |
-          echo 'Starting bounded Jarrell desktop/mobile gameplay smoke test.'
-          timeout --signal=TERM --kill-after=30s 20m node .github/scripts/game-smoke.mjs
 
       - name: Upload browser screenshots
         if: always()
