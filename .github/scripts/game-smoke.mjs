@@ -78,7 +78,8 @@ try {
     weatherAudit.resumable?.index!==2||weatherAudit.resumable?.elapsedMs!==420000||
     weatherAudit.longJump?.index!==0||weatherAudit.longJump?.elapsedMs!==450000||
     weatherAudit.noFakeElapsed?.index!==1||weatherAudit.noFakeElapsed?.elapsedMs!==200000||
-    !weatherAudit.manualWeatherControlMissing)
+    weatherAudit.slowFrameElapsed!==500||weatherAudit.backgroundElapsed!==0||
+    weatherAudit.notReadyElapsed!==0||!weatherAudit.manualWeatherControlMissing)
     errors.push('Automatic 15-minute weather cycle, resume, and manual control removal failed: '+JSON.stringify(weatherAudit));
   const weatherBefore=await page.evaluate(()=>document.documentElement.dataset.climboriaWeather);
   await page.keyboard.press('r');
