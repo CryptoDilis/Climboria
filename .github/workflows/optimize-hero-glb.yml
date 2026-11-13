@@ -2,6 +2,13 @@ name: Build Optimized Hero GLB
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/optimize-hero-glb.yml'
+      - '.github/scripts/optimize_hero_glb.py'
+      - '.github/scripts/verify_hero_optimization.py'
+      - 'assets/characters/Climboria_Hero.glb'
 
 permissions:
   contents: read
