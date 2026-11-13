@@ -20,6 +20,8 @@ pub mod climbx_authorization {
         let now = Clock::get()?.unix_timestamp;
         require!(allowed_mints.len() >= 1 && allowed_mints.len() <= 5, GrantError::InvalidMintCount);
         require!(expires_at > now, GrantError::InvalidExpiry);
+        let max_expiry = now.checked_add(24 * 60 * 60).ok_or(GrantError::InvalidExpiry)?;
+        require!(expires_at <= max_expiry, GrantError::ExpiryTooLong);
         require!(per_order_cap > 0 && cumulative_cap >= per_order_cap, GrantError::InvalidCap);
         require!(executor != Pubkey::default(), GrantError::InvalidExecutor);
         for (index, mint) in allowed_mints.iter().enumerate() {
@@ -101,6 +103,8 @@ pub enum GrantError {
     InvalidMintCount,
     #[msg("Grant expiry must be in the future")]
     InvalidExpiry,
+    #[msg("Grant expiry cannot exceed 24 hours from creation")]
+    ExpiryTooLong,
     #[msg("Invalid spend caps")]
     InvalidCap,
     #[msg("Invalid executor")]
