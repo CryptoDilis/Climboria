@@ -51,6 +51,16 @@
 
 ## Change log
 
+### 2026-11-14 — DEX stale Jupiter quote protection (PR #298; CI running)
+- **Scope:** DEX market terminal quote preview only; no changes to Game, CLIMBX, Launchpad contracts, or Swap execution gates.
+- **Before:** `main` `2cf4f7aadb6244a1392c18c1d2f5ad0acc05052c`. In `dex/index.html`, asynchronous quote callbacks could display an old token/amount after the input changed or a newer quote completed. The DEX preview did not verify the returned raw input amount matched its request.
+- **Changed:** `dex/index.html` (request identity guard, invalidation on amount/mint edit/selection, fail-closed mismatched response), `.github/workflows/browser-smoke.yml` (delayed-out-of-order and wrong-amount browser fixtures), this record; branch `fix/dex-stale-quote-response-guard`, [PR #298](https://github.com/CryptoDilis/Climboria/pull/298). Initial commits `2d13786f`, `90918bbc`.
+- **Verification:** first exact-head [Validate 43462924557](https://github.com/CryptoDilis/Climboria/actions/runs/43462924557) **SUCCESS**. First [Browser Smoke 43462924848](https://github.com/CryptoDilis/Climboria/actions/runs/43462924848) **FAILED**: Playwright attempted `locator.fill('#quoteAmount')` on the DEX quote panel while it was hidden by design (30-second visibility timeout); existing token/pool, market and watchlist assertions completed before this test-only fixture failed. This was a smoke-harness setup defect, not a demonstrated quote handler failure.
+- **Counter-fix:** `.github/workflows/browser-smoke.yml` commit `2d684824` reveals the DEX quote panel **only inside the isolated Playwright session** before exercising the delayed response checks; production UI/visibility/transaction gates unchanged. [Validate 43463364856](https://github.com/CryptoDilis/Climboria/actions/runs/43463364856) and [Browser Smoke 43463364888](https://github.com/CryptoDilis/Climboria/actions/runs/43463364888) started for the counter-fix; terminal result pending.
+- **Unresolved:** latest browser smoke outcome pending; new `workflow_run` after-deployment orchestration still requires a future Worker deployment; real-money swapping remains disabled and Launchpad preview-only.
+- **NEXT:** check exact-head 43463364888 failure/success. If green, merge PR #298 and update this record on main; if failed, diagnose the exact terminal log without dropping stale-response assertions.
+
+
 ### 2026-11-14 — Production quote-only verification confirmed; API CI race fixed in PR #296
 - **Scope:** Swap / DEX backend acceptance and release workflow. No Game, CLIMBX or Launchpad execution changes.
 - **Before:** `main` `4e3f7fed3e8d11bb18f4a0965078db1a981989ea`. Parallel workflows on prior commit `72ac1d8e`: API acceptance attempt 1 failed `Missing Worker binding: orderStore` at 15:58:01 UTC, **before** the Worker was deployed at 15:58:13 UTC.
