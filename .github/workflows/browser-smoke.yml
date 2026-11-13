@@ -477,16 +477,24 @@ jobs:
               const mintA='So11111111111111111111111111111111111111112';
               const mintB='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
               const mintC='Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
+              const heroPairAddress='So11111111111111111111111111111111111111112';
+              const heroPair={chainId:'solana',dexId:'verified-usdc',pairAddress:heroPairAddress,baseToken:{address:mintA,symbol:'SOL',name:'Wrapped SOL'},quoteToken:{address:mintB,symbol:'USDC',name:'USD Coin'},priceUsd:'150',liquidity:{usd:500000},priceChange:{h24:1}};
+              const wrongQuotePair={...heroPair,pairAddress:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',quoteToken:{address:mintC,symbol:'USDT',name:'Tether USD'},priceUsd:'999',liquidity:{usd:999999}};
               const pair=(mint,price,liquidity,volume,symbol)=>({chainId:'solana',dexId:'test',pairAddress:'Pair'+symbol,baseToken:{address:mint,symbol,name:symbol+' token'},quoteToken:{symbol:'USDC'},priceUsd:String(price),liquidity:{usd:liquidity},volume:{h24:volume},priceChange:{h24:1}});
               await page.route('https://api.dexscreener.com/**',async route=>{
                 const url=new URL(route.request().url()); calls.push(url.pathname);
-                if(url.pathname==='/latest/dex/tokens/'+mintA) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{chainId:'solana',baseToken:{address:mintA},quoteToken:{symbol:'USDC'},priceUsd:'150',liquidity:{usd:500000},priceChange:{h24:1}}]})});
+                if(url.pathname==='/latest/dex/tokens/'+mintA) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[wrongQuotePair,heroPair]})});
                 if(url.pathname==='/token-profiles/latest/v1') return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{chainId:'solana',tokenAddress:mintA},{chainId:'solana',tokenAddress:mintB},{chainId:'ethereum',tokenAddress:mintC}])});
                 if(url.pathname==='/token-boosts/top/v1') return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{chainId:'solana',tokenAddress:mintB},{chainId:'solana',tokenAddress:mintC}])});
                 if(url.pathname.startsWith('/tokens/v1/solana/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([pair(mintA,2,100000,50,'A-low'),pair(mintA,2.1,300000,50,'A-deep'),pair(mintB,3,10000,900,'B')])});
                 return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
               });
               await page.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
+              await page.waitForFunction(pairAddress=>document.querySelector('#heroMarket')?.dataset.marketLeaderPool===pairAddress,heroPairAddress,{timeout:15000});
+              const hero=await page.locator('#heroMarket').evaluate(el=>({state:el.dataset.marketState,pool:el.dataset.marketLeaderPool,fetchedAt:Number(el.dataset.marketFetchedAt),text:el.innerText}));
+              assert(hero.state==='fresh'&&hero.pool===heroPairAddress,'Market Leader must expose only a verified canonical SOL/USDC pool');
+              assert(Number.isFinite(hero.fetchedAt)&&hero.fetchedAt>0&&hero.text.includes('MARKET LEADER · SOL / USDC')&&hero.text.includes('$150')&&hero.text.includes('fetched')&&hero.text.includes('verified SOL/USDC pool'),'Market Leader must render the canonical pair price with a truthful fetch timestamp');
+              assert(!hero.text.includes('$999')&&!hero.text.includes('USDT'),'Market Leader must not use a deeper non-USDC wrapped-SOL pair');
               await page.waitForFunction(()=>document.querySelectorAll('#premiumTrendingGrid [data-premium-mint]').length===2,null,{timeout:15000});
               const cards=await page.locator('#premiumTrendingGrid [data-premium-mint]').evaluateAll(nodes=>nodes.map(n=>({mint:n.dataset.premiumMint,text:n.innerText})));
               assert(cards[0].mint===mintB,'Discovery cards must sort by reported 24h volume within the discovered sample');
@@ -503,6 +511,8 @@ jobs:
               await failed.route('https://api.dexscreener.com/**',route=>route.fulfill({status:503,contentType:'application/json',body:'{}'}));
               await failed.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
               await failed.waitForFunction(()=>document.querySelector('#premiumTrendingGrid .premium-trending-empty')?.textContent.includes('temporarily unavailable'),null,{timeout:10000});
+              await failed.waitForFunction(()=>document.querySelector('#heroMarket')?.dataset.marketState==='unavailable'&&document.querySelector('#heroMarket')?.textContent.includes('Live price temporarily unavailable'),null,{timeout:10000});
+
               await failed.close();
 
               const empty=await browser.newPage();
