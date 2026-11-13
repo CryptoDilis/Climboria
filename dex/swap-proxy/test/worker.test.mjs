@@ -176,6 +176,36 @@ test("proxies quote-only orders with server-side Jupiter key", async () => {
   } finally { globalThis.fetch = originalFetch; }
 });
 
+test("rejects mismatched, nonnumeric, zero, or incomplete Jupiter quotes", async () => {
+  const originalFetch = globalThis.fetch;
+  const request = () => new Request("https://worker.test/api/swap/quote?inputMint=" + valid +
+    "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000",
+    { headers: { origin } });
+  const good = { requestId: "quote-request-123", inAmount: "100000000", outAmount: "1234567" };
+  const invalid = [
+    ["mismatched input", { ...good, inAmount: "100000001" }],
+    ["nonnumeric input", { ...good, inAmount: "1e8" }],
+    ["numeric input instead of raw integer string", { ...good, inAmount: 100000000 }],
+    ["zero output", { ...good, outAmount: "0" }],
+    ["negative output", { ...good, outAmount: "-5" }],
+    ["missing output", { ...good, outAmount: null }],
+    ["blank request ID", { ...good, requestId: " " }],
+    ["missing response", null]
+  ];
+  try {
+    for (const [label, payload] of invalid) {
+      globalThis.fetch = async () => Response.json(payload);
+      const res = await worker.fetch(request(), env);
+      assert.equal(res.status, 502, label);
+      const body = await res.json();
+      assert.match(body.error, /incomplete or inconsistent quote/i, label);
+      assert.equal(body.outAmount, undefined, label + " must never expose a fake quote");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("proxies Jupiter token search through server-side credentials", async () => {
   const originalFetch = globalThis.fetch;
   try {
