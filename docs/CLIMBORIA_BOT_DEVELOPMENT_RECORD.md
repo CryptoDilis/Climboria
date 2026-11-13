@@ -1277,3 +1277,16 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Direct environment probe 2026-11-14:** `cargo`, `rustc`, `anchor`, `solana-test-validator` all unavailable. No actual Rust compilation, validator, signed devnet test, deployment, or audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase124:** verify Phase123 CI and fix any failure. Prioritize provisioning an approved pinned Rust/Solana/Anchor toolchain, reviewed Cargo.lock, actual `cargo check` and owner-signed validator grant/revoke tests. Avoid claiming mock/static tests are on-chain verification.
+
+
+## Phase 124 — 2026-11-14 — fix Phase123 CI regression failure
+
+**Phase123 CI** on `78f7a88f80ca014638b46e437a59ad5bee4577a7`: Browser Smoke SUCCESS `43492736787`, Validate SUCCESS `43492736075`, **CLIMBX release safety FAILED** `43492736071`. Job `132117884917` showed test #129 `rejects missing owner signer on grant creation` expected `MISSING_OWNER_SIGNATURE` but received `UNCOMPILED_GRANT_ONLY_SCAFFOLD`. Root cause: the test changed only the first of two owner Signer occurrences; the second occurrence still satisfied the textual static guard. This is a test setup error, not evidence of Rust compilation or deployment.
+
+**Phase124 branch commit** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `9bfe9325ceade18d069f3d84be2beef330e1cdfa`: test now uses `replaceAll` to remove both owner Signer occurrences, ensuring the guard is actually exercised.
+**Phase124 CI pending** at first check. Static source check remains narrow; future tests should validate specific account blocks rather than merely searching for a Signer anywhere.
+
+**Blockers:** no verified Rust/Cargo/Solana/Anchor toolchain, no Cargo.lock, no actual compilation or signed validator test. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase125:** verify Phase124 CI and fix any failures; prioritize genuine pinned Rust compilation and owner-signed validator tests on approved build host.
