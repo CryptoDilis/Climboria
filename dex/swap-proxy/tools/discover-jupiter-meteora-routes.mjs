@@ -149,6 +149,9 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
     ? Math.max(1, Math.min(options.maxTransactions, 250))
     : 25;
   const maxMatches = Number.isInteger(options.maxMatches) ? Math.max(1, Math.min(options.maxMatches, 20)) : 3;
+  const minRoutePlanCount = Number.isInteger(options.minRoutePlanCount)
+    ? Math.max(1, Math.min(options.minRoutePlanCount, 250))
+    : 1;
   const delayMs = Number.isInteger(options.delayMs) ? Math.max(0, options.delayMs) : 1000;
   const retryBaseMs = Number.isInteger(options.retryBaseMs) ? Math.max(0, options.retryBaseMs) : 1500;
   const initialBefore = typeof options.before === "string" && options.before.trim()
@@ -167,6 +170,10 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
   let rpcFailureMessage = null;
   let reachedEnd = false;
   const unavailableSignatures = [];
+  let matchingJupiterMeteoraCandidates = 0;
+  let unrecognizedRouteHeaders = 0;
+  let skippedUnrecognizedRouteHeaders = 0;
+  let skippedBelowMinRoutePlanCount = 0;
 
   while (transactionsScanned < maxTransactions && results.length < maxMatches && !rateLimited && !rpcFailureMethod && unavailableSignatures.length === 0) {
     const pageLimit = Math.min(limit, maxTransactions - transactionsScanned);
@@ -240,6 +247,17 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
             ix.programId === METEORA_DLMM_PROGRAM_ID && isMeteoraSwap2Instruction(ix.dataBase58)
           );
           if (swap2Cpis.length === 0) continue;
+          matchingJupiterMeteoraCandidates += 1;
+          if (routeHeader === null) {
+            unrecognizedRouteHeaders += 1;
+            if (minRoutePlanCount > 1) {
+              skippedUnrecognizedRouteHeaders += 1;
+              continue;
+            }
+          } else if (routeHeader.routePlanCount < minRoutePlanCount) {
+            skippedBelowMinRoutePlanCount += 1;
+            continue;
+          }
           const instructionBytes = decodeBase58(route.instructionDataBase58);
           results.push({
             signature: report.signature,
@@ -317,9 +335,14 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
     signatureLimit: limit,
     maxTransactions,
     maxMatches,
+    minRoutePlanCount,
     pagesScanned,
     signaturesReturned,
     transactionsScanned,
+    matchingJupiterMeteoraCandidates,
+    unrecognizedRouteHeaders,
+    skippedUnrecognizedRouteHeaders,
+    skippedBelowMinRoutePlanCount,
     matchingRoutes: results.filter((result) => result.routePlanHeaderRecognized).length,
     matchingJupiterMeteoraInstructions: results.length,
     rateLimited,
@@ -335,6 +358,7 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
       "A rate-limited page is incomplete; its unscanned signatures must be retried from nextBefore.",
       "A transport timeout/network failure is retried a bounded number of times; if exhausted, the report is incomplete and nextBefore remains the last fully fetched signature.",
       "A null getTransaction result is unavailable/pruned evidence, not a route-free transaction; the scan stops before it and preserves the last fully fetched continuation cursor.",
+      "Route-plan minimum filtering is based on the decoded outer Jupiter route header; skipped single-step and unrecognized headers are counted separately.",
       "Route-plan variant and inner Swap2 CPI association is observational for each returned transaction.",
       "The report does not expose CPI-requested signer/writable AccountMeta flags.",
       "Parent account sequence correlation and duplicate parent positions are observational only; they do not prove which runtime handler cursor consumed the accounts.",
@@ -363,6 +387,7 @@ async function main() {
     maxTransactions: integerEnv("JUPITER_AUDIT_MAX_TRANSACTIONS"),
     retryBaseMs: integerEnv("JUPITER_AUDIT_RETRY_BASE_MS"),
     maxMatches: integerEnv("JUPITER_AUDIT_MAX_MATCHES"),
+    minRoutePlanCount: integerEnv("JUPITER_AUDIT_MIN_ROUTE_PLAN_COUNT"),
     delayMs
   });
   process.stdout.write(JSON.stringify(report, null, 2) + "\n");
