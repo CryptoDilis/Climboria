@@ -317,9 +317,11 @@ function updatePlayerWaterState(player,body,groundHeight,dt,diveInput=0,surfaceI
   player.waterBodyId=null;player.swimDepth=0;
   const floor=groundHeight+1.75;
   const grounded=player.y<=floor+.12&&player.vy<=0;
-  const wasAirborne=player.jumpState==='takeoff'||player.jumpState==='airborne';
+  const wasAirborne=['takeoff','airborne','descent'].includes(player.jumpState);
   if(surfaceInput&&!player.jumpHeld&&grounded){
-   player.vy=11;player.jumpState='takeoff';player.jumpStateTimer=0;
+   // Keep a short, explicit takeoff phase before ascent so the renderer can
+   // blend from the authored run/walk clip into the procedural jump pose.
+   player.vy=11;player.jumpState='takeoff';player.jumpStateTimer=.12;
    player.jumpCount=(player.jumpCount||0)+1;
   }
   player.jumpHeld=!!surfaceInput;
@@ -330,7 +332,10 @@ function updatePlayerWaterState(player,body,groundHeight,dt,diveInput=0,surfaceI
    if(landed){player.jumpState='land';player.jumpStateTimer=.2;player.landCount=(player.landCount||0)+1;}
    else if(player.jumpState!=='land')player.jumpState='grounded';
   }else if(player.y>floor+.12){
-   if(player.jumpState==='takeoff')player.jumpState='airborne';
+   if(player.jumpState==='takeoff'){
+    player.jumpStateTimer=Math.max(0,(player.jumpStateTimer||0)-dt);
+    if(player.jumpStateTimer===0)player.jumpState=player.vy>0?'airborne':'descent';
+   }else if(player.jumpState==='airborne'&&player.vy<=0)player.jumpState='descent';
   }
   if(player.jumpState==='land'){
    player.jumpStateTimer=Math.max(0,(player.jumpStateTimer||0)-dt);
@@ -1058,11 +1063,12 @@ function findStandingRestClip(){
 }
 function chooseAssetAnimation(state,speed=0){
  if(!assetMixer||!assetActions.length)return false;
- const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':state==='jump'?'Jump':state==='land'?'Landing':'';
+ const jumping=state.startsWith('jump-');
+ const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':jumping?'Jump':state==='land'?'Landing':'';
  let clip=exact?assetActions.find(a=>a.name.toLowerCase()===exact.toLowerCase()):null;
  if(state==='idle'||state==='land')clip=findStandingRestClip();
  else if(!clip){
-  const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:state==='swim'?/swim|stroke/i:state==='jump'?/jump|takeoff|airborne/i:/land|touchdown/i;
+  const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:state==='swim'?/swim|stroke/i:jumping?/jump|takeoff|airborne/i:/land|touchdown/i;
   clip=assetActions.find(a=>patterns.test(a.name)&&!FORBIDDEN_REST_CLIP.test(a.name));
  }
  if(!clip&&state==='run')clip=assetActions.find(a=>/walk|locomotion|move/i.test(a.name));
@@ -1087,17 +1093,20 @@ function heroAnimationAudit(){
   return {shoulder:shoulder.name,upperArm:upper?.name||null,verticalDrop:dy*-1,segmentLength:length,downwardFraction:length?dy*-1/length:0};
  });
  const motionBone=entry=>entry?{name:entry.bone.name,rotation:{x:entry.bone.rotation.x,y:entry.bone.rotation.y,z:entry.bone.rotation.z}}:null;
- return {state:assetAnimState,activeClip:active,availableClips:assetActions.map(a=>a.name),forbiddenRestClip:FORBIDDEN_REST_CLIP.test(active),idleCandidate:findStandingRestClip()?.name||'procedural-fallback',naturalStandingShoulderDrop:NATURAL_STANDING_SHOULDER_DROP,shoulderDrops,idleMotion:{hips:motionBone(assetRig.hips),spine:motionBone(assetRig.spine),head:motionBone(assetRig.head)},armBones,legBones:assetRig.legs.map(({bone,base,side})=>({name:bone.name,parent:bone.parent?.name||'',side,baseX:base,rotation:{x:bone.rotation.x,y:bone.rotation.y,z:bone.rotation.z}}))};
+ const legBones=assetRig.legs.map(({bone,base,side})=>({name:bone.name,parent:bone.parent?.name||'',side,baseX:base,rotation:{x:bone.rotation.x,y:bone.rotation.y,z:bone.rotation.z}}));
+ const jumpLimbSignature=[...armBones,...legBones].reduce((sum,b)=>sum+b.rotation.x*3+b.rotation.y*2+b.rotation.z,0);
+ return {state:assetAnimState,activeClip:active,availableClips:assetActions.map(a=>a.name),forbiddenRestClip:FORBIDDEN_REST_CLIP.test(active),idleCandidate:findStandingRestClip()?.name||'procedural-fallback',naturalStandingShoulderDrop:NATURAL_STANDING_SHOULDER_DROP,shoulderDrops,idleMotion:{hips:motionBone(assetRig.hips),spine:motionBone(assetRig.spine),head:motionBone(assetRig.head)},jumpLimbSignature,armBones,legBones};
 }
 function animateAssetFallback(t,state,speed){
- const moving=state==='walk'||state==='run',swimming=state==='swim',jumping=state==='jump',landing=state==='land';
+ const moving=state==='walk'||state==='run',swimming=state==='swim',jumpPhase=state.startsWith('jump-')?state.slice(5):'',jumping=!!jumpPhase,landing=state==='land';
  const resting=!moving&&!swimming&&!jumping&&!landing;
+ const jumpPose=jumpPhase==='takeoff'?{upperLeg:-.34,lowerLeg:.52,upperArm:.30,lowerArm:-.18,spine:.11,hips:.025}:jumpPhase==='airborne'?{upperLeg:.16,lowerLeg:-.12,upperArm:-.25,lowerArm:.12,spine:-.045,hips:-.015}:jumpPhase==='descent'?{upperLeg:-.10,lowerLeg:.30,upperArm:.17,lowerArm:-.07,spine:.055,hips:.018}:null;
  const amp=moving?(state==='run'?.72:.42):0,phase=t*(state==='run'?11:8.5);
  for(const item of assetRig.legs){
   const b=item.bone;
   if(resting){b.quaternion.copy(item.baseQuaternion);continue;}
   if(swimming)b.rotation.x=item.base+Math.sin(phase+item.side)*.28;
-  else if(jumping)b.rotation.x=item.base-.28;
+  else if(jumping){b.quaternion.copy(item.baseQuaternion);b.rotateX(/lowerleg|calf|knee/i.test(b.name)?jumpPose.lowerLeg:jumpPose.upperLeg);}
   else if(landing)b.rotation.x=item.base+.16;
   else b.rotation.x=item.base+Math.sin(phase)*amp*item.side;
  }
@@ -1109,7 +1118,7 @@ function animateAssetFallback(t,state,speed){
    continue;
   }
   if(swimming)b.rotation.x=item.base+Math.PI*.42+Math.sin(phase+item.side)*.16;
-  else if(jumping)b.rotation.x=item.base-.52;
+  else if(jumping){b.quaternion.copy(item.baseQuaternion);b.rotateX(item.lower?jumpPose.lowerArm:jumpPose.upperArm);}
   else if(landing)b.rotation.x=item.base+.22;
   else b.rotation.x=item.base+(moving?-Math.sin(phase)*amp*.58*item.side+(item.lower?.2:.06):0);
   // Preserve the GLB-authored shoulder/elbow rest pose while standing still.
@@ -1125,8 +1134,9 @@ function animateAssetFallback(t,state,speed){
   if(assetRig.head){const b=assetRig.head.bone;b.quaternion.copy(assetRig.head.baseQuaternion);b.rotateY(look*.042);b.rotateZ(sway*.008);}
   if(assetRig.hips){const b=assetRig.hips.bone;b.quaternion.copy(assetRig.hips.baseQuaternion);b.rotateZ(sway*.005);}
  }else{
-  if(assetRig.spine)assetRig.spine.bone.rotation.x=landing?.12:jumping?-.08:0;
-  if(assetRig.hips)assetRig.hips.bone.rotation.y=moving?Math.sin(phase)*.025:0;
+  if(assetRig.spine){const b=assetRig.spine.bone;if(jumping){b.quaternion.copy(assetRig.spine.baseQuaternion);b.rotateX(jumpPose.spine);}else b.rotation.x=landing?.12:0;}
+  if(assetRig.hips){const b=assetRig.hips.bone;if(jumping){b.quaternion.copy(assetRig.hips.baseQuaternion);b.rotateY(jumpPose.hips);}else b.rotation.y=moving?Math.sin(phase)*.025:0;}
+  if(assetRig.head)assetRig.head.bone.quaternion.copy(assetRig.head.baseQuaternion);
  }
 }
 const assetChoices={Adventurer:'../assets/characters/Climboria_Hero.glb'};
@@ -2179,20 +2189,26 @@ function caveGrottoTraversalAudit(){
  }finally{Object.assign(P,saved);}
 }
 function jumpControllerAudit(){
- const p={y:1.75,vy:0,jumpState:'grounded',jumpHeld:false,jumpCount:0,landCount:0};
+ const p={y:1.75,vy:0,jumpState:'grounded',jumpHeld:false,jumpStateTimer:0,jumpCount:0,landCount:0};
+ const phases=[];
+ const recordPhase=()=>{if(phases.at(-1)!==p.jumpState)phases.push(p.jumpState)};
  updatePlayerWaterState(p,null,0,.016,0,0,0);
+ recordPhase();
  updatePlayerWaterState(p,null,0,.016,0,1,0);
+ recordPhase();
  const takeoff={y:p.y,state:p.jumpState,count:p.jumpCount};
- for(let i=0;i<5;i++)updatePlayerWaterState(p,null,0,.016,0,1,i*.016);
+ for(let i=0;i<5;i++){updatePlayerWaterState(p,null,0,.016,0,1,i*.016);recordPhase();}
  const heldCount=p.jumpCount;
  updatePlayerWaterState(p,null,0,.016,0,0,.1);
+ recordPhase();
  let peak=p.y,frames=0;
- while((p.jumpState==='takeoff'||p.jumpState==='airborne')&&frames<120){updatePlayerWaterState(p,null,0,.016,0,0,.1+frames*.016);peak=Math.max(peak,p.y);frames++;}
+ while(['takeoff','airborne','descent'].includes(p.jumpState)&&frames<120){updatePlayerWaterState(p,null,0,.016,0,0,.1+frames*.016);recordPhase();peak=Math.max(peak,p.y);frames++;}
  const landing={state:p.jumpState,count:p.landCount,y:p.y,peak,frames};
  const body={id:'jump-audit-water',surfaceY:0,depth:3};
  const swimmer={y:swimTargetY(body,1),vy:0,jumpState:'grounded',jumpHeld:false,jumpCount:0,swimDepth:1};
  updatePlayerWaterState(swimmer,body,-1,.05,0,1,0);
- return {takeoff,heldCount,landing,swimming:{state:swimmer.jumpState,count:swimmer.jumpCount,depth:swimmer.swimDepth,swim:swimmer.swim},ok:takeoff.y>1.75&&takeoff.count===1&&heldCount===1&&landing.count===1&&landing.state==='land'&&landing.peak>2.5&&swimmer.swim&&swimmer.jumpCount===0&&swimmer.swimDepth<1};
+ const jumpPhases=['takeoff','airborne','descent','land'],phaseOrder=jumpPhases.map(phase=>phases.indexOf(phase));
+ return {takeoff,heldCount,phases,phaseOrder,landing,swimming:{state:swimmer.jumpState,count:swimmer.jumpCount,depth:swimmer.swimDepth,swim:swimmer.swim},ok:takeoff.y>1.75&&takeoff.count===1&&heldCount===1&&phaseOrder.every((frame,index)=>frame>=0&&(index===0||frame>phaseOrder[index-1]))&&landing.count===1&&landing.state==='land'&&landing.peak>2.5&&swimmer.swim&&swimmer.jumpCount===0&&swimmer.swimDepth<1};
 }
 function geodeChestLifecycleAudit(){
  const c=chests.find(item=>item.kind==='geode');
@@ -2316,7 +2332,7 @@ function update(dt){
   cam.updateProjectionMatrix();
   cam.lookAt(terrainCameraTarget);
   const locomotionState=moving?(sprinting?'run':'walk'):'idle';
-  const animState=P.swim?'swim':(['takeoff','airborne'].includes(P.jumpState)?'jump':P.jumpState==='land'?'land':locomotionState);
+  const animState=P.swim?'swim':(['takeoff','airborne','descent'].includes(P.jumpState)?'jump-'+P.jumpState:P.jumpState==='land'?'land':locomotionState);
   document.documentElement.dataset.climboriaJumpState=P.swim?'swim':(P.jumpState||'grounded');
   if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset+(P.swim?.42:0),P.z);assetHero.rotation.y=P.yaw+Math.PI;assetHero.rotation.x=P.swim&&!assetHeroUsesAuthoredAnimations?-Math.PI/2:0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
    // Swimming uses a deliberate prone body pose instead of an arbitrary imported clip
