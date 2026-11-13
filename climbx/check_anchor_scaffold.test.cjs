@@ -43,7 +43,7 @@ test('rejects scaffold without overflow-checked expiry bound',()=>{
 
 
 test('rejects missing owner signer on grant creation',()=>{
- const result=checkScaffold({read:mockRead(source.replace("pub owner: Signer<'info>","pub owner: UncheckedAccount<'info>"))});
+ const result=checkScaffold({read:mockRead(source.replaceAll("pub owner: Signer<'info>","pub owner: UncheckedAccount<'info>"))});
  assert.equal(result.reason,'MISSING_OWNER_SIGNATURE');
 });
 test('rejects removed revoke owner binding',()=>{
