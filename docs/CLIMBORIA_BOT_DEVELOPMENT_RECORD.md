@@ -1077,3 +1077,14 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Blockers:** assistant environment lacks rustc/cargo/solana/solana-test-validator/anchor; no installed on-chain program, signed local-validator/devnet tests, independently audited DEX-only execution or atomic cap/replay enforcement. No real-funds trading (**NO-GO**). No Swap/DEX/Launchpad/game edits.
 
 **Next Phase111:** verify Phase110 CI; independently capture actual tool versions and validator RPC health in a provisioned runner (do not trust caller-supplied flags as proof); begin a minimal Solana program only after toolchain readiness. Keep append-only main record.
+
+
+## Phase 111 — 2026-11-14 — Phase110 browser failure triage and validator evidence provenance
+
+**Phase110 commit** `f5d745050fb3eb76044d13904e80ff4050878547`: CLIMBX release safety `43472642050` **SUCCESS**, Validate Climboria `43472642377` **SUCCESS**, Browser Smoke `43472642088` **FAILURE** on first attempt. Browser job `132048244557` failed DEX back/forward navigation: "Browser Forward did not restore pool B after bounded history navigation." This is in DEX browser navigation, outside CLIMBX ownership. No evidence this failure was caused by CLIMBX. **Requested rerun of failed workflow jobs** on run `43472642088`; rerun job `132052133476` **in_progress** at last check. Do not claim Phase110 all-green until rerun completes successfully.
+
+**Phase111 branch commit** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `123fd69043a25837b8503684b8abc0c4a4db8a3a`: updated `climbx/LOCAL_VALIDATOR_READINESS.md` with explicit warning that Phase110 evidence gate trusts caller-provided flags and is **not independent attestation**, plus capture protocol for pinned tool versions, disposable validator startup/RPC health, slot progress, disposable transaction, and signed grant/revoke on-chain tests.
+**Phase111 CI not yet verified.** No DEX code changes; no actual toolchain/validator installed or on-chain execution. CLIMBX real-funds **NO-GO**.
+
+**Next Phase112:** verify browser rerun and Phase111 CI; if DEX browser regression persists, notify DEX owner without modifying their workstream. Provision independently verified Solana local-validator toolchain, then owner-signed grant/revoke/cap prototype with atomicity/replay tests. Continue append-only record.
