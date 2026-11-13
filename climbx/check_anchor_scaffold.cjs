@@ -12,6 +12,7 @@ function checkScaffold({read=fs.readFileSync}={}){
   if(!manifest.includes('anchor-lang = "0.30.1"'))return blocked('UNPINNED_ANCHOR_VERSION');
   if(!source.includes('declare_id!("11111111111111111111111111111111")'))return blocked('UNREVIEWED_PROGRAM_ID');
   if(!/pub fn create_grant\s*\(/.test(source)||!/pub fn revoke_grant\s*\(/.test(source))return blocked('MISSING_GRANT_LIFECYCLE');
+  if(!source.includes('now.checked_add(24 * 60 * 60)')||!source.includes('expires_at <= max_expiry'))return blocked('MISSING_24H_GRANT_CAP');
   if(/pub fn (?:execute|swap|trade|withdraw|transfer)\w*\s*\(/.test(source))return blocked('UNREVIEWED_EXECUTION_INSTRUCTION');
   return blocked('UNCOMPILED_GRANT_ONLY_SCAFFOLD');
  }catch{return blocked('INVALID_SCAFFOLD')}
