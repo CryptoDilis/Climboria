@@ -1720,14 +1720,17 @@ function hurt(n,why){if(P.mode!='walk'||P.inv>0)return;P.hp=Math.max(0,P.hp-n);P
 /* Game smoke only: exercise real death, dropped-backpack recovery and expiry.
    Restore all player/backpack state so other cave and movement checks stay valid. */
 function deathLootLifecycleAudit(){
- if(deathLootBag)return {ok:false,reason:'unexpected pre-existing bag'};
  const savedPlayer={...P},savedCameraYaw=cameraYaw,savedCameraPitch=cameraPitch;
  const savedItems=inventory.map(item=>({...item})),savedScope=inventoryStorageKey;
+ const priorDeathLootRaw=localStorage.getItem(deathLootStorageKey());
+ const hadPriorDeathLoot=!!deathLootBag;
  let droppedEvents=0,recoveredEvents=0;
  const onDrop=()=>droppedEvents++,onRecover=()=>recoveredEvents++;
  addEventListener('climboria:death-loot-dropped',onDrop);
  addEventListener('climboria:death-loot-recovered',onRecover);
  try{
+  // Preserve any legitimate pre-existing death bag from other smoke sequences.
+  clearDeathLootBag(true);
   inventory.splice(0,inventory.length,{name:'Smoke Recovery Relic',qty:2});
   saveInventory();renderInventory();
   P.mode='walk';P.inv=0;P.hp=1;P.x=125;P.z=125;P.y=groundAt(P.x,P.z)+1.75;
@@ -1765,10 +1768,13 @@ function deathLootLifecycleAudit(){
     survivesUnload&&isolated&&rehydrated&&recovered&&recoveredStored&&
     clearedOnRecovery&&expired&&droppedEvents===2&&recoveredEvents===1,
    dropped,inventoryCleared,respawned,persisted,survivesUnload,isolated,rehydrated,
-   recovered,recoveredStored,clearedOnRecovery,expired,droppedEvents,recoveredEvents};
+   recovered,recoveredStored,clearedOnRecovery,expired,droppedEvents,recoveredEvents,hadPriorDeathLoot};
  }finally{
   inventoryStorageKey=savedScope;
   clearDeathLootBag();
+  if(priorDeathLootRaw!==null){
+   try{localStorage.setItem(deathLootStorageKey(),priorDeathLootRaw);loadDeathLootBag()}catch(_){}
+  }
   inventory.splice(0,inventory.length,...savedItems);saveInventory();renderInventory();
   Object.assign(P,savedPlayer);cameraYaw=savedCameraYaw;cameraPitch=savedCameraPitch;
   removeEventListener('climboria:death-loot-dropped',onDrop);
@@ -2002,10 +2008,15 @@ function caveSpikeDamageTickAudit(){
 }
 function caveTrapLifecycleAudit(){
  const savedPlayer={...P},savedCamera={yaw:cameraYaw,pitch:cameraPitch},savedFree=document.body.classList.contains('free');
+ // Existing chest smoke tests can award carried inventory before this audit.
+ // Isolate its fatal spike: a smoke-only death must not create a real recovery
+ // bag or destroy chest rewards that later gameplay smoke assertions rely on.
+ const savedItems=inventory.map(item=>({...item}));
  let deathEvents=0;
  const onDeath=()=>deathEvents++;
  addEventListener('climboria:death',onDeath);
  try{
+  inventory.splice(0,inventory.length);saveInventory();renderInventory();
   P.mode='walk';P.hp=P.maxHp;P.inv=0;
   const before=P.hp;
   hurt(CAVE_SPIKE_DAMAGE,'Smoke test spike damage');
@@ -2015,6 +2026,7 @@ function caveTrapLifecycleAudit(){
   const afterDeath={hp:P.hp,x:P.x,z:P.z,y:P.y,mode:P.mode,expectedY:groundAt(0,-30)+1.75};
   return {damageTaken:before-afterHit,damageCorrect:before-afterHit===CAVE_SPIKE_DAMAGE,deathEvents,respawn:afterDeath,respawnCorrect:deathEvents===1&&afterDeath.hp===P.maxHp&&afterDeath.mode==='walk'&&afterDeath.x===0&&afterDeath.z===-30&&Number.isFinite(afterDeath.y)&&Math.abs(afterDeath.y-afterDeath.expectedY)<.02};
  }finally{
+  inventory.splice(0,inventory.length,...savedItems);saveInventory();renderInventory();
   removeEventListener('climboria:death',onDeath);
   Object.assign(P,savedPlayer);
   cameraYaw=savedCamera.yaw;cameraPitch=savedCamera.pitch;
