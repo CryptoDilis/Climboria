@@ -1216,3 +1216,18 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Blockers:** no compatible Rust/Cargo/Solana/Anchor toolchain verified, no actual validator started, no signed local-validator E2E, no restricted DEX CPI implementation, no independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
 
 **Next Phase120:** replace placeholder ID with uniquely generated devnet program key, run pinned Cargo/Anchor build and owner-signature/PDA tests on disposable validator; then design and implement strictly constrained execution only after security review. Maintain append-only main record.
+
+
+## Phase 120 — 2026-11-14 — grant-only Anchor scaffold static guard
+
+**Phase119 CI all SUCCESS** on `015450e41b0b542285270ae8e4978c67a3cbbc32`: Validate `43488298364`, Browser Smoke `43488298393`, CLIMBX release safety `43488298085`. These checks do not compile Rust.
+
+**Phase120 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `929a999cf715ae90730542d66bb7e56bf84ac5b1`: `climbx/check_anchor_scaffold.cjs` checks presence of pinned Anchor dependency, placeholder program ID, owner grant/revoke functions and absence of recognized execute/swap/trade/withdraw/transfer function names. Always reports `safeForDeployment:false`, `compiled:false`, `mayExecute:false`. Static guard is narrow and cannot prove code safety.
+- `e6e0067875867d689013a01a7e2d03f671644a9d`: six static guard regression tests.
+- `fbc7b57da2737113ad38150bf9e86a8699052084`: include static guard tests in non-deploying CLIMBX CI.
+**Phase120 CI pending** at first check. Runtime toolchain check in assistant container: Node available; `cargo`, `rustc`, `solana-test-validator`, `anchor` not found. No Rust compilation, validator or deployment claimed.
+
+**Critical:** placeholder `declare_id!("11111111111111111111111111111111")` is System Program ID, intentionally blocks any credible deployment; do not deploy with it. A valid program ID requires an actual program keypair, controlled securely on an approved development host, not an arbitrary generated string. Do not treat static test success as Rust compilation or authorization.
+
+**Next Phase121:** verify Phase120 CI and fix failures. Set up pinned compatible Rust/Solana/Anchor build on approved CI/dev host with disposable keys; replace placeholder only with a properly generated program keypair public key; run `cargo check` and signed local validator grant/revoke tests. Real-funds CLIMBX **NO-GO**; no Swap/DEX/Launchpad/game edits.
