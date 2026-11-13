@@ -26,7 +26,7 @@ const TARGETS = Object.freeze({
 });
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
-function decodeBase58(value) {
+export function decodeBase58(value) {
   if (typeof value !== "string" || !value.length) throw new Error("Invalid base58 public key");
   const bytes = [0];
   let zeros = 0;
@@ -45,7 +45,7 @@ function decodeBase58(value) {
   const significant = bytes.length === 1 && bytes[0] === 0 ? [] : bytes.reverse();
   return Uint8Array.from([...new Array(zeros).fill(0), ...significant]);
 }
-function encodeBase58(input) {
+export function encodeBase58(input) {
   const bytes = [...input];
   let zeros = 0;
   while (zeros < bytes.length && bytes[zeros] === 0) zeros++;
