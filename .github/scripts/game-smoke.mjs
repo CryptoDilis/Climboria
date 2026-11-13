@@ -91,12 +91,16 @@ try {
       await page.keyboard.down('Space');
       // Physics owns this trace, so it records each real frame even when a
       // short phase falls between Playwright polling cycles.
-      const completed=await page.waitForFunction(({jumps,lands})=>{const p=window.__climboriaJarrellsPeak?.player,t=p?.jumpTrace;return !!t&&t.jumpCount>jumps&&t.phases.includes('land')&&(p.landCount||0)>lands;},before,{timeout:8000}).then(()=>true).catch(()=>false);
+      const reachedDescent=await page.waitForFunction(jumps=>{const p=window.__climboriaJarrellsPeak?.player,t=p?.jumpTrace;return !!t&&t.jumpCount>jumps&&t.phases.includes('descent');},before.jumps,{timeout:8000}).then(()=>true).catch(()=>false);
       await page.keyboard.up('Space');
+      // The software-rendered CI world can spend most of the first bounded
+      // window reaching descent. Landing gets its own observed window rather
+      // than treating two independently verified stages as one timeout.
+      const landedForJump=await page.waitForFunction(({jumps,lands})=>{const p=window.__climboriaJarrellsPeak?.player,t=p?.jumpTrace;return !!t&&t.jumpCount>jumps&&t.phases.includes('land')&&(p.landCount||0)>lands;},before,{timeout:8000}).then(()=>true).catch(()=>false);
       const landed=await page.evaluate(()=>{const p=window.__climboriaJarrellsPeak.player;return {state:p.jumpState,lands:p.landCount||0,jumps:p.jumpCount||0,trace:p.jumpTrace?JSON.parse(JSON.stringify(p.jumpTrace)):null};});
-      await page.waitForTimeout(300);
-      const resumed=await page.evaluate(()=>({state:window.__climboriaJarrellsPeak.player.jumpState,animation:document.documentElement.dataset.climboriaHeroAnimation||''}));
-      liveJumps.push({running,completed,baseline:before.y,jumpCount:landed.jumps,landState:landed.state,landCount:landed.lands,trace:landed.trace,resumed,priorJumpCount:before.jumps,priorLandCount:before.lands});
+      const expectedLocomotion=running?'run':'walk';
+      const resumed=await page.waitForFunction(expected=>{const p=window.__climboriaJarrellsPeak?.player;return !!p&&p.jumpState==='grounded'&&document.documentElement.dataset.climboriaHeroAnimation===expected;},expectedLocomotion,{timeout:8000}).then(()=>page.evaluate(()=>({state:window.__climboriaJarrellsPeak.player.jumpState,animation:document.documentElement.dataset.climboriaHeroAnimation||''}))).catch(()=>page.evaluate(()=>({state:window.__climboriaJarrellsPeak.player.jumpState,animation:document.documentElement.dataset.climboriaHeroAnimation||''})));
+      liveJumps.push({running,reachedDescent,completed:reachedDescent&&landedForJump,baseline:before.y,jumpCount:landed.jumps,landState:landed.state,landCount:landed.lands,trace:landed.trace,resumed,priorJumpCount:before.jumps,priorLandCount:before.lands});
       await page.keyboard.up('w');
       if(running) await page.keyboard.up('Shift');
       await page.evaluate(()=>{const p=window.__climboriaJarrellsPeak.player,w=window.__climboriaJarrellsPeak;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.jumpState='grounded';p.jumpHeld=false;p.jumpStateTimer=0;p.jumpTrace=null;});
