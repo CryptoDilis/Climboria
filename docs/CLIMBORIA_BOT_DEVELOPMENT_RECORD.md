@@ -548,3 +548,8 @@ Reviewed main `overview/index.html`: its public-facing Project Brief is separate
 ## Phase 68 checkpoint — 2026-11-13 (CLIMBX whitepaper FAQ)
 
 Verified Phase66 Whitepaper CI `43451746368` and `43451745623` successful; Phase67 Overview CI `43451880807` and `43451880780` successful. Added a plain-language CLIMBX FAQ to the draft branch whitepaper, commit `146fe36dc2204167a42ed076bd3990df3626bc6d`, explaining free access vs Solana network fees, cumulative net realized profit high-water-mark fee, approval-only learning, exclusive Signature DEX execution, and explicit NO-GO. No deployment, production migration or live bot authorization. Check CI for new commit before claiming it passed.
+
+
+## Phase 69 checkpoint — 2026-11-13 (timeout safety audit)
+
+Verified Phase68 Whitepaper FAQ commit `146fe36dc2204167a42ed076bd3990df3626bc6d`: CLIMBX release safety **43452640920** success and Validate Climboria **43452641352** success. Reviewed actual draft `climbx/wallet_api_factory.cjs`, `climbx/bind_wallet_pg.cjs` and `climbx/issue_challenge_pg.cjs`. Confirmed critical unresolved risk: `withDeadline` uses Promise.race and may return timeout while database operations continue/commit; timeout is NOT safe cancellation. Added blocking audit and remediation plan `docs/CLIMBX_TIMEOUT_SAFETY_REVIEW.md` commit `b43f3112f905d99ba7565b864d7de9a613c11537`. No code fix or production deployment claimed. Next implement database-enforced timeouts, ambiguous-outcome reconciliation and real PostgreSQL failure tests. Keep CLIMBX NO-GO.
