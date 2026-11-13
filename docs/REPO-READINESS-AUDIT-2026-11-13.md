@@ -326,7 +326,7 @@ Continue the documented candidate-scoped ABI-v1 input reconstruction:
 
 - Main HEAD at audit start: `50712f68017bc06e9a0896cd3f2691ebdab4c594`.
 - PR #269 is OPEN / DRAFT. Current head `04f4d09f233cccc5f45fa9ef2dc617880563fed2`; PR base `0fa8e987aec4d6e6bc7590363efa7d20fde79422`. Compared with current main, it is **194 commits ahead and 11 behind**. The 11 main-only commits since the merge base are documentation-only readiness updates; no main-only product-code file changes were reported by the comparison.
-- PR #274 is OPEN / DRAFT. Head `559423bdddf709cae31de06b01b2c4b461f2a482`; compared with main it is **203 commits ahead and 11 behind**. It overlaps substantially with PR #269's DEX/provider/CPI/IDL evidence work. Keep both unmerged until the evidence is consolidated and branch freshness is reconciled; do not merge both independently.
+- PR #274 is OPEN / DRAFT. Head `559423bdddf709cae31de06b01b2c4b461f2a482`; compared with main it is **203 commits ahead and 18 behind**. It overlaps substantially with PR #269's DEX/provider/CPI/IDL evidence work. Keep both unmerged until the evidence is consolidated and branch freshness is reconciled; do not merge both independently.
 - The owner-approved product order remains P1 Live Swap → P2 Live DEX → P3 all Login methods → P4 fully live game → P5 Launchpad last. This checkpoint does not change that order.
 
 ### Exact-head verification — PR #269 head 04f4d09
@@ -403,3 +403,10 @@ The 50-transaction sample is bounded evidence, not exhaustive route coverage. It
 - [x] Current main HEAD after handoff synchronization: `0ed2b393c7f4daee40f36213862c8b0c81ff82e1`.
 - [!] PR #269 exact head remains `49a342cef18adf51dc98560a8c60c9e06f02654a`; no product code has been merged to main by these documentation commits.
 - [ ] Continue with current in-progress official history runs `43336735508` / `43337636175` and the explicit Browser Smoke rerun `43337636485`; record terminal evidence before changing the next priority.
+
+### Branch freshness recheck — 2026-11-13
+
+- [x] PR #269 current head `49a342cef18adf51dc98560a8c60c9e06f02654a` compares to main as **196 ahead / 18 behind**.
+- [x] PR #274 current head `559423bdddf709cae31de06b01b2c4b461f2a482` compares to main as **203 ahead / 18 behind**.
+- [x] The 18 commits on main since the PR merge base touch only the three documentation files listed above; product code has no main-only delta in this comparison.
+- [ ] Sync PR #269 with current main before merge; keep PR #274 draft until overlapping evidence is consolidated.
