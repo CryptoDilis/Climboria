@@ -2,6 +2,9 @@
 // Caller MUST still configure actual HTTP server request/header timeouts.
 // AbortSignal timeout is advisory to dependencies; this wrapper bounds
 // response latency even when an injected dependency ignores cancellation.
+// SECURITY: timeout rejection does NOT cancel database queries, prevent a late
+// COMMIT, or prove rollback. Do not wrap live state-changing operations with
+// this helper as a substitute for database-level timeouts and reconciliation.
 function withDeadline(operation,{timeoutMs=5000,setTimeoutFn=setTimeout,clearTimeoutFn=clearTimeout}={}){
  if(typeof operation!=='function')throw new TypeError('operation required');
  if(!Number.isInteger(timeoutMs)||timeoutMs<100||timeoutMs>30000)throw new TypeError('invalid timeout');
