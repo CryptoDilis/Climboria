@@ -34,6 +34,7 @@ function harness(){
   let api;
   const sandbox={
     $,
+    DEX_TRADE_TERMINAL_INTERACTION_ENABLED:false,
     fmt:n=>String(n),
     dexTradeSetStatus:msg=>{statuses.push(msg);$('dexTradeStatus').textContent=msg;},
     discardDexTradeQuote:msg=>invalidations.push(msg),
@@ -72,7 +73,8 @@ test('out-of-order RPC results cannot write old decimals to newly selected DEX t
   currentRpc.resolve(rpcResult(6));await current;
   assert.equal(t.api.inspect().id,USDC);
   assert.equal(t.api.inspect().decimals,6);
-  assert.equal(t.$('dexTradeGetQuote').disabled,false);
+  assert.equal(t.$('dexTradeGetQuote').disabled,true);
+  assert.equal(t.$('dexTradePrepare').disabled,true);
   const status=t.$('dexTradeStatus').textContent;
 
   oldRpc.resolve(rpcResult(9));await old;
@@ -97,7 +99,8 @@ test('old RPC resolves before current one: stale result cannot reenable Get Quot
 
   nextRpc.resolve(rpcResult(6));await current;
   assert.equal(t.api.inspect().decimals,6);
-  assert.equal(t.$('dexTradeGetQuote').disabled,false);
+  assert.equal(t.$('dexTradeGetQuote').disabled,true);
+  assert.equal(t.$('dexTradePrepare').disabled,true);
   assert.equal(t.updates.length,1);
 });
 
