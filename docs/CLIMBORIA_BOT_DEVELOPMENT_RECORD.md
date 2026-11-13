@@ -325,3 +325,12 @@ V13 adds `durable_handoff_v13.py`: SQLite-persisted canonical MOCK transaction b
 **Verified locally:** 118/118 Python unittest tests passed (111 previous + 7 new), ZIP `climbx-paper-v15.zip` archive integrity verified. Local source/README/readiness checklist are **not committed to this repository**. No live deployment or trading flags changed.
 
 V15 hardens `DurableHandoff.send()` to validate canonical persisted mock transaction bytes and their deterministic mock SHA-256 identity, order ID, side, fee and expiry before any fake broadcast; mismatches return `PAYLOAD_INTEGRITY_ERROR` and leave order locked. Tests cover payload/signature/fee/expiry tampering, noncanonical payload, valid path and recovery fail-closed. **This is integrity consistency only, NOT authenticated Solana signing**; a database writer could recompute the mock hash. Next priority remains actual scoped Solana authority proof, real validator/devnet transactions and independent RPC reconciliation, reproducible CI and independent security audit. CLIMBX icon, card and manual website integration remains pending. **Live release NO-GO.**
+
+
+## Phase 25 checkpoint — 2026-11-13 (CLIMBX V16 authorization policy gate)
+
+**Verified locally:** 133/133 Python unittest tests passed (118 prior + 15 new policy tests); ZIP `climbx-paper-v16.zip` integrity verified. Source is a **local conversation artifact**, not committed to the repo or deployed.
+
+V16 adds `authorization_gate_v16.py`, an offline fail-closed policy evaluator for wallet identity, action/mint allowlists, revoked status, issued/expiry time, 30-minute BUY cutoff, pending spend/fee budgets, invalid numeric inputs, and sell permission before expiry. The new tests verify these constraints. **This is not a Solana permissioned smart account or a cryptographically enforced authorization.** Policy inputs are caller-supplied; budgets are not transactionally consumed across workers, and no actual signed Jupiter/native SOL transaction has been tested.
+
+**Live release remains NO-GO.** Next required deliverable is an actual validator/devnet authorization feasibility proof and end-to-end signed transaction/reconciliation tests, plus source/CI integration and independent security review. Preserve CLIMBX website icon/card/manual requirements and existing DEX release priorities.
