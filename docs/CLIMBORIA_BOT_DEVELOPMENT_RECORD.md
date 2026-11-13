@@ -1201,3 +1201,18 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Blockers:** Rust/Cargo/Solana/Anchor toolchain not verified in assistant environment; no local validator started, no reviewed on-chain program, no signed devnet E2E, no independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase119:** turn the spec into an isolated Anchor/Rust program scaffold with owner-signed grant/revoke and tests when toolchain is available; verify CLIMBX CI and capture real local-validator evidence. Keep append-only main record.
+
+
+## Phase 119 — 2026-11-14 — isolated Anchor grant/revoke Rust scaffold
+
+**Phase118 CI all SUCCESS** on `7660e6e80c3179ea4cfd09b72e5c38d85442dbc1`: Validate `43487544097`, CLIMBX release safety `43487544128`, Browser Smoke `43487544032`.
+
+**Phase119 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `765f892952522fd2e54e62d07a37b26cb526241f`: isolated Anchor 0.30.1 Cargo manifest `climbx/programs/climbx-authorization/Cargo.toml`.
+- `785ae4b6cde64d9c50118181fac283fc431b60bd`: `src/lib.rs` owner-signed grant creation/revocation with grant PDA, max-five distinct mint validation, expiry/cap validation and stored grant fields; **no execute or swap instruction**.
+- `015450e41b0b542285270ae8e4978c67a3cbbc32`: README explicitly marks uncompiled/unverified, placeholder System Program ID to replace before deployment, and missing custody/CPI/receipt/nonce/settlement tests.
+**Phase119 CI pending** at first check. Existing JS CI does NOT compile Rust; a green JS workflow is not Rust build evidence.
+
+**Blockers:** no compatible Rust/Cargo/Solana/Anchor toolchain verified, no actual validator started, no signed local-validator E2E, no restricted DEX CPI implementation, no independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase120:** replace placeholder ID with uniquely generated devnet program key, run pinned Cargo/Anchor build and owner-signature/PDA tests on disposable validator; then design and implement strictly constrained execution only after security review. Maintain append-only main record.
