@@ -1088,3 +1088,17 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Phase111 CI not yet verified.** No DEX code changes; no actual toolchain/validator installed or on-chain execution. CLIMBX real-funds **NO-GO**.
 
 **Next Phase112:** verify browser rerun and Phase111 CI; if DEX browser regression persists, notify DEX owner without modifying their workstream. Provision independently verified Solana local-validator toolchain, then owner-signed grant/revoke/cap prototype with atomicity/replay tests. Continue append-only record.
+
+
+## Phase 111 — 2026-11-14 — validator evidence provenance marker and cancelled CI retry
+
+**Phase110 CI** on `f5d745050fb3eb76044d13904e80ff4050878547`: Validate `43472642377` SUCCESS; CLIMBX release safety `43472642050` SUCCESS; Browser Smoke `43472642088` CANCELLED (not passed). Retried cancelled browser-smoke job `132052133476` via GitHub rerun; accepted, completion pending.
+
+**Phase111 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `014bded599fc6cc87875e52afc15bb204096d691`: require validator evidence source marker `LOCAL_PROBE` in the Phase110 checklist gate; missing or alternate source fails closed.
+- `37e8307956a11835cea46c33f0d6363042938e49`: update existing fixtures and add three tests for missing/remote provenance and explicit `mayExecute:false` even when callers claim trade authorization.
+**Phase111 CI pending** at first check. Note: `source:'LOCAL_PROBE'` is still a **caller-supplied string, not independent attestation**; must not treat as verified validator health, nor use as a release gate for real funds.
+
+**Blockers:** no Rust/Solana/Anchor toolchain available in assistant environment, no real local validator start/RPC probe, no owner-signed on-chain grant/revoke/cap program, no signed devnet execution, no independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase112:** verify Phase111 CI and cancelled Browser Smoke retry; replace self-reported evidence with a runner-executed local validator process and RPC checks in a provisioned toolchain environment; then begin on-chain authorization program. Keep append-only main record.
