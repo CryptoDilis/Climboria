@@ -2,9 +2,9 @@
 
 **Last reviewed:** 2026-11-14 (Philippine time)
 **Repository:** `CryptoDilis/Climboria`
-**Initial baseline:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`; **latest merged DEX/Swap change:** `19d5afba669934f7bc3ffedeab7e8fd03e8178bd` (PR #305; refresh current `main` on every resume)
+**Initial baseline:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`; **latest merged DEX/Swap change:** `f95ef0a9658b2de04d353f204f0e9069a35f8ca5` (PR #313; refresh current `main` on every resume)
 **Owner-directed scope:** **DEX, Swap, Launchpad ONLY.** The Game is owned by a separate chat/developer. This file supersedes older cross-project priority instructions **for this workstream only**.
-**State:** active development; **not** evidence that signed mainnet swaps or token launches are live.
+**Latest Launchpad read-only integration:** `9379d783bce37763479f16a1ea7e50d63d5d3813` (PR #317).\n**State:** active development; **not** evidence that signed mainnet swaps or token launches are live.
 
 ## How to resume after a chat ends
 
@@ -260,3 +260,12 @@ Changed: branch `feat/launchpad-readonly-program-provenance` independently ports
 Verified: branch commits `092c65d`, `ca6591d`, `18feb31` created; exact-head CI and real RPC/API probe **PENDING**. The program IDs are historical candidate references and must be verified against current on-chain reality; no independent audit or authority policy sign-off.
 Unresolved: proper live GlobalConfig/PlatformConfig, official SDK/IDL current hashes and discriminators, approved quote mint and bonding economics, wallet-owned creator/signing, finalized create→curve→CPMM migration→LP lifecycle reconciliation, incident controls and independent security audit. Mainnet launch remains **DISABLED** even if provenance passes.
 NEXT: review/merge only this focused read-only probe after exact-head tests; inspect real provider read result and blocker details. Then separately evaluate read-only launch config + current SDK/IDL compatibility in a new focused PR; do not pull in all 22 old PR #251 files or allow signing before Devnet lifecycle evidence.
+
+
+### 2026-11-14 — Launchpad Raydium Mainnet and Devnet read-only program provenance PASS
+Scope: **Launchpad provenance only**; no trading, wallet signing, mint creation, bonding curve swap, LP migration, or user fund handling.
+Before: stale old PR #251 bundled 22 files and resource-heavy SDK/IDL/Metaplex checks not ready to merge wholesale; focused PR #317 separated the read-only program/upgrade metadata probe.
+Changed: [PR #317](https://github.com/CryptoDilis/Climboria/pull/317) merged into main as `9379d783bce37763479f16a1ea7e50d63d5d3813`. Added `.github/scripts/launchlab-provenance.mjs`, `.github/scripts/launchlab-provenance.test.mjs`, and a small non-deploying `.github/workflows/launchpad-readonly-provenance.yml` running only on Launchpad probe edits/dispatch.
+Verified: PR head `823aa73bd1abe8a5db7f31bd97b4dd9d0efea8df` [read-only parser tests 43475395947](https://github.com/CryptoDilis/Climboria/actions/runs/43475395947) **SUCCESS** (live provider job correctly skipped on PR) and [Validate 43475395840](https://github.com/CryptoDilis/Climboria/actions/runs/43475395840) **SUCCESS**. Postmerge [read-only live provenance 43475554292](https://github.com/CryptoDilis/Climboria/actions/runs/43475554292) **SUCCESS**; job `132058389715` logs, captured at 2026-11-13 17:43:27 UTC, confirmed `readOnly=true`, `transactionSubmitted=false`, `pass=true` for BOTH mainnet and devnet public Raydium APIs and finalized Solana RPC program account reads. All 6 published candidate LaunchLab/CPMM/LP lock addresses existed, were executable, were owned by Solana Upgradeable Loader, with readable ProgramData slots, upgrade authority and fingerprints; zero probe blockers. Notably each ProgramData reported `immutable=false` and a non-null upgrade authority, so upgrade authority risk remains and this is point-in-time provenance evidence only.
+Unresolved: API `/main/info` reachability and program account existence do NOT verify live LaunchLab GlobalConfig/PlatformConfig, SDK/IDL discriminators, instruction account privilege semantics, fees, quote mint, creator mint authority, durable token supply or Devnet complete launch/trade/graduation/migration. Original PR #251 remains draft and unmerged. Security review and owner-approved Devnet signing gates missing. **Launchpad remains informational preview; no production token creation service is live.**
+NEXT: isolate the current read-only Launch Config allowlist parser and pinned SDK/IDL digest checks into a focused, low-cost PR, then require verified on-chain Devnet configs and `createLaunchpad` simulation/creator approval before even contemplating Devnet signing. Keep mainnet issuance/fee collection disabled.
