@@ -76,8 +76,8 @@ try {
   const liveJumpStart = await page.evaluate(() => {
     const p=window.__climboriaJarrellsPeak?.player,w=window.__climboriaJarrellsPeak;
     if(!p||!w)return null;
-    const saved={x:p.x,y:p.y,z:p.z,vy:p.vy,yaw:p.yaw,mode:p.mode,jumpState:p.jumpState,jumpHeld:p.jumpHeld,jumpStateTimer:p.jumpStateTimer,jumpCount:p.jumpCount,landCount:p.landCount};
-    p.x=0;p.z=-30;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.mode='walk';p.jumpState='grounded';p.jumpHeld=false;p.jumpStateTimer=0;
+    const saved={x:p.x,y:p.y,z:p.z,vy:p.vy,yaw:p.yaw,mode:p.mode,jumpState:p.jumpState,jumpHeld:p.jumpHeld,jumpStateTimer:p.jumpStateTimer,jumpCount:p.jumpCount,landCount:p.landCount,jumpTrace:p.jumpTrace};
+    p.x=0;p.z=-30;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.mode='walk';p.jumpState='grounded';p.jumpHeld=false;p.jumpStateTimer=0;p.jumpTrace=null;
     return {saved,baseline:p.y,jumpCount:p.jumpCount||0,landCount:p.landCount||0};
   });
   if(!liveJumpStart) errors.push('Live keyboard jump test could not access the gameplay player.');
@@ -89,32 +89,26 @@ try {
       await page.waitForTimeout(100);
       const before=await page.evaluate(()=>({y:window.__climboriaJarrellsPeak.player.y,jumps:window.__climboriaJarrellsPeak.player.jumpCount||0,lands:window.__climboriaJarrellsPeak.player.landCount||0}));
       await page.keyboard.down('Space');
-      await page.evaluate(({y,jumps})=>{window.__climboriaJumpBaseline=y;window.__climboriaJumpCount=jumps;},{y:before.y,jumps:before.jumps});
-      // Return the pose from the same page evaluation that observes the phase.
-      // A separate evaluate call can run after the deliberately short takeoff
-      // window advances, turning a valid observation into a false failure.
-      const capturePhase=phase=>page.waitForFunction(expected=>{const p=window.__climboriaJarrellsPeak?.player,a=document.documentElement.dataset.climboriaHeroAnimation;if(!p||p.jumpState!==expected||a!=='jump-'+expected)return false;const audit=window.__climboriaJarrellsPeak.heroAnimationAudit?.();return {state:p.jumpState,animation:a,limbSignature:audit?.jumpLimbSignature};},phase,{timeout:5000}).then(handle=>handle.jsonValue()).catch(()=>null);
-      const takeoff=await capturePhase('takeoff');
-      const rose=await page.waitForFunction(()=>{const p=window.__climboriaJarrellsPeak?.player;return !!p&&p.y>window.__climboriaJumpBaseline+.2&&p.jumpCount>window.__climboriaJumpCount;},undefined,{timeout:5000}).then(()=>true).catch(()=>false);
+      // Physics owns this trace, so it records each real frame even when a
+      // short phase falls between Playwright polling cycles.
+      const completed=await page.waitForFunction(({jumps,lands})=>{const p=window.__climboriaJarrellsPeak?.player,t=p?.jumpTrace;return !!t&&t.jumpCount>jumps&&t.phases.includes('land')&&(p.landCount||0)>lands;},before,{timeout:8000}).then(()=>true).catch(()=>false);
       await page.keyboard.up('Space');
-      const ascent=await capturePhase('airborne');
-      const descent=await capturePhase('descent');
-      const peak=await page.evaluate(()=>({y:window.__climboriaJarrellsPeak.player.y,state:window.__climboriaJarrellsPeak.player.jumpState,jumps:window.__climboriaJarrellsPeak.player.jumpCount||0}));
-      await page.waitForFunction(()=>{const p=window.__climboriaJarrellsPeak?.player;return !!p&&(p.jumpState==='land'||p.jumpState==='grounded');},undefined,{timeout:8000}).catch(()=>{});
-      const landed=await page.evaluate(()=>({state:window.__climboriaJarrellsPeak.player.jumpState,lands:window.__climboriaJarrellsPeak.player.landCount||0}));
+      const landed=await page.evaluate(()=>{const p=window.__climboriaJarrellsPeak.player;return {state:p.jumpState,lands:p.landCount||0,jumps:p.jumpCount||0,trace:p.jumpTrace?JSON.parse(JSON.stringify(p.jumpTrace)):null};});
       await page.waitForTimeout(300);
       const resumed=await page.evaluate(()=>({state:window.__climboriaJarrellsPeak.player.jumpState,animation:document.documentElement.dataset.climboriaHeroAnimation||''}));
-      liveJumps.push({running,rose,baseline:before.y,takeoff,ascent,descent,peak:peak.y,airState:peak.state,jumpCount:peak.jumps,landState:landed.state,landCount:landed.lands,resumed,priorJumpCount:before.jumps,priorLandCount:before.lands});
+      liveJumps.push({running,completed,baseline:before.y,jumpCount:landed.jumps,landState:landed.state,landCount:landed.lands,trace:landed.trace,resumed,priorJumpCount:before.jumps,priorLandCount:before.lands});
       await page.keyboard.up('w');
       if(running) await page.keyboard.up('Shift');
-      await page.evaluate(()=>{const p=window.__climboriaJarrellsPeak.player,w=window.__climboriaJarrellsPeak;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.jumpState='grounded';p.jumpHeld=false;});
+      await page.evaluate(()=>{const p=window.__climboriaJarrellsPeak.player,w=window.__climboriaJarrellsPeak;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.jumpState='grounded';p.jumpHeld=false;p.jumpStateTimer=0;p.jumpTrace=null;});
     }
     await page.evaluate(saved=>{
       const p=window.__climboriaJarrellsPeak.player;
-      Object.assign(p,{x:saved.x,y:saved.y,z:saved.z,vy:saved.vy,yaw:saved.yaw,mode:saved.mode,jumpState:saved.jumpState,jumpHeld:saved.jumpHeld,jumpStateTimer:saved.jumpStateTimer,jumpCount:saved.jumpCount,landCount:saved.landCount});
+      Object.assign(p,{x:saved.x,y:saved.y,z:saved.z,vy:saved.vy,yaw:saved.yaw,mode:saved.mode,jumpState:saved.jumpState,jumpHeld:saved.jumpHeld,jumpStateTimer:saved.jumpStateTimer,jumpCount:saved.jumpCount,landCount:saved.landCount,jumpTrace:saved.jumpTrace});
     },liveJumpStart.saved);
-    if(liveJumps.some(x=>!x.rose||x.peak<=x.baseline+.2||x.jumpCount<=x.priorJumpCount||x.landCount<=x.priorLandCount)) errors.push('Spacebar jump failed while walking or running: '+JSON.stringify(liveJumps));
-    if(liveJumps.some(x=>!x.takeoff||!x.ascent||!x.descent||x.takeoff.animation!=='jump-takeoff'||x.ascent.animation!=='jump-airborne'||x.descent.animation!=='jump-descent'||![x.takeoff.limbSignature,x.ascent.limbSignature,x.descent.limbSignature].every(Number.isFinite)||Math.abs(x.takeoff.limbSignature-x.ascent.limbSignature)<.05||Math.abs(x.ascent.limbSignature-x.descent.limbSignature)<.05||x.resumed.animation!==(x.running?'run':'walk'))) errors.push('Running jump did not progress through distinct takeoff/ascent/descent poses and back to locomotion: '+JSON.stringify(liveJumps));
+    const requiredJumpPhases=['takeoff','airborne','descent','land'];
+    const hasOrderedPhases=trace=>{const order=requiredJumpPhases.map(phase=>trace?.phases?.indexOf(phase)??-1);return order.every((frame,index)=>frame>=0&&(index===0||frame>order[index-1]));};
+    if(liveJumps.some(x=>!x.completed||!x.trace||x.trace.peakY<=x.baseline+.2||x.jumpCount<=x.priorJumpCount||x.landCount<=x.priorLandCount)) errors.push('Spacebar jump failed while walking or running: '+JSON.stringify(liveJumps));
+    if(liveJumps.some(x=>{const poses=x.trace?.poses||{},takeoff=poses.takeoff,ascent=poses.airborne,descent=poses.descent;return !hasOrderedPhases(x.trace)||takeoff?.animation!=='jump-takeoff'||ascent?.animation!=='jump-airborne'||descent?.animation!=='jump-descent'||![takeoff?.limbSignature,ascent?.limbSignature,descent?.limbSignature].every(Number.isFinite)||Math.abs(takeoff.limbSignature-ascent.limbSignature)<.05||Math.abs(ascent.limbSignature-descent.limbSignature)<.05||x.resumed.animation!==(x.running?'run':'walk');})) errors.push('Running jump did not progress through distinct takeoff/ascent/descent poses and back to locomotion: '+JSON.stringify(liveJumps));
     console.log('Live walking/running jump diagnostics:',JSON.stringify(liveJumps));
   }
 
