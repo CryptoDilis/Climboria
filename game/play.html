@@ -1794,7 +1794,7 @@ loadCC0ForestModel('fallenLog',cc0LogSpots);
 parkFixtureSolids.forEach(s=>solid(s.x,s.z,s.r));
 for(let i=0;i<12;i++){const a=i/12*6.283;solid(POI.sanct.x+Math.sin(a)*22,POI.sanct.z+Math.cos(a)*22,1.6)}
 [[-22,-20,15],[20,-22,14],[-13,-34,5],[13,-34,5],[-30,-6,7],[30,-6,7]].forEach(([x,z,r])=>{const[w,v]=l2w(caveG,x,z);solid(w,v,r)});
-function caveWallBlocks(nx,nz,ox,oz){
+function caveWallBlocks(nx,nz,ox,oz,feet=null){
  const pointSegmentDistance=(px,pz,ax,az,bx,bz)=>{
   const dx=bx-ax,dz=bz-az,len=dx*dx+dz*dz;
   const t=len?Math.max(0,Math.min(1,((px-ax)*dx+(pz-az)*dz)/len)):0;
@@ -1811,6 +1811,11 @@ function caveWallBlocks(nx,nz,ox,oz){
  };
  const moveA={x:ox,z:oz},moveB={x:nx,z:nz};
  for(const wall of caveWallSegments){
+  // Underground coastal rocks should not collide with players above the cave.
+  if(wall.coastal&&Number.isFinite(feet)){
+   const local=caveLocalCoords(nx,nz),floor=caveCoastalFloorAt(local.z);
+   if(feet<floor-2||feet>floor+8.8)continue;
+  }
   const a={x:wall.ax,z:wall.az},b={x:wall.bx,z:wall.bz};
   if(intersects(moveA,moveB,a,b)||
      Math.min(pointSegmentDistance(ox,oz,a.x,a.z,b.x,b.z),pointSegmentDistance(nx,nz,a.x,a.z,b.x,b.z),
@@ -1822,7 +1827,7 @@ function caveWallBlocks(nx,nz,ox,oz){
 }
 function blocked(nx,nz,ox,oz,feet){
  window.__climboriaLastCollision=null;
- if(caveWallBlocks(nx,nz,ox,oz))return true;
+ if(caveWallBlocks(nx,nz,ox,oz,feet))return true;
  const dirX=nx-ox,dirZ=nz-oz,segLen=Math.hypot(dirX,dirZ);
  if(segLen<1e-6)return false;
  const r=PLAYER_RADIUS,ts=[0,.5,1];
