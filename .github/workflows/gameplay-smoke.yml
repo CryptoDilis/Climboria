@@ -1,0 +1,79 @@
+name: Jarrell's Peak Gameplay Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "game/**"
+      - "assets/characters/**"
+      - ".github/scripts/game-smoke.mjs"
+      - ".github/workflows/gameplay-smoke.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "game/**"
+      - "assets/characters/**"
+      - ".github/scripts/game-smoke.mjs"
+      - ".github/workflows/gameplay-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climboria-gameplay-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gameplay-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out game
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Cache Playwright browser binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-v1
+      - name: Install Playwright
+        timeout-minutes: 10
+        run: |
+          npm init -y
+          timeout --signal=TERM --kill-after=20s 2m npm install --no-save playwright
+          timeout --signal=TERM --kill-after=20s 4m npx playwright install chromium
+      - name: Start local web server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/climboria-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/climboria-http.log
+          exit 1
+      - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
+        timeout-minutes: 21
+        run: |
+          echo 'Starting bounded Jarrell desktop/mobile gameplay smoke test.'
+          timeout --signal=TERM --kill-after=30s 20m node .github/scripts/game-smoke.mjs
+
+      - name: Upload gameplay screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climboria-gameplay-screenshots
+          path: |
+            climboria-desktop-gameplay.png
+            climboria-mobile-gameplay.png
+            climboria-desktop-cave-entrance.png
+            climboria-mobile-cave-entrance.png
+            climboria-desktop-cave-interior.png
+            climboria-mobile-cave-interior.png
+          if-no-files-found: warn
+          retention-days: 7
