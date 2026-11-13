@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   CRITICAL_INSTRUCTIONS, CRITICAL_ACCOUNTS, CRITICAL_TYPES,
-  compareCriticalIdls, verifyOnchainLaunchpadIdl
+  compareCriticalIdls, verifySdkInstructionDiscriminators, verifyOnchainLaunchpadIdl
 } from "./launchlab-onchain-idl-check.mjs";
 
 function pinnedFixture() {
@@ -77,4 +77,16 @@ test("rejects tampered official pinned IDL bytes before any RPC call", async () 
     await writeFile(layout,"invalid layout");
     await assert.rejects(verifyOnchainLaunchpadIdl(idl,layout), /Pinned official LaunchLab IDL hash mismatch/);
   } finally { await rm(dir,{recursive:true,force:true}); }
+});
+
+test("SDK builder discriminators match exact pinned IDL bytes", () => {
+  const repo = pinnedFixture();
+  const names = {buy_exact_in:"buyExactIn", buy_exact_out:"buyExactOut", sell_exact_in:"sellExactIn", sell_exact_out:"sellExactOut", initialize_v2:"initializeV2", initialize_with_token_2022:"initializeWithToken2022", create_platform_config:"createPlatformConfig", claim_platform_fee:"claimPlatformFee", claim_platform_fee_from_vault:"claimPlatformFeeFromVault", claim_creator_fee:"claimCreatorFee", create_vesting_account:"createVestingAccount", claim_vested_token:"claimVestedToken", create_platform_vesting_account:"createPlatformVestingAccount"};
+  const rows = Object.entries(names).map(([idl, sdk]) => sdk + ": Buffer.from([" + repo.instructions.find(x => x.name === idl).discriminator.join(",") + "])");
+  const text = "export const anchorDataBuf = {\n" + rows.join(",\n") + "\n};";
+  assert.equal(verifySdkInstructionDiscriminators(repo,text).comparedInstructionCount, 13);
+  const modified = text.replace("buyExactIn: Buffer.from([2,", "buyExactIn: Buffer.from([250,");
+  assert.throws(() => verifySdkInstructionDiscriminators(repo,modified), /buy_exact_in/);
+  const absent = text.replace(/claimCreatorFee: Buffer\.from\(\[[^\]]+\]\),?/, "");
+  assert.throws(() => verifySdkInstructionDiscriminators(repo,absent), /claim_creator_fee/);
 });
