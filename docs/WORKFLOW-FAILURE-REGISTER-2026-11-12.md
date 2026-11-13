@@ -1423,3 +1423,41 @@ The immediate failure is an upstream availability/coverage problem: the IDL Expl
 - [ ] Preserve incomplete adapter exclusions and all execution kill switches.
 
 **Release posture:** still not production-ready for transaction execution. CI Validate is green, but IDL evidence remains incomplete; Browser Smoke and CPI Trace are cancelled/incomplete on this exact head. No live swap or production deployment is claimed.
+
+## 2026-11-13 — PR #269 exact-head gameplay smoke parser failure and counter-fix
+
+### Exact-head batch (tested head 66b458f974d0e7ede4b63ae59df1513d3c1f73c4)
+
+| Workflow | Run | Job | Result |
+|---|---:|---:|---|
+| Validate Climboria | 43337651633 | 131597824623 | SUCCESS — 155 tests passed, 0 failed |
+| Jupiter V6 CPI Trace Audit | 43337651956 | 131597867438 | SUCCESS — 50 finalized transactions fetched across two pages; 2 Jupiter/Meteora matches; no transport failure/rate limit |
+| Climboria Browser Smoke Test | 43337651711 | 131597832680 | FAILURE in final gameplay-summary JSON validation; gameplay script itself logged PASS |
+| Jupiter IDL History Audit | 43337651932 | 131597804700 | IN PROGRESS at direct on-chain history reconstruction when inspected; no terminal result yet |
+
+### Browser Smoke — run 43337651711 / job 131597832680
+
+- Steps 1–21 passed, including deterministic OHLCV tests, live DexScreener/GeckoTerminal captures, auth/cloud-save isolation, homepage and DEX routing, proxy fail-closed behavior, Swap/DEX flows, Base/Solana search, chart identity, mobile DEX/Swap layout and provider error/empty states.
+- The Jarrell's Peak desktop/mobile test executed and logged PASS: cinematic Jarrell's Peak boot, terrain, landmarks, chests, facilities, desktop controls, and mobile controls. The emitted GAME_SMOKE_SUMMARY reported status=passed, errorCount=0, desktop/mobile ready, 99/74 render frames, and all eight expected screenshots. Browser artifact 13998671613 uploaded successfully (8.9 MB; includes screenshots and summary).
+- Actual failing operation: the subsequent workflow-level node -e validation attempted JSON.parse(game-smoke-summary.json) and failed with SyntaxError: Unexpected non-whitespace character after JSON at position 618 (line 22 column 2). The error's displayed tail was a literal backslash+n after the JSON object.
+- Root cause confirmed in source: .github/scripts/game-smoke.mjs wrote JSON.stringify(smokeSummary, null, 2) + '\\n', which appends the two literal characters backslash+n instead of a newline. Thus gameplay assertions passed; the artifact parser rejected an otherwise valid JSON object with an invalid trailing suffix. This is a test-harness serialization defect, not a gameplay regression.
+- Counter-fix committed: changed the writer to append the actual newline escape '\n' in commit b1fc7d7eaace17a781f61b2cdad3a254a1d893da. No gameplay assertions were relaxed and no evidence gates were removed.
+- Verification still required: rerun Browser Smoke on the new exact head and require the entire job, including the JSON parser, to pass and upload a valid game-smoke-summary.json. The original run remains a FAILURE until that new run completes.
+
+### CPI Trace and IDL status
+
+- CPI Trace run 43337651956 completed successfully: 50 finalized transactions scanned over two pages, 2 Jupiter/Meteora matches, no rate-limit or transport errors. Both matched examples are single-route; no multi-hop/split route evidence was found. Artifact 13998171871, SHA-256 2991c09e1d592001536132e7aa2a165a6f5e4bcfe0d70ed03814bc5e169c789f.
+- IDL History run 43337651932 was still running direct on-chain reconstruction at inspection time. Do not mark it passed until terminal logs/artifacts prove unique Jupiter route-v2 IDL revision coverage at candidate slot 468153382; if public fallback cannot establish this, the repository owner must configure encrypted Actions secret SOLANA_RPC_URL with an HTTPS archival-capable endpoint.
+
+### Updated top-priority checklist
+
+- [x] Exact-head Validate passed (155/155).
+- [x] CPI Trace passed with 50 finalized transactions and uploaded evidence; multi-hop/split route coverage remains open.
+- [x] Deep-diagnose Browser Smoke failure; establish that Jarrell's Peak gameplay assertions passed and the failure was the JSON writer's literal backslash+n suffix.
+- [x] Commit targeted JSON newline serialization fix (b1fc7d7...).
+- [ ] Verify Browser Smoke end-to-end on the new exact head; require JSON parse gate and screenshot artifact to pass.
+- [ ] Inspect terminal result/artifact for IDL History run 43337651932; establish unique candidate-slot revision coverage or configure SOLANA_RPC_URL.
+- [ ] Extend finalized CPI trace evidence to multi-hop/split route plans and other account-slice permutations.
+- [ ] Keep Jupiter/Worker execution disabled until provenance, account-meta, Devnet settlement and independent security gates pass.
+
+Release posture: the gameplay run itself passed its assertions, but the workflow was red due to a confirmed harness bug. The targeted fix is committed but not yet verified by a rerun. CPI trace evidence is green but limited to two single-route matches. IDL history remains pending. No production Swap deployment or live transaction execution is claimed.
