@@ -363,3 +363,8 @@ Verified GitHub Actions for Phase 28 PR branch commit `249f0b73d1695e8ec4c9ab630
 ## Phase 30 checkpoint — 2026-11-13 (CI false-positive safety fix)
 
 On draft PR #282 branch `climbx/phase28-release-gate-ci`, commit `95e2c70e663cc0e3a058a25e95c77a50824f690b` changes `.github/workflows/climbx-release-gate.yml`: the workflow now checks **exactly** release-gate exit code 1, parses valid JSON, requires decision `NO_GO` and a non-empty `missing` list. Previously any failure (including a Python crash) could be incorrectly treated as successful NO-GO enforcement. **CI results for this new commit were not yet available at checkpoint time.** Local Phase 27 paper engine was rerun in the working container: **141/141 tests passed**, but remains **outside** GitHub PR and GitHub CI. This fix does not prove Solana validator/devnet authorization or live transaction execution. **Real-money CLIMBX release remains NO-GO.**
+
+
+## Phase 31 checkpoint — 2026-11-13 (verified CI fix and expanded tests)
+
+Verified GitHub Actions on PR #282 commit `95e2c70e663cc0e3a058a25e95c77a50824f690b`: CLIMBX safety workflow run **43436061723** and Validate Climboria run **43436061856**, both **completed/success**. Subsequently expanded branch `climbx/phase28-release-gate-ci` release-gate unit tests from five to ten cases in commit `9d2151c5aa23888a737184f7d1d23e45ac57d195` (new CI run **not yet verified**). Independently reran the **141/141** historical paper-engine tests locally from `/mnt/data/climbx-phase27`, but that engine is **not** yet committed to PR or exercised by GitHub CI. No validator/devnet signed transaction tests or independent security audit; **live release NO-GO**.
