@@ -558,3 +558,8 @@ Verified Phase68 Whitepaper FAQ commit `146fe36dc2204167a42ed076bd3990df3626bc6d
 ## Phase 70 checkpoint — 2026-11-13 (deadline regression proof)
 
 Added deterministic regression test in `climbx/deadline.test.cjs`, commit `8830c43fad0926be2330c5e37d2de602c4b161a3`, explicitly proving that a deadline rejection can be followed by an underlying write completing later. Added code warning to `climbx/deadline.cjs`, commit `03992b6256acadddf88885a9920208212370b6a6`, that response timeout is not database cancellation or rollback. Expected test count 302; CI result for new commits not yet verified. This is a documented safety regression, NOT a remediation of the actual late-commit risk. Next implement real PostgreSQL timeouts and ambiguous-outcome reconciliation; keep live API unmounted and CLIMBX NO-GO.
+
+
+## Phase 71 checkpoint — 2026-11-13 (real PostgreSQL timeout rollback tests)
+
+Added two real isolated PostgreSQL integration tests to `climbx/test_postgres_integration.py`, commit `eef7ee4ec32548f1902ed6a762ce1aabfecc3a7b`: `statement_timeout` after a nonce update must abort and roll back the update, and `lock_timeout` on a locked wallet binding must abort without changing ownership. CI `43453570288` was in progress and Validate `43453570390` queued at last check; do not claim pass yet. These tests prove limited PostgreSQL primitives, not production-safe cancellation, rollback after connection loss, or ambiguous-commit reconciliation. Expected Python/PostgreSQL/Node count after Phase70 and these tests: 121 + 13 + 153? Recompute from CI rather than trusting this estimate. Keep live CLIMBX NO-GO.
