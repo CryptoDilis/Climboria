@@ -206,6 +206,39 @@ test("rejects mismatched, nonnumeric, zero, or incomplete Jupiter quotes", async
   }
 });
 
+test("reports missing or invalid Jupiter fee as unknown rather than zero", async () => {
+  const originalFetch = globalThis.fetch;
+  const inputs = [
+    ["absent", undefined, null],
+    ["null", null, null],
+    ["empty", "", null],
+    ["nonnumeric", "unavailable", null],
+    ["negative", -1, null],
+    ["out-of-bounds", 10001, null],
+    ["explicit zero", 0, 0],
+    ["valid fee", "15", 15]
+  ];
+  try {
+    for (const [label, fee, expected] of inputs) {
+      globalThis.fetch = async () => Response.json({
+        requestId: "request-quote-1",
+        inAmount: "100000000",
+        outAmount: "999999",
+        ...(fee === undefined ? {} : { feeBps: fee })
+      });
+      const res = await worker.fetch(new Request(
+        "https://worker.test/api/swap/quote?inputMint=" + valid +
+        "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000",
+        { headers: { origin } }
+      ), env);
+      assert.equal(res.status, 200, label);
+      assert.equal((await res.json()).feeBps, expected, label);
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("proxies Jupiter token search through server-side credentials", async () => {
   const originalFetch = globalThis.fetch;
   try {
