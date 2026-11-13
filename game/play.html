@@ -1258,6 +1258,11 @@ const inventory=readInventory(INVENTORY_KEY) || [];
    This is NOT server inventory, not a multiplayer drop, and not cloud custody. */
 const DEATH_LOOT_RECOVERY_SECONDS=180;
 let deathLootBag=null;
+const deathLootPrompt=document.createElement('div');
+deathLootPrompt.id='climboria-death-loot-prompt';
+deathLootPrompt.setAttribute('role','status');
+deathLootPrompt.style.cssText='position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:11;max-width:calc(100vw - 24px);padding:8px 12px;border:1px solid #dfae6388;border-radius:9px;background:#10191fe8;color:#ffe3a3;font:700 12px/1.4 system-ui;text-align:center;pointer-events:none;display:none';
+document.body.appendChild(deathLootPrompt);
 function clearDeathLootBag(){
  if(!deathLootBag)return;
  const group=deathLootBag.group;
@@ -1267,6 +1272,7 @@ function clearDeathLootBag(){
   if(o.material){const materials=Array.isArray(o.material)?o.material:[o.material];materials.forEach(m=>m.dispose());}
  });
  deathLootBag=null;
+ deathLootPrompt.style.display='none';
 }
 function dropDeathLoot(){
  if(!inventory.length)return 0;
@@ -1306,10 +1312,16 @@ function recoverDeathLoot(){
 }
 function updateDeathLootBag(){
  if(!deathLootBag)return;
- if(Date.now()>=deathLootBag.expiresAt){
+ const remaining=Math.ceil((deathLootBag.expiresAt-Date.now())/1000);
+ if(remaining<=0){
   clearDeathLootBag();toast('Your dropped loot has expired');return;
  }
  deathLootBag.group.rotation.y+=.005;
+ if(P.mode!=='walk'){deathLootPrompt.style.display='none';return;}
+ const meters=Math.round(Math.hypot(P.x-deathLootBag.x,P.z-deathLootBag.z));
+ deathLootPrompt.textContent=meters<=4?'E · RECOVER DROPPED LOOT ('+remaining+'s)':
+   'DROPPED LOOT · '+meters+'m away · '+Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0')+' remaining';
+ deathLootPrompt.style.display='block';
 }
 const invPanel=css(document.createElement('section'),'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);right:auto;z-index:1002;width:min(620px,calc(100vw - 28px));max-height:82vh;overflow:auto;padding:14px 16px;background:rgba(8,13,20,.94);border:1px solid #d8b46b88;border-radius:12px;box-shadow:0 12px 40px #000b;color:#f4ecd8;font:13px/1.5 system-ui;display:none;backdrop-filter:blur(12px)');
 invPanel.id='climboriaInventoryPanel';
