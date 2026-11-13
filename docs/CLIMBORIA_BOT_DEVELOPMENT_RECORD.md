@@ -1305,3 +1305,14 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Blockers unchanged:** static guard is not a Rust compiler or Anchor audit; actual Rust compilation, validator tests, signed devnet E2E and DEX-only CPI not done. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase125:** verify Phase124 CI, inspect and fix failures. Then prioritize actual pinned Rust/Solana toolchain and signed local-validator tests; no live funds.
+
+
+## Phase 124 — 2026-11-14 — fix failed Phase123 CI and verify recovery
+
+**Phase123 failure identified:** on `78f7a88f80ca014638b46e437a59ad5bee4577a7`, CLIMBX release safety workflow `43492736071` failed exactly one test, `rejects missing owner signer on grant creation`. The checker searched the entire Rust source for any `Signer<'info>` and mistakenly accepted the revoke context's signer when the create context signer was removed. Validate `43492736075` and Browser Smoke `43492736787` succeeded, but Phase123 was **not** all green.
+
+**Phase124 branch repair** (`climbx/phase28-release-gate-ci`, draft PR #282): scoped `CreateGrant` and `RevokeGrant` signer detection independently, added revoke-context regression, corrected regex escape syntax. Latest branch head `3baad04be9f51982871c67f51c409b90a60bda77` **CI all SUCCESS**: Validate `43496277170`, CLIMBX release safety `43496276738`, Browser Smoke `43496276813`. This resolves the observed CI regression; it is not a Rust compilation or on-chain security proof.
+
+**Direct environment check:** `cargo`, `rustc`, `anchor`, and `solana-test-validator` unavailable. No actual Cargo/Anchor build, signed local-validator tests, DEX-only CPI, on-chain trade execution, devnet deployment, or audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase125:** obtain a compatible pinned Rust/Solana/Anchor toolchain and reviewed lockfile on an approved build host, compile the actual grant/revoke scaffold, run signed disposable-validator owner/PDA/expiry tests, then record exact evidence. Keep trading disabled until reviewed execution/custody and reconciliation exist.
