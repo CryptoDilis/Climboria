@@ -57,6 +57,12 @@ function base58DecodedLength(value) {
   return zeros + (bytes.length === 1 && bytes[0] === 0 ? 0 : bytes.length);
 }
 function validPubkey(value) { return base58DecodedLength(value) === 32; }
+// SPL Token and Solana instruction raw amounts are unsigned 64-bit integers.
+const U64_MAX = 18446744073709551615n;
+function validRawTokenAmount(value) {
+  return typeof value === "string" && /^[1-9][0-9]{0,19}$/.test(value) &&
+    BigInt(value) <= U64_MAX;
+}
 // A missing fee is unknown, not zero. Accept only explicitly supplied integer bps.
 function optionalFeeBps(value) {
   if (typeof value !== "number" && (typeof value !== "string" || !value.trim())) return null;
@@ -99,8 +105,8 @@ async function handleOrder(request, env) {
   if (!validPubkey(inputMint) || !validPubkey(outputMint) || inputMint === outputMint || !validPubkey(taker)) {
     return json({ error: "Invalid input/output mint or taker public key" }, 400);
   }
-  if (typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount)) {
-    return json({ error: "Amount must be a positive integer string in base units" }, 400);
+  if (!validRawTokenAmount(amount)) {
+    return json({ error: "Amount must be a positive u64 integer string in base units" }, 400);
   }
   if (!env.JUPITER_API_KEY) return json({ error: "Backend is not configured: missing Jupiter server API key" }, 503);
   if (!env.ORDER_STORE || typeof env.ORDER_STORE.idFromName !== "function" || typeof env.ORDER_STORE.get !== "function") {
@@ -224,7 +230,7 @@ async function handleQuote(request, env) {
   const outputMint = url.searchParams.get("outputMint");
   const amount = url.searchParams.get("amount");
   if (!validPubkey(inputMint) || !validPubkey(outputMint) || inputMint === outputMint ||
-      typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount)) {
+      !validRawTokenAmount(amount)) {
     return json({ error: "Invalid quote input mints or amount" }, 400);
   }
   const params = new URLSearchParams({ inputMint, outputMint, amount });
