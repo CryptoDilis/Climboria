@@ -294,6 +294,9 @@ try {
   if(!deathLoot?.ok||!deathLoot.inventoryCleared||!deathLoot.respawned||!deathLoot.persisted||
     !deathLoot.survivesUnload||!deathLoot.isolated||!deathLoot.rehydrated||!deathLoot.recovered||
     !deathLoot.recoveredStored||!deathLoot.clearedOnRecovery||!deathLoot.expired||
+    !deathLoot.mapAfterDeath?.visible||!deathLoot.mapAfterDeath?.orange||
+    !deathLoot.mapAfterReload?.visible||!deathLoot.mapAfterReload?.orange||
+    deathLoot.mapAfterRecovery?.visible||deathLoot.mapAfterExpiry?.visible||
     deathLoot.droppedEvents!==2||deathLoot.recoveredEvents!==1)
     errors.push('Jarrell death carried-loot drop/E recover/3-minute expiry lifecycle failed: '+JSON.stringify(deathLoot));
   console.log('Jarrell death-loot recovery audit:',JSON.stringify(deathLoot));
