@@ -7,8 +7,9 @@ let heroMarketFetchedAt=0;
 let heroMarketRequest=0;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const money=n=>{const v=Number(n);if(!Number.isFinite(v))return 'Unavailable';return v>=1e9?'$'+(v/1e9).toFixed(2)+'B':v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':'$'+v.toFixed(2)};
-const price=n=>{const v=Number(n);if(!Number.isFinite(v))return 'Unavailable';return '$'+(v<.0001?v.toExponential(2):v<1?v.toPrecision(4):v.toLocaleString('en-US',{maximumFractionDigits:4}))};
+const metric=n=>{if(n===null||n===undefined||typeof n==='boolean'||(typeof n==='string'&&!n.trim()))return null;const v=Number(n);return Number.isFinite(v)?v:null};
+const money=n=>{const v=metric(n);if(v===null||v<0)return 'Unavailable';return v>=1e9?'$'+(v/1e9).toFixed(2)+'B':v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':'$'+v.toFixed(2)};
+const price=n=>{const v=metric(n);if(v===null||v<=0)return 'Unavailable';return '$'+(v<.0001?v.toExponential(2):v<1?v.toPrecision(4):v.toLocaleString('en-US',{maximumFractionDigits:4}))};
 async function get(path){const r=await fetch(API+path,{headers:{accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(9000)});if(!r.ok)throw new Error('DexScreener HTTP '+r.status);return r.json()}
 function setFlash(el,next){if(!el)return;const old=el.dataset.lastValue;if(old&&old!==next){el.classList.remove('price-flash-up','price-flash-down');void el.offsetWidth;el.classList.add(Number(next.replace(/[^0-9.+-]/g,''))>=Number(old.replace(/[^0-9.+-]/g,''))?'price-flash-up':'price-flash-down');}el.dataset.lastValue=next;el.textContent=next}
 function renderHeroUnavailable(el,detail='Retrying with next market refresh'){
@@ -33,8 +34,8 @@ async function loadHero(){
   pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
   const p=pairs[0];if(!p)throw new Error('No verified wrapped-SOL/USDC pool returned');
   if(request!==heroMarketRequest)return;
-  const change=Number(p.priceChange?.h24),changeText=Number.isFinite(change)?(change>0?'+':'')+change.toFixed(2)+'%':'24h change unavailable';
-  const changeClass=Number.isFinite(change)?(change>=0?'positive':'negative'):'muted';
+  const change=metric(p.priceChange?.h24),changeText=change!==null?(change>0?'+':'')+change.toFixed(2)+'%':'24h change unavailable';
+  const changeClass=change!==null?(change>=0?'positive':'negative'):'muted';
   const previous=Number(el.dataset.lastPrice),current=Number(p.priceUsd),flash=Number.isFinite(previous)&&Number.isFinite(current)&&current!==previous?(current>previous?'price-flash-up':'price-flash-down'):'';
   heroMarketFetchedAt=fetchedAt;
   el.dataset.marketState='fresh';
@@ -80,8 +81,8 @@ async function loadTrending(){
   for(const p of pairs){
    const mint=p?.baseToken?.address;
    if(p?.chainId!=='solana'||!candidates.has(mint)||!p.pairAddress)continue;
-   const liquidity=Number(p.liquidity?.usd),volume=Number(p.volume?.h24),usd=Number(p.priceUsd);
-   if(!Number.isFinite(liquidity)||liquidity<=0||!Number.isFinite(volume)||volume<0||!Number.isFinite(usd)||usd<=0)continue;
+   const liquidity=metric(p.liquidity?.usd),volume=metric(p.volume?.h24),usd=metric(p.priceUsd);
+   if(liquidity===null||liquidity<=0||volume===null||volume<0||usd===null||usd<=0)continue;
    const prior=bestByMint.get(mint);
    if(!prior||liquidity>Number(prior.liquidity?.usd||0))bestByMint.set(mint,p);
   }
@@ -96,8 +97,8 @@ async function loadTrending(){
   }
   const max=Math.max(...list.map(p=>Number(p.liquidity.usd)||0),1);
   grid.innerHTML=list.map(p=>{
-   const change=Number(p.priceChange?.h24),cls=Number.isFinite(change)?(change>=0?'positive':'negative'):'muted';
-   const changeText=Number.isFinite(change)?(change>0?'+':'')+change.toFixed(2)+'%':'24h change unavailable';
+   const change=metric(p.priceChange?.h24),cls=change!==null?(change>=0?'positive':'negative'):'muted';
+   const changeText=change!==null?(change>0?'+':'')+change.toFixed(2)+'%':'24h change unavailable';
    const depth=Math.max(3,Math.round((Number(p.liquidity.usd)||0)/max*100));
    return '<button type="button" class="premium-asset-card" data-premium-mint="'+esc(p.baseToken.address)+'"><span class="premium-asset-top"><b>'+esc(p.baseToken.symbol||'TOKEN')+'</b><span class="'+cls+'">'+changeText+'</span></span><span class="premium-asset-name">'+esc(p.baseToken.name||'Unknown token')+' · '+esc(p.quoteToken?.symbol||'PAIR')+'</span><strong>'+price(p.priceUsd)+'</strong><span class="premium-asset-meta"><span>24h Vol <b>'+money(p.volume.h24)+'</b></span><span>Liquidity <b>'+money(p.liquidity.usd)+'</b></span></span><span class="premium-depth"><i style="width:'+depth+'%"></i></span><span class="premium-asset-action">Inspect token ↗</span><small class="premium-discovery-source">'+esc(p.discoverySource)+' discovery · not a global market ranking</small></button>';
   }).join('');

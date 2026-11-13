@@ -478,15 +478,15 @@ jobs:
               const mintB='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
               const mintC='Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
               const heroPairAddress='So11111111111111111111111111111111111111112';
-              const heroPair={chainId:'solana',dexId:'verified-usdc',pairAddress:heroPairAddress,baseToken:{address:mintA,symbol:'SOL',name:'Wrapped SOL'},quoteToken:{address:mintB,symbol:'USDC',name:'USD Coin'},priceUsd:'150',liquidity:{usd:500000},priceChange:{h24:1}};
+              const heroPair={chainId:'solana',dexId:'verified-usdc',pairAddress:heroPairAddress,baseToken:{address:mintA,symbol:'SOL',name:'Wrapped SOL'},quoteToken:{address:mintB,symbol:'USDC',name:'USD Coin'},priceUsd:'150',liquidity:{usd:500000},priceChange:{h24:null}};
               const wrongQuotePair={...heroPair,pairAddress:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',quoteToken:{address:mintC,symbol:'USDT',name:'Tether USD'},priceUsd:'999',liquidity:{usd:999999}};
-              const pair=(mint,price,liquidity,volume,symbol)=>({chainId:'solana',dexId:'test',pairAddress:'Pair'+symbol,baseToken:{address:mint,symbol,name:symbol+' token'},quoteToken:{symbol:'USDC'},priceUsd:String(price),liquidity:{usd:liquidity},volume:{h24:volume},priceChange:{h24:1}});
+              const pair=(mint,price,liquidity,volume,symbol,change=1)=>({chainId:'solana',dexId:'test',pairAddress:'Pair'+symbol,baseToken:{address:mint,symbol,name:symbol+' token'},quoteToken:{symbol:'USDC'},priceUsd:String(price),liquidity:{usd:liquidity},volume:{h24:volume},priceChange:{h24:change}});
               await page.route('https://api.dexscreener.com/**',async route=>{
                 const url=new URL(route.request().url()); calls.push(url.pathname);
                 if(url.pathname==='/latest/dex/tokens/'+mintA) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[wrongQuotePair,heroPair]})});
                 if(url.pathname==='/token-profiles/latest/v1') return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{chainId:'solana',tokenAddress:mintA},{chainId:'solana',tokenAddress:mintB},{chainId:'ethereum',tokenAddress:mintC}])});
                 if(url.pathname==='/token-boosts/top/v1') return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{chainId:'solana',tokenAddress:mintB},{chainId:'solana',tokenAddress:mintC}])});
-                if(url.pathname.startsWith('/tokens/v1/solana/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([pair(mintA,2,100000,50,'A-low'),pair(mintA,2.1,300000,50,'A-deep'),pair(mintB,3,10000,900,'B')])});
+                if(url.pathname.startsWith('/tokens/v1/solana/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([pair(mintA,2,100000,50,'A-low'),pair(mintA,2.1,300000,50,'A-deep'),pair(mintA,2.2,999999,null,'A-missing-volume'),pair(mintB,3,10000,900,'B',null)])});
                 return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
               });
               await page.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
@@ -495,11 +495,13 @@ jobs:
               assert(hero.state==='fresh'&&hero.pool===heroPairAddress,'Market Leader must expose only a verified canonical SOL/USDC pool');
               assert(Number.isFinite(hero.fetchedAt)&&hero.fetchedAt>0&&hero.text.includes('MARKET LEADER · SOL / USDC')&&hero.text.includes('$150')&&hero.text.includes('fetched')&&hero.text.includes('verified SOL/USDC pool'),'Market Leader must render the canonical pair price with a truthful fetch timestamp');
               assert(!hero.text.includes('$999')&&!hero.text.includes('USDT'),'Market Leader must not use a deeper non-USDC wrapped-SOL pair');
+              assert(hero.text.includes('24h change unavailable')&&!hero.text.includes('+0.00%'),'Missing SOL market change must not be displayed as zero');
               await page.waitForFunction(()=>document.querySelectorAll('#premiumTrendingGrid [data-premium-mint]').length===2,null,{timeout:15000});
               const cards=await page.locator('#premiumTrendingGrid [data-premium-mint]').evaluateAll(nodes=>nodes.map(n=>({mint:n.dataset.premiumMint,text:n.innerText})));
               assert(cards[0].mint===mintB,'Discovery cards must sort by reported 24h volume within the discovered sample');
               assert(cards[1].mint===mintA,'Second discovery card should be the remaining eligible discovered mint');
-              assert(cards[1].text.includes('$300.0K'),'Discovery must choose the deepest eligible pool for each mint, not the first/lowest-liquidity pool');
+              assert(cards[1].text.includes('$300.0K'),'Discovery must choose the deepest eligible pool with a real 24h volume, not an unreported-volume decoy');
+              assert(cards[0].text.includes('24h change unavailable')&&!cards[0].text.includes('0.00%'),'Missing token change must remain unavailable instead of a fabricated zero');
               assert(cards.length===2&&!cards.some(card=>card.mint===mintC),'Non-Solana boost/profile entries must never appear in Solana discovery');
               assert(cards.every(c=>c.text.includes('discovery')&&c.text.includes('not a global market ranking')),'Cards must disclose discovery provenance and limited ranking scope');
               assert(calls.includes('/token-profiles/latest/v1')&&calls.includes('/token-boosts/top/v1')&&calls.some(p=>p.startsWith('/tokens/v1/solana/')),'Expected profile, boost and batched token-pair requests');
