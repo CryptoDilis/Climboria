@@ -1146,3 +1146,17 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Blockers:** Rust/Cargo/Solana/Anchor unavailable in assistant environment; no actual validator, signed grant/revoke program, atomic cap/nonce enforcement, devnet signed E2E or independent audit. Real-funds trading **NO-GO**. No Swap/DEX/Launchpad/game changes.
 
 **Next Phase115:** verify Phase113 Validate and Phase114 CI, inspect failures; run collector on a provisioned local validator machine and capture real outputs; then build on-chain owner-grant prototype with deterministic validator tests. Keep append-only main record.
+
+
+## Phase 115 — 2026-11-14 — absolute local RPC deadline against trickle responses
+
+**Phase114 CI all SUCCESS** on `8a21fec97d67f6b15797943a6af5025954db5283`: Validate `43485737667`, CLIMBX release safety `43485737288`, Browser Smoke `43485737311`. Historical Phase113 Validate `43485176620` CANCELLED.
+
+**Phase115 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `82196c6e974ef48f2d8b84221987acb6fdc374f3`: enforce absolute timeout in localhost RPC health probe; prior socket inactivity timeout could be bypassed by trickling bytes. Timer cleared after terminal result.
+- `9b3417473cd756d01ab4c9787825efa39fe7717b`: add two regression tests for trickling response and oversized RPC payload.
+**Phase115 CI pending** at first check. These are mock HTTP tests; no actual Solana validator started.
+
+**Security state:** read-only probes and off-chain simulations, no Rust/Cargo/Solana/Anchor available in assistant environment, no signed on-chain grant/revoke/cap program, no verified devnet trading, no audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase116:** verify Phase115 CI, fix any failures; provision compatible pinned Solana toolchain and actually run disposable validator with captured version/RPC evidence; proceed to owner-controlled on-chain grant/revoke and atomic cap/replay tests. Keep append-only main record.
