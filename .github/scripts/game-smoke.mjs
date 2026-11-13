@@ -7,7 +7,40 @@ const browser = await chromium.launch({
 });
 
 try {
+  // New-game gating: no created hero must never start the scene, including direct URLs.
+  const anonymous=await browser.newPage();
+  await anonymous.goto('http://127.0.0.1:4173/game/play.html?smoke=gate',{waitUntil:'domcontentloaded'});
+  await anonymous.waitForURL('**/game/index.html?hero=required',{timeout:10000});
+  if(!anonymous.url().includes('hero=required')) errors.push('Missing hero did not redirect to Game hub');
+  // Exercise the real Create Hero UI before any gameplay WebGL context opens.
+  await anonymous.locator('#openHeroCreator').click();
+  if(!(await anonymous.locator('#heroEditor').isVisible())) errors.push('Hero editor did not open from the Expedition card');
+  if(await anonymous.locator('#heroEditor input[type="file"]').count()) errors.push('Hero editor still asks players to upload a GLB');
+  await anonymous.locator('#heroNameInput').fill('Smoke Explorer');
+  if(!(await anonymous.locator('#saveHeroButton').isDisabled()) && !(await anonymous.locator('#heroPreviewStatus').textContent()).includes('LIVE 3D PREVIEW')) errors.push('Save Hero enabled before model preview is ready');
+  await anonymous.waitForFunction(() => document.querySelector('#heroPreviewStatus')?.textContent?.includes('LIVE 3D PREVIEW'), undefined, { timeout: 120000 });
+  const creatorVisual=await anonymous.evaluate(()=>{
+    const canvas=document.querySelector('#heroPreviewCanvas'),stage=document.querySelector('.hero-editor-stage');
+    return {canvasWidth:canvas?.width||0,canvasHeight:canvas?.height||0,stageWidth:stage?.clientWidth||0,stageHeight:stage?.clientHeight||0,
+      loaded:!!document.querySelector('#heroPreviewStatus')?.textContent?.includes('LIVE 3D PREVIEW')};
+  });
+  if(!creatorVisual.loaded||creatorVisual.canvasWidth<200||creatorVisual.canvasHeight<250) errors.push('Full-body 3D Hero preview canvas did not render at playable size: '+JSON.stringify(creatorVisual));
+  await anonymous.screenshot({path:'climboria-hero-creator-desktop.png'});
+  await anonymous.locator('#heroPreviewCanvas').hover();
+  await anonymous.mouse.wheel(0,150);
+  await anonymous.locator('#saveHeroButton').click();
+  const created=await anonymous.evaluate(()=>JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null'));
+  if(created?.name!=='Smoke Explorer'||created?.model!=='Adventurer') errors.push('Create Hero UI did not persist expected hero: '+JSON.stringify(created));
+  await anonymous.locator('#closeHeroEditor').click();
+  await anonymous.locator('#openHeroCreator').click();
+  if(await anonymous.locator('#heroNameInput').inputValue()!=='Smoke Explorer') errors.push('Edit Hero did not restore the saved name');
+  await anonymous.locator('#heroNameInput').fill('Smoke Hero');
+  await anonymous.locator('#saveHeroButton').click();
+  const edited=await anonymous.evaluate(()=>JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null'));
+  if(edited?.name!=='Smoke Hero') errors.push('Edit Hero failed to save name: '+JSON.stringify(edited));
+  await anonymous.close();
   const desktop = await browser.newContext({ viewport: { width: 1365, height: 900 } });
+  await desktop.addInitScript(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Smoke Explorer',model:'Adventurer',createdAt:'2026-11-14T00:00:00Z'})));
   const page = await desktop.newPage();
   page.on('pageerror', error => errors.push('desktop pageerror: ' + (error.stack || error.message)));
   page.on('console', message => { if (message.type() === 'error') errors.push('desktop console: ' + message.text()); });
@@ -356,6 +389,30 @@ try {
   if(desktopHeroStability.identity!=='adventurer'||desktopHeroStability.renderer!=='glb'||!desktopHeroStability.cameraApi) errors.push('Desktop movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(desktopHeroStability));
 
   if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || spawnCheck.heroAsset !== 'adventurer') errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
+  const heroNameInWorld=await page.locator('#player-name').innerText();
+  if(heroNameInWorld!=='Smoke Explorer')errors.push('Saved Create Hero name did not appear in live Jarrell HUD: '+heroNameInWorld);
+  const staminaAudit=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sprintStaminaAudit?.());
+  if(!staminaAudit||!staminaAudit.started.sprinting||staminaAudit.started.stamina>=200||
+    !staminaAudit.empty.exhausted||staminaAudit.empty.stamina!==0||
+    staminaAudit.recovering.sprinting||staminaAudit.recovering.stamina<=0||
+    !staminaAudit.restored.sprinting||staminaAudit.restored.exhausted)
+    errors.push('Jarrell survival sprint drain/exhaustion/recovery invariant failed: '+JSON.stringify(staminaAudit));
+  const staminaBeforeRun=await page.evaluate(()=>window.__climboriaJarrellsPeak?.player?.stamina??null);
+  await page.keyboard.down('w');await page.keyboard.down('Shift');
+  let staminaDuringRun=null;
+  try{
+    await page.waitForFunction(before=>{
+      const p=window.__climboriaJarrellsPeak?.player;
+      return p&&p.stamina<before-2&&document.documentElement.dataset.climboriaSprint==='running';
+    },staminaBeforeRun,{timeout:7000});
+    staminaDuringRun=await page.evaluate(()=>window.__climboriaJarrellsPeak.player.stamina);
+  }finally{
+    await page.keyboard.up('Shift');await page.keyboard.up('w');
+  }
+  await page.waitForFunction(before=>window.__climboriaJarrellsPeak?.player?.stamina>before+1,
+    staminaDuringRun,{timeout:7000});
+  if(!(staminaDuringRun<staminaBeforeRun))errors.push('Sprinting did not drain the live stamina resource');
+
   const hudUi = await page.evaluate(() => ({
     playerName: !!document.querySelector('#player-name'),
     statusBars: !!document.querySelector('#health-fill') && !!document.querySelector('#stamina-fill'),
@@ -380,13 +437,20 @@ try {
   const menu=await browser.newPage({viewport:{width:1365,height:900}});
   await menu.goto('http://127.0.0.1:4173/game/index.html',{waitUntil:'domcontentloaded'});
   const createHero=menu.locator('#menuCreateHero');
-  if(await createHero.count()!==1 || !(await createHero.isVisible()) || await createHero.getAttribute('href')!=='./character-lab.html') errors.push('Hub Create Hero header action is missing, hidden, or points to the wrong page');
+  if(await createHero.count()!==1 || !(await createHero.isVisible()) || await createHero.getAttribute('type')!=='button') errors.push('Hub Create Hero action is missing or not an editor button');
+   if(await menu.locator('#openHeroCreator, #heroEditor, #heroNameInput, #heroPreviewCanvas').count()!==4) errors.push('Hero creator card, modal, name input or live preview canvas is missing');
   if(await menu.locator('.grid > .card').count()!==4) errors.push('Hub must contain exactly four destination cards');
   if(await menu.locator('.grid #menuCreateHero, .grid .create-hero-card').count()) errors.push('Create Hero must not appear as a destination grid card');
   if(await menu.locator('.card[data-level="11"]').count()!==1) errors.push('Jarrell’s Peak launch card is missing');
   // The launch card performs a full document navigation. Playwright's click()
   // already waits for that navigation; a concurrent waitForURL can miss the
   // same-document/fast navigation edge and time out after the target URL loaded.
+  // The menu must gate entry for guests, then unlock for a stored valid hero.
+  await menu.locator('.card[data-level="11"]').click();
+  if(!(await menu.locator('#heroEditor').isVisible())) errors.push('Jarrell launch card did not open Create Hero for a guest');
+  await menu.locator('#closeHeroEditor').click();
+  await menu.evaluate(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Smoke Explorer',model:'Adventurer',createdAt:'2026-11-14T00:00:00Z'})));
+  await menu.reload({waitUntil:'domcontentloaded'});
   await menu.locator('.card[data-level="11"]').click();
   await menu.waitForLoadState('domcontentloaded');
   const launchUrl=new URL(menu.url());
@@ -506,6 +570,7 @@ try {
       Object.defineProperty(Object.getPrototypeOf(screen), 'orientation', { configurable: true, get: () => mockedOrientation });
     }
   });
+  await mobile.addInitScript(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Smoke Explorer',model:'Adventurer',createdAt:'2026-11-14T00:00:00Z'})));
   await mobile.goto('http://127.0.0.1:4173/game/play.html?smoke=mobile', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,

@@ -1,0 +1,221 @@
+# Climboria Game Development Record
+
+**Last reviewed:** 2026-11-14 (Philippine time)  
+**Repository:** `CryptoDilis/Climboria`  
+**Owner:** Game development (Jarrell's Peak and Arena only)  
+**Working branch:** `game/hero-creation-gate-2026-11-14` (active); previous baseline branch `game/development-record-2026-11-14`  
+**Status:** Create Hero editor and entry gate passed exact-code-head GitHub CI and desktop screenshot inspection; **original production GLB performance and physical device not verified**. No production/live claim.  
+**Default branch observed:** `main` (reviewed at recent indexed commit `0749b47190b3d8f032856462aa35328c4e820a05`; confirm exact remote HEAD before integrating).  
+**Tracking PR:** [#297](https://github.com/CryptoDilis/Climboria/pull/297) (draft, unmerged); old docs-only #295 closed superseded; initial record commit: `3287bb92159e6f9ad827f1e1f631e919f343c7b5`.
+
+## Strict scope and resumption rules
+
+- ONLY Jarrell's Peak and Arena are gameplay worlds. Do not reintroduce the retired 11 Mountains concept.
+- Do not edit DEX, Swap, Launchpad, trading execution or `docs/DEX_SWAP_LAUNCHPAD_DEVELOPMENT_RECORD.md`.
+- Start every future **Continue** by reading this record and checking current branch/main, game files, game-related PRs, commits, and exact-head CI. Resume the next unfinished task; never claim that past work or old-green CI verifies a new commit.
+- Work on `game/*` branches and submit PRs; no merge with failing required checks. Make small, scoped changes. Update and commit this record after each meaningful code change, bug fix, CI verification, or merge. Include SHA, PR, tests, failures and precise next task.
+- Avoid shared files and global workflows unless a targeted change is necessary, coordinated, and separately verified. Do not silently redesign existing gameplay.
+- Preserve existing character artwork, soundtrack, settings/minimap, Dota-style left-click movement, desktop behavior, and intended mobile landscape controls. Wildlife and snakes remain disabled unless explicitly reauthorized.
+
+## Verified baseline from GitHub inspection (2026-11-14)
+
+### Reviewed files / evidence
+- `GAME_CONCEPT.md` (main, blob `7b3a16f9c417cc2bfae8b44b6d4b0291eaaf4692`): Jarrell's Peak is current launch world and endless-feeling wilderness; Arena remains future/nonplayable. Marketplace is demo and Inventory local preview. Concept is not evidence of deployed or working systems.
+- `AGENTS.md` (main, blob `a26843812a8c8683a5a77890ddec83df93a140c1`): required preservation, truthful verification, responsive/mobile target and no mock-only completion.
+- `game/index.html` (main, blob `38868edb6889783fd14bdcf2e8b61c1031592828`): Game hub/menu exists; implementation not newly browser-tested in this audit.
+- `game/play.html` (main, blob `ee0be518d118d943253cbe51ab2b952d62aac998`): Jarrell gameplay/HUD/mobile-layout source present; runtime gameplay not newly tested in this audit.
+- `.github/workflows/browser-smoke.yml` (main, blob `2af9b03584a8279e92dd0d518ccda47f9a2e4d61`): read as historical CI configuration; separate dedicated gameplay workflow is described in PR #284 but must be checked at present HEAD before reporting a new success.
+- `docs/ACTIVE-HANDOFF-2026-11-11.md`: historical exact-head Game Browser Smoke run [43102883650](https://github.com/CryptoDilis/Climboria/actions/runs/43102883650) reported **SUCCESS** at `8c4e86994e1ed203ffa26803874924e705973462`, including desktop and mobile smoke. This is **historical evidence only**, not current-HEAD validation.
+- [PR #291](https://github.com/CryptoDilis/Climboria/pull/291) / [commit `ff4c3e6`](https://github.com/CryptoDilis/Climboria/commit/ff4c3e64637110ae4eb928d39c45a00d6e3b4905): Game hub official Support link.
+- [PR #284](https://github.com/CryptoDilis/Climboria/pull/284): dedicated Jarrell gameplay smoke split proposed/recorded; no current run checked in this audit.
+- [PR #285](https://github.com/CryptoDilis/Climboria/pull/285): isolate finished desktop WebGL context before mobile smoke; prior CI loading issue and proposed test fix documented.
+- [commit `1de8538`](https://github.com/CryptoDilis/Climboria/commit/1de853845b8c80527bd5dd061c678ed7b355710c): cave rock materials and audit.
+- [commit `87b730d`](https://github.com/CryptoDilis/Climboria/commit/87b730d4f4c201c27e206aa8d32708eece17533c): Jarrell/Arena-only conceptual scope.
+
+### Completed in this record task
+1. Reviewed the above current files, relevant history and PR summaries; distinguished design from implementation.
+2. Established an independent `game/development-record-2026-11-14` branch.
+3. Created this durable handoff record as a documentation-only change. **Affected file:** `docs/GAME_DEVELOPMENT_RECORD.md`. No game code, global/shared release files, or DEX files changed.
+4. Current task tests: documentation-only audit, **no new runtime tests executed**; exact-head Actions run: **none yet**. Historical successful run above is not a substitute.
+
+## Existing features: verified status and limitations
+
+| Area | Status |
+| --- | --- |
+| Jarrell's Peak world | Source exists; not newly verified playable at current HEAD |
+| Desktop keyboard/mouse and Dota-style left-click | Required; current-head behavior pending |
+| Mobile touch / landscape / Redmi 14 5G | Source and prior smoke evidence exist; physical Redmi device untested |
+| Spawn, movement, climb, swim, fishing, collision, treasures, death/respawn | Expected preserved mechanics; each needs smoke/test evidence before marking current-head passed |
+| Arena playable multiplayer | **Not implemented/verified** per GAME_CONCEPT.md; Game hub future-status panel only |
+| Multiplayer/chat, marketplace and rewards | Planned/demo; not certified live |
+| 11 Mountains | Out of scope, no restoration |
+
+## Follow-up inspection on 2026-11-14
+
+- Reviewed `.github/scripts/game-smoke.mjs` (main blob `be64f179cd4aec77f460c9c8ae131f3bb5f3c2b4`): browser smoke uses Chromium/SwiftShader and asserts 3D render readiness, original adventurer GLB identity, jump/landing, terrain/water/landmarks and additional gameplay state. Source inspection only; **not run here**.
+- Attempted fetch of `.github/workflows/game-browser-smoke.yml` on main: **404 NOT_FOUND**. Its existence/name must not be assumed from PR #284. Confirm whether standalone gameplay workflow exists under another path or gameplay still runs from `.github/workflows/browser-smoke.yml` before dispatch or edits.
+- No new Actions run was launched; exact-head Game CI still pending. Initial record committed at `3287bb92159e6f9ad827f1e1f631e919f343c7b5`.
+
+
+## Priority change — Hero creator before gameplay (2026-11-14, PHT)
+
+**Owner decision:** The **Create Hero card belongs in the Expedition/Game hub**. Players must not start Jarrell's Peak without first creating a hero. Players can edit a saved name, see a complete 3D live preview, and enter only when their hero is valid and saved. The GLB is a bundled official model, **not a required file upload**. This task takes priority over earlier gameplay performance work; Arena remains planned.
+
+### Actual code changes, committed on `game/hero-creation-gate-2026-11-14`
+- `game/index.html` — added independent hero creation card and accessible editor modal, 3D full-body model loaded from `../assets/characters/Climboria_Hero.glb`, rotate/zoom preview, name input/validation, local browser save/edit and launch-gate navigation. No additional world destination added. Commit `047130789462cace299a44b57d484c82706e52de`, follow-up loader fix `ed36d257bdbac21e75eeeb25c71f6aded657b7d2`, preview reopen and pinch fix `c725e8815d615d8e905ac045143969a5fb328520`.
+- `game/play.html` — direct URL preflight requires a valid locally saved hero; denies world setup otherwise, returns to menu, and displays saved hero name on in-game HUD. Commits `726019d1f2cb948346dc7d5544f02c52817abf3e` and `8dc057fad114fbce5898808435c31ecba463cac1`.
+- `.github/scripts/game-smoke.mjs` — negative test for anonymous direct-world entry, valid desktop/mobile local hero fixtures, and menu card gating coverage. Commit `2a4166f1ac0702aea28029385537ada157f52f69`.
+- `docs/GAME_DEVELOPMENT_RECORD.md` — updated durable task handoff on the active branch; commit SHA on GitHub file history.
+
+### Important technical findings
+- Prior `game/index.html` linked Create Hero to `game/character-lab.html`, a standalone *developer GLB upload tester* with no player-creation persistence; existing launch click directly navigated to `play.html` without hero validation.
+- Runtime `game/play.html` already loads official `../assets/characters/Climboria_Hero.glb`; uploading a model from a user's computer is not needed.
+- Current hero name saved as `climboria-created-hero-v1` in localStorage (model `Adventurer`). This is **local-only** and can be cleared or manually edited by browser users. It is *not secure account-level identity or anti-cheat validation*.
+- The new model preview uses the existing Three.js and GLTFLoader distribution; on slow devices, the 42.9 MB GLB is a performance concern. Loading and full-body framing require real browser verification.
+- `game/character-lab.html` remains an independent developer test utility, not part of player create-hero flow.
+
+### Tests / PR / status
+- Static inline JavaScript syntax parsing for `game/index.html` and `game/play.html`, and async-wrapped syntax parsing for `.github/scripts/game-smoke.mjs`, completed successfully via JavaScript parser on this branch. **These are syntax-only checks**, not browser execution. Static inspection of source and previous regression test source complete. **New exact-head Playwright, GitHub Actions and physical mobile-device results have not been observed yet**; therefore implementation is not considered complete or production-ready.
+- Current Game PR: [#297](https://github.com/CryptoDilis/Climboria/pull/297) (draft, unmerged). Exact-head initial GitHub Actions [Browser Smoke run 43461952553](https://github.com/CryptoDilis/Climboria/actions/runs/43461952553) and [Jarrell gameplay run 43461952694](https://github.com/CryptoDilis/Climboria/actions/runs/43461952694) were **QUEUED** when observed on commit `bbda6718d5558946beea68ed6e07ae1fa34191e5`. These do NOT verify the later preview-pinch fix commit `c725e8815d615d8e905ac045143969a5fb328520`; inspect new exact-head CI and final results before merge.
+- No changes to DEX, Swap, Launchpad or their progress record.
+
+### Precise next task (highest priority)
+1. Verify the hero modal script initializes in desktop/mobile browsers and the official GLB loads, renders full body and idles; validate rotation, zoom, name edit/save, exit/reopen and load-failure behavior.
+2. Confirm direct `play.html` URL with no local hero fails closed; valid hero redirects correctly into world and custom name appears on HUD; check browser storage-denied states.
+3. Run targeted gameplay smoke and examine exact-head CI + screenshots. Fix first failing issue and record accurate PR, commit SHA and Actions link.
+4. Check 42.9 MB GLB load and mobile touch preview performance; optimize safely without changing the approved in-game character.
+5. Only after hero creation is green, continue Jarrell's Peak core mechanics and mobile smoke.
+
+
+## Remaining bugs, risks, blockers
+
+- No current-head end-to-end gameplay execution performed for this record task, so remaining runtime bugs are **unknown**, not zero.
+- Prior mobile WebGL 42.9 MB hero GLB load contention recorded in PR #285; confirm fix on exact current head rather than assuming.
+- Current branch CI and browser screenshots are pending; physical-device verification not available.
+- Arena shared-world capacity (target >1,000) is aspirational, without load-test evidence.
+- Do not deploy/announce multiplayer, economy, rewards or Arena as live from concept text.
+
+## Exact next steps (in order)
+
+1. **P0: Validate current Game baseline.** Determine actual dedicated Game workflow path (the assumed `game-browser-smoke.yml` returned 404), review `.github/scripts/game-smoke.mjs`, complete `game/play.html`, and recent game-specific PR status. Verify the latest exact-head gameplay Actions workflow and inspect failed job logs if any. Document run URL, SHA and individual desktop/mobile results here.
+2. **P0: Run targeted game smoke.** Execute the existing desktop/mobile Playwright flows against the game branch/current main (or dispatch dedicated workflow safely), validating Game hub → character entry → Jarrell spawn → movement/camera/climb/collision/swim/fishing/treasure/respawn/settings → menu; confirm screenshot artifacts. Record what the script actually asserts, not desired coverage.
+3. **P1: Fix first reproducible Game-only failure.** Change only necessary `game/**` or game-specific test files, preserve game mechanics/art and original music, add regression coverage, verify green exact-head CI.
+4. **P1: Mobile usability/performance.** Test landscape touch, HUD and safe areas, sustained WebGL performance and memory behavior; distinguish emulated browser from actual Redmi 14 5G testing.
+5. **P2: Arena planning only after Jarrell stability.** Maintain Arena as 'Coming Soon' until separate gameplay, server authority, moderation and load testing exist; do not claim 1,000 concurrent players.
+6. For each completed step update this file with **actual files, branch, PR number, commit SHA, CI run URL/status, failed tests, blockers and next executable step**, and commit on the game branch. Submit a game-only PR and merge only after required successful tests.
+
+## Progress history
+
+| Date (PHT) | Branch / PR | Commit | Affected files | Verification | Result / Next |
+| --- | --- | --- | --- | --- | --- |
+| 2026-11-14 | `game/development-record-2026-11-14` / no PR | `3287bb92159e6f9ad827f1e1f631e919f343c7b5` | `docs/GAME_DEVELOPMENT_RECORD.md` | GitHub source/PR/history audit; no new CI | Baseline recorded | 
+| 2026-11-14 | `game/development-record-2026-11-14` / PR #295 (draft) | `ef57267b9325d1889f9179114f5ee8f09e224727` | `docs/GAME_DEVELOPMENT_RECORD.md` | Game smoke source reviewed; dedicated workflow guessed path returned 404; CI not run | Determine correct workflow path and exact-head CI, then targeted game fixes |
+
+### 2026-11-14 supplemental handoff checkpoint
+- Branch: `game/hero-creation-gate-2026-11-14`; draft PR: #297; latest observed code commit: `c725e8815d615d8e905ac045143969a5fb328520`.
+- Affected files for latest fix: `game/index.html`. Resumes the preview render loop if editor was closed during GLB loading; adds mobile two-finger pinch zoom.
+- Exact-head CI for latest fix: pending; do not mark old queued runs green for newer head. No live deployment/physical-device test claimed.
+- Next: inspect exact-head #297 CI conclusions and browser screenshots, then diagnose and fix failing test or runtime behavior.
+
+### Continue checkpoint — 2026-11-14 (PHT)
+- Read this record before resuming; current priority remains **Create Hero real browser verification**, not in-game feature expansion.
+- Prior recorded head `e73665ccdf913447981724c1b33739874b73019a`: [Validate run 43462173597](https://github.com/CryptoDilis/Climboria/actions/runs/43462173597) **SUCCESS**; [Browser Smoke run 43462173071](https://github.com/CryptoDilis/Climboria/actions/runs/43462173071) **SUCCESS**. [Jarrell Gameplay run 43462173167](https://github.com/CryptoDilis/Climboria/actions/runs/43462173167) **IN PROGRESS** at last check, running strict desktop/mobile gameplay step; not passed.
+- More targeted UI regression coverage committed: `61923ddefcc337f0b4d1ecd3dcd4c23952204434`, followed by race-safe assertion update `961f04ecbd120637ff0d0b537aa43c59427efe7c`. Affected file `.github/scripts/game-smoke.mjs`. Added browser-created hero, no-upload UI assertion, full-size render canvas evidence, save/reopen/edit behavior before desktop and mobile direct play tests. Tests **not yet verified** on the newest SHA.
+- Exact current-head PR and Actions results must be checked anew; no merge until exact-head green gameplay and validation. The recorded prior SUCCESS results are superseded by these new test commits.
+- Unresolved: true GPU/model preview pixels and full-body framing not confirmed from screenshots, physical Android not tested; localStorage identity remains local-only, not secure account identity.
+- **Next:** inspect Actions for newest head, investigate failures via job logs, add screenshot capture/visual review of hero modal if CI finishes, fix first reproducible issue. Do not touch DEX scope.
+
+### Screenshot evidence checkpoint — 2026-11-14 (PHT)
+- Reviewed actual dedicated workflow: `.github/workflows/gameplay-smoke.yml` exists (the earlier guessed `game-browser-smoke.yml` path was incorrect). It runs a CI-only resized copy of original 42.9 MB GLB, so success does **not** measure unmodified production GLB performance.
+- Prior `e73665ccdf913447981724c1b33739874b73019a`: Validate [43462173597](https://github.com/CryptoDilis/Climboria/actions/runs/43462173597) SUCCESS; Browser Smoke [43462173071](https://github.com/CryptoDilis/Climboria/actions/runs/43462173071) SUCCESS; Game smoke [43462173167](https://github.com/CryptoDilis/Climboria/actions/runs/43462173167) CANCELLED by newer PR push, not a pass.
+- Commit `130f89a77360d0d04c9c246a005125ad35b265de` updates `.github/scripts/game-smoke.mjs` to screenshot the live Hero editor after the official GLB loads. Commit `466caa4103760eb0248f46e8732840f753713021` updates game-only `.github/workflows/gameplay-smoke.yml` to upload `climboria-hero-creator-desktop.png` with existing gameplay captures. Not yet tested on exact head.
+- User-visible status: still draft PR #297, no merge/deploy. Next check exact-head Validate, Browser Smoke, Jarrell's Peak Gameplay Smoke and hero screenshot artifact; identify any failing job and fix it before merge. If this succeeds, run a realistic 42.9 MB production-model load/performance check separately on desktop and mobile.
+
+### Exact-head gameplay acceptance and visual review — 2026-11-14 PHT
+- All three required CI workflows **SUCCESS** on exact PR head `155cab0421457a117354d2224d0da7f971fd78ce`: [Validate Climboria 43463067990](https://github.com/CryptoDilis/Climboria/actions/runs/43463067990), [Climboria Browser Smoke Test 43463067868](https://github.com/CryptoDilis/Climboria/actions/runs/43463067868), [Jarrell's Peak Gameplay Smoke 43463067833](https://github.com/CryptoDilis/Climboria/actions/runs/43463067833). Gameplay job `132014891206` completed successfully, including desktop/mobile gameplay assertions and screenshot upload.
+- Gameplay run screenshot artifact `14056608979` (`climboria-gameplay-screenshots`, 3,733,052 compressed bytes, digest `sha256:85604e006e45db25c05e5188a166de0e6c18eab05f08ee662a53a2799ad2be3a`) downloaded and inspected. `climboria-hero-creator-desktop.png` at 1280×720 shows a loaded **complete standing figure from head to boots**, name input, Save Hero button, and preview instructions. The Enter button is disabled at capture as expected before save. The figure occupies a limited fraction of the canvas; visual framing can be improved separately if requested, but body is not cropped.
+- Evidence is from GitHub CI's **texture-resized GLB**, not the untouched 42.9 MB production model. No physical Android / Redmi 14 5G hardware was tested. No claim of production mobile performance or cloud-backed identity.
+- This record update adds only documentation; **new record commit is not the tested code SHA**. Do not confuse docs HEAD with previously verified gameplay commit. PR #297 remains draft and unmerged until any remaining release blockers are addressed.
+- **Next priority:** run an isolated browser check of the unmodified production GLB on desktop and mobile (load timing, memory, full-body preview/rotation, error recovery), then consider a licensable/attributed optimized production derivative only with verified asset rights; keep Jarrell game code isolated.
+
+### Production original-GLB verification infrastructure — 2026-11-14 PHT
+- Created `.github/scripts/game-hero-original-glb-smoke.mjs` in commit `a688a7eb3fbe6443c6ac0cdce028798f8f9eaeae`. Targeted Playwright checks run **desktop and mobile-portrait** hero creator on separate browser contexts, load the unmodified GLB, verify full-body preview canvas dimensions, UI save/enter behavior, overflow and capture screenshots. Tests have not yet run or passed.
+- Created game-only workflow `.github/workflows/game-hero-original-glb-smoke.yml` in commit `bb930e488a889e1cedcd0415d5992459cb063dcd`. It checks that the original GLB is larger than 10 MB, performs **no optimization or replacement**, starts local server, uses a bounded 6-minute browser test, uploads desktop/mobile preview evidence. This is software-rendered Chromium, **not physical-device performance**.
+- This workflow is intentionally isolated from established optimized-asset gameplay smoke. If original GLB load fails or times out, record a production asset-size/performance blocker instead of weakening the load test.
+- No marketplace, DEX, Swap, Launchpad, trading, or Arena gameplay edits. PR #297 still DRAFT. Next: verify exact latest CI conclusions and screenshot artifact, inspect job logs if red; do not merge with failing checks.
+
+### Continue checkpoint — original hero CI and mobile action placement (2026-11-14 PHT)
+- **Exact-head `0abc0b282deec2b9990243929c41f7b31920f0cc` CI:** [Validate 43464164159](https://github.com/CryptoDilis/Climboria/actions/runs/43464164159) SUCCESS; [Browser Smoke 43464163991](https://github.com/CryptoDilis/Climboria/actions/runs/43464163991) SUCCESS; [Original GLB Smoke 43464163943](https://github.com/CryptoDilis/Climboria/actions/runs/43464163943) SUCCESS. [Jarrell Gameplay Smoke 43464164048](https://github.com/CryptoDilis/Climboria/actions/runs/43464164048) was IN PROGRESS at the beginning of this checkpoint and must be rechecked (do not call green yet).
+- Original-model CI job `132018786694` confirmed untouched `Climboria_Hero.glb` is **42,923,204 bytes**. Logs measured **959 ms desktop** and **866 ms Chromium mobile-emulated** creator flow in high-resource GitHub runner; not a field-device performance guarantee. Both hero-save paths passed, no horizontal modal overflow or GLB upload control. Image artifact [14056934008](https://github.com/CryptoDilis/Climboria/actions/runs/43464163943/artifacts/14056934008) downloaded and inspected. Screenshots showed a complete full-body model on desktop and mobile portrait, including hair, torso, legs, and boots.
+- **Mobile usability finding:** in the 390×844 preview screenshot, the Save/Enter buttons sat just below the initially visible fold because explanatory notes preceded the action row. A person could scroll, but important controls were initially obscured.
+- Fix commit `dddb8074f65367d805ecc7d9ef0558cf6d7f1e6a` changes ONLY `game/index.html`: move Save/Enter directly after name input; decrease mobile preview stage height from 48dvh to 39dvh (280px minimum); two-column mobile buttons. Hero model, animations and all gameplay remain unchanged.
+- Regression commit `4d5b69908c4ab90436629edd7bc753fe115cc584` updates ONLY `.github/scripts/game-hero-original-glb-smoke.mjs`: assert both buttons fully fit initial mobile viewport without scroll. Exact-new-head CI pending. Do not merge PR #297 unless these pass.
+- **Next:** check dedicated original GLB and gameplay CI on the new PR head; inspect updated screenshots for controls and unclipped character. If red, fix first reproducible failure. Real Android device still untested; local-only hero identity still not cloud-backed.
+
+### User-requested pose correction — 2026-11-14 PHT
+- User specifically wants a **seated pose in the Create Hero live preview**, rather than the standing/running pose. Continue prioritizing the Expedition menu hero creator before in-game work.
+- Root cause confirmed from [gameplay Actions logs 43463067833](https://github.com/CryptoDilis/Climboria/actions/runs/43463067833): bundled original GLB animations include `Running`, `Walking`, **`Chair_Sit_Idle_F`**, etc., but no generic named `Idle` animation. Existing preview selected `gltf.animations[0]` (Running) because `/idle/i` fallback did not correctly express seated preference. Gameplay correctly avoids seated clips during locomotion and is unchanged.
+- Fix on branch `game/hero-creation-gate-2026-11-14`, code commit `669708d7d378bb614de82eed34d40080468f2358`: in `game/index.html`, prefer exact `Chair_Sit_Idle_F` for live preview; use named seated/standing-rest clips as fallback, otherwise static, **never default to Running**. Expose selected clip in `document.documentElement.dataset.climboriaHeroPreviewClip`; preview status says seated. In-game `game/play.html` and character GLB file untouched.
+- Test commit `9f0363243f7a2c40958a943f1dcae428c604ee7f`: original-production-GLB Playwright smoke asserts `Chair_Sit_Idle_F` selected on desktop and mobile. Exact new-head CI and screenshot evidence pending; no merge/live claim.
+- Next: check latest original GLB workflow; visually inspect seated model screenshot (chair not provided by existing clip; do not claim seated on furniture). If seated framing or pose is broken, adjust creator-only camera/framing. Verify all required CI before any merge. Separate physical-device performance remains unverified.
+
+### Seated preview visual correction follow-up — 2026-11-14 PHT
+- Exact earlier head `af9322710066b74300651d6359cd595a36d934ed`: [Original GLB Smoke 43465585958](https://github.com/CryptoDilis/Climboria/actions/runs/43465585958) SUCCESS, [Browser Smoke 43465586046](https://github.com/CryptoDilis/Climboria/actions/runs/43465586046) SUCCESS, [Validate 43465586006](https://github.com/CryptoDilis/Climboria/actions/runs/43465586006) SUCCESS; [Jarrell gameplay 43465585894](https://github.com/CryptoDilis/Climboria/actions/runs/43465585894) IN PROGRESS at first check, not accepted.
+- Visually reviewed exact original-asset desktop and mobile screenshot artifact `14058151565`: `Chair_Sit_Idle_F` animates correctly, but avatar appears suspended in space without chair/ground support. Full figure is visible but small.
+- Creator-only code fix `4e09faf4a8832b90b2addf92500d2362ca1e7730` to `game/index.html`: add a modest, separately rendered stationary wooden resting perch beneath the GLB seated pose, tighten initial camera distance from 3.9 to 3.0, constrain zoom 2.4–6.5. These meshes do NOT alter hero model, skeleton, gameplay, environment or other project areas.
+- Regression `1d9e9d25f529ef249e63ce0b417533fc7e6c1d48`: `.github/scripts/game-hero-original-glb-smoke.mjs` now asserts preview seat initialized in original production GLB browser test, in addition to official sitting clip and full-body preview. **Current change not visually or CI verified yet**; inspect updated screenshot and fix overlap or clipping if needed before merging.
+- Strict scope: Game Expedition hero creator only. PR #297 draft. Next: inspect exact-head original GLB desktop/mobile screenshot and final Actions outcomes; address first failure. Do not claim actual Android test.
+
+### Follow-up screenshot audit: pedestal occlusion bug — 2026-11-14 PHT
+- Inspected [Original GLB Smoke run 43466242552](https://github.com/CryptoDilis/Climboria/actions/runs/43466242552) on exact head `7082062f04027d96e27c2e1c938acafa55458f45`: SUCCESS; [Validate 43466242575](https://github.com/CryptoDilis/Climboria/actions/runs/43466242575) and [Browser Smoke 43466242391](https://github.com/CryptoDilis/Climboria/actions/runs/43466242391) SUCCESS; [Gameplay 43466242412](https://github.com/CryptoDilis/Climboria/actions/runs/43466242412) IN PROGRESS at initial check (not certified passed).
+- Extracted and visually inspected the desktop and mobile CI screenshots in artifact [14058601709](https://github.com/CryptoDilis/Climboria/actions/runs/43466242552/artifacts/14058601709). **Visual FAIL despite green test**: the added tall wide cylindrical wooden pedestal rendered in front of the hero's abdomen/legs, obscuring almost the entire lower body. Do NOT accept this as finished based solely on functional CI.
+- Fix commit `cdc0806aab26b1f754f471a686494105b06b32df` to `game/index.html`: remove occluding solid cylinder, replace with modest thin open-frame bench (seat and slender corner legs/backrest) behind the hero, ensure bench rotates with preview model. Preserve original GLB, seated `Chair_Sit_Idle_F` animation, gameplay and game menu behavior.
+- Test update commit `f53cd1e789dfbcf68d139bbce57029b9ff5f3262`: `.github/scripts/game-hero-original-glb-smoke.mjs` asserts the new `open-frame-bench` preview status. **Visual screenshot review remains mandatory**; dataset check cannot prove non-occlusion.
+- Exact-new-head CI pending; PR #297 draft/unmerged, no deployment. Next: verify exact-head Validate, Browser Smoke, Original GLB Smoke, Game Smoke; download newest desktop+mobile screenshot and visually inspect the model/seat relationship. If still occluded or misaligned, fix only game hero creator and update this record. Physical Android not tested.
+
+### Second visual review: open-frame chair also blocked hero — 2026-11-14 PHT
+- Inspected screenshot artifact [14059191932](https://github.com/CryptoDilis/Climboria/actions/runs/43466826681/artifacts/14059191932) from original-GLB CI on code commit `f53cd1e789dfbcf68d139bbce57029b9ff5f3262`. CI original GLB, Validate and Browser Smoke were SUCCESS, but screenshot shows the open-frame chair's crossbar across the hero's upper chest/abdomen and vertical legs obscuring the hero. **Visual review therefore rejects the design despite green automated tests**.
+- Fix `e74271f5568e7b2aac5ddce34c4051d465f08407` updates ONLY `game/index.html`: removes distracting chair back and crossbars completely; replaces with a shallow low stool beneath/behind the seated figure. Keeps the original `Chair_Sit_Idle_F` clip, preview camera, ability to orbit stool and model together, 42.9 MB GLB unchanged and gameplay unchanged.
+- Regression `fb0c8f2b1ea28c0170a5217b2a191bb14d8a94ea` changes ONLY `.github/scripts/game-hero-original-glb-smoke.mjs` to assert new low-stool mode in preview. Functional check does not replace screenshot visual inspection.
+- Next: inspect exact new-head four CI workflows and original-GLB desktop/mobile screenshots. Require that hero's face, torso, hands, pants, boots are unobstructed. If stool remains visually unsuitable, prefer **no chair at all** over hiding the user-requested hero, and remove the prop. Do not merge until visual check green. PR #297 remains draft.
+
+### User correction — A-pose is the accepted Create Hero preview (2026-11-14 PHT)
+- **Explicit user instruction supersedes earlier seated preview requirements**: the hero should be in a normal **standing A-pose**, with arms angled diagonally downward/out and feet apart. Earlier seating/chair implementations made the hero look like a mermaid and must not return. Do NOT infer that an earlier screenshot acceptance of seated pose remains valid.
+- Scope strictly **Expedition hub Create Hero preview**, not actual gameplay character. Name editing, local save, hero gate and full-body orbit/zoom remain required.
+- Code commit `5bcefc88be7b04f6b189011b1ed6884c9fd78bec` (`game/index.html`): remove all stool, chair, furniture, seated and running preview clips; keep original GLB untouched; pose dedicated GLB instance via upper/lower arm and upper/lower leg skeleton joints into symmetric **static A-pose** with eight direct bone alignments; recenter feet at floor; show A-POSE in preview. Animation mixer not played, so no gait or seated movement. Original in-game `game/play.html` untouched.
+- Test commit `d7ed13b7086ae9ef223febf4b213e937414cb530` (`.github/scripts/game-hero-original-glb-smoke.mjs`): replace obsolete chair/sitting assertions with strict A-pose/no furniture/no animation assertions. Enhanced verification with code commit `f0d6bd1b83d53d5eff61d2c711389947c00c2cd2` to expose actual posed upper arm/leg direction vectors, and test commit `6b1564a6eeb9a77cd091a7d78a6306b9b6dca96b` to assert symmetric downward-and-outward arm vectors and upright legs on **both desktop and mobile-emulated original 42.9 MB GLB**. All changes game-only.
+- Static JavaScript syntax parsing PASS for latest `game/index.html` inline scripts and `game-hero-original-glb-smoke.mjs`; browser execution and visual screenshot acceptance are NOT yet confirmed on new pose.
+- Last previously observed CI on prior seated-head `930c01711667bebedeaf9a886ba1709c9e881620`: Validate, Browser Smoke and Original GLB passed, Gameplay was in progress; these do not validate A-pose changes.
+- PR [#297](https://github.com/CryptoDilis/Climboria/pull/297) remains DRAFT/UNMERGED, not live. The earlier seated design is **rejected**, regardless of prior green CI.
+- **Immediate next:** inspect exact-head A-pose CI. If original GLB test fails, inspect job logs (likely rig name/layout or incorrect bone angles), fix game-only files; download original GLB desktop and mobile screenshots and visually verify the standing pose and uncropped face, hands, legs, and feet. Only then consider merge readiness and in-game work. Physical-device performance and cloud identity remain separate unresolved concerns.
+
+### A-pose exact-code CI and full-body screenshot review — 2026-11-14 PHT
+- Original A-pose code/test head `6b1564a6eeb9a77cd091a7d78a6306b9b6dca96b` CI: [Validate 43469127607](https://github.com/CryptoDilis/Climboria/actions/runs/43469127607) SUCCESS, [Browser Smoke 43469127671](https://github.com/CryptoDilis/Climboria/actions/runs/43469127671) SUCCESS, [Original GLB Smoke 43469127600](https://github.com/CryptoDilis/Climboria/actions/runs/43469127600) SUCCESS; [Gameplay Smoke 43469127724](https://github.com/CryptoDilis/Climboria/actions/runs/43469127724) was IN PROGRESS when first reviewed and is NOT claimed passed here.
+- Downloaded [A-pose screenshot artifact 14059553273](https://github.com/CryptoDilis/Climboria/actions/runs/43469127600/artifacts/14059553273). Actual 1280×720 desktop and 390×844 mobile-portrait screenshots visually confirm upright *standing A-pose* with diagonal slightly lowered arms, straight legs, no stool/chair, natural hero shape. Old mermaid/seated look removed. Original model in full-body viewport and functional name/Save/Enter present.
+- **Observed remaining visual defect:** the dark `LIVE 3D PREVIEW` status bar was positioned across the boots at the bottom of both screenshot canvases, hiding part of the shoes. This fails the user's earlier requirement to see the **entire** character, despite green functional CI.
+- Creator-only fix `c3fa98f2c04f956d2b84e9aa6e052815dfb0adb1` in `game/index.html`: move ready status to small upper-left overlay, shorten label to `LIVE 3D PREVIEW · A-POSE`; preserve loading/error messages at bottom. The full head-to-boots character should now remain unobstructed.
+- Regression `9dc21ba94c48c3cc9141bb50ef820de2d17f783d` in `.github/scripts/game-hero-original-glb-smoke.mjs`: ensure loaded preview status remains at top of stage, not across boots, desktop and mobile.
+- JavaScript inline-script and original-GLB smoke syntax parsing PASS on these changes. **New screenshot and exact-head CI for label fix still pending**; do not claim completed merge/deployment. Do not touch gameplay GLB / DEX / Swap / Launchpad / ClimbX.
+- Next: verify latest exact-head original GLB+Validate+Browser+gameplay CI; inspect screenshot again and accept A-pose only if both boots fully visible and no other model part is obscured. Keep PR #297 draft until release gates.
+
+### Create Hero A-pose completed CI / integration handoff — 2026-11-14 PHT
+- **Exact verified code/record commit:** `0eaf98128a0f55e7aac0e93466833925fb387e04`. All **four** workflows completed SUCCESS at this exact SHA: [Validate 43469750579](https://github.com/CryptoDilis/Climboria/actions/runs/43469750579), [Climboria Browser Smoke 43469750439](https://github.com/CryptoDilis/Climboria/actions/runs/43469750439), [Original unmodified GLB A-pose Smoke 43469750573](https://github.com/CryptoDilis/Climboria/actions/runs/43469750573), [Jarrell Gameplay Smoke 43469750420](https://github.com/CryptoDilis/Climboria/actions/runs/43469750420). **Do not claim this docs-only follow-up commit was retested until its own CI completes.**
+- Visual confirmation: inspected exact original-GLB desktop/mobile screenshots in artifact `14059349709`. Approved **standing A-pose**, arms diagonally angled down/out, full body from head through both boots visible, no chair, stool or "mermaid" pose. Name/Save/Enter controls visible in both rendered layouts. Detailed evidence added to PR #297 conversation.
+- Integration finding at this checkpoint: [PR #297](https://github.com/CryptoDilis/Climboria/pull/297) still **OPEN/DRAFT and `mergeable=false`**; the game branch was ~51 commits behind active main when inspected. A compare from shared merge base `4e3f7fed3e8d11bb18f4a0965078db1a981989ea` to observed main `19d5afba669934f7bc3ffedeab7e8fd03e8178bd` listed only unrelated DEX/Swap/ClimbX/docs/production-browser changes, with **no overlapping Game files**. This does not by itself prove future clean merge, and main keeps moving. Integrate without overwriting others; verify on latest main before approving/merging.
+- Strict scope: only Game hub / Jarrell's Peak / Arena planned. No 11 Mountains, DEX, Swap, Launchpad, ClimbX or their records. No live deployment claimed; real Android performance not field-tested; localStorage hero save is browser-local (not account persistence).
+- **Next executable steps:** safely synchronize the game PR with current `main` using an ordinary merge commit if possible, with all seven Game PR files preserved and main's non-game files untouched; check mergeability and exact synchronization-head CI. Only if all required checks pass and no conflicts, move PR out of draft and merge. After integration, start in-game Jarrell's Peak hero identity/HUD gameplay, preserving the verified A-pose exclusively in Create Hero UI.
+
+### Integration synchronization — 2026-11-14 PHT
+- **Ordinary two-parent merge commit** `dce1fdebc622bebe2fa3696d8ecdba4f3baaf3e3` created on `game/hero-creation-gate-2026-11-14`; parents are game-record head `12716eaa0488e21bd32a8e18ec19e3949defab2d` and then-observed main `023337d9d97268d3c880324074cee4d17daa779a`. Used main's exact tree and overlaid the existing seven Game PR file blobs, then advanced the Game branch with a fast-forward branch-ref update guarded by its expected previous SHA. This preserves both branch histories and untouched non-game main files.
+- **Safety evidence:** compare of common merge base to then-main showed only DEX/Swap/ClimbX/related CI & docs file changes, **zero overlap** with the seven Game PR paths. Post-sync blob comparisons verified `dex/index.html` and `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` unchanged from the synchronized main commit, and `game/index.html` and `game/play.html` byte-identical to the previously CI-verified Game branch. PR still only changes those seven Game-specific paths.
+- Another three unrelated main commits appeared immediately after synchronization (`.github/workflows/dex-swap-production-quote.yml`, `docs/DEX_SWAP_LAUNCHPAD_DEVELOPMENT_RECORD.md`). These were not overwritten; the game PR branch was three commits behind moving main at comparison time. GitHub PR still `mergeable=false` / draft at that observation. Do not treat branch sync as a merge into main or release.
+- **Next:** observe CI for the latest exact game branch head including this documentation update; check `get_pr_info` mergeability/reviews, and only merge if GitHub allows and all required exact-head tests green. Main may advance; reconcile any new same-file changes, but never overwrite non-game areas. After merge, begin in-game Jarrell's Peak tasks in a dedicated Game branch.
+
+### In-game survival implementation started — 2026-11-14 PHT
+- User requested continuing actual Jarrell's Peak gameplay, not repeated Create Hero UI polishing. The A-pose creator is visually approved and initial Game CI was green at `0eaf98128a0f55e7aac0e93466833925fb387e04`, but PR #297 remains **open/unmerged** until integrated CI and unrelated Browser Smoke failure are resolved.
+- Verified prior intermediate main-synchronized branch commit `12716eaa0488e21bd32a8e18ec19e3949defab2d`: [Validate 43471098830](https://github.com/CryptoDilis/Climboria/actions/runs/43471098830) SUCCESS; [Original GLB 43471098429](https://github.com/CryptoDilis/Climboria/actions/runs/43471098429) SUCCESS; [Browser Smoke 43471098491](https://github.com/CryptoDilis/Climboria/actions/runs/43471098491) FAILED at shared DEX mobile detail close tap (not Game); this is outside game-only ownership. Later current main-synced head `2ddf0d744aeb140afdef870ad9ed6493f0ca15f9`: [Validate 43471717587](https://github.com/CryptoDilis/Climboria/actions/runs/43471717587) SUCCESS, [Original GLB 43471717569](https://github.com/CryptoDilis/Climboria/actions/runs/43471717569) SUCCESS, [Browser Smoke 43471717530](https://github.com/CryptoDilis/Climboria/actions/runs/43471717530) FAILED in **standalone DEX pool history Forward navigation**, independent of Game changes; [Gameplay 43471717563](https://github.com/CryptoDilis/Climboria/actions/runs/43471717563) was IN PROGRESS at audit. **Do not edit DEX, Swap, their CI logic or DEX development record to clear this unrelated failure.** Notify owner via PR and await appropriate DEX team fix.
+- Source inspection found real in-game survival issue: player had a 200-point stamina bar, yet holding Shift set speed 22 vs walk 9 with no stamina expenditure, exhaustion or recovery. Existing gameplay had health respawn and HUD stamina text but no sprint resource use.
+- Implemented **stamina-governed sprint** in `game/play.html`, commit `60fd8d25de69ea64f38abf00c5af98ef5b27a633`: sprint drains 26 stamina/second, walking/rest recovers 18/second, depleted heroes walk until 40 stamina is restored. On death restore stamina with health; HUD already binds live stamina; sprint animation now follows actual allowed sprint. Preserve fly/debug controls, running/walking original GLB, game world and 3D model.
+- Added regression `.github/scripts/game-smoke.mjs`, commit `4a6271120b7a2ffdcff5c196b880b51fc1c7740e`: deterministic stamina depletion/exhaustion/recovery audit, keyboard-driven sprint followed by recovery check, exact saved hero name in Jarrell HUD. Javascript syntax checks PASS for both changed game files. **Latest gameplay browser CI not yet confirmed**; do not present as proven functional in the user's real browser.
+- Current branch includes previously integrated main commits via merge `dce1fdebc622bebe2fa3696d8ecdba4f3baaf3e3`; newer unrelated DEX/Swap main commits continue to land. PR #297 was marked **ready for review** after synchronized tree became mergeable, but main subsequently moved and `mergeable` may change. No merge/deploy claimed.
+- Next task in strict order: verify exact-head Game/Original GLB/Validate CI for new stamina code and check any gameplay failure, rerun dedicated movement and name tests; annotate the PR with clear DEX-global Browser Smoke blocker while leaving DEX untouched. Once Game checks pass, synchronize safely with latest main without overwriting other teams, and integrate PR #297 only if repository merge policy/required checks allow. Then proceed to next actual survival feature (recovery/death/loot) rather than user interface decoration.

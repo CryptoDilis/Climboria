@@ -127,14 +127,41 @@ h2{font:700 18px/1.18 Cinzel,serif;margin:20px 40px 8px 0;min-height:2.36em;disp
 .topbar .menu-status{justify-self:center}
 .topbar #menuCreateHero{justify-self:end}
 @media(max-width:760px){.topbar{display:flex;flex-wrap:wrap;align-items:center}.topbar .brand{order:0;flex:1 1 auto}.topbar #menuCreateHero{order:2;display:flex!important;width:100%;min-height:46px;margin:0;justify-self:stretch}.topbar .menu-status{order:3;width:100%;text-align:center}.topbar .back{order:4;margin-left:auto}}
+</style>
+<style>
+/* Jarrell's Peak hero creation: this is a player editor, not a GLB uploader. */
+.hero-create-card{margin:0 auto 22px;max-width:1000px;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 22px;background:linear-gradient(115deg,#202a3b,#121923);border:1px solid #b89a5d;border-radius:18px}
+.hero-create-card strong{display:block;color:#f5dba0;font:700 20px Cinzel,serif}
+.hero-create-card p{margin:6px 0 0;color:#b9c6d7;font-size:13px;line-height:1.5}
+.hero-create-card button,.hero-editor-actions button{border:1px solid #d6b765;background:#533e1c;color:#ffe8ad;font:800 12px system-ui,sans-serif;border-radius:10px;padding:13px 18px;cursor:pointer}
+.hero-create-card button:focus-visible,.hero-editor button:focus-visible,.hero-editor input:focus-visible{outline:3px solid #f7d27b;outline-offset:2px}
+.hero-editor{position:fixed;inset:0;z-index:2100;display:none;align-items:center;justify-content:center;padding:14px;background:#03070be8}
+.hero-editor.open{display:flex}
+.hero-editor-panel{position:relative;width:min(1000px,100%);max-height:95dvh;overflow-y:auto;border:1px solid #b89a5d;border-radius:20px;padding:20px;background:#101a28;color:#e7eef8;box-shadow:0 22px 80px #000c}
+.hero-editor-panel h2{margin:3px 0 6px;font:900 clamp(23px,4vw,34px) Cinzel,serif;color:#f3d38c}
+.hero-editor-intro{color:#aebed0;font-size:13px;line-height:1.5}
+.hero-editor-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr);gap:18px;margin-top:16px}
+.hero-editor-stage{position:relative;height:clamp(340px,55vh,540px);border:1px solid #b89a5d80;border-radius:14px;background:radial-gradient(ellipse at 50% 60%,#2c3d4d,#101827 60%,#080d15);overflow:hidden}
+#heroPreviewCanvas{display:block;width:100%;height:100%;touch-action:none}
+#heroPreviewStatus{position:absolute;bottom:12px;left:12px;right:12px;padding:8px;background:#09101bdc;border-radius:8px;color:#e3cf95;font:12px system-ui,sans-serif;text-align:center}
+#heroPreviewStatus.ready{bottom:auto;top:10px;left:10px;right:auto;max-width:43%;padding:6px 8px;font-size:10px;line-height:1.35;text-align:left;pointer-events:none}
+.hero-editor-fields{display:flex;flex-direction:column;gap:12px;justify-content:center}
+.hero-editor-fields label{color:#f3d38c;font:800 12px system-ui,sans-serif}
+.hero-editor-fields input{width:100%;padding:13px 14px;background:#0b1320;color:white;border:1px solid #a08a5d;border-radius:9px;font:16px system-ui,sans-serif}
+.hero-editor-fields small{font:12px/1.55 system-ui,sans-serif;color:#afbed0}
+.hero-editor-actions{display:flex;flex-wrap:wrap;gap:10px}
+.hero-editor-actions button:disabled{opacity:.45;cursor:not-allowed}
+#heroCreateFeedback{min-height:2em;font:12px/1.5 system-ui,sans-serif;color:#f4cfa0}
+.hero-editor-close{position:absolute;top:10px;right:12px;border:0;background:#27354a;border-radius:8px;color:#fff;font-size:23px;padding:7px 13px;cursor:pointer}
+@media(max-width:720px){.hero-create-card{flex-direction:column;align-items:stretch}.hero-editor-grid{grid-template-columns:1fr}.hero-editor-stage{height:39dvh;min-height:280px}.hero-editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hero-editor-actions button{min-height:44px;padding:10px 7px;font-size:11px}.hero-editor-panel{padding:14px}.hero-editor-fields{gap:9px}.hero-create-card button{width:100%}}
 </style></head><body>
-<header class="topbar"><a class="brand" href="../">CLIMBORIA</a><a href="/support/" aria-label="Climboria customer support" style="color:#edca80;font:700 11px system-ui,sans-serif;text-decoration:none;white-space:nowrap">SUPPORT</a><span class="menu-status">ONE PLAYABLE WORLD · THREE FEATURE PREVIEWS</span><button class="header-icon" data-panel="announcements" aria-label="Announcements" title="Announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg></button><button class="header-icon" data-panel="notifications" aria-label="Notifications" title="Notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg></button><a id="menuCreateHero" class="menu-create" href="./character-lab.html">CREATE HERO</a><a class="back" href="../">← BACK TO HOME</a></header>
+<header class="topbar"><a class="brand" href="../">CLIMBORIA</a><a href="/support/" aria-label="Climboria customer support" style="color:#edca80;font:700 11px system-ui,sans-serif;text-decoration:none;white-space:nowrap">SUPPORT</a><span class="menu-status">ONE PLAYABLE WORLD · THREE FEATURE PREVIEWS</span><button class="header-icon" data-panel="announcements" aria-label="Announcements" title="Announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg></button><button class="header-icon" data-panel="notifications" aria-label="Notifications" title="Notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg></button><button id="menuCreateHero" class="menu-create" type="button">CREATE HERO</button><a class="back" href="../">← BACK TO HOME</a></header>
 <div class="climboria-panel-backdrop" id="climboriaPanelBackdrop" hidden><section class="climboria-panel" role="dialog" aria-modal="true" aria-labelledby="climboriaPanelTitle"><button class="panel-close" id="climboriaPanelClose" aria-label="Close">×</button><span class="expedition">CLIMBORIA HUB</span><h2 id="climboriaPanelTitle">Announcements</h2><div id="climboriaPanelContent"></div></section></div><main>
 <div class="kicker">GAME FIRST · SPECULATION LATER</div>
 <h1>CHOOSE YOUR DESTINATION</h1>
 <p class="intro">One launch world. Three feature previews. Enter Jarrell’s Peak and explore.</p>
 
-<section class="expedition-ad-slot"><span>CLIMBORIA PARTNERS</span><b>Advertising space</b><small>Premium placement reserved for verified sponsors</small></section><section class="grid" aria-label="Jarrell’s Peak, Arena, Marketplace, and Inventory">
+<section class="hero-create-card" aria-label="Create your Jarrell's Peak hero"><div><strong id="heroCardTitle">CREATE YOUR HERO</strong><p id="heroCardDescription">Choose a hero name and see the full character in a live 3D preview before entering Jarrell’s Peak.</p></div><button id="openHeroCreator" type="button">CREATE HERO</button></section><section class="expedition-ad-slot"><span>CLIMBORIA PARTNERS</span><b>Advertising space</b><small>Premium placement reserved for verified sponsors</small></section><section class="grid" aria-label="Jarrell’s Peak, Arena, Marketplace, and Inventory">
 <button class="card active jarrell" data-level="11" aria-disabled="false">
 <img class="crest crest-jarrell" src="../11_jarrells-peak-extreme-risk.png" alt="Jarrell’s Peak emblem" loading="lazy">
 <span class="expedition">LAUNCH WORLD</span><h2>JARRELL'S PEAK</h2>
@@ -159,6 +186,15 @@ h2{font:700 18px/1.18 Cinzel,serif;margin:20px 40px 8px 0;min-height:2.36em;disp
 </button>
 </section>
 </main>
+<section class="hero-editor" id="heroEditor" role="dialog" aria-modal="true" aria-labelledby="heroEditorTitle" aria-hidden="true">
+<div class="hero-editor-panel"><button id="closeHeroEditor" class="hero-editor-close" type="button" aria-label="Close hero editor">×</button>
+<h2 id="heroEditorTitle">CREATE YOUR HERO</h2><p class="hero-editor-intro">Meet your Jarrell's Peak adventurer. Drag to turn the model, scroll or pinch to zoom. You do not need to upload a GLB.</p>
+<div class="hero-editor-grid"><div class="hero-editor-stage"><canvas id="heroPreviewCanvas" aria-label="Full-body live 3D hero preview"></canvas><div id="heroPreviewStatus" role="status">Preview opens when the hero editor starts.</div></div>
+<div class="hero-editor-fields"><label for="heroNameInput">HERO NAME</label><input id="heroNameInput" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Enter your hero name" aria-describedby="heroNameHelp">
+<div class="hero-editor-actions"><button id="saveHeroButton" type="button" disabled>SAVE HERO</button><button id="heroEnterButton" type="button" disabled>ENTER JARRELL'S PEAK</button></div>
+<small id="heroNameHelp">2–24 characters: letters, numbers, spaces, underscores and hyphens. One local hero per browser for now; this is not a cloud/account save.</small>
+<small>Hero model: Official Climboria Adventurer (built in). A valid hero name and successfully loaded character are required to enter the game.</small>
+<p id="heroCreateFeedback" role="status" aria-live="polite"></p></div></div></div></section>
 <section class="menu-modal" id="levelShopModal" aria-modal="true" role="dialog" aria-label="Marketplace"><div class="menu-modal-shell"><header><div><small>CLIMBORIA EXCHANGE</small><h2>MARKETPLACE</h2></div><button class="menu-modal-close" data-close="levelShopModal" aria-label="Close">×</button></header><div class="menu-shop-grid" id="menuShopGrid"></div><p class="menu-modal-note">Demo storefront · purchases are not connected to real currency or persistent inventory.</p></div></section>
 <section class="menu-modal" id="arenaStatusModal" aria-modal="true" role="dialog" aria-label="Arena status"><div class="menu-modal-shell"><header class="menu-modal-head"><div><small>FUTURE MAP · NOT PLAYABLE YET</small><h2>ARENA</h2></div><button class="menu-modal-close" data-close="arenaStatusModal" aria-label="Close">×</button></header><div class="arena-status-content"><p class="arena-status-lead">A separate public forest battlefield is part of Climboria’s future plan.</p><ul><li>Public free-for-all when no funded event is active.</li><li>Guild Battles and Weekly Guild Wars after the systems are built and tested.</li><li>Sponsored events only after admin approval and full prize-pool verification.</li><li>No Arena rewards or multiplayer capacity are promised before implementation and testing.</li></ul><p class="modal-note">STATUS: PLANNED · THIS PANEL IS INFORMATION ONLY. Jarrell’s Peak remains the playable launch world.</p></div></div></section><section class="menu-modal" id="levelInventoryModal" aria-modal="true" role="dialog" aria-label="Inventory"><div class="menu-modal-shell"><header><div><small>PLAYER LOADOUT</small><h2>INVENTORY</h2></div><button class="menu-modal-close" data-close="levelInventoryModal" aria-label="Close">×</button></header><div class="menu-inventory-layout"><div><h3>EQUIPMENT SLOTS</h3><div class="menu-equipment"><div>🛡 ARMOR <b>Empty</b></div><div>🎭 SKIN <b>Default</b></div><div>📿 ACCESSORY <b>Empty</b></div><div>⚔ WEAPON <b>Basic tool</b></div><div>＋ OTHER GEAR <b>Empty</b></div></div></div><div><h3>ITEMS</h3><div class="menu-item-grid" id="menuItemGrid"></div></div></div><p class="menu-modal-note">Inventory preview only · equipment and item ownership are not saved yet.</p></div></section><style>
 .menu-actions{display:flex;justify-content:center;gap:12px;margin:22px auto 34px;position:relative;z-index:5}
@@ -167,7 +203,168 @@ h2{font:700 18px/1.18 Cinzel,serif;margin:20px 40px 8px 0;min-height:2.36em;disp
 .menu-modal{display:none;position:fixed;inset:0;z-index:1000;background:#030711d9;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px}.menu-modal.open{display:flex}.menu-modal-shell{width:min(760px,96vw);max-height:88vh;overflow:auto;border:1px solid #d5ae4d55;border-radius:18px;padding:22px;background:linear-gradient(145deg,#111c2b,#070c14);color:#eaf0f7;box-shadow:0 24px 90px #000b}.menu-modal-shell header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.menu-modal-shell small{color:#c7a454;letter-spacing:2px}.menu-modal-shell h2{margin:4px 0;font-size:24px}.menu-modal-shell h3{font-size:12px;letter-spacing:1.5px;color:#c7d5e4}.menu-modal-close{background:#202b39;border:1px solid #ffffff25;color:#fff;border-radius:8px;font-size:24px;width:38px;height:38px;cursor:pointer}.menu-shop-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.menu-shop-item{border:1px solid #ffffff18;background:#0b1420;border-radius:12px;padding:15px}.menu-shop-item .item-icon{font-size:30px}.menu-shop-item strong{display:block;margin:8px 0}.menu-shop-item button{margin-top:10px;width:100%;padding:9px;background:#d6ad48;color:#17130a;border:0;border-radius:7px;font-weight:800}.menu-inventory-layout{display:grid;grid-template-columns:1fr 1.2fr;gap:20px}.menu-equipment>div{display:flex;justify-content:space-between;gap:12px;padding:11px;margin:7px 0;background:#0b1420;border:1px solid #ffffff14;border-radius:8px;font-size:12px}.menu-equipment b{color:#a9b8c8}.menu-item-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.menu-item-grid span{aspect-ratio:1;display:grid;place-items:center;background:#0b1420;border:1px solid #ffffff20;border-radius:7px;color:#63768b}.menu-item-grid span:first-child{color:#ffe4a0;border-color:#d5ae4d}.menu-modal-note{color:#8798aa;font-size:11px;margin-top:16px}
 @media(max-width:760px){.topbar{height:auto;min-height:76px;grid-template-columns:1fr auto;gap:10px;padding:12px 16px}.topbar .brand{grid-column:1;grid-row:1}.topbar .back{grid-column:2;grid-row:1}.top-actions{grid-column:1 / -1;grid-row:2;padding-top:5px}.menu-action{padding:10px 14px;font-size:11px;min-height:42px}.menu-shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.menu-inventory-layout{grid-template-columns:1fr}.menu-modal-shell{padding:16px}}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
+
+const HERO_RECORD_KEY='climboria-created-hero-v1';
+const heroEditor=document.getElementById('heroEditor');
+const heroNameInput=document.getElementById('heroNameInput');
+const saveHeroButton=document.getElementById('saveHeroButton');
+const heroEnterButton=document.getElementById('heroEnterButton');
+const heroFeedback=document.getElementById('heroCreateFeedback');
+const heroStatus=document.getElementById('heroPreviewStatus');
+const heroCanvas=document.getElementById('heroPreviewCanvas');
+let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.4,previewTouchX=null,previewTouchDistance=null;
+const validHeroName=name=>/^[A-Za-z0-9 _-]{2,24}$/.test(name)&&/[A-Za-z0-9]/.test(name);
+function savedHero(){
+ try{const h=JSON.parse(localStorage.getItem(HERO_RECORD_KEY)||'null');return h&&h.model==='Adventurer'&&typeof h.name==='string'&&validHeroName(h.name)?h:null}catch(_){return null}
+}
+function updateHeroCard(){
+ const h=savedHero();
+ document.getElementById('heroCardTitle').textContent=h?'YOUR HERO · '+h.name:'CREATE YOUR HERO';
+ document.getElementById('heroCardDescription').textContent=h?'Hero created locally. View or edit the character before entering the wilderness.':'A hero is required before starting the game. Choose a name and inspect your full-body 3D character.';
+ document.getElementById('openHeroCreator').textContent=h?'EDIT / PREVIEW HERO':'CREATE HERO';
+ document.getElementById('menuCreateHero').textContent=h?'EDIT HERO':'CREATE HERO';
+ const launch=document.querySelector('.card.jarrell .status');if(launch)launch.textContent=h?'▶ ENTER JARRELL’S PEAK':'CREATE HERO TO UNLOCK';
+}
+function editorButtons(){
+ saveHeroButton.disabled=!previewLoaded||!validHeroName(heroNameInput.value.trim());
+ const h=savedHero();heroEnterButton.disabled=!previewLoaded||!h||h.name!==heroNameInput.value.trim();
+}
+function previewRender(){
+ if(!heroEditor.classList.contains('open')||!previewRenderer)return;
+ previewFrame=requestAnimationFrame(previewRender);
+ const area=heroCanvas.getBoundingClientRect();
+ if(area.width>0&&area.height>0){
+  const w=Math.max(1,Math.round(area.width)),h=Math.max(1,Math.round(area.height));
+  if(heroCanvas.width!==w||heroCanvas.height!==h){previewRenderer.setSize(w,h,false);previewCamera.aspect=w/h;previewCamera.updateProjectionMatrix();}
+ }
+ if(previewModel){previewModel.rotation.y=previewAngle;previewCamera.position.set(0,1.0,previewDistance);previewCamera.lookAt(0,1.0,0);}
+ if(previewMixer&&previewClock)previewMixer.update(Math.min(previewClock.getDelta(),.06));
+ previewRenderer.render(previewScene,previewCamera);
+}
+function startHeroPreview(){
+ if(previewLoaded){previewRender();editorButtons();return}
+ if(previewLoading){previewRender();return}
+ previewLoading=true;heroStatus.classList.remove('ready');heroStatus.textContent='Loading the official hero model…';
+ try{
+  if(!window.THREE||!THREE.GLTFLoader)throw Error('3D renderer unavailable');
+  previewScene=new THREE.Scene();
+  previewScene.add(new THREE.HemisphereLight(0xffffff,0x61708b,2));
+  const light=new THREE.DirectionalLight(0xffe0ac,2.2);light.position.set(3,7,5);previewScene.add(light);
+  previewCamera=new THREE.PerspectiveCamera(38,1,.1,100);
+  previewRenderer=new THREE.WebGLRenderer({canvas:heroCanvas,antialias:true,alpha:true});
+  previewRenderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
+  previewRenderer.outputEncoding=THREE.sRGBEncoding;
+  previewClock=new THREE.Clock();
+  new THREE.GLTFLoader().load('../assets/characters/Climboria_Hero.glb',gltf=>{
+   previewModel=gltf.scene;const box=new THREE.Box3().setFromObject(previewModel),size=box.getSize(new THREE.Vector3());
+   const scale=1.9/Math.max(.001,size.y);previewModel.scale.setScalar(scale);
+   const ground=new THREE.Box3().setFromObject(previewModel);previewModel.position.y=-ground.min.y;
+   previewScene.add(previewModel);
+   // Player-facing A-pose: arms angled down/out, straight legs, no chair.
+   // This modifies only a dedicated preview model instance. The gameplay GLB,
+   // skeleton and authored animations are never rewritten.
+   previewModel.updateWorldMatrix(true,true);
+   const rotateBoneToward=(boneName,childName,direction)=>{
+    const bone=previewModel.getObjectByName(boneName);
+    const child=previewModel.getObjectByName(childName);
+    if(!bone||!child||child.parent!==bone)return false;
+    previewModel.updateWorldMatrix(true,true);
+    const joint=bone.getWorldPosition(new THREE.Vector3());
+    const tip=child.getWorldPosition(new THREE.Vector3());
+    const original=tip.sub(joint);
+    if(original.lengthSq()<1e-8)return false;
+    original.normalize();
+    const delta=new THREE.Quaternion().setFromUnitVectors(original,direction.clone().normalize());
+    const world=bone.getWorldQuaternion(new THREE.Quaternion());
+    const parentWorld=bone.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
+    bone.quaternion.copy(parentWorld.multiply(delta.multiply(world)));
+    previewModel.updateWorldMatrix(true,true);
+    return true;
+   };
+   let posed=0;
+   // Each target is in world coordinates; the arm angle is deliberately below
+   // a T-pose while staying far enough from the hips to show the silhouette.
+   for(const [side,sign] of [['Left',1],['Right',-1]]){
+    posed+=Number(rotateBoneToward(side+'UpperArm',side+'LowerArm',new THREE.Vector3(sign*.74,-.67,0)));
+    posed+=Number(rotateBoneToward(side+'LowerArm',side+'Hand',new THREE.Vector3(sign*.69,-.72,0)));
+    posed+=Number(rotateBoneToward(side+'UpperLeg',side+'LowerLeg',new THREE.Vector3(sign*.10,-.995,0)));
+    posed+=Number(rotateBoneToward(side+'LowerLeg',side+'Foot',new THREE.Vector3(sign*.045,-.999,0)));
+   }
+   if(posed!==8){
+    previewLoading=false;
+    heroStatus.textContent='Hero rig unavailable';
+    heroFeedback.textContent='Unable to prepare the hero A-pose. Please try again.';
+    console.warn('[Climboria] Expected complete preview rig; posed joints:',posed);
+    return;
+   }
+   previewModel.position.y=0;
+   const posedBounds=new THREE.Box3().setFromObject(previewModel);
+   previewModel.position.y=-posedBounds.min.y;
+   previewModel.updateWorldMatrix(true,true);
+   previewMixer=null; // Never auto-play Running, Sitting or other clips here.
+   document.documentElement.dataset.climboriaHeroPreviewPose='a-pose';
+   document.documentElement.dataset.climboriaHeroPreviewClip='none-static';
+   document.documentElement.dataset.climboriaHeroPreviewSeat='none';
+   const directionBetween=(a,b)=>{
+    const start=previewModel.getObjectByName(a),end=previewModel.getObjectByName(b);
+    return end.getWorldPosition(new THREE.Vector3())
+     .sub(start.getWorldPosition(new THREE.Vector3())).normalize().toArray();
+   };
+   window.__climboriaHeroAPoseAudit={
+    leftArm:directionBetween('LeftUpperArm','LeftLowerArm'),
+    rightArm:directionBetween('RightUpperArm','RightLowerArm'),
+    leftLeg:directionBetween('LeftUpperLeg','LeftLowerLeg'),
+    rightLeg:directionBetween('RightUpperLeg','RightLowerLeg')
+   };
+   previewLoaded=true;previewLoading=false;heroStatus.classList.add('ready');heroStatus.textContent='LIVE 3D PREVIEW · A-POSE';
+   editorButtons();heroFeedback.textContent='Official hero is ready. Choose and save your hero name.';
+  },progress=>{
+   if(progress.total>0)heroStatus.textContent='Loading hero model · '+Math.min(100,Math.round(progress.loaded/progress.total*100))+'%';
+  },err=>{previewLoading=false;heroStatus.textContent='Hero preview failed to load.';heroFeedback.textContent='Could not load the built-in GLB. Check your connection and reopen this editor to retry.';console.error('[Climboria] Hero preview unavailable',err);});
+  previewRender();
+ }catch(e){previewLoading=false;heroStatus.textContent='3D preview unavailable';heroFeedback.textContent='Unable to initialize 3D preview: '+e.message;}
+}
+function openHeroEditor(){
+ const h=savedHero();heroNameInput.value=h?.name||'';
+ heroEditor.classList.add('open');heroEditor.setAttribute('aria-hidden','false');heroFeedback.textContent='';
+ editorButtons();startHeroPreview();heroNameInput.focus();
+}
+function closeHeroEditor(){
+ heroEditor.classList.remove('open');heroEditor.setAttribute('aria-hidden','true');
+ if(previewFrame)cancelAnimationFrame(previewFrame);previewFrame=0;
+ document.getElementById('openHeroCreator').focus();
+}
+document.getElementById('menuCreateHero').addEventListener('click',openHeroEditor);
+document.getElementById('openHeroCreator').addEventListener('click',openHeroEditor);
+document.getElementById('closeHeroEditor').addEventListener('click',closeHeroEditor);
+heroEditor.addEventListener('click',e=>{if(e.target===heroEditor)closeHeroEditor()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&heroEditor.classList.contains('open'))closeHeroEditor()});
+heroNameInput.addEventListener('input',()=>{heroFeedback.textContent=validHeroName(heroNameInput.value.trim())?'':'Enter 2–24 allowed characters and at least one letter or number.';editorButtons()});
+saveHeroButton.addEventListener('click',()=>{
+ const name=heroNameInput.value.trim();
+ if(!previewLoaded||!validHeroName(name)){heroFeedback.textContent='Load the hero and enter a valid name first.';return}
+ try{
+  const record={name,model:'Adventurer',createdAt:new Date().toISOString()};
+  localStorage.setItem(HERO_RECORD_KEY,JSON.stringify(record));
+  localStorage.setItem('climboria-selected-hero','Adventurer');
+  heroFeedback.textContent='Hero saved in this browser. You can enter Jarrell’s Peak!';
+  updateHeroCard();editorButtons();
+ }catch(_){heroFeedback.textContent='Hero could not be saved. Check browser storage permissions.'}
+});
+heroEnterButton.addEventListener('click',()=>{if(previewLoaded&&savedHero()?.name===heroNameInput.value.trim())location.href='./play.html?level=11'});
+let pointerStart=null;
+heroCanvas.addEventListener('pointerdown',e=>{pointerStart=e.clientX;heroCanvas.setPointerCapture(e.pointerId)});
+heroCanvas.addEventListener('pointermove',e=>{if(pointerStart!==null){previewAngle+=(e.clientX-pointerStart)*.012;pointerStart=e.clientX}});
+heroCanvas.addEventListener('pointerup',()=>pointerStart=null);
+heroCanvas.addEventListener('pointercancel',()=>pointerStart=null);
+heroCanvas.addEventListener('wheel',e=>{e.preventDefault();previewDistance=Math.max(2.4,Math.min(6.5,previewDistance+Math.sign(e.deltaY)*.3))},{passive:false});
+heroCanvas.addEventListener('touchmove',e=>{if(e.touches.length===2){e.preventDefault();const a=e.touches[0],b=e.touches[1],dist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);if(previewTouchDistance!==null)previewDistance=Math.max(2.3,Math.min(7,previewDistance+(previewTouchDistance-dist)*.01));previewTouchDistance=dist}},{passive:false});
+heroCanvas.addEventListener('touchend',()=>{previewTouchDistance=null});
+updateHeroCard();
+
 const shopProducts=[["⛏","Climber's Pick","250 Demo Coins"],["🪖","Ridgeguard Armor","500 Demo Coins"],["🎭","Wilderness Skin","750 Demo Coins"],["📿","Grip Charm","300 Demo Coins"],["🥾","Trail Boots","400 Demo Coins"],["🧤","Grip Gloves","350 Demo Coins"]];
 const shopGrid=document.getElementById("menuShopGrid");
 shopProducts.forEach(([icon,name,price])=>{const card=document.createElement("article");card.className="menu-shop-item";card.innerHTML='<div class="item-icon">'+icon+'</div><strong>'+name+'</strong><span>'+price+'</span><button type="button">PREVIEW</button>';card.querySelector("button").onclick=()=>{card.querySelector("button").textContent="DEMO ONLY"};shopGrid.appendChild(card)});
@@ -179,7 +376,7 @@ document.getElementById("menuInventory").addEventListener("click",()=>openModal(
 document.getElementById("menuArena").addEventListener("click",()=>openModal("arenaStatusModal"));
 document.querySelectorAll("[data-close]").forEach(button=>button.addEventListener("click",()=>document.getElementById(button.dataset.close)?.classList.remove("open")));
 document.querySelectorAll(".menu-modal").forEach(modal=>{modal.addEventListener("click",event=>{if(event.target===modal)modal.classList.remove("open")});modal.addEventListener("keydown",event=>{if(event.key==="Escape")modal.classList.remove("open")})});
-document.querySelectorAll(".card[data-level]").forEach(card=>card.addEventListener("click",()=>{location.href='./play.html?level='+encodeURIComponent(card.dataset.level)}));
+document.querySelectorAll(".card[data-level]").forEach(card=>card.addEventListener("click",()=>{if(!savedHero()){openHeroEditor();heroFeedback.textContent='Create and save a hero before entering Jarrell’s Peak.';return}location.href='./play.html?level='+encodeURIComponent(card.dataset.level)}));
 
 const climboriaPanelBackdrop=document.getElementById("climboriaPanelBackdrop");document.querySelectorAll("[data-panel]").forEach(button=>button.addEventListener("click",()=>{const type=button.dataset.panel;document.getElementById("climboriaPanelTitle").textContent=type==="announcements"?"Announcements":"Notifications";document.getElementById("climboriaPanelContent").innerHTML=type==="announcements"?'<p>Official Climboria expedition and ecosystem updates will appear here. Follow <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">@ClimboriaHQ</a> for verified announcements.</p>':'<p>You are all caught up. Expedition, event and account alerts will appear here when notification services are enabled.</p>';climboriaPanelBackdrop.hidden=false}));document.getElementById("climboriaPanelClose").addEventListener("click",()=>climboriaPanelBackdrop.hidden=true);climboriaPanelBackdrop.addEventListener("click",e=>{if(e.target===climboriaPanelBackdrop)climboriaPanelBackdrop.hidden=true});
 </script><svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg></body></html>
