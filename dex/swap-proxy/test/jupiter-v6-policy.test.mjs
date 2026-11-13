@@ -171,3 +171,71 @@ test("rejects orphaned Jupiter intermediate output even with a valid final-outpu
   ]);
   assert.throws(() => decodeJupiterV6Route(dangling), /unconsumed intermediate output/i);
 });
+
+
+test("rejects duplicate account pubkeys in resolved static keys and ALT entries", () => {
+  const repeatedSourceAndDestination = parsed();
+  repeatedSourceAndDestination.staticAccountKeys[2] = decodeBase58(source);
+  assert.throws(
+    () => validate(repeatedSourceAndDestination),
+    /duplicate resolved account pubkeys/i,
+    "A source/destination alias must never become a legitimate token-movement route"
+  );
+
+  const repeatedExecutableProgram = parsed();
+  repeatedExecutableProgram.staticAccountKeys[8] = decodeBase58(raydium);
+  assert.throws(
+    () => validate(repeatedExecutableProgram),
+    /duplicate resolved account pubkeys/i,
+    "Duplicating a DEX executable pubkey can hide a later writable alias"
+  );
+
+  assert.throws(
+    () => validate(parsed(), { loadedReadonly: [raydium] }),
+    /duplicate resolved account pubkeys/i,
+    "An ALT readonly key must not alias any existing static account key"
+  );
+  const other = encodeBase58(new Uint8Array(32).fill(24));
+  assert.throws(
+    () => validate(parsed(), { loadedWritable: [other], loadedReadonly: [other] }),
+    /duplicate resolved account pubkeys/i,
+    "Resolved ALT writable/readonly indexes must not alias each other"
+  );
+});
+
+test("rejects executable program writable privileges even outside active route metas", () => {
+  const whirlpool = "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc";
+  assert.throws(
+    () => validate(parsed(), { loadedWritable: [whirlpool] }),
+    /grants signer or writable privileges to a known executable program/i,
+    "An approved but unused executable DEX program cannot be writable in ALT keys"
+  );
+
+  // Remove the static Raydium pubkey; reference the same program as a
+  // resolved ALT writable account rather than merely duplicating it.
+  const viaWritableAlt = parsed();
+  viaWritableAlt.staticAccountKeys[6] = decodeBase58(encodeBase58(new Uint8Array(32).fill(25)));
+  viaWritableAlt.instructions[0].accountIndexes[7] = 9;
+  assert.throws(
+    () => validate(viaWritableAlt, { loadedWritable: [raydium] }),
+    /grants signer or writable privileges to a known executable program/i,
+    "Moving a route's program meta to a writable ALT must be rejected"
+  );
+});
+
+test("accepts a uniquely resolved readonly ALT DEX program without widening security policy", () => {
+  const viaReadonlyAlt = parsed();
+  viaReadonlyAlt.staticAccountKeys[6] = decodeBase58(encodeBase58(new Uint8Array(32).fill(25)));
+  viaReadonlyAlt.instructions[0].accountIndexes[7] = 9;
+  const accepted = validate(viaReadonlyAlt, { loadedReadonly: [raydium] });
+  assert.equal(accepted.ok, true);
+  assert.equal(accepted.route.steps[0].dex, "Raydium");
+  // This is only a mocked structural acceptance; CPI and asset flows are
+  // still not proven, and signing/execute release gates remain hard-disabled.
+});
+
+test("rejects out-of-bounds ALT and static account indexes before any route acceptance", () => {
+  const malicious = parsed();
+  malicious.instructions[0].accountIndexes[7] = 255;
+  assert.throws(() => validate(malicious), /account index is outside the resolved key list/i);
+});
