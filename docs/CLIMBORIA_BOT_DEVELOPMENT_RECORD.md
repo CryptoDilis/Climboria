@@ -588,3 +588,8 @@ Verified Phase74 CLIMBX release safety `43454707112` and Validate Climboria `434
 ## Phase 76 checkpoint — 2026-11-13 (DEX CLIMBX preview placement)
 
 Verified Phase75 CLIMBX CI `43455166968` and Validate `43455166908` successful. Inspected draft `dex/index.html`: no CLIMBX preview existed. Added an explicitly **NOT LIVE** CLIMBX preview panel immediately before the DEX Market Explorer, commit `858469fcc5b243e98c6171bec638dc40434d064d`, describing free personal bot, up to five assets, approval-based learning, exclusive Signature DEX routing, proposed 10% high-water-mark fee, network costs, risk, and link to Overview project brief. This is a static preview only, not the actual bot dashboard; it is in the draft branch, not deployed. CI for new commit not yet verified. Future: desktop right-side/mobile after-overview layout refinement, real bot dashboard only after reviewed security and on-chain authorization. CLIMBX NO-GO.
+
+
+## Phase 77 checkpoint — 2026-11-13 (responsive non-functional CLIMBX dashboard preview)
+
+Verified Phase76 DEX preview CI: Validate `43455577079`, CLIMBX release safety `43455577199`, Browser Smoke `43455576988`, all successful. Added responsive static preview at `dex/climbx/index.html`, commit `8fe283b7adeeff736982a7007c820f75b1b6b1ba`: bot status, 5 empty slots, planned strategies, fee/risk disclosures, disabled wallet and trade controls. Updated DEX CLIMBX card to link to `/dex/climbx/`, commit `3d67dd3a2935cda04fe0dfce21045b9817861da0`. Draft branch only, not deployed; new CI not verified. No wallet integration, trading, backend connection or live authorization. Further desktop/mobile visual QA required. CLIMBX NO-GO.
