@@ -26,7 +26,7 @@ const TARGETS = Object.freeze({
 });
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
-function decodeBase58(value) {
+export function decodeBase58(value) {
   if (typeof value !== "string" || !value.length) throw new Error("Invalid base58 public key");
   const bytes = [0];
   let zeros = 0;
