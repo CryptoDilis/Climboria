@@ -25,7 +25,7 @@ This is the working release checklist. A checkbox is marked complete only after 
 - [x] Document sponsor approval, written agreements, full-payment and prize-pool verification, and Jarrell’s Peak funding boundaries.
 - [x] Document Solana-first strategy and later Base consideration without claiming unsupported chain functionality.
 - [x] Document roadmap, risks, security gates, and explicit planned/in-development/live status distinctions.
-- [ ] Complete final editorial consistency review against all approved project decisions and remove any contradictory or stale claims. (Detailed review still open.)
+- [ ] Complete final editorial consistency review against all approved project decisions and remove any contradictory or stale claims. (Current review confirms fee design and badge-deferred wording match README on main; confirm any older 10-mountain/top-25-badge notes are superseded before sign-off.)
 - [ ] Verify every external link, internal section link, canonical metadata, mobile layout, and public deployment after merge.
 
 ## B. Homepage navigation cleanup
@@ -81,16 +81,27 @@ Draft file: [docs/COINGECKO_PROJECT_INFORMATION_DRAFT.md](./COINGECKO_PROJECT_IN
 
 - **Whitepaper expansion:** substantial content added; final editorial consistency review remains open.
 - **Homepage Overview removal:** confirmed by focused branch checks; production verification awaits deployment.
-- **Validate Climboria workflow:** passed on commit d954f721017288d6045f869ab2f1162b4ed2391a (run 43362006775).
-- **Browser Smoke workflow:** run 43362006873 is in progress on commit d954f721017288d6045f869ab2f1162b4ed2391a; homepage/mobile, Swap, DEX, and market-state steps passed; Jarrell's Peak desktop/mobile gameplay smoke is still running.
+- **Validate Climboria workflow:** passed on commit 25d80356795a4031948546d15c054120c54b3a83 (run 43363065269).
+- **Browser Smoke workflow:** run 43363065233 is in progress on commit 25d80356795a4031948546d15c054120c54b3a83; homepage/mobile, Swap, DEX, and market-state steps passed; Jarrell's Peak desktop/mobile gameplay smoke is still running.
 - **PR #275:** open; not merged.
 - **Production deployment:** not yet verified.
 - **CoinGecko submission readiness:** evidence checklist remains open; a complete whitepaper alone is not sufficient.
 
 - **CoinGecko Section 3 drafts:** five fields prepared; all exceed 400 characters. Owner review remains open.
 - **CoinGecko Section 4–6:** no verified mint or active trading pair supplied yet. Explorer links remain intentionally blank; asset type is Token, blockchain selection is Solana, and decimals must be read from the deployed mint.
+- **Latest exact PR head:** 25d80356795a4031948546d15c054120c54b3a83. PR #275 remains open and mergeable; the Browser Smoke run is not complete, so no merge/deployment claim is made.
 
 Last updated: 2026-11-13.
+
+## G. Editorial consistency review — findings to close
+
+- [x] Confirm Whitepaper v1.3 badge and canonical Markdown version both read 1.3.
+- [x] Confirm documented marketplace fees match current README on main: 2.5% buy, 2.5% sell, and 5% of collected marketplace fee revenue allocated to game funding (not 5% of gross trading volume).
+- [x] Confirm Whitepaper says badges are not currently planned; current README on main says badges are deferred, not an active reward promise.
+- [ ] Owner sign-off that the current README/main design supersedes older notes about 10 normal mountains plus Jarrell's Peak and a top-25 free badge; do not reintroduce these older claims without confirmation.
+- [ ] Consider adding the recorded 15 November 2026 15:00 UTC pump.fun launch target to the Whitepaper only if it remains an approved current target; label it a target, not a completed launch.
+- [ ] Final cross-check of all remaining feature statuses against current main README and actual live product behavior.
+
 
 ## F. CoinGecko Sections 4–6 — form-entry checklist
 
