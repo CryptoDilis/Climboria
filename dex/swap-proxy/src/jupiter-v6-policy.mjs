@@ -94,10 +94,10 @@ export function decodeJupiterV6Route(data) {
   // at an intermediate input that is never produced, or leave intermediate
   // output stranded while also referencing the final output elsewhere.
   //
-  // Every non-source input must come from a prior step, and every non-final
-  // output must feed a later step. Since each step must move from a lower
-  // token index to a higher one, these checks ensure every edge lies on a
-  // path from token 0 to the terminal index without assuming hop order.
+  // Every non-source input must come from a producer step, and every
+  // non-final output must feed a consumer step. The separate topological
+  // ordering check below additionally requires producers to appear first.
+  // Increasing token indexes ensure an acyclic route to the terminal.
   const produced = new Set(steps.map(step => step.outputIndex));
   const consumed = new Set(percentByInput.keys());
   for (const step of steps) {
@@ -107,6 +107,19 @@ export function decodeJupiterV6Route(data) {
     if (step.outputIndex !== count && !consumed.has(step.outputIndex)) {
       fail("Jupiter route plan has an unconsumed intermediate output token index");
     }
+  }
+  // The pinned Jupiter V6 IDL calls routePlan a "Topologically sorted trade
+  // DAG" (jup-ag/instruction-parser at e6f77951377847c579112e6a16d8c17c5c092485,
+  // src/idl/jupiter.ts). Graph connectivity alone cannot prove ordering:
+  // even a reachable branch is invalid if consumed before the producing step.
+  // Run this AFTER the connectivity checks above so orphaned and misordered
+  // routes remain separately identifiable security failure classes.
+  const previouslyProducedOutputs = new Set([0]);
+  for (const step of steps) {
+    if (!previouslyProducedOutputs.has(step.inputIndex)) {
+      fail("Jupiter route plan steps must be topologically sorted before consuming intermediate tokens");
+    }
+    previouslyProducedOutputs.add(step.outputIndex);
   }
   if (slippageBps > 500) fail("Jupiter route slippage exceeds the 5% safety cap");
   if (platformFeeBps !== 0) fail("Jupiter platform fees are not configured for Climboria");

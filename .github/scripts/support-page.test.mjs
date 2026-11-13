@@ -22,8 +22,8 @@ test("support navigation is available across public Climboria product pages", ()
     assert.match(page, /href="\/support\/"/, route + " must link to Customer Support");
   }
   const home = read("index.html");
-  assert.match(home, /<div class="navl">[^]*?href="\/support\/"/, "Desktop homepage navigation needs Support");
-  assert.match(home, /class="mobile-menu" id="mobileMenu">[^]*?href="\/support\/"/, "Mobile homepage navigation needs Support");
+  assert.match(home, /<div class="navl"(?:\s[^>]*)?>[^]*?href="\/support\/"/, "Desktop homepage navigation needs Support");
+  assert.match(home, /class="mobile-menu" id="mobileMenu"(?:\s[^>]*)?>[^]*?href="\/support\/"/, "Mobile homepage navigation needs Support");
 });
 
 test("official support route has simple mobile layout and safe external links", () => {
