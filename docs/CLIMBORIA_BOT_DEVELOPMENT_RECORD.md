@@ -705,3 +705,19 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Fix commit:** `aa46aeda0eb8a6243337102a595784cb1d10a048` — update that test to explicitly expect `INVALID` and rename it to describe the negative-clock case. No policy relaxation or trading enablement. At initial check, GitHub had not yet returned new CI runs; **CI status pending verification**.
 
 **Next actions:** (1) verify workflow runs for `aa46aeda0eb8a6243337102a595784cb1d10a048`, fix any remaining failures and record exact run IDs; (2) remove redundant tests only if safe, and strengthen missing-authorization/slot policy cases; (3) verify Solana devnet CLI and infrastructure before claiming on-chain tests; (4) design/implement reviewed devnet-only on-chain authorization; (5) independent security review and explicit owner GO/NO-GO. CLIMBX only, never enable real funds. Keep appending exact commits/CI/next steps to this main-branch record.
+
+
+## Phase 87 — 2026-11-14 — cross-slot fail-closed policy hardening
+
+**Scope:** CLIMBX only, branch `climbx/phase28-release-gate-ci`, draft PR #282. No DEX/Swap/Launchpad/game changes.
+
+**Phase86 CI on `aa46aeda0eb8a6243337102a595784cb1d10a048`:** CLIMBX safety `43461555537` SUCCESS; Validate `43461555874` SUCCESS; Browser Smoke `43461555632` still in progress at time checked.
+
+**Phase87 commits:**
+- `11664ed6c07ea3da4eb89261fb705c166ff3136c`: `climbx/authorization_policy_simulation.cjs` now rejects array-shaped grant/entry objects, empty entry mint, and any unselected slot with an unknown/malformed `openPosition` state. A selected occupied slot still returns `SLOT_OCCUPIED`.
+- `a12a3eb5808fbf52691597a49f3215931184c327`: `climbx/authorization_policy_simulation.test.cjs` adds five matching negative tests. Existing CLIMBX CI workflow already includes this test file.
+- **Phase87 CI not yet observed** at initial GitHub check (zero runs returned); do not claim pass until verified.
+
+**Security limitations:** This remains a non-deploying **off-chain policy simulation**; no on-chain permissioned vault/program, no signed bot swaps, no real-money authorization, no independent security review. **CLIMBX NO-GO** remains unchanged.
+
+**Next actions (start here):** (1) verify exact CI runs for `a12a3eb5808fbf52691597a49f3215931184c327` and pending Browser Smoke `43461555632`; inspect failures and fix; (2) verify actual Solana CLI/local validator/Rust/Anchor tooling and devnet access; (3) document selected owner-revocable on-chain authority architecture and precise allowlisted DEX instruction semantics; (4) implement isolated devnet proof with owner caps, 24h expiry, revocation, five-slot isolation, and malicious transaction rejection; (5) independent review and owner GO/NO-GO. Continue CLIMBX only, append exact commits and next steps here after each phase.
