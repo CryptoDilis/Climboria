@@ -826,3 +826,17 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Release status:** real-funds CLIMBX **NO-GO**. No Solana program, signed devnet trade, on-chain nonce uniqueness or atomic cap accounting, verified DEX-only CPI constraints, or independent audit. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase94:** (1) verify exact Phase93 CI and fix any failure; (2) make nonce uniqueness/atomic cap limitations impossible to confuse with an authorized trade, retaining simulation-only interfaces; (3) provision Rust/Cargo/Solana CLI/validator/Anchor and capture versions; (4) implement owner-only create/revoke and nonce PDA uniqueness with atomic on-chain spend/sequence updates on local validator, DEX CPI deny-all until route review; (5) devnet evidence, independent review and explicit owner GO/NO-GO. Continue append-only record on main.
+
+
+## Phase 94 — 2026-11-14 — explicit non-executable simulator results (CLIMBX only)
+
+**Phase93 CI all SUCCESS** on `bcf6c3068fe5b22b40bf297d8f09e3d7d8d84ad8`: Validate `43464241957`, CLIMBX release safety `43464241977`, Browser Smoke `43464242688`.
+
+**Phase94 branch commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `3731ff94fa550b2817e0dd6d0ee6c9a901b09df1`: successful `createGrant`, `revokeGrant`, and `evaluateOrder` simulations explicitly return `simulationOnly:true`, `mayExecute:false`. The `ok:true` field means only that a local policy simulation passed; it must never be used as trade authorization.
+- `eab5b409d5021469f6b506c7cb2b04ead509559d`: update prior success assertion and add three regression tests that no successful simulation grants execution permission.
+**Phase94 CI pending** for `eab5b409d5021469f6b506c7cb2b04ead509559d` at record time. Workflow already includes this test file.
+
+**Blockers unchanged:** no deployed Solana grant/vault program, no atomic on-chain nonce/spend/sequence accounting, no verified Signature DEX CPI/account allowlist, no signed devnet swap or independent audit. Current assistant container lacks Rust/Cargo/Solana CLI/local validator/Anchor. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase95:** verify Phase94 CI; inspect CLIMBX call sites for consumers that might mistake `ok:true` for execution permission; if found, fail closed and add regression tests. Establish actual Solana toolchain and local validator before claiming on-chain work; obtain DEX router constraints read-only; implement owner-signed on-chain grant/revoke/caps and independent audit. Append next phase here.
