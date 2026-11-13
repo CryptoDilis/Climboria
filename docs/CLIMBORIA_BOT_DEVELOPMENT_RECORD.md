@@ -1231,3 +1231,19 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Critical:** placeholder `declare_id!("11111111111111111111111111111111")` is System Program ID, intentionally blocks any credible deployment; do not deploy with it. A valid program ID requires an actual program keypair, controlled securely on an approved development host, not an arbitrary generated string. Do not treat static test success as Rust compilation or authorization.
 
 **Next Phase121:** verify Phase120 CI and fix failures. Set up pinned compatible Rust/Solana/Anchor build on approved CI/dev host with disposable keys; replace placeholder only with a properly generated program keypair public key; run `cargo check` and signed local validator grant/revoke tests. Real-funds CLIMBX **NO-GO**; no Swap/DEX/Launchpad/game edits.
+
+
+## Phase 121 — 2026-11-14 — local-only offline Cargo verification gate
+
+**Phase120 CI all SUCCESS** on `fbc7b57da2737113ad38150bf9e86a8699052084`: Validate `43488607519`, CLIMBX release safety `43488607188`, Browser Smoke `43488607255`.
+
+**Phase121 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `fec008960c0dcbd0f58575a33f4a9b4a50578b4d`: `climbx/verify_anchor_cargo_build.cjs`, local-only `cargo check --locked --offline --manifest-path ...` with bounded timeout, no installation or deployment. Returns `mayExecute:false` and `safeForDeployment:false` even on successful compilation.
+- `352d5a8ef73556ba96a50caf4e2f7a8b205b454c`: six mock runner tests covering success, missing Cargo, failed/killed run, hostile runner and invalid runner.
+- `9148052f3d3eaeceb0d557ad70762c3d61923d75`: add verifier **unit tests** to non-deploying CLIMBX CI. CI does **not** invoke actual `cargo check`.
+- `206b8e76346eca3fc2217d074a55a0cfcc622162`: README documents controlled-host prerequisites: reviewed Cargo.lock and cached dependencies. Neither is currently provisioned; offline locked build is expected to fail until then.
+**Phase121 CI pending** at first check. No Rust compilation, Anchor build, actual validator, key generation or deployment claimed.
+
+**Blockers:** compatible toolchain and lockfile not provisioned; no signed local-validator tests, restricted DEX CPI, grant execution, audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase122:** verify Phase121 CI and fix failures; on approved host generate and review Cargo.lock with pinned toolchain, cache dependencies, run actual offline cargo check and capture output, then signed local validator grant/revoke tests. Keep append-only main record.
