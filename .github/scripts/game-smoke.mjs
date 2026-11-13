@@ -281,8 +281,15 @@ try {
   const caveLighting=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveLightingAudit?.()??null);
   const caveTraps=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveTrapAudit?.()??null);
   if(!caveTraps||!Number.isFinite(caveTraps.caveBaseY)||caveTraps.spikeCount!==35||caveTraps.rows!==5||caveTraps.columns!==7||caveTraps.trapRoom?.minX!==-64||caveTraps.trapRoom?.maxX!==-46||caveTraps.trapRoom?.minZ!==-47||caveTraps.trapRoom?.maxZ!==-35||caveTraps.damage!==25||!caveTraps.activeProbe||!caveTraps.inactiveProbe||!caveTraps.outsideProbe) errors.push('Cave spike trap activation/damage audit failed: '+JSON.stringify(caveTraps));
+  const beforeTrapInventory=await page.evaluate(()=>JSON.stringify(window.__climboriaJarrellsPeak?.inventory||[]));
   const caveTrapLifecycle=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveTrapLifecycleAudit?.()??null);
   if(!caveTrapLifecycle||!caveTrapLifecycle.damageCorrect||caveTrapLifecycle.damageTaken!==25||!caveTrapLifecycle.respawnCorrect) errors.push('Cave live damage/death/Sanctuary respawn lifecycle failed: '+JSON.stringify(caveTrapLifecycle));
+  const afterTrapState=await page.evaluate(()=>({
+    inventory:JSON.stringify(window.__climboriaJarrellsPeak?.inventory||[]),
+    bag:window.__climboriaJarrellsPeak?.deathLootSnapshot?.()||null
+  }));
+  if(afterTrapState.inventory!==beforeTrapInventory||afterTrapState.bag)
+    errors.push('Legacy cave-death smoke test leaked carried items into a recoverable bag: '+JSON.stringify({beforeTrapInventory,afterTrapState}));
   const deathLoot=await page.evaluate(()=>window.__climboriaJarrellsPeak?.deathLootLifecycleAudit?.()??null);
   if(!deathLoot?.ok||!deathLoot.inventoryCleared||!deathLoot.respawned||!deathLoot.persisted||
     !deathLoot.survivesUnload||!deathLoot.isolated||!deathLoot.rehydrated||!deathLoot.recovered||
