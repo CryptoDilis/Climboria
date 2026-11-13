@@ -1102,3 +1102,18 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Blockers:** no Rust/Solana/Anchor toolchain available in assistant environment, no real local validator start/RPC probe, no owner-signed on-chain grant/revoke/cap program, no signed devnet execution, no independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
 
 **Next Phase112:** verify Phase111 CI and cancelled Browser Smoke retry; replace self-reported evidence with a runner-executed local validator process and RPC checks in a provisioned toolchain environment; then begin on-chain authorization program. Keep append-only main record.
+
+
+## Phase 112 — 2026-11-14 — read-only localhost Solana validator RPC probe
+
+**Phase111 CI all SUCCESS** on `37e8307956a11835cea46c33f0d6363042938e49`: CLIMBX release safety `43480095143`, Browser Smoke `43480095191`, Validate `43480095074`. Historical Phase110 browser rerun job `132073822052` remains CANCELLED; latest Phase111 browser smoke passed.
+
+**Phase112 commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `0ede584e643e389d8e4061e0ec52488270afaad4`: read-only `climbx/local_validator_rpc_probe.cjs` sends `getHealth` JSON-RPC to explicitly loopback `127.0.0.1` only, bounds timeout/response, and always returns `mayExecute:false`. Does not install tools, start validator, sign or submit transactions.
+- `fab726a0cd6ce27c85953fcf1c42dd5914426a5e`: six mocked local HTTP tests covering success, invalid endpoint, malformed/wrong-id response, unhealthy validator.
+- `6542f0cd75c97d607f03bd93a57e84a54e98fb20`: add probe tests to CLIMBX non-deploying CI.
+**Phase112 CI pending** at first check.
+
+**Actual assistant environment:** rustc/cargo/solana/solana-test-validator/anchor all missing; Node v22.16.0. No validator started; mock HTTP test does not prove real validator availability. Even successful `getHealth` is not program authorization. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase113:** verify Phase112 CI, fix failures; provision approved pinned toolchain and actually start disposable local validator, capture RPC health/version and deterministic on-chain grant/revoke/cap tests. Maintain append-only main record.
