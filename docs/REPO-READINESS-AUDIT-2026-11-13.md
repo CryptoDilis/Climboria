@@ -420,3 +420,16 @@ The 50-transaction sample is bounded evidence, not exhaustive route coverage. It
 - [x] Readiness document read-back confirms the current PR freshness values are 196/18 for PR #269 and 203/18 for PR #274.
 
 - [x] Latest compare before this checkpoint update: PR #269 = 196 ahead / 21 behind; PR #274 = 203 ahead / 21 behind. The 21 main-only commits touch only the three documentation files already listed. This readiness update itself adds one further documentation-only commit; re-check the exact behind count immediately before branch sync/merge.
+
+
+## Latest PR #269 exact-head checkpoint — 2026-11-13 00:33 UTC
+
+- Current PR #269 head: `66b458f974d0e7ede4b63ae59df1513d3c1f73c4` (OPEN / DRAFT).
+- Current compare to main: **197 ahead / 22 behind**. PR #274 remains OPEN / DRAFT at `559423bdddf709cae31de06b01b2c4b461f2a482`, **203 ahead / 22 behind**. The 22 main-only commits still touch only the three readiness/handoff documentation files; sync PR #269 before merge.
+- Exact-head Validate run `43337651633`: **SUCCESS**, 155 tests passed, 0 failed.
+- Exact-head Jupiter CPI Trace run `43337651956`: **SUCCESS**. It scanned 50 finalized transactions across two pages, fetched all 50, found two matching Jupiter/Meteora transactions, and reported no rate limiting or transport failure. Artifact `13998171871`, SHA-256 `2991c09e1d592001536132e7aa2a165a6f5e4bcfe0d70ed03814bc5e169c789f`. Both matches remain single-route examples; no multi-hop/split example found.
+- Exact-head Browser Smoke run `43337651711`: IN PROGRESS at Jarrell's Peak desktop/mobile gameplay smoke; 21 steps completed, no failed step. The new explicit summary gate has not yet been accepted.
+- Exact-head Jupiter IDL History run `43337651932`: IN PROGRESS at direct on-chain history reconstruction using public-mainnet fallback. The encrypted `SOLANA_RPC_URL` secret remains missing/empty; public fallback must produce a complete, unique candidate-slot history or the owner must add the private HTTPS RPC secret.
+- Older IDL runs `43336735508` and `43337636175` belong to superseded heads; use the current exact-head run `43337651932` for acceptance.
+- [ ] **Next exact task:** inspect Browser Smoke run `43337651711` for a validated `game-smoke-summary.json`; inspect IDL History run `43337651932` for exactly one active Jupiter route-v2 revision at slot `468153382`. If public RPC cannot complete the history, ask owner to add encrypted Actions secret `SOLANA_RPC_URL`. Keep all Swap execution gates disabled.
+
