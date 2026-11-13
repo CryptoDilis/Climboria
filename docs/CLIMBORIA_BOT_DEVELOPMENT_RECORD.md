@@ -796,3 +796,18 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Phase91 branch commit:** `8f08f484a8b792b3684bd96e76d2307780160531` creates `climbx/DEVNET_PROGRAM_IMPLEMENTATION_GATE.md`, documenting environment, owner-controlled grant/vault prerequisites, DEX route review dependency, required adversarial local-validator tests and independent audit. **Documentation only**, not a working Solana program. No DEX/Swap/Launchpad/game edits. Real-funds **NO-GO**.
 
 **Next Phase92:** (1) verify Phase91 CI on commit `8f08f484a8b792b3684bd96e76d2307780160531`; (2) establish a controlled Solana devnet build/validator environment with pinned tool versions (or document inability); (3) read-only review DEX router transaction schema; (4) implement and test owner grant/revoke/caps on devnet, deny all swaps until exact route constraints are verified; (5) independent review, signed settlement evidence, explicit owner release decision. Keep append-only progress record on main after every phase.
+
+
+## Phase 92 — 2026-11-14 — CLIMBX grant lifecycle simulator (non-deploying)
+
+**Phase91 CI all SUCCESS** on `8f08f484a8b792b3684bd96e76d2307780160531`: Validate `43463474332`, CLIMBX safety `43463474298`, Browser Smoke `43463474296`.
+
+**Phase92 CLIMBX-only branch commits:**
+- `0002cbfcfb2922e5781011746c6fe57723428e49`: `climbx/devnet_grant_state_simulation.cjs` models owner/executor grant, nonce, <=24h expiry, <=5 unique allowed mints, per-trade/cumulative caps, owner-only revoke, bot-only order checks, last-30-minute cutoff, position state and sequence replay rejection. **Pure JavaScript simulation, not an on-chain Solana program or atomic settlement.**
+- `c4f3e668a9ed2a65ac9d5f1279bcb34dc945013c`: 18 grant/revoke/expiry/replay/cap tests in `climbx/devnet_grant_state_simulation.test.cjs`.
+- `bc51db923897f698c6cdbf48cbe8e3370aeb9591`: wire tests into CLIMBX non-deploying release gate.
+**Phase92 CI not yet verified** at log time. Check exact commit workflow runs before claiming pass.
+
+**Critical limits:** Simulated revoke has no blockchain effect; no state mutation after orders; no on-chain caps, transaction signing, DEX router CPI, devnet deployment or independent audit. Current assistant container lacks Rust/Cargo/Solana CLI/local validator/Anchor. CLIMBX real-funds **NO-GO**. No DEX/Swap/Launchpad/game files modified.
+
+**Next Phase93:** (1) verify Phase92 CI on `bc51db923897f698c6cdbf48cbe8e3370aeb9591`, investigate failures; (2) add adversarial grant lifecycle tests for nonce reuse and atomicity limitations, explicitly document that off-chain simulations cannot enforce them; (3) provision controlled Solana devnet build environment, pinned versions and local validator; (4) implement owner-signed on-chain grant/revoke/caps with deny-all swaps until concrete reviewed DEX route exists; (5) independent review and explicit owner GO/NO-GO. Continue CLIMBX-only append-only handoff.
