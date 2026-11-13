@@ -80,8 +80,8 @@ mod tests {
     #[test]
     fn grant_size_covers_five_mints() {
         // 8-byte Anchor discriminator is added at account allocation.
-        assert_eq!(Grant::MAX_SIZE, 246);
-        assert_eq!(8 + Grant::MAX_SIZE, 254);
+        assert_eq!(Grant::MAX_SIZE, 278);
+        assert_eq!(8 + Grant::MAX_SIZE, 286);
     }
 
     #[test]
