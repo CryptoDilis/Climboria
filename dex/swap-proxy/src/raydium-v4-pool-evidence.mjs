@@ -125,6 +125,21 @@ function parseMint(account, role) {
   };
 }
 
+/**
+ * Decode one direct Raydium V4 pool account without trusting an RPC-provided
+ * jsonParsed representation. Caller MUST pin the network and independently
+ * corroborate the pool public key: state consistency alone cannot prove
+ * that a pool is legitimate or that it matches an intended trading pair.
+ *
+ * Only used for read-only discovery; does not authorize any Jupiter CPI.
+ */
+export function inspectRaydiumV4RawPoolAccount({ network, account } = {}) {
+  if (!Object.hasOwn(RAYDIUM_V4_PROGRAM_IDS, network)) {
+    fail("unsupported or unspecified network");
+  }
+  return Object.freeze(parsePool(account, RAYDIUM_V4_PROGRAM_IDS[network]));
+}
+
 /** Deterministic proof for an already retrieved single finalized-context snapshot. */
 export function inspectRaydiumV4FinalizedPoolSnapshot({
   network, addresses, expectedAuthority, accounts, contextSlot
