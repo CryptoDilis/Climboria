@@ -26,6 +26,7 @@ export const CRITICAL_TYPES = ["GlobalConfig", "PlatformConfig", "PoolState", "B
 const sha = bytes => createHash("sha256").update(bytes).digest("hex");
 const SDK_LAYOUT_SHA256 = "a422af7572b3b0f567ff7ad39f4b099eaf8a551257a77f89a61a3fe603ec2256";
 const IDL_SHA256 = "963189409945069409f32e345d4adf2892e0b3ca1be504372577fe34a23c6cdb";
+const SDK_INSTRUMENT_SHA256 = "177d418defd36a173d43fafb29a06019a8754c7abe599365885d0b46c1fd8274";
 const readU64 = (data, offset) => data.readBigUInt64LE(offset).toString();
 const fixedText = (data, start, length) => { const value = data.subarray(start, start + length).toString("utf8"); const end = value.indexOf(String.fromCharCode(0)); return (end < 0 ? value : value.slice(0, end)).trim(); };
 function decodeSdkGlobalConfig(data) {
@@ -103,6 +104,31 @@ export function compareCriticalIdls(repoIdl, liveIdl) {
   const repoOnlyInstructions = [...repoInstructions.keys()].filter(x => !liveInstructions.has(x));
   const liveOnlyInstructions = [...liveInstructions.keys()].filter(x => !repoInstructions.has(x));
   return { criticalDiscriminatorMismatches, criticalSchemaMismatches, criticalSchemaDetails, repoOnlyInstructions, liveOnlyInstructions };
+}
+const SDK_INSTRUCTION_NAMES = Object.freeze({
+  buy_exact_in: "buyExactIn", buy_exact_out: "buyExactOut",
+  sell_exact_in: "sellExactIn", sell_exact_out: "sellExactOut",
+  initialize_v2: "initializeV2", initialize_with_token_2022: "initializeWithToken2022",
+  create_platform_config: "createPlatformConfig", claim_platform_fee: "claimPlatformFee",
+  claim_platform_fee_from_vault: "claimPlatformFeeFromVault", claim_creator_fee: "claimCreatorFee",
+  create_vesting_account: "createVestingAccount", claim_vested_token: "claimVestedToken",
+  create_platform_vesting_account: "createPlatformVestingAccount"
+});
+/** Compare trusted pinned Raydium SDK transaction builders against pinned official IDL. */
+export function verifySdkInstructionDiscriminators(repoIdl, instrumentText) {
+  const block = instrumentText.match(/export const anchorDataBuf = \{([\s\S]*?)\n\};/);
+  if (!block) throw new Error("Pinned Raydium SDK anchorDataBuf block missing");
+  const sdk = new Map([...block[1].matchAll(/(\w+): Buffer\.from\(\[([0-9,\s]+)\]\)/g)]
+    .map(match => [match[1], match[2].split(",").map(x=>Number(x.trim())).filter(Number.isFinite)]));
+  const instructions = new Map(repoIdl.instructions.map(x=>[x.name,x]));
+  for (const [idlName,sdkName] of Object.entries(SDK_INSTRUCTION_NAMES)) {
+    const expected = instructions.get(idlName)?.discriminator;
+    const observed = sdk.get(sdkName);
+    if (!Array.isArray(expected) || expected.length !== 8 || !Array.isArray(observed) || observed.length !== 8 ||
+      !same(expected, observed))
+      throw new Error("Pinned SDK instruction discriminator mismatch: " + idlName + "/" + sdkName);
+  }
+  return { pass:true, comparedInstructionCount:Object.keys(SDK_INSTRUCTION_NAMES).length };
 }
 async function readAccount(rpc, address) {
   const response = await fetch(rpc, {
@@ -190,11 +216,15 @@ async function fetchCluster(cluster, repoIdl) {
     pass: selectedDiscriminatorsMatch && repoIdlTypeDefinitionsExactlyMatch && sdkLayoutBinaryCompatible
   };
 }
-export async function verifyOnchainLaunchpadIdl(repoIdlPath, sdkLayoutPath) {
+export async function verifyOnchainLaunchpadIdl(repoIdlPath, sdkLayoutPath, sdkInstrumentPath) {
   const repoIdlRaw = await readFile(repoIdlPath, "utf8");
   const idlSha256 = sha(Buffer.from(repoIdlRaw));
   if (idlSha256 !== IDL_SHA256) throw new Error(`Pinned official LaunchLab IDL hash mismatch: ${idlSha256}`);
-  const repoIdl = JSON.parse(repoIdlRaw);
+  const repoIdl = JSON.parse(repoIdlRaw);  if (!sdkInstrumentPath) throw new Error("Pinned SDK instrument source path is required");
+  const sdkInstrument = await readFile(sdkInstrumentPath,"utf8");
+  const sdkInstrumentSha256 = sha(Buffer.from(sdkInstrument));
+  if (sdkInstrumentSha256 !== SDK_INSTRUMENT_SHA256) throw new Error("Pinned SDK transaction builder SHA-256 mismatch: " + sdkInstrumentSha256);
+  const sdkDiscriminators = verifySdkInstructionDiscriminators(repoIdl, sdkInstrument);
   const sdkLayout = await readFile(sdkLayoutPath, "utf8");
   const sdkLayoutSha256 = sha(Buffer.from(sdkLayout));
   if (sdkLayoutSha256 !== SDK_LAYOUT_SHA256) throw new Error(`Pinned SDK layout source hash mismatch: ${sdkLayoutSha256}`);
@@ -206,12 +236,12 @@ export async function verifyOnchainLaunchpadIdl(repoIdlPath, sdkLayoutPath) {
     try { results.push(await fetchCluster(cluster, repoIdl)); }
     catch (error) { results.push({ cluster, pass: false, blockers: [String(error.message || error)] }); }
   }
-  return { checkedAt: new Date().toISOString(), readOnly: true, transactionSubmitted: false, pinnedIdl: { sha256: idlSha256, commit: "e7e0c96fe77bcf6a020b84a44c47a722aac8e359" }, approvalToLaunch: false, sdkLayout: { sha256: sdkLayoutSha256, commit: "1cf5bb129dbbb1c76dab67819c3d478349c8ed25", layoutSizeChecks: "GlobalConfig=371;PlatformConfig=944" }, pass: results.every(x => x.pass), results };
+  return { checkedAt: new Date().toISOString(), readOnly: true, transactionSubmitted: false, pinnedIdl: { sha256: idlSha256, commit: "e7e0c96fe77bcf6a020b84a44c47a722aac8e359" }, approvalToLaunch: false, sdkInstrument: { sha256:sdkInstrumentSha256, comparedInstructionCount:sdkDiscriminators.comparedInstructionCount }, sdkLayout: { sha256: sdkLayoutSha256, commit: "1cf5bb129dbbb1c76dab67819c3d478349c8ed25", layoutSizeChecks: "GlobalConfig=371;PlatformConfig=944" }, pass: results.every(x => x.pass), results };
 }
 if (process.argv[1]?.endsWith("launchlab-onchain-idl-check.mjs")) {
-  const [idlPath, sdkLayoutPath] = process.argv.slice(2);
-  if (!idlPath || !sdkLayoutPath) throw new Error("Usage: node launchlab-onchain-idl-check.mjs launchpad-idl.json layout.ts");
-  const report = await verifyOnchainLaunchpadIdl(idlPath, sdkLayoutPath);
+  const [idlPath, sdkLayoutPath, sdkInstrumentPath] = process.argv.slice(2);
+  if (!idlPath || !sdkLayoutPath || !sdkInstrumentPath) throw new Error("Usage: node launchlab-onchain-idl-check.mjs launchpad-idl.json layout.ts instrument.ts");
+  const report = await verifyOnchainLaunchpadIdl(idlPath, sdkLayoutPath, sdkInstrumentPath);
   process.stdout.write(JSON.stringify(report, null, 2) + "\n");
   if (!report.pass) process.exitCode = 1;
 }
