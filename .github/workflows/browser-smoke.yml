@@ -63,6 +63,12 @@ jobs:
           timeout --signal=TERM --kill-after=20s 2m npm install --no-save playwright
           timeout --signal=TERM --kill-after=20s 4m npx playwright install chromium
 
+      - name: Prepare optimized GLB for browser gameplay smoke
+        run: |
+          python3 -m pip install 'Pillow>=11,<13'
+          python3 .github/scripts/optimize_hero_glb.py assets/characters/Climboria_Hero.glb assets/characters/Climboria_Hero_mobile_optimized.glb
+          python3 .github/scripts/verify_hero_optimization.py assets/characters/Climboria_Hero.glb assets/characters/Climboria_Hero_mobile_optimized.glb
+
       - name: Start local web server
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/climboria-http.log 2>&1 &
@@ -304,6 +310,9 @@ jobs:
             } finally { await browser.close(); }
           })().catch(e=>{console.error(e);process.exit(1)});
           JS
+
+      - name: Test DEX Market Leader hierarchy on desktop and mobile
+        run: node .github/scripts/dex-market-leader-smoke.mjs
 
       - name: Test Cloudflare DEX swap proxy
         run: node --test dex/swap-proxy/test/worker.test.mjs
@@ -719,7 +728,7 @@ jobs:
         timeout-minutes: 21
         run: |
           echo 'Starting bounded Jarrell desktop/mobile gameplay smoke test.'
-          timeout --signal=TERM --kill-after=30s 20m node .github/scripts/game-smoke.mjs
+          CLIMBORIA_HERO_VARIANT=optimized timeout --signal=TERM --kill-after=30s 20m node .github/scripts/game-smoke.mjs
 
       - name: Upload browser screenshots
         if: always()
@@ -737,6 +746,8 @@ jobs:
             climboria-mobile-cave-interior.png
             climboria-dex-token-socials.png
             climboria-dex-token-socials-mobile.png
+            climboria-dex-market-leader-desktop.png
+            climboria-dex-market-leader-mobile.png
             freshwater-*.png
           if-no-files-found: warn
           retention-days: 7

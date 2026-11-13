@@ -1,5 +1,7 @@
 import { chromium } from 'playwright';
 
+const optimizedHeroSmoke = process.env.CLIMBORIA_HERO_VARIANT === 'optimized';
+const heroQuery = optimizedHeroSmoke ? '&heroAsset=optimized' : '';
 const errors = [];
 const browser = await chromium.launch({
   headless: true,
@@ -11,7 +13,7 @@ try {
   const page = await desktop.newPage();
   page.on('pageerror', error => errors.push('desktop pageerror: ' + (error.stack || error.message)));
   page.on('console', message => { if (message.type() === 'error') errors.push('desktop console: ' + message.text()); });
-  await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1', {
+  await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1' + heroQuery, {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
   });
@@ -500,7 +502,7 @@ try {
       Object.defineProperty(Object.getPrototypeOf(screen), 'orientation', { configurable: true, get: () => mockedOrientation });
     }
   });
-  await mobile.goto('http://127.0.0.1:4173/game/play.html?smoke=mobile', {
+  await mobile.goto('http://127.0.0.1:4173/game/play.html?smoke=mobile' + heroQuery, {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
   });
@@ -713,8 +715,25 @@ try {
   const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero }));
   if (!mobileHeroReady.readiness.chunk || !mobileHeroReady.readiness.render || !mobileHeroReady.readiness.hero || mobileHeroReady.renderer !== true || !mobileHeroReady.heroUsesGlb) throw new Error('Mobile saved GLB hero did not become fully ready: ' + JSON.stringify(mobileHeroReady));
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
+  // The mobile game may need several rendered frames after the hero becomes ready
+  // before movement mode settles. Diagnose failures instead of silently skipping.
   await mobile.keyboard.press('w');
-  await mobile.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.mode === 'walk', undefined, { timeout: 10000 });
+  try {
+    await mobile.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.mode === 'walk', undefined, { timeout: 30000 });
+  } catch (error) {
+    const diagnostic = await mobile.evaluate(() => ({
+      mode: window.__climboriaJarrellsPeak?.player?.mode,
+      position: window.__climboriaJarrellsPeak?.player && {
+        x: window.__climboriaJarrellsPeak.player.x,
+        y: window.__climboriaJarrellsPeak.player.y,
+        z: window.__climboriaJarrellsPeak.player.z,
+      },
+      frames: window.__climboriaRenderState?.frames,
+      readiness: window.__climboriaReadiness,
+      hero: document.documentElement.dataset.climboriaHero,
+    }));
+    throw new Error('Mobile movement did not enter walk mode: ' + JSON.stringify(diagnostic) + '; ' + error.message);
+  }
   const mobileOrbit = await mobile.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw,hero:api?.heroYaw,glb:api?.heroUsesGlb};
     const target=document.body;
@@ -780,11 +799,25 @@ try {
   // comparable default Sanctuary view rather than leaving the screenshot zoomed
   // toward an arbitrary direction or landmark.
   await mobile.keyboard.press('1');
-  await mobile.waitForFunction(() => {
-    const p=window.__climboriaJarrellsPeak?.player;
-    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
-      (window.__climboriaRenderState?.frames ?? 0)>=4;
-  }, undefined, { timeout: 10000 });
+  try {
+    await mobile.waitForFunction(() => {
+      const p=window.__climboriaJarrellsPeak?.player;
+      return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
+        (window.__climboriaRenderState?.frames ?? 0)>=4;
+    }, undefined, { timeout: 30000 });
+  } catch (error) {
+    const diagnostic = await mobile.evaluate(() => ({
+      player: window.__climboriaJarrellsPeak?.player && {
+        x: window.__climboriaJarrellsPeak.player.x,
+        y: window.__climboriaJarrellsPeak.player.y,
+        z: window.__climboriaJarrellsPeak.player.z,
+        mode: window.__climboriaJarrellsPeak.player.mode,
+      },
+      frames: window.__climboriaRenderState?.frames,
+      readiness: window.__climboriaReadiness,
+    }));
+    throw new Error('Mobile Sanctuary state did not settle: ' + JSON.stringify(diagnostic) + '; ' + error.message);
+  }
   await mobile.waitForTimeout(900);
   const mobileVisualCapture = await mobile.evaluate(() => ({
     player:{x:window.__climboriaJarrellsPeak?.player?.x,y:window.__climboriaJarrellsPeak?.player?.y,z:window.__climboriaJarrellsPeak?.player?.z},
@@ -795,15 +828,15 @@ try {
   }));
   console.log('Mobile visual capture normalized to Sanctuary:',JSON.stringify(mobileVisualCapture));
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
-  await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
+  await mobile.screenshot({ timeout: 90000, animations: 'disabled',  path: 'climboria-mobile-gameplay.png' });
   const mobileCaveView=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
   if(!mobileCaveView||Math.abs(mobileCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(mobileCaveView.playerYaw,mobileCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.playerYaw)-Math.PI)>.01) errors.push('Mobile cave entrance visual position/orientation could not be prepared: '+JSON.stringify(mobileCaveView));
   await mobile.waitForTimeout(1200);
-  await mobile.screenshot({ path: 'climboria-mobile-cave-entrance.png' });
+  await mobile.screenshot({ timeout: 90000, animations: 'disabled',  path: 'climboria-mobile-cave-entrance.png' });
   const mobileCaveInterior=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveInteriorForSmoke?.()??null);
   if(!mobileCaveInterior||Math.abs(mobileCaveInterior.local.x-30)>.01||Math.abs(mobileCaveInterior.local.z-25)>.01) errors.push('Mobile cave interior visual position could not be prepared: '+JSON.stringify(mobileCaveInterior));
   await mobile.waitForTimeout(1200);
-  await mobile.screenshot({path:'climboria-mobile-cave-interior.png'});
+  await mobile.screenshot({ timeout: 90000, animations: 'disabled', path:'climboria-mobile-cave-interior.png'});
   console.log('Mobile cave interior visual capture:',JSON.stringify(mobileCaveInterior));
   console.log('Mobile cave entrance visual capture:',JSON.stringify(mobileCaveView));
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));

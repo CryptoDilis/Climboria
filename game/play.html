@@ -1083,7 +1083,12 @@ function animateAssetFallback(t,state,speed){
  if(assetRig.spine)assetRig.spine.rotation.x=landing?.12:jumping?-.08:0;
  if(assetRig.hips)assetRig.hips.rotation.y=moving?Math.sin(phase)*.025:0;
 }
-const assetChoices={Adventurer:'../assets/characters/Climboria_Hero.glb'};
+// Development-only asset switch. Production defaults to the original hero.
+const heroVariant=new URLSearchParams(location.search).get('heroAsset');
+const heroOriginalUrl='../assets/characters/Climboria_Hero.glb';
+const heroOptimizedUrl='../assets/characters/Climboria_Hero_mobile_optimized.glb';
+const assetChoices={Adventurer:heroVariant==='optimized'?heroOptimizedUrl:heroOriginalUrl};
+document.documentElement.dataset.climboriaHeroAssetVariant=heroVariant==='optimized'?'optimized':'original';
 let heroLoadError='',heroLoadRequest=0;
 function loadAssetHero(choice='ClimboriaHero'){
  if(choice==='ClimboriaHero'||!assetChoices[choice])choice='Adventurer';
