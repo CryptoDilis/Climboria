@@ -1287,6 +1287,7 @@ $('showDexQuote').addEventListener('click',()=>{
  button.setAttribute('aria-expanded',String(opening));
  button.textContent=opening?'HIDE QUOTE PREVIEW':'GET LIVE QUOTE · NO TRADING';
  if(opening)panel.scrollIntoView({behavior:'smooth',block:'start'});
+ else invalidateDexQuote('Quote preview closed. Request a fresh Jupiter quote when reopened.');
 });
 $('connectWallet').addEventListener('click',connectClimboriaWallet);$('getQuote').addEventListener('click',requestJupiterQuote);$('prepareSwap').addEventListener('click',prepareJupiterSwap);
 $('quoteAmount').addEventListener('input',()=>invalidateDexQuote('Amount changed. Request a fresh Jupiter quote.'));
