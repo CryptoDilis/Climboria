@@ -1290,3 +1290,18 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Blockers:** no verified Rust/Cargo/Solana/Anchor toolchain, no Cargo.lock, no actual compilation or signed validator test. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase125:** verify Phase124 CI and fix any failures; prioritize genuine pinned Rust compilation and owner-signed validator tests on approved build host.
+
+
+## Phase 124 — 2026-11-14 — fix Phase123 CI signer regression failure
+
+**Phase123 CI mixed** on `78f7a88f80ca014638b46e437a59ad5bee4577a7`: Browser Smoke `43492736787` SUCCESS; Validate `43492736075` SUCCESS; CLIMBX release safety `43492736071` **FAILURE**. Inspected failed job `132117884917`: test #129 `rejects missing owner signer on grant creation` expected `MISSING_OWNER_SIGNATURE` but got `UNCOMPILED_GRANT_ONLY_SCAFFOLD`. Root cause: static guard matched owner Signer in RevokeGrant even when missing in CreateGrant.
+
+**Phase124 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `3c598eb088c9611986cf4eb4cb3bf650d1c1aa7a`: scope owner Signer checks separately to CreateGrant and RevokeGrant account contexts.
+- `a855235eb3c4cdfe2c5531964ad948c5d44ea20a`: correct existing expected failure and add missing RevokeGrant signer regression.
+- `bd49e6503f9efdb65054d33b8e45c2fac76c8f36`, `3baad04be9f51982871c67f51c409b90a60bda77`: correct JavaScript regex escaping in the checker and test.
+**Phase124 CI pending** at first check. Do not mark as passing until exact commit CI verified.
+
+**Blockers unchanged:** static guard is not a Rust compiler or Anchor audit; actual Rust compilation, validator tests, signed devnet E2E and DEX-only CPI not done. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase125:** verify Phase124 CI, inspect and fix failures. Then prioritize actual pinned Rust/Solana toolchain and signed local-validator tests; no live funds.

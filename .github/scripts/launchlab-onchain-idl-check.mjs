@@ -70,16 +70,67 @@ const stable = value => {
 };
 const same = (a,b) => JSON.stringify(stable(a)) === JSON.stringify(stable(b));
 
+/**
+ * Ignore ONLY human-readable IDL "docs" for diagnostic classification.
+ * All account order, signer/writable/optional, addresses, nested PDA seeds,
+ * program constraints, relations and unknown fields remain security-relevant.
+ * The original exact comparison AND fail-closed verdict are unchanged.
+ */
+export function stripAccountDocs(value) {
+  if (Array.isArray(value)) return value.map(stripAccountDocs);
+  if (value && typeof value === "object")
+    return Object.fromEntries(Object.entries(value)
+      .filter(([key]) => key !== "docs")
+      .map(([key, child]) => [key, stripAccountDocs(child)]));
+  return value;
+}
+
+
 
 /** Pure, fail-closed comparison of transaction-critical Anchor instruction and type layouts. */
 export function compareCriticalIdls(repoIdl, liveIdl) {
   const repoInstructions = new Map(repoIdl.instructions.map(x => [x.name, x]));
   const liveInstructions = new Map(liveIdl.instructions.map(x => [x.name, x]));
   const criticalDiscriminatorMismatches = [];
+  const criticalAccountMetaMismatches = [], criticalAccountConstraintMismatches = [],
+    documentationOnlyAccountMismatches = [], criticalArgumentMismatches = [], criticalInstructionSchemaDetails = [];
   for (const name of CRITICAL_INSTRUCTIONS) {
     const a = repoInstructions.get(name), b = liveInstructions.get(name);
-    if (!a || !b) criticalDiscriminatorMismatches.push(`${name}: missing from ${!a ? "pinned repo IDL" : "live on-chain IDL"}`);
-    else if (!same(a.discriminator, b.discriminator)) criticalDiscriminatorMismatches.push(`${name}: discriminator differs`);
+    if (!a || !b) {
+      criticalDiscriminatorMismatches.push(`${name}: missing from ${!a ? "pinned repo IDL" : "live on-chain IDL"}`);
+      criticalAccountMetaMismatches.push(`${name}: instruction missing`);
+      criticalAccountConstraintMismatches.push(`${name}: instruction missing`);
+      criticalArgumentMismatches.push(`${name}: instruction missing`);
+      continue;
+    }
+    if (!same(a.discriminator, b.discriminator)) criticalDiscriminatorMismatches.push(`${name}: discriminator differs`);
+    // Anchor account order, signer/writable bits, PDA seeds, optional accounts,
+    // nested account groups and instruction argument order/types affect what a
+    // wallet would authorize. Matching 8-byte discriminators does NOT prove these.
+    const accountsMatch = Array.isArray(a.accounts) && Array.isArray(b.accounts) && same(a.accounts, b.accounts);
+    const constraintsMatch = Array.isArray(a.accounts) && Array.isArray(b.accounts) &&
+      same(stripAccountDocs(a.accounts), stripAccountDocs(b.accounts));
+    const argsMatch = Array.isArray(a.args) && Array.isArray(b.args) && same(a.args, b.args);
+    if (!accountsMatch) {
+      criticalAccountMetaMismatches.push(`${name}: ordered account metas / constraints differ or are missing`);
+      if (constraintsMatch) documentationOnlyAccountMismatches.push(`${name}: account docs only; raw schema still differs`);
+      else criticalAccountConstraintMismatches.push(`${name}: account order, signer/writable, address, PDA or other constraint differs`);
+    }
+    if (!argsMatch) criticalArgumentMismatches.push(`${name}: ordered instruction args / types differ or are missing`);
+    if (!accountsMatch || !argsMatch) {
+      const firstChanged = (left, right) => {
+        if (!Array.isArray(left) || !Array.isArray(right)) return { index: null, pinnedCount: left?.length ?? null, liveCount: right?.length ?? null, missingArray: true };
+        const index = Array.from({ length: Math.max(left.length, right.length) }, (_, i) => i)
+          .find(i => !same(left[i], right[i]));
+        return { index: index ?? null, pinnedCount: left.length, liveCount: right.length,
+          pinned: index === undefined ? null : left[index] ?? null, live: index === undefined ? null : right[index] ?? null };
+      };
+      criticalInstructionSchemaDetails.push({
+        name, accountConstraintDifference: !constraintsMatch, accountDocumentationOnly: !accountsMatch && constraintsMatch,
+        accountMetaDifference: accountsMatch ? null : firstChanged(a.accounts, b.accounts),
+        argumentDifference: argsMatch ? null : firstChanged(a.args, b.args)
+      });
+    }
   }
   const repoAccounts = new Map((repoIdl.accounts || []).map(x => [x.name, x]));
   const liveAccounts = new Map((liveIdl.accounts || []).map(x => [x.name, x]));
@@ -103,7 +154,9 @@ export function compareCriticalIdls(repoIdl, liveIdl) {
   }
   const repoOnlyInstructions = [...repoInstructions.keys()].filter(x => !liveInstructions.has(x));
   const liveOnlyInstructions = [...liveInstructions.keys()].filter(x => !repoInstructions.has(x));
-  return { criticalDiscriminatorMismatches, criticalSchemaMismatches, criticalSchemaDetails, repoOnlyInstructions, liveOnlyInstructions };
+  return { criticalDiscriminatorMismatches, criticalAccountMetaMismatches, criticalAccountConstraintMismatches,
+    documentationOnlyAccountMismatches, criticalArgumentMismatches,
+    criticalInstructionSchemaDetails, criticalSchemaMismatches, criticalSchemaDetails, repoOnlyInstructions, liveOnlyInstructions };
 }
 const SDK_INSTRUCTION_NAMES = Object.freeze({
   buy_exact_in: "buyExactIn", buy_exact_out: "buyExactOut",
@@ -187,8 +240,11 @@ async function fetchCluster(cluster, repoIdl) {
       configAccountChecks[kind].schemaSemanticsIndependentlyVerified = false;
     }
   }
-  const { criticalDiscriminatorMismatches, criticalSchemaMismatches, criticalSchemaDetails, repoOnlyInstructions, liveOnlyInstructions } = compareCriticalIdls(repoIdl, liveIdl);
+  const { criticalDiscriminatorMismatches, criticalAccountMetaMismatches, criticalAccountConstraintMismatches,
+    documentationOnlyAccountMismatches, criticalArgumentMismatches,
+    criticalInstructionSchemaDetails, criticalSchemaMismatches, criticalSchemaDetails, repoOnlyInstructions, liveOnlyInstructions } = compareCriticalIdls(repoIdl, liveIdl);
   const selectedDiscriminatorsMatch = criticalDiscriminatorMismatches.length === 0;
+  const criticalInstructionSchemasMatch = criticalAccountMetaMismatches.length === 0 && criticalArgumentMismatches.length === 0;
   const repoIdlTypeDefinitionsExactlyMatch = criticalSchemaMismatches.length === 0;
   const globalDecoded = configAccountChecks.GlobalConfig.sdkLayoutDecoded;
   const platformDecoded = configAccountChecks.PlatformConfig.sdkLayoutDecoded;
@@ -211,9 +267,12 @@ async function fetchCluster(cluster, repoIdl) {
     liveIdlSha256: sha(inflated), repositoryIdlSha256: sha(Buffer.from(JSON.stringify(repoIdl))),
     liveIdlName: liveIdl.metadata?.name, liveIdlVersion: liveIdl.metadata?.version,
     liveInstructionCount: liveIdl.instructions?.length ?? 0, repositoryInstructionCount: repoIdl.instructions.length,
-    selectedDiscriminatorsMatch, repoIdlTypeDefinitionsExactlyMatch, sdkLayoutBinaryCompatible, criticalDiscriminatorMismatches, criticalSchemaMismatches, criticalSchemaDetails,
+    selectedDiscriminatorsMatch, criticalInstructionSchemasMatch, repoIdlTypeDefinitionsExactlyMatch, sdkLayoutBinaryCompatible,
+    criticalDiscriminatorMismatches, criticalAccountMetaMismatches, criticalAccountConstraintMismatches,
+    documentationOnlyAccountMismatches, criticalArgumentMismatches, criticalInstructionSchemaDetails,
+    criticalSchemaMismatches, criticalSchemaDetails,
     repoOnlyInstructions, liveOnlyInstructions,
-    pass: selectedDiscriminatorsMatch && repoIdlTypeDefinitionsExactlyMatch && sdkLayoutBinaryCompatible
+    pass: selectedDiscriminatorsMatch && criticalInstructionSchemasMatch && repoIdlTypeDefinitionsExactlyMatch && sdkLayoutBinaryCompatible
   };
 }
 export async function verifyOnchainLaunchpadIdl(repoIdlPath, sdkLayoutPath, sdkInstrumentPath) {
