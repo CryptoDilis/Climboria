@@ -51,6 +51,15 @@
 
 ## Change log
 
+### 2026-11-14 — DEX stale Jupiter quote protection (PR #298; CI running)
+- **Scope:** DEX market terminal quote preview only; no changes to Game, CLIMBX, Launchpad contracts, or Swap execution gates.
+- **Before:** `main` `2cf4f7aadb6244a1392c18c1d2f5ad0acc05052c`. In `dex/index.html`, asynchronous quote callbacks could display an old token/amount after the input changed or a newer quote completed. The DEX preview did not verify the returned raw input amount matched its request.
+- **Changed:** `dex/index.html` (request identity guard, invalidation on amount/mint edit/selection, fail-closed mismatched response), `.github/workflows/browser-smoke.yml` (delayed-out-of-order and wrong-amount browser fixtures), this record; branch `fix/dex-stale-quote-response-guard`, [PR #298](https://github.com/CryptoDilis/Climboria/pull/298). Initial commits `2d13786f`, `90918bbc`.
+- **Verification:** [Validate run 43462817421](https://github.com/CryptoDilis/Climboria/actions/runs/43462817421) and [Browser Smoke run 43462817543](https://github.com/CryptoDilis/Climboria/actions/runs/43462817543) started on the initial head; **terminal CI outcomes not yet observed**. Do not claim green or merged before refreshing exact-head checks.
+- **Unresolved:** CI test results pending. The new `workflow_run` after-deployment API orchestration still requires a future Worker deploy; real-money swapping remains disabled and Launchpad preview-only.
+- **NEXT:** inspect exact-head CI for PR #298, fix any failures, merge only when green; then verify quote UX on actual deployed origins and record release evidence.
+
+
 ### 2026-11-14 — Production quote-only verification confirmed; API CI race fixed in PR #296
 - **Scope:** Swap / DEX backend acceptance and release workflow. No Game, CLIMBX or Launchpad execution changes.
 - **Before:** `main` `4e3f7fed3e8d11bb18f4a0965078db1a981989ea`. Parallel workflows on prior commit `72ac1d8e`: API acceptance attempt 1 failed `Missing Worker binding: orderStore` at 15:58:01 UTC, **before** the Worker was deployed at 15:58:13 UTC.
