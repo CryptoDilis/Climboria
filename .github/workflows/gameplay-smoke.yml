@@ -46,6 +46,23 @@ jobs:
           npm init -y
           timeout --signal=TERM --kill-after=20s 2m npm install --no-save playwright
           timeout --signal=TERM --kill-after=20s 4m npx playwright install chromium
+      - name: Optimize hero GLB for CI gameplay tests
+        timeout-minutes: 8
+        run: |
+          # The original 42.9 MB hero can exceed the software-rendered mobile GLB readiness window.
+          # Resize embedded textures for CI only; production's original GLB stays unchanged.
+          npm install --no-save @gltf-transform/cli
+          mv assets/characters/Climboria_Hero.glb /tmp/climboria-original-hero.glb
+          npx gltf-transform resize /tmp/climboria-original-hero.glb assets/characters/Climboria_Hero.glb --width 2048 --height 2048
+          test -s assets/characters/Climboria_Hero.glb
+          python3 - <<'PY'
+          from pathlib import Path
+          original=Path('/tmp/climboria-original-hero.glb').stat().st_size
+          optimized=Path('assets/characters/Climboria_Hero.glb').stat().st_size
+          print(f'CI hero GLB: {original:,} -> {optimized:,} bytes')
+          if optimized >= original:
+              raise SystemExit('Optimized GLB is not smaller; failing instead of silently running the oversized asset')
+          PY
       - name: Start local web server
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/climboria-http.log 2>&1 &
