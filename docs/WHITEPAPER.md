@@ -1,6 +1,6 @@
 # CLIMBORIA — Full Ecosystem Whitepaper
 
-**Version:** 1.1  
+**Version:** 1.2  
 **Updated:** 13 November 2026  
 **Official website:** https://climboria.fun  
 **Official X:** https://x.com/ClimboriaHQ
@@ -154,3 +154,18 @@ Base expansion, Base Swap/DEX availability, marketplace, NFT minting, social sys
 - Source repository: https://github.com/CryptoDilis/Climboria
 
 For token identity and launch status, rely only on official Climboria announcements and verifiable on-chain records.
+
+
+## 14. Pre-listing information checklist
+
+This whitepaper is a project and product overview, not a complete listing application. Before submitting a CoinGecko pre-listing request, attach current primary-source evidence for:
+
+- Canonical Solana mint address and verified token identity.
+- Total and circulating supply, token authorities, and distribution/vesting details.
+- Active markets and trading pairs, with verifiable market data.
+- Official website and social channels, plus any additional official community channels.
+- Security audit reports or an explicit statement of audit status; never imply an audit without evidence.
+- Current operational status of the game, Swap, DEX, Launchpad, marketplace, and other products.
+- Any additional project, token, or market data requested by CoinGecko at submission time.
+
+Do not submit estimated, placeholder, or unverified token facts as final disclosures. The project must verify ticker availability, token address, supply, markets, and launch status before describing them as confirmed.
