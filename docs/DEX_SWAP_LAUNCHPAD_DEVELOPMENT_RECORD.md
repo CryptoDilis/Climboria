@@ -201,3 +201,20 @@ Changed: fresh branch `feat/dex-visible-quote-on-latest-main` from current `main
 Verified: new commits `c1ef191`, `10f1e28`, `d872379` created. Exact-head CI and real-origin Pages/browser acceptance **PENDING**. Original PR #308 remains draft/conflicted and must be closed once its replacement safely merges.
 Unresolved: ensure button accessible/tappable on real 390px mobile, actual DEX quote response after deploy, release UX clarity; signed Swap and Launchpad creator lifecycle still blocked.
 NEXT: create focused replacement PR, inspect exact-head Validate + Browser Smoke, merge only when green, and verify deployed DEX desktop/mobile read-only quote via real browser job; do not claim mainnet trading.
+
+
+### 2026-11-14 — PR #310 merged; real production mobile DEX quote button hidden (confirmed bug)
+Scope: **DEX only**; no Game, CLIMBX, Launchpad, trade execution or signing.
+Before: PR #310 added user-facing quote toggle and retained PR #307 mobile acceptance. Original conflicted PR #308 closed unmerged in favor of #310.
+Changed: [PR #310](https://github.com/CryptoDilis/Climboria/pull/310) merged `bcec7cfd251e900566caddb61423b822eaaae8b9`; production DEX read-only quote toggle and desktop+mobile real-button smoke landed. 
+Verified: PR head `22c39886d9d481c9700e5e2f4afdc839e4159589` [Validate 43472654564](https://github.com/CryptoDilis/Climboria/actions/runs/43472654564) **SUCCESS**, [Browser Smoke 43472654204](https://github.com/CryptoDilis/Climboria/actions/runs/43472654204) **SUCCESS**, [DEX/Swap syntax 43472654208](https://github.com/CryptoDilis/Climboria/actions/runs/43472654208) **SUCCESS**. Exact main [Pages 43472881944](https://github.com/CryptoDilis/Climboria/actions/runs/43472881944) **SUCCESS**. [Production browser 43472883328](https://github.com/CryptoDilis/Climboria/actions/runs/43472883328) **FAILURE**: desktop Swap, 390px mobile Swap and desktop DEX all PASS genuine Jupiter quotes; mobile DEX button `#showDexQuote` was `hidden` due to the preexisting mobile stylesheet `.dex-ad-slot,.execution-status,.stats{display:none!important}`, which hides its whole parent banner; no mobile quote request occurred.
+Unresolved: mobile DEX **user-facing** access is blocked despite a working quote provider and successful other browser checks. Do not claim mobile DEX quote feature live until exact deployed-browser PASS. Signing/execution remain disabled, Launchpad preview-only.
+NEXT: restore the existing banner **only for mobile Solana market view**, preserve Base/token detail compact layouts, and rerun exact-head browser production acceptance; do not unhide the control via test-only DOM mutation.
+
+### 2026-11-14 — Mobile Solana-only quote banner CSS override (CI pending)
+Scope: DEX mobile UX and quote-toggle CSS regression only.
+Before: real production [job 132049196793](https://github.com/CryptoDilis/Climboria/actions/runs/43472883328) failed on mobile `locator('#showDexQuote').waitFor({state:'visible'})`. Root cause is intentional compact mobile selector hiding `.execution-status`; this unintentionally hides the newly added read-only quote control too.
+Changed: branch `fix/dex-mobile-visible-quote-banner`, appended narrow `@media(max-width:760px)` CSS scoped to `body.mobile-solana-view` to restore the quote status banner and touch-target while preserving `mobile-base-view` and token-detail hiding. `.github/scripts/swap-amount.test.mjs` now checks the responsive CSS visibility rule in addition to actual toggle behavior. No runtime execution flags touched.
+Verified: commits `32b93b8` and `7600a3f` pushed on focused branch; **exact-head CI and production browser NOT YET VERIFIED**.
+Unresolved: actual 390px live mobile Playwright viewport state/quote success, physical Redmi device, launchpad Devnet and mainnet signing release gates.
+NEXT: inspect focused PR CI and the next exact deployed production DEX desktop/mobile quote test. Merge only if green, fix real failures without weakening tests.
