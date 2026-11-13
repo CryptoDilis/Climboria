@@ -83,3 +83,19 @@ jobs:
               raise SystemExit(f"Expected explicit NO_GO with missing evidence; got {decision}")
           print("Verified NO_GO and missing evidence; no deployment performed.")
           PY
+
+  rust-compile-probe:
+    name: Rust grant/revoke compilation (non-deploying)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Report installed Rust toolchain
+        run: |
+          rustc --version
+          cargo --version
+      - name: Compile isolated Anchor grant/revoke source
+        run: cargo check --manifest-path climbx/programs/climbx-authorization/Cargo.toml
+      - name: State security boundary
+        if: always()
+        run: echo "Cargo check is not a Solana validator test, audit, deploy, or execution approval."
