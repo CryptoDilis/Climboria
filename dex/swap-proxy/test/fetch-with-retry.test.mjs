@@ -81,3 +81,52 @@ test("honors Retry-After but caps the delay", async () => {
   );
   assert.deepEqual(delays, [1000]);
 });
+
+test("retries AbortError and TimeoutError with a fresh signal per attempt", async () => {
+  let calls = 0;
+  const result = await fetchWithRetry(
+    async (_input, init) => {
+      calls += 1;
+      assert.equal(init.attempt, calls);
+      if (calls === 1) {
+        const error = new Error("request timed out");
+        error.name = "TimeoutError";
+        throw error;
+      }
+      if (calls === 2) {
+        const error = new Error("request aborted");
+        error.name = "AbortError";
+        throw error;
+      }
+      return response(200);
+    },
+    "https://idl.example/history",
+    (attempt) => ({ attempt, signal: { attempt } }),
+    { maxAttempts: 3, baseDelayMs: 0, sleep: async () => {} },
+  );
+  assert.equal(calls, 3);
+  assert.equal(result.response.status, 200);
+  assert.deepEqual(result.attempts.map((item) => item.error ?? item.status), [
+    "request timed out",
+    "request aborted",
+    200,
+  ]);
+});
+
+test("does not retry non-transient programming errors", async () => {
+  let calls = 0;
+  await assert.rejects(
+    fetchWithRetry(
+      async () => { calls += 1; throw new Error("bad request construction"); },
+      "https://idl.example/history",
+      {},
+      { maxAttempts: 4, sleep: async () => assert.fail("unexpected retry") },
+    ),
+    (error) => {
+      assert.equal(error.message, "bad request construction");
+      assert.equal(error.retryAttempts.length, 1);
+      return true;
+    },
+  );
+  assert.equal(calls, 1);
+});
