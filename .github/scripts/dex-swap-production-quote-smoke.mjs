@@ -88,6 +88,19 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
       // It does NOT establish chart/pool orientation, freshness or trading.
       assert.ok(dexMarketResponses.some(s => s === 200), "No successful DexScreener market response in DEX browser session");
       console.log("PASS DEX received a real DexScreener market-data response (not pool/chart verification).");
+      // Closing the preview invalidates the estimate; reopening may not
+      // display an old route as if it were current.
+      const toggle = page.locator("#showDexQuote");
+      await toggle.click({ timeout: 15000 });
+      assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+      assert.equal(await page.locator("#swapQuote").isVisible(), false);
+      await toggle.click({ timeout: 15000 });
+      assert.equal(await toggle.getAttribute("aria-expanded"), "true");
+      assert.equal(await page.locator("#swapQuote").isVisible(), true);
+      assert.match(await page.locator("#quoteResults").innerText(), /No current quote/i);
+      assert.match(await page.locator("#quoteStatus").innerText(), /Quote preview closed/i);
+      assert.equal(forbidden.length, 0, "Closing the quote preview must not create a swap order");
+      console.log("PASS DEX preview close invalidates prior quote; reopening requires a fresh request.");
     }
   } finally {
     await page.close();
