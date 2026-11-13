@@ -235,3 +235,19 @@ Changed: branch `ci/dex-quote-allow-verified-pages-descendant`, `.github/workflo
 Verified: CI workflow commit `e87a52a` written; exact-head PR CI **PENDING**, production browser still not rerun.
 Unresolved: actual Pages provider health and mobile browser quote after deployment, plus all real-money security and Launchpad Devnet gates.
 NEXT: inspect focused CI, merge if clean, and obtain unmocked desktop/mobile Swap and DEX live quote PASS on a successful Pages build proven to contain this change.
+
+
+### 2026-11-14 — Production read-only Jupiter quotes verified in user-visible DEX and Swap desktop/mobile
+Scope: **Swap and DEX**. No Launchpad minting or financial execution switches changed.
+Before: PR #311's mobile CSS fix was unit/browser tested but its exact GitHub Pages deployment was cancelled by a later `main` commit, leaving live mobile DEX evidence unavailable.
+Changed: [PR #313](https://github.com/CryptoDilis/Climboria/pull/313) merged as `f95ef0a9658b2de04d353f204f0e9069a35f8ca5`: DEX/Swap production smoke may only run after a Pages SUCCESS for the exact tested SHA, or GitHub Compare-verified newer SHA that descends from it. It never accepts arbitrary older/unrelated release or bypasses actual browser assertions. This resolves false-negative CI results from concurrent pushes.
+Verified: PR #313 exact head `cc6747fb15cbfce09e6f911c6f21a5cdd496755b` [Validate 43474334374](https://github.com/CryptoDilis/Climboria/actions/runs/43474334374) **SUCCESS**; [quote browser workflow 43474334438](https://github.com/CryptoDilis/Climboria/actions/runs/43474334438) **SUCCESS** for syntax, production job skipped on PR as intended. Post-merge [Pages 43474457074](https://github.com/CryptoDilis/Climboria/actions/runs/43474457074) **SUCCESS** for `f95ef0a`; [production quote browser workflow 43474457265](https://github.com/CryptoDilis/Climboria/actions/runs/43474457265) **SUCCESS**. Live job `132054567616` logs explicitly confirm:
+- **PASS Swap desktop**, real Jupiter-proxied SOL/USDC quote, exact 100,000,000 base units, no transaction.
+- **PASS Swap mobile 390px**, same real response constraints, no transaction.
+- **PASS DEX desktop**, visible `#showDexQuote` button opened the real read-only quote panel and displayed genuine provider response.
+- **PASS DEX mobile 390px**, visible `#showDexQuote` button opened the quote panel and returned genuine Jupiter SOL/USDC quote.
+- **PASS DexScreener** real market-data responses in DEX desktop/mobile.
+- **No** wallet signing, `/api/swap/order`, `/api/swap/execute`, or fake success, and the public `enabled:false` switch remained required by test.
+Post-merge [Validate 43474457458](https://github.com/CryptoDilis/Climboria/actions/runs/43474457458) **SUCCESS**.
+Unresolved: real-money swap/signable orders and execution are **NOT LIVE**; source-level hard gates remain off pending independent transaction semantic/security review and controlled end-to-end settlement. Base markets are discovery only, not Base swaps. Mobile result is an emulated Playwright 390px viewport, **not a physical Redmi device**. Price freshness, exact pool/chart orientation, sustained provider uptime, other device sizes remain unverified. Launchpad is preview-only; Raydium LaunchLab create/curve/migration requires separate provenance, Devnet and security gates.
+NEXT: inspect existing [LaunchLab provenance PR #251](https://github.com/CryptoDilis/Climboria/pull/251) against current `main`, isolate read-only Devnet provenance/IDL/account tests into focused, tested integration without signing/minting, and continue Swap mainnet execution security review separately. Keep exact release evidence and strict Game/CLIMBX file boundaries.
