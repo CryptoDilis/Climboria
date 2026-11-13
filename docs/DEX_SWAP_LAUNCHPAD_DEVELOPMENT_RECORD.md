@@ -2,7 +2,7 @@
 
 **Last reviewed:** 2026-11-14 (Philippine time)
 **Repository:** `CryptoDilis/Climboria`
-**Initial baseline:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`; **latest merged DEX/Swap change:** `e1ef8b056b7f54f62e544e9262db795aede83c65` (PR #301; refresh current `main` on every resume)
+**Initial baseline:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`; **latest merged DEX/Swap change:** `e3157105b6b628352da6ae878d6577a0a799cb13` (PR #303; refresh current `main` on every resume)
 **Owner-directed scope:** **DEX, Swap, Launchpad ONLY.** The Game is owned by a separate chat/developer. This file supersedes older cross-project priority instructions **for this workstream only**.
 **State:** active development; **not** evidence that signed mainnet swaps or token launches are live.
 
@@ -132,3 +132,20 @@ Changed: branch `fix/swap-quote-amount-response-integrity`; `swap/index.html` no
 Verified: file commits `6c58155`, `96e19fd` created; exact-head CI **PENDING**. No current provider availability, wallet transaction or launch is claimed.
 Unresolved: real production browser/provider quote acceptance, physical device behavior, signable swap security gates and Launchpad Devnet provenance.
 NEXT: run exact-head tests, inspect CI, merge only if green, then run production-origin read-only browser quote tests. No Game/CLIMBX changes.
+
+
+### 2026-11-14 — Swap quote integrity PR #303 merged
+Scope: **Swap only**; no Game, CLIMBX, live token launches or transaction/signing gate changes.
+Before: dedicated Swap UI could show a returned Jupiter quote even if `inAmount` was not the exact raw amount requested, though DEX already rejected this.
+Changed: [PR #303](https://github.com/CryptoDilis/Climboria/pull/303) merged into `main` as `e3157105b6b628352da6ae878d6577a0a799cb13`; `swap/index.html` now requires exact raw input and positive integer output. Regression in `.github/scripts/swap-amount.test.mjs` evaluates the actual quote handler under Node VM and confirms malformed/mismatched output fails closed without a fabricated quote.
+Verified: exact PR head `52be9841d4a604202b673054ee750d2f305f05a5` [Validate 43468473741](https://github.com/CryptoDilis/Climboria/actions/runs/43468473741) **SUCCESS** and [Browser Smoke 43468473228](https://github.com/CryptoDilis/Climboria/actions/runs/43468473228) **SUCCESS**. Post-merge [Validate 43468705106](https://github.com/CryptoDilis/Climboria/actions/runs/43468705106) **SUCCESS**, [Browser Smoke 43468705178](https://github.com/CryptoDilis/Climboria/actions/runs/43468705178) **SUCCESS**. [Pages run 43468705426](https://github.com/CryptoDilis/Climboria/actions/runs/43468705426) **CANCELLED** due subsequent pushes; do not claim that exact Pages run deployed.
+Unresolved: standalone real-production browser quote acceptance, signed swaps, real-device verification, and Launchpad creator lifecycle.
+NEXT: run and evaluate a separate **DEX/Swap-only** real-origin browser smoke after the next successful Pages deployment, without changing the Game-owned live-site workflow or enabling financial execution.
+
+### 2026-11-14 — Real-origin read-only DEX/Swap browser smoke prepared (CI pending)
+Scope: **DEX and Swap testing only**.
+Before: existing `.github/workflows/live-site-smoke.yml` checks deployed UI presence and disabled execution, but not actual Jupiter quote response through the public site's browser on both device layouts. Existing local Browser Smoke uses mocked provider responses. Editing the shared Game/site workflow risks crossing developer ownership.
+Changed: branch `test/production-dex-swap-browser-quote-smoke`; added `.github/scripts/dex-swap-production-quote-smoke.mjs` and `.github/workflows/dex-swap-production-quote.yml`. PR checks run syntax only. After a successful Pages build or explicit manual dispatch, Chromium visits the actual production origin, requests provider-backed quotes on desktop/mobile Swap and DEX diagnostic quote path, validates mints, exact 0.1-SOL raw amount, request ID, integer output, quote-only UI, no wallet/order/execute requests, and at least one DexScreener response. **DEX quote panel is hidden in production; revealing it in the isolated test proves the code path, not user-facing availability**.
+Verified: GitHub commits `9248542` and `114e8f4` created; exact-head GitHub Actions and real production-browser check **NOT YET VERIFIED**.
+Unresolved: real API/market provider availability, current Pages timing, UX/visibility of the DEX quote panel, route/trade security gates, and Launchpad Devnet readiness.
+NEXT: inspect PR exact-head syntax/workflow and confirm new `workflow_run` starts after a successful Pages deployment. If live browser assertions fail, inspect logs and fix the actual provider/UI root cause; never substitute fixtures or mark execution live.
