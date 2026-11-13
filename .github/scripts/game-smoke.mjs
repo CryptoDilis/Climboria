@@ -694,15 +694,17 @@ try {
   }));
   const mobileGlbWaitStartedAt = Date.now();
   try {
-    await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { polling: 100, timeout: 75000 });
+    // The production GLB measured ~43 MB in CI and took ~219 seconds to finish
+    // loading on the mobile emulation. Keep the strict GLB readiness invariants,
+    // but give the real asset a bounded 240-second load window.
+    await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { polling: 100, timeout: 240000 });
   } catch (error) {
-    // The timeout can race the final GLB/camera readiness update on mobile.
-    // Re-read the same production invariants before treating the timeout as a
-    // real failure; do not accept a fallback renderer or skip the GLB check.
+    // Re-read the same production invariants before treating a timeout as a
+    // real failure; never accept a fallback renderer or skip the GLB check.
     let diagnostic = await mobileGlbReady();
     if (!diagnostic.ready) {
       try {
-        await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { polling: 100, timeout: 15000 });
+        await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { polling: 100, timeout: 30000 });
       } catch (graceError) {
         diagnostic = await mobileGlbReady();
         throw new Error('Mobile GLB readiness remained incomplete after bounded grace period: ' + JSON.stringify({ ...diagnostic, elapsedMs: Date.now() - mobileGlbWaitStartedAt }) + '; failedGlbRequests=' + JSON.stringify(mobileGlbRequestFailures) + '; browserErrors=' + JSON.stringify(errors) + '; initial=' + error.message + '; grace=' + graceError.message);
