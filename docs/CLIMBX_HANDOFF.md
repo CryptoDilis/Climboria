@@ -185,5 +185,11 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - PENDING: verify CI unit-test outcome on exact new branch commit; local-validator signed tests, committed Cargo.lock, SBF build, independent audit and production authorization still missing. **REAL-FUNDS NO-GO**.
 - No DEX, Swap, Launchpad or Game edits in this phase.
 
+## Phase 148 — 2026-11-14 — testable grant-tightening policy
+- DONE: CLIMBX-only branch commit `cec4a086697c1c3d36438d6041d703187747b13c` extracts deterministic `validate_tightening` Rust policy used by owner-only `tighten_grant`. Existing account constraints continue to require owner signer and owner-linked PDA.
+- DONE: added Rust negative-case tests rejecting cap expansion, cumulative cap below already-spent amount, zero per-order cap, expiry extension, expired new grant and changes to revoked grants. Positive tightening case included.
+- PENDING: exact-head Rust CI verification (workflow run not yet observed), signed validator test, SBF build, committed lockfile and independent audit. **REAL-FUNDS NO-GO**.
+- No DEX, Swap, Launchpad or Game edits.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
