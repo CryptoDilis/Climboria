@@ -1,18 +1,18 @@
 # Deploying the Climboria Jupiter swap proxy
 
-This Worker is prepared but **not deployed**. The deployment workflow now targets `dex/swap-proxy` (not the obsolete `backend/worker` path), runs the Worker test suite first, and then invokes Wrangler. A successful Pages deployment does not deploy this Worker. The static GitHub Pages site cannot deploy or host this backend by itself.
+This Worker has had historical deployment runs, but current quote-only production readiness must be confirmed by the live API probe. The deployment workflow targets `dex/swap-proxy` (not the obsolete `backend/worker` path), runs the Worker test suite first, and then invokes Wrangler. A successful Pages deployment does not deploy this Worker. The static GitHub Pages site cannot deploy or host this backend by itself.
 
 ## Prerequisites
 
 - Access to the Cloudflare account that manages the Climboria zone.
 - A Jupiter Developer Platform server API key. Do not paste it into chat, GitHub source, Wrangler config, or a frontend file.
-- A trusted public HTTPS Solana RPC endpoint, stored as the encrypted GitHub Actions secret `SOLANA_RPC_URL`; it is used only for finalized-context ALT resolution. Never accept this URL from a browser request.
+- For **quote-only** launch, `SOLANA_RPC_URL` is optional. A trusted public HTTPS Solana RPC endpoint, stored as an encrypted GitHub Actions secret, is required before any separate security-reviewed signed-order/execute release. Never accept a caller-supplied RPC URL.
 - Wrangler CLI 4.36.0 or later.
 - An active Cloudflare zone for `climboria.fun`. Wrangler provisions `api.climboria.fun` as a Worker Custom Domain from the checked-in config during deployment. Remove any conflicting CNAME at `api.climboria.fun` first; Cloudflare cannot create a Custom Domain over an existing CNAME.
 - A unique positive integer rate-limit namespace ID for this Cloudflare account.
 - The SQLite-backed `SwapOrderStore` Durable Object binding/migration configured in `wrangler.toml`.
 - GitHub repository variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` containing that positive integer.
-- GitHub Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `JUPITER_API_KEY`, and `SOLANA_RPC_URL` (encrypted; never commit or paste them into chat).
+- GitHub Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `JUPITER_API_KEY`; `SOLANA_RPC_URL` remains optional in the strictly quote-only mode (encrypted; never commit or paste keys into chat).
 
 ## Configure
 
@@ -20,7 +20,7 @@ This Worker is prepared but **not deployed**. The deployment workflow now target
 2. Allocate/confirm a positive integer rate-limit namespace unique to this Cloudflare account. For the GitHub Actions deployment, save it as repository variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID`; the workflow injects it into `wrangler.toml` during the run. The checked-in value is only a local/manual-deploy placeholder and must not be assumed valid for the account.
 3. Set the exact website origin(s) in `ALLOWED_ORIGINS`. Do not use a wildcard.
 4. In GitHub repository Settings, add encrypted Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `JUPITER_API_KEY`. The workflow writes the Jupiter key to the Worker secret store using Wrangler; it never prints the key.
-5. Save `SOLANA_RPC_URL` as an encrypted Actions secret and run **Actions → Deploy Climboria API → Run workflow**. The workflow runs the Worker tests, validates the namespace/configuration/secrets, writes `JUPITER_API_KEY` as a Worker secret, deploys the Worker, then checks production health and CORS.
+5. Optionally save `SOLANA_RPC_URL` as an encrypted Actions secret. For quote-only readiness it may be absent. Run **Actions → Deploy Climboria API → Run workflow**. The workflow runs the Worker tests, validates the namespace/configuration/secrets, writes `JUPITER_API_KEY` as a Worker secret, deploys the Worker, then checks production health and CORS.
 6. Confirm the deploy output shows `api.climboria.fun` Custom Domain provisioning completed, then verify TLS, CORS, and `GET https://api.climboria.fun/health`. If provisioning fails, inspect zone activation and conflicting DNS records before retrying.
 7. Verify unauthorised origins are rejected, missing secrets/rate limiter fail closed, and order/execute upstream failures are returned without being misreported as successful swaps.
 
