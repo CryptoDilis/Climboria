@@ -623,6 +623,8 @@ jobs:
                 dex.on('pageerror',e=>errors.push('DEX '+e.message));
                 await dex.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
                 await dex.locator('#dexMobileNav').waitFor({state:'visible',timeout:10000});
+                const dexSupport=dex.locator('.toplinks a[href="/support/"]');
+                if(!await dexSupport.isVisible()||await dexSupport.getAttribute('href')!=='/support/')throw new Error('DEX mobile header must expose a direct Support link at '+width+'px');
                 const dexMetrics=await dex.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,marketRows:document.querySelectorAll('#rows tr').length,navPosition:getComputedStyle(document.querySelector('#dexMobileNav')).position}));
                 if(dexMetrics.scrollWidth>dexMetrics.width+1||dexMetrics.navPosition!=='fixed')throw new Error('DEX '+width+'px overflow/bottom-nav failure: '+JSON.stringify(dexMetrics));
                 if(dexMetrics.marketRows>12)throw new Error('DEX mobile first paint should show no more than 12 market rows: '+JSON.stringify(dexMetrics));
@@ -676,6 +678,8 @@ jobs:
                 await swap.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
                 const tabs=swap.locator('#mobileWorkspaceTabs');
                 await tabs.waitFor({state:'visible',timeout:10000});
+                const swapSupport=swap.locator('.nav a[href="/support/"]');
+                if(!await swapSupport.isVisible()||await swapSupport.getAttribute('href')!=='/support/')throw new Error('Swap mobile header must expose a direct Support link at '+width+'px');
                 if(await tabs.evaluate(el=>getComputedStyle(el).position)!=='fixed')throw new Error('Swap mobile navigation must stay fixed at the bottom');
                 if(await swap.locator('.hero').isVisible()||await swap.locator('.ad-slot').first().isVisible())throw new Error('Swap mobile view must remove the tall hero and ad placeholder from the primary trading fold');
                 const trade=swap.locator('.premium-trade-layout');
