@@ -852,22 +852,35 @@ try {
     }, { once: true, capture: true });
   });
   await mobile.keyboard.press('1');
-  await mobile.waitForFunction(() => {
+  const mobileSanctuaryReady = () => mobile.evaluate(() => {
     const p=window.__climboriaJarrellsPeak?.player;
     return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
       (window.__climboriaRenderState?.frames ?? 0)>=4;
-  }, undefined, { timeout: 10000 }).catch(async error => {
-    const state = await mobile.evaluate(() => {
-      const p=window.__climboriaJarrellsPeak?.player;
-      return {
-        player: p ? { x:p.x, y:p.y, z:p.z, mode:p.mode, moveTarget:p.moveTarget, yaw:p.yaw } : null,
-        renderFrames: window.__climboriaRenderState?.frames ?? null,
-        keyEvents: window.__climboriaSmokeSanctuaryKeyEvents ?? [],
-        bodyClasses: [...document.body.classList],
-      };
-    });
-    throw new Error('Mobile Sanctuary normalization failed after the screenshot-stage Digit1 shortcut: ' + JSON.stringify(state) + '; ' + error.message);
   });
+  // Playwright's default rAF polling can be throttled on this busy mobile WebGL
+  // page after the real Digit1 event has already restored Sanctuary. Read the
+  // same strict predicate immediately, then use timer polling only if it is
+  // genuinely not ready; do not relax any location, mode, or frame invariant.
+  if (!(await mobileSanctuaryReady())) {
+    await mobile.waitForFunction(() => {
+      const p=window.__climboriaJarrellsPeak?.player;
+      return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
+        (window.__climboriaRenderState?.frames ?? 0)>=4;
+    }, undefined, { polling: 100, timeout: 10000 }).catch(async error => {
+      const state = await mobile.evaluate(async () => {
+        const p=window.__climboriaJarrellsPeak?.player;
+        return {
+          predicate: !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
+            (window.__climboriaRenderState?.frames ?? 0)>=4,
+          player: p ? { x:p.x, y:p.y, z:p.z, mode:p.mode, moveTarget:p.moveTarget, yaw:p.yaw } : null,
+          renderFrames: window.__climboriaRenderState?.frames ?? null,
+          keyEvents: window.__climboriaSmokeSanctuaryKeyEvents ?? [],
+          bodyClasses: [...document.body.classList],
+        };
+      });
+      throw new Error('Mobile Sanctuary normalization failed after the screenshot-stage Digit1 shortcut: ' + JSON.stringify(state) + '; ' + error.message);
+    });
+  }
   await mobile.waitForTimeout(900);
   const mobileVisualCapture = await mobile.evaluate(() => ({
     player:{x:window.__climboriaJarrellsPeak?.player?.x,y:window.__climboriaJarrellsPeak?.player?.y,z:window.__climboriaJarrellsPeak?.player?.z},
