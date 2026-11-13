@@ -167,4 +167,47 @@ class PostgresMigrationIntegration(unittest.TestCase):
         self.assertEqual(self.db.execute("SELECT user_id FROM climbx.wallet_bindings WHERE wallet_address=%s",
                                          (self.wallet,)).fetchone()[0],self.user1)
 
+    def test_reconcile_confirmed_consumed_challenge_and_owner(self):
+        """Real DB: matching consumed nonce and wallet owner confirm binding."""
+        nonce=uuid.uuid4().hex
+        self.db.execute("""INSERT INTO climbx.wallet_challenges
+          (nonce,user_id,wallet_address,domain,chain,canonical_message,issued_at,expires_at,consumed_at)
+          VALUES (%s,%s,%s,'climboria.fun','solana:devnet','test-message',now()-interval '1 minute',now()+interval '4 minutes',now())""",
+          (nonce,self.user1,self.wallet))
+        self.db.execute("INSERT INTO climbx.wallet_bindings(user_id,wallet_address,verified_at) VALUES(%s,%s,now())",
+                        (self.user1,self.wallet))
+        with psycopg.connect(URL) as conn:
+            with conn.transaction():
+                conn.execute("SET TRANSACTION READ ONLY")
+                challenge=conn.execute("SELECT user_id,wallet_address,consumed_at FROM climbx.wallet_challenges WHERE nonce=%s",(nonce,)).fetchone()
+                binding=conn.execute("SELECT user_id FROM climbx.wallet_bindings WHERE wallet_address=%s",(self.wallet,)).fetchone()
+        self.assertEqual(challenge[0],self.user1)
+        self.assertEqual(challenge[1],self.wallet)
+        self.assertIsNotNone(challenge[2])
+        self.assertEqual(binding[0],self.user1)
+
+    def test_reconcile_missing_binding_is_not_confirmed(self):
+        """Real DB: consumed nonce alone cannot prove wallet binding."""
+        nonce=uuid.uuid4().hex
+        self.db.execute("""INSERT INTO climbx.wallet_challenges
+          (nonce,user_id,wallet_address,domain,chain,canonical_message,issued_at,expires_at,consumed_at)
+          VALUES (%s,%s,%s,'climboria.fun','solana:devnet','test-message',now()-interval '1 minute',now()+interval '4 minutes',now())""",
+          (nonce,self.user1,self.wallet))
+        challenge=self.db.execute("SELECT consumed_at FROM climbx.wallet_challenges WHERE nonce=%s",(nonce,)).fetchone()
+        binding=self.db.execute("SELECT user_id FROM climbx.wallet_bindings WHERE wallet_address=%s",(self.wallet,)).fetchone()
+        self.assertIsNotNone(challenge[0])
+        self.assertIsNone(binding)
+
+    def test_reconcile_foreign_wallet_owner_not_confirmed(self):
+        """Real DB: ownership mismatch must never count as successful binding."""
+        nonce=uuid.uuid4().hex
+        self.db.execute("""INSERT INTO climbx.wallet_challenges
+          (nonce,user_id,wallet_address,domain,chain,canonical_message,issued_at,expires_at,consumed_at)
+          VALUES (%s,%s,%s,'climboria.fun','solana:devnet','test-message',now()-interval '1 minute',now()+interval '4 minutes',now())""",
+          (nonce,self.user1,self.wallet))
+        self.db.execute("INSERT INTO climbx.wallet_bindings(user_id,wallet_address,verified_at) VALUES(%s,%s,now())",
+                        (self.user2,self.wallet))
+        owner=self.db.execute("SELECT user_id FROM climbx.wallet_bindings WHERE wallet_address=%s",(self.wallet,)).fetchone()[0]
+        self.assertNotEqual(owner,self.user1)
+
 if __name__=="__main__":unittest.main()
