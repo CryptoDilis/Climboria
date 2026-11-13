@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-// Safe, read-only production acceptance probe. Never signs or submits a trade.
-// Both POST checks must be rejected by the server-side transaction kill switches.
+// Production readiness probe. No trade is signed, submitted or built.
+// Only an intentionally empty /execute POST verifies the server-side kill switch.
 export const SOL = "So11111111111111111111111111111111111111112";
 export const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const ORIGIN = "https://climboria.fun";
@@ -74,14 +74,9 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
   assert.equal(quote.data?.transaction, undefined, "Read-only quote must never expose a signable transaction");
   checks.push("Real Jupiter SOL/USDC quote preview (no transaction)");
 
-  const order = await request("/api/swap/order", {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ inputMint: SOL, outputMint: USDC, amount: "1000000", taker: SOL })
-  });
-  assert.equal(order.response.status, 503, "Wallet-signable order must remain server-side disabled");
-  assert.equal(order.data?.transaction, undefined, "Disabled order must not return a transaction");
-  checks.push("Wallet-signable order remains fail-closed");
-
+  // Never call /api/swap/order from a live monitoring probe. Even with
+  // execution disabled, a separately enabled order route could generate a
+  // wallet-signable transaction. Source/Worker unit tests verify that gate.
   const execute = await request("/api/swap/execute", {
     method: "POST", headers: { "content-type": "application/json" }, body: "{}"
   });
