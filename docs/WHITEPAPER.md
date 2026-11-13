@@ -1,68 +1,156 @@
-# Climboria — Project Whitepaper / Design Brief
+# CLIMBORIA — Full Ecosystem Whitepaper
 
-**Version status:** agreed design direction; not a statement that every feature is implemented or live.
+**Version:** 1.1  
+**Updated:** 13 November 2026  
+**Official website:** https://climboria.fun  
+**Official X:** https://x.com/ClimboriaHQ
 
-## 1. Vision
+> **Status and risk notice:** This document describes Climboria's product direction, design, and roadmap. It does not claim that every product or feature is live. Swap, DEX, login integrations, the full game release, Launchpad, marketplace, NFT minting, rewards, and Base expansion must each be implemented and independently verified before being described as operational. Cryptocurrency assets are volatile; no return, liquidity, listing, or profit is guaranteed.
 
-Climboria is a browser-first climbing, survival, and open-world treasure-hunting project. **Game First, Speculation Later** describes the product philosophy and the importance of a genuinely playable game; it is not the current cross-product engineering release order. The owner-approved execution order is **P1 Live Swap → P2 Live DEX → P3 All Login methods → P4 Fully Live Game → P5 Live Launchpad (last)**, as recorded in the root README and release-priority document. No demo-only delivery is accepted: each product must use real integrations and be verified live before it is called complete. The two game-world destinations are Jarrell’s Peak, the open-world survival experience, and Arena, the separate competitive map.
+## 1. Executive overview
 
-## 2. Launch world: Jarrell’s Peak
+Climboria is a browser-first gaming and Web3 ecosystem built around an exploration and survival adventure, supported by trading, token infrastructure, a project Launchpad, and digital-item economy plans. The project aims to connect players, traders, creators, and builders through one recognizable Climboria ecosystem.
 
-The world centers on a riverside starting camp, a long river, fishing, swimming, forests, cliffs, hidden routes, landmarks, and treasure discovery. Survival and exploration are the core loop. Existing gameplay mechanics are out of scope for documentation-only changes.
+The initial chain focus is Solana. A later Base expansion is planned, including a 1:1 $CLIMB deployment and a Base-facing Swap/DEX market, subject to secure cross-chain design, token supply controls, liquidity, provider support, and operational verification. “1:1” describes the intended token-unit relationship, not an already deployed bridge or a guarantee of price parity between markets.
 
-## 2A. Game menu and feature status
+**Product philosophy:** Game First, Speculation Later.  
+**Delivery rule:** no demo-only delivery and no feature is called live without real integration and end-to-end evidence.
 
-The menu has four entries: **Jarrell’s Peak** (playable open world), **Arena** (separate competitive map; currently a future-feature status panel), **Marketplace** (demo storefront; no live trading), and **Inventory** (local preview; no persistent ownership). Only Jarrell’s Peak and Arena are game-world destinations. Character creation/editing is reached through the Jarrell’s Peak entry flow.
+## 2. The Climboria ecosystem
 
-## 3. Top Gainers and rewards
+Climboria is organized into six connected pillars:
 
-The intended system has a permanent All-Time Top Gainers leaderboard and a separate Weekly Top Gainers leaderboard. Scoring combines eligible $CLIMB earnings, eligible treasure value, and transparent rarity/difficulty bonuses. There is no summit ranking and no badge system in the current plan.
+1. **Game & exploration** — the player experience and community entry point.
+2. **$CLIMB token** — the intended ecosystem utility and settlement asset, subject to verified launch details and final token disclosures.
+3. **Swap** — a user-facing token swap product with wallet review, transaction execution, and confirmation.
+4. **DEX** — market discovery, token profiles, pool/liquidity information, charts, and trading access.
+5. **Launchpad** — a future project-launch platform with application review and transparent sale terms.
+6. **Marketplace & digital items** — a planned economy for eligible game items, crafting, and optional NFT minting.
 
-Weekly payout timing, if funded and launched, is Friday at 03:00 UTC (11:00 AM Philippines time). Rewards require a verified funding pool, published eligibility, secure accounting, and server-side anti-cheat. No reward is guaranteed.
+The pillars are designed to complement one another, but each has separate technical, security, liquidity, compliance, and release requirements.
 
-## 4. Marketplace and game funding
+## 3. Game: Jarrell's Peak
 
-Eligible marketplace items and crafted gear are intended to use $CLIMB only. Buy fee is 2.5%; sell fee is 2.5%. Five percent of actual marketplace fee revenue collected is allocated to the Climboria game funding pool. This is not an additional 5% charge on gross trading volume. For example, 2,500 $CLIMB in collected marketplace fees results in 125 $CLIMB allocated to game funding. NFT minting is intended to have no Climboria minting fee; the player pays network gas.
+Jarrell's Peak is Climboria's open-world survival and exploration experience. Players explore a wilderness of rivers, forests, cliffs, caves, camps, coastlines, landmarks, and hidden treasure routes. Fishing, swimming, resource discovery, and survival are part of the intended world loop.
 
-These are agreed design rules, not proof that marketplace, fee collection, NFT minting, or on-chain reward systems are live.
+The core risk/reward idea is simple: the farther a player ventures into dangerous territory, the more valuable the potential discoveries may become—but the risk of losing carried loot also increases. Players may cooperate, form parties, or compete over discoveries. Trust and betrayal are part of the intended high-risk social dynamic.
 
-## 5. Future Arena
+Death and respawn rules, loot drops, combat, persistence, and multiplayer behavior must be verified in the actual release. Design descriptions are not proof that every mechanic is currently implemented.
 
-The Arena is a separate future public forest map, directly accessible from the game menu. It is planned for free-for-all fights, Guild Battles, and sponsored tournaments. Casual fights have no rewards. During Guild Battle, the entire Arena becomes the battlefield for two participating guilds and other players spectate. Any guild member may request a battle; guild leaders must approve. Weekly Guild Wars depend on future budget and implementation.
+A separate public Arena, guild battles, and Chatworld (global, proximity, and private messaging) are future product work and must remain clearly labelled as planned until released.
 
-A single shared world with a target of more than 1,000 concurrent players is a design goal, not a verified capacity claim. Server architecture and load testing must prove feasibility.
+## 4. $CLIMB token and chain strategy
 
-## 6. Chatworld
+$CLIMB is the intended Climboria token ticker. Solana is the initial chain focus and the planned initial launch venue is pump.fun. The planned launch target recorded by the project is **15 November 2026 at 15:00 UTC**. This date is a target/announcement, not evidence that a token has launched. The official mint address and live trading status must only be published after they are verified from official Climboria channels and on-chain evidence.
 
-Future Global Chat, Proximity Chat, and Private Messages are planned for Jarrell’s Peak and Arena. Trash talk and competitive banter are allowed within published conduct rules; threats, targeted harassment, hate speech, scams, and spam may be moderated. Mute, block, report, anti-spam, and moderator tools are planned. Server-side messaging, identity, permissions, and moderation are required.
+### Solana first
 
-## 7. Wagers and event rewards
+The first deployment is intended to establish the initial $CLIMB token identity and market on Solana. Token utility, supply, authorities, liquidity, distribution, and any restrictions must be disclosed using verified launch information. Do not infer a contract address, supply, allocation, or liquidity commitment from this whitepaper.
 
-Casual fights remain free. Optional wager matches are planned with mutually accepted $CLIMB stakes. The winner receives the total pot minus a 2.5% platform fee on the pot; that fee goes to the game funding pool. Secure escrow, consent, dispute handling, anti-abuse, and compliance review are release prerequisites.
+### Planned Base expansion
 
-Sponsored tournaments must have fully funded prize pools. There is no event announcement, sponsor branding, or event activation until the complete sponsorship fee and full promised prize pool are received and verified.
+Climboria intends to extend the same $CLIMB ecosystem to Base through a planned 1:1 token deployment. Before that can be called live, the team must publish the canonical Solana and Base token addresses, explain the exact issuance/bridging or representation model, demonstrate supply accounting and controls against double representation, and verify the cross-chain mechanism.
 
-## 8. Sponsorship policy
+The planned Base market includes access to Swap and DEX experiences for supported Base assets and $CLIMB. This depends on deployed contracts or supported token representation, reliable market/liquidity providers, wallet support, security review, and production testing. Base deployment and Base market access are roadmap items, not current availability claims.
 
-Climboria admin retains final approval. A written eligibility checklist and agreement define the package, full payment, prize pool, exclusivity, duration, branding placements, cancellation/refund terms, postponement, force majeure, renewal, and prize protection.
+## 5. Climboria Swap
 
-Launchpad-created tokens may receive fast-track sponsor review after basic eligibility, payment, and event checks. Other crypto sponsors receive full review; non-crypto sponsors are reviewed according to business type and risk. Fast-track is not a blanket exemption for fraud, impersonation, illegal promotions, or misleading claims.
+Swap is intended to provide a straightforward interface for exchanging supported tokens. The planned user journey is:
 
-After payment verification, announcements may appear on X.com, the homepage, game menu, and running announcements in both worlds. Arena branding may include the central sponsor flag, entrance panel, and event banners. Automatic renewal at the same price is intended, with a three-day grace period; new announcements and activations pause while unpaid. Cancellation and refund outcomes follow the signed agreement and applicable law.
+1. Select the supported network and connect a compatible wallet.
+2. Select the input and output assets and enter an amount.
+3. Retrieve a real provider-backed quote.
+4. Review rate, route, price impact, slippage, network fee, quote expiry, and relevant warnings.
+5. Review and sign the transaction in the user's wallet.
+6. Submit, confirm on-chain, and reconcile the final outcome.
 
-## 9. Token and platform status
+The product must clearly handle unsupported assets, insufficient liquidity, stale quotes, rejected signatures, expired transactions, network errors, and uncertain transaction outcomes. No fake quote, simulated fill, or placeholder success may be presented as a real swap.
 
-Solana is the initial chain focus; Base is a later possibility. $CLIMB is the intended ticker, not proof of an official token. A token address must be verified through Climboria’s official channels. Launchpad, DEX, swap, liquidity, marketplace, NFTs, Chatworld, Arena, wagers, sponsor management, and on-chain rewards are planned until implemented, tested, and officially released.
+**Status:** development and verification required. Do not describe Swap as production-live until the complete real transaction lifecycle is verified.
 
-## 10. Roadmap principles
+## 6. Climboria DEX
 
-1. Protect and verify existing Jarrell’s Peak gameplay.
-2. Align the website and documentation with the single-world launch.
-3. Implement secure marketplace and reward accounting.
-4. Build Chatworld and moderation.
-5. Build the public Arena and test shared-world scalability.
-6. Implement sponsorship approval, payment verification, and prize protection.
-7. Add Weekly Guild Wars and optional wagers only after budget, implementation, and testing.
-8. Reconsider additional maps and badges only after token launch and budget review.
+The DEX is intended as the broader trading and market-discovery experience, distinct from the focused Swap flow. Planned capabilities include:
 
-This document describes intended rules and future plans. It does not guarantee token value, liquidity, profits, prize availability, delivery dates, or multiplayer capacity.
+- Token and market discovery, search, watchlists, and token profiles.
+- Exact token/mint identity and network indicators.
+- Provider-backed price, liquidity, volume, and pool information.
+- Candlestick charts and relevant market history where reliable data is available.
+- Access to supported swap routes and transaction review.
+- Clear loading, stale-data, unavailable, and error states.
+
+Market data must come from real, attributable providers and be timestamped or otherwise clearly contextualized. The interface must never fabricate prices, candles, liquidity, volume, or trading activity.
+
+**Status:** development and verification required. The DEX is not production-live merely because a page or chart interface exists.
+
+## 7. Climboria Launchpad
+
+Climboria Launchpad is planned as a platform for projects seeking to introduce tokens and publish structured sale information. The intended lifecycle includes:
+
+1. Project application and identity/official-link verification.
+2. Review of token configuration, tokenomics, distribution, authority controls, utility claims, and available security evidence.
+3. Publication of complete sale terms before participation opens.
+4. Clear eligibility, wallet limits, allocation rules, anti-bot/anti-sybil controls, and regional restrictions.
+5. Wallet signing and verified on-chain launch/settlement.
+6. Public disclosure of token address, sale results, liquidity actions, and relevant post-launch information.
+
+Sale terms should include supply, price or pricing method, dates, allocations, vesting/lockups, fees, use of proceeds, liquidity plan, cancellation/refund rules, and material risks. A Launchpad listing must not be represented as an endorsement or guarantee of legitimacy, liquidity, exchange listing, price appreciation, or profit.
+
+The Launchpad is a later delivery priority. It must not accept real projects or funds until its complete lifecycle, security, legal/compliance, payment, and operational requirements are implemented and verified.
+
+## 8. Marketplace, crafting, and digital ownership
+
+The planned marketplace is intended for eligible in-game ingredients, crafted gear, and digital items, with $CLIMB as the intended marketplace currency. Players may use eligible items in-game without minting. Where NFT minting is supported, minting should be optional; players are responsible for applicable blockchain network gas fees.
+
+The current documented design proposes marketplace fees of 2.5% on buys and 2.5% on sells. Five percent of actually collected marketplace fee revenue is intended for the Climboria game funding pool; this is not 5% of gross trading volume. These are design rules, not evidence of a live fee contract or active reward distribution. The final fee implementation, eligible items, custody/ownership model, and settlement accounting must be verified before activation.
+
+Forge and refinement systems are intended to let players use collected materials to create or improve equipment. Recipes, item attributes, rarity, costs, and any tradability rules must be disclosed in-game and tested before they are relied upon.
+
+## 9. Rewards, community, and social systems
+
+Climboria plans community participation features such as player profiles, referrals, events, guilds, leaderboards, and reward campaigns. A permanent All-Time board and a separate weekly Top Gainers board are described in the current design direction. Any reward must be funded, secured, and governed by published eligibility, calculation, timing, and dispute rules before it is announced as active.
+
+Future social features include Global Chat, Proximity Chat, Private Messages, parties, guilds, and a Social Lobby. These require server-authoritative identity, permissions, message delivery, persistence, moderation, reporting, mute/block, and anti-spam protections.
+
+Optional Arena wager matches and sponsored events are future features. Any wager feature requires secure escrow, explicit consent, dispute handling, abuse prevention, and legal/compliance review. Sponsored events require written agreements, admin approval, and verified receipt of the full agreed funding and prize pool before announcements or activation.
+
+## 10. Multi-chain architecture and Base market
+
+The chain strategy is phased:
+
+- **Phase 1 — Solana:** initial $CLIMB token focus and initial ecosystem integrations.
+- **Phase 2 — Base:** planned 1:1 $CLIMB deployment/representation, after canonical token identity, supply accounting, cross-chain security, wallet support, and liquidity are verified.
+- **Phase 3 — Base Swap/DEX market:** support for eligible Base assets and $CLIMB through real market data and swap/liquidity providers.
+- **Future networks:** considered only when user demand, secure infrastructure, and sustainable liquidity justify them.
+
+The Solana and Base markets may have different liquidity, prices, fees, and execution conditions. A 1:1 token-unit design does not guarantee equal market prices. No bridge, wrapped representation, or cross-chain transfer should be advertised as available before its exact mechanism is implemented and independently reviewed.
+
+## 11. Delivery priorities and release gates
+
+The active owner-approved engineering order is:
+
+1. **P1 — Live Swap:** production backend, real quotes, wallet review/sign/submit/confirm/reconcile, security review, controlled Devnet acceptance, production deployment, monitoring, and rollback.
+2. **P2 — Live DEX:** real provider-backed discovery, exact token identity, market data, charts, navigation, responsive behavior, and honest error/empty states.
+3. **P3 — All Login methods:** operational Guest, email/password, Google, X, and supported Solana/EVM wallet authentication, with secure sessions and account-isolation tests.
+4. **P4 — Fully Live Game:** complete playable release with verified desktop/mobile behavior and only genuinely implemented persistence, multiplayer, and economy systems.
+5. **P5 — Live Launchpad:** complete project/token creation and sale lifecycle, on-chain launch, fees, liquidity, LP ownership/lock, confirmation, failure recovery, monitoring, and required reviews.
+
+Base expansion, Base Swap/DEX availability, marketplace, NFT minting, social systems, and rewards are separately gated roadmap work. A user interface, mock data, a testnet demo, or a documentation entry does not count as a production release.
+
+## 12. Security, transparency, and risk disclosures
+
+- Crypto assets can lose some or all of their value. No investment return or profit is promised.
+- Token addresses, supply, authorities, allocations, liquidity, and launch status must be verified before publication.
+- Users must review every transaction and confirm the correct network, token, amount, route, slippage, and fees.
+- Smart contracts, bridges, wallets, liquidity providers, and external services carry technical and operational risks.
+- Market prices, execution, liquidity, and availability may vary by chain and provider.
+- Game rewards and marketplace items are subject to implementation, funding, eligibility, and published rules.
+- A planned feature is not a live feature. Climboria will label roadmap items accurately and publish material changes through official channels.
+
+## 13. Official channels
+
+- Website: https://climboria.fun
+- X: https://x.com/ClimboriaHQ
+- Source repository: https://github.com/CryptoDilis/Climboria
+
+For token identity and launch status, rely only on official Climboria announcements and verifiable on-chain records.
