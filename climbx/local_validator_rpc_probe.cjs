@@ -10,7 +10,8 @@ function probeLocalValidator(options={}){
   return Promise.resolve({healthy:false,mayExecute:false,reason:'INVALID_LOCAL_ENDPOINT'});
  return new Promise(resolve=>{
   let settled=false;
-  const finish=(healthy,reason)=>{if(!settled){settled=true;resolve({healthy,mayExecute:false,reason})}};
+  let deadline;
+  const finish=(healthy,reason)=>{if(!settled){settled=true;clearTimeout(deadline);resolve({healthy,mayExecute:false,reason})}};
   const request=http.request({host,port,method:'POST',path:'/',headers:{'content-type':'application/json'},timeout:timeoutMs},response=>{
    response.setTimeout(timeoutMs,()=>{request.destroy();finish(false,'RPC_TIMEOUT')});
    let data='';
@@ -23,6 +24,7 @@ function probeLocalValidator(options={}){
     }catch{finish(false,'INVALID_RPC_RESPONSE')}
    });
   });
+  deadline=setTimeout(()=>{request.destroy();finish(false,'RPC_TIMEOUT')},timeoutMs);
   request.on('timeout',()=>{request.destroy();finish(false,'RPC_TIMEOUT')});
   request.on('error',()=>finish(false,'RPC_UNREACHABLE'));
   request.end(JSON.stringify({jsonrpc:'2.0',id:1,method:'getHealth',params:[]}));
