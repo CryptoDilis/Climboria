@@ -109,6 +109,7 @@ test("DEX exposes a keyboard-accessible read-only quote toggle without enabling 
   const end = html.indexOf("\n});", start);
   assert.ok(start >= 0 && end > start, "Read-only quote toggle handler missing");
   const callbacks = {};
+  const invalidations = [];
   const panel = { hidden: true, scrollIntoView() {} };
   const attrs = {};
   const button = {
@@ -117,7 +118,8 @@ test("DEX exposes a keyboard-accessible read-only quote toggle without enabling 
     addEventListener: (event, handler) => { callbacks[event] = handler; }
   };
   runInNewContext(html.slice(start, end + 4), {
-    $: id => id === "showDexQuote" ? button : id === "swapQuote" ? panel : null
+    $: id => id === "showDexQuote" ? button : id === "swapQuote" ? panel : null,
+    invalidateDexQuote: reason => invalidations.push(reason)
   });
   assert.equal(typeof callbacks.click, "function");
   callbacks.click();
@@ -128,4 +130,8 @@ test("DEX exposes a keyboard-accessible read-only quote toggle without enabling 
   assert.equal(panel.hidden, true);
   assert.equal(attrs["aria-expanded"], "false");
   assert.equal(button.textContent, "GET LIVE QUOTE · NO TRADING");
+  assert.deepEqual(invalidations, ["Quote preview closed. Request a fresh Jupiter quote when reopened."]);
+  callbacks.click();
+  assert.equal(panel.hidden, false);
+  assert.equal(invalidations.length, 1, "Reopening must not revive a hidden quote or trigger new invalidations");
 });
