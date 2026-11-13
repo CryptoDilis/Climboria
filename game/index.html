@@ -214,7 +214,7 @@ const heroEnterButton=document.getElementById('heroEnterButton');
 const heroFeedback=document.getElementById('heroCreateFeedback');
 const heroStatus=document.getElementById('heroPreviewStatus');
 const heroCanvas=document.getElementById('heroPreviewCanvas');
-let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewSeat=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.0,previewTouchX=null,previewTouchDistance=null;
+let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.4,previewTouchX=null,previewTouchDistance=null;
 const validHeroName=name=>/^[A-Za-z0-9 _-]{2,24}$/.test(name)&&/[A-Za-z0-9]/.test(name);
 function savedHero(){
  try{const h=JSON.parse(localStorage.getItem(HERO_RECORD_KEY)||'null');return h&&h.model==='Adventurer'&&typeof h.name==='string'&&validHeroName(h.name)?h:null}catch(_){return null}
@@ -239,7 +239,7 @@ function previewRender(){
   const w=Math.max(1,Math.round(area.width)),h=Math.max(1,Math.round(area.height));
   if(heroCanvas.width!==w||heroCanvas.height!==h){previewRenderer.setSize(w,h,false);previewCamera.aspect=w/h;previewCamera.updateProjectionMatrix();}
  }
- if(previewModel){previewModel.rotation.y=previewAngle;if(previewSeat)previewSeat.rotation.y=previewAngle;previewCamera.position.set(0,1.0,previewDistance);previewCamera.lookAt(0,1.0,0);}
+ if(previewModel){previewModel.rotation.y=previewAngle;previewCamera.position.set(0,1.0,previewDistance);previewCamera.lookAt(0,1.0,0);}
  if(previewMixer&&previewClock)previewMixer.update(Math.min(previewClock.getDelta(),.06));
  previewRenderer.render(previewScene,previewCamera);
 }
@@ -262,39 +262,52 @@ function startHeroPreview(){
    const scale=1.9/Math.max(.001,size.y);previewModel.scale.setScalar(scale);
    const ground=new THREE.Box3().setFromObject(previewModel);previewModel.position.y=-ground.min.y;
    previewScene.add(previewModel);
-   // The official seated pose should be the star. No pedestal or chair back:
-   // earlier screenshots proved those primitives obstructed the hero's body.
-   // Keep only a low stool beneath/behind the pose so the character stays clear.
-   previewSeat=new THREE.Group();previewSeat.name='ClimboriaHeroPreviewSeat';
-   const seatWood=new THREE.MeshBasicMaterial({color:0x5f472c});
-   const seatPart=(geometry,x,y,z)=>{
-    const part=new THREE.Mesh(geometry,seatWood);part.position.set(x,y,z);previewSeat.add(part);
+   // Player-facing A-pose: arms angled down/out, straight legs, no chair.
+   // This modifies only a dedicated preview model instance. The gameplay GLB,
+   // skeleton and authored animations are never rewritten.
+   previewModel.updateWorldMatrix(true,true);
+   const rotateBoneToward=(boneName,childName,direction)=>{
+    const bone=previewModel.getObjectByName(boneName);
+    const child=previewModel.getObjectByName(childName);
+    if(!bone||!child||child.parent!==bone)return false;
+    previewModel.updateWorldMatrix(true,true);
+    const joint=bone.getWorldPosition(new THREE.Vector3());
+    const tip=child.getWorldPosition(new THREE.Vector3());
+    const original=tip.sub(joint);
+    if(original.lengthSq()<1e-8)return false;
+    original.normalize();
+    const delta=new THREE.Quaternion().setFromUnitVectors(original,direction.clone().normalize());
+    const world=bone.getWorldQuaternion(new THREE.Quaternion());
+    const parentWorld=bone.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
+    bone.quaternion.copy(parentWorld.multiply(delta.multiply(world)));
+    previewModel.updateWorldMatrix(true,true);
+    return true;
    };
-   seatPart(new THREE.BoxGeometry(.54,.045,.30),0,.43,-.34);
-   for(const x of [-.22,.22]){
-    for(const z of [-.45,-.23]){
-     seatPart(new THREE.BoxGeometry(.035,.40,.035),x,.20,z);
-    }
+   let posed=0;
+   // Each target is in world coordinates; the arm angle is deliberately below
+   // a T-pose while staying far enough from the hips to show the silhouette.
+   for(const [side,sign] of [['Left',1],['Right',-1]]){
+    posed+=Number(rotateBoneToward(side+'UpperArm',side+'LowerArm',new THREE.Vector3(sign*.74,-.67,0)));
+    posed+=Number(rotateBoneToward(side+'LowerArm',side+'Hand',new THREE.Vector3(sign*.69,-.72,0)));
+    posed+=Number(rotateBoneToward(side+'UpperLeg',side+'LowerLeg',new THREE.Vector3(sign*.10,-.995,0)));
+    posed+=Number(rotateBoneToward(side+'LowerLeg',side+'Foot',new THREE.Vector3(sign*.045,-.999,0)));
    }
-   previewScene.add(previewSeat);
-   document.documentElement.dataset.climboriaHeroPreviewSeat='low-stool';
-   if(gltf.animations&&gltf.animations.length){
-    previewMixer=new THREE.AnimationMixer(previewModel);
-    // The bundled hero has a real seated rest clip. Do not choose the first
-    // animation (Running), which made the Create Hero preview look like a gait.
-    const seated=gltf.animations.find(a=>a.name==='Chair_Sit_Idle_F')
-      ||gltf.animations.find(a=>/(?:chair|sit|seated).*idle|idle.*(?:chair|sit|seated)/i.test(a.name));
-    const standing=gltf.animations.find(a=>/standing[_ -]?idle|idle[_ -]?standing/i.test(a.name));
-    const previewClip=seated||standing;
-    if(previewClip){
-      const action=previewMixer.clipAction(previewClip);action.reset().play();
-      document.documentElement.dataset.climboriaHeroPreviewClip=previewClip.name;
-    }else{
-      document.documentElement.dataset.climboriaHeroPreviewClip='static-rest';
-      console.info('[Climboria] No seated/resting clip found; keeping hero static instead of playing locomotion.');
-    }
+   if(posed!==8){
+    previewLoading=false;
+    heroStatus.textContent='Hero rig unavailable';
+    heroFeedback.textContent='Unable to prepare the hero A-pose. Please try again.';
+    console.warn('[Climboria] Expected complete preview rig; posed joints:',posed);
+    return;
    }
-   previewLoaded=true;previewLoading=false;heroStatus.textContent='LIVE 3D PREVIEW · Seated pose · Drag to rotate · Scroll / pinch to zoom';
+   previewModel.position.y=0;
+   const posedBounds=new THREE.Box3().setFromObject(previewModel);
+   previewModel.position.y=-posedBounds.min.y;
+   previewModel.updateWorldMatrix(true,true);
+   previewMixer=null; // Never auto-play Running, Sitting or other clips here.
+   document.documentElement.dataset.climboriaHeroPreviewPose='a-pose';
+   document.documentElement.dataset.climboriaHeroPreviewClip='none-static';
+   document.documentElement.dataset.climboriaHeroPreviewSeat='none';
+   previewLoaded=true;previewLoading=false;heroStatus.textContent='LIVE 3D PREVIEW · A-POSE · Drag to rotate · Scroll / pinch to zoom';
    editorButtons();heroFeedback.textContent='Official hero is ready. Choose and save your hero name.';
   },progress=>{
    if(progress.total>0)heroStatus.textContent='Loading hero model · '+Math.min(100,Math.round(progress.loaded/progress.total*100))+'%';
