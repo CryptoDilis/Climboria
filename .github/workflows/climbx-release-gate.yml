@@ -118,6 +118,28 @@ jobs:
           echo "f868ffce588a34a789c688589c78a5f9b7f8e933c7292cbbb2ee97ffbb4b39b9  climbx/programs/climbx-authorization/Cargo.lock" | sha256sum --check --status
       - name: Validate CLIMBX Cargo lockfile integrity (not vulnerability audit)
         run: python3 climbx/check_cargo_lock.py climbx/programs/climbx-authorization/Cargo.lock
+      - name: Export CLIMBX dependency inventory for review (non-deploying)
+        run: |
+          cargo +1.99.1 metadata --locked --format-version 1 --manifest-path climbx/programs/climbx-authorization/Cargo.toml --no-deps > climbx-program-metadata.json
+          python3 - <<'PY'
+          import json
+          import pathlib
+          import tomllib
+          lock = pathlib.Path("climbx/programs/climbx-authorization/Cargo.lock")
+          packages = tomllib.loads(lock.read_text())["package"]
+          inventory = [{"name": p["name"], "version": p["version"], "source": p.get("source", "workspace")} for p in packages]
+          pathlib.Path("climbx-dependency-inventory.json").write_text(json.dumps(inventory, indent=2, sort_keys=True) + "\\n")
+          print(f"Inventory exported: {len(inventory)} packages")
+          PY
+      - name: Upload CLIMBX dependency inventory for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: climbx-dependency-inventory
+          path: |
+            climbx-dependency-inventory.json
+            climbx-program-metadata.json
+          retention-days: 14
+          if-no-files-found: error
       - name: Upload lockfile candidate for independent dependency review
         uses: actions/upload-artifact@v4
         with:
