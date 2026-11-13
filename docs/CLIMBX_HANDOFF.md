@@ -38,5 +38,12 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - NEXT: run Node tests and inspect exact-head CI, then provision/review lockfile and toolchain and change Rust compile command to `cargo check --locked` only after those prerequisites exist. Next perform signed disposable-validator grant/revoke tests.
 - Real funds **NO-GO**. No DEX, Swap, Launchpad or Game files edited.
 
+## Phase 129 — 2026-11-14 — wire build prerequisite tests into CI
+- DONE: inspected exact-head branch commit `08d56f0ee0e2aa1c076aaeb3679adee0cc463cdf`: Validate `43499909171`, Browser Smoke `43499908961`, and CLIMBX release safety `43499909135` all reported SUCCESS. These runs did not independently prove the newly added build-prerequisite tests were executed.
+- DONE: updated only `.github/workflows/climbx-release-gate.yml` on `climbx/phase28-release-gate-ci` to execute `node --test climbx/check_reproducible_build.test.cjs` in the Rust compilation job, commit `374111e8db200fbf572df65cd74e77c21a366a6a`.
+- PENDING: GitHub commit-run lookup immediately after commit returned no workflow runs. Do not claim Phase 129 tests passed until a job is observed and its steps verified.
+- BLOCKED: no reviewed Cargo.lock or pinned toolchain, no `cargo check --locked` validation, no signed local-validator tests. Real-funds **NO-GO**.
+- NEXT: inspect workflow runs for commit `374111e8`; resolve any test failures; then prepare pinned Rust toolchain and reviewed lockfile with reproducible CI evidence.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
