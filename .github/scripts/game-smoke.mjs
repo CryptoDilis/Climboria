@@ -284,8 +284,10 @@ try {
   const caveTrapLifecycle=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveTrapLifecycleAudit?.()??null);
   if(!caveTrapLifecycle||!caveTrapLifecycle.damageCorrect||caveTrapLifecycle.damageTaken!==25||!caveTrapLifecycle.respawnCorrect) errors.push('Cave live damage/death/Sanctuary respawn lifecycle failed: '+JSON.stringify(caveTrapLifecycle));
   const deathLoot=await page.evaluate(()=>window.__climboriaJarrellsPeak?.deathLootLifecycleAudit?.()??null);
-  if(!deathLoot?.ok||!deathLoot.inventoryCleared||!deathLoot.respawned||!deathLoot.recovered||
-    !deathLoot.recoveredStored||!deathLoot.expired||deathLoot.droppedEvents!==2||deathLoot.recoveredEvents!==1)
+  if(!deathLoot?.ok||!deathLoot.inventoryCleared||!deathLoot.respawned||!deathLoot.persisted||
+    !deathLoot.survivesUnload||!deathLoot.isolated||!deathLoot.rehydrated||!deathLoot.recovered||
+    !deathLoot.recoveredStored||!deathLoot.clearedOnRecovery||!deathLoot.expired||
+    deathLoot.droppedEvents!==2||deathLoot.recoveredEvents!==1)
     errors.push('Jarrell death carried-loot drop/E recover/3-minute expiry lifecycle failed: '+JSON.stringify(deathLoot));
   console.log('Jarrell death-loot recovery audit:',JSON.stringify(deathLoot));
 
