@@ -18,10 +18,16 @@ function inspect(source = fs.readFileSync(programPath, 'utf8')) {
   return {
     checks,
     scaffoldSafetyChecksPass: Object.entries(checks).filter(([k]) => !['placeholderProgramId','hasExecutionInstruction'].includes(k)).every(([,v])=>v),
+    programIdConfigured: !checks.placeholderProgramId,
+    executionInstructionPresent: checks.hasExecutionInstruction,
     executable: false,
     deploymentApproved: false,
     realFundsAllowed: false,
-    missingEvidence: ['SIGNED_VALIDATOR_TESTS','ONCHAIN_EXECUTION_AUTHORIZATION','INDEPENDENT_AUDIT','RELEASE_APPROVAL']
+    missingEvidence: [
+      ...(checks.placeholderProgramId ? ['NON_PLACEHOLDER_PROGRAM_ID'] : []),
+      ...(!checks.hasExecutionInstruction ? ['SCOPED_EXECUTION_INSTRUCTION'] : []),
+      'SIGNED_VALIDATOR_TESTS','ONCHAIN_EXECUTION_AUTHORIZATION','INDEPENDENT_AUDIT','RELEASE_APPROVAL'
+    ]
   };
 }
 if (require.main === module) {
