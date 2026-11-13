@@ -81,17 +81,18 @@ Draft file: [docs/COINGECKO_PROJECT_INFORMATION_DRAFT.md](./COINGECKO_PROJECT_IN
 
 - **Whitepaper expansion:** substantial content added; final editorial consistency review remains open.
 - **Homepage Overview removal:** confirmed by focused branch checks; production verification awaits deployment.
-- **Validate Climboria workflow:** passed on commit 25d80356795a4031948546d15c054120c54b3a83 (run 43363065269).
-- **Browser Smoke workflow:** run 43363065233 is in progress on commit 25d80356795a4031948546d15c054120c54b3a83; homepage/mobile, Swap, DEX, and market-state steps passed; Jarrell's Peak desktop/mobile gameplay smoke is still running.
+- **Validate Climboria workflow:** passed on latest PR head c840579c81da094a2348d8825cc7ce73f754b2df (run 43363525872).
+- **Browser Smoke workflow:** run 43363525808 is in progress on latest PR head c840579c81da094a2348d8825cc7ce73f754b2df; homepage/mobile, Swap, DEX, and market-state steps passed; Jarrell's Peak desktop/mobile gameplay smoke is still running.
 - **PR #275:** open; not merged.
 - **Production deployment:** not yet verified.
 - **CoinGecko submission readiness:** evidence checklist remains open; a complete whitepaper alone is not sufficient.
 
 - **CoinGecko Section 3 drafts:** five fields prepared; all exceed 400 characters. Owner review remains open.
-- **CoinGecko Section 4–6:** no verified mint or active trading pair supplied yet. Explorer links remain intentionally blank; asset type is Token, blockchain selection is Solana, and decimals must be read from the deployed mint.
-- **Latest exact PR head:** 25d80356795a4031948546d15c054120c54b3a83. PR #275 remains open and mergeable; the Browser Smoke run is not complete, so no merge/deployment claim is made.
+- **CoinGecko Section 4–6:** token is still preview-stage with no deployed/verified mint supplied. CoinGecko currently marks Contract Address and Decimals as required, so this section cannot be completed truthfully yet. Explorer links remain blank; asset type is Token and blockchain selection is Solana. Do not invent CA or decimals. Save a draft if the portal offers it; otherwise pause this application section until deployment.
+- **Latest exact PR head:** c840579c81da094a2348d8825cc7ce73f754b2df. PR #275 remains open; Browser Smoke is not complete, so no merge/deployment claim is made.
 
 Last updated: 2026-11-13.
+
 
 ## G. Editorial consistency review — findings to close
 
@@ -113,4 +114,14 @@ Last updated: 2026-11-13.
 - [ ] Verify supply and mint/freeze authorities from primary on-chain data.
 - [ ] Add Section 4 exchange name and exact pair analytics URL only after an active market exists and is listed/selectable in CoinGecko's exchange field.
 - [ ] If the form makes any of these fields mandatory before launch, pause rather than enter placeholder or fabricated data.
+
+
+## H. Preview-stage CoinGecko submission decision
+
+- [x] Confirmed from the owner's CoinGecko form screenshot that Contract Address and Contract Decimal Places are required fields.
+- [x] Confirmed the $CLIMB token is still preview-stage and no verified deployed mint has been supplied.
+- [x] Decision: do not enter a placeholder CA or guessed decimals; do not submit Section 6 with fabricated values.
+- [ ] Check whether CoinGecko Partner portal provides a Save Draft function; if available, save without submitting.
+- [ ] If no draft/save option exists, pause the listing application at this stage until token deployment and on-chain verification.
+- [ ] After deployment, verify mint address, decimals, supply, authorities, and explorer links from primary on-chain sources before resuming.
 
