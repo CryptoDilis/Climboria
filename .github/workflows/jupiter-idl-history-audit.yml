@@ -46,7 +46,7 @@ jobs:
   fetch-idl-history:
     name: Fetch current and historical Jupiter IDLs
     runs-on: ubuntu-latest
-    timeout-minutes: 35 # Allow bounded retries and historical RPC provenance checks to finish
+    timeout-minutes: 50 # Public-RPC historical reconstruction can be slower; preserve time for downstream audits
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -66,7 +66,7 @@ jobs:
       - name: Test DEX adapter IDL evidence classifications and LaunchLab account audit
         run: node --test dex/swap-proxy/test/dex-adapter-idl-status.test.mjs dex/swap-proxy/test/raydium-launchlab-account-audit.test.mjs dex/swap-proxy/test/fetch-with-retry.test.mjs dex/swap-proxy/test/official-idl-history.test.mjs
       - name: Reconstruct Jupiter IDL history directly from on-chain transactions
-        timeout-minutes: 20
+        timeout-minutes: 30
         continue-on-error: true
         env:
           SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
