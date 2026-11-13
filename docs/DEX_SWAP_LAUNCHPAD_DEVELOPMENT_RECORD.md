@@ -614,3 +614,11 @@ Post-merge exact SHA **`47f23a59ab8a1393e9b46e364387131e52aa3a44`**: [DEX CPI Se
 6. **After every material change**, append a dated entry here containing scoped files, PR/commit SHA, actual test results, outstanding blockers and the single exact next action. End every session with a concrete resume point; never count mocks, docs, or green Pages deploys as real live execution.
 
 **Current release status:** Swap and DEX **quote-only**; Launchpad **preview-only**; wallet signing/execute and token creation intentionally disabled.
+
+### 2026-11-14 — Raydium read-only operator CLI error confidentiality (PR #369 OPEN)
+**Scope:** Swap/DEX operator read-only evidence tooling only. No Game, ClimbX, homepage, Auth, Launchpad runtime or execution gate changed.
+**Branch:** `security/raydium-cli-private-rpc-errors-20261114`; [PR #369](https://github.com/CryptoDilis/Climboria/pull/369), initial head `c769a62f3e7f9198cf6d9e0fa526c6af83f4555b`.
+**Done (proposed, not merged):** new `dex/swap-proxy/tools/raydium-v4-safe-error.mjs` suppresses raw untrusted RPC/transport error messages that might contain a private endpoint query API token. Updated `tools/raydium-v4-finalized-pool-report.mjs` to use the safe formatter. Added `test/raydium-v4-safe-error.test.mjs` with malformed/credential-containing error, safe argument-error and unexpected thrown-value coverage. This eliminates the direct raw `error.message` stderr sink in this operator CLI; it is not an RPC/network test.
+**Verification status:** GitHub branch commits created and PR opened; **CI results not yet verified**, no real RPC call, no signed transaction, no deployment. PR must pass source review and full DEX security CI before merging.
+**Next exact action:** verify PR #369 CI/Validate, resolve any test or merge problems, merge only if green, then record exact merged SHA and postmerge results. Separately obtain one independently verified public Raydium V4 pool key plus operator-private trusted RPC to run the previously implemented **read-only** finalized snapshot CLI. Do not request secret values in chat or put them in commits. Then continue Jupiter V6 per-DEX inner CPI evidence.
+**Hard gates unchanged:** `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`, `swap-config.js enabled:false`; Launchpad creation/trading OFF.
