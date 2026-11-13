@@ -81,15 +81,15 @@ Draft file: [docs/COINGECKO_PROJECT_INFORMATION_DRAFT.md](./COINGECKO_PROJECT_IN
 
 - **Whitepaper expansion:** substantial content added; final editorial consistency review remains open.
 - **Homepage Overview removal:** confirmed by focused branch checks; production verification awaits deployment.
-- **Validate Climboria workflow:** passed on latest PR head c840579c81da094a2348d8825cc7ce73f754b2df (run 43363525872).
-- **Browser Smoke workflow:** run 43363525808 is in progress on latest PR head c840579c81da094a2348d8825cc7ce73f754b2df; homepage/mobile, Swap, DEX, and market-state steps passed; Jarrell's Peak desktop/mobile gameplay smoke is still running.
+- **Validate Climboria workflow:** passed on PR head d597176891ed8433381e869747a479a4bb385c7d (run 43363769740).
+- **Browser Smoke workflow:** run 43363769789 is in progress on PR head d597176891ed8433381e869747a479a4bb385c7d; homepage/mobile, Swap, DEX, and market-state steps passed; Jarrell's Peak desktop/mobile gameplay smoke is still running.
 - **PR #275:** open; not merged.
 - **Production deployment:** not yet verified.
 - **CoinGecko submission readiness:** evidence checklist remains open; a complete whitepaper alone is not sufficient.
 
 - **CoinGecko Section 3 drafts:** five fields prepared; all exceed 400 characters. Owner review remains open.
 - **CoinGecko Section 4–6:** token is still preview-stage with no deployed/verified mint supplied. CoinGecko currently marks Contract Address and Decimals as required, so this section cannot be completed truthfully yet. Explorer links remain blank; asset type is Token and blockchain selection is Solana. Do not invent CA or decimals. Save a draft if the portal offers it; otherwise pause this application section until deployment.
-- **Latest exact PR head:** c840579c81da094a2348d8825cc7ce73f754b2df. PR #275 remains open; Browser Smoke is not complete, so no merge/deployment claim is made.
+- **Latest exact PR head:** d597176891ed8433381e869747a479a4bb385c7d. PR #275 remains open; Browser Smoke is not complete, so no merge/deployment claim is made.
 
 Last updated: 2026-11-13.
 
@@ -124,4 +124,15 @@ Last updated: 2026-11-13.
 - [ ] Check whether CoinGecko Partner portal provides a Save Draft function; if available, save without submitting.
 - [ ] If no draft/save option exists, pause the listing application at this stage until token deployment and on-chain verification.
 - [ ] After deployment, verify mint address, decimals, supply, authorities, and explorer links from primary on-chain sources before resuming.
+
+
+## I. Community and growth-partner outreach
+
+- [x] Receive an unsolicited offer from X account Kenzo to collaborate on Climboria promotion at no cost (based on the owner's shared DM screenshot).
+- [x] Prepare a reply asking for concrete deliverables, channels/audience, scope, and any conditions or expectations.
+- [ ] Receive and review Kenzo's proposed scope and deliverables.
+- [ ] Verify account identity, audience quality, relevant campaign examples, and references before granting any role or access.
+- [ ] Agree in writing on responsibilities, posting schedule, reporting, ownership of created assets, and termination/access-removal terms.
+- [ ] Do not share wallet seed phrases/private keys, token treasury access, exchange credentials, or X account admin access during initial evaluation.
+- [ ] Do not promise token allocation, payment, or revenue share unless separately approved and documented.
 
