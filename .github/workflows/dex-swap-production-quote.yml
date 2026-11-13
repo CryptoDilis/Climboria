@@ -1,0 +1,58 @@
+name: DEX Swap Production Quote Browser Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/dex-swap-production-quote-smoke.mjs"
+      - ".github/workflows/dex-swap-production-quote.yml"
+  workflow_dispatch:
+  # Only test the actual deployed website after GitHub Pages succeeds.
+  # PR checks run syntax only; they never pretend that a staged UI is live.
+  workflow_run:
+    workflows: ["pages build and deployment"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dex-swap-production-quote-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  syntax:
+    name: Validate read-only browser smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate smoke syntax
+        run: node --check .github/scripts/dex-swap-production-quote-smoke.mjs
+
+  production-browser:
+    name: Verify deployed DEX and Swap Jupiter quote UI
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    needs: syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright Chromium
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Check production desktop/mobile Swap and diagnostic DEX quotes
+        run: node .github/scripts/dex-swap-production-quote-smoke.mjs
