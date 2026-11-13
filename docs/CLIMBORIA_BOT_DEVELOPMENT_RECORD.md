@@ -906,3 +906,18 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Audit limitations:** regex-based, top-level CLIMBX CJS/Python only; does not inspect nested folders, other repository modules, dynamic calls, aliased imports, or distinguish every comment/string false positive. It is not an execution security proof. No on-chain Solana grant/vault, signed devnet swap, audited router or independent security review. CLIMBX real-funds **NO-GO**. No edits to Swap/DEX/Launchpad/game.
 
 **Next Phase99:** verify Phase97 Browser Smoke and Phase98 CI; investigate any audit failures and avoid suppressing real findings; improve recursive scan and import-aware review if needed; verify Solana toolchain and implement owner-only grant/revoke/caps in a controlled local validator before claiming devnet readiness. Continue append-only main-branch progress recording.
+
+
+## Phase 99 — 2026-11-14 — recursive CLIMBX source audit (non-deploying)
+
+**Phase97 CI all SUCCESS** on `adfef36c25ef582158269379024adfc1c8d0b7b2`: Browser Smoke `43466987555`, Validate `43466986763`, CLIMBX safety `43466986647`.
+**Phase98 CI all SUCCESS** on `ecd131d3ed9fed402fd82ed2abdc6fec7c1b2266`: Browser Smoke `43467187338`, Validate `43467188105`, CLIMBX safety `43467187459`.
+
+**Phase99 CLIMBX branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `871a9c83d694fa336ea126aeed19930ea68c53b0`: recursively scan nested `.cjs` and `.py` under CLIMBX for known simulation/execution call sites and executable flags; skip symlinks, preserve relative paths and sort results.
+- `96b481e8c0a3513495c321fda081df01024e2130`: three regression tests for nested listing, nested call-site detection, and symlink isolation. Existing CLIMBX CI invokes the audit test file.
+**Phase99 CI pending** on `96b481e8c0a3513495c321fda081df01024e2130` at first check.
+
+**Limits:** regex-only static review, scoped to CLIMBX `.cjs`/`.py`; no JavaScript ESM/TS, cross-directory call graph, alias analysis, dynamic dispatch or runtime verification. Passing CI is not proof of trade authorization. No on-chain vault/program, audited router CPI, signed devnet swap, or independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase100:** verify Phase99 CI, repair failures; evaluate expanding to `.js`/`.ts` files and strengthen parser-aware checks with low false-positive risk; continue on-chain toolchain readiness and owner-controlled Solana grant/revoke/caps development only after actual toolchain and validator verification. Append further handoff entries on main.
