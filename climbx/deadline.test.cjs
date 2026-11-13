@@ -13,3 +13,16 @@ test('rejects excessive timeout',()=>assert.throws(()=>withDeadline(()=>{}, {tim
 test('rejects fractional timeout',()=>assert.throws(()=>withDeadline(()=>{}, {timeoutMs:100.5})));
 test('clears timer on successful completion',async()=>{let cleared=false;await withDeadline(async()=>1,{clearTimeoutFn:t=>{cleared=true;clearTimeout(t);}})();assert.equal(cleared,true);});
 test('clears timer on rejection',async()=>{let cleared=false;await assert.rejects(withDeadline(async()=>{throw Error('no');},{clearTimeoutFn:t=>{cleared=true;clearTimeout(t);}})());assert.equal(cleared,true);});
+
+// Regression proof: a response deadline is NOT database cancellation.
+test('deadline rejection does not imply underlying write was cancelled',async()=>{
+ let finishWrite;
+ let committed=false;
+ const pendingWrite=new Promise(resolve=>{finishWrite=()=>{committed=true;resolve('COMMITTED');};});
+ const operation=withDeadline(()=>pendingWrite,{timeoutMs:100});
+ await assert.rejects(operation(),err=>err.code==='CLIMBX_DEADLINE');
+ assert.equal(committed,false);
+ finishWrite();
+ assert.equal(await pendingWrite,'COMMITTED');
+ assert.equal(committed,true);
+});
