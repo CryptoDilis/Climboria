@@ -191,3 +191,14 @@ Added in local V2: wallet-scoped *simulated* pending buy reservations, duplicate
 **Still unproven:** real chain signature verification, externally validated reconciliation, wallet activity outside the bot, multi-host serialization, authorization scope enforcement, crash-safe intent-before-send outbox, transaction expiry/finality checks, native SOL/rent/fees/slippage, automated TP/SL integration, full position/fee ledger, and independent security review. No real trading enabled.
 
 **Next:** Phase 13 should integrate the paper journal with the existing JS engine or select one coherent runtime, implement a durable intent-before-submit outbox and reconciler state machine with injected crashes, add owner-authorization expiry/fee-reserve constraints and complete end-to-end paper trades. Do not deploy or enable live execution without proof and approval.
+
+
+## Phase 13 checkpoint — 2026-11-13 (local integrated paper executor V4)
+
+**Verified locally:** 20/20 Python unittest cases passed (10 V3 journal regression + 10 new integrated paper-engine tests). A ZIP containing `journal.py`, `integrated.py`, both test files and README was generated locally. **Executable V4 source has not been committed to GitHub.** No deployment or live trading flags changed.
+
+V4 integrates the SQLite journal with persistent paper positions and wallet balance: reserve -> simulated submit -> simulated confirmation -> position creation, full-position TP/SL on supplied price events, atomic simulated exit proceeds and realized PnL, restart recovery, duplicate mint/slot protection, authorization expiry/revocation checks, and 30-minute pre-expiry new-entry cutoff. Reconciliation of an already-submitted order is allowed after authorization expiry/revocation, since recording a historical confirmed outcome is not a new delegated trade. The tests caught and corrected an arithmetic expectation: 1,080 available simulated units after buying 100 at price 1, selling 100 at price 2, and retaining a 20-unit reserve from 1,000 starting units.
+
+**Known blockers:** no actual outbox or external reconciliation, exit orders are not journaled as pending, no live RPC/signing/Jupiter, no fees/rent/slippage or partial fills, no TP ladder/trailing/time exits, no automatic re-entry scheduler, no multi-host concurrency guarantees, no fee high-water-mark ledger, no verified Solana delegated authority. Caller-supplied simulated outcomes/prices are not trusted chain evidence. This prototype is NOT production-safe.
+
+**Next Phase 14:** model durable exit order lifecycle and position locking, reconcile UNKNOWN exits before releasing/re-entering, implement a deterministic simulated quote/fee model and partial exits, and fault-injection tests for crash boundaries. Keep mainnet execution disabled.
