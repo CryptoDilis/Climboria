@@ -45,3 +45,26 @@ test('one millisecond before final 30 minute cutoff is allowed in simulation',()
  const x=valid();x.nowMs=x.grant.expiresAtMs-ENTRY_CUTOFF_MS-1;
  assert.deepEqual(evaluateClimbxEntry(x),{allowed:true,reason:'POLICY_SIMULATION_ONLY'});
 });
+
+denied('negative clock',x=>x.nowMs=-1,'INVALID');
+denied('unsafe clock',x=>x.nowMs=Number.MAX_SAFE_INTEGER+1,'INVALID');
+denied('negative grant issuance',x=>x.grant.issuedAtMs=-1,'INVALID_GRANT');
+denied('unsafe grant expiry',x=>x.grant.expiresAtMs=Number.MAX_SAFE_INTEGER+1,'INVALID_GRANT');
+denied('empty mint allowlist',x=>x.grant.allowedMints=[],'MINT_NOT_AUTHORIZED');
+denied('duplicate authorized mint',x=>x.grant.allowedMints=['SOL','SOL'],'MINT_NOT_AUTHORIZED');
+denied('malformed authorized mint',x=>x.grant.allowedMints=['SOL',null],'MINT_NOT_AUTHORIZED');
+denied('overlong authorized mint allowlist',x=>x.grant.allowedMints=['SOL','A','B','C','D','E'],'MINT_NOT_AUTHORIZED');
+denied('already overspent cap',x=>x.grant.spent=301,'INVALID_CAP');
+denied('unsafe trade integer',x=>x.entry.amount=Number.MAX_SAFE_INTEGER+1,'INVALID_CAP');
+denied('NaN trade amount',x=>x.entry.amount=NaN,'INVALID_CAP');
+denied('malformed slot',x=>x.slots[0]=null,'INVALID_SLOTS');
+test('exact cumulative cap is allowed by off-chain simulation only',()=>{
+ const x=valid();x.grant.spent=250;x.entry.amount=50;
+ assert.deepEqual(evaluateClimbxEntry(x),{allowed:true,reason:'POLICY_SIMULATION_ONLY'});
+});
+test('exact 30-minute boundary denied, one millisecond earlier allowed',()=>{
+ const x=valid();x.nowMs=x.grant.expiresAtMs-ENTRY_CUTOFF_MS-1;
+ assert.equal(evaluateClimbxEntry(x).allowed,true);
+ x.nowMs++;
+ assert.deepEqual(evaluateClimbxEntry(x),{allowed:false,reason:'ENTRY_CUTOFF'});
+});
