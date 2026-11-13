@@ -1,0 +1,10 @@
+'use strict';
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const {TOOLS,probeTool,probeAll}=require('./probe_solana_toolchain.cjs');
+test('probe enumerates all required Solana tools',()=>assert.deepEqual(TOOLS,['rustc','cargo','solana','solana-test-validator','anchor']));
+test('missing executable fails closed',()=>assert.deepEqual(probeTool('cargo',()=>({error:Error('ENOENT'),status:null,stdout:'',stderr:''})),{name:'cargo',available:false,version:null}));
+test('nonzero tool status fails closed',()=>assert.deepEqual(probeTool('solana',()=>({status:1,stdout:'',stderr:'failed'})),{name:'solana',available:false,version:null}));
+test('successful version output is captured',()=>assert.deepEqual(probeTool('rustc',()=>({status:0,stdout:'rustc 1.80.0\n',stderr:''})),{name:'rustc',available:true,version:'rustc 1.80.0'}));
+test('all tools must pass independently',()=>{let count=0;const tools=probeAll(()=>{count++;return {status:0,stdout:'test version\n',stderr:''}});assert.equal(count,TOOLS.length);assert.equal(tools.length,TOOLS.length);assert.ok(tools.every(x=>x.available));});
+test('thrown runner error fails closed',()=>assert.equal(probeTool('anchor',()=>{throw Error('runner failure')}).available,false));
