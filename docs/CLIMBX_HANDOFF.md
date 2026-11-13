@@ -165,5 +165,12 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - PENDING: verify public hosting deployment and responsive visual behavior in browser; Rust/security milestones remain blocked. **REAL-FUNDS NO-GO**.
 - No Swap, Launchpad or Game files edited.
 
+## Phase 145 — 2026-11-14 — mobile-visible CLIMBX DEX hero entry point
+- DISCOVERED: DEX stylesheet includes mobile rule `.toplinks a{display:none!important}`, so earlier CLIMBX header link could be hidden on phones.
+- DONE: main commit `27c8361c402dc759f77b7b9fdf4766d20d228325` adds a CLIMBX Coming Soon banner and `/dex/climbx/` link inside the DEX hero, outside mobile-hidden nav, with clear disabled-trading text. No trading logic or wallet integration changed.
+- CONFIRMED: GitHub main contains disabled CLIMBX standalone page and navigation/hero links. Live website HTTPS probe failed due to environment DNS resolution; public deployment still UNVERIFIED.
+- NEXT: user/browser confirmation that hero banner and preview are publicly visible; validate responsive layout and CI. Continue Rust signed local-validator safety testing. **REAL-FUNDS NO-GO**.
+- No Swap, Launchpad or Game files edited.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
