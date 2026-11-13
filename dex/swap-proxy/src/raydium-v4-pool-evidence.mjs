@@ -18,7 +18,9 @@ import { RAYDIUM_V4_PROGRAM_IDS, RAYDIUM_V4_CLASSIC_TOKEN_PROGRAM } from "./rayd
  */
 const SPL_TOKEN = RAYDIUM_V4_CLASSIC_TOKEN_PROGRAM;
 const WSOL = "So11111111111111111111111111111111111111112";
-const MAX_ACCOUNT_DATA_BASE64 = 1400;
+// Legacy orderbook/open-orders account state may be larger than an AMM pool.
+// Bound each raw account independently; transport itself is capped at 512 KiB.
+const MAX_ACCOUNT_DATA_BASE64 = 64 * 1024;
 const ROLES = Object.freeze([
   "pool", "coinVault", "pcVault", "coinMint", "pcMint",
   "openOrders", "market", "marketProgram"
