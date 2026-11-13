@@ -51,7 +51,8 @@ jobs:
         run: |
           # The original 42.9 MB hero can exceed the software-rendered mobile GLB readiness window.
           # Resize embedded textures for CI only; production's original GLB stays unchanged.
-          npm install --no-save @gltf-transform/cli
+          npm install --no-save playwright @gltf-transform/cli
+          node -e "require.resolve('playwright'); console.log('Playwright dependency verified')"
           mv assets/characters/Climboria_Hero.glb /tmp/climboria-original-hero.glb
           npx gltf-transform resize /tmp/climboria-original-hero.glb assets/characters/Climboria_Hero.glb --width 2048 --height 2048
           test -s assets/characters/Climboria_Hero.glb
