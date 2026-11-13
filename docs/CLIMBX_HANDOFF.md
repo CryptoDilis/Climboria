@@ -80,5 +80,13 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - NEXT: generate and review CLIMBX Cargo.lock, verify `cargo +1.99.1 check --locked` in CI, then signed disposable-validator grant/revoke tests. Notify DEX owner of browser timeout.
 - No DEX, Swap, Launchpad or Game files changed.
 
+## Phase 134 — 2026-11-14 — generate candidate Cargo.lock and verify --locked
+- DONE: updated CLIMBX-only `.github/workflows/climbx-release-gate.yml` on `climbx/phase28-release-gate-ci`, commit `45b6288e736f2feae5bf2540d6a96c8d337c7d6d`.
+- CI now generates `Cargo.lock` with pinned Rust 1.99.1, checks Cargo metadata with `--locked`, uploads `climbx-cargo-lockfile-candidate` artifact for dependency review, then performs `cargo +1.99.1 check --locked`.
+- PENDING: exact commit workflow was not discoverable immediately after commit. Artifact has not been downloaded, reviewed, or committed; do not claim dependency reproducibility is complete. This CI candidate generation is intentionally not production approval.
+- BLOCKED: reviewed committed lockfile, validator tests, SBF build, restricted DEX-only execution, reconciliation, audit and owner approval. **REAL-FUNDS NO-GO**.
+- NEXT: inspect Phase 134 workflow results and lockfile artifact; audit dependency versions, commit reviewed lockfile, change workflow to require committed lockfile (no auto-generation) and verify `--locked` on clean checkout.
+- No DEX, Swap, Launchpad or Game files changed.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
