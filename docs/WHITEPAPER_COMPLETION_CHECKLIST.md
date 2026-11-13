@@ -8,7 +8,7 @@ This is the working release checklist. A checkbox is marked complete only after 
 
 ## A. Whitepaper content — editorial completion
 
-- [x] Establish the Whitepaper as the canonical ecosystem document; /overview/ is a compatibility redirect.
+- [x] Establish the Whitepaper as the sole canonical ecosystem document; the retired /overview/ route is deleted (no redirect).
 - [x] Expand the paper beyond the old short version and restore detailed information from the former Overview.
 - [x] Explain the project vision and Game First, Speculation Later principle.
 - [x] Document Jarrell’s Peak, the single launch-world direction, survival, exploration, fishing, swimming, treasure discovery, and no-summit/no-final-level design.
@@ -35,7 +35,7 @@ This is the working release checklist. A checkbox is marked complete only after 
 - [x] Remove the Overview resource card from the homepage lower card/resource area.
 - [x] Keep Roadmap and Game Concept cards.
 - [x] Point desktop/mobile Whitepaper entry points to the canonical /whitepaper/ page.
-- [x] Keep /overview/ redirect for old bookmarks and inbound links.
+- [x] Delete /overview/ entirely; do not retain a redirect or compatibility page.
 - [ ] Verify these changes on the deployed production homepage after merge.
 
 ## C. Quality assurance and release
@@ -80,7 +80,7 @@ Draft file: [docs/COINGECKO_PROJECT_INFORMATION_DRAFT.md](./COINGECKO_PROJECT_IN
 ## Current status snapshot
 
 - **Whitepaper expansion:** substantial content added; final editorial consistency review remains open.
-- **Homepage Overview removal:** confirmed by focused branch checks; production verification awaits deployment.
+- **Homepage Overview removal:** desktop/mobile nav and bottom Project Overview card removed on the PR branch; /overview/ route deleted (no redirect). Production verification awaits merge/deployment.
 - **Validate Climboria workflow:** passed on PR head d597176891ed8433381e869747a479a4bb385c7d (run 43363769740).
 - **Browser Smoke workflow:** run 43363769789 is in progress on PR head d597176891ed8433381e869747a479a4bb385c7d; homepage/mobile, Swap, DEX, and market-state steps passed; Jarrell's Peak desktop/mobile gameplay smoke is still running.
 - **PR #275:** open; not merged.
@@ -155,3 +155,16 @@ Last updated: 2026-11-13.
 - [ ] Validate Climboria passes on the exact workflow-fix commit.
 - [ ] Browser Smoke and final Whitepaper checks complete on the latest exact PR head.
 
+
+
+## M. Owner screenshot acceptance — homepage Overview removal and full Whitepaper
+
+- [x] Reviewed owner screenshots showing the live homepage desktop navigation still contains an OVERVIEW button.
+- [x] Reviewed owner screenshot showing the lower homepage Project Overview resource card still visible.
+- [x] Confirmed these screenshots match the current deployed/main branch, while PR #275 is not yet merged; do not claim production changes are live.
+- [x] Confirmed PR branch has removed Overview from desktop and mobile navigation and replaced the lower Project Overview card with the retained Roadmap and polished Game Concept destinations.
+- [x] Confirmed PR branch has deleted `overview/index.html`; no redirect is intended. The home-page ecosystem intro anchor is renamed to avoid a leftover `#overview` entry point.
+- [ ] Expand the canonical Whitepaper so all approved former Overview material is represented, including free-to-play heroes/tools, Forge/refining, treasure discovery/public records, Top Gainers and funded reward safeguards, Arena/Guild Battles/wagers, Launchpad/Climboria Signature, sponsor approval/payment/prize protection, DEX/Launchpad funding boundaries, community/referrals, Social Lobby, mobile-app future status, NFT eligibility/ownership, and wallet boundaries.
+- [ ] Synchronize Markdown source and rendered `/whitepaper/` page; verify section parity and every internal link.
+- [ ] Run focused static checks and required CI on the exact final PR head.
+- [ ] Merge only after required checks pass; verify deployed homepage screenshots and confirm `/overview/` returns 404.
