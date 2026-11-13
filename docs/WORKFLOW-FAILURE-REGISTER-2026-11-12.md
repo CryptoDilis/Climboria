@@ -1277,3 +1277,51 @@ The green CI batch is not production deployment acceptance. Do not mark the site
 - Re-read `swap-config.js` and Worker Wrangler config: proxy is configured in frontend, but transaction execution remains disabled in frontend and Worker. The Worker still requires its security-review gates; do not bypass them.
 - Production-origin verification remains unproven from the available GitHub connector. The earlier web fetch failures are not a reliable outage signal. No deployment, public health response, real OAuth round trip, SMTP delivery, or live Swap settlement is claimed.
 - **Next exact task:** continue the P0/P1 production-origin audit using authorized Cloudflare/GitHub settings; separately implement password recovery only after checking the auth page markup and adding real Supabase recovery/update-password flows with tests. Do not mark Login or DEX live until the real production flows are exercised.
+
+
+## 2026-11-13 — Jupiter IDL History provider HTTP 500: exact failure diagnosis and bounded retry counter-fix
+
+### Failed workflow evidence
+
+- [x] Exact failed head: `d0ee34053d42b57fa316590966feb944ab2cb16e`.
+- [x] Failed run: Jupiter IDL History Audit `43334500101`; job `131587149550`.
+- [x] First failed step: `Fetch Jupiter and DEX CPI IDL history records`.
+- [x] Preceding local checks passed: Node syntax checks passed; DEX adapter / LaunchLab tests reported **14 passed, 0 failed**.
+- [x] The captured `idl-one.vercel.app` Jupiter `latest` and `history` requests both returned HTTP **500**, each with a 24-byte response and the same response SHA-256 `76e6be68d64c5c7aca44e885e1c05021fc79c7c1cef1ec7ee4ef916c262d3996`. Both responses contained no IDL candidates or Anchor metadata account address.
+- [x] The resulting finalized-RPC audit could not discover the Jupiter Anchor metadata account because the external IDL Explorer returned no address. The report correctly kept the historical revision count at zero and candidate-slot evidence incomplete for transaction slot `468153382`.
+- [x] The process exited 1 because `assessment.anyHttpOrTransportFailure=true` and `exactlyOneRevisionCoversCandidateSlot=false`. This is an intentional fail-closed evidence gate, not a false-positive unit-test failure.
+- [!] Other evidence gaps in the same report remain separate: the Raydium LaunchLab candidate account audit did not establish a trusted candidate-slot PoolState layout; some DEX IDL provenance remains incomplete. Do not classify those as the direct HTTP-500 failure cause.
+- [!] The Browser Smoke run `43334500063` was canceled after the branch advanced while gameplay step 22 was running. The job log says GitHub canceled the operation; no failed assertion is recorded. This is concurrency supersession, not a code failure.
+- [x] On the same failed head, Validate `43334500089` and Jupiter V6 CPI Trace `43334500033` completed SUCCESS.
+
+### Root cause
+
+The IDL-history workflow depends on an external IDL Explorer service. At this run, its two Jupiter endpoints returned HTTP 500, so no historical IDL revision could be established for the preserved candidate slot. The script had no bounded retry for transient HTTP 5xx/429 responses; it recorded the 500 response once and then correctly failed the release-evidence gate. The missing historical revision is still a real evidence blocker; retrying must never turn a persistent provider failure or missing revision into success.
+
+### Targeted counter-fix
+
+- [x] Added `dex/swap-proxy/tools/fetch-with-retry.mjs`: bounded retry for HTTP 408/425/429/500/502/503/504 and transient transport errors; exponential backoff; bounded `Retry-After`; per-attempt fresh request options.
+- [x] Integrated retry into `fetch-jupiter-idl-history.mjs`: four attempts, 30-second per-attempt timeout, 500 ms base delay capped at 4 seconds, and recorded per-attempt status/error history in each source record.
+- [x] Persistent HTTP 500 is still returned as a failed response after the retry budget. Non-transient client errors are not retried. The final `anyHttpOrTransportFailure` and candidate-slot historical revision gates are unchanged.
+- [x] Added five regression tests: transient 500 recovery, persistent 500 preservation, non-retryable 404, transient transport TypeError, and capped Retry-After.
+- [x] Ran the five helper tests locally with Node v22.16.0: **5 passed, 0 failed**.
+- [x] Added the helper/test paths and tests to the IDL History workflow's syntax, test and pull-request path filters.
+
+### Counter-fix commits and rerun
+
+- Helper: `408484d2a80c3f9b13530c4f288fd3bcd8df1c58`.
+- Integration: `e686f919e31e849d9d3a608421f7f39ccb49ab3a`.
+- Regression tests: `c05c77f0cb40d0b8cd0d5991d878713eaf11b355`.
+- Workflow integration: `57270018af0253dc8abced30ed466599cf07194f`.
+- Current exact head at this checkpoint: `48f6cfb688998a26091c76a69510d102c1da5a70`.
+- Exact-head rerun IDs: Validate `43334821860` (SUCCESS); Jupiter CPI Trace `43334821794` (in progress at checkpoint); Browser Smoke `43334821774` (in progress at checkpoint); Jupiter IDL History `43334821887` (in progress at checkpoint).
+- Do not mark the counter-fix recovered until run `43334821887` reaches terminal status and its logs/artifact show the retry attempt history. If the provider remains HTTP 500 or no historical revision covers the candidate slot, the workflow must remain failed/incomplete and the route remains excluded.
+
+## 2026-11-13 — bounded 50-transaction finalized Jupiter/Meteora scan
+
+- [x] Expanded the read-only discovery default from 5 to 50 finalized transactions, kept signature pages at 25 (two-page cursor coverage), added 100 ms inter-transaction pacing, and raised the discovery step timeout to 180 seconds / job timeout to 10 minutes.
+- [x] Exact run `43334500033` on head `d0ee34053d42b57fa316590966feb944ab2cb16e` completed SUCCESS. The scan returned 50 signatures across 2 pages, fetched all 50 transactions, and reported `transactionFetchComplete=true`, `rateLimited=false`, no transport failure and no unavailable signatures.
+- [x] Artifact `13996327675`, SHA-256 `ddfa8634b660a3ca28b939d923b3c334483a0b4382f2ef92e5c73d42ac8b3338`, independently downloaded and inspected.
+- [x] The bounded sample found 2 successful matching Jupiter/Meteora transactions. Both were single-step Jupiter `route` plans (`routePlanCount=1`), variant 75, each with one 19-account Meteora `swap2` CPI and the same ordered program sequence (Meteora, Tokenkeg, Token-2022, Meteora self-calls, Jupiter event self-CPI).
+- [!] This 50-transaction sample still did **not** produce a multi-hop/split route example. It does not establish general account-slice cursor behavior or CPI-requested privileges. The 19-account vectors remain candidate-specific; do not infer every trailing account role from count alone.
+- [ ] Next route-evidence task: inspect all 19 CPI accounts for both signatures using finalized, slot-aware account owner/data/discriminator evidence; classify BinArray/bitmap/dynamic-tail accounts only where the on-chain account data and pool linkage prove it. Continue a paginated bounded search for actual multi-hop/split and transfer-hook examples. Keep outer transaction privileges distinct from CPI-requested AccountMeta flags.
