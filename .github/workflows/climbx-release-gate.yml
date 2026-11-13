@@ -38,7 +38,7 @@ jobs:
         with:
           node-version: '22'
       - name: Solana Ed25519 signature tests
-        run: node --test climbx/solana_signature.test.cjs
+        run: node --test climbx/solana_signature.test.cjs climbx/verify_challenge.test.cjs
       - name: Verify exact fail-closed release decision
         run: |
           python - <<'PY'
