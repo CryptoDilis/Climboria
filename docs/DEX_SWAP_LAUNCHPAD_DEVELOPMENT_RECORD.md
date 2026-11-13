@@ -2,7 +2,7 @@
 
 **Last reviewed:** 2026-11-14 (Philippine time)
 **Repository:** `CryptoDilis/Climboria`
-**Initial baseline:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`; **latest merged DEX/Swap change:** `b6884cb5d498dd3a4e1894270e7db1989565891d` (PR #304; refresh current `main` on every resume)
+**Initial baseline:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`; **latest merged DEX/Swap change:** `19d5afba669934f7bc3ffedeab7e8fd03e8178bd` (PR #305; refresh current `main` on every resume)
 **Owner-directed scope:** **DEX, Swap, Launchpad ONLY.** The Game is owned by a separate chat/developer. This file supersedes older cross-project priority instructions **for this workstream only**.
 **State:** active development; **not** evidence that signed mainnet swaps or token launches are live.
 
@@ -166,3 +166,20 @@ Changed: branch `ci/scope-production-quote-browser-to-dex-swap`, `.github/workfl
 Verified: commit `77411c7` written; exact-head GitHub Actions **NOT YET VERIFIED**.
 Unresolved: a merge commit or deploy event can still have provider/asset timing differences; deployed-origin real browser evidence pending. No actual wallet transaction was triggered.
 NEXT: validate this workflow on a focused PR, merge if green, then read the next related Pages-triggered live browser smoke results; fix any genuine production error rather than bypassing assertions.
+
+
+### 2026-11-14 — Scoped CI PR #305 merged; GitHub Pages workflow_run trigger not observed
+Scope: **DEX and Swap test infrastructure only**.
+Before: every successful Pages deployment could invoke an expensive browser smoke, even for unrelated CLIMBX/Game commits.
+Changed: [PR #305](https://github.com/CryptoDilis/Climboria/pull/305) merged as `19d5afba669934f7bc3ffedeab7e8fd03e8178bd` with a deployed-commit diff gate and cancellation of stale runs.
+Verified: PR head `c80463d97310994072c64e24b10736b08d192670` [scoped syntax 43470275295](https://github.com/CryptoDilis/Climboria/actions/runs/43470275295) **SUCCESS** (production job skipped on PR), [Validate 43470275439](https://github.com/CryptoDilis/Climboria/actions/runs/43470275439) **SUCCESS**. Post-merge [Pages 43470453492](https://github.com/CryptoDilis/Climboria/actions/runs/43470453492) completed **SUCCESS**; however Actions listing at this checkpoint did **not show** a new DEX Swap Production Quote Browser Smoke `workflow_run` for either Pages 43469714846 or 43470453492.
+Unresolved: no actual live-origin quote browser acceptance despite successful Pages deployment. The GitHub-built-in `pages build and deployment` dynamic workflow may not emit a usable `workflow_run` for this Actions workflow; this is a real orchestration gap, not proof of a quote bug.
+NEXT: use a DEX/Swap-only `push` path trigger with a job explicitly waiting for the matching Pages success before running any live browser calls; preserve manual dispatch, and keep unrelated Game/CLIMBX commits excluded.
+
+### 2026-11-14 — Replace absent post-Pages workflow_run with exact-release polling gate (CI pending)
+Scope: **DEX/Swap CI only**.
+Before: multiple successful Pages releases lacked a corresponding production browser run, so deployed quotes were still unverified.
+Changed: branch `ci/trigger-production-browser-after-exact-pages`, workflow `.github/workflows/dex-swap-production-quote.yml`. Production browser now triggers on **relevant main pushes only**, checks read-only GitHub Actions API for `pages build and deployment` with `head_sha = GITHUB_SHA` and requires conclusion SUCCESS before installing Playwright or calling live providers. PRs check syntax only; `workflow_dispatch` remains available for manual checks; stale runs cancel.
+Verified: commit `18697b9` created; exact-head CI and real production browser **PENDING**.
+Unresolved: possible Pages cancellation on concurrent pushes; actual provider CORS/availability; quote diagnostic DEX panel still hidden to users. No trading or token mint/launch is enabled.
+NEXT: validate new workflow via focused PR, merge if green; inspect exact Pages and production-browser run conclusions and failure logs. Record actual deployment evidence, not assumptions.

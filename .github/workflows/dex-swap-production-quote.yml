@@ -6,16 +6,21 @@ on:
     paths:
       - ".github/scripts/dex-swap-production-quote-smoke.mjs"
       - ".github/workflows/dex-swap-production-quote.yml"
-  workflow_dispatch:
-  # Only test the actual deployed website after GitHub Pages succeeds.
-  # PR checks run syntax only; they never pretend that a staged UI is live.
-  workflow_run:
-    workflows: ["pages build and deployment"]
-    types: [completed]
+  # Avoid workflow_run on GitHub's built-in Pages dynamic workflow: actual
+  # Pages successes have not emitted that trigger in this repository.
+  push:
     branches: [main]
+    paths:
+      - "dex/**"
+      - "swap/**"
+      - "swap-config.js"
+      - ".github/scripts/dex-swap-production-quote-smoke.mjs"
+      - ".github/workflows/dex-swap-production-quote.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: dex-swap-production-quote-${{ github.ref }}
@@ -24,50 +29,47 @@ concurrency:
 jobs:
   syntax:
     name: Validate read-only browser smoke
-    outputs:
-      relevant: ${{ steps.scope.outputs.relevant }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
-          fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Validate smoke syntax
         run: node --check .github/scripts/dex-swap-production-quote-smoke.mjs
-      - name: Skip expensive production browser tests for Game/ClimbX-only pushes
-        id: scope
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "relevant=true" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
-            if git diff --name-only HEAD^ HEAD | grep -Eq '^(dex/|swap/|swap-config\.js$|\.github/scripts/dex-swap-production-quote-smoke\.mjs$|\.github/workflows/dex-swap-production-quote\.yml$)'; then
-              echo "relevant=true" >> "$GITHUB_OUTPUT"
-            else
-              echo "relevant=false" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "relevant=false" >> "$GITHUB_OUTPUT"
-          fi
 
   production-browser:
     name: Verify deployed DEX and Swap Jupiter quote UI
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && needs.syntax.outputs.relevant == 'true')
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: syntax
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Wait for successful Pages deployment of exact commit
+        if: github.event_name == 'push'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${GITHUB_SHA}&per_page=100" --jq '[.workflow_runs[] | select(.name == "pages build and deployment") | (.conclusion // "pending")][0] // "pending"')"
+            echo "Pages for ${GITHUB_SHA}: ${state} (check ${attempt}/30)"
+            case "$state" in
+              success) echo "Exact-head Pages deployment succeeded."; exit 0 ;;
+              failure|cancelled|timed_out|action_required|skipped)
+                echo "::error::Exact-head Pages deployment ended ${state}; production quote acceptance not run."
+                exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "::error::Timed out waiting for a successful Pages deployment of ${GITHUB_SHA}."
+          exit 1
       - name: Install Playwright Chromium
         run: |
           npm init -y
