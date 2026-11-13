@@ -104,5 +104,14 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - BLOCKED: permanent reviewed lockfile and clean checkout --locked enforcement, signed validator tests, SBF build, restricted DEX-only execution, reconciliation, independent audit and explicit approval. **REAL-FUNDS NO-GO**.
 - NEXT: verify new CI; obtain commit-ready Cargo.lock through GitHub workflow/artifact review; remove lockfile generation and enforce clean-checkout --locked. No DEX, Swap, Launchpad or Game edits.
 
+## Phase 137 — 2026-11-14 — verified integrity gate and adversarial test coverage
+- DONE: exact CLIMBX commit `0cdcc5d8b68a6bf8e41963199accb3f78a43434b` release run `43503926283` SUCCESS. Rust job passed lockfile generation, integrity validation, artifact upload and --locked compilation. Validate `43503926338` and Browser Smoke `43503926304` SUCCESS.
+- DONE: inspected existing lockfile artifact `14075152596` locally: Cargo.lock version 4, 195 packages, 48,350 bytes; Anchor resolved 0.30.3. This is structural inspection only, not vulnerability review.
+- DONE: CLIMBX branch commit `3d15690144887e8becb6908f6ef7605f1d0f6e82` adds `climbx/test_check_cargo_lock.py` with positive and negative cases: missing file, invalid checksum, Git source, duplicate package, wrong lockfile version.
+- DONE: commit `626a77b7589d4a1763b8b66adf2baea2a19a1756` wires these tests into CLIMBX CI. Latest commit CI not yet verified.
+- PENDING: commit reviewed Cargo.lock into branch and remove candidate generation from CI; no false claim of permanently locked dependency graph. Latest CI pending.
+- BLOCKED: signed local-validator tests, SBF build, DEX-only execution authorization, reconciliation, independent audit and explicit release approval. **REAL-FUNDS NO-GO**.
+- No DEX, Swap, Launchpad or Game files modified.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
