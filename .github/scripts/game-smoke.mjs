@@ -25,7 +25,7 @@ try {
       loaded:!!document.querySelector('#heroPreviewStatus')?.textContent?.includes('LIVE 3D PREVIEW')};
   });
   if(!creatorVisual.loaded||creatorVisual.canvasWidth<200||creatorVisual.canvasHeight<250) errors.push('Full-body 3D Hero preview canvas did not render at playable size: '+JSON.stringify(creatorVisual));
-  await anonymous.screenshot({path:'climboria-hero-creator-desktop.png'});
+  await anonymous.screenshot({path:'climboria-hero-creator-desktop.png', timeout: 90000, animations: 'disabled' });
   await anonymous.locator('#heroPreviewCanvas').hover();
   await anonymous.mouse.wheel(0,150);
   await anonymous.locator('#saveHeroButton').click();
@@ -593,23 +593,23 @@ try {
   }));
   console.log('Desktop visual capture normalized to Sanctuary:',JSON.stringify(desktopVisualCapture));
   if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
-  await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
+  await page.screenshot({ path: 'climboria-desktop-gameplay.png' , timeout: 90000, animations: 'disabled' });
   const desktopCaveView=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
   const caveAngleDelta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
   if(!desktopCaveView||Math.abs(desktopCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(desktopCaveView.playerYaw,desktopCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.playerYaw)-Math.PI)>.01) errors.push('Desktop cave entrance visual position/orientation could not be prepared: '+JSON.stringify(desktopCaveView));
   await page.waitForTimeout(1200);
-  await page.screenshot({ path: 'climboria-desktop-cave-entrance.png' });
+  await page.screenshot({ path: 'climboria-desktop-cave-entrance.png' , timeout: 90000, animations: 'disabled' });
   console.log('Desktop cave entrance visual capture:',JSON.stringify(desktopCaveView));
   const desktopCaveInterior=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveInteriorForSmoke?.()??null);
   if(!desktopCaveInterior||Math.abs(desktopCaveInterior.local.x-30)>.01||Math.abs(desktopCaveInterior.local.z-25)>.01) errors.push('Desktop cave interior visual position could not be prepared: '+JSON.stringify(desktopCaveInterior));
   await page.waitForTimeout(1200);
-  await page.screenshot({path:'climboria-desktop-cave-interior.png'});
+  await page.screenshot({path:'climboria-desktop-cave-interior.png', timeout: 90000, animations: 'disabled' });
   console.log('Desktop cave interior visual capture:',JSON.stringify(desktopCaveInterior));
   const desktopCoastalExit=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveCoastalExitForSmoke?.()??null);
   if(!desktopCoastalExit||desktopCoastalExit.local.z>-295||desktopCoastalExit.groundY<0)
     errors.push('Desktop shore exit camera could not be prepared: '+JSON.stringify(desktopCoastalExit));
   await page.waitForTimeout(1200);
-  await page.screenshot({path:'climboria-desktop-cave-coastal-exit.png'});
+  await page.screenshot({path:'climboria-desktop-cave-coastal-exit.png', timeout: 90000, animations: 'disabled' });
   console.log('Desktop coastal cave exit:',JSON.stringify(desktopCoastalExit));
 
   // Free desktop WebGL/software-renderer resources before booting the mobile
@@ -949,21 +949,21 @@ try {
   }));
   console.log('Mobile visual capture normalized to Sanctuary:',JSON.stringify(mobileVisualCapture));
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
-  await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
+  await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' , timeout: 90000, animations: 'disabled' });
   const mobileCaveView=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
   if(!mobileCaveView||Math.abs(mobileCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(mobileCaveView.playerYaw,mobileCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.playerYaw)-Math.PI)>.01) errors.push('Mobile cave entrance visual position/orientation could not be prepared: '+JSON.stringify(mobileCaveView));
   await mobile.waitForTimeout(1200);
-  await mobile.screenshot({ path: 'climboria-mobile-cave-entrance.png' });
+  await mobile.screenshot({ path: 'climboria-mobile-cave-entrance.png' , timeout: 90000, animations: 'disabled' });
   const mobileCaveInterior=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveInteriorForSmoke?.()??null);
   if(!mobileCaveInterior||Math.abs(mobileCaveInterior.local.x-30)>.01||Math.abs(mobileCaveInterior.local.z-25)>.01) errors.push('Mobile cave interior visual position could not be prepared: '+JSON.stringify(mobileCaveInterior));
   await mobile.waitForTimeout(1200);
-  await mobile.screenshot({path:'climboria-mobile-cave-interior.png'});
+  await mobile.screenshot({path:'climboria-mobile-cave-interior.png', timeout: 90000, animations: 'disabled' });
   console.log('Mobile cave interior visual capture:',JSON.stringify(mobileCaveInterior));
   const mobileCoastalExit=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveCoastalExitForSmoke?.()??null);
   if(!mobileCoastalExit||mobileCoastalExit.local.z>-295||mobileCoastalExit.groundY<0)
     errors.push('Mobile shore exit camera could not be prepared: '+JSON.stringify(mobileCoastalExit));
   await mobile.waitForTimeout(1200);
-  await mobile.screenshot({path:'climboria-mobile-cave-coastal-exit.png'});
+  await mobile.screenshot({path:'climboria-mobile-cave-coastal-exit.png', timeout: 90000, animations: 'disabled' });
   console.log('Mobile coastal cave exit:',JSON.stringify(mobileCoastalExit));
   console.log('Mobile cave entrance visual capture:',JSON.stringify(mobileCaveView));
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));

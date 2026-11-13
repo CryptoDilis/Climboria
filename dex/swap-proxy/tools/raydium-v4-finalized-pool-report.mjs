@@ -1,0 +1,80 @@
+#!/usr/bin/env node
+/**
+ * Operator-only, public-data-only, read-only Raydium V4 pool evidence CLI.
+ *
+ * Run locally, not in public CI:
+ *   CLIMBORIA_SOLANA_RPC_URL=<operator HTTPS endpoint> node \
+ *     dex/swap-proxy/tools/raydium-v4-finalized-pool-report.mjs \
+ *     --network mainnet-beta --pool <independently verified Raydium V4 pool ID>
+ *
+ * Never commit/log the RPC URL if it includes an access token. This program
+ * neither prints the URL nor builds/signs/submits an on-chain transaction.
+ * A single public pool address supplied by a trusted operator is required.
+ */
+import { fetchRaydiumV4EvidenceFromPoolAddress } from "../src/raydium-v4-pool-discovery.mjs";
+
+const USAGE = "Usage: node dex/swap-proxy/tools/raydium-v4-finalized-pool-report.mjs --network mainnet-beta|devnet --pool <verified-public-pool-address> [--min-slot <nonnegative-slot>]";
+
+async function main(argv) {
+  if (!Array.isArray(argv) || argv.length < 4 || argv.length > 6 || argv.length % 2 !== 0) {
+    throw new Error(USAGE);
+  }
+  const flags = new Map();
+  for (let i = 0; i < argv.length; i += 2) {
+    const flag = argv[i], value = argv[i + 1];
+    if (!["--network", "--pool", "--min-slot"].includes(flag) ||
+        flags.has(flag) || !value || value.startsWith("--")) {
+      throw new Error(USAGE);
+    }
+    flags.set(flag, value);
+  }
+  if (!flags.has("--network") || !flags.has("--pool")) throw new Error(USAGE);
+  const minSlotRaw = flags.get("--min-slot");
+  const minContextSlot = minSlotRaw === undefined ? null :
+    (/^(?:0|[1-9][0-9]*)$/.test(minSlotRaw) && Number.isSafeInteger(Number(minSlotRaw))
+      ? Number(minSlotRaw) : NaN);
+  if (Number.isNaN(minContextSlot)) throw new Error("Invalid --min-slot");
+  const rpcUrl = process.env.CLIMBORIA_SOLANA_RPC_URL;
+  if (!rpcUrl) throw new Error("CLIMBORIA_SOLANA_RPC_URL must be configured in the operator environment");
+  const result = await fetchRaydiumV4EvidenceFromPoolAddress({
+    network: flags.get("--network"),
+    poolAddress: flags.get("--pool"),
+    rpcUrl, minContextSlot
+  });
+
+  // Output ONLY public addresses and safety metadata. Do NOT reveal RPC
+  // endpoint/query secrets, raw token account bytes, or wallet material.
+  process.stdout.write(JSON.stringify({
+    kind: "RAYDIUM_V4_READ_ONLY_POOL_EVIDENCE",
+    network: result.network,
+    programId: result.programId,
+    pool: result.poolAddress,
+    bootstrapSlot: result.poolDiscoveryContextSlot,
+    finalizedContextSlot: result.contextSlot,
+    coinMint: result.pool.coinMint,
+    pcMint: result.pool.pcMint,
+    coinVault: result.pool.coinVault,
+    pcVault: result.pool.pcVault,
+    market: result.pool.market,
+    marketProgram: result.pool.marketProgram,
+    openOrders: result.pool.openOrders,
+    authority: result.expectedAuthority,
+    vaultMintBindingsChecked: result.finalizedSnapshotRelationshipsChecked,
+    authorityPdaMathChecked: result.ammAuthorityPdaIndependentlyVerified,
+    poolRawImageStableAcrossFinalizedReads: result.poolStateStableAcrossFinalizedReads,
+    independentlyCorroboratedPoolSelection: result.poolAddressIndependentlyCorroborated,
+    independentlyAuditedRpcSource: result.rpcSourceIndependentlyAudited,
+    jupiterCpiAccountMappingVerified: result.jupiterCpiAccountMappingVerified,
+    deployedProgramBytecodeVerified: result.deployedProgramBytecodeVerified,
+    approvedForJupiterCpi: false
+  }, null, 2) + "\n");
+}
+
+main(process.argv.slice(2)).catch(error => {
+  // The underlying security functions emit controlled messages without
+  // including the RPC URL. Avoid stack traces/serialization of request
+  // objects which could leak operator HTTPS query-string credentials.
+  process.stderr.write("Read-only Raydium pool evidence FAILED: " +
+    (error instanceof Error ? error.message : "unexpected error") + "\n");
+  process.exitCode = 1;
+});
