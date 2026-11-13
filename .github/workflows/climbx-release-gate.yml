@@ -1,0 +1,30 @@
+name: CLIMBX release safety (non-deploying)
+on:
+  push:
+    paths:
+      - 'climbx/**'
+      - '.github/workflows/climbx-release-gate.yml'
+  pull_request:
+    paths:
+      - 'climbx/**'
+      - '.github/workflows/climbx-release-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Unit tests
+        run: python -m unittest discover -s climbx -p 'test_*.py' -v
+      - name: Verify live release is blocked without evidence
+        run: |
+          if python climbx/release_gate.py --evidence climbx/release_evidence.json; then
+            echo "Unexpected manual-review clearance; do not deploy automatically."
+            exit 1
+          fi
+          echo "NO-GO correctly enforced. No deployment performed."
