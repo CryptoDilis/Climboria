@@ -71,6 +71,7 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
         to: { id: USDC, symbol: "USDC", decimals: 6 }
       },
       quoteRequestSequence: 0,
+      selectedChain: "solana",
       esc: value => String(value),
       fetch: async url => {
         requested.push(String(url));
