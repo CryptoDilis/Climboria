@@ -73,4 +73,26 @@ class PostgresMigrationIntegration(unittest.TestCase):
         self.assertIsNone(self.db.execute("""UPDATE climbx.wallet_challenges SET consumed_at=now()
           WHERE nonce=%s AND consumed_at IS NULL AND expires_at>now() RETURNING nonce""",(nonce,)).fetchone())
 
+    def test_atomic_rollback_keeps_nonce_unconsumed(self):
+        """If binding fails, nonce consumption must roll back too."""
+        nonce=uuid.uuid4().hex
+        self.db.execute("""INSERT INTO climbx.wallet_challenges
+          (nonce,user_id,wallet_address,domain,chain,canonical_message,issued_at,expires_at)
+          VALUES (%s,%s,%s,'climboria.fun','solana:devnet','test-message',now(),now()+interval '4 minutes')""",
+          (nonce,self.user1,self.wallet))
+        self.db.execute("INSERT INTO climbx.wallet_bindings(user_id,wallet_address,verified_at) VALUES(%s,%s,now())",(self.user2,self.wallet))
+        with psycopg.connect(URL) as conn:
+            with self.assertRaises(psycopg.errors.UniqueViolation):
+                with conn.transaction():
+                    conn.execute("UPDATE climbx.wallet_challenges SET consumed_at=now() WHERE nonce=%s",(nonce,))
+                    conn.execute("INSERT INTO climbx.wallet_bindings(user_id,wallet_address,verified_at) VALUES(%s,%s,now())",(self.user1,self.wallet))
+        self.assertIsNone(self.db.execute("SELECT consumed_at FROM climbx.wallet_challenges WHERE nonce=%s",(nonce,)).fetchone()[0])
+    def test_private_challenge_table_has_rls(self):
+        enabled=self.db.execute("""SELECT relrowsecurity FROM pg_class
+          WHERE oid='climbx.wallet_challenges'::regclass""").fetchone()[0]
+        self.assertTrue(enabled)
+    def test_anon_cannot_read_challenges(self):
+        grant=self.db.execute("""SELECT has_table_privilege('anon','climbx.wallet_challenges','SELECT')""").fetchone()[0]
+        self.assertFalse(grant)
+
 if __name__=="__main__":unittest.main()
