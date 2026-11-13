@@ -191,5 +191,10 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - PENDING: exact-head Rust CI verification (workflow run not yet observed), signed validator test, SBF build, committed lockfile and independent audit. **REAL-FUNDS NO-GO**.
 - No DEX, Swap, Launchpad or Game edits.
 
+## Phase 149 — 2026-11-14 — deterministic grant creation policy tests
+- DONE: CLIMBX branch commit `77e51467391e8c09a4457d6a01b9cac7b4f5f0ed` extracts `validate_new_grant` from the on-chain instruction without changing authorization requirements; adds positive and negative Rust unit cases for 1–5 unique mints, zero/duplicate mints, zero executor, expired or over-24-hour grant, zero/insufficient caps, and timestamp overflow.
+- PENDING: exact-commit Rust CI result (GitHub workflow lookup has not returned runs for recent CLIMBX branch commits). These tests are committed but **not claimed passed**. Verify compilation/tests, fix failures, then signed local-validator owner/PDA authorization tests.
+- No DEX, Swap, Launchpad or Game edits. **REAL-FUNDS NO-GO**.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
