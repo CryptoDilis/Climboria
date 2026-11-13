@@ -42,6 +42,11 @@ try{
    }));
    if(pose.mode!=='a-pose'||pose.clip!=='none-static'||pose.furniture!=='none'||!pose.label.includes('A-POSE'))
      throw Error('Create Hero must display a STATIC standing A-pose, no seated/running clip or furniture: '+JSON.stringify(pose));
+   const limbs=await page.evaluate(()=>window.__climboriaHeroAPoseAudit||null);
+   const validArm=(v,sign)=>Array.isArray(v)&&v.length===3&&v[0]*sign>.5&&v[1]<-.45&&v[1]>-.85&&Math.abs(v[2])<.3;
+   const validLeg=v=>Array.isArray(v)&&v.length===3&&v[1]<-.9&&Math.abs(v[0])<.25;
+   if(!limbs||!validArm(limbs.leftArm,1)||!validArm(limbs.rightArm,-1)||!validLeg(limbs.leftLeg)||!validLeg(limbs.rightLeg))
+     throw Error('Preview joints do not form upright symmetric A-pose: '+JSON.stringify(limbs));
    if(layout.canvas.width<250||layout.canvas.height<250)throw Error('Full body canvas is too small: '+JSON.stringify(layout));
    if(layout.modal.scrollWidth>layout.modal.clientWidth+3)throw Error('Hero editor overflows horizontally: '+JSON.stringify(layout));
    if(config.isMobile){
