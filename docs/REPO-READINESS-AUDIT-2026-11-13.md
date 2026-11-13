@@ -394,3 +394,12 @@ The 50-transaction sample is bounded evidence, not exhaustive route coverage. It
 - [ ] Exact-head rerun on PR #269 head `49a342cef18adf51dc98560a8c60c9e06f02654a`: Browser Smoke run `43337636485` pending; Validate `43337636118` in progress; Jupiter CPI Trace `43337635961` pending; Jupiter IDL History `43337636175` in progress. Inspect the explicit summary before accepting the gameplay smoke.
 - [ ] Continue the previous exact task: inspect the official IDL history report from runs `43336735508` and `43337636175`; public RPC fallback must produce a unique active revision at candidate slot `468153382`, otherwise require the encrypted private RPC secret.
 
+
+
+### Active handoff synchronization — 2026-11-13
+
+- [x] Updated `docs/ACTIVE-HANDOFF-2026-11-11.md` with the current PR #269 head, exact workflow IDs, confirmed missing `SOLANA_RPC_URL`, gameplay summary gate, and exact next task.
+- [x] Handoff commit: `0ed2b393c7f4daee40f36213862c8b0c81ff82e1`.
+- [x] Current main HEAD after handoff synchronization: `0ed2b393c7f4daee40f36213862c8b0c81ff82e1`.
+- [!] PR #269 exact head remains `49a342cef18adf51dc98560a8c60c9e06f02654a`; no product code has been merged to main by these documentation commits.
+- [ ] Continue with current in-progress official history runs `43336735508` / `43337636175` and the explicit Browser Smoke rerun `43337636485`; record terminal evidence before changing the next priority.
