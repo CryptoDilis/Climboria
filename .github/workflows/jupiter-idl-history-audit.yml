@@ -21,6 +21,8 @@ on:
       - main
     paths:
       - "dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs"
+      - "dex/swap-proxy/tools/fetch-with-retry.mjs"
+      - "dex/swap-proxy/test/fetch-with-retry.test.mjs"
       - "dex/swap-proxy/tools/dex-adapter-idl-status.mjs"
       - "dex/swap-proxy/test/dex-adapter-idl-status.test.mjs"
       - "dex/swap-proxy/tools/jupiter-sbf-static-audit/**"
@@ -49,6 +51,7 @@ jobs:
       - name: Syntax-check IDL history audit utility
         run: |
           node --check dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
+          node --check dex/swap-proxy/tools/fetch-with-retry.mjs
           node --check dex/swap-proxy/tools/raydium-launchlab-account-audit.mjs
       - name: Test DEX adapter IDL evidence classifications and LaunchLab account audit
         run: node --test dex/swap-proxy/test/dex-adapter-idl-status.test.mjs dex/swap-proxy/test/raydium-launchlab-account-audit.test.mjs dex/swap-proxy/test/fetch-with-retry.test.mjs
