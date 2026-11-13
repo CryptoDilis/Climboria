@@ -172,5 +172,11 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - NEXT: user/browser confirmation that hero banner and preview are publicly visible; validate responsive layout and CI. Continue Rust signed local-validator safety testing. **REAL-FUNDS NO-GO**.
 - No Swap, Launchpad or Game files edited.
 
+## Phase 146 — 2026-11-14 — preview regression checks and CI
+- DONE: main commit `3e6da2a150a71538a761e46cd0180ae641d508a7` creates `climbx/test_dex_preview_visibility.cjs`. Static assertions verify the CLIMBX DEX link, banner inside hero (outside mobile-hidden nav), Coming Soon status, disabled trading and all three disabled actions, and no executable preview scripts.
+- DONE: main commit `c300bc03dd0e29ab5eb897661f2f19462183a178` adds CLIMBX-only `.github/workflows/climbx-preview-visibility.yml`, scoped to preview/DEX HTML/test/workflow changes, running Node 22 without secrets, wallet access or trading.
+- PENDING: new workflow CI outcome (no run returned immediately after commit), production hosting deployment and live phone/browser acceptance. Environment DNS cannot reach climboria.fun, so no verified live availability.
+- NEXT: verify workflow status and fix any failing checks; get actual deployed page/browser evidence. Keep real-money trading disabled. No Swap, Launchpad or Game edits.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
