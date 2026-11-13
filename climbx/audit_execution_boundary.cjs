@@ -19,6 +19,11 @@ function scanSource(files,readFile){
    const imported=/\b(?:evaluateClimbxEntry|evaluateOrder|authorizeBotExecution)\s*(?:as|:)\s*[A-Za-z_$][\w$]*/.test(source);
    const pythonAlias=/\bimport\s+(?:evaluateClimbxEntry|evaluateOrder|authorizeBotExecution)\s+as\s+[A-Za-z_]\w*/.test(source);
    if(imported||pythonAlias)findings.push({file,reason:'REVIEW_ALIASED_AUTHORIZATION_IMPORT'});
+   // Dynamic member access is a manual-review signal, not evidence of execution.
+   if(/\[\s*['"`]?(?:evaluateClimbxEntry|evaluateOrder|authorizeBotExecution)['"`]?\s*\]/.test(source))
+    findings.push({file,reason:'REVIEW_DYNAMIC_AUTHORIZATION_ACCESS'});
+   if(/\b(?:mayExecute|authorized)\s*\]\s*=\s*true\b/.test(source))
+    findings.push({file,reason:'REVIEW_DYNAMIC_EXECUTION_FLAG'});
   }
  }
  return findings;
