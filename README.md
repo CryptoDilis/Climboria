@@ -1,3 +1,13 @@
+## 2026-11-13 — P1 Swap fail-closed DEX-schema gate
+
+- [x] Commit `97f4652f49700c745d24d59f34208a7ce77e03c9` adds `JUPITER_V6_SEMANTIC_POLICY_VERSION = "v1-unverified-dex-schemas-rejected"`.
+- [x] The V6 route validator now rejects every otherwise shape-valid route unless each route adapter has an independently verified, versioned per-DEX account schema. A readonly program ID and route enum label alone cannot authorize CPI account cursor boundaries, token movement, or fee destinations.
+- [x] Targeted isolated check: `node --test dex/swap-proxy/test/jupiter-v6-policy.test.mjs` on exact commit `97f4652` passed **24/24** tests. The new assertion proves the formerly accepted Raydium fixture is rejected until semantic account evidence exists; adversarial privilege, fee, min-output, unknown-program, route graph, RPC-audit and Meteora evidence tests also passed.
+- [!] PR #268 is currently conflicted against current `main`; GitHub did not schedule a new pull-request workflow for this head. This local exact-head result is not a substitute for final current-main CI. Do not report CI for `97f4652` as green.
+- [ ] Next: resolve the stale PR through an ordinary current-main integration, preserve this deny-by-default gate, then run exact-head Validate, browser, CPI trace and IDL history workflows. Do not enable any signing or execution gate.
+
+---
+
 ## 2026-11-11 21:45 +08 — PR #268 synchronized; exact-new-head ecosystem CI passed
 
 - [x] Resolved PR #268 base drift without dropping its changes: merged current main `cd42569a9fbe471f2b3df8579cc384d6e461fd66` into branch `codex/swap-jupiter-fixed-account-roles-2026-11-11` with merge commit `9df06f90ae6377b21883e935dff24e75d922614c`.

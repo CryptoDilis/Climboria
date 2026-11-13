@@ -26,6 +26,18 @@
 4. **Production Cloudflare deployment is unverified.** Repository secrets/variables, active zone/custom domain, Durable Object migration, RPC provider, TLS/CORS/rate-limit/monitoring and rollback must be verified in the actual account. Never claim the Worker is deployed from a dry-run.
 5. **Independent Solana transaction-security review remains required** before changing the hard source gate.
 
+## Fail-closed per-DEX schema gate — 2026-11-13
+
+Commit `97f4652f49700c745d24d59f34208a7ce77e03c9` adds a defence-in-depth guard to the legacy route validator:
+
+- `JUPITER_V6_SEMANTIC_POLICY_VERSION` is `v1-unverified-dex-schemas-rejected`.
+- The validator still parses and performs all prior route, fixed-account, privilege, amount, slippage, fee, and DEX-program checks, but it now rejects before returning success unless every DEX adapter has an independently verified versioned account schema.
+- This closes the prior path where a route with only an enum label and readonly program account could produce `ok: true`, despite the documented lack of proof for CPI account cursor boundaries, token movement, and fee destinations.
+- Exact-head targeted local check in an isolated temporary checkout: `node --test dex/swap-proxy/test/jupiter-v6-policy.test.mjs` passed 24/24 tests. The positive Raydium fixture was converted to a stronger assertion that it fails closed for lack of a verified schema. No acceptance assertion was removed or relaxed.
+- PR #268 is currently conflicted against current `main`; GitHub did not schedule a new pull-request workflow for this head. This local result is not GitHub CI evidence and must be re-run after ordinary current-main integration.
+
+This change does not modify `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler `EXECUTION_ENABLED=false`, or public `swap-config.js` `enabled:false`.
+
 ## Required release posture
 
 - Keep EXECUTION_SECURITY_REVIEW_COMPLETE = false.
