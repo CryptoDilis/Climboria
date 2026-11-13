@@ -844,7 +844,7 @@ try {
       'climboria-mobile-cave-interior.png',
     ],
   };
-  await writeFile('game-smoke-summary.json', JSON.stringify(smokeSummary, null, 2) + '\\n');
+  await writeFile('game-smoke-summary.json', JSON.stringify(smokeSummary, null, 2) + '\n');
   console.log('PASS: cinematic Jarrell’s Peak boot, terrain, landmarks, chests, facilities, desktop controls, and mobile controls (all wildlife temporarily disabled).');
   console.log('GAME_SMOKE_SUMMARY:', JSON.stringify(smokeSummary));
 } finally {
