@@ -95,6 +95,14 @@ Expand `dex/swap-proxy/test/` to cover:
 - `dex/swap-proxy/test/` — negative/adversarial tests.
 - `docs/DEX_SWAP_LAUNCHPAD_DEVELOPMENT_RECORD.md` — append-only DEX/Swap/Launchpad progress and next work.
 
+## Pending next DEX/Swap security patch — not merged (2026-11-14)
+
+[PR #356](https://github.com/CryptoDilis/Climboria/pull/356) adds the **separate versioned, fail-closed CPI-review guard** for all seven currently decodable Jupiter V6 DEX variants. It intentionally denies structurally valid routes until each DEX has a separately reviewed CPI account-role/vault/authority/token-flow/fee-recipient policy. Do **not** treat structural decoding, route labels, or Grok's handoff as a signable-order authorization.
+
+**Exact PR-head dedicated security CI [43518270181](https://github.com/CryptoDilis/Climboria/actions/runs/43518270181) passed 92/92 Worker tests + Wrangler dry-run**. However **PR #356 is OPEN, NOT MERGED**: the repository-wide [Validate 43518269987](https://github.com/CryptoDilis/Climboria/actions/runs/43518269987) fails a homepage Support navigation assertion and [Browser Smoke 43518270010](https://github.com/CryptoDilis/Climboria/actions/runs/43518270010) fails the separate homepage/Supabase auth-button click, both matching red baseline main workflows. The homepage/auth owner must fix those without relaxing assertions. Once baseline main checks are green, refresh PR head, rerun all checks, merge only on full green, then record exact merged production quote-only acceptance.
+
+**Never conflate this extra denial with completed per-DEX CPI proofs.** Further implementation requires independently pinned actual program/schema account roles, vault/mint/fee recipient and cross-hop token-movement semantics for every routed variant, controlled Devnet end-to-end confirmation, and independent audit. Public Swap/DEX signing, execution and Launchpad mint/trading remain **hard-disabled**.
+
 ## Repo reconciliation — verified after Grok's handoff on 2026-11-14
 
 **This section is a repository-verification update, separate from Grok's original instructions.** Do not treat original handoff checklist entries as proof that a feature has *not* been implemented.
