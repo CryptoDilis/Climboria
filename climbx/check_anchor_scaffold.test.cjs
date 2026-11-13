@@ -60,7 +60,7 @@ test('rejects changed revoke PDA seeds',()=>{
 });
 
 test('rejects missing owner signer on grant revocation even when create signer remains',()=>{
- const modified=source.replace(/(pub struct RevokeGrant<'info>\\s*\\{[\\s\\S]*?)pub owner: Signer<'info>/, "$1pub owner: UncheckedAccount<'info>");
+ const modified=source.replace(/(pub struct RevokeGrant<'info>\s*\{[\s\S]*?)pub owner: Signer<'info>/, "$1pub owner: UncheckedAccount<'info>");
  const result=checkScaffold({read:mockRead(modified)});
  assert.equal(result.reason,'MISSING_REVOKE_OWNER_SIGNATURE');
 });
