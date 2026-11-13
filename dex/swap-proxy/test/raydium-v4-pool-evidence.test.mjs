@@ -308,7 +308,7 @@ test("discovery rejects cross-slot state swaps including unparsed bytes", async 
 
   const differentRaw = mockedDiscovery({ second: p => {
     const clone = [...p.result.value];
-    const image = Buffer.from(clone[0].data[0], "base64");
+    const image = Uint8Array.from(Buffer.from(clone[0].data[0], "base64"));
     // This offset is deliberately NOT among the AMM fields we currently
     // interpret. A parsed-key comparison would miss this state mutation.
     image[280] ^= 1;
@@ -326,7 +326,7 @@ test("discovery rejects cross-slot state swaps including unparsed bytes", async 
 test("discovery rejects a later pool nonce, vault reassignment or mismatched market program", async () => {
   const newNonce = mockedDiscovery({ second: p => {
     const clone = [...p.result.value];
-    const image = Buffer.from(clone[0].data[0], "base64");
+    const image = Uint8Array.from(Buffer.from(clone[0].data[0], "base64"));
     u64(image, 8, 255);
     clone[0] = { ...clone[0], data: asBase64(image) };
     p.result.value = clone;
