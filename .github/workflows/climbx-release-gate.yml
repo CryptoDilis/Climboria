@@ -21,10 +21,25 @@ jobs:
           python-version: '3.13'
       - name: Unit tests
         run: python -m unittest discover -s climbx -p 'test_*.py' -v
-      - name: Verify live release is blocked without evidence
+      - name: Verify exact fail-closed release decision
         run: |
-          if python climbx/release_gate.py --evidence climbx/release_evidence.json; then
-            echo "Unexpected manual-review clearance; do not deploy automatically."
-            exit 1
-          fi
-          echo "NO-GO correctly enforced. No deployment performed."
+          python - <<'PY'
+          import json
+          import subprocess
+          import sys
+
+          result = subprocess.run(
+              [sys.executable, "climbx/release_gate.py",
+               "--evidence", "climbx/release_evidence.json"],
+              text=True, capture_output=True, check=False,
+          )
+          if result.returncode != 1:
+              raise SystemExit(f"Expected NO_GO exit 1; got {result.returncode}: {result.stderr}")
+          try:
+              decision = json.loads(result.stdout)
+          except json.JSONDecodeError as exc:
+              raise SystemExit(f"Release gate did not return JSON: {exc}")
+          if decision.get("decision") != "NO_GO" or not decision.get("missing"):
+              raise SystemExit(f"Expected explicit NO_GO with missing evidence; got {decision}")
+          print("Verified NO_GO and missing evidence; no deployment performed.")
+          PY
