@@ -262,26 +262,22 @@ function startHeroPreview(){
    const scale=1.9/Math.max(.001,size.y);previewModel.scale.setScalar(scale);
    const ground=new THREE.Box3().setFromObject(previewModel);previewModel.position.y=-ground.min.y;
    previewScene.add(previewModel);
-   // The original GLB's seated clip contains no chair mesh. Use a small
-   // OPEN-FRAME bench behind the legs: a broad pedestal occluded most of the
-   // hero in real screenshots. This remains preview-only and rotates with her.
+   // The official seated pose should be the star. No pedestal or chair back:
+   // earlier screenshots proved those primitives obstructed the hero's body.
+   // Keep only a low stool beneath/behind the pose so the character stays clear.
    previewSeat=new THREE.Group();previewSeat.name='ClimboriaHeroPreviewSeat';
-   const seatWood=new THREE.MeshBasicMaterial({color:0x64452b});
-   const seatTrim=new THREE.MeshBasicMaterial({color:0x967344});
-   const seatPart=(geometry,material,x,y,z)=>{
-    const part=new THREE.Mesh(geometry,material);part.position.set(x,y,z);previewSeat.add(part);
+   const seatWood=new THREE.MeshBasicMaterial({color:0x5f472c});
+   const seatPart=(geometry,x,y,z)=>{
+    const part=new THREE.Mesh(geometry,seatWood);part.position.set(x,y,z);previewSeat.add(part);
    };
-   // A thin seat behind the model's hips, not a slab in front of the torso.
-   seatPart(new THREE.BoxGeometry(.74,.065,.38),seatWood,0,.72,-.27);
-   for(const x of [-.30,.30]){
-    for(const z of [-.42,-.12]){
-     seatPart(new THREE.BoxGeometry(.05,.68,.055),seatWood,x,.34,z);
+   seatPart(new THREE.BoxGeometry(.54,.045,.30),0,.43,-.34);
+   for(const x of [-.22,.22]){
+    for(const z of [-.45,-.23]){
+     seatPart(new THREE.BoxGeometry(.035,.40,.035),x,.20,z);
     }
-    seatPart(new THREE.BoxGeometry(.05,.48,.055),seatWood,x,.97,-.45);
    }
-   seatPart(new THREE.BoxGeometry(.66,.10,.05),seatTrim,0,1.16,-.45);
    previewScene.add(previewSeat);
-   document.documentElement.dataset.climboriaHeroPreviewSeat='open-frame-bench';
+   document.documentElement.dataset.climboriaHeroPreviewSeat='low-stool';
    if(gltf.animations&&gltf.animations.length){
     previewMixer=new THREE.AnimationMixer(previewModel);
     // The bundled hero has a real seated rest clip. Do not choose the first
