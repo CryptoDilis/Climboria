@@ -120,5 +120,13 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - BLOCKED: SBF/validator signed grant/revoke tests, DEX-only on-chain execution authorization, reconciliation, audit, release approval. **REAL-FUNDS NO-GO**.
 - No DEX, Swap, Launchpad or Game files modified.
 
+## Phase 139 — 2026-11-14 — lockfile stability CI and exact candidate fingerprint
+- DONE: commit `14cdd08914548c929f6ebf74753ebc4f866b4934` CLIMBX release safety run `43504685151` SUCCESS; Rust job passed lockfile generation, byte-for-byte stability regeneration comparison, integrity validation, artifact upload and --locked compilation. Validate `43504684940` and Browser Smoke `43504685071` SUCCESS.
+- DONE: downloaded earlier CI lockfile artifact `14075152596`, computed exact Cargo.lock SHA256 `f868ffce588a34a789c688589c78a5f9b7f8e933c7292cbbb2ee97ffbb4b39b9` over 48,350 bytes. This is a fingerprint of a candidate, NOT an independent dependency security audit.
+- DONE: commit `f1f4226638b03671a97f1af43ed4e959007f7213` adds fail-closed SHA256 comparison in CLIMBX release CI to prevent silent candidate dependency drift. CI verification of this commit pending.
+- PENDING: actual Cargo.lock remains not committed to branch; CI still generates it. Fingerprint protects candidate drift but is not a replacement for committing reviewed lockfile and requiring --locked on clean checkout.
+- BLOCKED: signed validator tests, SBF build, scoped DEX-only execution, reconciliation, audit, release approval. **REAL-FUNDS NO-GO**.
+- No DEX, Swap, Launchpad or Game edits.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
