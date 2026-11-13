@@ -483,6 +483,10 @@ jobs:
                 if(amount==='200000000')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:amount,outAmount:'2222222',router:'CURRENT SECOND QUOTE'})});
                 return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'999999',outAmount:'3333333',router:'INVALID MISMATCHED QUOTE'})});
               });
+              // DEX quote panel is intentionally hidden until its UI path is selected.
+              // Expose it in this isolated browser test to exercise quote logic
+              // without touching production trading-gate / visibility controls.
+              await page.evaluate(()=>{document.querySelector('#swapQuote').hidden=false});
               await page.locator('#quoteAmount').fill('0.1');
               await page.evaluate(()=>{void requestJupiterQuote()});
               await oldQuoteObserved;
