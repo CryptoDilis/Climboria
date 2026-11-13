@@ -2,12 +2,13 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const {generateKeyPairSync,sign}=require('node:crypto');
 const {bindVerifiedWallet}=require('./bind_wallet_pg.cjs');
+const {canonicalChallenge}=require('./canonical_challenge.cjs');
 const alpha='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 function b58(bytes){let n=BigInt('0x'+bytes.toString('hex')),s='';while(n>0n){s=alpha[Number(n%58n)]+s;n/=58n;}for(const b of bytes){if(b!==0)break;s='1'+s;}return s;}
 function fixture(options={}){
  const kp=generateKeyPairSync('ed25519'),wallet=b58(kp.publicKey.export({format:'der',type:'spki'}).subarray(-32));
- const userId='00000000-0000-4000-8000-000000000001',nonce='test-nonce';
- const message='CLIMBX wallet ownership verification\nDomain: climboria.fun\nChain: solana:devnet\nUser: '+userId+'\nWallet: '+wallet+'\nNonce: '+nonce+'\nIssued: 100\nExpires: 400';
+ const userId='00000000-0000-4000-8000-000000000001',nonce='A'.repeat(43);
+ const message=canonicalChallenge({userId,wallet,nonce,issuedAt:100,expiresAt:400});
  const row={user_id:userId,wallet_address:wallet,domain:'climboria.fun',chain:'solana:devnet',canonical_message:message,issued_at:new Date(100000),expires_at:new Date(400000),consumed_at:null,...options.row};
  const calls=[];
  const client={query:async(sql,params)=>{calls.push([sql,params]);if(sql.startsWith('SELECT user_id'))return {rows:options.unknown?[]:[row]};if(sql.startsWith('SELECT id'))return {rows:options.owner?[{user_id:options.owner}]:[]};if(sql.startsWith('UPDATE'))return {rows:options.consumedRace?[]:[{nonce}]};if(sql.startsWith('INSERT')&&options.uniqueRace){const e=new Error('unique');e.code='23505';throw e;}return {rows:[]};},release:()=>calls.push(['RELEASE'])};
@@ -30,3 +31,6 @@ test('no pool',async()=>await assert.rejects(()=>bindVerifiedWallet({...fixture(
 test('no signature',async()=>assert.equal(await bindVerifiedWallet({...fixture().args,signature:''}),'INVALID'));
 test('invalid time',async()=>assert.equal(await bindVerifiedWallet({...fixture().args,now:new Date(NaN)}),'INVALID'));
 test('release connection',async()=>{const f=fixture();await bindVerifiedWallet(f.args);assert.equal(f.calls.at(-1)[0],'RELEASE');});
+
+test('tampered stored canonical message rejected',async()=>{const f=fixture({row:{canonical_message:'CLIMBX wallet ownership verification\\nTampered'}});assert.equal(await bindVerifiedWallet(f.args),'INVALID_CHALLENGE');assert.ok(f.calls.some(x=>x[0]==='ROLLBACK'));});
+test('non-second-aligned timestamps rejected',async()=>{const f=fixture({row:{issued_at:new Date(100001)}});assert.equal(await bindVerifiedWallet(f.args),'INVALID_CHALLENGE');});
