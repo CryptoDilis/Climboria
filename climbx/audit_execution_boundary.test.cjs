@@ -51,3 +51,9 @@ test('recursive listing includes JS ESM and TypeScript source extensions',()=>{
 });
 test('TypeScript direct execution call is flagged',()=>assert.deepEqual(scanSource(['nested/worker.ts'],()=> 'authorizeBotExecution(input)'),[{file:'nested/worker.ts',reason:'REVIEW_CALL_SITE'}]));
 test('ESM executable flag is flagged',()=>assert.deepEqual(scanSource(['nested/worker.mjs'],()=> 'export const x={mayExecute:true};'),[{file:'nested/worker.mjs',reason:'EXECUTABLE_FLAG'}]));
+
+
+test('CommonJS destructured authorization alias is flagged',()=>assert.deepEqual(scanSource(['climbx/worker.js'],()=> "const {evaluateOrder: tradeCheck}=require('./devnet_grant_state_simulation.cjs')"),[{file:'climbx/worker.js',reason:'REVIEW_ALIASED_AUTHORIZATION_IMPORT'}]));
+test('ESM authorization import alias is flagged',()=>assert.deepEqual(scanSource(['climbx/worker.ts'],()=> "import {authorizeBotExecution as permit} from './execution_authorization_boundary.cjs'"),[{file:'climbx/worker.ts',reason:'REVIEW_ALIASED_AUTHORIZATION_IMPORT'}]));
+test('Python authorization alias is flagged',()=>assert.deepEqual(scanSource(['climbx/worker.py'],()=> "from climbx import evaluateOrder as permit"),[{file:'climbx/worker.py',reason:'REVIEW_ALIASED_AUTHORIZATION_IMPORT'}]));
+test('non-authorization import is not flagged',()=>assert.deepEqual(scanSource(['climbx/worker.ts'],()=> "import {formatAmount as format} from './utils'"),[]));
