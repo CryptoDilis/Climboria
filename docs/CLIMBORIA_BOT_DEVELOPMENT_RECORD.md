@@ -680,3 +680,17 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 5. Add CLIMBX strategy engine, risk controls, learning recommendations requiring owner approval, and high-water-mark fee ledger as isolated testable modules.
 6. Verify independent review and explicit owner release decision before real-funds trading. Record every phase, commits, exact CI and next steps in this file.
 
+
+
+## Phase 85 — 2026-11-14 — CLIMBX-only policy boundary hardening
+
+**Phase84 CI confirmed successful** on commit `7251260ae71df1ba78871d6cad897005c51b0726`: Validate `43459440974`, CLIMBX release safety `43459440899`, Browser Smoke `43459441053`, all success.
+
+**Phase85 branch:** `climbx/phase28-release-gate-ci` (draft PR #282).
+- `a20628aede755489606d425def2ebd8ea1e43b0f`: harden `climbx/authorization_policy_simulation.cjs` against negative/unsafe timestamps, empty/duplicate/malformed or >5 authorized mint allowlists, and already overspent cumulative budgets.
+- `22ed2cf58662389f1e191379880c57c915c3322e`: add 14 regression tests for malformed inputs, exact cumulative-cap equality and last-30-minute cutoff boundary. The CI workflow already runs this test file.
+- **Phase85 CI pending:** GitHub returned no runs for test commit at time of check. Do not claim passing until verified.
+
+**Scope and release:** off-chain simulator only. No Solana program, signed devnet swap, wallet trading authority, or real-funds bot. **NO-GO** remains. Other modules untouched.
+
+**Next steps for next session:** (1) check CI runs for `22ed2cf58662389f1e191379880c57c915c3322e`; fix any failure, log exact run IDs; (2) assess remaining policy fail-closed edges (slot state, mint identity, large amounts) and run local node tests if available; (3) verify actual Solana toolchain and devnet availability; (4) select reviewed on-chain authority architecture and prototype on devnet with on-chain revocation/caps and exact DEX-only execution; (5) independent security review and explicit owner go/no-go. Record all next steps and commits here after every phase; CLIMBX only.
