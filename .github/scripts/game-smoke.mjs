@@ -465,6 +465,12 @@ try {
   await page.screenshot({path:'climboria-desktop-cave-interior.png'});
   console.log('Desktop cave interior visual capture:',JSON.stringify(desktopCaveInterior));
 
+  // Free desktop WebGL/software-renderer resources before booting the mobile
+  // GLB scene. Running both heavy 3D pages together can stall the mobile loader
+  // even after the GLB bytes have finished downloading. Keep all assertions.
+  await desktop.close();
+  console.log('Desktop gameplay context closed before mobile GLB loading.');
+
   const mobile = await browser.newPage({
     // Start portrait to verify the rotate gate, then switch to landscape for gameplay evidence.
     viewport: { width: 390, height: 844 },
