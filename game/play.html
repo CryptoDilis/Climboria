@@ -538,7 +538,7 @@ const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
   const count=MOB?150:330;
   for(let i=0;i<count;i++){
    const x=ox+rand()*CS,z=oz+rand()*CS,h=heightAt(x,z);
-   if(h<2||h>155||shoreClear(x,z,h)||nearPOI(x,z))continue;
+   if(h<2||h>155||shoreClear(x,z,h)||nearPOI(x,z)||caveCoastalTerrainAt(x,z).mask>.1)continue;
    const b=biome(x,z,h);
    if(!['Wild Fields','Whispering Forest','Rice Terraces','Mountain Slopes'].includes(b))continue;
    if(Math.abs(heightAt(x+2,z)-heightAt(x-2,z))>5)continue;
@@ -569,7 +569,7 @@ function props(cx,cz,out){
  const ox=cx*CS,oz=cz*CS,r=rng(cx*7349+cz*911+13),ro=[],col=[];
  for(let i=0;i<34;i++){
   const x=ox+r()*CS,z=oz+r()*CS,h=heightAt(x,z),s=1+r()*r()*5,k=r();
-  if(h<.2||shoreClear(x,z,h)||nearPOI(x,z)||k>(h>60?.9:desF(x,z)>.5?.5:.25))continue;
+  if(h<.2||shoreClear(x,z,h)||nearPOI(x,z)||caveCoastalTerrainAt(x,z).mask>.1||k>(h>60?.9:desF(x,z)>.5?.5:.25))continue;
   col.push({x,z,r:s*.8});ro.push({x,h,z,s,rot:r()*6.28,c:desF(x,z)>.5?L('#b98a55'):hsl(.08,.06,.3+.12*r())});
  }
  const g=new T3.Group();
@@ -1752,7 +1752,7 @@ function findCC0ForestSpots(count,minSpacing,excluded=[]){
  for(let ring=105;ring<=1450&&found.length<count;ring+=38){
   for(let deg=0;deg<360&&found.length<count;deg+=18){
    const a=deg*Math.PI/180,x=Math.sin(a)*ring,z=60+Math.cos(a)*ring,h=heightAt(x,z);
-   if(h<2||h>132||waterBodyAt(x,z)||desF(x,z)>.48||fd(x,z)<.5||shoreClear(x,z,h)||nearPOI(x,z))continue;
+   if(h<2||h>132||waterBodyAt(x,z)||desF(x,z)>.48||fd(x,z)<.5||shoreClear(x,z,h)||nearPOI(x,z)||caveCoastalTerrainAt(x,z).mask>.1)continue;
    if(Math.abs(heightAt(x+5,z)-h)>2.2||Math.abs(heightAt(x,z+5)-h)>2.2)continue;
    if(blockedSpots.some(p=>Math.hypot(p.x-x,p.z-z)<minSpacing))continue;
    const spot={x,z,h};found.push(spot);blockedSpots.push(spot);
