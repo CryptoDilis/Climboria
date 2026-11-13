@@ -136,4 +136,35 @@ class PostgresMigrationIntegration(unittest.TestCase):
             self.db.execute("""INSERT INTO climbx.wallet_api_rate_limits
               (key_hash,window_start,request_count) VALUES ('bad',now(),1)""")
 
+    def test_statement_timeout_rolls_back_transactional_nonce_write(self):
+        """A DB-enforced statement timeout must abort the enclosing transaction."""
+        nonce=uuid.uuid4().hex
+        self.db.execute("""INSERT INTO climbx.wallet_challenges
+          (nonce,user_id,wallet_address,domain,chain,canonical_message,issued_at,expires_at)
+          VALUES (%s,%s,%s,'climboria.fun','solana:devnet','test-message',now(),now()+interval '4 minutes')""",
+          (nonce,self.user1,self.wallet))
+        with psycopg.connect(URL) as conn:
+            with self.assertRaises(psycopg.errors.QueryCanceled):
+                with conn.transaction():
+                    conn.execute("SET LOCAL statement_timeout = '100ms'")
+                    conn.execute("UPDATE climbx.wallet_challenges SET consumed_at=now() WHERE nonce=%s",(nonce,))
+                    conn.execute("SELECT pg_sleep(0.5)")
+        self.assertIsNone(self.db.execute(
+            "SELECT consumed_at FROM climbx.wallet_challenges WHERE nonce=%s",(nonce,)).fetchone()[0])
+
+    def test_lock_timeout_aborts_blocked_binding_update(self):
+        """A DB lock timeout must not commit a blocked binding update."""
+        self.db.execute("INSERT INTO climbx.wallet_bindings(user_id,wallet_address,verified_at) VALUES(%s,%s,now())",
+                        (self.user1,self.wallet))
+        with psycopg.connect(URL) as locker, psycopg.connect(URL) as waiter:
+            with locker.transaction():
+                locker.execute("SELECT id FROM climbx.wallet_bindings WHERE wallet_address=%s FOR UPDATE",(self.wallet,))
+                with self.assertRaises(psycopg.errors.LockNotAvailable):
+                    with waiter.transaction():
+                        waiter.execute("SET LOCAL lock_timeout = '100ms'")
+                        waiter.execute("UPDATE climbx.wallet_bindings SET user_id=%s WHERE wallet_address=%s",
+                                       (self.user2,self.wallet))
+        self.assertEqual(self.db.execute("SELECT user_id FROM climbx.wallet_bindings WHERE wallet_address=%s",
+                                         (self.wallet,)).fetchone()[0],self.user1)
+
 if __name__=="__main__":unittest.main()
