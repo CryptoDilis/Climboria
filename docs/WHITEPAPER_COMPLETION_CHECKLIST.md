@@ -164,7 +164,22 @@ Last updated: 2026-11-13.
 - [x] Confirmed these screenshots match the current deployed/main branch, while PR #275 is not yet merged; do not claim production changes are live.
 - [x] Confirmed PR branch has removed Overview from desktop and mobile navigation and replaced the lower Project Overview card with the retained Roadmap and polished Game Concept destinations.
 - [x] Confirmed PR branch has deleted `overview/index.html`; no redirect is intended. The home-page ecosystem intro anchor is renamed to avoid a leftover `#overview` entry point.
-- [ ] Expand the canonical Whitepaper so all approved former Overview material is represented, including free-to-play heroes/tools, Forge/refining, treasure discovery/public records, Top Gainers and funded reward safeguards, Arena/Guild Battles/wagers, Launchpad/Climboria Signature, sponsor approval/payment/prize protection, DEX/Launchpad funding boundaries, community/referrals, Social Lobby, mobile-app future status, NFT eligibility/ownership, and wallet boundaries.
-- [ ] Synchronize Markdown source and rendered `/whitepaper/` page; verify section parity and every internal link.
-- [ ] Run focused static checks and required CI on the exact final PR head.
+- [x] Expand the canonical Whitepaper so all approved former Overview material is represented, including free-to-play heroes/tools, Forge/refining, treasure discovery/public records, Top Gainers and funded reward safeguards, Arena/Guild Battles/wagers, Launchpad/Climboria Signature, sponsor approval/payment/prize protection, DEX/Launchpad funding boundaries, community/referrals, Social Lobby, mobile-app future status, NFT eligibility/ownership, and wallet boundaries.
+- [x] Synchronize Markdown source and rendered `/whitepaper/` page to 21 numbered sections; static check confirms all 21 TOC anchors resolve to matching HTML section IDs and numbering is sequential.
+- [ ] Run final focused static checks and required CI on the exact PR head.
 - [ ] Merge only after required checks pass; verify deployed homepage screenshots and confirm `/overview/` returns 404.
+
+
+## N. Whitepaper parity and homepage Overview acceptance — 13 November 2026
+
+- [x] Rebuilt the published `whitepaper/index.html` table of contents to list all 21 numbered sections, including separate Official Channels and Pre-listing Information sections.
+- [x] Matched the rendered HTML section order and numbering (01–21) with the canonical Markdown source sections (01–21).
+- [x] Verified all 21 Whitepaper TOC anchors resolve to an existing section ID; no missing anchor targets.
+- [x] Removed duplicated Guilds/events campaign copy from the Social Lobby section and consolidated repeated/duplicated Markdown tail content into one canonical explanation per topic.
+- [x] Verified homepage `index.html` contains zero Overview text references, zero Overview navigation links, zero Overview URL references, and zero Project Overview cards.
+- [x] Verified `overview/index.html` is absent from the PR branch; no redirect page is retained.
+- [x] Verified homepage retains the Whitepaper and Roadmap destinations and a working `/game-concept/` link; Game Concept page has a proper document title.
+- [ ] Run final content/editorial review of the full paper and exact-head required checks.
+- [ ] Merge PR only after required checks pass; verify production deployment, Overview nav/card absence, and `/overview/` returning 404.
+
+**Scope guard:** Do not work on Sanctuary/gameplay, Browser Smoke gameplay failures, Swap, DEX, Login, or any unrelated engineering task while this Whitepaper and Overview-removal task remains open.
