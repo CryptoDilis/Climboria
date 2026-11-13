@@ -761,8 +761,11 @@ jobs:
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
         run: |
+          set -euo pipefail
+          rm -f game-smoke-summary.json
           echo 'Starting bounded Jarrell desktop/mobile gameplay smoke test.'
           timeout --signal=TERM --kill-after=30s 20m node .github/scripts/game-smoke.mjs
+          node -e 'const fs=require("node:fs");const p="game-smoke-summary.json";if(!fs.existsSync(p))throw new Error("Gameplay smoke exited without its explicit pass-summary artifact");const s=JSON.parse(fs.readFileSync(p,"utf8"));if(s.status!=="passed"||s.errorCount!==0||s.desktopReady!==true||s.mobileReady!==true||s.mobileControlsReady!==true||!(s.desktopRenderFrames>=2)||!(s.mobileRenderFrames>=2)||!Array.isArray(s.screenshots)||s.screenshots.length!==8)throw new Error("Gameplay smoke pass-summary failed validation: "+JSON.stringify(s));console.log("PASS: explicit desktop/mobile gameplay summary validated.");'
 
       - name: Upload DexScreener provider contract capture
         if: always()
@@ -796,6 +799,7 @@ jobs:
             climboria-mobile-cave-entrance.png
             climboria-desktop-cave-interior.png
             climboria-mobile-cave-interior.png
+            game-smoke-summary.json
             climboria-dex-token-socials.png
             climboria-dex-token-socials-mobile.png
             freshwater-*.png
