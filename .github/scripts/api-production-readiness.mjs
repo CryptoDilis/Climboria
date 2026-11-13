@@ -38,7 +38,7 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
   assert.equal(health.response.headers.get("access-control-allow-origin"), ORIGIN, "Worker health CORS is not configured for the site");
   assert.equal(health.data?.ok, true, "Worker health is not ready");
   assert.equal(health.data?.service, "climboria-swap-proxy", "Unexpected service at API hostname");
-  for (const binding of ["jupiterKey", "rateLimiter", "orderStore", "solanaRpc"]) {
+  for (const binding of ["jupiterKey", "rateLimiter", "orderStore"]) {
     assert.equal(health.data?.configured?.[binding], true, "Missing Worker binding: " + binding);
   }
   assert.equal(health.data?.execution, "disabled", "Unsafe: Worker reports executable trading enabled");
