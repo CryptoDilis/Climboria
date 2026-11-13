@@ -316,3 +316,59 @@ Continue the documented candidate-scoped ABI-v1 input reconstruction:
 
 - No policy allowlist, route_v2 support, signing, execution, or deployment gate changed.
 - Next: inspect the 19 CPI account addresses against slot-appropriate account data to identify BinArray and bitmap-extension discriminators and pool linkage; extend finalized discovery to a larger bounded scan for genuinely multiple matched transactions and multi-hop/split examples; parse variant-75 dynamic remaining-account metadata only against version-matched CPI evidence. Continue to preserve outer privileges versus CPI-requested privileges.
+
+
+---
+
+## Live repository re-audit — 2026-11-13
+
+### Verified repository / PR state
+
+- Main HEAD at audit start: `50712f68017bc06e9a0896cd3f2691ebdab4c594`.
+- PR #269 is OPEN / DRAFT. Current head `04f4d09f233cccc5f45fa9ef2dc617880563fed2`; PR base `0fa8e987aec4d6e6bc7590363efa7d20fde79422`. Compared with current main, it is **194 commits ahead and 11 behind**. The 11 main-only commits since the merge base are documentation-only readiness updates; no main-only product-code file changes were reported by the comparison.
+- PR #274 is OPEN / DRAFT. Head `559423bdddf709cae31de06b01b2c4b461f2a482`; compared with main it is **203 commits ahead and 11 behind**. It overlaps substantially with PR #269's DEX/provider/CPI/IDL evidence work. Keep both unmerged until the evidence is consolidated and branch freshness is reconciled; do not merge both independently.
+- The owner-approved product order remains P1 Live Swap → P2 Live DEX → P3 all Login methods → P4 fully live game → P5 Launchpad last. This checkpoint does not change that order.
+
+### Exact-head verification — PR #269 head 04f4d09
+
+| Workflow | Run | Result at this checkpoint | Evidence |
+|---|---:|---|---|
+| Validate Climboria | `43336735429` | **SUCCESS** | 15 workflow steps; Node test suite: **155 passed, 0 failed** |
+| Jupiter V6 CPI Trace Audit | `43336735443` | **SUCCESS** | 50 finalized transactions fetched across 2 pages; 2 matching Jupiter/Meteora route transactions; no rate-limit or transport failure; artifact `13997946169` |
+| Browser Smoke | `43336735421` | IN PROGRESS | 21 steps completed; currently running Jarrell's Peak desktop/mobile gameplay smoke. Do not claim complete until terminal status and screenshots are reviewed. |
+| Jupiter IDL History Audit | `43336735508` | IN PROGRESS | Direct on-chain history reconstruction using public-mainnet fallback because `SOLANA_RPC_URL` is absent; inspect final artifact/report before acceptance. |
+
+The 50-transaction sample is bounded evidence, not exhaustive route coverage. It found two successful matching routes, both single-step Jupiter route plans with one 19-account Meteora `swap2` CPI. It did **not** find a multi-hop/split route in this sample. The exact CPI account roles and requested signer/writable privileges remain unproven.
+
+### Newly confirmed account-configuration blocker
+
+- In IDL History run `43336512234`, the workflow environment showed `SOLANA_RPC_URL` as empty and the direct-history tool reported: `Missing encrypted Actions secret SOLANA_RPC_URL`.
+- The same run's `/api/latest` request succeeded and exposed the current Jupiter Anchor/PMP metadata addresses; its hosted `/api/history` request timed out. The on-chain account inspection confirmed the current Anchor IDL account owner matches Jupiter, the current payload contains the expected `route_v2` discriminator `bb64facc31c4af14`, and ProgramData deployment slot `468023491` is before candidate transaction slot `468153382`.
+- Those facts verify current on-chain metadata and deployment timing, but **do not** prove which IDL revision was active at the candidate slot. The workflow correctly failed closed with zero active historical revisions.
+- Countermeasure: the official `@solana/idl@0.3.0` direct-history reconstruction is now attempted first. If `SOLANA_RPC_URL` is absent, it falls back to public mainnet RPC; the run `43336735508` is the current acceptance attempt. A private archival RPC remains preferable for large history replays.
+- If the public fallback is rate-limited or cannot reconstruct a complete history, the owner action is to add the HTTPS private Solana RPC endpoint as encrypted repository Actions secret **`SOLANA_RPC_URL`** (or provide the existing secret's name only if it is stored under a different name). Never paste the value into chat or source.
+- This same missing secret blocks the current Cloudflare API deployment workflow's preflight because `SOLANA_RPC_URL` is a required deployment secret. Worker production deployment/health remains unverified.
+
+### P1 Swap readiness decision
+
+- [x] Jupiter route discovery default expanded to 50 finalized transactions with bounded pacing and timeout; exact run `43336735443` passed and its artifact was captured.
+- [x] Retry behavior for transient IDL provider HTTP 5xx/429 and transport errors added with bounded attempts, capped backoff, Retry-After support, and preserved attempt history.
+- [x] Official on-chain IDL history reconstruction and slot-range normalization added; Validate passes 155 tests.
+- [ ] Confirm exact one historical Jupiter IDL revision covers candidate slot `468153382` using run `43336735508`; if public fallback cannot do so, add the private RPC secret and rerun.
+- [ ] Inspect all 19 CPI accounts against slot-aware evidence; distinguish current account state from historical state, and prove each account's role, owner, discriminator, pool linkage, and requested CPI signer/writable flags.
+- [ ] Continue bounded discovery for genuine multi-hop/split route examples and Token-2022 transfer-hook examples. Preserve fail-closed behavior where evidence is incomplete.
+- [ ] Finish route-by-route semantic validation, independent security review, and controlled Devnet sign → execute → confirm → balance reconciliation. Mainnet execution remains disabled.
+- [ ] Verify Cloudflare Worker deployment, custom domain, production health, CORS, rate limiting, Durable Object order persistence and Jupiter quote/order behavior. Do not claim live execution.
+
+### Other readiness
+
+- DEX: market discovery code and provider capture tests exist; production-origin data freshness, pool identity, chart-to-pool mapping, provider outage behavior, and Base trading remain unaccepted. Base market discovery is not Base swap execution.
+- Login: email/password and OAuth/Web3 client handlers exist, but Supabase production dashboard/provider configuration and real account tests remain unverified. Password recovery and secure guest-to-account linking remain source-level gaps; guest login remains disabled pending CAPTCHA configuration.
+- Uniswap/Base: separate Base adapter is still not implemented/accepted. Keep it separate from Jupiter/Solana.
+- Launchpad: remains last in the approved priority order.
+
+### Exact next task
+
+1. Inspect terminal status and artifact for IDL History run `43336735508`; verify the official history report has a unique candidate-slot revision and record its slot range/hash. If it fails on public RPC limits or missing historical data, request only the owner-side encrypted `SOLANA_RPC_URL` configuration (never its value).
+2. Inspect Browser Smoke run `43336735421` terminal status and screenshots.
+3. Continue the 19-account CPI evidence audit and multi-hop/split route discovery. Keep all execution gates disabled.
