@@ -99,3 +99,33 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
   assert.match(good.quoteResults.innerHTML, /Estimated output/);
   assert.match(good.quoteResults.innerHTML, /Not requested/);
 });
+
+
+test("DEX exposes a keyboard-accessible read-only quote toggle without enabling swaps", () => {
+  const html = readFileSync(new URL("../../dex/index.html", import.meta.url), "utf8");
+  assert.match(html, /<button[^>]+id="showDexQuote"[^>]+aria-controls="swapQuote"[^>]+aria-expanded="false"/);
+  assert.match(html, /GET LIVE QUOTE · NO TRADING/);
+  const start = html.indexOf("$('showDexQuote').addEventListener('click',()=>{");
+  const end = html.indexOf("\n});", start);
+  assert.ok(start >= 0 && end > start, "Read-only quote toggle handler missing");
+  const callbacks = {};
+  const panel = { hidden: true, scrollIntoView() {} };
+  const attrs = {};
+  const button = {
+    textContent: "GET LIVE QUOTE · NO TRADING",
+    setAttribute: (name, value) => { attrs[name] = value; },
+    addEventListener: (event, handler) => { callbacks[event] = handler; }
+  };
+  runInNewContext(html.slice(start, end + 4), {
+    $: id => id === "showDexQuote" ? button : id === "swapQuote" ? panel : null
+  });
+  assert.equal(typeof callbacks.click, "function");
+  callbacks.click();
+  assert.equal(panel.hidden, false);
+  assert.equal(attrs["aria-expanded"], "true");
+  assert.equal(button.textContent, "HIDE QUOTE PREVIEW");
+  callbacks.click();
+  assert.equal(panel.hidden, true);
+  assert.equal(attrs["aria-expanded"], "false");
+  assert.equal(button.textContent, "GET LIVE QUOTE · NO TRADING");
+});
