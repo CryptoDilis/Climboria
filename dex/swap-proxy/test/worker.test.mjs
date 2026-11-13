@@ -176,6 +176,73 @@ test("proxies quote-only orders with server-side Jupiter key", async () => {
   } finally { globalThis.fetch = originalFetch; }
 });
 
+test("rejects mismatched, nonnumeric, zero, or incomplete Jupiter quotes", async () => {
+  const originalFetch = globalThis.fetch;
+  const request = () => new Request("https://worker.test/api/swap/quote?inputMint=" + valid +
+    "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000",
+    { headers: { origin } });
+  const good = { requestId: "quote-request-123", inAmount: "100000000", outAmount: "1234567" };
+  const invalid = [
+    ["mismatched input", { ...good, inAmount: "100000001" }],
+    ["nonnumeric input", { ...good, inAmount: "1e8" }],
+    ["numeric input instead of raw integer string", { ...good, inAmount: 100000000 }],
+    ["zero output", { ...good, outAmount: "0" }],
+    ["negative output", { ...good, outAmount: "-5" }],
+    ["numeric output instead of raw integer string", { ...good, outAmount: 1234567 }],
+    ["leading-zero output", { ...good, outAmount: "01234567" }],
+    ["output exceeds Solana u64", { ...good, outAmount: "18446744073709551616" }],
+    ["missing output", { ...good, outAmount: null }],
+    ["blank request ID", { ...good, requestId: " " }],
+    ["oversized request ID", { ...good, requestId: "x".repeat(257) }],
+    ["missing response", null]
+  ];
+  try {
+    for (const [label, payload] of invalid) {
+      globalThis.fetch = async () => Response.json(payload);
+      const res = await worker.fetch(request(), env);
+      assert.equal(res.status, 502, label);
+      const body = await res.json();
+      assert.match(body.error, /incomplete or inconsistent quote/i, label);
+      assert.equal(body.outAmount, undefined, label + " must never expose a fake quote");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("reports missing or invalid Jupiter fee as unknown rather than zero", async () => {
+  const originalFetch = globalThis.fetch;
+  const inputs = [
+    ["absent", undefined, null],
+    ["null", null, null],
+    ["empty", "", null],
+    ["nonnumeric", "unavailable", null],
+    ["negative", -1, null],
+    ["out-of-bounds", 10001, null],
+    ["explicit zero", 0, 0],
+    ["valid fee", "15", 15]
+  ];
+  try {
+    for (const [label, fee, expected] of inputs) {
+      globalThis.fetch = async () => Response.json({
+        requestId: "request-quote-1",
+        inAmount: "100000000",
+        outAmount: "999999",
+        ...(fee === undefined ? {} : { feeBps: fee })
+      });
+      const res = await worker.fetch(new Request(
+        "https://worker.test/api/swap/quote?inputMint=" + valid +
+        "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000",
+        { headers: { origin } }
+      ), env);
+      assert.equal(res.status, 200, label);
+      assert.equal((await res.json()).feeBps, expected, label);
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("proxies Jupiter token search through server-side credentials", async () => {
   const originalFetch = globalThis.fetch;
   try {
@@ -251,6 +318,39 @@ test("rejects invalid mint on pump.fun metadata route before upstream request", 
     const res = await worker.fetch(new Request("https://worker.test/api/pump/coin?mint=bad", { headers: { origin } }), env);
     assert.equal(res.status, 400);
   } finally { globalThis.fetch = originalFetch; }
+});
+
+test("enforces Solana u64 bounds on quote and wallet order amounts", async () => {
+  const originalFetch = globalThis.fetch;
+  const mint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+  const max = "18446744073709551615";
+  const invalid = ["18446744073709551616", "99999999999999999999", "0", "-1", "1e18"];
+  const makeQuote = amount => new Request(
+    "https://worker.test/api/swap/quote?inputMint=" + valid + "&outputMint=" + mint + "&amount=" + amount,
+    { headers: { origin } }
+  );
+  const makeOrder = amount => new Request("https://worker.test/api/swap/order", {
+    method: "POST", headers: { origin, "content-type": "application/json" },
+    body: JSON.stringify({ inputMint: valid, outputMint: mint, amount, taker: valid })
+  });
+  try {
+    globalThis.fetch = async () => { throw new Error("invalid amount must not reach Jupiter"); };
+    for (const amount of invalid) {
+      assert.equal((await worker.fetch(makeQuote(amount), env)).status, 400, "quote " + amount);
+      assert.equal((await worker.fetch(makeOrder(amount), env)).status, 400, "order " + amount);
+    }
+    globalThis.fetch = async () => Response.json({
+      requestId: "quote-u64-boundary", inAmount: max, outAmount: "1"
+    });
+    const quote = await worker.fetch(makeQuote(max), env);
+    assert.equal(quote.status, 200, "u64 maximum quote should pass input validation");
+    assert.equal((await quote.json()).inAmount, max);
+    const order = await worker.fetch(makeOrder(max), env);
+    assert.equal(order.status, 503, "u64 maximum order must reach the independent security gate");
+    assert.match((await order.json()).error, /wallet-signable orders are disabled/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("rejects malformed quote and token search requests before upstream calls", async () => {

@@ -57,6 +57,18 @@ function base58DecodedLength(value) {
   return zeros + (bytes.length === 1 && bytes[0] === 0 ? 0 : bytes.length);
 }
 function validPubkey(value) { return base58DecodedLength(value) === 32; }
+// SPL Token and Solana instruction raw amounts are unsigned 64-bit integers.
+const U64_MAX = 18446744073709551615n;
+function validRawTokenAmount(value) {
+  return typeof value === "string" && /^[1-9][0-9]{0,19}$/.test(value) &&
+    BigInt(value) <= U64_MAX;
+}
+// A missing fee is unknown, not zero. Accept only explicitly supplied integer bps.
+function optionalFeeBps(value) {
+  if (typeof value !== "number" && (typeof value !== "string" || !value.trim())) return null;
+  const bps = Number(value);
+  return Number.isInteger(bps) && bps >= 0 && bps <= 10000 ? bps : null;
+}
 async function readJson(request, maxBytes = 40000) {
   const contentType = String(request.headers.get("content-type") || "").toLowerCase();
   if (!contentType.startsWith("application/json")) throw new Error("Content-Type must be application/json");
@@ -93,8 +105,8 @@ async function handleOrder(request, env) {
   if (!validPubkey(inputMint) || !validPubkey(outputMint) || inputMint === outputMint || !validPubkey(taker)) {
     return json({ error: "Invalid input/output mint or taker public key" }, 400);
   }
-  if (typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount)) {
-    return json({ error: "Amount must be a positive integer string in base units" }, 400);
+  if (!validRawTokenAmount(amount)) {
+    return json({ error: "Amount must be a positive u64 integer string in base units" }, 400);
   }
   if (!env.JUPITER_API_KEY) return json({ error: "Backend is not configured: missing Jupiter server API key" }, 503);
   if (!env.ORDER_STORE || typeof env.ORDER_STORE.idFromName !== "function" || typeof env.ORDER_STORE.get !== "function") {
@@ -201,7 +213,7 @@ async function handleOrder(request, env) {
     outAmount: data.outAmount || null,
     router: data.router || null,
     mode: data.mode || null,
-    feeBps: Number.isFinite(Number(data.feeBps)) ? Number(data.feeBps) : null,
+    feeBps: optionalFeeBps(data.feeBps),
     feeMint: data.feeMint || null,
     transactionVersion: data.transactionVersion ?? null,
     lastValidBlockHeight: data.lastValidBlockHeight ?? null,
@@ -218,20 +230,24 @@ async function handleQuote(request, env) {
   const outputMint = url.searchParams.get("outputMint");
   const amount = url.searchParams.get("amount");
   if (!validPubkey(inputMint) || !validPubkey(outputMint) || inputMint === outputMint ||
-      typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount)) {
+      !validRawTokenAmount(amount)) {
     return json({ error: "Invalid quote input mints or amount" }, 400);
   }
   const params = new URLSearchParams({ inputMint, outputMint, amount });
   const response = await upstream("/order?" + params.toString(), { method: "GET" }, env);
   const data = await response.json().catch(() => null);
   if (!response.ok) return json({ error: "Jupiter quote request failed", upstreamStatus: response.status, details: data?.error || data?.message || null }, response.status >= 400 && response.status < 500 ? response.status : 502);
-  if (!data || !data.inAmount || !data.outAmount || !data.requestId) {
-    return json({ error: data?.errorMessage || "Jupiter returned an incomplete quote", errorCode: data?.errorCode ?? null }, 502);
+  // A provider HTTP 200 is not proof of a usable quote. Refuse missing or
+  // mismatched raw amounts rather than displaying a price for another order.
+  if (!data || !validRawTokenAmount(data.inAmount) || data.inAmount !== amount ||
+      !validRawTokenAmount(data.outAmount) || typeof data.requestId !== "string" ||
+      !data.requestId.trim() || data.requestId.length > 256) {
+    return json({ error: "Jupiter returned an incomplete or inconsistent quote" }, 502);
   }
   return json({
     requestId: data.requestId, inAmount: data.inAmount, outAmount: data.outAmount,
     router: data.router || null, mode: data.mode || null,
-    feeBps: Number.isFinite(Number(data.feeBps)) ? Number(data.feeBps) : null,
+    feeBps: optionalFeeBps(data.feeBps),
     feeMint: data.feeMint || null, priceImpactPct: data.priceImpactPct ?? null
   });
 }
