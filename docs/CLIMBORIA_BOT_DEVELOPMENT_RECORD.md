@@ -213,3 +213,10 @@ V5 adds SQLite-persisted exit order intents with RESERVED -> SUBMITTED -> UNKNOW
 **Important limitations:** No live chain execution, external confirmation, multi-host concurrency, trustable market feed, fee/rent/slippage accounting, actual outbox network boundary, TP1/TP2/TP3 scheduler, trailing/time exits, re-entry scheduler, or secure delegated Solana authority. Caller-supplied simulated fill outcomes are not chain proof. The V4 base remains for regression; V5 consumers must instantiate `PaperBotV5`.
 
 **Next Phase 15:** implement deterministic TP ladder (partial take profits), trailing stops and time exits, then a durable simulated outbox/reconciler with crash injection and balance/fee conservation tests. Keep live swap execution disabled.
+
+
+## Website User's Manual requirement — 2026-11-13
+
+**Owner-requested mandatory deliverable:** The Climboria Signature Bot must include an accessible, mobile-friendly **User's Manual / Help** page on the Climboria website, linked from the bot dashboard and first-run experience. Draft source committed as [`docs/CLIMBORIA_BOT_USERS_MANUAL.md`](CLIMBORIA_BOT_USERS_MANUAL.md). It covers five slots, configuration, TP/SL, fund manager, 24h authorization and revoke, fees, learning, troubleshooting, and safety.
+
+**Status:** Manual content **DRAFT COMMITTED**; **website page/navigation NOT YET IMPLEMENTED**. Do not imply it is already visible to site users. Acceptance: stable first-party help URL, bot dashboard Help navigation, contextual setting tooltips, mobile readability, clear paper/live/unavailable status, and website acceptance tests. Integrate when bot UI work is authorized and consistent with current repository P1 live swap / P2 live DEX priorities. Preserve the manual requirement in all future handoffs.
