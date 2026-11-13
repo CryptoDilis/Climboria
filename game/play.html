@@ -188,9 +188,9 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>DAMAGE</span><span id="damage-value">5</span></div><div class="stat-track"><div class="stat-fill" id="damage-fill" style="width:25%;background:#c66b54"></div></div></div>
 <div id="summit-chest-status" role="status" aria-live="polite"><span>JARRELL’S PEAK · SUMMIT CHEST</span><strong id="summit-chest-countdown">READY</strong><small>HIGH-TIER LOOT · 15-MINUTE RESPAWN</small></div>
 <button id="world-map-toggle" type="button">WORLD MAP · M</button>
-<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="time-cycle-control" type="button">TIME OF DAY · GOLDEN HOUR</button><button id="weather-cycle-control" type="button">WEATHER · CLEAR</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
+<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="time-cycle-control" type="button">TIME OF DAY · GOLDEN HOUR</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
 
-<div id="help">WASD move · Shift sprint · Space jump · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · R weather · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
+<div id="help">WASD move · Shift sprint · Space jump · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · Weather changes automatically every 15 min · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
 
 <script>
 /* Client-side preflight: do not boot the 3D world before a named hero exists. */
@@ -407,7 +407,49 @@ const TOD=[
  {n:'Dusk',el:.04,az:4.1,top:'#1f2a5a',hor:'#8a5a78',sun:'#ff8f6a',si:1.3,hi:.42,nt:.2},
  {n:'Moonlit night',el:.5,az:5.2,top:'#050a1c',hor:'#162340',sun:'#8fa9ff',si:.6,hi:.3,nt:1}
 ].map(t=>({...t,top:L(t.top),hor:L(t.hor),sun:L(t.sun)}));
-let todI=0,wx=0,flash=0,thT=5;const weatherNames=['Clear','Rain','Thunderstorm'];const cur={top:TOD[0].top.clone(),hor:TOD[0].hor.clone(),sun:TOD[0].sun.clone(),si:2.2,hi:.55,nt:0,el:.17,az:2.2};
+let todI=0,wx=0,flash=0,thT=5;const weatherNames=['Clear','Rain','Thunderstorm'];
+const WEATHER_INTERVAL_MS=900000,WEATHER_STORAGE_KEY='climboria_jarrell_weather_v1';
+let weatherElapsedMs=0,weatherVisual=0,weatherSaveMs=0;
+try{
+ const stored=JSON.parse(localStorage.getItem(WEATHER_STORAGE_KEY)||'null');
+ if(stored?.version===1&&Number.isInteger(stored.index)&&stored.index>=0&&stored.index<weatherNames.length&&
+  Number.isFinite(stored.elapsedMs)&&stored.elapsedMs>=0&&stored.elapsedMs<WEATHER_INTERVAL_MS){
+  wx=stored.index;weatherElapsedMs=stored.elapsedMs;
+ }
+}catch(_){}
+weatherVisual=wx;
+function weatherPhaseStep(index,elapsedMs,deltaMs){
+ const elapsed=Math.max(0,Math.min(WEATHER_INTERVAL_MS-1,Number(elapsedMs)||0));
+ const ms=Math.max(0,Number.isFinite(deltaMs)?deltaMs:0);
+ const total=elapsed+ms,changes=Math.floor(total/WEATHER_INTERVAL_MS);
+ return {index:(index+changes)%weatherNames.length,elapsedMs:total%WEATHER_INTERVAL_MS,changes};
+}
+function persistWeather(){
+ try{localStorage.setItem(WEATHER_STORAGE_KEY,JSON.stringify({version:1,index:wx,elapsedMs:weatherElapsedMs}))}catch(_){}
+}
+function advanceWeather(seconds){
+ const state=weatherPhaseStep(wx,weatherElapsedMs,Math.max(0,seconds)*1000);
+ wx=state.index;weatherElapsedMs=state.elapsedMs;
+ weatherSaveMs+=Math.max(0,seconds)*1000;
+ if(state.changes||weatherSaveMs>=30000){
+  weatherSaveMs=0;persistWeather();
+  if(state.changes)emit('weather-change',{weather:weatherNames[wx],changes:state.changes});
+ }
+ return state;
+}
+function automaticWeatherAudit(){
+ const before={index:0,elapsedMs:0};
+ const justBefore=weatherPhaseStep(before.index,before.elapsedMs,899999);
+ const at15Min=weatherPhaseStep(justBefore.index,justBefore.elapsedMs,1);
+ const at30Min=weatherPhaseStep(at15Min.index,at15Min.elapsedMs,900000);
+ const at45Min=weatherPhaseStep(at30Min.index,at30Min.elapsedMs,900000);
+ const resumable=weatherPhaseStep(2,120000,300000);
+ const longJump=weatherPhaseStep(1,450000,1800000);
+ const noFakeElapsed=weatherPhaseStep(1,200000,0);
+ return {intervalMs:WEATHER_INTERVAL_MS,justBefore,at15Min,at30Min,at45Min,resumable,longJump,noFakeElapsed,
+  manualWeatherControlMissing:!document.getElementById('weather-cycle-control'),restoredWeatherIndex:wx,storedElapsedMs:weatherElapsedMs};
+}
+const cur={top:TOD[0].top.clone(),hor:TOD[0].hor.clone(),sun:TOD[0].sun.clone(),si:2.2,hi:.55,nt:0,el:.17,az:2.2};
 const sunDir=new T3.Vector3();
 /* ---------- sky ---------- */
 const skyU={uTop:{value:cur.top},uHor:{value:cur.hor},uSun:{value:sunDir},uSunC:{value:cur.sun},uNight:{value:0},uT:{value:0}};
@@ -1242,7 +1284,7 @@ addEventListener('keydown',e=>{
  keys[e.code]=true;
  if(['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
  
- if(!e.repeat&&e.code=='KeyT'){todI=(todI+1)%TOD.length;syncEnvironmentControls()}if(!e.repeat&&e.code=='KeyR'){wx=(wx+1)%weatherNames.length;syncEnvironmentControls()}if(e.code=='KeyE'&&!e.repeat)interact();
+ if(!e.repeat&&e.code=='KeyT'){todI=(todI+1)%TOD.length;syncEnvironmentControls()}if(!e.repeat&&e.code=='KeyR'&&new URLSearchParams(location.search).has('debug-weather')){wx=(wx+1)%weatherNames.length;weatherElapsedMs=0;persistWeather()}if(e.code=='KeyE'&&!e.repeat)interact();
  if(e.code=='KeyV'){P.mode='walk';camY=null;free(true);document.exitPointerLock&&document.exitPointerLock()}
  const m=e.code.match(/^Digit([1-8])$/);if(m)TP[m[1]]();
 });
@@ -2067,7 +2109,7 @@ P.fish=0;
 const RN=MOB?500:1100,rp=new Float32Array(RN*6),rox=new Float32Array(RN),roz=new Float32Array(RN),rdy=new Float32Array(RN);for(let i=0;i<RN;i++){rox[i]=(Math.random()-.5)*90;roz[i]=(Math.random()-.5)*90;rdy[i]=Math.random()*50}
 const rgeo=new T3.BufferGeometry();rgeo.setAttribute('position',new T3.BufferAttribute(rp,3));
 const rain=new T3.LineSegments(rgeo,new T3.LineBasicMaterial({color:0x9fb4d0,transparent:true,opacity:.45,fog:false}));rain.frustumCulled=false;rain.visible=false;scene.add(rain);
-function syncEnvironmentControls(){const t=document.getElementById('time-cycle-control'),w=document.getElementById('weather-cycle-control');if(t)t.textContent='TIME OF DAY · '+TOD[todI].n.toUpperCase();if(w)w.textContent='WEATHER · '+weatherNames[wx].toUpperCase()}
+function syncEnvironmentControls(){const t=document.getElementById('time-cycle-control');if(t)t.textContent='TIME OF DAY · '+TOD[todI].n.toUpperCase()}
 function updateSummitChestStatus(){
  const panel=document.getElementById('summit-chest-status'),countdown=document.getElementById('summit-chest-countdown');
  if(!panel||!countdown)return;
@@ -2078,7 +2120,7 @@ function updateSummitChestStatus(){
  if(chest.open){const seconds=Math.max(0,Math.ceil(chest.t));countdown.textContent='RESPAWN IN '+String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0')}
  else countdown.textContent='READY TO CLAIM';
 }
-document.getElementById('time-cycle-control').addEventListener('click',()=>{todI=(todI+1)%TOD.length;syncEnvironmentControls()});document.getElementById('weather-cycle-control').addEventListener('click',()=>{wx=(wx+1)%weatherNames.length;syncEnvironmentControls()});syncEnvironmentControls();
+document.getElementById('time-cycle-control').addEventListener('click',()=>{todI=(todI+1)%TOD.length;syncEnvironmentControls()});syncEnvironmentControls();
 function gameTick(dt,cp){
  updateDeathLootBag();
  const live=P.mode=='walk';P.inv=Math.max(0,P.inv-dt);
@@ -2095,11 +2137,19 @@ function gameTick(dt,cp){
  // The terrain map is a static relief image; redraw it only when opened/toggled.
  // Recomputing 240x240 height + multi-octave noise samples every frame stalls gameplay.
 
- // weather
- scene.fog.color.copy(cur.hor);if(wx>0)scene.fog.color.lerp(new T3.Color('#71869a'),.38);flash=Math.max(0,flash-dt*3);
- if(wx==2){thT-=dt;if(thT<0){thT=4+Math.random()*9;flash=1}}
- hemi.intensity=cur.hi*(1-.3*(wx>0))+flash*2.5;sunL.intensity=cur.si*(wx>0?.78:1)+flash*1.2;rain.visible=wx>0;
- if(wx>0){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
+ // Natural weather changes every 900 active gameplay seconds, never via settings.
+ advanceWeather(dt);
+ weatherVisual+=(wx-weatherVisual)*Math.min(1,dt/8);
+ const wetness=Math.max(0,Math.min(1,weatherVisual));
+ scene.fog.color.copy(cur.hor).lerp(new T3.Color('#71869a'),.38*wetness);
+ flash=Math.max(0,flash-dt*3);
+ if(wx===2&&weatherVisual>1.45){thT-=dt;if(thT<0){thT=4+Math.random()*9;flash=1}}
+ hemi.intensity=cur.hi*(1-.3*wetness)+flash*2.5;
+ sunL.intensity=cur.si*(1-.22*wetness)+flash*1.2;
+ rain.visible=weatherVisual>.12;
+ rain.material.opacity=Math.min(.52,.45*wetness);
+ document.documentElement.dataset.climboriaWeather=weatherNames[wx].toLowerCase();
+ if(rain.visible){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
   rgeo.attributes.position.needsUpdate=true}
 }
 function auditCollisionSolids(){
@@ -2275,7 +2325,7 @@ function caveEntranceTraversalAudit(){
   return {ok:reached>=endLocal.z-.5,progressLocalZ:+reached.toFixed(2),walkedDistance:+(reached-startLocal.z).toFixed(2),blockedAt};
  }finally{Object.assign(P,saved)}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveEntranceTraversalAudit,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,texturedRockMaterials:caveRockMaterials.filter(m=>m.userData?.caveRockTexture&&m.map&&m.bumpMap).length,bumpedRockMaterials:caveRockMaterials.filter(m=>!!m.bumpMap).length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,deathLootSnapshot:()=>deathLootBag?{x:deathLootBag.x,z:deathLootBag.z,items:deathLootBag.items.map(i=>({...i})),expiresAt:deathLootBag.expiresAt}:null,deathLootLifecycleAudit:new URLSearchParams(location.search).has('smoke')?deathLootLifecycleAudit:undefined,deathLootMapMarkerAudit:new URLSearchParams(location.search).has('smoke')?deathLootMapMarkerAudit:undefined,lootRecoveryDirectionAudit:new URLSearchParams(location.search).has('smoke')?lootRecoveryDirectionAudit:undefined,sprintStaminaAudit:new URLSearchParams(location.search).has('smoke')?sprintStaminaAudit:undefined,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,sanctuaryDressingAudit:()=>({pathSlabs:sanctuaryPathSlabs.length,lanterns:sanctuaryPathLanterns.length,planters:sanctuaryPlanters.length,span:{minZ:Math.min(...sanctuaryPathSlabs.map(o=>o.position.z)),maxZ:Math.max(...sanctuaryPathSlabs.map(o=>o.position.z))},attached:sanctuaryPathSlabs.every(o=>o.parent===sanctuaryGroup)&&sanctuaryPathLanterns.every(o=>o.base.parent===sanctuaryGroup&&o.post.parent===sanctuaryGroup&&o.cap.parent===sanctuaryGroup&&o.lamp.parent===sanctuaryGroup)&&sanctuaryPlanters.every(o=>o.bed.parent===sanctuaryGroup&&o.shrub.parent===sanctuaryGroup&&o.bloom.parent===sanctuaryGroup)}),collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,automaticWeatherAudit:new URLSearchParams(location.search).has('smoke')?automaticWeatherAudit:undefined,caveEntranceTraversalAudit,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,texturedRockMaterials:caveRockMaterials.filter(m=>m.userData?.caveRockTexture&&m.map&&m.bumpMap).length,bumpedRockMaterials:caveRockMaterials.filter(m=>!!m.bumpMap).length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,deathLootSnapshot:()=>deathLootBag?{x:deathLootBag.x,z:deathLootBag.z,items:deathLootBag.items.map(i=>({...i})),expiresAt:deathLootBag.expiresAt}:null,deathLootLifecycleAudit:new URLSearchParams(location.search).has('smoke')?deathLootLifecycleAudit:undefined,deathLootMapMarkerAudit:new URLSearchParams(location.search).has('smoke')?deathLootMapMarkerAudit:undefined,lootRecoveryDirectionAudit:new URLSearchParams(location.search).has('smoke')?lootRecoveryDirectionAudit:undefined,sprintStaminaAudit:new URLSearchParams(location.search).has('smoke')?sprintStaminaAudit:undefined,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,sanctuaryDressingAudit:()=>({pathSlabs:sanctuaryPathSlabs.length,lanterns:sanctuaryPathLanterns.length,planters:sanctuaryPlanters.length,span:{minZ:Math.min(...sanctuaryPathSlabs.map(o=>o.position.z)),maxZ:Math.max(...sanctuaryPathSlabs.map(o=>o.position.z))},attached:sanctuaryPathSlabs.every(o=>o.parent===sanctuaryGroup)&&sanctuaryPathLanterns.every(o=>o.base.parent===sanctuaryGroup&&o.post.parent===sanctuaryGroup&&o.cap.parent===sanctuaryGroup&&o.lamp.parent===sanctuaryGroup)&&sanctuaryPlanters.every(o=>o.bed.parent===sanctuaryGroup&&o.shrub.parent===sanctuaryGroup&&o.bloom.parent===sanctuaryGroup)}),collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
