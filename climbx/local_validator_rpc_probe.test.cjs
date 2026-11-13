@@ -51,3 +51,15 @@ test('oversized RPC response fails closed',async()=>withServer((req,res)=>{
  assert.equal(result.healthy,false);
  assert.equal(result.reason,'OVERSIZED_RPC_RESPONSE');
 }));
+
+
+test('local RPC connection uses fresh loopback socket',async()=>withServer((req,res)=>{
+ assert.equal(req.socket.localAddress,'127.0.0.1');
+ assert.equal(req.socket.remoteAddress,'127.0.0.1');
+ res.writeHead(200,{'content-type':'application/json'});
+ res.end(JSON.stringify({jsonrpc:'2.0',id:1,result:'ok'}));
+},async port=>{
+ const result=await probeLocalValidator({port});
+ assert.equal(result.healthy,true);
+ assert.equal(result.mayExecute,false);
+}));
