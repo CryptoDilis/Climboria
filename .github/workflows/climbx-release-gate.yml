@@ -27,8 +27,8 @@ jobs:
           sys.path.insert(0, "climbx")
           suite = unittest.defaultTestLoader.discover("climbx", pattern="test_*.py")
           count = suite.countTestCases()
-          if count < 54:
-              raise SystemExit(f"Test collection unexpectedly shrank: {count} < 54")
+          if count < 70:
+              raise SystemExit(f"Test collection unexpectedly shrank: {count} < 70")
           result = unittest.TextTestRunner(verbosity=2).run(suite)
           if not result.wasSuccessful():
               raise SystemExit(1)
