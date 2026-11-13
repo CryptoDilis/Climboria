@@ -224,3 +224,31 @@ test("signer, writable, optional, account order, PDA and args changes cannot be 
     assert.equal(result.criticalAccountMetaMismatches.length, 1);
   }
 });
+
+
+test("forensic report skips changed docs and locates the later security-critical account address", () => {
+  const repo = pinnedFixture(), live = structuredClone(repo);
+  const pinnedInstruction = repo.instructions.find(x => x.name === "initialize_v2");
+  const observedInstruction = live.instructions.find(x => x.name === "initialize_v2");
+  // First raw mismatch is prose in account index 0.
+  observedInstruction.accounts[0].docs = ["Raydium now supports Token-2022"];
+  // Actual enforced address constraint is later in the account list.
+  pinnedInstruction.accounts[2].address = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+  const result = compareCriticalIdls(repo, live);
+  const details = result.criticalInstructionSchemaDetails.find(x => x.name === "initialize_v2");
+  assert.equal(result.criticalAccountConstraintMismatches.length, 1);
+  assert.equal(result.documentationOnlyAccountMismatches.length, 0);
+  assert.equal(details.accountMetaDifference.index, 0, "raw first diff remains visible");
+  assert.equal(details.firstSecurityConstraintDifference.index, 2, "reveal first actual account constraint drift");
+  assert.equal(details.firstSecurityConstraintDifference.pinned.address, "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+  assert.equal(details.firstSecurityConstraintDifference.live.address, undefined);
+  assert.deepEqual(result.criticalArgumentMismatches, []);
+});
+
+test("docs-only changes produce no material security difference", () => {
+  const repo = pinnedFixture(), live = structuredClone(repo);
+  live.instructions[0].accounts[0].docs = ["Only text changed"];
+  const result = compareCriticalIdls(repo, live);
+  assert.equal(result.criticalInstructionSchemaDetails[0].firstSecurityConstraintDifference, null);
+  assert.equal(result.criticalAccountMetaMismatches.length, 1, "original fail-closed raw mismatch retained");
+});
