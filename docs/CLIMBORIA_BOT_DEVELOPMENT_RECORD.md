@@ -1160,3 +1160,17 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Security state:** read-only probes and off-chain simulations, no Rust/Cargo/Solana/Anchor available in assistant environment, no signed on-chain grant/revoke/cap program, no verified devnet trading, no audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase116:** verify Phase115 CI, fix any failures; provision compatible pinned Solana toolchain and actually run disposable validator with captured version/RPC evidence; proceed to owner-controlled on-chain grant/revoke and atomic cap/replay tests. Keep append-only main record.
+
+
+## Phase 116 — 2026-11-14 — fail-closed readiness collector hostile inputs
+
+**Phase115 CI all SUCCESS** on `9b3417473cd756d01ab4c9787825efa39fe7717b`: CLIMBX release safety `43486192473`, Validate `43486192790`, Browser Smoke `43486192432`.
+
+**Phase116 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `16ae295a1452c3f13b545d6f9b5f403286b249f8`: harden `climbx/collect_local_readiness.cjs` against null/primitive/array options, hostile getters, non-function probe dependencies, null or hostile RPC responses. Always fail closed and `mayExecute:false`.
+- `9133493cbbabdea0aebc650382d55818220074a8`: five regression tests for invalid/hostile readiness inputs and RPC outputs.
+**Phase116 CI pending** at first check. Existing CLIMBX workflow includes collector tests. No actual validator has been started by this work.
+
+**Security state:** off-chain, read-only tooling and mocks only. No verified Rust/Cargo/Solana/Anchor toolchain, owner-controlled on-chain grant/revoke/cap program, signed devnet E2E or independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase117:** verify Phase116 CI, inspect failures; execute readiness command on a pinned Solana toolchain with an actual disposable validator; prioritize atomic on-chain grant/revoke/nonce/cap enforcement and signed devnet tests. Maintain append-only main record.
