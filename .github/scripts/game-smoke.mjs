@@ -799,11 +799,25 @@ try {
   // comparable default Sanctuary view rather than leaving the screenshot zoomed
   // toward an arbitrary direction or landmark.
   await mobile.keyboard.press('1');
-  await mobile.waitForFunction(() => {
-    const p=window.__climboriaJarrellsPeak?.player;
-    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
-      (window.__climboriaRenderState?.frames ?? 0)>=4;
-  }, undefined, { timeout: 10000 });
+  try {
+    await mobile.waitForFunction(() => {
+      const p=window.__climboriaJarrellsPeak?.player;
+      return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
+        (window.__climboriaRenderState?.frames ?? 0)>=4;
+    }, undefined, { timeout: 30000 });
+  } catch (error) {
+    const diagnostic = await mobile.evaluate(() => ({
+      player: window.__climboriaJarrellsPeak?.player && {
+        x: window.__climboriaJarrellsPeak.player.x,
+        y: window.__climboriaJarrellsPeak.player.y,
+        z: window.__climboriaJarrellsPeak.player.z,
+        mode: window.__climboriaJarrellsPeak.player.mode,
+      },
+      frames: window.__climboriaRenderState?.frames,
+      readiness: window.__climboriaReadiness,
+    }));
+    throw new Error('Mobile Sanctuary state did not settle: ' + JSON.stringify(diagnostic) + '; ' + error.message);
+  }
   await mobile.waitForTimeout(900);
   const mobileVisualCapture = await mobile.evaluate(() => ({
     player:{x:window.__climboriaJarrellsPeak?.player?.x,y:window.__climboriaJarrellsPeak?.player?.y,z:window.__climboriaJarrellsPeak?.player?.z},
