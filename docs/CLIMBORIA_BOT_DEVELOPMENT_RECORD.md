@@ -892,3 +892,17 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Release status:** CLIMBX real-funds **NO-GO**. No deployed on-chain vault, signed devnet swap, reviewed DEX route or audit. No DEX/Swap/Launchpad/game changes.
 
 **Next Phase98:** verify Phase97 CI, fix any static audit failures; expand source coverage to CLIMBX Python and relevant integration paths with reviewed false-positive rules; identify actual trade execution consumers; provision pinned Rust/Solana toolchain and implement owner-signed devnet grant/revoke/caps with no router CPI until independently reviewed. Continue permanent main-branch handoff logging.
+
+
+## Phase 98 — 2026-11-14 — expanded CLIMBX static audit to Python
+
+**Phase97 CI on `adfef36c25ef582158269379024adfc1c8d0b7b2`:** CLIMBX release safety `43466986647` SUCCESS, Validate `43466986763` SUCCESS, Browser Smoke `43466987555` IN_PROGRESS at first check. Do not claim all passed until rechecked.
+
+**Phase98 branch commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `b72a7eecb07c446cfa1818f355306e02736e94e4`: `climbx/audit_execution_boundary.cjs` now scans top-level CLIMBX `.py` in addition to `.cjs` for known direct authorization call sites and executable flags.
+- `ecd131d3ed9fed402fd82ed2abdc6fec7c1b2266`: two regression tests for Python direct call and executable-flag detection. Existing CLIMBX release-safety CI runs audit tests.
+**Phase98 CI pending** on `ecd131d3ed9fed402fd82ed2abdc6fec7c1b2266` at record time.
+
+**Audit limitations:** regex-based, top-level CLIMBX CJS/Python only; does not inspect nested folders, other repository modules, dynamic calls, aliased imports, or distinguish every comment/string false positive. It is not an execution security proof. No on-chain Solana grant/vault, signed devnet swap, audited router or independent security review. CLIMBX real-funds **NO-GO**. No edits to Swap/DEX/Launchpad/game.
+
+**Next Phase99:** verify Phase97 Browser Smoke and Phase98 CI; investigate any audit failures and avoid suppressing real findings; improve recursive scan and import-aware review if needed; verify Solana toolchain and implement owner-only grant/revoke/caps in a controlled local validator before claiming devnet readiness. Continue append-only main-branch progress recording.
