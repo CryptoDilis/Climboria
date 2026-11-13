@@ -1006,3 +1006,16 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Limits:** tests assert side-effect absence for the tested objects, not proof of universal absence of effects or Solana authority. CLIMBX real-funds **NO-GO**. No on-chain vault/grant, atomic cap/nonce enforcement, signed devnet swap, verified Signature DEX-only CPI, independent security audit. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase106:** verify Phase105 CI and fix any failures; inspect CI coverage and add negative tests for grant and policy input stability; prioritize Rust/Cargo/Solana CLI + local validator availability before implementing owner-controlled grant/revoke/caps on-chain. Keep main progress record append-only.
+
+
+## Phase 106 — 2026-11-14 — CLIMBX policy/grant stability and short-circuit regression
+
+**Phase105 CI all SUCCESS** on `4fda4b71cb3620240f27ae16beb247fe55930a7d`: CLIMBX release safety `43469836604`, Validate `43469836318`, Browser Smoke `43469836323`.
+
+**Phase106 branch commit** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `544bb2c1e60f1b8b69ec199a44b47cb9064595db`: four new authorization boundary regression tests verifying repeated denials preserve frozen policy/grant simulation inputs and counters; failed grant avoids later route getter; failed policy avoids later grant getter; and executable grant marker is rejected even if `ok:true`.
+**Phase106 CI pending** on `544bb2c1e60f1b8b69ec199a44b47cb9064595db` at first check. No production runtime logic changed this phase.
+
+**Security state:** off-chain deny-only, simulation-only. No on-chain owner-controlled Solana grant/vault, atomic nonce/spend enforcement, signed devnet transaction, verified DEX-only route or independent audit. CLIMBX real-funds **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase107:** verify Phase106 CI, investigate any failure; prioritize actual Solana toolchain availability, local validator and owner-signed on-chain grant/revoke/caps prototype with deterministic tests rather than further repetitive off-chain assertions; maintain main progress record.
