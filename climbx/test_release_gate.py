@@ -22,5 +22,28 @@ class ReleaseGateTests(unittest.TestCase):
         evidence = {k: {"status": "verified", "evidence_url": "https://example.org/proof", "reviewer": "person"} for k in REQUIRED}
         self.assertEqual(evaluate({"requirements": evidence})["decision"], "READY_FOR_MANUAL_REVIEW")
 
+
+    def test_missing_requirements_container_fails_closed(self):
+        self.assertEqual(evaluate({"requirements": None})["decision"], "NO_GO")
+
+    def test_wrong_status_fails_closed(self):
+        evidence = {k: {"status": "verified", "evidence_url": "https://example.org/proof", "reviewer": "person"} for k in REQUIRED}
+        evidence[REQUIRED[-1]]["status"] = "pending"
+        self.assertIn(REQUIRED[-1], evaluate({"requirements": evidence})["missing"])
+
+    def test_missing_evidence_url_fails_closed(self):
+        evidence = {k: {"status": "verified", "evidence_url": "https://example.org/proof", "reviewer": "person"} for k in REQUIRED}
+        evidence[REQUIRED[1]]["evidence_url"] = " "
+        self.assertEqual(evaluate({"requirements": evidence})["decision"], "NO_GO")
+
+    def test_non_string_reviewer_fails_closed(self):
+        evidence = {k: {"status": "verified", "evidence_url": "https://example.org/proof", "reviewer": "person"} for k in REQUIRED}
+        evidence[REQUIRED[1]]["reviewer"] = 123
+        self.assertEqual(evaluate({"requirements": evidence})["decision"], "NO_GO")
+
+    def test_missing_one_requirement_fails_closed(self):
+        evidence = {k: {"status": "verified", "evidence_url": "https://example.org/proof", "reviewer": "person"} for k in REQUIRED[:-1]}
+        self.assertEqual(evaluate({"requirements": evidence})["missing"], [REQUIRED[-1]])
+
 if __name__ == "__main__":
     unittest.main()
