@@ -81,7 +81,11 @@ export function inspectRaydiumV4DirectSwapBaseInEvidence({
       error("malformed account meta at direct role " + role.name);
     }
     let canonicalKey;
-    try { canonicalKey = encodeBase58(decodeBase58(account.pubkey)); } catch { error("invalid pubkey at " + role.name); }
+    try {
+      const decoded = decodeBase58(account.pubkey);
+      if (decoded.length !== 32) error("invalid 32-byte pubkey at " + role.name);
+      canonicalKey = encodeBase58(decoded);
+    } catch { error("invalid 32-byte pubkey at " + role.name); }
     if (canonicalKey !== account.pubkey) error("noncanonical pubkey at " + role.name);
     if (account.writable !== role.writable || account.signer !== role.signer) {
       error("unexpected account signer/writable privileges at direct role " + role.name);
