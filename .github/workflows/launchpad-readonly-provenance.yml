@@ -1,0 +1,52 @@
+name: Launchpad Read-only Program Provenance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/launchlab-provenance.mjs"
+      - ".github/scripts/launchlab-provenance.test.mjs"
+      - ".github/workflows/launchpad-readonly-provenance.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/scripts/launchlab-provenance.mjs"
+      - ".github/scripts/launchlab-provenance.test.mjs"
+      - ".github/workflows/launchpad-readonly-provenance.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: launchpad-readonly-provenance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Validate fail-closed Raydium provenance parser
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax and read-only unit tests
+        run: |
+          node --check .github/scripts/launchlab-provenance.mjs
+          node --test .github/scripts/launchlab-provenance.test.mjs
+
+  live-readonly:
+    name: Verify public Raydium programs on mainnet and devnet
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Read-only Raydium API and finalized Solana ProgramData checks
+        run: node .github/scripts/launchlab-provenance.mjs
