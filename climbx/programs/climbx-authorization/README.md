@@ -9,3 +9,7 @@ This Anchor 0.30.1 Rust scaffold contains only owner-signed `create_grant` and `
 The program is isolated under `climbx/programs/` and is not referenced by the DEX, bot executor or deploy pipeline. No keypairs or wallet secrets are included.
 
 On a controlled development host with a compatible pinned Rust/Solana/Anchor toolchain, first replace the placeholder program ID, then run `cargo check --manifest-path climbx/programs/climbx-authorization/Cargo.toml`. Record actual compiler output and signed local-validator tests. **No successful compilation or validator run is claimed in Phase119.**
+
+## Phase121 compilation verification gate
+
+Run `node climbx/verify_anchor_cargo_build.cjs` from the repository root **only after** a controlled development host has Rust/Cargo installed and a reviewed `Cargo.lock` has been generated and committed with its dependency graph cached. The gate uses `cargo check --locked --offline` and intentionally fails if the lockfile or cached crates are missing. It does not download packages or change dependencies. A successful check only establishes host-side Rust type checking, not Anchor build, signed local-validator tests, audit, deployment readiness, or execution authorization. Existing GitHub CI runs **mocked unit tests of this gate only**, not `cargo check`.
