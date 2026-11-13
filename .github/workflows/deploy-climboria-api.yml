@@ -94,9 +94,14 @@ jobs:
             echo "::error::Missing GitHub Actions secret JUPITER_API_KEY. Store the Jupiter server key as an encrypted Actions secret; never commit it."
             exit 1
           fi
-          if ! node -e 'const u=new URL(process.argv[1]);if(u.protocol!=="https:"||u.username||u.password)process.exit(1)' "$SOLANA_RPC_URL"; then
-            echo "::error::Missing or invalid SOLANA_RPC_URL; configure a public HTTPS Solana RPC endpoint as an encrypted Actions secret."
+          # Solana RPC is required for a future security-reviewed signed-order
+          # release, but quote-only Jupiter search/quotes do not consume it.
+          if [ -n "$SOLANA_RPC_URL" ] && ! node -e 'const u=new URL(process.argv[1]);if(u.protocol!=="https:"||u.username||u.password)process.exit(1)' "$SOLANA_RPC_URL"; then
+            echo "::error::Invalid SOLANA_RPC_URL; if configured, it must be an HTTPS URL without credentials."
             exit 1
+          fi
+          if [ -z "$SOLANA_RPC_URL" ]; then
+            echo "::notice::SOLANA_RPC_URL is unset. Shipping quote-only API: signable orders and execution remain source-disabled."
           fi
 
       - name: Set Jupiter server key as a Worker secret
@@ -114,7 +119,13 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
-        run: printf '%s' "$SOLANA_RPC_URL" | npx wrangler@4.36.0 secret put SOLANA_RPC_URL
+        run: |
+          set -euo pipefail
+          if [ -n "$SOLANA_RPC_URL" ]; then
+            printf '%s' "$SOLANA_RPC_URL" | npx wrangler@4.36.0 secret put SOLANA_RPC_URL
+          else
+            echo "Quote-only release: skipping unset Solana RPC secret."
+          fi
 
       - name: Deploy Worker
         working-directory: dex/swap-proxy
@@ -127,7 +138,7 @@ jobs:
         run: |
           set -euo pipefail
           response="$(curl --retry 6 --retry-delay 10 --retry-connrefused --fail --silent --show-error https://api.climboria.fun/health)"
-          printf '%s' "$response" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const x=JSON.parse(s);if(x.ok!==true||x.configured?.jupiterKey!==true||x.configured?.rateLimiter!==true||x.configured?.orderStore!==true||x.configured?.solanaRpc!==true||x.execution!=='disabled'||x.configured?.executionEnabled!==false){console.error('Worker health is not quote-only production-ready:',x);process.exit(1)}console.log('Worker health, required bindings, and disabled execution kill switch verified.')})"
+          printf '%s' "$response" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const x=JSON.parse(s);if(x.ok!==true||x.configured?.jupiterKey!==true||x.configured?.rateLimiter!==true||x.configured?.orderStore!==true||x.execution!=='disabled'||x.configured?.executionEnabled!==false){console.error('Worker health is not quote-only production-ready:',x);process.exit(1)}console.log('Worker health, required bindings, and disabled execution kill switch verified.')})"
           curl --fail --silent --show-error -X OPTIONS https://api.climboria.fun/api/swap/order -H 'Origin: https://climboria.fun' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' -o /dev/null -D /tmp/climboria-cors-headers
           grep -qi '^access-control-allow-origin: https://climboria.fun' /tmp/climboria-cors-headers
           echo "Worker CORS preflight verified for https://climboria.fun."

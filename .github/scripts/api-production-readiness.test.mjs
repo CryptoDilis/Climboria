@@ -41,6 +41,25 @@ test("production acceptance probe verifies real quote preview but never signs or
   assert.ok(calls.every(c => c.origin === ORIGIN || c.origin === "https://unauthorized.example"));
 });
 
+test("read-only readiness probe accepts intentionally missing Solana RPC", async () => {
+  const { fakeFetch } = fixture({
+    health: Response.json({ ...health, configured: { ...health.configured, solanaRpc: false } }, {
+      headers: { "access-control-allow-origin": ORIGIN }
+    })
+  });
+  const result = await probeProductionApi({ fetchImpl: fakeFetch });
+  assert.equal(result.ok, true);
+});
+
+test("read-only readiness probe still requires order store binding", async () => {
+  const { fakeFetch } = fixture({
+    health: Response.json({ ...health, configured: { ...health.configured, orderStore: false, solanaRpc: false } }, {
+      headers: { "access-control-allow-origin": ORIGIN }
+    })
+  });
+  await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), /orderStore/);
+});
+
 test("probe rejects non-HTTPS origins before making requests", async () => {
   await assert.rejects(probeProductionApi({ baseUrl: "http://localhost:4173", fetchImpl: () => { throw Error("should not fetch"); } }), /HTTPS/);
 });
