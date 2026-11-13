@@ -219,13 +219,19 @@ try {
       try {
         await pendingQuote(ctx,async page=>{
           await page.evaluate(kind=>{
-            if(kind==='side') {
-              document.querySelector('[data-dex-side="sell"]').click();
-              document.querySelector('[data-dex-side="buy"]').click();
-            } else {
-              document.querySelector('[data-dex-order="limit"]').click();
-              document.querySelector('[data-dex-order="market"]').click();
+            // Production trade tabs remain intentionally disabled.
+            // Activate only this isolated DOM fixture to test the dormant
+            // invalidation handlers; restore disabled state immediately.
+            const attrs=kind==='side'?['sell','buy']:['limit','market'];
+            const name=kind==='side'?'dex-side':'dex-order';
+            for(const value of attrs){
+              const button=document.querySelector('[data-'+name+'="'+value+'"]');
+              if(!button||!button.disabled)throw new Error('Expected a disabled production trading tab');
+              button.disabled=false;
+              try{button.click();}finally{button.disabled=true;}
             }
+            if([...document.querySelectorAll('[data-'+name+']')].some(x=>!x.disabled))
+              throw new Error('Trading tab was not returned to fail-closed state');
           },kind);
           assert.equal(await page.locator('#getQuote').isDisabled(),false);
         },{assertStatus:kind==='side'?/Trade direction changed/i:/Order mode changed/i,
