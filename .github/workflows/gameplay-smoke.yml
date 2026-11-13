@@ -87,6 +87,7 @@ jobs:
         with:
           name: climboria-gameplay-screenshots
           path: |
+            climboria-hero-creator-desktop.png
             climboria-desktop-gameplay.png
             climboria-mobile-gameplay.png
             climboria-desktop-cave-entrance.png
