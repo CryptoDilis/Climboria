@@ -1553,3 +1553,31 @@ All four runs below targeted commit `7ddc4377331799f770b0150829f9ede6647ed933`:
 - [ ] Keep production signing/execution disabled pending complete provenance, Devnet settlement and independent security review.
 
 Release posture: three of four exact-head workflows passed; IDL History is red for missing unique historical provenance after the on-chain reconstruction timeout. PR #269 remains open and unmerged. No production Worker deployment, signing, transaction submission, Devnet settlement acceptance, or LIVE Swap claim is made.
+
+
+## 2026-11-13 — PR #269 exact-head IDL History completion and artifact findings (head 4d30d19)
+
+### Exact-head verification
+
+| Workflow | Run | Job | Result |
+|---|---:|---:|---|
+| Validate Climboria | 43346493400 | 131627021981 | **SUCCESS** |
+| Climboria Browser Smoke Test | 43346493345 | 131627039757 | **SUCCESS** |
+| Jupiter V6 CPI Trace Audit | 43346493401 | 131627104802 | **SUCCESS** |
+| Jupiter IDL History Audit | 43346493435 | 131627006789 | **SUCCESS** |
+
+All steps in all four jobs completed successfully. The IDL job completed on-chain reconstruction, DEX adapter history fetch, pinned Rust static-audit tests, disassembly/CFG generation, and artifact upload. No terminal failed job exists on this exact head; do not create a speculative failure diagnosis.
+
+### Artifact inspection and provenance
+
+- IDL artifact `14002604160`, 3,187,258 bytes; CPI trace artifact `14001114756`, 22,872 bytes. Both downloaded and inspected.
+- Jupiter candidate `route_v2` at slot `468153382`: official `@solana/idl@0.3.0` private-RPC fallback succeeded (75 Anchor revisions / 91 snapshots). There are 27 matching historical records and exactly one active revision covering the candidate slot. Finalized on-chain IDL account owner matches Jupiter; decompressed IDL payload hash matches the active historical revision; route_v2 discriminator matches; ProgramData deployment slot `468023491` is before candidate slot. Pinned ELF SHA-256: `aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6`. Pinned sBPF static analysis and CFG/disassembly completed.
+- The external IDL-history provider's Jupiter `/history` HTTP request timed out, but independent official RPC reconstruction succeeded. This is a transport warning, not a failed workflow or failed Jupiter history gate. Artifact flags: `officialHistoryReconstructionSucceeded=true`, `requiredHistorySourceAvailable=true`, candidate-slot provenance gate passed.
+- Adapter IDL status: Kipseli incomplete (no historical/on-chain IDL; current ProgramData deployment after candidate); Orca Whirlpool incomplete (on-chain instruction/payload mismatch); Meteora DLMM incomplete (latest/history disagreement and on-chain instruction/payload mismatch); Raydium LaunchLab supported for IDL provenance only, but two active revisions cover the candidate slot so provenance is not unique. LaunchLab candidate account audit matched. These classifications do not establish runtime CPI compatibility or release approval.
+- CPI trace remains a single transaction-specific Jupiter/Meteora observation. It does not prove runtime remaining-account slicing, CPI-requested signer/writable privileges, complete token movement/fee semantics, or universal route variants. Outer transaction privileges are not CPI-requested AccountMeta privileges.
+
+### Next work and safety posture
+
+- Reconcile PR #269 with latest main: PR remains open/draft/unmerged, GitHub reports mergeable=false, and base SHA is `0fa8e987aec4d6e6bc7590363efa7d20fde79422`.
+- Expand finalized CPI traces to multi-hop/split routes, DEX order permutations, transfer-hook slices and variable Meteora BinArray counts; establish runtime cursor behavior and CPI-requested privileges; complete adapter-specific provenance.
+- Keep signing/execution disabled and both security-review flags false. No production deployment, Devnet settlement acceptance, independent review, or LIVE Swap claim is established.
