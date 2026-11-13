@@ -636,3 +636,22 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Phase 83 commit:** `44f8d59a2cceb9e15c470699c4796621cecb693d` added `climbx/SOLANA_AUTHORIZATION_THREAT_MODEL.md` on branch `climbx/phase28-release-gate-ci` (draft PR #282). Design specifies one bot/wallet, five distinct slots, 24-hour owner-signed grants, last-30-minute no-new-entry rule, on-chain caps and revocation, DEX-only venue enforcement, safe native SOL handling, replay protection, exact CPI/program/ALT validation, net realized profit high-water-mark fee, and adversarial devnet acceptance criteria. **Design only, no deployed program, no real signed Solana swap, no independent audit.** CLIMBX real-funds release **NO-GO**.
 
 **Next steps — start here in a future session:** (1) add CLIMBX-only off-chain policy negative tests for slots, caps, expiry, revocation and cutoff, explicitly not misrepresenting these as on-chain controls; (2) verify actual Solana CLI/validator/Rust/Anchor availability and devnet infrastructure; (3) choose scoped on-chain authorization architecture and build devnet-only proof; (4) verify signed swap, finality and independent reconciliation; (5) independent security review and owner release decision. Keep the other chat's Swap/DEX/Launchpad files untouched. Append each new phase with exact commits, CI and next steps to this main-branch record.
+
+
+## Phase 84 — 2026-11-14 — CLIMBX-only authorization policy simulation + CI wiring
+
+**Branch:** `climbx/phase28-release-gate-ci` (draft PR #282). No edits to Swap, DEX, Launchpad, or game source.
+
+**Commits:** `bd809e8eb0c1b7d074bbd9ab5f32c78d76965633` added `climbx/authorization_policy_simulation.cjs` (strict, fail-closed OFF-CHAIN policy evaluator). `eb64c87d73aac309b15415d9f0002d29e2e7f0f0` added `climbx/authorization_policy_simulation.test.cjs` (19 tests covering valid simulation, owner mismatch, revoked/unknown authorization, grant lifetime, expiry, last-30-minute cutoff, sixth/duplicate slot, occupied slot, mint restrictions, invalid amount, per-trade/cumulative caps, venue, missing state). `7251260ae71df1ba78871d6cad897005c51b0726` wired test file into `.github/workflows/climbx-release-gate.yml`.
+
+**CI status:** Workflow runs for final commit were not yet visible when checked (GitHub returned zero runs); **do not claim Phase84 tests passed** until checking actual workflow runs/logs. Previous Phase82 CI was successful (CLIMBX `43458426921`, Validate `43458427033`, Browser Smoke `43458426940`).
+
+**Critical distinction:** This is an **off-chain simulation**, not an on-chain grant, bot signer, permissioned Solana program, signed transaction, deployed service, or independent security audit. `allowed:true` means only the simulated policy predicates passed; never use it to authorize real funds. CLIMBX real-funds trading remains **NO-GO**.
+
+**NEXT STEPS (start here, don't repeat finished work):**
+1. Check workflow runs for commit `7251260ae71df1ba78871d6cad897005c51b0726` and inspect any failures. If necessary fix tests and record final exact passing commit/run IDs.
+2. Add boundary tests for zero/negative/unsafe integer timestamps, non-array allowed mints, invalid slot shapes, NaN and malformed amounts, and cumulative-cap edge equality; verify tests are run in CI.
+3. Verify available Solana CLI, local validator, Rust/Anchor and devnet RPC (do not infer provisioning from docs). Record actual versions/evidence.
+4. Select an on-chain owner-revocable scoped authority mechanism, design exact CPI/ALT/program allowlist and spend accounting, build a devnet-only prototype and adversarial end-to-end tests.
+5. Independently review all code that could authorize real funds; require explicit owner release approval. Never flip real-trading gates.
+6. Append future progress, exact commits, CI and next actions to this main-branch record each phase. CLIMBX-only scope.
