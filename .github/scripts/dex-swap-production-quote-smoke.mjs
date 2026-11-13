@@ -49,7 +49,7 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
     assert.equal(config?.proxyEnabled, true, name + " must use server-side API proxy");
     assert.equal(config?.enabled, false, name + " wallet execution gate must remain disabled");
 
-    if (name === "DEX") {
+    if (name.startsWith("DEX")) {
       await page.locator("#markets").waitFor({ state: "visible", timeout: 20000 });
       // The DEX panel is deliberately hidden for users. This verifies only the
       // underlying quote path; product UI acceptance remains a separate gate.
@@ -81,7 +81,7 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
     assert.equal(errors.length, 0, "Browser errors: " + errors.join(" | "));
     console.log("PASS " + name + " real browser quote via Jupiter proxy; exact raw units, no transaction.");
 
-    if (name === "DEX") {
+    if (name.startsWith("DEX")) {
       // A provider-backed market response is a minimum data-integrity signal.
       // It does NOT establish chart/pool orientation, freshness or trading.
       assert.ok(dexMarketResponses.some(s => s === 200), "No successful DexScreener market response in DEX browser session");
@@ -96,7 +96,8 @@ const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] }
 try {
   await assertPage(browser, { name: "Swap desktop", path: "/swap/", viewport: { width: 1440, height: 900 } });
   await assertPage(browser, { name: "Swap mobile", path: "/swap/", viewport: { width: 390, height: 844 }, isMobile: true });
-  await assertPage(browser, { name: "DEX", path: "/dex/", viewport: { width: 1440, height: 900 } });
+  await assertPage(browser, { name: "DEX desktop", path: "/dex/", viewport: { width: 1440, height: 900 } });
+  await assertPage(browser, { name: "DEX mobile", path: "/dex/", viewport: { width: 390, height: 844 }, isMobile: true });
   console.log("PASS: production read-only DEX/Swap browser acceptance (no live execution claimed).");
 } finally {
   await browser.close();
