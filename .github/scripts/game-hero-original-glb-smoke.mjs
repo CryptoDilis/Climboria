@@ -36,6 +36,15 @@ try{
    if(!layout.modelReady||!layout.saveEnabled||!layout.enterDisabled||layout.hasUpload)throw Error('Hero creator state incorrect: '+JSON.stringify(layout));
    if(layout.canvas.width<250||layout.canvas.height<250)throw Error('Full body canvas is too small: '+JSON.stringify(layout));
    if(layout.modal.scrollWidth>layout.modal.clientWidth+3)throw Error('Hero editor overflows horizontally: '+JSON.stringify(layout));
+   if(config.isMobile){
+     const actionVisibility=await page.evaluate(()=>{
+       const save=document.querySelector('#saveHeroButton'),enter=document.querySelector('#heroEnterButton');
+       const a=save.getBoundingClientRect(),b=enter.getBoundingClientRect();
+       return {saveTop:a.top,saveBottom:a.bottom,enterTop:b.top,enterBottom:b.bottom,viewportHeight:innerHeight};
+     });
+     if(actionVisibility.saveBottom>actionVisibility.viewportHeight-5||actionVisibility.enterBottom>actionVisibility.viewportHeight-5)
+       throw Error('Mobile Save/Enter actions are hidden below the initial viewport: '+JSON.stringify(actionVisibility));
+   }
    await page.screenshot({path:`climboria-original-glb-${config.name}.png`});
    await page.locator('#saveHeroButton').click();
    const created=await page.evaluate(()=>JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null'));
