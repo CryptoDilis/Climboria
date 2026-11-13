@@ -245,5 +245,12 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - NEXT: verify GitHub preview-visibility workflow, inspect responsive layout in browser and fix issues. After launch presentation, resume isolated CLIMBX runtime integration.
 - No DEX trading, Swap, Launchpad or Game edits. **REAL-FUNDS NO-GO**.
 
+## Phase 157 — 2026-11-14 — CI failure diagnosis and targeted fix (verification pending)
+- Opened draft integration PR #353 (`climbx/mainline-integration-20261114` -> main) to trigger PR checks, no merge: https://github.com/CryptoDilis/Climboria/pull/353
+- Initial run `43515477717` failed static-boundaries job `132196255020`: 21/22 tests passed; `actual scaffold retains static grant/revoke safeguards` failed because `check_anchor_safety_boundary.cjs` looked for `allowed_mints.len() <= 5`, while the new Rust grant validator correctly uses `(1..=5).contains(&allowed_mints.len())`.
+- FIX committed on integration branch `37d353a96b676c529ac3c0d08c5911a129ab8f20`: recognize the bounded 1-to-5 range without relaxing owner, expiry, cap or fail-closed checks.
+- PENDING: new exact-head PR CI green evidence; Rust unit-test job and main Validate workflow status; do not move to next feature until checked.
+- No live trade enablement. **REAL-FUNDS NO-GO**.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
