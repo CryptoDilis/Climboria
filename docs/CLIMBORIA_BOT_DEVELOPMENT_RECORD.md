@@ -284,3 +284,12 @@ V10 adds deterministic in-memory `FakeChain` with fake broadcast/inclusion/expir
 V10 adds a deterministic in-memory fake-chain simulator with broadcast, pending, inclusion, simulated two-block finality, reorganization before finality, expiry, and failed-transaction fee observations. `FinalityGate` persists mock observations in SQLite and does not treat pending/included/unknown as finalized. These are paper fixtures, **not Solana consensus/finality proof**.
 
 **Critical limitations:** fake chain canonical history is not persistent across restart; fee observations are **not atomically linked to V9 wallet/order settlement**; no crash-safe real network send, actual RPC/signatures, validator or audited Solana permission mechanism. Phase 20: atomic finality-to-journal/fee settlement, persist fake chain for restart tests, inject crash windows and enforce authorization invariants. CLIMBX website icon/card/manual remain planned and not deployed. Keep live execution disabled and current DEX priority order unchanged.
+
+
+## Phase 20 checkpoint — 2026-11-13 (CLIMBX atomic paper settlement V11)
+
+**Verified locally:** 84/84 Python unittest tests passed (74 regressions + 10 new atomicity tests). ZIP `climbx-paper-v11.zip` archive integrity verified; executable code remains **local conversation artifact only**, NOT committed to this repo or deployed.
+
+V11 `atomic_v11.py` provides `ClimbXPaperV11`: one SQLite BEGIN IMMEDIATE transaction for final fake-chain status, order/position/wallet mutation, failed-tx fee debit, resolved intent and unique settlement record. Injected pre-commit exception rolls back the whole settlement. Tests cover buy/sell success, failed buy/sell fee, duplicate idempotency, restart, pending lock, signature mismatch, and crash rollback. Uses in-memory FakeChain V10 as **untrusted deterministic fixture** only; not cryptographic or RPC evidence.
+
+**Remaining critical gaps:** fake chain canonical history not persistent, no durable signed transaction before network send, no external RPC/finality validation, no crash-proof exactly-once broadcast, no actual delegated Solana authority, no external wallet spending/fees/rent/slippage model, no security audit. Website CLIMBX icon, desktop/mobile card and User's Manual are still mandatory but not deployed. **Next Phase 21:** persist fake chain state across restart, test crash windows around broadcast and signature recording, implement conservative UNKNOWN resolution rules, then plan website UI integration after owner priority gates. Live execution remains disabled.
