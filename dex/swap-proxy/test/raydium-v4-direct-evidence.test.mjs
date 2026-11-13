@@ -109,7 +109,7 @@ test("explicit expected account binding catches wrong token program, source, des
 });
 
 test("invalid and duplicate direct account pubkeys cannot be accepted as on-chain evidence", () => {
-  failWith(e => { e.accounts[5].pubkey = "not-a-base58-key"; e.expectedAddresses.ammPcVault = e.accounts[5].pubkey; }, /invalid pubkey/i);
+  failWith(e => { e.accounts[5].pubkey = "not-a-base58-key"; e.expectedAddresses.ammPcVault = e.accounts[5].pubkey; }, /invalid (?:32-byte )?pubkey/i);
   failWith(e => { e.accounts[5].pubkey = "1"; e.expectedAddresses.ammPcVault = "1"; }, /invalid pubkey|32-byte pubkey/i);
   failWith(e => { e.accounts[12].pubkey = e.accounts[11].pubkey; e.expectedAddresses.marketPcVault = e.accounts[11].pubkey; }, /duplicate direct account keys/i);
 });
