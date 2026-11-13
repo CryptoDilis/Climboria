@@ -190,3 +190,15 @@ Last updated: 2026-11-13.
 - [x] Corrected the Whitepaper Markdown and rendered HTML to state explicitly that Climboria Signature is planned, not implemented, and not operational.
 - [x] Reframed identity, tokenomics, authority, liquidity, creator-lock, sell-limit, reviewer, and approval items as proposed requirements—not active review checks or existing controls.
 - [ ] Recheck Markdown/HTML parity and focused status-language assertions on the new exact PR head.
+
+
+## P. Two-destination scope audit — 13 November 2026
+
+- [x] Audited active whitepaper, homepage, and Game Concept content against the approved scope: Jarrell's Peak and Arena are the only game-world destinations.
+- [x] Replaced the retired eleven-mountain/single-world wording in the canonical Whitepaper source, rendered Whitepaper, Game Concept Markdown, and rendered Game Concept page.
+- [x] Removed the active Game Concept statement that allowed additional maps after budget review; further game-world destinations are outside the approved scope.
+- [x] Kept Arena clearly labelled as planned in the homepage destination panel. Marketplace and Inventory remain supporting panels, not game worlds.
+- [x] Verified the homepage source contains no Overview desktop/mobile navigation item, Project Overview resource card, or Overview route link. The Whitepaper's internal executive-overview anchor remains a document section, not a homepage navigation entry.
+- [x] Investigated Browser Smoke run 43384117049 on prior PR head d7b98a9: gameplay assertions completed; Playwright timed out at .github/scripts/game-smoke.mjs:840 while waiting for fonts during the first mobile viewport screenshot. This is a smoke-artifact capture failure, not a failed world/HUD/control assertion.
+- [ ] Run Validate and Browser Smoke on the exact new documentation head. Preserve every gameplay assertion; repair the screenshot capture path only if the exact failure is reproducible.
+- [ ] Verify the deployed homepage and /overview/ 404 only after separate merge and deployment approval.
