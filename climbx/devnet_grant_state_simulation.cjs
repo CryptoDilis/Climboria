@@ -11,11 +11,15 @@ function createGrant({owner,executor,nonce,issuedAt,expiresAt,allowedMints,maxPe
  return {ok:true,grant:{owner,executor,nonce,issuedAt,expiresAt,allowedMints:[...allowedMints],maxPerTrade,maxCumulative,spent:0,revoked:false,lastSequence:0}};
 }
 function revokeGrant(grant,{owner}={}){
- if(!grant||grant.revoked!==false||owner!==grant.owner)return deny('UNAUTHORIZED_REVOKE');
+ if(!grant||typeof grant!=='object'||Array.isArray(grant)||grant.revoked!==false||typeof grant.owner!=='string'||!grant.owner||owner!==grant.owner)return deny('UNAUTHORIZED_REVOKE');
  return {ok:true,grant:{...grant,revoked:true}};
 }
 function evaluateOrder(grant,{executor,mint,amount,sequence,now,positionOpen}={}){
- if(!grant||grant.revoked!==false)return deny('REVOKED_OR_UNKNOWN');
+ if(!grant||typeof grant!=='object'||Array.isArray(grant)||grant.revoked!==false)return deny('REVOKED_OR_UNKNOWN');
+ if(typeof grant.owner!=='string'||!grant.owner||typeof grant.executor!=='string'||!grant.executor||typeof grant.nonce!=='string'||!grant.nonce)return deny('INVALID_GRANT');
+ if(!uint(grant.issuedAt)||!uint(grant.expiresAt)||grant.expiresAt<=grant.issuedAt||grant.expiresAt-grant.issuedAt>MAX_LIFETIME_SECONDS)return deny('INVALID_GRANT');
+ if(!Array.isArray(grant.allowedMints)||grant.allowedMints.length<1||grant.allowedMints.length>MAX_SLOTS||grant.allowedMints.some(m=>typeof m!=='string'||!m)||new Set(grant.allowedMints).size!==grant.allowedMints.length)return deny('INVALID_GRANT');
+ if(!uint(grant.lastSequence))return deny('INVALID_GRANT');
  if(typeof executor!=='string'||executor!==grant.executor)return deny('EXECUTOR_MISMATCH');
  if(!uint(now)||now<grant.issuedAt||now>=grant.expiresAt)return deny('OUTSIDE_GRANT');
  if(grant.expiresAt-now<=ENTRY_CUTOFF_SECONDS)return deny('ENTRY_CUTOFF');
