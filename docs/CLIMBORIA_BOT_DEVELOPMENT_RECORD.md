@@ -1263,3 +1263,17 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Toolchain probe on assistant container:** `cargo`, `rustc`, `solana-test-validator`, `anchor` absent. No real Rust build, signed local-validator test, devnet deployment, DEX CPI, or audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
 
 **Next Phase123:** verify Phase122 CI, fix failures; set up approved pinned Rust/Solana/Anchor build host, generate reviewed Cargo.lock, run actual cargo check and signed local-validator grant/revoke tests. Keep append-only main record.
+
+
+## Phase 123 — 2026-11-14 — owner signer and PDA structural regression guard
+
+**Phase122 CI all SUCCESS** on `d6454b8b84c3b2831640602d0ccd83ee52af771c`: CLIMBX release safety `43491853719`, Validate `43491853713`, Browser Smoke `43491853736`.
+
+**Phase123 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `7e1f217013f4024315f425ce1d8fa9414c20fb12`: `climbx/check_anchor_scaffold.cjs` now fails closed when source lacks Anchor owner Signer, revoke `has_one = owner`, or owner-bound create/revoke PDA seeds.
+- `78f7a88f80ca014638b46e437a59ad5bee4577a7`: four regression tests for absent owner signature, removed revoke owner binding, and altered create/revoke PDA seeds. Existing CI includes this test file.
+**Phase123 CI pending** at first check. This is a narrow textual regression guard only, not proof that Anchor constraints are safe or Rust compiles.
+
+**Direct environment probe 2026-11-14:** `cargo`, `rustc`, `anchor`, `solana-test-validator` all unavailable. No actual Rust compilation, validator, signed devnet test, deployment, or audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase124:** verify Phase123 CI and fix any failure. Prioritize provisioning an approved pinned Rust/Solana/Anchor toolchain, reviewed Cargo.lock, actual `cargo check` and owner-signed validator grant/revoke tests. Avoid claiming mock/static tests are on-chain verification.
