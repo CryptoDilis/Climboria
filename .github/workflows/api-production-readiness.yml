@@ -44,7 +44,9 @@ jobs:
 
   production-probe:
     name: Check real API production quote-only readiness
-    if: github.event_name == 'workflow_dispatch'
+    # Verify real production quote-only availability on the first main merge too.
+    # PRs only run unit checks; production probes run for main pushes and manual dispatch.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     needs: probe-unit
     runs-on: ubuntu-latest
     timeout-minutes: 5
