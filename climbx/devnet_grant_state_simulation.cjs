@@ -8,11 +8,11 @@ function createGrant({owner,executor,nonce,issuedAt,expiresAt,allowedMints,maxPe
  if(!uint(issuedAt)||!uint(expiresAt)||expiresAt<=issuedAt||expiresAt-issuedAt>MAX_LIFETIME_SECONDS)return deny('INVALID_EXPIRY');
  if(!Array.isArray(allowedMints)||allowedMints.length<1||allowedMints.length>MAX_SLOTS||allowedMints.some(m=>typeof m!=='string'||!m)||new Set(allowedMints).size!==allowedMints.length)return deny('INVALID_MINTS');
  if(!uint(maxPerTrade)||maxPerTrade===0||!uint(maxCumulative)||maxCumulative===0)return deny('INVALID_CAPS');
- return {ok:true,grant:{owner,executor,nonce,issuedAt,expiresAt,allowedMints:[...allowedMints],maxPerTrade,maxCumulative,spent:0,revoked:false,lastSequence:0}};
+ return {ok:true,simulationOnly:true,mayExecute:false,grant:{owner,executor,nonce,issuedAt,expiresAt,allowedMints:[...allowedMints],maxPerTrade,maxCumulative,spent:0,revoked:false,lastSequence:0}};
 }
 function revokeGrant(grant,{owner}={}){
  if(!grant||typeof grant!=='object'||Array.isArray(grant)||grant.revoked!==false||typeof grant.owner!=='string'||!grant.owner||owner!==grant.owner)return deny('UNAUTHORIZED_REVOKE');
- return {ok:true,grant:{...grant,revoked:true}};
+ return {ok:true,simulationOnly:true,mayExecute:false,grant:{...grant,revoked:true}};
 }
 function evaluateOrder(grant,{executor,mint,amount,sequence,now,positionOpen}={}){
  if(!grant||typeof grant!=='object'||Array.isArray(grant)||grant.revoked!==false)return deny('REVOKED_OR_UNKNOWN');
@@ -29,6 +29,6 @@ function evaluateOrder(grant,{executor,mint,amount,sequence,now,positionOpen}={}
  if(!uint(amount)||amount===0||!uint(grant.maxPerTrade)||!uint(grant.maxCumulative)||!uint(grant.spent)||grant.spent>grant.maxCumulative)return deny('INVALID_CAP');
  if(amount>grant.maxPerTrade||amount>grant.maxCumulative-grant.spent)return deny('CAP_EXCEEDED');
  // No settlement mutation here. Atomic on-chain cap accounting is NOT implemented.
- return {ok:true,reason:'SIMULATION_ONLY_NO_EXECUTION'};
+ return {ok:true,simulationOnly:true,mayExecute:false,reason:'SIMULATION_ONLY_NO_EXECUTION'};
 }
 module.exports={createGrant,revokeGrant,evaluateOrder};
