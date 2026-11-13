@@ -122,3 +122,6 @@ jobs:
           curl --fail --silent --show-error -X OPTIONS https://api.climboria.fun/api/swap/order -H 'Origin: https://climboria.fun' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' -o /dev/null -D /tmp/climboria-cors-headers
           grep -qi '^access-control-allow-origin: https://climboria.fun' /tmp/climboria-cors-headers
           echo "Worker CORS preflight verified for https://climboria.fun."
+
+      - name: Verify production API quote, token search, and closed transaction gates
+        run: node .github/scripts/api-production-readiness.mjs
