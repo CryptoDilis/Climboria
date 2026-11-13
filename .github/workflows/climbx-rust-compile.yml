@@ -18,13 +18,15 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Report toolchain
+      - name: Install pinned toolchain
+        run: rustup toolchain install 1.99.1 --profile minimal
+      - name: Report pinned toolchain
         run: |
-          rustc --version
-          cargo --version
+          rustc +1.99.1 --version
+          cargo +1.99.1 --version
       - name: Cargo type check (development scaffold only)
         run: |
-          cargo check --manifest-path climbx/programs/climbx-authorization/Cargo.toml
+          cargo +1.99.1 check --manifest-path climbx/programs/climbx-authorization/Cargo.toml
       - name: Non-deployment boundary
         if: always()
         run: |
