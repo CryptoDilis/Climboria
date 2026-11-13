@@ -1,0 +1,31 @@
+name: CLIMBX Rust compile probe (non-deploying)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - climbx/phase28-release-gate-ci
+    paths:
+      - 'climbx/programs/climbx-authorization/**'
+      - '.github/workflows/climbx-rust-compile.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  rust-compile-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Report toolchain
+        run: |
+          rustc --version
+          cargo --version
+      - name: Cargo type check (development scaffold only)
+        run: |
+          cargo check --manifest-path climbx/programs/climbx-authorization/Cargo.toml
+      - name: Non-deployment boundary
+        if: always()
+        run: |
+          echo "CLIMBX grant/revoke source only; no Solana deployment, validator, signatures, or trade execution."
