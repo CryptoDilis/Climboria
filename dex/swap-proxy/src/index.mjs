@@ -239,10 +239,9 @@ async function handleQuote(request, env) {
   if (!response.ok) return json({ error: "Jupiter quote request failed", upstreamStatus: response.status, details: data?.error || data?.message || null }, response.status >= 400 && response.status < 500 ? response.status : 502);
   // A provider HTTP 200 is not proof of a usable quote. Refuse missing or
   // mismatched raw amounts rather than displaying a price for another order.
-  const validRawAmount = value => typeof value === "string" && /^[1-9][0-9]*$/.test(value);
-  if (!data || !validRawAmount(data.inAmount) || data.inAmount !== amount ||
-      !validRawAmount(data.outAmount) || typeof data.requestId !== "string" ||
-      !data.requestId.trim()) {
+  if (!data || !validRawTokenAmount(data.inAmount) || data.inAmount !== amount ||
+      !validRawTokenAmount(data.outAmount) || typeof data.requestId !== "string" ||
+      !data.requestId.trim() || data.requestId.length > 256) {
     return json({ error: "Jupiter returned an incomplete or inconsistent quote" }, 502);
   }
   return json({
