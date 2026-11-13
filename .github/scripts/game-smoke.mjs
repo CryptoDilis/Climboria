@@ -841,12 +841,33 @@ try {
   // Camera-orbit and pinch tests above deliberately change the view. Capture a
   // comparable default Sanctuary view rather than leaving the screenshot zoomed
   // toward an arbitrary direction or landmark.
+  await mobile.evaluate(() => {
+    window.__climboriaSmokeSanctuaryKeyEvents = [];
+    addEventListener('keydown', event => {
+      window.__climboriaSmokeSanctuaryKeyEvents.push({
+        code: event.code,
+        key: event.key,
+        trusted: event.isTrusted,
+      });
+    }, { once: true, capture: true });
+  });
   await mobile.keyboard.press('1');
   await mobile.waitForFunction(() => {
     const p=window.__climboriaJarrellsPeak?.player;
     return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
       (window.__climboriaRenderState?.frames ?? 0)>=4;
-  }, undefined, { timeout: 10000 });
+  }, undefined, { timeout: 10000 }).catch(async error => {
+    const state = await mobile.evaluate(() => {
+      const p=window.__climboriaJarrellsPeak?.player;
+      return {
+        player: p ? { x:p.x, y:p.y, z:p.z, mode:p.mode, moveTarget:p.moveTarget, yaw:p.yaw } : null,
+        renderFrames: window.__climboriaRenderState?.frames ?? null,
+        keyEvents: window.__climboriaSmokeSanctuaryKeyEvents ?? [],
+        bodyClasses: [...document.body.classList],
+      };
+    });
+    throw new Error('Mobile Sanctuary normalization failed after the screenshot-stage Digit1 shortcut: ' + JSON.stringify(state) + '; ' + error.message);
+  });
   await mobile.waitForTimeout(900);
   const mobileVisualCapture = await mobile.evaluate(() => ({
     player:{x:window.__climboriaJarrellsPeak?.player?.x,y:window.__climboriaJarrellsPeak?.player?.y,z:window.__climboriaJarrellsPeak?.player?.z},
