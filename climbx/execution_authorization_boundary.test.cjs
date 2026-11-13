@@ -47,3 +47,35 @@ test('spoofed on-chain proof with throwing getter remains untrusted',()=>{
  const onChainProof=Object.defineProperty({},'verified',{get(){throw Error('must never inspect caller proof')}});
  assert.deepEqual(authorizeBotExecution({...good,onChainProof}),{authorized:false,mayExecute:false,reason:'ON_CHAIN_AUTHORIZATION_NOT_IMPLEMENTED'});
 });
+
+
+test('authorization boundary does not mutate frozen input objects',()=>{
+ const walletBinding=Object.freeze({status:'BOUND_CONFIRMED'});
+ const policySimulation=Object.freeze({allowed:true,simulationOnly:true,mayExecute:false});
+ const grantSimulation=Object.freeze({ok:true,simulationOnly:true,mayExecute:false});
+ const routePreflight=Object.freeze({status:'BLOCKED',mayExecute:false});
+ const onChainProof=Object.freeze({verified:true,authorized:true});
+ const input=Object.freeze({walletBinding,policySimulation,grantSimulation,routePreflight,onChainProof});
+ assert.deepEqual(authorizeBotExecution(input),{authorized:false,mayExecute:false,reason:'ON_CHAIN_AUTHORIZATION_NOT_IMPLEMENTED'});
+ assert.deepEqual(input,{walletBinding,policySimulation,grantSimulation,routePreflight,onChainProof});
+});
+test('authorization boundary does not invoke input setters',()=>{
+ let writes=0;
+ const guarded=new Proxy({status:'BOUND_CONFIRMED'}, {set(){writes++;throw Error('unexpected mutation')}});
+ const result=authorizeBotExecution({...good,walletBinding:guarded});
+ assert.equal(result.mayExecute,false);
+ assert.equal(writes,0);
+});
+test('caller-supplied proof getter is never read',()=>{
+ let reads=0;
+ const proof=Object.defineProperty({},'authorized',{get(){reads++;throw Error('should not be read')}});
+ assert.equal(authorizeBotExecution({...good,onChainProof:proof}).reason,'ON_CHAIN_AUTHORIZATION_NOT_IMPLEMENTED');
+ assert.equal(reads,0);
+});
+test('repeated authorization requests never advance a grant sequence',()=>{
+ const grantSimulation={ok:true,simulationOnly:true,mayExecute:false,sequence:7,spent:0};
+ const input={...good,grantSimulation};
+ for(let i=0;i<5;i++)assert.equal(authorizeBotExecution(input).mayExecute,false);
+ assert.equal(grantSimulation.sequence,7);
+ assert.equal(grantSimulation.spent,0);
+});
