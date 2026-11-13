@@ -14,6 +14,12 @@ on:
       - ".github/scripts/api-production-readiness.test.mjs"
       - ".github/workflows/api-production-readiness.yml"
   workflow_dispatch:
+  # Deploy runs and readiness checks are separate workflows. Checking on a
+  # main push can probe the OLD Worker before Wrangler finishes.
+  workflow_run:
+    workflows: ["Deploy Climboria API"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -29,6 +35,9 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Compare the deployed revision on post-deploy checks.
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -44,14 +53,17 @@ jobs:
 
   production-probe:
     name: Check real API production quote-only readiness
-    # Verify real production quote-only availability on the first main merge too.
-    # PRs only run unit checks; production probes run for main pushes and manual dispatch.
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    # A successful Worker deployment (or an explicit manual check) is the
+    # ONLY condition that permits a live quote-only production probe.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     needs: probe-unit
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Compare the deployed revision on post-deploy checks.
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22

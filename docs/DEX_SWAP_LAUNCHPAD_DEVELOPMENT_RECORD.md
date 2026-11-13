@@ -2,7 +2,7 @@
 
 **Last reviewed:** 2026-11-14 (Philippine time)
 **Repository:** `CryptoDilis/Climboria`
-**Baseline observed:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`
+**Initial baseline:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`; **latest source audit:** `main` at `4e3f7fed3e8d11bb18f4a0965078db1a981989ea` (refresh on every resume)
 **Owner-directed scope:** **DEX, Swap, Launchpad ONLY.** The Game is owned by a separate chat/developer. This file supersedes older cross-project priority instructions **for this workstream only**.
 **State:** active development; **not** evidence that signed mainnet swaps or token launches are live.
 
@@ -19,7 +19,7 @@
 | Area | Verified accomplishments | Still blocked / NOT verified |
 | --- | --- | --- |
 | **DEX** | Public static DEX market explorer, discovery, charts, liquidity/market data interface deployed through GitHub Pages; browser regression coverage. PRs [#283](https://github.com/CryptoDilis/Climboria/pull/283) canonical SOL/USDC identity, [#287](https://github.com/CryptoDilis/Climboria/pull/287) missing provider values, [#288](https://github.com/CryptoDilis/Climboria/pull/288) browser-history CI merged. | Provider freshness, mobile real-device behavior, and end-to-end market/quote availability on the actual production origin still need acceptance evidence. Website deployment does not establish order execution. |
-| **Swap** | `/swap/` frontend deployed; Jupiter token search and quote-preview proxy implemented in `dex/swap-proxy/src/index.mjs`. Quote validation hardening [#286](https://github.com/CryptoDilis/Climboria/pull/286), safe production probe [#289](https://github.com/CryptoDilis/Climboria/pull/289), and quote-only RPC-optional release [#293](https://github.com/CryptoDilis/Climboria/pull/293) merged. Worker deployment workflow on [commit `72ac1d8`](https://github.com/CryptoDilis/Climboria/commit/72ac1d8e003eccb62c05b1693d8b592f90cc53d7) **succeeded** ([deploy run 43457843679](https://github.com/CryptoDilis/Climboria/actions/runs/43457843679)). | **Production readiness probe failed** on the same commit ([run 43457843923](https://github.com/CryptoDilis/Climboria/actions/runs/43457843923)): `Missing Worker binding: orderStore` / missing expected field in production `/health` response. Could reflect stale Worker/custom-domain target vs wrong runtime binding; diagnose, do not assume root cause. Do **not** claim live Jupiter quotes verified. `swap-config.js` remains `enabled: false`; source-level signable-order and execute gates remain false, so **real trading is disabled**. |
+| **Swap** | `/swap/` quote-preview frontend deployed. Jupiter token search/quote backend and quote hardening [#286](https://github.com/CryptoDilis/Climboria/pull/286), safe production probe [#289](https://github.com/CryptoDilis/Climboria/pull/289), RPC-optional quote-only [#293](https://github.com/CryptoDilis/Climboria/pull/293) merged. **Production quote-only API passed real verification on 2026-11-13 15:58 UTC**: [Cloudflare deploy run 43457843679](https://github.com/CryptoDilis/Climboria/actions/runs/43457843679) checked Worker bindings, exact-origin CORS, real SOL token search, SOL/USDC quote and 503 execution lock; [independent readiness run 43457843923, attempt 2](https://github.com/CryptoDilis/Climboria/actions/runs/43457843923) passed after the deploy. | The independent readiness run's first attempt failed while deployment was in flight, before the new Worker was active; **CI race**, not a proven persistent missing binding. [PR #296](https://github.com/CryptoDilis/Climboria/pull/296) sequences future production probes after successful Worker deployment; exact-head CI and final merge pending. Production quote checks are point-in-time and do not prove ongoing availability. `swap-config.js` remains `enabled: false`; source-level signable-order and execute gates remain false. **No real-money Swap trading.** |
 | **Launchpad** | `/launchpad/` is an informational preview with Normal, Developer and Signature sections. `docs/SIGNATURE-LAUNCHPAD-IMPLEMENTATION-SPEC.md` and `docs/SIGNATURE-LAUNCHPAD-BONDING-ARCHITECTURE.md` document Solana-first Devnet/security plan and proposed Raydium LaunchLab bonding-curve integration. | No verified creator submission, token mint, curve trading, migration, LP, fee settlement, Devnet lifecycle or production token deployment. No public fundraising/deposit vault. Mainnet launch **not approved**; fees are proposals, not collected. |
 
 ### Safety boundaries (non-negotiable)
@@ -32,10 +32,10 @@
 
 ## Exact next steps — in order
 
-**P0 — Restore honest, verified quote-only production API.**
-- Compare deployed `https://api.climboria.fun/health` JSON **schema, Worker version and target custom-domain route** against the current source; inspect Cloudflare deployment run 43457843679 and failure logs for 43457843923. Do not expose secrets or invent availability. Investigate why the production response omitted `configured.orderStore` even though the new deployment workflow reported success.
-- Check Durable Object `ORDER_STORE` binding/migration and whether the custom domain serves the intended Worker revision. Make a targeted fix only after diagnosing the mismatch.
-- Run/trigger the safe, read-only production API readiness check. Must pass health + binding/schema + exact-origin CORS + real Jupiter SOL search + SOL/USDC quote + disabled execution. Record run link and actual conclusion.
+**P0 — Finish the quote-only CI race fix.**
+- [Deployment run 43457843679](https://github.com/CryptoDilis/Climboria/actions/runs/43457843679) passed deployed health/bindings, CORS, real Jupiter SOL token search, SOL/USDC quote, and fail-closed execute. [Independent run 43457843923 attempt 2](https://github.com/CryptoDilis/Climboria/actions/runs/43457843923) also passed after the Worker deploy; its first attempt failed before deployment finished.
+- [PR #296](https://github.com/CryptoDilis/Climboria/pull/296) changes `.github/workflows/api-production-readiness.yml` to run production probes only on successful **completed** `Deploy Climboria API` workflow runs on `main` or manual dispatch, preserving PR/push unit tests.
+- **NEXT:** verify #296 exact-head Validate and API readiness unit checks; merge if green. On the next Worker deployment, verify the new post-deploy orchestration actually fires, check its terminal conclusion and update this record.
 
 **P1 — DEX and Swap quote UX acceptance.**
 - Test real site on desktop and mobile at `/dex/` and `/swap/`; ensure genuine provider responses, no fake prices or fabricated balances, clear loading/errors, stable token/pool selection and quote-only messaging.
@@ -50,6 +50,15 @@
 - Implement a Devnet-only vertical slice with deterministic tests; do **not** represent the informational Launchpad UI as a token creation service.
 
 ## Change log
+
+### 2026-11-14 — Production quote-only verification confirmed; API CI race fixed in PR #296
+- **Scope:** Swap / DEX backend acceptance and release workflow. No Game, CLIMBX or Launchpad execution changes.
+- **Before:** `main` `4e3f7fed3e8d11bb18f4a0965078db1a981989ea`. Parallel workflows on prior commit `72ac1d8e`: API acceptance attempt 1 failed `Missing Worker binding: orderStore` at 15:58:01 UTC, **before** the Worker was deployed at 15:58:13 UTC.
+- **Verified:** [Worker deployment run 43457843679](https://github.com/CryptoDilis/Climboria/actions/runs/43457843679) **SUCCESS** after real health/CORS/search/quote/disabled execute acceptance at 15:58:15 UTC; [independent API readiness run 43457843923](https://github.com/CryptoDilis/Climboria/actions/runs/43457843923) **SUCCESS on attempt 2** after retriggering its failed job. Evidence is point-in-time only.
+- **Changed:** branch `fix/swap-api-readiness-after-deploy`, [PR #296](https://github.com/CryptoDilis/Climboria/pull/296); `.github/workflows/api-production-readiness.yml` plus regression in `.github/scripts/api-production-readiness.test.mjs`. Production checks now require `workflow_run` completion with successful deploy on `main`, or explicit manual dispatch; no live probe on every main push.
+- **Safety:** source-level order and execute kill switches and frontend `enabled: false` unchanged; no user funds can be swapped via Climboria yet. Launchpad is preview-only.
+- **Unresolved:** PR #296 exact-head checks and merge pending. Actual `workflow_run` orchestration requires a future Worker deployment to verify; real mobile/front-end quote UX acceptance remains outstanding.
+- **NEXT:** verify PR #296 CI, then merge and document merge SHA and subsequent deployment-trigger results.
 
 ### 2026-11-14 — Workstream continuity record created
 - **Task:** establish one authoritative record for this chat's DEX/Swap/Launchpad ownership, release truth and next steps.

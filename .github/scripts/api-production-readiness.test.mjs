@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { probeProductionApi, SOL } from "./api-production-readiness.mjs";
 
 const ORIGIN = "https://climboria.fun";
@@ -77,4 +78,13 @@ test("probe rejects a quote for a different input amount", async () => {
 test("probe fails when a configured provider search or quote is unavailable", async () => {
   const { fakeFetch } = fixture({ tokens: Response.json({ error: "Jupiter offline" }, { status: 502, headers: { "access-control-allow-origin": ORIGIN } }) });
   await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), /token-search/);
+});
+
+// Regression for the Nov 13 race: live probe started while Wrangler was still deploying.
+test("production smoke is triggered after a successful Worker deployment, not by main push", () => {
+  const workflow = readFileSync(new URL("../workflows/api-production-readiness.yml", import.meta.url), "utf8");
+  assert.match(workflow, /workflow_run:\n\s+workflows: \["Deploy Climboria API"\]/);
+  assert.match(workflow, /github\.event\.workflow_run\.conclusion == 'success'/);
+  assert.match(workflow, /github\.event\.workflow_run\.head_branch == 'main'/);
+  assert.doesNotMatch(workflow, /github\.event_name == 'push'/);
 });
