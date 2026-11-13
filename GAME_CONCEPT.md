@@ -78,11 +78,11 @@ Solana is the initial chain focus; Base is a later possibility. $CLIMB is the in
 
 1. Protect and stabilize existing Jarrell’s Peak gameplay without redesigning mechanics as part of documentation work.
 2. Verify starting camp, river, swimming, collision, treasure discovery, respawn, and desktop/mobile behavior.
-3. Align website, overview, whitepaper, roadmap, game concept, and root README with the single-world launch.
+3. Align active website and project documentation with the approved two-destination scope: Jarrell's Peak and Arena.
 4. Implement and test marketplace economy and secure reward accounting before promising payouts.
 5. Design and build server-authoritative Chatworld and moderation.
 6. Plan the public Arena, shared-world architecture, climbing-themed weapons, and event rules.
 7. Implement sponsorship approval, payment verification, announcement distribution, and prize protection.
-8. Consider Weekly Guild Wars, badges, and additional maps only when budget, implementation, and testing justify them.
+8. Consider Weekly Guild Wars and badges only after budget, implementation, safety, and testing justify them. Do not add or market further game-world destinations.
 
 This document records agreed direction, not a claim that all systems are live. Silent gameplay redesigns are out of scope.

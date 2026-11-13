@@ -222,8 +222,8 @@ jobs:
           from pathlib import Path
           files = [
               "game/index.html", "game/character-lab.html",
-              "game/open-world-v2.html",
-              "overview/index.html", "terms/index.html",
+              "game/open-world-v2.html", "game-concept/index.html",
+              "terms/index.html",
           ]
           class Audit(HTMLParser):
               def __init__(self):
