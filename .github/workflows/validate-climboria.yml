@@ -41,6 +41,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Inspect character GLB payload and embedded texture dimensions
+        run: node .github/scripts/inspect-character-glb.mjs
       - name: Test Cloudflare swap proxy security and API contracts
         run: |
           node --check dex/swap-proxy/src/index.mjs
