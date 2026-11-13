@@ -1,0 +1,71 @@
+name: Jarrell Hero Original GLB Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "game/index.html"
+      - "assets/characters/Climboria_Hero.glb"
+      - ".github/scripts/game-hero-original-glb-smoke.mjs"
+      - ".github/workflows/game-hero-original-glb-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climboria-hero-original-glb-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  original-hero-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - name: Check out game
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright and Chromium
+        timeout-minutes: 8
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install chromium
+      - name: Confirm untouched production hero asset
+        run: |
+          test -s assets/characters/Climboria_Hero.glb
+          python3 - <<'PY'
+          from pathlib import Path
+          asset=Path('assets/characters/Climboria_Hero.glb')
+          size=asset.stat().st_size
+          print(f'Original hero model byte size: {size:,}')
+          if size < 10_000_000:
+              raise SystemExit('Unexpectedly small GLB: do not silently test a resized stand-in')
+          PY
+      - name: Serve Game locally
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/climboria-original-glb-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/game/index.html > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/climboria-original-glb-http.log
+          exit 1
+      - name: Audit desktop and mobile original-GLB hero creation
+        timeout-minutes: 7
+        run: timeout --signal=TERM --kill-after=20s 6m node .github/scripts/game-hero-original-glb-smoke.mjs
+      - name: Upload original-GLB hero screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climboria-original-glb-hero-preview
+          path: |
+            climboria-original-glb-desktop.png
+            climboria-original-glb-mobile-portrait.png
+          if-no-files-found: warn
+          retention-days: 7
