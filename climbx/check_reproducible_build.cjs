@@ -10,7 +10,11 @@ function inspect(exists = fs.existsSync) {
   const missing = [];
   if (!exists(lock)) missing.push('REVIEWED_CARGO_LOCK');
   if (!exists(toolchain)) missing.push('PINNED_RUST_TOOLCHAIN');
+  const lockfilePresent = exists(lock);
+  const toolchainPinned = exists(toolchain);
   return {
+    lockfilePresent,
+    toolchainPinned,
     status: missing.length ? 'BLOCKED' : 'PREREQUISITES_PRESENT_UNVERIFIED',
     missing,
     reproducibleBuildVerified: false,
