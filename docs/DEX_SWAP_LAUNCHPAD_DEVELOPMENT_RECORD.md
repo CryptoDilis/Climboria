@@ -105,3 +105,12 @@ NEXT: <single specific next coding or verification action>
 ```
 
 **Cross-chat ownership:** Game owner must independently keep a separate `docs/GAME_DEVELOPMENT_RECORD.md`. Neither chat should alter the other chat's progress record. If a change to shared code is unavoidable, communicate the exact file, branch and PR before touching it.
+
+
+### 2026-11-14 — Small-amount production quote acceptance (pending CI)
+Scope: DEX | Swap | Launchpad — **Swap only**
+Before: `main` baseline `f4af9455667aa8d5b1a2882e538947197b504177`; precision fixes in merged PR #300 had frontend browser evidence but the production API probe covered only 1,000,000 raw SOL units.
+Changed: branch `test/swap-production-small-quote-readiness`; `.github/scripts/api-production-readiness.mjs` and `.github/scripts/api-production-readiness.test.mjs` now verify read-only Jupiter SOL/USDC response for exactly 15,700 lamports (0.0000157 SOL), including matching input, positive output, request ID and absence of signable transaction.
+Verified: First PR head `438dda2` passed [API unit workflow 43466510830](https://github.com/CryptoDilis/Climboria/actions/runs/43466510830) and [Validate workflow 43466510853](https://github.com/CryptoDilis/Climboria/actions/runs/43466510853). Live production probe was **skipped as designed** on the PR. Later safety refinement commits `acf414e` and `56a2692` are **not yet CI-verified**. No real-money trades or new deployment.
+Unresolved: whether live provider routes tiny amounts, current-origin browser UX/mobile behavior, subsequent deploy-triggered workflow sequencing and all signable-swap/Launchpad security gates. The tiny quote is now explicitly diagnostic: a non-200 provider rejection is recorded as unavailable rather than falsely claiming a successful quote or blocking the proven larger quote; any successful tiny quote still must satisfy exact input and no-transaction invariants.
+NEXT: validate the latest PR head after the tiny-quote diagnostic safety refinement, merge only if clean, and run an independent production read-only check at a safe time; then verify real deployed DEX/Swap browser UX and Launchpad Devnet provenance. Do not enable wallet signing or any token launch.

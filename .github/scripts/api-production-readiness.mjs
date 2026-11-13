@@ -8,7 +8,8 @@ export const SOL = "So11111111111111111111111111111111111111112";
 export const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const ORIGIN = "https://climboria.fun";
 const SEARCH = "/api/tokens/search?query=SOL";
-const QUOTE = "/api/swap/quote?inputMint=" + SOL + "&outputMint=" + USDC + "&amount=1000000";
+const quotePath = (amount) => "/api/swap/quote?inputMint=" + SOL + "&outputMint=" + USDC + "&amount=" + amount;
+const QUOTE = quotePath("1000000");
 
 export async function probeProductionApi({ baseUrl = "https://api.climboria.fun", fetchImpl = globalThis.fetch } = {}) {
   const base = new URL(baseUrl);
@@ -17,6 +18,7 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
   assert.equal(base.password, "", "API URL must not contain credentials");
   assert.equal(base.pathname, "/", "Production API base URL must be an origin");
   const checks = [];
+  const observations = [];
   const request = async (path, options = {}) => {
     const response = await fetchImpl(new URL(path, base).href, {
       redirect: "error",
@@ -74,6 +76,27 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
   assert.equal(quote.data?.transaction, undefined, "Read-only quote must never expose a signable transaction");
   checks.push("Real Jupiter SOL/USDC quote preview (no transaction)");
 
+  // Small amounts can be valid u64 inputs but still lack a Jupiter route.
+  // Record a provider rejection as a non-tradable observation, not a failed
+  // core-production check or a fictional successful quote. A successful
+  // response must still match the exact 15,700-lamport input and be unsigned.
+  const smallQuote = await request(quotePath("15700"));
+  if (smallQuote.response.status === 200) {
+    assert.equal(smallQuote.data?.inAmount, "15700", "Small quote input amount differs from requested raw units");
+    assert.ok(typeof smallQuote.data?.outAmount === "string" && /^[1-9][0-9]*$/.test(smallQuote.data.outAmount),
+      "Small live quote output is missing or invalid");
+    assert.ok(typeof smallQuote.data?.requestId === "string" && smallQuote.data.requestId.trim().length > 0,
+      "Small live quote has no provider request ID");
+    assert.equal(smallQuote.data?.transaction, undefined, "Small read-only quote must never expose a signable transaction");
+    checks.push("Exact small-amount SOL/USDC quote available (15,700 lamports; no transaction)");
+  } else {
+    assert.ok(smallQuote.response.status >= 400 && smallQuote.response.status <= 599,
+      "Unexpected response for small-amount quote");
+    assert.equal(smallQuote.data?.transaction, undefined, "Failed small quote must never expose a signable transaction");
+    assert.equal(smallQuote.data?.signature, undefined, "Failed small quote must never report an on-chain signature");
+    observations.push("Small-amount SOL/USDC quote NOT available (HTTP " + smallQuote.response.status + "); no minimum-trade claim");
+  }
+
   // Never call /api/swap/order from a live monitoring probe. Even with
   // execution disabled, a separately enabled order route could generate a
   // wallet-signable transaction. Source/Worker unit tests verify that gate.
@@ -84,7 +107,7 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
   assert.equal(execute.data?.signature, undefined, "Disabled execute must not report an on-chain transaction");
   checks.push("On-chain execute remains fail-closed");
 
-  return { ok: true, checks };
+  return { ok: true, checks, observations };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
@@ -92,6 +115,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     const result = await probeProductionApi();
     console.log("PASS Climboria production API quote-only readiness:");
     for (const check of result.checks) console.log("  - " + check);
+    for (const observation of result.observations) console.log("  - OBSERVATION: " + observation);
   } catch (error) {
     console.error("FAIL production API quote-only readiness: " + (error instanceof Error ? error.message : String(error)));
     process.exitCode = 1;
