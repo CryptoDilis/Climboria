@@ -43,6 +43,10 @@ function createWalletHttpHandler({service,origin='https://climboria.fun',rateLim
    if(result.status==='UNAUTHORIZED'){send(401,{status:'UNAUTHORIZED'});return;}
    if(result.status==='ISSUED'){send(200,{status:'ISSUED',nonce:result.nonce,message:result.message,expiresAt:result.expiresAt});return;}
    if(result.status==='BOUND'){send(200,{status:'BOUND'});return;}
+   if(result.status==='COMMIT_OUTCOME_UNKNOWN'||result.status==='ROLLBACK_OUTCOME_UNKNOWN'){
+    // Do not expose an ambiguous write as a client input error or safe retry.
+    send(503,{status:'OUTCOME_UNKNOWN'});return;
+   }
    send(400,{status:result.status});
   }catch{send(503,{status:'UNAVAILABLE'});}
  };
