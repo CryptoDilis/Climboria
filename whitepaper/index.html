@@ -1,55 +1,513 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#07101b">
-<meta name="description" content="Climboria full ecosystem whitepaper: game, $CLIMB, Swap, DEX, Launchpad, marketplace, and planned Solana-to-Base expansion.">
-<title>Climboria Whitepaper — Full Ecosystem</title>
-<link rel="icon" href="../climboria-favicon.png">
-<style>
-:root{color-scheme:dark;--bg:#07101b;--panel:#0d1a2a;--panel2:#112238;--line:#29415a;--text:#f3f7fc;--muted:#a9b8ca;--gold:#f4c86a;--blue:#75b8ff;--green:#7bd6a1}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 50% -10%,#173451 0,transparent 48%),var(--bg);color:var(--text);font:16px/1.7 Inter,system-ui,-apple-system,Segoe UI,sans-serif}a{color:#9acbff}header{border-bottom:1px solid #ffffff18;background:#07101bdc;backdrop-filter:blur(14px);position:sticky;top:0;z-index:5}.nav{max-width:1120px;margin:auto;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{font-weight:900;letter-spacing:.12em;color:var(--gold);text-decoration:none}.nav a:last-child{font-size:14px}.wrap{max-width:980px;margin:auto;padding:42px 22px 80px}.hero{padding:46px 0 34px}.eyebrow{color:var(--gold);font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}.hero h1{font-size:clamp(38px,7vw,68px);line-height:1.03;letter-spacing:-.045em;margin:12px 0}.hero p{max-width:760px;color:var(--muted);font-size:18px}.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:22px}.chip{border:1px solid #f4c86a55;background:#f4c86a12;border-radius:999px;padding:6px 12px;font-size:12px;color:#f7dda0}.notice{border:1px solid #e2b95b55;background:#8e6b241c;padding:16px 18px;border-radius:14px;color:#f3dfb0;margin:24px 0 34px}.toc{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 42px}.toc a{font-size:13px;text-decoration:none;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:#ffffff06}.section{padding:30px 0;border-top:1px solid #ffffff18;scroll-margin-top:76px}.section h2{font-size:27px;line-height:1.2;margin:0 0 14px}.section h3{font-size:18px;color:#f5d58c;margin:22px 0 8px}.section p,.section li{color:#c2cedc}.section ul,.section ol{padding-left:22px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0}.card{background:linear-gradient(145deg,#102239,#0b1726);border:1px solid var(--line);border-radius:16px;padding:18px}.card h3{margin:0 0 8px}.card p{margin:0;font-size:14px}.status{display:inline-block;margin-top:12px;color:var(--gold);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}.priority{display:grid;grid-template-columns:54px 1fr;gap:14px;padding:15px 0;border-bottom:1px solid #ffffff15}.priority b{color:var(--gold);font-size:20px}.priority p{margin:3px 0}.footer{border-top:1px solid #ffffff18;padding-top:24px;margin-top:45px;color:#93a4b8;font-size:13px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-@media(max-width:680px){.wrap{padding:24px 16px 60px}.grid{grid-template-columns:1fr}.hero{padding-top:32px}.hero p{font-size:16px}.section h2{font-size:24px}.nav{padding:12px 16px}}
+<head><link rel="icon" type="image/png" sizes="64x64" href="../climboria-favicon.png"><link rel="apple-touch-icon" href="../climboria-favicon.png">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07101b">
+  <meta name="description" content="Official Climboria ecosystem whitepaper: game design, token strategy, Swap, DEX, Launchpad, marketplace, rewards, and planned Solana-to-Base expansion.">
+  <title>Climboria Ecosystem Whitepaper</title>
+  
+  <style>
+    :root{color-scheme:dark;--bg:#07101b;--panel:#0d1a2a;--panel2:#112238;--line:#29415a;--text:#f3f7fc;--muted:#a1b1c4;--gold:#f4c86a;--green:#55ff70;--blue:#77c7ff}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}
+    body{margin:0;background:radial-gradient(ellipse at 50% -10%,#1b3a50 0%,var(--bg) 58%);color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:inherit}.shell{width:min(1060px,100%);margin:auto;padding:18px 18px 44px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 0 30px}
+    .brand{display:flex;align-items:center;gap:11px;text-decoration:none}.mark{display:grid;place-items:center;width:44px;height:44px;border:1px solid #f4c86a88;border-radius:12px;color:var(--gold);font-size:22px;background:#f4c86a0d}
+    .brand strong{display:block;font-size:16px;letter-spacing:2px}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:2px}
+    .actions{display:flex;gap:9px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 15px;border:1px solid var(--line);border-radius:9px;background:#0a1522;text-decoration:none;font-size:11px;font-weight:900;letter-spacing:1px}
+    .btn.primary{background:linear-gradient(180deg,#ffe49a,#e6ae3d);border-color:#ffe6a0;color:#101521}
+    .hero{padding:clamp(25px,6vw,58px);border:1px solid #76bde33a;border-radius:22px;background:linear-gradient(135deg,#10243aee,#081321f5);box-shadow:0 22px 70px #0004;position:relative;overflow:hidden}
+    .hero:after{content:"▲";position:absolute;right:-15px;bottom:-100px;font-size:clamp(200px,35vw,380px);line-height:1;color:#77c7ff08;pointer-events:none}
+    .eyebrow{font-size:10px;font-weight:900;letter-spacing:3px;color:var(--gold)}h1{font-size:clamp(34px,7vw,62px);line-height:1.03;letter-spacing:-2px;margin:12px 0 15px;max-width:760px}
+    .hero p{max-width:700px;color:#c1cede;font-size:clamp(14px,2vw,17px);margin:0}.hero .actions{margin-top:24px}
+    .section{margin-top:28px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:13px}h2{font-size:20px;letter-spacing:-.4px;margin:0}.section-head p{font-size:11px;color:var(--muted);margin:0}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{border:1px solid var(--line);border-radius:15px;padding:19px;background:linear-gradient(160deg,#102034,#091421)}
+    .icon{font-size:24px;margin-bottom:9px}.card h3{font-size:14px;margin:0 0 7px}.card p{font-size:12px;color:var(--muted);margin:0}
+    .tag{display:inline-flex;margin-top:13px;border:1px solid #77c7ff44;border-radius:20px;padding:4px 8px;color:var(--blue);font-size:9px;font-weight:900;letter-spacing:.8px}.tag.active{color:var(--green);border-color:#55ff7050}.tag.planned{color:var(--gold);border-color:#f4c86a50}
+    .roadmap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.step{display:flex;gap:13px;border:1px solid var(--line);border-radius:14px;padding:16px;background:#0b1725}
+    .num{flex:0 0 34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#f4c86a12;border:1px solid #f4c86a44;color:var(--gold);font-weight:900}.step h3{font-size:13px;margin:0 0 5px}.step p{font-size:11px;color:var(--muted);margin:0}
+    .notice{margin-top:18px;padding:15px 17px;border:1px solid #f4c86a4a;border-radius:12px;background:#f4c86a0b;color:#e8d7ad;font-size:12px}.notice strong{color:#ffe19a}
+    footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:30px;padding-top:18px;border-top:1px solid #ffffff18;color:#8395aa;font-size:10px}footer a{color:#c7d7e8}
+    @media(max-width:720px){.shell{padding:12px 12px 30px}header{padding-bottom:18px}.grid{grid-template-columns:1fr}.roadmap{grid-template-columns:1fr}.section-head{align-items:start;flex-direction:column}.hero{border-radius:16px}.brand strong{font-size:14px}.actions .btn{flex:1}.card{padding:16px}}
+
+    /* Premium roadmap presentation — uses the existing official cinematic artwork unchanged. */
+    .roadmap-section{scroll-margin-top:24px}
+    .roadmap-heading{align-items:end;gap:28px;margin-bottom:20px}
+    .roadmap-heading h2{font-size:clamp(29px,4.5vw,44px);line-height:1.08;letter-spacing:-1.4px;margin-top:8px}
+    .roadmap-heading>p{max-width:390px;font-size:12px;line-height:1.8}
+    .roadmap-feature{display:grid;grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);align-items:stretch;overflow:hidden;border:1px solid #a6cce42b;border-radius:20px;background:linear-gradient(125deg,#10243a,#081321 72%);box-shadow:0 22px 65px #0005}
+    .roadmap-feature-copy{padding:clamp(22px,4vw,40px);align-self:center}
+    .roadmap-kicker{display:inline-flex;align-items:center;gap:9px;color:#f4c86a;font-size:9px;font-weight:900;letter-spacing:2px}
+    .status-dot{width:7px;height:7px;border-radius:50%;background:#f4c86a;box-shadow:0 0 12px #f4c86a99}
+    .roadmap-feature-copy h3{max-width:460px;font-size:clamp(23px,3.4vw,36px);line-height:1.12;letter-spacing:-1px;margin:17px 0 12px}
+    .roadmap-feature-copy>p{max-width:480px;color:#b5c5d6;font-size:12px;line-height:1.9;margin:0}
+    .roadmap-principles{display:grid;gap:8px;margin-top:23px;padding-top:17px;border-top:1px solid #ffffff16}
+    .roadmap-principles span{font-size:9px;font-weight:900;letter-spacing:1.3px;color:#d2deea}
+    .roadmap-principles span:first-child{color:#f4c86a}
+    .roadmap-art{margin:0;min-width:0;display:flex;flex-direction:column;justify-content:center;background:#07111d;border-left:1px solid #ffffff12}
+    .roadmap-art img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain}
+    .roadmap-art figcaption{display:flex;justify-content:space-between;gap:12px;padding:11px 15px;border-top:1px solid #ffffff12;color:#91a6bb;font-size:8px;font-weight:900;letter-spacing:1.7px}
+    .roadmap-art figcaption span{color:#f4c86a}
+    .roadmap-subhead{display:flex;align-items:end;justify-content:space-between;gap:18px;margin:34px 0 15px}
+    .roadmap-subhead h3{font-size:22px;letter-spacing:-.5px;margin:5px 0 0}
+    .roadmap-subhead>p{max-width:330px;margin:0;color:var(--muted);font-size:11px}
+    .roadmap-section .roadmap{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .roadmap-section .roadmap-step{position:relative;align-items:flex-start;gap:15px;padding:20px;border-radius:15px;background:linear-gradient(145deg,#102034,#091421 82%);border-color:#a3c4df20;min-width:0;transition:border-color .2s,transform .2s}
+    .roadmap-section .roadmap-step:hover{border-color:#f4c86a65;transform:translateY(-2px)}
+    .roadmap-section .roadmap-step-focus{border-color:#f4c86a68;background:linear-gradient(145deg,#182a3c,#0b1725 82%)}
+    .roadmap-section .num{flex:0 0 39px;height:39px;border-radius:11px;font-size:13px;background:linear-gradient(145deg,#f4c86a20,#f4c86a08);border-color:#f4c86a55;box-shadow:inset 0 1px #ffffff10}
+    .roadmap-section .step-copy{min-width:0}
+    .roadmap-section .step-label{display:block;margin:2px 0 8px;color:#8ca6bf;font-size:8px;font-weight:900;letter-spacing:1.6px}
+    .roadmap-section .roadmap-step-focus .step-label{color:#f4c86a}
+    .roadmap-section .step h3{font-size:14px;line-height:1.4;margin:0 0 7px}
+    .roadmap-section .step p{font-size:11px;line-height:1.8;color:#aabbd0}
+    .step-outcome{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;padding-top:11px;border-top:1px solid #ffffff12;color:#7189a1;font-size:8px;font-weight:900;letter-spacing:1px}
+    .step-outcome b{color:#dce7f3;font-weight:800;letter-spacing:.2px}
+    .roadmap-footnote{display:flex;align-items:flex-start;gap:12px;margin-top:18px;padding:16px 18px;border:1px solid #f4c86a35;border-radius:13px;background:linear-gradient(110deg,#f4c86a0d,#091421)}
+    .roadmap-footnote-mark{flex:0 0 23px;height:23px;display:grid;place-items:center;border:1px solid #f4c86a55;border-radius:50%;color:#f4c86a;font-size:12px;font-weight:900}
+    .roadmap-footnote p{margin:0;color:#b4c2d2;font-size:10px;line-height:1.8}
+    .roadmap-footnote strong{color:#ffe09a}
+    @media(max-width:720px){
+      .roadmap-heading{align-items:start;flex-direction:column;gap:9px}
+      .roadmap-feature{grid-template-columns:1fr;border-radius:16px}
+      .roadmap-feature-copy{padding:23px 20px 19px}
+      .roadmap-feature-copy h3{font-size:27px}
+      .roadmap-art{border-left:0;border-top:1px solid #ffffff12}
+      .roadmap-art img{width:100%;height:auto;aspect-ratio:16/9;object-fit:contain}
+      .roadmap-subhead{align-items:start;flex-direction:column;gap:7px;margin-top:27px}
+      .roadmap-section .roadmap{grid-template-columns:1fr;gap:10px}
+      .roadmap-section .roadmap-step{padding:17px}
+      .roadmap-principles{grid-template-columns:1fr}
+    }
+    @media(prefers-reduced-motion:reduce){.roadmap-section .roadmap-step{transition:none}.roadmap-section .roadmap-step:hover{transform:none}}
+
+
+    /* Premium overview visual: reuse the official artwork unchanged. */
+    .overview-visual{position:relative;isolation:isolate;overflow:hidden;margin-top:18px;border:1px solid #9cc5e52b;border-radius:20px;background:#07111d;box-shadow:0 24px 70px #0005}
+    .overview-visual>img{display:block;width:100%;height:auto;aspect-ratio:16/7;object-fit:cover;object-position:center 46%;filter:saturate(.98) contrast(1.02)}
+    .overview-visual:after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(90deg,#06111ce8 0%,#07121c99 38%,#07121c08 76%),linear-gradient(0deg,#06111ce8 0%,transparent 58%)}
+    .overview-visual-caption{position:absolute;z-index:1;inset:auto 0 0;display:flex;align-items:end;gap:17px;padding:clamp(18px,4vw,34px)}
+    .visual-line{align-self:stretch;flex:0 0 3px;min-height:62px;background:linear-gradient(#ffe4a0,#d99e36);box-shadow:0 0 22px #f4c86a35}
+    .overview-visual-caption .eyebrow{font-size:9px;letter-spacing:2px}
+    .overview-visual-caption h2{margin-top:6px;font-size:clamp(23px,4vw,39px);line-height:1.06;letter-spacing:-1.2px;text-shadow:0 2px 20px #0008}
+    .visual-index{margin-left:auto;padding-bottom:3px;color:#d3deea;font-size:8px;font-weight:900;letter-spacing:1.5px;white-space:nowrap}
+    .icon{width:34px;height:3px;margin-bottom:15px;border-radius:4px;background:linear-gradient(90deg,var(--gold),#77c7ff);box-shadow:0 0 15px #f4c86a1f}
+    .card{position:relative;overflow:hidden}
+    .card:after{content:"";position:absolute;top:0;right:0;width:72px;height:72px;pointer-events:none;background:radial-gradient(circle at top right,#77c7ff0c,transparent 72%)}
+    @media(max-width:720px){
+      .overview-visual{margin-top:12px;border-radius:15px}
+      .overview-visual>img{aspect-ratio:4/3;object-fit:cover;object-position:center 48%}
+      .overview-visual:after{background:linear-gradient(0deg,#06111cf2 0%,#07121c66 48%,#07121c00 100%)}
+      .overview-visual-caption{gap:11px;padding:17px 15px}
+      .overview-visual-caption h2{font-size:25px}
+      .overview-visual-caption .eyebrow{font-size:8px;letter-spacing:1.4px}
+      .visual-index{font-size:7px;letter-spacing:1px;white-space:normal;max-width:74px;text-align:right}
+      .visual-line{min-height:52px}
+    }
+
+  
+    /* Readability pass: comfortable type sizes on desktop and phones. */
+    body{font-size:16px;line-height:1.72}
+    .brand strong{font-size:18px}.brand small{font-size:12px;letter-spacing:1.4px}
+    .btn{font-size:13px;letter-spacing:.7px;min-height:46px;padding:11px 16px}
+    .eyebrow{font-size:12px;letter-spacing:2px}
+    .hero p{font-size:clamp(16px,2.2vw,19px);line-height:1.75}
+    h2{font-size:clamp(23px,3vw,29px);line-height:1.25}
+    .section-head p{font-size:14px;line-height:1.6}
+    .card{padding:22px}
+    .card h3{font-size:18px;line-height:1.35}
+    .card p{font-size:15px;line-height:1.75;color:#c0cede}
+    .tag{font-size:11px;letter-spacing:.6px;padding:5px 10px}
+    .roadmap-heading>p{font-size:15px;line-height:1.75}
+    .roadmap-feature-copy>p{font-size:15px;line-height:1.8}
+    .roadmap-kicker{font-size:11px;letter-spacing:1.5px}
+    .roadmap-principles span{font-size:11px;letter-spacing:1px}
+    .roadmap-art figcaption{font-size:10px;letter-spacing:1px}
+    .roadmap-subhead h3{font-size:25px}
+    .roadmap-subhead>p{font-size:14px;line-height:1.7}
+    .roadmap-section .step-label{font-size:10px;letter-spacing:1.1px}
+    .roadmap-section .step h3{font-size:17px;line-height:1.45}
+    .roadmap-section .step p{font-size:14px;line-height:1.8}
+    .step-outcome{font-size:10px;letter-spacing:.7px;line-height:1.6}
+    .roadmap-footnote p{font-size:13px;line-height:1.8}
+    .overview-visual-caption .eyebrow{font-size:11px;letter-spacing:1.5px}
+    .visual-index{font-size:10px;letter-spacing:1px}
+    footer{font-size:12px;line-height:1.7}
+    @media(max-width:720px){
+      .shell{padding:14px 14px 34px}
+      .brand strong{font-size:16px;letter-spacing:1.5px}
+      .brand small{font-size:11px;letter-spacing:1px}
+      .hero{padding:25px 20px}
+      h1{font-size:clamp(36px,10vw,48px);letter-spacing:-1.3px;line-height:1.08}
+      .hero p{font-size:17px;line-height:1.75}
+      .section{margin-top:32px}
+      .section-head{margin-bottom:16px}
+      .section-head p{font-size:14px}
+      .card{padding:20px}
+      .card h3{font-size:19px}
+      .card p{font-size:16px;line-height:1.75}
+      .tag{font-size:11px}
+      .roadmap-heading h2{font-size:clamp(29px,8vw,36px)}
+      .roadmap-heading>p{font-size:15px}
+      .roadmap-feature-copy h3{font-size:29px;line-height:1.15}
+      .roadmap-feature-copy>p{font-size:15px}
+      .roadmap-section .roadmap-step{padding:19px}
+      .roadmap-section .step h3{font-size:18px}
+      .roadmap-section .step p{font-size:15px;line-height:1.8}
+      .roadmap-section .step-label{font-size:10px}
+      .step-outcome{font-size:11px}
+      .roadmap-footnote p{font-size:14px}
+      .roadmap-art figcaption{font-size:10px}
+      .overview-visual-caption h2{font-size:clamp(25px,7vw,31px)}
+      .overview-visual-caption .eyebrow{font-size:9px}
+      .visual-index{font-size:9px;max-width:92px}
+      footer{font-size:12px}
+    }
+
+  
+    /* Professional, time-boxed roadmap — targets are explicit but non-guaranteed. */
+    .roadmap-timeline{margin:30px 0 10px;padding:clamp(18px,3.2vw,30px);border:1px solid #8dbbe02b;border-radius:19px;background:linear-gradient(145deg,#0e2033,#081321 78%);box-shadow:0 18px 48px #0003}
+    .roadmap-timeline-head{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:18px}
+    .roadmap-timeline-head h3{font-size:clamp(24px,3.5vw,32px);line-height:1.15;letter-spacing:-.7px;margin:7px 0 0}
+    .roadmap-timeline-head>p{max-width:390px;margin:0;color:#aebfd1;font-size:14px;line-height:1.75}
+    .roadmap-timeline-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .roadmap-period{min-width:0;padding:19px;border:1px solid #8ba9c51f;border-radius:14px;background:linear-gradient(145deg,#12253a,#0a1624 82%)}
+    .roadmap-period-current{border-color:#f4c86a77;background:linear-gradient(145deg,#1c2a3b,#0b1725 82%)}
+    .roadmap-period-quarter{border-color:#77c7ff55}
+    .roadmap-period-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .roadmap-period-date{font-size:12px;font-weight:950;letter-spacing:1.4px;color:#f4c86a}
+    .roadmap-period-status{font-size:9px;font-weight:900;letter-spacing:1px;color:#a9bfd5}
+    .roadmap-period-current .roadmap-period-status{color:#ffe19a}
+    .roadmap-period h4{font-size:21px;line-height:1.3;margin:15px 0 8px;letter-spacing:-.3px;color:#f4f7fc}
+    .roadmap-period p{margin:0;color:#b3c3d4;font-size:14px;line-height:1.8}
+    .roadmap-period-footer{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:12px;border-top:1px solid #ffffff13;font-size:10px;letter-spacing:.8px}
+    .roadmap-period-footer span{color:#7f98b0;font-weight:900}
+    .roadmap-period-footer b{color:#e2ebf5;font-size:12px;letter-spacing:0}
+    @media(max-width:720px){
+      .roadmap-timeline{padding:19px 15px;margin-top:24px;border-radius:16px}
+      .roadmap-timeline-head{align-items:start;flex-direction:column;gap:9px}
+      .roadmap-timeline-head h3{font-size:27px}
+      .roadmap-timeline-head>p{font-size:14px}
+      .roadmap-timeline-grid{grid-template-columns:1fr;gap:10px}
+      .roadmap-period{padding:17px 15px}
+      .roadmap-period-date{font-size:12px}
+      .roadmap-period-status{font-size:9px}
+      .roadmap-period h4{font-size:21px;margin-top:13px}
+      .roadmap-period p{font-size:15px;line-height:1.75}
+      .roadmap-period-footer b{font-size:13px}
+    }
+
+
+/* Mobile-first overview: reduce tall card stacks and make roadmap content scannable. */
+@media(max-width:720px){
+ .shell{padding:10px 11px 28px}
+ header{padding-bottom:13px}
+ .hero{padding:20px 15px;border-radius:14px}
+ .hero h1{font-size:clamp(30px,8.5vw,40px);line-height:1.08}
+ .hero p{font-size:13px;line-height:1.6}
+ .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .actions .btn{min-width:0;min-height:42px;padding:9px 10px;font-size:10px}
+ .section{margin-top:22px}
+ .section-head{display:flex;align-items:flex-start;flex-direction:column;gap:5px;margin-bottom:11px}
+ .section-head h2{font-size:19px;line-height:1.2}
+ .section-head p{font-size:11px;line-height:1.5}
+ .grid{grid-template-columns:1fr;gap:8px}
+ .card{padding:14px;border-radius:13px}
+ .card h3{font-size:14px;line-height:1.3}
+ .card p{font-size:11px;line-height:1.55}
+ .tag{font-size:8px;letter-spacing:.7px}
+ .roadmap-feature{grid-template-columns:1fr}
+ .roadmap-feature-copy{padding:17px 15px}
+ .roadmap-feature-copy h3{font-size:23px;line-height:1.15}
+ .roadmap-feature-copy>p{font-size:12px;line-height:1.6}
+ .roadmap-art{min-height:0}
+ .roadmap-art img{width:100%;height:auto;max-height:220px;object-fit:contain}
+ .roadmap-principles{grid-template-columns:1fr;gap:7px}
+ .roadmap-timeline{padding:14px 11px;margin-top:16px}
+ .roadmap-timeline-head{gap:7px}
+ .roadmap-timeline-head h3{font-size:21px}
+ .roadmap-timeline-head>p{font-size:11px;line-height:1.5}
+ .roadmap-timeline-grid{grid-template-columns:1fr;gap:8px}
+ .roadmap-period{padding:13px;border-radius:12px}
+ .roadmap-period-top{gap:8px}
+ .roadmap-period h4{font-size:14px}
+ .roadmap-period p,.roadmap-period li{font-size:11px;line-height:1.5}
+ .roadmap{grid-template-columns:1fr;gap:8px}
+ .step{padding:13px;gap:10px}
+ .step-copy h3{font-size:13px;line-height:1.3}
+ .step-copy p{font-size:11px;line-height:1.5}
+ .whitepaper-section{padding:15px!important;border-radius:13px}
+ .whitepaper-section h2{font-size:20px;line-height:1.2}
+ .whitepaper-section p,.whitepaper-section li{font-size:12px;line-height:1.6}
+ .whitepaper-columns{grid-template-columns:1fr;gap:8px}
+ .whitepaper-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .whitepaper-actions a{min-width:0;text-align:center}
+ footer{gap:8px;line-height:1.6}
+}
+@media(max-width:380px){
+ .shell{padding-inline:9px}
+ .hero{padding:17px 12px}
+ .actions{grid-template-columns:1fr}
+ .roadmap-feature-copy{padding:15px 12px}
+ .roadmap-timeline{padding:12px 9px}
+ .whitepaper-actions{grid-template-columns:1fr}
+}
+
+</style>
+<style id="climboria-overview-navigation-v1">
+  .overview-jump{display:flex;flex-wrap:wrap;gap:9px;margin:18px 0 30px;padding:14px;border:1px solid #a6cce42b;border-radius:15px;background:linear-gradient(120deg,#0e2033,#081321)}
+  .overview-jump-label{flex:0 0 100%;color:#f4c86a;font-size:10px;font-weight:900;letter-spacing:1.7px;margin:0 0 2px}
+  .overview-jump a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:9px 13px;border:1px solid #a6cce43a;border-radius:8px;color:#e7f0fb;text-decoration:none;font-size:11px;font-weight:850;letter-spacing:.45px;background:#0b1725;transition:border-color .15s,background .15s}
+  .overview-jump a:hover,.overview-jump a:focus-visible{border-color:#f4c86a;background:#172a40;outline:none}
+  .whitepaper-section{margin-top:34px;padding:clamp(20px,4vw,36px);border:1px solid #a6cce42b;border-radius:18px;background:linear-gradient(145deg,#10243a,#081321 78%)}
+  .whitepaper-section h2{font-size:clamp(25px,4vw,36px);line-height:1.2;margin:8px 0 12px}
+  .whitepaper-section p,.whitepaper-section li{color:#b8c8d9;font-size:14px;line-height:1.85}
+  .whitepaper-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}
+  .whitepaper-columns article{padding:17px;border:1px solid #a6cce420;border-radius:12px;background:#071321}
+  .whitepaper-columns h3{margin:0 0 8px;color:#f3cc75;font-size:14px}
+  .whitepaper-columns p{margin:0;font-size:13px}
+  .whitepaper-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  @media(max-width:700px){.overview-jump{gap:7px;padding:11px}.overview-jump a{flex:1 1 calc(50% - 7px);font-size:11px}.whitepaper-columns{grid-template-columns:1fr}.whitepaper-section p,.whitepaper-section li{font-size:14px}}
 </style>
 </head>
 <body>
-<header><nav class="nav"><a class="brand" href="../">CLIMBORIA</a><a href="../">Back to Climboria ↗</a></nav></header>
-<main class="wrap">
-<section class="hero">
-<div class="eyebrow">Official project document · Version 1.1 · 13 November 2026</div>
-<h1>The Climboria<br><span style="color:var(--gold)">Ecosystem Whitepaper</span></h1>
-<p>A browser-first survival and exploration game connected to a planned Web3 ecosystem: $CLIMB, Swap, DEX, Launchpad, marketplace, and a phased Solana-to-Base expansion.</p>
-<div class="chips"><span class="chip">GAME & EXPLORATION</span><span class="chip">$CLIMB TOKEN</span><span class="chip">SWAP</span><span class="chip">DEX</span><span class="chip">LAUNCHPAD</span><span class="chip">SOLANA → BASE PLAN</span></div>
-</section>
-<div class="notice"><strong>Important status disclosure:</strong> This whitepaper describes product direction and roadmap, not a claim that every feature is live. Swap, DEX, login, full game release, Launchpad, marketplace, rewards, and Base expansion each require implementation, security checks, and production verification. No price, liquidity, listing, or profit is guaranteed.</div>
-<nav class="toc" aria-label="Whitepaper sections">
-<a href="#overview">Overview</a><a href="#game">Game</a><a href="#token">Token</a><a href="#swap">Swap</a><a href="#dex">DEX</a><a href="#launchpad">Launchpad</a><a href="#marketplace">Marketplace</a><a href="#community">Community</a><a href="#multichain">Base expansion</a><a href="#roadmap">Roadmap</a><a href="#risks">Risks</a>
-</nav>
-<section class="section" id="overview"><h2>1. One connected ecosystem</h2><p>Climboria brings together players, traders, creators, and builders. The game is the exploration entry point; the token is intended to support eligible ecosystem utility; Swap and DEX provide planned trading access; Launchpad is intended for transparent project launches; and the marketplace connects eligible digital items to player ownership.</p><div class="grid">
-<article class="card"><h3>01 · Game & exploration</h3><p>Jarrell’s Peak is the open-world survival and treasure-discovery experience.</p><span class="status">Game product</span></article>
-<article class="card"><h3>02 · $CLIMB token</h3><p>Intended ecosystem token, beginning with Solana. Final token facts must be verified on-chain.</p><span class="status">Solana-first direction</span></article>
-<article class="card"><h3>03 · Swap</h3><p>A focused token exchange flow with real quotes, wallet review, transaction confirmation, and settlement reconciliation.</p><span class="status">Development / verification required</span></article>
-<article class="card"><h3>04 · DEX</h3><p>Market discovery, token profiles, liquidity and price information, charts, and access to supported trading routes.</p><span class="status">Development / verification required</span></article>
-<article class="card"><h3>05 · Launchpad</h3><p>A future project-launch platform with application review, published sale terms, and verified on-chain execution.</p><span class="status">Later delivery priority</span></article>
-<article class="card"><h3>06 · Marketplace</h3><p>Planned $CLIMB-denominated eligible item trading, crafting, and optional NFT minting.</p><span class="status">Planned</span></article>
-</div></section>
-<section class="section" id="game"><h2>2. Game — Jarrell’s Peak</h2><p>Jarrell’s Peak is a browser-first climbing, survival, and open-world treasure-hunting experience. Players explore rivers, forests, cliffs, caves, camps, coastlines, landmarks, and hidden routes. Fishing, swimming, resource discovery, and survival form the intended world loop.</p><p>The core risk/reward loop: venture farther into dangerous territory for potentially better discoveries, while accepting greater risk of losing carried loot. Players may cooperate or compete over discoveries. A separate Arena, guild battles, and Chatworld are future work until implemented and verified.</p></section>
-<section class="section" id="token"><h2>3. $CLIMB token strategy</h2><p>$CLIMB is the intended ticker, with Solana as the initial chain focus. The project’s planned launch target is <strong>15 November 2026 at 15:00 UTC</strong>. This is a target announcement, not proof of a completed launch. Publish the mint address, supply, authorities, distribution, and live trading status only after verification through official Climboria channels and on-chain evidence.</p><p>Token utility, eligibility, fees, and any rewards must be disclosed accurately. This document does not invent a mint address, final supply, allocation, or liquidity commitment.</p></section>
-<section class="section" id="swap"><h2>4. Climboria Swap</h2><p>Swap is intended to provide a focused exchange flow for supported assets. Users select a network and token pair, enter an amount, receive a real provider-backed quote, review rate/route/price impact/slippage/network fee/expiry, then approve and sign in their wallet. The service must submit, confirm, and reconcile the transaction outcome.</p><p>It must handle stale quotes, insufficient liquidity, rejected signatures, expired transactions, network errors, and uncertain outcomes honestly. No fake quotes, simulated fills, or placeholder success may be shown as real.</p><span class="status">Not production-live until the full real transaction lifecycle is verified</span></section>
-<section class="section" id="dex"><h2>5. Climboria DEX</h2><p>The DEX is the broader trading and market-discovery experience, distinct from the focused Swap flow. Planned features include search and discovery, watchlists, token profiles, exact mint/network identity, provider-backed price/liquidity/volume/pool data, charts, market history, and access to supported swap routes.</p><p>Market data must come from real attributable providers. Prices, candles, liquidity, volume, and trading activity must never be fabricated. Clear stale-data, unavailable, loading, and error states are required.</p><span class="status">Not production-live until provider data and trading flows are verified</span></section>
-<section class="section" id="launchpad"><h2>6. Climboria Launchpad</h2><p>The planned Launchpad will let projects apply to launch with structured disclosures and review. Intended stages include team and official-link verification, token configuration and authority review, tokenomics and distribution checks, published sale terms, eligibility and wallet limits, anti-bot controls, verified wallet/on-chain execution, and post-launch disclosure.</p><p>Sale terms must disclose supply, price or pricing method, sale dates, allocations, vesting/lockups, fees, use of proceeds, liquidity plan, and cancellation/refund conditions. A Launchpad listing is not a guarantee of safety, legitimacy, liquidity, exchange listing, or profit.</p><span class="status">Later delivery priority · not open for live launches</span></section>
-<section class="section" id="marketplace"><h2>7. Marketplace, crafting & digital ownership</h2><p>The planned marketplace is intended for eligible ingredients, crafted gear, and digital items, using $CLIMB as the intended currency. Players may use eligible items in-game without minting. NFT minting is intended to be optional; players pay applicable network gas fees.</p><p>The documented design proposes 2.5% buy and 2.5% sell marketplace fees. Five percent of actually collected marketplace fee revenue is intended for the Climboria game funding pool—not 5% of trading volume. These are design rules, not evidence of live fee collection or rewards. Forge and refinement systems remain subject to implementation and testing.</p></section>
-<section class="section" id="community"><h2>8. Community, rewards & social features</h2><p>Planned features include player profiles, referrals, events, guilds, All-Time and weekly Top Gainers boards, and funded reward campaigns. Rewards must be funded, secured, and governed by published eligibility and calculation rules before activation.</p><p>Future Global, Proximity, and Private Chat, parties, and Social Lobby features require server-authoritative identity, permissions, persistence, moderation, reporting, mute/block, and anti-spam controls. Arena wagers and sponsored events require secure escrow or verified funding, written agreements, and legal/compliance review before activation.</p></section>
-<section class="section" id="multichain"><h2>9. Solana first — planned Base expansion</h2><div class="grid"><article class="card"><h3>Phase 1 · Solana</h3><p>Initial $CLIMB token focus and first ecosystem integrations.</p></article><article class="card"><h3>Phase 2 · Base</h3><p>Planned 1:1 $CLIMB deployment/representation after canonical token identity, supply accounting, cross-chain security, wallet support, and liquidity are verified.</p></article><article class="card"><h3>Phase 3 · Base Swap/DEX</h3><p>Planned Base market access for supported Base assets and $CLIMB using real market data and swap/liquidity providers.</p></article><article class="card"><h3>Future networks</h3><p>Considered only when demand, secure infrastructure, and sustainable liquidity justify expansion.</p></article></div><p>A 1:1 token-unit design does not guarantee equal market prices across chains. The precise bridge or token-representation model, canonical addresses, and controls against double representation must be published and independently reviewed before cross-chain transfers are advertised as available.</p></section>
-<section class="section" id="roadmap"><h2>10. Engineering delivery priorities</h2>
-<div class="priority"><b>P1</b><div><strong>Live Swap</strong><p>Real production backend, quotes, wallet signing, submission, confirmation, reconciliation, security review, Devnet acceptance, monitoring, and rollback.</p></div></div>
-<div class="priority"><b>P2</b><div><strong>Live DEX</strong><p>Real market discovery, exact token identity, provider-backed data, charts, responsive behavior, and honest error states.</p></div></div>
-<div class="priority"><b>P3</b><div><strong>All Login methods</strong><p>Operational Guest, email/password, Google, X, and supported Solana/EVM wallet authentication with secure sessions and account-isolation tests.</p></div></div>
-<div class="priority"><b>P4</b><div><strong>Fully Live Game</strong><p>Complete playable release with verified desktop/mobile behavior and genuinely implemented systems.</p></div></div>
-<div class="priority"><b>P5</b><div><strong>Live Launchpad</strong><p>Complete project/token creation and sale lifecycle, on-chain launch, fees, liquidity, LP ownership/lock, confirmation, recovery, monitoring, and required reviews.</p></div></div>
-<p>Base expansion, Base Swap/DEX, marketplace, NFT minting, social systems, and rewards have separate release gates. A UI, mock data, testnet demo, or documentation entry does not constitute a production release.</p></section>
-<section class="section" id="risks"><h2>11. Risk & transparency disclosures</h2><ul><li>Crypto assets are volatile and may lose some or all value. No return or profit is promised.</li><li>Verify token addresses, supply, authorities, allocations, liquidity, and launch status before publishing.</li><li>Users must review network, token, amount, route, slippage, and fees before signing transactions.</li><li>Smart contracts, bridges, wallets, liquidity providers, and external services carry technical and operational risks.</li><li>Prices, execution, liquidity, and availability may differ across networks and providers.</li><li>Game rewards and marketplace items depend on implementation, funding, eligibility, and published rules.</li><li>Planned features are not live features. Material changes will be shared through official channels.</li></ul></section>
-<footer class="footer"><span>CLIMBORIA · GAME FIRST, SPECULATION LATER</span><span><a href="https://climboria.fun">climboria.fun</a> · <a href="https://x.com/ClimboriaHQ">@ClimboriaHQ</a> · <a href="https://github.com/CryptoDilis/Climboria/blob/main/docs/WHITEPAPER.md">Markdown source</a></span></footer>
-</main>
-</body></html>
+  <main class="shell">
+    <header>
+      <a class="brand" href="../" aria-label="Climboria home"><span class="mark" aria-hidden="true">▲</span><span><strong>CLIMBORIA</strong><small>MORE THAN A GAME · IT’S A CLIMB</small></span></a>
+      <nav class="actions" aria-label="Page navigation"><a class="btn" href="#roadmap">ROADMAP</a><a class="btn" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">FOLLOW ON X ↗</a></nav>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">OFFICIAL PROJECT OVERVIEW</div>
+      <h1>One climb.<br>Room to grow.</h1>
+      <p>Climboria is developing a free-to-play multiplayer mountain survival and exploration game. Players will face long expeditions, changing conditions, resource management, crafting, teamwork, and dangerous encounters. The game is intended to be playable without purchases or a crypto wallet; optional Web3 features will be introduced only as they are built, tested, and ready.</p>
+      <div class="actions"><a class="btn primary" href="../">PLAY CLIMBORIA</a><a class="btn" href="#roadmap">EXPLORE THE PLAN ↓</a></div>
+    </section>
+
+    <nav class="overview-jump" aria-label="Explore Climboria sections">
+      <p class="overview-jump-label">EXPLORE CLIMBORIA · TAP A SECTION</p>
+      <a href="#vision-title">OVERVIEW</a>
+      <a href="#ecosystem-map">ECOSYSTEM</a>
+      <a href="#forge-title">FORGE & ITEMS</a>
+      <a href="#heroes-title">HEROES & TOOLS</a>
+      <a href="#community-title">COMMUNITY</a>
+      <a href="#lobby-title">SOCIAL LOBBY</a>
+      <a href="#market-title">MARKETPLACE & SWAP</a>
+      <a href="#economy-title">TOKENOMICS & REWARDS</a>
+      <a href="#launchpad-title">LAUNCHPAD</a>
+      <a href="#roadmap">ROADMAP</a>
+      <a href="#climboria-whitepaper">PROJECT BRIEF</a>
+    </nav>
+
+    <section class="overview-visual" aria-label="Climboria mountain artwork">
+      <img src="../climboria-homepage.png" alt="Official Climboria mountain artwork" width="1920" height="1080" loading="eager" decoding="async">
+      <div class="overview-visual-caption"><span class="visual-line"></span><div><span class="eyebrow">THE CLIMBORIA EXPERIENCE</span><h2>Earn every ascent.</h2></div><span class="visual-index">01 — THE JOURNEY</span></div>
+    </section>
+
+    <section class="section" aria-labelledby="vision-title">
+      <div class="section-head"><h2 id="vision-title">The game comes first</h2><p>Game first. Speculation later.</p></div>
+      <div class="grid">
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Free-to-play, play-to-earn</h3><p>The core game is designed to be playable without purchases or a crypto wallet. Players can earn progression and eligible in-game items through play; any token or prize rewards will depend on implemented systems, published rules, available funding, and official launch readiness.</p><span class="tag planned">PLAYER-FIRST ECONOMY</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Browser mountain survival</h3><p>A multiplayer survival and exploration experience designed for browser play on desktop and mobile. The core adventure is intended to remain accessible without requiring crypto.</p><span class="tag active">CORE EXPERIENCE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Jarrell’s Peak — the launch world</h3><p>One vast, endless-feeling wilderness focused on exploration, survival, fishing, swimming, and treasure hunting. There is no summit or final level. Other maps are deferred until after token launch and budget readiness.</p><span class="tag active">LAUNCH FOCUS</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Dedicated mobile app</h3><p>A Climboria app is planned for the future. The priority is to polish gameplay and touch controls first, then prepare and test a mobile release before announcing platform availability.</p><span class="tag planned">FUTURE PLAN · NOT RELEASED</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Top Gainers</h3><p>Planned permanent All-Time and separate Weekly Top Gainers boards for Jarrell’s Peak. Scoring combines eligible $CLIMB earnings, published treasure value, and transparent rarity/difficulty bonuses. No summit ranking or badges.</p><span class="tag planned">PLANNED · FUNDED REWARDS ONLY</span></article>
+      </div>
+    </section>
+
+    <section class="section" id="mountain-survival" aria-labelledby="mountain-survival-title">
+      <div class="section-head"><h2 id="mountain-survival-title">Jarrell’s Peak: endless wilderness</h2><p>Explore, survive, discover treasure—and choose how far to venture.</p></div>
+      <div class="notice"><strong>Game design announcement:</strong> The core game direction is evolving into a multiplayer mountain survival and exploration experience. The systems below describe the intended design; they are not a claim that multiplayer, blockchain rewards, or token payouts are already live.</div>
+      <div class="notice"><strong>Current game-menu layout:</strong> Four destinations only — Jarrell’s Peak (the playable launch world), Arena (future-feature status panel), Marketplace (demo storefront), and Inventory (local preview). The ten proposed normal mountains are removed from the menu and remain deferred, not playable launch content.</div>
+      <div class="grid">
+        <article class="card"><h3>One launch world: Jarrell’s Peak</h3><p>A vast, endless-feeling forest and wilderness map built around exploration, survival, fishing, swimming, and treasure hunting. It has no summit, final level, or safe zone; death returns the player to the starting point under the published game rules.</p><span class="tag active">LAUNCH WORLD</span></article>
+        <article class="card"><h3>Gameplay first</h3><p>We are prioritizing the mountain survival experience and core progression. No achievement rewards, fixed reward pool, or token payout is being promised.</p><span class="tag planned">GAME FIRST</span></article>
+         <article class="card"><h3>Marketplace fee allocation</h3><p>Planned buy and sell fees are 2.5% each. Five percent of actual marketplace fee revenue collected is allocated to the Climboria game funding pool; this is not 5% of trading volume.</p><span class="tag planned">PLANNED ECONOMY</span></article>
+         <article class="card"><h3>Marketplace &amp; digital items</h3><p>Eligible marketplace items and crafted gear are intended to use $CLIMB only. Buy fee: 2.5%; sell fee: 2.5%. Eligible NFT minting is intended to have no Climboria minting fee; players pay network gas. These systems remain planned until implemented and verified.</p><span class="tag planned">PLANNED · NOT LIVE</span></article>
+        <article class="card"><h3>Random chests &amp; public discovery</h3><p>Random chests may contain $CLIMB, ingredients, gear, and NFT items. The design has no daily/weekly claim cap. Chest coordinates remain hidden until discovered; discovery is then announced to players and recorded publicly with the disclosed location and amount. Actual contents, odds, funding, and anti-cheat rules must be published before rewards launch.</p><span class="tag planned">EXPLORATION REWARD CONCEPT</span></article>
+        <article class="card"><h3>Jarrell’s Peak: endless risk</h3><p>Jarrell’s Peak is the only planned launch mountain: an endless wilderness with no summit, final level, or safe zone. It centers on treasure hunting, exploration, fishing, swimming, and survival. Existing gameplay mechanics are not being redesigned as part of this documentation update.</p><span class="tag active">LAUNCH FOCUS</span></article>
+        <article class="card"><h3>Future public Arena &amp; sponsor events</h3><p>A separate public forest Arena is planned for free-for-all battles, Guild Battles, and sponsored tournaments. The design target is one shared world with more than 1,000 concurrent players, subject to server architecture and load testing. Sponsors must pay the full agreed fee and prize pool before any announcement or activation.</p><span class="tag planned">FUTURE MAP</span></article>
+      </div>
+      <div class="notice"><strong>Transparency &amp; launch status:</strong> The website describes agreed design rules, not proof of deployment. Marketplace, fee allocation, leaderboards, token rewards, Chatworld, Arena, wagers, and sponsorship operations must be implemented, tested, funded where applicable, and formally announced before being treated as live. Rewards are never guaranteed without a verified funded pool.</div>
+    </section>
+
+    <section class="section" id="climboria-signature" aria-labelledby="climboria-signature-title">
+      <div class="section-head"><h2 id="climboria-signature-title">Climboria Signature — a flagship product</h2><p>Our launch philosophy connects responsible project launches with the world we are building.</p></div>
+      <div class="grid">
+        <article class="card"><h3>Signature Launchpad</h3><p>Transparent project terms, creator-lock rules, sell-limit safeguards, and clear launch conditions are central to the Climboria Signature approach. The safeguards remain in development and must be published before activation.</p><span class="tag planned">FLAGSHIP PRODUCT · IN DEVELOPMENT</span></article>
+        <article class="card"><h3>DEX &amp; Launchpad fund Jarrell’s Peak</h3><p>A disclosed portion of eligible DEX and Launchpad fees is intended to support Jarrell’s Peak directly. Exact percentages and accounting rules have not been finalized and will be published before launch. No fee allocation is active today.</p><span class="tag planned">PLANNED · RATE TO BE DISCLOSED</span></article>
+        <article class="card"><h3>Optional project donations</h3><p>Other projects may voluntarily donate $1–$1,000 worth of SOL to support Jarrell’s Peak. Conversion to $CLIMB is intended only through a safe, verified route; otherwise the funds remain in a SOL reserve.</p><span class="tag planned">OPTIONAL · NOT A REQUIRED FEE</span></article>
+      </div>
+      <div class="notice"><strong>Funding boundary:</strong> Jarrell’s Peak is the dedicated destination for its approved DEX/Launchpad fee allocations and optional project donations. This is separate from marketplace fee accounting. Collection, conversion, reporting, and distribution must be verifiable before activation.</div>
+    </section>
+
+    <section class="section" id="ecosystem-map" aria-labelledby="ecosystem-map-title">
+      <div class="section-head"><h2 id="ecosystem-map-title">The Climboria ecosystem, at a glance</h2><p>One connected journey — game first, features added in stages.</p></div>
+      <div class="grid">
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>01 · EXPLORE</h3><p>Explore Jarrell’s Peak, an endless-feeling wilderness for survival, fishing, swimming, and treasure hunting. No summit or final level is planned.</p><span class="tag active">LAUNCH WORLD</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>02 · TOP GAINERS</h3><p>Planned permanent All-Time and Weekly Top Gainers boards combine eligible $CLIMB earnings, eligible treasure value, and rarity/difficulty bonuses. No summit ranking or badge system is planned for launch.</p><span class="tag planned">PLANNED</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>03 · COLLECT & FORGE</h3><p>Earn ingredients through play, then craft or upgrade tools in the Forge. The intended free-to-play route lets players complete the game without buying tools; refining is planned to be free but may consume ingredients.</p><span class="tag planned">PROGRESSION SYSTEM</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>04 · PERSONALIZE</h3><p>Start with a free male or female adult hero in their mid-30s and one free starter tool. Planned marketplace choices include additional heroes and skins; some skins may have balanced attributes. Purchases remain optional for completion.</p><span class="tag planned">FREE START · OPTIONS LATER</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>05 · CHATWORLD</h3><p>Future Global Chat, Proximity Chat, and Private Messages are planned for Jarrell’s Peak and the Arena, with mute, block, report, anti-spam, and moderator tools.</p><span class="tag planned">FUTURE MULTIPLAYER FEATURE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>06 · ARENA</h3><p>A future public forest Arena is planned for free-for-all fights, Guild Battles, and sponsor events. Casual fights have no rewards; funded event rewards require published rules and verified funding.</p><span class="tag planned">FUTURE MAP</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>07 · MARKETPLACE & SWAP</h3><p>A future marketplace may support eligible items minted as NFTs. The temporary swap is planned to become operational after the official Climboria token launches, once liquidity, wallet integration, and security checks are ready. The dedicated Climboria DEX remains the longer-term vision.</p><span class="tag planned">TOKEN-LAUNCH DEPENDENT · NOT LIVE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>08 · WEB3 IN PHASES</h3><p>Solana is the initial blockchain focus. Base may follow later, with additional chains only after integrations, liquidity, and security are ready. $CLIMB is a candidate ticker; no official mint address is confirmed here.</p><span class="tag planned">SOLANA FIRST · BASE LATER</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>09 · PLAY ANYWHERE</h3><p>The browser game is the starting point for crypto-curious and non-crypto players alike. No crypto wallet is required for the core game. A dedicated Climboria mobile app is planned after gameplay and touch controls are stable; no app release is announced yet.</p><span class="tag planned">APP PLANNED</span></article>
+      </div>
+      <div class="notice"><strong>Game-first direction:</strong> focus on playable expeditions, survival, gear, crafting, and cooperative exploration. Token, marketplace, and platform features remain separate and are not promised as player rewards.</div>
+    </section>
+
+    <section class="section" aria-labelledby="forge-title">
+      <div class="section-head"><h2 id="forge-title">Forge, refine, and collect</h2><p>Progression beyond the climb.</p></div>
+      <div class="grid">
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Forge and refine</h3><p>Collect ingredients through gameplay and use them in the Forge to craft or improve tools. The intended progression lets players finish the full game without buying tools: the free starter tool can carry a player through, while earned materials provide a path to craft stronger options. Refining is planned to remain free, though ingredients may be permanently consumed.</p><span class="tag planned">FREE-TO-PLAY PATH</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Tools, skins, and inventory</h3><p>Players start with one free, non-tradable starter tool. Additional tools and character or equipment skins may be available through the marketplace or crafting. Some purchasable skins may carry gameplay attributes; exact stats, limits, and balance rules will be published before release.</p><span class="tag planned">FREE START · OPTIONAL ITEMS</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Future Arena &amp; Guild Battles</h3><p>A separate public forest Arena is planned for free-for-all fights, Guild Battles, and sponsored tournaments. Weekly Guild Wars depend on future budget, secure multiplayer systems, and tested event rules. Badges are deferred.</p><span class="tag planned">FUTURE MAP · BUDGET DEPENDENT</span></article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="heroes-title">
+      <div class="section-head"><h2 id="heroes-title">Free-to-play heroes, tools & skins</h2><p>Play the full climb without being forced to pay.</p></div>
+      <div class="grid">
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Choose your free hero</h3><p>Every player can choose a free default hero: male or female, designed as an adult in their mid-30s. The free hero is enough to begin the journey; character choice is about identity and play style, not a paywall.</p><span class="tag planned">FREE STARTER HERO</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>More character ages in the marketplace</h3><p>Planned purchasable hero options may include male and female characters across different age styles: teenagers, older adults, and toddlers, alongside other character designs as the roster expands. Availability and any gameplay effects will be clearly described per character.</p><span class="tag planned">OPTIONAL MARKETPLACE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Skins with optional attributes</h3><p>Players may buy visual skins, and some skins may provide bonus attributes. Stats must be clearly displayed and balanced so the game remains fair; no item is required to complete the full game. Final attributes, prices, rarity, and trade rules will be published before marketplace launch.</p><span class="tag planned">COSMETICS + POSSIBLE STATS</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>One free starter tool</h3><p>Every player receives one free starter tool. It is intended to be non-sellable, non-transferable, and non-mintable, so players can start climbing without buying equipment.</p><span class="tag planned">FREE STARTER TOOL</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Earn ingredients, then Forge</h3><p>Collect ingredients by playing and use them to craft or improve tools through the Forge. Players can work toward stronger equipment through gameplay instead of purchases. The free starter tool plus earned ingredients is the planned no-purchase route to completing the game.</p><span class="tag planned">NO PURCHASE REQUIRED</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Purchases are optional</h3><p>Marketplace heroes, skins, and extra tools are for choice and progression—not a requirement to reach the ending. The final balance rules will define how attribute bonuses work and protect fair competition.</p><span class="tag planned">GAME FIRST</span></article>
+      </div>
+      <div class="notice"><strong>Fair-play commitment:</strong> Climboria is intended to remain completable without buying tools or skins. Expedition scoring and any item attribute bonuses will need clear balance limits so competition is not decided by spending alone.</div>
+    </section>
+
+    <section class="section" aria-labelledby="community-title">
+      <div class="section-head"><h2 id="community-title">Community and rewards</h2><p>Participation should be clear and fair.</p></div>
+      <div class="grid">
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Community participation</h3><p>Optional community events, referrals, and challenges may be considered later. Any incentive would need clear rules and funding before launch.</p><span class="tag planned">UNDER REVIEW</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Guilds & special events</h3><p>Players will be able to create or join guilds, team up for limited-time events, complete shared challenges, and compete for guild rewards. Event schedules, scoring, eligibility, and anti-abuse rules will be published before rewards are offered.</p><span class="tag planned">GUILDS · PLANNED</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Referrals and events</h3><p>Referral features, guilds, and community events are planned to help players invite friends, team up for special events, and compete for rewards. Eligibility and anti-abuse rules should be shared before any rewards are distributed.</p><span class="tag planned">PLANNED</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Campaign & reward tracker</h3><p>A future tracker may show campaign participation, challenge progress, and reward eligibility. Every campaign will publish its rules, eligibility requirements, and reward details before it begins.</p><span class="tag planned">CAMPAIGNS · PLANNED</span></article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="lobby-title">
+      <div class="section-head"><h2 id="lobby-title">Social Lobby & Trading Hangout</h2><p>A place to meet, show off, and connect.</p></div>
+      <div class="grid">
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Meet and make friends</h3><p>A planned shared lobby where climbers can hang out, chat, meet new friends, and find other players between climbs. Social tools will need clear privacy and moderation controls.</p><span class="tag planned">FUTURE SOCIAL FEATURE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Show your best look</h3><p>Showcase your favorite character skins, tools, and earned achievements on your player profile or in the lobby, so other climbers can see your style and achievements.</p><span class="tag planned">FUTURE SOCIAL FEATURE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Trade while you hang out</h3><p>While seated and chatting in the Social Lobby, players can open a built-in trading terminal. One side will show token names and a watchlist; the other will display an order book and candlestick chart beside the live hangout. This terminal is planned and depends on reliable market data, wallet flows, order handling, and security checks.</p><span class="tag planned">LOBBY TRADING · PLANNED</span></article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="market-title">
+      <div class="section-head"><h2 id="market-title">The wider Climboria ecosystem</h2><p>Built in stages, not all at once.</p></div>
+      <div class="grid">
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Marketplace & NFT minting</h3><p>Every item obtained or earned through gameplay is intended to be eligible for NFT minting. Items can be used in-game without minting; once an item is minted as an NFT, it can be traded or sold through supported marketplaces, subject to ownership, item, and network rules. Climboria plans no platform minting fee, while the player pays the blockchain gas fee. This system is planned and is not live yet.</p><span class="tag planned">PLANNED · PLAYER PAYS GAS</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Climboria DEX · normal crypto trading</h3><p>The goal is a familiar decentralized exchange experience: connect a supported wallet, choose a token pair, review the quoted rate, price impact, slippage settings, and network fee, then confirm the swap yourself. The interface is planned to show available liquidity, price charts, and transaction history where reliable data is available. Trades depend on liquidity and can lose value; prices, execution, and fills are not guaranteed. The DEX is planned, not live.</p><span class="tag planned">PLANNED · SWAP-BASED TRADING</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Multi-chain vision</h3><p>Climboria aims to expand beyond a single blockchain over time. Solana is the initial focus, Base is a later consideration, and additional networks may follow as secure cross-chain infrastructure, supported assets, and liquidity become available. “Multi-chain” does not mean every chain is supported at launch.</p><span class="tag planned">PHASED EXPANSION</span></article>
+      </div>
+    </section>
+
+    <section class="section" id="launchpad" aria-labelledby="launchpad-title">
+      <div class="section-head"><h2 id="launchpad-title">Climboria Launchpad</h2><p>Project launches with transparent terms — planned, not live.</p></div>
+      <div class="grid">
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Apply & verify</h3><p>Projects will submit their team and official links, token configuration, tokenomics, intended utility, distribution plan, and liquidity approach. Climboria plans a review process for identity and project disclosures, authority controls, and available security evidence. Review is not a guarantee of safety, legitimacy, or profit.</p><span class="tag planned">PROPOSED REVIEW RULES</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Publish sale terms first</h3><p>Before participation opens, each project must publish its supply, price or pricing method, sale dates, allocation limits, vesting or lockups, fees, use of proceeds, liquidity plan, and refund/cancellation conditions. Any changes must be disclosed before users commit funds.</p><span class="tag planned">TRANSPARENT TERMS</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Fair access & launch disclosure</h3><p>Each sale will publish eligibility, wallet limits, allocation and oversubscription rules, anti-bot/anti-sybil measures, and any region restrictions. After a launch, the project should disclose the verified token address and relevant sale/liquidity results. A Launchpad listing does not promise a listing elsewhere, liquidity, price appreciation, or profit.</p><span class="tag planned">RULES BEFORE EACH SALE</span></article>
+      </div>
+      <div class="notice"><strong>Launchpad principles:</strong> no project is automatically approved; no guaranteed allocation or return; disclose team/project risks, token distribution, unlock schedules, fees, liquidity arrangements, and conflicts of interest. Launches only proceed after required technical, security, operational, and legal/compliance checks are ready. Exact platform fees and launch formats will be published before the first sale.</div>
+    </section>
+
+    <section class="section" id="economy" aria-labelledby="economy-title">
+      <div class="section-head"><h2 id="economy-title">Tokenomics &amp; game funding</h2><p>Clear fees, funded rewards, and no false promises.</p></div>
+      <div class="grid">
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Marketplace fees</h3><p>Planned marketplace fees are 2.5% on buys and 2.5% on sells. Five percent of actual collected marketplace fee revenue goes to the Climboria game funding pool—not 5% of gross trading volume.</p><span class="tag planned">PLANNED · NOT LIVE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Top Gainers rewards</h3><p>A permanent All-Time board and separate weekly board are planned. Weekly rewards, if funded and activated, use combined eligible gains and the Friday 03:00 UTC schedule. There are no badges and no summit ranking.</p><span class="tag planned">FUNDED REWARDS ONLY</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Arena wager fee</h3><p>Future optional wager matches use a 2.5% fee on the total pot, paid to the Climboria game funding pool. Casual fights are free and have no rewards. Wagers require secure escrow and dispute handling before release.</p><span class="tag planned">FUTURE FEATURE</span></article>
+      </div>
+      <div class="notice"><strong>Current status:</strong> The percentages above are agreed design rules, not confirmation that marketplace or wager systems are live. Token allocation and supply remain unconfirmed here. No rewards are currently promised; each reward must be funded, secured, and governed by published rules.</div>
+    </section>
+
+    <section class="section roadmap-section" id="roadmap" aria-labelledby="roadmap-title">
+      <div class="section-head roadmap-heading">
+        <div><div class="eyebrow">THE CLIMBORIA PLAN</div><h2 id="roadmap-title">Built with purpose.<br>Expanded in stages.</h2></div>
+        <p>A game-first roadmap focused on quality, clear milestones, and responsible ecosystem growth. Priorities may evolve as development and testing progress.</p>
+      </div>
+
+      <div class="roadmap-feature">
+        <div class="roadmap-feature-copy">
+          <span class="roadmap-kicker"><span class="status-dot"></span> DEVELOPMENT ROADMAP</span>
+          <h3>One wilderness. A world of discoveries.</h3>
+          <p>First, protect and stabilize Jarrell’s Peak and its existing gameplay. Then build secure economy and social systems. The Arena, Chatworld, sponsor operations, and additional maps remain future work until funded, implemented, and tested.</p>
+          <div class="roadmap-principles"><span>01 / GAMEPLAY FIRST</span><span>02 / COMMUNITY NEXT</span><span>03 / WEB3 WHEN READY</span></div>
+        </div>
+        <figure class="roadmap-art">
+          <img src="../climboria-homepage.png" alt="Climboria signature mountain artwork" width="1920" height="1080" loading="eager" decoding="async">
+          <figcaption>THE ASCENT CONTINUES <span>CLIMBORIA</span></figcaption>
+        </figure>
+      </div>
+
+      <div class="roadmap-timeline" aria-labelledby="timeline-title">
+        <div class="roadmap-timeline-head"><div><span class="eyebrow">DELIVERY TARGET · 2026 / NEXT PHASE · 2027</span><h3 id="timeline-title">What we’re aiming for</h3></div><p>Near-term targets are planning windows, not guaranteed launch dates. We’ll update progress as work is tested and ready.</p></div>
+        <div class="roadmap-timeline-grid">
+          <article class="roadmap-period roadmap-period-current">
+            <div class="roadmap-period-top"><span class="roadmap-period-date">OCT 2026</span><span class="roadmap-period-status">CURRENT FOCUS</span></div>
+            <h4>This month</h4>
+            <p>Align the website and project documents with the single-world launch plan while protecting existing gameplay mechanics. Verify spawn, river, swimming, collision, treasure discovery, and desktop/mobile behavior.</p>
+            <div class="roadmap-period-footer"><span>PRIORITY</span><b>Usability & stability</b></div>
+          </article>
+          <article class="roadmap-period">
+            <div class="roadmap-period-top"><span class="roadmap-period-date">OCT–NOV 2026</span><span class="roadmap-period-status">FLEXIBLE TGE TARGET</span></div>
+            <h4>Solana token launch readiness</h4>
+            <p>The current target has been discussed for November 15, 2026 at 15:00 UTC, but it must not be treated as a completed launch or guaranteed until the official token address, launch page, and transaction status are verified through Climboria’s official channels. Base remains a later phase.</p>
+            <div class="roadmap-period-footer"><span>PRIORITY</span><b>Funded giveaways & launch readiness</b></div>
+          </article>
+          <article class="roadmap-period roadmap-period-quarter">
+            <div class="roadmap-period-top"><span class="roadmap-period-date">Q4 2026</span><span class="roadmap-period-status">QUARTER OBJECTIVE</span></div>
+            <h4>This quarter</h4>
+            <p>Prioritize the Jarrell’s Peak launch-world foundation and align core project documents. Marketplace and reward systems proceed only when accounting, security, anti-cheat, and funding requirements are ready; no release date is guaranteed.</p>
+            <div class="roadmap-period-footer"><span>PRIORITY</span><b>Playable foundation</b></div>
+          </article>
+          <article class="roadmap-period roadmap-period-future">
+            <div class="roadmap-period-top"><span class="roadmap-period-date">Q1 2027</span><span class="roadmap-period-status">NEXT-PHASE TARGET</span></div>
+            <h4>Climboria Launchpad + DEX</h4>
+            <p>Target the first quarter of 2027 for the Climboria Launchpad and dedicated DEX, after the core ecosystem target for year-end 2026. Both remain planned releases and depend on architecture, liquidity, wallet compatibility, security reviews, and operational readiness.</p>
+            <div class="roadmap-period-footer"><span>PRIORITY</span><b>Launchpad & trading infrastructure</b></div>
+          </article>
+        </div>
+      </div>
+      <div class="roadmap-subhead"><div><span class="eyebrow">MILESTONES</span><h3>The path ahead</h3></div><p>No artificial deadlines. Each stage moves forward as the work is ready.</p></div>
+      <div class="roadmap">
+        <article class="step roadmap-step roadmap-step-focus"><div class="num">01</div><div class="step-copy"><span class="step-label">FOUNDATION</span><h3>Build the survival foundation</h3><p>Develop the multiplayer mountain world, player movement, survival needs, safe-zone rules, persistent player state, and reliable browser/mobile controls.</p><span class="step-outcome">OUTCOME <b>A stronger, playable core</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">02</div><div class="step-copy"><span class="step-label">GAME CONTENT</span><h3>Stabilize Jarrell’s Peak</h3><p>Keep one launch mountain: an endless-feeling wilderness with a riverside camp, long river, fishing, swimming, treasure hunting, and survival. Preserve existing gameplay and verify desktop/mobile stability.</p><span class="step-outcome">OUTCOME <b>More reasons to climb</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">03</div><div class="step-copy"><span class="step-label">PLAYER PROGRESSION</span><h3>Build Forge and inventory systems</h3><p>Develop the Forge and refine loops, materials, tools, skins, player profiles, and achievement records with understandable in-game rules.</p><span class="step-outcome">OUTCOME <b>Deeper player progression</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">04</div><div class="step-copy"><span class="step-label">COMMUNITY</span><h3>Connect events and rewards</h3><p>Plan CLIMB Points, daily streaks, referrals, event tracking, and transparent eligibility rules before any rewards are distributed.</p><span class="step-outcome">OUTCOME <b>Clear participation systems</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">05</div><div class="step-copy"><span class="step-label">SOCIAL EXPERIENCE</span><h3>Build Chatworld and the public Arena</h3><p>Plan Global, Proximity, and Private Chat with moderation. The future Arena is a public forest battle/event map with sponsor branding, no rewards outside funded events, and a shared-world target that must pass load testing.</p><span class="step-outcome">OUTCOME <b>A place to meet climbers</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">06</div><div class="step-copy"><span class="step-label">BLOCKCHAIN FOUNDATIONS</span><h3>Build toward multi-chain support</h3><p>Keep Solana as the initial focus and consider Base later. Research wallet support, liquidity routing, cross-chain security, and supply/accounting safeguards before expanding networks.</p><span class="step-outcome">OUTCOME <b>Careful, staged integration</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">07</div><div class="step-copy"><span class="step-label">MOBILE</span><h3>Prepare the Climboria app</h3><p>Polish the browser experience and touch controls first, then package and test a dedicated app. Platform availability will be announced only when a release is ready.</p><span class="step-outcome">OUTCOME <b>A tested mobile experience</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">08</div><div class="step-copy"><span class="step-label">LONG-TERM ECOSYSTEM</span><h3>Build the Climboria Launchpad and DEX</h3><p>Target Q1 2027 for the Launchpad and dedicated DEX, following the core ecosystem target before the end of 2026. Release depends on architecture, liquidity, wallet compatibility, security, and operational requirements.</p><span class="step-outcome">OUTCOME <b>Launchpad + DEX target · Q1 2027</b></span></div></article>
+      </div>
+      <div class="roadmap-footnote"><span class="roadmap-footnote-mark">i</span><p><strong>Transparency matters.</strong> The target is to deliver the core Climboria ecosystem before the end of 2026. The Launchpad and dedicated DEX are targeted for Q1 2027, subject to readiness and security reviews. The Solana TGE may happen in October or November 2026, depending on development progress; there is no fixed or guaranteed launch date. Campaigns must have funded rewards and published rules; CLIMB Points are not tokens and do not guarantee a payout. The official token address must be announced through Climboria’s official channels after deployment. Base and the dedicated app remain future plans until officially released. Beware of unofficial tokens.</p></div>
+    </section>
+
+    <section class="whitepaper-section" id="climboria-whitepaper" aria-labelledby="climboria-whitepaper-title">
+      <div class="eyebrow">PROJECT BRIEF · GAME FIRST</div>
+      <h2 id="climboria-whitepaper-title">What Climboria is building</h2>
+      <p>Climboria is a browser-first climbing, survival, and open-world treasure-hunting project. The initial world focus is Jarrell’s Peak, an endless-feeling wilderness with no summit or final level. The guiding principle is Game First, Speculation Later; the core adventure is intended to remain accessible without a crypto wallet or required purchases.</p>
+      <div class="whitepaper-columns">
+        <article><h3>Jarrell’s Peak</h3><p>Explore, survive, fish, swim, and discover hidden treasure across a vast wilderness. There is no summit, final level, or safe zone. The ten previously proposed normal mountains are deferred and are not launch content.</p></article>
+        <article><h3>Top Gainers</h3><p>A permanent All-Time board and a separate Weekly Top Gainers board are planned. Scoring combines eligible $CLIMB earnings, eligible treasure value, and transparent rarity/difficulty bonuses. No summit leaderboard or badge system is planned.</p></article>
+        <article><h3>Marketplace & game funding</h3><p>Planned marketplace buy and sell fees are 2.5% each. Five percent of actual collected marketplace fee revenue is allocated to the Climboria game funding pool—not 5% of trading volume. Eligible items and crafted gear are intended to use $CLIMB only. Systems are not live until implemented and verified.</p></article>
+        <article><h3>Future Arena, Chatworld & sponsors</h3><p>The public Arena, Global/Proximity/Private Chat, optional wagers, sponsor events, and Weekly Guild Wars are future features. Sponsorship requires admin approval, a written agreement, and full verified payment—including the complete prize pool—before any announcement or activation.</p></article>
+      </div>
+      <div class="whitepaper-actions">
+        <a class="btn primary" href="../">PLAY CLIMBORIA</a>
+        <a class="btn" href="#economy-title">TOKENOMICS & REWARD RULES</a>
+        <a class="btn" href="#roadmap">VIEW DEVELOPMENT ROADMAP</a>
+      </div>
+    </section>
+
+        <footer><span>CLIMBORIA · GAME FIRST, SPECULATION LATER</span><span><a href="../">Back to the game</a> · <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">@ClimboriaHQ</a></span></footer>
+  </main>
+</body>
+</html>
