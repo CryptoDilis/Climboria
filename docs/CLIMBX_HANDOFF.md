@@ -238,5 +238,12 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - NEXT: verify rendered whitepaper and home links, continue CLIMBX integration branch. No real-money execution enabled.
 - User explicitly authorized homepage and whitepaper edits as an exception to CLIMBX-only scope.
 
+## Phase 156 — 2026-11-14 — CLIMBX public UI polish for launch-day presentation
+- DONE: main commit `56519851b9bad80867f65dc0449a9acd9e9a7ea1` redesigns only `dex/climbx/index.html` with premium responsive dark/mint styling, mobile layouts, section navigation, a clear preview-only hero, planned-capability metrics, structured status rows, five asset cards and a three-step onboarding explainer. Existing security/risk/fee disclosures preserved.
+- DONE: main commit `f37e15411ad0b3e32d11a4651834616356b7d6d7` updates `climbx/test_dex_preview_visibility.cjs` acceptance assertions for the new status markup and required About/Security/Risks/Whitepaper disclosures. Three disabled buttons and script-free fail-closed preview remain required.
+- PENDING: exact-head CI and live mobile/browser verification; no claim that the deployed site already reflects changes.
+- NEXT: verify GitHub preview-visibility workflow, inspect responsive layout in browser and fix issues. After launch presentation, resume isolated CLIMBX runtime integration.
+- No DEX trading, Swap, Launchpad or Game edits. **REAL-FUNDS NO-GO**.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
