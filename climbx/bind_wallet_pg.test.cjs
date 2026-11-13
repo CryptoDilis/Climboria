@@ -44,3 +44,17 @@ test('binding installs transaction-local PostgreSQL timeout settings before chal
  assert.match(f.calls[timeout][0],/lock_timeout/);
  assert.match(f.calls[timeout][0],/idle_in_transaction_session_timeout/);
 });
+
+test('COMMIT failure reports unknown outcome instead of false rollback',async()=>{
+ const f=fixture();const original=f.args.pool.connect;
+ f.args.pool.connect=async()=>{const c=await original();const query=c.query;c.query=async(sql,params)=>{if(sql==='COMMIT')throw Error('connection lost after commit');return query(sql,params);};return c;};
+ assert.equal(await bindVerifiedWallet(f.args),'COMMIT_OUTCOME_UNKNOWN');
+ assert.equal(f.calls.some(x=>x[0]==='ROLLBACK'),false);
+ assert.equal(f.calls.at(-1)[0],'RELEASE');
+});
+test('ROLLBACK failure reports unknown outcome instead of a confident error',async()=>{
+ const f=fixture({unknown:true});const original=f.args.pool.connect;
+ f.args.pool.connect=async()=>{const c=await original();const query=c.query;c.query=async(sql,params)=>{if(sql==='ROLLBACK')throw Error('connection lost during rollback');return query(sql,params);};return c;};
+ assert.equal(await bindVerifiedWallet(f.args),'ROLLBACK_OUTCOME_UNKNOWN');
+ assert.equal(f.calls.at(-1)[0],'RELEASE');
+});
