@@ -1247,3 +1247,19 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Blockers:** compatible toolchain and lockfile not provisioned; no signed local-validator tests, restricted DEX CPI, grant execution, audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase122:** verify Phase121 CI and fix failures; on approved host generate and review Cargo.lock with pinned toolchain, cache dependencies, run actual offline cargo check and capture output, then signed local validator grant/revoke tests. Keep append-only main record.
+
+
+## Phase 122 — 2026-11-14 — enforce max 24-hour grant creation duration
+
+**Phase121 CI all SUCCESS** on `206b8e76346eca3fc2217d074a55a0cfcc622162`: Browser Smoke `43488944723`, CLIMBX release safety `43488944901`, Validate `43488944761`.
+
+**Phase122 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `8ead6287103f6f4a008dcdd26aa6dd326929c69c`: Rust grant creation rejects expiry beyond 24 hours from on-chain clock using checked timestamp addition and dedicated `ExpiryTooLong` error.
+- `6cb88c8aa3ad913041b73cb9634fcf2882288b77`: static scaffold gate checks presence of 24-hour duration cap and overflow-safe addition.
+- `33a89bc28685785d035bdbf98fe16817a18c65d1`: two static guard regression tests for removed/insecure expiry cap.
+- `d6454b8b84c3b2831640602d0ccd83ee52af771c`: document expiry cap and remaining absence of execution-time enforcement.
+**Phase122 CI pending** at first check. Existing CI executes static JavaScript guard tests; does not compile Rust or run a Solana validator.
+
+**Toolchain probe on assistant container:** `cargo`, `rustc`, `solana-test-validator`, `anchor` absent. No real Rust build, signed local-validator test, devnet deployment, DEX CPI, or audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase123:** verify Phase122 CI, fix failures; set up approved pinned Rust/Solana/Anchor build host, generate reviewed Cargo.lock, run actual cargo check and signed local-validator grant/revoke tests. Keep append-only main record.
