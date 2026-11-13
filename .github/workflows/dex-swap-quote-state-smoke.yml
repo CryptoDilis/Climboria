@@ -1,0 +1,59 @@
+name: DEX Swap Read-only Quote State Regression
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "dex/index.html"
+      - "swap/index.html"
+      - "dex/swap-amount.js"
+      - "swap-config.js"
+      - ".github/scripts/dex-swap-quote-state-smoke.mjs"
+      - ".github/workflows/dex-swap-quote-state-smoke.yml"
+  push:
+    branches: [main]
+    paths:
+      - "dex/index.html"
+      - "swap/index.html"
+      - "dex/swap-amount.js"
+      - "swap-config.js"
+      - ".github/scripts/dex-swap-quote-state-smoke.mjs"
+      - ".github/workflows/dex-swap-quote-state-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dex-swap-quote-state-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    name: Verify missing metadata and discarded stale quotes on desktop/mobile
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify smoke test syntax
+        run: node --check .github/scripts/dex-swap-quote-state-smoke.mjs
+      - name: Install Playwright Chromium
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Start local static web server
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/climboria-quote-state-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/swap/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/climboria-quote-state-http.log
+          exit 1
+      - name: Assert no stale provider quote, no fabricated fees, and no wallet requests
+        run: node .github/scripts/dex-swap-quote-state-smoke.mjs
