@@ -220,3 +220,8 @@ V5 adds SQLite-persisted exit order intents with RESERVED -> SUBMITTED -> UNKNOW
 **Owner-requested mandatory deliverable:** The Climboria Signature Bot must include an accessible, mobile-friendly **User's Manual / Help** page on the Climboria website, linked from the bot dashboard and first-run experience. Draft source committed as [`docs/CLIMBORIA_BOT_USERS_MANUAL.md`](CLIMBORIA_BOT_USERS_MANUAL.md). It covers five slots, configuration, TP/SL, fund manager, 24h authorization and revoke, fees, learning, troubleshooting, and safety.
 
 **Status:** Manual content **DRAFT COMMITTED**; **website page/navigation NOT YET IMPLEMENTED**. Do not imply it is already visible to site users. Acceptance: stable first-party help URL, bot dashboard Help navigation, contextual setting tooltips, mobile readability, clear paper/live/unavailable status, and website acceptance tests. Integrate when bot UI work is authorized and consistent with current repository P1 live swap / P2 live DEX priorities. Preserve the manual requirement in all future handoffs.
+
+
+## Official bot brand decision — 2026-11-13
+
+**Owner approved name: CLIMBX** (display: **CLIMBX by Climboria**). Tagline: **You Dictate. It Climbs. It Learns.** Use CLIMBX for the desktop/mobile DEX promotional card, bot navigation/dashboard, and website User's Manual. Retain existing five slots and trading design. Existing technical file names may remain unchanged to avoid breaking links. Brand decision does **not** imply bot launch, production availability, or trademark clearance. The website card/manual navigation are still pending implementation.
