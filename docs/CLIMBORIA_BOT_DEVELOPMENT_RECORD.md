@@ -1131,3 +1131,18 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Limits:** localhost test server is mocked, not a running Solana validator. No Rust/Cargo/Solana/Anchor toolchain or on-chain grant/revoke/cap prototype verified. No real-funds trading (**NO-GO**), no Swap/DEX/Launchpad/game edits.
 
 **Next Phase114:** verify Phase112 Validate and Phase113 CI, inspect failures; obtain pinned toolchain and run actual local validator/RPC test; prioritize signed grant/revoke/cap prototype and on-chain replay protection. Maintain append-only main record.
+
+
+## Phase 114 — 2026-11-14 — compose local command + localhost RPC readiness
+
+**Prior CI:** Phase112 `6542f0cd75c97d607f03bd93a57e84a54e98fb20`: CLIMBX release safety `43484986731` SUCCESS, Browser Smoke `43484986696` SUCCESS, Validate `43484986780` CANCELLED. Phase113 `cfdbc55e5f30cbd8b76468b31b30937dbedce592`: CLIMBX release safety `43485176798` SUCCESS, Browser Smoke `43485176714` SUCCESS, Validate `43485176620` PENDING at Phase114 check. Neither phase should be described as all green.
+
+**Phase114 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `d8c2177d53a31ec7a5da7ac9095ed5c8abf22051`: new `climbx/collect_local_readiness.cjs` combines actual local executable `--version` probes and localhost `getHealth` RPC; skips RPC when any tool missing; always returns `mayExecute:false`. Runnable via `node climbx/collect_local_readiness.cjs` on a provisioned machine. Does not start validator, prove validator identity, or authorize trading.
+- `c4fcd0b1c6745fe77266d0786d2487dac62a1617`: five deterministic tests covering missing tool, healthy/unhealthy RPC, exception and caller-claimed execution.
+- `8a21fec97d67f6b15797943a6af5025954db5283`: wire collector tests into non-deploying CLIMBX CI.
+**Phase114 CI pending** at first check. CI unit tests mock command and RPC outcomes; no real validator test claimed.
+
+**Blockers:** Rust/Cargo/Solana/Anchor unavailable in assistant environment; no actual validator, signed grant/revoke program, atomic cap/nonce enforcement, devnet signed E2E or independent audit. Real-funds trading **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase115:** verify Phase113 Validate and Phase114 CI, inspect failures; run collector on a provisioned local validator machine and capture real outputs; then build on-chain owner-grant prototype with deterministic validator tests. Keep append-only main record.
