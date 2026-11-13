@@ -57,6 +57,13 @@ export function decodeJupiterV6Route(data) {
   const steps = [];
   const percentByInput = new Map();
   const dexProgramIds = new Set();
+  // Jupiter's pinned V6 route IDL explicitly calls routePlan a
+  // "Topologically sorted trade DAG" (jup-ag/instruction-parser at
+  // e6f77951377847c579112e6a16d8c17c5c092485, src/idl/jupiter.ts).
+  // The existing graph connectivity checks are necessary but insufficient:
+  // a fully connected graph may still consume an intermediate token before
+  // any preceding step produced it. Reject non-topological ordering.
+  const previouslyProducedOutputs = new Set([0]);
   for (let i = 0; i < count; i++) {
     if (offset >= data.length) fail("Truncated Jupiter route step");
     const variant = data[offset++];
@@ -74,6 +81,10 @@ export function decodeJupiterV6Route(data) {
     if (percent < 1 || percent > 100 || inputIndex >= outputIndex || outputIndex > count) {
       fail("Jupiter route contains an invalid split percentage or token index");
     }
+    if (!previouslyProducedOutputs.has(inputIndex)) {
+      fail("Jupiter route plan steps must be topologically sorted before consuming intermediate tokens");
+    }
+    previouslyProducedOutputs.add(outputIndex);
     percentByInput.set(inputIndex, (percentByInput.get(inputIndex) || 0) + percent);
     steps.push({ variant, dex: support.name, percent, inputIndex, outputIndex });
     dexProgramIds.add(support.programId);
@@ -94,10 +105,10 @@ export function decodeJupiterV6Route(data) {
   // at an intermediate input that is never produced, or leave intermediate
   // output stranded while also referencing the final output elsewhere.
   //
-  // Every non-source input must come from a prior step, and every non-final
-  // output must feed a later step. Since each step must move from a lower
-  // token index to a higher one, these checks ensure every edge lies on a
-  // path from token 0 to the terminal index without assuming hop order.
+  // Every non-source input must come from a producer step, and every
+  // non-final output must feed a consumer step. The separate topological
+  // ordering check above additionally requires producers to appear first.
+  // Increasing token indexes ensure an acyclic route to the terminal.
   const produced = new Set(steps.map(step => step.outputIndex));
   const consumed = new Set(percentByInput.keys());
   for (const step of steps) {
