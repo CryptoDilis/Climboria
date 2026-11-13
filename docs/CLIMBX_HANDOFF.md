@@ -230,5 +230,13 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - NEXT: verify published page, test HTML assertions and continue safe mainline CLIMBX integration.
 - No DEX trading, Swap, Launchpad or Game edits. **REAL-FUNDS NO-GO**.
 
+## Phase 155 — 2026-11-14 — owner-requested homepage and premium ecosystem whitepaper
+- DONE: main commit `df4bb62d02a8e21436a66a3cadeffa18eb4a30f0` removes desktop/mobile Overview navigation, the homepage Overview section and bottom Project Overview and Roadmap cards; replaces Whitepaper navigation and CTA with `/whitepaper/`.
+- DONE: main commit `2981b9c82c5162a59ab02affaf4962365a3ca371` creates premium responsive, print-friendly `whitepaper/index.html` with 12 sections for the entire ecosystem: executive summary, products, Jarrell's Peak, DEX/Swap, Launchpad, CLIMBX, economics, architecture, security, roadmap, operations and risk disclosures. Carefully labels planned vs verified features.
+- DONE: main commit `dfbd2f436349df0fced4cb1faae5177c89b2c5b8` updates CLIMBX preview links to the new unified whitepaper.
+- PENDING: website deployment and live visual/mobile verification; homepage retains separate detailed game, tokenomics and roadmap content for now, but the obsolete Overview navigation/section and bottom Project Overview card are removed. Legacy `/overview/` remains to avoid breaking inbound links.
+- NEXT: verify rendered whitepaper and home links, continue CLIMBX integration branch. No real-money execution enabled.
+- User explicitly authorized homepage and whitepaper edits as an exception to CLIMBX-only scope.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
