@@ -223,5 +223,12 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - NEXT: verify workflow and fix any failing tests; then migrate next CLIMBX-only module group and open draft integration PR.
 - No DEX, Swap, Launchpad or Game edits. **REAL-FUNDS NO-GO**.
 
+## Phase 154 — 2026-11-14 — public CLIMBX whitepaper and About/security disclosure
+- DONE: main commit `a92faeeeedef2500beefce9e0abeb65b7bb1898a` adds Section 11 to `docs/WHITEPAPER.md`: how CLIMBX is planned to work, one bot/wallet, max five assets, DEX-only routing, paper-first release, owner-approved learning, spending/loss limits, scam/execution risks, revocation, audit prerequisites, proposed fee model and clear NO-GO status.
+- DONE: main commit `7691b3fe3a0a6a8799a3e73faf5c966c55e27dd3` updates only `dex/climbx/index.html` with public About, Security, Risks and staged-release sections; no trading controls enabled.
+- PENDING: website deployment and live rendering not verified; whitepaper anchor `/overview/#climboria-whitepaper` should be checked on deployment. Tests and site review pending.
+- NEXT: verify published page, test HTML assertions and continue safe mainline CLIMBX integration.
+- No DEX trading, Swap, Launchpad or Game edits. **REAL-FUNDS NO-GO**.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
