@@ -188,3 +188,13 @@ A code commit is not a live-release success by itself. A workflow pass is not pr
 - [x] Identified unresolved historical discrepancy: a prior Worker deploy was reported successful, but production custom-domain health/DNS failed and current deployment docs still say not deployed.
 - [x] Recorded Uniswap key, Google/X OAuth setup, Supabase dashboard/provider acceptance, real test accounts and wallet approvals as unverified rather than assuming they were supplied.
 - [ ] **Next exact task:** inspect the latest main-branch deployment workflow runs and current live `https://api.climboria.fun/health`/DNS evidence; if the endpoint is not healthy, inspect the exact deployment job logs and fix the actual root cause before any redeploy. Keep all swap execution gates disabled.
+
+
+### Documentation commit verification — 2026-11-13
+
+- [x] Read-back verification: the updated readiness document is present on `main`; blob SHA `bb2501e230c528b65322660214143091b5069758`.
+- [x] Readiness/priority update commit: `115c78719acf03afc0be9d525ac1f02858e90d9b` — `docs: update live readiness priorities and owner setup ledger`.
+- [x] Commit status query returned no status-check records for this documentation commit (empty status list); no workflow pass is claimed.
+- [!] Attempt to inspect the production `https://api.climboria.fun/health` endpoint through the available read-only web checker returned inaccessible/internal error. This is **not proof of an origin outage**, but it means current production health remains unverified.
+- [!] The available GitHub connection does not expose workflow-dispatch or Actions-secret read APIs. Secret values/presence cannot be re-read directly here, and no manual deployment was triggered. Previously reported encrypted secrets remain marked reported, not revalidated.
+- [ ] **Next exact task:** owner-triggered `Actions → Deploy Climboria API → Run workflow` is required if no existing successful run is available; then inspect its exact run/job logs and fix any failed DNS/custom-domain/health step. Keep execution disabled. After that, add a machine-verifiable production-origin smoke check for `/health`, CORS, Jupiter token search and quote.
