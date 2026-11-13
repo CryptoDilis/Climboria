@@ -5,6 +5,7 @@ import { decodeLegacyAnchorIdlAccount, encodeBase58 } from "./legacy-anchor-idl-
 import { decodeSplTokenAccountSummary } from "./spl-token-account-summary.mjs";
 import { canonicalIdlSchemaSha256, classifyDexAdapterIdlEvidence } from "./dex-adapter-idl-status.mjs";
 import { auditRaydiumLaunchlabCandidateAccounts } from "./raydium-launchlab-account-audit.mjs";
+import { fetchWithRetry } from "./fetch-with-retry.mjs";
 
 const programId = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 const baseUrl = "https://idl-one.vercel.app";
@@ -299,11 +300,19 @@ async function request(name, endpoint) {
     responseSha256: null,
     responseBytes: 0,
     error: null,
+    retryAttempts: [],
     candidates: [],
   };
 
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(290_000) });
+    const fetched = await fetchWithRetry(
+      fetch,
+      url,
+      () => ({ signal: AbortSignal.timeout(30_000) }),
+      { maxAttempts: 4, baseDelayMs: 500, maxDelayMs: 4000 },
+    );
+    record.retryAttempts = fetched.attempts;
+    const response = fetched.response;
     const body = await response.text();
     record.status = response.status;
     record.ok = response.ok;
@@ -319,6 +328,7 @@ async function request(name, endpoint) {
     await writeFile(join(outDir, `${name}-response.json`), body);
   } catch (error) {
     record.error = error instanceof Error ? error.message : String(error);
+    record.retryAttempts = error?.retryAttempts ?? record.retryAttempts;
     await writeFile(join(outDir, `${name}-error.txt`), record.error);
   }
 
