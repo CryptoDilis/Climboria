@@ -26,7 +26,7 @@ denied('unreviewed venue',x=>x.entry.venue='EXTERNAL_DEX','VENUE_NOT_ALLOWED');
 denied('missing openPosition state fails closed',x=>delete x.slots[0].openPosition,'SLOT_OCCUPIED');
 denied('invalid spent counter',x=>x.grant.spent=-1,'INVALID_CAP');
 
-denied('zero issued timestamp with current time before issuance',x=>{x.grant.issuedAtMs=0;x.grant.expiresAtMs=MAX_GRANT_MS;x.nowMs=-1},'OUTSIDE_GRANT');
+denied('zero issued timestamp with invalid negative clock',x=>{x.grant.issuedAtMs=0;x.grant.expiresAtMs=MAX_GRANT_MS;x.nowMs=-1},'INVALID');
 denied('negative issued timestamp with oversized grant lifetime',x=>{x.grant.issuedAtMs=-1;x.grant.expiresAtMs=MAX_GRANT_MS},'INVALID_GRANT');
 denied('unsafe expiry timestamp',x=>x.grant.expiresAtMs=Number.MAX_SAFE_INTEGER+1,'INVALID_GRANT');
 denied('unsafe current timestamp',x=>x.nowMs=Number.MAX_SAFE_INTEGER+1,'INVALID');
