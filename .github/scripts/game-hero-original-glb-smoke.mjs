@@ -34,10 +34,14 @@ try{
       deviceMemory:navigator.deviceMemory||null};
    });
    if(!layout.modelReady||!layout.saveEnabled||!layout.enterDisabled||layout.hasUpload)throw Error('Hero creator state incorrect: '+JSON.stringify(layout));
-   const previewClip=await page.evaluate(()=>document.documentElement.dataset.climboriaHeroPreviewClip||null);
-   if(previewClip!=='Chair_Sit_Idle_F')throw Error('Hero preview must play official seated idle clip instead of Running: '+previewClip);
-   const seatVisible=await page.evaluate(()=>document.documentElement.dataset.climboriaHeroPreviewSeat==='low-stool');
-   if(!seatVisible)throw Error('Seated hero preview perch did not initialize');
+   const pose=await page.evaluate(()=>({
+     mode:document.documentElement.dataset.climboriaHeroPreviewPose||null,
+     clip:document.documentElement.dataset.climboriaHeroPreviewClip||null,
+     furniture:document.documentElement.dataset.climboriaHeroPreviewSeat||null,
+     label:document.querySelector('#heroPreviewStatus')?.textContent||''
+   }));
+   if(pose.mode!=='a-pose'||pose.clip!=='none-static'||pose.furniture!=='none'||!pose.label.includes('A-POSE'))
+     throw Error('Create Hero must display a STATIC standing A-pose, no seated/running clip or furniture: '+JSON.stringify(pose));
    if(layout.canvas.width<250||layout.canvas.height<250)throw Error('Full body canvas is too small: '+JSON.stringify(layout));
    if(layout.modal.scrollWidth>layout.modal.clientWidth+3)throw Error('Hero editor overflows horizontally: '+JSON.stringify(layout));
    if(config.isMobile){
