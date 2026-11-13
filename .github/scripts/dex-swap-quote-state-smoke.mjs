@@ -158,6 +158,87 @@ try {
         console.log('PASS DEX '+label+': closing preview discards pending provider response');
       } finally {await ctx.page.close();}
     }
+
+    // A→B→A changes are especially dangerous: the eventual provider response
+    // has the same amount/mints as the current form but belongs to an old user
+    // intent. Each actual input event must invalidate the request sequence.
+    for(const kind of ['Swap','DEX']) {
+      {
+        const ctx=await quotePage(browser,kind,viewport);
+        try {
+          await pendingQuote(ctx,async page=>{
+            await page.locator('#quoteAmount').fill('0.2');
+            await page.locator('#quoteAmount').fill('0.1');
+            assert.equal(await page.locator('#getQuote').isDisabled(),false);
+          },{assertStatus:/Amount changed/i,
+            assertResult:kind==='Swap'?/Estimated output/i:/No current quote/i});
+          console.log('PASS '+kind+' '+label+': amount A→B→A rejects stale response');
+        } finally {await ctx.page.close();}
+      }
+      {
+        const ctx=await quotePage(browser,kind,viewport);
+        try {
+          await pendingQuote(ctx,async page=>{
+            // Trigger the actual delegated token-selection click handler.
+            // DEX deliberately closes this handler over private module state:
+            // do not expose internals to window just for a test.
+            await page.evaluate(({sol,usdc})=>{
+              const box=document.getElementById('toResults');
+              const candidates=[
+                {id:sol,symbol:'SOL',name:'Solana',decimals:9},
+                {id:usdc,symbol:'USDC',name:'USD Coin',decimals:6}
+              ];
+              for(const index of [0,1]){
+                box._tokens=candidates;
+                box.innerHTML='<button type="button" data-index="'+index+'">Select candidate</button>';
+                box.querySelector('button').click();
+              }
+            },{sol:MINT,usdc:USDC});
+            assert.equal(await page.locator('#getQuote').isDisabled(),false);
+          },{assertStatus:kind==='Swap'?/Asset updated/i:/Token changed/i,
+            assertResult:kind==='Swap'?/Estimated output/i:/No current quote/i});
+          console.log('PASS '+kind+' '+label+': output token A→B→A rejects stale response');
+        } finally {await ctx.page.close();}
+      }
+      {
+        const ctx=await quotePage(browser,kind,viewport);
+        try {
+          await pendingQuote(ctx,async page=>{
+            await page.locator('#quoteFromSearch').fill('BTC');
+            assert.equal(await page.locator('#getQuote').isDisabled(),false);
+          },{assertStatus:kind==='Swap'?/Finding token/i:/Input token search changed/i,
+            assertResult:kind==='Swap'?/Estimated output/i:/No current quote/i});
+          console.log('PASS '+kind+' '+label+': typing a new source token discards old quote');
+        } finally {await ctx.page.close();}
+      }
+    }
+    // Terminal mode changes invalidate the quote even if Buy→Sell→Buy
+    // restores the SAME pair. This cannot be caught with pair equality alone.
+    for(const kind of ['side','mode']) {
+      const ctx=await quotePage(browser,'DEX',viewport);
+      try {
+        await pendingQuote(ctx,async page=>{
+          await page.evaluate(kind=>{
+            // Production trade tabs remain intentionally disabled.
+            // Activate only this isolated DOM fixture to test the dormant
+            // invalidation handlers; restore disabled state immediately.
+            const attrs=kind==='side'?['sell','buy']:['limit','market'];
+            const name=kind==='side'?'dex-side':'dex-order';
+            for(const value of attrs){
+              const button=document.querySelector('[data-'+name+'="'+value+'"]');
+              if(!button||!button.disabled)throw new Error('Expected a disabled production trading tab');
+              button.disabled=false;
+              try{button.click();}finally{button.disabled=true;}
+            }
+            if([...document.querySelectorAll('[data-'+name+']')].some(x=>!x.disabled))
+              throw new Error('Trading tab was not returned to fail-closed state');
+          },kind);
+          assert.equal(await page.locator('#getQuote').isDisabled(),false);
+        },{assertStatus:kind==='side'?/Trade direction changed/i:/Order mode changed/i,
+          assertResult:/No current quote/i});
+        console.log('PASS DEX '+label+': '+kind+' A→B→A discards stale quote');
+      } finally {await ctx.page.close();}
+    }
   }
   console.log('PASS: offline read-only Swap/DEX quote-state browser regressions');
 } finally {await browser.close();}
