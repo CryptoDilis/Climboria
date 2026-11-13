@@ -1117,3 +1117,17 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Actual assistant environment:** rustc/cargo/solana/solana-test-validator/anchor all missing; Node v22.16.0. No validator started; mock HTTP test does not prove real validator availability. Even successful `getHealth` is not program authorization. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase113:** verify Phase112 CI, fix failures; provision approved pinned toolchain and actually start disposable local validator, capture RPC health/version and deterministic on-chain grant/revoke/cap tests. Maintain append-only main record.
+
+
+## Phase 113 — 2026-11-14 — localhost RPC fail-closed response hardening
+
+**Phase112 CI** on `6542f0cd75c97d607f03bd93a57e84a54e98fb20`: CLIMBX release safety `43484986731` SUCCESS, Browser Smoke `43484986696` SUCCESS, Validate `43484986780` PENDING at first Phase113 check. Do not claim all passed until Validate completes.
+
+**Phase113 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `0f27d188cf86f1171c24aa69e087da8f606a2f03`: fail-closed handling for null/hostile RPC probe options; timeout on stalled response stream; explicit `RPC_UNHEALTHY` reason instead of labeling unsuccessful health checks `RPC_HEALTH_CHECK`.
+- `cfdbc55e5f30cbd8b76468b31b30937dbedce592`: four tests for null/hostile options, unhealthy RPC result and stalled local response timeout.
+**Phase113 CI pending** at first check.
+
+**Limits:** localhost test server is mocked, not a running Solana validator. No Rust/Cargo/Solana/Anchor toolchain or on-chain grant/revoke/cap prototype verified. No real-funds trading (**NO-GO**), no Swap/DEX/Launchpad/game edits.
+
+**Next Phase114:** verify Phase112 Validate and Phase113 CI, inspect failures; obtain pinned toolchain and run actual local validator/RPC test; prioritize signed grant/revoke/cap prototype and on-chain replay protection. Maintain append-only main record.
