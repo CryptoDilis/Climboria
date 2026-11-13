@@ -316,6 +316,39 @@ test("rejects invalid mint on pump.fun metadata route before upstream request", 
   } finally { globalThis.fetch = originalFetch; }
 });
 
+test("enforces Solana u64 bounds on quote and wallet order amounts", async () => {
+  const originalFetch = globalThis.fetch;
+  const mint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+  const max = "18446744073709551615";
+  const invalid = ["18446744073709551616", "99999999999999999999", "0", "-1", "1e18"];
+  const makeQuote = amount => new Request(
+    "https://worker.test/api/swap/quote?inputMint=" + valid + "&outputMint=" + mint + "&amount=" + amount,
+    { headers: { origin } }
+  );
+  const makeOrder = amount => new Request("https://worker.test/api/swap/order", {
+    method: "POST", headers: { origin, "content-type": "application/json" },
+    body: JSON.stringify({ inputMint: valid, outputMint: mint, amount, taker: valid })
+  });
+  try {
+    globalThis.fetch = async () => { throw new Error("invalid amount must not reach Jupiter"); };
+    for (const amount of invalid) {
+      assert.equal((await worker.fetch(makeQuote(amount), env)).status, 400, "quote " + amount);
+      assert.equal((await worker.fetch(makeOrder(amount), env)).status, 400, "order " + amount);
+    }
+    globalThis.fetch = async () => Response.json({
+      requestId: "quote-u64-boundary", inAmount: max, outAmount: "1"
+    });
+    const quote = await worker.fetch(makeQuote(max), env);
+    assert.equal(quote.status, 200, "u64 maximum quote should pass input validation");
+    assert.equal((await quote.json()).inAmount, max);
+    const order = await worker.fetch(makeOrder(max), env);
+    assert.equal(order.status, 503, "u64 maximum order must reach the independent security gate");
+    assert.match((await order.json()).error, /wallet-signable orders are disabled/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("rejects malformed quote and token search requests before upstream calls", async () => {
   const originalFetch = globalThis.fetch;
   try {
