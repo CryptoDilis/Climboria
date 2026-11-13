@@ -105,6 +105,8 @@ jobs:
           cargo +1.99.1 generate-lockfile --manifest-path climbx/programs/climbx-authorization/Cargo.toml
           test -s climbx/programs/climbx-authorization/Cargo.lock
           cargo +1.99.1 metadata --locked --format-version 1 --manifest-path climbx/programs/climbx-authorization/Cargo.toml --no-deps > /dev/null
+      - name: Validate CLIMBX Cargo lockfile integrity (not vulnerability audit)
+        run: python3 climbx/check_cargo_lock.py climbx/programs/climbx-authorization/Cargo.lock
       - name: Upload lockfile candidate for independent dependency review
         uses: actions/upload-artifact@v4
         with:
