@@ -527,3 +527,93 @@ test("preserves multi-transaction CPI order, nested transfer-hook calls, and tok
       result.signature === "multi-hop-sig-2" ? "24" : "49");
   }
 });
+
+
+test("skips single-step Meteora matches, continues pagination, and retains the qualifying multi-step cursor", async () => {
+  const cpiIndexes = [7, 9, 21, 13, 16, 18, 47, 39, 25, 45, 0, 51, 50, 46, 37, 45, 6, 22];
+  const keys = Array.from({ length: 54 }, (_, index) => "Account" + index);
+  keys[52] = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
+  keys[53] = METEORA_DLMM_PROGRAM_ID;
+  const outerIndexes = [...Array.from({ length: 44 }, (_, index) => index), ...cpiIndexes, 1, 2];
+  const makeTransaction = (slot, data) => ({
+    slot,
+    version: 1,
+    transaction: {
+      message: {
+        accountKeys: keys,
+        header: {
+          numRequiredSignatures: 1,
+          numReadonlySignedAccounts: 0,
+          numReadonlyUnsignedAccounts: 53,
+        },
+        instructions: [{
+          programIdIndex: 52,
+          accounts: outerIndexes,
+          data,
+        }],
+      },
+    },
+    meta: {
+      err: null,
+      loadedAddresses: { writable: [], readonly: [] },
+      innerInstructions: [{
+        index: 0,
+        instructions: [{
+          programIdIndex: 53,
+          accounts: cpiIndexes,
+          data: "fx9RHbGFfZ7Sw9c4BaQiLdbuZhcv5hAgYh5vbR",
+          stackHeight: 2,
+        }],
+      }],
+    },
+  });
+  const transactions = new Map([
+    ["single-step-sig", makeTransaction(
+      201,
+      "3aafXU8vKpJ2D842B5MTALCjKB1EgQVwGQ2xy2YBNzTTyVpKtErKcs",
+    )],
+    ["multi-step-sig", makeTransaction(
+      200,
+      "2sDES9fHqoTppYzwZFtuwMPsJL1uwAj7C1WKpRv22o7xwLdcxsAo7oWEePwUpZ5eNY93NaNUqWmSkoDTyArfz1JtB2NYgMy",
+    )],
+  ]);
+  const signatureQueries = [];
+  const fetchImpl = async (_url, request) => {
+    const body = JSON.parse(request.body);
+    if (body.method === "getSignaturesForAddress") {
+      const query = body.params[1];
+      signatureQueries.push(query);
+      if (!query.before) return rpcResponse([{ signature: "single-step-sig" }]);
+      if (query.before === "single-step-sig") return rpcResponse([{ signature: "multi-step-sig" }]);
+      return rpcResponse([]);
+    }
+    if (body.method === "getTransaction") {
+      return rpcResponse(transactions.get(body.params[0]) ?? null);
+    }
+    throw new Error("Unexpected RPC method: " + body.method);
+  };
+
+  const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example", {
+    limit: 1,
+    maxTransactions: 2,
+    maxMatches: 1,
+    minRoutePlanCount: 2,
+    delayMs: 0,
+    fetchImpl,
+  });
+
+  assert.deepEqual(signatureQueries, [
+    { commitment: "finalized", limit: 1 },
+    { commitment: "finalized", limit: 1, before: "single-step-sig" },
+  ]);
+  assert.equal(report.transactionsScanned, 2);
+  assert.equal(report.pagesScanned, 2);
+  assert.equal(report.matchingJupiterMeteoraCandidates, 2);
+  assert.equal(report.skippedBelowMinRoutePlanCount, 1);
+  assert.equal(report.skippedUnrecognizedRouteHeaders, 0);
+  assert.equal(report.matchingJupiterMeteoraInstructions, 1);
+  assert.equal(report.nextBefore, "multi-step-sig");
+  assert.equal(report.transactionFetchComplete, true);
+  assert.equal(report.results[0].signature, "multi-step-sig");
+  assert.equal(report.results[0].routePlanHeader.routePlanCount, 4);
+});
