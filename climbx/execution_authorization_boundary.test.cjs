@@ -13,3 +13,21 @@ test('missing arguments fail closed',()=>assert.equal(authorizeBotExecution().ma
 
 test('legacy passing policy without boundary markers is denied',()=>assert.equal(authorizeBotExecution({...good,policySimulation:{allowed:true}}).reason,'INVALID_POLICY_BOUNDARY'));
 test('spoofed executable policy is denied',()=>assert.equal(authorizeBotExecution({...good,policySimulation:{allowed:true,simulationOnly:true,mayExecute:true}}).reason,'INVALID_POLICY_BOUNDARY'));
+
+
+test('throwing wallet status getter fails closed',()=>{
+ const walletBinding=Object.defineProperty({},'status',{get(){throw Error('hostile wallet input')}});
+ assert.deepEqual(authorizeBotExecution({...good,walletBinding}),{authorized:false,mayExecute:false,reason:'INVALID_AUTHORIZATION_INPUT'});
+});
+test('throwing policy flag getter fails closed',()=>{
+ const policySimulation=Object.defineProperty({allowed:true},'simulationOnly',{get(){throw Error('hostile policy input')}});
+ assert.deepEqual(authorizeBotExecution({...good,policySimulation}),{authorized:false,mayExecute:false,reason:'INVALID_AUTHORIZATION_INPUT'});
+});
+test('throwing route flag getter fails closed',()=>{
+ const routePreflight=Object.defineProperty({},'mayExecute',{get(){throw Error('hostile route input')}});
+ assert.deepEqual(authorizeBotExecution({...good,routePreflight}),{authorized:false,mayExecute:false,reason:'INVALID_AUTHORIZATION_INPUT'});
+});
+test('hostile proxy fails closed without propagating exception',()=>{
+ const walletBinding=new Proxy({}, {get(){throw Error('proxy access denied')}});
+ assert.equal(authorizeBotExecution({...good,walletBinding}).mayExecute,false);
+});
