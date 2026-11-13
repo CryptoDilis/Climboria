@@ -69,6 +69,22 @@ function optionalFeeBps(value) {
   const bps = Number(value);
   return Number.isInteger(bps) && bps >= 0 && bps <= 10000 ? bps : null;
 }
+// Provider metadata is optional. Invalid fields must not become a fabricated
+// 0% impact, "NaN%", an unverified fee mint, or an object-rendered route label.
+function optionalPriceImpactFraction(value) {
+  if (typeof value !== "number" && (typeof value !== "string" || value.length > 48 ||
+      !/^-?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$/.test(value))) return null;
+  const number = Number(value);
+  return Number.isFinite(number) && number >= -1 && number <= 1 ? number : null;
+}
+function optionalProviderLabel(value) {
+  return typeof value === "string" && value.length > 0 && value.length <= 80 &&
+    /^[\x20-\x7e]+$/.test(value) ? value : null;
+}
+function optionalFeeMint(value) {
+  return validPubkey(value) ? value : null;
+}
+
 async function readJson(request, maxBytes = 40000) {
   const contentType = String(request.headers.get("content-type") || "").toLowerCase();
   if (!contentType.startsWith("application/json")) throw new Error("Content-Type must be application/json");
@@ -246,9 +262,10 @@ async function handleQuote(request, env) {
   }
   return json({
     requestId: data.requestId, inAmount: data.inAmount, outAmount: data.outAmount,
-    router: data.router || null, mode: data.mode || null,
+    router: optionalProviderLabel(data.router), mode: optionalProviderLabel(data.mode),
     feeBps: optionalFeeBps(data.feeBps),
-    feeMint: data.feeMint || null, priceImpactPct: data.priceImpactPct ?? null
+    feeMint: optionalFeeMint(data.feeMint),
+    priceImpactPct: optionalPriceImpactFraction(data.priceImpactPct)
   });
 }
 async function handleTokenSearch(request, env) {
