@@ -12,7 +12,7 @@ function probeLocalValidator(options={}){
   let settled=false;
   let deadline;
   const finish=(healthy,reason)=>{if(!settled){settled=true;clearTimeout(deadline);resolve({healthy,mayExecute:false,reason})}};
-  const request=http.request({host,port,method:'POST',path:'/',headers:{'content-type':'application/json'},timeout:timeoutMs},response=>{
+  const request=http.request({host,port,method:'POST',path:'/',agent:false,headers:{'content-type':'application/json'},timeout:timeoutMs},response=>{
    response.setTimeout(timeoutMs,()=>{request.destroy();finish(false,'RPC_TIMEOUT')});
    let data='';
    response.on('data',chunk=>{data+=chunk;if(data.length>8192){request.destroy();finish(false,'OVERSIZED_RPC_RESPONSE')}});
@@ -27,6 +27,13 @@ function probeLocalValidator(options={}){
   deadline=setTimeout(()=>{request.destroy();finish(false,'RPC_TIMEOUT')},timeoutMs);
   request.on('timeout',()=>{request.destroy();finish(false,'RPC_TIMEOUT')});
   request.on('error',()=>finish(false,'RPC_UNREACHABLE'));
+  request.on('socket',socket=>{
+   socket.on('connect',()=>{
+    if(socket.remoteAddress!=='127.0.0.1'){
+     request.destroy();finish(false,'NON_LOOPBACK_RPC_PEER');
+    }
+   });
+  });
   request.end(JSON.stringify({jsonrpc:'2.0',id:1,method:'getHealth',params:[]}));
  });
 }
