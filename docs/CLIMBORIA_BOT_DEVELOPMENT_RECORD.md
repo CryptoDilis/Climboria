@@ -275,3 +275,12 @@ V9 `fees_v9.py` adds `ClimbXPaperV9` with fee-inclusive buy budget: a simulated 
 V10 adds deterministic in-memory `FakeChain` with fake broadcast/inclusion/expiry, two-block finality, pre-finality reorg, duplicate signature handling, and simulated failed-transaction fees. SQLite `FinalityGate` persists mock observations and only labels final states as final. Tests cover pending/included distinction, success/failure finality, expiry, reorg, duplicate send, persistence, signature conflict, and invalid heights.
 
 **Critical limitations:** Fake-chain state itself is not persisted; fee observations are not atomically linked to V9 wallet balance or order settlement; this does NOT implement a real Solana RPC reconciler, genuine chain finality, cryptographic transaction verification, crash-safe external sends, or scoped unattended authorization. It is not production-safe. Next Phase 20: integrate atomic fake finality + fee debit into journal, persist fake chain across restarts, crash injection and invariants; security review before live execution. Official CLIMBX icon, desktop/mobile card and User's Manual remain owner-approved but not deployed.
+
+
+## Phase 19 checkpoint — 2026-11-13 (CLIMBX fake-chain finality V10)
+
+**Verified locally:** `python -m unittest discover -p 'test_*.py' -q` passed **74/74** tests (62 prior + 12 new). A local ZIP `climbx-paper-v10.zip` exists with V9 source plus `fake_chain_v10.py` and its tests. **Executable V10 is not committed to this repository**, and nothing has been deployed.
+
+V10 adds a deterministic in-memory fake-chain simulator with broadcast, pending, inclusion, simulated two-block finality, reorganization before finality, expiry, and failed-transaction fee observations. `FinalityGate` persists mock observations in SQLite and does not treat pending/included/unknown as finalized. These are paper fixtures, **not Solana consensus/finality proof**.
+
+**Critical limitations:** fake chain canonical history is not persistent across restart; fee observations are **not atomically linked to V9 wallet/order settlement**; no crash-safe real network send, actual RPC/signatures, validator or audited Solana permission mechanism. Phase 20: atomic finality-to-journal/fee settlement, persist fake chain for restart tests, inject crash windows and enforce authorization invariants. CLIMBX website icon/card/manual remain planned and not deployed. Keep live execution disabled and current DEX priority order unchanged.
