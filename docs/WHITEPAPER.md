@@ -9,7 +9,7 @@
 
 ## 1. Executive overview
 
-Climboria is a browser-first gaming and Web3 ecosystem built around an exploration and survival adventure, supported by trading, token infrastructure, a project Launchpad, and digital-item economy plans. The project aims to connect players, traders, creators, and builders through one recognizable Climboria ecosystem.
+Climboria is a browser-first gaming and Web3 ecosystem centered on two game destinations: Jarrell’s Peak, the open-world survival and exploration experience, and Arena, a separate planned competitive environment. Supporting products include trading infrastructure, a project Launchpad, and a proposed digital-item economy. The project aims to connect players, traders, creators, and builders through one recognizable Climboria ecosystem.
 
 The initial chain focus is Solana. A later Base expansion is planned, including a 1:1 $CLIMB deployment and a Base-facing Swap/DEX market, subject to secure cross-chain design, token supply controls, liquidity, provider support, and operational verification. “1:1” describes the intended token-unit relationship, not an already deployed bridge or a guarantee of price parity between markets.
 
@@ -31,13 +31,13 @@ The pillars are designed to complement one another, but each has separate techni
 
 ## 3. Game: Jarrell's Peak
 
-Jarrell's Peak is Climboria's open-world survival and exploration experience. Players explore a wilderness of rivers, forests, cliffs, caves, camps, coastlines, landmarks, and hidden treasure routes. Fishing, swimming, resource discovery, and survival are part of the intended world loop.
+Jarrell's Peak is Climboria's primary open-world survival and exploration experience. It is not one level in an eleven-mountain campaign. Players explore a wilderness of rivers, forests, cliffs, caves, camps, coastlines, landmarks, and hidden treasure routes. Fishing, swimming, resource discovery, and survival are part of the intended world loop.
 
 The core risk/reward idea is simple: the farther a player ventures into dangerous territory, the more valuable the potential discoveries may become—but the risk of losing carried loot also increases. Players may cooperate, form parties, or compete over discoveries. Trust and betrayal are part of the intended high-risk social dynamic.
 
 Death and respawn rules, loot drops, combat, persistence, and multiplayer behavior must be verified in the actual release. Design descriptions are not proof that every mechanic is currently implemented.
 
-A separate public Arena, guild battles, and Chatworld (global, proximity, and private messaging) are future product work and must remain clearly labelled as planned until released.
+Arena is the only other game-world destination; the public Arena, guild battles, and Chatworld (global, proximity, and private messaging) are future product work and must remain clearly labelled as planned until released.
 
 ## 4. $CLIMB token and chain strategy
 
