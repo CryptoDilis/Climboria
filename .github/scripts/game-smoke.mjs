@@ -1,5 +1,7 @@
 import { chromium } from 'playwright';
 
+const optimizedHeroSmoke = process.env.CLIMBORIA_HERO_VARIANT === 'optimized';
+const heroQuery = optimizedHeroSmoke ? '&heroAsset=optimized' : '';
 const errors = [];
 const browser = await chromium.launch({
   headless: true,
@@ -11,7 +13,7 @@ try {
   const page = await desktop.newPage();
   page.on('pageerror', error => errors.push('desktop pageerror: ' + (error.stack || error.message)));
   page.on('console', message => { if (message.type() === 'error') errors.push('desktop console: ' + message.text()); });
-  await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1', {
+  await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1' + heroQuery, {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
   });
@@ -500,7 +502,7 @@ try {
       Object.defineProperty(Object.getPrototypeOf(screen), 'orientation', { configurable: true, get: () => mockedOrientation });
     }
   });
-  await mobile.goto('http://127.0.0.1:4173/game/play.html?smoke=mobile', {
+  await mobile.goto('http://127.0.0.1:4173/game/play.html?smoke=mobile' + heroQuery, {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
   });
