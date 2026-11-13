@@ -178,5 +178,12 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - PENDING: new workflow CI outcome (no run returned immediately after commit), production hosting deployment and live phone/browser acceptance. Environment DNS cannot reach climboria.fun, so no verified live availability.
 - NEXT: verify workflow status and fix any failing checks; get actual deployed page/browser evidence. Keep real-money trading disabled. No Swap, Launchpad or Game edits.
 
+## Phase 147 — 2026-11-14 — Rust grant unit tests and CI
+- VERIFIED: CLIMBX security CI run `43505953889` for authorization-tightening commit `e581e0ec00f1f10aeda195d54858d973ca9f4251` SUCCESS; pinned Rust compilation and existing fail-closed release checks passed. This is not SBF/validator proof.
+- DONE: branch commit `0d79c0da17127752222b182dd709cf1a861a292d` added Rust unit tests for maximum grant account sizing and initial spent/nonce state; corrected expected size in `1da8bcb61b8e47de412eb252c7e833cbc0571bb8` (278-byte Grant payload, 286 including Anchor discriminator).
+- DONE: branch commit `90d2d18da7200fb51c20d8a77ab4c3b2b7a1bb72` adds `cargo +1.99.1 test --locked --lib` to CLIMBX release CI.
+- PENDING: verify CI unit-test outcome on exact new branch commit; local-validator signed tests, committed Cargo.lock, SBF build, independent audit and production authorization still missing. **REAL-FUNDS NO-GO**.
+- No DEX, Swap, Launchpad or Game edits in this phase.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
