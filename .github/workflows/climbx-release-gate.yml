@@ -128,7 +128,7 @@ jobs:
           lock = pathlib.Path("climbx/programs/climbx-authorization/Cargo.lock")
           packages = tomllib.loads(lock.read_text())["package"]
           inventory = [{"name": p["name"], "version": p["version"], "source": p.get("source", "workspace")} for p in packages]
-          pathlib.Path("climbx-dependency-inventory.json").write_text(json.dumps(inventory, indent=2, sort_keys=True) + "\\n")
+          pathlib.Path("climbx-dependency-inventory.json").write_text(json.dumps(inventory, indent=2, sort_keys=True) + "\n")
           print(f"Inventory exported: {len(inventory)} packages")
           PY
       - name: Upload CLIMBX dependency inventory for review
