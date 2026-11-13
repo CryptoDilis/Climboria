@@ -151,5 +151,12 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - HANDOFF FOR DEX OWNER: import and render `climbx/components/ClimbxBetaPreview.tsx` in DEX navigation/page only after the DEX owner reviews integration. CLIMBX developer did NOT modify DEX, Swap, Launchpad or Game files, and did NOT deploy the preview. Visible on live DEX: NOT VERIFIED.
 - PENDING: DEX-owner navigation integration and deployment, CI/typecheck of preview, Rust authorization compile verification, committed Cargo.lock, signed validator tests, audit. **REAL-FUNDS NO-GO**.
 
+## Phase 143 — 2026-11-14 — user-approved DEX preview integration on main
+- User explicitly requested CLIMBX to be visible in DEX even while disabled, superseding earlier no-DEX-edit constraint for this narrowly scoped preview integration.
+- DONE: commit `93b3cb1767f9a2158e8004ad4b07728c297629d6` created `dex/climbx/index.html` on main, reusing the existing CLIMBX standalone static preview from development branch. Preview states Coming Soon and does NOT connect wallets, authorize grants or execute trades.
+- DONE: commit `d6a0ef19e23a0902a33bbf3510980bf45a35a155` added a single CLIMBX BETA link in `dex/index.html` navigation to `/dex/climbx/`. No Swap, Launchpad or Game edits.
+- PENDING: deployment to climboria.fun and live browser verification; do NOT claim publicly visible until checked. Main CI checks pending. Link: https://climboria.fun/dex/climbx/
+- BLOCKED: production trading authorization, signed validator tests, audit and explicit release approval. **REAL-FUNDS NO-GO**.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
