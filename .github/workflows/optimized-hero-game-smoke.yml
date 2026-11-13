@@ -1,0 +1,66 @@
+name: Optimized Hero Gameplay Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'game/play.html'
+      - '.github/scripts/game-smoke.mjs'
+      - '.github/scripts/optimize_hero_glb.py'
+      - '.github/scripts/verify_hero_optimization.py'
+      - '.github/workflows/optimized-hero-game-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  optimized-gameplay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 27
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build and verify optimized hero for local gameplay
+        run: |
+          python -m pip install 'Pillow>=11,<13'
+          python .github/scripts/optimize_hero_glb.py assets/characters/Climboria_Hero.glb assets/characters/Climboria_Hero_mobile_optimized.glb
+          python .github/scripts/verify_hero_optimization.py assets/characters/Climboria_Hero.glb assets/characters/Climboria_Hero_mobile_optimized.glb
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Start local server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/climboria-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/game/play.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/climboria-http.log
+          exit 1
+      - name: Test optimized hero desktop and mobile gameplay
+        timeout-minutes: 21
+        env:
+          CLIMBORIA_HERO_VARIANT: optimized
+        run: timeout --signal=TERM --kill-after=30s 20m node .github/scripts/game-smoke.mjs
+      - name: Upload gameplay screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: optimized-hero-gameplay-screenshots
+          path: |
+            climboria-desktop-gameplay.png
+            climboria-mobile-gameplay.png
+            climboria-desktop-cave-entrance.png
+            climboria-mobile-cave-entrance.png
+            climboria-desktop-cave-interior.png
+            climboria-mobile-cave-interior.png
+          if-no-files-found: warn
+          retention-days: 7
