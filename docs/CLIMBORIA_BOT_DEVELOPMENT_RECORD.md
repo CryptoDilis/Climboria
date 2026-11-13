@@ -1019,3 +1019,15 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Security state:** off-chain deny-only, simulation-only. No on-chain owner-controlled Solana grant/vault, atomic nonce/spend enforcement, signed devnet transaction, verified DEX-only route or independent audit. CLIMBX real-funds **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase107:** verify Phase106 CI, investigate any failure; prioritize actual Solana toolchain availability, local validator and owner-signed on-chain grant/revoke/caps prototype with deterministic tests rather than further repetitive off-chain assertions; maintain main progress record.
+
+
+## Phase 107 — 2026-11-14 — verified Solana local-validator toolchain blocker
+
+**Phase106 CI all SUCCESS** on `544bb2c1e60f1b8b69ec199a44b47cb9064595db`: CLIMBX release safety `43470310467`, Validate `43470310333`, Browser Smoke `43470310320`.
+
+**Phase107 branch commit** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `9ca0aead9594bc36d4f89aef6276d8f3093f028b`: added `climbx/LOCAL_VALIDATOR_READINESS.md`, documenting actual toolchain probe and the owner-signed local-validator authorization gate.
+
+**Toolchain probe in assistant execution environment:** `rustc`, `cargo`, `solana`, `solana-test-validator`, `anchor` all MISSING; Node v22.16.0 available. This does **not** establish what tools are installed on other CI runners or the user's machine. No local validator or signed devnet transaction run. No production code changed; Phase107 CI not yet verified at record time.
+
+**Next Phase108:** verify Phase107 CI; provision pinned compatible Rust/Solana/Anchor toolchain on a suitable runner; capture command versions and actual local-validator startup; implement and test minimal owner-signed on-chain grant/revoke with nonce/cap enforcement, then route restrictions. Do not infer toolchain availability from simulation CI. Real-funds trading **NO-GO**; no Swap/DEX/Launchpad/game edits.
