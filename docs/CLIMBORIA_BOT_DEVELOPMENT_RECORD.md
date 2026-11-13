@@ -603,3 +603,27 @@ Verified Phase77 CI: Validate `43455914831`, CLIMBX release safety `43455914721`
 ## Phase 81 checkpoint — 2026-11-13 (CLIMBX-only security boundary)
 
 Owner directed this workstream to focus exclusively on CLIMBX; other chat handles Swap, DEX, Launchpad. On CLIMBX draft branch `climbx/phase28-release-gate-ci`, added `climbx/SECURITY_BOUNDARY.md` in commit `a5c292a6454c89dc4f62d6caf25c2569c61ef392`. Source-reviewed `wallet_api_factory.cjs`, `authenticated_wallet_service.cjs`, `bind_wallet_pg.cjs`, `reconcile_wallet_binding_pg.cjs`, `wallet_http.cjs`, and authentication service tests. Key finding: verified wallet ownership is NOT permission to execute trades; devnet-only binding, uncancelled Promise deadlines, and lack of scoped on-chain authority remain blockers. No production bot server, on-chain trading authority, or mainnet execution deployed. NO-GO unchanged. Next: CLIMBX-only regression coverage and devnet authorization design. Phase78 CI on `5ad7a01ddc12162bd0905fab9eced239b53b1f51` verified all three successful (Validate `43456362476`, Browser Smoke `43456362364`, CLIMBX `43456362533`).
+
+
+## Phase 82 — 2026-11-14 — wallet reconciliation fail-closed timestamp validation
+
+**Scope:** CLIMBX only, draft PR #282, branch `climbx/phase28-release-gate-ci`. Other workstreams own DEX/Swap/Launchpad; do not edit their files.
+
+**Security issue:** `reconcileWalletBinding` previously checked `ch.consumed_at !== null` when confirming a binding. An absent `undefined` or malformed timestamp could be treated as consumed when a same-owner binding exists. The PostgreSQL schema normally supplies a proper timestamp, but mocks and malformed results should fail closed.
+
+**Changes committed:**
+- `5d4cf99bc226efaec89bdf4baaad216381ccdad4` — require a finite valid JavaScript Date for `consumed_at` before `BOUND_CONFIRMED`.
+- `d193faf896d50aa907ade4c42c905d19a04dd3f9` — 3 regression tests: missing consumed timestamp, malformed timestamp values, and wrong wallet.
+- CI launched for test commit: CLIMBX release safety `43458426921`, Validate `43458427033`, Browser Smoke `43458426940`; **in progress at time of record**, not yet verified successful.
+
+**Release decision:** CLIMBX real-funds trading **NO-GO**. Wallet binding is not trading authorization. No production wallet API, smart account, devnet signed bot swaps, or audit has been verified.
+
+### Mandatory next steps (continue from here; do not redo finished work)
+1. **First check exact Phase82 CI runs** `43458426921`, `43458427033`, `43458426940`. If failures, inspect logs and fix on CLIMBX branch; record exact successful run IDs.
+2. Extend real PostgreSQL integration tests for malformed/missing consumed timestamps and concurrent/ambiguous transaction outcomes where feasible; do not claim mock tests prove real chain safety.
+3. Create CLIMBX-only Solana authorization threat model/spec for one bot per wallet, up to five token slots, owner-defined caps, 24h expiry, revocation, no new entries in last 30min, and fail-closed execution restricted to Climboria Signature DEX. Specify exact program/transaction validation requirements before implementation.
+4. Implement a devnet-only proof of scoped authorization, revocation and end-to-end swap settlement with independent confirmation; verify actual Solana tooling/environment first.
+5. Keep learning strategy suggestions owner-approved, 10% cumulative net realized profit high-water mark and loss carryforward, and no user secret keys. Test against crashes/reorgs/multi-worker races.
+6. Seek independent security review before enabling any real-funds automated trading. No silent activation of swap or bot feature gates.
+7. After **every** future phase, append exact commits, tests/CI statuses, blockers and next steps to **this file on main**; preserve old history. The user explicitly requests continuity across chats.
+
