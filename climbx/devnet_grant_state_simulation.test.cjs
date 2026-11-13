@@ -23,3 +23,15 @@ test('replay sequence blocks',()=>assert.equal(evaluateOrder(grant(),{...order()
 test('per-trade cap blocks',()=>assert.equal(evaluateOrder(grant(),{...order(),amount:101}).reason,'CAP_EXCEEDED'));
 test('cumulative cap blocks',()=>{const g=grant();g.spent=220;assert.equal(evaluateOrder(g,order()).reason,'CAP_EXCEEDED')});
 test('valid order is only simulation, no execution',()=>assert.deepEqual(evaluateOrder(grant(),order()),{ok:true,reason:'SIMULATION_ONLY_NO_EXECUTION'}));
+
+
+test('array grant cannot revoke',()=>assert.equal(revokeGrant([],{owner:'walletA'}).reason,'UNAUTHORIZED_REVOKE'));
+test('array grant cannot authorize',()=>assert.equal(evaluateOrder([],order()).reason,'REVOKED_OR_UNKNOWN'));
+test('missing nonce blocks order',()=>{const g=grant();delete g.nonce;assert.equal(evaluateOrder(g,order()).reason,'INVALID_GRANT')});
+test('missing owner blocks order',()=>{const g=grant();delete g.owner;assert.equal(evaluateOrder(g,order()).reason,'INVALID_GRANT')});
+test('duplicate allowed mints in persisted state block order',()=>{const g=grant();g.allowedMints=['SOL','SOL'];assert.equal(evaluateOrder(g,order()).reason,'INVALID_GRANT')});
+test('sixth persisted mint blocks order',()=>{const g=grant();g.allowedMints=['A','B','C','D','E','SOL'];assert.equal(evaluateOrder(g,order()).reason,'INVALID_GRANT')});
+test('invalid persisted expiry blocks order',()=>{const g=grant();g.expiresAt=g.issuedAt+86401;assert.equal(evaluateOrder(g,order()).reason,'INVALID_GRANT')});
+test('negative persisted sequence blocks order',()=>{const g=grant();g.lastSequence=-1;assert.equal(evaluateOrder(g,order()).reason,'INVALID_GRANT')});
+test('repeated order sequence is not consumed by pure simulation',()=>{const g=grant();assert.equal(evaluateOrder(g,order()).ok,true);assert.equal(evaluateOrder(g,order()).ok,true);assert.equal(g.lastSequence,0);assert.equal(g.spent,0);});
+test('same nonce can be created twice: uniqueness requires on-chain account constraint',()=>{const a=createGrant(config());const b=createGrant(config());assert.equal(a.ok,true);assert.equal(b.ok,true);});
