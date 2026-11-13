@@ -39,6 +39,32 @@ test("health endpoint reports execution disabled when the production kill switch
   assert.equal(res.status, 200);
   assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, orderStore: true, solanaRpc: true, executionEnabled: false } });
 });
+test("quote-only health stays ready without an RPC secret while signing stays disabled", async () => {
+  const safeEnv = { ...env, SOLANA_RPC_URL: undefined, EXECUTION_ENABLED: "false" };
+  const health = await worker.fetch(new Request("https://worker.test/health"), safeEnv);
+  assert.equal(health.status, 200);
+  const state = await health.json();
+  assert.equal(state.ok, true);
+  assert.equal(state.execution, "disabled");
+  assert.equal(state.configured.solanaRpc, false);
+  assert.equal(state.configured.orderStore, true);
+  const execute = await worker.fetch(new Request("https://worker.test/api/swap/execute", {
+    method: "POST", headers: { origin, "content-type": "application/json" }, body: "{}"
+  }), safeEnv);
+  assert.equal(execute.status, 503);
+  assert.equal((await execute.json()).signature, undefined);
+});
+
+test("quote-only health still fails closed when the order-store binding is absent", async () => {
+  const res = await worker.fetch(new Request("https://worker.test/health"), {
+    ...env, SOLANA_RPC_URL: undefined, ORDER_STORE: undefined, EXECUTION_ENABLED: "false"
+  });
+  assert.equal(res.status, 503);
+  const state = await res.json();
+  assert.equal(state.ok, false);
+  assert.equal(state.configured.orderStore, false);
+});
+
 test("sets defensive security headers on API responses", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
   assert.equal(res.headers.get("x-content-type-options"), "nosniff");
