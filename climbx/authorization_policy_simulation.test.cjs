@@ -5,7 +5,7 @@ const t=1700000000000;
 function valid(){return {grant:{owner:'wallet1',revoked:false,issuedAtMs:t,expiresAtMs:t+MAX_GRANT_MS,allowedMints:['SOL','USDC'],maxPerTrade:100,maxCumulative:300,spent:20},slots:[{mint:'SOL',openPosition:false},{mint:'USDC',openPosition:false}],entry:{owner:'wallet1',mint:'SOL',amount:50,venue:'CLIMBORIA_SIGNATURE_DEX'},nowMs:t+1000};}
 function check(change){const x=valid();change(x);return evaluateClimbxEntry(x);}
 function denied(name,change,reason){test(name,()=>assert.deepEqual(check(change),{allowed:false,reason}));}
-test('valid policy simulation does not imply on-chain authority',()=>assert.deepEqual(evaluateClimbxEntry(valid()),{allowed:true,reason:'POLICY_SIMULATION_ONLY'}));
+test('valid policy simulation does not imply on-chain authority',()=>assert.deepEqual(evaluateClimbxEntry(valid()),{allowed:true,simulationOnly:true,mayExecute:false,reason:'POLICY_SIMULATION_ONLY'}));
 denied('wrong owner',x=>x.entry.owner='attacker','OWNER_MISMATCH');
 denied('unknown revocation status fails closed',x=>delete x.grant.revoked,'REVOKED_OR_UNKNOWN');
 denied('revoked grant',x=>x.grant.revoked=true,'REVOKED_OR_UNKNOWN');
@@ -39,11 +39,11 @@ denied('negative spent amount',x=>x.grant.spent=-1,'INVALID_CAP');
 denied('unsafe spent amount',x=>x.grant.spent=Number.MAX_SAFE_INTEGER+1,'INVALID_CAP');
 test('exact per-trade and cumulative cap equality is allowed in simulation',()=>{
  const x=valid();x.grant.maxPerTrade=100;x.grant.maxCumulative=120;x.grant.spent=20;x.entry.amount=100;
- assert.deepEqual(evaluateClimbxEntry(x),{allowed:true,reason:'POLICY_SIMULATION_ONLY'});
+ assert.deepEqual(evaluateClimbxEntry(x),{allowed:true,simulationOnly:true,mayExecute:false,reason:'POLICY_SIMULATION_ONLY'});
 });
 test('one millisecond before final 30 minute cutoff is allowed in simulation',()=>{
  const x=valid();x.nowMs=x.grant.expiresAtMs-ENTRY_CUTOFF_MS-1;
- assert.deepEqual(evaluateClimbxEntry(x),{allowed:true,reason:'POLICY_SIMULATION_ONLY'});
+ assert.deepEqual(evaluateClimbxEntry(x),{allowed:true,simulationOnly:true,mayExecute:false,reason:'POLICY_SIMULATION_ONLY'});
 });
 
 denied('negative clock',x=>x.nowMs=-1,'INVALID');
@@ -60,7 +60,7 @@ denied('NaN trade amount',x=>x.entry.amount=NaN,'INVALID_CAP');
 denied('malformed slot',x=>x.slots[0]=null,'INVALID_SLOTS');
 test('exact cumulative cap is allowed by off-chain simulation only',()=>{
  const x=valid();x.grant.spent=250;x.entry.amount=50;
- assert.deepEqual(evaluateClimbxEntry(x),{allowed:true,reason:'POLICY_SIMULATION_ONLY'});
+ assert.deepEqual(evaluateClimbxEntry(x),{allowed:true,simulationOnly:true,mayExecute:false,reason:'POLICY_SIMULATION_ONLY'});
 });
 test('exact 30-minute boundary denied, one millisecond earlier allowed',()=>{
  const x=valid();x.nowMs=x.grant.expiresAtMs-ENTRY_CUTOFF_MS-1;
@@ -74,3 +74,5 @@ denied('array entry is invalid',x=>x.entry=[],'INVALID');
 denied('unselected slot with unknown position state fails closed',x=>delete x.slots[1].openPosition,'INVALID_SLOTS');
 denied('unselected slot with malformed position state fails closed',x=>x.slots[1].openPosition='false','INVALID_SLOTS');
 denied('empty entry mint',x=>x.entry.mint='','MINT_NOT_ALLOWED');
+
+test('passing policy explicitly cannot authorize execution',()=>{const r=evaluateClimbxEntry(valid());assert.equal(r.allowed,true);assert.equal(r.simulationOnly,true);assert.equal(r.mayExecute,false);});
