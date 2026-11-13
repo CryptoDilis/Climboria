@@ -158,6 +158,127 @@ try {
         console.log('PASS DEX '+label+': closing preview discards pending provider response');
       } finally {await ctx.page.close();}
     }
+
+    // A→B→A changes are especially dangerous: the eventual provider response
+    // has the same amount/mints as the current form but belongs to an old user
+    // intent. Each actual input event must invalidate the request sequence.
+    for(const kind of ['Swap','DEX']) {
+      {
+        const ctx=await quotePage(browser,kind,viewport);
+        try {
+          await pendingQuote(ctx,async page=>{
+            await page.locator('#quoteAmount').fill('0.2');
+            await page.locator('#quoteAmount').fill('0.1');
+            assert.equal(await page.locator('#getQuote').isDisabled(),false);
+          },{assertStatus:/Amount changed/i,
+            assertResult:kind==='Swap'?/Estimated output/i:/No current quote/i});
+          console.log('PASS '+kind+' '+label+': amount A→B→A rejects stale response');
+        } finally {await ctx.page.close();}
+      }
+      {
+        const ctx=await quotePage(browser,kind,viewport);
+        try {
+          await pendingQuote(ctx,async page=>{
+            // Exercise real token selection logic, not merely input typing.
+            await page.evaluate(({sol,usdc})=>{
+              chooseQuoteToken('to',{id:sol,symbol:'SOL',name:'Solana',decimals:9});
+              chooseQuoteToken('to',{id:usdc,symbol:'USDC',name:'USD Coin',decimals:6});
+            },{sol:MINT,usdc:USDC});
+            assert.equal(await page.locator('#getQuote').isDisabled(),false);
+          },{assertStatus:kind==='Swap'?/Asset updated/i:/Token changed/i,
+            assertResult:kind==='Swap'?/Estimated output/i:/No current quote/i});
+          console.log('PASS '+kind+' '+label+': output token A→B→A rejects stale response');
+        } finally {await ctx.page.close();}
+      }
+      {
+        const ctx=await quotePage(browser,kind,viewport);
+        try {
+          await pendingQuote(ctx,async page=>{
+            await page.locator('#quoteFromSearch').fill('BTC');
+            assert.equal(await page.locator('#getQuote').isDisabled(),false);
+          },{assertStatus:kind==='Swap'?/Finding token/i:/Input token search changed/i,
+            assertResult:kind==='Swap'?/Estimated output/i:/No current quote/i});
+          console.log('PASS '+kind+' '+label+': typing a new source token discards old quote');
+        } finally {await ctx.page.close();}
+      }
+    }
+    // Terminal mode changes invalidate the quote even if Buy→Sell→Buy
+    // restores the SAME pair. This cannot be caught with pair equality alone.
+    for(const kind of ['side','mode']) {
+      const ctx=await quotePage(browser,'DEX',viewport);
+      try {
+        await ctx.page.evaluate(usdc=>{
+          dexTradeToken={id:usdc,symbol:'USDC',name:'USD Coin',decimals:6,isVerified:true};
+          dexTradeSide='buy';dexTradeOrderType='market';dexTradeApplyDirection();
+        },USDC);
+        await pendingQuote(ctx,async page=>{
+          await page.evaluate(kind=>{
+            if(kind==='side') {
+              document.querySelector('[data-dex-side="sell"]').click();
+              document.querySelector('[data-dex-side="buy"]').click();
+            } else {
+              document.querySelector('[data-dex-order="limit"]').click();
+              document.querySelector('[data-dex-order="market"]').click();
+            }
+          },kind);
+          assert.equal(await page.locator('#getQuote').isDisabled(),false);
+        },{assertStatus:kind==='side'?/Trade direction changed/i:/Order mode changed/i,
+          assertResult:/No current quote/i});
+        console.log('PASS DEX '+label+': '+kind+' A→B→A discards stale quote');
+      } finally {await ctx.page.close();}
+    }
+    // Two independent mint-supply responses may complete out of order when
+    // the user selects markets quickly. Only the most recent token can adopt
+    // the RPC decimals or set the enabled quote-terminal state.
+    {
+      const ctx=await quotePage(browser,'DEX',viewport);
+      try {
+        const {page,errors}=ctx;
+        let resolveFirst;
+        const firstRequest=new Promise(resolve=>{resolveFirst=resolve;});
+        await page.route('https://api.mainnet-beta.solana.com/**',async route=>{
+          const body=route.request().postDataJSON();
+          if(body?.method!=='getTokenSupply') return route.continue();
+          if(body.params?.[0]===MINT) {resolveFirst(route);return;}
+          if(body.params?.[0]===USDC) return route.fulfill({
+            status:200,contentType:'application/json',
+            body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:6}}})
+          });
+          return route.abort();
+        });
+        await page.evaluate(mint=>{
+          void dexTradeSyncToken({baseToken:{address:mint,symbol:'SOL',name:'Stale choice'},
+            priceUsd:'100',liquidity:{usd:100}});
+        },MINT);
+        const oldRoute=await Promise.race([
+          firstRequest,sleep(10000).then(()=>{throw new Error('First mint RPC was not requested');})
+        ]);
+        await page.evaluate(mint=>{
+          void dexTradeSyncToken({baseToken:{address:mint,symbol:'USDC',name:'Latest choice'},
+            priceUsd:'1',liquidity:{usd:100}});
+        },USDC);
+        await page.waitForFunction(mint=>{
+          return dexTradeToken?.id===mint && dexTradeToken?.decimals===6 &&
+            (document.querySelector('#dexTradeStatus')?.textContent||'').includes('On-chain mint verified');
+        },USDC,{timeout:10000});
+        await oldRoute.fulfill({status:200,contentType:'application/json',
+          body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:9}}})});
+        await page.waitForTimeout(120);
+        const state=await page.evaluate(()=>({
+          id:dexTradeToken?.id,decimals:dexTradeToken?.decimals,
+          input:quoteTokens.from.id,output:quoteTokens.to.id,
+          status:document.querySelector('#dexTradeStatus')?.textContent
+        }));
+        assert.equal(state.id,USDC);
+        assert.equal(state.decimals,6);
+        assert.equal(state.input,MINT);
+        assert.equal(state.output,USDC);
+        assert.match(state.status,/On-chain mint verified/);
+        assert.deepEqual(errors,[]);
+        assert.equal(ctx.forbidden.length,0);
+        console.log('PASS DEX '+label+': late old mint-supply RPC cannot overwrite current token decimals');
+      } finally {await ctx.page.close();}
+    }
   }
   console.log('PASS: offline read-only Swap/DEX quote-state browser regressions');
 } finally {await browser.close();}
