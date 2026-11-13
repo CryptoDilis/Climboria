@@ -38,13 +38,13 @@ class LearningSchemaSafetyTests(unittest.TestCase):
         self.assertIn("revoke all on all tables in schema climbx from public, anon, authenticated", self.sql)
 
     def test_wallet_owner_filter(self):
-        self.assertRegex(self.sql, r"create policy wallet_owner_read[^;]*user_id\s*=\s*\(select auth\.uid\(\)\)", re.S)
+        self.assertRegex(self.sql, r"(?s)create policy wallet_owner_read[^;]*user_id\s*=\s*\(select auth\.uid\(\)\)", re.S)
 
     def test_trade_owner_filter(self):
-        self.assertRegex(self.sql, r"create policy trade_owner_read[^;]*b\.user_id\s*=\s*\(select auth\.uid\(\)\)", re.S)
+        self.assertRegex(self.sql, r"(?s)create policy trade_owner_read[^;]*b\.user_id\s*=\s*\(select auth\.uid\(\)\)", re.S)
 
     def test_learning_owner_filter(self):
-        self.assertRegex(self.sql, r"create policy learning_owner_read[^;]*b\.user_id\s*=\s*\(select auth\.uid\(\)\)", re.S)
+        self.assertRegex(self.sql, r"(?s)create policy learning_owner_read[^;]*b\.user_id\s*=\s*\(select auth\.uid\(\)\)", re.S)
 
     def test_five_slot_limit(self):
         self.assertEqual(self.sql.count("slot between 0 and 4"), 2)
