@@ -171,3 +171,14 @@ Other chat/developer work owns Climboria DEX live swap, launchpad, authenticatio
 **Limits:** This is a local deterministic simulation, NOT a real concurrent multi-worker test or production backend. No real RPC, Jupiter, wallet delegation, fee ledger, TP/SL triggers, auto re-entry, or live trading. No executable code has been committed or deployed. Local prototype was delivered as a ZIP attachment in the chat; to adopt into repo, explicitly authorize a separate code review/commit.
 
 **Next:** Extend paper engine with durable asynchronous wallet-scoped reservations, pending order states and reconciliation, TP/SL/time exit, auto re-entry, and high-water-mark fee accounting. Add adversarial concurrent-worker and crash-recovery tests. Separately validate Solana restricted delegation before any real-fund work.
+
+
+## Phase 11 checkpoint — 2026-11-13 (local paper prototype V2)
+
+**Verified locally:** Node.js test run passed **16/16 tests** (8 V1 regression + 8 new V2 tests). The paper-only V2 ZIP was generated as a conversation artifact; **the executable source is not committed to this repository**. No live trading, real Solana authorization, or deployment was performed.
+
+Added in local V2: wallet-scoped *simulated* pending buy reservations, duplicate pending signal/mint protection, TTL expiry, 30-minute pre-expiry entry cutoff, full-position take-profit and stop-loss price-event triggers, and JSON file snapshots via temporary file + rename. New tests cover fund contention, reservation idempotency, expiry/release, confirmation once, TP, SL authorization expiry, restart restore, and entry cutoff.
+
+**Limitations/blockers:** The manager is synchronous and file-backed, **not multi-process serializable or crash-safe journaling**. It does not model live on-chain transaction uncertainty, actual fees/rent/slippage, verified price feeds, partial TP ladders, trailing stops, automatic re-entry scheduling, fee high-water mark, or delegated Solana execution. Paper price triggers are not executable quotes. No real-funds safety claim.
+
+**Next action:** Phase 12: design/implement transactional persistent reservation and order journal (SQLite/Postgres or suitable Durable Object per-wallet coordination), model SUBMITTED/UNKNOWN/CONFIRMED states, reconcile-before-retry, add crash/fault-injection tests and explicit cost/fee model. Keep all live execution flags disabled until independent security validation. Other DEX workstreams remain out of scope.
