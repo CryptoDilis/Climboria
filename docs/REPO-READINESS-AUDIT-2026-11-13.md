@@ -326,7 +326,7 @@ Continue the documented candidate-scoped ABI-v1 input reconstruction:
 
 - Main HEAD at audit start: `50712f68017bc06e9a0896cd3f2691ebdab4c594`.
 - PR #269 is OPEN / DRAFT. Current head `04f4d09f233cccc5f45fa9ef2dc617880563fed2`; PR base `0fa8e987aec4d6e6bc7590363efa7d20fde79422`. Compared with current main, it is **194 commits ahead and 11 behind**. The 11 main-only commits since the merge base are documentation-only readiness updates; no main-only product-code file changes were reported by the comparison.
-- PR #274 is OPEN / DRAFT. Head `559423bdddf709cae31de06b01b2c4b461f2a482`; compared with main it is **203 commits ahead and 18 behind**. It overlaps substantially with PR #269's DEX/provider/CPI/IDL evidence work. Keep both unmerged until the evidence is consolidated and branch freshness is reconciled; do not merge both independently.
+- PR #274 is OPEN / DRAFT. Head `559423bdddf709cae31de06b01b2c4b461f2a482`; compared with main it is **203 commits ahead and 21 behind as of main HEAD `a311cb91795d5ac9825f6384a77eb3f426ffa288`**. It overlaps substantially with PR #269's DEX/provider/CPI/IDL evidence work. Keep both unmerged until the evidence is consolidated and branch freshness is reconciled; do not merge both independently.
 - The owner-approved product order remains P1 Live Swap → P2 Live DEX → P3 all Login methods → P4 fully live game → P5 Launchpad last. This checkpoint does not change that order.
 
 ### Exact-head verification — PR #269 head 04f4d09
@@ -406,8 +406,8 @@ The 50-transaction sample is bounded evidence, not exhaustive route coverage. It
 
 ### Branch freshness recheck — 2026-11-13
 
-- [x] PR #269 current head `49a342cef18adf51dc98560a8c60c9e06f02654a` compares to main as **196 ahead / 18 behind**.
-- [x] PR #274 current head `559423bdddf709cae31de06b01b2c4b461f2a482` compares to main as **203 ahead / 18 behind**.
+- [x] PR #269 current head `49a342cef18adf51dc98560a8c60c9e06f02654a` compares to main as **196 ahead / 21 behind** at base HEAD `a311cb91795d5ac9825f6384a77eb3f426ffa288`.
+- [x] PR #274 current head `559423bdddf709cae31de06b01b2c4b461f2a482` compares to main as **203 ahead / 21 behind** at base HEAD `a311cb91795d5ac9825f6384a77eb3f426ffa288`.
 - [x] The 18 commits on main since the PR merge base touch only the three documentation files listed above; product code has no main-only delta in this comparison.
 - [ ] Sync PR #269 with current main before merge; keep PR #274 draft until overlapping evidence is consolidated.
 
@@ -418,3 +418,5 @@ The 50-transaction sample is bounded evidence, not exhaustive route coverage. It
 - [x] Active handoff correction committed: `32af66eadbcac5e8cfe9caf8ebbc91f60ed71c77`.
 - [x] Main HEAD after these documentation updates: `32af66eadbcac5e8cfe9caf8ebbc91f60ed71c77`.
 - [x] Readiness document read-back confirms the current PR freshness values are 196/18 for PR #269 and 203/18 for PR #274.
+
+- [x] Latest compare before this checkpoint update: PR #269 = 196 ahead / 21 behind; PR #274 = 203 ahead / 21 behind. The 21 main-only commits touch only the three documentation files already listed. This readiness update itself adds one further documentation-only commit; re-check the exact behind count immediately before branch sync/merge.
