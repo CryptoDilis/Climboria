@@ -39,12 +39,8 @@ function validate(p = parsed(), extra = {}) {
   return validateJupiterV6Transaction({ parsed: p, taker, outputMint, amount: "1000", outAmount: "950", otherAmountThreshold: "945", ...extra });
 }
 
-test("decodes a supported Raydium Jupiter route with exact amounts and bounded slippage", () => {
-  const result = validate();
-  assert.equal(result.ok, true);
-  assert.equal(result.route.steps[0].dex, "Raydium");
-  assert.equal(result.sourceTokenAccount, source);
-  assert.equal(result.destinationTokenAccount, destination);
+test("fails closed until the route's DEX account schema is independently verified", () => {
+  assert.throws(() => validate(), /no verified per-DEX semantic account schema: Raydium/i);
 });
 
 test("rejects unknown top-level programs, route_v2, extra signers and unsupported route variants", () => {
@@ -163,7 +159,7 @@ test("rejects Compute Budget instructions that carry account metas or unsupporte
 });
 
 test("binds Jupiter minimum output to the route instruction slippage floor", () => {
-  assert.equal(validate(parsed(), { otherAmountThreshold: "945" }).ok, true);
+  assert.throws(() => validate(parsed(), { otherAmountThreshold: "945" }), /no verified per-DEX semantic account schema: Raydium/i);
   assert.throws(() => validate(parsed(), { otherAmountThreshold: "944" }), /weaker than the route slippage limit/i);
   assert.throws(() => validate(parsed(), { otherAmountThreshold: "951" }), /weaker than the route slippage limit/i);
   assert.throws(() => validate(parsed(), { otherAmountThreshold: "0" }), /positive integer string/i);

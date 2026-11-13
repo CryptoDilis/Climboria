@@ -4,6 +4,9 @@ export const JUPITER_V6_PROGRAM_ID = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV
 export const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 export const COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111";
 export const JUPITER_V6_EVENT_AUTHORITY = "D8cy77BBepLMngZx6ZukaTff5hCt1HrWyKk3Hnd9oitf";
+// A route can become executable only after every adapter has a reviewed account schema.
+// This version is intentionally deny-by-default while that evidence is incomplete.
+export const JUPITER_V6_SEMANTIC_POLICY_VERSION = "v1-unverified-dex-schemas-rejected";
 
 const ROUTE_DISCRIMINATOR = [229, 23, 203, 151, 122, 227, 173, 42];
 const SUPPORTED_SWAP_VARIANTS = new Map([
@@ -16,6 +19,13 @@ const SUPPORTED_SWAP_VARIANTS = new Map([
 ]);
 
 function fail(message) { throw new Error(message); }
+function requireVerifiedDexSemanticSchemas(route) {
+  // Route-plan enum names and readonly program IDs are insufficient to establish
+  // CPI account cursor boundaries, token movement, or fee destinations. Keep
+  // the validator closed until a versioned adapter schema is independently proven.
+  const missing = [...new Set(route.steps.map(step => step.dex))];
+  fail("Jupiter route has no verified per-DEX semantic account schema: " + missing.join(", "));
+}
 function readU32(bytes, offset) {
   if (offset + 4 > bytes.length) fail("Truncated Jupiter route instruction");
   return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(offset, true);
@@ -198,5 +208,6 @@ export function validateJupiterV6Transaction({
       if (accountMetas[9 + relativeIndex].writable) fail("DEX program accounts must be readonly");
     }
   }
+  requireVerifiedDexSemanticSchemas(route);
   return { ok: true, route, sourceTokenAccount: accountKeys[2], destinationTokenAccount: accountKeys[3] };
 }
