@@ -1,0 +1,41 @@
+name: CLIMBX isolated authorization checks
+on:
+  push:
+    paths:
+      - 'climbx/programs/climbx-authorization/**'
+      - 'climbx/check_anchor_scaffold*'
+      - 'climbx/check_anchor_safety_boundary*'
+      - '.github/workflows/climbx-authorization-integration.yml'
+  pull_request:
+    paths:
+      - 'climbx/programs/climbx-authorization/**'
+      - 'climbx/check_anchor_scaffold*'
+      - 'climbx/check_anchor_safety_boundary*'
+      - '.github/workflows/climbx-authorization-integration.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-boundaries:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test climbx/check_anchor_scaffold.test.cjs climbx/check_anchor_safety_boundary.test.cjs
+  rust-unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Rust
+        run: rustup toolchain install 1.99.1 --profile minimal
+      - name: Generate temporary lockfile for isolated CI tests
+        run: cargo +1.99.1 generate-lockfile --manifest-path climbx/programs/climbx-authorization/Cargo.toml
+      - name: Compile and run Anchor authorization unit tests
+        run: cargo +1.99.1 test --locked --manifest-path climbx/programs/climbx-authorization/Cargo.toml --lib
+      - name: State release boundary
+        if: always()
+        run: echo "Non-deploying unit tests only. No signed validator proof or real-funds approval."
