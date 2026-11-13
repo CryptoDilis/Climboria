@@ -26,6 +26,6 @@ function evaluateClimbxEntry({grant,slots,entry,nowMs}={}){
  if(!positiveInt(entry.amount)||!positiveInt(grant.maxPerTrade)||!positiveInt(grant.maxCumulative)||!nonnegativeInt(grant.spent)||grant.spent>grant.maxCumulative)return deny('INVALID_CAP');
  if(entry.amount>grant.maxPerTrade||entry.amount>grant.maxCumulative-grant.spent)return deny('CAP_EXCEEDED');
  if(entry.venue!=='CLIMBORIA_SIGNATURE_DEX')return deny('VENUE_NOT_ALLOWED');
- return {allowed:true,reason:'POLICY_SIMULATION_ONLY'};
+ return {allowed:true,simulationOnly:true,mayExecute:false,reason:'POLICY_SIMULATION_ONLY'};
 }
 module.exports={evaluateClimbxEntry,MAX_SLOTS,MAX_GRANT_MS,ENTRY_CUTOFF_MS};
