@@ -55,5 +55,13 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - NEXT: verify new security CI; fix test failures; obtain compatible pinned Rust toolchain and reviewed Cargo.lock; create real signed local-validator grant/revoke integration tests. Never deploy placeholder program ID.
 - Ownership: no DEX, Swap, Launchpad or Game code modified.
 
+## Phase 131 — 2026-11-14 — verified security CI and stronger deployment blocker
+- DONE: exact CLIMBX commit `8f4809bc9930e83198d3ff05ac8f47b68e695662` release-safety run `43500842612` SUCCESS. Rust job `132145886884` explicitly passed both prerequisite and Anchor scaffold security regression test steps, plus Cargo compilation. Validate run `43500842008` and Browser Smoke `43500842185` SUCCESS.
+- DONE on CLIMBX branch: updated `climbx/check_anchor_safety_boundary.cjs` commit `a76b638169e4d007531a3ee37f30a37d4696b0eb` to explicitly report placeholder program ID and missing scoped execution instruction as deployment blockers. Real-funds permission stays hardcoded false.
+- DONE: expanded tests in `climbx/check_anchor_safety_boundary.test.cjs`, commit `fc728ac1764ee7a550c18b150e81a07d95a855d3`, to assert both blockers and that even a configured ID plus execution function do not constitute approval.
+- PENDING: CI for `fc728ac` was not yet discoverable on immediate lookup; tests not independently verified at this exact commit.
+- BLOCKED: pinned toolchain/lockfile, signed validator tests, on-chain execution, audit, release approval. **REAL-FUNDS NO-GO**.
+- NEXT: inspect latest CI; then prepare pinned reproducible build and real signed local-validator tests, avoiding placeholder program deployment and all DEX/Swap/Launchpad/Game edits.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
