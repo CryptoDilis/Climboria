@@ -1174,3 +1174,17 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Security state:** off-chain, read-only tooling and mocks only. No verified Rust/Cargo/Solana/Anchor toolchain, owner-controlled on-chain grant/revoke/cap program, signed devnet E2E or independent audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game edits.
 
 **Next Phase117:** verify Phase116 CI, inspect failures; execute readiness command on a pinned Solana toolchain with an actual disposable validator; prioritize atomic on-chain grant/revoke/nonce/cap enforcement and signed devnet tests. Maintain append-only main record.
+
+
+## Phase 117 — 2026-11-14 — localhost RPC peer enforcement
+
+**Phase116 CI all SUCCESS** on `9133493cbbabdea0aebc650382d55818220074a8`: CLIMBX release safety `43486569017`, Validate `43486568776`, Browser Smoke `43486568959`.
+
+**Phase117 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `95050f604a45ff1489dc8297d4794a31f4c95139`: require actual TCP RPC peer address `127.0.0.1` and disable HTTP agent reuse in the read-only localhost health probe. If peer is not loopback, fail closed. This is still only local network health, not Solana validator identity or authorization.
+- `93befe9794e9ead42b6dd23eb431ca3c2d414b92`: add localhost socket peer regression test.
+**Phase117 CI pending** at first check. Existing CLIMBX non-deploying workflow covers the probe test suite.
+
+**Security state:** no actual Solana local validator started or proven, no Rust/Cargo/Solana/Anchor toolchain verified, no on-chain owner grant/revoke/cap/nonce program, no signed devnet E2E or audit. Real-funds CLIMBX **NO-GO**. No Swap/DEX/Launchpad/game changes.
+
+**Next Phase118:** verify Phase117 CI; provision pinned toolchain on runner or controlled development host and run real disposable validator; collect actual command versions and RPC evidence; begin on-chain grant/revoke prototype and atomic tests. Maintain append-only main record.
