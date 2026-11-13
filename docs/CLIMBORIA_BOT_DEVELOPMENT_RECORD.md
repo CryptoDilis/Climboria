@@ -721,3 +721,14 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Security limitations:** This remains a non-deploying **off-chain policy simulation**; no on-chain permissioned vault/program, no signed bot swaps, no real-money authorization, no independent security review. **CLIMBX NO-GO** remains unchanged.
 
 **Next actions (start here):** (1) verify exact CI runs for `a12a3eb5808fbf52691597a49f3215931184c327` and pending Browser Smoke `43461555632`; inspect failures and fix; (2) verify actual Solana CLI/local validator/Rust/Anchor tooling and devnet access; (3) document selected owner-revocable on-chain authority architecture and precise allowlisted DEX instruction semantics; (4) implement isolated devnet proof with owner caps, 24h expiry, revocation, five-slot isolation, and malicious transaction rejection; (5) independent review and owner GO/NO-GO. Continue CLIMBX only, append exact commits and next steps here after each phase.
+
+
+## Phase 88 — 2026-11-14 — devnet authority architecture proposal (CLIMBX only)
+
+**Phase87 CI confirmed ALL SUCCESS on `a12a3eb5808fbf52691597a49f3215931184c327`:** CLIMBX safety `43461781440`, Validate `43461781506`, Browser Smoke `43461781480`. Historical Phase86 Browser Smoke `43461555632` failed, but Phase87 Browser Smoke succeeded; do not conceal the older failure.
+
+**Phase88 commit:** `9638b0ac3db291daa85883c3ddb03e0cd01988a7` added `climbx/DEVNET_AUTHORIZATION_ARCHITECTURE.md` on `climbx/phase28-release-gate-ci` (draft PR #282). Proposed owner-controlled Solana program vault with grant/slot PDAs, owner-only create/revoke/withdraw, executor-only scoped order flow, atomic caps, expiry, last-30-minute entry stop, anti-replay, exact DEX router/CPI/ALT/account constraints, independent finalized settlement and native SOL budgeting. This is a **proposal only**, not a deployed program or proven DEX-only mechanism.
+
+**Critical blockers:** Actual Solana CLI/Rust/Anchor/local-validator/devnet tooling NOT verified; exact Climboria Signature DEX router program IDs and transaction schema NOT verified; no signed devnet swap, no independent security audit. CLIMBX real-funds **NO-GO**. Do not touch other teams' DEX/Swap/Launchpad/game files.
+
+**Next steps:** (1) check Phase88 CI on commit `9638b0ac3db291daa85883c3ddb03e0cd01988a7` and record exact results; (2) inspect real Solana tooling/environment and document versions; (3) obtain concrete DEX router schema from other workstream read-only, implement deny-all until reviewed allowlist exists; (4) prototype on-chain owner create/revoke/expiry/caps with local validator and devnet tests; (5) independently review authority/settlement before any live funds. Continue to append commits, tests, CI, blockers and next steps here each phase.
