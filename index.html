@@ -464,6 +464,19 @@ footer:first-of-type>div{
 .hamburger:focus-visible{outline:2px solid #fbbf24;outline-offset:3px}
 @media(min-width:1201px){.navl{gap:clamp(5px,.55vw,10px)!important}.navl>.hub-link .climboria-icon{width:15px!important;height:15px!important;flex-basis:15px!important}}
 @media(min-width:1201px) and (max-width:1500px){.navl{gap:5px!important}.navl>.hub-link .climboria-icon{width:12px!important;height:12px!important;flex-basis:12px!important}}
+
+/* Compact header threshold: avoid unreadable 8px labels on laptop screens. */
+@media(min-width:901px) and (max-width:1449px){
+ .navl{display:none!important}
+ .hamburger{display:flex!important}
+ #xLogo{display:flex!important}
+ nav{padding:14px 20px}
+}
+@media(min-width:1450px){
+ .navl>a:not([target]),.navl>.hub-link,.navl>.btn-gold,.navl>.nav-x-link{font-size:clamp(9px,.7vw,11px)!important;letter-spacing:0!important}
+ .navl>.hub-link .climboria-icon{width:14px!important;height:14px!important;flex-basis:14px!important}
+}
+@media(prefers-reduced-motion:reduce){.mobile-menu,.hamburger span,.navl>a,.navl>button{transition:none!important}}
 </style>
 </head>
 <body>
@@ -718,6 +731,7 @@ footer:first-of-type>div{
     menuOpen = open;
     menu.classList.toggle('active', open);
     menu.inert = !open;
+    if(open) menu.querySelector("a")?.focus();
     ham.setAttribute('aria-expanded', String(open));
     ham.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
     ham.children[0].style.transform = open ? 'rotate(45deg) translate(5px,5px)' : '';
@@ -728,9 +742,8 @@ footer:first-of-type>div{
   document.addEventListener('keydown', e => { if(e.key === 'Escape' && menuOpen){setMenu(false);ham.focus();} });
   document.addEventListener('click', e => { if(menuOpen && !menu.contains(e.target) && !ham.contains(e.target)) setMenu(false); });
   menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setMenu(false)));
-  menu.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', () => {
-    if(a.id !== 'mobileDexBtn' && a.id !== 'mobileSwapBtn' && a.id !== 'mobileLaunchpadBtn') setMenu(false);
-  }));
+  // The desktop header takes over above the compact breakpoint.
+  window.addEventListener('resize', () => { if(window.innerWidth >= 1450 && menuOpen) setMenu(false); });
   const authModal = document.getElementById('authModal');
   const authStatus = document.getElementById('authStatus');
   const openAuth = () => { setMenu(false); authModal.classList.add('open'); };
