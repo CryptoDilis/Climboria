@@ -30,3 +30,24 @@ test('null options fail closed without throwing',async()=>assert.deepEqual(await
 test('hostile options getter fails closed',async()=>{const input=Object.defineProperty({},'host',{get(){throw Error('hostile')}});assert.equal((await probeLocalValidator(input)).healthy,false)});
 test('non-ok RPC health reports unhealthy',async()=>withServer((req,res)=>res.end(JSON.stringify({jsonrpc:'2.0',id:1,result:'behind'})),async port=>assert.deepEqual(await probeLocalValidator({port}),{healthy:false,mayExecute:false,reason:'RPC_UNHEALTHY'})));
 test('stalled local RPC response times out',async()=>withServer((req,res)=>{res.writeHead(200,{'content-type':'application/json'});res.write(' ');},async port=>{const result=await probeLocalValidator({port,timeoutMs:150});assert.equal(result.healthy,false);assert.equal(result.mayExecute,false);assert.equal(result.reason,'RPC_TIMEOUT')}));
+
+
+test('trickling RPC response cannot bypass absolute deadline',async()=>withServer((req,res)=>{
+ res.writeHead(200,{'content-type':'application/json'});
+ const interval=setInterval(()=>{if(!res.destroyed)res.write(' ');else clearInterval(interval)},25);
+ res.on('close',()=>clearInterval(interval));
+},async port=>{
+ const started=Date.now();
+ const result=await probeLocalValidator({port,timeoutMs:180});
+ assert.equal(result.healthy,false);
+ assert.equal(result.reason,'RPC_TIMEOUT');
+ assert.ok(Date.now()-started<2500);
+}));
+test('oversized RPC response fails closed',async()=>withServer((req,res)=>{
+ res.writeHead(200,{'content-type':'application/json'});
+ res.end('x'.repeat(9000));
+},async port=>{
+ const result=await probeLocalValidator({port});
+ assert.equal(result.healthy,false);
+ assert.equal(result.reason,'OVERSIZED_RPC_RESPONSE');
+}));
