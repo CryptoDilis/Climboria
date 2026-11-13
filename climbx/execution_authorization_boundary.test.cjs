@@ -79,3 +79,32 @@ test('repeated authorization requests never advance a grant sequence',()=>{
  assert.equal(grantSimulation.sequence,7);
  assert.equal(grantSimulation.spent,0);
 });
+
+
+test('policy and grant simulation objects remain unchanged across repeated denials',()=>{
+ const policySimulation=Object.freeze({allowed:true,simulationOnly:true,mayExecute:false,reason:'POLICY_SIMULATION_ONLY'});
+ const grantSimulation=Object.freeze({ok:true,simulationOnly:true,mayExecute:false,reason:'SIMULATION_ONLY_NO_EXECUTION',lastSequence:9,spent:50});
+ const input={...good,policySimulation,grantSimulation};
+ for(let i=0;i<10;i++)assert.deepEqual(authorizeBotExecution(input),{authorized:false,mayExecute:false,reason:'ON_CHAIN_AUTHORIZATION_NOT_IMPLEMENTED'});
+ assert.equal(grantSimulation.lastSequence,9);
+ assert.equal(grantSimulation.spent,50);
+ assert.equal(policySimulation.allowed,true);
+});
+test('grant simulation failure is denied without reading later route input',()=>{
+ let routeReads=0;
+ const routePreflight=Object.defineProperty({},'mayExecute',{get(){routeReads++;throw Error('must not read route')}});
+ const result=authorizeBotExecution({...good,grantSimulation:{ok:false,simulationOnly:true,mayExecute:false},routePreflight});
+ assert.equal(result.reason,'INVALID_SIMULATION_BOUNDARY');
+ assert.equal(routeReads,0);
+});
+test('policy simulation failure is denied without reading later grant input',()=>{
+ let grantReads=0;
+ const grantSimulation=Object.defineProperty({},'ok',{get(){grantReads++;throw Error('must not read grant')}});
+ const result=authorizeBotExecution({...good,policySimulation:{allowed:false},grantSimulation});
+ assert.equal(result.reason,'POLICY_NOT_SATISFIED');
+ assert.equal(grantReads,0);
+});
+test('grant simulation result with executable true is rejected even when ok true',()=>{
+ const grantSimulation={ok:true,simulationOnly:true,mayExecute:true};
+ assert.deepEqual(authorizeBotExecution({...good,grantSimulation}),{authorized:false,mayExecute:false,reason:'INVALID_SIMULATION_BOUNDARY'});
+});
