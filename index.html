@@ -532,6 +532,19 @@ footer:first-of-type>div{
 .home-footer-bottom{max-width:1300px;margin:0 auto;padding:18px 40px 26px!important;display:flex!important;justify-content:space-between!important;gap:20px;border-top:1px solid rgba(245,197,91,.13);color:#9994a0;font-size:11px}
 @media(max-width:700px){.home-final-cta{padding:65px 18px}.home-footer{grid-template-columns:1fr 1fr;padding:30px 20px!important}.home-footer-brand{grid-column:1/-1}.home-footer-bottom{padding:18px 20px!important;flex-wrap:wrap}}
 
+
+/* Prevent horizontal overflow from homepage footer/CTA at 390px mobile widths. */
+@media(max-width:900px){
+ .home-final-cta,.home-footer,.home-footer-bottom{box-sizing:border-box!important;width:100%!important;min-width:0!important}
+ .home-final-cta h2{font-size:clamp(31px,8vw,58px)!important;overflow-wrap:anywhere}
+ .home-final-actions{min-width:0}
+ .home-final-actions a{max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;text-align:center}
+ .home-footer{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:22px!important}
+ .home-footer-brand{min-width:0;grid-column:1/-1}
+ .home-footer-col{min-width:0}
+ .home-footer-col a{max-width:100%;overflow-wrap:anywhere}
+ .home-footer-bottom{min-width:0;flex-wrap:wrap}
+}
 </style>
 </head>
 <body>
