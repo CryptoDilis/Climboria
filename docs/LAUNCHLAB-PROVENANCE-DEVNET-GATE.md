@@ -74,3 +74,14 @@
 ## Work-unit verification
 
 Documentation-only research; no repository runtime code modified, SDK installed, CI run, RPC verification, Devnet transaction, or Mainnet transaction performed.
+
+
+## November 14, 2026 — Gate A status: configuration verified; IDL schema drift BLOCKS launch
+
+The earlier "Work-unit verification" section below describes the original documentation-only scope, **not** the latest repository audit. The current exact evidence is recorded in `docs/DEX_SWAP_LAUNCHPAD_DEVELOPMENT_RECORD.md`.
+
+- **PASS:** [Live Raydium API versus finalized GlobalConfig/PlatformConfig run 43492418285](https://github.com/CryptoDilis/Climboria/actions/runs/43492418285) on Mainnet and Devnet, using read-only HTTP GET + Solana `getAccountInfo`. No transactions submitted.
+- **PASS:** [PR #325](https://github.com/CryptoDilis/Climboria/pull/325) exact-head unit and syntax tests: official pinned SDK/IDL hashes and fail-closed fixtures.
+- **FAIL / BLOCKER:** [post-merge IDL compatibility run 43494261014](https://github.com/CryptoDilis/Climboria/actions/runs/43494261014), live job `132123263360`, found **matching transaction instruction discriminators but nonmatching critical type schemas** in both networks. Pinned official `GlobalConfig` requires-platform-auth representation differs from legacy live Anchor-IDL padding; pinned `PlatformConfig` type lacks newer on-chain restriction fields; `PlatformConfigParam` differs and `BondingCurveParam`/`PlatformCurveParam` are absent in live on-chain IDL. Binary account lengths matching (371/944) do **not** resolve semantic mismatch. The failures remain hard gates in CI.
+
+**Gate A not fully passed.** Gate C Devnet signing/minting is **not approved**, and Gate D Mainnet launch/fee collection is **disabled**. Do not hide the failed check or manually waive it. Next reconcile with the **current official pinned SDK/IDL and deployed bytecode/authority policy**, then re-run independent read-only semantic tests, inspect migration recipient/LP custody and only afterwards plan supervised Devnet lifecycle.
