@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   CRITICAL_INSTRUCTIONS, CRITICAL_ACCOUNTS, CRITICAL_TYPES,
-  compareCriticalIdls, verifySdkInstructionDiscriminators, verifyOnchainLaunchpadIdl
+  compareCriticalIdls, stripAccountDocs, verifySdkInstructionDiscriminators, verifyOnchainLaunchpadIdl
 } from "./launchlab-onchain-idl-check.mjs";
 
 function pinnedFixture() {
@@ -158,4 +158,69 @@ test("missing critical instruction rejects account/argument schemas too", () => 
   assert.ok(check.criticalDiscriminatorMismatches.some(x => x.includes("initialize_with_token_2022")));
   assert.ok(check.criticalAccountMetaMismatches.some(x => x.includes("initialize_with_token_2022")));
   assert.ok(check.criticalArgumentMismatches.some(x => x.includes("initialize_with_token_2022")));
+});
+
+
+test("human-readable docs-only changes are classified without falsely asserting signer or PDA drift", () => {
+  const repo = pinnedFixture(), live = structuredClone(repo);
+  live.instructions.find(x => x.name === "buy_exact_in").accounts[1].docs = ["Updated provider documentation"];
+  const check = compareCriticalIdls(repo, live);
+  assert.deepEqual(check.criticalDiscriminatorMismatches, []);
+  assert.deepEqual(check.criticalArgumentMismatches, []);
+  assert.deepEqual(check.criticalAccountConstraintMismatches, []);
+  assert.equal(check.criticalAccountMetaMismatches.length, 1, "raw account-IDL mismatch must remain a blocker");
+  assert.match(check.documentationOnlyAccountMismatches[0], /buy_exact_in/);
+  const detail = check.criticalInstructionSchemaDetails.find(x => x.name === "buy_exact_in");
+  assert.equal(detail.accountConstraintDifference, false);
+  assert.equal(detail.accountDocumentationOnly, true);
+});
+
+test("fixed token program address removed in live IDL is a security-relevant drift, even if docs also change", () => {
+  const repo = pinnedFixture(), live = structuredClone(repo);
+  const a = repo.instructions.find(x => x.name === "initialize_v2").accounts[0];
+  const b = live.instructions.find(x => x.name === "initialize_v2").accounts[0];
+  a.address = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+  b.docs = ["Token program may be either SPL or Token-2022"];
+  const check = compareCriticalIdls(repo, live);
+  assert.equal(check.documentationOnlyAccountMismatches.length, 0);
+  assert.equal(check.criticalAccountConstraintMismatches.length, 1);
+  assert.match(check.criticalAccountConstraintMismatches[0], /initialize_v2/);
+  assert.equal(check.criticalInstructionSchemaDetails[0].accountConstraintDifference, true);
+});
+
+test("documentation stripping preserves all account permissions and unknown constraints recursively", () => {
+  const entry = [
+    {
+      name: "vault", signer: true, writable: true,
+      docs: ["Visible explanation"],
+      pda: { seeds: [{ kind: "account", path: "creator", docs: ["seed note"] }] },
+      arbitraryFutureConstraint: { approved: false, docs: ["nested docs"] }
+    }
+  ];
+  const projected = stripAccountDocs(entry);
+  assert.deepEqual(projected, [{
+    name: "vault", signer: true, writable: true,
+    pda: { seeds: [{ kind: "account", path: "creator" }] },
+    arbitraryFutureConstraint: { approved: false }
+  }]);
+  assert.ok(Object.hasOwn(entry[0], "docs"), "original IDL must not be mutated");
+  assert.equal(projected[0].arbitraryFutureConstraint.approved, false);
+});
+
+test("signer, writable, optional, account order, PDA and args changes cannot be classified as docs-only", () => {
+  for (const change of [
+    entry => { entry.accounts[0].signer = false; },
+    entry => { entry.accounts[1].writable = false; },
+    entry => { entry.accounts[1].pda.seeds[0].value[0] = 255; },
+    entry => { entry.accounts.reverse(); },
+    entry => { entry.accounts[2].optional = true; },
+    entry => { delete entry.accounts; }
+  ]) {
+    const repo = pinnedFixture(), live = structuredClone(repo);
+    change(live.instructions.find(x => x.name === "migrate_to_cpswap"));
+    const result = compareCriticalIdls(repo, live);
+    assert.equal(result.documentationOnlyAccountMismatches.length, 0);
+    assert.equal(result.criticalAccountConstraintMismatches.length, 1);
+    assert.equal(result.criticalAccountMetaMismatches.length, 1);
+  }
 });
