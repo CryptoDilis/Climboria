@@ -37,20 +37,23 @@ class PaperJournal:
         return max(0,row["balance"]-row["reserve"]-locked)
 
     def reserve(self, oid, slot, mint, amount, now, ttl=5):
-        if not oid or not mint or type(slot) is not int or type(amount) is not int or type(now) is not int or type(ttl) is not int or not 0<=slot<5 or amount<=0 or ttl<=0:return "INVALID"
+        if type(oid) is not str or not oid.strip() or type(mint) is not str or not mint.strip() or type(slot) is not int or type(amount) is not int or type(now) is not int or type(ttl) is not int or not 0<=slot<5 or amount<=0 or now<0 or ttl<=0:return "INVALID"
         with self.tx():
-            prior=self.db.execute("SELECT state FROM orders WHERE id=?",(oid,)).fetchone()
-            if prior:return prior["state"]
+            prior=self.db.execute("SELECT state,slot,mint,amount FROM orders WHERE id=?",(oid,)).fetchone()
+            if prior:
+                if (prior["slot"],prior["mint"],prior["amount"])!=(slot,mint,amount):return "ORDER_CONFLICT"
+                return prior["state"]
             if self.available()<amount:return "INSUFFICIENT_FUNDS"
             try:self.db.execute("INSERT INTO orders VALUES(?,?,?,?,?,?,NULL)",(oid,slot,mint,amount,"RESERVED",now+ttl))
             except sqlite3.IntegrityError:return "SLOT_OR_MINT_BUSY"
             return "RESERVED"
 
     def submit(self, oid, signature, now):
-        if not signature or type(now) is not int:return "INVALID"
+        if type(signature) is not str or not signature.strip() or type(now) is not int or now<0:return "INVALID"
         with self.tx():
-            row=self.db.execute("SELECT state,expires_at FROM orders WHERE id=?",(oid,)).fetchone()
+            row=self.db.execute("SELECT state,expires_at,signature FROM orders WHERE id=?",(oid,)).fetchone()
             if not row:return "NOT_FOUND"
+            if row["signature"] is not None and row["signature"]!=signature:return "SIGNATURE_CONFLICT"
             if row["state"]!="RESERVED":return row["state"]
             if now>row["expires_at"]:
                 self.db.execute("UPDATE orders SET state='EXPIRED' WHERE id=?",(oid,))
@@ -73,7 +76,9 @@ class PaperJournal:
         with self.tx():
             row=self.db.execute("SELECT state,amount FROM orders WHERE id=?",(oid,)).fetchone()
             if not row:return "NOT_FOUND"
-            if row["state"] in ("CONFIRMED","FAILED","EXPIRED"):return row["state"]
+            if row["state"] in ("CONFIRMED","FAILED"):
+                return row["state"] if row["state"]==outcome else "OUTCOME_CONFLICT"
+            if row["state"]=="EXPIRED":return "EXPIRED"
             if row["state"] not in ("SUBMITTED","UNKNOWN"):return "NOT_SUBMITTED"
             if outcome=="CONFIRMED":
                 balance=self.db.execute("SELECT balance FROM wallet WHERE id=1").fetchone()[0]
