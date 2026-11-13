@@ -22,7 +22,7 @@ function scanSource(files,readFile){
    // Dynamic member access is a manual-review signal, not evidence of execution.
    if(/\[\s*['"`]?(?:evaluateClimbxEntry|evaluateOrder|authorizeBotExecution)['"`]?\s*\]/.test(source))
     findings.push({file,reason:'REVIEW_DYNAMIC_AUTHORIZATION_ACCESS'});
-   if(/\b(?:mayExecute|authorized)\s*\]\s*=\s*true\b/.test(source))
+   if(/\[\s*['\"`](?:mayExecute|authorized)['\"`]\s*\]\s*=\s*true\b/.test(source))
     findings.push({file,reason:'REVIEW_DYNAMIC_EXECUTION_FLAG'});
   }
  }
