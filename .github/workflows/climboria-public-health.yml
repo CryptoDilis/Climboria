@@ -1,0 +1,26 @@
+name: Climboria public website health (non-deploying)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: climboria-public-health
+  cancel-in-progress: false
+jobs:
+  public-homepage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check public homepage without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          status=$(curl --silent --show-error --location --max-redirs 3 --connect-timeout 5 --max-time 15 --output /dev/null --write-out '%{http_code}' 'https://climboria.fun/')
+          echo "Public homepage HTTP status: $status"
+          if [[ ! "$status" =~ ^2[0-9][0-9]$ ]]; then
+            echo "::error::Climboria public homepage returned HTTP $status"
+            exit 1
+          fi
+          echo 'Public homepage responded with HTTP 2xx. This does not verify login, swap, bot or launchpad.'
