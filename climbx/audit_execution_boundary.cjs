@@ -17,12 +17,12 @@ function scanSource(files,readFile){
  return findings;
 }
 function auditDirectory(dir=root){
- const files=fs.readdirSync(dir).filter(name=>name.endsWith('.cjs')&&!EXEMPT.has(name));
+ const files=fs.readdirSync(dir).filter(name=>(name.endsWith('.cjs')||name.endsWith('.py'))&&!EXEMPT.has(name));
  return scanSource(files,name=>fs.readFileSync(path.join(dir,name),'utf8'));
 }
 if(require.main===module){
  const findings=auditDirectory();
- process.stdout.write(JSON.stringify({status:findings.length?'REVIEW_REQUIRED':'NO_MATCHING_CALL_SITES_IN_CLIMBX_CJS',files:findings},null,2)+'\n');
+ process.stdout.write(JSON.stringify({status:findings.length?'REVIEW_REQUIRED':'NO_MATCHING_CALL_SITES_IN_CLIMBX_CJS_PY',files:findings},null,2)+'\n');
  if(findings.length)process.exitCode=1;
 }
 module.exports={scanSource,auditDirectory};
