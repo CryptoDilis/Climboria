@@ -410,3 +410,11 @@ The 50-transaction sample is bounded evidence, not exhaustive route coverage. It
 - [x] PR #274 current head `559423bdddf709cae31de06b01b2c4b461f2a482` compares to main as **203 ahead / 18 behind**.
 - [x] The 18 commits on main since the PR merge base touch only the three documentation files listed above; product code has no main-only delta in this comparison.
 - [ ] Sync PR #269 with current main before merge; keep PR #274 draft until overlapping evidence is consolidated.
+
+
+### Final branch-freshness documentation commits — 2026-11-13
+
+- [x] Readiness comparison correction committed: `f516b3ed5f72d40d57e0d84a673ea87223881ed1`.
+- [x] Active handoff correction committed: `32af66eadbcac5e8cfe9caf8ebbc91f60ed71c77`.
+- [x] Main HEAD after these documentation updates: `32af66eadbcac5e8cfe9caf8ebbc91f60ed71c77`.
+- [x] Readiness document read-back confirms the current PR freshness values are 196/18 for PR #269 and 203/18 for PR #274.
