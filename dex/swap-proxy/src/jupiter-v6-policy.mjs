@@ -74,6 +74,25 @@ export function decodeJupiterV6Route(data) {
   for (const [inputIndex, percent] of percentByInput) {
     if (percent !== 100) fail("Jupiter route split percentages must total 100 for each input index");
   }
+  // A per-index percentage total does not prove that the route is actually
+  // connected. A malicious plan could start a disconnected secondary route
+  // at an intermediate input that is never produced, or leave intermediate
+  // output stranded while also referencing the final output elsewhere.
+  //
+  // Every non-source input must come from a prior step, and every non-final
+  // output must feed a later step. Since each step must move from a lower
+  // token index to a higher one, these checks ensure every edge lies on a
+  // path from token 0 to the terminal index without assuming hop order.
+  const produced = new Set(steps.map(step => step.outputIndex));
+  const consumed = new Set(percentByInput.keys());
+  for (const step of steps) {
+    if (step.inputIndex !== 0 && !produced.has(step.inputIndex)) {
+      fail("Jupiter route plan has an unreachable intermediate input token index");
+    }
+    if (step.outputIndex !== count && !consumed.has(step.outputIndex)) {
+      fail("Jupiter route plan has an unconsumed intermediate output token index");
+    }
+  }
   if (slippageBps > 500) fail("Jupiter route slippage exceeds the 5% safety cap");
   if (platformFeeBps !== 0) fail("Jupiter platform fees are not configured for Climboria");
   return { steps, inAmount, quotedOutAmount, slippageBps, platformFeeBps, dexProgramIds: [...dexProgramIds] };
