@@ -6,7 +6,7 @@
 **Working branch:** `game/hero-creation-gate-2026-11-14` (active); previous baseline branch `game/development-record-2026-11-14`  
 **Status:** Create Hero editor and entry gate implemented on a game-only branch, **awaiting exact-head CI and device testing**. No production/live claim.  
 **Default branch observed:** `main` (reviewed at recent indexed commit `0749b47190b3d8f032856462aa35328c4e820a05`; confirm exact remote HEAD before integrating).  
-**Tracking PR:** [#295](https://github.com/CryptoDilis/Climboria/pull/295) (draft, unmerged); initial record commit: `3287bb92159e6f9ad827f1e1f631e919f343c7b5`.
+**Tracking PR:** [#297](https://github.com/CryptoDilis/Climboria/pull/297) (draft, unmerged); old docs-only #295 closed superseded; initial record commit: `3287bb92159e6f9ad827f1e1f631e919f343c7b5`.
 
 ## Strict scope and resumption rules
 
@@ -116,3 +116,11 @@
 - Affected files for latest fix: `game/index.html`. Resumes the preview render loop if editor was closed during GLB loading; adds mobile two-finger pinch zoom.
 - Exact-head CI for latest fix: pending; do not mark old queued runs green for newer head. No live deployment/physical-device test claimed.
 - Next: inspect exact-head #297 CI conclusions and browser screenshots, then diagnose and fix failing test or runtime behavior.
+
+### Continue checkpoint — 2026-11-14 (PHT)
+- Read this record before resuming; current priority remains **Create Hero real browser verification**, not in-game feature expansion.
+- Prior recorded head `e73665ccdf913447981724c1b33739874b73019a`: [Validate run 43462173597](https://github.com/CryptoDilis/Climboria/actions/runs/43462173597) **SUCCESS**; [Browser Smoke run 43462173071](https://github.com/CryptoDilis/Climboria/actions/runs/43462173071) **SUCCESS**. [Jarrell Gameplay run 43462173167](https://github.com/CryptoDilis/Climboria/actions/runs/43462173167) **IN PROGRESS** at last check, running strict desktop/mobile gameplay step; not passed.
+- More targeted UI regression coverage committed: `61923ddefcc337f0b4d1ecd3dcd4c23952204434`, followed by race-safe assertion update `961f04ecbd120637ff0d0b537aa43c59427efe7c`. Affected file `.github/scripts/game-smoke.mjs`. Added browser-created hero, no-upload UI assertion, full-size render canvas evidence, save/reopen/edit behavior before desktop and mobile direct play tests. Tests **not yet verified** on the newest SHA.
+- Exact current-head PR and Actions results must be checked anew; no merge until exact-head green gameplay and validation. The recorded prior SUCCESS results are superseded by these new test commits.
+- Unresolved: true GPU/model preview pixels and full-body framing not confirmed from screenshots, physical Android not tested; localStorage identity remains local-only, not secure account identity.
+- **Next:** inspect Actions for newest head, investigate failures via job logs, add screenshot capture/visual review of hero modal if CI finishes, fix first reproducible issue. Do not touch DEX scope.
