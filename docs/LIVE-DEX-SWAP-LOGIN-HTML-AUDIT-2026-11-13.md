@@ -198,3 +198,18 @@ A code commit is not a live-release success by itself. A workflow pass is not pr
 - [!] Attempt to inspect the production `https://api.climboria.fun/health` endpoint through the available read-only web checker returned inaccessible/internal error. This is **not proof of an origin outage**, but it means current production health remains unverified.
 - [!] The available GitHub connection does not expose workflow-dispatch or Actions-secret read APIs. Secret values/presence cannot be re-read directly here, and no manual deployment was triggered. Previously reported encrypted secrets remain marked reported, not revalidated.
 - [ ] **Next exact task:** owner-triggered `Actions → Deploy Climboria API → Run workflow` is required if no existing successful run is available; then inspect its exact run/job logs and fix any failed DNS/custom-domain/health step. Keep execution disabled. After that, add a machine-verifiable production-origin smoke check for `/health`, CORS, Jupiter token search and quote.
+
+
+---
+
+## Latest repository verification — 2026-11-13
+
+This checkpoint supersedes the earlier continuation task above. The detailed live repository/PR/workflow ledger is maintained in [`docs/REPO-READINESS-AUDIT-2026-11-13.md`](./REPO-READINESS-AUDIT-2026-11-13.md).
+
+- [x] PR #269 exact head `04f4d09f233cccc5f45fa9ef2dc617880563fed2`: Validate run `43336735429` SUCCESS, 155 tests passed; Jupiter CPI Trace run `43336735443` SUCCESS, 50 finalized transactions scanned and 2 matching routes.
+- [ ] Browser Smoke run `43336735421` is still running its Jarrell's Peak desktop/mobile gameplay step.
+- [ ] Jupiter IDL History run `43336735508` is still running the official on-chain history reconstruction using public-mainnet fallback.
+- [!] Actions evidence confirms encrypted secret `SOLANA_RPC_URL` is currently empty/missing. This blocks the private archival RPC path and the Cloudflare API deployment preflight. Do not paste the value into chat. The public RPC fallback is being tested before asking for owner configuration.
+- [!] Current on-chain Jupiter IDL owner, current `route_v2` discriminator, and ProgramData deployment slot have been verified; historical IDL revision at the candidate slot is still not proven.
+- [!] The 50-transaction route sample did not include a multi-hop/split route. The 19 CPI account roles and requested privileges remain under investigation.
+- [ ] **Exact next task:** inspect run `43336735508` and its official history artifact. Accept only one proven active historical revision for candidate slot `468153382`; if public RPC cannot reconstruct it, request the encrypted `SOLANA_RPC_URL` secret be added in GitHub Settings. Then inspect Browser Smoke run `43336735421` and continue the CPI account-role audit. Keep execution disabled.
