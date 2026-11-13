@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { writeFile } from 'node:fs/promises';
 
 const errors = [];
 const browser = await chromium.launch({
@@ -821,7 +822,31 @@ try {
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));
 
   if (errors.length) throw new Error(errors.join('\n'));
+  const smokeSummary = {
+    status: 'passed',
+    completedAt: new Date().toISOString(),
+    errorCount: errors.length,
+    desktopReady: true,
+    mobileReady: true,
+    desktopRenderFrames: renderState?.frames ?? null,
+    mobileRenderFrames: mobileState.renderFrames,
+    mobileViewportWidth: mobileState.viewport,
+    mobileDocumentWidth: mobileState.document,
+    mobileControlsReady: mobileState.controls && mobileState.mobileActions.length === 4 && mobileState.mobileActions.every(action => action.visible),
+    screenshots: [
+      'climboria-desktop-home.png',
+      'climboria-mobile-home.png',
+      'climboria-desktop-gameplay.png',
+      'climboria-mobile-gameplay.png',
+      'climboria-desktop-cave-entrance.png',
+      'climboria-mobile-cave-entrance.png',
+      'climboria-desktop-cave-interior.png',
+      'climboria-mobile-cave-interior.png',
+    ],
+  };
+  await writeFile('game-smoke-summary.json', JSON.stringify(smokeSummary, null, 2) + '\\n');
   console.log('PASS: cinematic Jarrell’s Peak boot, terrain, landmarks, chests, facilities, desktop controls, and mobile controls (all wildlife temporarily disabled).');
+  console.log('GAME_SMOKE_SUMMARY:', JSON.stringify(smokeSummary));
 } finally {
   await browser.close();
 }
