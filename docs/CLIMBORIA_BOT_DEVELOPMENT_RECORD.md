@@ -202,3 +202,14 @@ V4 integrates the SQLite journal with persistent paper positions and wallet bala
 **Known blockers:** no actual outbox or external reconciliation, exit orders are not journaled as pending, no live RPC/signing/Jupiter, no fees/rent/slippage or partial fills, no TP ladder/trailing/time exits, no automatic re-entry scheduler, no multi-host concurrency guarantees, no fee high-water-mark ledger, no verified Solana delegated authority. Caller-supplied simulated outcomes/prices are not trusted chain evidence. This prototype is NOT production-safe.
 
 **Next Phase 14:** model durable exit order lifecycle and position locking, reconcile UNKNOWN exits before releasing/re-entering, implement a deterministic simulated quote/fee model and partial exits, and fault-injection tests for crash boundaries. Keep mainnet execution disabled.
+
+
+## Phase 14 checkpoint — 2026-11-13 (local paper executor V5)
+
+**Verified locally:** 28/28 Python unittest tests passed (20 V3/V4 regressions + 8 V5 exit tests). Local ZIP: `climboria-bot-paper-v5.zip`, containing `exits_v5.py`, previous V4 modules, tests, README. **No executable bot source committed to this repository; no deployment or real-money execution.**
+
+V5 adds SQLite-persisted exit order intents with RESERVED -> SUBMITTED -> UNKNOWN -> CONFIRMED/FAILED lifecycle, one active exit per slot, duplicate-ID protection, restart retention of UNKNOWN locks, partial exit quantity/cost-basis accounting, simulated fee-adjusted realized PnL, and idempotent settlement. V5 overrides price-event TP/SL handling so the trigger creates a durable exit intent **rather than immediately crediting proceeds**. Existing submitted exits may be reconciled after permission expiry/revocation, but new delegated exits cannot start. Tests cover partial/full exits, restart/UNKNOWN, failure release, unsubmitted settlement rejection, duplicate exits, TP intent, expiry and invalid fee/price.
+
+**Important limitations:** No live chain execution, external confirmation, multi-host concurrency, trustable market feed, fee/rent/slippage accounting, actual outbox network boundary, TP1/TP2/TP3 scheduler, trailing/time exits, re-entry scheduler, or secure delegated Solana authority. Caller-supplied simulated fill outcomes are not chain proof. The V4 base remains for regression; V5 consumers must instantiate `PaperBotV5`.
+
+**Next Phase 15:** implement deterministic TP ladder (partial take profits), trailing stops and time exits, then a durable simulated outbox/reconciler with crash injection and balance/fee conservation tests. Keep live swap execution disabled.
