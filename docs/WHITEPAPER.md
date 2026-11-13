@@ -225,7 +225,7 @@ Optional wager matches have been discussed as a future feature using mutually ac
 
 ### Launchpad review and creator safeguards
 
-Climboria Signature is the responsible-launch approach behind the planned Launchpad. Project review is intended to cover team and official links, token configuration, tokenomics, utility, distribution, liquidity approach, authorities, and available security evidence. Creator-lock rules, sell-limit safeguards, and transparent launch conditions are design requirements still subject to implementation and review. No review is an endorsement or guarantee of legitimacy, safety, liquidity, listing, or returns.
+Climboria Signature is a planned responsible-launch framework for the future Launchpad. **It has not been implemented and is not currently operational.** The review areas described here—team and official-link identity, token configuration, tokenomics, utility, distribution, liquidity approach, authority controls, and available security evidence—are proposed requirements, not checks currently being performed. Creator-lock rules, sell-limit safeguards, reviewer procedures, approval criteria, and transparent launch conditions still require design, implementation, testing, and publication before the framework can be used. No future Signature review will constitute an endorsement or guarantee of legitimacy, safety, liquidity, listing, or returns.
 
 ### Sponsored event approval and payment
 
