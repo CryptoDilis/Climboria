@@ -149,6 +149,8 @@ jobs:
           if-no-files-found: error
       - name: Compile isolated Anchor grant/revoke source with candidate lockfile
         run: cargo +1.99.1 check --locked --manifest-path climbx/programs/climbx-authorization/Cargo.toml
+      - name: Run isolated Anchor grant-state unit tests (non-deploying)
+        run: cargo +1.99.1 test --locked --manifest-path climbx/programs/climbx-authorization/Cargo.toml --lib
       - name: State security boundary
         if: always()
         run: echo "Cargo check is not a Solana validator test, audit, deploy, or execution approval."
