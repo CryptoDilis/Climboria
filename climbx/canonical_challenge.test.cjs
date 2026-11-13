@@ -1,0 +1,24 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const {generateKeyPairSync,sign}=require('node:crypto');
+const {canonicalChallenge}=require('./canonical_challenge.cjs');
+const {verifySolanaMessage}=require('./solana_signature.cjs');
+const abc='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function b58(bytes){let n=BigInt('0x'+bytes.toString('hex')),s='';while(n>0n){s=abc[Number(n%58n)]+s;n/=58n;}for(const b of bytes){if(b!==0)break;s='1'+s;}return s;}
+const kp=generateKeyPairSync('ed25519');
+const wallet=b58(kp.publicKey.export({format:'der',type:'spki'}).subarray(-32));
+const valid=()=>({userId:'00000000-0000-4000-8000-000000000001',wallet,nonce:'A'.repeat(43),issuedAt:100,expiresAt:400});
+test('canonical exact lines',()=>assert.equal(canonicalChallenge(valid()).split('\n').length,8));
+test('sign and verify canonical message',()=>{const msg=canonicalChallenge(valid());assert.equal(verifySolanaMessage({wallet,message:msg,signature:b58(sign(null,Buffer.from(msg),kp.privateKey))}),true);});
+test('domain rejected',()=>assert.throws(()=>canonicalChallenge({...valid(),domain:'evil.example'})));
+test('chain rejected',()=>assert.throws(()=>canonicalChallenge({...valid(),chain:'solana:mainnet'})));
+test('invalid uuid rejected',()=>assert.throws(()=>canonicalChallenge({...valid(),userId:'alice'})));
+test('invalid wallet rejected',()=>assert.throws(()=>canonicalChallenge({...valid(),wallet:'111'})));
+test('invalid wallet chars',()=>assert.throws(()=>canonicalChallenge({...valid(),wallet:'0'.repeat(44)})));
+test('short nonce rejected',()=>assert.throws(()=>canonicalChallenge({...valid(),nonce:'short'})));
+test('nonce whitespace rejected',()=>assert.throws(()=>canonicalChallenge({...valid(),nonce:'A'.repeat(42)+' '})));
+test('negative time rejected',()=>assert.throws(()=>canonicalChallenge({...valid(),issuedAt:-1})));
+test('zero ttl rejected',()=>assert.throws(()=>canonicalChallenge({...valid(),expiresAt:100})));
+test('overlong ttl rejected',()=>assert.throws(()=>canonicalChallenge({...valid(),expiresAt:401})));
+test('noninteger time rejected',()=>assert.throws(()=>canonicalChallenge({...valid(),issuedAt:100.1})));
+test('newline injection rejected',()=>assert.throws(()=>canonicalChallenge({...valid(),nonce:'A'.repeat(42)+'\n'})));
