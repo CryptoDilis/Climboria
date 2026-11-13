@@ -90,7 +90,10 @@ try {
       const before=await page.evaluate(()=>({y:window.__climboriaJarrellsPeak.player.y,jumps:window.__climboriaJarrellsPeak.player.jumpCount||0,lands:window.__climboriaJarrellsPeak.player.landCount||0}));
       await page.keyboard.down('Space');
       await page.evaluate(({y,jumps})=>{window.__climboriaJumpBaseline=y;window.__climboriaJumpCount=jumps;},{y:before.y,jumps:before.jumps});
-      const capturePhase=phase=>page.waitForFunction(expected=>{const p=window.__climboriaJarrellsPeak?.player,a=document.documentElement.dataset.climboriaHeroAnimation;return !!p&&p.jumpState===expected&&a==='jump-'+expected;},phase,{timeout:5000}).then(()=>page.evaluate(()=>{const a=window.__climboriaJarrellsPeak.heroAnimationAudit();return {state:window.__climboriaJarrellsPeak.player.jumpState,animation:document.documentElement.dataset.climboriaHeroAnimation||'',limbSignature:a?.jumpLimbSignature};})).catch(()=>null);
+      // Return the pose from the same page evaluation that observes the phase.
+      // A separate evaluate call can run after the deliberately short takeoff
+      // window advances, turning a valid observation into a false failure.
+      const capturePhase=phase=>page.waitForFunction(expected=>{const p=window.__climboriaJarrellsPeak?.player,a=document.documentElement.dataset.climboriaHeroAnimation;if(!p||p.jumpState!==expected||a!=='jump-'+expected)return false;const audit=window.__climboriaJarrellsPeak.heroAnimationAudit?.();return {state:p.jumpState,animation:a,limbSignature:audit?.jumpLimbSignature};},phase,{timeout:5000}).then(handle=>handle.jsonValue()).catch(()=>null);
       const takeoff=await capturePhase('takeoff');
       const rose=await page.waitForFunction(()=>{const p=window.__climboriaJarrellsPeak?.player;return !!p&&p.y>window.__climboriaJumpBaseline+.2&&p.jumpCount>window.__climboriaJumpCount;},undefined,{timeout:5000}).then(()=>true).catch(()=>false);
       await page.keyboard.up('Space');
