@@ -68,6 +68,18 @@ Solana is the initial chain focus; Base is a later possibility. $CLIMB is the in
 
 **Release status and risks:** CLIMBX is in non-deploying development and is **NO-GO for live automated trading**. Passing offline tests and GitHub CI does not establish on-chain safety. A reviewed permissioned Solana smart-account/program architecture, safe transaction cancellation/timeout semantics, production database migrations, devnet end-to-end execution, independent security review and explicit release approval are required before enabling real-fund trading. Automated trading can lose the full amount allocated, encounter slippage or failed transactions, and incur network fees. No yield, profit, or availability is guaranteed.
 
+### CLIMBX: fees, learning and safety at a glance
+
+**Is CLIMBX free?** The intended personal bot has no subscription or activation fee. Each wallet is eligible for one bot; users still pay applicable network and execution costs. Infrastructure costs are borne by the platform and may require capacity limits or staged access; free access does not promise unlimited availability.
+
+**When is the 10% fee charged?** Only after cumulative **net realized profit** across the bot's slots exceeds its previous high-water mark, with prior losses carried forward. Unrealized gains do not trigger the performance fee. Any settlement must be separately authorized; exact accounting and fee collection must be validated before launch.
+
+**Does CLIMBX change strategy without permission?** It may propose changes after at least 20 completed trades, but requires an explicit YES/NO decision before applying a proposed strategy update. Learning cannot override authorization expiry, spending caps or other risk controls.
+
+**Can it trade through other DEXs?** No. The planned bot is exclusive to Climboria Signature DEX, and no external DEX execution is permitted.
+
+**Is the bot ready to trade?** No. The current implementation is development-only and **NO-GO** for live execution. Independent security review, real on-chain authorization, transaction safety and devnet validation remain prerequisites. No profit is guaranteed.
+
 ## 10. Roadmap principles
 
 1. Protect and verify existing Jarrell’s Peak gameplay.
