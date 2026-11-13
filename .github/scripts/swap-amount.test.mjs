@@ -105,6 +105,8 @@ test("DEX exposes a keyboard-accessible read-only quote toggle without enabling 
   const html = readFileSync(new URL("../../dex/index.html", import.meta.url), "utf8");
   assert.match(html, /<button[^>]+id="showDexQuote"[^>]+aria-controls="swapQuote"[^>]+aria-expanded="false"/);
   assert.match(html, /GET LIVE QUOTE · NO TRADING/);
+  assert.match(html, /body\.mobile-solana-view \.execution-status\{display:flex!important/, "Mobile Solana market must expose quote button banner");
+  assert.match(html, /body\.mobile-solana-view #showDexQuote\{min-height:42px/, "Mobile quote button must have a touch target");
   const start = html.indexOf("$('showDexQuote').addEventListener('click',()=>{");
   const end = html.indexOf("\n});", start);
   assert.ok(start >= 0 && end > start, "Read-only quote toggle handler missing");
