@@ -992,3 +992,17 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Status:** CLIMBX real-funds trading **NO-GO**. Off-chain safety hardening is not a Solana on-chain vault, atomic cap/nonce enforcement, signed devnet swap, DEX-only CPI router or independent audit. No edits to Swap/DEX/Launchpad/game.
 
 **Next Phase105:** verify Phase104 CI and fix failures; review off-chain boundary for mutation/side-effect risks; prioritize actual Rust/Cargo/Solana CLI and local validator availability before any on-chain grant/revoke prototype; keep main log updated.
+
+
+## Phase 105 — 2026-11-14 — CLIMBX deny-only boundary side-effect regression
+
+**Phase104 CI all SUCCESS** on `7c925350c6f4e37612fb2f78c91192a1bd1f2f1f`: CLIMBX release safety `43469549615`, Validate `43469549758`, Browser Smoke `43469550133`.
+
+**Phase105 branch commits** (`climbx/phase28-release-gate-ci`, draft PR #282):
+- `02a0a5a320961d3a1e021f0ac73d796168267be8`: four regression tests for frozen authorization inputs, proxy setter avoidance, caller proof getter avoidance, and repeated deny-only calls leaving grant sequence/spend unchanged.
+- `4fda4b71cb3620240f27ae16beb247fe55930a7d`: document explicit read-only contract on the deny-only execution authorization boundary. No runtime permission grant or execution code added.
+**Phase105 CI pending** on `4fda4b71cb3620240f27ae16beb247fe55930a7d` at first check.
+
+**Limits:** tests assert side-effect absence for the tested objects, not proof of universal absence of effects or Solana authority. CLIMBX real-funds **NO-GO**. No on-chain vault/grant, atomic cap/nonce enforcement, signed devnet swap, verified Signature DEX-only CPI, independent security audit. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase106:** verify Phase105 CI and fix any failures; inspect CI coverage and add negative tests for grant and policy input stability; prioritize Rust/Cargo/Solana CLI + local validator availability before implementing owner-controlled grant/revoke/caps on-chain. Keep main progress record append-only.
