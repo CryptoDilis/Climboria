@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { encodeBase58, decodeBase58 } from "../src/transaction-validation.mjs";
 import { RAYDIUM_V4_PROGRAM_IDS, RAYDIUM_V4_CLASSIC_TOKEN_PROGRAM } from "../src/raydium-v4-direct-evidence.mjs";
+import { fetchRaydiumV4EvidenceFromPoolAddress } from "../src/raydium-v4-pool-discovery.mjs";
 import {
   inspectRaydiumV4FinalizedPoolSnapshot,
   fetchRaydiumV4FinalizedPoolEvidence
@@ -232,4 +233,133 @@ test("rejects wrong on-chain nonce even when pool and claimed vault authority re
     /on-curve or ambiguous address/i,
     "A nonce with an on-curve hash cannot yield a valid Solana PDA"
   );
+});
+
+
+function mockedDiscovery({ first = x => x, second = x => x } = {}) {
+  const fixture = sample(), calls = [];
+  const fetchImpl = async (url, options) => {
+    const request = JSON.parse(options.body);
+    calls.push({ url, options, request });
+    const response = calls.length === 1 ? first({
+      jsonrpc: "2.0", id: "climboria-raydium-v4-pool-bootstrap",
+      result: { context: { slot: 120 }, value: fixture.accounts[0] }
+    }) : second({
+      jsonrpc: "2.0", id: "climboria-raydium-v4-finalized-evidence",
+      result: { context: { slot: 121 }, value: fixture.accounts }
+    });
+    return new Response(JSON.stringify(response), { status: 200 });
+  };
+  const run = (args = {}) => fetchRaydiumV4EvidenceFromPoolAddress({
+    network: fixture.network, poolAddress: fixture.addresses.pool,
+    rpcUrl: "https://configured-solana-rpc.example", fetchImpl, ...args
+  });
+  return { fixture, calls, run };
+}
+
+test("operator-only pool discovery starts from ONE address and re-fetches 8 raw accounts in one finalized context", async () => {
+  const { fixture, calls, run } = mockedDiscovery();
+  const result = await run({ minContextSlot: 119 });
+  assert.equal(calls.length, 2);
+  assert.deepEqual(calls.map(c => c.request.method), ["getAccountInfo", "getMultipleAccounts"]);
+  assert.deepEqual(calls[0].request.params, [
+    fixture.addresses.pool, { encoding: "base64", commitment: "finalized", minContextSlot: 119 }
+  ]);
+  assert.deepEqual(calls[1].request.params, [
+    Object.values(fixture.addresses), { encoding: "base64", commitment: "finalized", minContextSlot: 120 }
+  ]);
+  assert.equal(calls[0].url, calls[1].url, "same configured operator RPC must be used for both reads");
+  for (const c of calls) assert.equal(c.options.redirect, "error");
+  assert.equal(result.poolDiscoveryContextSlot, 120);
+  assert.equal(result.contextSlot, 121);
+  assert.equal(result.poolStateStableAcrossFinalizedReads, true);
+  assert.equal(result.ammAuthorityPdaIndependentlyVerified, true);
+  assert.equal(result.poolAddressIndependentlyCorroborated, false);
+  assert.equal(result.rpcSourceIndependentlyAudited, false);
+  assert.equal(result.approvedForJupiterCpi, false);
+});
+
+test("discovery rejects stale/missing first snapshot and substitute wrong-program AMM", async () => {
+  await assert.rejects(
+    () => mockedDiscovery({ first: p => { p.result.context.slot = 118; return p; } }).run({ minContextSlot: 119 }),
+    /bootstrap returned missing, stale or mismatched/i
+  );
+  await assert.rejects(
+    () => mockedDiscovery({ first: p => { p.id = "bad id"; return p; } }).run(),
+    /bootstrap returned missing, stale or mismatched/i
+  );
+  await assert.rejects(
+    () => mockedDiscovery({ first: p => { p.result.value = null; return p; } }).run(),
+    /bootstrap returned missing, stale or mismatched/i
+  );
+  await assert.rejects(
+    () => mockedDiscovery({ first: p => { p.result.value = { ...p.result.value, owner: pk(33) }; return p; } }).run(),
+    /pool has wrong program ownership/i
+  );
+  await assert.rejects(
+    () => mockedDiscovery().run({ network: "devnet" }),
+    /pool has wrong program ownership/i
+  );
+});
+
+test("discovery rejects cross-slot state swaps including unparsed bytes", async () => {
+  const stale = mockedDiscovery({ second: p => { p.result.context.slot = 119; return p; } });
+  await assert.rejects(() => stale.run(), /incomplete, mismatched or stale/i);
+
+  const differentRaw = mockedDiscovery({ second: p => {
+    const clone = [...p.result.value];
+    const image = Uint8Array.from(Buffer.from(clone[0].data[0], "base64"));
+    // This offset is deliberately NOT among the AMM fields we currently
+    // interpret. A parsed-key comparison would miss this state mutation.
+    image[280] ^= 1;
+    clone[0] = { ...clone[0], data: asBase64(image) };
+    p.result.value = clone;
+    return p;
+  } });
+  await assert.rejects(
+    () => differentRaw.run(),
+    /raw account bytes changed between finalized reads/i,
+    "Never combine finalized snapshots whose full pool byte images differ"
+  );
+});
+
+test("discovery rejects a later pool nonce, vault reassignment or mismatched market program", async () => {
+  const newNonce = mockedDiscovery({ second: p => {
+    const clone = [...p.result.value];
+    const image = Uint8Array.from(Buffer.from(clone[0].data[0], "base64"));
+    u64(image, 8, 255);
+    clone[0] = { ...clone[0], data: asBase64(image) };
+    p.result.value = clone;
+    return p;
+  } });
+  await assert.rejects(() => newNonce.run(), /raw account bytes changed between finalized reads/i);
+
+  const vaultAttack = mockedDiscovery({ second: p => {
+    const clone = [...p.result.value];
+    clone[1] = { ...clone[1], owner: pk(49) };
+    p.result.value = clone;
+    return p;
+  } });
+  await assert.rejects(() => vaultAttack.run(), /coinVault has wrong program ownership/i);
+
+  const badMarket = mockedDiscovery({ second: p => {
+    const clone = [...p.result.value];
+    clone[7] = { ...clone[7], executable: false };
+    p.result.value = clone;
+    return p;
+  } });
+  await assert.rejects(() => badMarket.run(), /market program must be executable/i);
+});
+
+test("operator discovery rejects malformed pool keys and unsafe RPC configuration before fetching", async () => {
+  for (const { input, error } of [
+    { input: { poolAddress: "1" }, error: /pool must be a canonical (?:32-byte )?public key/i },
+    { input: { network: "testnet" }, error: /unsupported or unspecified Raydium network/i },
+    { input: { minContextSlot: -1 }, error: /minimum finalized context slot/i },
+    { input: { rpcUrl: "http://127.0.0.1:8899" }, error: /public HTTPS endpoint/i }
+  ]) {
+    const { run, calls } = mockedDiscovery();
+    await assert.rejects(() => run(input), error);
+    assert.equal(calls.length, 0, "invalid discovery must not contact any RPC");
+  }
 });

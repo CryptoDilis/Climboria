@@ -125,6 +125,21 @@ function parseMint(account, role) {
   };
 }
 
+/**
+ * Decode one direct Raydium V4 pool account without trusting an RPC-provided
+ * jsonParsed representation. Caller MUST pin the network and independently
+ * corroborate the pool public key: state consistency alone cannot prove
+ * that a pool is legitimate or that it matches an intended trading pair.
+ *
+ * Only used for read-only discovery; does not authorize any Jupiter CPI.
+ */
+export function inspectRaydiumV4RawPoolAccount({ network, account } = {}) {
+  if (!Object.hasOwn(RAYDIUM_V4_PROGRAM_IDS, network)) {
+    fail("unsupported or unspecified network");
+  }
+  return Object.freeze(parsePool(account, RAYDIUM_V4_PROGRAM_IDS[network]));
+}
+
 /** Deterministic proof for an already retrieved single finalized-context snapshot. */
 export function inspectRaydiumV4FinalizedPoolSnapshot({
   network, addresses, expectedAuthority, accounts, contextSlot
@@ -193,6 +208,7 @@ export function inspectRaydiumV4FinalizedPoolSnapshot({
  */
 export async function fetchRaydiumV4FinalizedPoolEvidence({
   network, addresses, expectedAuthority, rpcUrl, minContextSlot = null,
+  expectedPoolAccountData = null,
   fetchImpl = globalThis.fetch
 } = {}) {
   if (typeof fetchImpl !== "function") fail("configured RPC transport is unavailable");
@@ -225,6 +241,15 @@ export async function fetchRaydiumV4FinalizedPoolEvidence({
       (minContextSlot !== null && contextSlot < minContextSlot) ||
       !Array.isArray(payload?.result?.value) || payload.result.value.length !== ROLES.length) {
     fail("incomplete, mismatched or stale finalized Solana RPC snapshot");
+  }
+  if (expectedPoolAccountData !== null) {
+    // Used by two-phase, pool-address-only discovery: compare the ENTIRE
+    // canonical raw 752-byte pool account image, including unparsed fields.
+    // Never accept a second finalized slot containing a different AMM state.
+    if (typeof expectedPoolAccountData !== "string" ||
+        payload.result.value[0]?.data?.[0] !== expectedPoolAccountData) {
+      fail("AMM pool raw account bytes changed between finalized reads");
+    }
   }
   const verdict = inspectRaydiumV4FinalizedPoolSnapshot({
     network, addresses, expectedAuthority, accounts: payload.result.value, contextSlot
