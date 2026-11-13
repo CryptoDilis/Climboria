@@ -58,6 +58,10 @@ def main(original, optimized):
             ba = bb[bv.get("byteOffset", 0):bv.get("byteOffset", 0) + bv["byteLength"]]
             if aa != ba:
                 raise ValueError(f"non-image view {i} bytes changed")
+    if len(bb) >= len(ab):
+        raise ValueError("optimized BIN chunk is not smaller")
+    if Path(optimized).stat().st_size >= Path(original).stat().st_size:
+        raise ValueError("optimized GLB is not smaller than original")
     for ai, bi in zip(a["images"], b["images"]):
         if {k: v for k, v in ai.items() if k != "bufferView"} != {k: v for k, v in bi.items() if k != "bufferView"}:
             raise ValueError("image metadata differs")
