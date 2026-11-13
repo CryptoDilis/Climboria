@@ -811,3 +811,18 @@ Owner directed this workstream to focus exclusively on CLIMBX; other chat handle
 **Critical limits:** Simulated revoke has no blockchain effect; no state mutation after orders; no on-chain caps, transaction signing, DEX router CPI, devnet deployment or independent audit. Current assistant container lacks Rust/Cargo/Solana CLI/local validator/Anchor. CLIMBX real-funds **NO-GO**. No DEX/Swap/Launchpad/game files modified.
 
 **Next Phase93:** (1) verify Phase92 CI on `bc51db923897f698c6cdbf48cbe8e3370aeb9591`, investigate failures; (2) add adversarial grant lifecycle tests for nonce reuse and atomicity limitations, explicitly document that off-chain simulations cannot enforce them; (3) provision controlled Solana devnet build environment, pinned versions and local validator; (4) implement owner-signed on-chain grant/revoke/caps with deny-all swaps until concrete reviewed DEX route exists; (5) independent review and explicit owner GO/NO-GO. Continue CLIMBX-only append-only handoff.
+
+
+## Phase 93 — 2026-11-14 — malformed persisted grant hardening and nonce/atomicity limits (CLIMBX only)
+
+**Phase92 CI all SUCCESS** for `bc51db923897f698c6cdbf48cbe8e3370aeb9591`: CLIMBX release safety `43463837926`, Browser Smoke `43463837906`, Validate `43463837986`.
+
+**Phase93 branch commits** on `climbx/phase28-release-gate-ci` (draft PR #282):
+- `00fc02fc71e6adbdd79dd553cd586fdcdf687c3b`: harden `climbx/devnet_grant_state_simulation.cjs` against malformed persisted owner/executor/nonce, expiry, mint allowlist, sequence, array-shaped grant, and revoke input. This is still off-chain simulation.
+- `bcf6c3068fe5b22b40bf297d8f09e3d7d8d84ad8`: add ten tests, including invalid grants and **explicit demonstrations** that independent create calls can reuse the same nonce and that evaluating an order does not atomically consume sequence/spending caps. These two tests document vulnerabilities that **must be solved on-chain**; they are not passing evidence of replay safety.
+
+**Phase93 CI pending** on `bcf6c3068fe5b22b40bf297d8f09e3d7d8d84ad8` (no runs returned at first check). Do not claim pass until verified.
+
+**Release status:** real-funds CLIMBX **NO-GO**. No Solana program, signed devnet trade, on-chain nonce uniqueness or atomic cap accounting, verified DEX-only CPI constraints, or independent audit. No Swap/DEX/Launchpad/game edits.
+
+**Next Phase94:** (1) verify exact Phase93 CI and fix any failure; (2) make nonce uniqueness/atomic cap limitations impossible to confuse with an authorized trade, retaining simulation-only interfaces; (3) provision Rust/Cargo/Solana CLI/validator/Anchor and capture versions; (4) implement owner-only create/revoke and nonce PDA uniqueness with atomic on-chain spend/sequence updates on local validator, DEX CPI deny-all until route review; (5) devnet evidence, independent review and explicit owner GO/NO-GO. Continue append-only record on main.
