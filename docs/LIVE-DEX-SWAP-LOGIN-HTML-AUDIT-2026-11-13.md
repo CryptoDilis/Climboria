@@ -213,3 +213,12 @@ This checkpoint supersedes the earlier continuation task above. The detailed liv
 - [!] Current on-chain Jupiter IDL owner, current `route_v2` discriminator, and ProgramData deployment slot have been verified; historical IDL revision at the candidate slot is still not proven.
 - [!] The 50-transaction route sample did not include a multi-hop/split route. The 19 CPI account roles and requested privileges remain under investigation.
 - [ ] **Exact next task:** inspect run `43336735508` and its official history artifact. Accept only one proven active historical revision for candidate slot `468153382`; if public RPC cannot reconstruct it, request the encrypted `SOLANA_RPC_URL` secret be added in GitHub Settings. Then inspect Browser Smoke run `43336735421` and continue the CPI account-role audit. Keep execution disabled.
+
+
+### Superseding verification note — 2026-11-13
+
+- Browser Smoke run `43336735421` reached GitHub SUCCESS and uploaded screenshots, but its gameplay log contained `The operation was canceled` without the final PASS marker. It is not accepted as full gameplay proof.
+- Added explicit `game-smoke-summary.json` generation and workflow validation in PR #269 commits `d06fd9006d0a3898bd2c18833abdb841174720ac` and `49a342cef18adf51dc98560a8c60c9e06f02654a`.
+- Current PR #269 exact head: `49a342cef18adf51dc98560a8c60c9e06f02654a`. New Browser Smoke run `43337636485` is pending; Validate `43337636118` is in progress; Jupiter CPI Trace `43337635961` is pending; Jupiter IDL History `43337636175` is in progress.
+- The previous IDL run confirmed `SOLANA_RPC_URL` is missing in GitHub Actions. Public mainnet fallback is being tested; private RPC remains preferred and required for the Worker deployment workflow.
+- **Next:** inspect run `43337636485` for a validated pass-summary artifact and run `43337636175` for a unique active historical Jupiter IDL revision at slot `468153382`. Keep all Swap execution gates disabled.
