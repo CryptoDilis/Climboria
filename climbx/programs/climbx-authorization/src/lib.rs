@@ -59,13 +59,13 @@ pub mod climbx_authorization {
     ) -> Result<()> {
         let grant = &mut ctx.accounts.grant;
         require!(!grant.revoked, GrantError::AlreadyRevoked);
-        require!(new_per_order_cap > 0, GrantError::InvalidCap);
-        require!(new_per_order_cap <= grant.per_order_cap, GrantError::CannotExpandGrant);
-        require!(new_cumulative_cap >= grant.spent, GrantError::InvalidCap);
-        require!(new_cumulative_cap <= grant.cumulative_cap, GrantError::CannotExpandGrant);
-        require!(new_cumulative_cap >= new_per_order_cap, GrantError::InvalidCap);
-        require!(new_expires_at <= grant.expires_at, GrantError::CannotExpandGrant);
-        require!(new_expires_at > Clock::get()?.unix_timestamp, GrantError::InvalidExpiry);
+        validate_tightening(
+            grant,
+            new_per_order_cap,
+            new_cumulative_cap,
+            new_expires_at,
+            Clock::get()?.unix_timestamp,
+        )?;
         grant.per_order_cap = new_per_order_cap;
         grant.cumulative_cap = new_cumulative_cap;
         grant.expires_at = new_expires_at;
@@ -73,9 +73,48 @@ pub mod climbx_authorization {
     }
 }
 
+// Pure policy function for deterministic negative-case tests. The account context
+// separately enforces owner signature and PDA ownership before this is called.
+fn validate_tightening(
+    grant: &Grant,
+    per_order: u64,
+    cumulative: u64,
+    expiry: i64,
+    now: i64,
+) -> Result<()> {
+    require!(!grant.revoked, GrantError::AlreadyRevoked);
+    require!(per_order > 0, GrantError::InvalidCap);
+    require!(per_order <= grant.per_order_cap, GrantError::CannotExpandGrant);
+    require!(cumulative >= grant.spent, GrantError::InvalidCap);
+    require!(cumulative <= grant.cumulative_cap, GrantError::CannotExpandGrant);
+    require!(cumulative >= per_order, GrantError::InvalidCap);
+    require!(expiry <= grant.expires_at, GrantError::CannotExpandGrant);
+    require!(expiry > now, GrantError::InvalidExpiry);
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn tightening_policy_rejects_expansion_and_revocation() {
+        let mut grant = Grant {
+            owner: Pubkey::new_unique(), executor: Pubkey::new_unique(),
+            grant_id: 1, allowed_mints: vec![Pubkey::new_unique()],
+            expires_at: 1000, per_order_cap: 10, cumulative_cap: 100,
+            spent: 40, next_nonce: 3, revoked: false, bump: 1,
+        };
+        assert!(validate_tightening(&grant, 8, 80, 900, 500).is_ok());
+        assert!(validate_tightening(&grant, 11, 80, 900, 500).is_err());
+        assert!(validate_tightening(&grant, 8, 101, 900, 500).is_err());
+        assert!(validate_tightening(&grant, 8, 39, 900, 500).is_err());
+        assert!(validate_tightening(&grant, 0, 80, 900, 500).is_err());
+        assert!(validate_tightening(&grant, 8, 80, 1001, 500).is_err());
+        assert!(validate_tightening(&grant, 8, 80, 500, 500).is_err());
+        grant.revoked = true;
+        assert!(validate_tightening(&grant, 8, 80, 900, 500).is_err());
+    }
 
     #[test]
     fn grant_size_covers_five_mints() {
