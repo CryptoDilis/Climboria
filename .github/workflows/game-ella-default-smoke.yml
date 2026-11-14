@@ -1,0 +1,66 @@
+name: Climboria Ella Default Hero Acceptance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "assets/characters/Climboria_Ella.glb"
+      - "game/index.html"
+      - "game/play.html"
+      - "game/scripts/verify-ella-default.mjs"
+      - ".github/scripts/game-ella-default-smoke.mjs"
+      - ".github/workflows/game-ella-default-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climboria-ella-acceptance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ella-import-and-play:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - name: Check out PR candidate
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm uploaded optimized GLB, rig, clips and original hero backup
+        run: node game/scripts/verify-ella-default.mjs
+      - name: Install Playwright and Chromium
+        timeout-minutes: 8
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install chromium
+      - name: Serve game for real browser tests
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/climboria-ella-server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/game/index.html > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/climboria-ella-server.log
+          exit 1
+      - name: Exercise Ella default hero on desktop and mobile
+        timeout-minutes: 11
+        run: timeout --signal=TERM --kill-after=30s 10m node .github/scripts/game-ella-default-smoke.mjs
+      - name: Upload Ella creator and gameplay QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climboria-ella-default-qa
+          path: |
+            climboria-ella-desktop-creator-preview.png
+            climboria-ella-mobile-creator-preview.png
+            climboria-ella-desktop-hero-smoke.png
+            climboria-ella-mobile-hero-smoke.png
+            climboria-ella-desktop-creator-diagnostic.png
+            climboria-ella-mobile-creator-diagnostic.png
+          if-no-files-found: warn
+          retention-days: 7
