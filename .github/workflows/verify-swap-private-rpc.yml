@@ -1,0 +1,37 @@
+name: Verify Swap DEX private Solana RPC (read-only)
+
+on:
+  # Secret-bearing endpoint checks are manual on main ONLY. Never execute on a
+  # pull request or fork; private RPC endpoints are not CI test fixtures.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climboria-swap-rpc-private-preflight
+  cancel-in-progress: false
+
+jobs:
+  rpc-check:
+    name: Independently pinned dual-RPC genesis and finalized-slot check
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout approved main
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run synthetic RPC safety tests (no credentials)
+        run: |
+          node --test dex/swap-proxy/test/raydium-v4-rpc-genesis-preflight.test.mjs \
+            dex/swap-proxy/test/operator-private-rpc-connectivity.test.mjs
+      - name: Probe private RPC genesis and finalized slots without sharing credentials
+        env:
+          CLIMBORIA_SOLANA_RPC_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL }}
+          CLIMBORIA_SOLANA_RPC_URL_SECONDARY: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL_SECONDARY }}
+          CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH: ${{ vars.CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH }}
+        run: node dex/swap-proxy/tools/operator-private-rpc-setup-check.mjs
