@@ -116,7 +116,9 @@ test("fake settlement finality, bad receipt amount or wrong issued message is ne
   ])assert.throws(()=>review(record(),{...witness(),...patch}),DENIED);
 });
 test("tampered signed wire differs from issued message and cannot pass local preflight",()=>{
-  const bad=fx.signed.replace(/.$/,"=");
+  const altered=Buffer.from(fx.signed,"base64");
+  altered[altered.length-2]^=1;
+  const bad=altered.toString("base64");
   assert.throws(()=>validateOperatorClaimedOrder({
     orderRecord:record(),expectedRequestId:"jupiter-request-123",signedTransaction:bad
   }),DENIED);
