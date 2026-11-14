@@ -19,7 +19,7 @@ function json(data, status = 200) {
 // The Durable Object is an internal replay-lock boundary, not an excuse to
 // allocate an untrusted request body before checking its size. Reuse the same
 // strict, streaming byte limit as the public Worker. No JSONP, oversized
-// Content-Length, invalid UTF-8 or unbounded request.text() allocations.
+// Content-Length, invalid UTF-8 or whole-body allocation.
 async function readBody(request) {
   return readBoundedRequestJson(request, 60_000);
 }
