@@ -200,7 +200,7 @@ async function handleOrder(request, env) {
   if (typeof data.transaction !== "string" || !data.transaction.length) {
     return json({
       error: "Jupiter returned a quote without an executable transaction",
-      errorCode: data.errorCode ?? null,
+      errorCode: null,
       router: optionalProviderLabel(data.router)
     }, 422);
   }
@@ -296,8 +296,8 @@ async function handleOrder(request, env) {
     feeMint: optionalFeeMint(data.feeMint),
     transactionVersion: data.transactionVersion ?? null,
     lastValidBlockHeight: data.lastValidBlockHeight ?? null,
-    expireAt: data.expireAt || null,
-    errorCode: data.errorCode ?? null,
+    expireAt: typeof data.expireAt === "string" && /^\\d{4}-\\d{2}-\\d{2}T[0-9:.+-]+Z?$/.test(data.expireAt) && data.expireAt.length <= 48 ? data.expireAt : null,
+    errorCode: null,
     errorMessage: null
   });
 }
