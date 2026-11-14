@@ -8,6 +8,7 @@
  * Do not turn provider status "Success" into a user-facing settled claim
  * without verified chain and exact balance evidence.
  */
+import { createHash } from "node:crypto";
 import { decodeBase58, encodeBase58 } from "./transaction-validation.mjs";
 import { validateRpcUrl } from "./solana-rpc.mjs";
 import { verifyExpectedRpcGenesis } from "./raydium-v4-rpc-genesis-preflight.mjs";
@@ -148,6 +149,28 @@ export function inspectFinalizedSwapReceipt({
       !Number.isSafeInteger(postLamports[0]) || postLamports[0] < 0 ||
       preLamports[0] - postLamports[0] !== receipt.meta.fee) fail();
 
+  // Provider-reported transaction account-state fingerprint for a SECOND RPC
+  // witness. Compare full resolved key roles + all observed token/lamport
+  // balances, not merely the taker delta: a forged/mismatched vault snapshot
+  // must not silently agree with a different source's taker-facing quote.
+  // The SHA-256 is a deterministic comparison marker, NOT a ledger proof or
+  // a substitute for reviewing Jupiter inner CPI and vault ownership.
+  if (preLamports.some(value => !Number.isSafeInteger(value) || value < 0) ||
+      postLamports.some(value => !Number.isSafeInteger(value) || value < 0)) fail();
+  const tokenSnapshot = map => [...map.values()]
+    .sort((a,b) => a.index - b.index)
+    .map(item => [
+      item.index, item.owner, item.mint, item.amount.toString(), item.decimals
+    ]);
+  const snapshot = JSON.stringify({
+    schema: 1, signature, slot: receipt.slot, version: receipt.version,
+    fee: receipt.meta.fee,
+    accountKeys: keys.map(item => [item.pubkey,item.signer,item.writable]),
+    preLamports, postLamports,
+    preTokenBalances: tokenSnapshot(pre), postTokenBalances: tokenSnapshot(post)
+  });
+  const accountSnapshotSha256 = createHash("sha256").update(snapshot).digest("hex");
+
   return Object.freeze({
     kind: "CLIMBORIA_READ_ONLY_FINALIZED_SWAP_RECEIPT_EVIDENCE",
     signature, providerReportedFinalizedSlot: receipt.slot,
@@ -157,6 +180,7 @@ export function inspectFinalizedSwapReceipt({
     observedOutputRawAmount: received.toString(),
     minimumOutputRawAmount: minimumOutput.toString(),
     feeLamports: receipt.meta.fee,
+    providerReportedAccountSnapshotSha256: accountSnapshotSha256,
     exactSourceDebitAndMinimumDestinationCreditChecked: true,
     feePayerLamportDeltaMatchesFee: true,
     knownOtherTakerOwnedTokenAccountsUnchanged: true,
