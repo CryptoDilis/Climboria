@@ -16,6 +16,11 @@ try {
   await anonymous.locator('#openHeroCreator').click();
   if(!(await anonymous.locator('#heroEditor').isVisible())) errors.push('Hero editor did not open from the Expedition card');
   if(await anonymous.locator('#heroEditor input[type="file"]').count()) errors.push('Hero editor still asks players to upload a GLB');
+  const visibleModels=await anonymous.locator('#heroModelSelect option').evaluateAll(options=>options.map(o=>o.value));
+  if(JSON.stringify(visibleModels)!==JSON.stringify(['Adventurer','Jarrell','Lheiz']))
+    errors.push('Hero selection is not populated with the three verified identities: '+JSON.stringify(visibleModels));
+  if(await anonymous.locator('#heroModelSelect').inputValue()!=='Adventurer')
+    errors.push('Existing creator must default to the original Adventurer model');
   await anonymous.locator('#heroNameInput').fill('Smoke Explorer');
   if(!(await anonymous.locator('#saveHeroButton').isDisabled()) && !(await anonymous.locator('#heroPreviewStatus').textContent()).includes('LIVE 3D PREVIEW')) errors.push('Save Hero enabled before model preview is ready');
   await anonymous.waitForFunction(() => document.querySelector('#heroPreviewStatus')?.textContent?.includes('LIVE 3D PREVIEW'), undefined, { timeout: 120000 });

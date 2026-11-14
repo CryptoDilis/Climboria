@@ -428,7 +428,7 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let connectedWallet=null,walletProvider=null;
+let connectedWallet=null,walletProvider=null,walletEventProvider=null,walletEventHandlers=null,walletConnectionEpoch=0;
 let selectedChain='solana';
 let restoringSwapUrl=false;
 function setSwapUrl(){const u=new URL(location.href);u.searchParams.set('chain',selectedChain);u.searchParams.set('from',quoteTokens.from.id);u.searchParams.set('to',quoteTokens.to.id);const next=u.pathname+u.search+u.hash,current=location.pathname+location.search+location.hash;if(next===current)return;if(restoringSwapUrl)history.replaceState({climboriaSwap:true},'',u);else history.pushState({climboriaSwap:true},'',u);}
@@ -501,29 +501,55 @@ async function resolveSolanaTokenByMint(mint,fallbackSymbol='TOKEN',fallbackName
  if(decimals===null){if(canonical[mint])decimals=canonical[mint].decimals;else throw new Error('Could not verify mint decimals from Solana RPC. '+lastError);}
  return {id:mint,symbol:meta?.symbol||canonical[mint]?.symbol||fallbackSymbol,name:meta?.name||canonical[mint]?.name||fallbackName,decimals,isVerified:false};
 }
+function walletAddress(value){return value?.toString?.()||'';}
+function removeWalletEventListeners(){
+ const provider=walletEventProvider,handlers=walletEventHandlers;
+ if(provider&&handlers){
+  const remove=typeof provider.off==='function'?provider.off.bind(provider):typeof provider.removeListener==='function'?provider.removeListener.bind(provider):null;
+  if(remove){remove('disconnect',handlers.disconnect);remove('accountChanged',handlers.accountChanged);remove('accountsChanged',handlers.accountsChanged);}
+ }
+ walletEventProvider=null;walletEventHandlers=null;
+}
+function clearWalletSession(message){
+ ++walletConnectionEpoch;removeWalletEventListeners();connectedWallet=null;walletProvider=null;pendingSwapOrder=null;
+ $('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';button.removeAttribute('title');button.disabled=false;
+ $('swapReview').hidden=true;$('swapReview').innerHTML='';if(message)$('quoteStatus').textContent=message;
+}
+function bindWalletEvents(provider){
+ removeWalletEventListeners();walletEventProvider=provider;
+ const disconnect=()=>{if(walletProvider===provider)clearWalletSession('Wallet disconnected. Any prepared order was cleared; no transaction was submitted.');};
+ const accountChanged=value=>{
+  const address=walletAddress(Array.isArray(value)?value[0]:value);
+  if(!address){disconnect();return;}
+  if(walletProvider!==provider||address===connectedWallet)return;
+  connectedWallet=address;pendingSwapOrder=null;$('swapReview').hidden=true;$('swapReview').innerHTML='';
+  $('walletStatus').textContent=address.slice(0,5)+'…'+address.slice(-5);const button=$('connectWallet');button.textContent='Disconnect wallet';button.title='Connected wallet '+address;
+  $('quoteStatus').textContent='Wallet account changed. Any prepared order was cleared; request a fresh quote before signing.';
+ };
+ const accountsChanged=accounts=>accountChanged(Array.isArray(accounts)?accounts[0]:accounts);
+ walletEventHandlers={disconnect,accountChanged,accountsChanged};
+ if(typeof provider.on==='function'){provider.on('disconnect',disconnect);provider.on('accountChanged',accountChanged);provider.on('accountsChanged',accountsChanged);}
+}
 async function connectClimboriaWallet(){
  const button=$('connectWallet'),status=$('walletStatus');
  if(connectedWallet){await disconnectClimboriaWallet();return;}
- button.disabled=true;button.textContent='Connecting…';
+ const attempt=++walletConnectionEpoch;button.disabled=true;button.textContent='Connecting…';
  try{
   const providers=[window.phantom?.solana,window.solflare,window.backpack?.solana,window.solana].filter(Boolean);
   const provider=providers.find(p=>typeof p.connect==='function'&&(p.isPhantom||p.isSolflare||p.isBackpack))||providers.find(p=>typeof p.connect==='function');
   if(!provider)throw new Error('No supported Solana wallet detected. Open Climboria in Phantom, Solflare or Backpack browser.');
   const result=await provider.connect();
-  const publicKey=result?.publicKey||provider.publicKey;
-  const address=publicKey?.toString?.();
+  const address=walletAddress(result?.publicKey||provider.publicKey);
+  if(attempt!==walletConnectionEpoch)return;
   if(!address)throw new Error('Wallet connected but did not return a public key.');
-  connectedWallet=address;walletProvider=provider;
-  status.textContent=address.slice(0,5)+'…'+address.slice(-5);
-  button.textContent='Disconnect wallet';
-  button.title='Connected wallet '+address;
+  connectedWallet=address;walletProvider=provider;bindWalletEvents(provider);
+  status.textContent=address.slice(0,5)+'…'+address.slice(-5);button.textContent='Disconnect wallet';button.title='Connected wallet '+address;
   $('quoteStatus').textContent='Wallet connected. Review every quote and transaction before signing.';
  }catch(error){
-  status.textContent='Not connected';button.textContent='Connect wallet';
-  $('quoteStatus').textContent='Wallet connection failed: '+error.message;
- }finally{button.disabled=false;}
+  if(attempt===walletConnectionEpoch){status.textContent='Not connected';button.textContent='Connect wallet';button.removeAttribute('title');$('quoteStatus').textContent='Wallet connection failed: '+error.message;}
+ }finally{if(attempt===walletConnectionEpoch)button.disabled=false;}
 }
-async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)await walletProvider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';}
+async function disconnectClimboriaWallet(){const provider=walletProvider;++walletConnectionEpoch;removeWalletEventListeners();try{if(provider?.disconnect)await provider.disconnect();}catch(e){}clearWalletSession('Wallet disconnected. Any prepared order was cleared; no transaction was submitted.');}
 const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
 let tokenSearchSequence={from:0,to:0};
 async function searchQuoteToken(side,options={}){const request=++tokenSearchSequence[side];const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Finding the best Solana token match…</div>';try{if(!swapProxyReady())throw new Error('Climboria Swap API is unavailable; token search is paused.');const tokenUrl=swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(request!==tokenSearchSequence[side]||input.value.trim()!==query)return;if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}const candidates=tokens.filter(t=>t&&typeof t.id==='string'&&Number.isInteger(Number(t.decimals))&&Number(t.decimals)>=0&&Number(t.decimals)<=18).slice(0,8);if(!candidates.length)throw new Error('Jupiter returned no usable token metadata.');box._tokens=candidates;box.innerHTML=candidates.map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+' <span class="token-option-meta">'+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'</span></b><small>'+esc(t.id)+'</small><span class="token-option-meta '+(t.isVerified===true?'token-verification':'')+'">'+(t.isVerified===true?'✓ Jupiter verified':'Unverified token')+'</span></button>').join('');if(options.autoSelect){const chosen=await chooseBestSolanaCandidate(candidates,request,side,query);if(request!==tokenSearchSequence[side]||input.value.trim()!==query)return;if(chosen){const alternativesMarkup=box.innerHTML;chooseQuoteToken(side,chosen);box.innerHTML='<div class="notice">Selected best-supported '+esc(chosen.symbol||'token')+' market automatically. You can still choose another representation below.</div>'+alternativesMarkup;autoQuoteAfterChange();}else{$(side==='from'?'fromSelected':'toSelected').textContent='Selection required · choose the exact mint';box.insertAdjacentHTML('afterbegin','<div class="notice">Multiple token representations found. Choose the exact mint below; no asset has been changed yet.</div>');}}}catch(e){if(request===tokenSearchSequence[side]&&input.value.trim()===query)box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
@@ -538,6 +564,8 @@ const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
 let pendingSwapOrder=null;
 function swapProxyReady(){return swapConfig.proxyEnabled===true&&typeof swapConfig.apiBase==="string"&&/^https:\/\//.test(swapConfig.apiBase);}
 function swapExecutionReady(){return swapProxyReady()&&swapConfig.enabled===true;}
+const QUOTE_REQUEST_TIMEOUT_MS=15000;
+async function fetchQuoteFromProxy(url){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),QUOTE_REQUEST_TIMEOUT_MS);try{return await fetch(url,{headers:{accept:'application/json'},signal:controller.signal});}catch(error){if(controller.signal.aborted)throw new Error('Climboria quote request timed out. No cached estimate was used.');throw error;}finally{clearTimeout(timer);}}
 async function prepareJupiterSwap(){
  const status=$('quoteStatus'),button=$('prepareSwap'),review=$('swapReview');
  if(!connectedWallet||!walletProvider){status.textContent='Connect your Solana wallet first. No transaction has been requested.';return;}
@@ -615,7 +643,7 @@ async function requestJupiterQuote(){
   const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});
   if(slippage!=='auto')params.set('slippageBps',slippage);
   if(!swapProxyReady())throw new Error('Climboria Swap API is unavailable; quote preview is paused.');const quoteUrl=swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString();
-  const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});
+  const response=await fetchQuoteFromProxy(quoteUrl);
   const data=await response.json();
   if(!stillCurrent())return;
   if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');

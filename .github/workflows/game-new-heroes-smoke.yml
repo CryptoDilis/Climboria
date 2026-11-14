@@ -1,0 +1,73 @@
+name: Climboria New Heroes Jarrell and Lheiz Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "game/index.html"
+      - "game/play.html"
+      - "game/scripts/verify-hero-imports.mjs"
+      - ".github/scripts/game-new-heroes-smoke.mjs"
+      - ".github/workflows/game-new-heroes-smoke.yml"
+      - "assets/characters/Climboria_Jarrell.glb"
+      - "assets/characters/Climboria_Lheiz.glb"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climboria-new-heroes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hero-import-and-play:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - name: Check out PR candidate
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate exact owner-supplied Meshy GLB bytes and animations
+        run: node game/scripts/verify-hero-imports.mjs
+      - name: Install Playwright and Chromium
+        timeout-minutes: 8
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install chromium
+      - name: Start local test server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/climboria-heroes-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/game/index.html > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/climboria-heroes-http.log
+          exit 1
+      - name: Exercise actual Jarrell and Lheiz GLB selection and gameplay
+        timeout-minutes: 12
+        run: timeout --signal=TERM --kill-after=30s 11m node .github/scripts/game-new-heroes-smoke.mjs
+      - name: Upload desktop and mobile hero screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climboria-jarrell-lheiz-review
+          path: |
+            climboria-jarrell-desktop-hero-smoke.png
+            climboria-jarrell-mobile-hero-smoke.png
+            climboria-lheiz-desktop-hero-smoke.png
+            climboria-lheiz-mobile-hero-smoke.png
+            climboria-jarrell-desktop-creator-preview.png
+            climboria-jarrell-mobile-creator-preview.png
+            climboria-lheiz-desktop-creator-preview.png
+            climboria-lheiz-mobile-creator-preview.png
+            climboria-jarrell-desktop-creator-diagnostic.png
+            climboria-jarrell-mobile-creator-diagnostic.png
+            climboria-lheiz-desktop-creator-diagnostic.png
+            climboria-lheiz-mobile-creator-diagnostic.png
+          if-no-files-found: warn
+          retention-days: 7

@@ -45,9 +45,9 @@ test("DEX and Swap both load the shared decimal converter before app logic", () 
 test("Swap quote handler rejects mismatched and malformed provider raw amounts", async () => {
   const html = readFileSync(new URL("../../swap/index.html", import.meta.url), "utf8");
   const start = html.indexOf("async function requestJupiterQuote(){");
-  const end = html.indexOf("\n}\n", start);
-  assert.ok(start >= 0 && end > start, "Expected dedicated Swap quote handler");
-  const handler = html.slice(start, end + 2);
+  const closing = html.slice(start).match(/\r?\n}\r?\n/);
+  assert.ok(start >= 0 && closing?.index !== undefined, "Expected dedicated Swap quote handler");
+  const handler = html.slice(start, start + closing.index + closing[0].length - 1);
   const SOL = "So11111111111111111111111111111111111111112";
   const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
@@ -78,6 +78,7 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
         return { ok: true, json: async () => quote };
       }
     };
+    context.fetchQuoteFromProxy = url => context.fetch(url);
     await runInNewContext(handler + "\nrequestJupiterQuote()", context);
     assert.equal(requested.length, 1);
     assert.match(requested[0], /amount=100000000/);
@@ -139,6 +140,25 @@ test("DEX exposes a keyboard-accessible read-only quote toggle without enabling 
   assert.equal(invalidations.length, 1);
 });
 
+test("DEX announces dynamic quote and terminal safety status updates", () => {
+  const html = readFileSync(new URL("../../dex/index.html", import.meta.url), "utf8");
+  assert.match(html, /id="quoteStatus" aria-live="polite" aria-atomic="true"/, "DEX quote status must announce quote and wallet safety changes");
+  assert.match(html, /id="dexTradeStatus" aria-live="polite" aria-atomic="true"/, "DEX terminal status must announce read-only and quote state changes");
+});
+
+test("Swap and DEX discard wallet-bound state when the provider disconnects or changes accounts", () => {
+  for (const page of ["swap/index.html", "dex/index.html"]) {
+    const html = readFileSync(new URL("../../" + page, import.meta.url), "utf8");
+    assert.match(html, /walletConnectionEpoch/, page + " must reject stale asynchronous wallet connections");
+    assert.match(html, /provider\.on\('disconnect',disconnect\)/, page + " must observe wallet-side disconnects");
+    assert.match(html, /provider\.on\('accountChanged',accountChanged\)/, page + " must observe wallet account changes");
+    assert.match(html, /removeWalletEventListeners\(\)/, page + " must detach listeners when a session ends");
+    assert.match(html, /pendingSwapOrder=null/, page + " must discard a prepared order when wallet identity changes");
+    assert.match(html, /Wallet account changed\. Any prepared order was cleared/, page);
+    assert.match(html, /Wallet disconnected\. Any prepared order was cleared/, page);
+  }
+});
+
 
 test("Swap and DEX quote/token search never silently bypass the Climboria backend", () => {
   for (const page of ["swap/index.html", "dex/index.html"]) {
@@ -148,5 +168,10 @@ test("Swap and DEX quote/token search never silently bypass the Climboria backen
     assert.match(html, /if\(!swapProxyReady\(\)\)throw new Error\('Climboria Swap API is unavailable; quote preview is paused\.'\)/, page);
     assert.match(html, /const tokenUrl=swapConfig\.apiBase\.replace\(/, page);
     assert.match(html, /const quoteUrl=swapConfig\.apiBase\.replace\(/, page);
+    assert.match(html, /const QUOTE_REQUEST_TIMEOUT_MS=15000/, page + " must bound a stalled browser quote request");
+    assert.match(html, /async function fetchQuoteFromProxy\(url\)/, page);
+    assert.match(html, /signal:controller\.signal/, page);
+    assert.match(html, /Climboria quote request timed out\. No cached estimate was used\./, page);
+    assert.match(html, /await fetchQuoteFromProxy\(quoteUrl\)/, page);
   }
 });
