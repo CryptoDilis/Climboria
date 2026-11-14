@@ -1311,13 +1311,17 @@ async function requestJupiterQuote(){
     if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);
     if(data.inAmount!==String(raw)||typeof data.outAmount!=='string'||!(/^[1-9][0-9]*$/).test(data.outAmount))
       throw new Error('Jupiter returned an inconsistent quote for this amount; no fallback will be shown');
-    const out=Number(data.outAmount)/Math.pow(10,to.decimals);
-    if(!Number.isFinite(out)||out<=0)throw new Error('Jupiter returned an invalid output amount');
+    if(typeof data.otherAmountThreshold!=='string'||!(/^[1-9][0-9]*$/).test(data.otherAmountThreshold)||BigInt(data.otherAmountThreshold)>BigInt(data.outAmount))
+      throw new Error('Jupiter did not return a verified minimum received amount; no estimate will be shown');
+    const out=window.ClimboriaSwapAmount.formatRaw(data.outAmount,to.decimals);
+    const minimum=window.ClimboriaSwapAmount.formatRaw(data.otherAmountThreshold,to.decimals);
+    const appliedSlippage=Number.isInteger(data.slippageBps)&&data.slippageBps>=0&&data.slippageBps<=10000?data.slippageBps:null;
+    if(slippage!=='auto'&&appliedSlippage!==Number(slippage))throw new Error('Jupiter did not confirm the selected slippage tolerance; no estimate will be shown');
     const suppliedImpact=data.priceImpactPct??data.priceImpact??null;
     const impact=typeof suppliedImpact==='number'&&Number.isFinite(suppliedImpact)&&suppliedImpact>=-1&&suppliedImpact<=1?suppliedImpact:null;
     const fee=Number.isInteger(data.feeBps)&&data.feeBps>=0&&data.feeBps<=10000?String(data.feeBps)+' bps':'Not supplied';
     const router=typeof data.router==='string'&&data.router.trim()?data.router:'Jupiter route';
-    $('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+out.toLocaleString('en-US',{maximumFractionDigits:8})+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+esc(input+' '+from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';
+    $('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+esc(out)+'</b></div><div class="quote-result"><small>Minimum received · '+esc(to.symbol)+'</small><b>'+esc(minimum)+'</b></div><div class="quote-result"><small>Slippage protection</small><b>'+(appliedSlippage===null?'Automatic · provider RTSE':esc((appliedSlippage/100).toFixed(2))+'%')+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+esc(input+' '+from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';
     status.textContent='Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';
   }catch(e){
     if(!stillCurrent())return;

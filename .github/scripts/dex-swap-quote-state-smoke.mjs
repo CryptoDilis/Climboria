@@ -13,7 +13,7 @@ const MINT = 'So11111111111111111111111111111111111111112';
 const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const fixture = extra => ({
   requestId:'local-readonly-quote-fixture',inAmount:'100000000',
-  outAmount:'1234567',...extra
+  outAmount:'1234567',otherAmountThreshold:'1200000',slippageBps:50,...extra
 });
 const sleep = ms => new Promise(resolve => setTimeout(resolve,ms));
 async function quotePage(browser,kind,viewport) {
@@ -67,12 +67,36 @@ async function mockResult(ctx,metadata) {
     null,{timeout:10000});
   const result = await page.locator('#quoteResults').innerText();
   assert.match(result,/Estimated output/i);
+  assert.match(result,/Minimum received/i);
+  assert.match(result,/Slippage protection/i);
   assert.match(result,/Not requested/);
   assert.match(result,/Not supplied/);
   assert.doesNotMatch(result,/NaN%|null bps|\[object Object\]|undefined bps/);
   assert.equal(forbidden.length,0,'Preview unexpectedly requested wallet execution');
   assert.deepEqual(errors,[],'Quote UI threw a browser error');
   return result;
+}
+async function customSlippageResult(ctx,kind) {
+  const {page,forbidden,errors}=ctx;
+  const control=kind==='DEX'?'#dexTradeSlippage':'#swapSlippage';
+  await page.route(QUOTE,route=>{
+    const u=new URL(route.request().url());
+    assert.equal(u.searchParams.get('slippageBps'),'50','custom slippage must reach the Climboria proxy');
+    return route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify(fixture({slippageBps:50,otherAmountThreshold:'1200000'}))
+    });
+  });
+  await page.locator(control).selectOption('50');
+  await page.locator('#getQuote').click();
+  await page.waitForFunction(() =>
+    (document.querySelector('#quoteStatus')?.textContent||'').includes('Quote received from Jupiter'),
+    null,{timeout:10000});
+  const result=await page.locator('#quoteResults').innerText();
+  assert.match(result,/Slippage protection\s*0\.50%/i);
+  assert.match(result,/Minimum received/i);
+  assert.equal(forbidden.length,0,'Custom quote unexpectedly requested wallet execution');
+  assert.deepEqual(errors,[],'Custom slippage quote caused a browser error');
 }
 async function pendingQuote(ctx,action,{assertStatus,assertResult}) {
   const {page,forbidden,errors}=ctx;
@@ -110,6 +134,13 @@ try {
       try {
         await mockResult(ctx,{feeBps:null,priceImpactPct:null,router:null,mode:null});
         console.log('PASS '+kind+' '+label+': unavailable fee, impact and router remain honest; no wallet requests');
+      } finally {await ctx.page.close();}
+    }
+    for(const kind of ['Swap','DEX']) {
+      const ctx=await quotePage(browser,kind,viewport);
+      try {
+        await customSlippageResult(ctx,kind);
+        console.log('PASS '+kind+' '+label+': custom slippage reaches the proxy and exposes its provider minimum');
       } finally {await ctx.page.close();}
     }
     {
