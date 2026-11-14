@@ -342,6 +342,19 @@ async function handleQuote(request, env) {
   // Do not expose an unparseable, zero, or greater-than-quoted threshold.
   const otherAmountThreshold = validRawTokenAmount(data.otherAmountThreshold) &&
     BigInt(data.otherAmountThreshold) <= BigInt(data.outAmount) ? data.otherAmountThreshold : null;
+  // A provider echo alone is not proof that a user-selected slippage bound
+  // protects the quoted minimum. In read-only mode, refuse contradictory
+  // fixed-slippage quotes instead of presenting a misleading estimate.
+  // Use u64-safe integer arithmetic; allow a stronger-than-requested minimum
+  // and avoid assuming upstream rounding must produce exact equality.
+  if (requestedSlippageBps !== null) {
+    const minimumForRequestedSlippage = BigInt(data.outAmount) *
+      BigInt(10_000 - requestedSlippageBps) / 10_000n;
+    if (otherAmountThreshold === null ||
+        BigInt(otherAmountThreshold) < minimumForRequestedSlippage) {
+      return json({ error: "Jupiter quote minimum received does not respect the requested slippage tolerance" }, 502);
+    }
+  }
   return json({
     requestId: data.requestId, inAmount: data.inAmount, outAmount: data.outAmount,
     otherAmountThreshold, slippageBps: appliedSlippageBps,
