@@ -1,5 +1,30 @@
 # Climboria Game Development Record
 
+## ACTIVE GAME HANDOFF — Five new Meshy rarity chests (2026-11-15 PHT)
+
+**User request:** Install five attached GLB models — Common, Uncommon, Rare, Epic and Legendary — as the five appearance tiers across the **existing 100 Jarrell's Peak chest spawn sites**, preserve chest opening/respawn and original rarity odds. Game-only; no DEX, Swap, Launchpad or ClimbX work.
+
+### Verified in this session
+- Owner GLBs inspected directly from conversation attachments: `common chest.glb` 35,109,024 bytes / **864,318** tris / 4 textures; `uncommon chest.glb` 1,625,016 bytes / **4,996** tris / 1 texture; `rarechest.glb` 13,368,996 bytes / **197,888** tris / 3 textures; `epicchest.glb` 3,891,296 bytes / **46,144** tris / 1 texture; `legendary chest.glb` 3,997,476 bytes / **7,058** tris / 1 texture. All valid GLB v2.0, static/no skins or animations.
+- Local 3D optimizer used VTK topology/quadric mesh reduction, Pillow 1K albedo and 768p PBR texture compression, reconstructed GLB 2.0, and Trimesh parse validation. Results: Common **1,358,448 bytes / 25,999 tris**, Uncommon **559,748 bytes / 4,996 tris**, Rare **1,581,236 bytes / 30,754 tris**, Epic **1,208,104 bytes / 17,000 tris**, Legendary **746,592 bytes / 7,058 tris**. Total **5,454,128 bytes**, from 57,991,808 source bytes. Rare was optimized using topology-preserving VTK DecimatePro rather than an unstable quadric UV simplifier. Local ZIP `Climboria_Five_Rarity_Chests_Optimized.zip` contains all five official release GLBs in `assets/chests/`, a manifest, and import guide. **GLB binaries are still local to ChatGPT; NOT transferred to GitHub** at this record checkpoint.
+- Game branch: `game/chest-rarity-glb-models-2026-11-15`. Commit `8229886e72edd53b0f7de7e20e387341d0fa1764` updates **only `game/play.html`**: chest rarity is rolled at spawn from the **existing unmodified source percentages**, and its chosen item + tier are cached per spawn until opening. New tier re-roll occurs only when the chest respawns. Model loaded at interactive Game readiness, one GLB per tier, scene clones share GPU geometry and materials. The 100 authored chest spawn locations are untouched; old chest fallback remains until assets load. Exported `chestVisualAudit()` helps verify mismatches and render status.
+- Commit `125efdbc81146754dd57a649572a6f545bfb70e6`: exact five-asset GLB SHA-256/byte/triangle/texture integrity release gate `game/scripts/verify-rarity-chests.mjs`, intentionally fails while assets absent.
+- Commit `5331b5516664deb9b7de87e82b40520d5595b9de`: dedicated Playwright desktop/mobile 100-chest 3D, rarity odds, reward/visual agreement, opening+geode respawn browser smoke with screenshot artifacts `.github/scripts/game-rarity-chests-smoke.mjs`.
+- Commit `d03b98127e23486fbab77f94a35dbc1027c81ee5`: `.github/workflows/game-rarity-chests-smoke.yml` CI release workflow with integrity gate and real browser checks.
+- Commit `ec394e33b804a5c682c24e0a301518805ec934cc`: asset manifest/import instructions in `assets/chests/README.md`. Each expected filename, exact source/optimized bytes and SHA-256 listed there.
+- **Actual status:** code changes and local optimization done, but **NOT DEPLOYED OR LIVE**. GitHub connection can commit UTF-8 text and tests, not stream five binary files from ChatGPT's sandbox. No reliable live WebGL screenshot exists yet with all five GLBs installed.
+
+### Existing drop rates (DO NOT MODIFY)
+World: Common 65%, Uncommon 25%, Rare 8%, Epic 1.8%, Legendary 0.2%. Cave/geode: 25%,35%,25%,12%,3%. Summit: 5%,15%,35%,30%,15%. Probabilities describe reward rarity when a chest spawns. The visual is now planned to reveal that rarity in advance, because the owner supplied five distinct models. The game remains a client-local prototype; real shared online chest claims require server authority to prevent abuse.
+
+### Exact NEXT TASK / BLOCKERS
+1. Upload **the five optimized individual GLBs**, not the ZIP, from downloaded `Climboria_Five_Rarity_Chests_Optimized.zip`, to paths under `assets/chests/` **on the Game PR branch `game/chest-rarity-glb-models-2026-11-15`**. Each optimized file is under the 25MB GitHub web-upload limit. Do not upload originals (Common original is 35 MB) or overwrite Jarrell/Lheiz, Adventurer, Ella, NPC vendor or Swap/DEX files.
+2. Run `node game/scripts/verify-rarity-chests.mjs` and ensure **5/5 SHA-256 match**. Then run dedicated `Climboria Rarity Chest GLB Acceptance` Playwright desktop/mobile acceptance and normal Game Validate, Browser Smoke, original/Jarrell/Lheiz hero and full Jarrell's Peak Gameplay smoke on exact PR head. Fix any model, scale or JS/404 problems. Review actual textures and all five models/rarities visually, including at least one controlled Legendary view.
+3. Once all verified green and model commercial rights cleared, mark the PR ready, merge Game-only with expected head SHA, verify GitHub Pages deployment **and actual hosted Game**. Record merge SHA, screenshots, CI run links, honest live status and exact next task here. Keep safe placeholder behavior until asset upload; do not claim chest rollout live.
+4. Other independent unfinished Game tasks remain: draft Ella default hero PR #435 missing optimized binary; Sanctuary NPC/Arcane Cart PR #451; multiplayer presence & security foundation PR #453. Never mix scope or accidentally merge drafts. Continue to keep current Jarrell/Lheiz/original Game available to players.
+
+---
+
 ## VERIFIED GAME LIVE CHECK — 2026-11-15 PHT (Jarrell; Ella still pending)
 
 - **Owner's current priority:** Game must be live and actually playable first. Do not touch Swap, DEX, Launchpad, or ClimbX.
