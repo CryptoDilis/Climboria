@@ -3,13 +3,15 @@ import assert from "node:assert/strict";
 import { SwapOrderStore } from "../src/order-store.mjs";
 import { makeFixture } from "./solana-v0-fixture.mjs";
 import { encodeBase58 } from "../src/transaction-validation.mjs";
+import {readFileSync} from "node:fs";
 
 function createStore() {
   const values = new Map();
   const storage = {
     kv: {
       get(key) { return values.get(key); },
-      put(key, value) { values.set(key, value); }
+      put(key, value) { values.set(key, value); },
+      delete(key) { return values.delete(key); }
     },
     transactionSync(callback) { return callback(); },
     async get(key) { return values.get(key); },
@@ -304,6 +306,66 @@ test("24h alarm clears unclaimed orders, including expired ready orders",async()
   await object.alarm();
   assert.equal(await storage.get("order"),undefined);
   assert.equal((await claimOrder(object,fixture.signed)).status,404);
+});
+
+test("alarm deletion is atomic: no await or async get can erase an order claimed during cleanup",async()=>{
+  const fixture=makeFixture(1);
+  const {object,storage}=createStore();
+  await storeOrder(object,fixture);
+  // In the old implementation, the first await storage.get could yield a
+  // 'ready' snapshot and deleteAll AFTER a concurrent successful /claim.
+  // Make async get intentionally perform the claim if alarm ever calls it.
+  const get=storage.get.bind(storage);
+  let asyncGetCalled=false;
+  storage.get=async key=>{
+    asyncGetCalled=true;
+    if(key==="order") await claimOrder(object,fixture.signed);
+    return get(key);
+  };
+  await object.alarm();
+  assert.equal(asyncGetCalled,false);
+  assert.equal(storage.kv.get("order"),undefined);
+  // The callback is truly synchronous: no asynchronous snapshot/deletion gap.
+  const source=readFileSync(new URL("../src/order-store.mjs",import.meta.url),"utf8");
+  const alarm=source.slice(source.indexOf("  async alarm() {"));
+  assert.match(alarm,/transactionSync\(\(\) => \{/);
+  assert.match(alarm,/this\.ctx\.storage\.kv\.delete\("order"\)/);
+  assert.doesNotMatch(alarm,/await this\.ctx\.storage\.get\("order"\)|await this\.ctx\.storage\.deleteAll\(\)/);
+});
+
+test("claim performed just BEFORE the atomic alarm transaction is preserved and replay-locked",async()=>{
+  const fixture=makeFixture(1);
+  const {object,storage}=createStore();
+  await storeOrder(object,fixture);
+  const transaction=storage.transactionSync.bind(storage);
+  let injected=false;
+  const signed=encodeBase58(fixture.takerSignature);
+  storage.transactionSync=callback=>{
+    if(!injected){
+      injected=true;
+      const old=storage.kv.get("order");
+      storage.kv.put("order",{
+        ...old,state:"executing",claimedAt:Date.now(),
+        claimedSignature:signed,retainUntil:Date.now()+30*86_400_000
+      });
+    }
+    return transaction(callback);
+  };
+  await object.alarm();
+  const record=storage.kv.get("order");
+  assert.equal(record.state,"executing");
+  assert.equal(record.claimedSignature,signed);
+  assert.equal(storage.alarmAt,record.retainUntil);
+  assert.equal((await claimOrder(object,fixture.signed)).status,409);
+});
+
+test("no-order alarm is idempotent and cannot delete unrelated durable keys",async()=>{
+  const {object,storage}=createStore();
+  storage.kv.put("unrelated-kept","safety-metadata");
+  await object.alarm();
+  assert.equal(storage.kv.get("unrelated-kept"),"safety-metadata");
+  await object.alarm();
+  assert.equal(storage.kv.get("unrelated-kept"),"safety-metadata");
 });
 
 test("claimed executing orders survive 24h cleanup and remain replay-locked",async()=>{
