@@ -149,10 +149,11 @@ export class SwapOrderStore {
 
       if (url.pathname === "/settle" && request.method === "POST") {
         const body = await readBody(request);
-        // Provider "Success" is not finalized settlement. The DO cannot
-        // mark completed until an independently reviewed chain-verification
-        // endpoint exists; do not leave a shortcut to call /settle completed.
-        if (!["provider_success_unconfirmed", "failed", "uncertain"].includes(body?.state)) {
+        // Neither provider "Success" nor "Failed" is finalized chain
+        // settlement. Only explicit provider-observation states or unknown
+        // are allowed here; completed AND final failed need a separately
+        // audited on-chain reconciliation path that does not yet exist.
+        if (!["provider_success_unconfirmed", "provider_failure_unconfirmed", "uncertain"].includes(body?.state)) {
           return json({ error: "Invalid terminal order state" }, 400);
         }
         const settled = this.ctx.storage.transactionSync(() => {
@@ -167,7 +168,7 @@ export class SwapOrderStore {
           const suppliedSignature = body.signature === undefined || body.signature === null
             ? null : body.signature;
           if (suppliedSignature !== null && suppliedSignature !== current.claimedSignature) return false;
-          if (body.state === "provider_success_unconfirmed" &&
+          if (["provider_success_unconfirmed", "provider_failure_unconfirmed"].includes(body.state) &&
               suppliedSignature !== current.claimedSignature) return false;
           this.ctx.storage.kv.put("order", {
             ...current,

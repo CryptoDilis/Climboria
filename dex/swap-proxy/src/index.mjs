@@ -504,9 +504,10 @@ async function handleExecute(request, env) {
     }, 503);
   }
 
-  // Provider Success is only an unconfirmed observation, never proof of
-  // finalized balances or a completed swap. A separately reviewed chain
-  // reconciliation path MUST make that determination before enabling trading.
+  // Neither provider Success nor provider Failed proves a finalized-chain
+  // outcome. Both are provider observations ONLY; return HTTP 202 with
+  // PendingConfirmation and the claimed signature for safe on-chain review.
+  // A separately audited reconciliation path is required before release.
   return json({
     status: outcome.userStatus,
     providerStatus: outcome.providerStatus,
@@ -516,8 +517,8 @@ async function handleExecute(request, env) {
     settledOnChain: false,
     message: outcome.settlementState === "provider_success_unconfirmed"
       ? "Jupiter reported success, but the swap is NOT independently confirmed on-chain. Verify your wallet before taking further action."
-      : "Jupiter reported a failure. The transaction outcome still requires on-chain verification."
-  }, outcome.settlementState === "provider_success_unconfirmed" ? 202 : 200);
+      : "Jupiter reported a failure, but that does NOT prove the transaction was never broadcast or finalized. Do NOT blindly resubmit; verify the claimed signature on-chain before taking further action."
+  }, 202);
 }
 export default {
   async fetch(request, env) {
