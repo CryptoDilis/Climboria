@@ -4,8 +4,9 @@ import { readFileSync } from "node:fs";
 import { probeProductionApi, SOL } from "./api-production-readiness.mjs";
 
 const ORIGIN = "https://climboria.fun";
+const REVISION = "a".repeat(40);
 const health = {
-  ok: true, service: "climboria-swap-proxy", execution: "disabled",
+  ok: true, service: "climboria-swap-proxy", deployedGitSha: REVISION, execution: "disabled",
   configured: { jupiterKey: true, rateLimiter: true, orderStore: true, solanaRpc: true, executionEnabled: false }
 };
 
@@ -45,6 +46,68 @@ test("production acceptance probe verifies real quote preview but never signs or
   assert.ok(!calls.some(c => c.url === "/api/swap/order"), "Never create wallet-signable orders in production monitoring");
   assert.equal(calls.find(c => c.url === "/api/swap/execute").body, "{}");
   assert.ok(calls.every(c => c.origin === ORIGIN || c.origin === "https://unauthorized.example"));
+});
+
+test("production readiness matches the exact deploy commit after a guarded release", async () => {
+  const { fakeFetch } = fixture();
+  const result = await probeProductionApi({ fetchImpl: fakeFetch, expectedRevision: REVISION });
+  assert.equal(result.ok, true);
+});
+
+test("production readiness rejects old, missing and malformed deployment revisions", async () => {
+  const { fakeFetch } = fixture();
+  await assert.rejects(probeProductionApi({
+    fetchImpl: fakeFetch, expectedRevision: "b".repeat(40)
+  }), /revision differs from the exact GitHub commit deployed/);
+  for (const value of [undefined, null, "unpublished", "b".repeat(39), "A".repeat(40)]) {
+    const { fakeFetch: bad } = fixture({
+      health: Response.json({ ...health, deployedGitSha: value }, {
+        headers: { "access-control-allow-origin": ORIGIN }
+      })
+    });
+    await assert.rejects(probeProductionApi({ fetchImpl: bad }),
+      /no valid deployed Git revision marker/);
+  }
+});
+
+test("invalid expected commit is rejected before contacting the production API", async () => {
+  let calls = 0;
+  await assert.rejects(probeProductionApi({
+    expectedRevision: "not-a-commit",
+    fetchImpl: () => { calls++; throw Error("must not fetch"); }
+  }), /Invalid expected deployed Git SHA/);
+  assert.equal(calls, 0);
+});
+
+test("probe refuses oversized declared and streamed API responses before unbounded allocation", async () => {
+  const hugeDeclared = fixture({
+    health: new Response('{"ok":true}', {
+      headers: { "content-length": "1000000", "access-control-allow-origin": ORIGIN }
+    })
+  });
+  await assert.rejects(probeProductionApi({ fetchImpl: hugeDeclared.fakeFetch }), /oversized response/);
+
+  let cancelled = false;
+  const base = fixture();
+  const fakeFetch = async (url, options) => {
+    if (new URL(url).pathname !== "/health") return base.fakeFetch(url, options);
+    return {
+      ok: true,
+      status: 200,
+      headers: new Headers({ "access-control-allow-origin": ORIGIN }),
+      body: {
+        getReader() {
+          return {
+            read: async () => ({ done: false, value: new Uint8Array(70000) }),
+            cancel: async () => { cancelled = true; },
+            releaseLock: () => {}
+          };
+        }
+      }
+    };
+  };
+  await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), /oversized response/);
+  assert.equal(cancelled, true);
 });
 
 test("read-only readiness probe accepts intentionally missing Solana RPC", async () => {
@@ -113,4 +176,9 @@ test("production smoke is triggered after a successful Worker deployment, not by
   assert.match(workflow, /github\.event\.workflow_run\.conclusion == 'success'/);
   assert.match(workflow, /github\.event\.workflow_run\.head_branch == 'main'/);
   assert.doesNotMatch(workflow, /github\.event_name == 'push'/);
+  assert.match(workflow, /CLIMBORIA_EXPECTED_DEPLOY_SHA:/);
+  const deploy = readFileSync(new URL("../workflows/deploy-climboria-api.yml", import.meta.url), "utf8");
+  assert.match(deploy, /DEPLOYED_GIT_SHA/);
+  assert.match(deploy, /EXPECTED_DEPLOY_SHA/);
+  assert.match(deploy, /CLIMBORIA_EXPECTED_DEPLOY_SHA/);
 });
