@@ -365,11 +365,11 @@ try {
   const undergrowth=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryEdgeUndergrowthAudit?.()??null);
   const expectedUndergrowth=await page.evaluate(()=>(('ontouchstart' in window)||navigator.maxTouchPoints>0)?52:104);
   if(!undergrowth?.instanced||undergrowth.count!==expectedUndergrowth||
-    undergrowth.desired!==expectedUndergrowth||undergrowth.minAbsX<24||
-    undergrowth.minPlatformDist<37.4||undergrowth.minZ< -146.1||
-    undergrowth.maxZ> -19.9||undergrowth.nearCameraCount<expectedUndergrowth*.32||
-    !undergrowth.heightAligned||undergrowth.trianglesPerInstance!==5||
-    undergrowth.trianglesTotal>520||!undergrowth.oneDrawCall||
+    undergrowth.desired!==expectedUndergrowth||undergrowth.minAbsX<15.9||
+    undergrowth.minPlatformDist<37.4||undergrowth.minZ< -127.1||
+    undergrowth.maxZ> -24.9||undergrowth.nearCameraCount<expectedUndergrowth*.50||
+    !undergrowth.heightAligned||undergrowth.trianglesPerInstance!==7||
+    undergrowth.trianglesTotal>728||!undergrowth.oneDrawCall||
     !undergrowth.hasInstanceTints||!undergrowth.noNewCollision||
     undergrowth.meshName!=='JarrellSanctuaryEdgeUndergrowth')
     errors.push('Sanctuary field-edge undergrowth batch, visibility, walkway or mobile budget regression: '+JSON.stringify(undergrowth));
@@ -464,13 +464,22 @@ try {
   if (!idleAnimationAudit?.shoulderDrops || idleAnimationAudit.shoulderDrops.length !== 2 || idleAnimationAudit.shoulderDrops.some(arm => !arm.upperArm || !Number.isFinite(arm.downwardFraction) || arm.downwardFraction < .45)) {
     errors.push('Hero standing idle retained an A-pose instead of relaxed downward shoulders: ' + JSON.stringify(idleAnimationAudit?.shoulderDrops));
   }
-  await page.waitForTimeout(500);
-  const idleMotionAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);
-  const idleMotionDelta=['spine','head','hips'].reduce((largest,part)=>{
-    const before=idleAnimationAudit?.idleMotion?.[part]?.rotation,after=idleMotionAudit?.idleMotion?.[part]?.rotation;
+  // WebGL software rendering can sample at two nearly identical idle phases.
+  // Observe several bounded animation frames, still requiring the original
+  // strict 0.001 radian real bone-motion threshold (never inspect a static GLB).
+  const idleDeltaFrom=(next)=>['spine','head','hips'].reduce((largest,part)=>{
+    const before=idleAnimationAudit?.idleMotion?.[part]?.rotation,after=next?.idleMotion?.[part]?.rotation;
     if(!before||!after)return largest;
     return Math.max(largest,...['x','y','z'].map(axis=>Math.abs((after[axis]||0)-(before[axis]||0))));
   },0);
+  await page.waitForTimeout(500);
+  let idleMotionAudit=await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);
+  let idleMotionDelta=idleDeltaFrom(idleMotionAudit);
+  for(let sample=0;sample<8 && idleMotionAudit?.state==='idle' && idleMotionDelta<.001;sample++){
+    await page.waitForTimeout(260);
+    idleMotionAudit=await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);
+    idleMotionDelta=Math.max(idleMotionDelta,idleDeltaFrom(idleMotionAudit));
+  }
   if (idleMotionAudit?.state !== 'idle' || idleMotionDelta < .001) errors.push('Hero idle did not provide observable breathing/head/weight motion: ' + JSON.stringify({before:idleAnimationAudit?.idleMotion,after:idleMotionAudit?.idleMotion,idleMotionDelta}));
   console.log('Hero standing-idle animation audit:',JSON.stringify(idleAnimationAudit));
   console.log('Hero idle motion audit:',JSON.stringify({after:idleMotionAudit?.idleMotion,idleMotionDelta}));
