@@ -1,5 +1,39 @@
 # Climboria Game Development Record
 
+## ACTIVE GAME-ONLY HANDOFF — Sanctuary NPC + Arcane Cart vendor, Chest tiers, Multiplayer (2026-11-15 PHT)
+
+**Update after PR opened:** [PR #451](https://github.com/CryptoDilis/Climboria/pull/451) Game-only workflow [#43632752071](https://github.com/CryptoDilis/Climboria/actions/runs/43632752071) SUCCESSFULLY generated and committed the real 5,465,860-byte optimized starting visitor to branch as commit `7122d1a0939832ac58703215bab46c0a49b3de48`, Git blob `7f4dd470ea8359e115d38a9523f485428018bc14` — verified against locally optimized bytes. **No manual upload needed for the NPC now.** First focused decor smoke [#43632752118](https://github.com/CryptoDilis/Climboria/actions/runs/43632752118) FAILED at missing binary because its checkout used the pre-bot commit; it did not run on the new optimized-asset head. New bot-head CI workflows returned `action_required` (GitHub token automation privilege/approval), not success. Trigger fresh CI via a normal developer-authored source/doc commit after the bot binary commit and inspect exact-head terminal results. **Arcane Cart binary still missing; the code intentionally retains existing Black Market stall.**
+
+**Scope:** Game/Expedition only. Do NOT modify Swap, DEX, Launchpad, or ClimbX; current live Jarrell/Lheiz/original hero mechanics must remain playable. **No new multiplayer or vendor claims are live yet.**
+
+### Assets actually inspected and optimized in the chat runtime
+- Current `main` has exact raw `assets/characters/Climboria. hero.glb` (23,178,884 bytes, blob SHA `f7f5c1555d243a23a5f1773a001450a75065c865`; SHA-256 `b44e65a0c3781cb52dbafa3d610f35f875959d2730c21590fd4e2a13b28b95fe`), 30,628 triangles, **no rig/animation**. This is the old user-uploaded `Climboria_Vendor.glb`; it is suitable only as a static Sanctuary visitor/NPC prop. Optimized copy created locally: `Climboria_Starting_Tambay_NPC_optimized.glb` 5,465,860 bytes, SHA-256 `f070a77cbc4505676feb75dc7def96dc3a55ec7861f30b9f23fb877e15c00e84` (2K/1K textures; geometry unchanged).
+- Owner-uploaded new Arcane Cart `Meshy_AI_The_Arcane_Cart_Merch_1114073048_texture(1).glb`: 72,398,504 bytes, 1,609,854 triangles, static/no animations. **Local optimized** `Climboria_Arcane_Cart_optimized.glb` = 5,719,576 bytes, 120,738 triangles, 2K texture; SHA-256 `99ef9b9d50c4afeb64a20d6f4858452928581532339f61797968841c34a13b65`. **Not uploaded to GitHub**. Do not claim live cart until file exists on the deployment branch.
+
+### Work completed in new scoped branch
+- Branch: `game/sanctuary-npc-arcane-vendor-2026-11-15`. `game/play.html` code commit `6e9d48a3ed2f2e14dcdd3e0231f0a23ad6a0b218` stages a non-interactive visitor at Sanctuary x=-12,z=-24 away from center spawn x=0,z=-30, and an optional optimized Arcane Cart at the existing x=36,z=-52 Black Market stall. Both are async cosmetic loads after the game becomes playable. Cart hides existing market **visual placeholder only after successful load**; missing cart retains the original visible stall. Missing optimized visitor falls back to the verified original raw `Climboria. hero.glb` from `main`; that's 23MB and not optimal for performance.
+- `7398a9a15c2dff0b9c03e2e227700060b185b1ee`: deterministic Python/Pillow optimizer `game/scripts/optimize-starting-npc.py` reads only the exact original repository GLB, validates SHA, preserves triangles, writes the 5.47MB candidate; never alters the original.
+- `42ea267e4cafa51ed5b2e5e67d2e97ff5ff04459`: GitHub Action `.github/workflows/game-build-starting-npc.yml` will attempt to generate and commit the optimized binary **ONLY** to this exact same-repo Game PR branch. This action's GitHub write permission and resulting generated binary **have not yet been verified**; if blocked, owner manually uploads local optimized file. Do not assume it succeeded.
+- `77091e6655366941604a75613ec52aa987ca22d1` + `6535f221622646cf2a79695af4b1f1389062152a`: new binary-gated desktop browser scene smoke `.github/scripts/game-static-decor-smoke.mjs`, dedicated CI, readable audit `window.__climboriaJarrellsPeak.sanctuaryDecorAudit()` and screenshot artifact. Test MUST FAIL until optimized visitor binary exists.
+- `55bd2c48858ee31f84a910a467b6c95a6f8b1029`: complete Game-only asset/visual/multiplayer/chest specification in `docs/GAME_SANCTUARY_NPC_VENDOR_MULTIPLAYER_CHESTS.md`.
+
+### Chest probabilities (verified in source, do not modify)
+World = 65% common, 25% uncommon, 8% rare, 1.8% epic, 0.2% legendary. Cave = 25/35/25/12/3%. Summit = 5/15/35/30/15%. The current reward rarity is rolled on open, not pre-assigned at spawn. Meshy needs **five** GLB designs, not just 4; visual rarity requires carefully pre-rolling tier and preserving it through opening, or cosmetic/reveal-only color. Specs and prompt ideas in Game doc.
+
+### Multiplayer/attack/grab status
+**Not implemented / not live.** Real player presence requires server-authoritative WebSocket game rooms, legitimate IDs, safe-zone and consent controls, anti-cheat, server combat/cooldowns and item transfer. No fake ghosts as connected players, no real wallet/token theft, no stealing of paid/persistent inventory. Detailed staged delivery and validation requirements in Game doc. Backend secrets, public host, user consent and load tests not yet available; do not claim multiplayer/PvP release.
+
+### Exact next task
+1. Open/inspect Game-only PR, wait for the optimizer Action terminal result; **confirm `assets/characters/Climboria_Starting_Tambay_NPC_optimized.glb` really exists and SHA/size pass**, rerun exact-head scene and original Game regression. If optimizer bot cannot push, manual upload of optimized 5.47MB asset is required.
+2. Upload local **5,719,576-byte Arcane Cart GLB** to PR at `assets/characters/Climboria_Arcane_Cart_optimized.glb` and verify actual replacement screenshot and collision/market interaction. No GitHub tool can transfer this local binary directly; don't merge with claims of live vendor if absent.
+3. Review all targeted CI/screenshot/visual/desktop-mobile results, fix failures and record commit IDs. Merge safely only after no regression, verify Pages and live Game; do not publish false multiplayer claims.
+4. Ella default hero still separate draft PR #435 blocked by unuploaded `Climboria_Ella.glb`; remain isolated. Run exact hero acceptance and merge only after actual optimized binary and verified rights arrive. Prior Jarrell and Lheiz stay live.
+5. Stage real multiplayer **presence first** as separate Game-only server/websocket PR with two-real-browser test; then consent-based PvP and world-item grab/loot transfers. Chest GLBs need owner selected Meshy assets / license approval.
+
+**Important:** Static props are cosmetic non-interactive models. The existing Black Market inventory remains placeholder; the Cart does not create a real shop backend. Do not restore wildlife bots or spawn fake users.
+
+---
+
 ## VERIFIED GAME LIVE CHECK — 2026-11-15 PHT (Jarrell; Ella still pending)
 
 - **Owner's current priority:** Game must be live and actually playable first. Do not touch Swap, DEX, Launchpad, or ClimbX.

@@ -1,0 +1,45 @@
+name: Game Build Optimized Sanctuary Visitor GLB
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "game/scripts/optimize-starting-npc.py"
+      - ".github/workflows/game-build-starting-npc.yml"
+      - "game/play.html"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-verified-static-asset:
+    # Never write to forked PRs or an unrelated developer branch.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'game/sanctuary-npc-arcane-vendor-2026-11-15'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check out exact Game PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: game/sanctuary-npc-arcane-vendor-2026-11-15
+          persist-credentials: true
+      - name: Use Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install exact image toolchain
+        run: python -m pip install --disable-pip-version-check "Pillow==12.3.0"
+      - name: Generate lightweight visitor from repository original
+        run: python game/scripts/optimize-starting-npc.py
+      - name: Commit ONLY optimized Game asset to PR branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- assets/characters/Climboria_Starting_Tambay_NPC_optimized.glb
+          if git diff --cached --quiet; then
+            echo "Optimized source GLB already matches; no update needed."
+          else
+            git commit -m "assets(game): install optimized Sanctuary visitor GLB"
+            git push origin HEAD:refs/heads/game/sanctuary-npc-arcane-vendor-2026-11-15
+          fi
