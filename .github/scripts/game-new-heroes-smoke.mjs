@@ -48,15 +48,18 @@ try{
     await page.locator('#heroModelSelect').selectOption(hero.name);
     await page.waitForFunction(name=>
       document.documentElement.dataset.climboriaHeroPreviewModel===name.toLowerCase()
-      &&document.documentElement.dataset.climboriaHeroPreviewPose==='authored-idle'
-      &&document.documentElement.dataset.climboriaHeroPreviewClip==='Idle_03',
+      &&document.documentElement.dataset.climboriaHeroPreviewPose==='neutral-idle'
+      &&document.documentElement.dataset.climboriaHeroPreviewClip==='procedural-neutral'
+      &&window.__climboriaHeroNeutralPoseAudit?.leftArm?.[1]<-.6
+      &&window.__climboriaHeroNeutralPoseAudit?.rightArm?.[1]<-.6,
       hero.name,{timeout:90000});
     await page.waitForTimeout(500);
     const preview=await page.evaluate(()=>({
       canvas:document.querySelector('#heroPreviewCanvas')?.width||0,
       pose:document.documentElement.dataset.climboriaHeroPreviewPose,
       clip:document.documentElement.dataset.climboriaHeroPreviewClip,
-      chosen:document.documentElement.dataset.climboriaHeroPreviewModel
+      chosen:document.documentElement.dataset.climboriaHeroPreviewModel,
+      armAngles:window.__climboriaHeroNeutralPoseAudit
     }));
     if(!preview.canvas||preview.chosen!==hero.name.toLowerCase())throw Error('Preview canvas did not render: '+JSON.stringify(preview));
     await page.screenshot({path:'climboria-'+hero.name.toLowerCase()+'-'+device.name+'-creator-preview.png',animations:'disabled',timeout:90000});
@@ -116,10 +119,19 @@ try{
         z:window.__climboriaJarrellsPeak.player.z
       }:null,
       viewport:{width:innerWidth,height:innerHeight},
-      rotating:getComputedStyle(document.querySelector('#rotate-phone-overlay')).display!=='none'
+      rotating:getComputedStyle(document.querySelector('#rotate-phone-overlay')).display!=='none',
+      restingArmSlope:(()=>{
+        const bones=window.__climboriaJarrellsPeak?.heroAnimationAudit?.()?.armBones||[];
+        const point=n=>bones.find(x=>x.name===n)?.worldPosition;
+        const left=point('mixamorig:LeftArm'),leftElbow=point('mixamorig:LeftForeArm');
+        const right=point('mixamorig:RightArm'),rightElbow=point('mixamorig:RightForeArm');
+        return {left:left&&leftElbow?leftElbow.y-left.y:null,right:right&&rightElbow?rightElbow.y-right.y:null};
+      })()
     }));
     if(!state.file?.endsWith('Climboria_'+hero.name+'.glb')||!state.ready||!state.worldReady||!state.visible||state.rotating)throw Error('Player not visible in playable scene: '+JSON.stringify(state));
     for(const clip of hero.clips)if(!state.animations.includes(clip))throw Error('Missing expected '+clip+' for '+hero.name);
+    if(state.clip!=='procedural-fallback'||!(state.restingArmSlope.left<-.03)||!(state.restingArmSlope.right<-.03))
+      throw Error('Hero idle is not relaxed and naturally lowered: '+JSON.stringify(state));
     if(errors.length)throw Error('Browser JS exceptions: '+errors.join(' | '));
     await page.screenshot({path:'climboria-'+hero.name.toLowerCase()+'-'+device.name+'-hero-smoke.png',animations:'disabled',timeout:90000});
     console.log('PASS',hero.name,device.name,JSON.stringify(state));
