@@ -47,12 +47,13 @@ This file records candidate assets before integration. The source page is author
 
 Use the 1K/2K maps for mobile, pack local texture files, and avoid loading full 8K/8K model downloads at runtime. Official license: https://polyhaven.com/license.
 
-### GitHub-hosted realistic rock candidate — 2026-11-14 (not integrated)
+### GitHub-hosted realistic rock asset — 2026-11-14 (integrated locally)
 
-- **Candidate:** `rock_moss_set_01.glb` in the GitHub-hosted [Papyszoo/CC0-Public-Domain-Models](https://github.com/Papyszoo/CC0-Public-Domain-Models) `polyhaven-nature-rocks` pack. The catalog identifies it as a Poly Haven nature-rock asset and lists a **5.8 MB GLB**.
-- **License evidence:** the repository declares its bundled assets CC0 1.0, and the original [Poly Haven API/license documentation](https://github.com/Poly-Haven/Public-API) states the assets themselves are CC0. The mirror is a convenience source; the original Poly Haven record remains the authority at import time.
-- **Decision:** **not imported.** A 5.8 MB opaque GLB has no verified triangle budget, LODs, texture dimensions, scale, collision bounds, or Redmi 14 5G result. It must be downloaded to a staging workspace, inspected and simplified before it can be bundled or requested at runtime.
-- **Current implementation:** the map-polish branch uses only deterministic, locally generated mineral color/bump maps on the existing decorative terrain-rock instances. It adds no network asset dependency, no terrain/collision change and no third-party bytes.
+- **Asset/source:** `rock_moss_set_01.glb`, pinned from commit [`77343cac874f06b73d16ad0063339df7c9ca254c`](https://github.com/Papyszoo/CC0-Public-Domain-Models/tree/77343cac874f06b73d16ad0063339df7c9ca254c) in the `polyhaven-nature-rocks` pack. It is bundled locally as `game/assets/environment/rock_moss_set_01.glb`; no gameplay request depends on GitHub or another third-party runtime host.
+- **License evidence:** the source repository declares CC0 1.0 for its bundled models and identifies the pack as Poly Haven; [Poly Haven's license](https://polyhaven.com/license) is CC0. The mirror is pinned for reproducibility; the original Poly Haven record remains the licensing authority.
+- **Audited format and budget:** self-contained glTF 2.0 / GLB; SHA-256 `73B670A38AC490E3A00D99BF385CFA73EB8241952DD772EDCA042CD803413D7B`; 1,934,496 bytes; six static PBR meshes (63,127 triangles total) sharing three embedded 1024×1024 JPEG textures (base color, normal, metallic/roughness). No animations, skins, external URI dependencies, Draco extension, collision, or physics data.
+- **Integration limits:** only four existing-map-adjacent, visual-only Sanctuary edge landmarks are cloned from the two lighter source meshes: 27,988 rendered triangles worst-case, four mesh draw calls, and shared texture/material resources. The import adds **zero** collision solids, changes no terrain height or water/cave mesh, and leaves the broad streamed rock system instanced. Redmi 14 5G physical-device profiling remains required before expanding count, texture size, or biome coverage.
+- **Verification contract:** the strict Jarrell smoke asserts local-path loading, four placements/meshes, standard + textured materials, a ≤28,000-triangle render budget, and zero colliders. Failure is surfaced rather than falling back silently.
 
 
 ## Mountain and cave candidates for Jarrell's Peak — 2026-10-29

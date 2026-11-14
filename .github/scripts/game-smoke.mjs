@@ -373,6 +373,11 @@ try {
     terrainRocks.material!=='MeshStandardMaterial'||!terrainRocks.textured||!terrainRocks.bumped||!terrainRocks.standard||
     !terrainRocks.instanceColors||terrainRocks.flatShading||terrainRocks.roughness<.9||terrainRocks.colliderRadiusMultiplier!==.8||
     !terrainRocks.visualOnly) errors.push('Natural terrain-rock dressing lost its PBR surface, smooth irregular silhouette, or unchanged collision contract: '+JSON.stringify(terrainRocks));
+  const landmarkRocks=terrainRocks?.landmarkPbr;
+  if(!landmarkRocks||!landmarkRocks.requested||!landmarkRocks.loaded||landmarkRocks.error||landmarkRocks.asset!=='./assets/environment/rock_moss_set_01.glb'||
+    landmarkRocks.placements!==4||landmarkRocks.meshes!==4||landmarkRocks.triangles>28000||landmarkRocks.standardMaterials!==4||
+    landmarkRocks.texturedMaterials!==4||landmarkRocks.collisionCount!==0||!landmarkRocks.visualOnly)
+    errors.push('Audited local CC0 PBR landmark-rock load, material, budget, or visual-only contract failed: '+JSON.stringify(landmarkRocks));
   console.log('Natural terrain-rock dressing audit:',JSON.stringify(terrainRocks));
   if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
   if (!world.freshwaterBankClearance || !world.riverBankClearance) errors.push('Freshwater/river sandy bank vegetation buffer regression: '+JSON.stringify({freshwater:world.freshwaterBankClearance,river:world.riverBankClearance}));

@@ -696,7 +696,8 @@ function terrainRockDressingAudit(){
  return {geometry:ROCK.type,detail:ROCK.parameters?.detail,vertices:ROCK.attributes.position?.count??0,
   material:mRock.type,textured:!!mRock.map,bumped:!!mRock.bumpMap,standard:mRock.isMeshStandardMaterial===true,
   instanceColors:mRock.vertexColors===true,flatShading:mRock.flatShading===true,roughness:mRock.roughness,
-  colliderRadiusMultiplier:TERRAIN_ROCK_COLLIDER_SCALE,visualOnly:true};
+  colliderRadiusMultiplier:TERRAIN_ROCK_COLLIDER_SCALE,visualOnly:true,
+  landmarkPbr:{...pbrLandmarkRockState}};
 }
 function updateChunks(px,pz,budget){
  const ccx=Math.floor(px/CS),ccz=Math.floor(pz/CS);
@@ -1976,6 +1977,44 @@ loadCC0ForestModel('buttress',cc0TreeSpots);
 loadCC0ForestModel('canopy',cc0CanopySpots);
 loadCC0ForestModel('undergrowth',cc0GroundSpots);
 loadCC0ForestModel('fallenLog',cc0LogSpots);
+
+/* ---------- audited local CC0 PBR landmark rocks ----------
+   The generic streamed rocks remain instanced for broad mobile coverage. These
+   four foreground landmarks use a locally bundled, audited CC0 PBR GLB to
+   break up the low-detail Sanctuary edge without changing terrain, existing
+   placement, water, cave geometry, or any collision registration. */
+const PBR_LANDMARK_ROCK_URL='./assets/environment/rock_moss_set_01.glb';
+const pbrLandmarkRockPlacements=[
+ {id:'sanctuary-west-low',node:'rock_moss_set_01_rock03',x:-35,z:25,scale:.92,rotation:.62},
+ {id:'sanctuary-east-low',node:'rock_moss_set_01_rock06',x:35,z:25,scale:.76,rotation:-.46},
+ {id:'sanctuary-west-high',node:'rock_moss_set_01_rock06',x:-34,z:48,scale:.58,rotation:1.12},
+ {id:'sanctuary-east-high',node:'rock_moss_set_01_rock03',x:34,z:48,scale:.85,rotation:-1.06}
+];
+const pbrLandmarkRockState={requested:true,loaded:false,error:null,asset:PBR_LANDMARK_ROCK_URL,
+ placements:0,meshes:0,triangles:0,standardMaterials:0,texturedMaterials:0,collisionCount:0,visualOnly:true};
+function loadPbrLandmarkRocks(){
+ new T3.GLTFLoader().load(PBR_LANDMARK_ROCK_URL,gltf=>{
+  for(const placement of pbrLandmarkRockPlacements){
+   const source=gltf.scene.getObjectByName(placement.node);
+   if(!source){pbrLandmarkRockState.error='missing-node:'+placement.node;continue}
+   const rock=source.clone(true),x=POI.sanct.x+placement.x,z=POI.sanct.z+placement.z;
+   rock.name='Climboria_CC0_PBR_Rock_'+placement.id;
+   rock.position.set(x,0,z);rock.rotation.y=placement.rotation;rock.scale.setScalar(placement.scale);
+   rock.updateMatrixWorld(true);
+   const bounds=new T3.Box3().setFromObject(rock);
+   rock.position.y+=groundAt(x,z)-bounds.min.y+.015;
+   rock.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;
+    pbrLandmarkRockState.meshes++;
+    pbrLandmarkRockState.triangles+=(o.geometry.index?.count??o.geometry.attributes.position?.count??0)/3;
+    if(o.material?.isMeshStandardMaterial)pbrLandmarkRockState.standardMaterials++;
+    if(o.material?.map&&o.material?.normalMap)pbrLandmarkRockState.texturedMaterials++;
+   });
+   scene.add(rock);pbrLandmarkRockState.placements++;
+  }
+  pbrLandmarkRockState.loaded=pbrLandmarkRockState.placements===pbrLandmarkRockPlacements.length&&!pbrLandmarkRockState.error;
+ },undefined,error=>{pbrLandmarkRockState.error='load-failed:'+String(error?.message||error)});
+}
+loadPbrLandmarkRocks();
 
 parkFixtureSolids.forEach(s=>solid(s.x,s.z,s.r));
 // Register actual pillar mesh world positions, not guessed rings; keep the
