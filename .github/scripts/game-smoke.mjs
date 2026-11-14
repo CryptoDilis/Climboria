@@ -695,6 +695,15 @@ try {
   console.log('Desktop visual capture normalized to Sanctuary:',JSON.stringify(desktopVisualCapture));
   if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' , timeout: 90000, animations: 'disabled' });
+  const desktopMountain=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtMountainCliffForSmoke?.()??null);
+  if(!desktopMountain||desktopMountain.viewDistance<290||
+    desktopMountain.origin.x!==420||desktopMountain.origin.z!==-360||
+    desktopMountain.loadedChunks<40||
+    Math.abs(Math.atan2(Math.sin(desktopMountain.cameraYaw-desktopMountain.facing),Math.cos(desktopMountain.cameraYaw-desktopMountain.facing))-Math.PI)>.01)
+    errors.push('Desktop actual alpine mountain-view camera setup invalid: '+JSON.stringify(desktopMountain));
+  await page.waitForTimeout(1800);
+  await page.screenshot({path:'climboria-desktop-mountain-cliff.png',timeout:90000,animations:'disabled'});
+  console.log('Desktop alpine cliff screenshot from real world heightfield:',JSON.stringify(desktopMountain));
   const desktopCaveView=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
   const caveAngleDelta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
   if(!desktopCaveView||Math.abs(desktopCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(desktopCaveView.playerYaw,desktopCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.playerYaw)-Math.PI)>.01) errors.push('Desktop cave entrance visual position/orientation could not be prepared: '+JSON.stringify(desktopCaveView));
@@ -1051,6 +1060,14 @@ try {
   console.log('Mobile visual capture normalized to Sanctuary:',JSON.stringify(mobileVisualCapture));
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' , timeout: 90000, animations: 'disabled' });
+  const mobileMountain=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtMountainCliffForSmoke?.()??null);
+  if(!mobileMountain||mobileMountain.viewDistance<290||
+    mobileMountain.origin.x!==420||mobileMountain.origin.z!==-360||
+    mobileMountain.loadedChunks<40)
+    errors.push('Mobile actual alpine mountain-view camera setup invalid: '+JSON.stringify(mobileMountain));
+  await mobile.waitForTimeout(1800);
+  await mobile.screenshot({path:'climboria-mobile-mountain-cliff.png',timeout:90000,animations:'disabled'});
+  console.log('Mobile alpine cliff screenshot from real world heightfield:',JSON.stringify(mobileMountain));
   const mobileCaveView=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
   if(!mobileCaveView||Math.abs(mobileCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(mobileCaveView.playerYaw,mobileCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.playerYaw)-Math.PI)>.01) errors.push('Mobile cave entrance visual position/orientation could not be prepared: '+JSON.stringify(mobileCaveView));
   await mobile.waitForTimeout(1200);
