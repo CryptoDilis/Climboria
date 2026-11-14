@@ -11,6 +11,7 @@ on:
       - ".github/scripts/dex-swap-quote-state-smoke.mjs"
       - ".github/scripts/dex-trade-rpc-race.test.mjs"
       - ".github/scripts/dex-swap-managed-provider-shell.test.mjs"
+      - ".github/scripts/dex-swap-monetization-readiness.test.mjs"
       - "dex/provider-managed-swap.mjs"
       - "dex/provider-managed-swap.css"
       - ".github/workflows/dex-swap-quote-state-smoke.yml"
@@ -24,6 +25,7 @@ on:
       - ".github/scripts/dex-swap-quote-state-smoke.mjs"
       - ".github/scripts/dex-trade-rpc-race.test.mjs"
       - ".github/scripts/dex-swap-managed-provider-shell.test.mjs"
+      - ".github/scripts/dex-swap-monetization-readiness.test.mjs"
       - "dex/provider-managed-swap.mjs"
       - "dex/provider-managed-swap.css"
       - ".github/workflows/dex-swap-quote-state-smoke.yml"
@@ -51,6 +53,7 @@ jobs:
           node --check .github/scripts/dex-swap-quote-state-smoke.mjs
           node --test .github/scripts/dex-trade-rpc-race.test.mjs
           node --test .github/scripts/dex-swap-managed-provider-shell.test.mjs
+          node --test .github/scripts/dex-swap-monetization-readiness.test.mjs
       - name: Install Playwright Chromium
         run: |
           npm init -y

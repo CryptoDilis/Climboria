@@ -13,5 +13,14 @@ window.CLIMBORIA_SWAP_CONFIG = Object.freeze({
     provider: "jupiter-terminal",
     scriptUrl: null,
     integrity: null
+  }),
+  // Business *target*, not a collected fee. Any future fee needs an
+  // officially documented adapter, configured wallet recipient, explicit
+  // pre-trade disclosure and an independently verified settlement receipt.
+  revenue: Object.freeze({
+    integratorFeeTargetBps: 50,
+    feeCollectionEnabled: false,
+    feeRecipient: null,
+    providerFeeIntegrationVerified: false
   })
 });
