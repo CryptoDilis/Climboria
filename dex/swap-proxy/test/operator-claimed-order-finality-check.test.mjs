@@ -93,7 +93,8 @@ test("cross-order, state, signature, expiry and issuance evidence mismatch fails
     {tokenAccountEvidence:{...record().tokenAccountEvidence,requestedAmount:"2001"}},
     {tokenAccountEvidence:{...record().tokenAccountEvidence,source:{...record().tokenAccountEvidence.source,owner:"bad"}}},
     {tokenAccountEvidence:{...record().tokenAccountEvidence,destination:{...record().tokenAccountEvidence.destination,mint:"bad"}}}
-  ])assert.throws(()=>review({...record(),...patch}),DENIED);
+  ])assert.throws(()=>review({...record(),...patch}),DENIED,
+    "Rejected order mutation must fail: "+JSON.stringify(patch));
   assert.throws(()=>review(record(),witness(),{expectedRequestId:"other-123456"}),DENIED);
 });
 test("fake settlement finality, bad receipt amount or wrong issued message is never accepted",()=>{
