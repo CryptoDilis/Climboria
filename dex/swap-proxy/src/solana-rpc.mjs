@@ -10,15 +10,23 @@ export function validateRpcUrl(value) {
   let url;
   try { url = new URL(value); } catch { fail("A valid configured Solana RPC URL is required"); }
   const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  // URL.hostname canonicalizes unusual IPv4 spellings (hex/octal/integer).
+  // Reject non-public literal ranges before any operator RPC request.
   const privateIpv4 = /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host) &&
     (() => {
-      const p = host.split(".").map(Number);
-      return p[0] === 10 || p[0] === 127 || p[0] === 0 ||
-        (p[0] === 169 && p[1] === 254) ||
-        (p[0] === 172 && p[1] >= 16 && p[1] <= 31) ||
-        (p[0] === 192 && p[1] === 168);
+      const [a, b, c] = host.split(".").map(Number);
+      return a === 0 || a === 10 || a === 127 || a >= 224 ||
+        (a === 100 && b >= 64 && b <= 127) || // shared address space
+        (a === 169 && b === 254) || // link local
+        (a === 172 && b >= 16 && b <= 31) ||
+        (a === 192 && (b === 168 || (b === 0 && (c === 0 || c === 2)))) ||
+        (a === 198 && ((b === 18 || b === 19) || (b === 51 && c === 100))) ||
+        (a === 203 && b === 0 && c === 113);
     })();
-  const privateIpv6 = host === "::1" || host === "::" || /^(fc|fd|fe80:)/i.test(host);
+  // Block IPv4-mapped IPv6 altogether: these can bypass literal IPv4 checks.
+  // IPv6 link-local is fe80::/10, i.e. fe8x through febx (not just fe80).
+  const privateIpv6 = host === "::1" || host === "::" ||
+    /^(?:fc|fd|fe[89ab]|::ffff:)/i.test(host);
   if (url.protocol !== "https:" || url.username || url.password ||
       (url.port && url.port !== "443") || host === "localhost" ||
       host.endsWith(".localhost") || host.endsWith(".local") ||
