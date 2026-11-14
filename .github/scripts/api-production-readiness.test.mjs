@@ -217,6 +217,7 @@ test("only fixed known categories from public error data may appear in deploymen
   assert.equal(classifyReadOnlyApiFailure({code:"RATE_LIMIT_EXCEEDED"}), "RATE_LIMIT_EXCEEDED");
   assert.equal(classifyReadOnlyApiFailure({error:"Jupiter upstream request failed or redirected"}), "JUPITER_TRANSPORT_OR_REDIRECT");
   assert.equal(classifyReadOnlyApiFailure({error:"Jupiter upstream request timed out"}), "JUPITER_TIMEOUT");
+  assert.equal(classifyReadOnlyApiFailure({error:"Jupiter upstream redirect blocked"}), "JUPITER_REDIRECT_BLOCKED");
   assert.equal(classifyReadOnlyApiFailure({error:"Jupiter token search failed",upstreamStatus:403}), "JUPITER_HTTP_403");
   assert.equal(classifyReadOnlyApiFailure({error:"Jupiter quote request failed",upstreamStatus:503}), "JUPITER_HTTP_503");
   assert.equal(classifyReadOnlyApiFailure({error:"Jupiter token search failed",upstreamStatus:"403"}), "JUPITER_HTTP_UNKNOWN");
