@@ -20,5 +20,23 @@
     if (units > MAX_U64) throw new Error('Amount exceeds the Solana token limit.');
     return units.toString();
   }
-  global.ClimboriaSwapAmount = Object.freeze({ toRaw });
+  // Never render a raw on-chain amount through Number: a Solana u64 can
+  // exceed JavaScript's safe integer range and silently change the amount a
+  // trader sees. This formatter is intentionally exact and returns a plain
+  // decimal string rather than a locale-rounded display value.
+  function formatRaw(value, decimals) {
+    if (!Number.isInteger(decimals) || decimals < 0 || decimals > 18)
+      throw new Error('Token decimals are not supported.');
+    const raw = String(value ?? '');
+    if (!/^(?:0|[1-9][0-9]{0,19})$/.test(raw))
+      throw new Error('Raw token amount must be an unsigned integer string.');
+    const units = BigInt(raw);
+    if (units > MAX_U64) throw new Error('Amount exceeds the Solana token limit.');
+    if (decimals === 0) return units.toString();
+    const digits = units.toString().padStart(decimals + 1, '0');
+    const whole = digits.slice(0, -decimals);
+    const fraction = digits.slice(-decimals).replace(/0+$/, '');
+    return fraction ? whole + '.' + fraction : whole;
+  }
+  global.ClimboriaSwapAmount = Object.freeze({ toRaw, formatRaw });
 })(window);
