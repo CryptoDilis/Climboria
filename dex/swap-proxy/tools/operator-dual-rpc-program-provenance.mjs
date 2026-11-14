@@ -10,10 +10,10 @@
  * Never import into the Worker or a client wallet code path.
  */
 import { validateRpcUrl } from "../src/solana-rpc.mjs";
-import { verifyOperatorRpcGenesisSet } from "./raydium-v4-rpc-genesis-preflight.mjs";
-import { fetchMainnetUpgradeableProgramProvenance } from "./upgradeable-program-provenance.mjs";
-import { JUPITER_V6_PROGRAM_ID } from "./jupiter-v6-policy.mjs";
-import { RAYDIUM_V4_PROGRAM_IDS } from "./raydium-v4-direct-evidence.mjs";
+import { verifyOperatorRpcGenesisSet } from "../src/raydium-v4-rpc-genesis-preflight.mjs";
+import { fetchMainnetUpgradeableProgramProvenance } from "../src/upgradeable-program-provenance.mjs";
+import { JUPITER_V6_PROGRAM_ID } from "../src/jupiter-v6-policy.mjs";
+import { RAYDIUM_V4_PROGRAM_IDS } from "../src/raydium-v4-direct-evidence.mjs";
 
 const PROGRAMS = Object.freeze({
   jupiterV6: JUPITER_V6_PROGRAM_ID,
