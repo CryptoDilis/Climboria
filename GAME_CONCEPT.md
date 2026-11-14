@@ -1,3 +1,8 @@
+---
+layout: null
+title: "Climboria — Game Concept"
+---
+
 # Climboria — Game Concept Baseline
 
 > **READ THE FORMATTED GAME CONCEPT:** https://climboria.fun/game-concept.html
