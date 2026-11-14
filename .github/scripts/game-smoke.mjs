@@ -302,6 +302,14 @@ try {
     coastRoute.outward.distance<260||coastRoute.returnTrip.distance<260)
     errors.push('Real cave-to-coast route was not traversable in both directions: '+JSON.stringify(coastRoute));
   console.log('Cave-to-shore two-way traversal:',JSON.stringify(coastRoute));
+  const coastFloor=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveCoastalFloorMaterialAudit?.()??null);
+  if(!coastFloor?.exists||!coastFloor.tiledMaterial||
+    !coastFloor.mapTiled||!coastFloor.bumpTiled||
+    coastFloor.mapRepeatX!==3||coastFloor.mapRepeatY!==56||
+    coastFloor.bumpRepeatX!==3||coastFloor.bumpRepeatY!==56||
+    coastFloor.floorLength<260||!coastFloor.keepsWorldFloor)
+    errors.push('Coastal tunnel floor map stretched or gameplay floor geometry changed: '+JSON.stringify(coastFloor));
+  console.log('Coastal tunnel floor texture tiling audit:',JSON.stringify(coastFloor));
   const caveGround=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveApproachGroundAudit?.()??null);
   if(!caveGround?.ground||caveGround.rockInstances<30||caveGround.vertices!==1363||
     caveGround.alphaComponents!==4||caveGround.edgeAlpha>.05||
