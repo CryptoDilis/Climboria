@@ -182,3 +182,30 @@ test("production smoke is triggered after a successful Worker deployment, not by
   assert.match(deploy, /EXPECTED_DEPLOY_SHA/);
   assert.match(deploy, /CLIMBORIA_EXPECTED_DEPLOY_SHA/);
 });
+
+test("production deployment trigger tracks reviewed Worker source and rejects non-main manual dispatch", () => {
+  const deploy = readFileSync(new URL("../workflows/deploy-climboria-api.yml", import.meta.url), "utf8");
+  const readiness = readFileSync(new URL("../workflows/api-production-readiness.yml", import.meta.url), "utf8");
+  assert.match(deploy, /workflow_dispatch:\n  push:\n    branches: \[main\]/,
+    "Deployment workflow must permit only reviewed main pushes or manually initiated releases");
+  assert.match(deploy, /'dex\/swap-proxy\/src\/\*\*'/,
+    "Every reviewed Worker source change must start a guarded quote-only deploy");
+  assert.match(deploy, /'dex\/swap-proxy\/wrangler\.toml'/,
+    "Reviewed config changes must start a guarded quote-only deploy");
+  assert.match(deploy, /'\.github\/workflows\/deploy-climboria-api\.yml'/,
+    "Changes to the guarded workflow must themselves receive a deploy attempt");
+  assert.doesNotMatch(deploy, /(?:^|\n)  pull_request:/,
+    "Never deploy production from a pull request event");
+  assert.match(deploy, /^    if: github\.ref == 'refs\/heads\/main'$/m,
+    "Manual dispatches selected on non-main branches must be rejected");
+  assert.match(deploy, /grep -Fqx 'EXECUTION_ENABLED = "false"' wrangler\.toml/);
+  assert.match(deploy, /grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' src\/index\.mjs/);
+  assert.match(deploy, /grep -Fqx 'const EXECUTION_SECURITY_REVIEW_COMPLETE = false;' src\/index\.mjs/);
+  assert.match(deploy, /grep -Eq '\^\[\[:space:\]\]\*enabled:\[\[:space:\]\]\*false' \.\.\/\.\.\/swap-config\.js/);
+  assert.match(deploy, /node --test test\/\*\.test\.mjs/);
+  assert.match(deploy, /CLIMBORIA_EXPECTED_DEPLOY_SHA:/,
+    "Deployment must verify exact revision and quote-only production readiness");
+  assert.match(readiness, /"\.github\/workflows\/deploy-climboria-api\.yml"/,
+    "Any change to the deployment workflow must run the API readiness unit tests in PR CI");
+});
+
