@@ -198,7 +198,7 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
  var valid=false,hero=null;
  try{
   hero=JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null');
-  valid=!!hero&&['Adventurer','Jarrell','Lheiz'].includes(hero.model)&&typeof hero.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(hero.name)&&/[A-Za-z0-9]/.test(hero.name);
+  valid=!!hero&&['Ella','Adventurer','Jarrell','Lheiz'].includes(hero.model)&&typeof hero.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(hero.name)&&/[A-Za-z0-9]/.test(hero.name);
  }catch(_){}
  if(!valid){location.replace('./index.html?hero=required');return}
  window.__climboriaCreatedHero=hero;
@@ -1633,16 +1633,17 @@ function animateAssetFallback(t,state,speed){
  }
  if(jumping&&P.jumpTrace?.jumpCount===P.jumpCount)P.jumpTrace.poses[jumpPhase]={animation:'jump-'+jumpPhase,limbSignature:getJumpLimbSignature()};
 }
-// Optional new heroes remain unselected until their reviewed GLBs are committed.
-// The original Adventurer stays the default and the unavailable-asset fallback.
+// Ella is the new selectable default. Preserve the original Adventurer GLB
+// as a non-default recovery path for existing saves and failed asset loads.
 const assetChoices=Object.freeze({
- Adventurer:'../assets/characters/Climboria_Hero.glb',
+ Ella:'../assets/characters/Climboria_Ella.glb',
  Jarrell:'../assets/characters/Climboria_Jarrell.glb',
- Lheiz:'../assets/characters/Climboria_Lheiz.glb'
+ Lheiz:'../assets/characters/Climboria_Lheiz.glb',
+ Adventurer:'../assets/characters/Climboria_Hero.glb'
 });
 let heroLoadError='',heroLoadRequest=0;
 function loadAssetHero(choice='ClimboriaHero'){
- if(choice==='ClimboriaHero'||!assetChoices[choice])choice='Adventurer';
+ if(choice==='ClimboriaHero'||!assetChoices[choice])choice='Ella';
  const requestId=++heroLoadRequest;
  if(!T3.GLTFLoader){heroLoadError='GLTFLoader unavailable';document.documentElement.dataset.climboriaHero='load-error';document.documentElement.dataset.climboriaHeroRenderer='fallback';hero.visible=false;heroReady=true;console.warn('[Climboria] '+heroLoadError);return}
  document.documentElement.dataset.climboriaHero='loading-'+choice.toLowerCase();
@@ -1668,7 +1669,7 @@ heroReady=true;
  },undefined,error=>{
   if(requestId!==heroLoadRequest)return;
   // Optional hero assets must never leave a saved player with an invisible character.
-  // An absent/unapproved GLB falls back to the existing official Adventurer.
+  // An absent/unapproved Ella or other optional GLB falls back to the original legacy Adventurer.
   if(choice!=='Adventurer'){
    console.warn('[Climboria] Optional hero GLB unavailable, restoring Adventurer:',choice,error);
    loadAssetHero('Adventurer');return;
