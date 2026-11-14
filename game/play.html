@@ -881,9 +881,9 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  });
  // Real walk-through portal: no opaque painted plane across the entrance.
  const caveFloorMat=registerCaveRockMaterial(caveRockMaterial('#625b50',4110,.11)),caveDampFloorMat=registerCaveRockMaterial(caveRockMaterial('#4f5b5c',4112,.14)),caveRoofMat=registerCaveRockMaterial(caveRockMaterial('#383f43',4114,.2));
- // Cave approach ground surface is currently only a flat vertex-color
- // terrain. Blend a fine-grained procedural rock/soil layer over the actual
- // terrain heightfield; never alter colliders or block the central walkway.
+ // Exterior approach ground in front of the portal (local -Z) needs actual
+ // textured soil rather than only the uniform terrain. Conform to the live
+ // heightfield without changing colliders or blocking the walkable center.
  const entranceSoil=registerCaveRockMaterial(caveRockMaterial('#b29a7c',4187,.065));
  for(const map of [entranceSoil.map,entranceSoil.bumpMap]){
   map.wrapS=map.wrapT=T3.RepeatWrapping;map.repeat.set(7,13);map.needsUpdate=true;
@@ -891,7 +891,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  entranceSoil.flatShading=false;entranceSoil.vertexColors=true;
  entranceSoil.transparent=true;entranceSoil.opacity=.93;
  entranceSoil.depthWrite=false;entranceSoil.polygonOffset=true;entranceSoil.polygonOffsetFactor=-1;
- const soilGrid={minX:-28,maxX:28,minZ:9,maxZ:101,cols:28,rows:46};
+ const soilGrid={minX:-28,maxX:28,minZ:-101,maxZ:-9,cols:28,rows:46};
  const soilVerts=[],soilUV=[],soilColors=[],soilIndices=[];
  const soilYaw=g.rotation.y,soilCos=Math.cos(soilYaw),soilSin=Math.sin(soilYaw);
  function caveApproachHeight(x,z){
@@ -936,7 +936,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  const gravel=new T3.InstancedMesh(new T3.IcosahedronGeometry(1,0),caveFloorMat,gravelCount);
  const pebble=new T3.Object3D();
  for(let i=0;i<gravelCount;i++){
-  const x=(i%2?-1:1)*(8+gravelRand()*18),z=10+gravelRand()*84;
+  const x=(i%2?-1:1)*(8+gravelRand()*18),z=-10-gravelRand()*84;
   const r=.14+gravelRand()*.32;
   pebble.position.set(x,caveApproachHeight(x,z)+r*.22,z);
   pebble.rotation.set(gravelRand()*Math.PI,gravelRand()*Math.PI,gravelRand()*Math.PI);
@@ -2620,6 +2620,16 @@ function caveApproachGroundAudit(){
   maxPigment=Math.max(maxPigment,attr.getX(i));
  }
  const pigmentRange=attr?+(maxPigment-minPigment).toFixed(4):null;
+ const meshZMin=positions?.getZ(0)??null,meshZMax=positions?.getZ(positions.count-1)??null;
+ const foregroundCameraCovered=meshZMin!==null&&meshZMax!==null&&meshZMin<=-20&&meshZMax>=-20;
+ const pebbleMatrix=new T3.Matrix4();
+ let pebbleZMin=Infinity,pebbleZMax=-Infinity;
+ if(rocks)for(let i=0;i<rocks.count;i++){
+  rocks.getMatrixAt(i,pebbleMatrix);
+  const localZ=pebbleMatrix.elements[14];
+  pebbleZMin=Math.min(pebbleZMin,localZ);
+  pebbleZMax=Math.max(pebbleZMax,localZ);
+ }
  let terrainGap=null;
  if(positions&&caveG){
   const x=positions.getX(center),z=positions.getZ(center),yaw=caveG.rotation.y;
@@ -2631,6 +2641,9 @@ function caveApproachGroundAudit(){
   frustumCulled:ground?.frustumCulled===true,terrainGap,
   vertices:ground?.geometry?.getAttribute('position')?.count||0,
   alphaComponents:attr?.itemSize||0,pigmentRange,
+  foregroundCameraCovered,meshZMin,meshZMax,
+  pebbleZMin:Number.isFinite(pebbleZMin)?+pebbleZMin.toFixed(2):null,
+  pebbleZMax:Number.isFinite(pebbleZMax)?+pebbleZMax.toFixed(2):null,
   edgeAlpha:attr?.getW(0)??null,centerAlpha:attr?.getW(center)??null,
   hasColorTexture:!!ground?.material?.map,hasBumpTexture:!!ground?.material?.bumpMap,
   textureRepeat:ground?.material?.map?.repeat?.x||0};
