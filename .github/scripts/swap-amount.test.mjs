@@ -6,7 +6,7 @@ import { runInNewContext } from "node:vm";
 const source = readFileSync(new URL("../../dex/swap-amount.js", import.meta.url), "utf8");
 const browser = {};
 runInNewContext(source, { window: browser });
-const { toRaw } = browser.ClimboriaSwapAmount;
+const { toRaw, formatRaw } = browser.ClimboriaSwapAmount;
 test("converts decimal user inputs to exact raw Solana units without float truncation", () => {
   assert.equal(toRaw("0.0157", 6), "15700");
   assert.equal(toRaw("0.0163", 6), "16300");
@@ -32,6 +32,14 @@ test("rejects fractional dust, excess precision, overflows, and invalid notation
     ["1", 19, /decimals/]
   ]) assert.throws(() => toRaw(v, decimals), why, v);
 });
+test("formats raw u64 amounts exactly without Number rounding", () => {
+  assert.equal(formatRaw("1234567", 6), "1.234567");
+  assert.equal(formatRaw("1200000", 6), "1.2");
+  assert.equal(formatRaw("18446744073709551615", 9), "18446744073.709551615");
+  assert.equal(formatRaw("0", 9), "0");
+  assert.throws(() => formatRaw("01", 6), /unsigned integer/);
+  assert.throws(() => formatRaw("18446744073709551616", 0), /limit/);
+});
 test("DEX and Swap both load the shared decimal converter before app logic", () => {
   for (const page of ["dex/index.html", "swap/index.html"]) {
     const html = readFileSync(new URL("../../" + page, import.meta.url), "utf8");
@@ -45,19 +53,19 @@ test("DEX and Swap both load the shared decimal converter before app logic", () 
 test("Swap quote handler rejects mismatched and malformed provider raw amounts", async () => {
   const html = readFileSync(new URL("../../swap/index.html", import.meta.url), "utf8");
   const start = html.indexOf("async function requestJupiterQuote(){");
-  const end = html.indexOf("\n}\n", start);
-  assert.ok(start >= 0 && end > start, "Expected dedicated Swap quote handler");
-  const handler = html.slice(start, end + 2);
+  const closing = html.slice(start).match(/\r?\n}\r?\n/);
+  assert.ok(start >= 0 && closing?.index !== undefined, "Expected dedicated Swap quote handler");
+  const handler = html.slice(start, start + closing.index + closing[0].length - 1);
   const SOL = "So11111111111111111111111111111111111111112";
   const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
-  async function exercise(quote) {
+  async function exercise(quote, slippage = "auto") {
     const elements = {
       quoteStatus: { textContent: "" },
       getQuote: { disabled: false, textContent: "Get live quote" },
       quoteAmount: { value: "0.1" },
       quoteResults: { innerHTML: "" },
-      swapSlippage: { value: "auto" }
+      swapSlippage: { value: slippage }
     };
     const requested = [];
     const context = {
@@ -82,7 +90,7 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
     assert.equal(requested.length, 1);
     assert.match(requested[0], /amount=100000000/);
     assert.equal(elements.getQuote.disabled, false);
-    return elements;
+    return { elements, requested };
   }
 
   for (const quote of [
@@ -90,15 +98,23 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
     { inAmount: "100000000", outAmount: "0", requestId: "zero-output" },
     { inAmount: "100000000", outAmount: "500abc", requestId: "invalid-output" }
   ]) {
-    const elements = await exercise(quote);
+    const { elements } = await exercise(quote);
     assert.match(elements.quoteStatus.textContent, /Quote unavailable/);
     assert.match(elements.quoteResults.innerHTML, /inconsistent quote/);
     assert.doesNotMatch(elements.quoteResults.innerHTML, /Estimated output/);
   }
-  const good = await exercise({ inAmount: "100000000", outAmount: "500000", requestId: "valid-quote" });
-  assert.match(good.quoteStatus.textContent, /Quote received from Jupiter/);
-  assert.match(good.quoteResults.innerHTML, /Estimated output/);
-  assert.match(good.quoteResults.innerHTML, /Not requested/);
+  const missingMinimum = await exercise({ inAmount: "100000000", outAmount: "500000", requestId: "missing-minimum" });
+  assert.match(missingMinimum.elements.quoteStatus.textContent, /Quote unavailable/);
+  assert.match(missingMinimum.elements.quoteResults.innerHTML, /minimum received/i);
+  const good = await exercise({ inAmount: "100000000", outAmount: "500000", otherAmountThreshold: "495000", requestId: "valid-quote" });
+  assert.match(good.elements.quoteStatus.textContent, /Quote received from Jupiter/);
+  assert.match(good.elements.quoteResults.innerHTML, /Estimated output/);
+  assert.match(good.elements.quoteResults.innerHTML, /Minimum received/);
+  assert.match(good.elements.quoteResults.innerHTML, /0\.495/);
+  assert.match(good.elements.quoteResults.innerHTML, /Not requested/);
+  const custom = await exercise({ inAmount: "100000000", outAmount: "500000", otherAmountThreshold: "495000", slippageBps: 50, requestId: "custom-slippage" }, "50");
+  assert.match(custom.requested[0], /slippageBps=50/);
+  assert.match(custom.elements.quoteResults.innerHTML, /0\.50%/);
 });
 
 
@@ -108,6 +124,14 @@ test("DEX exposes a keyboard-accessible read-only quote toggle without enabling 
   assert.match(html, /GET LIVE QUOTE · NO TRADING/);
   assert.match(html, /body\.mobile-solana-view \.execution-status\{display:flex!important/, "Mobile Solana market must expose quote button banner");
   assert.match(html, /body\.mobile-solana-view #showDexQuote\{min-height:42px/, "Mobile quote button must have a touch target");
+  const quotePanelStart = html.indexOf('<section class="quote-panel" id="swapQuote"');
+  const quotePanelEnd = html.indexOf('</section>', quotePanelStart);
+  const slippageControl = html.indexOf('id="dexTradeSlippage"');
+  assert.ok(quotePanelStart >= 0 && quotePanelEnd > quotePanelStart, "DEX quote panel markup missing");
+  assert.ok(slippageControl > quotePanelStart && slippageControl < quotePanelEnd,
+    "DEX quote slippage must be visible in the read-only quote preview, not the disabled trade terminal");
+  assert.equal((html.match(/id="dexTradeSlippage"/g) || []).length, 1,
+    "DEX must expose exactly one slippage selector");
   const start = html.indexOf("$('showDexQuote').addEventListener('click',()=>{");
   const end = html.indexOf("\n});", start);
   assert.ok(start >= 0 && end > start, "Read-only quote toggle handler missing");

@@ -168,7 +168,7 @@ jobs:
                 return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(btcSearchFixture)});
               });
               // Keep quote-preview requests deterministic and same-origin-safe in browser tests; production CORS is tested separately.
-              await page.route('https://api.climboria.fun/api/swap/quote**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'10000000',outAmount:'1234567',priceImpactPct:0.001,feeBps:0,router:'Jupiter fixture'})}));
+              await page.route('https://api.climboria.fun/api/swap/quote**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'10000000',outAmount:'1234567',otherAmountThreshold:'1200000',priceImpactPct:0.001,feeBps:0,router:'Jupiter fixture'})}));
               // Direct Jupiter is only the fallback when the proxy is explicitly disabled.
               await page.route('https://api.jup.ag/tokens/v2/search**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(btcSearchFixture)}));
               const quoteOnlyMint='SysvarC1ock11111111111111111111111111111111';
@@ -243,7 +243,7 @@ jobs:
               const mobileMockMint='SysvarRent111111111111111111111111111111111';
               const mobileMockPair={chainId:'solana',dexId:'test-dex',pairAddress:'9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe',baseToken:{address:mobileMockMint,symbol:'BTC',name:'Bitcoin'},quoteToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin'},priceUsd:'65000',priceChange:{h24:2.5},volume:{h24:123456},marketCap:1200000000,liquidity:{usd:100000}};
               await mobileSwap.route('https://api.climboria.fun/api/tokens/search**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{id:mobileMockMint,symbol:'BTC',name:'Bitcoin (wrapped representation)',decimals:8,isVerified:true},{id:'11111111111111111111111111111111',symbol:'BTC',name:'Alternate BTC representation',decimals:8,isVerified:false}])}));
-              await mobileSwap.route('https://api.climboria.fun/api/swap/quote**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'10000000',outAmount:'1234567',priceImpactPct:0.001,feeBps:0,router:'Jupiter fixture'})}));
+              await mobileSwap.route('https://api.climboria.fun/api/swap/quote**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'10000000',outAmount:'1234567',otherAmountThreshold:'1200000',priceImpactPct:0.001,feeBps:0,router:'Jupiter fixture'})}));
               await mobileSwap.route('https://api.dexscreener.com/latest/dex/tokens/**',route=>{
                 const requestedMint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
                 if(requestedMint===mobileMockMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mobileMockPair]})});
@@ -346,13 +346,15 @@ jobs:
               let requestedRawAmount=null;
               await page.route('https://api.climboria.fun/api/swap/quote**',route=>{
                 requestedRawAmount=new URL(route.request().url()).searchParams.get('amount');
-                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({requestId:'test-quote',inAmount:requestedRawAmount,outAmount:'1234567',router:'Exact amount fixture'})});
+                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({requestId:'test-quote',inAmount:requestedRawAmount,outAmount:'1234567',otherAmountThreshold:'1200000',router:'Exact amount fixture'})});
               });
               await page.locator('#quoteAmount').fill('0.0000157');
               await page.locator('#getQuote').click();
               await page.waitForFunction(()=>document.querySelector('#quoteStatus')?.textContent.includes('Quote received'),null,{timeout:15000});
               if(requestedRawAmount!=='15700') throw new Error('Swap quote used rounded/truncated raw input units: '+requestedRawAmount);
-              if(!await page.locator('#quoteResults').textContent().then(x=>x.includes('1.234567'))) throw new Error('Swap exact-amount quote output was not rendered');
+              const quoteResults=await page.locator('#quoteResults').textContent();
+              if(!quoteResults.includes('1.234567')) throw new Error('Swap exact-amount quote output was not rendered');
+              if(!quoteResults.includes('Minimum received')||!quoteResults.includes('1.2')) throw new Error('Swap verified minimum-received output was not rendered');
               if(errors.length) throw new Error('Swap browser errors: '+errors.join(' | '));
               console.log('PASS standalone Swap route, wallet, token search, quote and feature-gated execution controls.');
             } finally { await browser.close(); }
@@ -493,10 +495,10 @@ jobs:
                 if(quoteCalls===1){
                   oldQuoteStarted();
                   await oldQuoteGate;
-                  return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'100000000',outAmount:'1111111',router:'STALE FIRST QUOTE'})});
+                  return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'100000000',outAmount:'1111111',otherAmountThreshold:'1100000',router:'STALE FIRST QUOTE'})});
                 }
-                if(amount==='200000000')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:amount,outAmount:'2222222',router:'CURRENT SECOND QUOTE'})});
-                if(amount==='15700')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:amount,outAmount:'1234567',router:'PRECISION QUOTE'})});
+                if(amount==='200000000')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:amount,outAmount:'2222222',otherAmountThreshold:'2200000',router:'CURRENT SECOND QUOTE'})});
+                if(amount==='15700')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:amount,outAmount:'1234567',otherAmountThreshold:'1200000',router:'PRECISION QUOTE'})});
                 return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'999999',outAmount:'3333333',router:'INVALID MISMATCHED QUOTE'})});
               });
               // DEX quote panel is intentionally hidden until its UI path is selected.
