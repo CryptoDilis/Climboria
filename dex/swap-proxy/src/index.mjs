@@ -1,6 +1,6 @@
 import { SwapOrderStore } from "./order-store.mjs";
 import { parseSolanaV0Transaction, validateJupiterOrderMetadata } from "./transaction-validation.mjs";
-import { resolveTransactionLookups, verifyJupiterTokenAccounts } from "./solana-rpc.mjs";
+import { resolveTransactionLookups, verifyJupiterTokenAccounts, validateRpcUrl } from "./solana-rpc.mjs";
 import { validateJupiterV6Transaction } from "./jupiter-v6-policy.mjs";
 import { requireReviewedJupiterV6CpiSemantics } from "./jupiter-v6-cpi-review.mjs";
 export { SwapOrderStore };
@@ -273,6 +273,43 @@ async function handleQuote(request, env) {
     priceImpactPct: optionalPriceImpactFraction(data.priceImpactPct)
   });
 }
+// Token metadata is untrusted third-party data. Most importantly, the label
+// "Jupiter verified" is a provider claim, NOT a general safety endorsement.
+// Only a literal boolean true may carry that claim through the proxy.
+function optionalTokenLabel(value, fallback, max) {
+  if (typeof value !== "string") return fallback;
+  const clean = value.replace(/[\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "").trim();
+  return clean ? clean.slice(0, max) : fallback;
+}
+function optionalTokenIcon(value) {
+  if (typeof value !== "string" || value.length > 2048) return null;
+  // Reuse the same public HTTPS / non-local host policy enforced for trusted
+  // Solana RPC endpoints. Never request local services from a token icon URL.
+  try { return validateRpcUrl(value).href; }
+  catch { return null; }
+}
+function normalizeTokenSearchResults(data) {
+  if (!Array.isArray(data)) return null;
+  const seenMints = new Set();
+  const results = [];
+  for (const token of data.slice(0, 100)) {
+    if (!token || typeof token !== "object" || Array.isArray(token) ||
+        !validPubkey(token.id) || seenMints.has(token.id) ||
+        typeof token.decimals !== "number" || !Number.isInteger(token.decimals) ||
+        token.decimals < 0 || token.decimals > 18) continue;
+    seenMints.add(token.id);
+    results.push({
+      id: token.id,
+      name: optionalTokenLabel(token.name, "Unknown token", 100),
+      symbol: optionalTokenLabel(token.symbol, "TOKEN", 32),
+      decimals: token.decimals,
+      icon: optionalTokenIcon(token.icon),
+      isVerified: token.isVerified === true
+    });
+    if (results.length === 20) break;
+  }
+  return results;
+}
 async function handleTokenSearch(request, env) {
   const limited = await enforceRateLimit(request, env);
   if (limited) return limited;
@@ -283,12 +320,9 @@ async function handleTokenSearch(request, env) {
   const response = await upstream("https://api.jup.ag/tokens/v2/search?query=" + encodeURIComponent(query), { method: "GET" }, env);
   const data = await response.json().catch(() => null);
   if (!response.ok) return json({ error: "Jupiter token search failed", upstreamStatus: response.status }, response.status >= 400 && response.status < 500 ? response.status : 502);
-  if (!Array.isArray(data)) return json({ error: "Jupiter returned an invalid token search response" }, 502);
-  return json(data.slice(0, 20).filter(t => t && validPubkey(t.id) && Number.isInteger(Number(t.decimals)) && Number(t.decimals) >= 0 && Number(t.decimals) <= 18).map(t => ({
-    id: t.id, name: String(t.name || "Unknown token").slice(0, 100),
-    symbol: String(t.symbol || "TOKEN").slice(0, 32), decimals: Number(t.decimals),
-    icon: typeof t.icon === "string" ? t.icon : null, isVerified: Boolean(t.isVerified)
-  })));
+  const normalized = normalizeTokenSearchResults(data);
+  if (!normalized) return json({ error: "Jupiter returned an invalid token search response" }, 502);
+  return json(normalized);
 }
 async function handlePumpCoin(request, env) {
   const limited = await enforceRateLimit(request, env);
