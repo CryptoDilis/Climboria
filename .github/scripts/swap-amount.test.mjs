@@ -127,10 +127,12 @@ test("Swap public market requests time out without substituting cached data", as
 
 test("an older Swap market refresh cannot overwrite a newer response", async () => {
   const html = readFileSync(new URL("../../swap/index.html", import.meta.url), "utf8");
-  const start = html.indexOf("let majorMarketsRequest=0;");
+  const start = html.indexOf("async function loadMajorMarkets(){");
   const end = html.indexOf("async function restoreSwapFromUrl", start);
   assert.ok(start >= 0 && end > start, "Expected request-sequenced Swap market loader");
-  const loader = html.slice(start, end);
+  assert.ok(html.indexOf("let majorMarketsRequest=0;") < html.indexOf("loadMajorMarkets();updateSelectedAsset"),
+    "Market request sequence must be initialized before the first page-load refresh");
+  const loader = "let majorMarketsRequest=0;\n" + html.slice(start, end);
   const elements = { majorCoins: { innerHTML: "" }, majorStatus: { textContent: "" } };
   const pending = [];
   const loadMajorMarkets = runInNewContext(loader + "\nloadMajorMarkets", {
