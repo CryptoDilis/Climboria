@@ -477,6 +477,20 @@ footer:first-of-type>div{
  .navl>.hub-link .climboria-icon{width:14px!important;height:14px!important;flex-basis:14px!important}
 }
 @media(prefers-reduced-motion:reduce){.mobile-menu,.hamburger span,.navl>a,.navl>button{transition:none!important}}
+
+/* Homepage footer: reference-matched two-column layout. */
+.climboria-footer{display:block!important;box-sizing:border-box!important;width:100%!important;margin:0!important;padding:0 0 0!important;background:#101827!important;border-top:1px solid rgba(175,190,217,.2)!important;color:#c2c8d3!important;font-family:'Inter',sans-serif!important;text-align:left!important}
+.climboria-footer-main{max-width:1160px;margin:0 auto;padding:32px 20px 34px;display:flex;align-items:flex-start;justify-content:space-between;gap:48px}
+.climboria-footer-about{max-width:520px;min-width:0}
+.climboria-footer-brand{font:900 22px/1.3 'Cinzel',serif;color:#e7b85f;letter-spacing:.8px;margin-bottom:10px;text-shadow:0 1px 9px #dca95233}
+.climboria-footer-about p{font:400 12px/1.65 'Inter',sans-serif;color:#c3c9d5;margin:0;max-width:510px}
+.climboria-footer-links{display:flex;gap:52px;flex:0 0 auto}
+.climboria-footer-group{display:flex;flex-direction:column;align-items:flex-start;gap:9px}
+.climboria-footer-group h2{font:800 10px/1.3 'Inter',sans-serif;letter-spacing:1.2px;color:#c6ccda;margin:0 0 6px}
+.climboria-footer-group a,.climboria-footer-group button{font:600 12px/1.3 'Inter',sans-serif!important;color:#d1d7e3!important;background:none!important;border:0!important;padding:0!important;margin:0!important;text-align:left!important;text-decoration:none!important;cursor:pointer!important;white-space:nowrap}
+.climboria-footer-group a:hover,.climboria-footer-group button:hover{color:#f2c676!important}
+.climboria-footer-bottom{border-top:1px solid rgba(175,190,217,.18);max-width:none;padding:19px max(20px,calc((100vw - 1120px)/2));display:flex;align-items:center;justify-content:space-between;gap:16px;font:400 10px/1.5 'Inter',sans-serif;color:#8e99ad}
+@media(max-width:700px){.climboria-footer-main{padding:30px 22px;flex-direction:column;gap:26px}.climboria-footer-links{width:100%;gap:44px;justify-content:flex-start}.climboria-footer-bottom{padding:18px 22px;flex-wrap:wrap;gap:8px}.climboria-footer-brand{font-size:20px}.climboria-footer-about p{font-size:12px}}
 </style>
 </head>
 <body>
@@ -706,8 +720,19 @@ footer:first-of-type>div{
   </div>
 </div>
 
-<footer style="display:flex;justify-content:space-between"><div>© 2026 Climboria. All rights reserved.</div></footer>
-<footer class="site-status">GAME DEVELOPMENT • SOLANA ECOSYSTEM PLANNED • <a href="./terms/" style="color:#fbbf24;text-decoration:underline">TERMS OF USE</a> • <a href="/support/" style="color:#fbbf24;text-decoration:underline">CUSTOMER SUPPORT</a></footer>
+<footer class="climboria-footer" aria-label="Climboria footer">
+  <div class="climboria-footer-main">
+    <div class="climboria-footer-about">
+      <div class="climboria-footer-brand">CLIMBORIA</div>
+      <p>Planned target only—verify launch link and token address on official channels. Nothing here is financial advice.</p>
+    </div>
+    <div class="climboria-footer-links">
+      <div class="climboria-footer-group"><h2>EXPLORE</h2><a href="/game/">Game</a><a href="/dex/">DEX</a><a href="/launchpad/">Launchpad</a></div>
+      <div class="climboria-footer-group"><h2>SOCIAL</h2><a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer">@CLIMBORIAHQ</a><button type="button" data-panel="announcements">Announcements</button><a href="/support/">Support</a></div>
+    </div>
+  </div>
+  <div class="climboria-footer-bottom"><span>© 2026 CLIMBORIA. All rights reserved.</span><span>VENGEANCE IS ALWAYS AN OPTION.</span></div>
+</footer>
 
 <script>
 (() => {
