@@ -296,6 +296,91 @@ test("concurrent claims atomically allow exactly one execution", async () => {
 });
 
 
+test("24h alarm clears unclaimed orders, including expired ready orders",async()=>{
+  const fixture=makeFixture(1);
+  const {object,storage}=createStore();
+  assert.equal((await storeOrder(object,fixture)).status,201);
+  assert.equal((await storage.get("order")).state,"ready");
+  await object.alarm();
+  assert.equal(await storage.get("order"),undefined);
+  assert.equal((await claimOrder(object,fixture.signed)).status,404);
+});
+
+test("claimed executing orders survive 24h cleanup and remain replay-locked",async()=>{
+  const fixture=makeFixture(1);
+  const {object,storage}=createStore();
+  await storeOrder(object,fixture);
+  const originalAlarm=storage.alarmAt;
+  assert.equal((await claimOrder(object,fixture.signed)).status,200);
+  const record=await storage.get("order");
+  assert.ok(record.retainUntil>originalAlarm);
+  assert.ok(record.retainUntil>=record.claimedAt+29*86_400_000);
+  await object.alarm();
+  const retained=await storage.get("order");
+  assert.equal(retained.claimedSignature,encodeBase58(fixture.takerSignature));
+  assert.equal(retained.state,"executing");
+  assert.equal(storage.alarmAt,retained.retainUntil);
+  assert.equal((await claimOrder(object,fixture.signed)).status,409);
+  assert.equal((await storeOrder(object,fixture)).status,409);
+});
+
+test("all provider observations and unknown outcomes retain exact claimed transaction for investigation",async()=>{
+  const fixture=makeFixture(1);
+  const sig=encodeBase58(fixture.takerSignature);
+  for(const state of ["uncertain","provider_success_unconfirmed","provider_failure_unconfirmed"]){
+    const {object,storage}=createStore();
+    await storeOrder(object,fixture);
+    await claimOrder(object,fixture.signed);
+    assert.equal((await settleOrder(object,state,state==="uncertain"?null:sig)).status,200);
+    await object.alarm();
+    const retained=await storage.get("order");
+    assert.equal(retained.state,state);
+    assert.equal(retained.claimedSignature,sig);
+    assert.equal(storage.alarmAt,retained.retainUntil);
+    assert.equal((await claimOrder(object,fixture.signed)).status,409);
+  }
+});
+
+test("30-day retention expires claimed order and deletes data only after retained deadline",async()=>{
+  const fixture=makeFixture(1);
+  const {object,storage}=createStore();
+  await storeOrder(object,fixture);
+  await claimOrder(object,fixture.signed);
+  const record=await storage.get("order");
+  await storage.put("order",{...record,retainUntil:Date.now()-1});
+  await object.alarm();
+  assert.equal(await storage.get("order"),undefined);
+});
+
+test("legacy claimed records without retention metadata migrate conservatively, not delete",async()=>{
+  const fixture=makeFixture(1);
+  const {object,storage}=createStore();
+  await storeOrder(object,fixture);
+  await claimOrder(object,fixture.signed);
+  const claimed=await storage.get("order");
+  delete claimed.retainUntil;
+  claimed.claimedAt=Date.now()-31*86_400_000;
+  await storage.put("order",claimed);
+  await object.alarm();
+  const migrated=await storage.get("order");
+  assert.equal(migrated.state,"executing");
+  assert.ok(migrated.retainUntil>=Date.now()+86_400_000-2000);
+  assert.equal(storage.alarmAt,migrated.retainUntil);
+  await object.alarm();
+  assert.equal((await storage.get("order")).state,"executing");
+});
+
+test("failed alarm reschedule NEVER deletes unresolved claimed order",async()=>{
+  const fixture=makeFixture(1);
+  const {object,storage}=createStore();
+  await storeOrder(object,fixture);
+  await claimOrder(object,fixture.signed);
+  storage.setAlarm=async()=>{throw Error("operator secret is unavailable");};
+  await assert.rejects(object.alarm(),/operator secret is unavailable/);
+  assert.equal((await storage.get("order")).state,"executing");
+  assert.equal((await claimOrder(object,fixture.signed)).status,409);
+});
+
 test("does not persist an order when cleanup scheduling fails", async () => {
   const fixture = makeFixture(1);
   const { object, storage } = createStore();
