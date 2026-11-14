@@ -39,7 +39,7 @@ export class SwapOrderStore {
     try {
       if (url.pathname === "/store" && request.method === "PUT") {
         const body = await readBody(request);
-        const { requestId, transaction, taker, lastValidBlockHeight, expiresAt, resolvedLookups = [], lookupContextSlot = null, tokenAccountEvidence } = body || {};
+        const { requestId, transaction, taker, lastValidBlockHeight, expiresAt, resolvedLookups = [], lookupContextSlot = null, tokenAccountEvidence, minimumOutputRaw, quotedOutputRaw } = body || {};
         if (typeof requestId !== "string" || requestId.length < 8 || requestId.length > 200 ||
             !/^[A-Za-z0-9._:-]+$/.test(requestId)) return json({ error: "Invalid Jupiter request ID" }, 400);
         if (typeof transaction !== "string" || transaction.length > 4096 ||
@@ -54,6 +54,16 @@ export class SwapOrderStore {
         if (!Array.isArray(resolvedLookups) || resolvedLookups.length > 32 ||
             (lookupContextSlot !== null && lookupContextSlot !== undefined && (!Number.isSafeInteger(lookupContextSlot) || lookupContextSlot < 0))) {
           return json({ error: "Resolved address lookup evidence is invalid" }, 400);
+        }
+        // Preserve the EXACT provider-validated raw minimum at order issuance.
+        // Without this pin a later finality report cannot prove the wallet's
+        // signed order honored its original accepted output threshold.
+        const validU64 = value => typeof value === "string" &&
+          /^[1-9][0-9]{0,19}$/.test(value) &&
+          BigInt(value) <= 18446744073709551615n;
+        if (!validU64(minimumOutputRaw) || !validU64(quotedOutputRaw) ||
+            BigInt(minimumOutputRaw) > BigInt(quotedOutputRaw)) {
+          return json({ error: "Unsigned order minimum output evidence is missing or inconsistent" }, 400);
         }
         const sourceEvidence = tokenAccountEvidence?.source;
         const destinationEvidence = tokenAccountEvidence?.destination;
@@ -97,6 +107,8 @@ export class SwapOrderStore {
           resolvedLookups,
           lookupContextSlot: lookupContextSlot ?? null,
           tokenAccountEvidence,
+          minimumOutputRaw,
+          quotedOutputRaw,
           state: "ready",
           createdAt: Date.now()
         };
