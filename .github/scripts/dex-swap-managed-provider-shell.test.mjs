@@ -77,7 +77,7 @@ function createDom({ failure = false } = {}) {
     },
     createElement(tag) {
       assert.equal(tag, "script");
-      const script = { remove() { this.removed = true; } };
+      const script = { dataset: {}, remove() { this.removed = true; } };
       created.push(script);
       return script;
     },
