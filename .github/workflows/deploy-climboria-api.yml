@@ -1,13 +1,15 @@
 name: Deploy Climboria API
 
 on:
+  # Quote-only Worker updates are deployed after a reviewed PR is merged to
+  # main. Never deploy on pull_request, branch pushes, docs or game changes.
   workflow_dispatch:
-  # Ship the quote-only Worker once when this guarded release workflow lands
-  # on main. Later source changes never silently enable mainnet trading.
   push:
     branches: [main]
     paths:
       - '.github/workflows/deploy-climboria-api.yml'
+      - 'dex/swap-proxy/src/**'
+      - 'dex/swap-proxy/wrangler.toml'
 
 permissions:
   contents: read
@@ -19,6 +21,9 @@ concurrency:
 jobs:
   deploy:
     name: Build and deploy Worker
+    # workflow_dispatch can be selected on non-main branches. Refuse it.
+    # This protects production even if a contributor has Actions dispatch access.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
