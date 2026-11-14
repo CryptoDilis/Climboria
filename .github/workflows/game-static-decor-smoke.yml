@@ -1,0 +1,55 @@
+name: Climboria Sanctuary Static Decor Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "game/play.html"
+      - "game/scripts/optimize-starting-npc.py"
+      - ".github/scripts/game-static-decor-smoke.mjs"
+      - ".github/workflows/game-static-decor-smoke.yml"
+      - "assets/characters/Climboria_Starting_Tambay_NPC_optimized.glb"
+      - "assets/characters/Climboria_Arcane_Cart_optimized.glb"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sanctuary-props-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-visible-static-props:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Chromium test harness
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install chromium
+      - name: Start local web server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/climboria-static-props-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/game/play.html > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/climboria-static-props-http.log
+          exit 1
+      - name: Assert optimized NPC and safe cart fallback in playable scene
+        timeout-minutes: 10
+        run: timeout --signal=TERM --kill-after=30s 9m node .github/scripts/game-static-decor-smoke.mjs
+      - name: Preserve scene screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climboria-sanctuary-static-props
+          path: climboria-sanctuary-static-props.png
+          if-no-files-found: warn
+          retention-days: 7
