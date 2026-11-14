@@ -17,6 +17,9 @@ try{
   try{
    await page.goto(base,{waitUntil:'domcontentloaded',timeout:45000});
    await page.locator('#openHeroCreator').click();
+   // Legacy backup is intentionally hidden in the public picker but remains
+   // loadable for existing saved Adventurers and regression verification.
+   await page.locator('#heroModelSelect').selectOption('Adventurer');
    await page.locator('#heroNameInput').fill('Production GLB Check');
    // The production GLB is much larger than CI's resized surrogate. Give it
    // a bounded allowance; a timeout is a legitimate release/performance signal.

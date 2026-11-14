@@ -1,5 +1,38 @@
 # Climboria Game Development Record
 
+## ACTIVE HANDOFF — Ella optimized replacement for default hero (2026-11-15 PHT)
+
+**Latest verified CI checkpoint:** PR [#435](https://github.com/CryptoDilis/Climboria/pull/435) head `74e1ad603ef270b7c8e3e53da4c266478620cdb8` — [Validate #43620161460](https://github.com/CryptoDilis/Climboria/actions/runs/43620161460), [Original Hero #43620161477](https://github.com/CryptoDilis/Climboria/actions/runs/43620161477), [Browser Smoke #43620161488](https://github.com/CryptoDilis/Climboria/actions/runs/43620161488), [Jarrell/Lheiz #43620161436](https://github.com/CryptoDilis/Climboria/actions/runs/43620161436) **SUCCESS**. [Ella Acceptance #43620161559](https://github.com/CryptoDilis/Climboria/actions/runs/43620161559) **FAIL at import gate**, exact error `Ella binary NOT uploaded: assets/characters/Climboria_Ella.glb`. [Full Gameplay #43620161518](https://github.com/CryptoDilis/Climboria/actions/runs/43620161518) **FAILED at 120-second browser timeout** because it now expects new Ella as the default and the binary is missing; rerun after asset arrives to establish whether further defects exist. GitHub contents API returned 404 for Ella path on BOTH PR branch and main as of this checkpoint. The ChatGPT copy `/mnt/data/Climboria_Ella.glb` was independently reverified at **14,714,996 bytes, SHA-256 `f5b5e5fd42ffbe24f151b64b4e7902d48676199830b27319bbd8c641a7de41d5`** and 8 animation clips. The GitHub app exposes inline base64/blob creation but no shared binary-file-path transfer; attempts to imply a server-side upload by passing a local path would be false. Owner declined the separate Work handoff, so do not invoke it repeatedly. **Exact next action is still single-file binary upload to the existing PR branch**, then rerun exact-head CI, inspect screenshots, clear licensing, merge safely, verify Pages.
+
+**Game-only task.** Owner requests replacing the original default playable hero with the owner-uploaded `Climbori_Ella.glb`. **Jarrell and Lheiz unchanged; original `Climboria_Hero.glb` retained as backup.** Do not edit or interfere with Swap, DEX, Launchpad, ClimbX.
+
+**State:** PREPARED CODE ON BRANCH `game/ella-default-optimized-2026-11-15`; **NOT MERGED OR LIVE**. Actual 14.7-MB binary still only in ChatGPT working files, **NOT COMMITTED TO GITHUB**. All code changes are intentionally staged so missing Ella asset fails release checks instead of displaying an invalid replacement.
+
+### Source verification and local optimization
+- Source uploaded in chat: `Climbori_Ella.glb` — 52,278,424 bytes, SHA-256 `b7d3cd48df3fe5e56ba31bf137fd590c4c637d40090f3433a88990b8ea28d78c`.
+- **Selected optimized release asset:** `Climboria_Ella.glb` — 14,714,996 bytes, SHA-256 `f5b5e5fd42ffbe24f151b64b4e7902d48676199830b27319bbd8c641a7de41d5` (~71.9% reduction). Three 4K PNG maps resampled to 2K; base color JPEG 88, other PBR textures PNG; preserved 31,145 triangles, 1 Mixamo skin/66 joints, all 8 embedded animations. GLB 2.0 parse checked locally (including geometry bounds) using Trimesh. The alternative 1K experiment is 7,764,256 bytes, **not** selected as production candidate because of potential quality loss.
+- Included animation clip names: `Running`, `Walking`, `Climb_Attempt_and_Fall_4`, `Fall2`, `Jumping_Punch`, `Right_Jab_from_Guard`, `Swim_Forward`, `climbing_up_wall`. **No actual standing idle or standard jump clip.** Reuse the current neutral procedural standing pose and procedural jump; do not trigger `Jumping_Punch` for jumping.
+- Model source and garment artwork commercial rights **not independently verified**; require owner rights confirmation before publishing.
+
+### Completed staging (committed)
+- `3c5b32f34779f8b2a968cd319daeb5b781c4a28b`: `game/index.html` Hero Select now offers Ella first/default, Jarrell, Lheiz. The original Adventurer stays hidden in the option list as a legacy backup and saved old users can still play; their Edit Hero opens Ella for explicit re-save. The new Meshy neutral preview path supports Ella's Mixamo rig.
+- `e9d498e1f8e5e0ca4fb175c40e6d0530cb989001`: `game/play.html` validates Ella records, loads `assets/characters/Climboria_Ella.glb` and falls back to the original Adventurer file on missing asset. Jarrell/Lheiz paths unchanged.
+- `b693e321096753805e46ea5dfaac0d2fac826b29`: exact-source SHA-256, size, skin, triangles, clips, PBR map and legacy hero preservation validator `game/scripts/verify-ella-default.mjs`.
+- `72f5b54c33e05e762a0a0b7f28807b7e4b3bc0d5` and `fd9cb619ac2b12b71a5ed914a5d345aefb2e8321`: update default-hero selector browser regression while keeping the old Adventurer GLB smoke as a legacy fallback test.
+- `cf5ec89e336e8090163f03cc7da88acdbb98471b` and `2f61f9ecde5c304b19abeba122ecced4f893d270`: Ella desktop/mobile creator→save→game startup and neutral pose acceptance tests, animation state routing tests and dedicated GitHub Actions release gate. The Ella-specific test MUST fail while its binary is absent.
+- `fb58f8b625b10fd601f7fba014a6ba2475883336` and `af3562ff7d1509edb4ee9b44f98205dfd2540108`: exact Ella import guide `assets/characters/ELLA_DEFAULT_IMPORT.md` and provenance/rights record in `ASSET_SOURCES.md`.
+
+### HARD BLOCKER / EXACT NEXT TASK
+1. **Upload one binary to this exact Game branch** (not `main`): `assets/characters/Climboria_Ella.glb`. Source file is the optimized **14,714,996-byte `Climboria_Ella.glb` from ChatGPT**, NOT the original 52-MB source. GitHub's connected source API cannot transfer its container bytes; it is not in the repository. Do not ask the owner to upload existing Jarrell or Lheiz files again. Keep `Climboria_Hero.glb` untouched.
+2. Run `node game/scripts/verify-ella-default.mjs` and ensure exact SHA pass. Inspect new Ella acceptance workflow plus existing Game Validations, Browser Smoke, legacy original GLB smoke, Jarrell/Lheiz smoke and full desktop/mobile gameplay smoke at exact PR HEAD. Fix failures, never disable tests.
+3. Manually review Ella screenshots, scale, feet/collisions, idle, walk/run, water, safe jump, climb, initial loading and low-memory mobile. Run real physical-device performance later. Confirm asset commercial rights/artwork.
+4. After passing tests and required rights review, mark Game PR ready, merge safely with expected HEAD SHA, verify GitHub Pages deployment and direct live `climboria.fun/game/` (not just a green PR), then update this record with merge, CI and deployment SHAs. If any blocker remains, keep PR draft and record specific blocker.
+5. Continue to avoid any work outside Game/hero files.
+
+**Do not confuse local glTF structural parse with actual browser acceptance. Do not claim the Ella hero has been replaced live before the binary and CI gates.**
+
+---
+
 ## 2026-11-15 PHT — Jarrell/Lheiz HERO SELECT MERGED; GitHub Pages build succeeded
 
 **Game workstream only. No Swap/DEX/Launchpad/ClimbX files changed.**
