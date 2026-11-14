@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   CRITICAL_INSTRUCTIONS, CRITICAL_ACCOUNTS, CRITICAL_TYPES,
-  compareCriticalIdls, stripAccountDocs, verifySdkInstructionDiscriminators, verifyOnchainLaunchpadIdl
+  compareCriticalIdls, inspectIdlDefinitionNames, stripAccountDocs, verifySdkInstructionDiscriminators, verifyOnchainLaunchpadIdl
 } from "./launchlab-onchain-idl-check.mjs";
 
 function pinnedFixture() {
@@ -251,4 +251,109 @@ test("docs-only changes produce no material security difference", () => {
   const result = compareCriticalIdls(repo, live);
   assert.equal(result.criticalInstructionSchemaDetails[0].firstSecurityConstraintDifference, null);
   assert.equal(result.criticalAccountMetaMismatches.length, 1, "original fail-closed raw mismatch retained");
+});
+
+
+test("matching unambiguous pinned and live Anchor IDL namespaces remain accepted", () => {
+  const original = pinnedFixture();
+  const evidence = compareCriticalIdls(original, structuredClone(original));
+  assert.deepEqual(evidence.idlNamespaceMismatches, []);
+  assert.deepEqual(inspectIdlDefinitionNames(original, "pinned official IDL"), []);
+});
+
+test("a duplicate launch instruction can hide a conflicting signer schema behind the final Map value", () => {
+  const repo = pinnedFixture(), live = structuredClone(repo);
+  const conflicting = structuredClone(live.instructions.find(x => x.name === "initialize_v2"));
+  conflicting.accounts[0].signer = false;
+  // This conflicting first entry was silently discarded by last-write-wins
+  // Map() before the fix, since the second entry equals pinned official IDL.
+  live.instructions.unshift(conflicting);
+  const evidence = compareCriticalIdls(repo, live);
+  assert.deepEqual(evidence.criticalDiscriminatorMismatches, []);
+  assert.deepEqual(evidence.criticalAccountMetaMismatches, []);
+  assert.deepEqual(evidence.criticalArgumentMismatches, []);
+  assert.equal(evidence.idlNamespaceMismatches.length, 1);
+  assert.match(evidence.idlNamespaceMismatches[0], /live on-chain IDL: duplicate instructions name/);
+});
+
+test("duplicate program account definitions cannot hide fee-vault or pool-state changes", () => {
+  const repo = pinnedFixture(), live = structuredClone(repo);
+  const duplicate = structuredClone(live.accounts.find(x=>x.name === "PlatformConfig"));
+  duplicate.discriminator[0] ^= 255;
+  live.accounts.unshift(duplicate);
+  const evidence = compareCriticalIdls(repo, live);
+  assert.deepEqual(evidence.criticalSchemaMismatches, []);
+  assert.match(evidence.idlNamespaceMismatches[0], /duplicate accounts name/);
+});
+
+test("duplicate type definitions are rejected even when final type layout matches", () => {
+  const repo = pinnedFixture(), live = structuredClone(repo);
+  const duplicate = structuredClone(live.types.find(x=>x.name === "CurveParams"));
+  duplicate.type.fields[0].type = "u8";
+  live.types.unshift(duplicate);
+  const evidence = compareCriticalIdls(repo, live);
+  assert.deepEqual(evidence.criticalSchemaMismatches, []);
+  assert.match(evidence.idlNamespaceMismatches[0], /duplicate types name/);
+});
+
+test("duplicates in pinned official IDL are also rejected, never silently preferred", () => {
+  const repo = pinnedFixture(), live = structuredClone(repo);
+  repo.instructions.push(structuredClone(repo.instructions[0]));
+  repo.accounts.push(structuredClone(repo.accounts[0]));
+  repo.types.push(structuredClone(repo.types[0]));
+  const evidence = compareCriticalIdls(repo, live);
+  assert.equal(evidence.idlNamespaceMismatches.length, 3);
+  assert.ok(evidence.idlNamespaceMismatches.every(x => x.includes("pinned official IDL")));
+});
+
+test("noncritical duplicate definitions also fail namespace review rather than creating ambiguous SDK resolution", () => {
+  const repo = pinnedFixture(), live = structuredClone(repo);
+  live.instructions.push({ name: "unlisted_method", discriminator: [1,2,3,4,5,6,7,8], accounts: [], args: [] });
+  live.instructions.push({ name: "unlisted_method", discriminator: [7,7,7,7,7,7,7,7], accounts: [], args: [] });
+  const evidence = compareCriticalIdls(repo, live);
+  assert.equal(evidence.idlNamespaceMismatches.length, 1);
+  assert.match(evidence.idlNamespaceMismatches[0], /duplicate instructions name/);
+  assert.deepEqual(evidence.criticalDiscriminatorMismatches, []);
+});
+
+test("missing arrays and malformed entries are explicit namespace blockers without runtime TypeErrors", () => {
+  for (const change of [
+    x => { x.instructions = undefined; },
+    x => { x.instructions = {}; },
+    x => { x.accounts = {}; },
+    x => { x.types = "not an array"; },
+    x => { x.instructions[0] = null; },
+    x => { x.accounts[0] = []; },
+    x => { x.types[0] = { name: 42, type: {} }; },
+    x => { x.instructions[0].name = "__invalid name__"; },
+    x => { x.instructions[0].name = "x".repeat(129); }
+  ]) {
+    const repo = pinnedFixture(), live = structuredClone(repo);
+    change(live);
+    const evidence = compareCriticalIdls(repo, live);
+    assert.ok(evidence.idlNamespaceMismatches.length > 0);
+    assert.ok(evidence.idlNamespaceMismatches.every(x =>
+      x.startsWith("live on-chain IDL:")), "must label the untrusted namespace");
+  }
+});
+
+test("malformed IDL root and suspicious provider names do not appear in diagnostic strings", () => {
+  assert.match(inspectIdlDefinitionNames(null)[0], /IDL root must be an object/);
+  const maliciousName = "SENSITIVE_RPC_TOKEN_" + "X".repeat(150);
+  const issues = inspectIdlDefinitionNames({
+    instructions: [{name: maliciousName}], accounts: [], types: []
+  }, "live on-chain IDL");
+  assert.equal(issues.length, 1);
+  assert.doesNotMatch(issues[0], /SENSITIVE_RPC_TOKEN/);
+});
+
+test("namespace diagnostics remain deterministic and include actual indices for review", () => {
+  const repo = pinnedFixture();
+  const live = structuredClone(repo);
+  live.instructions.push(structuredClone(live.instructions[0]));
+  const evidence = compareCriticalIdls(repo, live);
+  assert.match(evidence.idlNamespaceMismatches[0],
+    new RegExp("indices 0 and " + (live.instructions.length - 1) + "$"));
+  assert.deepEqual(evidence.idlNamespaceMismatches,
+    compareCriticalIdls(repo, live).idlNamespaceMismatches);
 });
