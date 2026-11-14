@@ -88,3 +88,10 @@ Research evidence: the 3DAssets.dev pack page documents the 94-model count, 4.1 
 | C — broad medieval kit | [Free Low-Poly Medieval Collection — Avramania](https://avramania.itch.io/free-collection) | CC0; 189 models across nature, village, castle/siege, interiors and dungeon/ruins; GLB and FBX formats; 8.4 MB archive. | Style is explicitly low-poly/flat-shaded. Use only if visual review confirms it fits Climboria; do not mix styles blindly. |
 
 Research evidence: the linked source pages list the stated CC0 terms, formats and specifications. These are candidates only; no castle asset has been downloaded, integrated, collision-tested or visually accepted yet.
+
+
+## Climboria Ella default hero — owner-supplied source (2026-11-15)
+
+| Asset | Provenance and technical details | Current status / gates |
+| --- | --- | --- |
+| `Climboria_Ella.glb` (planned) | Owner-uploaded Meshy export `Climbori_Ella.glb`, 52,278,424 bytes source; optimized 2K GLB 14,714,996 bytes, SHA-256 `f5b5e5fd42ffbe24f151b64b4e7902d48676199830b27319bbd8c641a7de41d5`; 31,145 triangles, one skinned Mixamo rig, eight animation clips, three 2K embedded texture maps | **Not yet uploaded to GitHub**. Prepared as the new default hero in draft Game integration branch; original `Climboria_Hero.glb` retained as backup. No confirmation yet of commercial rights to all Meshy source art and third-party garment graphics. Do not mark integrated/live until actual binary upload, full exact-head CI, visual/mobile acceptance and license confirmation. See `assets/characters/ELLA_DEFAULT_IMPORT.md`. |
