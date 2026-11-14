@@ -1,6 +1,6 @@
 import { SwapOrderStore } from "./order-store.mjs";
 import { parseSolanaV0Transaction, validateJupiterOrderMetadata } from "./transaction-validation.mjs";
-import { resolveTransactionLookups, verifyJupiterTokenAccounts } from "./solana-rpc.mjs";
+import { resolveTransactionLookups, verifyJupiterTokenAccounts, validateRpcUrl } from "./solana-rpc.mjs";
 import { validateJupiterV6Transaction } from "./jupiter-v6-policy.mjs";
 import { requireReviewedJupiterV6CpiSemantics } from "./jupiter-v6-cpi-review.mjs";
 export { SwapOrderStore };
@@ -283,17 +283,10 @@ function optionalTokenLabel(value, fallback, max) {
 }
 function optionalTokenIcon(value) {
   if (typeof value !== "string" || value.length > 2048) return null;
-  try {
-    const url = new URL(value);
-    const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
-    if (url.protocol !== "https:" || url.username || url.password ||
-        host === "localhost" || host.endsWith(".localhost") ||
-        host.endsWith(".local") || host === "::1" || host === "::" ||
-        /^(?:127|10|0)\./.test(host) || /^192\.168\./.test(host) ||
-        /^172\.(?:1[6-9]|2\d|3[01])\./.test(host) ||
-        /^(?:fc|fd|fe[89ab]|::ffff:)/i.test(host)) return null;
-    return url.href;
-  } catch { return null; }
+  // Reuse the same public HTTPS / non-local host policy enforced for trusted
+  // Solana RPC endpoints. Never request local services from a token icon URL.
+  try { return validateRpcUrl(value).href; }
+  catch { return null; }
 }
 function normalizeTokenSearchResults(data) {
   if (!Array.isArray(data)) return null;
