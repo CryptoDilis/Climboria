@@ -449,14 +449,14 @@ async function handleExecute(request, env) {
   const payload = { signedTransaction, requestId: claim.record.requestId };
   if (claim.record.lastValidBlockHeight !== null && claim.record.lastValidBlockHeight !== undefined) {
     if (!Number.isSafeInteger(claim.record.lastValidBlockHeight) || claim.record.lastValidBlockHeight <= 0) {
-      await orderStore.fetch("https://order-store/settle", {
+      const settlementRecorded=await orderStore.fetch("https://order-store/settle", {
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ state: "uncertain" })
       }).then(response=>response.ok).catch(()=>false);
       return json(pendingClaimedSwapEvidence({
         claimedSignature:claim.record.claimedSignature,
         reason:"INVALID_STORED_HEIGHT",
-        settlementRecorded:false
+        settlementRecorded
       }),202);
     }
     payload.lastValidBlockHeight = claim.record.lastValidBlockHeight;
