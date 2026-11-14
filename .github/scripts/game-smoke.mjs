@@ -345,6 +345,14 @@ try {
     northPalette.lavenderIntensity!==1.3||northPalette.cyanIntensity!==1.45)
     errors.push('North annex over-lit pale rock palette or material regression: '+JSON.stringify(northPalette));
   console.log('North annex subdued lighting and tinted rock batch:',JSON.stringify(northPalette));
+  const sanctPaint=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryGroundPigmentAudit?.()??null);
+  if(sanctPaint?.sampleCount!==380||sanctPaint.painted<240||
+    sanctPaint.strong<90||sanctPaint.maxPigment<.75||
+    sanctPaint.pigmentRange<.7||!sanctPaint.centerLaneProtected||
+    !sanctPaint.outsideZoneClean||sanctPaint.terrainStep!==5||
+    !sanctPaint.vertexColorTerrain||sanctPaint.colorRedRange<.04)
+    errors.push('Sanctuary actual spawn-view ground palette / path-free visual breakup regression: '+JSON.stringify(sanctPaint));
+  console.log('Sanctuary spawn-view soil and moss pigmentation:',JSON.stringify(sanctPaint));
   const sanctuaryPillars=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryPillarCollisionAudit?.()??null);
   if(!sanctuaryPillars?.ok||sanctuaryPillars.pillars?.length!==12||
     sanctuaryPillars.pillars.some(p=>!p.collider||!p.blocked)||sanctuaryPillars.walkwayBlocked?.length)
