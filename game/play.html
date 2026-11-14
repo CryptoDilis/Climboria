@@ -201,6 +201,15 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
   valid=!!hero&&['Ella','Adventurer','Jarrell','Lheiz'].includes(hero.model)&&typeof hero.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(hero.name)&&/[A-Za-z0-9]/.test(hero.name);
  }catch(_){}
  if(!valid){location.replace('./index.html?hero=required');return}
+ // A bookmarked direct Game URL must migrate legacy Adventurer saves, too:
+ // Ella replaces the old default even if the player bypasses the hero editor.
+ if(hero.model==='Adventurer'){
+  hero={...hero,model:'Ella'};
+  try{
+   localStorage.setItem('climboria-created-hero-v1',JSON.stringify(hero));
+   localStorage.setItem('climboria-selected-hero','Ella');
+  }catch(error){console.warn('[Climboria] Legacy hero migration could not persist',error)}
+ }
  window.__climboriaCreatedHero=hero;
 })();
 </script>
