@@ -232,15 +232,53 @@ test("mismatched or missing signature cannot fabricate provider success or cross
   }
 });
 
-test("explicit provider failure and unknown outcome remain terminal to replay, but cannot store another signature", async () => {
+test("unaudited provider failure cannot create terminal failed state or permit replay", async () => {
   const fixture=makeFixture(1);
-  for (const state of ["failed","uncertain"]) {
+  const {object,storage}=createStore();
+  await storeOrder(object,fixture);
+  await claimOrder(object,fixture.signed);
+  const claimed=encodeBase58(fixture.takerSignature);
+  // Final "failed" is reserved for an independently audited on-chain proof
+  // and is not available through the current provider-only /settle route.
+  assert.equal((await settleOrder(object,"failed",claimed)).status,400);
+  assert.equal((await storage.get("order")).state,"executing");
+  for(const signature of [null,undefined,"5".repeat(88),"not-a-signature"]){
+    assert.equal((await settleOrder(object,"provider_failure_unconfirmed",signature)).status,409);
+    assert.equal((await storage.get("order")).state,"executing");
+  }
+  const result=await settleOrder(object,"provider_failure_unconfirmed",claimed);
+  assert.equal(result.status,200);
+  assert.deepEqual(await result.json(),{ok:true,state:"provider_failure_unconfirmed"});
+  assert.equal((await storage.get("order")).signature,claimed);
+  assert.equal((await storage.get("order")).state,"provider_failure_unconfirmed");
+  assert.equal((await claimOrder(object,fixture.signed)).status,409);
+  assert.equal((await settleOrder(object,"provider_failure_unconfirmed",claimed)).status,409);
+});
+
+test("unknown outcome remains replay-locked even without a provider signature", async () => {
+  const fixture=makeFixture(1);
+  const {object,storage}=createStore();
+  await storeOrder(object,fixture);
+  await claimOrder(object,fixture.signed);
+  assert.equal((await settleOrder(object,"uncertain","5".repeat(88))).status,409);
+  assert.equal((await storage.get("order")).state,"executing");
+  assert.equal((await settleOrder(object,"uncertain",null)).status,200);
+  assert.equal((await storage.get("order")).state,"uncertain");
+  assert.equal((await claimOrder(object,fixture.signed)).status,409);
+});
+
+test("provider terminal states reject mismatched and blank signatures without writing a final-chain result",async()=>{
+  const fixture=makeFixture(1);
+  for(const state of ["provider_success_unconfirmed","provider_failure_unconfirmed"]){
     const {object,storage}=createStore();
     await storeOrder(object,fixture);
     await claimOrder(object,fixture.signed);
-    assert.equal((await settleOrder(object,state,"5".repeat(88))).status,409);
-    assert.equal((await storage.get("order")).state,"executing");
-    assert.equal((await settleOrder(object,state,null)).status,200);
+    for(const signature of [null,undefined,"",5,"5".repeat(88)]){
+      assert.equal((await settleOrder(object,state,signature)).status,409);
+      assert.equal((await storage.get("order")).state,"executing");
+    }
+    const claimed=encodeBase58(fixture.takerSignature);
+    assert.equal((await settleOrder(object,state,claimed)).status,200);
     assert.equal((await storage.get("order")).state,state);
     assert.equal((await claimOrder(object,fixture.signed)).status,409);
   }
