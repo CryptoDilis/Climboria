@@ -351,3 +351,59 @@ Tests use mocked response slices; **no real Solana mainnet RPC was accessed**.
 If a trusted deployment image reference digest is not available, this stage
 remains blocked. Never paste RPC URLs with credentials, wallet keys or raw
 program images into public PRs/logs/issues.
+
+
+## 13. Single finalized RPC response per deployed ProgramData image
+
+The §12 chunked scanner calls Solana `getAccountInfo` multiple times, so
+each chunk can be served from a different finalized slot, and a matching
+SHA-256 cannot by itself prove a coherent single-state observation.
+
+To reduce that ambiguity, the operator-only
+`src/upgradeable-program-single-snapshot-digest.mjs` provides a stricter
+**one full `getAccountInfo` response per ProgramData account** path.
+`tools/jupiter-raydium-bytecode-digest-report.mjs` now selects this
+path by default. The original chunked inspector remains as a separate
+bounded read-only evidence function, but the CLI does **not silently fall
+back** to it if a provider cannot return the full ProgramData account.
+
+Safeguards:
+- Verify operator-pinned genesis and independently derived ProgramData PDA
+  before fetching binary data. A forged ProgramData key/bump fails before I/O.
+- Request `getAccountInfo` with `commitment: finalized`,
+  `encoding: base64`, `minContextSlot` from preflight and **no `dataSlice`**.
+  Reject redirected requests, mismatched request IDs, non-finalized/stale
+  contexts, missing accounts, malformed or noncanonical base64, wrong owner
+  or executable state, and declared `space` that disagrees with decoded bytes.
+- Stream with a bounded response cap of approximately 14 MiB, hard-limit
+  allocated ProgramData to **10 MiB plus 45 header bytes**, and enforce a
+  25-second request timeout. Large or unsupported provider responses **fail
+  closed**, not as fabricated evidence.
+- Replay **only in local memory** the captured finalized image to the
+  previously tested 32 KiB payload/header/hash validator. Every segment,
+  including the trailing metadata check, is computed from the **same
+  captured RPC response and context slot**, not new network requests.
+- Compare the full allocated payload (excluding the 45-byte ProgramData
+  header) to an **externally and independently pinned exact payload SHA-256**
+  for Jupiter V6 and Raydium V4. Both hashes are mandatory, and a mismatch
+  in either denies the combined report.
+
+Each per-program result includes
+`oneFinalizedRpcResponseForWholeProgram:true`,
+`perChunkFinalizedSlotsMayDiffer:false` and the observed finalized slot.
+However, Jupiter V6 and Raydium V4 are still read in **separate** RPC
+responses and may have different finalized slots. The aggregate reports
+`sameFinalizedSlotAcrossBothProgramsVerified:false`.
+
+**Not proven:** the provider could misreport an entire finalized account;
+a single reported context slot is not an independently authenticated
+Solana ledger state proof. Matching independently pinned digests is not
+in itself an independent source-to-deployed-binary reproducibility audit.
+Do not set `singleSlotBytecodeSnapshotVerified:true`,
+`independentlyTrustedRpc:true`, `sourceCodeParityVerified:true` or
+`approvedForJupiterCpi:true` based on this report alone. Mainnet Swap
+execution/signing, Jupiter CPI account/fee/custody audit and production
+Launchpad token creation remain blocked.
+
+The regression tests use synthetic local full-account responses. **No
+real Solana RPC, production deployment or wallet transaction was run**.
