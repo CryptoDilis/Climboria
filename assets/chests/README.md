@@ -2,7 +2,7 @@
 
 **Game-only status (2026-11-15 PHT):** Exact optimized binaries were generated and validated from five owner-uploaded Meshy GLB files **in ChatGPT**, but the connected GitHub text-file API cannot stream their binary bytes from the local container into this PR. This PR intentionally stays DRAFT, **NOT LIVE** until all five optimized GLBs are uploaded and exact-head tests pass.
 
-Use these names and paths in this directory. Do **not** upload the ZIP as the game asset; extract it first and upload the five individual GLBs to the same Game branch `game/chest-rarity-glb-models-2026-11-15`.
+**Easiest upload: one ZIP.** Download `Climboria_Five_Rarity_Chests_Optimized.zip` from ChatGPT and upload **that ZIP** on Game branch `game/chest-rarity-glb-models-2026-11-15` at the exact path `assets/chests/Climboria_Five_Rarity_Chests_Optimized.zip`. Do not upload it to `main`. The branch-restricted GitHub Actions workflow `.github/workflows/game-import-rarity-chest-zip.yml` validates exactly five expected binary hashes, extracts them into the correct paths, commits the five GLBs, and removes the temporary ZIP. It refuses extra/untrusted ZIP members. **If GitHub Actions lacks branch write permission, extract the ZIP and manually upload the five individual GLBs instead.**
 
 | Tier | Owner upload | Release GLB | Original size | Optimized bytes | Optimized triangles | SHA-256 (optimized) |
 |---|---|---|---:|---:|---:|---|
@@ -32,7 +32,7 @@ In `game/play.html`, the five GLBs are loaded once only **after the game becomes
 
 ## Release gate and exact next action
 
-1. Obtain the ZIP `Climboria_Five_Rarity_Chests_Optimized.zip` supplied in the ChatGPT conversation. Extract and upload **all five .glb files** under `assets/chests/` to **the PR branch**, not `main`.
+1. Obtain the ZIP `Climboria_Five_Rarity_Chests_Optimized.zip` supplied in the ChatGPT conversation. Upload it **as one file to `assets/chests/Climboria_Five_Rarity_Chests_Optimized.zip` on the PR branch**, not `main`. Check that the branch-restricted import workflow runs and commits the five verified GLB assets; if it cannot push, extract and upload the five `.glb` files yourself. The ZIP alone is **NOT** a shipped game asset.
 2. Execute `node game/scripts/verify-rarity-chests.mjs`. This fails on any missing or altered GLB; its SHA-256 checks prevent substituting wrong source files.
 3. Run `Climboria Rarity Chest GLB Acceptance` workflow (desktop/mobile browser checks for exact models, 100 existing locations, unchanged chances, reward/visual match, geode opening and respawn, screenshots). Verify the normal Game Validate, Browser Smoke, Jarrell/Lheiz, and full Jarrell's Peak Gameplay Smoke workflows also pass on the exact PR HEAD.
 4. Manually review five source shapes, in-game screenshot scale, normals and textures, all rarity variants (legendary may not naturally spawn in a 100-chest sample), impact on mobile WebGL, and the owners' commercial permission for submitted artwork.
