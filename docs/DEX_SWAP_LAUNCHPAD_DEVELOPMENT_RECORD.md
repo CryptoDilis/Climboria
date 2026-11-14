@@ -1416,3 +1416,16 @@ NEXT EXACT: check PR #427 current head CI and changed files; merge only on verif
 **No release action:** PR remains a focused draft; it was not merged, deployed, or made ready for review. The quote-only production baseline remains Worker deploy [43573594485](https://github.com/CryptoDilis/Climboria/actions/runs/43573594485), deployed SHA `b724a602047600000ef239a6514914deb2e11a87`; this static/browser PR does not change Worker deployment. Native signing/execution stays fail-closed (`SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED="false"`).
 
 **NEXT EXACT:** push this final evidence-only record commit and verify its own exact-head CI. Then continue only independent Swap/DEX work identified by the development record: inspect active PR #427's status and avoid duplicating its operator runbook; native execution remains externally **BLOCKED** on privately supplied independent RPC/genesis evidence, deployed-program binary/CPI custody audit, supervised wallet-signed finalized settlement/replay/timeout cases, audited privileged DO final-state transition and separate release approval. No credentials, signing, transaction submission, merge or deployment.
+
+
+### 2026-11-15 (PH) — DEX quote-status accessibility follow-up, CI pending
+
+**Scope and reason:** A focused accessibility audit after PR #428's wallet-session work found that DEX JavaScript updates `#quoteStatus` for quote failures, wallet disconnect/account changes and read-only warnings, and updates `#dexTradeStatus` for terminal safety state, but neither element was an ARIA live region. This left critical no-transaction and stale-session messages unavailable to screen-reader users. This is a real UI accessibility gap; no execution behavior was changed.
+
+**Implementation:** commit `e3d0757f64547923f731724e879f48c89363146d` (`fix(dex): announce quote safety status`) adds `aria-live="polite" aria-atomic="true"` to only those two dynamic DEX status regions. It preserves current visual rendering, read-only controls, wallet behavior, quote logic and all financial gates.
+
+**Regression evidence:** `.github/scripts/swap-amount.test.mjs` now asserts both accessibility contracts. Local `node --test .github/scripts/swap-amount.test.mjs` **8/8 PASS**; `node --check .github/scripts/dex-swap-quote-state-smoke.mjs` PASS; DEX inline scripts parse; `git diff --check` PASS. Full desktop/mobile browser verification remains pending exact-head GitHub Actions after this commit is pushed.
+
+**Safety/release status:** PR #428 remains draft and unmerged. No Worker, Durable Object, API route, signing/execution gate, wallet signature, transaction submission, secret or deployment changed. Quote-only baseline and native execution NO-GO remain unchanged.
+
+**NEXT EXACT:** commit this record, push the PR branch and inspect the exact current head's Validate, Browser Smoke, DEX quote-state and associated workflow results. Fix only actual regressions; do not merge/deploy without separate approval. Continue reviewing only distinct, independently actionable Swap/DEX issues after exact-head CI is green.
