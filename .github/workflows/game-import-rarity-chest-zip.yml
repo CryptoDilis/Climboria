@@ -67,3 +67,53 @@ jobs:
           git rm -- assets/chests/Climboria_Five_Rarity_Chests_Optimized.zip
           git commit -m "assets(game): install five verified optimized rarity chest GLBs"
           git push origin HEAD:refs/heads/game/chest-rarity-glb-models-2026-11-15
+
+  # Bot-authored branch pushes do not automatically trigger other GitHub
+  # workflows. Run browser QA from the ACTUAL imported-binary commit here.
+  verify-imported-chests-in-browser:
+    needs: verify-unpack-and-commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - name: Checkout latest committed five-GLB Game branch
+        uses: actions/checkout@v4
+        with:
+          ref: game/chest-rarity-glb-models-2026-11-15
+          persist-credentials: false
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Confirm imported GitHub assets at new branch HEAD
+        run: |
+          git log -1 --format='%H %s'
+          node game/scripts/verify-rarity-chests.mjs
+          test ! -e assets/chests/Climboria_Five_Rarity_Chests_Optimized.zip
+      - name: Install Chromium test runner
+        timeout-minutes: 8
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install chromium
+      - name: Serve committed Game branch locally
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/climboria-chest-import-test.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/game/play.html > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/climboria-chest-import-test.log
+          exit 1
+      - name: Real desktop/mobile five-chest acceptance after asset import
+        timeout-minutes: 11
+        run: timeout --signal=TERM --kill-after=30s 10m node .github/scripts/game-rarity-chests-smoke.mjs
+      - name: Preserve exact imported-build QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climboria-five-rarity-chests-imported-browser-qa
+          path: |
+            climboria-rarity-chest-desktop.png
+            climboria-rarity-chest-mobile.png
+          if-no-files-found: warn
+          retention-days: 7
