@@ -46,6 +46,7 @@ console.log('PASS disabled manifest makes zero requests');
 
 const invalid = harness({schema:1,enabled:true,guardModels:[],decorations:[
  {file:'../escape.glb',anchor:'park',dx:0,dz:0,height:3},
+ {file:'premium.glb',anchor:'park',dx:0,dz:0,height:3,desktopOnly:true},
  {file:'ok.glb',anchor:'park',dx:0,dz:0,height:3},
  {file:'ok2.glb',anchor:'park',dx:4,dz:0,height:3},
  {file:'ok3.glb',anchor:'park',dx:8,dz:0,height:3}
@@ -59,6 +60,7 @@ assert.equal(invalid.calls.length,2,'Mobile cap is two concurrent scenery loads'
 assert.equal(invalid.api.audit().activeLoads,2);
 assert.equal(invalid.calls.every(c=>c.url.startsWith('../assets/game/new_optimized/')),true);
 assert.equal(invalid.calls.some(c=>c.url.includes('escape')),false);
+assert.equal(invalid.calls.some(c=>c.url.includes('premium')),false,'Mobile must never request desktop-only high-poly scenery');
 console.log('PASS path traversal rejected and mobile asset request cap enforced');
 
 const idle = harness({schema:1,enabled:true,guardModels:['ok.glb'],decorations:[]});
