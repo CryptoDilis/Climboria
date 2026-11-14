@@ -218,7 +218,7 @@ const heroCanvas=document.getElementById('heroPreviewCanvas');
 let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.4,previewTouchX=null,previewTouchDistance=null;
 const validHeroName=name=>/^[A-Za-z0-9 _-]{2,24}$/.test(name)&&/[A-Za-z0-9]/.test(name);
 function savedHero(){
- try{const h=JSON.parse(localStorage.getItem(HERO_RECORD_KEY)||'null');return h&&h.model==='Adventurer'&&typeof h.name==='string'&&validHeroName(h.name)?h:null}catch(_){return null}
+ try{const h=JSON.parse(localStorage.getItem(HERO_RECORD_KEY)||'null');return h&&['Adventurer','Jarrell','Lheiz'].includes(h.model)&&typeof h.name==='string'&&validHeroName(h.name)?h:null}catch(_){return null}
 }
 function updateHeroCard(){
  const h=savedHero();
