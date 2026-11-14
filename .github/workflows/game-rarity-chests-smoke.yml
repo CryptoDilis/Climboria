@@ -1,0 +1,61 @@
+name: Climboria Rarity Chest GLB Acceptance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "game/play.html"
+      - "assets/chests/**"
+      - "game/scripts/verify-rarity-chests.mjs"
+      - ".github/scripts/game-rarity-chests-smoke.mjs"
+      - ".github/workflows/game-rarity-chests-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climboria-chests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chest-model-assets-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - name: Checkout PR candidate
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Require exact five optimized source binaries and unchanged meshes
+        run: node game/scripts/verify-rarity-chests.mjs
+      - name: Install browser dependencies
+        timeout-minutes: 8
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install chromium
+      - name: Start static Game test server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/climboria-chest-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/game/play.html > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/climboria-chest-http.log
+          exit 1
+      - name: Validate 5 rarity chest skins and unchanged odds in desktop/mobile Game
+        timeout-minutes: 12
+        run: timeout --signal=TERM --kill-after=30s 11m node .github/scripts/game-rarity-chests-smoke.mjs
+      - name: Upload real in-game chest screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climboria-chest-rarity-desktop-mobile
+          path: |
+            climboria-rarity-chest-desktop.png
+            climboria-rarity-chest-mobile.png
+          if-no-files-found: warn
+          retention-days: 7
