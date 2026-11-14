@@ -362,6 +362,18 @@ try {
     soilTile.extraTerrainMeshes!==0||!soilTile.noNewTerrainCollider||soilTile.step!==5)
     errors.push('Sanctuary streamed world-aligned soil microtexture/UV/mobile budget regression: '+JSON.stringify(soilTile));
   console.log('Sanctuary tileable 128px soil detail / streamed UV audit:',JSON.stringify(soilTile));
+  const undergrowth=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryEdgeUndergrowthAudit?.()??null);
+  const expectedUndergrowth=await page.evaluate(()=>(('ontouchstart' in window)||navigator.maxTouchPoints>0)?52:104);
+  if(!undergrowth?.instanced||undergrowth.count!==expectedUndergrowth||
+    undergrowth.desired!==expectedUndergrowth||undergrowth.minAbsX<24||
+    undergrowth.minPlatformDist<37.4||undergrowth.minZ< -146.1||
+    undergrowth.maxZ> -19.9||undergrowth.nearCameraCount<expectedUndergrowth*.32||
+    !undergrowth.heightAligned||undergrowth.trianglesPerInstance!==5||
+    undergrowth.trianglesTotal>520||!undergrowth.oneDrawCall||
+    !undergrowth.hasInstanceTints||!undergrowth.noNewCollision||
+    undergrowth.meshName!=='JarrellSanctuaryEdgeUndergrowth')
+    errors.push('Sanctuary field-edge undergrowth batch, visibility, walkway or mobile budget regression: '+JSON.stringify(undergrowth));
+  console.log('Sanctuary field-edge original instanced undergrowth audit:',JSON.stringify(undergrowth));
   const sanctuaryPillars=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryPillarCollisionAudit?.()??null);
   if(!sanctuaryPillars?.ok||sanctuaryPillars.pillars?.length!==12||
     sanctuaryPillars.pillars.some(p=>!p.collider||!p.blocked)||sanctuaryPillars.walkwayBlocked?.length)
