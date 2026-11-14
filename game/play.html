@@ -2092,13 +2092,13 @@ function drawWorldMapPlayer(){
  // Mark ONLY nearby unopened chests, avoiding 100 permanent cluttering dots.
  // Their ring color is the reward tier already rolled for this spawn.
  c.save();let chestPins=0;
- for(const chest of chests){
+ for(const chest of window.__climboriaChestMapMarkers||[]){
   if(chest.open||!chest.reward)continue;
   if(Math.hypot(chest.x-P.x,chest.z-P.z)>320||chestPins>=20)continue;
   const mx=w/2+chest.x/3000*w,my=h/2+chest.z/2000*h;
   if(mx<3||mx>w-3||my<3||my>h-3)continue;
   c.beginPath();c.arc(mx,my,4,0,Math.PI*2);
-  c.fillStyle=CHEST_TIER_PALETTE[chest.reward.rarity].gem;
+  c.fillStyle=chest.mapColor||'#ead79c';
   c.fill();c.lineWidth=1;c.strokeStyle='#121922';c.stroke();chestPins++;
  }
  c.restore();
@@ -2564,7 +2564,7 @@ function repaintChest(c){
  c.visual.lid.color.set(p.lid);
  c.visual.iron.color.set(p.trim);
  c.visual.gem.color.set(p.gem);
- c.visualTier=tier;
+ c.visualTier=tier;c.mapColor=p.gem;
  if(!c.visualModel&&CHEST_MODEL_CACHE.has(tier)){
   const model=cloneChestModel(CHEST_MODEL_CACHE.get(tier));
   if(model){c.g.add(model);c.visualModel=model;}
@@ -2679,6 +2679,9 @@ chest('geode',l2w(caveG,54,42));chest('summit',[POI.summit.px+5,POI.summit.pz+5]
 const WORLD_CHEST_ZONES=[[-420,-640],[930,-260],[250,-1000],[-600,300]];
 WORLD_CHEST_ZONES.forEach(a=>chest('remote',null,a,160));
 for(let i=0;i<79;i++)chest('remote',null,WORLD_CHEST_ZONES[i%WORLD_CHEST_ZONES.length],160);
+// World-map renderer is initialized earlier in this inline script.
+// Publish markers only after the complete 100-chest registry exists.
+window.__climboriaChestMapMarkers=chests;
 function chestDistributionAudit(){
  const world=chests.filter(c=>c.kind==='remote'||c.kind==='ruins'),remote=chests.filter(c=>c.kind==='remote'),cave=chests.filter(c=>c.kind==='cave'||c.kind==='geode'),summit=chests.filter(c=>c.kind==='summit');
  let worldMinSpacing=Infinity;
