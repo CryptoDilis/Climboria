@@ -477,8 +477,25 @@ footer:first-of-type>div{
  .navl>.hub-link .climboria-icon{width:14px!important;height:14px!important;flex-basis:14px!important}
 }
 @media(prefers-reduced-motion:reduce){.mobile-menu,.hamburger span,.navl>a,.navl>button{transition:none!important}}
-/* Homepage-only navigation removal requested for launch. Keep DOM hooks intact. */
-nav, #mobileMenu {display:none!important;visibility:hidden!important;pointer-events:none!important}
+/* Reference-matched homepage navigation; only the homepage is affected. */
+nav{position:absolute!important;top:20px!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:calc(100% - 72px)!important;max-width:1400px!important;min-height:56px!important;display:flex!important;visibility:visible!important;pointer-events:auto!important;align-items:center!important;justify-content:space-between!important;gap:18px!important;margin:0!important;padding:8px 17px!important;border:1px solid rgba(147,173,222,.35)!important;border-radius:999px!important;background:linear-gradient(100deg,rgba(17,35,62,.97),rgba(31,47,82,.96))!important;box-shadow:0 7px 25px rgba(0,0,0,.4),inset 0 1px rgba(255,255,255,.12)!important;backdrop-filter:blur(15px)!important;z-index:99!important}
+nav .logo{flex-shrink:0!important;font-family:'Cinzel',serif!important;font-size:clamp(15px,1.3vw,20px)!important;font-weight:900!important;letter-spacing:1.5px!important;color:#f5d18b!important;background:none!important;-webkit-text-fill-color:#f5d18b!important;text-shadow:0 1px 8px rgba(249,193,92,.35)!important;white-space:nowrap!important}
+nav .navl{display:flex!important;visibility:visible!important;align-items:center!important;justify-content:center!important;flex-wrap:nowrap!important;gap:5px!important;min-width:0!important;margin:0!important}
+nav .navl>a,nav .navl>button{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:4px!important;flex-shrink:0!important;min-height:33px!important;width:auto!important;margin:0!important;padding:7px clamp(9px,.85vw,15px)!important;border:1px solid rgba(214,177,111,.72)!important;border-radius:999px!important;background:rgba(12,26,49,.68)!important;color:#f6dfac!important;-webkit-text-fill-color:#f6dfac!important;font-family:'Inter',sans-serif!important;font-size:clamp(9px,.69vw,11px)!important;font-weight:800!important;letter-spacing:.3px!important;line-height:1!important;text-decoration:none!important;white-space:nowrap!important;box-shadow:inset 0 1px rgba(255,255,255,.08)!important}
+nav .navl>a:hover,nav .navl>button:hover{background:rgba(224,173,82,.2)!important;border-color:#f4d28c!important}
+nav .navl>.hub-link[data-panel="notifications"]{display:none!important}
+nav .navl>.hub-link .climboria-icon{display:none!important}
+nav .navl>a[href="/support/"]{margin-left:clamp(8px,4vw,65px)!important}
+nav .navl>.nav-x-link{width:33px!important;min-width:33px!important;padding:5px!important;font-size:17px!important}
+nav #xLogo,nav .hamburger{display:none!important}
+@media(max-width:1199px){
+ nav{top:12px!important;width:calc(100% - 28px)!important;min-height:54px!important;padding:9px 16px!important}
+ nav .navl{display:none!important}
+ nav #xLogo{display:none!important}
+ nav .hamburger{display:flex!important;visibility:visible!important;pointer-events:auto!important;border:1px solid rgba(214,177,111,.72)!important;border-radius:12px!important;padding:9px!important;background:rgba(12,26,49,.75)!important}
+ #mobileMenu{display:flex!important;visibility:visible!important;pointer-events:auto!important}
+}
+@media(min-width:1200px){#mobileMenu{display:none!important}}
 </style>
 </head>
 <body>
