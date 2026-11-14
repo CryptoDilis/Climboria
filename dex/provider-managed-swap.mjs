@@ -75,6 +75,9 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   let mounted = false;
   let scriptLoaded = false;
   let lastTrigger = null;
+  // Closing invalidates any pending script-load result. A late third-party
+  // response must never mount wallet-enabled UI behind a closed panel.
+  let openRequestId = 0;
   const expanded = value => buttons.forEach(button => button.setAttribute?.("aria-expanded", String(value)));
   expanded(false);
   buttons.forEach(button => {
@@ -84,7 +87,12 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
       lastTrigger = button;
       expanded(true);
       panel.scrollIntoView?.({ behavior: "smooth", block: "start" });
-      if (mounted || loading) return;
+      if (mounted) return;
+      if (loading) {
+        status.textContent = "Provider is finishing a previous load. If the panel stays empty, click Swap again.";
+        return;
+      }
+      const requestId = ++openRequestId;
       loading = true;
       buttons.forEach(control => { control.disabled = true; });
       status.textContent = "Loading verified provider integration. No wallet transaction has been requested by Climboria.";
@@ -93,14 +101,19 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
           await loadReviewedScript(doc, approved);
           scriptLoaded = true;
         }
+        if (requestId !== openRequestId || panel.hidden) return;
         if (!scope.Jupiter || typeof scope.Jupiter.init !== "function") {
           throw new Error("The reviewed provider did not expose the expected integration API");
         }
         await Promise.resolve(scope.Jupiter.init(integratedTerminalOptions(target.id)));
         mounted = true;
-        status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
+        if (requestId === openRequestId && !panel.hidden) {
+          status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
+        }
       } catch {
-        status.textContent = "Provider integration unavailable. Review outstanding wallet prompts or activity before retrying. Climboria did not submit a swap.";
+        if (requestId === openRequestId && !panel.hidden) {
+          status.textContent = "Provider integration unavailable. Review outstanding wallet prompts or activity before retrying. Climboria did not submit a swap.";
+        }
       } finally {
         loading = false;
         buttons.forEach(control => { control.disabled = false; });
@@ -108,6 +121,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     });
   });
   close.addEventListener("click", () => {
+    ++openRequestId;
     panel.hidden = true;
     expanded(false);
     lastTrigger?.focus?.();

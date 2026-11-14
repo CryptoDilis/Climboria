@@ -96,11 +96,72 @@ async function runPage(browser, path, {badHash = false} = {}) {
   }
 }
 
+
+async function runCloseDuringLoad(browser, path) {
+  const page = await browser.newPage({viewport:{width: path === "/dex/" ? 390 : 1280,height:850}});
+  let releaseLoad;
+  let beginLoad;
+  let scriptLoads = 0;
+  const loadGate = new Promise(resolve => { releaseLoad = resolve; });
+  const loadStarted = new Promise(resolve => { beginLoad = resolve; });
+  const forbidden = [];
+  page.on("request", req => {
+    if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(req.url())) forbidden.push(req.url());
+  });
+  await page.route("**/swap-config.js", route =>
+    route.fulfill({status:200,contentType:"application/javascript",body:mockConfig()}));
+  await page.route(SCRIPT_URL, async route => {
+    scriptLoads++;
+    beginLoad();
+    await loadGate;
+    await route.fulfill({status:200,contentType:"application/javascript",
+      headers:{"access-control-allow-origin":"*","cache-control":"no-store"},body:MOCK_SCRIPT});
+  });
+  try {
+    const resp = await page.goto(ORIGIN + path,{waitUntil:"domcontentloaded",timeout:20000});
+    assert.equal(resp.status(),200);
+    const button = page.locator("[data-climboria-managed-swap-open]:visible").first();
+    await button.waitFor({timeout:15000});
+    await button.click();
+    let requestTimer;
+    try {
+      await Promise.race([
+        loadStarted,
+        new Promise((_, reject) => {
+          requestTimer = setTimeout(() => reject(Error("provider request did not start")), 10000);
+        })
+      ]);
+    } finally {
+      clearTimeout(requestTimer);
+    }
+    const panel = page.locator("[data-climboria-managed-swap-panel]");
+    await panel.locator("[data-climboria-managed-swap-close]").click();
+    assert.equal(await panel.isVisible(),false);
+    releaseLoad();
+    await page.waitForFunction(() => !!window.Jupiter,null,{timeout:10000});
+    // Give the DOM script onload handler one task turn after evaluation.
+    await page.waitForTimeout(100);
+    assert.equal(await panel.isVisible(),false,"late provider JS must not reopen the panel");
+    assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length || 0),0,
+      "a closed panel must not initialize the third-party wallet widget");
+    await button.click();
+    await page.waitForFunction(() => (window.__mockProviderCalls?.length || 0)===1,null,{timeout:15000});
+    assert.equal(scriptLoads,1,"reopen after cancelled load reuses the reviewed script");
+    assert.deepEqual(forbidden,[],"no native Climboria execution path allowed");
+    console.log("PASS "+path+" close-during-script-load blocks hidden wallet initialization");
+  } finally {
+    releaseLoad();
+    await page.close();
+  }
+}
+
 const browser = await chromium.launch({headless:true});
 try {
   await runPage(browser,"/swap/");
   await runPage(browser,"/dex/");
   await runPage(browser,"/swap/",{badHash:true});
+  await runCloseDuringLoad(browser,"/swap/");
+  await runCloseDuringLoad(browser,"/dex/");
 } finally {
   await browser.close();
 }
