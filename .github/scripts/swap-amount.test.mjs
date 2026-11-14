@@ -78,7 +78,7 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
         return { ok: true, json: async () => quote };
       }
     };
-    context.fetchQuoteFromProxy = url => context.fetch(url);
+    context.fetchSwapProxy = url => context.fetch(url);
     await runInNewContext(handler + "\nrequestJupiterQuote()", context);
     assert.equal(requested.length, 1);
     assert.match(requested[0], /amount=100000000/);
@@ -169,9 +169,10 @@ test("Swap and DEX quote/token search never silently bypass the Climboria backen
     assert.match(html, /const tokenUrl=swapConfig\.apiBase\.replace\(/, page);
     assert.match(html, /const quoteUrl=swapConfig\.apiBase\.replace\(/, page);
     assert.match(html, /const QUOTE_REQUEST_TIMEOUT_MS=15000/, page + " must bound a stalled browser quote request");
-    assert.match(html, /async function fetchQuoteFromProxy\(url\)/, page);
+    assert.match(html, /async function fetchSwapProxy\(url,timeoutMessage\)/, page);
     assert.match(html, /signal:controller\.signal/, page);
     assert.match(html, /Climboria quote request timed out\. No cached estimate was used\./, page);
-    assert.match(html, /await fetchQuoteFromProxy\(quoteUrl\)/, page);
+    assert.match(html, /await fetchSwapProxy\(quoteUrl,'Climboria quote request timed out\. No cached estimate was used\.'\)/, page);
+    assert.match(html, /await fetchSwapProxy\(tokenUrl,'Climboria token search timed out\. No token was selected\.'\)/, page);
   }
 });
