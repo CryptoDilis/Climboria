@@ -55,14 +55,14 @@ test("rate limit rejection stays HTTP 429 and never falls through to upstream",a
     assert.equal(upstreamCalls,0);
   }finally{globalThis.fetch=oldFetch;}
 });
-test("Cloudflare rate-limiter accepts normal requests without changing existing strict upstream redirect refusal",async()=>{
+test("Cloudflare rate-limiter accepts normal requests without following upstream redirects",async()=>{
   const oldFetch=globalThis.fetch;
   let calls=0;
   try {
     globalThis.fetch=async(url,options)=>{
       calls++;
       assert.match(url,/^https:\/\/api\.jup\.ag\/tokens\/v2\/search\?query=/);
-      assert.equal(options.redirect,"error");
+      assert.equal(options.redirect,"manual");
       assert.equal(options.headers["x-api-key"],"TEST_SECRET_DO_NOT_ECHO");
       return Response.json([{id:"So11111111111111111111111111111111111111112",
         name:"Solana",symbol:"SOL",decimals:9,isVerified:true}]);
@@ -87,5 +87,46 @@ test("Jupiter outgoing transport error is still sanitized and distinct from a ra
     assert.equal(data.error,"Jupiter upstream request failed or redirected");
     assert.equal(data.code,undefined);
     assert.doesNotMatch(JSON.stringify(data),/TEST_SECRET_DO_NOT_ECHO/);
+  }finally{globalThis.fetch=oldFetch;}
+});
+
+test("manual Jupiter redirect is explicitly blocked without forwarding the server API key",async()=>{
+  const oldFetch=globalThis.fetch;
+  let calls=0;
+  try{
+    for(const status of [301,302,307,308]){
+      calls=0;
+      globalThis.fetch=async(url,options)=>{
+        calls++;
+        assert.equal(options.redirect,"manual");
+        assert.equal(options.headers["x-api-key"],"TEST_SECRET_DO_NOT_ECHO");
+        assert.match(url,/^https:\/\/api\.jup\.ag\//);
+        return new Response(null,{status,
+          headers:{location:"https://attacker.invalid/steal?key=TEST_SECRET_DO_NOT_ECHO"}});
+      };
+      const response=await worker.fetch(tokenRequest(),{
+        ...baseEnv,RATE_LIMITER:{limit:async()=>({success:true})}
+      });
+      assert.equal(response.status,503);
+      const result=await response.json();
+      assert.equal(result.error,"Jupiter upstream redirect blocked");
+      assert.equal(calls,1,"no second fetch to a redirected host");
+      assert.doesNotMatch(JSON.stringify(result),/TEST_SECRET_DO_NOT_ECHO|attacker.invalid/);
+    }
+  }finally{globalThis.fetch=oldFetch;}
+});
+test("opaque and unexpectedly already-followed redirect responses fail closed",async()=>{
+  const oldFetch=globalThis.fetch;
+  try{
+    for(const responseObj of [{status:0,type:"opaqueredirect"},{status:200,redirected:true}]){
+      let calls=0;
+      globalThis.fetch=async()=>{calls++;return responseObj;};
+      const result=await worker.fetch(tokenRequest(),{
+        ...baseEnv,RATE_LIMITER:{limit:async()=>({success:true})}
+      });
+      assert.equal(result.status,503);
+      assert.equal((await result.json()).error,"Jupiter upstream redirect blocked");
+      assert.equal(calls,1);
+    }
   }finally{globalThis.fetch=oldFetch;}
 });
