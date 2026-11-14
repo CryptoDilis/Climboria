@@ -31,6 +31,7 @@ jobs:
           root=pathlib.Path('.')
           zip_path=root/'assets/chests/Climboria_Five_Rarity_Chests_Optimized.zip'
           if not zip_path.is_file():raise SystemExit('Optimized ZIP not found on PR branch')
+          if zip_path.stat().st_size > 8_000_000:raise SystemExit('ZIP exceeds approved 8 MB import budget')
           expected={
            'Climboria_Chest_Common.glb':(1358448,'ef18bfd30eee4da3f6df06144c04acd0fc277089fbd729706b3c57d9caeefc7b'),
            'Climboria_Chest_Uncommon.glb':(559748,'cacc85ac63792556c5907076fbcb1ce99b1be79c558ccc48f4b0d2fc67c08bdb'),
@@ -42,7 +43,10 @@ jobs:
           allowed=expected_names|{'manifest.json','README_IMPORT.txt'}
           with zipfile.ZipFile(zip_path) as archive:
            names=set(archive.namelist())
+           if len(names)!=len(archive.infolist()):raise SystemExit('Duplicate ZIP member names forbidden')
            if names!=allowed:raise SystemExit('ZIP has missing/unexpected members: '+repr(names.symmetric_difference(allowed)))
+           for meta in ('manifest.json','README_IMPORT.txt'):
+            if archive.getinfo(meta).file_size>64_000:raise SystemExit('Metadata ZIP entry size exceeds safe limit')
            if archive.testzip() is not None:raise SystemExit('Corrupt chest import ZIP')
            for name,(size,sha) in expected.items():
             src='assets/chests/'+name
