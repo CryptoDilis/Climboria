@@ -4,6 +4,7 @@ import {
   validateSignedOrderTransaction,
   validateUnsignedOrderTransaction
 } from "./transaction-validation.mjs";
+import { readBoundedRequestJson } from "./bounded-request-json.mjs";
 
 const MAX_ORDER_AGE_MS = 120_000;
 const ORDER_CLEANUP_MS = 86_400_000;
@@ -15,13 +16,12 @@ function json(data, status = 200) {
   });
 }
 
+// The Durable Object is an internal replay-lock boundary, not an excuse to
+// allocate an untrusted request body before checking its size. Reuse the same
+// strict, streaming byte limit as the public Worker. No JSONP, oversized
+// Content-Length, invalid UTF-8 or unbounded request.text() allocations.
 async function readBody(request) {
-  if (!String(request.headers.get("content-type") || "").toLowerCase().startsWith("application/json")) {
-    throw new Error("Content-Type must be application/json");
-  }
-  const raw = await request.text();
-  if (raw.length > 60_000) throw new Error("Order-store request is too large");
-  try { return JSON.parse(raw); } catch { throw new Error("Invalid order-store JSON"); }
+  return readBoundedRequestJson(request, 60_000);
 }
 
 export class SwapOrderStore {
@@ -161,7 +161,17 @@ export class SwapOrderStore {
 
       return json({ error: "Not found" }, 404);
     } catch (error) {
-      return json({ error: error instanceof Error ? error.message : "Order store failed" }, 503);
+      // Reject malformed caller bodies with fixed client-safe codes. Never
+      // reflect arbitrary storage/crypto/provider exceptions that could leak
+      // secrets, user payloads or Worker internals.
+      const reason = error instanceof Error ? error.message : "";
+      const badRequest = new Set([
+        "Content-Type must be application/json",
+        "Invalid Content-Length", "Request body too large", "Invalid JSON body"
+      ]);
+      return badRequest.has(reason)
+        ? json({ error: reason }, 400)
+        : json({ error: "Order store failed securely" }, 503);
     }
   }
 
