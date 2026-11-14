@@ -19,7 +19,7 @@
 
 ## Jupiter/Raydium deployed-program metadata comparison (2026-11-15)
 
-After the **real** two-private-RPC connectivity preflight succeeds, the same manual main-only workflow also runs `node dex/swap-proxy/tools/operator-dual-rpc-program-provenance-report.mjs`, using the **existing** encrypted primary and secondary RPC URL secrets and pinned public genesis hash. No additional credentials or RPC accounts are needed.
+After the **real** two-private-RPC connectivity preflight succeeds, the same protected workflow (manually dispatched on main, or automatically triggered only when its own reviewed workflow file changes on main; never on PRs/forks) also runs `node dex/swap-proxy/tools/operator-dual-rpc-program-provenance-report.mjs`, using the **existing** encrypted primary and secondary RPC URL secrets and pinned public genesis hash. No additional credentials or RPC accounts are needed.
 
 This second, read-only step independently queries **both configured RPC hosts** for finalized Jupiter V6/Raydium V4 Upgradeable Loader program headers, derives canonical ProgramData PDAs locally, checks loader account ownership and deployment slots, then compares both providers' **program IDs, ProgramData addresses, PDA bumps, last deploy slots, upgrade authorities and immutability status**. Any missing, mismatched or unresponsive provider fails closed. Public metadata (including public upgrade authorities) may be printed, but RPC URLs, keys and untrusted transport errors are not. The code lives in `dex/swap-proxy/tools/`, deliberately outside deployed Worker source.
 
