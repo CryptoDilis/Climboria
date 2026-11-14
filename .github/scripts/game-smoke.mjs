@@ -337,6 +337,14 @@ try {
     northSky.rays?.length!==4||northSky.rays.some(ray=>!ray.hit||ray.distance<=0||ray.distance>31))
     errors.push('Cave north-annex sky gap not sealed by actual opaque rock geometry: '+JSON.stringify(northSky));
   console.log('Cave north-annex sky occlusion ray audit:',JSON.stringify(northSky));
+  const northPalette=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveNorthAnnexPaletteAudit?.()??null);
+  if(!northPalette?.batched||northPalette.rockCount!==24||!northPalette.hasTint||
+    !Number.isFinite(northPalette.shadeRange)||northPalette.shadeRange<.13||
+    northPalette.shadeRange>.22||!northPalette.backstopIntact||
+    !northPalette.lavenderFixed||!northPalette.cyanFixed||
+    northPalette.lavenderIntensity!==1.3||northPalette.cyanIntensity!==1.45)
+    errors.push('North annex over-lit pale rock palette or material regression: '+JSON.stringify(northPalette));
+  console.log('North annex subdued lighting and tinted rock batch:',JSON.stringify(northPalette));
   const sanctuaryPillars=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryPillarCollisionAudit?.()??null);
   if(!sanctuaryPillars?.ok||sanctuaryPillars.pillars?.length!==12||
     sanctuaryPillars.pillars.some(p=>!p.collider||!p.blocked)||sanctuaryPillars.walkwayBlocked?.length)
