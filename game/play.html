@@ -1497,8 +1497,15 @@ let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={le
 // neutral arm-at-sides rest pose instead, without modifying the GLB's actual
 // authored running, swimming or combat animation data.
 function poseMeshyNeutralRest(root){
+ // Three.js GLTFLoader replaces punctuation in node names. Resolve the
+ // original Meshy Mixamo bones by normalized full name, never partial match.
+ const findBone=name=>{
+  const canonical=value=>value.toLowerCase().replace(/[^a-z0-9]/g,'');
+  let result=null;root.traverse(o=>{if(o.isBone&&canonical(o.name)===canonical(name))result=o});
+  return result;
+ };
  const turn=(boneName,childName,target)=>{
-  const bone=root.getObjectByName(boneName),child=root.getObjectByName(childName);
+  const bone=findBone(boneName),child=findBone(childName);
   if(!bone||!child||child.parent!==bone)return false;
   root.updateWorldMatrix(true,true);
   const current=child.getWorldPosition(new T3.Vector3()).sub(bone.getWorldPosition(new T3.Vector3()));
@@ -1524,7 +1531,7 @@ function cacheAssetRig(root){
   const n=o.name.toLowerCase();
   if(/hip|pelvis/.test(n))assetRig.hips={bone:o,baseQuaternion:o.quaternion.clone()};
   if(/spine|chest/.test(n)&&!assetRig.spine)assetRig.spine={bone:o,baseQuaternion:o.quaternion.clone()};
-  if(/(?:^|:)head$/.test(n)&&!assetRig.head)assetRig.head={bone:o,baseQuaternion:o.quaternion.clone()};
+  if(/(?:^|[_:])head$/.test(n)&&!assetRig.head)assetRig.head={bone:o,baseQuaternion:o.quaternion.clone()};
   if(/thigh|upleg|calf|lowerleg|knee|leg/.test(n))assetRig.legs.push({bone:o,base:o.rotation.x,baseQuaternion:o.quaternion.clone(),side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.legs.length%2? -1:1});
   if(/upperarm|lowerarm|arm|shoulder|forearm/.test(n))assetRig.arms.push({bone:o,base:o.rotation.x,baseY:o.rotation.y,baseZ:o.rotation.z,baseQuaternion:o.quaternion.clone(),shoulder:/shoulder/.test(n),lower:/lower|forearm/.test(n),side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.arms.length%2? -1:1});
  });
