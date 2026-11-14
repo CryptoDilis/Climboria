@@ -111,7 +111,7 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
   assert.match(good.quoteResults.innerHTML, /Estimated output/);
   assert.match(good.quoteResults.innerHTML, /Not requested/);
   assert.match(good.quoteResults.innerHTML, /Minimum received/);
-  assert.match(good.quoteResults.innerHTML, /0\\.495/);
+  assert.match(good.quoteResults.innerHTML, /0\.495/);
   const noMinimum = await exercise({ inAmount: "100000000", outAmount: "500000", requestId: "no-minimum" });
   assert.match(noMinimum.quoteResults.innerHTML, /Unavailable · not verified/);
   assert.match(noMinimum.quoteStatus.textContent, /minimum received was not verified/i);
@@ -119,7 +119,7 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
   assert.match(badMinimum.quoteResults.innerHTML, /Unavailable · not verified/);
   const confirmed = await exercise({ inAmount: "100000000", outAmount: "500000", otherAmountThreshold: "495000", slippageBps: 50, requestId: "confirmed" }, "50");
   assert.match(confirmed._requested[0], /slippageBps=50/);
-  assert.match(confirmed.quoteResults.innerHTML, /0\\.50% · provider reported/);
+  assert.match(confirmed.quoteResults.innerHTML, /0\.50% · provider reported/);
   const unconfirmed = await exercise({ inAmount: "100000000", outAmount: "500000", otherAmountThreshold: "495000", slippageBps: 100, requestId: "wrong" }, "50");
   assert.match(unconfirmed.quoteStatus.textContent, /Quote unavailable/);
   assert.match(unconfirmed.quoteResults.innerHTML, /did not confirm the selected slippage/);
