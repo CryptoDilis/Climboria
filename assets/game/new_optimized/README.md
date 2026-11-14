@@ -12,7 +12,7 @@
 ## Import steps (owner)
 1. Download the five files `Climboria_Meshy_Assets_Pack_01.zip` through `Pack_05.zip` from the ChatGPT artifact message, **not** the old raw models.
 2. On GitHub, open branch `game/meshy-asset-pipeline-2026-11-15` and upload each ZIP to **`assets/game/new_optimized/`**, without renaming.
-3. Workflow `Game Import Verified Optimized Meshy GLB Packs` validates bounded GLB assets and imports the individual GLB files, deleting the ZIPs from GitHub. Its bot pushes may not retrigger default PR CI; add a manual docs checkpoint commit afterward if needed.
+3. Workflow `Game Import Optimized Meshy GLB Packs` validates bounded GLB assets and imports the individual GLB files, deleting the ZIPs from GitHub. Its bot pushes may not retrigger default PR CI; add a manual docs checkpoint commit afterward if needed.
 4. Check the Game-only PR #466 against exact-head Validate, Browser Smoke, full Jarrell's Peak gameplay, guard/source visual QA, all needed new biome snapshots, cave/shore route, 100 chests and 12 Sanctuary pillars.
 5. Confirm proper art rights and physical Android FPS/thermals. Only then change `manifest.json.enabled` to true on the reviewed branch and merge when full Game CI and Pages acceptance pass. Never force release on merely green static checks.
 
@@ -27,3 +27,11 @@
 ## Release status
 **NOT LIVE / NOT INTEGRATED**, because no binary ZIP has been transferred into GitHub and no production/browser/device acceptance has passed.
 Tracking: issue #463, draft PR #466, `docs/GAME_DEVELOPMENT_RECORD.md`.
+
+## Verified importer and loader checks (2026-11-15)
+
+- Exact file allowlist: `source_manifest.json` — 44 optimized GLBs with known bytes, SHA-256, triangle counts, image counts and assigned ZIP pack. It is not copied from untrusted archive metadata during import.
+- Import script: `game/scripts/verify-meshy-asset-packs.py` validates all five archives **before writing any binary**. Local usage: `python3 game/scripts/verify-meshy-asset-packs.py --archives`, then `--files`; `--manifest` checks the committed allowlist without binaries.
+- Import workflow: `.github/workflows/game-import-meshy-asset-packs.yml`; waits for all five ZIPs, tests and commits all 44 verified GLBs, removes ZIP files, and retains a disabled runtime manifest.
+- PR checks: `.github/workflows/game-meshy-pipeline-checks.yml` invokes `node game/scripts/test-meshy-world-assets.mjs` and manifest validation. Passing here **does not** substitute for actual Game visual QA, anti-obstruction, FPS and hardware tests.
+- After bot binary import, issue a user-authored Game documentation checkpoint commit to retrigger standard PR CI. Do not change `enabled` prematurely.
