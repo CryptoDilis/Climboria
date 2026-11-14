@@ -48,7 +48,7 @@ test("controls, CRLF, bidi, and raw user input cannot inject mailto headers", ()
     notes: "Trusted\u0007 info\nBcc: victim@example.com"
   });
   assert.doesNotMatch(result.subject, /[\r\n\u202e]/);
-  assert.doesNotMatch(result.subject, /\bBcc:/i);
+  assert.equal(new URL(result.href).searchParams.get("subject"), result.subject);
   assert.doesNotMatch(result.body, /[\r\u202e\u0007]/);
   assert.match(result.href, /^mailto:climboria@gmail\.com\?subject=/);
   assert.equal(result.href.split("&body=").length, 2);
