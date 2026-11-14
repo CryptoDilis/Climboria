@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { SwapOrderStore } from "../src/order-store.mjs";
 import { makeFixture } from "./solana-v0-fixture.mjs";
+import { encodeBase58 } from "../src/transaction-validation.mjs";
 
 function createStore() {
   const values = new Map();
@@ -63,7 +64,11 @@ test("stores a verified unsigned order and atomically permits only one claim", a
   assert.equal(claimed.status, 200);
   assert.deepEqual(await claimed.json(), {
     ok: true,
-    record: { requestId: "jupiter-request-123", lastValidBlockHeight: 12345 }
+    record: {
+      requestId: "jupiter-request-123",
+      lastValidBlockHeight: 12345,
+      claimedSignature: encodeBase58(fixture.takerSignature)
+    }
   });
   const replay = await claimOrder(object, fixture.signed);
   assert.equal(replay.status, 409);
@@ -160,21 +165,86 @@ test("refuses to claim an expired stored order", async () => {
   assert.equal(response.status, 410);
 });
 
-test("settles only a claimed order and preserves terminal replay protection", async () => {
-  const fixture = makeFixture(1);
-  const { object } = createStore();
-  assert.equal((await storeOrder(object, fixture)).status, 201);
-  assert.equal((await claimOrder(object, fixture.signed)).status, 200);
-  const settled = await object.fetch(new Request("https://order-store/settle", {
+async function settleOrder(object, state, signature) {
+  return object.fetch(new Request("https://order-store/settle", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ state: "completed", signature: "5".repeat(88) })
+    body: JSON.stringify({ state, signature })
   }));
-  assert.equal(settled.status, 200);
-  const replay = await claimOrder(object, fixture.signed);
-  assert.equal(replay.status, 409);
+}
+
+test("stores the exact Ed25519 transaction ID at claim time, not an upstream-provided ID", async () => {
+  const fixture = makeFixture(1);
+  const { object, storage } = createStore();
+  assert.equal((await storeOrder(object, fixture)).status, 201);
+  const claimed = await claimOrder(object, fixture.signed);
+  assert.equal(claimed.status, 200);
+  const signed = encodeBase58(fixture.takerSignature);
+  assert.equal((await claimed.json()).record.claimedSignature, signed);
+  const record = await storage.get("order");
+  assert.equal(record.state, "executing");
+  assert.equal(record.claimedSignature, signed);
+  assert.equal((await claimOrder(object, fixture.signed)).status, 409);
 });
 
+test("provider Success is recorded only as unconfirmed; a claimed order never returns to ready", async () => {
+  const fixture = makeFixture(1);
+  const { object, storage } = createStore();
+  assert.equal((await storeOrder(object, fixture)).status, 201);
+  assert.equal((await claimOrder(object, fixture.signed)).status, 200);
+  const signature = encodeBase58(fixture.takerSignature);
+  const settled = await settleOrder(object, "provider_success_unconfirmed", signature);
+  assert.equal(settled.status, 200);
+  assert.deepEqual(await settled.json(), { ok: true, state: "provider_success_unconfirmed" });
+  assert.equal((await storage.get("order")).state, "provider_success_unconfirmed");
+  assert.equal((await storage.get("order")).signature, signature);
+  assert.equal((await claimOrder(object, fixture.signed)).status, 409);
+  assert.equal((await settleOrder(object, "provider_success_unconfirmed", signature)).status, 409);
+});
+
+test("completed state cannot be written from an unaudited Jupiter /settle caller", async () => {
+  const fixture=makeFixture(1);
+  const { object, storage }=createStore();
+  await storeOrder(object,fixture);
+  await claimOrder(object,fixture.signed);
+  const signature=encodeBase58(fixture.takerSignature);
+  const response=await settleOrder(object,"completed",signature);
+  assert.equal(response.status,400);
+  assert.match((await response.json()).error,/Invalid terminal order state/);
+  assert.equal((await storage.get("order")).state,"executing");
+});
+
+test("mismatched or missing signature cannot fabricate provider success or cross-order settlement", async () => {
+  const fixture=makeFixture(1);
+  const signature=encodeBase58(fixture.takerSignature);
+  const mismatches=[
+    "5".repeat(88),"not-a-signature","",null,undefined,5
+  ];
+  for (const invalid of mismatches) {
+    const {object,storage}=createStore();
+    await storeOrder(object,fixture);
+    await claimOrder(object,fixture.signed);
+    const attempted=await settleOrder(object,"provider_success_unconfirmed",invalid);
+    assert.equal(attempted.status,409,String(invalid));
+    assert.equal((await storage.get("order")).state,"executing");
+    const valid=await settleOrder(object,"provider_success_unconfirmed",signature);
+    assert.equal(valid.status,200);
+  }
+});
+
+test("explicit provider failure and unknown outcome remain terminal to replay, but cannot store another signature", async () => {
+  const fixture=makeFixture(1);
+  for (const state of ["failed","uncertain"]) {
+    const {object,storage}=createStore();
+    await storeOrder(object,fixture);
+    await claimOrder(object,fixture.signed);
+    assert.equal((await settleOrder(object,state,"5".repeat(88))).status,409);
+    assert.equal((await storage.get("order")).state,"executing");
+    assert.equal((await settleOrder(object,state,null)).status,200);
+    assert.equal((await storage.get("order")).state,state);
+    assert.equal((await claimOrder(object,fixture.signed)).status,409);
+  }
+});
 
 test("concurrent claims atomically allow exactly one execution", async () => {
   const fixture = makeFixture(2);

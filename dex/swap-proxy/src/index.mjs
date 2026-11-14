@@ -1,5 +1,6 @@
 import { SwapOrderStore } from "./order-store.mjs";
 import { parseSolanaV0Transaction, validateJupiterOrderMetadata } from "./transaction-validation.mjs";
+import { classifyJupiterExecutionOutcome } from "./jupiter-execution-outcome-policy.mjs";
 import { resolveTransactionLookups, verifyJupiterTokenAccounts, validateRpcUrl } from "./solana-rpc.mjs";
 import { validateJupiterV6Transaction } from "./jupiter-v6-policy.mjs";
 import { requireReviewedJupiterV6CpiSemantics } from "./jupiter-v6-cpi-review.mjs";
@@ -438,7 +439,10 @@ async function handleExecute(request, env) {
     body: JSON.stringify({ signedTransaction })
   });
   const claim = await claimResponse.json().catch(() => null);
-  if (!claimResponse.ok || claim?.ok !== true || typeof claim.record?.requestId !== "string") {
+  if (!claimResponse.ok || claim?.ok !== true ||
+      typeof claim.record?.requestId !== "string" ||
+      typeof claim.record?.claimedSignature !== "string" ||
+      !/^[1-9A-HJ-NP-Za-km-z]{80,100}$/.test(claim.record.claimedSignature)) {
     return json({ error: claim?.error || "Order validation or one-time claim failed" }, claimResponse.status || 503);
   }
   const payload = { signedTransaction, requestId: claim.record.requestId };
@@ -460,60 +464,60 @@ async function handleExecute(request, env) {
     });
     return response.ok;
   };
-  let response;
+  let response, data;
   try {
     response = await upstream("/execute", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload)
     }, env);
+    // Invalid/oversized Jupiter JSON is also UNKNOWN after submission, not
+    // a generic retryable 503 that might encourage a second transaction.
+    data = await readBoundedProviderJson(response, 65536);
   } catch {
-    // A transport timeout/reset can happen after Jupiter has accepted the
-    // transaction. Never leave the UI with a generic retry-looking error.
-    // The order was already atomically claimed, so it remains replay-locked
-    // even if this best-effort terminal-state write also fails.
     const settlementRecorded = await settle("uncertain").catch(() => false);
     return json({
-      error: "Jupiter execution outcome is unknown; the order is locked against replay. Check wallet activity before taking further action.",
+      error: "Jupiter execution outcome is unknown; the order is locked against replay. Check on-chain wallet activity before taking further action.",
       settlementRecorded
     }, 502);
   }
-  const data = await readBoundedProviderJson(response, 65536);
   if (!response.ok) {
-    // A provider HTTP error is not proof that no execution occurred. Preserve
-    // the replay lock and tell the caller whether the terminal state was stored.
+    // A Jupiter HTTP error does not prove that no transaction landed.
     const settlementRecorded = await settle("uncertain").catch(() => false);
     return json({
-      error: "Jupiter execution request failed; order is locked against replay",
+      error: "Jupiter execution request failed; outcome is unknown and order remains replay-locked",
       upstreamStatus: response.status,
-      details: data?.error || data?.message || null,
       settlementRecorded
     }, response.status >= 400 && response.status < 500 ? response.status : 502);
   }
-  if (!data || !["Success", "Failed"].includes(data.status) || !Number.isInteger(data.code)) {
-    await settle("uncertain");
-    return json({ error: "Jupiter returned an unknown execution status; order is locked against replay" }, 502);
+  const outcome = classifyJupiterExecutionOutcome(data, claim.record.claimedSignature);
+  if (outcome.settlementState === "uncertain") {
+    const settlementRecorded = await settle("uncertain").catch(() => false);
+    return json({
+      error: "Jupiter returned an unknown or mismatched transaction result; the order is replay-locked. Verify the exact transaction on-chain.",
+      settlementRecorded
+    }, 502);
   }
-  if (data.status === "Success" &&
-      (data.code !== 0 || typeof data.signature !== "string" ||
-       !/^[1-9A-HJ-NP-Za-km-z]{80,100}$/.test(data.signature))) {
-    await settle("uncertain", typeof data.signature === "string" ? data.signature : null);
-    return json({ error: "Jupiter returned an incomplete or inconsistent success result; order is locked against replay" }, 502);
+  if (!await settle(outcome.settlementState, outcome.signature).catch(() => false)) {
+    return json({
+      error: "Jupiter responded but the order result could not be durably recorded; verify the exact transaction on-chain before further action"
+    }, 503);
   }
-  const finalState = data.status === "Success" ? "completed" : "failed";
-  if (!await settle(finalState, typeof data.signature === "string" ? data.signature : null)) {
-    return json({ error: "Jupiter responded but the order result could not be durably recorded; check wallet activity before any further action" }, 503);
-  }
+
+  // Provider Success is only an unconfirmed observation, never proof of
+  // finalized balances or a completed swap. A separately reviewed chain
+  // reconciliation path MUST make that determination before enabling trading.
   return json({
-    status: data.status,
-    code: data.code,
-    signature: typeof data.signature === "string" ? data.signature : null,
-    totalInputAmount: data.totalInputAmount || null,
-    totalOutputAmount: data.totalOutputAmount || null,
-    inputAmountResult: data.inputAmountResult || null,
-    outputAmountResult: data.outputAmountResult || null,
-    error: data.error || null
-  });
+    status: outcome.userStatus,
+    providerStatus: outcome.providerStatus,
+    code: outcome.providerCode,
+    signature: outcome.signature,
+    confirmation: "unverified",
+    settledOnChain: false,
+    message: outcome.settlementState === "provider_success_unconfirmed"
+      ? "Jupiter reported success, but the swap is NOT independently confirmed on-chain. Verify your wallet before taking further action."
+      : "Jupiter reported a failure. The transaction outcome still requires on-chain verification."
+  }, outcome.settlementState === "provider_success_unconfirmed" ? 202 : 200);
 }
 export default {
   async fetch(request, env) {

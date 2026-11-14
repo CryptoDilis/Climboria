@@ -1,5 +1,6 @@
 import {
   decodeBase58,
+  encodeBase58,
   parseSolanaV0Transaction,
   validateSignedOrderTransaction,
   validateUnsignedOrderTransaction
@@ -121,16 +122,24 @@ export class SwapOrderStore {
           taker: record.taker
         });
         if (!valid.ok) return json({ error: valid.error }, 400);
+        // Bind the one-time order claim to the actual authenticated
+        // transaction ID (the first signature) before ANY upstream execute.
+        // The signature cannot be chosen by the Jupiter response or caller:
+        // validateSignedOrderTransaction already verified its Ed25519 proof.
+        const claimedSignature = encodeBase58(
+          parseSolanaV0Transaction(body.signedTransaction).signatures[0]
+        );
         const claimed = this.ctx.storage.transactionSync(() => {
           const current = this.ctx.storage.kv.get("order");
           if (!current || current.expiresAt <= Date.now()) return { status: 410, error: "Order has expired" };
           if (current.state !== "ready") return { status: 409, error: "Order has already been claimed and cannot be replayed" };
-          this.ctx.storage.kv.put("order", { ...current, state: "executing", claimedAt: Date.now() });
+          this.ctx.storage.kv.put("order", { ...current, state: "executing", claimedAt: Date.now(), claimedSignature });
           return {
             status: 200,
             record: {
               requestId: current.requestId,
-              lastValidBlockHeight: current.lastValidBlockHeight
+              lastValidBlockHeight: current.lastValidBlockHeight,
+              claimedSignature
             }
           };
         });
@@ -140,18 +149,31 @@ export class SwapOrderStore {
 
       if (url.pathname === "/settle" && request.method === "POST") {
         const body = await readBody(request);
-        if (!["completed", "failed", "uncertain"].includes(body?.state)) {
+        // Provider "Success" is not finalized settlement. The DO cannot
+        // mark completed until an independently reviewed chain-verification
+        // endpoint exists; do not leave a shortcut to call /settle completed.
+        if (!["provider_success_unconfirmed", "failed", "uncertain"].includes(body?.state)) {
           return json({ error: "Invalid terminal order state" }, 400);
         }
         const settled = this.ctx.storage.transactionSync(() => {
           const current = this.ctx.storage.kv.get("order");
           if (!current) return false;
-          if (current.state !== "executing") return false;
+          if (current.state !== "executing" ||
+              typeof current.claimedSignature !== "string" ||
+              !/^[1-9A-HJ-NP-Za-km-z]{80,100}$/.test(current.claimedSignature)) return false;
+          // A returned provider signature must match the authenticated
+          // claimed signature byte-for-byte; no arbitrary signatures or
+          // cross-order receipts, even if Jupiter reports Success.
+          const suppliedSignature = body.signature === undefined || body.signature === null
+            ? null : body.signature;
+          if (suppliedSignature !== null && suppliedSignature !== current.claimedSignature) return false;
+          if (body.state === "provider_success_unconfirmed" &&
+              suppliedSignature !== current.claimedSignature) return false;
           this.ctx.storage.kv.put("order", {
             ...current,
             state: body.state,
             settledAt: Date.now(),
-            signature: typeof body.signature === "string" ? body.signature.slice(0, 100) : null
+            signature: suppliedSignature
           });
           return true;
         });
