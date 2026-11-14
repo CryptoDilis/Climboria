@@ -9,6 +9,10 @@ import { readBoundedRequestJson } from "./bounded-request-json.mjs";
 
 const MAX_ORDER_AGE_MS = 120_000;
 const ORDER_CLEANUP_MS = 86_400_000;
+// Preserve claimed, provider-unconfirmed and unknown-outcome replay evidence
+// long enough for operator investigation. This is finite retention, NOT
+// indefinite idempotency or an independently authenticated chain record.
+const CLAIMED_ORDER_RETENTION_MS = 30 * 86_400_000;
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -133,7 +137,11 @@ export class SwapOrderStore {
           const current = this.ctx.storage.kv.get("order");
           if (!current || current.expiresAt <= Date.now()) return { status: 410, error: "Order has expired" };
           if (current.state !== "ready") return { status: 409, error: "Order has already been claimed and cannot be replayed" };
-          this.ctx.storage.kv.put("order", { ...current, state: "executing", claimedAt: Date.now(), claimedSignature });
+          const claimedAt = Date.now();
+          this.ctx.storage.kv.put("order", {
+            ...current, state: "executing", claimedAt, claimedSignature,
+            retainUntil: claimedAt + CLAIMED_ORDER_RETENTION_MS
+          });
           return {
             status: 200,
             record: {
@@ -199,6 +207,37 @@ export class SwapOrderStore {
   }
 
   async alarm() {
-    await this.ctx.storage.deleteAll();
+    // A 24h cleanup is appropriate for an unclaimed, short-lived order, but
+    // deleting an unresolved claimed order at 24h destroys the only durable
+    // claim/signature/replay evidence while Solana/provider finality may
+    // still need manual investigation. Retain claimed orders for 30 days.
+    const record = await this.ctx.storage.get("order");
+    if (!record || record.state === "ready") {
+      await this.ctx.storage.deleteAll();
+      return;
+    }
+    const now = Date.now();
+    let retainUntil = record.retainUntil;
+    if (!Number.isSafeInteger(retainUntil) || retainUntil <= 0) {
+      // Backward-compatible migration for previously claimed records whose
+      // schema predates retainUntil; fail toward retention, not early deletion.
+      const base = Number.isSafeInteger(record.claimedAt) &&
+        record.claimedAt > 0 ? record.claimedAt : now;
+      retainUntil = Math.max(now + ORDER_CLEANUP_MS, base + CLAIMED_ORDER_RETENTION_MS);
+      this.ctx.storage.transactionSync(() => {
+        const current = this.ctx.storage.kv.get("order");
+        if (current && current.state !== "ready" &&
+            (!Number.isSafeInteger(current.retainUntil) || current.retainUntil <= 0)) {
+          this.ctx.storage.kv.put("order", { ...current, retainUntil });
+        }
+      });
+    }
+    if (now >= retainUntil) {
+      await this.ctx.storage.deleteAll();
+      return;
+    }
+    // A failing schedule must throw so Cloudflare retries this alarm; never
+    // delete unresolved evidence merely because the reschedule failed.
+    await this.ctx.storage.setAlarm(retainUntil);
   }
 }
