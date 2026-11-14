@@ -61,5 +61,9 @@ jobs:
             climboria-jarrell-mobile-hero-smoke.png
             climboria-lheiz-desktop-hero-smoke.png
             climboria-lheiz-mobile-hero-smoke.png
+            climboria-jarrell-desktop-creator-preview.png
+            climboria-jarrell-mobile-creator-preview.png
+            climboria-lheiz-desktop-creator-preview.png
+            climboria-lheiz-mobile-creator-preview.png
           if-no-files-found: warn
           retention-days: 7
