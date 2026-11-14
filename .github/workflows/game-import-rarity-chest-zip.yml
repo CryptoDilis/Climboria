@@ -18,6 +18,8 @@ jobs:
     if: github.ref == 'refs/heads/game/chest-rarity-glb-models-2026-11-15'
     runs-on: ubuntu-latest
     timeout-minutes: 6
+    outputs:
+      verified_commit_sha: ${{ steps.publish.outputs.commit_sha }}
     steps:
       - name: Checkout exact owner-uploaded Game branch
         uses: actions/checkout@v4
@@ -64,6 +66,7 @@ jobs:
       - name: Execute exact Game GLB release validator
         run: node game/scripts/verify-rarity-chests.mjs
       - name: Commit five GLBs only and remove temporary ZIP
+        id: publish
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -71,6 +74,7 @@ jobs:
           git rm -- assets/chests/Climboria_Five_Rarity_Chests_Optimized.zip
           git commit -m "assets(game): install five verified optimized rarity chest GLBs"
           git push origin HEAD:refs/heads/game/chest-rarity-glb-models-2026-11-15
+          echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   # Bot-authored branch pushes do not automatically trigger other GitHub
   # workflows. Run browser QA from the ACTUAL imported-binary commit here.
@@ -79,10 +83,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 22
     steps:
-      - name: Checkout latest committed five-GLB Game branch
+      - name: Checkout exact SHA of the verified five-GLB binary commit
         uses: actions/checkout@v4
         with:
-          ref: game/chest-rarity-glb-models-2026-11-15
+          ref: ${{ needs.verify-unpack-and-commit.outputs.verified_commit_sha }}
           persist-credentials: false
       - name: Node 22
         uses: actions/setup-node@v4
@@ -90,6 +94,7 @@ jobs:
           node-version: "22"
       - name: Confirm imported GitHub assets at new branch HEAD
         run: |
+          test "$(git rev-parse HEAD)" = "${{ needs.verify-unpack-and-commit.outputs.verified_commit_sha }}"
           git log -1 --format='%H %s'
           node game/scripts/verify-rarity-chests.mjs
           test ! -e assets/chests/Climboria_Five_Rarity_Chests_Optimized.zip
