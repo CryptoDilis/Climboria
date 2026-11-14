@@ -1,5 +1,17 @@
 # Climboria Game Development Record
 
+## PRODUCTION VERIFIED: Five optimized rarity chests are LIVE (2026-11-15 PHT)
+
+**Release complete.** The five Meshy rarity GLBs (Common, Uncommon, Rare, Epic, Legendary) are deployed to `climboria.fun/game/` with the same 100 chest locations and unchanged reward odds. [Source merge PR #456](https://github.com/CryptoDilis/Climboria/pull/456) = `259ba7735edc6e1a54a8321a2e806443830041ee`. [GitHub Pages release #43642604895](https://github.com/CryptoDilis/Climboria/actions/runs/43642604895) **SUCCESS on that exact SHA**. All [five required source-PR checks](https://github.com/CryptoDilis/Climboria/pull/456/checks) **SUCCESS** (Validate, Browser Smoke, Chest Browser Acceptance, Jarrell/Lheiz Regression, Full Jarrell's Peak Gameplay).
+
+**Independent real production CDN byte-level proof:** [Game Live Chest CDN Verification #43642973648](https://github.com/CryptoDilis/Climboria/actions/runs/43642973648) **SUCCESS**. The test fetched HTTPS `https://climboria.fun/game/play.html` (contains `CHEST_MODEL_PATHS`), and all five publicly served `https://climboria.fun/assets/chests/Climboria_Chest_<Tier>.glb` files; returned HTTP 200 and matched glTF2 headers, exact size and exact SHA-256 for each model. This is **actual custom-domain verification**, not merely a green Pages build. Its reusable source script `game/scripts/verify-live-chest-assets.mjs` and weekly Game-only workflow `.github/workflows/game-live-chest-assets.yml` were [merged in Game QA PR #459](https://github.com/CryptoDilis/Climboria/pull/459) as commit `b67b69ecc5e3e15ce815dcd862eac5ee72f47822` after the live asset test + Validate succeeded. The extra full gameplay smoke for this QA-only PR was still in progress at the time it merged; QA PR changed no playable Game code, and the actual chest release already passed full Game smoke before merging.
+
+**Visual QA:** GitHub importer [#43641589153](https://github.com/CryptoDilis/Climboria/actions/runs/43641589153) captured ten images (five rarity variants × desktop/mobile). Models are visibly distinct; Rare chest is partly occluded by decorative camp NPCs in its screenshot. That visual clutter is an optional polish task, **not a failed 3D load or correctness test**.
+
+**Exact next Game tasks:** (a) confirm the latest Pages deployment after QA/record commits and monitor live custom-domain chest assets; (b) optional improve Rare chest screenshot angle and world placement so players can see the chest behind camp props clearly; (c) continue **separate draft Game workstreams only**: optimized Ella hero PR #435 (needs binary/acceptance), Sanctuary NPC + Arcane Cart PR #451 (new NPC/optional vendor state to verify), real multiplayer room/PvP foundation PR #453 (not yet live). Never alter DEX/Swap/Launchpad/ClimbX in this chat. Maintain this record for each change with commits, tests, unresolved blockers and exact next work.
+
+---
+
 ## VERIFIED MERGE AND PAGES DEPLOY — Five playable rarity chests (2026-11-15 PHT)
 
 **GAME ONLY; all five owner-supplied chest GLBs are MERGED TO MAIN and deployed by successful GitHub Pages build.** No DEX/Swap/Launchpad/ClimbX edits.
