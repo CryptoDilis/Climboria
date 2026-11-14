@@ -890,7 +890,7 @@ async function loadGraduations(){
  const now=Date.now(),since=now-86400000,days=[utcDayOffset(0),utcDayOffset(1)];
  // Each UTC-day file is optional. One 404 must not discard verified rows from the other day.
  // Never promote partial coverage to a complete 24h feed, and never synthesize rows.
- const dayResults=await Promise.allSettled(days.map(day=>fetch('https://pumpdata.fun/graduations/'+day+'.json',{headers:{accept:'application/json'}}).then(r=>{if(!r.ok)throw new Error('Graduation feed unavailable');return r.json()})));
+ const dayResults=await Promise.allSettled(days.map(day=>fetch('https://pumpdata.fun/graduations/'+day+'.json',{headers:{accept:'application/json'}}).then(async r=>{if(!r.ok)throw new Error('Graduation feed unavailable');const data=await r.json();if(!Array.isArray(data)&&!Array.isArray(data?.graduations)&&!Array.isArray(data?.items)&&!Array.isArray(data?.data))throw new Error('Invalid graduation feed format');return data})));
  const available=dayResults.filter(result=>result.status==='fulfilled').map(result=>result.value);
  if(!available.length)throw new Error('Graduation feed unavailable for both UTC dates');
  const rows=available.flatMap(data=>Array.isArray(data)?data:(Array.isArray(data?.graduations)?data.graduations:Array.isArray(data?.items)?data.items:Array.isArray(data?.data)?data.data:[]));
