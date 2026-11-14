@@ -1,0 +1,49 @@
+name: Game Meshy Asset Pipeline Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'game/meshy-world-assets.js'
+      - 'game/scripts/test-meshy-world-assets.mjs'
+      - 'game/scripts/verify-meshy-asset-packs.py'
+      - 'assets/game/new_optimized/**'
+      - '.github/workflows/game-meshy-pipeline-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mesh-assets-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Game-only optional Meshy code syntax
+        run: node --check game/meshy-world-assets.js
+      - name: Unit test mobile request cap, disabled manifest and path safety
+        run: node game/scripts/test-meshy-world-assets.mjs
+      - name: Validate 44 exact approved GLB hashes in immutable source manifest
+        run: python3 game/scripts/verify-meshy-asset-packs.py --manifest
+      - name: Validate extracted assets if already imported
+        shell: bash
+        run: |
+          if test -f 'assets/game/new_optimized/Meshy_AI_Medieval_Guards_1114220324_texture.glb'; then
+            python3 game/scripts/verify-meshy-asset-packs.py --files
+          else
+            echo 'Owner optimized binaries not in repository yet; runtime manifest must remain disabled'
+          fi
+      - name: Ensure gameplay asset gate stays off until visual/performance approval
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          conf=json.loads(Path('assets/game/new_optimized/manifest.json').read_text())
+          if conf.get('enabled') is not False:
+              raise SystemExit('Meshy models cannot be enabled without model-specific browser and FPS acceptance')
+          print('PASS safe rollout gate disabled')
+          PY
