@@ -217,7 +217,7 @@ test("proxies quote-only orders with server-side Jupiter key", async () => {
     globalThis.fetch = async (url, init) => {
       target = String(url);
       assert.equal(init.headers["x-api-key"], "test-server-key");
-      return Response.json({ requestId: "quote-request-123", inAmount: "100000000", outAmount: "1234567", otherAmountThreshold: "1200000", slippageBps: 50, router: "metis", feeBps: 0 });
+      return Response.json({ requestId: "quote-request-123", inAmount: "100000000", outAmount: "1234567", otherAmountThreshold: "1230000", slippageBps: 50, router: "metis", feeBps: 0 });
     };
     const req = new Request("https://worker.test/api/swap/quote?inputMint=" + valid + "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000&slippageBps=50", { headers: { origin } });
     const res = await worker.fetch(req, env);
@@ -226,7 +226,7 @@ test("proxies quote-only orders with server-side Jupiter key", async () => {
     assert.match(target, /slippageBps=50/);
     const quote = await res.json();
     assert.equal(quote.outAmount, "1234567");
-    assert.equal(quote.otherAmountThreshold, "1200000");
+    assert.equal(quote.otherAmountThreshold, "1230000");
     assert.equal(quote.slippageBps, 50);
   } finally { globalThis.fetch = originalFetch; }
 });
@@ -284,6 +284,37 @@ test("rejects malformed requested slippage and mismatched confirmed custom slipp
     const res = await worker.fetch(new Request(target + "&slippageBps=50", { headers: { origin } }), env);
     assert.equal(res.status, 502);
     assert.match((await res.json()).error, /requested slippage/i);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("rejects provider-confirmed custom slippage when minimum received violates the requested floor", async () => {
+  const originalFetch = globalThis.fetch;
+  const target = "https://worker.test/api/swap/quote?inputMint=" + valid +
+    "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000&slippageBps=50";
+  try {
+    for (const [label, threshold, expectedStatus] of [
+      ["attacker minimum of one raw unit", "1", 502],
+      ["one unit below exact 50-bps floor", "994999", 502],
+      ["missing minimum", undefined, 502],
+      ["unparseable minimum", "NaN", 502],
+      ["exact floor", "995000", 200],
+      ["stronger minimum", "995001", 200]
+    ]) {
+      globalThis.fetch = async () => Response.json({
+        requestId: "quote-request-123", inAmount: "100000000",
+        outAmount: "1000000", slippageBps: 50,
+        ...(threshold === undefined ? {} : { otherAmountThreshold: threshold })
+      });
+      const response = await worker.fetch(new Request(target, { headers: { origin } }), env);
+      assert.equal(response.status, expectedStatus, label);
+      const body = await response.json();
+      if (expectedStatus === 502) {
+        assert.match(body.error, /minimum received.*requested slippage/i, label);
+        assert.equal(body.outAmount, undefined, label + " must not display an inconsistent quote");
+      } else {
+        assert.equal(body.otherAmountThreshold, threshold, label);
+      }
+    }
   } finally { globalThis.fetch = originalFetch; }
 });
 
