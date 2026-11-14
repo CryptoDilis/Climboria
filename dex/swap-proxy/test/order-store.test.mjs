@@ -33,6 +33,8 @@ async function storeOrder(object, fixture, overrides = {}) {
       taker: fixture.taker,
       lastValidBlockHeight: 12345,
       expiresAt: Date.now() + 60_000,
+      minimumOutputRaw: "500",
+      quotedOutputRaw: "900",
       tokenAccountEvidence: {
         contextSlot: 99,
         requestedAmount: "1000",
@@ -77,6 +79,48 @@ test("stores a verified unsigned order and atomically permits only one claim", a
   assert.match((await replay.json()).error, /already been claimed/i);
 });
 
+
+test("persists immutable minimum and quoted output alongside the server-issued order", async () => {
+  const fixture = makeFixture(1);
+  const { object, storage } = createStore();
+  assert.equal((await storeOrder(object, fixture)).status, 201);
+  let record = await storage.get("order");
+  assert.equal(record.minimumOutputRaw, "500");
+  assert.equal(record.quotedOutputRaw, "900");
+  assert.equal((await claimOrder(object, fixture.signed)).status, 200);
+  record = await storage.get("order");
+  assert.equal(record.minimumOutputRaw, "500");
+  assert.equal(record.quotedOutputRaw, "900");
+  assert.equal((await settleOrder(object, "uncertain", undefined)).status, 200);
+  record = await storage.get("order");
+  assert.equal(record.minimumOutputRaw, "500");
+  assert.equal(record.quotedOutputRaw, "900");
+  assert.equal(record.state, "uncertain");
+});
+
+test("refuses missing, malformed, zero, oversized or reversed output evidence BEFORE persisting", async () => {
+  const fixture = makeFixture(1);
+  for (const override of [
+    { minimumOutputRaw: undefined },
+    { quotedOutputRaw: undefined },
+    { minimumOutputRaw: null },
+    { minimumOutputRaw: "0" },
+    { minimumOutputRaw: "01" },
+    { minimumOutputRaw: "-1" },
+    { minimumOutputRaw: "1.2" },
+    { quotedOutputRaw: "0" },
+    { quotedOutputRaw: "000900" },
+    { quotedOutputRaw: "18446744073709551616" },
+    { minimumOutputRaw: "18446744073709551616" },
+    { minimumOutputRaw: "901", quotedOutputRaw: "900" }
+  ]) {
+    const { object, storage } = createStore();
+    const response = await storeOrder(object, fixture, override);
+    assert.equal(response.status, 400, JSON.stringify(override));
+    assert.match((await response.json()).error, /minimum output evidence/i);
+    assert.equal(await storage.get("order"), undefined);
+  }
+});
 
 test("persists finalized account evidence and rejects stale or inconsistent evidence", async () => {
   const fixture = makeFixture(1);
