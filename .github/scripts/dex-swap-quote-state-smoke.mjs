@@ -87,6 +87,9 @@ async function customSlippageResult(ctx,kind) {
       body:JSON.stringify(fixture({slippageBps:50,otherAmountThreshold:'1200000'}))
     });
   });
+  const advanced=page.locator(control).locator('xpath=ancestor::details[1]');
+  if(await advanced.count()&&!(await advanced.evaluate(element=>element.open)))
+    await advanced.locator('summary').click();
   await page.locator(control).selectOption('50');
   await page.locator('#getQuote').click();
   await page.waitForFunction(() =>
