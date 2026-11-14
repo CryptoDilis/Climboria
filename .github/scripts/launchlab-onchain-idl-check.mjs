@@ -87,10 +87,55 @@ export function stripAccountDocs(value) {
 
 
 
+/**
+ * Anchor IDL name tables must be unambiguous. Last-write-wins Map lookup
+ * silently discards duplicate instruction, account and type declarations.
+ * Flag any duplicate or malformed name before schema comparison; errors
+ * intentionally avoid including untrusted provider-provided strings.
+ */
+export function inspectIdlDefinitionNames(idl, label = "IDL") {
+  const problems = [];
+  if (!idl || typeof idl !== "object" || Array.isArray(idl)) {
+    return [label + ": IDL root must be an object"];
+  }
+  for (const group of ["instructions", "accounts", "types"]) {
+    const entries = idl[group];
+    if (entries === undefined && group !== "instructions") continue;
+    if (!Array.isArray(entries)) {
+      problems.push(label + ": " + group + " must be an array");
+      continue;
+    }
+    const seen = new Map();
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i], name = entry?.name;
+      if (!entry || typeof entry !== "object" || Array.isArray(entry) ||
+          typeof name !== "string" || name.length === 0 || name.length > 128 ||
+          !/^[A-Za-z_][A-Za-z_0-9]*$/.test(name)) {
+        problems.push(label + ": " + group + " malformed name at index " + i);
+        continue;
+      }
+      if (seen.has(name)) {
+        problems.push(label + ": duplicate " + group + " name at indices " +
+          seen.get(name) + " and " + i);
+      } else seen.set(name, i);
+    }
+  }
+  return problems;
+}
+
 /** Pure, fail-closed comparison of transaction-critical Anchor instruction and type layouts. */
 export function compareCriticalIdls(repoIdl, liveIdl) {
-  const repoInstructions = new Map(repoIdl.instructions.map(x => [x.name, x]));
-  const liveInstructions = new Map(liveIdl.instructions.map(x => [x.name, x]));
+  const idlNamespaceMismatches = [
+    ...inspectIdlDefinitionNames(repoIdl, "pinned official IDL"),
+    ...inspectIdlDefinitionNames(liveIdl, "live on-chain IDL")
+  ];
+  const definitions = (idl, group) => Array.isArray(idl?.[group])
+    ? idl[group].filter(x => x && typeof x === "object" &&
+      !Array.isArray(x) && typeof x.name === "string")
+    : [];
+  // Even a matching last duplicate does NOT clear an ambiguous namespace.
+  const repoInstructions = new Map(definitions(repoIdl, "instructions").map(x => [x.name, x]));
+  const liveInstructions = new Map(definitions(liveIdl, "instructions").map(x => [x.name, x]));
   const criticalDiscriminatorMismatches = [];
   const criticalAccountMetaMismatches = [], criticalAccountConstraintMismatches = [],
     documentationOnlyAccountMismatches = [], criticalArgumentMismatches = [], criticalInstructionSchemaDetails = [];
@@ -137,16 +182,16 @@ export function compareCriticalIdls(repoIdl, liveIdl) {
       });
     }
   }
-  const repoAccounts = new Map((repoIdl.accounts || []).map(x => [x.name, x]));
-  const liveAccounts = new Map((liveIdl.accounts || []).map(x => [x.name, x]));
+  const repoAccounts = new Map(definitions(repoIdl, "accounts").map(x => [x.name, x]));
+  const liveAccounts = new Map(definitions(liveIdl, "accounts").map(x => [x.name, x]));
   const criticalSchemaMismatches = [], criticalSchemaDetails = [];
   for (const name of CRITICAL_ACCOUNTS) {
     const a = repoAccounts.get(name), b = liveAccounts.get(name);
     if (!a || !b) criticalSchemaMismatches.push(`${name}: account definition missing from ${!a ? "pinned repo IDL" : "live on-chain IDL"}`);
     else if (!same(a, b)) criticalSchemaMismatches.push(`${name}: account discriminator definition differs`);
   }
-  const repoTypes = new Map((repoIdl.types || []).map(x => [x.name, x]));
-  const liveTypes = new Map((liveIdl.types || []).map(x => [x.name, x]));
+  const repoTypes = new Map(definitions(repoIdl, "types").map(x => [x.name, x]));
+  const liveTypes = new Map(definitions(liveIdl, "types").map(x => [x.name, x]));
   for (const name of CRITICAL_TYPES) {
     const a = repoTypes.get(name), b = liveTypes.get(name);
     if (!a && !b) continue;
