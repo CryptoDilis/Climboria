@@ -136,7 +136,8 @@ test("provider load or integrity failure cannot invoke widget", async () => {
   await ui.btn.click();
   assert.equal(called, false);
   assert.equal(ui.created[0].removed, true);
-  assert.match(ui.status.textContent, /could not be verified or loaded/);
+  assert.match(ui.status.textContent, /Provider integration unavailable/);
+  assert.match(ui.status.textContent, /Review outstanding wallet prompts or activity/);
 });
 
 test("both Climboria swap interfaces retain quote-only path and use isolated hosted widget", () => {
