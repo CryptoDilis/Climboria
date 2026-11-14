@@ -39,7 +39,7 @@ def approved():
     data = {}
     for item in source['models']:
         name = item['file']
-        if not isinstance(name, str) or not re.fullmatch(r'[^/\\]+\\.glb', name) or name in data or '..' in name:
+        if not isinstance(name, str) or not name.endswith('.glb') or '/' in name or chr(92) in name or name in data or '..' in name:
             fail('Unsafe or duplicated allowlist name')
         if not isinstance(item.get('bytes'), int) or not 0 < item['bytes'] < MAX_FILE_BYTES:
             fail('Invalid byte budget for ' + name)
