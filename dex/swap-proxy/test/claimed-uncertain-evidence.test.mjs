@@ -86,8 +86,8 @@ test("unknown outcome no longer generates an HTTP error class that can invite au
   for(const reason of reasons){
     const branch=postClaim.indexOf('reason:"'+reason+'"');
     assert.ok(branch>0,"reason="+reason);
-    const ending=postClaim.slice(branch,branch+150);
-    assert.match(ending,/\},202\);/);
+    const ending=postClaim.slice(branch,branch+220);
+    assert.match(ending,/\}\),202\);/);
   }
   assert.match(postClaim,/const settlementRecorded = await settle\("uncertain"\)/);
   assert.match(postClaim,/return json\(\{\s*status: outcome\.userStatus/);
