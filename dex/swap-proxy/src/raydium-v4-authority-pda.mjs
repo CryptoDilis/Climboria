@@ -43,7 +43,7 @@ const SQRT_MINUS_ONE = powMod(2n, (P - 1n) / 4n);
  * compressed Edwards25519 point and for noncanonical/ambiguous encodings.
  * Only a mathematically impossible square root is treated as OFF-curve.
  */
-function isPossiblyOnEd25519Curve(bytes) {
+export function isPossiblyOnEd25519Curve(bytes) {
   if (!(bytes instanceof Uint8Array) || bytes.length !== 32) return true;
   let y = 0n;
   for (let i = 31; i >= 0; i--) {

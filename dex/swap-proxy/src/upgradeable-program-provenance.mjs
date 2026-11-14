@@ -11,8 +11,9 @@ import { decodeBase58, encodeBase58 } from "./transaction-validation.mjs";
 import { validateRpcUrl, readBoundedBody } from "./solana-rpc.mjs";
 import { JUPITER_V6_PROGRAM_ID } from "./jupiter-v6-policy.mjs";
 import { RAYDIUM_V4_PROGRAM_IDS } from "./raydium-v4-direct-evidence.mjs";
+import { deriveUpgradeableProgramDataPda, UPGRADEABLE_BPF_LOADER_ID } from "./upgradeable-programdata-pda.mjs";
 
-export const UPGRADEABLE_BPF_LOADER = "BPFLoaderUpgradeab1e11111111111111111111111";
+export const UPGRADEABLE_BPF_LOADER = UPGRADEABLE_BPF_LOADER_ID;
 const MAX_HEADER_BYTES = 45;
 const PROGRAM_IDS = Object.freeze({
   jupiterV6: JUPITER_V6_PROGRAM_ID,
@@ -107,6 +108,8 @@ export function inspectFinalizedProgramProvenance({
       programDataAddress: first[i].programDataAddress,
       ...header,
       loaderMetadataVerified: true,
+      // This synchronous RPC-image inspector cannot perform independent PDA math.
+      programDataPdaIndependentlyVerified: false,
       deployedProgramBytecodeVerified: false,
       approvedForJupiterCpi: false
     });
@@ -114,6 +117,7 @@ export function inspectFinalizedProgramProvenance({
   return Object.freeze({
     network, bootstrapSlot, finalizedSlot,
     programs: Object.freeze(result),
+    programDataPdaIndependentlyVerified: false,
     deployedProgramBytecodeVerified: false,
     jupiterCpiAccountMappingVerified: false,
     approvedForJupiterCpi: false
@@ -160,10 +164,32 @@ export async function fetchMainnetUpgradeableProgramProvenance({
   const endpoint=validateRpcUrl(rpcUrl).toString();
   const initial=await readFinalized(fetchImpl,endpoint,Object.values(PROGRAM_IDS),minContextSlot);
   const heads=Object.keys(PROGRAM_IDS).map((role,i)=>programHeader(initial.accounts[i],role));
-  const addresses=[...Object.values(PROGRAM_IDS),...heads.map(item=>item.programDataAddress)];
+  // The on-chain Program header can be a valid 36-byte forged claim. Derive
+  // the loader PDA locally BEFORE requesting any caller-directed ProgramData.
+  const derived=await Promise.all(
+    Object.values(PROGRAM_IDS).map(programId=>deriveUpgradeableProgramDataPda(programId))
+  );
+  if (heads.some((item,i)=>item.programDataAddress!==derived[i].programDataAddress)) {
+    fail("Program header references a noncanonical ProgramData PDA");
+  }
+  const addresses=[...Object.values(PROGRAM_IDS),...derived.map(item=>item.programDataAddress)];
   const final=await readFinalized(fetchImpl,endpoint,addresses,initial.slot);
-  return inspectFinalizedProgramProvenance({
+  const inspected=inspectFinalizedProgramProvenance({
     network,bootstrapSlot:initial.slot,finalizedSlot:final.slot,
     bootstrapAccounts:initial.accounts,finalizedAccounts:final.accounts
+  });
+  // The offline PDA derivation is separate from the finalized account header,
+  // but still does NOT verify executable bytes, source parity, or Jupiter CPI.
+  const programs=Object.freeze(Object.fromEntries(
+    Object.keys(PROGRAM_IDS).map((role,i)=>[role,Object.freeze({
+      ...inspected.programs[role],
+      programDataPdaBump: derived[i].bump,
+      programDataPdaIndependentlyVerified: true
+    })])
+  ));
+  return Object.freeze({
+    ...inspected, programs, programDataPdaIndependentlyVerified: true,
+    deployedProgramBytecodeVerified: false,
+    approvedForJupiterCpi: false
   });
 }

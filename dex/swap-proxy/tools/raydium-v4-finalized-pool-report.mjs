@@ -74,6 +74,7 @@ async function main(argv) {
     matchesOperatorExpectedGenesis: preflight.matchesOperatorExpectedGenesis,
     genesisWitnessedRpcCount: preflight.witnessedRpcCount,
     executableLoaderMetadataVerified: true,
+    programDataPdaIndependentlyVerified: programProof.programDataPdaIndependentlyVerified,
     executableMetadataPrimaryRpcOnly: true,
     jupiterProgramData: programProof.programs.jupiterV6,
     raydiumProgramData: programProof.programs.raydiumV4,

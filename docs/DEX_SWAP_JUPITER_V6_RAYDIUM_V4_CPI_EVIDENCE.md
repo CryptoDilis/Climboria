@@ -239,3 +239,48 @@ The existing `approvedForJupiterCpi:false`, signing, execution and Launchpad
 release gates remain disabled. CI tests use synthetic finalized RPC responses,
 not live on-chain program snapshots. This does **not** close the independent
 audit or executable bytecode parity blocker.
+
+
+## 11. Independent Upgradeable Loader ProgramData PDA derivation
+
+The synchronous account-image inspector from §10 parses finalized Program /
+ProgramData headers but **does not** independently derive a ProgramData PDA;
+its `programDataPdaIndependentlyVerified` flag remains **false**.
+
+The **asynchronous**, operator-only two-phase finalized collector now adds
+`src/upgradeable-programdata-pda.mjs` as a separate local check before it
+requests either linked ProgramData account. Solana's Upgradeable BPF Loader
+derives each ProgramData key with:
+
+```text
+find_program_address([executable_program_id_bytes], BPFLoaderUpgradeab1e11111111111111111111111)
+SHA256(program_id || bump || loader_id || "ProgramDerivedAddress")
+```
+
+The bump is searched from 255 downward and requires an unambiguously
+off-curve Ed25519 digest. We reuse Climboria's separately tested conservative
+Ed25519 point classifier from Raydium's existing authority-PDA inspector.
+The locally derived addresses must **exactly match** both RPC-provided
+Program account links. If one differs, the collector fails **before**
+requesting any linked ProgramData accounts. The second read uses only locally
+derived ProgramData keys and verifies the same finalized Program account
+headers again. Returned flags include
+`programDataPdaIndependentlyVerified:true` and individual bump values.
+
+Offline reference vectors (independently calculated, not fetched from live RPC):
+
+| Executable program | Expected derived ProgramData PDA | Bump |
+|---|---|---:|
+| Jupiter V6 `JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4` | `4Ec7ZxZS6Sbdg5UGSLHbAnM7GQHp2eFd4KYWRexAipQT` | 254 |
+| Raydium V4 `675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8` | `A7ZG7ByDi8DpzT9Ab7CiXhvgYTJQmaDPJkMDoPitaCQV` | 255 |
+
+**Still not proven:** actual Solana chain canonicality or provider honesty;
+whether the deployed binaries match audited upstream source; program upgrade
+governance; complete market/vault and token-flow semantics; Jupiter V6
+inner-CPI accounts, signer forwarding or fee recipients. A valid PDA
+derivation binds an address to the loader seed rules, not to correct program
+behavior. Mainnet signing/execution and Launchpad creation remain OFF.
+
+This work is tested against offline/synthetic fixtures only. An operator must
+still independently verify the public pool key, expected genesis hash,
+private RPC trust and genuine finalized on-chain observations.
