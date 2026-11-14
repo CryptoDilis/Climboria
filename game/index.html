@@ -219,8 +219,8 @@ const HERO_RECORD_KEY='climboria-created-hero-v1';
 const heroEditor=document.getElementById('heroEditor');
 const heroNameInput=document.getElementById('heroNameInput');
 const heroModelSelect=document.getElementById('heroModelSelect');
-// Ella is the new default. Retain the original GLB as a legacy/fallback
-// model for already-created Adventurers, never overwrite its binary bytes.
+// Ella replaces the default Adventurer. Keep the original GLB only as a
+// recoverable fallback; migrate old saved Adventurer identities to Ella.
 const HERO_MODELS=Object.freeze({
  Ella:'../assets/characters/Climboria_Ella.glb',
  Jarrell:'../assets/characters/Climboria_Jarrell.glb',
@@ -234,6 +234,18 @@ const heroStatus=document.getElementById('heroPreviewStatus');
 const heroCanvas=document.getElementById('heroPreviewCanvas');
 let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.4,previewTouchX=null,previewTouchDistance=null,previewRequest=0,previewActiveModel='',previewNeutralSpine=null,previewNeutralTime=0;
 const validHeroName=name=>/^[A-Za-z0-9 _-]{2,24}$/.test(name)&&/[A-Za-z0-9]/.test(name);
+// Ella REPLACES the previous default, including already-created Adventurers.
+// Preserve the player's name and creation date. This is a one-time local
+// migration; the old GLB remains in the repository only as a safety fallback.
+(function upgradeOriginalHeroToElla(){
+ try{
+  const prior=JSON.parse(localStorage.getItem(HERO_RECORD_KEY)||'null');
+  if(prior?.model!=='Adventurer'||!validHeroName(prior.name))return;
+  const upgraded={...prior,model:'Ella'};
+  localStorage.setItem(HERO_RECORD_KEY,JSON.stringify(upgraded));
+  localStorage.setItem('climboria-selected-hero','Ella');
+ }catch(error){console.warn('[Climboria] Could not migrate saved Adventurer to Ella',error)}
+})();
 function savedHero(){
  try{const h=JSON.parse(localStorage.getItem(HERO_RECORD_KEY)||'null');return h&&['Ella','Jarrell','Lheiz','Adventurer'].includes(h.model)&&typeof h.name==='string'&&validHeroName(h.name)?h:null}catch(_){return null}
 }
