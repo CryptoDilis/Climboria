@@ -170,6 +170,12 @@ export function inspectFinalizedSwapReceipt({
     preTokenBalances: tokenSnapshot(pre), postTokenBalances: tokenSnapshot(post)
   });
   const accountSnapshotSha256 = createHash("sha256").update(snapshot).digest("hex");
+  // Separate fingerprint of exact resolved signer/writable account roles. A
+  // later operator-only cross-encoding check binds these reported roles to
+  // the ORIGINAL Ed25519-signed compiled v0 message, not merely a signature.
+  const providerReportedAccountKeyRolesSha256 = createHash("sha256")
+    .update(JSON.stringify(keys.map(item => [item.pubkey,item.signer,item.writable])))
+    .digest("hex");
 
   return Object.freeze({
     kind: "CLIMBORIA_READ_ONLY_FINALIZED_SWAP_RECEIPT_EVIDENCE",
@@ -181,6 +187,7 @@ export function inspectFinalizedSwapReceipt({
     minimumOutputRawAmount: minimumOutput.toString(),
     feeLamports: receipt.meta.fee,
     providerReportedAccountSnapshotSha256: accountSnapshotSha256,
+    providerReportedAccountKeyRolesSha256,
     exactSourceDebitAndMinimumDestinationCreditChecked: true,
     feePayerLamportDeltaMatchesFee: true,
     knownOtherTakerOwnedTokenAccountsUnchanged: true,

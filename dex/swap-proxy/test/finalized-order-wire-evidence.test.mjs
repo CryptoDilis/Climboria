@@ -70,7 +70,9 @@ test("pure inspector cryptographically verifies Ed25519 taker signature, origina
   assert.equal(result.ed25519TakerSignatureVerifiedAgainstOriginalOrder,true);
   assert.equal(result.approvedForProductionExecution,false);
   assert.equal(result.independentlyAuthenticatedLedgerFinality,false);
-  assert.doesNotMatch(JSON.stringify(result),new RegExp(fixture.signed.slice(10,35)));
+  // Base64 is untrusted literal data, not a regular-expression program.
+  // Signed fixture bytes can legitimately include + or / (flaky regex).
+  assert.equal(JSON.stringify(result).includes(fixture.signed.slice(10,35)),false);
 });
 
 test("different on-chain bytes with same claimed signature fail, not merely compare signature text",async()=>{

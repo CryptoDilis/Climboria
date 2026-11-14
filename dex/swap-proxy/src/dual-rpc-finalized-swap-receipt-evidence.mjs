@@ -17,7 +17,8 @@ const CONSENSUS_FIELDS = Object.freeze([
   "taker", "sourceTokenAccount", "destinationTokenAccount",
   "inputMint", "outputMint", "observedInputRawAmount",
   "observedOutputRawAmount", "minimumOutputRawAmount",
-  "feeLamports", "providerReportedAccountSnapshotSha256"
+  "feeLamports", "providerReportedAccountSnapshotSha256",
+  "providerReportedAccountKeyRolesSha256"
 ]);
 
 /**
@@ -63,7 +64,9 @@ export async function verifyDualRpcFinalizedSwapReceipt({
         primary.approvedForJupiterCpi !== false ||
         secondary.approvedForJupiterCpi !== false ||
         !/^[0-9a-f]{64}$/.test(primary.providerReportedAccountSnapshotSha256) ||
-        !/^[0-9a-f]{64}$/.test(secondary.providerReportedAccountSnapshotSha256)) fail();
+        !/^[0-9a-f]{64}$/.test(secondary.providerReportedAccountSnapshotSha256) ||
+        !/^[0-9a-f]{64}$/.test(primary.providerReportedAccountKeyRolesSha256) ||
+        !/^[0-9a-f]{64}$/.test(secondary.providerReportedAccountKeyRolesSha256)) fail();
 
     for (const key of CONSENSUS_FIELDS) {
       if (primary[key] !== secondary[key]) fail();
@@ -91,6 +94,7 @@ export async function verifyDualRpcFinalizedSwapReceipt({
       inputMint, outputMint,
       providerReportedFinalizedSlot: primary.providerReportedFinalizedSlot,
       providerReportedAccountSnapshotSha256: primary.providerReportedAccountSnapshotSha256,
+      providerReportedAccountKeyRolesSha256: primary.providerReportedAccountKeyRolesSha256,
       observedInputRawAmount: primary.observedInputRawAmount,
       observedOutputRawAmount: primary.observedOutputRawAmount,
       minimumOutputRawAmount: primary.minimumOutputRawAmount,
@@ -100,6 +104,7 @@ export async function verifyDualRpcFinalizedSwapReceipt({
       bothReportedSameFinalizedSignatureSlotAndAccountSnapshot: true,
       exactSourceDebitAndMinimumDestinationCreditChecked: true,
       feePayerLamportDeltaMatchesFee: true,
+      knownOtherTakerOwnedTokenAccountsUnchanged: true,
       independentlyAuditedRpcProviders: false,
       independentlyAuthenticatedLedgerFinality: false,
       jupiterCpiAccountMappingVerified: false,
