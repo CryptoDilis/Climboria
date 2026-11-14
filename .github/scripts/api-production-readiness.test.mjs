@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { probeProductionApi, SOL } from "./api-production-readiness.mjs";
+import { probeProductionApi, classifyReadOnlyApiFailure, SOL } from "./api-production-readiness.mjs";
 
 const ORIGIN = "https://climboria.fun";
 const REVISION = "a".repeat(40);
@@ -209,3 +209,69 @@ test("production deployment trigger tracks reviewed Worker source and rejects no
     "Any change to the deployment workflow must run the API readiness unit tests in PR CI");
 });
 
+
+
+test("only fixed known categories from public error data may appear in deployment logs", () => {
+  assert.equal(classifyReadOnlyApiFailure({code:"RATE_LIMITER_UNAVAILABLE"}), "RATE_LIMITER_UNAVAILABLE");
+  assert.equal(classifyReadOnlyApiFailure({code:"RATE_LIMITER_NOT_CONFIGURED"}), "RATE_LIMITER_NOT_CONFIGURED");
+  assert.equal(classifyReadOnlyApiFailure({code:"RATE_LIMIT_EXCEEDED"}), "RATE_LIMIT_EXCEEDED");
+  assert.equal(classifyReadOnlyApiFailure({error:"Jupiter upstream request failed or redirected"}), "JUPITER_TRANSPORT_OR_REDIRECT");
+  assert.equal(classifyReadOnlyApiFailure({error:"Jupiter upstream request timed out"}), "JUPITER_TIMEOUT");
+  assert.equal(classifyReadOnlyApiFailure({error:"Jupiter token search failed",upstreamStatus:403}), "JUPITER_HTTP_403");
+  assert.equal(classifyReadOnlyApiFailure({error:"Jupiter quote request failed",upstreamStatus:503}), "JUPITER_HTTP_503");
+  assert.equal(classifyReadOnlyApiFailure({error:"Jupiter token search failed",upstreamStatus:"403"}), "JUPITER_HTTP_UNKNOWN");
+  for(const body of [null,{},{code:"PRIVATE_SECRET_123",error:"PRIVATE_SECRET_123"},
+    {error:"Jupiter quote request failed",upstreamStatus:-1},
+    {error:"Jupiter quote request failed",upstreamStatus:999999}]) {
+    const category=classifyReadOnlyApiFailure(body);
+    assert.match(category,/^(?:UNKNOWN_PUBLIC_API_FAILURE|JUPITER_HTTP_UNKNOWN)$/);
+    assert.doesNotMatch(category,/PRIVATE_SECRET_123/);
+  }
+});
+
+test("live readiness probes both token-search and quote and reports only safe failure categories", async () => {
+  const bad = fixture({
+    tokens:Response.json({error:"Backend rate limiter temporarily unavailable",
+      code:"RATE_LIMITER_UNAVAILABLE",providerDebug:"SENSITIVE_KEY_NEVER_LOG"}, {
+      status:503,headers:{"access-control-allow-origin":ORIGIN}
+    }),
+    quote:Response.json({error:"Jupiter upstream request failed or redirected",
+      debug:"https://example.invalid/?token=SENSITIVE_KEY_NEVER_LOG"}, {
+      status:503,headers:{"access-control-allow-origin":ORIGIN}
+    })
+  });
+  await assert.rejects(probeProductionApi({fetchImpl:bad.fakeFetch}), error=>{
+    assert.match(error.message,/token-search HTTP 503 category RATE_LIMITER_UNAVAILABLE/);
+    assert.match(error.message,/quote HTTP 503 category JUPITER_TRANSPORT_OR_REDIRECT/);
+    assert.doesNotMatch(error.message,/SENSITIVE_KEY_NEVER_LOG|example.invalid/);
+    return true;
+  });
+  assert.ok(bad.calls.some(x=>x.url==="/api/tokens/search"));
+  assert.ok(bad.calls.some(x=>x.url==="/api/swap/quote" && x.method==="GET"));
+  assert.ok(!bad.calls.some(x=>x.url==="/api/swap/order"),"no signable order probe");
+});
+
+test("production readiness still hard fails for provider outage after passing health and CORS", async () => {
+  const bad=fixture({
+    tokens:Response.json({error:"Jupiter token search failed",upstreamStatus:401},{
+      status:401,headers:{"access-control-allow-origin":ORIGIN}
+    })
+  });
+  await assert.rejects(probeProductionApi({fetchImpl:bad.fakeFetch}),
+    /token-search HTTP 401 category JUPITER_HTTP_401; quote HTTP 200 category OK/);
+});
+
+test("production probe transport exceptions cannot echo credential-bearing URLs", async () => {
+  const normal=fixture();
+  const fakeFetch=async(url,options)=>{
+    if(new URL(url).pathname==="/api/tokens/search"){
+      throw Error("https://private.provider.invalid?key=SECRET_DO_NOT_ECHO");
+    }
+    return normal.fakeFetch(url,options);
+  };
+  await assert.rejects(probeProductionApi({fetchImpl:fakeFetch}),error=>{
+    assert.match(error.message,/Production API probe transport unavailable/);
+    assert.doesNotMatch(error.message,/SECRET_DO_NOT_ECHO|private.provider.invalid/);
+    return true;
+  });
+});
