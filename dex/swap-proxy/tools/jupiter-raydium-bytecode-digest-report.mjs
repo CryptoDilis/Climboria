@@ -4,6 +4,7 @@
  *
  * Required local environment:
  *   CLIMBORIA_SOLANA_RPC_URL (private trusted HTTPS endpoint)
+ *   CLIMBORIA_SOLANA_RPC_URL_SECONDARY (optional DIFFERENT HTTPS host; fail closed if it disagrees)
  *   CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH (independently corroborated)
  *   CLIMBORIA_JUPITER_V6_EXPECTED_PROGRAMDATA_PAYLOAD_SHA256
  *   CLIMBORIA_RAYDIUM_V4_EXPECTED_PROGRAMDATA_PAYLOAD_SHA256
@@ -24,14 +25,30 @@ import { verifyOperatorRpcGenesisSet } from "../src/raydium-v4-rpc-genesis-prefl
 import { fetchMainnetUpgradeableProgramProvenance } from "../src/upgradeable-program-provenance.mjs";
 import { hashPinnedProgramsJointFinalizedSnapshot } from "../src/upgradeable-program-joint-snapshot-digest.mjs";
 import { safeRaydiumOperatorError } from "./raydium-v4-safe-error.mjs";
+import { verifyDualRpcMainnetProgramPayloads } from "../src/upgradeable-program-dual-rpc-digest.mjs";
 
 async function main() {
   const rpcUrl = process.env.CLIMBORIA_SOLANA_RPC_URL;
+  const secondaryRpcUrl = process.env.CLIMBORIA_SOLANA_RPC_URL_SECONDARY;
   const expectedGenesisHash = process.env.CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH;
   const expectedJupiterSha256 = process.env.CLIMBORIA_JUPITER_V6_EXPECTED_PROGRAMDATA_PAYLOAD_SHA256;
   const expectedRaydiumSha256 = process.env.CLIMBORIA_RAYDIUM_V4_EXPECTED_PROGRAMDATA_PAYLOAD_SHA256;
   if (!rpcUrl || !expectedGenesisHash || !expectedJupiterSha256 || !expectedRaydiumSha256) {
     throw new Error("Operator RPC, expected genesis and both independently pinned program payload SHA-256 values are required");
+  }
+  if (secondaryRpcUrl) {
+    // This optional path never silently falls back to one provider on failure.
+    // It requires BOTH hosts to agree on pinned full ProgramData payload bytes
+    // and Upgradeable Loader metadata; it still grants no trading approval.
+    const verified = await verifyDualRpcMainnetProgramPayloads({
+      primaryRpcUrl: rpcUrl, secondaryRpcUrl,
+      expectedGenesisHash, expectedJupiterSha256, expectedRaydiumSha256
+    });
+    process.stdout.write(JSON.stringify({
+      kind: "CLIMBORIA_READ_ONLY_DUAL_RPC_PROGRAMDATA_DIGEST",
+      ...verified
+    }, null, 2) + "\n");
+    return;
   }
   const genesis = await verifyOperatorRpcGenesisSet({
     primaryRpcUrl: rpcUrl, expectedGenesisHash
