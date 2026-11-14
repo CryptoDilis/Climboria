@@ -16,7 +16,7 @@ const fixture = extra => ({
   outAmount:'1234567',...extra
 });
 const sleep = ms => new Promise(resolve => setTimeout(resolve,ms));
-async function quotePage(browser,kind,viewport,{walletProvider=false}={}) {
+async function quotePage(browser,kind,viewport,{walletProvider=false,tokenSearchUnavailable=false}={}) {
   const mobile = viewport.width < 600;
   const page = await browser.newPage({ viewport, isMobile:mobile, hasTouch:mobile });
   if(walletProvider) await page.addInitScript(() => {
@@ -57,8 +57,9 @@ async function quotePage(browser,kind,viewport,{walletProvider=false}={}) {
   await page.route('https://api.dexscreener.com/**',route =>
     route.fulfill({status:200,contentType:'application/json',body:'{"pairs":[]}'})
   );
-  await page.route('https://api.climboria.fun/api/tokens/search**',route =>
-    route.fulfill({status:200,contentType:'application/json',body:'[]'})
+  await page.route('https://api.climboria.fun/api/tokens/search**',route => tokenSearchUnavailable
+    ? route.abort('timedout')
+    : route.fulfill({status:200,contentType:'application/json',body:'[]'})
   );
   const response = await page.goto(ORIGIN+(kind==='DEX'?'/dex/':'/swap/'),
     {waitUntil:'domcontentloaded',timeout:35000});
@@ -134,6 +135,18 @@ async function unavailableQuote(ctx,kind) {
   assert.equal(forbidden.length,0,'An unavailable quote must not request wallet execution');
   assert.deepEqual(errors,[],'Unavailable quote handling caused a browser error');
 }
+async function unavailableTokenSearch(ctx,kind) {
+  const {page,forbidden,errors}=ctx;
+  await page.locator('#quoteFromSearch').fill('SOL');
+  await page.locator('#searchFrom').click();
+  await page.waitForFunction(() =>
+    (document.querySelector('#fromResults')?.textContent||'').includes('Climboria token search timed out.'),
+    null,{timeout:10000});
+  const result=await page.locator('#fromResults').innerText();
+  assert.match(result,/Climboria token search timed out\. No token was selected\./,kind+' must preserve an honest unavailable token-search state');
+  assert.equal(forbidden.length,0,'An unavailable token search must not request wallet execution');
+  assert.deepEqual(errors,[],'Unavailable token search handling caused a browser error');
+}
 async function pendingQuote(ctx,action,{assertStatus,assertResult}) {
   const {page,forbidden,errors}=ctx;
   let resolveRoute;
@@ -170,6 +183,13 @@ try {
       try {
         await mockResult(ctx,{feeBps:null,priceImpactPct:null,router:null,mode:null});
         console.log('PASS '+kind+' '+label+': unavailable fee, impact and router remain honest; no wallet requests');
+      } finally {await ctx.page.close();}
+    }
+    for(const kind of ['Swap','DEX']) {
+      const ctx=await quotePage(browser,kind,viewport,{tokenSearchUnavailable:true});
+      try {
+        await unavailableTokenSearch(ctx,kind);
+        console.log('PASS '+kind+' '+label+': unavailable token search recovers without selection or execution');
       } finally {await ctx.page.close();}
     }
     for(const kind of ['Swap','DEX']) {
