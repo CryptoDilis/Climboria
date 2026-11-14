@@ -26,6 +26,23 @@ try{
     const page=await context.newPage();
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
+    if(device.isMobile){
+      // Playwright viewport changes alone do not always update screen.orientation.
+      await page.addInitScript(()=>{
+        let type='portrait-primary';
+        const orientation=new EventTarget();
+        Object.defineProperty(orientation,'type',{configurable:true,get:()=>type});
+        orientation.lock=async()=>{};
+        window.__setClimboriaMockOrientation=next=>{
+          type=next;
+          orientation.dispatchEvent(new Event('change'));
+          window.dispatchEvent(new Event('orientationchange'));
+          window.dispatchEvent(new Event('resize'));
+        };
+        try{Object.defineProperty(screen,'orientation',{configurable:true,value:orientation})}
+        catch(_){Object.defineProperty(Object.getPrototypeOf(screen),'orientation',{configurable:true,get:()=>orientation})}
+      });
+    }
     await page.goto(base+'/game/index.html',{waitUntil:'domcontentloaded',timeout:60000});
     await page.locator('#openHeroCreator').click();
     await page.locator('#heroModelSelect').selectOption(hero.name);
@@ -34,6 +51,15 @@ try{
       &&document.documentElement.dataset.climboriaHeroPreviewPose==='authored-idle'
       &&document.documentElement.dataset.climboriaHeroPreviewClip==='Idle_03',
       hero.name,{timeout:90000});
+    await page.waitForTimeout(500);
+    const preview=await page.evaluate(()=>({
+      canvas:document.querySelector('#heroPreviewCanvas')?.width||0,
+      pose:document.documentElement.dataset.climboriaHeroPreviewPose,
+      clip:document.documentElement.dataset.climboriaHeroPreviewClip,
+      chosen:document.documentElement.dataset.climboriaHeroPreviewModel
+    }));
+    if(!preview.canvas||preview.chosen!==hero.name.toLowerCase())throw Error('Preview canvas did not render: '+JSON.stringify(preview));
+    await page.screenshot({path:'climboria-'+hero.name.toLowerCase()+'-'+device.name+'-creator-preview.png',animations:'disabled',timeout:90000});
     if(await page.locator('#saveHeroButton').isEnabled())throw Error('Save must require a valid name');
     const label='QA '+hero.name;
     await page.locator('#heroNameInput').fill(label);
@@ -43,17 +69,56 @@ try{
     if(!await page.locator('#heroEnterButton').isEnabled())throw Error('Enter unavailable after successful save');
     await page.locator('#heroEnterButton').click();
     await page.waitForURL('**/game/play.html?level=11',{timeout:30000});
+    // The hero GLB may finish parsing before terrain chunks and follow camera.
+    // A green screenshot of empty terrain is NOT evidence that the avatar renders.
+    await page.waitForFunction(()=>window.__climboriaGameReady===true
+      &&document.body.classList.contains('free')
+      &&(window.__climboriaRenderState?.frames||0)>4,undefined,{timeout:120000});
     await page.waitForFunction(name=>document.documentElement.dataset.climboriaHero===name.toLowerCase()
-      &&document.documentElement.dataset.climboriaHeroRenderer==='glb',hero.name,{timeout:120000});
+      &&document.documentElement.dataset.climboriaHeroRenderer==='glb'
+      &&window.__climboriaCameraOrbit?.heroUsesGlb===true,
+      hero.name,{timeout:120000});
+    if(device.isMobile){
+      // Portrait is intentionally covered by the rotate-phone UX. Do not use
+      // a portrait screenshot as proof of a visible playable hero.
+      const rotate=await page.locator('#rotate-phone-overlay').evaluate(el=>getComputedStyle(el).display);
+      if(rotate==='none')throw Error('Mobile portrait must show rotation guidance');
+      await page.setViewportSize({width:844,height:390});
+      await page.evaluate(()=>window.__setClimboriaMockOrientation('landscape-primary'));
+      await page.waitForFunction(()=>document.body.classList.contains('climboria-landscape')
+        &&getComputedStyle(document.querySelector('#rotate-phone-overlay')).display==='none',
+        undefined,{timeout:20000});
+    }
+    // Move the player/camera to the true playable Sanctuary view, not the initial
+    // high-altitude pregame cinematic, and wait for camera settling.
+    await page.keyboard.press('1');
+    await page.waitForFunction(()=>{
+      const p=window.__climboriaJarrellsPeak?.player;
+      return p?.mode==='walk'&&Math.abs(p.x)<1&&Math.abs(p.z+30)<1
+        &&window.__climboriaCameraOrbit?.heroUsesGlb===true;
+    },undefined,{timeout:15000});
+    await page.waitForTimeout(1100);
     const state=await page.evaluate(()=>({
       model:document.documentElement.dataset.climboriaHero,
       file:document.documentElement.dataset.climboriaHeroAsset,
       renderer:document.documentElement.dataset.climboriaHeroRenderer,
       animations:(document.documentElement.dataset.climboriaAnimations||'').split('|'),
       clip:document.documentElement.dataset.climboriaHeroClip,
-      ready:window.__climboriaReadiness?.heroReady
+      ready:window.__climboriaReadiness?.heroReady,
+      worldReady:window.__climboriaGameReady===true,
+      visible:window.__climboriaCameraOrbit?.heroUsesGlb===true,
+      camera:window.__climboriaCameraOrbit?{
+        distance:window.__climboriaCameraOrbit.distance,
+        actualDistance:window.__climboriaCameraOrbit.actualDistance
+      }:null,
+      player:window.__climboriaJarrellsPeak?.player?{
+        x:window.__climboriaJarrellsPeak.player.x,
+        z:window.__climboriaJarrellsPeak.player.z
+      }:null,
+      viewport:{width:innerWidth,height:innerHeight},
+      rotating:getComputedStyle(document.querySelector('#rotate-phone-overlay')).display!=='none'
     }));
-    if(!state.file?.endsWith('Climboria_'+hero.name+'.glb')||!state.ready)throw Error('Wrong GLB loaded: '+JSON.stringify(state));
+    if(!state.file?.endsWith('Climboria_'+hero.name+'.glb')||!state.ready||!state.worldReady||!state.visible||state.rotating)throw Error('Player not visible in playable scene: '+JSON.stringify(state));
     for(const clip of hero.clips)if(!state.animations.includes(clip))throw Error('Missing expected '+clip+' for '+hero.name);
     if(errors.length)throw Error('Browser JS exceptions: '+errors.join(' | '));
     await page.screenshot({path:'climboria-'+hero.name.toLowerCase()+'-'+device.name+'-hero-smoke.png',animations:'disabled',timeout:90000});
@@ -62,5 +127,5 @@ try{
    }finally{await context.close()}
   }
  }
- console.log('PASS: '+passed+' / 4 Jarrell+Lheiz desktop/mobile model selection and runtime boot checks');
+ console.log('PASS: '+passed+' / 4 Jarrell+Lheiz desktop/mobile actual 3D previews and playable scene checks');
 }finally{await browser.close()}
