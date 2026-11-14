@@ -2556,6 +2556,7 @@ const CHEST_TIER_PALETTE=Object.freeze({
  legendary:{wood:'#61391f',lid:'#905822',trim:'#eac266',gem:'#fff1a0'}
 });
 const CHEST_MODEL_STATUS=Object.fromEntries(Object.keys(CHEST_MODEL_ASSETS).map(tier=>[tier,'not-shipped']));
+const CHEST_MODEL_CACHE=new Map();
 let chestModelsStarted=false;
 function repaintChest(c){
  const tier=c.reward?.rarity||'common',p=CHEST_TIER_PALETTE[tier];
@@ -2563,28 +2564,34 @@ function repaintChest(c){
  c.visual.lid.color.set(p.lid);
  c.visual.iron.color.set(p.trim);
  c.visual.gem.color.set(p.gem);
- c.visualFallback.visible=!c.visualModel;
  c.visualTier=tier;
- if(c.visualModel){c.visualModel.visible=true;}
+ if(!c.visualModel&&CHEST_MODEL_CACHE.has(tier)){
+  const model=cloneChestModel(CHEST_MODEL_CACHE.get(tier));
+  if(model){c.g.add(model);c.visualModel=model;}
+ }
+ c.visualFallback.visible=!c.visualModel;
+ if(c.visualModel)c.visualModel.visible=true;
+}
+function cloneChestModel(source){
+ // Static props share geometry/materials across all instances.
+ const model=source.clone(true),box=new T3.Box3().setFromObject(model);
+ const dimensions=box.getSize(new T3.Vector3());
+ if(!Number.isFinite(dimensions.y)||dimensions.y<=.001)return null;
+ const maxWidth=Math.max(dimensions.x,dimensions.z);
+ const scale=Math.min(1.65/Math.max(maxWidth,.001),1.3/dimensions.y);
+ if(!Number.isFinite(scale)||scale<=0)return null;
+ model.scale.multiplyScalar(scale);
+ model.updateMatrixWorld(true);
+ const adjusted=new T3.Box3().setFromObject(model),center=adjusted.getCenter(new T3.Vector3());
+ model.position.set(-center.x,-adjusted.min.y,-center.z);
+ return model;
 }
 function attachChestModel(tier,source){
- // Static props share their source geometry and materials (cheap clones).
- // Each active chest keeps its own parent transform, placement and tier.
- for(const c of chests){
+ CHEST_MODEL_CACHE.set(tier,source);
+ for(const c of chests)if(c.reward?.rarity===tier){
   if(c.visualModel&&c.visualModel.parent)c.visualModel.parent.remove(c.visualModel);
   c.visualModel=null;
-  if(c.reward?.rarity!==tier)continue;
-  const model=source.clone(true),box=new T3.Box3().setFromObject(model);
-  const dimensions=box.getSize(new T3.Vector3());
-  if(!Number.isFinite(dimensions.y)||dimensions.y<=.001)continue;
-  const maxWidth=Math.max(dimensions.x,dimensions.z);
-  const scale=Math.min(1.65/Math.max(maxWidth,.001),1.3/dimensions.y);
-  model.scale.multiplyScalar(scale);
-  model.updateMatrixWorld(true);
-  const adjusted=new T3.Box3().setFromObject(model),center=adjusted.getCenter(new T3.Vector3());
-  model.position.set(-center.x,-adjusted.min.y,-center.z);
-  // Chest parent is intentionally 0.62 scale to preserve historical hitboxes.
-  c.g.add(model);c.visualModel=model;c.visualFallback.visible=false;
+  repaintChest(c);
  }
 }
 function startChestModelLoading(){
