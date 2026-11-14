@@ -7,12 +7,14 @@ on:
       - ".github/scripts/api-production-readiness.mjs"
       - ".github/scripts/api-production-readiness.test.mjs"
       - ".github/workflows/api-production-readiness.yml"
+      - ".github/workflows/deploy-climboria-api.yml"
   push:
     branches: [main]
     paths:
       - ".github/scripts/api-production-readiness.mjs"
       - ".github/scripts/api-production-readiness.test.mjs"
       - ".github/workflows/api-production-readiness.yml"
+      - ".github/workflows/deploy-climboria-api.yml"
   workflow_dispatch:
   # Deploy runs and readiness checks are separate workflows. Checking on a
   # main push can probe the OLD Worker before Wrangler finishes.
