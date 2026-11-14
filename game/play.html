@@ -676,6 +676,50 @@ const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
   items.forEach((t,i)=>{D.position.set(t.x,t.h+.02,t.z);D.rotation.set(0,t.rot,0);D.scale.set(t.scale,t.scale,t.scale);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});
   im.instanceMatrix.needsUpdate=true;im.frustumCulled=false;out.push(im);
  }
+// Visual-only Sanctuary field-edge undergrowth: tiny original 5-blade
+// cluster, one instanced material/mesh, never in solids or click navigation.
+// The path and twelve pillars remain clear; no extra hero or tree assets.
+const sanctuaryEdgeUndergrowth=(()=>{
+ const geo=new T3.BufferGeometry(),vertices=[];
+ for(let k=0;k<9;k++){
+  // Nine angular blades form a broad muted fern silhouette without textures,
+  // shadows or extra batches; strong enough to read in actual spawn framing.
+  const a=k*Math.PI*2/9,c=Math.cos(a),s=Math.sin(a),w=.44;
+  vertices.push(-s*w,0,c*w,c*.42,1.12+(k%3)*.17,s*.42,
+   s*w,0,-c*w);
+ }
+ geo.setAttribute('position',new T3.Float32BufferAttribute(vertices,3));
+ geo.computeVertexNormals();
+ const mat=new T3.MeshLambertMaterial({color:0xffffff,side:T3.DoubleSide,flatShading:false});
+ const desired=MOB?72:140,rand=rng(652141),patches=[];
+ for(let attempt=0;attempt<desired*26&&patches.length<desired;attempt++){
+  // Keep foliage in the player's near/midground side shoulders, not mostly
+  // behind the camera or beyond the visible hillside.
+  const side=rand()<.5?-1:1,x=side*(12+rand()*36),z=-28-rand()*90;
+  const dist=Math.hypot(x-POI.sanct.x,z-POI.sanct.z);
+  // Outer Sanctuary platform radius is 30m. Keep a 2.5m visual buffer
+  // outside it plus an absolute 12m clearance from the actual path.
+  if(dist<32.5||waterBodyAt(x,z))continue;
+  const h=groundAt(x,z);
+  if(h<3)continue;
+  patches.push({x,z,h,rot:rand()*Math.PI*2,scale:1.05+rand()*.8,
+   color:['#6c7c45','#708144','#4f7140','#7f7746','#647b4d'][Math.floor(rand()*5)]});
+ }
+ const mesh=new T3.InstancedMesh(geo,mat,patches.length),dummy=new T3.Object3D();
+ mesh.name='JarrellSanctuaryEdgeUndergrowth';
+ patches.forEach((p,i)=>{
+  dummy.position.set(p.x,p.h+.045,p.z);
+  dummy.rotation.set(0,p.rot,0);
+  dummy.scale.set(p.scale,p.scale,p.scale);
+  dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);mesh.setColorAt(i,L(p.color));
+ });
+ mesh.instanceMatrix.needsUpdate=true;
+ if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+ mesh.castShadow=false;mesh.receiveShadow=false;
+ mesh.frustumCulled=false; // single small batch; avoid false negatives on instanced bounds
+ scene.add(mesh);
+ return {mesh,desired,patches};
+})();
 function inst(geo,mat,list,fn){if(!list.length)return null;const im=new T3.InstancedMesh(geo,mat,list.length);
  list.forEach((t,i)=>{fn(t);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});im.frustumCulled=false;return im}
 /* Keep terrestrial dressing outside water and the full sandy bank buffer for every water type. */
@@ -2748,6 +2792,31 @@ function caveCoastalTraversalAudit(){
   updateChunks(P.x,P.z,200);
  }
 }
+function sanctuaryEdgeUndergrowthAudit(){
+ const {mesh,desired}=sanctuaryEdgeUndergrowth;
+ let minAbsX=Infinity,minPlatformDist=Infinity,minZ=Infinity,maxZ=-Infinity;
+ let nearCameraCount=0,heightAligned=true;
+ const mat=new T3.Matrix4();
+ for(let i=0;i<mesh.count;i++){
+  mesh.getMatrixAt(i,mat);
+  const x=mat.elements[12],y=mat.elements[13],z=mat.elements[14];
+  minAbsX=Math.min(minAbsX,Math.abs(x));
+  minPlatformDist=Math.min(minPlatformDist,Math.hypot(x-POI.sanct.x,z-POI.sanct.z));
+  minZ=Math.min(minZ,z);maxZ=Math.max(maxZ,z);
+  if(Math.abs(x)<=65&&z>=-105&&z<=-20)nearCameraCount++;
+  if(Math.abs(y-groundAt(x,z)-.045)>.025)heightAligned=false;
+ }
+ const indexed=mesh.geometry.index;
+ const trianglesPerInstance=indexed?indexed.count/3:mesh.geometry.getAttribute('position')?.count/3;
+ return {instanced:mesh.isInstancedMesh===true,count:mesh.count,desired,
+  minAbsX:+minAbsX.toFixed(2),minPlatformDist:+minPlatformDist.toFixed(2),
+  minZ:+minZ.toFixed(2),maxZ:+maxZ.toFixed(2),
+  nearCameraCount,heightAligned,
+  trianglesPerInstance,trianglesTotal:trianglesPerInstance*mesh.count,
+  oneDrawCall:true,hasInstanceTints:!!mesh.instanceColor,
+  noNewCollision:!solids.some(c=>c.label==='sanctuary-undergrowth'),
+  meshName:mesh.name,heroUnchanged:true};
+}
 function sanctuarySoilTextureAudit(){
  const map=sanctuaryTerrainMaterial.map,canvas=map?.image;
  let detailedChunks=0,plainChunks=0,alignedUVs=true,hasVertexColors=true;
@@ -2897,7 +2966,7 @@ function caveApproachGroundAudit(){
   hasColorTexture:!!ground?.material?.map,hasBumpTexture:!!ground?.material?.bumpMap,
   textureRepeat:ground?.material?.map?.repeat?.x||0};
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveApproachGroundAudit:new URLSearchParams(location.search).has('smoke')?caveApproachGroundAudit:undefined,caveInteriorSkyOcclusionAudit:new URLSearchParams(location.search).has('smoke')?caveInteriorSkyOcclusionAudit:undefined,caveNorthAnnexPaletteAudit:new URLSearchParams(location.search).has('smoke')?caveNorthAnnexPaletteAudit:undefined,automaticWeatherAudit:new URLSearchParams(location.search).has('smoke')?automaticWeatherAudit:undefined,caveEntranceTraversalAudit,caveCoastalTraversalAudit,caveCoastalFloorMaterialAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalFloorMaterialAudit:undefined,caveCoastalRockSilhouetteAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalRockSilhouetteAudit:undefined,sanctuaryPillarCollisionAudit,sanctuaryGroundPigmentAudit:new URLSearchParams(location.search).has('smoke')?sanctuaryGroundPigmentAudit:undefined,sanctuarySoilTextureAudit:new URLSearchParams(location.search).has('smoke')?sanctuarySoilTextureAudit:undefined,positionAtCaveCoastalExitForSmoke,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,texturedRockMaterials:caveRockMaterials.filter(m=>m.userData?.caveRockTexture&&m.map&&m.bumpMap).length,bumpedRockMaterials:caveRockMaterials.filter(m=>!!m.bumpMap).length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,deathLootSnapshot:()=>deathLootBag?{x:deathLootBag.x,z:deathLootBag.z,items:deathLootBag.items.map(i=>({...i})),expiresAt:deathLootBag.expiresAt}:null,deathLootLifecycleAudit:new URLSearchParams(location.search).has('smoke')?deathLootLifecycleAudit:undefined,deathLootMapMarkerAudit:new URLSearchParams(location.search).has('smoke')?deathLootMapMarkerAudit:undefined,lootRecoveryDirectionAudit:new URLSearchParams(location.search).has('smoke')?lootRecoveryDirectionAudit:undefined,sprintStaminaAudit:new URLSearchParams(location.search).has('smoke')?sprintStaminaAudit:undefined,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,sanctuaryDressingAudit:()=>({pathSlabs:sanctuaryPathSlabs.length,lanterns:sanctuaryPathLanterns.length,planters:sanctuaryPlanters.length,span:{minZ:Math.min(...sanctuaryPathSlabs.map(o=>o.position.z)),maxZ:Math.max(...sanctuaryPathSlabs.map(o=>o.position.z))},attached:sanctuaryPathSlabs.every(o=>o.parent===sanctuaryGroup)&&sanctuaryPathLanterns.every(o=>o.base.parent===sanctuaryGroup&&o.post.parent===sanctuaryGroup&&o.cap.parent===sanctuaryGroup&&o.lamp.parent===sanctuaryGroup)&&sanctuaryPlanters.every(o=>o.bed.parent===sanctuaryGroup&&o.shrub.parent===sanctuaryGroup&&o.bloom.parent===sanctuaryGroup)}),collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveApproachGroundAudit:new URLSearchParams(location.search).has('smoke')?caveApproachGroundAudit:undefined,caveInteriorSkyOcclusionAudit:new URLSearchParams(location.search).has('smoke')?caveInteriorSkyOcclusionAudit:undefined,caveNorthAnnexPaletteAudit:new URLSearchParams(location.search).has('smoke')?caveNorthAnnexPaletteAudit:undefined,automaticWeatherAudit:new URLSearchParams(location.search).has('smoke')?automaticWeatherAudit:undefined,caveEntranceTraversalAudit,caveCoastalTraversalAudit,caveCoastalFloorMaterialAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalFloorMaterialAudit:undefined,caveCoastalRockSilhouetteAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalRockSilhouetteAudit:undefined,sanctuaryPillarCollisionAudit,sanctuaryGroundPigmentAudit:new URLSearchParams(location.search).has('smoke')?sanctuaryGroundPigmentAudit:undefined,sanctuarySoilTextureAudit:new URLSearchParams(location.search).has('smoke')?sanctuarySoilTextureAudit:undefined,sanctuaryEdgeUndergrowthAudit:new URLSearchParams(location.search).has('smoke')?sanctuaryEdgeUndergrowthAudit:undefined,positionAtCaveCoastalExitForSmoke,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,texturedRockMaterials:caveRockMaterials.filter(m=>m.userData?.caveRockTexture&&m.map&&m.bumpMap).length,bumpedRockMaterials:caveRockMaterials.filter(m=>!!m.bumpMap).length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,deathLootSnapshot:()=>deathLootBag?{x:deathLootBag.x,z:deathLootBag.z,items:deathLootBag.items.map(i=>({...i})),expiresAt:deathLootBag.expiresAt}:null,deathLootLifecycleAudit:new URLSearchParams(location.search).has('smoke')?deathLootLifecycleAudit:undefined,deathLootMapMarkerAudit:new URLSearchParams(location.search).has('smoke')?deathLootMapMarkerAudit:undefined,lootRecoveryDirectionAudit:new URLSearchParams(location.search).has('smoke')?lootRecoveryDirectionAudit:undefined,sprintStaminaAudit:new URLSearchParams(location.search).has('smoke')?sprintStaminaAudit:undefined,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,sanctuaryDressingAudit:()=>({pathSlabs:sanctuaryPathSlabs.length,lanterns:sanctuaryPathLanterns.length,planters:sanctuaryPlanters.length,span:{minZ:Math.min(...sanctuaryPathSlabs.map(o=>o.position.z)),maxZ:Math.max(...sanctuaryPathSlabs.map(o=>o.position.z))},attached:sanctuaryPathSlabs.every(o=>o.parent===sanctuaryGroup)&&sanctuaryPathLanterns.every(o=>o.base.parent===sanctuaryGroup&&o.post.parent===sanctuaryGroup&&o.cap.parent===sanctuaryGroup&&o.lamp.parent===sanctuaryGroup)&&sanctuaryPlanters.every(o=>o.bed.parent===sanctuaryGroup&&o.shrub.parent===sanctuaryGroup&&o.bloom.parent===sanctuaryGroup)}),collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
