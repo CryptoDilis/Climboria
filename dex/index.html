@@ -1271,7 +1271,7 @@ async function searchQuoteToken(side){
   const tokens=await res.json();
   if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return;}
   box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+'</b> · '+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'<br><small>'+esc(t.id)+' · '+(t.isVerified===true?'Jupiter verified':'Unverified')+'</small></button>').join('');box._tokens=tokens.slice(0,8);
- }catch(e){box.innerHTML='<div class="notice">'+esc(e.message)+'</div>';}
+ }catch(e){box.innerHTML='<div class="notice">Token search unavailable. No token was selected. '+esc(e.message)+'</div>';}
 }
 let dexQuoteRequestSequence=0;
 function invalidateDexQuote(reason='Quote invalidated. Request a fresh quote for the selected tokens and amount.'){

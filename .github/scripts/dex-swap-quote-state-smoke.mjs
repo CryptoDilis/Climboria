@@ -140,10 +140,10 @@ async function unavailableTokenSearch(ctx,kind) {
   await page.locator('#quoteFromSearch').fill('SOL');
   await page.locator('#searchFrom').click();
   await page.waitForFunction(() =>
-    (document.querySelector('#fromResults')?.textContent||'').includes('Climboria token search timed out.'),
+    (document.querySelector('#fromResults')?.textContent||'').includes('Token search unavailable. No token was selected.'),
     null,{timeout:10000});
   const result=await page.locator('#fromResults').innerText();
-  assert.match(result,/Climboria token search timed out\. No token was selected\./,kind+' must preserve an honest unavailable token-search state');
+  assert.match(result,/Token search unavailable\. No token was selected\. Failed to fetch/,kind+' must preserve an honest unavailable token-search state');
   assert.equal(forbidden.length,0,'An unavailable token search must not request wallet execution');
   assert.deepEqual(errors,[],'Unavailable token search handling caused a browser error');
 }
