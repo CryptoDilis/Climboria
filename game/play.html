@@ -955,8 +955,13 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  [[-27,-16],[27,-16],[-27,31],[27,31]].forEach(([x,z])=>caveTorches.push(torch(x,0,z,g)));
  glow('#ff8a3a',3.4,76,0,5,6,g);
  glow('#e7c58e',3.2,92,0,5,25,g);
- glow('#c9b7ff',1.3,45,30,3,42.5,g);
- glow('#9bd8e5',1.45,46,51,3,25,g);
+ // These two dim mineral accents must remain steady. The generic torch flicker
+ // loop otherwise drives the lavender light back to ~2.6 at runtime, undoing
+ // this annex palette polish even though the creation intensity was 1.3.
+ const annexLavender=glow('#c9b7ff',1.3,45,30,3,42.5,g);
+ const annexCyan=glow('#9bd8e5',1.45,46,51,3,25,g);
+ annexLavender.userData.fixedCaveAccent=true;
+ annexCyan.userData.fixedCaveAccent=true;
  // First connected side chamber: a short walkable branch off the existing chamber.
  // Every wall has a matching swept player collider; the doorway remains open at the west end.
  const caveWallMat=registerCaveRockMaterial(caveRockMaterial('#514b43',4106,.16)),caveWallDark=registerCaveRockMaterial(caveRockMaterial('#3d3935',4108,.18)),caveWallHeight=7,caveWallThickness=1.1;
@@ -2732,6 +2737,8 @@ function caveNorthAnnexPaletteAudit(){
   minShade:Number.isFinite(minShade)?+minShade.toFixed(3):null,
   maxShade:Number.isFinite(maxShade)?+maxShade.toFixed(3):null,
   lavenderIntensity:lavender?.intensity??null,cyanIntensity:cyan?.intensity??null,
+  lavenderFixed:lavender?.userData?.fixedCaveAccent===true,
+  cyanFixed:cyan?.userData?.fixedCaveAccent===true,
   backstopIntact:!!backstop&&backstop.position.z>47&&!!backstop.material?.map};
 }
 function caveApproachGroundAudit(){
@@ -2859,7 +2866,9 @@ function update(dt){
  crystal.rotation.y=Tm*.6;crystal.position.y=6+Math.sin(Tm*1.2)*.5;
  caveGems.forEach(({cluster,baseY,phase})=>{cluster.position.y=baseY+Math.sin(Tm*1.15+phase)*.11;cluster.rotation.y+=.0008;cluster.children.forEach((m,j)=>{m.material.emissiveIntensity=1.15+.32*Math.sin(Tm*2.1+phase+j*.7)})});
  flames.forEach((f,i)=>{f.scale.y=(f.userData.b||(f.userData.b=f.scale.y))*(.85+.25*Math.sin(Tm*13+i*2));});
- lights.forEach((l,i)=>{if(i>0&&l.color.r>.5)l.intensity=l.intensity*.9+.1*(2.6+Math.sin(Tm*11+i)*.5)*(l.distance>100?1.1:1)});
+ // Flicker flame/torch lights only; fixed mineral ambience is intentionally
+ // excluded so its subdued intensity stays correct throughout gameplay.
+ lights.forEach((l,i)=>{if(i>0&&l.color.r>.5&&!l.userData.fixedCaveAccent)l.intensity=l.intensity*.9+.1*(2.6+Math.sin(Tm*11+i)*.5)*(l.distance>100?1.1:1)});
  spikes.forEach(o=>{const w=Math.sin(Tm*1.6+o.ph);o.s.position.y=w>.55?1.2:w>.3?-.2:-2});
  soldiers.forEach(o=>{o.s.rotation.z=Math.sin(Tm*.8+o.ph)*o.tilt;o.s.rotation.x=Math.sin(Tm*.6+o.ph)*o.tilt*.6});
  const pa=flag.geometry.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i);pa.setZ(i,Math.sin(x*1.1-Tm*5)*.3*(x+3)/6)}pa.needsUpdate=true;wavingFlags.forEach(({geometry,base,phase})=>{const p=geometry.attributes.position;for(let i=0;i<p.count;i++){const x=base[i*3],y=base[i*3+1],fall=Math.max(0,(x+1.125)/2.25);p.setZ(i,base[i*3+2]+fall*(Math.sin(x*3.1-Tm*4.2+phase+y*.7)*.17+Math.sin(x*5.4-Tm*6.1+phase)*.035))}p.needsUpdate=true;geometry.computeVertexNormals()});

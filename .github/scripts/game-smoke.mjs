@@ -341,6 +341,7 @@ try {
   if(!northPalette?.batched||northPalette.rockCount!==24||!northPalette.hasTint||
     !Number.isFinite(northPalette.shadeRange)||northPalette.shadeRange<.13||
     northPalette.shadeRange>.22||!northPalette.backstopIntact||
+    !northPalette.lavenderFixed||!northPalette.cyanFixed||
     northPalette.lavenderIntensity!==1.3||northPalette.cyanIntensity!==1.45)
     errors.push('North annex over-lit pale rock palette or material regression: '+JSON.stringify(northPalette));
   console.log('North annex subdued lighting and tinted rock batch:',JSON.stringify(northPalette));
