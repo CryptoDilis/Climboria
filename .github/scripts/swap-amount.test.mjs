@@ -139,6 +139,12 @@ test("DEX exposes a keyboard-accessible read-only quote toggle without enabling 
   assert.equal(invalidations.length, 1);
 });
 
+test("DEX announces dynamic quote and terminal safety status updates", () => {
+  const html = readFileSync(new URL("../../dex/index.html", import.meta.url), "utf8");
+  assert.match(html, /id="quoteStatus" aria-live="polite" aria-atomic="true"/, "DEX quote status must announce quote and wallet safety changes");
+  assert.match(html, /id="dexTradeStatus" aria-live="polite" aria-atomic="true"/, "DEX terminal status must announce read-only and quote state changes");
+});
+
 test("Swap and DEX discard wallet-bound state when the provider disconnects or changes accounts", () => {
   for (const page of ["swap/index.html", "dex/index.html"]) {
     const html = readFileSync(new URL("../../" + page, import.meta.url), "utf8");
