@@ -19,6 +19,9 @@ const PROGRAMS = Object.freeze({
   jupiterV6: JUPITER_V6_PROGRAM_ID,
   raydiumV4: RAYDIUM_V4_PROGRAM_IDS["mainnet-beta"]
 });
+// The independent connectivity preflight already rejects stale finalized-slot
+// witnesses beyond this difference. Preserve the same fail-closed bound here.
+const MAX_FINALIZED_SLOT_DRIFT = 2048;
 const META = Object.freeze([
   "programId", "programDataAddress", "programDataPdaBump",
   "lastDeploySlot", "upgradeAuthority", "immutable"
@@ -85,6 +88,8 @@ export async function verifyDualRpcProgramProvenance({
       observations.push(proof);
     }
     const [a, b] = observations;
+    const providerReportedFinalizedSlotDifference = Math.abs(a.finalizedSlot - b.finalizedSlot);
+    if (providerReportedFinalizedSlotDifference > MAX_FINALIZED_SLOT_DRIFT) fail();
     const programs = {};
     for (const role of Object.keys(PROGRAMS)) {
       const one = checkedMetadata(a, role);
@@ -104,6 +109,7 @@ export async function verifyDualRpcProgramProvenance({
       distinctConfiguredRpcHostnames: true,
       primaryProviderReportedFinalizedSlot: a.finalizedSlot,
       secondaryProviderReportedFinalizedSlot: b.finalizedSlot,
+      providerReportedFinalizedSlotDifference,
       bothProviderReportedUpgradeableProgramMetadataAgree: true,
       programs: Object.freeze(programs),
       independentlyVerifiedDifferentOperators: false,
