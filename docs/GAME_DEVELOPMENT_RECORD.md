@@ -1,5 +1,18 @@
 # Climboria Game Development Record
 
+## 2026-11-15 PHT — Jarrell/Lheiz HERO SELECT MERGED; GitHub Pages build succeeded
+
+**Game workstream only. No Swap/DEX/Launchpad/ClimbX files changed.**
+
+- **Root cause of "new heroes not visible":** The 7,911,328-byte `Climboria_Jarrell.glb` and 12,465,796-byte `Climboria_Lheiz.glb` were already uploaded to `main`, but the `game/index.html` three-hero selector and `game/play.html` loader were still isolated on draft Game PR #424. A GLB upload alone does not add Hero Select UI.
+- **Fixed on GitHub:** [Game PR #424](https://github.com/CryptoDilis/Climboria/pull/424) was made ready and MERGED. Merge commit `ec2eabb1e8fa1f4c0032be2bf6f53be21dc36055` (2026-11-15 PHT). GitHub `main` HEAD and `game/index.html` were re-read at this commit; `#heroModelSelect` contains Adventurer, Jarrell, Lheiz. Original Adventurer remains the default/fallback.
+- **PRE-MERGE exact-head checks:** `d89b3a1603f99ff74db25f7eff5599edd4638070` — **5/5 SUCCESS**: [Validate #43615285862](https://github.com/CryptoDilis/Climboria/actions/runs/43615285862), [Browser Smoke #43615285806](https://github.com/CryptoDilis/Climboria/actions/runs/43615285806), [Original Hero GLB #43615285901](https://github.com/CryptoDilis/Climboria/actions/runs/43615285901), [New Jarrell+Lheiz Hero Smoke #43615285823](https://github.com/CryptoDilis/Climboria/actions/runs/43615285823), [Full Jarrell's Peak Gameplay #43615285822](https://github.com/CryptoDilis/Climboria/actions/runs/43615285822). 4/4 new-hero creator/game bootstrap passes with neutral lowered arms; 8 desktop/mobile screenshots reviewed on prior verified run #43614703063.
+- **Deployment:** [GitHub Pages build/deployment #43616440700](https://github.com/CryptoDilis/Climboria/actions/runs/43616440700) for merge SHA `ec2eabb1...` **SUCCESS**. This confirms GitHub's Pages deployment workflow completed, but a new browser request to `climboria.fun/game/` (including CDN/cache) was **NOT independently observed** in this environment. Do not assert a direct live-site check passed. Player can refresh `https://climboria.fun/game/` with Ctrl+Shift+R, open Create/Edit Hero, and check Choose Hero selector.
+- **POST-MERGE checks:** [Validate #43616441629](https://github.com/CryptoDilis/Climboria/actions/runs/43616441629) SUCCESS. [Main Jarrell Gameplay #43616441624](https://github.com/CryptoDilis/Climboria/actions/runs/43616441624) was IN PROGRESS when last checked. Review its terminal status, plus any automatically triggered live-site smoke logs, before claiming fully live gameplay verification.
+- **Known limitations:** Some animations are only confirmed embedded/available, not independently exercised via all user input paths. Lheiz has no regular jump clip, so no `Jumping_Punch` movement substitution. Mobile landscape camera framing may crop character feet and needs separate Game-only polish; real-device GPU/FPS and Meshy commercial artwork/license rights remain unverified.
+- **Exact next task for any resumed chat:** Check GitHub `main` HEAD and Pages deployment status first. Determine whether the hero options are visible to the user after a hard reload; if not, inspect published `game/index.html` asset/route/caching and Pages configuration, then fix on a Game-only branch and verify. Check post-merge full gameplay run #43616441624. Continue one feature at a time; record tested commits/PRs/run IDs and next action in this file. **Do not request re-upload of Jarrell/Lheiz binaries.**
+
+---
 ## ACTIVE GAME-ONLY HANDOFF — Jarrell + Lheiz selectable heroes (2026-11-14 PHT)
 
 **Task:** Add owner-supplied Jarrell/Lheiz playable characters to Jarrell's Peak Create Hero without replacing the original Adventurer, changing terrain/colliders, or touching DEX/Swap/Launchpad/ClimbX.
