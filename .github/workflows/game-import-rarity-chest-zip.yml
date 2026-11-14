@@ -1,0 +1,69 @@
+name: Game Import Owner Rarity Chest ZIP
+
+on:
+  push:
+    branches: [game/chest-rarity-glb-models-2026-11-15]
+    paths:
+      - 'assets/chests/Climboria_Five_Rarity_Chests_Optimized.zip'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: climboria-chest-binary-import-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-unpack-and-commit:
+    if: github.ref == 'refs/heads/game/chest-rarity-glb-models-2026-11-15'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout exact owner-uploaded Game branch
+        uses: actions/checkout@v4
+        with:
+          ref: game/chest-rarity-glb-models-2026-11-15
+          persist-credentials: true
+      - name: Verify ZIP members against hardcoded trusted optimized SHA-256
+        run: |
+          python3 - <<'PY'
+          import zipfile,hashlib,pathlib
+          root=pathlib.Path('.')
+          zip_path=root/'assets/chests/Climboria_Five_Rarity_Chests_Optimized.zip'
+          if not zip_path.is_file():raise SystemExit('Optimized ZIP not found on PR branch')
+          expected={
+           'Climboria_Chest_Common.glb':(1358448,'ef18bfd30eee4da3f6df06144c04acd0fc277089fbd729706b3c57d9caeefc7b'),
+           'Climboria_Chest_Uncommon.glb':(559748,'cacc85ac63792556c5907076fbcb1ce99b1be79c558ccc48f4b0d2fc67c08bdb'),
+           'Climboria_Chest_Rare.glb':(1581236,'96c8a4911312efdf1cbab974a4ec21b9f66b70c8556b645c7a502b83e7424d6f'),
+           'Climboria_Chest_Epic.glb':(1208104,'d74a80d50402458c5e2202c2d22d3d4fe413423aa1d70814a6312b6009d4ac60'),
+           'Climboria_Chest_Legendary.glb':(746592,'53a9e94a16db3977347981caad6aa7e8f213ee52cfb7166afd165744466a7fb4')
+          }
+          expected_names={'assets/chests/'+x for x in expected}
+          allowed=expected_names|{'manifest.json','README_IMPORT.txt'}
+          with zipfile.ZipFile(zip_path) as archive:
+           names=set(archive.namelist())
+           if names!=allowed:raise SystemExit('ZIP has missing/unexpected members: '+repr(names.symmetric_difference(allowed)))
+           if archive.testzip() is not None:raise SystemExit('Corrupt chest import ZIP')
+           for name,(size,sha) in expected.items():
+            src='assets/chests/'+name
+            info=archive.getinfo(src)
+            if info.file_size!=size:raise SystemExit('Wrong declared '+name+' byte size')
+            if (info.external_attr>>16)&0o170000==0o120000:raise SystemExit('Symlink forbidden in ZIP')
+            raw=archive.read(src)
+            if len(raw)!=size or hashlib.sha256(raw).hexdigest()!=sha:raise SystemExit('Wrong SHA/bytes for '+name)
+            if raw[:4]!=b'glTF':raise SystemExit('Not GLB: '+name)
+            target=root/'assets/chests'/name
+            target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_bytes(raw)
+            print('PASS',src,size,sha)
+          PY
+      - name: Execute exact Game GLB release validator
+        run: node game/scripts/verify-rarity-chests.mjs
+      - name: Commit five GLBs only and remove temporary ZIP
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- assets/chests/Climboria_Chest_Common.glb assets/chests/Climboria_Chest_Uncommon.glb assets/chests/Climboria_Chest_Rare.glb assets/chests/Climboria_Chest_Epic.glb assets/chests/Climboria_Chest_Legendary.glb
+          git rm -- assets/chests/Climboria_Five_Rarity_Chests_Optimized.zip
+          git commit -m "assets(game): install five verified optimized rarity chest GLBs"
+          git push origin HEAD:refs/heads/game/chest-rarity-glb-models-2026-11-15
