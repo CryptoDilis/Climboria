@@ -70,7 +70,11 @@ test("a genuine provider Failed with matching or absent signature is never Succe
   }
 });
 
-test("untrusted claimed signature values cannot convert a provider result into Success",()=>{
+test("malformed claimed signature values cannot convert a provider result into Success",()=>{
+  // This pure classifier validates syntax + equality; the Durable Object
+  // must obtain the claimed signature from an Ed25519-verified transaction.
+  // A different correctly encoded 64-byte signature is NOT malformed and
+  // must be rejected by the upstream claim binding, not guessed at here.
   for(const invalid of [null,undefined,"",other.slice(1),{},0]){
     const result=classifyJupiterExecutionOutcome({
       status:"Success",code:0,signature:invalid
