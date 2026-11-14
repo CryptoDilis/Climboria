@@ -182,7 +182,10 @@ export class SwapOrderStore {
             ...current,
             state: body.state,
             settledAt: Date.now(),
-            // An unknown provider outcome still has an authenticated on-chain\n            // transaction ID from /claim. Never replace it with null: operators\n            // must reconcile that exact signature before any retry.\n            signature: suppliedSignature ?? current.claimedSignature\n          });
+            // An unknown provider outcome still has an authenticated on-chain
+            // transaction ID from /claim. Never replace it with null: operators
+            // must reconcile that exact signature before any retry.
+            signature: suppliedSignature ?? current.claimedSignature\n          });
           return true;
         });
         if (!settled) return json({ error: "Order is not in an executable state" }, 409);
