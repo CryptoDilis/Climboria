@@ -374,6 +374,18 @@ try {
     undergrowth.meshName!=='JarrellSanctuaryEdgeUndergrowth')
     errors.push('Sanctuary field-edge undergrowth batch, visibility, walkway or mobile budget regression: '+JSON.stringify(undergrowth));
   console.log('Sanctuary field-edge original instanced undergrowth audit:',JSON.stringify(undergrowth));
+  const mountainCliff=await page.evaluate(()=>window.__climboriaJarrellsPeak?.mountainCliffStrataAudit?.()??null);
+  if(!mountainCliff||mountainCliff.sampleCount!==625||
+    mountainCliff.sampleHeights<90||mountainCliff.active<45||
+    mountainCliff.strong<10||mountainCliff.maxWeight<.15||
+    mountainCliff.strataRange<.28||mountainCliff.rockRedRange<.04||
+    mountainCliff.protectedSites?.length!==4||
+    mountainCliff.protectedSites.some(site=>!site.clear)||
+    !mountainCliff.riceProtected||!mountainCliff.desertProtected||
+    !mountainCliff.lowlandProtected||mountainCliff.terrainStep!==5||
+    !mountainCliff.terrainMaterialUnchanged)
+    errors.push('Mountain strata alpine coverage, biome exclusion or vertex-color audit failed: '+JSON.stringify(mountainCliff));
+  console.log('Jarrell world-aligned mountain cliff/lichen strata coverage:',JSON.stringify(mountainCliff));
   const sanctuaryPillars=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryPillarCollisionAudit?.()??null);
   if(!sanctuaryPillars?.ok||sanctuaryPillars.pillars?.length!==12||
     sanctuaryPillars.pillars.some(p=>!p.collider||!p.blocked)||sanctuaryPillars.walkwayBlocked?.length)
