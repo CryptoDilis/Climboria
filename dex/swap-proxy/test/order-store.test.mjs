@@ -266,6 +266,10 @@ test("unknown outcome remains replay-locked even without a provider signature", 
   assert.equal((await storage.get("order")).state,"executing");
   assert.equal((await settleOrder(object,"uncertain",null)).status,200);
   assert.equal((await storage.get("order")).state,"uncertain");
+  // Unknown provider outcomes must retain the verified transaction ID for
+  // independent on-chain reconciliation, not persist a null signature.
+  assert.equal((await storage.get("order")).signature,encodeBase58(fixture.takerSignature));
+  assert.equal((await storage.get("order")).claimedSignature,encodeBase58(fixture.takerSignature));
   assert.equal((await claimOrder(object,fixture.signed)).status,409);
 });
 

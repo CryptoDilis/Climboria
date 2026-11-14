@@ -182,7 +182,10 @@ export class SwapOrderStore {
             ...current,
             state: body.state,
             settledAt: Date.now(),
-            signature: suppliedSignature
+            // An unknown provider outcome still has an authenticated on-chain
+            // transaction ID from /claim. Never replace it with null: operators
+            // must reconcile that exact signature before any retry.
+            signature: suppliedSignature ?? current.claimedSignature
           });
           return true;
         });
