@@ -138,3 +138,28 @@ is not proof that production has been updated. Never enable
 signable/execution gates during this work. Manual local Wrangler deploys
 must also set a real `DEPLOYED_GIT_SHA` deliberately, or health is
 fail-closed (503).
+
+
+## Incoming JSON POST byte-limit enforcement (2026-11-14)
+
+The Cloudflare Worker previously called `request.text()` in its
+`readJson` request parser **before** checking the byte count. A malicious
+client could force allocation of a large incoming POST even though
+wallet-signable orders and execution are source-disabled.
+
+`dex/swap-proxy/src/bounded-request-json.mjs` now uses a bounded request
+stream instead. It validates the JSON media type exactly (accepts a
+`application/json; charset=utf-8` parameter, not
+`application/jsonp`), checks strictly numeric advertised
+`Content-Length` without unsafe numeric coercion and aborts immediately
+once the actually received bytes exceed the route limit. It never
+buffers the remainder of an oversized stream. It rejects invalid
+UTF-8, empty/truncated/malformed JSON, unavailable streams and streaming
+failures with fixed, credential-free 400 errors. It retains the existing
+8,192-byte `/api/swap/order` limit and the 60,000-byte `/api/swap/execute`
+limit (execution remains source-disabled before reaching JSON parsing).
+
+The regression tests use hostile synthetic request streams and Worker
+integration tests; they do not claim an actual public load test or a
+real wallet transaction. This change does not enable trading or token
+creation and does not modify public quotes, auth, CLIMBX or the game.
