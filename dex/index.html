@@ -1205,9 +1205,59 @@ async function openToken(mint,options={}){
  ['tokenOverviewPrice','tokenOverviewChange','tokenOverviewVolume','tokenOverviewLiquidity','tokenOverviewVenue','detailPrice','detailVolume','detailLiquidity','detailChange'].forEach(id=>{const el=$(id);if(el)el.classList.remove('skeleton-value')});
 }
 
-let connectedWallet=null,walletProvider=null;
-async function connectClimboriaWallet(){if(connectedWallet){await disconnectClimboriaWallet();return}const button=$('connectWallet');button.disabled=true;try{const provider=window.phantom?.solana||window.solflare||window.solana;if(!provider||typeof provider.connect!=='function')throw new Error('No supported Solana wallet detected. Open Climboria in Phantom or Solflare browser.');const result=await provider.connect();const key=(result?.publicKey||provider.publicKey)?.toString();if(!key)throw new Error('Wallet connection returned no public key.');connectedWallet=key;walletProvider=provider;$('walletStatus').textContent=key.slice(0,6)+'…'+key.slice(-6);button.textContent='Disconnect';button.disabled=false;}catch(e){$('quoteStatus').textContent=e.message;button.disabled=false;}}
-async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)await walletProvider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';}
+let connectedWallet=null,walletProvider=null,walletEventProvider=null,walletEventHandlers=null,walletConnectionEpoch=0;
+function walletAddress(value){return value?.toString?.()||'';}
+function renderDexWalletSession(){
+ const connected=Boolean(connectedWallet),label=connected?connectedWallet.slice(0,6)+'…'+connectedWallet.slice(-6):'Not connected';
+ $('walletStatus').textContent=label;const button=$('connectWallet');button.textContent=connected?'Disconnect':'Connect wallet';
+ if(connected)button.title='Connected wallet '+connectedWallet;else button.removeAttribute('title');
+ const terminalStatus=$('dexTradeWalletStatus'),terminalButton=$('dexTradeConnect');
+ if(terminalStatus)terminalStatus.textContent=connected?label:'Wallet not connected';
+ if(terminalButton)terminalButton.textContent=connected?'Disconnect':'Connect wallet';
+}
+function removeWalletEventListeners(){
+ const provider=walletEventProvider,handlers=walletEventHandlers;
+ if(provider&&handlers){
+  const remove=typeof provider.off==='function'?provider.off.bind(provider):typeof provider.removeListener==='function'?provider.removeListener.bind(provider):null;
+  if(remove){remove('disconnect',handlers.disconnect);remove('accountChanged',handlers.accountChanged);remove('accountsChanged',handlers.accountsChanged);}
+ }
+ walletEventProvider=null;walletEventHandlers=null;
+}
+function clearWalletSession(message){
+ ++walletConnectionEpoch;removeWalletEventListeners();connectedWallet=null;walletProvider=null;pendingSwapOrder=null;
+ renderDexWalletSession();$('connectWallet').disabled=false;$('swapReview').hidden=true;$('swapReview').innerHTML='';if(message)$('quoteStatus').textContent=message;
+}
+function bindWalletEvents(provider){
+ removeWalletEventListeners();walletEventProvider=provider;
+ const disconnect=()=>{if(walletProvider===provider)clearWalletSession('Wallet disconnected. Any prepared order was cleared; no transaction was submitted.');};
+ const accountChanged=value=>{
+  const address=walletAddress(Array.isArray(value)?value[0]:value);
+  if(!address){disconnect();return;}
+  if(walletProvider!==provider||address===connectedWallet)return;
+  connectedWallet=address;pendingSwapOrder=null;$('swapReview').hidden=true;$('swapReview').innerHTML='';renderDexWalletSession();
+  $('quoteStatus').textContent='Wallet account changed. Any prepared order was cleared; request a fresh quote before signing.';
+ };
+ const accountsChanged=accounts=>accountChanged(Array.isArray(accounts)?accounts[0]:accounts);
+ walletEventHandlers={disconnect,accountChanged,accountsChanged};
+ if(typeof provider.on==='function'){provider.on('disconnect',disconnect);provider.on('accountChanged',accountChanged);provider.on('accountsChanged',accountsChanged);}
+}
+async function connectClimboriaWallet(){
+ if(connectedWallet){await disconnectClimboriaWallet();return;}
+ const button=$('connectWallet'),attempt=++walletConnectionEpoch;button.disabled=true;button.textContent='Connecting…';
+ try{
+  const providers=[window.phantom?.solana,window.solflare,window.backpack?.solana,window.solana].filter(Boolean);
+  const provider=providers.find(p=>typeof p.connect==='function'&&(p.isPhantom||p.isSolflare||p.isBackpack))||providers.find(p=>typeof p.connect==='function');
+  if(!provider)throw new Error('No supported Solana wallet detected. Open Climboria in Phantom, Solflare or Backpack browser.');
+  const result=await provider.connect(),address=walletAddress(result?.publicKey||provider.publicKey);
+  if(attempt!==walletConnectionEpoch)return;
+  if(!address)throw new Error('Wallet connection returned no public key.');
+  connectedWallet=address;walletProvider=provider;bindWalletEvents(provider);renderDexWalletSession();
+  $('quoteStatus').textContent='Wallet connected. Quote preview remains read-only until the separate execution release is approved.';
+ }catch(error){
+  if(attempt===walletConnectionEpoch){connectedWallet=null;walletProvider=null;renderDexWalletSession();$('quoteStatus').textContent='Wallet connection failed: '+error.message;}
+ }finally{if(attempt===walletConnectionEpoch)button.disabled=false;}
+}
+async function disconnectClimboriaWallet(){const provider=walletProvider;++walletConnectionEpoch;removeWalletEventListeners();try{if(provider?.disconnect)await provider.disconnect();}catch(e){}clearWalletSession('Wallet disconnected. Any prepared order was cleared; no transaction was submitted.');}
 const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
 async function searchQuoteToken(side){const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{if(!swapProxyReady())throw new Error('Climboria Swap API is unavailable; token search is paused.');const tokenUrl=swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+'</b> · '+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'<br><small>'+esc(t.id)+' · '+(t.isVerified===true?'Jupiter verified':'Unverified')+'</small></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
 let dexQuoteRequestSequence=0;

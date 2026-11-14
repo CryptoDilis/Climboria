@@ -16,9 +16,33 @@ const fixture = extra => ({
   outAmount:'1234567',...extra
 });
 const sleep = ms => new Promise(resolve => setTimeout(resolve,ms));
-async function quotePage(browser,kind,viewport) {
+async function quotePage(browser,kind,viewport,{walletProvider=false}={}) {
   const mobile = viewport.width < 600;
   const page = await browser.newPage({ viewport, isMobile:mobile, hasTouch:mobile });
+  if(walletProvider) await page.addInitScript(() => {
+    const listeners = new Map();
+    const primary = 'FirstWallet111111111111111111111111111111111';
+    const provider = {
+      isPhantom: true,
+      publicKey: { toString: () => primary },
+      connect: async () => ({ publicKey: provider.publicKey }),
+      disconnect: async () => {},
+      on: (event, handler) => {
+        const handlers = listeners.get(event) ?? new Set();
+        handlers.add(handler); listeners.set(event, handlers);
+      },
+      off: (event, handler) => listeners.get(event)?.delete(handler)
+    };
+    const emit = (event, value) => {
+      for(const handler of [...(listeners.get(event) ?? [])]) handler(value);
+    };
+    window.phantom = { solana: provider };
+    window.__climboriaWalletTest = {
+      accountChanged: () => emit('accountChanged', { toString: () => 'SecondWallet22222222222222222222222222222222' }),
+      disconnect: () => emit('disconnect'),
+      listenerCount: event => listeners.get(event)?.size ?? 0
+    };
+  });
   const forbidden = [], errors = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('request', r => {
@@ -48,6 +72,28 @@ async function quotePage(browser,kind,viewport) {
     assert.equal(await page.locator('#swapQuote').isVisible(),true);
   }
   return {page,forbidden,errors};
+}
+async function walletSessionResult(ctx,kind) {
+  const {page,forbidden,errors}=ctx;
+  await page.locator('#connectWallet').click();
+  const connected=await page.locator('#walletStatus').innerText();
+  assert.notEqual(connected,'Not connected',kind+' must display the connected wallet');
+  assert.match(await page.locator('#quoteStatus').innerText(),/Wallet connected/i);
+  await page.evaluate(()=>window.__climboriaWalletTest.accountChanged());
+  await page.waitForFunction(previous => {
+    const current=document.querySelector('#walletStatus')?.textContent?.trim();
+    return current && current !== previous;
+  },connected,{timeout:5000});
+  assert.match(await page.locator('#quoteStatus').innerText(),/Wallet account changed/i);
+  assert.equal(await page.locator('#swapReview').isHidden(),true,'Account change must clear any prepared order UI');
+  await page.evaluate(()=>window.__climboriaWalletTest.disconnect());
+  await page.waitForFunction(() => document.querySelector('#walletStatus')?.textContent?.trim()==='Not connected',null,{timeout:5000});
+  assert.equal(await page.locator('#connectWallet').innerText(),'Connect wallet');
+  assert.match(await page.locator('#quoteStatus').innerText(),/Wallet disconnected/i);
+  assert.equal(await page.evaluate(()=>window.__climboriaWalletTest.listenerCount('disconnect')),0,
+    'Disconnected wallet must not retain event listeners');
+  assert.equal(forbidden.length,0,'Wallet state changes must not request order execution');
+  assert.deepEqual(errors,[],'Wallet session handling caused a browser error');
 }
 async function mockResult(ctx,metadata) {
   const {page,forbidden,errors}=ctx;
@@ -110,6 +156,13 @@ try {
       try {
         await mockResult(ctx,{feeBps:null,priceImpactPct:null,router:null,mode:null});
         console.log('PASS '+kind+' '+label+': unavailable fee, impact and router remain honest; no wallet requests');
+      } finally {await ctx.page.close();}
+    }
+    for(const kind of ['Swap','DEX']) {
+      const ctx=await quotePage(browser,kind,viewport,{walletProvider:true});
+      try {
+        await walletSessionResult(ctx,kind);
+        console.log('PASS '+kind+' '+label+': wallet disconnect and account changes clear stale session state without execution');
       } finally {await ctx.page.close();}
     }
     {
