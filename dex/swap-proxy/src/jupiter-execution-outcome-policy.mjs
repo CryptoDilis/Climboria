@@ -3,8 +3,9 @@
  * finality. A response MUST bind to the exact first signature of the signed
  * transaction already verified and atomically claimed by SwapOrderStore.
  *
- * No route here returns "completed" or a user-facing Success. A separate
- * audited finalized-chain reconciliation process is required for that.
+ * Neither provider Success NOR provider Failed is proof of finalized chain
+ * settlement. Never return an on-chain finality label for either claim.
+ * A separate audited finalized-chain reconciliation process is required.
  */
 export function classifyJupiterExecutionOutcome(data, claimedSignature) {
   const uncertain = Object.freeze({
@@ -32,16 +33,19 @@ export function classifyJupiterExecutionOutcome(data, claimedSignature) {
     });
   }
 
-  // An explicit matching provider failure is a provider claim, NOT proof
-  // that a network submission never landed. Avoid returning a success.
+  // Jupiter "Failed" cannot establish on-chain failure or prove the
+  // signed transaction was never broadcast. Returning status:"Failed" or
+  // writing DO state "failed" would encourage dangerous blind resubmission.
+  // Keep replay locked and provide the CLAIMED signature for on-chain review,
+  // even if Jupiter omitted its signature in the off-chain error response.
   if (data.status === "Failed" && data.code !== 0 &&
       (data.signature === null || data.signature === undefined ||
        data.signature === claimedSignature)) {
     return Object.freeze({
-      settlementState: "failed",
-      userStatus: "Failed",
+      settlementState: "provider_failure_unconfirmed",
+      userStatus: "PendingConfirmation",
       providerStatus: "Failed",
-      signature: data.signature === claimedSignature ? claimedSignature : null,
+      signature: claimedSignature,
       providerCode: data.code,
       providerReportedSuccessUnconfirmed: false,
       settledOnChain: false
