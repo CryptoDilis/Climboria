@@ -14,9 +14,10 @@
 import { fetchRaydiumV4EvidenceFromPoolAddress } from "../src/raydium-v4-pool-discovery.mjs";
 import { fetchRaydiumV4DualRpcPublicEvidence } from "../src/raydium-v4-dual-rpc-evidence.mjs";
 import { safeRaydiumOperatorError } from "./raydium-v4-safe-error.mjs";
+import { fetchMainnetUpgradeableProgramProvenance } from "../src/upgradeable-program-provenance.mjs";
 import { verifyOperatorRpcGenesisSet } from "../src/raydium-v4-rpc-genesis-preflight.mjs";
 
-const USAGE = "Usage: node dex/swap-proxy/tools/raydium-v4-finalized-pool-report.mjs --network mainnet-beta|devnet --pool <verified-public-pool-address> [--min-slot <nonnegative-slot>]";
+const USAGE = "Usage: node dex/swap-proxy/tools/raydium-v4-finalized-pool-report.mjs --network mainnet-beta --pool <verified-public-pool-address> [--min-slot <nonnegative-slot>]";
 
 async function main(argv) {
   if (!Array.isArray(argv) || argv.length < 4 || argv.length > 6 || argv.length % 2 !== 0) {
@@ -49,6 +50,12 @@ async function main(argv) {
   const preflight = await verifyOperatorRpcGenesisSet({
     primaryRpcUrl: rpcUrl, secondaryRpcUrl, expectedGenesisHash
   });
+  // Read-only finalized Upgradeable Loader evidence for BOTH Jupiter V6 and
+  // Raydium V4. This is a strict mainnet-beta-only evidence boundary, not
+  // bytecode verification and not permission to execute any transaction.
+  const programProof = await fetchMainnetUpgradeableProgramProvenance({
+    network: flags.get("--network"), rpcUrl, minContextSlot
+  });
   const result = secondaryRpcUrl
     ? await fetchRaydiumV4DualRpcPublicEvidence({
         network: flags.get("--network"), poolAddress: flags.get("--pool"),
@@ -66,6 +73,10 @@ async function main(argv) {
     genesisHash: preflight.genesisHash,
     matchesOperatorExpectedGenesis: preflight.matchesOperatorExpectedGenesis,
     genesisWitnessedRpcCount: preflight.witnessedRpcCount,
+    executableLoaderMetadataVerified: true,
+    executableMetadataPrimaryRpcOnly: true,
+    jupiterProgramData: programProof.programs.jupiterV6,
+    raydiumProgramData: programProof.programs.raydiumV4,
     network: result.network,
     programId: result.programId,
     pool: result.poolAddress,
