@@ -302,6 +302,14 @@ try {
     coastRoute.outward.distance<260||coastRoute.returnTrip.distance<260)
     errors.push('Real cave-to-coast route was not traversable in both directions: '+JSON.stringify(coastRoute));
   console.log('Cave-to-shore two-way traversal:',JSON.stringify(coastRoute));
+  const coastalExitFormation=await page.evaluate(()=>window.__climboriaJarrellsPeak?.coastalExitFormationAudit?.()??null);
+  if(!coastalExitFormation?.formed||!coastalExitFormation.batched||coastalExitFormation.count!==9||
+    coastalExitFormation.detail!==2||!coastalExitFormation.castShadow||!coastalExitFormation.receiveShadow||
+    !coastalExitFormation.visualOnly||!coastalExitFormation.layered||
+    !coastalExitFormation.leftShoulder||!coastalExitFormation.rightShoulder||!coastalExitFormation.crown||
+    coastalExitFormation.walkLaneHalfWidth!==5.6||coastalExitFormation.addedExitColliders!==0)
+    errors.push('Layered coastal exit formation or its no-new-collision guarantee failed: '+JSON.stringify(coastalExitFormation));
+  console.log('Layered coastal exit formation audit:',JSON.stringify(coastalExitFormation));
   const caveGround=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveApproachGroundAudit?.()??null);
   if(!caveGround?.ground||caveGround.rockInstances<30||caveGround.vertices!==1363||
     caveGround.alphaComponents!==4||caveGround.edgeAlpha>.05||
