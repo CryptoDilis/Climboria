@@ -15,6 +15,12 @@ const POOL_FIELDS = Object.freeze([
   "coinVault", "pcVault", "coinMint", "pcMint", "lpMint",
   "openOrders", "market", "marketProgram", "targetOrders"
 ]);
+const ACCOUNT_FIELDS = Object.freeze({
+  coinVault: ["mint", "owner", "native"],
+  pcVault: ["mint", "owner", "native"],
+  coinMint: ["decimals", "mintAuthority", "freezeAuthority"],
+  pcMint: ["decimals", "mintAuthority", "freezeAuthority"]
+});
 
 function fail() {
   // Never include configured RPC endpoint text in exception messages.
@@ -39,6 +45,12 @@ function checkView(view, network, poolAddress) {
   for (const key of POOL_FIELDS) {
     if (view.pool[key] === null || view.pool[key] === undefined) fail();
   }
+  for (const [role, fields] of Object.entries(ACCOUNT_FIELDS)) {
+    if (!view[role] || typeof view[role] !== "object") fail();
+    for (const field of fields) {
+      if (!Object.hasOwn(view[role], field)) fail();
+    }
+  }
 }
 
 export function compareRaydiumV4PublicViews(primary, secondary, { network, poolAddress } = {}) {
@@ -48,6 +60,11 @@ export function compareRaydiumV4PublicViews(primary, secondary, { network, poolA
       primary.expectedAuthority !== secondary.expectedAuthority) fail();
   for (const field of POOL_FIELDS) {
     if (primary.pool[field] !== secondary.pool[field]) fail();
+  }
+  for (const [role, fields] of Object.entries(ACCOUNT_FIELDS)) {
+    for (const field of fields) {
+      if (primary[role][field] !== secondary[role][field]) fail();
+    }
   }
   // Slots can differ; pool configuration and derived addresses must not.
   // This comparison does not attest dynamic vault balances, block ancestry,
