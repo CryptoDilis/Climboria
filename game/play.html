@@ -905,7 +905,17 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
    const vx=ix/soilGrid.cols,x=mix(soilGrid.minX,soilGrid.maxX,vx);
    soilVerts.push(x,caveApproachHeight(x,z),z);soilUV.push(vx,vz);
    const edge=Math.min(x-soilGrid.minX,soilGrid.maxX-x,z-soilGrid.minZ,soilGrid.maxZ-z);
-   soilColors.push(1,1,1,.86*ss(0,10,edge));
+   // Stable large-scale mineral/soil banding, with subtle mossier shoulders.
+   // Colors multiply the existing tileable soil texture; geometry and collision stay untouched.
+   const shoulder=ss(4,23,Math.abs(x));
+   const strata=Math.sin(x*.18+z*.095)*Math.cos(z*.24-x*.09);
+   const speckle=.5+.5*Math.sin(z*.54+x*.38)*Math.sin(z*.17-x*.29);
+   const moss=shoulder*(.55+.45*Math.sin(z*.11+x*.23)**2);
+   const dry=.07*strata+.08*(speckle-.5);
+   const soilR=Math.max(.64,Math.min(1,.93+dry-.12*moss));
+   const soilG=Math.max(.64,Math.min(1,.91+dry*.65-.055*moss));
+   const soilB=Math.max(.64,Math.min(1,.88+dry*.45-.16*moss));
+   soilColors.push(soilR,soilG,soilB,.86*ss(0,10,edge));
   }
  }
  const stride=soilGrid.cols+1;
@@ -2604,6 +2614,12 @@ function caveApproachGroundAudit(){
  const rocks=caveG?.getObjectByName('JarrellCaveApproachLoosePebbles');
  const attr=ground?.geometry?.getAttribute('color');
  const center=Math.floor((46/2)*29+14),positions=ground?.geometry?.getAttribute('position');
+ let minPigment=1,maxPigment=0;
+ if(attr)for(let i=0;i<attr.count;i+=7){
+  minPigment=Math.min(minPigment,attr.getX(i));
+  maxPigment=Math.max(maxPigment,attr.getX(i));
+ }
+ const pigmentRange=attr?+(maxPigment-minPigment).toFixed(4):null;
  let terrainGap=null;
  if(positions&&caveG){
   const x=positions.getX(center),z=positions.getZ(center),yaw=caveG.rotation.y;
@@ -2614,7 +2630,7 @@ function caveApproachGroundAudit(){
  return {ground:!!ground,rockInstances:rocks?.count||0,
   frustumCulled:ground?.frustumCulled===true,terrainGap,
   vertices:ground?.geometry?.getAttribute('position')?.count||0,
-  alphaComponents:attr?.itemSize||0,
+  alphaComponents:attr?.itemSize||0,pigmentRange,
   edgeAlpha:attr?.getW(0)??null,centerAlpha:attr?.getW(center)??null,
   hasColorTexture:!!ground?.material?.map,hasBumpTexture:!!ground?.material?.bumpMap,
   textureRepeat:ground?.material?.map?.repeat?.x||0};
