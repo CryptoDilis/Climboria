@@ -275,7 +275,9 @@ async function handleOrder(request, env) {
       expiresAt,
       resolvedLookups: lookupResolution.tables,
       lookupContextSlot: lookupResolution.contextSlot,
-      tokenAccountEvidence: tokenAccountVerification
+      tokenAccountEvidence: tokenAccountVerification,
+      minimumOutputRaw: data.otherAmountThreshold,
+      quotedOutputRaw: data.outAmount
     })
   });
   const storedData = await stored.json().catch(() => null);
