@@ -13,11 +13,15 @@
  * Not sourced from the SAME RPC being checked. Never paste URLs/API keys
  * into terminal transcripts, issue trackers or public CI.
  *
+ * The default digest check uses ONE bounded full finalized RPC response for
+ * each program, not cross-slot chunk reads. Each program can still have a
+ * different finalized slot. Provider honesty remains independently unproven.
+ *
  * This tool neither constructs nor signs/submits any transaction.
  */
 import { verifyOperatorRpcGenesisSet } from "../src/raydium-v4-rpc-genesis-preflight.mjs";
 import { fetchMainnetUpgradeableProgramProvenance } from "../src/upgradeable-program-provenance.mjs";
-import { hashPinnedJupiterRaydiumPayloads } from "../src/upgradeable-program-bytecode-digest.mjs";
+import { hashPinnedProgramsSingleSnapshots } from "../src/upgradeable-program-single-snapshot-digest.mjs";
 import { safeRaydiumOperatorError } from "./raydium-v4-safe-error.mjs";
 
 async function main() {
@@ -34,7 +38,7 @@ async function main() {
   const provenance = await fetchMainnetUpgradeableProgramProvenance({
     network: "mainnet-beta", rpcUrl
   });
-  const report = await hashPinnedJupiterRaydiumPayloads({
+  const report = await hashPinnedProgramsSingleSnapshots({
     provenanceProof: provenance, rpcUrl,
     expectedJupiterSha256, expectedRaydiumSha256
   });
@@ -47,7 +51,9 @@ async function main() {
     bothMatchOperatorPinnedSha256: report.bothMatchOperatorPinnedSha256,
     programSourceAndBinaryIndependentAuditComplete: false,
     rpcIndependentlyTrusted: false,
-    singleFinalizedSlotForAllBytecodeChunks: false,
+    singleFinalizedRpcResponsePerProgram: report.eachProgramReadInOneFinalizedRpcResponse,
+    sameFinalizedSlotAcrossBothProgramsVerified: report.sameFinalizedSlotAcrossBothProgramsVerified,
+    sourceToBinaryParityIndependentlyVerified: false,
     jupiterV6CpiSemanticsApproved: false,
     approvedForJupiterCpi: false,
     transactionsBuiltOrSubmitted: false
