@@ -133,18 +133,21 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
   assert.equal(denied.response.headers.get("access-control-allow-origin"), null, "Unknown origin must not receive CORS permission");
   checks.push("Unauthorized-origin rejection");
 
+  // Probe both independent read-only provider paths even when one fails,
+  // so a single guarded deploy can diagnose the actual production blocker.
+  // Neither path creates an order or touches wallet signing.
   const tokens = await request(SEARCH);
-  assert.equal(tokens.response.status, 200,
-    "Live token-search route unavailable (HTTP " + tokens.response.status +
-    "; category " + classifyReadOnlyApiFailure(tokens.data) + ")");
+  const quote = await request(QUOTE);
+  if (tokens.response.status !== 200 || quote.response.status !== 200) {
+    const status = (label, result) => label + " HTTP " + result.response.status +
+      " category " + (result.response.status === 200
+        ? "OK" : classifyReadOnlyApiFailure(result.data));
+    throw new Error("Live read-only Jupiter checks failed: " +
+      status("token-search", tokens) + "; " + status("quote", quote));
+  }
   assert.ok(Array.isArray(tokens.data) && tokens.data.some(t => t?.id === SOL && Number(t.decimals) === 9),
     "Jupiter-backed token search did not return canonical SOL metadata");
   checks.push("Real Jupiter token search (canonical SOL)");
-
-  const quote = await request(QUOTE);
-  assert.equal(quote.response.status, 200,
-    "Live quote route unavailable (HTTP " + quote.response.status +
-    "; category " + classifyReadOnlyApiFailure(quote.data) + ")");
   assert.equal(quote.data?.inAmount, "1000000", "Quote input amount differs from requested raw units");
   assert.ok(typeof quote.data?.outAmount === "string" && /^[1-9][0-9]*$/.test(quote.data.outAmount),
     "Live quote output is missing or invalid");
