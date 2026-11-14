@@ -198,16 +198,16 @@ test("all provider launch controls reference the actual expanded panel, not the 
     ["dex/index.html", "climboriaDexProviderPanel", 3]
   ]) {
     const source = readFileSync(new URL("../../" + path, import.meta.url), "utf8");
-    const buttons = source.match(/<button\\b[^>]*data-climboria-managed-swap-open[^>]*>/g) || [];
+    const buttons = source.match(/<button\b[^>]*data-climboria-managed-swap-open[^>]*>/g) || [];
     assert.equal(buttons.length, count, path + " provider launch controls");
     assert.equal((source.match(new RegExp('id="' + id + '"', "g")) || []).length, 1,
       path + " must have exactly one provider region ID");
     assert.match(source, new RegExp('<section id="' + id + '"[^>]*role="region"[^>]*data-climboria-managed-swap-panel'),
       path + " provider panel must be an accessible region");
     for (const tag of buttons) {
-      assert.match(tag, new RegExp('\\\\baria-controls="' + id + '"'),
+      assert.match(tag, new RegExp('\\baria-controls="' + id + '"'),
         path + " launch must control the visible panel");
-      assert.match(tag, /\\baria-expanded="false"/,
+      assert.match(tag, /\baria-expanded="false"/,
         path + " initial expansion state must be false");
     }
   }
