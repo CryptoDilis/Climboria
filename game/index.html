@@ -307,8 +307,15 @@ function startHeroPreview(){
     // Owner's Meshy Idle_03 is an overhead-arms motion, NOT a neutral rest.
     // Keep all original animation clips embedded but preview the safe relaxed
     // pose with arms lowered so the player sees the actual spawn silhouette.
+    // GLTFLoader sanitizes ':' and other punctuation in exported bone names.
+    // Match normalized full names, not only the original raw Meshy strings.
+    const findBone=name=>{
+     const canonical=value=>value.toLowerCase().replace(/[^a-z0-9]/g,'');
+     let hit=null;previewModel.traverse(o=>{if(o.isBone&&canonical(o.name)===canonical(name))hit=o});
+     return hit;
+    };
     const point=(boneName,childName,target)=>{
-     const bone=previewModel.getObjectByName(boneName),child=previewModel.getObjectByName(childName);
+     const bone=findBone(boneName),child=findBone(childName);
      if(!bone||!child||child.parent!==bone)return false;
      previewModel.updateWorldMatrix(true,true);
      const current=child.getWorldPosition(new THREE.Vector3()).sub(bone.getWorldPosition(new THREE.Vector3()));
@@ -335,7 +342,7 @@ function startHeroPreview(){
     const posedBounds=new THREE.Box3().setFromObject(previewModel);
     previewModel.position.y=-posedBounds.min.y;
     const direction=(bone,child)=>{
-     const a=previewModel.getObjectByName(bone),b=previewModel.getObjectByName(child);
+     const a=findBone(bone),b=findBone(child);
      return b.getWorldPosition(new THREE.Vector3())
       .sub(a.getWorldPosition(new THREE.Vector3())).normalize().toArray();
     };
@@ -343,7 +350,7 @@ function startHeroPreview(){
      leftArm:direction('mixamorig:LeftArm','mixamorig:LeftForeArm'),
      rightArm:direction('mixamorig:RightArm','mixamorig:RightForeArm')
     };
-    const spine=previewModel.getObjectByName('mixamorig:Spine2');
+    const spine=findBone('mixamorig:Spine2');
     previewNeutralSpine=spine?{bone:spine,base:spine.quaternion.clone()}:null;
     previewNeutralTime=0;
     document.documentElement.dataset.climboriaHeroPreviewPose='neutral-idle';
