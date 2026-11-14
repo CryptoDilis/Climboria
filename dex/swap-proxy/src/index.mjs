@@ -1,6 +1,7 @@
 import { SwapOrderStore } from "./order-store.mjs";
 import { parseSolanaV0Transaction, validateJupiterOrderMetadata } from "./transaction-validation.mjs";
 import { classifyJupiterExecutionOutcome } from "./jupiter-execution-outcome-policy.mjs";
+import { pendingClaimedSwapEvidence } from "./claimed-uncertain-evidence.mjs";
 import { resolveTransactionLookups, verifyJupiterTokenAccounts, validateRpcUrl } from "./solana-rpc.mjs";
 import { validateJupiterV6Transaction } from "./jupiter-v6-policy.mjs";
 import { requireReviewedJupiterV6CpiSemantics } from "./jupiter-v6-cpi-review.mjs";
@@ -448,11 +449,15 @@ async function handleExecute(request, env) {
   const payload = { signedTransaction, requestId: claim.record.requestId };
   if (claim.record.lastValidBlockHeight !== null && claim.record.lastValidBlockHeight !== undefined) {
     if (!Number.isSafeInteger(claim.record.lastValidBlockHeight) || claim.record.lastValidBlockHeight <= 0) {
-      await orderStore.fetch("https://order-store/settle", {
+      const settlementRecorded=await orderStore.fetch("https://order-store/settle", {
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ state: "uncertain" })
-      });
-      return json({ error: "Stored Jupiter order has invalid lastValidBlockHeight; execution stopped" }, 503);
+      }).then(response=>response.ok).catch(()=>false);
+      return json(pendingClaimedSwapEvidence({
+        claimedSignature:claim.record.claimedSignature,
+        reason:"INVALID_STORED_HEIGHT",
+        settlementRecorded
+      }),202);
     }
     payload.lastValidBlockHeight = claim.record.lastValidBlockHeight;
   }
@@ -476,32 +481,36 @@ async function handleExecute(request, env) {
     data = await readBoundedProviderJson(response, 65536);
   } catch {
     const settlementRecorded = await settle("uncertain").catch(() => false);
-    return json({
-      error: "Jupiter execution outcome is unknown; the order is locked against replay. Check on-chain wallet activity before taking further action.",
+    return json(pendingClaimedSwapEvidence({
+      claimedSignature:claim.record.claimedSignature,
+      reason:"PROVIDER_TRANSPORT_UNKNOWN",
       settlementRecorded
-    }, 502);
+    }),202);
   }
   if (!response.ok) {
     // A Jupiter HTTP error does not prove that no transaction landed.
     const settlementRecorded = await settle("uncertain").catch(() => false);
-    return json({
-      error: "Jupiter execution request failed; outcome is unknown and order remains replay-locked",
-      upstreamStatus: response.status,
+    return json(pendingClaimedSwapEvidence({
+      claimedSignature:claim.record.claimedSignature,
+      reason:"PROVIDER_HTTP_UNKNOWN",
       settlementRecorded
-    }, response.status >= 400 && response.status < 500 ? response.status : 502);
+    }),202);
   }
   const outcome = classifyJupiterExecutionOutcome(data, claim.record.claimedSignature);
   if (outcome.settlementState === "uncertain") {
     const settlementRecorded = await settle("uncertain").catch(() => false);
-    return json({
-      error: "Jupiter returned an unknown or mismatched transaction result; the order is replay-locked. Verify the exact transaction on-chain.",
+    return json(pendingClaimedSwapEvidence({
+      claimedSignature:claim.record.claimedSignature,
+      reason:"PROVIDER_RESULT_UNKNOWN",
       settlementRecorded
-    }, 502);
+    }),202);
   }
   if (!await settle(outcome.settlementState, outcome.signature).catch(() => false)) {
-    return json({
-      error: "Jupiter responded but the order result could not be durably recorded; verify the exact transaction on-chain before further action"
-    }, 503);
+    return json(pendingClaimedSwapEvidence({
+      claimedSignature:claim.record.claimedSignature,
+      reason:"DURABLE_OUTCOME_UNKNOWN",
+      settlementRecorded:false
+    }),202);
   }
 
   // Neither provider Success nor provider Failed proves a finalized-chain
