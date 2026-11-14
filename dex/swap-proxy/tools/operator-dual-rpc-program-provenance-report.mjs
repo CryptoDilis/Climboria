@@ -10,7 +10,7 @@
  */
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
-import { verifyDualRpcProgramProvenance } from "../src/operator-dual-rpc-program-provenance.mjs";
+import { verifyDualRpcProgramProvenance } from "./operator-dual-rpc-program-provenance.mjs";
 
 export async function runDualRpcProgramMetadata({
   primaryRpcUrl = process.env.CLIMBORIA_SOLANA_RPC_URL,
