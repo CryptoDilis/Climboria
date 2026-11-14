@@ -30,6 +30,7 @@ try{
   props:window.__climboriaJarrellsPeak.sanctuaryDecorAudit()
  }));
  if(result.props.visitor.source!=='../assets/characters/Climboria_Starting_Tambay_NPC_optimized.glb'
+   ||result.props.visitor.x!==-10||result.props.visitor.z!==-43
    ||!result.props.visitor.centerLaneClear||!result.props.visitor.loaded)
   throw Error('Visitor optimized source did not safely attach at the Sanctuary: '+JSON.stringify(result));
  if(cartInstalled){
@@ -38,6 +39,14 @@ try{
  }else if(!result.props.cart.placeholderRetained)
   throw Error('Missing Arcane Cart must retain existing merchant until asset upload');
  if(errors.length)throw Error('Browser JS errors: '+errors.join(' | '));
+ // Look at the real static visitor from the player-side entry route rather
+ // than archiving the initial spawn camera, which faces away from the NPC.
+ await page.evaluate(()=>{
+  const world=window.__climboriaJarrellsPeak,player=world.player;
+  player.x=-10;player.z=-28;player.y=world.groundAt(player.x,player.z)+1.75;
+  player.yaw=0;player.mode='walk';player.vy=0;
+ });
+ await page.waitForTimeout(1600);
  await page.screenshot({path:'climboria-sanctuary-static-props.png',animations:'disabled'});
  console.log('PASS Sanctuary decorative visitor with optimized source; Arcane Cart installed:',cartInstalled,JSON.stringify(result));
 }finally{await browser.close()}
