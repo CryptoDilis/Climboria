@@ -1,21 +1,21 @@
 # Climboria DEX, Swap & Launchpad — Development Record / Chat Handoff
 
-**Last reviewed:** 2026-11-14 (Philippine time)
+**Last reviewed:** 2026-11-15 (Philippine time)
 **Repository:** `CryptoDilis/Climboria`
-**Initial baseline:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`; **latest merged DEX/Swap change:** `f95ef0a9658b2de04d353f204f0e9069a35f8ca5` (PR #313; refresh current `main` on every resume)
-**Current owner-directed scope (2026-11-14):** **Swap + DEX ONLY.** Launchpad is PAUSED; Game, ClimbX and other workstreams are owned elsewhere. This file's historical entries cover Launchpad, but this workstream must not resume it without a new owner instruction. Record exact progress/CI/next task here after each meaningful change.
+**Initial historical baseline:** `main` at `11c76a34b2da53854253670eebaa6fa52f224607`; **latest verified merged DEX/Swap code change:** PR #467, `ac65e833a8fe9eb7ceddd7ad3c4d15ffe6304308` (production Pages + quote browser tests PASS; refresh current `main` on every resume)
+**Current owner-directed scope (2026-11-15):** **Swap + DEX ONLY.** Launchpad is PAUSED; Game, ClimbX and other workstreams are owned elsewhere. This file's historical entries cover Launchpad, but this workstream must not resume it without a new owner instruction. Record exact progress/CI/next task here after each meaningful change.
 **Latest Launchpad read-only integration:** `9379d783bce37763479f16a1ea7e50d63d5d3813` (PR #317).\n**State:** active development; **not** evidence that signed mainnet swaps or token launches are live.
-**Latest verified Swap/DEX security code merge:** PR #401, `a333409f015ab445942febad7fd7a3e74196e514` (2026-11-14). Public quote previews live, native signing/execution remains disabled. The earlier PR #313 'latest' field above is historical; always check current main.
+**Latest verified provider lifecycle security fix:** PR #465, `880f88a46b0d20bd8fec190f73be176c516dc7c1` (2026-11-15), followed by PR #467 accessibility fix, `ac65e833a8fe9eb7ceddd7ad3c4d15ffe6304308`. Public quotes and market UI live; **real wallet execution remains disabled**. Do not mistake an in-site provider mock test for a verified official SDK or settled swap.
 
-## How to resume after a chat ends
+**CURRENT 2026-11-15 GO/NO-GO:** Real-money Swap/DEX is **NO-GO**, even though quote-only website and latest PR #467 panel accessibility changes have verified successful Pages deployment + production quote-browser checks. Provider-managed third-party in-site SDK remains disabled; official upstream vendor docs/source/SRI, wallet behavior and a tiny owner-funded on-chain receipt are NOT verified. **NEXT:** verify trustworthy current first-party embeddable SDK artifact and API; then scoped fee-OFF integration PR, staging and minimal owner-wallet mainnet acceptance, independently checked finality/amounts, and explicit production enabling. No Game, ClimbX or Launchpad edits. The latest dated log entry at the bottom is authoritative over older historical checklist items.\n\n## How to resume after a chat ends
 
 1. **Read this file FIRST**, then fetch current `main`, open PRs and exact-head GitHub Actions runs. Do **not** assume the baseline SHA above is still current.
-2. Work on **DEX, Swap and Launchpad only**. Avoid `game/`, Game assets, `GAME_CONCEPT.md`, gameplay-specific workflows and Game progress records. The other developer handles those.
+2. Work on **DEX and Swap only** (Launchpad paused). Avoid `game/`, Game assets, `GAME_CONCEPT.md`, gameplay-specific workflows and Game progress records. The other developer handles those.
 3. Before every substantial change, inspect the relevant source + current remote CI. Use a focused branch/PR, preserve unrelated changes, and validate exact-head checks before merging. Shared frontend/workflows require extra conflict care.
 4. **Update this same record after each meaningful completed task, test result, merge or blocker diagnosis.** Add the date, affected files, branch/PR/commit, exact run URLs and pass/fail conclusion, and one concrete next step. Refresh obsolete statuses; do not append unsupported success claims.
 5. No asynchronous work is implied by this document. A future chat resumes by reading it and taking the next step, rather than repeating earlier planning.
 
-## Current release truth (verified source and GitHub evidence)
+## Historical release baseline (2026-11-14; see latest 2026-11-15 entry below for current facts)
 
 | Area | Verified accomplishments | Still blocked / NOT verified |
 | --- | --- | --- |
@@ -31,7 +31,7 @@
 - Launchpad must remain preview-only until program/SDK provenance, configuration, economics, creator authentication, Devnet launch-to-migration reconciliation, incident controls and independent security review all pass.
 - Prefer free/low-cost infrastructure **without downgrading** authentication, validation, key management, rate limiting or asset safety.
 
-## Exact next steps — in order
+## Historical planned next steps (2026-11-14; superseded for current action by latest 2026-11-15 entry)
 
 **P0 — Finish the quote-only CI race fix.**
 - [Deployment run 43457843679](https://github.com/CryptoDilis/Climboria/actions/runs/43457843679) passed deployed health/bindings, CORS, real Jupiter SOL token search, SOL/USDC quote, and fail-closed execute. [Independent run 43457843923 attempt 2](https://github.com/CryptoDilis/Climboria/actions/runs/43457843923) also passed after the Worker deploy; its first attempt failed before deployment finished.
