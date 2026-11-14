@@ -197,3 +197,11 @@ a release workflow succeeding is not permission to change
 `enabled: false`. No source-review or mainnet transaction gate was
 weakened. Verify the main-push Actions run ID and post-deploy probe
 before reporting any new release live.
+
+## Real token-search HTTP 503 triage (2026-11-14)
+
+**Verified production blocker:** [Deploy Climboria API run 43550525078](https://github.com/CryptoDilis/Climboria/actions/runs/43550525078), checked out at df46b6f, successfully completed Worker security tests, Cloudflare secret/namespace checks, Wrangler deploy, exact live /health SHA and CORS tests. Its final real token-search readiness failed: HTTP 503 instead of 200. The Worker was deployed in quote-only mode; the Jupiter-backed API is NOT production-ready and no on-chain trades were executed.
+
+New fail-closed diagnostics: Cloudflare RATE_LIMITER.limit() exceptions return only RATE_LIMITER_UNAVAILABLE, while missing namespace and ordinary limit refusal remain separately identifiable. The real production smoke probes BOTH token search and unsigned SOL/USDC quote even when one fails. It prints ONLY fixed allowlisted categories and HTTP status (e.g. RATE_LIMITER_UNAVAILABLE, JUPITER_TRANSPORT_OR_REDIRECT, JUPITER_TIMEOUT, JUPITER_HTTP_401/403/429/5xx), never raw provider errors, private tokens or URLs. It never calls the signable order endpoint.
+
+**Next:** Inspect the postmerge guarded main-push Deploy Climboria API run. If RATE_LIMITER_UNAVAILABLE, check Cloudflare account-specific binding/namespace under owner control rather than disabling rate limits. If Jupiter network transport/redirect, check outbound egress while preserving redirect:error and secret isolation. If JUPITER_HTTP_401/403, investigate Jupiter account/entitlements and private Actions secret; never paste keys in source, logs or chat. If HTTP 429, respect provider quotas. Only full live quote-only readiness success establishes operational quoting; it is not approval for native transaction signing or execution.
