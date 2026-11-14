@@ -16,7 +16,7 @@ const fixture = extra => ({
   outAmount:'1234567',...extra
 });
 const sleep = ms => new Promise(resolve => setTimeout(resolve,ms));
-async function quotePage(browser,kind,viewport,{walletProvider=false,tokenSearchUnavailable=false}={}) {
+async function quotePage(browser,kind,viewport,{walletProvider=false,tokenSearchUnavailable=false,marketUnavailable=false}={}) {
   const mobile = viewport.width < 600;
   const page = await browser.newPage({ viewport, isMobile:mobile, hasTouch:mobile });
   if(walletProvider) await page.addInitScript(() => {
@@ -56,6 +56,10 @@ async function quotePage(browser,kind,viewport,{walletProvider=false,tokenSearch
   // Stub market feeds only. The quote endpoint is separately controlled.
   await page.route('https://api.dexscreener.com/**',route =>
     route.fulfill({status:200,contentType:'application/json',body:'{"pairs":[]}'})
+  );
+  await page.route('https://api.coingecko.com/**',route => marketUnavailable
+    ? route.abort('timedout')
+    : route.fulfill({status:200,contentType:'application/json',body:'[]'})
   );
   await page.route('https://api.climboria.fun/api/tokens/search**',route => tokenSearchUnavailable
     ? route.abort('timedout')
@@ -147,6 +151,15 @@ async function unavailableTokenSearch(ctx,kind) {
   assert.equal(forbidden.length,0,'An unavailable token search must not request wallet execution');
   assert.deepEqual(errors,[],'Unavailable token search handling caused a browser error');
 }
+async function unavailableSwapMarket(ctx) {
+  const {page,forbidden,errors}=ctx;
+  await page.waitForFunction(() =>
+    (document.querySelector('#majorStatus')?.textContent||'').includes('Live price provider unavailable'),
+    null,{timeout:10000});
+  assert.match(await page.locator('#majorCoins').innerText(),/BTC/, 'Swap must retain its selectable market list when the public feed is unavailable');
+  assert.equal(forbidden.length,0,'An unavailable public market feed must not request wallet execution');
+  assert.deepEqual(errors,[],'Unavailable public market handling caused a browser error');
+}
 async function pendingQuote(ctx,action,{assertStatus,assertResult}) {
   const {page,forbidden,errors}=ctx;
   let resolveRoute;
@@ -190,6 +203,13 @@ try {
       try {
         await unavailableTokenSearch(ctx,kind);
         console.log('PASS '+kind+' '+label+': unavailable token search recovers without selection or execution');
+      } finally {await ctx.page.close();}
+    }
+    {
+      const ctx=await quotePage(browser,'Swap',viewport,{marketUnavailable:true});
+      try {
+        await unavailableSwapMarket(ctx);
+        console.log('PASS Swap '+label+': unavailable public market feed preserves selection and does not execute');
       } finally {await ctx.page.close();}
     }
     for(const kind of ['Swap','DEX']) {

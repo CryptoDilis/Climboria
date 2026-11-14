@@ -102,6 +102,29 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
   assert.match(good.quoteResults.innerHTML, /Not requested/);
 });
 
+test("Swap public market requests time out without substituting cached data", async () => {
+  const html = readFileSync(new URL("../../swap/index.html", import.meta.url), "utf8");
+  const start = html.indexOf("const MARKET_REQUEST_TIMEOUT_MS=10000;");
+  const end = html.indexOf("\nlet selectedChartRequest", start);
+  assert.ok(start >= 0 && end > start, "Expected bounded Swap market request helper");
+  const helper = html.slice(start, end);
+  let scheduled, delay, cleared, usedSignal;
+  class FakeAbortController {
+    constructor() { this.signal = { aborted: false }; }
+    abort() { this.signal.aborted = true; }
+  }
+  const attempt = runInNewContext(helper + "\nfetchMarketJson('https://market.example.test/feed')", {
+    AbortController: FakeAbortController,
+    setTimeout: (callback, milliseconds) => { scheduled = callback; delay = milliseconds; return 42; },
+    clearTimeout: id => { cleared = id; },
+    fetch: (_url, options) => { usedSignal = options.signal; scheduled(); return Promise.reject(new Error("network unavailable")); }
+  });
+  await assert.rejects(attempt, /Market provider request timed out\. No cached market data was substituted\./);
+  assert.equal(delay, 10000);
+  assert.equal(usedSignal.aborted, true);
+  assert.equal(cleared, 42);
+});
+
 
 test("DEX exposes a keyboard-accessible read-only quote toggle without enabling swaps", () => {
   const html = readFileSync(new URL("../../dex/index.html", import.meta.url), "utf8");
