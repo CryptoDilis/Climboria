@@ -2555,15 +2555,22 @@ const CHEST_TIER_PALETTE=Object.freeze({
  epic:{wood:'#42235f',lid:'#60378c',trim:'#a77cdb',gem:'#dd9cff'},
  legendary:{wood:'#61391f',lid:'#905822',trim:'#eac266',gem:'#fff1a0'}
 });
+// Reuse just five sets of materials. M() globally caches materials, so never
+// recolor a shared cached material in place (other chests would all change).
+const CHEST_TIER_MATERIALS=Object.fromEntries(Object.entries(CHEST_TIER_PALETTE).map(([tier,p])=>[tier,{
+ wood:M(p.wood),lid:M(p.lid),iron:M(p.trim),gem:M(p.gem,1)
+}]));
 const CHEST_MODEL_STATUS=Object.fromEntries(Object.keys(CHEST_MODEL_ASSETS).map(tier=>[tier,'not-shipped']));
 const CHEST_MODEL_CACHE=new Map();
 let chestModelsStarted=false;
 function repaintChest(c){
  const tier=c.reward?.rarity||'common',p=CHEST_TIER_PALETTE[tier];
- c.visual.wood.color.set(p.wood);
- c.visual.lid.color.set(p.lid);
- c.visual.iron.color.set(p.trim);
- c.visual.gem.color.set(p.gem);
+ const mats=CHEST_TIER_MATERIALS[tier];
+ c.visual.body.material=mats.wood;
+ c.visual.lid.material=mats.lid;
+ c.visual.bands.forEach(band=>band.material=mats.iron);
+ c.visual.lock.material=mats.iron;
+ c.visual.gem.material=mats.gem;
  c.visualTier=tier;c.mapColor=p.gem;
  if(!c.visualModel&&CHEST_MODEL_CACHE.has(tier)){
   const model=cloneChestModel(CHEST_MODEL_CACHE.get(tier));
@@ -2640,16 +2647,15 @@ function chestRespawnDelay(c){
 }
 function chest(kind,fixed,anchor,rad){
  const g=new T3.Group(),fallback=new T3.Group();
- const wood=M('#68452b'),lid=M('#805936'),iron=M('#b58a43'),gem=M('#ffd27a',1);
- sc(mk(DOD,wood,0,.42,0,fallback),.82,.43,.58);
- sc(mk(DOD,lid,0,.79,-.015,fallback),.84,.34,.6);
- [-.38,0,.38].forEach(x=>{const band=mk(BOX,iron,x,.58,0,fallback);sc(band,.09,.72,1.03)});
- sc(mk(BOX,iron,0,.68,.57,fallback),.24,.28,.08);
- sc(mk(SPH,gem,0,1.12,.02,fallback),.1,.1,.1);
+ const body=sc(mk(DOD,M('#68452b'),0,.42,0,fallback),.82,.43,.58);
+ const lid=sc(mk(DOD,M('#805936'),0,.79,-.015,fallback),.84,.34,.6);
+ const bands=[-.38,0,.38].map(x=>sc(mk(BOX,M('#b58a43'),x,.58,0,fallback),.09,.72,1.03));
+ const lock=sc(mk(BOX,M('#b58a43'),0,.68,.57,fallback),.24,.28,.08);
+ const gem=sc(mk(SPH,M('#ffd27a',1),0,1.12,.02,fallback),.1,.1,.1);
  g.add(fallback);g.scale.setScalar(.62);scene.add(g);
  const c={g,kind,fixed,anchor,rad,open:true,t:0,x:0,z:0,spawnSlot:null,
   reward:null,visualTier:'common',visualFallback:fallback,visualModel:null,
-  visual:{wood,lid,iron,gem}};
+  visual:{body,lid,bands,lock,gem}};
  chests.push(c);place(c);
 }
 function place(c){
