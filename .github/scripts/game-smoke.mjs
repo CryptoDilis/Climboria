@@ -363,13 +363,13 @@ try {
     errors.push('Sanctuary streamed world-aligned soil microtexture/UV/mobile budget regression: '+JSON.stringify(soilTile));
   console.log('Sanctuary tileable 128px soil detail / streamed UV audit:',JSON.stringify(soilTile));
   const undergrowth=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryEdgeUndergrowthAudit?.()??null);
-  const expectedUndergrowth=await page.evaluate(()=>(('ontouchstart' in window)||navigator.maxTouchPoints>0)?52:104);
+  const expectedUndergrowth=await page.evaluate(()=>(('ontouchstart' in window)||navigator.maxTouchPoints>0)?72:140);
   if(!undergrowth?.instanced||undergrowth.count!==expectedUndergrowth||
-    undergrowth.desired!==expectedUndergrowth||undergrowth.minAbsX<15.9||
-    undergrowth.minPlatformDist<37.4||undergrowth.minZ< -127.1||
-    undergrowth.maxZ> -24.9||undergrowth.nearCameraCount<expectedUndergrowth*.50||
-    !undergrowth.heightAligned||undergrowth.trianglesPerInstance!==7||
-    undergrowth.trianglesTotal>728||!undergrowth.oneDrawCall||
+    undergrowth.desired!==expectedUndergrowth||undergrowth.minAbsX<11.9||
+    undergrowth.minPlatformDist<32.4||undergrowth.minZ< -118.1||
+    undergrowth.maxZ> -27.9||undergrowth.nearCameraCount<expectedUndergrowth*.70||
+    !undergrowth.heightAligned||undergrowth.trianglesPerInstance!==9||
+    undergrowth.trianglesTotal>1260||!undergrowth.oneDrawCall||
     !undergrowth.hasInstanceTints||!undergrowth.noNewCollision||
     undergrowth.meshName!=='JarrellSanctuaryEdgeUndergrowth')
     errors.push('Sanctuary field-edge undergrowth batch, visibility, walkway or mobile budget regression: '+JSON.stringify(undergrowth));
