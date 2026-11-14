@@ -692,6 +692,26 @@ const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
   sh.vertexShader=sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nfloat grassBend=uv.y*uv.y*(sin(uGrassTime*1.7+instanceMatrix[3][0]*0.035+instanceMatrix[3][2]*0.027)*0.12+sin(uGrassTime*0.8+instanceMatrix[3][0]*0.012)*0.045);\ntransformed.x += grassBend;');
  };
  grassMat.customProgramCacheKey=()=>'climboria-grass-wind-v1';
+ // A world-space sphere per instanced chunk avoids drawing vegetation and rocks
+ // behind the camera. In Three r128, the culling sphere belongs to geometry,
+ // so each batch owns only a tiny geometry clone (never mutate shared templates).
+ function boundWorldInstances(batch,instances,radiusAt,yAt){
+  const bounds=new T3.Box3(),lower=new T3.Vector3(),upper=new T3.Vector3();
+  for(const t of instances){
+   const rad=radiusAt(t),y=yAt(t);
+   lower.set(t.x-rad,y-rad,t.z-rad);
+   upper.set(t.x+rad,y+rad,t.z+rad);
+   bounds.expandByPoint(lower);bounds.expandByPoint(upper);
+  }
+  if(bounds.isEmpty())return batch;
+  const ownedGeometry=batch.geometry.clone();
+  ownedGeometry.boundingSphere=bounds.getBoundingSphere(new T3.Sphere());
+  batch.geometry=ownedGeometry;
+  batch.userData.ownsChunkBoundsGeometry=true;
+  batch.frustumCulled=true;
+  return batch;
+ }
+
  function makeGrass(cx,cz,out){
   const ox=cx*CS,oz=cz*CS,rand=rng(cx*1877+cz*3181+991),items=[];
   const count=MOB?150:330;
@@ -707,7 +727,9 @@ const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
   if(!items.length)return;
   const im=new T3.InstancedMesh(grassGeo,grassMat,items.length);
   items.forEach((t,i)=>{D.position.set(t.x,t.h+.02,t.z);D.rotation.set(0,t.rot,0);D.scale.set(t.scale,t.scale,t.scale);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});
-  im.instanceMatrix.needsUpdate=true;im.frustumCulled=false;out.push(im);
+  im.instanceMatrix.needsUpdate=true;
+  boundWorldInstances(im,items,t=>Math.max(1.5,t.scale*1.6),t=>t.h+.3*t.scale);
+  out.push(im);
  }
 // Visual-only Sanctuary field-edge undergrowth: tiny original 5-blade
 // cluster, one instanced material/mesh, never in solids or click navigation.
@@ -754,7 +776,9 @@ const sanctuaryEdgeUndergrowth=(()=>{
  return {mesh,desired,patches};
 })();
 function inst(geo,mat,list,fn){if(!list.length)return null;const im=new T3.InstancedMesh(geo,mat,list.length);
- list.forEach((t,i)=>{fn(t);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});im.frustumCulled=false;return im}
+ list.forEach((t,i)=>{fn(t);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});
+ boundWorldInstances(im,list,t=>Math.max(1.5,t.s*2.3),t=>t.h+t.s*.2);
+ return im}
 /* Keep terrestrial dressing outside water and the full sandy bank buffer for every water type. */
 function shoreClear(x,z,h){
  const radius=18;
@@ -802,7 +826,7 @@ const chunks=new Map();
 function updateChunks(px,pz,budget){
  const ccx=Math.floor(px/CS),ccz=Math.floor(pz/CS);
  for(const[k,c]of chunks)if(Math.max(Math.abs(c.cx-ccx),Math.abs(c.cz-ccz))>R+1){
-  c.objs.forEach(o=>{scene.remove(o);o.dispose&&o.dispose()});c.geo.dispose();chunks.delete(k)}
+  c.objs.forEach(o=>{scene.remove(o);if(o.userData?.ownsChunkBoundsGeometry)o.geometry.dispose();o.dispose&&o.dispose()});c.geo.dispose();chunks.delete(k)}
  const need=[];
  for(let i=-R;i<=R;i++)for(let j=-R;j<=R;j++){const cx=ccx+i,cz=ccz+j;if(!chunks.has(cx+','+cz))need.push([cx,cz,i*i+j*j])}
  need.sort((a,b)=>a[2]-b[2]);
