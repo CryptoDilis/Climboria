@@ -93,8 +93,8 @@ test("upstream object in place of array does not masquerade as successful token 
   assert.match(result.body.error,/invalid token search response/);
 });
 
-test("Swap browser quote selection uses strict boolean verification, including direct-provider fallback",()=>{
-  for(const file of ["../../../swap/index.html"]) {
+test("DEX and Swap browser quote selection use strict boolean verification, including direct-provider fallback",()=>{
+  for(const file of ["../../../swap/index.html","../../index.html"]) {
     const html=readFileSync(new URL(file,import.meta.url),"utf8");
     assert.match(html,/isVerified:token\.isVerified===true/);
     assert.match(html,/t\.isVerified===true\?/);
