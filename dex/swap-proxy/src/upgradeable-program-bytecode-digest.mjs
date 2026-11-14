@@ -11,6 +11,7 @@
  * Do not import into the Cloudflare Worker order/execute path.
  */
 import { createHash } from "node:crypto";
+import { decodeBase58 } from "./transaction-validation.mjs";
 import { validateRpcUrl, readBoundedBody } from "./solana-rpc.mjs";
 import { UPGRADEABLE_BPF_LOADER } from "./upgradeable-program-provenance.mjs";
 import { JUPITER_V6_PROGRAM_ID } from "./jupiter-v6-policy.mjs";
@@ -64,11 +65,10 @@ function checkHeader(bytes, evidence, slot) {
     fail("ProgramData metadata or deployment slot disagrees with prior finalized evidence");
   }
   if (option === 1) {
-    // Locally computed base58 is intentionally used instead of trusting
-    // RPC jsonParsed account metadata for the upgrade authority.
-    // The original inspector already checks canonical authority key.
-    // Import lazily is unnecessary: compare canonical bytes via base58 decode.
-    return bytes;
+    const authority = Buffer.from(decodeBase58(evidence.upgradeAuthority));
+    if (authority.length !== 32 || !bytes.subarray(13, 45).equals(authority)) {
+      fail("ProgramData upgrade authority disagrees with prior finalized evidence");
+    }
   }
   return bytes;
 }
