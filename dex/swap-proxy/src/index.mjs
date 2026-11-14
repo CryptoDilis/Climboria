@@ -168,7 +168,9 @@ async function handleOrder(request, env) {
   const params = new URLSearchParams({ inputMint, outputMint, amount, taker, maxSupportedTransactionVersion: "0" });
   const response = await upstream("/order?" + params.toString(), { method: "GET" }, env);
   const data = await readBoundedProviderJson(response, 262144);
-  if (!response.ok) return json({ error: "Jupiter order request failed", upstreamStatus: response.status, details: data?.error || data?.message || null }, response.status >= 400 && response.status < 500 ? response.status : 502);
+  // Signable orders are disabled, but preserve the same no-reflection rule
+  // for any future reviewed order path: upstream diagnostics are untrusted.
+  if (!response.ok) return json({ error: "Jupiter order request failed", upstreamStatus: response.status }, response.status >= 400 && response.status < 500 ? response.status : 502);
   if (!data || typeof data.requestId !== "string" || !data.requestId) {
     return json({ error: "Jupiter returned an incomplete order response" }, 502);
   }
@@ -290,7 +292,10 @@ async function handleQuote(request, env) {
   const params = new URLSearchParams({ inputMint, outputMint, amount });
   const response = await upstream("/order?" + params.toString(), { method: "GET" }, env);
   const data = await readBoundedProviderJson(response, 262144);
-  if (!response.ok) return json({ error: "Jupiter quote request failed", upstreamStatus: response.status, details: data?.error || data?.message || null }, response.status >= 400 && response.status < 500 ? response.status : 502);
+  // Never reflect untrusted provider error/message text (it can include
+  // server-side API keys, internal URL fragments or user-supplied payloads).
+  // Only the sanitized fixed error class and numeric upstream status escape.
+  if (!response.ok) return json({ error: "Jupiter quote request failed", upstreamStatus: response.status }, response.status >= 400 && response.status < 500 ? response.status : 502);
   // A provider HTTP 200 is not proof of a usable quote. Refuse missing or
   // mismatched raw amounts rather than displaying a price for another order.
   if (!data || !validRawTokenAmount(data.inAmount) || data.inAmount !== amount ||
