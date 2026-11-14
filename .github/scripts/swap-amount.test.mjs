@@ -6,7 +6,7 @@ import { runInNewContext } from "node:vm";
 const source = readFileSync(new URL("../../dex/swap-amount.js", import.meta.url), "utf8");
 const browser = {};
 runInNewContext(source, { window: browser });
-const { toRaw } = browser.ClimboriaSwapAmount;
+const { toRaw, formatRaw } = browser.ClimboriaSwapAmount;
 test("converts decimal user inputs to exact raw Solana units without float truncation", () => {
   assert.equal(toRaw("0.0157", 6), "15700");
   assert.equal(toRaw("0.0163", 6), "16300");
@@ -32,6 +32,15 @@ test("rejects fractional dust, excess precision, overflows, and invalid notation
     ["1", 19, /decimals/]
   ]) assert.throws(() => toRaw(v, decimals), why, v);
 });
+test("exactly formats full Solana u64 amounts with no floating-point rounding", () => {
+  assert.equal(formatRaw("1234567", 6), "1.234567");
+  assert.equal(formatRaw("1200000", 6), "1.2");
+  assert.equal(formatRaw("18446744073709551615", 9), "18446744073.709551615");
+  assert.equal(formatRaw("0", 9), "0");
+  assert.throws(() => formatRaw("01", 6), /unsigned integer/);
+  assert.throws(() => formatRaw("18446744073709551616", 9), /limit/);
+});
+
 test("DEX and Swap both load the shared decimal converter before app logic", () => {
   for (const page of ["dex/index.html", "swap/index.html"]) {
     const html = readFileSync(new URL("../../" + page, import.meta.url), "utf8");
@@ -51,13 +60,13 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
   const SOL = "So11111111111111111111111111111111111111112";
   const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
-  async function exercise(quote) {
+  async function exercise(quote, slippage = 'auto') {
     const elements = {
       quoteStatus: { textContent: "" },
       getQuote: { disabled: false, textContent: "Get live quote" },
       quoteAmount: { value: "0.1" },
       quoteResults: { innerHTML: "" },
-      swapSlippage: { value: "auto" }
+      swapSlippage: { value: slippage }
     };
     const requested = [];
     const context = {
@@ -83,6 +92,7 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
     assert.equal(requested.length, 1);
     assert.match(requested[0], /amount=100000000/);
     assert.equal(elements.getQuote.disabled, false);
+    elements._requested = requested;
     return elements;
   }
 
@@ -96,10 +106,24 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
     assert.match(elements.quoteResults.innerHTML, /inconsistent quote/);
     assert.doesNotMatch(elements.quoteResults.innerHTML, /Estimated output/);
   }
-  const good = await exercise({ inAmount: "100000000", outAmount: "500000", requestId: "valid-quote" });
+  const good = await exercise({ inAmount: "100000000", outAmount: "500000", otherAmountThreshold: "495000", requestId: "valid-quote" });
   assert.match(good.quoteStatus.textContent, /Quote received from Jupiter/);
   assert.match(good.quoteResults.innerHTML, /Estimated output/);
   assert.match(good.quoteResults.innerHTML, /Not requested/);
+  assert.match(good.quoteResults.innerHTML, /Minimum received/);
+  assert.match(good.quoteResults.innerHTML, /0\\.495/);
+  const noMinimum = await exercise({ inAmount: "100000000", outAmount: "500000", requestId: "no-minimum" });
+  assert.match(noMinimum.quoteResults.innerHTML, /Unavailable · not verified/);
+  assert.match(noMinimum.quoteStatus.textContent, /minimum received was not verified/i);
+  const badMinimum = await exercise({ inAmount: "100000000", outAmount: "500000", otherAmountThreshold: "600000", requestId: "bad-minimum" });
+  assert.match(badMinimum.quoteResults.innerHTML, /Unavailable · not verified/);
+  const confirmed = await exercise({ inAmount: "100000000", outAmount: "500000", otherAmountThreshold: "495000", slippageBps: 50, requestId: "confirmed" }, "50");
+  assert.match(confirmed._requested[0], /slippageBps=50/);
+  assert.match(confirmed.quoteResults.innerHTML, /0\\.50% · provider reported/);
+  const unconfirmed = await exercise({ inAmount: "100000000", outAmount: "500000", otherAmountThreshold: "495000", slippageBps: 100, requestId: "wrong" }, "50");
+  assert.match(unconfirmed.quoteStatus.textContent, /Quote unavailable/);
+  assert.match(unconfirmed.quoteResults.innerHTML, /did not confirm the selected slippage/);
+  assert.doesNotMatch(unconfirmed.quoteResults.innerHTML, /Estimated output/);
 });
 
 test("Swap public market requests time out without substituting cached data", async () => {
