@@ -7,6 +7,9 @@ workers_dev = true
 # Replace with the exact production origin after confirming the custom domain.
 ALLOWED_ORIGINS = "https://climboria.fun,https://www.climboria.fun"
 EXECUTION_ENABLED = "false"
+# This placeholder MUST be replaced by deploy workflow with the exact checked-out SHA.
+# Public provenance hint only, never proof of deployed bytecode/audit.
+DEPLOYED_GIT_SHA = "unpublished"
 
 # Configure the secret outside source control:
 # npx wrangler secret put JUPITER_API_KEY

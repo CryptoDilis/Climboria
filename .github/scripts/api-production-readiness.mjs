@@ -11,7 +11,13 @@ const SEARCH = "/api/tokens/search?query=SOL";
 const quotePath = (amount) => "/api/swap/quote?inputMint=" + SOL + "&outputMint=" + USDC + "&amount=" + amount;
 const QUOTE = quotePath("1000000");
 
-export async function probeProductionApi({ baseUrl = "https://api.climboria.fun", fetchImpl = globalThis.fetch } = {}) {
+export async function probeProductionApi({ baseUrl = "https://api.climboria.fun", fetchImpl = globalThis.fetch, expectedRevision = null } = {}) {
+  // Post-deploy probes must bind to the exact GitHub commit checked out by
+  // Wrangler. Manual probes may omit this for an observational (not
+  // revision-matched) check, but still require a valid deployed SHA marker.
+  if (expectedRevision !== null) {
+    assert.match(expectedRevision, /^[0-9a-f]{40}$/, "Invalid expected deployed Git SHA");
+  }
   const base = new URL(baseUrl);
   assert.equal(base.protocol, "https:", "Only HTTPS production API origins may be probed");
   assert.equal(base.username, "", "API URL must not contain credentials");
@@ -26,11 +32,37 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
       ...options,
       headers: { origin: ORIGIN, accept: "application/json", ...(options.headers || {}) }
     });
-    const text = await response.text();
-    assert.ok(text.length <= 65536, path + " returned an oversized response");
+    // Enforce the 64 KiB cap before and during streaming; response.text()
+    // allocates the whole body first, which is unsafe for a live probe.
+    const maxBytes = 65536;
+    const declared = response.headers.get("content-length");
+    if (declared !== null) {
+      assert.match(declared, /^[0-9]+$/, path + " returned invalid Content-Length");
+      assert.ok(BigInt(declared) <= BigInt(maxBytes), path + " returned an oversized response");
+    }
+    const reader = response.body?.getReader();
+    const chunks = [];
+    let size = 0;
+    if (reader) {
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          assert.ok(value instanceof Uint8Array, path + " returned a malformed response stream");
+          size += value.byteLength;
+          if (size > maxBytes) {
+            await reader.cancel().catch(() => {});
+            throw new Error(path + " returned an oversized response");
+          }
+          chunks.push(Buffer.from(value));
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    }
     let data = null;
-    if (text) {
-      try { data = JSON.parse(text); }
+    if (size > 0) {
+      try { data = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks, size))); }
       catch { throw new Error(path + " returned non-JSON content (HTTP " + response.status + ")"); }
     }
     return { response, data };
@@ -40,12 +72,18 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
   assert.equal(health.response.headers.get("access-control-allow-origin"), ORIGIN, "Worker health CORS is not configured for the site");
   assert.equal(health.data?.ok, true, "Worker health is not ready");
   assert.equal(health.data?.service, "climboria-swap-proxy", "Unexpected service at API hostname");
+  const observedRevision = health.data?.deployedGitSha;
+  assert.match(observedRevision ?? "", /^[0-9a-f]{40}$/, "Worker has no valid deployed Git revision marker");
+  if (expectedRevision !== null) {
+    assert.equal(observedRevision, expectedRevision,
+      "Live Worker revision differs from the exact GitHub commit deployed");
+  }
   for (const binding of ["jupiterKey", "rateLimiter", "orderStore"]) {
     assert.equal(health.data?.configured?.[binding], true, "Missing Worker binding: " + binding);
   }
   assert.equal(health.data?.execution, "disabled", "Unsafe: Worker reports executable trading enabled");
   assert.equal(health.data?.configured?.executionEnabled, false, "Unsafe: Worker execution must remain disabled");
-  checks.push("Worker health, bindings, CORS and server-side execution gate");
+  checks.push("Worker health, deployed Git revision, bindings, CORS and server-side execution gate");
 
   const allowed = await request("/api/swap/quote", {
     method: "OPTIONS",
@@ -112,7 +150,9 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
-    const result = await probeProductionApi();
+    const result = await probeProductionApi({
+      expectedRevision: process.env.CLIMBORIA_EXPECTED_DEPLOY_SHA || null
+    });
     console.log("PASS Climboria production API quote-only readiness:");
     for (const check of result.checks) console.log("  - " + check);
     for (const observation of result.observations) console.log("  - OBSERVATION: " + observation);

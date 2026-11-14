@@ -24,21 +24,36 @@ const orderStoreStub = {
 const orderNamespace = { idFromName: value => value, get: () => orderStoreStub };
 
 const origin = "https://climboria.fun";
-const env = { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true", RATE_LIMITER: { limit: async () => ({ success: true }) }, ORDER_STORE: orderNamespace, SOLANA_RPC_URL: "https://rpc.example.com" };
+const env = { ALLOWED_ORIGINS: origin, DEPLOYED_GIT_SHA: "a".repeat(40), JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true", RATE_LIMITER: { limit: async () => ({ success: true }) }, ORDER_STORE: orderNamespace, SOLANA_RPC_URL: "https://rpc.example.com" };
 const valid = "So11111111111111111111111111111111111111112";
 
 test("health endpoint responds without exposing credentials", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, orderStore: true, solanaRpc: true, executionEnabled: false } });
+  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", deployedGitSha: "a".repeat(40), execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, orderStore: true, solanaRpc: true, executionEnabled: false } });
 });
 
 test("health endpoint reports execution disabled when the production kill switch is off", async () => {
   const safeEnv = { ...env, EXECUTION_ENABLED: "false" };
   const res = await worker.fetch(new Request("https://worker.test/health"), safeEnv);
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, orderStore: true, solanaRpc: true, executionEnabled: false } });
+  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", deployedGitSha: "a".repeat(40), execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, orderStore: true, solanaRpc: true, executionEnabled: false } });
 });
+test("Worker health rejects missing or malformed deployment revision without enabling execution", async () => {
+  for (const value of [undefined, null, "", "unpublished", "A".repeat(40), "b".repeat(39)]) {
+    const res = await worker.fetch(new Request("https://worker.test/health"), {
+      ...env, DEPLOYED_GIT_SHA: value, EXECUTION_ENABLED: "false"
+    });
+    assert.equal(res.status, 503);
+    const body = await res.json();
+    assert.equal(body.ok, false);
+    assert.equal(body.deployedGitSha, null);
+    assert.equal(body.execution, "disabled");
+    assert.equal(body.configured.executionEnabled, false);
+    assert.equal(body.JUPITER_API_KEY, undefined);
+  }
+});
+
 test("quote-only health stays ready without an RPC secret while signing stays disabled", async () => {
   const safeEnv = { ...env, SOLANA_RPC_URL: undefined, EXECUTION_ENABLED: "false" };
   const health = await worker.fetch(new Request("https://worker.test/health"), safeEnv);
