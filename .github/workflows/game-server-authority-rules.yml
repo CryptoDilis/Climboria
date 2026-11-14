@@ -1,0 +1,27 @@
+name: Game Server Authority Rules
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "game/multiplayer/server-authority-rules.mjs"
+      - "game/multiplayer/server-authority-rules.test.mjs"
+      - "game/multiplayer/presence-room.mjs"
+      - "game/multiplayer/presence-room.test.mjs"
+      - ".github/workflows/game-server-authority-rules.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  server-policy-unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Assert no client-authoritative combat/loot or unsafe spawn PvP
+        run: node --test game/multiplayer/*.test.mjs
