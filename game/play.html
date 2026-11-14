@@ -1492,7 +1492,31 @@ hp(axe,hBox,metal,0,.8,0,.5,.07,.08);hp(axe,hBox,metal,-.22,.75,0,.12,.16,.08);
 for(let i=0;i<4;i++)hp(axe,hCyl,leather,0,.1+i*.09,-.005,.05,.025,.05);
 hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='awaiting-saved-glb';document.documentElement.dataset.climboriaHeroRenderer='glb-only';
 /* Character model integration is paused until replacement Meshy GLBs are supplied. */
-let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null,head:null},assetAnimState='',assetHeroGroundOffset=0,assetHeroUsesAuthoredAnimations=false;
+let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null,head:null},assetAnimState='',assetHeroGroundOffset=0,assetHeroUsesAuthoredAnimations=false,assetHeroIsNewMeshy=false;
+// Meshy Idle_03 raises both arms overhead on these source exports. Use a
+// neutral arm-at-sides rest pose instead, without modifying the GLB's actual
+// authored running, swimming or combat animation data.
+function poseMeshyNeutralRest(root){
+ const turn=(boneName,childName,target)=>{
+  const bone=root.getObjectByName(boneName),child=root.getObjectByName(childName);
+  if(!bone||!child||child.parent!==bone)return false;
+  root.updateWorldMatrix(true,true);
+  const current=child.getWorldPosition(new T3.Vector3()).sub(bone.getWorldPosition(new T3.Vector3()));
+  if(current.lengthSq()<1e-8)return false;
+  const delta=new T3.Quaternion().setFromUnitVectors(current.normalize(),target.clone().normalize());
+  const world=bone.getWorldQuaternion(new T3.Quaternion());
+  const parentWorld=bone.parent.getWorldQuaternion(new T3.Quaternion()).invert();
+  bone.quaternion.copy(parentWorld.multiply(delta.multiply(world)));
+  root.updateWorldMatrix(true,true);
+  return true;
+ };
+ let moved=0;
+ for(const [side,sign] of [['Left',1],['Right',-1]]){
+  moved+=Number(turn('mixamorig:'+side+'Arm','mixamorig:'+side+'ForeArm',new T3.Vector3(sign*.38,-.93,0)));
+  moved+=Number(turn('mixamorig:'+side+'ForeArm','mixamorig:'+side+'Hand',new T3.Vector3(sign*.24,-.97,.05)));
+ }
+ return moved===4;
+}
 function cacheAssetRig(root){
  assetRig={legs:[],arms:[],hips:null,spine:null,head:null};
  root.traverse(o=>{
@@ -1511,6 +1535,10 @@ const FORBIDDEN_REST_CLIP=/(?:^|[_\\s-])(sit|sitting|seated|crouch|kneel|prone|s
 // procedural idle is active. Authored locomotion clips remain untouched.
 const NATURAL_STANDING_SHOULDER_DROP=-.6;
 function findStandingRestClip(){
+ // These new source GLBs have an overhead-arm Idle_03, not a standing rest.
+ // Preserve the clip in the package for future explicit emotes; never use it
+ // as the default on spawn or after landing.
+ if(assetHeroIsNewMeshy)return null;
  const safe=assetActions.filter(a=>!FORBIDDEN_REST_CLIP.test(a.name)&&!/(swim|swimming|combat|weapon|rifle|sword|aim|attack)/i.test(a.name));
  const preferred=['Standing_Idle','Idle_Standing','Standing','Idle','Idle_01','Idle_03','Breathing_Idle','Idle_Breathing'];
  for(const name of preferred){const clip=safe.find(a=>a.name.toLowerCase()===name.toLowerCase());if(clip)return clip;}
@@ -1572,7 +1600,7 @@ function animateAssetFallback(t,state,speed){
   const b=item.bone;
   if(resting){
    b.quaternion.copy(item.baseQuaternion);
-   if(item.shoulder)b.rotateX(NATURAL_STANDING_SHOULDER_DROP);
+   if(item.shoulder&&!assetHeroIsNewMeshy)b.rotateX(NATURAL_STANDING_SHOULDER_DROP);
    continue;
   }
   if(swimming)b.rotation.x=item.base+Math.PI*.42+Math.sin(phase+item.side)*.16;
@@ -1619,6 +1647,8 @@ function loadAssetHero(choice='ClimboriaHero'){
   const box=new T3.Box3().setFromObject(assetHero),size=box.getSize(new T3.Vector3());
   const scale=1.9/Math.max(size.y,.001);assetHero.scale.setScalar(scale);
   const scaledBox=new T3.Box3().setFromObject(assetHero);assetHeroGroundOffset=-scaledBox.min.y;assetHero.position.y=assetHeroGroundOffset;
+  assetHeroIsNewMeshy=choice!=='Adventurer'&&poseMeshyNeutralRest(assetHero);
+  if(choice!=='Adventurer'&&!assetHeroIsNewMeshy)console.warn('[Climboria] Optional hero neutral rig could not be resolved:',choice);
   assetHero.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
   scene.add(assetHero);hero.visible=false;hero.traverse(o=>{o.visible=false});
   assetMixer=gltf.animations&&gltf.animations.length?new T3.AnimationMixer(assetHero):null;
