@@ -99,14 +99,23 @@ async function readJson(request, maxBytes = 40000) {
 async function upstream(path, init, env) {
   if (!env.JUPITER_API_KEY) throw new Error("Backend is not configured: missing Jupiter server API key");
   const target = path.startsWith("https://api.jup.ag/") ? path : JUPITER + path;
-  return fetch(target, {
-    ...init,
-    // Never forward a server-side API key to a redirected third-party origin.
-    redirect: "error",
-    headers: { ...(init?.headers || {}), "x-api-key": env.JUPITER_API_KEY },
-    // Bound provider latency so stalled upstream requests cannot pin Worker capacity.
-    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
-  });
+  try {
+    return await fetch(target, {
+      ...init,
+      // Never forward a server-side API key to a redirected third-party origin.
+      redirect: "error",
+      headers: { ...(init?.headers || {}), "x-api-key": env.JUPITER_API_KEY },
+      // Bound provider latency so stalled upstream requests cannot pin Worker capacity.
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
+    });
+  } catch (error) {
+    // Never pass raw fetch errors with possible credential-bearing URLs to
+    // browser clients or logs. Keep the existing timeout signal distinct.
+    if (error?.name === "TimeoutError" || error?.name === "AbortError") {
+      throw new Error("Jupiter upstream request timed out");
+    }
+    throw new Error("Jupiter upstream request failed or redirected");
+  }
 }
 async function enforceRateLimit(request, env) {
   if (!env.RATE_LIMITER || typeof env.RATE_LIMITER.limit !== "function") {
@@ -334,11 +343,17 @@ async function handlePumpCoin(request, env) {
   if (!validPubkey(mint)) return json({ error: "A valid Solana mint address is required" }, 400);
   // pump.fun blocks browser-origin requests. Fetch server-side and expose only
   // the public metadata fields needed by the token profile.
-  const response = await fetch("https://frontend-api-v3.pump.fun/coins-v2/" + encodeURIComponent(mint), {
-    headers: { accept: "application/json" },
-    redirect: "error",
-    signal: AbortSignal.timeout(9000)
-  });
+  let response;
+  try {
+    response = await fetch("https://frontend-api-v3.pump.fun/coins-v2/" + encodeURIComponent(mint), {
+      headers: { accept: "application/json" },
+      redirect: "error",
+      signal: AbortSignal.timeout(9000)
+    });
+  } catch {
+    // Untrusted upstream transport messages can embed private URLs or headers.
+    return json({ error: "pump.fun metadata request failed or redirected" }, 502);
+  }
   if (!response.ok) return json({ error: "pump.fun metadata unavailable", upstreamStatus: response.status }, response.status === 404 ? 404 : 502);
   const data = await readBoundedProviderJson(response, 262144);
   if (!data || (data.mint && data.mint !== mint)) return json({ error: "pump.fun returned invalid token metadata" }, 502);
