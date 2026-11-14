@@ -1,0 +1,90 @@
+name: Game Import Optimized Meshy GLB Packs
+
+on:
+  push:
+    branches: [game/meshy-asset-pipeline-2026-11-15]
+    paths:
+      - 'assets/game/new_optimized/Climboria_Meshy_Assets_Pack_*.zip'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: game-owner-meshy-import-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-and-import-owner-assets:
+    if: github.ref == 'refs/heads/game/meshy-asset-pipeline-2026-11-15'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    outputs:
+      ready: ${{ steps.packs.outputs.ready }}
+      imported_sha: ${{ steps.publish.outputs.imported_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: game/meshy-asset-pipeline-2026-11-15
+          persist-credentials: true
+      - name: Wait until all five exact owner packs are uploaded
+        id: packs
+        shell: bash
+        run: |
+          count=0
+          for n in 01 02 03 04 05; do
+            f="assets/game/new_optimized/Climboria_Meshy_Assets_Pack_${n}.zip"
+            if test -f "$f"; then count=$((count+1)); else echo "WAITING for $f"; fi
+          done
+          if [ "$count" -ne 5 ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Only $count/5 files present; nothing installed or activated"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Verify exact ZIP filenames, SHA-256, GLB2 structure and triangle budget
+        if: steps.packs.outputs.ready == 'true'
+        run: python3 game/scripts/verify-meshy-asset-packs.py --archives
+      - name: Verify extracted exact owner models
+        if: steps.packs.outputs.ready == 'true'
+        run: python3 game/scripts/verify-meshy-asset-packs.py --files
+      - name: Commit verified GLBs and remove temporary upload archives
+        id: publish
+        if: steps.packs.outputs.ready == 'true'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- assets/game/new_optimized/*.glb
+          git rm -- assets/game/new_optimized/Climboria_Meshy_Assets_Pack_{01,02,03,04,05}.zip
+          git diff --cached --stat
+          git commit -m "assets(game): install 44 SHA-verified owner Meshy scenery candidates"
+          git push origin HEAD:refs/heads/game/meshy-asset-pipeline-2026-11-15
+          echo "imported_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "GLBs imported; live scenery manifest remains disabled pending visual and performance QA"
+
+  verify-import-commit:
+    if: needs.verify-and-import-owner-assets.outputs.ready == 'true'
+    needs: verify-and-import-owner-assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.verify-and-import-owner-assets.outputs.imported_sha }}
+          persist-credentials: false
+      - name: Verify imported source-approved GLBs at exact commit
+        run: python3 game/scripts/verify-meshy-asset-packs.py --files
+      - name: Verify optional Game-only scene loader JavaScript
+        run: node --check game/meshy-world-assets.js
+      - name: Verify existing five chest assets remain untouched
+        run: node game/scripts/verify-rarity-chests.mjs
+      - name: Confirm default scenery enable gate remains disabled
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('assets/game/new_optimized/manifest.json').read_text())
+          assert data['enabled'] is False
+          print('PASS optional mesh loading remains off until browser visual acceptance and FPS check')
+          PY
