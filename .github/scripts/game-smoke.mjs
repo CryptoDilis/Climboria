@@ -310,6 +310,15 @@ try {
     coastFloor.floorLength<260||!coastFloor.keepsWorldFloor)
     errors.push('Coastal tunnel floor map stretched or gameplay floor geometry changed: '+JSON.stringify(coastFloor));
   console.log('Coastal tunnel floor texture tiling audit:',JSON.stringify(coastFloor));
+  const coastalRock=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveCoastalRockSilhouetteAudit?.()??null);
+  if(!coastalRock?.instanced||coastalRock.rockCount!==196||
+    coastalRock.trianglesPerRock<170||coastalRock.trianglesPerRock>200||
+    coastalRock.rockTrianglesTotal>40000||!coastalRock.hasTint||
+    !Number.isFinite(coastalRock.shadeRange)||coastalRock.shadeRange<.12||
+    coastalRock.shadeRange>.21||!coastalRock.hasTexture||
+    !coastalRock.hasBumpMap||!coastalRock.stillCastsShadow)
+    errors.push('Coastal batched sculpted rock silhouette/performance regression: '+JSON.stringify(coastalRock));
+  console.log('Coastal sculpted rock batch audit:',JSON.stringify(coastalRock));
   const caveGround=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveApproachGroundAudit?.()??null);
   if(!caveGround?.ground||caveGround.rockInstances<30||caveGround.vertices!==1363||
     caveGround.alphaComponents!==4||caveGround.edgeAlpha>.05||
