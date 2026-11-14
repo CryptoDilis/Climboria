@@ -53,7 +53,7 @@ test("integrated widget target accepts only safe existing element IDs", () => {
   }
 });
 
-function createDom({ failure = false } = {}) {
+function createDom({ failure = false, deferLoad = false } = {}) {
   const created = [];
   const btn = { hidden: true, disabled: false, addEventListener(event, callback) { this[event] = callback; } };
   const close = { addEventListener(event, callback) { this[event] = callback; } };
@@ -83,7 +83,7 @@ function createDom({ failure = false } = {}) {
     },
     head: {
       appendChild(script) {
-        queueMicrotask(() => failure ? script.onerror() : script.onload());
+        if (!deferLoad) queueMicrotask(() => failure ? script.onerror() : script.onload());
       }
     }
   };
@@ -138,6 +138,58 @@ test("provider load or integrity failure cannot invoke widget", async () => {
   assert.equal(ui.created[0].removed, true);
   assert.match(ui.status.textContent, /Provider integration unavailable/);
   assert.match(ui.status.textContent, /Review outstanding wallet prompts or activity/);
+});
+
+
+test("closing during a pending provider script download blocks late invisible wallet initialization", async () => {
+  const ui = createDom({ deferLoad: true });
+  let initCalls = 0;
+  const api = { Jupiter: { init() { ++initCalls; } } };
+  initializeManagedSwapHost({ doc: ui.doc, scope: api, config: approved });
+  const firstClick = ui.btn.click();
+  assert.equal(ui.created.length, 1, "one script request begins after explicit click");
+  assert.equal(ui.panel.hidden, false);
+  ui.close.click();
+  assert.equal(ui.panel.hidden, true);
+  assert.match(ui.status.textContent, /Provider panel closed/);
+  ui.created[0].onload();
+  await firstClick;
+  assert.equal(initCalls, 0, "late provider script cannot initialize while panel is closed");
+  assert.equal(ui.created.length, 1, "script loaded but not initialized");
+
+  // A fresh explicit user click after the previous load has completed may
+  // initialize the verified widget; no second external script is injected.
+  await ui.btn.click();
+  assert.equal(initCalls, 1, "reopen explicitly initializes the provider");
+  assert.equal(ui.created.length, 1, "same loaded SDK is reused");
+  assert.equal(ui.panel.hidden, false);
+});
+
+test("closing while provider initialization awaits does not overwrite the closed-panel safety status", async () => {
+  const ui = createDom();
+  let resolveProvider;
+  let initCalls = 0;
+  const api = { Jupiter: {
+    init() {
+      ++initCalls;
+      return new Promise(resolve => { resolveProvider = resolve; });
+    }
+  } };
+  initializeManagedSwapHost({ doc: ui.doc, scope: api, config: approved });
+  const pending = ui.btn.click();
+  await new Promise(resolve => queueMicrotask(resolve));
+  await new Promise(resolve => queueMicrotask(resolve));
+  assert.equal(initCalls, 1, "third-party init started once");
+  assert.equal(typeof resolveProvider, "function");
+  ui.close.click();
+  const closedStatus = ui.status.textContent;
+  resolveProvider();
+  await pending;
+  assert.equal(ui.panel.hidden, true);
+  assert.equal(ui.status.textContent, closedStatus,
+    "late provider init success may not claim an open widget after close");
+  await ui.btn.click();
+  assert.equal(initCalls, 1, "reopening does not duplicate already-started provider initialization");
 });
 
 test("both Climboria swap interfaces retain quote-only path and use isolated hosted widget", () => {
