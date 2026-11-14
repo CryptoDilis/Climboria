@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import worker from "../src/index.mjs";
 import { validateUnsignedOrderTransaction } from "../src/transaction-validation.mjs";
 import { makeFixture } from "./solana-v0-fixture.mjs";
+import { readFileSync } from "node:fs";
 
 const orderStoreCalls = [];
 let settleResponseStatus = 200;
@@ -26,6 +27,15 @@ const orderNamespace = { idFromName: value => value, get: () => orderStoreStub }
 const origin = "https://climboria.fun";
 const env = { ALLOWED_ORIGINS: origin, DEPLOYED_GIT_SHA: "a".repeat(40), JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true", RATE_LIMITER: { limit: async () => ({ success: true }) }, ORDER_STORE: orderNamespace, SOLANA_RPC_URL: "https://rpc.example.com" };
 const valid = "So11111111111111111111111111111111111111112";
+
+test("future gated order path passes exactly validated raw minimum and quote into Durable Object", () => {
+  const source = readFileSync(new URL("../src/index.mjs", import.meta.url), "utf8");
+  assert.match(source, /validateJupiterOrderMetadata\(data, \{ taker, amount \}\)/);
+  assert.match(source, /minimumOutputRaw:\s*data\.otherAmountThreshold/);
+  assert.match(source, /quotedOutputRaw:\s*data\.outAmount/);
+  assert.match(source, /const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false/);
+  assert.match(source, /const EXECUTION_SECURITY_REVIEW_COMPLETE = false/);
+});
 
 test("health endpoint responds without exposing credentials", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
