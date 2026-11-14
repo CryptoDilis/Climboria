@@ -2,6 +2,8 @@
 
 ## ACTIVE GAME-ONLY HANDOFF — Sanctuary NPC + Arcane Cart vendor, Chest tiers, Multiplayer (2026-11-15 PHT)
 
+**Update after PR opened:** [PR #451](https://github.com/CryptoDilis/Climboria/pull/451) Game-only workflow [#43632752071](https://github.com/CryptoDilis/Climboria/actions/runs/43632752071) SUCCESSFULLY generated and committed the real 5,465,860-byte optimized starting visitor to branch as commit `7122d1a0939832ac58703215bab46c0a49b3de48`, Git blob `7f4dd470ea8359e115d38a9523f485428018bc14` — verified against locally optimized bytes. **No manual upload needed for the NPC now.** First focused decor smoke [#43632752118](https://github.com/CryptoDilis/Climboria/actions/runs/43632752118) FAILED at missing binary because its checkout used the pre-bot commit; it did not run on the new optimized-asset head. New bot-head CI workflows returned `action_required` (GitHub token automation privilege/approval), not success. Trigger fresh CI via a normal developer-authored source/doc commit after the bot binary commit and inspect exact-head terminal results. **Arcane Cart binary still missing; the code intentionally retains existing Black Market stall.**
+
 **Scope:** Game/Expedition only. Do NOT modify Swap, DEX, Launchpad, or ClimbX; current live Jarrell/Lheiz/original hero mechanics must remain playable. **No new multiplayer or vendor claims are live yet.**
 
 ### Assets actually inspected and optimized in the chat runtime
