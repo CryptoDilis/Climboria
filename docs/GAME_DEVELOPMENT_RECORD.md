@@ -1,5 +1,17 @@
 # Climboria Game Development Record
 
+## GAME-ONLY MULTIPLAYER RULES FOUNDATION — 2026-11-15 PHT
+
+**Status: NOT A LIVE MULTIPLAYER, COMBAT OR LOOT FEATURE.** This is an isolated policy component for a FUTURE server-authoritative room, not player ghosts or a client-only button.
+
+- Branch `game/server-authority-combat-grab-rules-2026-11-15`.
+- Source `game/multiplayer/server-authority-rules.mjs` commit `364707e449c4b9bb1f7617fa2415c44f1eec97d5`: reusable, fail-closed server-side policies for valid player movement/speed, Sanctuary spawn PvP-free radius, same-room authenticated-player identity requirements, mutual opt-in duel/attack authorization, cooldown/range/dead-player checks, and eligibility to grab **unowned ephemeral world drops only**. No wallet assets, paid items, character inventory or other players' body transfers.
+- Unit tests `game/multiplayer/server-authority-rules.test.mjs` commits `454f1ed87248edfa12e711dcedf863047a2c1915` and `f1c7c9b29a1a131d23f4ab1e059afc2e0a85542b`: multiple malicious or invalid cases and valid intent. Workflow `.github/workflows/game-server-authority-rules.yml` commit `f964391e94599fa1cc58b1d9a11b420d03685c03` runs Node 22 tests. **At this record moment, no CI pass claimed**.
+- **Exact next task:** review focused CI, fix code/test failures, then proceed with separate Game room server + secure guest authentication and two-browser real presence (join, leave, state interpolation). Only after server is real and deployed should these policy functions be invoked by authoritative room state. No fake players, no claims of online PvP, actual damage, or inventory transfers until integrated and attack/replay/drop race tests pass.
+- Keep this PR separate from current live Game and the Sanctuary NPC/cart PR #451. Do not touch DEX/Swap/Launchpad/ClimbX. Before any production rollout, add anti-spam, moderation, rate limits, room capacity, disconnect recovery, mobile UI, and measured load testing.
+
+---
+
 ## VERIFIED GAME LIVE CHECK — 2026-11-15 PHT (Jarrell; Ella still pending)
 
 - **Owner's current priority:** Game must be live and actually playable first. Do not touch Swap, DEX, Launchpad, or ClimbX.
