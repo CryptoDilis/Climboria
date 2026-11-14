@@ -65,5 +65,9 @@ jobs:
             climboria-jarrell-mobile-creator-preview.png
             climboria-lheiz-desktop-creator-preview.png
             climboria-lheiz-mobile-creator-preview.png
+            climboria-jarrell-desktop-creator-diagnostic.png
+            climboria-jarrell-mobile-creator-diagnostic.png
+            climboria-lheiz-desktop-creator-diagnostic.png
+            climboria-lheiz-mobile-creator-diagnostic.png
           if-no-files-found: warn
           retention-days: 7
