@@ -2452,6 +2452,10 @@ const sanctuaryDecor={
   url:'../assets/characters/Climboria_Arcane_Cart_optimized.glb',
   fallback:null,height:3.6,diameter:5.2,yaw:-.6}
 };
+// Do NOT request a non-existent optional cart GLB in production. Browser 404
+// errors are counted by the strict Game smoke. Flip this only in a follow-up
+// Game PR that uploads and visually verifies the exact optimized cart bytes.
+const ARCANE_CART_ASSET_RELEASED=false;
 let sanctuaryDecorStarted=false;
 function placeSanctuaryDecor(record,gltf,source){
  const model=gltf?.scene;
@@ -2502,7 +2506,12 @@ function loadSanctuaryDecor(){
  sanctuaryDecorStarted=true;
  if(!T3.GLTFLoader){Object.values(sanctuaryDecor).forEach(o=>o.status='unavailable');return;}
  // Defer until after the player becomes interactive and the first frame paints.
- requestAnimationFrame(()=>Object.values(sanctuaryDecor).forEach(fetchSanctuaryDecor));
+ requestAnimationFrame(()=>Object.values(sanctuaryDecor).forEach(record=>{
+  if(record.id==='cart'&&!ARCANE_CART_ASSET_RELEASED){
+   record.status='unavailable';return;
+  }
+  fetchSanctuaryDecor(record);
+ }));
 }
 function sanctuaryDecorAudit(){
  return Object.fromEntries(Object.entries(sanctuaryDecor).map(([name,o])=>[name,{
