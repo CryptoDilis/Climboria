@@ -198,7 +198,7 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
  var valid=false,hero=null;
  try{
   hero=JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null');
-  valid=!!hero&&hero.model==='Adventurer'&&typeof hero.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(hero.name)&&/[A-Za-z0-9]/.test(hero.name);
+  valid=!!hero&&['Adventurer','Jarrell','Lheiz'].includes(hero.model)&&typeof hero.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(hero.name)&&/[A-Za-z0-9]/.test(hero.name);
  }catch(_){}
  if(!valid){location.replace('./index.html?hero=required');return}
  window.__climboriaCreatedHero=hero;
@@ -1596,7 +1596,13 @@ function animateAssetFallback(t,state,speed){
  }
  if(jumping&&P.jumpTrace?.jumpCount===P.jumpCount)P.jumpTrace.poses[jumpPhase]={animation:'jump-'+jumpPhase,limbSignature:getJumpLimbSignature()};
 }
-const assetChoices={Adventurer:'../assets/characters/Climboria_Hero.glb'};
+// Optional new heroes remain unselected until their reviewed GLBs are committed.
+// The original Adventurer stays the default and the unavailable-asset fallback.
+const assetChoices=Object.freeze({
+ Adventurer:'../assets/characters/Climboria_Hero.glb',
+ Jarrell:'../assets/characters/Climboria_Jarrell.glb',
+ Lheiz:'../assets/characters/Climboria_Lheiz.glb'
+});
 let heroLoadError='',heroLoadRequest=0;
 function loadAssetHero(choice='ClimboriaHero'){
  if(choice==='ClimboriaHero'||!assetChoices[choice])choice='Adventurer';
@@ -1607,7 +1613,7 @@ function loadAssetHero(choice='ClimboriaHero'){
   // Ignore late responses from an earlier character selection; the most recent choice always wins.
   if(requestId!==heroLoadRequest){gltf.scene.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}});return}
   if(assetHero){if(assetMixer)assetMixer.stopAllAction();scene.remove(assetHero);assetHero.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}})}
-  assetHero=gltf.scene;assetHero.name='Climboria_'+choice+'_PhysicsCharacter';assetHeroUsesAuthoredAnimations=choice==='Adventurer';
+  assetHero=gltf.scene;assetHero.name='Climboria_'+choice+'_PhysicsCharacter';assetHeroUsesAuthoredAnimations=!!assetChoices[choice];
   const box=new T3.Box3().setFromObject(assetHero),size=box.getSize(new T3.Vector3());
   const scale=1.9/Math.max(size.y,.001);assetHero.scale.setScalar(scale);
   const scaledBox=new T3.Box3().setFromObject(assetHero);assetHeroGroundOffset=-scaledBox.min.y;assetHero.position.y=assetHeroGroundOffset;
@@ -1622,6 +1628,12 @@ heroReady=true;
   console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
  },undefined,error=>{
   if(requestId!==heroLoadRequest)return;
+  // Optional hero assets must never leave a saved player with an invisible character.
+  // An absent/unapproved GLB falls back to the existing official Adventurer.
+  if(choice!=='Adventurer'){
+   console.warn('[Climboria] Optional hero GLB unavailable, restoring Adventurer:',choice,error);
+   loadAssetHero('Adventurer');return;
+  }
   heroLoadError=String(error&&error.message||error);
   document.documentElement.dataset.climboriaHero='load-error';
   document.documentElement.dataset.climboriaHeroRenderer='fallback';
