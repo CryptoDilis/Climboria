@@ -14,6 +14,7 @@
 import { fetchRaydiumV4EvidenceFromPoolAddress } from "../src/raydium-v4-pool-discovery.mjs";
 import { fetchRaydiumV4DualRpcPublicEvidence } from "../src/raydium-v4-dual-rpc-evidence.mjs";
 import { safeRaydiumOperatorError } from "./raydium-v4-safe-error.mjs";
+import { verifyOperatorRpcGenesisSet } from "../src/raydium-v4-rpc-genesis-preflight.mjs";
 
 const USAGE = "Usage: node dex/swap-proxy/tools/raydium-v4-finalized-pool-report.mjs --network mainnet-beta|devnet --pool <verified-public-pool-address> [--min-slot <nonnegative-slot>]";
 
@@ -38,9 +39,16 @@ async function main(argv) {
   if (Number.isNaN(minContextSlot)) throw new Error("Invalid --min-slot");
   const rpcUrl = process.env.CLIMBORIA_SOLANA_RPC_URL;
   if (!rpcUrl) throw new Error("CLIMBORIA_SOLANA_RPC_URL must be configured in the operator environment");
+  // Require an operator independently corroborated genesis hash before pool RPC
+  // evidence is ever fetched, so an accidental wrong-cluster provider fails closed.
+  const expectedGenesisHash = process.env.CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH;
+  if (!expectedGenesisHash) throw new Error("CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH must be configured in the operator environment");
   // An optional second independently configured operator hostname provides a
   // second read-only view. A mismatch fails closed; no fallback as corroborated.
   const secondaryRpcUrl = process.env.CLIMBORIA_SOLANA_RPC_URL_SECONDARY;
+  const preflight = await verifyOperatorRpcGenesisSet({
+    primaryRpcUrl: rpcUrl, secondaryRpcUrl, expectedGenesisHash
+  });
   const result = secondaryRpcUrl
     ? await fetchRaydiumV4DualRpcPublicEvidence({
         network: flags.get("--network"), poolAddress: flags.get("--pool"),
@@ -55,6 +63,9 @@ async function main(argv) {
   // endpoint/query secrets, raw token account bytes, or wallet material.
   process.stdout.write(JSON.stringify({
     kind: "RAYDIUM_V4_READ_ONLY_POOL_EVIDENCE",
+    genesisHash: preflight.genesisHash,
+    matchesOperatorExpectedGenesis: preflight.matchesOperatorExpectedGenesis,
+    genesisWitnessedRpcCount: preflight.witnessedRpcCount,
     network: result.network,
     programId: result.programId,
     pool: result.poolAddress,
