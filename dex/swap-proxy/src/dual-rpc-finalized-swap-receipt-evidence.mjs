@@ -104,6 +104,7 @@ export async function verifyDualRpcFinalizedSwapReceipt({
       bothReportedSameFinalizedSignatureSlotAndAccountSnapshot: true,
       exactSourceDebitAndMinimumDestinationCreditChecked: true,
       feePayerLamportDeltaMatchesFee: true,
+      knownOtherTakerOwnedTokenAccountsUnchanged: true,
       independentlyAuditedRpcProviders: false,
       independentlyAuthenticatedLedgerFinality: false,
       jupiterCpiAccountMappingVerified: false,
