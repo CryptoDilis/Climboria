@@ -166,6 +166,7 @@ try {
       animals: w?.animals?.length ?? 0,
       facilities: w?.FAC?.map(f => f.type) ?? [],
       terrainFinite: !!w && samples.every(([x,z]) => Number.isFinite(w.heightAt(x,z))),
+      terrainRockDressingAudit: w?.terrainRockDressingAudit?.() ?? null,
       shorelineClearance: !!w?.shoreClear && [[-1200,0],[-1200,24],[-1200,-24]].every(([x,z])=>w.shoreClear(x,z,w.heightAt(x,z))),
       freshwaterBankClearance: !!w?.shoreClear && w.waterBodies.filter(b=>b.kind==='freshwater').every(b=>w.shoreClear(b.x+b.radius+8,b.z,w.heightAt(b.x+b.radius+8,b.z))),
       riverBankClearance: !!w?.shoreClear && (()=>{const z=0,x=160+90*Math.sin(z*.0042)+45*Math.sin(z*.011+2)+48;return w.shoreClear(x,z,w.heightAt(x,z))})(),
@@ -367,6 +368,17 @@ try {
   if (world.animals !== 0) errors.push('Low-quality placeholder wildlife should remain disabled, got ' + world.animals);
   for (const facility of ['black_market','forge','craft','fish']) if (!world.facilities.includes(facility)) errors.push('Missing world facility: ' + facility);
   if (!world.terrainFinite || world.chunkCount < 1) errors.push('Terrain samples/chunk streaming are not ready: ' + JSON.stringify(world));
+  const terrainRocks=world.terrainRockDressingAudit;
+  if(!terrainRocks||terrainRocks.geometry!=='IcosahedronGeometry'||terrainRocks.detail!==1||terrainRocks.vertices<40||
+    terrainRocks.material!=='MeshStandardMaterial'||!terrainRocks.textured||!terrainRocks.bumped||!terrainRocks.standard||
+    !terrainRocks.instanceColors||terrainRocks.flatShading||terrainRocks.roughness<.9||terrainRocks.colliderRadiusMultiplier!==.8||
+    !terrainRocks.visualOnly) errors.push('Natural terrain-rock dressing lost its PBR surface, smooth irregular silhouette, or unchanged collision contract: '+JSON.stringify(terrainRocks));
+  const landmarkRocks=terrainRocks?.landmarkPbr;
+  if(!landmarkRocks||!landmarkRocks.requested||!landmarkRocks.loaded||landmarkRocks.error||landmarkRocks.asset!=='./assets/environment/rock_moss_set_01.glb'||
+    landmarkRocks.placements!==4||landmarkRocks.meshes!==4||landmarkRocks.triangles>28000||landmarkRocks.standardMaterials!==4||
+    landmarkRocks.texturedMaterials!==4||landmarkRocks.collisionCount!==0||!landmarkRocks.visualOnly)
+    errors.push('Audited local CC0 PBR landmark-rock load, material, budget, or visual-only contract failed: '+JSON.stringify(landmarkRocks));
+  console.log('Natural terrain-rock dressing audit:',JSON.stringify(terrainRocks));
   if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
   if (!world.freshwaterBankClearance || !world.riverBankClearance) errors.push('Freshwater/river sandy bank vegetation buffer regression: '+JSON.stringify({freshwater:world.freshwaterBankClearance,river:world.riverBankClearance}));
   if (!world.seabedColorAudit?.shallow || world.seabedColorAudit.shallow.color[0] <= world.seabedColorAudit.deep[0] || world.seabedColorAudit.freshwater[0] <= world.seabedColorAudit.deep[0]) errors.push('Shallow sea/freshwater seabeds are not visibly sand-tinted relative to deep ocean: '+JSON.stringify(world.seabedColorAudit));

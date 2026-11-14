@@ -17,6 +17,15 @@
 - Avoid shared files and global workflows unless a targeted change is necessary, coordinated, and separately verified. Do not silently redesign existing gameplay.
 - Preserve existing character artwork, soundtrack, settings/minimap, Dota-style left-click movement, desktop behavior, and intended mobile landscape controls. Wildlife and snakes remain disabled unless explicitly reauthorized.
 
+## Cinematic terrain-rock polish — staged 2026-11-14 PHT
+
+- **Branch:** `codex/game-cinematic-terrain-20261114`, based on `main` commit `147f1764485af31c39a56448fc47632969bce320`. This is separate from draft PRs #383 and #385; no merge claim is implied.
+- **Root cause addressed:** streamed general-world rocks used one `DodecahedronGeometry(1,0)` with a flat-shaded Lambert material, producing the visibly toy-like/faceted terrain dressing noted in prior cave/coast visual review.
+- **Scoped change:** replace only those existing visual instances with one shared, irregular detail-1 icosahedral silhouette and deterministic local mineral/lichen color+bump canvases on a `MeshStandardMaterial`. Existing chunk streaming, placement count/seed, terrain height field, water, cave geometry, player routes, original Hero GLB, wildlife state and soundtrack are untouched. The existing collision multiplier remains numerically identical at `0.8`.
+- **Regression gate:** Browser Smoke now requires the natural-rock PBR material, texture/bump maps, non-flat detail-1 geometry, instanced color support, high roughness and unchanged collision multiplier. The assertion is additive; it does not weaken existing world, cave, coast, desktop or mobile tests.
+- **External asset audit:** a GitHub-hosted Poly Haven `rock_moss_set_01.glb` candidate is recorded in `ASSET_SOURCES.md`, but is **not integrated** because its 5.8 MB GLB has no verified mesh/texture/LOD/mobile budget. No unverified third-party asset or runtime dependency was introduced.
+- **Verification:** inline `game/play.html` scripts and `game-smoke.mjs` parse; `git diff --check` passes. Local Browser Smoke cannot start in this isolated workspace because the `playwright` package is absent (`ERR_MODULE_NOT_FOUND`), so no test success is claimed. Required next evidence: exact-head Validate, Browser Smoke and Jarrell Gameplay workflows plus desktop/mobile screenshot review before any merge.
+
 ## Verified baseline from GitHub inspection (2026-11-14)
 
 ### Reviewed files / evidence
@@ -412,3 +421,11 @@
 - **Actual fix:** same 1,363-vertex soil mesh now spans cave-local `Z=-101..-9` *outside* the genuine portal, and 36-mobile / 86-desktop noncolliding pebbles are scattered at `Z=-10..-94`, with a clear central walking lane. Existing terrain height alignment via `groundAt`, smooth transparent edge fade, tinted RGB material, texture/bump tiling, hard colliders, weather, cave and coastal paths, GLB all preserved. No extra draw calls or triangle count; code touches Game only.
 - **Stronger Game smoke:** require soil bounds exactly [-101,-9], inclusion of screenshot camera Z=-20, and instanced pebble locations on exterior side, in addition to strict pigment-range, terrain gap, 12 Sanctuary pillar and bidirectional cave-to-coast checks. This catches the exact regression that prior tests missed, rather than skipping assertions.
 - **Status at commit time:** new exact-head CI **not yet run/verified**, and screenshot visibility **not yet approved**. Keep [draft PR #379](https://github.com/CryptoDilis/Climboria/pull/379) unmerged until new 3/3 passing CI, nine images and material visual comparison. Meanwhile upstream main may advance in DEX; preserve all other developers' files. Follow-up [issue #375](https://github.com/CryptoDilis/Climboria/issues/375) still requires cave roof sightline audit and coastal rock polish; no physical Android / full-size Hero GLB benchmark performed.
+
+### Map polish follow-up — audited local CC0 PBR Sanctuary rocks (2026-11-14 PHT)
+
+- **Reason:** exact-head gameplay screenshots for terrain pass `54e8820c6b858c48bfa3d57eb3710d4990e84643` were functional but the broad generic rock field remained visibly faceted; do not label that visual state cinematic-final just because gameplay smoke passed.
+- **Scoped implementation:** bundle one audited, pinned CC0 PBR rock GLB locally and place four low-count visual landmarks along the existing Sanctuary perimeter. Broad terrain props stay one instanced draw call per stream chunk. Terrain sampling, water, cave meshes/routes, collision solids, GLB hero, camera/controls and wildlife policy are unchanged.
+- **Asset gate:** `rock_moss_set_01.glb` is 1,934,496 bytes, SHA-256 `73B670A38AC490E3A00D99BF385CFA73EB8241952DD772EDCA042CD803413D7B`; it contains six static PBR meshes / 63,127 source triangles with three 1024² JPEG maps. The local runtime uses four lighter mesh clones only (27,988 triangles, four draw calls, shared material/textures), with no colliders. Full source/license/budget record is in `ASSET_SOURCES.md`.
+- **Strict regression check:** Jarrell smoke now requires the local GLB to load and verifies exact placement/mesh/material counts, PBR texture presence, ≤28,000 render triangles and zero collision additions; it does not weaken existing terrain or cave assertions.
+- **Status / next:** local syntax/static checks and a fresh exact-head CI + screenshot comparison are still required after this commit. Browser Smoke's previous Firebase 503 from a third-party DEX iframe is a separate shared-test blocker; do not suppress it in Game code. Physical Redmi 14 5G FPS has not been measured.
