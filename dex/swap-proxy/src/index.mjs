@@ -4,6 +4,7 @@ import { resolveTransactionLookups, verifyJupiterTokenAccounts, validateRpcUrl }
 import { validateJupiterV6Transaction } from "./jupiter-v6-policy.mjs";
 import { requireReviewedJupiterV6CpiSemantics } from "./jupiter-v6-cpi-review.mjs";
 import { readBoundedProviderJson } from "./bounded-provider-json.mjs";
+import { readBoundedRequestJson as readJson } from "./bounded-request-json.mjs";
 export { SwapOrderStore };
 
 const JSON_HEADERS = {
@@ -87,15 +88,6 @@ function optionalFeeMint(value) {
   return validPubkey(value) ? value : null;
 }
 
-async function readJson(request, maxBytes = 40000) {
-  const contentType = String(request.headers.get("content-type") || "").toLowerCase();
-  if (!contentType.startsWith("application/json")) throw new Error("Content-Type must be application/json");
-  const length = Number(request.headers.get("content-length") || 0);
-  if (length > maxBytes) throw new Error("Request body too large");
-  const raw = await request.text();
-  if (new TextEncoder().encode(raw).length > maxBytes) throw new Error("Request body too large");
-  try { return JSON.parse(raw); } catch { throw new Error("Invalid JSON body"); }
-}
 async function upstream(path, init, env) {
   if (!env.JUPITER_API_KEY) throw new Error("Backend is not configured: missing Jupiter server API key");
   const target = path.startsWith("https://api.jup.ag/") ? path : JUPITER + path;
