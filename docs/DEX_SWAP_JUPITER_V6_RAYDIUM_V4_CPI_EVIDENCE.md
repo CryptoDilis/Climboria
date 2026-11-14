@@ -407,3 +407,55 @@ Launchpad token creation remain blocked.
 
 The regression tests use synthetic local full-account responses. **No
 real Solana RPC, production deployment or wallet transaction was run**.
+
+
+## 14. Joint finalized Jupiter/Raydium ProgramData RPC response
+
+The §13 verifier binds all bytes *within one program* to a single
+provider-reported finalized response, but Jupiter V6 and Raydium V4
+were fetched separately, potentially from different finalized slots.
+
+The operator-only `src/upgradeable-program-joint-snapshot-digest.mjs` now
+requests **both complete ProgramData accounts in ONE `getMultipleAccounts`
+RPC response**, using `commitment: "finalized"`, `encoding: "base64"`,
+`minContextSlot` from the already verified two-stage Program metadata
+inspection, and **no `dataSlice`**. Both PDAs and bumps are independently
+derived and verified **before** any RPC call. The response must contain
+exactly two present accounts at one valid finalized context slot, with the
+expected JSON-RPC request ID and no RPC error. A streaming JSON bound of
+approximately **28 MiB** and 30-second request timeout prevent arbitrary
+unbounded responses; individual ProgramData allocations remain subject
+to the existing **10 MiB + 45 byte** bound, exact owner/executable/space,
+canonical base64, header/deployment/upgrade-authority and externally pinned
+SHA-256 checks. The single captured response is replayed **locally** to
+the existing §13 strict per-program validator; there are **no extra
+network reads** during binary hashing.
+
+The operator CLI
+`tools/jupiter-raydium-bytecode-digest-report.mjs` now selects this
+joint response path by default. If the provider cannot return the
+complete pair in one response, it fails closed: **no silent fallback** to
+separate single-program reads or cross-slot chunked reads. The less
+strict functions remain available as explicitly separate offline
+forensic tools, not automatic proof substitutes.
+
+This establishes that the **same RPC response claims one finalized
+context slot for both full program images**. It does **not**
+independently authenticate that slot or canonical chain history; the
+provider can still misreport both images, and matching independently
+operator-pinned digests do not themselves establish source-to-bytecode
+reproducibility, governance or deployed Jupiter CPI correctness. Report
+fields keep the distinction explicit:
+`bothProgramImagesInOneFinalizedRpcResponse:true`,
+`providerReportedSameFinalizedContextForBothPrograms:true`,
+`independentlyAuthenticatedLedgerSnapshot:false`,
+`independentlyTrustedRpc:false`,
+`sourceCodeParityVerified:false`,
+`approvedForJupiterCpi:false`.
+
+**Status:** synthetic adversarial tests only; no actual Solana RPC
+transaction or operator-pinned mainnet binary reference was checked in
+this work. Never enable signing, execution or Launchpad creation based
+on these local test fixtures. Real independently corroborated pool
+selection, genesis, external reference binary hashes, Jupiter CPI
+custody/signer/fee verification and external audit remain mandatory.
