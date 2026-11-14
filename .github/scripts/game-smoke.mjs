@@ -314,6 +314,12 @@ try {
     !Number.isFinite(caveGround.pebbleZMax)||caveGround.pebbleZMax>=-9)
     errors.push('Cave entrance terrain detail failed alpha edges, texture, or budget invariant: '+JSON.stringify(caveGround));
   console.log('Cave entrance detailed ground audit:',JSON.stringify(caveGround));
+  const northSky=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveInteriorSkyOcclusionAudit?.()??null);
+  if(!northSky?.sealed||!northSky.beyondPlayableNorthWall||
+    !northSky.hasRockTexture||northSky.claddingCount!==24||
+    northSky.rays?.length!==4||northSky.rays.some(ray=>!ray.hit||ray.distance<=0||ray.distance>31))
+    errors.push('Cave north-annex sky gap not sealed by actual opaque rock geometry: '+JSON.stringify(northSky));
+  console.log('Cave north-annex sky occlusion ray audit:',JSON.stringify(northSky));
   const sanctuaryPillars=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryPillarCollisionAudit?.()??null);
   if(!sanctuaryPillars?.ok||sanctuaryPillars.pillars?.length!==12||
     sanctuaryPillars.pillars.some(p=>!p.collider||!p.blocked)||sanctuaryPillars.walkwayBlocked?.length)
