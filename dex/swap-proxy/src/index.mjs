@@ -111,11 +111,26 @@ async function upstream(path, init, env) {
 }
 async function enforceRateLimit(request, env) {
   if (!env.RATE_LIMITER || typeof env.RATE_LIMITER.limit !== "function") {
-    return json({ error: "Backend rate limiter is not configured; swap proxy is fail-closed" }, 503);
+    return json({
+      error: "Backend rate limiter is not configured; swap proxy is fail-closed",
+      code: "RATE_LIMITER_NOT_CONFIGURED"
+    }, 503);
   }
   const ip = request.headers.get("cf-connecting-ip") || "unknown";
-  const result = await env.RATE_LIMITER.limit({ key: ip });
-  if (!result?.success) return json({ error: "Rate limit exceeded; retry later" }, 429);
+  let result;
+  try {
+    result = await env.RATE_LIMITER.limit({ key: ip });
+  } catch {
+    // Cloudflare can expose account/namespace internals or request values
+    // in thrown errors. Never forward the exception or fail open.
+    return json({
+      error: "Backend rate limiter temporarily unavailable",
+      code: "RATE_LIMITER_UNAVAILABLE"
+    }, 503);
+  }
+  if (!result?.success) {
+    return json({ error: "Rate limit exceeded; retry later", code: "RATE_LIMIT_EXCEEDED" }, 429);
+  }
   return null;
 }
 async function handleOrder(request, env) {

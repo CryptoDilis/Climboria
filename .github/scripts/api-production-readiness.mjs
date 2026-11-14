@@ -11,6 +11,36 @@ const SEARCH = "/api/tokens/search?query=SOL";
 const quotePath = (amount) => "/api/swap/quote?inputMint=" + SOL + "&outputMint=" + USDC + "&amount=" + amount;
 const QUOTE = quotePath("1000000");
 
+/**
+ * Only show fixed, non-secret error categories in release logs.
+ * Never echo arbitrary provider error messages or upstream URLs/tokens.
+ */
+export function classifyReadOnlyApiFailure(body) {
+  const code = body?.code;
+  if (code === "RATE_LIMITER_NOT_CONFIGURED" ||
+      code === "RATE_LIMITER_UNAVAILABLE" ||
+      code === "RATE_LIMIT_EXCEEDED") return code;
+  const error = body?.error;
+  if (error === "Jupiter upstream request failed or redirected")
+    return "JUPITER_TRANSPORT_OR_REDIRECT";
+  if (error === "Jupiter upstream request timed out")
+    return "JUPITER_TIMEOUT";
+  if (error === "Backend is not configured: missing Jupiter server API key")
+    return "JUPITER_KEY_MISSING";
+  if (error === "Backend rate limiter is not configured; swap proxy is fail-closed")
+    return "RATE_LIMITER_NOT_CONFIGURED";
+  if (error === "Backend rate limiter temporarily unavailable")
+    return "RATE_LIMITER_UNAVAILABLE";
+  if (error === "Rate limit exceeded; retry later")
+    return "RATE_LIMIT_EXCEEDED";
+  if (error === "Jupiter token search failed" || error === "Jupiter quote request failed") {
+    const status = body?.upstreamStatus;
+    return Number.isInteger(status) && status >= 400 && status <= 599
+      ? "JUPITER_HTTP_" + status : "JUPITER_HTTP_UNKNOWN";
+  }
+  return "UNKNOWN_PUBLIC_API_FAILURE";
+}
+
 export async function probeProductionApi({ baseUrl = "https://api.climboria.fun", fetchImpl = globalThis.fetch, expectedRevision = null } = {}) {
   // Post-deploy probes must bind to the exact GitHub commit checked out by
   // Wrangler. Manual probes may omit this for an observational (not
@@ -26,12 +56,17 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
   const checks = [];
   const observations = [];
   const request = async (path, options = {}) => {
-    const response = await fetchImpl(new URL(path, base).href, {
-      redirect: "error",
-      signal: AbortSignal.timeout(12000),
-      ...options,
-      headers: { origin: ORIGIN, accept: "application/json", ...(options.headers || {}) }
-    });
+    let response;
+    try {
+      response = await fetchImpl(new URL(path, base).href, {
+        redirect: "error",
+        signal: AbortSignal.timeout(12000),
+        ...options,
+        headers: { origin: ORIGIN, accept: "application/json", ...(options.headers || {}) }
+      });
+    } catch {
+      throw new Error("Production API probe transport unavailable");
+    }
     // Enforce the 64 KiB cap before and during streaming; response.text()
     // allocates the whole body first, which is unsafe for a live probe.
     const maxBytes = 65536;
@@ -98,14 +133,21 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
   assert.equal(denied.response.headers.get("access-control-allow-origin"), null, "Unknown origin must not receive CORS permission");
   checks.push("Unauthorized-origin rejection");
 
+  // Probe both independent read-only provider paths even when one fails,
+  // so a single guarded deploy can diagnose the actual production blocker.
+  // Neither path creates an order or touches wallet signing.
   const tokens = await request(SEARCH);
-  assert.equal(tokens.response.status, 200, "Live token-search route is not available");
+  const quote = await request(QUOTE);
+  if (tokens.response.status !== 200 || quote.response.status !== 200) {
+    const status = (label, result) => label + " HTTP " + result.response.status +
+      " category " + (result.response.status === 200
+        ? "OK" : classifyReadOnlyApiFailure(result.data));
+    throw new Error("Live read-only Jupiter checks failed: " +
+      status("token-search", tokens) + "; " + status("quote", quote));
+  }
   assert.ok(Array.isArray(tokens.data) && tokens.data.some(t => t?.id === SOL && Number(t.decimals) === 9),
     "Jupiter-backed token search did not return canonical SOL metadata");
   checks.push("Real Jupiter token search (canonical SOL)");
-
-  const quote = await request(QUOTE);
-  assert.equal(quote.response.status, 200, "Live quote route is not available");
   assert.equal(quote.data?.inAmount, "1000000", "Quote input amount differs from requested raw units");
   assert.ok(typeof quote.data?.outAmount === "string" && /^[1-9][0-9]*$/.test(quote.data.outAmount),
     "Live quote output is missing or invalid");
