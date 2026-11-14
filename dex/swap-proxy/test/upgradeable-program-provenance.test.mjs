@@ -9,7 +9,9 @@ import {
 } from "../src/upgradeable-program-provenance.mjs";
 
 const key = n => encodeBase58(new Uint8Array(32).fill(n));
-const pdJ=key(7), pdR=key(8);
+// Cross-language reference vectors (loader PDA, not RPC-provided bytes).
+const pdJ="4Ec7ZxZS6Sbdg5UGSLHbAnM7GQHp2eFd4KYWRexAipQT";
+const pdR="A7ZG7ByDi8DpzT9Ab7CiXhvgYTJQmaDPJkMDoPitaCQV";
 function base64(bytes) { return [Buffer.from(bytes).toString("base64"),"base64"]; }
 function program(programDataAddress) {
   const bytes=new Uint8Array(36);
@@ -52,6 +54,7 @@ test("read-only Jupiter/Raydium ProgramData metadata never approves executable C
   assert.equal(proof.programs.raydiumV4.upgradeAuthority,null);
   assert.equal(proof.programs.raydiumV4.immutable,true);
   assert.equal(proof.programs.raydiumV4.lastDeploySlot,108);
+  assert.equal(proof.programDataPdaIndependentlyVerified,false);
   for(const field of ["deployedProgramBytecodeVerified","jupiterCpiAccountMappingVerified","approvedForJupiterCpi"])assert.equal(proof[field],false);
 });
 test("reject executable owner mismatch, swapped ProgramData, wrong states and mutable ProgramData",()=>{
@@ -101,6 +104,12 @@ test("bounded two-step RPC uses finalized, slices and minimum context slot",asyn
   assert.equal(second.params[1].minContextSlot,110);
   assert.equal(observed[0].options.redirect,"error");
   assert.equal(proof.approvedForJupiterCpi,false);
+  assert.equal(proof.programDataPdaIndependentlyVerified,true);
+  assert.equal(proof.programs.jupiterV6.programDataPdaIndependentlyVerified,true);
+  assert.equal(proof.programs.raydiumV4.programDataPdaIndependentlyVerified,true);
+  assert.equal(proof.programs.jupiterV6.programDataPdaBump,254);
+  assert.equal(proof.programs.raydiumV4.programDataPdaBump,255);
+  assert.equal(proof.deployedProgramBytecodeVerified,false);
   assert.doesNotMatch(JSON.stringify(proof),/HIDDEN_TOKEN|rpc.operator.example/);
 });
 test("RPC response tampering or stale context fails closed",async()=>{
@@ -131,4 +140,21 @@ test("does not allow devnet, untrusted private RPC or invalid context",async()=>
     {network:"mainnet-beta",rpcUrl:"https://127.0.0.1"},
     {network:"mainnet-beta",rpcUrl:"https://rpc.operator.example",minContextSlot:-1}
   ]) await assert.rejects(fetchMainnetUpgradeableProgramProvenance(args));
+});
+
+test("self-consistent forged ProgramData address fails before phase-two RPC fetch",async()=>{
+  let calls=0;
+  await assert.rejects(fetchMainnetUpgradeableProgramProvenance({
+    network:"mainnet-beta",rpcUrl:"https://rpc.operator.example",
+    fetchImpl:async()=>{
+      calls++;
+      const forged=fixture();
+      forged.bootstrapAccounts[0]=program(key(7));
+      return new Response(JSON.stringify({
+        jsonrpc:"2.0",id:"climboria-upgradeable-program-readonly",
+        result:{context:{slot:110},value:forged.bootstrapAccounts}
+      }),{status:200});
+    }
+  }),/noncanonical ProgramData PDA/);
+  assert.equal(calls,1,"a forged ProgramData key must never be fetched in phase two");
 });
