@@ -33,6 +33,7 @@ function witness(){
   const parsed=parseSolanaV0Transaction(fx.original);
   return {
     kind:"CLIMBORIA_READ_ONLY_CORRELATED_FINALIZED_SWAP_EVIDENCE",
+    network:"devnet",
     claimedSignature:sig,taker:fx.taker,
     exactServerIssuedMessageSha256:HASH(parsed.message),
     exactFullSignedTransactionWireSha256:HASH(Buffer.from(fx.signed,"base64")),
@@ -55,7 +56,7 @@ function witness(){
 function review(r=record(),c=witness(),extra={}){
   return assessUnreleasedOrderFinality({
     orderRecord:r,correlatedEvidence:c,expectedRequestId:"jupiter-request-123",
-    signedTransaction:fx.signed,...extra
+    signedTransaction:fx.signed,network:"devnet",...extra
   });
 }
 const DENIED=/Operator-only claimed-order finality cross-check invalid or unavailable/;
@@ -103,6 +104,8 @@ test("fake settlement finality, bad receipt amount or wrong issued message is ne
     {taker:"11111111111111111111111111111111"},
     {providerReportedFinalizedSlot:50},
     {exactServerIssuedMessageSha256:"0".repeat(64)},
+    {exactFullSignedTransactionWireSha256:"0".repeat(64)},
+    {network:"mainnet-beta"},
     {observedInputRawAmount:"999"},
     {observedOutputRawAmount:"499"},
     {observedOutputRawAmount:"5000000000000000000000"},
@@ -124,6 +127,32 @@ test("tampered signed wire differs from issued message and cannot pass local pre
     orderRecord:record(),expectedRequestId:"jupiter-request-123",signedTransaction:bad
   }),DENIED);
 });
+test("reject forged signed-taker bytes even when claimed signature string is made to match",()=>{
+  const forged=Buffer.from(fx.signed,"base64");
+  // v0 wire: compact signature count followed by 64 Ed25519 signature bytes.
+  forged[8]^=0x40;
+  const falseSignature=encodeBase58(new Uint8Array(forged.subarray(1,65)));
+  const altered=forged.toString("base64");
+  const falseRecord={...record(),claimedSignature:falseSignature,signature:falseSignature};
+  assert.throws(()=>validateOperatorClaimedOrder({
+    orderRecord:falseRecord,expectedRequestId:"jupiter-request-123",
+    signedTransaction:altered
+  }),DENIED);
+  assert.throws(()=>assessUnreleasedOrderFinality({
+    orderRecord:falseRecord,expectedRequestId:"jupiter-request-123",
+    signedTransaction:altered,correlatedEvidence:{...witness(),claimedSignature:falseSignature},
+    network:"devnet"
+  }),DENIED);
+});
+
+test("cannot present a different network or signed wire digest as the claimed receipt",()=>{
+  const badNetwork=witness();badNetwork.network="mainnet-beta";
+  assert.throws(()=>review(record(),badNetwork),DENIED);
+  const badWire=witness();badWire.exactFullSignedTransactionWireSha256="c".repeat(64);
+  assert.throws(()=>review(record(),badWire),DENIED);
+  assert.throws(()=>review(record(),witness(),{network:"mainnet-beta"}),DENIED);
+});
+
 test("invalid pinned order fails before ANY private RPC request",async()=>{
   let calls=0;
   const fakeFetch=async()=>{calls++;throw new Error("PRIVATE-TOKEN");};
