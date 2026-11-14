@@ -1,0 +1,27 @@
+# Swap/DEX native settlement: provider success is not blockchain finality
+
+**Status (2026-11-14): strict NO-GO.** Wallet-signable orders and on-chain execution remain disabled in source, Wrangler and frontend. This document describes **future guarded execution**, not a running feature.
+
+## Concrete failure mode closed
+
+Before this change, the disabled Worker future `/api/swap/execute` path could accept Jupiter JSON `{"status":"Success","code":0,"signature":"..."}`, write the Durable Object terminal state `completed` and return user-facing `Success` **without an independent finalized transaction receipt**. It also did not compare the provider-returned signature to the actual verified signed transaction ID. A transient/malformed/mismatched provider response was not sufficient evidence of settled wallet balances.
+
+New invariant enforced in `src/order-store.mjs` and `src/jupiter-execution-outcome-policy.mjs`:
+
+- `/claim` first verifies the **Ed25519 taker signature** against the exact server-issued v0 message, and atomically stores the **first 64-byte signed transaction signature encoded in base58** as `claimedSignature`. Only the claimed order may be executed. The claim response returns this exact signature to its trusted Worker caller.
+- Jupiter `/execute` `status:"Success"`, integer `code:0` and `signature` **identical to the stored claimed signature** may be recorded ONLY as `provider_success_unconfirmed`. The public response, if the gated path is independently approved in the future, is `status:"PendingConfirmation"`, `confirmation:"unverified"`, `settledOnChain:false`, HTTP 202. It MUST NOT return success or copy Jupiter-reported output amounts as settled balances.
+- Jupiter explicit failure with nonzero integer code and either absent or matching signature may be recorded as `failed`, with explicit `settledOnChain:false`; provider failure is not proof that no network activity occurred. Any mismatched, missing, contradictory or malformed success/failure response becomes `uncertain`. A timeout, malformed/oversized provider body, HTTP error or transport failure after one-time claim is also `uncertain` and must never encourage blind resubmission.
+- `/settle` recognizes ONLY `provider_success_unconfirmed`, `failed` and `uncertain` after `executing`; it **rejects any `completed` request**. Whenever a provider supplies a signature it MUST exactly equal `claimedSignature`; reporting provider success without an identical signature is rejected. Terminal states retain the one-time claim replay lock.
+- The Durable Object cannot be reset to `ready` via provider status; the existing 24-hour cleanup expiry is unchanged. It is **not** an infinite ledger idempotency proof, permanent transaction archive or guaranteed provider reconciliation. Operators must not rely on the cleanup timer to retry transactions.
+
+## Release blockers: make chain finality real, not a UI label
+
+The system STILL NEEDS a **separately audited, independently verified chain-confirmation service** before any user-facing finalized Success can be enabled:
+
+1. Privately configure trusted Solana RPC hosts and corroborated genesis; obtain reviewed Jupiter V6 and Raydium V4 full allocated ProgramData source/binary SHA256 parity and actual DEX CPI signer/writable/vault/fee audits. Existing `dual-rpc-finalized-swap-receipt-evidence.mjs` is operator-only and compares provider-reported account states; it does not prove authenticated ledger finality.
+2. On a **real** supported Devnet/controlled-validator route, perform wallet-sign → stored-order claim → submit → finalized transaction receipt plus independently observed before/after account ownership, mint, raw token balance and fees. Reconcile the exact `claimedSignature`, request ID, expiry and token-account evidence with an immutable trust-reviewed order identifier; do not accept an arbitrary caller-supplied signature or provider payload.
+3. Design a dedicated privileged, authenticated, audited **post-finality** transition to `completed` or `failed` after signature, blockhash/expiry, instruction-CPI and balance checks. It is **not implemented**, and simply changing a DO state string or Worker kill switch is forbidden.
+4. Test negative duplicate requests, wallet reject, mismatched signatures, transport timeout after submission, contradictory provider reports, Devnet route unavailability, delayed finality, reorg/failed execution, fee caps, balance deltas, real provider outages and cleanup/idempotency windows.
+5. Obtain independent audit signoff, monitoring, fraud/incident response, secrets and key rotations and an explicit separate release change. Do NOT enable `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE`, `EXECUTION_SECURITY_REVIEW_COMPLETE`, Wrangler `EXECUTION_ENABLED`, or frontend `enabled` as a workaround.
+
+**Code/unit tests are synthetic only.** No user wallet key, Solana RPC secret, actual trade or externally verified bytecode was provided, and no live trade was executed by these changes. Production Jupiter **quotes** are live; token swaps remain disabled.
