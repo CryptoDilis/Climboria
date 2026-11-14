@@ -139,3 +139,48 @@ type layout mismatches remain unresolved (LaunchLab Gate A RED)**.
 The existing strict LaunchLab IDL compatibility workflow is not
 disabled or weakened by this evidence improvement. Genuine Devnet
 transaction lifecycle/fee/LP custody approval remains blocked.
+
+
+## November 14, 2026 — Anchor IDL duplicate-name fail-closed gate
+
+The strict published SDK/pinned IDL versus finalized on-chain Anchor IDL
+checker previously built JavaScript `Map` tables from each IDL's
+`instructions`, `accounts`, and `types` arrays. When an untrusted
+on-chain IDL contained two definitions with the same name, `Map` kept
+only the **last** one. A malicious or accidentally inconsistent IDL
+could put a conflicting signer, writable, PDA, vault or curve layout
+in the earlier entry and an exact matching pinned definition later,
+causing the existing critical-schema comparison to overlook the
+ambiguity. The same class of ambiguity also applies to pinned SDK
+reference files and noncritical entries that future builders may
+resolve differently.
+
+`.github/scripts/launchlab-onchain-idl-check.mjs` now runs
+`inspectIdlDefinitionNames` on **both** pinned and live IDLs before
+building lookup maps. It records `idlNamespaceMismatches` for
+duplicate names in any instruction, account or type table, missing
+required instruction tables, non-array provided tables, malformed
+entries and invalid identifier names. Diagnostics expose source,
+category and array indices **without copying attacker-controlled
+names**. Malformed entries are handled safely instead of throwing a
+`TypeError` during the name-map construction. The live forensic
+report exposes `idlNamespaceValid`; it is now a **mandatory**
+condition of `pass` in addition to existing discriminators,
+account/argument order, signer/writable/PDA constraints, 371/944 byte
+config account layouts and pinned SDK checks. A duplicate later
+definition can never erase a failing namespace verdict.
+
+Additional adversarial unit tests create deliberately conflicting
+earlier definitions for `initialize_v2`, `PlatformConfig` and
+`CurveParams`, with a matching last definition that would have
+masked the drift previously. They also cover noncritical namespace
+duplicates, malformed live tables, bad names and deterministic
+no-secret diagnostics.
+
+**NO-GO remains:** detecting ambiguous IDLs is not proof that
+LaunchLab's independently observed pinned-vs-deployed constraint
+and type-layout incompatibility has been resolved. The already RED
+Gate A stays RED. No Devnet or Mainnet minting, signing, fee custody,
+LP distribution or migration is approved by this code-only change.
+Public finalized network responses and authentic audited SDK/source
+parity still need separate verification.
