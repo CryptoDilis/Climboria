@@ -284,3 +284,70 @@ behavior. Mainnet signing/execution and Launchpad creation remain OFF.
 This work is tested against offline/synthetic fixtures only. An operator must
 still independently verify the public pool key, expected genesis hash,
 private RPC trust and genuine finalized on-chain observations.
+
+
+## 12. Optional full allocated ProgramData payload digest (operator-only, no bytecode audit)
+
+The prior §10–11 tool inspects only the first 45 metadata bytes. The **separate,
+opt-in, locally run** `dex/swap-proxy/tools/jupiter-raydium-bytecode-digest-report.mjs`
+adds a bounded read-only SHA-256 check against **two externally and
+independently pinned** expected hashes—one for Jupiter V6 and one for Raydium
+V4. This is not part of `/order`, `/execute`, the browser swap UI, or the
+routine pool snapshot CLI.
+
+The operator must independently corroborate mainnet genesis and source the
+*exact deployed image bytes* (including zero-padding in the allocated
+ProgramData payload, **not merely a separately compiled or trimmed ELF**) from
+a trusted independent audit/build. The expected hashes must **not be obtained
+from the same RPC source that will be checked**, or the comparison provides
+no independent reference.
+
+Run only in a trusted local operator environment (never public CI):
+
+```sh
+export CLIMBORIA_SOLANA_RPC_URL='<trusted private HTTPS RPC>'
+export CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH='<independently verified PUBLIC mainnet genesis hash>'
+export CLIMBORIA_JUPITER_V6_EXPECTED_PROGRAMDATA_PAYLOAD_SHA256='<trusted 64-character lowercase hex digest>'
+export CLIMBORIA_RAYDIUM_V4_EXPECTED_PROGRAMDATA_PAYLOAD_SHA256='<trusted 64-character lowercase hex digest>'
+node dex/swap-proxy/tools/jupiter-raydium-bytecode-digest-report.mjs
+```
+
+Process:
+1. Validate the operator-pinned genesis with the existing read-only
+   `getGenesisHash` preflight.
+2. Run the two-phase finalized Program / ProgramData inspector with **locally
+   derived, verified ProgramData PDAs**.
+3. Fetch each ProgramData account's exact 45-byte header and validate loader
+   owner, non-executable state, deployment slot and upgrade-authority bytes
+   against the earlier metadata.
+4. Hash **every byte starting at ProgramData offset 45** in sequential 32 KiB
+   base64 RPC `dataSlice` requests, with a hard 10 MiB payload bound, streaming
+   512 KiB response bound, 8-second per-request timeout, redirect rejection,
+   finalized commitment and nondecreasing `minContextSlot`.
+5. Re-read the metadata header after all payload chunks and fail closed if
+   the bytes, reported allocation size or deployment slot changed. Reject
+   any incomplete slice, bad RPC context, mismatched account ownership or
+   expected SHA-256 mismatch. Do not return a combined success unless **both**
+   programs match their separately pinned digests.
+
+**Limits of the evidence:** multiple RPC calls may use different finalized
+slots. Equal beginning/end metadata cannot prove that no intermediate upgrade
+occurred, and the RPC provider can misreport state. A matching binary digest
+is not an independent attestation of auditor-reviewed source-to-binary
+reproducibility unless that external process is completed and documented.
+There is no secondary provider cross-verification in this standalone tool
+and no Jupiter inner-CPI account, signer, token-flow or fee audit.
+
+The report therefore says `matchesOperatorPinnedSha256:true` only if the
+comparison succeeds, but explicitly retains:
+`independentlyAuditedReferenceDigest:false`,
+`singleSlotBytecodeSnapshotVerified:false`,
+`independentlyTrustedRpc:false`,
+`sourceCodeParityVerified:false`,
+`approvedForJupiterCpi:false`. This is **NOT** permission to enable
+signing, transaction execution or Launchpad token creation.
+
+Tests use mocked response slices; **no real Solana mainnet RPC was accessed**.
+If a trusted deployment image reference digest is not available, this stage
+remains blocked. Never paste RPC URLs with credentials, wallet keys or raw
+program images into public PRs/logs/issues.
