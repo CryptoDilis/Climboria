@@ -607,6 +607,30 @@ const C=h=>{const c=L(h);return[c.r,c.g,c.b]};
 const GA=C('#3c6a2a'),GB=C('#718f36'),FF=C('#244420'),SAND=C('#cdb27a'),UB=C('#a39a6c'),DA=C('#d8a35c'),DB=C('#b5793a'),RA=C('#5aa536'),RB=C('#b9c84a'),RE=C('#6b5a33'),RK1=C('#6c655a'),RK2=C('#4b463f'),SN=C('#f2f5fa');
 const mc=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
 const SANCT_SOIL=C('#887453'),SANCT_MOSS=C('#355639');
+const CLIFF_SHALE=C('#48554f'),CLIFF_OCHRE=C('#9c8875'),CLIFF_LICHEN=C('#516f53');
+// Natural terrain-vertex erosion bands for genuinely alpine, rocky faces.
+// World-coordinate sediment, seam and lichen grain is deterministic and
+// continuous across streaming chunks. This never alters heightAt/colliders,
+// never adds a draw call, model, external texture, or intersects cave paths.
+function mountainCliffStrata(x,z,h,ny){
+ if(h<65||desF(x,z)>.42||
+    Math.hypot(x-POI.sanct.x,z-POI.sanct.z)<165||
+    Math.hypot(x-POI.park.x,z-POI.park.z)<125||
+    Math.hypot(x-POI.camp.x,z-POI.camp.z)<115||
+    Math.hypot(x-POI.cave.x,z-POI.cave.z)<435||
+    Math.hypot(x-RICE.x,z-RICE.z)<285)
+  return {weight:0,strata:0,lichen:0};
+ const heightBand=ss(65,112,h)*(1-ss(235,282,h));
+ const exposedFace=1-ss(.58,.95,ny);
+ const weight=heightBand*(.26+.74*exposedFace)*(1-desF(x,z));
+ if(weight<.001)return {weight:0,strata:0,lichen:0};
+ const grain=fbm(x*.022+13,z*.022-19,3);
+ const seam=.5+.5*Math.sin(h*.137+x*.029-z*.016+(grain-.5)*5.2);
+ const strata=ss(.16,.8,seam*.79+grain*.21);
+ const lichen=ss(.54,.83,grain)*(1-strata*.8)*ss(.55,.96,ny);
+ return {weight,strata,lichen};
+}
+
 // Pigment on the EXISTING streamed terrain's vertex colors: no new overlay,
 // render draw, mesh, collider or alteration of heightAt()/groundAt().
 // Keep the central approach corridor clean, and feather naturally into forest.
@@ -626,6 +650,14 @@ function colorAt(x,z,h,ny){
  const rw=1-ss(190,300,Math.hypot(x-RICE.x,z-RICE.z));
  if(rw>0){c=mc(c,mc(RA,RB,ss(.3,.7,t)),rw*.95);if(ny<.97)c=mc(c,RE,rw)}
  const rk=Math.max(1-ss(.62,.86,ny),ss(90,170,h+t*30));if(rk>0)c=mc(c,mc(RK1,RK2,t2),rk);
+ const cliff=mountainCliffStrata(x,z,h,ny);
+ if(cliff.weight>.001){
+  // Distinct sediment ledges on exposed cliff faces, subtle lichen on shelves.
+  // All pigment lives inside the existing vertex color buffer.
+  const rockTone=mc(CLIFF_SHALE,CLIFF_OCHRE,cliff.strata);
+  c=mc(c,rockTone,Math.min(.43,cliff.weight*(.19+.29*cliff.strata)));
+  if(cliff.lichen>.001)c=mc(c,CLIFF_LICHEN,Math.min(.12,cliff.weight*cliff.lichen*.24));
+ }
  const sn=ss(240,290,h+t*25)*ss(.5,.8,ny);if(sn>0)c=mc(c,SN,sn);
  const bch=1-ss(.3,2.4,h);
  // Add a soft sand apron along mapped freshwater and river banks, not just low-elevation vertices.
@@ -1617,6 +1649,8 @@ let camY=null,lookY=0,cameraDistance=MOB?4.6:5.8,targetCameraDistance=MOB?4.6:5.
 // Camera orbit is independent from the explorer's body heading. Rotating the view
 // must never spin the hero in place; movement/facing continue to use P.yaw.
 let cameraYaw=0,cameraPitch=-.08;
+// CI-only high lookout. Normal gameplay always uses the collision-safe follow camera.
+let mountainSmokeVista=null;
 window.__climboriaCameraOrbit={get yaw(){return cameraYaw},get pitch(){return cameraPitch},get playerYaw(){return P.yaw},get heroYaw(){return assetHero?.rotation.y??hero.rotation.y},get heroUsesGlb(){return !!assetHero&&assetHero.visible},get distance(){return cameraDistance},get targetDistance(){return targetCameraDistance},get safeBack(){return cameraSafeBack},get actualDistance(){return cameraActualDistance},get groundClearance(){return cameraGroundClearance},get mobile(){return MOB},get fov(){return cam.fov}};
 const free=on=>document.body.classList.toggle('free',on);
 const climboriaMusic=new Audio('./assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;climboriaMusic.preload='auto';
@@ -2673,7 +2707,46 @@ function geodeChestLifecycleAudit(){
   return {ok:opened&&rewarded&&respawned,opened,rewarded,respawned,timer,inventoryBefore:before,inventoryAfter:after,visible:c.g.visible,open:c.open,floorY:floor,chestY:c.g.position.y};
  }finally{Object.assign(P,saved)}
 }
+function positionAtMountainCliffForSmoke(){
+ // The regular follow camera looks at the hero's waist. At a steep summit
+ // viewpoint this points into a solid green terrain face, a false art review.
+ // Use an elevated real-world panorama in ?smoke ONLY; never change the user's
+ // gameplay camera, movement, Hero GLB, terrain, or stored spawn.
+ const origin={x:POI.summit.x-220,z:POI.summit.z+260};
+ updateChunks(origin.x,origin.z,200);
+ P.mode='walk';P.x=origin.x;P.z=origin.z;P.y=groundAt(P.x,P.z)+1.75;
+ P.vy=0;P.moveTarget=null;
+ let focus=null;
+ for(let x=POI.summit.x-220;x<=POI.summit.x+140;x+=30)
+  for(let z=POI.summit.z-200;z<=POI.summit.z+170;z+=30){
+   const h=heightAt(x,z);
+   if(h<80||h>238)continue;
+   const nx=heightAt(x-5,z)-heightAt(x+5,z),nz=heightAt(x,z-5)-heightAt(x,z+5);
+   const ny=10/Math.hypot(nx,10,nz),cliff=mountainCliffStrata(x,z,h,ny);
+   const score=cliff.weight*(.7+.3*cliff.strata)+.12*(1-ny);
+   if(score>.22&&(!focus||score>focus.score))focus={x,z,h,score,weight:cliff.weight};
+  }
+ if(!focus)focus={x:POI.summit.x-100,z:POI.summit.z+130,
+  h:heightAt(POI.summit.x-100,POI.summit.z+130),score:0,weight:0};
+ const target={x:focus.x,y:focus.h+16,z:focus.z};
+ const camera={x:target.x-320,z:target.z+365};
+ let crest=0;
+ for(let i=0;i<=28;i++){
+  const t=i/28,x=camera.x+(target.x-camera.x)*t,z=camera.z+(target.z-camera.z)*t;
+  crest=Math.max(crest,heightAt(x,z));
+ }
+ camera.y=Math.max(crest+125,target.y+145,groundAt(camera.x,camera.z)+100);
+ mountainSmokeVista={camera,target,focusWeight:focus.weight};
+ const facing=Math.atan2(target.x-P.x,target.z-P.z);
+ P.yaw=facing;cameraYaw=facing+Math.PI;cameraPitch=-.24;
+ return {origin:{x:P.x,z:P.z,height:+(P.y-1.75).toFixed(2)},
+  target,camera,viewDistance:+Math.hypot(target.x-camera.x,target.z-camera.z).toFixed(2),
+  facing,cameraYaw,cameraPitch,loadedChunks:chunks.size,
+  smokeOverlook:true,focusWeight:+focus.weight.toFixed(3),
+  cameraGroundClearance:+(camera.y-groundAt(camera.x,camera.z)).toFixed(2)};
+}
 function positionAtCaveEntranceForSmoke(){
+ mountainSmokeVista=null; // Restore ordinary follow camera for cave and coast QA.
  // Capture from the exterior approach, not beneath the near-mouth rock overhang.
  // Keep the hero facing into the opening with the follow camera behind them.
  const local={x:0,z:-20},world=l2w(caveG,local.x,local.z);
@@ -2791,6 +2864,39 @@ function caveCoastalTraversalAudit(){
   Object.assign(P,saved);window.__climboriaLastCollision=beforeCollision;
   updateChunks(P.x,P.z,200);
  }
+}
+function mountainCliffStrataAudit(){
+ let sampleCount=0,active=0,strong=0,minStrata=1,maxStrata=0,maxWeight=0;
+ let minRockRed=Infinity,maxRockRed=-Infinity,sampleHeights=0;
+ // Actual mountain/summit world-space 5m heightfield, tested at deterministic
+ // grid points across the east-side alpine corridor, not on a fake image.
+ for(let x=310;x<=910;x+=25)for(let z=-920;z<=-320;z+=25){
+  const h=heightAt(x,z);
+  const dx=heightAt(x-5,z)-heightAt(x+5,z),dz=heightAt(x,z-5)-heightAt(x,z+5);
+  const ny=10/Math.hypot(dx,10,dz);
+  const p=mountainCliffStrata(x,z,h,ny);
+  sampleCount++;if(h>=65)sampleHeights++;
+  if(p.weight>.04){active++;minStrata=Math.min(minStrata,p.strata);maxStrata=Math.max(maxStrata,p.strata);
+   const col=colorAt(x,z,h,ny);minRockRed=Math.min(minRockRed,col[0]);maxRockRed=Math.max(maxRockRed,col[0]);}
+  if(p.weight>.15&&p.strata>.35)strong++;
+  maxWeight=Math.max(maxWeight,p.weight);
+ }
+ const protectedSites=[
+  {name:'Sanctuary',p:POI.sanct},
+  {name:'Park',p:POI.park},
+  {name:'Camp',p:POI.camp},
+  {name:'Cave',p:POI.cave}
+ ].map(o=>({name:o.name,clear:mountainCliffStrata(o.p.x,o.p.z,140,.65).weight===0}));
+ return {sampleCount,sampleHeights,active,strong,
+  maxWeight:+maxWeight.toFixed(3),
+  strataRange:active?+(maxStrata-minStrata).toFixed(3):0,
+  rockRedRange:active?+(maxRockRed-minRockRed).toFixed(3):0,
+  protectedSites,
+  riceProtected:mountainCliffStrata(RICE.x,RICE.z,160,.7).weight===0,
+  desertProtected:mountainCliffStrata(300,1300,160,.7).weight===0,
+  lowlandProtected:mountainCliffStrata(400,-500,20,.7).weight===0,
+  terrainStep:STEP,
+  terrainMaterialUnchanged:terrMat.vertexColors===true};
 }
 function sanctuaryEdgeUndergrowthAudit(){
  const {mesh,desired}=sanctuaryEdgeUndergrowth;
@@ -2966,7 +3072,7 @@ function caveApproachGroundAudit(){
   hasColorTexture:!!ground?.material?.map,hasBumpTexture:!!ground?.material?.bumpMap,
   textureRepeat:ground?.material?.map?.repeat?.x||0};
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveApproachGroundAudit:new URLSearchParams(location.search).has('smoke')?caveApproachGroundAudit:undefined,caveInteriorSkyOcclusionAudit:new URLSearchParams(location.search).has('smoke')?caveInteriorSkyOcclusionAudit:undefined,caveNorthAnnexPaletteAudit:new URLSearchParams(location.search).has('smoke')?caveNorthAnnexPaletteAudit:undefined,automaticWeatherAudit:new URLSearchParams(location.search).has('smoke')?automaticWeatherAudit:undefined,caveEntranceTraversalAudit,caveCoastalTraversalAudit,caveCoastalFloorMaterialAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalFloorMaterialAudit:undefined,caveCoastalRockSilhouetteAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalRockSilhouetteAudit:undefined,sanctuaryPillarCollisionAudit,sanctuaryGroundPigmentAudit:new URLSearchParams(location.search).has('smoke')?sanctuaryGroundPigmentAudit:undefined,sanctuarySoilTextureAudit:new URLSearchParams(location.search).has('smoke')?sanctuarySoilTextureAudit:undefined,sanctuaryEdgeUndergrowthAudit:new URLSearchParams(location.search).has('smoke')?sanctuaryEdgeUndergrowthAudit:undefined,positionAtCaveCoastalExitForSmoke,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,texturedRockMaterials:caveRockMaterials.filter(m=>m.userData?.caveRockTexture&&m.map&&m.bumpMap).length,bumpedRockMaterials:caveRockMaterials.filter(m=>!!m.bumpMap).length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,deathLootSnapshot:()=>deathLootBag?{x:deathLootBag.x,z:deathLootBag.z,items:deathLootBag.items.map(i=>({...i})),expiresAt:deathLootBag.expiresAt}:null,deathLootLifecycleAudit:new URLSearchParams(location.search).has('smoke')?deathLootLifecycleAudit:undefined,deathLootMapMarkerAudit:new URLSearchParams(location.search).has('smoke')?deathLootMapMarkerAudit:undefined,lootRecoveryDirectionAudit:new URLSearchParams(location.search).has('smoke')?lootRecoveryDirectionAudit:undefined,sprintStaminaAudit:new URLSearchParams(location.search).has('smoke')?sprintStaminaAudit:undefined,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,sanctuaryDressingAudit:()=>({pathSlabs:sanctuaryPathSlabs.length,lanterns:sanctuaryPathLanterns.length,planters:sanctuaryPlanters.length,span:{minZ:Math.min(...sanctuaryPathSlabs.map(o=>o.position.z)),maxZ:Math.max(...sanctuaryPathSlabs.map(o=>o.position.z))},attached:sanctuaryPathSlabs.every(o=>o.parent===sanctuaryGroup)&&sanctuaryPathLanterns.every(o=>o.base.parent===sanctuaryGroup&&o.post.parent===sanctuaryGroup&&o.cap.parent===sanctuaryGroup&&o.lamp.parent===sanctuaryGroup)&&sanctuaryPlanters.every(o=>o.bed.parent===sanctuaryGroup&&o.shrub.parent===sanctuaryGroup&&o.bloom.parent===sanctuaryGroup)}),collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveApproachGroundAudit:new URLSearchParams(location.search).has('smoke')?caveApproachGroundAudit:undefined,caveInteriorSkyOcclusionAudit:new URLSearchParams(location.search).has('smoke')?caveInteriorSkyOcclusionAudit:undefined,caveNorthAnnexPaletteAudit:new URLSearchParams(location.search).has('smoke')?caveNorthAnnexPaletteAudit:undefined,automaticWeatherAudit:new URLSearchParams(location.search).has('smoke')?automaticWeatherAudit:undefined,caveEntranceTraversalAudit,caveCoastalTraversalAudit,caveCoastalFloorMaterialAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalFloorMaterialAudit:undefined,caveCoastalRockSilhouetteAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalRockSilhouetteAudit:undefined,sanctuaryPillarCollisionAudit,sanctuaryGroundPigmentAudit:new URLSearchParams(location.search).has('smoke')?sanctuaryGroundPigmentAudit:undefined,sanctuarySoilTextureAudit:new URLSearchParams(location.search).has('smoke')?sanctuarySoilTextureAudit:undefined,sanctuaryEdgeUndergrowthAudit:new URLSearchParams(location.search).has('smoke')?sanctuaryEdgeUndergrowthAudit:undefined,mountainCliffStrataAudit:new URLSearchParams(location.search).has('smoke')?mountainCliffStrataAudit:undefined,positionAtMountainCliffForSmoke:new URLSearchParams(location.search).has('smoke')?positionAtMountainCliffForSmoke:undefined,positionAtCaveCoastalExitForSmoke,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,texturedRockMaterials:caveRockMaterials.filter(m=>m.userData?.caveRockTexture&&m.map&&m.bumpMap).length,bumpedRockMaterials:caveRockMaterials.filter(m=>!!m.bumpMap).length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,deathLootSnapshot:()=>deathLootBag?{x:deathLootBag.x,z:deathLootBag.z,items:deathLootBag.items.map(i=>({...i})),expiresAt:deathLootBag.expiresAt}:null,deathLootLifecycleAudit:new URLSearchParams(location.search).has('smoke')?deathLootLifecycleAudit:undefined,deathLootMapMarkerAudit:new URLSearchParams(location.search).has('smoke')?deathLootMapMarkerAudit:undefined,lootRecoveryDirectionAudit:new URLSearchParams(location.search).has('smoke')?lootRecoveryDirectionAudit:undefined,sprintStaminaAudit:new URLSearchParams(location.search).has('smoke')?sprintStaminaAudit:undefined,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,sanctuaryDressingAudit:()=>({pathSlabs:sanctuaryPathSlabs.length,lanterns:sanctuaryPathLanterns.length,planters:sanctuaryPlanters.length,span:{minZ:Math.min(...sanctuaryPathSlabs.map(o=>o.position.z)),maxZ:Math.max(...sanctuaryPathSlabs.map(o=>o.position.z))},attached:sanctuaryPathSlabs.every(o=>o.parent===sanctuaryGroup)&&sanctuaryPathLanterns.every(o=>o.base.parent===sanctuaryGroup&&o.post.parent===sanctuaryGroup&&o.cap.parent===sanctuaryGroup&&o.lamp.parent===sanctuaryGroup)&&sanctuaryPlanters.every(o=>o.bed.parent===sanctuaryGroup&&o.shrub.parent===sanctuaryGroup&&o.bloom.parent===sanctuaryGroup)}),collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
@@ -3031,6 +3137,12 @@ function update(dt){
   cam.near=0.15;
   cam.updateProjectionMatrix();
   cam.lookAt(terrainCameraTarget);
+  // Screenshot-only wide alpine lookout, not enabled in real gameplay.
+  if(mountainSmokeVista&&new URLSearchParams(location.search).has('smoke')){
+   const v=mountainSmokeVista;
+   cam.position.set(v.camera.x,v.camera.y,v.camera.z);
+   cam.lookAt(v.target.x,v.target.y,v.target.z);
+  }
   const locomotionState=moving?(sprinting?'run':'walk'):'idle';
   const animState=P.swim?'swim':(['takeoff','airborne','descent'].includes(P.jumpState)?'jump-'+P.jumpState:P.jumpState==='land'?'land':locomotionState);
   document.documentElement.dataset.climboriaJumpState=P.swim?'swim':(P.jumpState||'grounded');
