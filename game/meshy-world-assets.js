@@ -80,7 +80,7 @@ function prepareDecorations(entries){
  decorations=(Array.isArray(entries)?entries:[]).slice(0,30).map(d=>{
   const at=groundPosition(d.anchor,d.dx,d.dz);
   if(!at||!safeURL(d.file)||!(d.height>0&&d.height<=45))return null;
-  return {at,file:d.file,height:d.height,water:!!d.water,loadRadius:Math.min(300,Math.max(50,d.loadRadius||145)),mesh:null,pending:false,failed:false};
+  return {at,file:d.file,height:d.height,water:!!d.water,desktopOnly:d.desktopOnly===true,loadRadius:Math.min(300,Math.max(50,d.loadRadius||145)),mesh:null,pending:false,failed:false};
  }).filter(Boolean);
 }
 function tick(camera){
@@ -98,12 +98,12 @@ function tick(camera){
  }
  const active=decorations.filter(d=>d.mesh).length;
  if(active+state.queued>=maxLoaded)return;
- const candidate=decorations.find(d=>!d.mesh&&!d.pending&&!d.failed&&Math.hypot(camera.x-d.at.x,camera.z-d.at.z)<d.loadRadius);
+ const candidate=decorations.find(d=>!d.mesh&&!d.pending&&!d.failed&&(!mobile||!d.desktopOnly)&&Math.hypot(camera.x-d.at.x,camera.z-d.at.z)<d.loadRadius);
  if(!candidate)return;
  candidate.pending=true;state.queued++;
  glbLoad(safeURL(candidate.file)).then(root=>{
   candidate.pending=false;state.queued--;
-  if(!root||geometryCount(root)>55000||!dimensions(root,candidate.height)){candidate.failed=true;state.failures.push(candidate.file);return;}
+  if(!root||geometryCount(root)>(mobile?35000:65000)||!dimensions(root,candidate.height)){candidate.failed=true;state.failures.push(candidate.file);return;}
   const x=candidate.at.x,z=candidate.at.z,h=candidate.water?0:opts.heightAt(x,z);
   if(!Number.isFinite(h)){candidate.failed=true;return;}
   const group=new opts.T3.Group();group.name='OptionalMeshy:'+candidate.file;
