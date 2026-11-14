@@ -736,7 +736,9 @@ $('toResults').addEventListener('click',e=>{const b=e.target.closest('button[dat
 
 
 function miniSparkline(values){const a=(values||[]).filter(v=>Number.isFinite(Number(v))).map(Number);if(a.length<2)return '<span class="spark-empty">—</span>';const lo=Math.min(...a),hi=Math.max(...a),range=hi-lo||1;const pts=a.map((v,i)=>(i/(a.length-1)*72).toFixed(1)+','+(25-(v-lo)/range*22).toFixed(1)).join(' ');return '<svg class="mini-spark" viewBox="0 0 72 27" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="'+(a[a.length-1]>=a[0]?'#65d6a0':'#ff8290')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
+let majorMarketsRequest=0;
 async function loadMajorMarkets(){
+ const request=++majorMarketsRequest;
  const assets=[{id:'bitcoin',symbol:'BTC',name:'Bitcoin'},{id:'ethereum',symbol:'ETH',name:'Ethereum'},{id:'solana',symbol:'SOL',name:'Solana'},{id:'binancecoin',symbol:'BNB',name:'BNB'},{id:'ripple',symbol:'XRP',name:'XRP'},{id:'usd-coin',symbol:'USDC',name:'USD Coin'}];
  const render=(data,sourceNote)=>{
   $('majorCoins').innerHTML=data.map((c,i)=>{const ch=Number(c.price_change_percentage_24h),cls=Number.isFinite(ch)?(ch>=0?'positive':'negative'):'muted';return '<button type="button" class="major-row" data-major-index="'+i+'" data-major-symbol="'+esc(c.symbol.toUpperCase())+'" aria-label="Choose '+esc(c.symbol.toUpperCase())+' asset" title="" tabindex="0"><span class="major-identity"><span class="major-icon">'+esc(c.symbol.slice(0,1).toUpperCase())+'</span><span class="major-name"><b>'+esc(c.symbol.toUpperCase())+'</b><small>'+esc(c.name)+'</small></span></span><span class="major-spark">'+miniSparkline(c.sparkline_in_7d?.price)+'</span><span class="major-values"><b>'+usdFmt(c.current_price)+'</b><small class="'+cls+'">'+(Number.isFinite(ch)?(ch>0?'+':'')+ch.toFixed(2)+'%':'—')+'</small></span></button>'}).join('');
@@ -744,10 +746,12 @@ async function loadMajorMarkets(){
  };
  try{
   const data=await fetchMarketJson('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids='+assets.map(x=>x.id).join(',')+'&order=market_cap_desc&per_page=6&page=1&sparkline=true&price_change_percentage=24h');
+  if(request!==majorMarketsRequest)return;
   if(!Array.isArray(data)||!data.length)throw new Error('No major market records returned');
   const byId=new Map(data.map(x=>[x.id,x]));
   render(assets.map(a=>byId.get(a.id)||({symbol:a.symbol,name:a.name,current_price:null,price_change_percentage_24h:null,sparkline_in_7d:{price:[]}})), 'CoinGecko live price and 24h market data; unavailable prices shown as —');
  }catch(error){
+  if(request!==majorMarketsRequest)return;
   render(assets.map(a=>({symbol:a.symbol,name:a.name,current_price:null,price_change_percentage_24h:null,sparkline_in_7d:{price:[]}})), 'Live price provider unavailable; asset selection remains enabled');
  }
 }
