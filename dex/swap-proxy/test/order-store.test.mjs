@@ -402,6 +402,9 @@ test("all provider observations and unknown outcomes retain exact claimed transa
     const retained=await storage.get("order");
     assert.equal(retained.state,state);
     assert.equal(retained.claimedSignature,sig);
+    // Both explicit provider observations and uncertain receipts must retain
+    // the exact Ed25519-verified transaction ID across alarm cleanup.
+    assert.equal(retained.signature,sig);
     assert.equal(storage.alarmAt,retained.retainUntil);
     assert.equal((await claimOrder(object,fixture.signed)).status,409);
   }
