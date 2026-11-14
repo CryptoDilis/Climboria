@@ -79,10 +79,12 @@ test("absent, same-host and private-network endpoints reject before network call
 });
 
 test("unmatched or unpinned genesis stops before finalized-slot lookups", async () => {
-  for (const fixture of [fakeRpc({ secondaryGenesis: WRONG_GENESIS }), fakeRpc()]) {
+  for (const { fixture, expectedGenesisHash } of [
+    { fixture: fakeRpc({ secondaryGenesis: WRONG_GENESIS }), expectedGenesisHash: GENESIS },
+    { fixture: fakeRpc(), expectedGenesisHash: WRONG_GENESIS }
+  ]) {
     await assert.rejects(verifyPrivateDualRpcConnectivity({
-      ...options(fixture),
-      expectedGenesisHash: fixture.calls === undefined ? WRONG_GENESIS : WRONG_GENESIS
+      ...options(fixture), expectedGenesisHash
     }), /preflight failed securely/);
     assert.equal(fixture.calls.some(call => call.method === "getSlot"), false);
   }
