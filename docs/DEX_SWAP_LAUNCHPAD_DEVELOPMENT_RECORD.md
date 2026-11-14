@@ -1427,3 +1427,25 @@ NEXT EXACT: inspect head `a3a59ae...` CI (Validate 43575428329, Browser Smoke 43
 **EXACT NEXT TASK:** Inspect exact-head PR #426 Actions after push. If any check fails, use its specific log to correct the source or test fixture; do not hide controls, force interactions, relax assertions, merge, or deploy.<br>
 **NEXT COMMAND OR FILE TO EDIT:** GitHub Actions run list for the pushed PR #426 head; if the quote-state test reports a failure, start with `.github/scripts/dex-swap-quote-state-smoke.mjs` and `dex/index.html`.<br>
 **Acceptance criteria for the next task:** Validate, DEX Swap CPI Security, Browser Smoke, and DEX Swap Read-only Quote State are successful for the current PR head, including both desktop and mobile custom-slippage quote coverage, with no `/api/swap/order` or `/api/swap/execute` request.<br>
+
+
+### 2026-11-14 — PR #426 exact-head checks green after DEX control repair (DRAFT, NO MERGE)
+
+**Date and time:** 2026-11-14 Philippine time (UTC+08:00)<br>
+**Workstream:** Swap / DEX<br>
+**Branch:** `codex/swap-dex-quote-integrity-20261114`<br>
+**Starting commit SHA:** `e47af6a408d87dcfaf434d1693763fe4eca73efe`<br>
+**Files modified:** This record only.<br>
+**Implementation completed:** Verified the accessibility repair and complete PR #426 quote-integrity change set against GitHub Actions. No runtime or configuration changed in this milestone; no merge, deployment, wallet signing, order creation, transaction submission, or execution-gate change occurred.<br>
+**Commit SHA:** Verified implementation/documentation head `e47af6a408d87dcfaf434d1693763fe4eca73efe`; this durable result entry is committed separately immediately after this entry.<br>
+**PR number and URL:** Draft [PR #426](https://github.com/CryptoDilis/Climboria/pull/426).<br>
+**Tests performed:** GitHub-hosted Playwright browser regression on desktop and 390px mobile for Swap and DEX, Worker/CPI security tests, Validate, Browser Smoke, graduation feed, and preview safety.<br>
+**Test results:** PASS — `DEX Swap Read-only Quote State Regression` job 132397068606 ran 2026-11-14T08:57:21Z–08:58:08Z and completed every required step successfully, including Playwright Chromium installation and `Assert no stale provider quote, no fabricated fees, and no wallet requests`. The test exercises the visible DEX quote control rather than forcing a hidden terminal control, verifies provider minimum received and selected slippage in desktop/mobile fixture flows, and continues to forbid order/execute requests.<br>
+**GitHub Actions run IDs and results:** Exact head `e47af6a...` all SUCCESS — Validate Climboria 43578216960; DEX Swap CPI Security 43578217028; Preview safety 43578217020; DEX Swap Read-only Quote State Regression 43578216978; DEX Graduation Feed 43578217191; Climboria Browser Smoke Test 43578217339. The only annotations are platform notices about Node 20 action compatibility and a future `ubuntu-latest` image change, not source failures.<br>
+**Production verification:** None for this draft. Previous main production proof remains quote-only at frontend SHA `218c996f5682d7ad243c4457dedccbac93f69f48` and Worker SHA `b724a602047600000ef239a6514914deb2e11a87`; do not attribute either deployment to PR #426.<br>
+**Unresolved bugs:** No known PR #426 CI failure. The PR is deliberately unmerged, so the new behavior is not deployed or production-verified.<br>
+**External blockers:** Merging needs separate owner approval. Native execution additionally needs independent operator RPC/genesis evidence, complete deployed-program binary/CPI audit, controlled wallet-signed settlement and finality evidence, audited reconciliation, and release approval. No production secrets or safety gates were accessed or changed.<br>
+**Current release status:** PR #426 is a tested draft. Production is live quote-only; transaction signing and execution remain disabled and are not release-ready.<br>
+**EXACT NEXT TASK:** Review the existing swap execution implementation against the recorded native-execution evidence gates, identify the next source-level safety gap that can be closed without credentials or a real trade, and add only a focused regression if one exists. Otherwise preserve the tested draft and report the precise external launch blockers.<br>
+**NEXT COMMAND OR FILE TO EDIT:** Inspect `dex/swap-proxy/src/index.mjs`, `dex/swap-proxy/src/order-store.mjs`, their tests, and this record against the disabled execution gates and recorded operator evidence prerequisites.<br>
+**Acceptance criteria for the next task:** A source-level security gap is either fixed with targeted tests and exact-head green CI, or a no-change audit demonstrates that remaining execution requirements depend on unavailable independent infrastructure/audit evidence; signing and execution gates remain fail-closed throughout.<br>
