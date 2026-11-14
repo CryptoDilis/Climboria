@@ -1,7 +1,13 @@
 # Climboria — Game Concept Baseline
 
-**Status:** approved direction / design baseline. Future features are not represented as implemented.
-**Core principle:** Game First, Speculation Later.
+> **READ THE FORMATTED GAME CONCEPT:** https://climboria.fun/game-concept.html
+>
+> This `.md` file is the plain-text source for GitHub and developers. For a properly formatted, mobile-friendly version with readable headings, sections, and Climboria styling, open the page above.
+
+---
+
+**Status:** Approved direction / design baseline. Future features are not represented as implemented.  
+**Core principle:** Game First, Speculation Later.  
 **Current launch world:** Jarrell’s Peak only.
 
 ## Core experience — Jarrell’s Peak
