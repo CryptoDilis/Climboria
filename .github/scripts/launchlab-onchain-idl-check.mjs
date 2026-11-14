@@ -206,7 +206,8 @@ export function compareCriticalIdls(repoIdl, liveIdl) {
   const liveOnlyInstructions = [...liveInstructions.keys()].filter(x => !repoInstructions.has(x));
   return { criticalDiscriminatorMismatches, criticalAccountMetaMismatches, criticalAccountConstraintMismatches,
     documentationOnlyAccountMismatches, criticalArgumentMismatches,
-    criticalInstructionSchemaDetails, criticalSchemaMismatches, criticalSchemaDetails, repoOnlyInstructions, liveOnlyInstructions };
+    criticalInstructionSchemaDetails, criticalSchemaMismatches, criticalSchemaDetails,
+    idlNamespaceMismatches, repoOnlyInstructions, liveOnlyInstructions };
 }
 const SDK_INSTRUCTION_NAMES = Object.freeze({
   buy_exact_in: "buyExactIn", buy_exact_out: "buyExactOut",
@@ -292,7 +293,9 @@ async function fetchCluster(cluster, repoIdl) {
   }
   const { criticalDiscriminatorMismatches, criticalAccountMetaMismatches, criticalAccountConstraintMismatches,
     documentationOnlyAccountMismatches, criticalArgumentMismatches,
-    criticalInstructionSchemaDetails, criticalSchemaMismatches, criticalSchemaDetails, repoOnlyInstructions, liveOnlyInstructions } = compareCriticalIdls(repoIdl, liveIdl);
+    criticalInstructionSchemaDetails, criticalSchemaMismatches, criticalSchemaDetails,
+    idlNamespaceMismatches, repoOnlyInstructions, liveOnlyInstructions } = compareCriticalIdls(repoIdl, liveIdl);
+  const idlNamespaceValid = idlNamespaceMismatches.length === 0;
   const selectedDiscriminatorsMatch = criticalDiscriminatorMismatches.length === 0;
   const criticalInstructionSchemasMatch = criticalAccountMetaMismatches.length === 0 && criticalArgumentMismatches.length === 0;
   const repoIdlTypeDefinitionsExactlyMatch = criticalSchemaMismatches.length === 0;
@@ -321,8 +324,9 @@ async function fetchCluster(cluster, repoIdl) {
     criticalDiscriminatorMismatches, criticalAccountMetaMismatches, criticalAccountConstraintMismatches,
     documentationOnlyAccountMismatches, criticalArgumentMismatches, criticalInstructionSchemaDetails,
     criticalSchemaMismatches, criticalSchemaDetails,
+    idlNamespaceMismatches, idlNamespaceValid,
     repoOnlyInstructions, liveOnlyInstructions,
-    pass: selectedDiscriminatorsMatch && criticalInstructionSchemasMatch && repoIdlTypeDefinitionsExactlyMatch && sdkLayoutBinaryCompatible
+    pass: idlNamespaceValid && selectedDiscriminatorsMatch && criticalInstructionSchemasMatch && repoIdlTypeDefinitionsExactlyMatch && sdkLayoutBinaryCompatible
   };
 }
 export async function verifyOnchainLaunchpadIdl(repoIdlPath, sdkLayoutPath, sdkInstrumentPath) {
