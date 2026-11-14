@@ -19,6 +19,24 @@ const choices=[{
 }];
 let passed=0;
 try{
+ // Users who already created the ORIGINAL Adventurer must get Ella as their
+ // replacement without losing their saved username, on the real Game hub.
+ const migration=await browser.newContext();
+ try{
+  await migration.addInitScript(()=>{
+   localStorage.setItem('climboria-created-hero-v1',JSON.stringify({
+    name:'Old Hero Owner',model:'Adventurer',createdAt:'2026-11-14T00:00:00Z'
+   }));
+  });
+  const page=await migration.newPage();
+  await page.goto(base+'/game/index.html',{waitUntil:'domcontentloaded',timeout:60000});
+  const migrated=await page.evaluate(()=>JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null'));
+  if(migrated?.model!=='Ella'||migrated?.name!=='Old Hero Owner'||migrated?.createdAt!=='2026-11-14T00:00:00Z')
+   throw Error('Old Adventurer record was not migrated to Ella without losing identity: '+JSON.stringify(migrated));
+  if(await page.locator('#openHeroCreator').textContent()!=='EDIT / PREVIEW HERO')
+   throw Error('Existing player is not recognized after Ella migration');
+  console.log('PASS legacy Adventurer auto-migration to Ella with identity preserved');
+ }finally{await migration.close()}
  for(const hero of choices){
   for(const device of [{name:'desktop',width:1280,height:720,isMobile:false},{name:'mobile',width:390,height:844,isMobile:true}]){
    const context=await browser.newContext({viewport:{width:device.width,height:device.height},deviceScaleFactor:1,isMobile:device.isMobile,hasTouch:device.isMobile});
