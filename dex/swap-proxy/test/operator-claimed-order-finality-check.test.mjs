@@ -87,7 +87,7 @@ test("cross-order, state, signature, expiry and issuance evidence mismatch fails
     {state:"ready"},{state:"completed"},{state:"failed"},
     {claimedSignature:"2".repeat(88)},{signature:"2".repeat(88)},
     {lastValidBlockHeight:null},{createdAt:0},
-    {claimedAt:record().expiresAt+1},{retainUntil:1},
+    {claimedAt:Number.MAX_SAFE_INTEGER},{retainUntil:1},
     {taker:"11111111111111111111111111111111"},
     {transaction:"not canonical base64"},
     {tokenAccountEvidence:{...record().tokenAccountEvidence,requestedAmount:"2001"}},
