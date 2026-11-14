@@ -30,6 +30,18 @@ try{
   try{
    const page=await context.newPage(),errors=[];
    page.on('pageerror',e=>errors.push(e.message));
+   if(device.isMobile){
+    // Chromium's emulated orientation may remain portrait-primary even
+    // in an 844x390 viewport. Assert the real landscape playable UI.
+    await page.addInitScript(()=>{
+     const orientation=new EventTarget();
+     Object.defineProperty(orientation,'type',{configurable:true,get:()=> 'landscape-primary'});
+     orientation.lock=async()=>{};
+     try{Object.defineProperty(screen,'orientation',{configurable:true,value:orientation})}
+     catch(_){Object.defineProperty(Object.getPrototypeOf(screen),'orientation',{
+      configurable:true,get:()=>orientation})}
+    });
+   }
    await page.addInitScript(()=>{
     localStorage.setItem('climboria-created-hero-v1',JSON.stringify({
      name:'Rarity Chest QA',model:'Jarrell',createdAt:'2026-11-15T00:00:00Z'
@@ -46,6 +58,13 @@ try{
     undefined,{timeout:120000});
    await page.waitForFunction(()=>window.__climboriaJarrellsPeak?.chestVisualAudit?.().allLoaded===true,
     undefined,{timeout:120000});
+   if(device.isMobile){
+    await page.waitForFunction(()=>{
+     const overlay=document.querySelector('#rotate-phone-overlay');
+     return document.body.classList.contains('climboria-landscape')
+      &&(!overlay||getComputedStyle(overlay).display==='none');
+    },undefined,{timeout:30000});
+   }
    const state=await page.evaluate(()=>{
     const world=window.__climboriaJarrellsPeak,audit=world.chestVisualAudit();
     return {
