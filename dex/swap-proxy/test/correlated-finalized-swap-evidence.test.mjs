@@ -142,7 +142,51 @@ test("combines two REAL read-only mocked RPC witness paths and exact compiled si
     wireHash:independent.wireEvidence.exactFullSignedTransactionWireSha256===createHash("sha256").update(parsed.bytes).digest("hex"),
     messageHash:independent.wireEvidence.exactServerIssuedMessageSha256===createHash("sha256").update(parsed.message).digest("hex"),
     trueFlag:independent.balanceEvidence.exactSourceDebitAndMinimumDestinationCreditChecked===true,
-    approvedFlag:independent.wireEvidence.approvedForProductionExecution===false
+    approvedFlag:independent.wireEvidence.approvedForProductionExecution===false,
+    wireKind:independent.wireEvidence.kind==="CLIMBORIA_READ_ONLY_DUAL_RPC_ORDER_WIRE_EVIDENCE",
+    balanceKind:independent.balanceEvidence.kind==="CLIMBORIA_READ_ONLY_DUAL_RPC_FINALIZED_SWAP_RECEIPT_EVIDENCE",
+    network:independent.wireEvidence.network===common.network&&independent.balanceEvidence.network===common.network,
+    taker:independent.wireEvidence.taker===common.taker&&independent.balanceEvidence.taker===common.taker,
+    byteCount:independent.wireEvidence.signedTransactionBytes===parsed.bytes.length,
+    feeCeiling:independent.wireEvidence.providerReportedFeeLamports<=Number(common.maxFeeLamports),
+    source:independent.balanceEvidence.sourceTokenAccount===common.sourceTokenAccount,
+    dest:independent.balanceEvidence.destinationTokenAccount===common.destinationTokenAccount,
+    mint:independent.balanceEvidence.inputMint===common.inputMint&&independent.balanceEvidence.outputMint===common.outputMint,
+    destMinimum:BigInt(independent.balanceEvidence.observedOutputRawAmount)>=BigInt(common.minimumOutputRawAmount),
+    sourceRole:actualRoles[1][2]&&!actualRoles[1][1],
+    destRole:actualRoles[2][2]&&!actualRoles[2][1],
+    staticKeyCount:parsed.staticAccountKeys.length>=3,
+    signerCount:parsed.requiredSignatures===1,
+    lookupCount:parsed.addressTableLookups.length===0,
+    walletSig:independent.wireEvidence.claimedSignature===common.claimedSignature,
+    wireFlags:[
+      ["operatorPinnedGenesisMatchesBothProviders",true],
+      ["twoDistinctRpcHostnamesCompared",true],
+      ["bothProviderReportedFullWireReceiptsMatchSignedOrder",true],
+      ["independentlyAuditedRpcProviderOwnership",false],
+      ["independentlyAuthenticatedLedgerFinality",false],
+      ["completeSwapBalanceAndFeeReconciliationVerified",false],
+      ["independentSourceToDeployedProgramParityVerified",false],
+      ["downstreamJupiterCpiSemanticsVerified",false],
+      ["approvedForProductionExecution",false],
+      ["transactionSubmittedByThisTool",false]
+    ].every(([k,v])=>independent.wireEvidence[k]===v),
+    balanceFlags:[
+      ["operatorPinnedGenesisMatchesBothProviders",true],
+      ["twoConfiguredRpcHostsCompared",true],
+      ["bothReportedSameFinalizedSignatureSlotAndAccountSnapshot",true],
+      ["exactSourceDebitAndMinimumDestinationCreditChecked",true],
+      ["feePayerLamportDeltaMatchesFee",true],
+      ["knownOtherTakerOwnedTokenAccountsUnchanged",true],
+      ["independentlyAuditedRpcProviders",false],
+      ["independentlyAuthenticatedLedgerFinality",false],
+      ["jupiterCpiAccountMappingVerified",false],
+      ["innerDexVaultCustodyAndFeeRecipientsVerified",false],
+      ["sourceToDeployedBytecodeParityVerified",false],
+      ["approvedForJupiterCpi",false],
+      ["approvedForProductionExecution",false],
+      ["transactionSubmittedByThisTool",false]
+    ].every(([k,v])=>independent.balanceEvidence[k]===v)
   };
   assert.deepEqual(Object.keys(failures).filter(k=>!failures[k]),[],"positive correlation fixture mismatch");
   const h=mockRpc();
