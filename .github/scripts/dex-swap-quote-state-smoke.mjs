@@ -120,6 +120,20 @@ async function mockResult(ctx,metadata) {
   assert.deepEqual(errors,[],'Quote UI threw a browser error');
   return result;
 }
+async function unavailableQuote(ctx,kind) {
+  const {page,forbidden,errors}=ctx;
+  await page.route(QUOTE,route=>route.abort('timedout'));
+  await page.locator('#getQuote').click();
+  await page.waitForFunction(() =>
+    (document.querySelector('#quoteStatus')?.textContent||'').includes('Quote unavailable'),
+    null,{timeout:10000});
+  assert.equal(await page.locator('#getQuote').isDisabled(),false,kind+' must recover the quote control after an unavailable provider');
+  const result=await page.locator('#quoteResults').innerText();
+  assert.match(result,/Quote request failed|timed out|Failed to fetch/i,kind+' must show an unavailable state rather than a cached estimate');
+  assert.doesNotMatch(result,/Estimated output|1234567/);
+  assert.equal(forbidden.length,0,'An unavailable quote must not request wallet execution');
+  assert.deepEqual(errors,[],'Unavailable quote handling caused a browser error');
+}
 async function pendingQuote(ctx,action,{assertStatus,assertResult}) {
   const {page,forbidden,errors}=ctx;
   let resolveRoute;
@@ -156,6 +170,13 @@ try {
       try {
         await mockResult(ctx,{feeBps:null,priceImpactPct:null,router:null,mode:null});
         console.log('PASS '+kind+' '+label+': unavailable fee, impact and router remain honest; no wallet requests');
+      } finally {await ctx.page.close();}
+    }
+    for(const kind of ['Swap','DEX']) {
+      const ctx=await quotePage(browser,kind,viewport);
+      try {
+        await unavailableQuote(ctx,kind);
+        console.log('PASS '+kind+' '+label+': unavailable quote recovers without cached estimate or execution');
       } finally {await ctx.page.close();}
     }
     for(const kind of ['Swap','DEX']) {

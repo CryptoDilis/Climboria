@@ -1275,6 +1275,8 @@ const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
 let pendingSwapOrder=null;
 function swapProxyReady(){return swapConfig.proxyEnabled===true&&typeof swapConfig.apiBase==="string"&&/^https:\/\//.test(swapConfig.apiBase);}
 function swapExecutionReady(){return swapProxyReady()&&swapConfig.enabled===true;}
+const QUOTE_REQUEST_TIMEOUT_MS=15000;
+async function fetchQuoteFromProxy(url){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),QUOTE_REQUEST_TIMEOUT_MS);try{return await fetch(url,{headers:{accept:'application/json'},signal:controller.signal});}catch(error){if(controller.signal.aborted)throw new Error('Climboria quote request timed out. No cached estimate was used.');throw error;}finally{clearTimeout(timer);}}
 async function prepareJupiterSwap(){
  const status=$('quoteStatus'),button=$('prepareSwap'),review=$('swapReview');
  if(!connectedWallet||!walletProvider){status.textContent='Connect your Solana wallet first. No transaction has been requested.';return;}
@@ -1354,7 +1356,7 @@ async function requestJupiterQuote(){
     const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});
     if(slippage!=='auto')params.set('slippageBps',slippage);
     if(!swapProxyReady())throw new Error('Climboria Swap API is unavailable; quote preview is paused.');const quoteUrl=swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString();
-    const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});
+    const response=await fetchQuoteFromProxy(quoteUrl);
     const data=await response.json();
     if(!stillCurrent())return; // Ignore an older request after amount/token edits or a newer quote.
     if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');
