@@ -25,6 +25,12 @@ This second, read-only step independently queries **both configured RPC hosts** 
 
 **This is a public-metadata consistency check ONLY.** Two matching claims do not prove independent provider operation, full allocated ProgramData SHA-256, audited source/build parity, Jupiter CPI semantics, DEX vault/fee custody, authenticated Solana ledger finality or a safe order to sign. The next prerequisite is separately reviewed full-payload hashes via `jupiter-raydium-bytecode-digest-report.mjs` with independently sourced hash pins. If no such source-reviewed digest references exist, report **BLOCKED** rather than deriving the expected digest from the same RPC being checked or approving execution.
 
+## Verified current public checkpoints (2026-11-15 PH)
+
+- **PASS, real two-RPC genesis and finalized-slot connectivity:** [main run 43621573449](https://github.com/CryptoDilis/Climboria/actions/runs/43621573449) matched the operator-pinned Mainnet-Beta genesis and observed 1-slot difference.
+- **PASS, real two-RPC Jupiter V6/Raydium V4 upgradeable loader metadata:** [main run 43622879520](https://github.com/CryptoDilis/Climboria/actions/runs/43622879520), commit `b1085a7fd1cc6290efc702497a9722e343ff2fcd`; both providers reported finalized slot 469416561 and **identical** program IDs, canonical ProgramData PDAs, last deploy slots and upgrade authorities. **Both programs were upgradeable**, so any independently approved future trade must recheck the deployed upgrade slot and exact pinned audited binary.
+- **NOT VERIFIED:** independently trustworthy RPC operators, full separately pinned bytecode digest/source parity, signed audited Jupiter CPI/vault/fee flows, real controlled wallet-signed swap/finalized settlement and privileged Durable Object final-state release. This evidence does not authorize on-chain execution or change any source/config gate.
+
 ## Phase A — prerequisites, private operator environment
 
 1. Provision **two independently operated Solana HTTPS RPC endpoints** with different infrastructure/operators. Do not put credentials, endpoint tokens or wallet secrets into issues, PRs, logs, screenshots, or committed files. Use approved encrypted secret management. Confirm TLS, RPC rate limits, access control and key rotation.
