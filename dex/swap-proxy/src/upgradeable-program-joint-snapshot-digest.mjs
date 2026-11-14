@@ -41,7 +41,7 @@ async function boundedJson(response) {
   } catch { fail(); }
 }
 
-function localAccountReplay(endpoint, accountAddress, account, slot) {
+function localAccountReplay(endpoint, role, accountAddress, account, slot) {
   // Only serve synthetic getAccountInfo responses derived from the captured
   // two-account RPC payload. No additional network calls may occur.
   return async (url, options) => {
@@ -51,8 +51,7 @@ function localAccountReplay(endpoint, accountAddress, account, slot) {
     if (url !== endpoint || request?.jsonrpc !== "2.0" ||
         request.method !== "getAccountInfo" ||
         typeof request.id !== "string" ||
-        request.id !== "climboria-single-programdata-" +
-          (accountAddress === "never" ? "invalid" : request.id.slice("climboria-single-programdata-".length)) ||
+        request.id !== "climboria-single-programdata-" + role ||
         requestedAddress !== accountAddress ||
         params?.encoding !== "base64" || params?.commitment !== "finalized" ||
         Object.hasOwn(params, "dataSlice") ||
@@ -120,7 +119,7 @@ export async function hashPinnedProgramsJointFinalizedSnapshot({
     // is local; the real RPC was called exactly once for the pair.
     checked[ROLES[i]] = await hashPinnedProgramSingleSnapshot({
       role: ROLES[i], provenanceProof, rpcUrl, expectedSha256: pins[i],
-      fetchImpl: localAccountReplay(endpoint,evidence[i].programDataAddress,accounts[i],slot)
+      fetchImpl: localAccountReplay(endpoint,ROLES[i],evidence[i].programDataAddress,accounts[i],slot)
     });
     if (checked[ROLES[i]].firstFinalizedSlot !== slot ||
         checked[ROLES[i]].lastFinalizedSlot !== slot) fail();
