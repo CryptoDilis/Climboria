@@ -47,6 +47,19 @@ jobs:
           sed -i "s/namespace_id = \"20261108\"/namespace_id = \"$RATE_LIMIT_NAMESPACE_ID\"/" wrangler.toml
           grep -Fqx "namespace_id = \"$RATE_LIMIT_NAMESPACE_ID\"" wrangler.toml
 
+      - name: Stamp exact deploy commit in public Worker health metadata
+        working-directory: dex/swap-proxy
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$DEPLOY_SHA" | grep -Eq '^[a-f0-9]{40}$'; then
+            echo "::error::Expected a canonical 40-character Git commit SHA for Worker deployment."
+            exit 1
+          fi
+          sed -i "s/DEPLOYED_GIT_SHA = \"unpublished\"/DEPLOYED_GIT_SHA = \"$DEPLOY_SHA\"/" wrangler.toml
+          grep -Fqx "DEPLOYED_GIT_SHA = \"$DEPLOY_SHA\"" wrangler.toml
+
       - name: Validate Worker configuration
         working-directory: dex/swap-proxy
         run: |
@@ -56,6 +69,7 @@ jobs:
           grep -Fqx 'name = "climboria-swap-proxy"' wrangler.toml
           grep -Fqx 'ALLOWED_ORIGINS = "https://climboria.fun,https://www.climboria.fun"' wrangler.toml
           grep -Fqx 'EXECUTION_ENABLED = "false"' wrangler.toml
+          grep -Eq '^DEPLOYED_GIT_SHA = "[a-f0-9]{40}"$' wrangler.toml
           grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' src/index.mjs
           grep -Fqx 'const EXECUTION_SECURITY_REVIEW_COMPLETE = false;' src/index.mjs
           grep -Eq '^[[:space:]]*enabled:[[:space:]]*false' ../../swap-config.js
@@ -135,13 +149,17 @@ jobs:
         run: npx wrangler@4.36.0 deploy
 
       - name: Verify deployed Worker health and CORS
+        env:
+          EXPECTED_DEPLOY_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           response="$(curl --retry 6 --retry-delay 10 --retry-connrefused --fail --silent --show-error https://api.climboria.fun/health)"
-          printf '%s' "$response" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const x=JSON.parse(s);if(x.ok!==true||x.configured?.jupiterKey!==true||x.configured?.rateLimiter!==true||x.configured?.orderStore!==true||x.execution!=='disabled'||x.configured?.executionEnabled!==false){console.error('Worker health is not quote-only production-ready:',x);process.exit(1)}console.log('Worker health, required bindings, and disabled execution kill switch verified.')})"
+          printf '%s' "$response" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const x=JSON.parse(s);if(x.ok!==true||x.configured?.jupiterKey!==true||x.configured?.rateLimiter!==true||x.configured?.orderStore!==true||x.execution!=='disabled'||x.configured?.executionEnabled!==false||x.deployedGitSha!==process.env.EXPECTED_DEPLOY_SHA){console.error('Worker health is not quote-only production-ready:',x);process.exit(1)}console.log('Worker health, required bindings, and disabled execution kill switch verified.')})"
           curl --fail --silent --show-error -X OPTIONS https://api.climboria.fun/api/swap/order -H 'Origin: https://climboria.fun' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' -o /dev/null -D /tmp/climboria-cors-headers
           grep -qi '^access-control-allow-origin: https://climboria.fun' /tmp/climboria-cors-headers
           echo "Worker CORS preflight verified for https://climboria.fun."
 
       - name: Verify production API quote, token search, and closed transaction gates
+        env:
+          CLIMBORIA_EXPECTED_DEPLOY_SHA: ${{ github.sha }}
         run: node .github/scripts/api-production-readiness.mjs
