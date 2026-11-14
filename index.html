@@ -477,101 +477,6 @@ footer:first-of-type>div{
  .navl>.hub-link .climboria-icon{width:14px!important;height:14px!important;flex-basis:14px!important}
 }
 @media(prefers-reduced-motion:reduce){.mobile-menu,.hamburger span,.navl>a,.navl>button{transition:none!important}}
-
-/* Canonical homepage layout: replaces prior experimental overrides rather than stacking them. */
-@media(min-width:901px){
- nav{position:relative!important;inset:auto!important;display:flex!important;align-items:center!important;gap:18px!important;box-sizing:border-box!important;width:calc(100% - 48px)!important;max-width:1400px!important;min-height:58px!important;margin:12px auto 0!important;padding:7px 16px!important;border:1px solid rgba(221,181,121,.35)!important;border-radius:999px!important;background:linear-gradient(100deg,rgba(15,29,48,.96),rgba(25,41,64,.96))!important;box-shadow:0 10px 30px rgba(0,0,0,.2)!important;z-index:20!important}
- nav>.logo{flex:0 0 auto!important;font-size:clamp(16px,1.45vw,20px)!important;letter-spacing:1.5px!important;white-space:nowrap!important}
- .hero{position:relative!important;height:auto!important;min-height:800px!important;margin-top:0!important;padding:0 0 50px!important;isolation:isolate}
- .hero picture,.hero picture img{pointer-events:none}
- .hero-overlay{pointer-events:none!important;z-index:1!important}
- .launch-countdown{position:relative!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;box-sizing:border-box!important;width:min(540px,44vw)!important;margin:clamp(305px,29vw,370px) 0 0 clamp(24px,5vw,85px)!important;text-align:left!important;z-index:3!important}
- .launch-countdown{padding:15px 19px 14px!important}
- .launch-countdown .launch-timer{margin:10px 0 8px!important;max-width:390px!important}
- .launch-countdown .launch-time-unit{padding:7px 4px 6px!important}
- .launch-countdown .launch-follow{margin-top:8px!important;padding:7px 13px!important}
- .launch-countdown h2{margin-top:5px!important;margin-bottom:5px!important}
- .launch-countdown .launch-timer{margin-left:0!important;margin-right:0!important}
- .launch-countdown .launch-foot{justify-content:flex-start!important;text-align:left!important}
- .hero-content{position:relative!important;inset:auto!important;box-sizing:border-box!important;width:min(540px,44vw)!important;margin:14px 0 0 clamp(24px,5vw,85px)!important;padding:0!important;text-align:left!important;z-index:3!important}
- .hero-buttons{justify-content:flex-start!important;gap:12px!important}
- .hero-buttons>button{flex:1 1 0;min-width:0;white-space:nowrap}
- #game .menu-destinations{max-width:940px;margin:26px auto 0;padding:20px 22px}
- #game .menu-destination-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
- #game .menu-destination{min-height:120px;padding:15px}
- #game .grid3{margin-top:24px}
-}
-@media(min-width:1450px){
- .navl{display:flex!important;flex:1 1 auto!important;align-items:center!important;justify-content:flex-end!important;gap:clamp(5px,.48vw,10px)!important;min-width:0!important}
- .navl>a:not([target]),.navl>.hub-link,.navl>.btn-gold,.navl>.nav-x-link{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;width:auto!important;min-width:0!important;height:34px!important;min-height:34px!important;margin:0!important;padding:0 clamp(8px,.75vw,13px)!important;border:1px solid rgba(223,183,125,.65)!important;border-radius:999px!important;background:rgba(9,19,35,.4)!important;box-shadow:none!important;color:#f5dba8!important;font:700 clamp(9px,.67vw,11px)/1 Inter,system-ui,sans-serif!important;letter-spacing:.1px!important;white-space:nowrap!important;text-transform:uppercase!important}
- .navl>.hub-link .climboria-icon{display:none!important}
- .navl>.btn-gold{background:rgba(245,197,91,.1)!important}
- .navl>.nav-x-link{width:34px!important;min-width:34px!important;padding:0!important;font-size:15px!important}
- .navl>a:not([target]):hover,.navl>.hub-link:hover,.navl>.btn-gold:hover{border-color:#ffe2a8!important;background:rgba(245,197,91,.16)!important}
- .hamburger{display:none!important}
-}
-@media(min-width:901px) and (max-width:1449px){
- .navl{display:none!important}
- .hamburger{display:flex!important}
- #xLogo{display:flex!important}
-}
-@media(max-width:900px){
- nav{position:relative!important;inset:auto!important;width:calc(100% - 20px)!important;margin:8px auto 0!important;border-radius:24px!important;z-index:20!important}
- .hero{margin-top:0!important}
- .hero-overlay{pointer-events:none!important}
-}
-.home-final-cta{max-width:1300px;margin:0 auto;padding:72px 24px 65px;text-align:center;border-top:1px solid rgba(245,197,91,.13)}
-.home-final-kicker{font-size:11px;font-weight:800;letter-spacing:3px;color:#dcb36c}
-.home-final-cta h2{margin:16px 0;font:900 clamp(42px,6vw,82px)/1.1 Cinzel,serif;color:#fff4e5}
-.home-final-cta h2 span{color:#e6b552}
-.home-final-cta p{max-width:510px;margin:0 auto;color:#c6c4c9;line-height:1.7}
-.home-final-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:25px}
-.home-final-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:12px 22px;border:1px solid rgba(242,212,164,.48);border-radius:999px;color:#f5e8d0;text-decoration:none;font-size:11px;font-weight:800;letter-spacing:1px}
-.home-final-actions a:first-child{background:linear-gradient(120deg,#ffe9a5,#e9af48);color:#221b12}
-.home-footer{max-width:1100px;margin:0 auto;padding:35px 28px 28px!important;display:grid!important;grid-template-columns:minmax(0,2fr) 1fr 1fr;gap:32px;border-top:1px solid rgba(245,197,91,.18);color:#d7d1c6}
-.home-footer-brand strong{display:block;font:800 23px Cinzel,serif;letter-spacing:2px;color:#e8b968}
-.home-footer-brand p{max-width:470px;margin-top:10px;font-size:13px;line-height:1.65;color:#b7b6c1}
-.home-footer-col h3{margin:0 0 14px;font-size:10px;letter-spacing:2px;color:#d9d3c8}
-.home-footer-col a{display:block;width:fit-content;margin:0 0 10px;font-size:13px;color:#c9c7d0;text-decoration:none}
-.home-footer-col a:hover{color:#f5d99d}
-.home-footer-bottom{max-width:1100px;margin:0 auto;padding:18px 28px 26px!important;display:flex!important;justify-content:space-between!important;gap:20px;border-top:1px solid rgba(245,197,91,.13);color:#9994a0;font-size:11px}
-@media(max-width:700px){.home-final-cta{padding:65px 18px}.home-footer{grid-template-columns:1fr 1fr;padding:30px 20px!important}.home-footer-brand{grid-column:1/-1}.home-footer-bottom{padding:18px 20px!important;flex-wrap:wrap}}
-
-
-/* Prevent horizontal overflow from homepage footer/CTA at 390px mobile widths. */
-@media(max-width:900px){
- .home-final-cta,.home-footer,.home-footer-bottom{box-sizing:border-box!important;width:100%!important;min-width:0!important}
- .home-final-cta h2{font-size:clamp(31px,8vw,58px)!important;overflow-wrap:anywhere}
- .home-final-actions{min-width:0}
- .home-final-actions a{max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;text-align:center}
- .home-footer{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:22px!important}
- .home-footer-brand{min-width:0;grid-column:1/-1}
- .home-footer-col{min-width:0}
- .home-footer-col a{max-width:100%;overflow-wrap:anywhere}
- .home-footer-bottom{min-width:0;flex-wrap:wrap}
-}
-/* Single desktop hero layout. No negative margins or layered action panels. */
-@media(min-width:901px){
- nav{position:relative!important;inset:auto!important;display:flex!important;align-items:center!important;box-sizing:border-box!important;max-width:1400px!important;width:calc(100% - 40px)!important;min-height:58px!important;margin:12px auto!important;padding:8px 16px!important;z-index:20!important}
- .hero{position:relative!important;height:clamp(350px,43vh,500px)!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
- .hero picture,.hero picture img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 33%!important;pointer-events:none!important}
- .hero-overlay{pointer-events:none!important}
- .hero-action-stack{position:relative!important;inset:auto!important;z-index:5!important;display:flex!important;align-items:flex-start!important;flex-direction:column!important;gap:10px!important;box-sizing:border-box!important;width:min(470px,calc(100% - 40px))!important;margin:0 0 0 clamp(20px,4vw,64px)!important;padding:12px 0 24px!important}
- .hero-action-stack .launch-countdown{position:static!important;inset:auto!important;transform:none!important;box-sizing:border-box!important;margin:0!important;width:100%!important;max-width:none!important;padding:12px 16px!important}
- .hero-action-stack .launch-countdown h2{font-size:clamp(19px,1.7vw,25px)!important;line-height:1.1!important;margin:4px 0!important}
- .hero-action-stack .launch-timer{margin:8px 0!important;gap:6px!important}
- .hero-action-stack .launch-time-unit{padding:6px 4px!important}
- .hero-action-stack .launch-time-unit b{font-size:22px!important}
- .hero-action-stack .launch-foot{font-size:9px!important;line-height:1.3!important}
- .hero-action-stack .launch-follow{margin-top:6px!important;padding:6px 10px!important}
- .hero-action-stack .hero-content{position:static!important;inset:auto!important;transform:none!important;margin:0!important;padding:0!important;width:100%!important;max-width:none!important}
- .hero-action-stack .hero-buttons{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;margin:0!important}
- .hero-action-stack .hero-buttons>button{width:100%!important;min-width:0!important;padding:11px 5px!important;font-size:11px!important}
-}
-@media(max-width:900px){
- .hero-action-stack{position:relative;z-index:5;display:flex;flex-direction:column;gap:12px;width:min(560px,calc(100% - 32px));margin:0 auto;padding:18px 0 28px}
- .hero-action-stack .launch-countdown,.hero-action-stack .hero-content{position:static!important;inset:auto!important;transform:none!important;margin:0!important;width:100%!important;max-width:none!important}
-}
 </style>
 </head>
 <body>
@@ -628,9 +533,6 @@ footer:first-of-type>div{
     <img src="./857289992_1755402102906767_7411463028840030192_n-1.webp" alt="CLIMBORIA Official Hero" loading="eager" fetchpriority="high">
   </picture>
   <div class="hero-overlay"></div>
-</div>
-<div class="hero-action-stack">
-
   <section class="launch-countdown" aria-label="Climboria token launch countdown">
     <div class="launch-kicker">Planned launch target · subject to readiness</div>
     <h2>$CLIMB LAUNCH TARGET</h2>
@@ -652,6 +554,7 @@ footer:first-of-type>div{
     </div>
   </div>
 </div>
+
 
 <section class="sec" id="climboria-signature" aria-labelledby="signature-main-title" style="padding-top:64px;padding-bottom:64px">
  <div class="label">A Climboria flagship product</div>
@@ -803,18 +706,8 @@ footer:first-of-type>div{
   </div>
 </div>
 
-<section class="home-final-cta" aria-labelledby="home-final-cta-title">
-  <div class="home-final-kicker">THE MOUNTAIN IS WAITING</div>
-  <h2 id="home-final-cta-title">BEGIN THE <span>ASCENT.</span></h2>
-  <p>Watch the countdown. Read the rules. Follow only official channels — and decide for yourself.</p>
-  <div class="home-final-actions"><a href="/game/">EXPLORE JARRELL'S PEAK</a><a href="/dex/">PREVIEW THE DEX</a></div>
-</section>
-<footer class="home-footer">
- <div class="home-footer-brand"><strong>CLIMBORIA</strong><p>Planned target only — verify launch links and token addresses on official channels. Nothing here is financial advice.</p></div>
- <div class="home-footer-col"><h3>EXPLORE</h3><a href="/game/">Game</a><a href="/dex/">DEX</a><a href="/swap/">Swap</a><a href="/launchpad/">Launchpad</a></div>
- <div class="home-footer-col"><h3>SOCIAL & SUPPORT</h3><a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer">@CLIMBORIAHQ</a><a href="/support/">Support</a><a href="/whitepaper/">Whitepaper</a><a href="./terms/">Terms of Use</a></div>
-</footer><div class="home-footer-bottom"><span>© 2026 CLIMBORIA. All rights reserved.</span><span>VENGEANCE IS ALWAYS AN OPTION.</span></div>
-
+<footer style="display:flex;justify-content:space-between"><div>© 2026 Climboria. All rights reserved.</div></footer>
+<footer class="site-status">GAME DEVELOPMENT • SOLANA ECOSYSTEM PLANNED • <a href="./terms/" style="color:#fbbf24;text-decoration:underline">TERMS OF USE</a> • <a href="/support/" style="color:#fbbf24;text-decoration:underline">CUSTOMER SUPPORT</a></footer>
 
 <script>
 (() => {
