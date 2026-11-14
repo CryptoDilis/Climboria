@@ -69,7 +69,7 @@ async function runPage(browser, path, {badHash = false} = {}) {
     assert.equal(await panel.isVisible(),true);
     if (badHash) {
       await page.waitForFunction(() =>
-        (document.querySelector("[data-climboria-managed-swap-status]")?.textContent||"").includes("Provider integration unavailable"),{timeout:10000});
+        (document.querySelector("[data-climboria-managed-swap-status]")?.textContent||"").includes("Provider integration unavailable"),null,{timeout:10000});
       assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length || 0),0,
         "invalid SRI must prevent widget initialization");
       assert.equal(await page.locator("[data-climboria-test-widget]").count(),0);
