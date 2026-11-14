@@ -2,6 +2,21 @@
 
 **Status: NO-GO for wallet-signable orders and on-chain execution.** This is an operator checklist, not a release authorization. Quote-only production Worker deploy for commit `b724a602047600000ef239a6514914deb2e11a87` passed [Actions run 43573594485](https://github.com/CryptoDilis/Climboria/actions/runs/43573594485). Its logs explicitly say `SOLANA_RPC_URL` was unset. No actual signed swap or finalized settlement was verified.
 
+## Private RPC setup — actionable operator handoff (2026-11-15)
+
+**I can build and test the integration, but I cannot create API keys or paid provider accounts for the owner.** The two RPC URLs must come from two genuinely independent providers under owner-controlled accounts (candidate providers include Helius and QuickNode; current free-tier plans, limits and availability are **not** verified here). Neither ordinary public Solana RPC nor two URL paths under one provider count as independently operated private endpoints.
+
+1. Owner creates accounts with two separate providers; creates **Solana Mainnet-Beta HTTPS RPC** endpoints with least-privilege API credentials and restricted usage. Save credentials only in the provider dashboards and GitHub encrypted secrets; **never put real URL/query tokens into Git commits, PR comments, chat, or screenshots**. Do not send wallet seed phrases.
+2. In **GitHub repository Settings > Secrets and variables > Actions**, add encrypted repository secrets:
+   - `CLIMBORIA_SOLANA_RPC_URL` — private primary RPC URL.
+   - `CLIMBORIA_SOLANA_RPC_URL_SECONDARY` — separate provider/hostname private secondary URL.
+   Under repository **Variables**, add `CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH` — public Mainnet-Beta genesis hash **independently corroborated outside either chosen RPC**. Do not guess the genesis value from provider output.
+3. Once `.github/workflows/verify-swap-private-rpc.yml` is merged, choose **Actions > Verify Swap DEX private Solana RPC (read-only) > Run workflow** on `main`. The manual job runs existing genesis checks and the new two-RPC read-only `getGenesisHash` + finalized `getSlot` preflight. It fails closed for missing/malformed endpoints, same hostname, mismatched pinned hash, failed RPC or >2048 finalized-slot discrepancy. The job prints **only public slot numbers and generic fixed status**, never the URLs or provider exceptions.
+4. The preflight must report **PASS** for both hostnames before any later audit step is started. It **does not establish independent infrastructure ownership, authenticated Solana finality, contract correctness, or permission to enable trading**. Collect independent provider ownership and binary/source audit evidence separately.
+5. **Existing production Worker deployment expects a different legacy Actions secret** named `SOLANA_RPC_URL`. The new private RPC check intentionally does **not** change, deploy or enable the Worker. Once approved for a controlled stage, the operator can separately configure the production secret from the reviewed primary endpoint, following normal secret management; do not copy credentials into code. Do not deploy/enable native swaps based on a green preflight alone.
+
+**CLI alternative** (local trusted operator workstation, no cloud workflow required): keep the three `CLIMBORIA_...` variables private in the local environment and run `node dex/swap-proxy/tools/operator-private-rpc-setup-check.mjs`. No signing/transaction is performed.
+
 ## Phase A — prerequisites, private operator environment
 
 1. Provision **two independently operated Solana HTTPS RPC endpoints** with different infrastructure/operators. Do not put credentials, endpoint tokens or wallet secrets into issues, PRs, logs, screenshots, or committed files. Use approved encrypted secret management. Confirm TLS, RPC rate limits, access control and key rotation.
