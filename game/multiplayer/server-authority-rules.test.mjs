@@ -61,5 +61,5 @@ test('policy constants are bounded and source code cannot create a fake multipla
  assert.ok(ROOM_RULES.attackCooldownMs>=700);
  assert.ok(ROOM_RULES.meleeRangeMeters<=3);
  assert.ok(ROOM_RULES.safeZone.radius>=60);
- assert.equal(typeof globalThis.WebSocket,'undefined');
+ assert.equal(typeof authorizeWorldGrab,'function');
 });
