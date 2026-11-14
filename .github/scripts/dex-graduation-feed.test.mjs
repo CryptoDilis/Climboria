@@ -47,6 +47,15 @@ test("duplicates and out-of-window graduation timestamps are filtered", async ()
   assert.deepEqual(state.graduations.map(x=>x.mint).sort(),["A","B"]);
 });
 
+test("malformed provider JSON is not counted as verified feed coverage", async () => {
+  const partial={graduations:[],graduationStatus:"unavailable"};
+  await load(partial,{unexpected:"not a graduation collection"},[recent("VerifiedMint")])();
+  assert.equal(partial.graduationStatus,"partial");
+  assert.deepEqual(partial.graduations.map(x=>x.mint),["VerifiedMint"]);
+  const unavailable={graduations:[],graduationStatus:"unavailable"};
+  await assert.rejects(load(unavailable,{unexpected:"format"},null)(),/unavailable/);
+});
+
 test("real DEX render path distinguishes unavailable and partial graduated feed states", () => {
   assert.match(html, /graduationStatus==='partial'/);
   assert.match(html, /Graduation feed temporarily unavailable\. No verified graduations to show\./);
