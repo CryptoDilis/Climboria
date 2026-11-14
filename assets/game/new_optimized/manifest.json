@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "enabled": false,
+  "reason": "Asset loading is disabled until optimized GLBs are imported into this branch and verified in a browser. Never enable on missing files.",
+  "guardModels": [
+    "Meshy_AI_Medieval_Guards_1114220324_texture.glb",
+    "Meshy_AI_Medieval_Warrior_1114220223_texture.glb"
+  ],
+  "decorations": [
+    {
+      "file": "Meshy_AI_Majestic_Red_Lauan_Tr_1114194124_texture.glb",
+      "anchor": "park",
+      "dx": 87,
+      "dz": 67,
+      "height": 11,
+      "loadRadius": 155
+    },
+    {
+      "file": "Meshy_AI_Whispering_Branches_1114193441_texture.glb",
+      "anchor": "park",
+      "dx": -115,
+      "dz": 52,
+      "height": 10,
+      "loadRadius": 160
+    },
+    {
+      "file": "Meshy_AI_Mushroom_Tree_1114193612_texture.glb",
+      "anchor": "park",
+      "dx": -90,
+      "dz": 154,
+      "height": 8,
+      "loadRadius": 150
+    },
+    {
+      "file": "Meshy_AI_Nordic_Teepee_viking_1114220617_texture.glb",
+      "anchor": "camp",
+      "dx": 36,
+      "dz": -43,
+      "height": 4,
+      "loadRadius": 145
+    },
+    {
+      "file": "Meshy_AI_Fireside_Teepee_Camp_1114220647_texture.glb",
+      "anchor": "camp",
+      "dx": -43,
+      "dz": -45,
+      "height": 4,
+      "loadRadius": 145
+    },
+    {
+      "file": "Meshy_AI_Icebound_Summit_1114193414_texture.glb",
+      "anchor": "summit",
+      "dx": 60,
+      "dz": 39,
+      "height": 8,
+      "loadRadius": 150
+    },
+    {
+      "file": "Meshy_AI_The_Lanterned_Heart_T_1114193326_texture.glb",
+      "anchor": "park",
+      "dx": -165,
+      "dz": 82,
+      "height": 12,
+      "loadRadius": 180
+    },
+    {
+      "file": "Meshy_AI_Mystic_Crystal_Hideou_1114220457_texture.glb",
+      "anchor": "cave",
+      "dx": 87,
+      "dz": 79,
+      "height": 8,
+      "loadRadius": 130
+    },
+    {
+      "file": "Meshy_AI_Rustic_Nautical_Dock_1114221245_texture.glb",
+      "anchor": "coast",
+      "dx": -40,
+      "dz": -36,
+      "height": 5,
+      "water": true,
+      "loadRadius": 170
+    },
+    {
+      "file": "Meshy_AI_wooden_pier_1114221253_texture.glb",
+      "anchor": "coast",
+      "dx": -77,
+      "dz": -31,
+      "height": 4,
+      "water": true,
+      "loadRadius": 190
+    },
+    {
+      "file": "Meshy_AI_Galleon_Odyssey_1114221407_texture.glb",
+      "anchor": "coast",
+      "dx": -147,
+      "dz": -122,
+      "height": 19,
+      "water": true,
+      "loadRadius": 260
+    }
+  ]
+}
