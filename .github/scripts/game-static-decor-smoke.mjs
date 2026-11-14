@@ -9,8 +9,12 @@ const cartInstalled=existsSync('assets/characters/Climboria_Arcane_Cart_optimize
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--enable-webgl','--use-gl=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
 try{
  const page=await browser.newPage({viewport:{width:1280,height:720}});
- const errors=[];
+ const errors=[],cartRequests=[];
  page.on('pageerror',err=>errors.push(err.message));
+ page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text())});
+ page.on('request',request=>{
+  if(request.url().includes('Climboria_Arcane_Cart_optimized.glb'))cartRequests.push(request.url());
+ });
  await page.addInitScript(()=>{
   localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Static Prop Test',model:'Jarrell',createdAt:'2026-11-15T00:00:00Z'}));
  });
@@ -36,8 +40,11 @@ try{
  if(cartInstalled){
   if(!result.props.cart.loaded||result.props.cart.placeholderRetained||!result.props.cart.source.endsWith('Climboria_Arcane_Cart_optimized.glb'))
    throw Error('Arcane Cart did not replace Black Market placeholder: '+JSON.stringify(result.props.cart));
- }else if(!result.props.cart.placeholderRetained)
-  throw Error('Missing Arcane Cart must retain existing merchant until asset upload');
+ }else{
+  if(!result.props.cart.placeholderRetained)
+   throw Error('Missing Arcane Cart must retain existing merchant until asset upload');
+  if(cartRequests.length)throw Error('Unshipped cart GLB was requested, causing resource 404: '+cartRequests.join(','));
+ }
  if(errors.length)throw Error('Browser JS errors: '+errors.join(' | '));
  // Look at the real static visitor from the player-side entry route rather
  // than archiving the initial spawn camera, which faces away from the NPC.
