@@ -477,6 +477,8 @@ footer:first-of-type>div{
  .navl>.hub-link .climboria-icon{width:14px!important;height:14px!important;flex-basis:14px!important}
 }
 @media(prefers-reduced-motion:reduce){.mobile-menu,.hamburger span,.navl>a,.navl>button{transition:none!important}}
+/* Homepage-only navigation removal requested for launch. Keep DOM hooks intact. */
+nav, #mobileMenu {display:none!important;visibility:hidden!important;pointer-events:none!important}
 </style>
 </head>
 <body>
