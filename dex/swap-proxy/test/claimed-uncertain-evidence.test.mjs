@@ -29,7 +29,7 @@ test("every ambiguous post-claim Jupiter outcome exposes ONLY verified signed fi
       assert.equal(result.signature,claimedSignature);
       assert.equal(result.replayAllowed,false);
       assert.equal(result.settlementRecorded,settlementRecorded);
-      assert.ok(result.message.includes("Verify")||result.message.includes("Check"));
+      assert.match(result.message,/verify|check/i);
       assert.equal(result.completed,undefined);
       assert.equal(result.failed,undefined);
       assert.equal(Object.isFrozen(result),true);
