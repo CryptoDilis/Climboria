@@ -207,37 +207,39 @@ export class SwapOrderStore {
   }
 
   async alarm() {
-    // A 24h cleanup is appropriate for an unclaimed, short-lived order, but
-    // deleting an unresolved claimed order at 24h destroys the only durable
-    // claim/signature/replay evidence while Solana/provider finality may
-    // still need manual investigation. Retain claimed orders for 30 days.
-    const record = await this.ctx.storage.get("order");
-    if (!record || record.state === "ready") {
-      await this.ctx.storage.deleteAll();
-      return;
-    }
+    // Alarm and /claim can interleave at ANY await. A prior asynchronous
+    // get("order") followed by deleteAll() could erase an order claimed in
+    // between, destroying the authenticated signature and replay lock.
+    // Read + optionally delete the order in ONE synchronous DO transaction.
     const now = Date.now();
-    let retainUntil = record.retainUntil;
-    if (!Number.isSafeInteger(retainUntil) || retainUntil <= 0) {
-      // Backward-compatible migration for previously claimed records whose
-      // schema predates retainUntil; fail toward retention, not early deletion.
-      const base = Number.isSafeInteger(record.claimedAt) &&
-        record.claimedAt > 0 ? record.claimedAt : now;
-      retainUntil = Math.max(now + ORDER_CLEANUP_MS, base + CLAIMED_ORDER_RETENTION_MS);
-      this.ctx.storage.transactionSync(() => {
-        const current = this.ctx.storage.kv.get("order");
-        if (current && current.state !== "ready" &&
-            (!Number.isSafeInteger(current.retainUntil) || current.retainUntil <= 0)) {
-          this.ctx.storage.kv.put("order", { ...current, retainUntil });
-        }
-      });
+    const decision = this.ctx.storage.transactionSync(() => {
+      const record = this.ctx.storage.kv.get("order");
+      if (!record) return { action: "empty" };
+      if (record.state === "ready") {
+        this.ctx.storage.kv.delete("order");
+        return { action: "deleted" };
+      }
+
+      let retainUntil = record.retainUntil;
+      if (!Number.isSafeInteger(retainUntil) || retainUntil <= 0) {
+        // Legacy claim migration remains conservative and atomic too.
+        // Prefer preserving evidence on uncertain/malformed timestamps.
+        const base = Number.isSafeInteger(record.claimedAt) &&
+          record.claimedAt > 0 ? record.claimedAt : now;
+        retainUntil = Math.max(now + ORDER_CLEANUP_MS, base + CLAIMED_ORDER_RETENTION_MS);
+        this.ctx.storage.kv.put("order", { ...record, retainUntil });
+      }
+      if (now >= retainUntil) {
+        this.ctx.storage.kv.delete("order");
+        return { action: "deleted" };
+      }
+      return { action: "reschedule", retainUntil };
+    });
+
+    if (decision.action === "reschedule") {
+      // If this fails, Cloudflare retries the alarm; the claimed order is
+      // already durable and is NEVER deleted to "fix" the schedule error.
+      await this.ctx.storage.setAlarm(decision.retainUntil);
     }
-    if (now >= retainUntil) {
-      await this.ctx.storage.deleteAll();
-      return;
-    }
-    // A failing schedule must throw so Cloudflare retries this alarm; never
-    // delete unresolved evidence merely because the reschedule failed.
-    await this.ctx.storage.setAlarm(retainUntil);
   }
 }
