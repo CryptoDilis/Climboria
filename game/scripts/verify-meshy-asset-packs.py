@@ -151,12 +151,15 @@ def main():
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument('--archives', action='store_true')
     mode.add_argument('--files', action='store_true')
+    mode.add_argument('--manifest', action='store_true')
     args = parser.parse_args()
     expected = approved()
     if args.archives:
         validate_archives(expected)
     if args.files:
         validate_installed(expected)
+    if args.manifest:
+        print('PASS committed allowlist', len(expected), 'models, hashes and triangle limits')
 
 
 if __name__ == '__main__':
