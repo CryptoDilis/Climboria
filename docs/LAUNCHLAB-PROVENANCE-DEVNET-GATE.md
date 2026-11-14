@@ -94,3 +94,48 @@ The earlier "Work-unit verification" section below describes the original docume
 The recurring difference is that pinned published IDL has a **fixed SPL Token program address** for initialization, buying/selling, fee claims, and vesting claims, whereas legacy on-chain IDL omits that fixed address (and advertises support for either SPL Token or Token-2022 in related docs). Migration also differs by network: Mainnet account name `base_token_program` versus `token_program`; Devnet CPMM fixed program `DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb` versus the pinned published Mainnet `CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C`. Treat these as **unreconciled semantic differences**, not a reason to ignore the check.
 
 Gate A **BLOCKED**. Next read-only verification must explicitly bind network, quote mint owner, allowed Token/Token-2022 program IDs, CPMM owner/upgrade authority, and expected migration account metas to reviewed official source and deployed bytecode. No Devnet creator signing or mainnet token launches are authorized. See the complete per-instruction evidence and next task in `docs/DEX_SWAP_LAUNCHPAD_DEVELOPMENT_RECORD.md`.
+
+
+## November 14, 2026 — One-context LaunchLab GlobalConfig/PlatformConfig read-only evidence
+
+The original read-only LaunchLab `GlobalConfig` vs `PlatformConfig` economics
+probe called `getAccountInfo` **twice independently**. Both requests asked
+for finalized commitment, but the returned accounts could represent
+different finalized slots. The probe also did not verify JSON-RPC
+request IDs or record the provider-reported context. Its results could
+therefore imply cross-account economic consistency without a common
+reported snapshot.
+
+The hardened `.github/scripts/launchlab-live-config.mjs` now requests
+**both pinned config account addresses in one `getMultipleAccounts`**
+with `commitment:"finalized"` and `encoding:"base64"`. It requires
+the exact paired address order, one correct JSON-RPC version/request ID,
+one finite positive safe-integer context slot, exactly two present
+accounts, no RPC error, and then applies the existing strict owner,
+Anchor discriminator, allocated byte length, numeric configuration,
+quote-mint, curve economics and LP-scale checks to each in-order
+account. It reports
+`providerReportedFinalizedContextSlot`,
+`bothConfigsFromOneFinalizedRpcResponse:true`,
+`independentlyAuthenticatedLedgerSnapshot:false`, and
+`sdkIdlSemanticCompatibilityVerified:false`.
+
+Both the external Raydium API response and joint Solana RPC JSON body
+are streamed with hard byte caps (512 KiB and 64 KiB respectively),
+20-second request timeout and no redirects. Oversized, malformed,
+partial or unsuccessful HTTP responses fail closed; there is no
+silent fallback to separate `getAccountInfo` reads. Adversarial
+fixtures cover tampered account order, IDs, slot types, missing
+accounts, corrupt streams, excessive bodies, and transport errors
+without leaking provider URLs.
+
+**Evidence boundary:** a single RPC provider's reported finalized
+slot is **not** independently authenticated canonical chain state.
+Passing this read-only configuration subset is not approval for
+`InitializeV2`, `Buy`, `Sell`, migration, wallet signing, mint
+creation, or Mainnet rollout. The independent official SDK vs
+deployed on-chain **critical instruction account constraints and
+type layout mismatches remain unresolved (LaunchLab Gate A RED)**.
+The existing strict LaunchLab IDL compatibility workflow is not
+disabled or weakened by this evidence improvement. Genuine Devnet
+transaction lifecycle/fee/LP custody approval remains blocked.

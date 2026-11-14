@@ -105,22 +105,86 @@ export function assertApiMatchesChain(config, global, configAddress) {
     throw new Error("Pinned GlobalConfig is not WSOL constant-product curve index zero");
   return true;
 }
-async function json(fetchImpl, url, init = {}) {
-  const response = await fetchImpl(url, { ...init, signal: AbortSignal.timeout(20000) });
-  if (!response.ok) throw new Error("HTTP " + response.status + " from " + new URL(url).host);
-  return response.json();
+const RPC_REQUEST_ID = "climboria-launch-config-joint-readonly";
+const API_RESPONSE_MAX_BYTES = 512 * 1024;
+const RPC_RESPONSE_MAX_BYTES = 64 * 1024;
+
+// Operator-only, read-only upstream capture; never allocate unbounded API/RPC
+// response text. A single provider claim is NOT a chain-state attestation.
+async function json(fetchImpl, url, init = {}, maxBytes = API_RESPONSE_MAX_BYTES) {
+  let response;
+  try {
+    response = await fetchImpl(url, {
+      ...init, redirect: "error", signal: AbortSignal.timeout(20000)
+    });
+  } catch { throw new Error("LaunchLab read-only provider request failed or redirected"); }
+  if (!response?.ok) throw new Error("LaunchLab read-only provider unavailable (HTTP " + response?.status + ")");
+  if (!response.body || typeof response.body.getReader !== "function")
+    throw new Error("LaunchLab provider response has no readable stream");
+  const declared = response.headers?.get?.("content-length");
+  if (declared !== null && declared !== undefined) {
+    if (!/^[0-9]{1,20}$/.test(declared) || BigInt(declared) > BigInt(maxBytes))
+      throw new Error("LaunchLab provider response exceeded byte limit");
+  }
+  let reader;
+  try { reader = response.body.getReader(); }
+  catch { throw new Error("LaunchLab provider stream unavailable"); }
+  let total = 0;
+  const chunks = [];
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!(value instanceof Uint8Array)) throw new Error("LaunchLab provider stream invalid");
+      total += value.byteLength;
+      if (total > maxBytes) {
+        try { await reader.cancel(); } catch {}
+        throw new Error("LaunchLab provider response exceeded byte limit");
+      }
+      chunks.push(Buffer.from(value));
+    }
+  } catch (error) {
+    if (error?.message === "LaunchLab provider response exceeded byte limit" ||
+        error?.message === "LaunchLab provider stream invalid") throw error;
+    throw new Error("LaunchLab provider read failed");
+  } finally {
+    try { reader.releaseLock(); } catch {}
+  }
+  try {
+    return JSON.parse(new TextDecoder("utf-8", { fatal:true }).decode(Buffer.concat(chunks,total)));
+  } catch { throw new Error("LaunchLab provider returned invalid JSON"); }
 }
-async function getFinalizedAccount(fetchImpl, target, address) {
-  const response = await json(fetchImpl, target.rpc, {
+
+/**
+ * One finalized Solana JSON-RPC getMultipleAccounts for both exact config
+ * addresses. Both payloads share ONE provider-reported context slot.
+ * The returned slot, owner and content are not independently authenticated;
+ * existing critical IDL type/constraint mismatches still block any launch.
+ */
+export async function getFinalizedConfigSnapshot(fetchImpl, target) {
+  if (!target?.rpc || !target?.globalConfig || !target?.platformConfig ||
+      target.globalConfig === target.platformConfig)
+    throw new Error("Invalid pinned LaunchLab configuration target");
+  const payload = await json(fetchImpl, target.rpc, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", accept: "application/json" },
     body: JSON.stringify({
-      jsonrpc: "2.0", id: "climboria-launch-config-readonly",
-      method: "getAccountInfo", params: [address, { encoding: "base64", commitment: "finalized" }]
+      jsonrpc: "2.0", id: RPC_REQUEST_ID, method: "getMultipleAccounts",
+      params: [[target.globalConfig, target.platformConfig],
+        { encoding: "base64", commitment: "finalized" }]
     })
-  });
-  if (response.error) throw new Error("Solana RPC error: " + (response.error.message || "unknown"));
-  return response.result?.value ?? null;
+  }, RPC_RESPONSE_MAX_BYTES);
+  if (payload?.jsonrpc !== "2.0" || payload.id !== RPC_REQUEST_ID ||
+      payload.error !== undefined || !Number.isSafeInteger(payload?.result?.context?.slot) ||
+      payload.result.context.slot <= 0 || !Array.isArray(payload?.result?.value) ||
+      payload.result.value.length !== 2 || payload.result.value.some(item => !item)) {
+    throw new Error("Invalid joint finalized LaunchLab RPC config response");
+  }
+  return {
+    slot: payload.result.context.slot,
+    globalAccount: payload.result.value[0],
+    platformAccount: payload.result.value[1]
+  };
 }
 export async function inspectLaunchConfigCluster(fetchImpl, cluster) {
   const target = CONFIG_TARGETS[cluster], programId = PROGRAMS[cluster]?.launchpad;
@@ -131,11 +195,8 @@ export async function inspectLaunchConfigCluster(fetchImpl, cluster) {
   const configs = api.data.data.filter(item => item?.key?.pubKey === target.globalConfig);
   if (configs.length !== 1) throw new Error(cluster + " API has missing/duplicate pinned WSOL GlobalConfig");
   const config = configs[0];
-  const [ga, pa] = await Promise.all([
-    getFinalizedAccount(fetchImpl, target, target.globalConfig),
-    getFinalizedAccount(fetchImpl, target, target.platformConfig)
-  ]);
-  const decoded = decodeConfigAccounts(ga, pa, programId);
+  const snapshot = await getFinalizedConfigSnapshot(fetchImpl, target);
+  const decoded = decodeConfigAccounts(snapshot.globalAccount, snapshot.platformAccount, programId);
   assertApiMatchesChain(config, decoded.global, target.globalConfig);
   const economics = validateLaunchCurveDefaults({
     config,
@@ -151,6 +212,10 @@ export async function inspectLaunchConfigCluster(fetchImpl, cluster) {
     candidateAccountReferences: true,
     apiUrl: target.api, rpc: target.rpc, programId,
     globalConfig: target.globalConfig, platformConfig: target.platformConfig,
+    providerReportedFinalizedContextSlot: snapshot.slot,
+    bothConfigsFromOneFinalizedRpcResponse: true,
+    independentlyAuthenticatedLedgerSnapshot: false,
+    sdkIdlSemanticCompatibilityVerified: false,
     global: decoded.global, platform: decoded.platform, economics,
     configAccountLengths: { global: 371, platform: 944 },
     note: "Preliminary read-only consistency ONLY: pinned platform attribution, SDK/IDL semantics, authority/custody policies and real Devnet lifecycle still require independent verification."
