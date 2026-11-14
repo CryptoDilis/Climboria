@@ -100,3 +100,39 @@ Comparing the full captured state is deliberately stronger than comparing only t
 The positive report contains only public on-chain identifiers, input/output quantities and snapshot hash, plus explicit **`approvedForJupiterCpi:false`, `approvedForProductionExecution:false` and `independentlyAuthenticatedLedgerFinality:false`**. Do not share even those addresses/balances publicly without privacy review.
 
 **Evidence status at implementation:** only deterministic synthetic/failure fixtures; no operator RPC endpoints, real transaction signature, external binary parity or reviewer authorization were available to execute this tool against live Devnet/mainnet. **Keep production swap execution gates OFF.**
+
+
+## Exact signed-order wire binding across two finalized RPCs — 2026-11-14
+
+**Extra operator-only evidence layer:** `dex/swap-proxy/src/finalized-order-wire-evidence.mjs` and `tools/finalized-swap-order-wire-report.mjs`. This is separate from the earlier dual-RPC `jsonParsed` account balance/state witness. The earlier witness checks **reported net token/fee accounting** but does **not** compare the **actual on-chain signed transaction bytes** against the original Climboria-issued order.
+
+### Private operator input / execution
+
+After obtaining a **real supervised test order and signed transaction** and capturing the previous dual-RPC `jsonParsed` receipt's reported slot and fee, set all these variables privately, **never in Git, CI, chat, screenshots or issue comments**:
+
+```text
+CLIMBORIA_SOLANA_RPC_URL                   # primary trusted HTTPS RPC
+CLIMBORIA_SOLANA_RPC_URL_SECONDARY         # separately operated HTTPS hostname
+CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH    # independently corroborated
+CLIMBORIA_SWAP_RECEIPT_NETWORK            # devnet or mainnet-beta
+CLIMBORIA_SWAP_RECEIPT_TAKER              # exact taker pubkey
+CLIMBORIA_SWAP_CLAIMED_SIGNATURE          # from Ed25519-verified DO claim; not Jupiter's response
+CLIMBORIA_SWAP_ORIGINAL_UNSIGNED_TX_FILE  # private local file containing exact issued unsigned v0 base64
+CLIMBORIA_SWAP_SIGNED_TX_FILE             # private local file containing exact taker-signed v0 base64
+CLIMBORIA_SWAP_RECEIPT_SLOT               # positive finalized slot from independent receipt report
+CLIMBORIA_SWAP_RECEIPT_FEE_LAMPORTS       # integer lamports from independent receipt report
+```
+
+Both files must contain **only canonical base64 v0 transaction data**; use a private secure directory inaccessible to the public frontend, build artifacts and repository. The tool requires both files to be under 4,096 bytes; **never** use wallet seed phrases or private keys. Read-only CLI:
+
+```sh
+node dex/swap-proxy/tools/finalized-swap-order-wire-report.mjs
+```
+
+Preflight validates the locally preserved unsigned Jupiter/Climboria order and the **Ed25519 taker-signed transaction** using existing `validateSignedOrderTransaction` (exact signed message, wallet/fee payer, immutable other signer slots, genuine first signature) and demands the actual Durable Object `claimedSignature` equal the first 64-byte signature of those exact bytes. **Reject malformed local evidence before any RPC call.** Then both configured RPC hosts must match the operator-pinned genesis and each return exactly one `getTransaction` request with `encoding:"base64"`, `commitment:"finalized"`, `maxSupportedTransactionVersion:0`. Reject missing/errored/unfinalized-shaped/legacy/incorrect version/slot/fee/encoding responses; compare the returned canonical base64 **whole wire transaction byte-for-byte** with the signed transaction, including every signature slot, blockhash and instruction byte. No fallback to single host, weaker commitment or a different transaction by signature alone. The printed report is redacted of raw transaction data and RPC URLs; it includes stable wire/message SHA256 and explicit **`approvedForProductionExecution:false`**.
+
+**Exactly what this improves:** a provider cannot return a different transaction wire with matching-looking IDs or merely claim user-facing output amounts without failing this independent wire comparison. A local tampered/altered signed message is rejected by Ed25519 verification, not by trusting Jupiter status.
+
+**Still NOT finality or proof of trade safety:** two separate RPC **hostnames** may belong to the same operator or collude; matching provider-reported finalized responses are not cryptographically authenticated Solana ledger consensus. This wire layer checks **transaction identity**, not transaction semantics, CPI signer/vault/mint ownership/fee destinations, full token accounting, or source-to-deployed-program parity. Run the existing **dual-RPC jsonParsed balance witness as well** and verify that it reports the **same signature, slot and transaction fee**. Neither layer authorizes trading or creates a Durable Object `completed` state. Real audited on-chain settlement, privileged release review, RPC/provider provenance, source/binary parity, monitored rollback and an actual supervised signed test transaction are **still missing**.
+
+**Evidence at implementation:** synthetic adversarial fixtures only; no private endpoints, real signed Jupiter route, real Devnet/mainnet transaction, independently pinned full Jupiter/Raydium ProgramData SHA256 or third-party security approval in this development step.
