@@ -1405,3 +1405,25 @@ NEXT EXACT: inspect head `a3a59ae...` CI (Validate 43575428329, Browser Smoke 43
 **EXACT NEXT TASK:** Inspect all exact-head PR #426 Actions; diagnose and fix any real failure without weakening assertions. If all required checks become green, inspect the actual browser logs, then keep the PR draft pending review—do not merge or deploy without separate approval.<br>
 **NEXT COMMAND OR FILE TO EDIT:** GitHub Actions run list for commit `6372ed958ca19221200b3751498e6bcb60614428`; if source correction is needed, start at `dex/swap-proxy/src/index.mjs` and its matching test.<br>
 **Acceptance criteria for the next task:** Exact PR-head Worker/security, Validate, and Browser Smoke checks are all successful; browser logs demonstrate desktop/mobile Swap and DEX show a verified minimum received and selected slippage without any order/execute request.
+
+
+### 2026-11-14 — PR #426: DEX quote slippage control made accessible (CI pending)
+
+**Date and time:** 2026-11-14 Philippine time (UTC+08:00)<br>
+**Workstream:** Swap / DEX<br>
+**Branch:** `codex/swap-dex-quote-integrity-20261114`<br>
+**Starting commit SHA:** `8a0c142943d684e6d105c6ebb14a21f1893d1769`<br>
+**Files modified:** `dex/index.html`; `.github/scripts/swap-amount.test.mjs`; this record.<br>
+**Implementation completed:** Moved the single DEX `dexTradeSlippage` control out of the intentionally unavailable quote-only trade terminal and into the user-opened `#swapQuote` preview. The preview's quote request already reads that control, so the selection is now visible and operable before a quote is requested on both desktop and mobile. The selector remains quote-only: no signing, order preparation, execution request, or execution gate was enabled. A focused structural regression protects the control's placement and ensures exactly one selector exists.<br>
+**Commit SHA:** `111c6bc5d22b0dacccfa2622db16a60357c42f1a` (implementation and regression test); this documentation update is committed separately immediately after this entry.<br>
+**PR number and URL:** Draft [PR #426](https://github.com/CryptoDilis/Climboria/pull/426).<br>
+**Tests performed:** `git diff --check`; `node --check dex/swap-amount.js`; `node --check .github/scripts/dex-swap-quote-state-smoke.mjs`; `node --test .github/scripts/swap-amount.test.mjs`.<br>
+**Test results:** PASS — all 7 shared amount/UI tests. The new regression verifies that the read-only DEX quote panel—not the disabled terminal—contains the sole slippage selector. The broader Worker/security suite was unchanged by this markup-only accessibility repair and had already passed before it; GitHub Actions remains required for actual Playwright coverage.<br>
+**GitHub Actions run IDs and results:** Pending for the post-record exact PR head. Previous head `8a0c142...`: Validate 43577649404 SUCCESS; Browser Smoke 43577649406 SUCCESS; DEX Swap CPI Security 43577649515 SUCCESS; DEX Swap Read-only Quote State 43577649410 FAILURE because the DEX selector was not visible to a user. This repair targets that exact failure without forcing hidden controls or weakening the assertion.<br>
+**Production verification:** None for this unmerged branch. The deployed main remains quote-only; no deploy was requested or performed.<br>
+**Unresolved bugs:** Need exact-head GitHub Playwright execution confirming the visible DEX control forwards selected slippage and shows the verified minimum received on desktop and mobile.<br>
+**External blockers:** Real wallet signing/execution remains blocked by the recorded independent RPC/genesis evidence, deployed program binary/CPI audit, controlled signed settlement/finality tests, audited final-state reconciliation, and release approval. No secret, production configuration, execution flag, transaction, merge, or deployment changed.<br>
+**Current release status:** Draft PR. Production remains verified quote-only, with all signable-order and execution gates disabled.<br>
+**EXACT NEXT TASK:** Inspect exact-head PR #426 Actions after push. If any check fails, use its specific log to correct the source or test fixture; do not hide controls, force interactions, relax assertions, merge, or deploy.<br>
+**NEXT COMMAND OR FILE TO EDIT:** GitHub Actions run list for the pushed PR #426 head; if the quote-state test reports a failure, start with `.github/scripts/dex-swap-quote-state-smoke.mjs` and `dex/index.html`.<br>
+**Acceptance criteria for the next task:** Validate, DEX Swap CPI Security, Browser Smoke, and DEX Swap Read-only Quote State are successful for the current PR head, including both desktop and mobile custom-slippage quote coverage, with no `/api/swap/order` or `/api/swap/execute` request.<br>
