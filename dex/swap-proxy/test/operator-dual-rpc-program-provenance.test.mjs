@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { encodeBase58 } from "../src/transaction-validation.mjs";
 import { JUPITER_V6_PROGRAM_ID } from "../src/jupiter-v6-policy.mjs";
 import { RAYDIUM_V4_PROGRAM_IDS } from "../src/raydium-v4-direct-evidence.mjs";
-import { verifyDualRpcProgramProvenance } from "../src/operator-dual-rpc-program-provenance.mjs";
+import { verifyDualRpcProgramProvenance } from "../tools/operator-dual-rpc-program-provenance.mjs";
 
 const GENESIS = encodeBase58(Uint8Array.from({ length: 32 }, (_, i) => i + 1));
 const WRONG = encodeBase58(Uint8Array.from({ length: 32 }, (_, i) => i + 2));
