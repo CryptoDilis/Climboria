@@ -92,7 +92,7 @@ test("provider responses below configured caps preserve normal quote, token and 
   try {
     for(const scenario of cases) {
       globalThis.fetch=async(_url,options)=>{
-        assert.equal(options.redirect,"error","third-party redirects must never be followed");
+        assert.equal(options.redirect,_url.includes("api.jup.ag")?"manual":"error","third-party redirects must never be followed");
         return Response.json(scenario.valid);
       };
       const result=await worker.fetch(urlFor(scenario.path),env);
@@ -115,7 +115,7 @@ test("Jupiter redirect/transport errors are sanitized and never echo server-side
     for(const path of [quotePath,"/api/tokens/search?query=SOL"]){
       globalThis.fetch=async(_url,options)=>{
         assert.equal(options.headers["x-api-key"],"SECRET_SERVER_ONLY");
-        assert.equal(options.redirect,"error");
+        assert.equal(options.redirect,"manual");
         throw Error("redirect to https://hacker.example/?api-key=SECRET_SERVER_ONLY");
       };
       const result=await worker.fetch(urlFor(path),env);
