@@ -92,3 +92,49 @@ The quote/search API deployment workflow must not enable swap execution. It asse
 These bounds protect an account with limited Worker resources, but
 do not establish provider authenticity, on-chain token safety, or
 safe Jupiter V6 inner CPI behavior.
+
+
+## Production Worker revision binding (2026-11-14)
+
+The production quote-only API now publishes a **non-secret, public**
+`deployedGitSha` field in `GET /health`. It must be a lowercase 40-character
+Git commit SHA, injected into Wrangler `[vars].DEPLOYED_GIT_SHA` **from the
+exact GitHub Actions commit checked out for a deployment**. The checked-in
+`wrangler.toml` deliberately contains `"unpublished"` (not a real SHA).
+That placeholder makes the Worker `/health` return HTTP 503; the release
+workflow MUST replace it with `github.sha` before deployment and verify
+the replacement is canonical.
+
+The guarded `Deploy Climboria API` workflow then checks the live
+`/health.deployedGitSha` against its own `github.sha`, as well as the
+existing required quote-only bindings, disabled execution switch, CORS,
+live token search and unsigned SOL/USDC quote. A separate post-deploy
+`Climboria API Production Readiness` workflow receives
+`workflow_run.head_sha` through `CLIMBORIA_EXPECTED_DEPLOY_SHA` and
+requires that exact live SHA as well.
+
+This closes a specific *stale deployment detection gap*: prior smoke
+checks could pass against a fully working **old** Worker even if Wrangler
+had just deployed a new revision. A green check now requires the **declared
+deployment revision** to match the checked-out commit. This is not
+cryptographic deployed-bytecode provenance, independent Cloudflare
+attestation, or evidence of token trading.
+
+An explicit manual `Climboria API Production Readiness` run without
+`CLIMBORIA_EXPECTED_DEPLOY_SHA` remains *observational*: it requires a
+properly formatted published SHA but **does not** claim to match today's
+repository head. To verify a particular manually deployed commit, run
+the probe with that expected SHA in its private operator environment,
+for example `CLIMBORIA_EXPECTED_DEPLOY_SHA=<40-char-sha> node
+.github/scripts/api-production-readiness.mjs`. The probe also limits
+response *bytes* to 64 KiB **during streaming**, preventing over-large
+responses from being fully allocated before rejection.
+
+Changing this deployment workflow on `main` can trigger its existing
+guarded quote-only deployment workflow **if Cloudflare configuration and
+secrets are present**. Actual deployment is conditional; merging a PR
+is not proof that production has been updated. Never enable
+`EXECUTION_ENABLED`, frontend `enabled`, or the source-level
+signable/execution gates during this work. Manual local Wrangler deploys
+must also set a real `DEPLOYED_GIT_SHA` deliberately, or health is
+fail-closed (503).
