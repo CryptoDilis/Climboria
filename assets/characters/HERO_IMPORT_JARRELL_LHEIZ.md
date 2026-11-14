@@ -17,14 +17,16 @@ Both sources use Mixamo-style `mixamorig:` bone names. GLB animation names:
 ## Integration status
 - [x] Inspected source GLBs (format, geometry count, skin, embedded texture references, animation names, hashes).
 - [x] Staged new optional `Jarrell` and `Lheiz` paths in `game/play.html` with the existing Adventurer fallback, without altering the default user hero.
-- [x] Staged record validator support for future saved hero identities in `game/index.html` and the play preflight. **The UI still creates the Adventurer only**.
-- [ ] Upload the **actual** 7.9 MB + 12.5 MB binary GLBs to the destination paths above, on this Game branch (not via a text-only API). Keep the original hero untouched.
+- [x] The Create Hero modal now exposes Adventurer, Jarrell, and Lheiz selectors, loads the chosen GLB into the 3D preview, plays authored `Idle_03` on new Mixamo models, validates the skin+rig+idle clip, and persists the selected model with the name **only after loading successfully**. Missing files are shown as unavailable; they cannot be saved.
+- [x] The play preflight validates the saved model, and gameplay loads exactly that model instead of a separate stale localStorage selection key. Missing optional models fall back to the original Adventurer; existing saved Adventurer users are unaffected.
+- [x] Movement state clip matcher recognizes `Idle_03`, `Regular_Jump` and `climbing_up_wall`, recognizes `mixamorig:Head`, and excludes attack clips (e.g. `Jumping_Punch`) from locomotion fallback. Lheiz has **no standalone regular jump clip**, so uses procedural fallback until an appropriate clip is supplied.
+- [ ] Upload the **actual** 7.9 MB + 12.5 MB binary GLBs to the destination paths above on branch `game/jarrell-lheiz-glb-integration-2026-11-14`. Keep original hero untouched. They are available to the owner as a chat download package (`Climboria_Jarrell_Lheiz_GitHub_Import.zip`) with exact relative paths; extract and upload the two individual .glb files, **not** the ZIP, to GitHub. Each original GLB is below GitHub's ordinary 25 MB web-upload per-file limit.
 - [ ] Run `node game/scripts/verify-hero-imports.mjs` in a checkout containing both uploaded GLBs. Any missing/wrong file should fail.
 - [ ] Review Meshy commercial usage rights and images/text printed on character apparel; rights have not independently been verified.
-- [ ] Add an actual hero selector to the Create Hero modal with an accurate preview of the chosen GLB and persistent selection. Do not show unshipped choices yet.
+- [x] Source-code wiring for hero selector and 3D preview is committed to draft PR #424; **not yet runtime-verified with newly uploaded GLBs**, so don't claim the options are production-ready.
 - [ ] Exercise in-browser 3D preview, idle/run/walk/jump/swim/climb, scale and feet/ground collision for both models; verify original Adventurer unaffected.
 - [ ] Run exact-head Game CI and inspect mobile/desktop screenshots before merging. Physical-device FPS not verified.
 
 **Why no direct replacement:** `game/index.html` currently has a dedicated A-pose preview for the original rig (`LeftUpperArm` etc), while the new assets use `mixamorig:` names. Their preview needs a separate skeleton-compatible path. A blind replacement would risk an invisible preview and a broken hero creation gate.
 
-**Resume next:** upload both binaries to the Game branch; run validator; implement rig-compatible selection/preview; run targeted CI and inspect screenshots; update `docs/GAME_DEVELOPMENT_RECORD.md` with actual commit/PR/tests and unverified status. Never touch DEX/Swap/Launchpad/ClimbX files in this task.
+**Resume next:** upload both binaries to the Game branch; run validator; run targeted optional-hero 3D/animation browser acceptance on desktop and mobile, inspect screenshots, and update this record + `docs/GAME_DEVELOPMENT_RECORD.md` with actual SHA/test evidence. On any asset missing/error keep draft and unmerged. Never touch DEX/Swap/Launchpad/ClimbX files in this task.
