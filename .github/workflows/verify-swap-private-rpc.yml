@@ -42,6 +42,8 @@ jobs:
           CLIMBORIA_SOLANA_RPC_URL_SECONDARY: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL_SECONDARY }}
           CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH: ${{ vars.CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH }}
         run: node dex/swap-proxy/tools/operator-private-rpc-setup-check.mjs
+      # The provenance code separately rejects provider snapshots more than
+      # 2048 finalized slots apart, even when all metadata values agree.
       - name: Verify actual Jupiter V6 and Raydium V4 Upgradeable Loader metadata across both private RPCs (read-only)
         env:
           CLIMBORIA_SOLANA_RPC_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL }}

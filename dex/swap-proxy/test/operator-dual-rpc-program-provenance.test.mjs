@@ -76,6 +76,7 @@ test("both RPC genesis and both full loader metadata observations agree without 
   assert.equal(result.programs.jupiterV6.lastDeploySlot, 200);
   assert.equal(result.primaryProviderReportedFinalizedSlot, 300);
   assert.equal(result.secondaryProviderReportedFinalizedSlot, 301);
+  assert.equal(result.providerReportedFinalizedSlotDifference, 1);
   assert.equal(result.approvedForJupiterCpi, false);
   assert.equal(result.deployedProgramPayloadsHashedAndAudited, false);
   assert.equal(result.transactionSubmitted, false);
@@ -92,6 +93,27 @@ test("no source if missing, same-host, private or non-HTTPS endpoints", async ()
       /verification failed/);
     assert.equal(h.calls.length, 0);
   }
+});
+
+test("even matching upgrade metadata cannot approve drastically divergent finalized slots", async () => {
+  for (const { primary, secondary } of [
+    { primary: proof(469416561), secondary: proof(469414512) },
+    { primary: proof(469414512), secondary: proof(469416561) }
+  ]) {
+    const h = harness({ primary, secondary });
+    await assert.rejects(verifyDualRpcProgramProvenance(options(h)), /verification failed/);
+    assert.deepEqual(h.calls.map(x => x.method), [
+      "getGenesisHash", "getGenesisHash", "getProgramMetadata", "getProgramMetadata"
+    ]);
+  }
+});
+
+test("two provider snapshots at the 2048-slot boundary remain non-approving metadata evidence", async () => {
+  const h = harness({ primary: proof(300000), secondary: proof(302048) });
+  const result = await verifyDualRpcProgramProvenance(options(h));
+  assert.equal(result.providerReportedFinalizedSlotDifference, 2048);
+  assert.equal(result.approvedForProductionExecution, false);
+  assert.equal(result.independentlyAuthenticatedLedgerFinality, false);
 });
 
 test("pinned network mismatch refuses program reads", async () => {
