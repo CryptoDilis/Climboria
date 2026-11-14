@@ -105,7 +105,7 @@ async function readSlice(fetchImpl, endpoint, address, offset, length, minSlot, 
   return { bytes, slot, space: account.space };
 }
 
-function validateProof(proof, role) {
+export function validateProof(proof, role) {
   if (!Object.hasOwn(PROGRAM_IDS, role) || !proof ||
       proof.network !== "mainnet-beta" ||
       proof.programDataPdaIndependentlyVerified !== true ||
