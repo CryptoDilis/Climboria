@@ -158,3 +158,43 @@ real wallet sign/execute/confirm reconciliation remain unresolved. All
 `approvedForJupiterCpi` and `rpcSourceIndependentlyAudited` flags remain
 **false**. This tooling is not imported by the signable order or execution
 code path. Unit tests use fake evidence objects, **not real chain RPC**.
+
+
+## 9. Operator-pinned Solana genesis preflight (2026-11-14; read-only)
+
+Before collecting a Raydium V4 pool report, the operator CLI **requires**
+`CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH` in the local operator environment.
+The value must be obtained and corroborated **independently of the configured
+RPC endpoint(s)**. Do not copy a value from a candidate RPC and treat it as
+proof, and do not paste RPC API-key-bearing URLs into public records.
+
+`src/raydium-v4-rpc-genesis-preflight.mjs` issues the read-only JSON-RPC
+`getGenesisHash` method to each configured operator endpoint before any
+AMM pool-account snapshot. The response must be well-formed, belong to the
+expected JSON-RPC request, and equal the canonical 32-byte base58 genesis
+hash supplied by the operator. An incorrect cluster/hash, malformed response,
+unreachable primary or secondary provider, or identical secondary hostname
+**fails closed** before the pool's RPC reads. The bounded response reader,
+8-second request timeout, redirect refusal and static CLI error sanitization
+remain in effect. The operator report includes the public configured genesis
+hash, whether the check matched, and the number of checked endpoints.
+
+Run in a trusted operator environment (example uses placeholders only):
+
+```sh
+export CLIMBORIA_SOLANA_RPC_URL='<private HTTPS primary RPC endpoint>'
+export CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH='<independently confirmed public Solana genesis hash>'
+# Optional: export CLIMBORIA_SOLANA_RPC_URL_SECONDARY='<private HTTPS second RPC>'
+node dex/swap-proxy/tools/raydium-v4-finalized-pool-report.mjs \
+  --network mainnet-beta --pool '<independently verified public Raydium V4 pool>'
+```
+
+**Proof boundary:** providers merely *report* their genesis hash. A malicious
+provider can lie. Equal genesis responses do not cryptographically certify
+cluster state, the true canonical pool, independent provider ownership,
+deployed Raydium/Jupiter binary, custody, or CPI account mapping. The operator
+must separately check that the genesis hash corresponds to the intended
+`--network`; it is *not* inferred or pinned by this software. No wallet
+signature, token creation, submit, or on-chain swap is performed. The
+`approvedForJupiterCpi` gate stays false. CI tests mock provider responses;
+there is still **no live Solana RPC evidence** in this record.

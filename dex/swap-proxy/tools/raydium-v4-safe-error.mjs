@@ -9,6 +9,7 @@ export function safeRaydiumOperatorError(error) {
   if (message === "CLIMBORIA_SOLANA_RPC_URL must be configured in the operator environment") {
     return message;
   }
+  if (message === "CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH must be configured in the operator environment") return message;
   if (message === "Invalid --min-slot") return message;
   if (message.startsWith("Usage: node dex/swap-proxy/tools/raydium-v4-finalized-pool-report.mjs ")) {
     return "invalid CLI arguments; see documented usage";
