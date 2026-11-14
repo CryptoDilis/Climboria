@@ -1,9 +1,15 @@
 name: Verify Swap DEX private Solana RPC (read-only)
 
 on:
-  # Secret-bearing endpoint checks are manual on main ONLY. Never execute on a
-  # pull request or fork; private RPC endpoints are not CI test fixtures.
+  # Secret-bearing endpoint checks run on approved main only, NEVER on PRs
+  # or forks. Trigger once for a reviewed change to this exact workflow
+  # (including its new Jupiter/Raydium metadata step). All requests are
+  # read-only; provider URLs remain in encrypted Actions secrets.
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-swap-private-rpc.yml'
 
 permissions:
   contents: read
