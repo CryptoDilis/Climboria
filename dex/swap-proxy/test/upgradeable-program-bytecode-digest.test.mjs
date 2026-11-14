@@ -150,13 +150,20 @@ test("rejects missing preflight PDA, unreviewed metadata or forged executable ro
 });
 
 test("rejects wrong upgrade-authority bytes and mutated final ProgramData headers",async()=>{
-  for(const tamper of [
-    ({response,offset})=>{if(offset===0){const data=Buffer.from(response.result.value.data[0],"base64");data[13]^=1;response.result.value.data=[data.toString("base64"),"base64"];} },
-    ({response,count,offset})=>{if(offset===0&&count>1){const data=Buffer.from(response.result.value.data[0],"base64");data.writeBigUInt64LE(109n,4);response.result.value.data=[data.toString("base64"),"base64"];} }
-  ]){
+  const scenarios=[
+    {
+      role:"jupiterV6",
+      tamper:({response,offset})=>{if(offset===0){const data=Buffer.from(response.result.value.data[0],"base64");data[13]^=1;response.result.value.data=[data.toString("base64"),"base64"];}}
+    },
+    {
+      role:"raydiumV4",
+      tamper:({response,count,offset})=>{if(offset===0&&count>1){const data=Buffer.from(response.result.value.data[0],"base64");data.writeBigUInt64LE(109n,4);response.result.value.data=[data.toString("base64"),"base64"];}}
+    }
+  ];
+  for(const {role,tamper} of scenarios){
     const {fetchImpl}=fakeFetch({tamper});
     await assert.rejects(hashPinnedUpgradeableProgramPayload(
-      hashArgs("raydiumV4",fetchImpl)
+      hashArgs(role,fetchImpl)
     ),/Read-only deployed program digest/);
   }
 });
