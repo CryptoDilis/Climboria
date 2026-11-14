@@ -273,6 +273,21 @@ test("unknown outcome remains replay-locked even without a provider signature", 
   assert.equal((await claimOrder(object,fixture.signed)).status,409);
 });
 
+test("uncertain outcome with omitted provider signature preserves verified ID through alarm", async () => {
+  const fixture = makeFixture(1);
+  const { object, storage } = createStore();
+  await storeOrder(object, fixture);
+  await claimOrder(object, fixture.signed);
+  // JSON.stringify omits undefined: exercise the absent-signature branch
+  // separately from the explicit null covered by the other regression.
+  assert.equal((await settleOrder(object, "uncertain", undefined)).status, 200);
+  const verifiedSignature = encodeBase58(fixture.takerSignature);
+  assert.equal((await storage.get("order")).signature, verifiedSignature);
+  await object.alarm();
+  assert.equal((await storage.get("order")).signature, verifiedSignature);
+  assert.equal((await claimOrder(object, fixture.signed)).status, 409);
+});
+
 test("provider terminal states reject mismatched and blank signatures without writing a final-chain result",async()=>{
   const fixture=makeFixture(1);
   for(const state of ["provider_success_unconfirmed","provider_failure_unconfirmed"]){
