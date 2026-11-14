@@ -447,6 +447,31 @@ test("rejects malformed quote and token search requests before upstream calls", 
 });
 
 
+test("live quote endpoint never reflects untrusted Jupiter error/message or server key on HTTP 4xx/5xx",async()=>{
+  const originalFetch=globalThis.fetch;
+  const sensitive="SENSITIVE_PROVIDER_DIAGNOSTIC_TEST_KEY";
+  const req=()=>new Request("https://worker.test/api/swap/quote?inputMint="+valid+
+    "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100",{
+      headers:{origin}
+    });
+  try{
+    for(const status of [400,401,403,404,429,500,502,503]){
+      globalThis.fetch=async()=>Response.json({
+        error:"provider leaked "+sensitive,
+        message:"api key "+sensitive,
+        details:{raw:"request body "+sensitive}
+      },{status});
+      const response=await worker.fetch(req(),env);
+      assert.equal(response.status,status>=400&&status<500?status:502);
+      const result=await response.json();
+      assert.deepEqual(result,{error:"Jupiter quote request failed",upstreamStatus:status});
+      assert.doesNotMatch(JSON.stringify(result),new RegExp(sensitive));
+      assert.equal(result.details,undefined);
+      assert.equal(response.headers.get("cache-control"),"no-store, max-age=0");
+    }
+  }finally{globalThis.fetch=originalFetch;}
+});
+
 test("normalizes Jupiter upstream server errors without claiming an order exists", async () => {
   const originalFetch = globalThis.fetch;
   try {
