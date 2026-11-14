@@ -198,3 +198,44 @@ must separately check that the genesis hash corresponds to the intended
 signature, token creation, submit, or on-chain swap is performed. The
 `approvedForJupiterCpi` gate stays false. CI tests mock provider responses;
 there is still **no live Solana RPC evidence** in this record.
+
+
+## 10. Read-only finalized Upgradeable Loader evidence for Jupiter V6 and Raydium V4
+
+Operator-only tool `dex/swap-proxy/src/upgradeable-program-provenance.mjs`
+checks the **mainnet-beta** Jupiter V6 and Raydium V4 executable program
+accounts using two finalized RPC calls before the existing pool report.
+The first `getMultipleAccounts` resolves the two Program -> ProgramData
+links from locally parsed 36-byte Upgradeable Loader Program headers (state 2).
+The second fetches both Program accounts and both linked ProgramData accounts
+in one later finalized context, with `minContextSlot` set to the first
+observation. It requires the full Program account headers to remain unchanged,
+valid Upgradeable BPF Loader ownership, correct executable flags, ProgramData
+state 3, canonical optional upgrade authority and a deployment slot no later
+than the observed finalized slot. Each account requests a **45-byte data
+slice**, which is a bounded header read, not executable code extraction.
+
+The operator CLI `raydium-v4-finalized-pool-report.mjs` runs the existing
+operator-pinned genesis preflight first, then the new program metadata
+inspection on the **primary RPC only**, and only afterward the Raydium V4
+pool-account evidence read. Public output records each ProgramData address,
+upgrade authority (or null for reported immutable), deployment slot, and
+explicit `deployedProgramBytecodeVerified:false`. If program header,
+owner, ProgramData, or network checks fail, **no pool evidence report** is
+produced. This is read-only; no public application or order/execute call is
+wired to this tool.
+
+**Important:** the RPC provider may lie; a Program -> ProgramData link
+does **not** independently establish correct canonical PDA derivation, deployed
+program binary hash/source provenance, upstream program security, Jupiter V6
+remaining-account ordering, CPI signer forwarding, fee recipient, pool
+custody, or complete trading approval. Program upgrade authority can change
+between finalized reads, and no full executable payload is downloaded here.
+Secondary RPC pool cross-checks (when configured) do **not** automatically
+cross-check these two program headers. Flag
+`executableMetadataPrimaryRpcOnly:true` makes that limit explicit.
+
+The existing `approvedForJupiterCpi:false`, signing, execution and Launchpad
+release gates remain disabled. CI tests use synthetic finalized RPC responses,
+not live on-chain program snapshots. This does **not** close the independent
+audit or executable bytecode parity blocker.
