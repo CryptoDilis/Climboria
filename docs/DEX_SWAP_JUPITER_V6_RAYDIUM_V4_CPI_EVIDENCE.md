@@ -122,3 +122,39 @@ The CLI requires `CLIMBORIA_SOLANA_RPC_URL` to be set out of band. It prints **p
 **LIMITS:** The two finalized calls may reflect different slots; the full-byte AMM equality check and a nondecreasing second context prevent combining a changed AMM pool image, but cannot attest to arbitrary off-RPC changes or a dishonest RPC node. Pool selection/source identity, market/OpenBook internal decoding, program upgrade authority, Jupiter inner CPI account mapping, intermediate token flows, fees and actual settlements remain unverified. There is NO CI automation contacting an external Solana RPC: deterministic tests supply mocked two-stage finalized responses and adversarial mismatches.
 
 **Next real step:** An authorized operator must supply a corroborated pool public address and trustworthy network RPC, run this **read-only** CLI externally, retain redacted/public-only evidence, and independently corroborate it against a second trusted source before any claim of actual on-chain verification. This NEVER flips the signable-order or execution gates.
+
+
+## 8. Optional second operator RPC witness (2026-11-14; read-only)
+
+The existing `raydium-v4-finalized-pool-report.mjs` can optionally read the operator-only
+`CLIMBORIA_SOLANA_RPC_URL_SECONDARY` environment variable in addition to
+`CLIMBORIA_SOLANA_RPC_URL`. **Do not put either URL or its token in chat,
+source code, CI, workflow logs, or public artifacts.**
+
+When the second variable is configured, `src/raydium-v4-dual-rpc-evidence.mjs`
+fetches the same independently corroborated **public** Raydium V4 pool key
+from both operator HTTPS endpoints. The hosts must differ. Each source must
+independently pass the already implemented two-step finalized pool observation,
+single-context eight-account check, raw pool stability within its two reads,
+and independent AMM authority PDA validation. The comparison requires matching
+network, pool, Raydium program ID, derived authority, pool keys and fee
+configuration, decoded SPL vault owners/mints/native state, mint decimals and
+mint/freeze authority. Snapshot slots may differ; **vault balances and token
+supplies may legitimately change**, so they are not compared across RPCs.
+
+A mismatched/failing second endpoint **fails closed** and will not return a
+purported two-source report. The report discloses
+`twoConfiguredRpcHostsCompared`, `matchingPublicPoolConfiguration` and
+`secondaryFinalizedContextSlot` when a second operator endpoint is used.
+Without one, those fields are false/false/null.
+
+**Proof boundary:** two different DNS hostnames are *not independently
+audited/trusted providers*; providers may share infrastructure, serve stale or
+dishonest state, or be incorrectly selected by the operator. This is not a
+cryptographic proof of canonical chain ancestry or the correct Raydium pool
+selection. Program bytecode parity, actual Jupiter V6 inner-CPI routing,
+market/OpenBook state decoding, token-transfer and fee-recipient paths and
+real wallet sign/execute/confirm reconciliation remain unresolved. All
+`approvedForJupiterCpi` and `rpcSourceIndependentlyAudited` flags remain
+**false**. This tooling is not imported by the signable order or execution
+code path. Unit tests use fake evidence objects, **not real chain RPC**.

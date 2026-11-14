@@ -12,6 +12,7 @@
  * A single public pool address supplied by a trusted operator is required.
  */
 import { fetchRaydiumV4EvidenceFromPoolAddress } from "../src/raydium-v4-pool-discovery.mjs";
+import { fetchRaydiumV4DualRpcPublicEvidence } from "../src/raydium-v4-dual-rpc-evidence.mjs";
 import { safeRaydiumOperatorError } from "./raydium-v4-safe-error.mjs";
 
 const USAGE = "Usage: node dex/swap-proxy/tools/raydium-v4-finalized-pool-report.mjs --network mainnet-beta|devnet --pool <verified-public-pool-address> [--min-slot <nonnegative-slot>]";
@@ -37,11 +38,18 @@ async function main(argv) {
   if (Number.isNaN(minContextSlot)) throw new Error("Invalid --min-slot");
   const rpcUrl = process.env.CLIMBORIA_SOLANA_RPC_URL;
   if (!rpcUrl) throw new Error("CLIMBORIA_SOLANA_RPC_URL must be configured in the operator environment");
-  const result = await fetchRaydiumV4EvidenceFromPoolAddress({
-    network: flags.get("--network"),
-    poolAddress: flags.get("--pool"),
-    rpcUrl, minContextSlot
-  });
+  // An optional second independently configured operator hostname provides a
+  // second read-only view. A mismatch fails closed; no fallback as corroborated.
+  const secondaryRpcUrl = process.env.CLIMBORIA_SOLANA_RPC_URL_SECONDARY;
+  const result = secondaryRpcUrl
+    ? await fetchRaydiumV4DualRpcPublicEvidence({
+        network: flags.get("--network"), poolAddress: flags.get("--pool"),
+        primaryRpcUrl: rpcUrl, secondaryRpcUrl, minContextSlot
+      })
+    : await fetchRaydiumV4EvidenceFromPoolAddress({
+        network: flags.get("--network"), poolAddress: flags.get("--pool"),
+        rpcUrl, minContextSlot
+      });
 
   // Output ONLY public addresses and safety metadata. Do NOT reveal RPC
   // endpoint/query secrets, raw token account bytes, or wallet material.
@@ -63,6 +71,9 @@ async function main(argv) {
     vaultMintBindingsChecked: result.finalizedSnapshotRelationshipsChecked,
     authorityPdaMathChecked: result.ammAuthorityPdaIndependentlyVerified,
     poolRawImageStableAcrossFinalizedReads: result.poolStateStableAcrossFinalizedReads,
+    twoConfiguredRpcHostsCompared: result.twoConfiguredRpcHostsCompared === true,
+    matchingPublicPoolConfiguration: result.matchingPublicPoolConfiguration === true,
+    secondaryFinalizedContextSlot: result.secondaryFinalizedContextSlot ?? null,
     independentlyCorroboratedPoolSelection: result.poolAddressIndependentlyCorroborated,
     independentlyAuditedRpcSource: result.rpcSourceIndependentlyAudited,
     jupiterCpiAccountMappingVerified: result.jupiterCpiAccountMappingVerified,
