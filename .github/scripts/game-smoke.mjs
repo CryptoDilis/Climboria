@@ -71,6 +71,10 @@ try {
     visible: !!document.querySelector('canvas') && !!window.__climboriaCameraOrbit,
   }));
   if (heroAssetAudit.identity !== 'adventurer' || heroAssetAudit.renderer !== 'glb' || !heroAssetAudit.visible) errors.push('Original Climboria Meshy GLB did not initialize: ' + JSON.stringify(heroAssetAudit));
+  // Newly staged Meshy loader must remain fail-closed until reviewed binary assets are imported.
+  const optionalAssetAudit=await page.evaluate(()=>window.ClimboriaMeshyAssets?.audit?.()||null);
+  if(!optionalAssetAudit||optionalAssetAudit.enabled!==false||optionalAssetAudit.guardCount!==0||optionalAssetAudit.loadedDecorations!==0)
+    errors.push('Unreviewed Meshy assets loaded before binary import and visual acceptance: '+JSON.stringify(optionalAssetAudit));
   // Sample a full second: a half-second window can land near a sine-wave's
   // turning point and under-report a real but deliberately subtle idle motion.
   await page.waitForTimeout(1000);
