@@ -75,7 +75,7 @@ test("malformed claimed signature values cannot convert a provider result into S
   // must obtain the claimed signature from an Ed25519-verified transaction.
   // A different correctly encoded 64-byte signature is NOT malformed and
   // must be rejected by the upstream claim binding, not guessed at here.
-  for(const invalid of [null,undefined,"",other.slice(1),{},0]){
+  for(const invalid of [null,undefined,"","not_base58",{invalid:true},0]){
     const result=classifyJupiterExecutionOutcome({
       status:"Success",code:0,signature:invalid
     },invalid);
