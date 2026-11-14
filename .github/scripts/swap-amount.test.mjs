@@ -124,6 +124,14 @@ test("DEX exposes a keyboard-accessible read-only quote toggle without enabling 
   assert.match(html, /GET LIVE QUOTE · NO TRADING/);
   assert.match(html, /body\.mobile-solana-view \.execution-status\{display:flex!important/, "Mobile Solana market must expose quote button banner");
   assert.match(html, /body\.mobile-solana-view #showDexQuote\{min-height:42px/, "Mobile quote button must have a touch target");
+  const quotePanelStart = html.indexOf('<section class="quote-panel" id="swapQuote"');
+  const quotePanelEnd = html.indexOf('</section>', quotePanelStart);
+  const slippageControl = html.indexOf('id="dexTradeSlippage"');
+  assert.ok(quotePanelStart >= 0 && quotePanelEnd > quotePanelStart, "DEX quote panel markup missing");
+  assert.ok(slippageControl > quotePanelStart && slippageControl < quotePanelEnd,
+    "DEX quote slippage must be visible in the read-only quote preview, not the disabled trade terminal");
+  assert.equal((html.match(/id="dexTradeSlippage"/g) || []).length, 1,
+    "DEX must expose exactly one slippage selector");
   const start = html.indexOf("$('showDexQuote').addEventListener('click',()=>{");
   const end = html.indexOf("\n});", start);
   assert.ok(start >= 0 && end > start, "Read-only quote toggle handler missing");
