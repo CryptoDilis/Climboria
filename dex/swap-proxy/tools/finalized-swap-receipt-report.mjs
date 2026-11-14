@@ -6,6 +6,7 @@
  * do not publish this JSON without permission and a review/redaction.
  */
 import { fetchFinalizedSwapReceiptEvidence } from "../src/finalized-swap-receipt-evidence.mjs";
+import { verifyDualRpcFinalizedSwapReceipt } from "../src/dual-rpc-finalized-swap-receipt-evidence.mjs";
 
 const REQUIRED = Object.freeze([
   "CLIMBORIA_SOLANA_RPC_URL",
@@ -26,9 +27,18 @@ async function main() {
   if (REQUIRED.some(name => !process.env[name])) {
     throw new Error("operator receipt configuration incomplete");
   }
-  const report = await fetchFinalizedSwapReceiptEvidence({
+  // One-provider mode remains for local debugging only. A second separately
+  // operated HTTPS host enables a strict cross-source account-state witness.
+  const secondary = process.env.CLIMBORIA_SOLANA_RPC_URL_SECONDARY;
+  const inspect = secondary
+    ? verifyDualRpcFinalizedSwapReceipt
+    : fetchFinalizedSwapReceiptEvidence;
+  const report = await inspect({
     network:process.env.CLIMBORIA_SWAP_RECEIPT_NETWORK,
-    rpcUrl:process.env.CLIMBORIA_SOLANA_RPC_URL,
+    ...(secondary
+      ? {primaryRpcUrl:process.env.CLIMBORIA_SOLANA_RPC_URL,
+         secondaryRpcUrl:secondary}
+      : {rpcUrl:process.env.CLIMBORIA_SOLANA_RPC_URL}),
     expectedGenesisHash:process.env.CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH,
     signature:process.env.CLIMBORIA_SWAP_RECEIPT_SIGNATURE,
     taker:process.env.CLIMBORIA_SWAP_RECEIPT_TAKER,
