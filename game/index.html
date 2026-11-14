@@ -228,7 +228,7 @@ const heroEnterButton=document.getElementById('heroEnterButton');
 const heroFeedback=document.getElementById('heroCreateFeedback');
 const heroStatus=document.getElementById('heroPreviewStatus');
 const heroCanvas=document.getElementById('heroPreviewCanvas');
-let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.4,previewTouchX=null,previewTouchDistance=null,previewRequest=0,previewActiveModel='';
+let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.4,previewTouchX=null,previewTouchDistance=null,previewRequest=0,previewActiveModel='',previewNeutralSpine=null,previewNeutralTime=0;
 const validHeroName=name=>/^[A-Za-z0-9 _-]{2,24}$/.test(name)&&/[A-Za-z0-9]/.test(name);
 function savedHero(){
  try{const h=JSON.parse(localStorage.getItem(HERO_RECORD_KEY)||'null');return h&&['Adventurer','Jarrell','Lheiz'].includes(h.model)&&typeof h.name==='string'&&validHeroName(h.name)?h:null}catch(_){return null}
@@ -255,6 +255,11 @@ function previewRender(){
  }
  if(previewModel){previewModel.rotation.y=previewAngle;previewCamera.position.set(0,1.0,previewDistance);previewCamera.lookAt(0,1.0,0);}
  if(previewMixer&&previewClock)previewMixer.update(Math.min(previewClock.getDelta(),.06));
+ if(previewNeutralSpine&&previewClock){
+  previewNeutralTime+=Math.min(previewClock.getDelta(),.06);
+  previewNeutralSpine.bone.quaternion.copy(previewNeutralSpine.base);
+  previewNeutralSpine.bone.rotateX(Math.sin(previewNeutralTime*1.8)*.012);
+ }
  previewRenderer.render(previewScene,previewCamera);
 }
 function startHeroPreview(){
@@ -288,7 +293,7 @@ function startHeroPreview(){
     for(const material of mats){if(material.map)material.map.dispose();material.dispose();}
    });
   }
-  previewModel=null;previewMixer=null;
+  previewModel=null;previewMixer=null;previewNeutralSpine=null;previewNeutralTime=0;
   document.documentElement.dataset.climboriaHeroPreviewModel='loading';
   new THREE.GLTFLoader().load(HERO_MODELS[choice],gltf=>{
    if(request!==previewRequest)return;
@@ -297,24 +302,57 @@ function startHeroPreview(){
    const ground=new THREE.Box3().setFromObject(previewModel);previewModel.position.y=-ground.min.y;
    previewScene.add(previewModel);
    if(choice!=='Adventurer'){
-    let boneCount=0,skinnedCount=0;
-    previewModel.traverse(o=>{if(o.isBone)boneCount++;if(o.isSkinnedMesh)skinnedCount++;});
-    const clip=(gltf.animations||[]).find(a=>/^(standing_)?idle(?:[_-]?[0-9]+)?$/i.test(a.name));
-    if(!boneCount||!skinnedCount||!clip){
+    let bones=0,skinned=0;
+    previewModel.traverse(o=>{if(o.isBone)bones++;if(o.isSkinnedMesh)skinned++;});
+    // Owner's Meshy Idle_03 is an overhead-arms motion, NOT a neutral rest.
+    // Keep all original animation clips embedded but preview the safe relaxed
+    // pose with arms lowered so the player sees the actual spawn silhouette.
+    const point=(boneName,childName,target)=>{
+     const bone=previewModel.getObjectByName(boneName),child=previewModel.getObjectByName(childName);
+     if(!bone||!child||child.parent!==bone)return false;
+     previewModel.updateWorldMatrix(true,true);
+     const current=child.getWorldPosition(new THREE.Vector3()).sub(bone.getWorldPosition(new THREE.Vector3()));
+     if(current.lengthSq()<1e-8)return false;
+     const delta=new THREE.Quaternion().setFromUnitVectors(current.normalize(),target.clone().normalize());
+     const world=bone.getWorldQuaternion(new THREE.Quaternion());
+     const parentWorld=bone.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
+     bone.quaternion.copy(parentWorld.multiply(delta.multiply(world)));
+     previewModel.updateWorldMatrix(true,true);
+     return true;
+    };
+    let posed=0;
+    for(const [side,sign] of [['Left',1],['Right',-1]]){
+     posed+=Number(point('mixamorig:'+side+'Arm','mixamorig:'+side+'ForeArm',new THREE.Vector3(sign*.38,-.93,0)));
+     posed+=Number(point('mixamorig:'+side+'ForeArm','mixamorig:'+side+'Hand',new THREE.Vector3(sign*.24,-.97,.05)));
+    }
+    if(!bones||!skinned||posed!==4){
      previewLoaded=false;previewLoading=false;
-     heroStatus.textContent='Rigged idle preview unavailable';
-     heroFeedback.textContent='This GLB must include a skinned rig and a standing idle animation. Please verify the exported model.';
+     heroStatus.textContent='Rigged neutral preview unavailable';
+     heroFeedback.textContent='This GLB needs a working Mixamo humanoid rig. Please verify the model.';
      editorButtons();return;
     }
-    previewMixer=new THREE.AnimationMixer(previewModel);
-    previewMixer.clipAction(clip).reset().play();
-    document.documentElement.dataset.climboriaHeroPreviewPose='authored-idle';
-    document.documentElement.dataset.climboriaHeroPreviewClip=clip.name;
+    previewModel.position.y=0;
+    const posedBounds=new THREE.Box3().setFromObject(previewModel);
+    previewModel.position.y=-posedBounds.min.y;
+    const direction=(bone,child)=>{
+     const a=previewModel.getObjectByName(bone),b=previewModel.getObjectByName(child);
+     return b.getWorldPosition(new THREE.Vector3())
+      .sub(a.getWorldPosition(new THREE.Vector3())).normalize().toArray();
+    };
+    window.__climboriaHeroNeutralPoseAudit={
+     leftArm:direction('mixamorig:LeftArm','mixamorig:LeftForeArm'),
+     rightArm:direction('mixamorig:RightArm','mixamorig:RightForeArm')
+    };
+    const spine=previewModel.getObjectByName('mixamorig:Spine2');
+    previewNeutralSpine=spine?{bone:spine,base:spine.quaternion.clone()}:null;
+    previewNeutralTime=0;
+    document.documentElement.dataset.climboriaHeroPreviewPose='neutral-idle';
+    document.documentElement.dataset.climboriaHeroPreviewClip='procedural-neutral';
     document.documentElement.dataset.climboriaHeroPreviewSeat='none';
     document.documentElement.dataset.climboriaHeroPreviewModel=choice.toLowerCase();
     window.__climboriaHeroAPoseAudit=null;
     previewLoaded=true;previewLoading=false;heroStatus.classList.add('ready');
-    heroStatus.textContent='LIVE 3D PREVIEW · '+choice.toUpperCase()+' · IDLE';
+    heroStatus.textContent='LIVE 3D PREVIEW · '+choice.toUpperCase()+' · NEUTRAL IDLE';
     heroFeedback.textContent=choice+' is ready. Save to select this hero.';
     editorButtons();return;
    }
