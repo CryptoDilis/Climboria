@@ -25,6 +25,8 @@ export function classifyReadOnlyApiFailure(body) {
     return "JUPITER_TRANSPORT_OR_REDIRECT";
   if (error === "Jupiter upstream request timed out")
     return "JUPITER_TIMEOUT";
+  if (error === "Jupiter upstream redirect blocked")
+    return "JUPITER_REDIRECT_BLOCKED";
   if (error === "Backend is not configured: missing Jupiter server API key")
     return "JUPITER_KEY_MISSING";
   if (error === "Backend rate limiter is not configured; swap proxy is fail-closed")
