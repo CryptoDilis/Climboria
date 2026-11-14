@@ -74,10 +74,16 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   let loading = false;
   let mounted = false;
   let scriptLoaded = false;
+  let lastTrigger = null;
+  const expanded = value => buttons.forEach(button => button.setAttribute?.("aria-expanded", String(value)));
+  expanded(false);
   buttons.forEach(button => {
     button.hidden = false;
     button.addEventListener("click", async () => {
       panel.hidden = false;
+      lastTrigger = button;
+      expanded(true);
+      panel.scrollIntoView?.({ behavior: "smooth", block: "start" });
       if (mounted || loading) return;
       loading = true;
       buttons.forEach(control => { control.disabled = true; });
@@ -94,7 +100,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         mounted = true;
         status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
       } catch {
-        status.textContent = "Provider integration could not be verified or loaded. No swap was submitted by Climboria.";
+        status.textContent = "Provider integration unavailable. Review outstanding wallet prompts or activity before retrying. Climboria did not submit a swap.";
       } finally {
         loading = false;
         buttons.forEach(control => { control.disabled = false; });
@@ -103,6 +109,8 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   });
   close.addEventListener("click", () => {
     panel.hidden = true;
+    expanded(false);
+    lastTrigger?.focus?.();
     status.textContent = mounted
       ? "Provider panel hidden. Closing this page does not cancel wallet prompts or on-chain transactions."
       : "Provider panel closed. No swap was submitted by Climboria.";
