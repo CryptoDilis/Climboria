@@ -65,10 +65,11 @@ The quote/search API deployment workflow must not enable swap execution. It asse
 ## Third-party response/redirect safety (2026-11-14)
 
 - Server-side Jupiter `x-api-key` is attached ONLY to the approved
-  `api.jup.ag` request. Upstream `fetch` now explicitly uses
-  `redirect: "error"` so a redirect cannot forward that secret to
-  any new host; exceptions are rewritten into fixed, credential-free
-  failure text, retaining a generic timeout indication.
+  `api.jup.ag` request. Upstream `fetch` uses
+  `redirect: "manual"` and explicitly rejects all 3xx, opaque, or
+  unexpectedly auto-followed redirects **without making a second request**.
+  A redirect never forwards the key to a new host. Provider transport and
+  redirect exceptions are rewritten into fixed, credential-free categories.
 - Public read-only `/api/swap/quote` caps third-party JSON at **256 KiB**;
   `/api/tokens/search` at **512 KiB**; `/api/pump/coin` at
   **256 KiB**. The (still fully gated) wallet order and
@@ -204,4 +205,12 @@ before reporting any new release live.
 
 New fail-closed diagnostics: Cloudflare RATE_LIMITER.limit() exceptions return only RATE_LIMITER_UNAVAILABLE, while missing namespace and ordinary limit refusal remain separately identifiable. The real production smoke probes BOTH token search and unsigned SOL/USDC quote even when one fails. It prints ONLY fixed allowlisted categories and HTTP status (e.g. RATE_LIMITER_UNAVAILABLE, JUPITER_TRANSPORT_OR_REDIRECT, JUPITER_TIMEOUT, JUPITER_HTTP_401/403/429/5xx), never raw provider errors, private tokens or URLs. It never calls the signable order endpoint.
 
-**Next:** Inspect the postmerge guarded main-push Deploy Climboria API run. If RATE_LIMITER_UNAVAILABLE, check Cloudflare account-specific binding/namespace under owner control rather than disabling rate limits. If Jupiter network transport/redirect, check outbound egress while preserving redirect:error and secret isolation. If JUPITER_HTTP_401/403, investigate Jupiter account/entitlements and private Actions secret; never paste keys in source, logs or chat. If HTTP 429, respect provider quotas. Only full live quote-only readiness success establishes operational quoting; it is not approval for native transaction signing or execution.
+**Next:** Inspect the postmerge guarded main-push Deploy Climboria API run. If RATE_LIMITER_UNAVAILABLE, check Cloudflare account-specific binding/namespace under owner control rather than disabling rate limits. If Jupiter network transport/redirect, check outbound egress while preserving explicit no-follow redirect blocking and secret isolation. If JUPITER_HTTP_401/403, investigate Jupiter account/entitlements and private Actions secret; never paste keys in source, logs or chat. If HTTP 429, respect provider quotas. Only full live quote-only readiness success establishes operational quoting; it is not approval for native transaction signing or execution.
+
+## Follow-up to production Jupiter transport 503: manual no-follow redirects
+
+[Deploy Climboria API run #43553774249](https://github.com/CryptoDilis/Climboria/actions/runs/43553774249) succeeded at **Wrangler upload, exact live health SHA, and CORS**, but failed the full production smoke: BOTH Jupiter token search and unsigned quote returned `HTTP 503 JUPITER_TRANSPORT_OR_REDIRECT`. The Cloudflare rate limiter itself was **not** the reported error. This is a concrete API availability blocker and confirms that the backend is **not** live-operational for quotes yet.
+
+Jupiter upstream now uses **manual redirect mode with explicit fail-closed rejection**. This does not follow any redirect; any HTTP 3xx, opaque redirect, or response already marked redirected yields a fixed `Jupiter upstream redirect blocked` response, categorized as `JUPITER_REDIRECT_BLOCKED` by the production probe. The x-api-key remains attached exclusively to the initial fixed `https://api.jup.ag` request. A network/edge failure remains `JUPITER_TRANSPORT_OR_REDIRECT` for compatibility with existing logs. These categories allow operator diagnosis without revealing Jupiter credentials or arbitrary external error details.
+
+After merge inspect the new guarded main-push deploy: if both live endpoints now return HTTP 200 with correct provider data, quote-only API becomes operational (NOT transaction execution). If `JUPITER_REDIRECT_BLOCKED`, investigate official Jupiter endpoint/hostname and account routing before changing URLs; do NOT auto-follow a redirect with an API key. If still `JUPITER_TRANSPORT_OR_REDIRECT`, investigate Cloudflare outgoing fetch behavior and provider egress privately. Do not enable the signed order/execute gates to hide an upstream failure.
