@@ -58,15 +58,23 @@ test("unknown, malformed, contradictory provider responses stay replay-locked an
   }
 });
 
-test("a genuine provider Failed with matching or absent signature is never Success",()=>{
+test("provider Failed is an UNCONFIRMED observation, not finalized failure or permission to retry",()=>{
   for(const signature of [claimed,null,undefined]){
     const result=classifyJupiterExecutionOutcome({
       status:"Failed",code:9,signature
     },claimed);
-    assert.equal(result.settlementState,"failed");
-    assert.equal(result.userStatus,"Failed");
-    assert.equal(result.providerStatus,"Failed");
-    assert.equal(result.settledOnChain,false);
+    assert.deepEqual(result,{
+      settlementState:"provider_failure_unconfirmed",
+      userStatus:"PendingConfirmation",
+      providerStatus:"Failed",
+      signature:claimed,
+      providerCode:9,
+      providerReportedSuccessUnconfirmed:false,
+      settledOnChain:false
+    });
+    assert.equal(result.failed,undefined);
+    assert.equal(result.completed,undefined);
+    assert.equal(Object.isFrozen(result),true);
   }
 });
 
@@ -91,5 +99,9 @@ test("production Worker retains both hard-off source gates and never advertises 
   assert.match(worker,/classifyJupiterExecutionOutcome\(data, claim\.record\.claimedSignature\)/);
   assert.doesNotMatch(worker,/status:\s*data\.status/);
   assert.doesNotMatch(store,/\["completed", "failed", "uncertain"\]/);
+  assert.doesNotMatch(store,/"provider_success_unconfirmed", "failed"/);
   assert.match(store,/provider_success_unconfirmed/);
+  assert.match(store,/provider_failure_unconfirmed/);
+  assert.match(worker,/\}, 202\);/);
+  assert.doesNotMatch(worker,/userStatus:\s*"Failed"/);
 });
