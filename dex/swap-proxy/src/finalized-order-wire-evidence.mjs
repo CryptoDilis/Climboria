@@ -139,15 +139,8 @@ export async function verifyDualRpcFinalizedOrderWire({
     const second = validateRpcUrl(secondaryRpcUrl);
     if (first.hostname === second.hostname) fail();
     const genesis = canonicalExpectedGenesisHash(expectedGenesisHash);
-    // Validate local signed and unsigned messages BEFORE any network request.
-    // Prevent accidentally using wrong / unverified operator transaction files.
-    const check = await inspectFinalizedOrderWire({
-      receipt: null, originalUnsignedTransaction, signedTransaction,
-      taker, claimedSignature
-    }).catch(() => null);
-    // Null receipt is inherently rejected by the strict single-witness
-    // inspector. Preflight signed inputs separately instead.
-    if (check !== null) fail();
+    // Verify the independently preserved unsigned order, Ed25519-signed
+    // exact message and DO-claimed signature BEFORE any provider RPC.
     const auth = await validateSignedOrderTransaction({
       originalTransaction: originalUnsignedTransaction,
       signedTransaction,taker
