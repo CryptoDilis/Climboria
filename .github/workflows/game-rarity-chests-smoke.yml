@@ -55,7 +55,7 @@ jobs:
         with:
           name: climboria-chest-rarity-desktop-mobile
           path: |
-            climboria-rarity-chest-desktop.png
-            climboria-rarity-chest-mobile.png
+            climboria-rarity-chest-*-desktop.png
+            climboria-rarity-chest-*-mobile.png
           if-no-files-found: warn
           retention-days: 7
