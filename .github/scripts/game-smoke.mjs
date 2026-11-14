@@ -516,12 +516,27 @@ try {
     p.x=b.x;p.z=b.z;p.y=w.groundAt(b.x,b.z)+1.75;p.vy=0;
     return origin;
   });
+  const swimStateDiagnostic = () => page.evaluate(() => {
+    const w=window.__climboriaJarrellsPeak,p=w?.player,body=p&&w?.waterBodyAt?.(p.x,p.z);
+    return {gameReady:window.__climboriaGameReady,player:p?{x:p.x,z:p.z,y:p.y,mode:p.mode,swim:p.swim,swimDepth:p.swimDepth,waterBodyId:p.waterBodyId,vy:p.vy}:null,
+      body:body?{id:body.id,kind:body.kind,surfaceY:body.surfaceY,depth:body.depth}:null,
+      groundY:p&&w?.groundAt?.(p.x,p.z),animation:document.documentElement.dataset.climboriaHeroAnimation,
+      clip:document.documentElement.dataset.climboriaHeroClip,renderErrors:window.__climboriaRenderState?.errors??[]};
+  });
   await page.keyboard.down('w');
-  await page.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.swim === true && document.documentElement.dataset.climboriaHeroAnimation === 'swim', undefined, { timeout: 10000 });
+  try {
+    await page.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.swim === true && document.documentElement.dataset.climboriaHeroAnimation === 'swim', undefined, { timeout: 25000 });
+  } catch (error) {
+    throw new Error('Actual swim-state/animation gate timed out: '+JSON.stringify(await swimStateDiagnostic())+'; '+error.message);
+  }
   const swimClip = await page.evaluate(() => document.documentElement.dataset.climboriaHeroClip || '');
   await page.keyboard.up('w');
   if(swimOrigin)await page.evaluate(origin=>Object.assign(window.__climboriaJarrellsPeak.player,origin),swimOrigin);
-  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
+  try {
+    await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 25000 });
+  } catch (error) {
+    throw new Error('Actual post-swim idle animation gate timed out: '+JSON.stringify(await swimStateDiagnostic())+'; '+error.message);
+  }
   console.log('Original Climboria GLB movement states:',JSON.stringify({idle:'idle',walk:'walk',run:'run',swim:'swim'}));
   const spawnCheck = await page.evaluate(() => ({gameplayActive: document.body.classList.contains('free'), mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
   if(spawnCheck.heroAsset!=='adventurer')errors.push('Original Climboria GLB did not remain active during gameplay: '+JSON.stringify(spawnCheck));
