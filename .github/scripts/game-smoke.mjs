@@ -302,6 +302,14 @@ try {
     coastRoute.outward.distance<260||coastRoute.returnTrip.distance<260)
     errors.push('Real cave-to-coast route was not traversable in both directions: '+JSON.stringify(coastRoute));
   console.log('Cave-to-shore two-way traversal:',JSON.stringify(coastRoute));
+  const caveGround=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveApproachGroundAudit?.()??null);
+  if(!caveGround?.ground||caveGround.rockInstances<30||caveGround.vertices!==1363||
+    caveGround.alphaComponents!==4||caveGround.edgeAlpha>.05||
+    caveGround.centerAlpha<.7||!caveGround.hasColorTexture||
+    !caveGround.hasBumpTexture||caveGround.textureRepeat!==7||
+    !caveGround.frustumCulled||caveGround.terrainGap>0.001)
+    errors.push('Cave entrance terrain detail failed alpha edges, texture, or budget invariant: '+JSON.stringify(caveGround));
+  console.log('Cave entrance detailed ground audit:',JSON.stringify(caveGround));
   const sanctuaryPillars=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryPillarCollisionAudit?.()??null);
   if(!sanctuaryPillars?.ok||sanctuaryPillars.pillars?.length!==12||
     sanctuaryPillars.pillars.some(p=>!p.collider||!p.blocked)||sanctuaryPillars.walkwayBlocked?.length)
@@ -350,7 +358,7 @@ try {
 
   const caveSpikeTick=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveSpikeDamageTickAudit?.()??null);
   if(!caveSpikeTick||!caveSpikeTick.ok||caveSpikeTick.damageTaken!==25) errors.push('Live cave spike contact-to-gameTick damage path failed: '+JSON.stringify(caveSpikeTick));
-  if(!caveLighting||caveLighting.torchCount!==6||caveLighting.localPointLights<8||caveLighting.blackSphereOccluders!==0||caveLighting.entranceArchRocks<8||caveLighting.ambientFillIntensity<1.15||caveLighting.texturedRockMaterials!==10||caveLighting.bumpedRockMaterials!==10||caveLighting.torchPositions.some(p=>![p.x,p.y,p.z].every(Number.isFinite))) errors.push('Cave readable-light coverage, textured rock materials, ambient fill, or six-fixture layout is invalid: '+JSON.stringify(caveLighting));
+  if(!caveLighting||caveLighting.torchCount!==6||caveLighting.localPointLights<8||caveLighting.blackSphereOccluders!==0||caveLighting.entranceArchRocks<8||caveLighting.ambientFillIntensity<1.15||caveLighting.texturedRockMaterials!==11||caveLighting.bumpedRockMaterials!==11||caveLighting.torchPositions.some(p=>![p.x,p.y,p.z].every(Number.isFinite))) errors.push('Cave readable-light coverage, textured rock materials, ambient fill, or six-fixture layout is invalid: '+JSON.stringify(caveLighting));
   if (world.snakes !== 0) errors.push('Snakes should remain temporarily disabled with all wildlife, got ' + world.snakes);
   if (world.animals !== 0) errors.push('Low-quality placeholder wildlife should remain disabled, got ' + world.animals);
   for (const facility of ['black_market','forge','craft','fish']) if (!world.facilities.includes(facility)) errors.push('Missing world facility: ' + facility);
@@ -540,7 +548,11 @@ try {
   const bagSlots = await page.locator('#climboriaInventoryPanel').locator('div').filter({has: page.locator('small')}).count().catch(()=>0);
   if (!(await page.locator('#climboriaInventoryPanel').getByText('BACKPACK · 50 SLOTS').count())) errors.push('50-slot backpack heading missing');
   await page.locator('#climboriaInventoryPanel button').filter({hasText:'CLOSE'}).dispatchEvent('click');
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display === 'none', undefined, { timeout: 5000 });
+  // CLOSE sets the inline display synchronously; a single browser task checks
+  // actual closure without requestAnimationFrame starvation under software WebGL.
+  if(!(await page.locator('#climboriaInventoryPanel').evaluate(panel =>
+    panel.style.display==='none' && getComputedStyle(panel).display==='none')))
+    errors.push('Inventory CLOSE did not hide its field panel');
   await page.keyboard.press('f');
   await page.keyboard.press('3');
   const controls = await page.evaluate(() => ({
@@ -573,7 +585,11 @@ try {
   // Keep the gameplay evidence unobstructed: the inventory interaction above is
   // tested, but it must be closed before capturing the actual world/player view.
   await page.locator('#climboriaInventoryPanel button').filter({hasText:'CLOSE'}).dispatchEvent('click');
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display === 'none', undefined, { timeout: 5000 });
+  // CLOSE sets the inline display synchronously; a single browser task checks
+  // actual closure without requestAnimationFrame starvation under software WebGL.
+  if(!(await page.locator('#climboriaInventoryPanel').evaluate(panel =>
+    panel.style.display==='none' && getComputedStyle(panel).display==='none')))
+    errors.push('Inventory CLOSE did not hide its field panel');
   // Normalize the evidence view to the real Sanctuary spawn. Earlier controls tests
   // teleport to the cave, so restoring only player coordinates leaves a misleading
   // cave camera/biome view in the desktop screenshot.
