@@ -17,7 +17,7 @@ import { safeRaydiumOperatorError } from "./raydium-v4-safe-error.mjs";
 import { fetchMainnetUpgradeableProgramProvenance } from "../src/upgradeable-program-provenance.mjs";
 import { verifyOperatorRpcGenesisSet } from "../src/raydium-v4-rpc-genesis-preflight.mjs";
 
-const USAGE = "Usage: node dex/swap-proxy/tools/raydium-v4-finalized-pool-report.mjs --network mainnet-beta|devnet --pool <verified-public-pool-address> [--min-slot <nonnegative-slot>]";
+const USAGE = "Usage: node dex/swap-proxy/tools/raydium-v4-finalized-pool-report.mjs --network mainnet-beta --pool <verified-public-pool-address> [--min-slot <nonnegative-slot>]";
 
 async function main(argv) {
   if (!Array.isArray(argv) || argv.length < 4 || argv.length > 6 || argv.length % 2 !== 0) {
