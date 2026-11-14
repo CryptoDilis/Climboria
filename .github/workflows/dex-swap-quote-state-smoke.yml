@@ -11,6 +11,7 @@ on:
       - ".github/scripts/dex-swap-quote-state-smoke.mjs"
       - ".github/scripts/dex-trade-rpc-race.test.mjs"
       - ".github/scripts/dex-swap-managed-provider-shell.test.mjs"
+      - ".github/scripts/dex-swap-managed-provider-browser-smoke.mjs"
       - ".github/scripts/dex-swap-monetization-readiness.test.mjs"
       - "dex/provider-managed-swap.mjs"
       - "dex/provider-managed-swap.css"
@@ -28,6 +29,7 @@ on:
       - ".github/scripts/dex-swap-quote-state-smoke.mjs"
       - ".github/scripts/dex-trade-rpc-race.test.mjs"
       - ".github/scripts/dex-swap-managed-provider-shell.test.mjs"
+      - ".github/scripts/dex-swap-managed-provider-browser-smoke.mjs"
       - ".github/scripts/dex-swap-monetization-readiness.test.mjs"
       - "dex/provider-managed-swap.mjs"
       - "dex/provider-managed-swap.css"
@@ -80,3 +82,5 @@ jobs:
         run: node .github/scripts/dex-swap-quote-state-smoke.mjs
       - name: Verify DEX sponsorship inquiry form on desktop/mobile without sending email
         run: node .github/scripts/dex-sponsor-inquiry-browser-smoke.mjs
+      - name: Exercise both provider-managed in-page swap widgets using a synthetic SRI-pinned SDK only
+        run: node .github/scripts/dex-swap-managed-provider-browser-smoke.mjs
