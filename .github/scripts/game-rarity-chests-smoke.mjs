@@ -46,10 +46,18 @@ try{
     localStorage.setItem('climboria-created-hero-v1',JSON.stringify({
      name:'Rarity Chest QA',model:'Jarrell',createdAt:'2026-11-15T00:00:00Z'
     }));
-    if(navigator.userAgent.includes('Mobile')){
-     // The portrait rotate UX is not an error when the test is in landscape.
-     window.__climboriaChestSmokeMobile=true;
-    }
+    // Visual QA must render ALL five actual GLBs even though a natural
+    // 100-spawn sample can contain zero Legendary chests (0.2% world).
+    // Deterministic Math.random only for reward rolls in this TEST BROWSER;
+    // production odds and source logic stay untouched.
+    const random=Math.random;
+    const sample=[.04,.76,.92,.984,.999];
+    let idx=0;
+    Math.random=function(){
+     if((new Error().stack||'').includes('rollChestReward'))
+      return sample[(idx++)%sample.length];
+     return random();
+    };
    });
    await page.goto(base+'/game/play.html?level=11&smoke=1',{waitUntil:'domcontentloaded',timeout:60000});
    await page.waitForFunction(()=>window.__climboriaGameReady===true
@@ -78,12 +86,17 @@ try{
       c.assetVisual?.isObject3D===true&&c.assetVisual.userData.rarity===c.rarity&&c.fallback.visible===false),
      totals:world.chestDistributionAudit().rarityTotals,
      odds:world.chestDistributionAudit().rarityOdds,
-     hero:document.documentElement.dataset.climboriaHero
+     hero:document.documentElement.dataset.climboriaHero,
+     actualVisibleRarityCount:Object.fromEntries(
+      ['common','uncommon','rare','epic','legendary'].map(tier=>[
+       tier,world.chests.filter(c=>!c.open&&c.rarity===tier&&!!c.assetVisual).length
+      ]))
     };
    });
    if(state.total!==100||state.active!==100||!state.allLoaded||state.fallbackCount!==0
-    ||!state.tiersMatch||!state.everyVisibleChestHasMatchingGLB)
-    throw Error('Chest model mismatch or missing instance: '+JSON.stringify(state));
+    ||!state.tiersMatch||!state.everyVisibleChestHasMatchingGLB
+    ||Object.values(state.actualVisibleRarityCount).some(n=>n<1))
+    throw Error('Five visible distinct chest GLB variants not present or mismatched: '+JSON.stringify(state));
    for(const [kind,expectedOdds] of Object.entries(expected)){
     const rows=state.odds[kind];
     const actual=Object.fromEntries(rows);
@@ -104,17 +117,25 @@ try{
    if(!opened.lifecycle?.ok||!opened.after.rewardTiersMatchVisuals
     ||!opened.after.modelsMatchAssignedRarity)
     throw Error('Spawn/open/respawn rarity integrity failed: '+JSON.stringify(opened));
-   // Stand near an actual world chest to capture its visible GLB. This is not
-   // a fabricated showcase item; it is one of the original 100 world spawns.
-   await page.evaluate(()=>{
-    const world=window.__climboriaJarrellsPeak;
-    const chest=world.chests.find(c=>c.kind==='ruins'&&!c.open)||world.chests.find(c=>c.kind==='remote'&&!c.open);
-    const player=world.player;
-    player.x=chest.x+3;player.z=chest.z+5;player.y=world.groundAt(player.x,player.z)+1.75;
-    player.mode='walk';player.vy=0;player.moveTarget=null;
-   });
-   await page.waitForTimeout(1500);
-   await page.screenshot({path:'climboria-rarity-chest-'+device.name+'.png',animations:'disabled',timeout:60000});
+   // Capture EACH rarity from an actual chest on the original 100-site map,
+   // not a fabricated floating GLB viewer. Test-only scripted RNG above
+   // guarantees five distinct rarity appearances without editing player odds.
+   for(const tier of Object.keys(expected.world)){
+    const shot=await page.evaluate(rarity=>{
+     const world=window.__climboriaJarrellsPeak;
+     const chest=world.chests.find(c=>c.kind==='ruins'&&!c.open&&c.rarity===rarity)
+      ||world.chests.find(c=>c.kind==='remote'&&!c.open&&c.rarity===rarity)
+      ||world.chests.find(c=>!c.open&&c.rarity===rarity);
+     if(!chest||!chest.assetVisual||chest.fallback.visible)return null;
+     const player=world.player;
+     player.x=chest.x+3;player.z=chest.z+5;player.y=world.groundAt(player.x,player.z)+1.75;
+     player.mode='walk';player.vy=0;player.moveTarget=null;
+     return {tier:chest.rarity,position:{x:chest.x,z:chest.z}};
+    },tier);
+    if(!shot||shot.tier!==tier)throw Error('Missing actual '+tier+' chest model screenshot target');
+    await page.waitForTimeout(1000);
+    await page.screenshot({path:'climboria-rarity-chest-'+tier+'-'+device.name+'.png',animations:'disabled',timeout:60000});
+   }
    if(errors.length)throw Error('Browser JS errors: '+errors.join(' | '));
    console.log('PASS '+device.name+' FIVE optimized rarity chest GLBs on real 100-chest map',JSON.stringify(state));
   }finally{await context.close()}
