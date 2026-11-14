@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { generateKeyPairSync, sign } from "node:crypto";
+import { createHash, generateKeyPairSync, sign } from "node:crypto";
 import { shortVec } from "./solana-v0-fixture.mjs";
-import { encodeBase58 } from "../src/transaction-validation.mjs";
+import { encodeBase58, parseSolanaV0Transaction } from "../src/transaction-validation.mjs";
 import {
   verifyDualRpcFinalizedOrderWire
 } from "../src/finalized-order-wire-evidence.mjs";
@@ -123,6 +123,28 @@ async function twoReports(opts={}){
 }
 
 test("combines two REAL read-only mocked RPC witness paths and exact compiled signer/writable roles",async()=>{
+  const independent=await twoReports();
+  const parsed=parseSolanaV0Transaction(signedTransaction);
+  const actualRoles=parsed.staticAccountKeys.map((key,i)=>[
+    encodeBase58(key),i<parsed.requiredSignatures,
+    i<parsed.requiredSignatures
+      ? i<parsed.requiredSignatures-parsed.readonlySignedAccounts
+      : i<parsed.staticAccountKeys.length-parsed.readonlyUnsignedAccounts
+  ]);
+  const expectedRoleHash=createHash("sha256").update(JSON.stringify(actualRoles)).digest("hex");
+  const failures={
+    rolesHash:independent.balanceEvidence.providerReportedAccountKeyRolesSha256===expectedRoleHash,
+    slot:independent.wireEvidence.providerReportedFinalizedSlot===independent.balanceEvidence.providerReportedFinalizedSlot,
+    fee:independent.wireEvidence.providerReportedFeeLamports===independent.balanceEvidence.feeLamports,
+    signature:independent.wireEvidence.claimedSignature===independent.balanceEvidence.signature,
+    minOutput:independent.balanceEvidence.minimumOutputRawAmount===common.minimumOutputRawAmount,
+    input:independent.balanceEvidence.observedInputRawAmount===common.expectedInputRawAmount,
+    wireHash:independent.wireEvidence.exactFullSignedTransactionWireSha256===createHash("sha256").update(parsed.bytes).digest("hex"),
+    messageHash:independent.wireEvidence.exactServerIssuedMessageSha256===createHash("sha256").update(parsed.message).digest("hex"),
+    trueFlag:independent.balanceEvidence.exactSourceDebitAndMinimumDestinationCreditChecked===true,
+    approvedFlag:independent.wireEvidence.approvedForProductionExecution===false
+  };
+  assert.deepEqual(Object.keys(failures).filter(k=>!failures[k]),[],"positive correlation fixture mismatch");
   const h=mockRpc();
   const evidence=await verifyDualRpcCorrelatedSwapEvidence({
     ...common,fetchImpl:h.fetchImpl
