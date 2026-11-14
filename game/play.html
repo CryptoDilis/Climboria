@@ -558,6 +558,51 @@ const CS=200,SEG=40,STEP=CS/SEG,N1=SEG+1;
 const idx=[];for(let j=0;j<SEG;j++)for(let i=0;i<SEG;i++){const a=j*N1+i;idx.push(a,a+N1,a+1,a+1,a+N1,a+N1+1)}
 const IDX=new T3.BufferAttribute(new Uint32Array(idx),1);
 const terrMat=new T3.MeshLambertMaterial({vertexColors:true});
+// A single tiny original, seamlessly repeating mineral/soil albedo texture.
+// World-aligned UVs make neighboring 200m chunks join without seams. Existing
+// vertex colors still decide the biome, path pigments and soil/grass placement;
+// map is a gentle fine-scale breakup, NOT new geometry or a gameplay surface.
+function sanctuarySoilTile(){
+ const size=128,rand=rng(409127),grids=[8,32].map(n=>({n,values:Array.from({length:n*n},()=>rand())}));
+ const sample=(grid,u,v)=>{
+  const n=grid.n,px=u*n,py=v*n,ix=Math.floor(px),iy=Math.floor(py);
+  let fx=px-ix,fy=py-iy;fx=fx*fx*(3-2*fx);fy=fy*fy*(3-2*fy);
+  const at=(x,y)=>grid.values[((y+n)%n)*n+((x+n)%n)];
+  const a=mix(at(ix,iy),at(ix+1,iy),fx),b=mix(at(ix,iy+1),at(ix+1,iy+1),fx);
+  return mix(a,b,fy);
+ };
+ const canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;
+ const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(size,size);
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+  const u=x/size,v=y/size,base=sample(grids[0],u,v),detail=sample(grids[1],u,v);
+  const mineral=ss(.34,.71,base*.72+detail*.28),grain=(detail-.5)*39+(base-.5)*23;
+  const o=(y*size+x)*4;
+  pixels.data[o]=Math.max(0,Math.min(255,Math.round(215+30*mineral+grain)));
+  pixels.data[o+1]=Math.max(0,Math.min(255,Math.round(222-9*mineral+grain)));
+  pixels.data[o+2]=Math.max(0,Math.min(255,Math.round(213-30*mineral+grain)));
+  pixels.data[o+3]=255;
+ }
+ ctx.putImageData(pixels,0,0);
+ return canvas;
+}
+const SANCT_SOIL_TILE_METERS=9.6;
+const sanctuarySoilMap=new T3.CanvasTexture(sanctuarySoilTile());
+sanctuarySoilMap.colorSpace=T3.SRGBColorSpace;
+sanctuarySoilMap.wrapS=sanctuarySoilMap.wrapT=T3.RepeatWrapping;
+sanctuarySoilMap.minFilter=T3.LinearMipmapLinearFilter;
+sanctuarySoilMap.magFilter=T3.LinearFilter;
+sanctuarySoilMap.generateMipmaps=true;
+const sanctuaryTerrainMaterial=terrMat.clone();
+sanctuaryTerrainMaterial.map=sanctuarySoilMap;
+sanctuaryTerrainMaterial.needsUpdate=true;
+// Compute the nearest world-space point in each chunk footprint. Exactly the
+// 6 near-Sanctuary streamed chunks are eligible, with no new surface draw calls.
+function sanctuaryDetailChunk(cx,cz){
+ const minX=cx*CS,minZ=cz*CS,p=POI.sanct;
+ const nearestX=Math.max(minX,Math.min(p.x,minX+CS));
+ const nearestZ=Math.max(minZ,Math.min(p.z,minZ+CS));
+ return Math.hypot(nearestX-p.x,nearestZ-p.z)<135;
+}
 const C=h=>{const c=L(h);return[c.r,c.g,c.b]};
 const GA=C('#3c6a2a'),GB=C('#718f36'),FF=C('#244420'),SAND=C('#cdb27a'),UB=C('#a39a6c'),DA=C('#d8a35c'),DB=C('#b5793a'),RA=C('#5aa536'),RB=C('#b9c84a'),RE=C('#6b5a33'),RK1=C('#6c655a'),RK2=C('#4b463f'),SN=C('#f2f5fa');
 const mc=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
@@ -659,18 +704,21 @@ function props(cx,cz,out){
 }
 function buildChunk(cx,cz){
  const ox=cx*CS,oz=cz*CS,B=N1+2,hg=new Float32Array(B*B);
+ const detailed=sanctuaryDetailChunk(cx,cz),worldUV=detailed?new Float32Array(N1*N1*2):null;
  for(let j=-1;j<=N1;j++)for(let i=-1;i<=N1;i++)hg[(j+1)*B+i+1]=heightAt(ox+i*STEP,oz+j*STEP);
  const pos=new Float32Array(N1*N1*3),nor=new Float32Array(N1*N1*3),col=new Float32Array(N1*N1*3);
  for(let j=0;j<N1;j++)for(let i=0;i<N1;i++){
   const k=(j+1)*B+i+1,y=hg[k],hl=hg[k-1],hr=hg[k+1],hd=hg[k-B],hu=hg[k+B];
   let nx=hl-hr,ny=2*STEP,nz=hd-hu;const l=Math.hypot(nx,ny,nz);nx/=l;ny/=l;nz/=l;
   const o=(j*N1+i)*3;pos[o]=i*STEP;pos[o+1]=y;pos[o+2]=j*STEP;nor[o]=nx;nor[o+1]=ny;nor[o+2]=nz;
+  if(worldUV){const v=(j*N1+i)*2;worldUV[v]=(ox+i*STEP)/SANCT_SOIL_TILE_METERS;worldUV[v+1]=(oz+j*STEP)/SANCT_SOIL_TILE_METERS;}
   const c=colorAt(ox+i*STEP,oz+j*STEP,y,ny),ao=1-Math.min(.35,Math.max(-.15,((hl+hr+hd+hu)/4-y)*.06));
   col[o]=c[0]*ao;col[o+1]=c[1]*ao;col[o+2]=c[2]*ao;
  }
  const geo=new T3.BufferGeometry();geo.setAttribute('position',new T3.BufferAttribute(pos,3));geo.setAttribute('normal',new T3.BufferAttribute(nor,3));
  geo.setAttribute('color',new T3.BufferAttribute(col,3));geo.setIndex(IDX);geo.computeBoundingSphere();
- const m=new T3.Mesh(geo,terrMat);m.position.set(ox,0,oz);scene.add(m);
+ if(worldUV)geo.setAttribute('uv',new T3.BufferAttribute(worldUV,2));
+ const m=new T3.Mesh(geo,detailed?sanctuaryTerrainMaterial:terrMat);m.position.set(ox,0,oz);scene.add(m);
  const objs=[m],cl=props(cx,cz,objs);makeGrass(cx,cz,objs);return{cx,cz,objs,geo,col:cl};
 }
 const chunks=new Map();
@@ -2700,6 +2748,38 @@ function caveCoastalTraversalAudit(){
   updateChunks(P.x,P.z,200);
  }
 }
+function sanctuarySoilTextureAudit(){
+ const map=sanctuaryTerrainMaterial.map,canvas=map?.image;
+ let detailedChunks=0,plainChunks=0,alignedUVs=true,hasVertexColors=true;
+ let textureOutsideZone=false,uvCount=0;
+ for(const chunk of chunks.values()){
+  const mesh=chunk.objs?.[0];
+  if(!mesh?.isMesh)continue;
+  if(mesh.material===sanctuaryTerrainMaterial){
+   detailedChunks++;
+   const uv=mesh.geometry.getAttribute('uv');
+   if(!sanctuaryDetailChunk(chunk.cx,chunk.cz))textureOutsideZone=true;
+   if(!uv||uv.itemSize!==2||uv.count!==N1*N1)alignedUVs=false;
+   else{
+    uvCount+=uv.count;
+    if(Math.abs(uv.getX(0)-chunk.cx*CS/SANCT_SOIL_TILE_METERS)>.002||
+       Math.abs(uv.getY(0)-chunk.cz*CS/SANCT_SOIL_TILE_METERS)>.002)alignedUVs=false;
+   }
+   if(!mesh.geometry.getAttribute('color'))hasVertexColors=false;
+  }else if(mesh.material===terrMat)plainChunks++;
+ }
+ const data=canvas?.getContext('2d')?.getImageData(0,0,canvas.width,canvas.height).data;
+ let redMin=255,redMax=0;
+ if(data)for(let i=0;i<data.length;i+=4){redMin=Math.min(redMin,data[i]);redMax=Math.max(redMax,data[i]);}
+ return {nearChunks:detailedChunks,plainChunks,uvCount,alignedUVs,
+  hasVertexColors,textureOutsideZone,textureShared:sanctuaryTerrainMaterial.map===sanctuarySoilMap,
+  mapRepeated:map?.wrapS===T3.RepeatWrapping&&map?.wrapT===T3.RepeatWrapping,
+  mipmapped:map?.generateMipmaps===true&&map?.minFilter===T3.LinearMipmapLinearFilter,
+  srgb:map?.colorSpace===T3.SRGBColorSpace,
+  tileSize:canvas?.width??0,tileMeters:SANCT_SOIL_TILE_METERS,
+  redRange:data?redMax-redMin:null,extraTerrainMeshes:0,
+  noNewTerrainCollider:true,step:STEP};
+}
 function sanctuaryGroundPigmentAudit(){
  let total=0,painted=0,strong=0,minPigment=1,maxPigment=0;
  let minRed=Infinity,maxRed=-Infinity;
@@ -2817,7 +2897,7 @@ function caveApproachGroundAudit(){
   hasColorTexture:!!ground?.material?.map,hasBumpTexture:!!ground?.material?.bumpMap,
   textureRepeat:ground?.material?.map?.repeat?.x||0};
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveApproachGroundAudit:new URLSearchParams(location.search).has('smoke')?caveApproachGroundAudit:undefined,caveInteriorSkyOcclusionAudit:new URLSearchParams(location.search).has('smoke')?caveInteriorSkyOcclusionAudit:undefined,caveNorthAnnexPaletteAudit:new URLSearchParams(location.search).has('smoke')?caveNorthAnnexPaletteAudit:undefined,automaticWeatherAudit:new URLSearchParams(location.search).has('smoke')?automaticWeatherAudit:undefined,caveEntranceTraversalAudit,caveCoastalTraversalAudit,caveCoastalFloorMaterialAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalFloorMaterialAudit:undefined,caveCoastalRockSilhouetteAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalRockSilhouetteAudit:undefined,sanctuaryPillarCollisionAudit,sanctuaryGroundPigmentAudit:new URLSearchParams(location.search).has('smoke')?sanctuaryGroundPigmentAudit:undefined,positionAtCaveCoastalExitForSmoke,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,texturedRockMaterials:caveRockMaterials.filter(m=>m.userData?.caveRockTexture&&m.map&&m.bumpMap).length,bumpedRockMaterials:caveRockMaterials.filter(m=>!!m.bumpMap).length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,deathLootSnapshot:()=>deathLootBag?{x:deathLootBag.x,z:deathLootBag.z,items:deathLootBag.items.map(i=>({...i})),expiresAt:deathLootBag.expiresAt}:null,deathLootLifecycleAudit:new URLSearchParams(location.search).has('smoke')?deathLootLifecycleAudit:undefined,deathLootMapMarkerAudit:new URLSearchParams(location.search).has('smoke')?deathLootMapMarkerAudit:undefined,lootRecoveryDirectionAudit:new URLSearchParams(location.search).has('smoke')?lootRecoveryDirectionAudit:undefined,sprintStaminaAudit:new URLSearchParams(location.search).has('smoke')?sprintStaminaAudit:undefined,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,sanctuaryDressingAudit:()=>({pathSlabs:sanctuaryPathSlabs.length,lanterns:sanctuaryPathLanterns.length,planters:sanctuaryPlanters.length,span:{minZ:Math.min(...sanctuaryPathSlabs.map(o=>o.position.z)),maxZ:Math.max(...sanctuaryPathSlabs.map(o=>o.position.z))},attached:sanctuaryPathSlabs.every(o=>o.parent===sanctuaryGroup)&&sanctuaryPathLanterns.every(o=>o.base.parent===sanctuaryGroup&&o.post.parent===sanctuaryGroup&&o.cap.parent===sanctuaryGroup&&o.lamp.parent===sanctuaryGroup)&&sanctuaryPlanters.every(o=>o.bed.parent===sanctuaryGroup&&o.shrub.parent===sanctuaryGroup&&o.bloom.parent===sanctuaryGroup)}),collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveApproachGroundAudit:new URLSearchParams(location.search).has('smoke')?caveApproachGroundAudit:undefined,caveInteriorSkyOcclusionAudit:new URLSearchParams(location.search).has('smoke')?caveInteriorSkyOcclusionAudit:undefined,caveNorthAnnexPaletteAudit:new URLSearchParams(location.search).has('smoke')?caveNorthAnnexPaletteAudit:undefined,automaticWeatherAudit:new URLSearchParams(location.search).has('smoke')?automaticWeatherAudit:undefined,caveEntranceTraversalAudit,caveCoastalTraversalAudit,caveCoastalFloorMaterialAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalFloorMaterialAudit:undefined,caveCoastalRockSilhouetteAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalRockSilhouetteAudit:undefined,sanctuaryPillarCollisionAudit,sanctuaryGroundPigmentAudit:new URLSearchParams(location.search).has('smoke')?sanctuaryGroundPigmentAudit:undefined,sanctuarySoilTextureAudit:new URLSearchParams(location.search).has('smoke')?sanctuarySoilTextureAudit:undefined,positionAtCaveCoastalExitForSmoke,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,texturedRockMaterials:caveRockMaterials.filter(m=>m.userData?.caveRockTexture&&m.map&&m.bumpMap).length,bumpedRockMaterials:caveRockMaterials.filter(m=>!!m.bumpMap).length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,deathLootSnapshot:()=>deathLootBag?{x:deathLootBag.x,z:deathLootBag.z,items:deathLootBag.items.map(i=>({...i})),expiresAt:deathLootBag.expiresAt}:null,deathLootLifecycleAudit:new URLSearchParams(location.search).has('smoke')?deathLootLifecycleAudit:undefined,deathLootMapMarkerAudit:new URLSearchParams(location.search).has('smoke')?deathLootMapMarkerAudit:undefined,lootRecoveryDirectionAudit:new URLSearchParams(location.search).has('smoke')?lootRecoveryDirectionAudit:undefined,sprintStaminaAudit:new URLSearchParams(location.search).has('smoke')?sprintStaminaAudit:undefined,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,sanctuaryDressingAudit:()=>({pathSlabs:sanctuaryPathSlabs.length,lanterns:sanctuaryPathLanterns.length,planters:sanctuaryPlanters.length,span:{minZ:Math.min(...sanctuaryPathSlabs.map(o=>o.position.z)),maxZ:Math.max(...sanctuaryPathSlabs.map(o=>o.position.z))},attached:sanctuaryPathSlabs.every(o=>o.parent===sanctuaryGroup)&&sanctuaryPathLanterns.every(o=>o.base.parent===sanctuaryGroup&&o.post.parent===sanctuaryGroup&&o.cap.parent===sanctuaryGroup&&o.lamp.parent===sanctuaryGroup)&&sanctuaryPlanters.every(o=>o.bed.parent===sanctuaryGroup&&o.shrub.parent===sanctuaryGroup&&o.bloom.parent===sanctuaryGroup)}),collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');

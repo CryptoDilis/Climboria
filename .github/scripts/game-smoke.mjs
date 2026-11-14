@@ -353,6 +353,15 @@ try {
     !sanctPaint.vertexColorTerrain||sanctPaint.colorRedRange<.04)
     errors.push('Sanctuary actual spawn-view ground palette / path-free visual breakup regression: '+JSON.stringify(sanctPaint));
   console.log('Sanctuary spawn-view soil and moss pigmentation:',JSON.stringify(sanctPaint));
+  const soilTile=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuarySoilTextureAudit?.()??null);
+  if(!soilTile?.nearChunks||soilTile.nearChunks>6||soilTile.plainChunks<1||
+    !soilTile.alignedUVs||!soilTile.hasVertexColors||soilTile.textureOutsideZone||
+    !soilTile.textureShared||!soilTile.mapRepeated||!soilTile.mipmapped||
+    !soilTile.srgb||soilTile.tileSize!==128||soilTile.tileMeters!==9.6||
+    !Number.isFinite(soilTile.redRange)||soilTile.redRange<24||soilTile.redRange>110||
+    soilTile.extraTerrainMeshes!==0||!soilTile.noNewTerrainCollider||soilTile.step!==5)
+    errors.push('Sanctuary streamed world-aligned soil microtexture/UV/mobile budget regression: '+JSON.stringify(soilTile));
+  console.log('Sanctuary tileable 128px soil detail / streamed UV audit:',JSON.stringify(soilTile));
   const sanctuaryPillars=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryPillarCollisionAudit?.()??null);
   if(!sanctuaryPillars?.ok||sanctuaryPillars.pillars?.length!==12||
     sanctuaryPillars.pillars.some(p=>!p.collider||!p.blocked)||sanctuaryPillars.walkwayBlocked?.length)
