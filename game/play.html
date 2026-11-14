@@ -206,6 +206,7 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="./meshy-world-assets.js"></script>
 <script>
 (()=>{
 if(!window.__climboriaCreatedHero)return;
@@ -3292,7 +3293,7 @@ function update(dt){
   }else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='awaiting-saved-glb';}
  }
  mapMarkerClock+=dt;if(mapMarkerClock>=.12){mapMarkerClock=0;drawWorldMapPlayer();}
- const cp=cam.position;gameTick(dt,cp);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
+ const cp=cam.position;gameTick(dt,cp);window.ClimboriaMeshyAssets?.tick(cp);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
  updateChunks(cp.x,cp.z,ready?1:0);
  sky.position.copy(cp);const sx=(Math.floor(cp.x/CS)+.5)*CS,sz=(Math.floor(cp.z/CS)+.5)*CS;water.position.set(sx,0,sz);
  sunL.position.copy(cp).addScaledVector(sunDir,200);sunL.target.position.copy(cp);
@@ -3329,6 +3330,8 @@ function publishGameReady(){
  takeOver();
  // Start optional chest visuals after game controls are already interactive.
  requestAnimationFrame(loadChestModels);
+ // Optional owner Meshy GLBs are disabled by manifest until binary import and QA pass.
+ requestAnimationFrame(()=>window.ClimboriaMeshyAssets?.install({T3,scene,POI,soldiers,heightAt}));
 }
 function initChunks(){
  const buildNext=()=>{
