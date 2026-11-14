@@ -69,3 +69,34 @@ The tool prints a JSON report to the **operator terminal** only, never the priva
 5. Only then consider separate gated native order/execute enablement. Source-level `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE`, `EXECUTION_SECURITY_REVIEW_COMPLETE`, Wrangler `EXECUTION_ENABLED`, and public frontend `enabled` remain **false**.
 
 **Current evidence:** module and fixture tests only; no operator RPC, Devnet signing, or real chain transaction in this repository development step.
+
+
+## Two RPC hosts: operator-only finalized receipt corroboration (2026-11-14)
+
+The single-source report is **not** an independently corroborated proof of the transaction. To require a second separately configured HTTPS host, privately set this **optional** environment variable in addition to all the ordinary single-source inputs:
+
+```text
+CLIMBORIA_SOLANA_RPC_URL_SECONDARY      # second separately operated public HTTPS Solana RPC, never committed
+```
+
+Run the **same** operator-only CLI (not a Cloudflare Worker route):
+
+```sh
+node dex/swap-proxy/tools/finalized-swap-receipt-report.mjs
+```
+
+When the secondary URL is set, the CLI **requires** `verifyDualRpcFinalizedSwapReceipt`. It refuses two URLs whose normalized **hostname** is identical (even if API tokens or paths differ), refuses non-HTTPS/private-network/username-password endpoints, and **does not fall back to one RPC** if the second provider fails, returns a wrong genesis or disagrees.
+
+Each RPC independently receives `getGenesisHash` against the **same operator-pinned external hash** and exactly one `getTransaction` with `encoding:"jsonParsed"`, `commitment:"finalized"` and `maxSupportedTransactionVersion:0`. The two witnesses must agree on the exact transaction signature and **reported finalized slot** and a new SHA-256 snapshot covering:
+
+- every resolved account pubkey and its signer/writable roles;
+- every observed pre/post classic SPL Token balance's account index, owner, mint, raw amount and decimals (canonical account-index order; rejects duplicate indices);
+- all reported pre/post lamport balances in resolved account-index order, the reported transaction fee, signature, version and slot.
+
+Comparing the full captured state is deliberately stronger than comparing only the user-facing input/output delta: a provider cannot change the **reported vault balance** or account roles without a mismatch, even if the taker's own transfer amounts remain unchanged. Untrusted display `uiAmount` text and the order of token-balance entries cannot produce false differences because only canonical raw integers and account indices are compared.
+
+**This is STILL not approval or independently verified finality.** Two hostnames may belong to the same operator or both could lie. SHA-256 compares **provider-reported JSON account-state fields**; it does not attest a cryptographic Solana block proof, reconstruct the actual instruction bytes, verify all downstream Jupiter CPI/vault/fee recipient semantics or link the transaction to the Durable Object server-issued order. The algorithm is intentionally conservative: unsupported additional signers, Token-2022, ATA creation and missing owner/raw balances are rejected rather than represented as safe. Operators must independently authenticate network, providers and exact executable program source/bytecode and run real supervised wallet-sign → Worker validation → chain-settlement negative tests before any production release.
+
+The positive report contains only public on-chain identifiers, input/output quantities and snapshot hash, plus explicit **`approvedForJupiterCpi:false`, `approvedForProductionExecution:false` and `independentlyAuthenticatedLedgerFinality:false`**. Do not share even those addresses/balances publicly without privacy review.
+
+**Evidence status at implementation:** only deterministic synthetic/failure fixtures; no operator RPC endpoints, real transaction signature, external binary parity or reviewer authorization were available to execute this tool against live Devnet/mainnet. **Keep production swap execution gates OFF.**
