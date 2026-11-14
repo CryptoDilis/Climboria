@@ -137,7 +137,8 @@ try{
       rotating:getComputedStyle(document.querySelector('#rotate-phone-overlay')).display!=='none',
       restingArmSlope:(()=>{
         const bones=window.__climboriaJarrellsPeak?.heroAnimationAudit?.()?.armBones||[];
-        const point=n=>bones.find(x=>x.name===n)?.worldPosition;
+        const normalize=n=>n.toLowerCase().replace(/[^a-z0-9]/g,'');
+        const point=n=>bones.find(x=>normalize(x.name)===normalize(n))?.worldPosition;
         const left=point('mixamorig:LeftArm'),leftElbow=point('mixamorig:LeftForeArm');
         const right=point('mixamorig:RightArm'),rightElbow=point('mixamorig:RightForeArm');
         return {left:left&&leftElbow?leftElbow.y-left.y:null,right:right&&rightElbow?rightElbow.y-right.y:null};
