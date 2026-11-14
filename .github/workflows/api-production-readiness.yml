@@ -68,4 +68,7 @@ jobs:
         with:
           node-version: 22
       - name: Verify real Worker, quote/search and disabled execution
+        env:
+          # Manual checks are observational; post-deploy checks require an exact SHA.
+          CLIMBORIA_EXPECTED_DEPLOY_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
         run: node .github/scripts/api-production-readiness.mjs
