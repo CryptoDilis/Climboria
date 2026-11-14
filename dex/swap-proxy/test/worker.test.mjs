@@ -457,6 +457,39 @@ test("proxies pump.fun token metadata server-side and sanitizes public fields", 
   } finally { globalThis.fetch = originalFetch; }
 });
 
+test("strips controls and bidi overrides from pump.fun token name, symbol and description", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => Response.json({
+      mint: valid,
+      name: "SOL\u202EEVIL\u202C",
+      symbol: "SOL\u200F",
+      description: "hello\u0007world\u2066test\u2069",
+      image_uri: "https://images.example/token.png"
+    });
+    const res = await worker.fetch(new Request("https://worker.test/api/pump/coin?mint=" + valid, { headers: { origin } }), env);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.name, "SOLEVIL");
+    assert.equal(data.symbol, "SOL");
+    assert.equal(data.description, "helloworldtest");
+    assert.doesNotMatch(JSON.stringify([data.name, data.symbol, data.description]), /[\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("dormant signable order path never echoes upstream provider diagnostics or unvalidated labels", () => {
+  const source = readFileSync(new URL("../src/index.mjs", import.meta.url), "utf8");
+  const order = source.split("async function handleOrder(request, env) {")[1]?.split("async function handleQuote(request, env) {")[0];
+  assert.ok(order, "future order handler must still exist");
+  assert.doesNotMatch(order, /error:\s*data\.errorMessage|errorMessage:\s*data\.errorMessage/);
+  assert.match(order, /error:\s*"Jupiter returned a quote without an executable transaction"/);
+  assert.match(order, /router:\s*optionalProviderLabel\(data\.router\)/);
+  assert.match(order, /mode:\s*optionalProviderLabel\(data\.mode\)/);
+  assert.match(order, /feeMint:\s*optionalFeeMint\(data\.feeMint\)/);
+  assert.match(source, /const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false/);
+  assert.match(source, /const EXECUTION_SECURITY_REVIEW_COMPLETE = false/);
+});
+
 test("keeps absent and malformed Pump.fun metrics unavailable instead of coercing them to zero", async () => {
   const originalFetch = globalThis.fetch;
   try {
