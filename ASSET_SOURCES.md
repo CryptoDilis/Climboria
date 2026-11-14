@@ -47,6 +47,13 @@ This file records candidate assets before integration. The source page is author
 
 Use the 1K/2K maps for mobile, pack local texture files, and avoid loading full 8K/8K model downloads at runtime. Official license: https://polyhaven.com/license.
 
+### GitHub-hosted realistic rock candidate — 2026-11-14 (not integrated)
+
+- **Candidate:** `rock_moss_set_01.glb` in the GitHub-hosted [Papyszoo/CC0-Public-Domain-Models](https://github.com/Papyszoo/CC0-Public-Domain-Models) `polyhaven-nature-rocks` pack. The catalog identifies it as a Poly Haven nature-rock asset and lists a **5.8 MB GLB**.
+- **License evidence:** the repository declares its bundled assets CC0 1.0, and the original [Poly Haven API/license documentation](https://github.com/Poly-Haven/Public-API) states the assets themselves are CC0. The mirror is a convenience source; the original Poly Haven record remains the authority at import time.
+- **Decision:** **not imported.** A 5.8 MB opaque GLB has no verified triangle budget, LODs, texture dimensions, scale, collision bounds, or Redmi 14 5G result. It must be downloaded to a staging workspace, inspected and simplified before it can be bundled or requested at runtime.
+- **Current implementation:** the map-polish branch uses only deterministic, locally generated mineral color/bump maps on the existing decorative terrain-rock instances. It adds no network asset dependency, no terrain/collision change and no third-party bytes.
+
 
 ## Mountain and cave candidates for Jarrell's Peak — 2026-10-29
 

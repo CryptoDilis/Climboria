@@ -581,8 +581,44 @@ function colorAt(x,z,h,ny){
  return c;
 }
 const D=new T3.Object3D();
-const ROCK=new T3.DodecahedronGeometry(1,0);
-const mRock=new T3.MeshLambertMaterial({flatShading:true});
+/* Shared terrain-rock material: retain one instanced draw call per streamed
+   chunk, but give the formerly flat, toy-like boulders a natural mineral
+   surface. This is visual-only: terrain sampling and collision radii stay
+   exactly where the existing prop planner places them. */
+function naturalRockCanvas(seed,bump=false){
+ const size=128,canvas=document.createElement('canvas'),ctx=canvas.getContext('2d'),image=ctx.createImageData(size,size);
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+  const u=x/size,v=y/size;
+  const broad=fbm(u*5.2+seed*.013,v*5.2-seed*.009,4);
+  const grain=fbm(u*26.4-seed*.021,v*26.4+seed*.017,3);
+  const strata=.5+.5*Math.sin((u*8.5+v*4.2+broad*2.4+seed*.001)*Math.PI);
+  const vein=Math.max(0,1-Math.abs(Math.sin((u*14.5-v*7.8+broad*3.1)*Math.PI))*12);
+  const mineral=Math.max(0,Math.min(1,.58*broad+.24*grain+.18*strata));
+  const crease=Math.max(0,Math.min(1,.72*mineral+.28*vein));
+  const i=(y*size+x)*4;
+  if(bump){const shade=Math.round(36+crease*188);image.data[i]=image.data[i+1]=image.data[i+2]=shade;}
+  else{
+   const lichen=Math.max(0,Math.min(1,(grain-.56)*3.1))*Math.max(0,Math.min(1,1-v*1.35));
+   image.data[i]=Math.round(71+mineral*42-lichen*13);
+   image.data[i+1]=Math.round(67+mineral*39+lichen*23);
+   image.data[i+2]=Math.round(58+mineral*33-lichen*8);
+  }
+  image.data[i+3]=255;
+ }
+ ctx.putImageData(image,0,0);return canvas;
+}
+const terrainRockMap=new T3.CanvasTexture(naturalRockCanvas(63211));terrainRockMap.encoding=T3.sRGBEncoding;
+const terrainRockBumpMap=new T3.CanvasTexture(naturalRockCanvas(63212,true));terrainRockBumpMap.encoding=T3.LinearEncoding;
+[terrainRockMap,terrainRockBumpMap].forEach(map=>{map.wrapS=map.wrapT=T3.RepeatWrapping;map.repeat.set(1.65,1.25);map.needsUpdate=true;});
+const ROCK=new T3.IcosahedronGeometry(1,1),rockVertex=ROCK.attributes.position;
+for(let i=0;i<rockVertex.count;i++){
+ const x=rockVertex.getX(i),y=rockVertex.getY(i),z=rockVertex.getZ(i),ridge=.86+.17*Math.sin(x*11.7+y*7.9-z*9.1)+.08*Math.cos(x*4.3-z*12.7);
+ rockVertex.setXYZ(i,x*ridge,y*(.82+.15*Math.sin(z*8.3+x*5.1)),z*(.9+.12*Math.cos(y*10.2-x*6.7)));
+}
+rockVertex.needsUpdate=true;ROCK.computeVertexNormals();
+const TERRAIN_ROCK_COLLIDER_SCALE=.8;
+const mRock=new T3.MeshStandardMaterial({map:terrainRockMap,bumpMap:terrainRockBumpMap,bumpScale:.19,roughness:.94,metalness:.015,vertexColors:true,flatShading:false});
+mRock.userData.terrainRockSurface='procedural-mineral-v1';
 const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
  // Lightweight instanced grass: one shared blade mesh/material, per-chunk batches,
  // vertex-shader wind, and deterministic placement for stable streaming.
@@ -633,7 +669,7 @@ function props(cx,cz,out){
  for(let i=0;i<34;i++){
   const x=ox+r()*CS,z=oz+r()*CS,h=heightAt(x,z),s=1+r()*r()*5,k=r();
   if(h<.2||shoreClear(x,z,h)||nearPOI(x,z)||caveCoastalTerrainAt(x,z).mask>.1||k>(h>60?.9:desF(x,z)>.5?.5:.25))continue;
-  col.push({x,z,r:s*.8});ro.push({x,h,z,s,rot:r()*6.28,c:desF(x,z)>.5?L('#b98a55'):hsl(.08,.06,.3+.12*r())});
+  col.push({x,z,r:s*TERRAIN_ROCK_COLLIDER_SCALE});ro.push({x,h,z,s,rot:r()*6.28,c:desF(x,z)>.5?L('#b98a55'):hsl(.08,.06,.3+.12*r())});
  }
  const g=new T3.Group();
  const rk=inst(ROCK,mRock,ro,t=>{D.position.set(t.x,t.h+t.s*.2,t.z);D.rotation.set(t.rot*.3,t.rot,0);D.scale.set(t.s,t.s*.7,t.s)});
@@ -656,6 +692,12 @@ function buildChunk(cx,cz){
  const objs=[m],cl=props(cx,cz,objs);makeGrass(cx,cz,objs);return{cx,cz,objs,geo,col:cl};
 }
 const chunks=new Map();
+function terrainRockDressingAudit(){
+ return {geometry:ROCK.type,detail:ROCK.parameters?.detail,vertices:ROCK.attributes.position?.count??0,
+  material:mRock.type,textured:!!mRock.map,bumped:!!mRock.bumpMap,standard:mRock.isMeshStandardMaterial===true,
+  instanceColors:mRock.vertexColors===true,flatShading:mRock.flatShading===true,roughness:mRock.roughness,
+  colliderRadiusMultiplier:TERRAIN_ROCK_COLLIDER_SCALE,visualOnly:true};
+}
 function updateChunks(px,pz,budget){
  const ccx=Math.floor(px/CS),ccz=Math.floor(pz/CS);
  for(const[k,c]of chunks)if(Math.max(Math.abs(c.cx-ccx),Math.abs(c.cz-ccz))>R+1){
@@ -2650,6 +2692,7 @@ function caveApproachGroundAudit(){
 }
 window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveApproachGroundAudit:new URLSearchParams(location.search).has('smoke')?caveApproachGroundAudit:undefined,automaticWeatherAudit:new URLSearchParams(location.search).has('smoke')?automaticWeatherAudit:undefined,caveEntranceTraversalAudit,caveCoastalTraversalAudit,sanctuaryPillarCollisionAudit,positionAtCaveCoastalExitForSmoke,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,texturedRockMaterials:caveRockMaterials.filter(m=>m.userData?.caveRockTexture&&m.map&&m.bumpMap).length,bumpedRockMaterials:caveRockMaterials.filter(m=>!!m.bumpMap).length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,deathLootSnapshot:()=>deathLootBag?{x:deathLootBag.x,z:deathLootBag.z,items:deathLootBag.items.map(i=>({...i})),expiresAt:deathLootBag.expiresAt}:null,deathLootLifecycleAudit:new URLSearchParams(location.search).has('smoke')?deathLootLifecycleAudit:undefined,deathLootMapMarkerAudit:new URLSearchParams(location.search).has('smoke')?deathLootMapMarkerAudit:undefined,lootRecoveryDirectionAudit:new URLSearchParams(location.search).has('smoke')?lootRecoveryDirectionAudit:undefined,sprintStaminaAudit:new URLSearchParams(location.search).has('smoke')?sprintStaminaAudit:undefined,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,sanctuaryDressingAudit:()=>({pathSlabs:sanctuaryPathSlabs.length,lanterns:sanctuaryPathLanterns.length,planters:sanctuaryPlanters.length,span:{minZ:Math.min(...sanctuaryPathSlabs.map(o=>o.position.z)),maxZ:Math.max(...sanctuaryPathSlabs.map(o=>o.position.z))},attached:sanctuaryPathSlabs.every(o=>o.parent===sanctuaryGroup)&&sanctuaryPathLanterns.every(o=>o.base.parent===sanctuaryGroup&&o.post.parent===sanctuaryGroup&&o.cap.parent===sanctuaryGroup&&o.lamp.parent===sanctuaryGroup)&&sanctuaryPlanters.every(o=>o.bed.parent===sanctuaryGroup&&o.shrub.parent===sanctuaryGroup&&o.bloom.parent===sanctuaryGroup)}),collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
+window.ENDLESS_WILDS.terrainRockDressingAudit=terrainRockDressingAudit;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
 let ready=false,Tm=0,hudT=0,last=performance.now(),tmpC=new T3.Color();

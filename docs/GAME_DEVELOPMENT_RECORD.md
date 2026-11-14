@@ -17,6 +17,15 @@
 - Avoid shared files and global workflows unless a targeted change is necessary, coordinated, and separately verified. Do not silently redesign existing gameplay.
 - Preserve existing character artwork, soundtrack, settings/minimap, Dota-style left-click movement, desktop behavior, and intended mobile landscape controls. Wildlife and snakes remain disabled unless explicitly reauthorized.
 
+## Cinematic terrain-rock polish — staged 2026-11-14 PHT
+
+- **Branch:** `codex/game-cinematic-terrain-20261114`, based on `main` commit `147f1764485af31c39a56448fc47632969bce320`. This is separate from draft PRs #383 and #385; no merge claim is implied.
+- **Root cause addressed:** streamed general-world rocks used one `DodecahedronGeometry(1,0)` with a flat-shaded Lambert material, producing the visibly toy-like/faceted terrain dressing noted in prior cave/coast visual review.
+- **Scoped change:** replace only those existing visual instances with one shared, irregular detail-1 icosahedral silhouette and deterministic local mineral/lichen color+bump canvases on a `MeshStandardMaterial`. Existing chunk streaming, placement count/seed, terrain height field, water, cave geometry, player routes, original Hero GLB, wildlife state and soundtrack are untouched. The existing collision multiplier remains numerically identical at `0.8`.
+- **Regression gate:** Browser Smoke now requires the natural-rock PBR material, texture/bump maps, non-flat detail-1 geometry, instanced color support, high roughness and unchanged collision multiplier. The assertion is additive; it does not weaken existing world, cave, coast, desktop or mobile tests.
+- **External asset audit:** a GitHub-hosted Poly Haven `rock_moss_set_01.glb` candidate is recorded in `ASSET_SOURCES.md`, but is **not integrated** because its 5.8 MB GLB has no verified mesh/texture/LOD/mobile budget. No unverified third-party asset or runtime dependency was introduced.
+- **Verification:** inline `game/play.html` scripts and `game-smoke.mjs` parse; `git diff --check` passes. Local Browser Smoke cannot start in this isolated workspace because the `playwright` package is absent (`ERR_MODULE_NOT_FOUND`), so no test success is claimed. Required next evidence: exact-head Validate, Browser Smoke and Jarrell Gameplay workflows plus desktop/mobile screenshot review before any merge.
+
 ## Verified baseline from GitHub inspection (2026-11-14)
 
 ### Reviewed files / evidence
