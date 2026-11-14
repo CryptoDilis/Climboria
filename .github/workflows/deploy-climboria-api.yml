@@ -158,8 +158,28 @@ jobs:
           EXPECTED_DEPLOY_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          response="$(curl --retry 6 --retry-delay 10 --retry-connrefused --fail --silent --show-error https://api.climboria.fun/health)"
-          printf '%s' "$response" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const x=JSON.parse(s);if(x.ok!==true||x.configured?.jupiterKey!==true||x.configured?.rateLimiter!==true||x.configured?.orderStore!==true||x.execution!=='disabled'||x.configured?.executionEnabled!==false||x.deployedGitSha!==process.env.EXPECTED_DEPLOY_SHA){console.error('Worker health is not quote-only production-ready:',x);process.exit(1)}console.log('Worker health, required bindings, and disabled execution kill switch verified.')})"
+          # Cloudflare custom-domain edge propagation may briefly serve the
+          # previous healthy SHA immediately AFTER Wrangler reports success.
+          # Retry the actual exact-revision health predicate (not only curl
+          # transport failures), with a strict finite deadline; stale releases
+          # still FAIL closed and never count as a successful deployment.
+          ready=0
+          for attempt in $(seq 1 12); do
+            response="$(curl --max-time 10 --silent --fail https://api.climboria.fun/health 2>/dev/null || true)"
+            if printf '%s' "$response" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{let x;try{x=JSON.parse(s)}catch{process.exit(1)}if(x.ok!==true||x.service!=='climboria-swap-proxy'||x.configured?.jupiterKey!==true||x.configured?.rateLimiter!==true||x.configured?.orderStore!==true||x.execution!=='disabled'||x.configured?.executionEnabled!==false||x.deployedGitSha!==process.env.EXPECTED_DEPLOY_SHA)process.exit(1)})"; then
+              ready=1
+              echo "Exact deployed Worker SHA, health bindings and disabled execution verified."
+              break
+            fi
+            if [ "$attempt" -lt 12 ]; then
+              echo "Health revision not yet verified (attempt $attempt/12); checking again after edge propagation."
+              sleep 5
+            fi
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "::error::Exact expected Worker SHA and fail-closed health were not verified within 12 checks; deployment is NOT accepted."
+            exit 1
+          fi
           curl --fail --silent --show-error -X OPTIONS https://api.climboria.fun/api/swap/order -H 'Origin: https://climboria.fun' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' -o /dev/null -D /tmp/climboria-cors-headers
           grep -qi '^access-control-allow-origin: https://climboria.fun' /tmp/climboria-cors-headers
           echo "Worker CORS preflight verified for https://climboria.fun."
