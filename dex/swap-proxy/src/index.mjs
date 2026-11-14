@@ -296,7 +296,7 @@ async function handleOrder(request, env) {
     feeMint: optionalFeeMint(data.feeMint),
     transactionVersion: data.transactionVersion ?? null,
     lastValidBlockHeight: data.lastValidBlockHeight ?? null,
-    expireAt: typeof data.expireAt === "string" && /^\\d{4}-\\d{2}-\\d{2}T[0-9:.+-]+Z?$/.test(data.expireAt) && data.expireAt.length <= 48 ? data.expireAt : null,
+    expireAt: typeof data.expireAt === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.+-]+Z?$/.test(data.expireAt) && data.expireAt.length <= 48 ? data.expireAt : null,
     errorCode: null,
     errorMessage: null
   });
