@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { decodeBase58 } from "./launchlab-provenance.mjs";
 import { WSOL } from "./launchlab-curve-economics.mjs";
-import { CONFIG_TARGETS, decodeConfigAccounts, assertApiMatchesChain, runLiveConfigCheck } from "./launchlab-live-config.mjs";
+import { CONFIG_TARGETS, decodeConfigAccounts, assertApiMatchesChain, getFinalizedConfigSnapshot, runLiveConfigCheck } from "./launchlab-live-config.mjs";
 import { PROGRAMS } from "./launchlab-provenance.mjs";
 
 const fixture = (cluster, modify = () => {}) => {
@@ -58,16 +58,22 @@ function fakeFetch(modify = () => {}) {
       return new Response(JSON.stringify(chosen.api), { status: 200 });
     if (url === chosen.target.rpc && init.method === "POST") {
       const body = JSON.parse(init.body);
-      assert.equal(body.method, "getAccountInfo");
+      assert.equal(body.method, "getMultipleAccounts");
+      assert.equal(body.jsonrpc, "2.0");
+      assert.equal(body.id, "climboria-launch-config-joint-readonly");
+      assert.deepEqual(body.params[0], [chosen.target.globalConfig, chosen.target.platformConfig]);
       assert.equal(body.params[1].encoding, "base64");
       assert.equal(body.params[1].commitment, "finalized");
-      return new Response(JSON.stringify({ result: { value: chosen.accounts[body.params[0]] ?? null } }), { status: 200 });
+      assert.equal(Object.hasOwn(body.params[1], "dataSlice"), false);
+      return Response.json({ jsonrpc: "2.0", id: body.id,
+        result: { context: { slot: cluster === "mainnet" ? 240 : 241 },
+          value: body.params[0].map(address => chosen.accounts[address] ?? null) } });
     }
     throw new Error("Unexpected method or endpoint");
   };
   return { fetchImpl, calls, fixtures };
 }
-test("reads both clusters using only GET and finalized getAccountInfo, without signing", async () => {
+test("reads both configs per cluster from exactly ONE finalized getMultipleAccounts without signing", async () => {
   const { fetchImpl, calls } = fakeFetch();
   const report = await runLiveConfigCheck(fetchImpl);
   assert.equal(report.pass, true, JSON.stringify(report.results.filter(x => !x.pass)));
@@ -75,9 +81,14 @@ test("reads both clusters using only GET and finalized getAccountInfo, without s
   assert.equal(report.transactionSubmitted, false);
   assert.deepEqual(report.results.map(x => x.cluster), ["mainnet", "devnet"]);
   assert.ok(report.results.every(x => x.economics.pass && x.global.mintB === WSOL));
-  assert.equal(calls.length, 6);
+  assert.equal(calls.length, 4);
   assert.equal(calls.filter(x => x.method === "GET").length, 2);
-  assert.ok(calls.filter(x => x.method === "POST").every(x => x.body.method === "getAccountInfo"));
+  assert.equal(calls.filter(x => x.method === "POST").length, 2);
+  assert.ok(calls.filter(x => x.method === "POST").every(x => x.body.method === "getMultipleAccounts"));
+  assert.deepEqual(report.results.map(x => x.providerReportedFinalizedContextSlot), [240, 241]);
+  assert.ok(report.results.every(x => x.bothConfigsFromOneFinalizedRpcResponse === true));
+  assert.ok(report.results.every(x => x.independentlyAuthenticatedLedgerSnapshot === false));
+  assert.ok(report.results.every(x => x.sdkIdlSemanticCompatibilityVerified === false));
 });
 test("rejects API/on-chain fee drift even when candidate economics otherwise pass", async () => {
   const { fetchImpl } = fakeFetch((cluster, d) => {
@@ -123,7 +134,7 @@ test("rejects unsafe fundraising or LP distribution, without submitting a transa
     const report = await runLiveConfigCheck(fetchImpl);
     assert.equal(report.pass, false);
     assert.equal(report.results[1].pass, false);
-    assert.ok(calls.every(x => x.method === "GET" || x.body.method === "getAccountInfo"));
+    assert.ok(calls.every(x => x.method === "GET" || x.body.method === "getMultipleAccounts"));
   }
 });
 test("direct decoder validates ownership and fields before economics", () => {
