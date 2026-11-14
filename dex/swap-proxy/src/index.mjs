@@ -74,6 +74,17 @@ function optionalFeeBps(value) {
   const bps = Number(value);
   return Number.isInteger(bps) && bps >= 0 && bps <= 10000 ? bps : null;
 }
+// Keep user-selected quote slippage within the upstream API's documented
+// 0–10,000 bps range. Strings are accepted only in canonical integer form so
+// values such as exponent notation or leading zeroes cannot be normalized into
+// a different request than the user selected.
+function optionalSlippageBps(value) {
+  if (typeof value === "string") {
+    if (!/^(?:0|[1-9][0-9]{0,4})$/.test(value)) return null;
+  } else if (!Number.isInteger(value)) return null;
+  const bps = Number(value);
+  return bps >= 0 && bps <= 10000 ? bps : null;
+}
 // Provider metadata is optional. Invalid fields must not become a fabricated
 // 0% impact, "NaN%", an unverified fee mint, or an object-rendered route label.
 function optionalPriceImpactFraction(value) {
@@ -81,6 +92,16 @@ function optionalPriceImpactFraction(value) {
       !/^-?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$/.test(value))) return null;
   const number = Number(value);
   return Number.isFinite(number) && number >= -1 && number <= 1 ? number : null;
+}
+// Swap API V2's current `priceImpact` field is expressed in percentage
+// points (for example -0.1 means -0.1%). Keep the public proxy contract in
+// decimal fractions alongside the deprecated `priceImpactPct` field so both
+// forms render consistently without inventing a zero impact.
+function optionalPriceImpactPercentagePoints(value) {
+  if (typeof value !== "number" && (typeof value !== "string" || value.length > 48 ||
+      !/^-?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$/.test(value))) return null;
+  const number = Number(value);
+  return Number.isFinite(number) && number >= -100 && number <= 100 ? number / 100 : null;
 }
 function optionalProviderLabel(value) {
   return typeof value === "string" && value.length > 0 && value.length <= 80 &&
@@ -285,11 +306,17 @@ async function handleQuote(request, env) {
   const inputMint = url.searchParams.get("inputMint");
   const outputMint = url.searchParams.get("outputMint");
   const amount = url.searchParams.get("amount");
+  const rawSlippageBps = url.searchParams.get("slippageBps");
+  const requestedSlippageBps = rawSlippageBps === null ? null : optionalSlippageBps(rawSlippageBps);
   if (!validPubkey(inputMint) || !validPubkey(outputMint) || inputMint === outputMint ||
       !validRawTokenAmount(amount)) {
     return json({ error: "Invalid quote input mints or amount" }, 400);
   }
+  if (rawSlippageBps !== null && requestedSlippageBps === null) {
+    return json({ error: "Slippage tolerance must be an integer from 0 to 10000 basis points" }, 400);
+  }
   const params = new URLSearchParams({ inputMint, outputMint, amount });
+  if (requestedSlippageBps !== null) params.set("slippageBps", String(requestedSlippageBps));
   const response = await upstream("/order?" + params.toString(), { method: "GET" }, env);
   const data = await readBoundedProviderJson(response, 262144);
   // Never reflect untrusted provider error/message text (it can include
@@ -303,12 +330,24 @@ async function handleQuote(request, env) {
       !data.requestId.trim() || data.requestId.length > 256) {
     return json({ error: "Jupiter returned an incomplete or inconsistent quote" }, 502);
   }
+  const appliedSlippageBps = optionalSlippageBps(data.slippageBps);
+  // A fixed setting is a user protection, not a UI preference. Refuse a quote
+  // if the upstream response does not prove it used precisely that setting.
+  if (requestedSlippageBps !== null && appliedSlippageBps !== requestedSlippageBps) {
+    return json({ error: "Jupiter did not confirm the requested slippage tolerance" }, 502);
+  }
+  // `otherAmountThreshold` is the provider's minimum output after slippage.
+  // Do not expose an unparseable, zero, or greater-than-quoted threshold.
+  const otherAmountThreshold = validRawTokenAmount(data.otherAmountThreshold) &&
+    BigInt(data.otherAmountThreshold) <= BigInt(data.outAmount) ? data.otherAmountThreshold : null;
   return json({
     requestId: data.requestId, inAmount: data.inAmount, outAmount: data.outAmount,
+    otherAmountThreshold, slippageBps: appliedSlippageBps,
     router: optionalProviderLabel(data.router), mode: optionalProviderLabel(data.mode),
     feeBps: optionalFeeBps(data.feeBps),
     feeMint: optionalFeeMint(data.feeMint),
-    priceImpactPct: optionalPriceImpactFraction(data.priceImpactPct)
+    priceImpactPct: optionalPriceImpactFraction(data.priceImpactPct) ??
+      optionalPriceImpactPercentagePoints(data.priceImpact)
   });
 }
 // Token metadata is untrusted third-party data. Most importantly, the label

@@ -207,13 +207,17 @@ test("proxies quote-only orders with server-side Jupiter key", async () => {
     globalThis.fetch = async (url, init) => {
       target = String(url);
       assert.equal(init.headers["x-api-key"], "test-server-key");
-      return Response.json({ requestId: "quote-request-123", inAmount: "100000000", outAmount: "1234567", router: "metis", feeBps: 0 });
+      return Response.json({ requestId: "quote-request-123", inAmount: "100000000", outAmount: "1234567", otherAmountThreshold: "1200000", slippageBps: 50, router: "metis", feeBps: 0 });
     };
-    const req = new Request("https://worker.test/api/swap/quote?inputMint=" + valid + "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000", { headers: { origin } });
+    const req = new Request("https://worker.test/api/swap/quote?inputMint=" + valid + "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000&slippageBps=50", { headers: { origin } });
     const res = await worker.fetch(req, env);
     assert.equal(res.status, 200);
     assert.match(target, /api\.jup\.ag\/swap\/v2\/order/);
-    assert.equal((await res.json()).outAmount, "1234567");
+    assert.match(target, /slippageBps=50/);
+    const quote = await res.json();
+    assert.equal(quote.outAmount, "1234567");
+    assert.equal(quote.otherAmountThreshold, "1200000");
+    assert.equal(quote.slippageBps, 50);
   } finally { globalThis.fetch = originalFetch; }
 });
 
@@ -249,6 +253,45 @@ test("rejects mismatched, nonnumeric, zero, or incomplete Jupiter quotes", async
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test("rejects malformed requested slippage and mismatched confirmed custom slippage", async () => {
+  const originalFetch = globalThis.fetch;
+  const target = "https://worker.test/api/swap/quote?inputMint=" + valid +
+    "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000";
+  try {
+    let calls = 0;
+    globalThis.fetch = async () => { calls++; return Response.json({}); };
+    for (const value of ["01", "1e2", "-1", "10001", " "]) {
+      const res = await worker.fetch(new Request(target + "&slippageBps=" + encodeURIComponent(value), { headers: { origin } }), env);
+      assert.equal(res.status, 400, value);
+    }
+    assert.equal(calls, 0, "invalid slippage must not reach Jupiter");
+    globalThis.fetch = async () => Response.json({
+      requestId: "quote-request-123", inAmount: "100000000", outAmount: "1234567",
+      otherAmountThreshold: "1200000", slippageBps: 100
+    });
+    const res = await worker.fetch(new Request(target + "&slippageBps=50", { headers: { origin } }), env);
+    assert.equal(res.status, 502);
+    assert.match((await res.json()).error, /requested slippage/i);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("sanitizes invalid minimum output rather than exposing a fabricated slippage bound", async () => {
+  const originalFetch = globalThis.fetch;
+  const target = "https://worker.test/api/swap/quote?inputMint=" + valid +
+    "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000";
+  try {
+    for (const threshold of [undefined, "0", "1234568", "bad", 1200000]) {
+      globalThis.fetch = async () => Response.json({
+        requestId: "quote-request-123", inAmount: "100000000", outAmount: "1234567",
+        ...(threshold === undefined ? {} : { otherAmountThreshold: threshold })
+      });
+      const res = await worker.fetch(new Request(target, { headers: { origin } }), env);
+      assert.equal(res.status, 200);
+      assert.equal((await res.json()).otherAmountThreshold, null, String(threshold));
+    }
+  } finally { globalThis.fetch = originalFetch; }
 });
 
 test("reports missing or invalid Jupiter fee as unknown rather than zero", async () => {
@@ -292,6 +335,8 @@ test("sanitizes optional Jupiter quote metadata instead of rendering NaN%, forge
   const scenarios = [
     ["valid fraction", { priceImpactPct: "0.0025", router: "metis", mode: "ultra", feeMint: valid },
       { impact: 0.0025, router: "metis", mode: "ultra", mint: valid }],
+    ["current percentage-point field", { priceImpact: -0.1 }, { impact: -0.001, router: null, mode: null, mint: null }],
+    ["current numeric-string percentage-point field", { priceImpact: "0.25" }, { impact: 0.0025, router: null, mode: null, mint: null }],
     ["scientific fraction", { priceImpactPct: "1e-5" }, { impact: 0.00001, router: null, mode: null, mint: null }],
     ["negative price improvement", { priceImpactPct: -0.0001 }, { impact: -0.0001, router: null, mode: null, mint: null }],
     ["actual zero is allowed", { priceImpactPct: 0 }, { impact: 0, router: null, mode: null, mint: null }],
@@ -303,6 +348,7 @@ test("sanitizes optional Jupiter quote metadata instead of rendering NaN%, forge
     ["boolean impact", { priceImpactPct: true }, { impact: null, router: null, mode: null, mint: null }],
     ["object impact", { priceImpactPct: { value: 0 } }, { impact: null, router: null, mode: null, mint: null }],
     ["out-of-range impact", { priceImpactPct: "2" }, { impact: null, router: null, mode: null, mint: null }],
+    ["out-of-range current impact", { priceImpact: "100.01" }, { impact: null, router: null, mode: null, mint: null }],
     ["invalid router label", { router: "bad\nlabel", mode: {} }, { impact: null, router: null, mode: null, mint: null }]
   ];
   try {
