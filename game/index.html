@@ -192,9 +192,10 @@ h2{font:700 18px/1.18 Cinzel,serif;margin:20px 40px 8px 0;min-height:2.36em;disp
 <div class="hero-editor-grid"><div class="hero-editor-stage"><canvas id="heroPreviewCanvas" aria-label="Full-body live 3D hero preview"></canvas><div id="heroPreviewStatus" role="status">Preview opens when the hero editor starts.</div></div>
 <div class="hero-editor-fields"><label for="heroModelSelect">CHOOSE HERO</label>
 <select id="heroModelSelect" aria-describedby="heroModelHelp">
-<option value="Adventurer">Adventurer · Original</option>
+<option value="Ella">Ella · Default</option>
 <option value="Jarrell">Jarrell</option>
 <option value="Lheiz">Lheiz</option>
+<option value="Adventurer" hidden>Adventurer · Legacy backup</option>
 </select>
 <small id="heroModelHelp">Only a hero whose GLB has loaded successfully can be saved. New models require their official game files to be installed first.</small>
 <label for="heroNameInput">HERO NAME</label><input id="heroNameInput" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Enter your hero name" aria-describedby="heroNameHelp">
@@ -218,10 +219,13 @@ const HERO_RECORD_KEY='climboria-created-hero-v1';
 const heroEditor=document.getElementById('heroEditor');
 const heroNameInput=document.getElementById('heroNameInput');
 const heroModelSelect=document.getElementById('heroModelSelect');
+// Ella is the new default. Retain the original GLB as a legacy/fallback
+// model for already-created Adventurers, never overwrite its binary bytes.
 const HERO_MODELS=Object.freeze({
- Adventurer:'../assets/characters/Climboria_Hero.glb',
+ Ella:'../assets/characters/Climboria_Ella.glb',
  Jarrell:'../assets/characters/Climboria_Jarrell.glb',
- Lheiz:'../assets/characters/Climboria_Lheiz.glb'
+ Lheiz:'../assets/characters/Climboria_Lheiz.glb',
+ Adventurer:'../assets/characters/Climboria_Hero.glb'
 });
 const saveHeroButton=document.getElementById('saveHeroButton');
 const heroEnterButton=document.getElementById('heroEnterButton');
@@ -231,7 +235,7 @@ const heroCanvas=document.getElementById('heroPreviewCanvas');
 let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.4,previewTouchX=null,previewTouchDistance=null,previewRequest=0,previewActiveModel='',previewNeutralSpine=null,previewNeutralTime=0;
 const validHeroName=name=>/^[A-Za-z0-9 _-]{2,24}$/.test(name)&&/[A-Za-z0-9]/.test(name);
 function savedHero(){
- try{const h=JSON.parse(localStorage.getItem(HERO_RECORD_KEY)||'null');return h&&['Adventurer','Jarrell','Lheiz'].includes(h.model)&&typeof h.name==='string'&&validHeroName(h.name)?h:null}catch(_){return null}
+ try{const h=JSON.parse(localStorage.getItem(HERO_RECORD_KEY)||'null');return h&&['Ella','Jarrell','Lheiz','Adventurer'].includes(h.model)&&typeof h.name==='string'&&validHeroName(h.name)?h:null}catch(_){return null}
 }
 function updateHeroCard(){
  const h=savedHero();
@@ -435,7 +439,7 @@ function startHeroPreview(){
  }catch(e){previewLoading=false;heroStatus.textContent='3D preview unavailable';heroFeedback.textContent='Unable to initialize 3D preview: '+e.message;}
 }
 function openHeroEditor(){
- const h=savedHero();heroNameInput.value=h?.name||'';heroModelSelect.value=h?.model||'Adventurer';
+ const h=savedHero();heroNameInput.value=h?.name||'';heroModelSelect.value=h?.model==='Adventurer'?'Ella':h?.model||'Ella';
  heroEditor.classList.add('open');heroEditor.setAttribute('aria-hidden','false');heroFeedback.textContent='';
  editorButtons();startHeroPreview();heroNameInput.focus();
 }
