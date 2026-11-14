@@ -2,6 +2,10 @@
 
 ## GAME-ONLY MULTIPLAYER RULES FOUNDATION — 2026-11-15 PHT
 
+**Presence foundation increment:** commits `2baea1227e7c9c57672f21aae0a41de60359a49c`, `f77642c8d7390c90a8f0ecdce6547d28d46161ea`, `8bfcb45475db13234f10ec2880a8d732da0216af` implement `game/multiplayer/presence-room.mjs` (transport-agnostic server-only room core), real connected-session welcome/player-joined/player-moved/player-left broadcast, disconnect cleanup, room capacity, sender-identity binding, movement speed/rate checks, and tests for two sessions, spoofing, flood and ghost cleanup. **This is not live multiplayer**: no actual WebSocket adapter, server-issued trusted session/auth, deployment URL or UI peer rendering exists. Current room method explicitly REJECTS client `attack` and `grab` packets until authoritative combat/loot storage is wired. Focused CI is running on the later code head; do not mark passed before seeing SUCCESS.
+
+**UPDATED NEXT TASK:** finish focused Node tests, fix any failing cases. Only then implement a separate Cloudflare Game room Worker/Durable Object and authenticated short-lived guest session issuer, bind `PresenceRoom` to real WebSocket connections, add 2-browser integration and actual server deployment. Continue to keep combat and item theft disabled until consent, protection, atomic-claim and abuse tests pass.
+
 **Status: NOT A LIVE MULTIPLAYER, COMBAT OR LOOT FEATURE.** This is an isolated policy component for a FUTURE server-authoritative room, not player ghosts or a client-only button.
 
 - Branch `game/server-authority-combat-grab-rules-2026-11-15`.
