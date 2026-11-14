@@ -1,5 +1,36 @@
 # Climboria Game Development Record
 
+## ACTIVE GAME-ONLY HANDOFF — Jarrell + Lheiz selectable heroes (2026-11-14 PHT)
+
+**Task:** Add owner-supplied Jarrell/Lheiz playable characters to Jarrell's Peak Create Hero without replacing the original Adventurer, changing terrain/colliders, or touching DEX/Swap/Launchpad/ClimbX.
+
+**State:** Source binaries **VERIFIED ON `main`**; code and QA on [draft Game PR #424](https://github.com/CryptoDilis/Climboria/pull/424), branch `game/jarrell-lheiz-glb-integration-2026-11-14`. **NOT YET MERGED OR PRODUCTION-VERIFIED** at this record update. Historical “binary upload pending” notes below are superseded by this section.
+
+### Source / GitHub evidence
+- On 2026-11-14 the owner uploaded **`assets/characters/Climboria_Jarrell.glb` (7,911,328 bytes, Git blob `1f127f460fe0fcb0de2746c73e313edb2df2a028`)** and **`assets/characters/Climboria_Lheiz.glb` (12,465,796 bytes, Git blob `58b76698a0f92949e873ad48e08adf22dad3ac4c`)** directly to `main`, base `63f27daa9ef82c31d157317f58284e4ea0b7969f` at inspection. The actual Git blob hashes match the *original uploaded bytes exactly*; Jarrell SHA-256 `1249df0a1839c3ae69cecbe9e4f74c89ba4786fc64feb6354647430ced36933b`, Lheiz `d0c063c9f1e62242a58d69f92e5c956abd303d4408eacda8096b3a1b2e09de81`. **Do not ask owner to upload again.**
+- Original `assets/characters/Climboria_Hero.glb` (42,923,204 bytes) is preserved. Jarrell has one skinned Mixamo rig / 29,880 tris / 8 clips; Lheiz one rig / 31,679 tris / 9 clips. Details and all clip names: [assets/characters/HERO_IMPORT_JARRELL_LHEIZ.md](../assets/characters/HERO_IMPORT_JARRELL_LHEIZ.md).
+
+### Implemented in PR #424 (only Game-related paths)
+- `game/index.html`: Adventurer/Jarrell/Lheiz selector, live full-body 3D previews with separate sanitized Mixamo rig handling, neutral lowered-arm pose and tiny breathing movement, safe name+model persistence, disabled saving until model loads, original A-pose retained for Adventurer.
+- `game/play.html`: saved model is authoritative on play, asset paths, safe original fallback on missing optional GLB, animation matcher for run/walk/Regular_Jump/Swim_Forward/climb, excludes combat clips from movement. `Idle_03` from these specific Meshy GLBs raised arms overhead, so neutral procedural rest is used while **all original animation clips remain embedded and untouched**. GLTFLoader transforms punctuation in bone names; normalized lookup fixed the broken first neutral preview attempt.
+- `game/scripts/verify-hero-imports.mjs`: exact binary+rig+animation+triangle+SHA validator.
+- `.github/scripts/game-new-heroes-smoke.mjs` and `.github/workflows/game-new-heroes-smoke.yml`: binary-gated desktop/mobile Create Hero → save → world-boot checks, arm slope assertions, 8 screenshot artifacts. Existing original-hero browser smoke tests remain.
+- `assets/characters/HERO_IMPORT_JARRELL_LHEIZ.md` and this section: durable status and exact next action.
+
+### Test and visual QA evidence (do not confuse prior green with later changes)
+- **Code head `44acb1d48e85e936c7c437b5359e122cf0c28993` verified SUCCESS:** [Validate #43614703031](https://github.com/CryptoDilis/Climboria/actions/runs/43614703031), [Browser Smoke #43614703089](https://github.com/CryptoDilis/Climboria/actions/runs/43614703089), [Original Hero GLB #43614703016](https://github.com/CryptoDilis/Climboria/actions/runs/43614703016), **[New Heroes #43614703063](https://github.com/CryptoDilis/Climboria/actions/runs/43614703063)** — 4/4 Jarrell/Lheiz desktop/mobile creator and playable-world GLB checks. Logs confirm both arms lower than shoulders at idle (Jarrell upperarm-to-elbow Y -0.163/-0.157, Lheiz -0.146/-0.149, in scaled world units).
+- **Manual review of all 8 screenshots** in [artifact #14121930525](https://github.com/CryptoDilis/Climboria/actions/runs/43614703063/artifacts/14121930525): both distinct hero assets render in creator and world, properly neutral arms-down, no zombie pose. Mobile 844×390 correctly removes rotate gate in landscape but has hero rather low/cropped near bottom; log as later camera/UI polish (not an invisible GLB failure). Earlier #43613018193 passed asset & boot but its screenshots showed raised-arm `Idle_03` and initial empty-cinematic views; corrected smoke tests now require world-ready and playable camera before screenshot. Neutral-pose first attempt #43614208110 failed because `mixamorig:` name sanitized by GLTFLoader; diagnosed in #43614516837 and **fixed/verified** #43614703063. Do not treat these earlier failures as latest build defects.
+- [Jarrell's Peak full gameplay #43614703010](https://github.com/CryptoDilis/Climboria/actions/runs/43614703010) was **IN PROGRESS** at this record update. Do not call it passed before terminal check. Subsequent documentation-only commits require exact-head PR status checks again.
+
+### Remaining conditions / risks / exact next task
+1. Inspect latest PR head and confirm **Validate, Browser Smoke, Original GLB Smoke, New Heroes Smoke and Jarrell full Gameplay Smoke all terminal SUCCESS**, and that main has not gained conflicting new Game changes. Current code is ready for final review, but **PR #424 stays draft until verified**.
+2. Mark PR ready and merge using expected-head SHA only after all required checks, then fetch the merge SHA, verify original Hero and new GLBs are still present, and check deployment separately. GitHub merged is not proof climboria.fun has already deployed.
+3. Distinguish built-in animation clip presence from verified live gameplay transitions. Focused smoke tests loaded and verified clips but did not fully exercise every jump, swim and climbing input/state. Lheiz lacks a regular standalone jump clip; `Jumping_Punch` must not play as jump. No dedicated wall-climb animation state mapping has been proven.
+4. Confirm Meshy licensing/commercial use and any third-party clothing artwork; **unverified**. Test actual Android GPU/thermal/FPS; CI used software-rendered Chromium, not a physical device. Optionally refine mobile hero camera in a separate scoped Game-only PR after release.
+5. Record final merged commit, all CI run IDs, production verification status, unresolved limitations and next action in this same Game record. Do not redo already verified GLB upload/selector work.
+
+---
+
 **Last reviewed:** 2026-11-14 (Philippine time; PR #366 regression follow-up)
 **Repository:** `CryptoDilis/Climboria`  
 **Owner:** Game development (Jarrell's Peak and Arena only)  
