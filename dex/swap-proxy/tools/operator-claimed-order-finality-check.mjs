@@ -7,7 +7,7 @@
  * a privileged release endpoint, or ledger-consensus proof.
  */
 import { createHash } from "node:crypto";
-import { parseSolanaV0Transaction, encodeBase58 } from "../src/transaction-validation.mjs";
+import { parseSolanaV0Transaction, encodeBase58, validateUnsignedOrderTransaction } from "../src/transaction-validation.mjs";
 import { verifyDualRpcCorrelatedSwapEvidence } from "../src/correlated-finalized-swap-evidence.mjs";
 
 const U64=18446744073709551615n;
@@ -42,6 +42,7 @@ export function validateOperatorClaimedOrder({orderRecord,expectedRequestId,sign
        typeof account?.inputMint?.address!=="string"||
        typeof account?.outputMint?.address!=="string"||
        typeof signedTransaction!=="string")fail();
+    if(!validateUnsignedOrderTransaction({transaction:r.transaction,taker:r.taker}).ok)fail();
     const original=parseSolanaV0Transaction(r.transaction);
     const signed=parseSolanaV0Transaction(signedTransaction);
     const signature=encodeBase58(signed.signatures[0]);
