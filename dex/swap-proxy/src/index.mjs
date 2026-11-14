@@ -3,6 +3,7 @@ import { parseSolanaV0Transaction, validateJupiterOrderMetadata } from "./transa
 import { resolveTransactionLookups, verifyJupiterTokenAccounts, validateRpcUrl } from "./solana-rpc.mjs";
 import { validateJupiterV6Transaction } from "./jupiter-v6-policy.mjs";
 import { requireReviewedJupiterV6CpiSemantics } from "./jupiter-v6-cpi-review.mjs";
+import { readBoundedProviderJson } from "./bounded-provider-json.mjs";
 export { SwapOrderStore };
 
 const JSON_HEADERS = {
@@ -98,12 +99,23 @@ async function readJson(request, maxBytes = 40000) {
 async function upstream(path, init, env) {
   if (!env.JUPITER_API_KEY) throw new Error("Backend is not configured: missing Jupiter server API key");
   const target = path.startsWith("https://api.jup.ag/") ? path : JUPITER + path;
-  return fetch(target, {
-    ...init,
-    headers: { ...(init?.headers || {}), "x-api-key": env.JUPITER_API_KEY },
-    // Bound provider latency so stalled upstream requests cannot pin Worker capacity.
-    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
-  });
+  try {
+    return await fetch(target, {
+      ...init,
+      // Never forward a server-side API key to a redirected third-party origin.
+      redirect: "error",
+      headers: { ...(init?.headers || {}), "x-api-key": env.JUPITER_API_KEY },
+      // Bound provider latency so stalled upstream requests cannot pin Worker capacity.
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
+    });
+  } catch (error) {
+    // Never pass raw fetch errors with possible credential-bearing URLs to
+    // browser clients or logs. Keep the existing timeout signal distinct.
+    if (error?.name === "TimeoutError" || error?.name === "AbortError") {
+      throw new Error("Jupiter upstream request timed out");
+    }
+    throw new Error("Jupiter upstream request failed or redirected");
+  }
 }
 async function enforceRateLimit(request, env) {
   if (!env.RATE_LIMITER || typeof env.RATE_LIMITER.limit !== "function") {
@@ -134,7 +146,7 @@ async function handleOrder(request, env) {
   }
   const params = new URLSearchParams({ inputMint, outputMint, amount, taker, maxSupportedTransactionVersion: "0" });
   const response = await upstream("/order?" + params.toString(), { method: "GET" }, env);
-  const data = await response.json().catch(() => null);
+  const data = await readBoundedProviderJson(response, 262144);
   if (!response.ok) return json({ error: "Jupiter order request failed", upstreamStatus: response.status, details: data?.error || data?.message || null }, response.status >= 400 && response.status < 500 ? response.status : 502);
   if (!data || typeof data.requestId !== "string" || !data.requestId) {
     return json({ error: "Jupiter returned an incomplete order response" }, 502);
@@ -256,7 +268,7 @@ async function handleQuote(request, env) {
   }
   const params = new URLSearchParams({ inputMint, outputMint, amount });
   const response = await upstream("/order?" + params.toString(), { method: "GET" }, env);
-  const data = await response.json().catch(() => null);
+  const data = await readBoundedProviderJson(response, 262144);
   if (!response.ok) return json({ error: "Jupiter quote request failed", upstreamStatus: response.status, details: data?.error || data?.message || null }, response.status >= 400 && response.status < 500 ? response.status : 502);
   // A provider HTTP 200 is not proof of a usable quote. Refuse missing or
   // mismatched raw amounts rather than displaying a price for another order.
@@ -318,7 +330,7 @@ async function handleTokenSearch(request, env) {
     return json({ error: "Token search query must be 2 to 64 printable characters" }, 400);
   }
   const response = await upstream("https://api.jup.ag/tokens/v2/search?query=" + encodeURIComponent(query), { method: "GET" }, env);
-  const data = await response.json().catch(() => null);
+  const data = await readBoundedProviderJson(response, 524288);
   if (!response.ok) return json({ error: "Jupiter token search failed", upstreamStatus: response.status }, response.status >= 400 && response.status < 500 ? response.status : 502);
   const normalized = normalizeTokenSearchResults(data);
   if (!normalized) return json({ error: "Jupiter returned an invalid token search response" }, 502);
@@ -331,12 +343,19 @@ async function handlePumpCoin(request, env) {
   if (!validPubkey(mint)) return json({ error: "A valid Solana mint address is required" }, 400);
   // pump.fun blocks browser-origin requests. Fetch server-side and expose only
   // the public metadata fields needed by the token profile.
-  const response = await fetch("https://frontend-api-v3.pump.fun/coins-v2/" + encodeURIComponent(mint), {
-    headers: { accept: "application/json" },
-    signal: AbortSignal.timeout(9000)
-  });
+  let response;
+  try {
+    response = await fetch("https://frontend-api-v3.pump.fun/coins-v2/" + encodeURIComponent(mint), {
+      headers: { accept: "application/json" },
+      redirect: "error",
+      signal: AbortSignal.timeout(9000)
+    });
+  } catch {
+    // Untrusted upstream transport messages can embed private URLs or headers.
+    return json({ error: "pump.fun metadata request failed or redirected" }, 502);
+  }
   if (!response.ok) return json({ error: "pump.fun metadata unavailable", upstreamStatus: response.status }, response.status === 404 ? 404 : 502);
-  const data = await response.json().catch(() => null);
+  const data = await readBoundedProviderJson(response, 262144);
   if (!data || (data.mint && data.mint !== mint)) return json({ error: "pump.fun returned invalid token metadata" }, 502);
   const safeUrl = value => {
     if (typeof value !== "string" || value.length > 2048) return null;
@@ -440,7 +459,7 @@ async function handleExecute(request, env) {
       settlementRecorded
     }, 502);
   }
-  const data = await response.json().catch(() => null);
+  const data = await readBoundedProviderJson(response, 65536);
   if (!response.ok) {
     // A provider HTTP error is not proof that no execution occurred. Preserve
     // the replay lock and tell the caller whether the terminal state was stored.

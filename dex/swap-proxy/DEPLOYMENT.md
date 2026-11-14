@@ -60,3 +60,35 @@ Both `/dex/` and `/swap/` load the public `/swap-config.js` file. It contains no
 ## Deployment kill-switch verification
 
 The quote/search API deployment workflow must not enable swap execution. It asserts `EXECUTION_ENABLED = "false"` in `wrangler.toml` before deployment and requires the production `/health` response to report both `execution: "disabled"` and `configured.executionEnabled: false`. A deployment that exposes an enabled execution switch fails its post-deploy health gate. This is an additional safeguard, not a substitute for transaction semantic validation, request/order-to-wallet binding, Devnet lifecycle tests, or independent security review.
+
+
+## Third-party response/redirect safety (2026-11-14)
+
+- Server-side Jupiter `x-api-key` is attached ONLY to the approved
+  `api.jup.ag` request. Upstream `fetch` now explicitly uses
+  `redirect: "error"` so a redirect cannot forward that secret to
+  any new host; exceptions are rewritten into fixed, credential-free
+  failure text, retaining a generic timeout indication.
+- Public read-only `/api/swap/quote` caps third-party JSON at **256 KiB**;
+  `/api/tokens/search` at **512 KiB**; `/api/pump/coin` at
+  **256 KiB**. The (still fully gated) wallet order and
+  execute paths cap their provider JSON at 256 KiB and 64 KiB.
+  Content-Length and actual streamed bytes are both bounded;
+  malformed, truncated, unavailable and over-limit provider
+  responses become `null` and fail route validation instead of being
+  treated as usable quotes, verified tokens or executions.
+- Pump.fun server-side metadata HTTP fetch also refuses redirects and
+  sanitizes third-party transport errors.
+- The normal token and quote response schemas are unchanged. Unit
+  tests use synthetic oversized and malformed provider responses and
+  verify rejection, safe errors, and unaltered normal read-only
+  responses. **No live provider or production deployment was
+  verified by these tests.**
+- No change to wallet signing/transaction approval or mainnet
+  execution. Source-level `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE`,
+  `EXECUTION_SECURITY_REVIEW_COMPLETE`, `EXECUTION_ENABLED` and
+  frontend `enabled` remain disabled.
+
+These bounds protect an account with limited Worker resources, but
+do not establish provider authenticity, on-chain token safety, or
+safe Jupiter V6 inner CPI behavior.
