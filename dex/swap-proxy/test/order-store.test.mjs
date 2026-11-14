@@ -361,11 +361,24 @@ test("concurrent claims atomically allow exactly one execution", async () => {
 });
 
 
-test("24h alarm clears unclaimed orders, including expired ready orders",async()=>{
+test("early alarm preserves unexpired ready order and re-arms at expiry",async()=>{
   const fixture=makeFixture(1);
   const {object,storage}=createStore();
   assert.equal((await storeOrder(object,fixture)).status,201);
+  const before = await storage.get("order");
+  assert.equal(before.state, "ready");
+  await object.alarm();
   assert.equal((await storage.get("order")).state,"ready");
+  assert.equal(storage.alarmAt,before.expiresAt);
+  assert.equal((await claimOrder(object,fixture.signed)).status,200);
+});
+
+test("alarm clears expired unclaimed ready orders atomically",async()=>{
+  const fixture=makeFixture(1);
+  const {object,storage}=createStore();
+  assert.equal((await storeOrder(object,fixture)).status,201);
+  const ready = await storage.get("order");
+  storage.kv.put("order",{...ready,expiresAt:Date.now()-1});
   await object.alarm();
   assert.equal(await storage.get("order"),undefined);
   assert.equal((await claimOrder(object,fixture.signed)).status,404);
@@ -375,6 +388,9 @@ test("alarm deletion is atomic: no await or async get can erase an order claimed
   const fixture=makeFixture(1);
   const {object,storage}=createStore();
   await storeOrder(object,fixture);
+  // Deliberately simulate expired ready order so atomic deletion is expected.
+  const ready = await storage.get("order");
+  storage.kv.put("order",{...ready,expiresAt:Date.now()-1});
   // In the old implementation, the first await storage.get could yield a
   // 'ready' snapshot and deleteAll AFTER a concurrent successful /claim.
   // Make async get intentionally perform the claim if alarm ever calls it.

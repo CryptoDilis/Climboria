@@ -199,9 +199,9 @@ async function handleOrder(request, env) {
   // Never return that as an executable order to the wallet-review frontend.
   if (typeof data.transaction !== "string" || !data.transaction.length) {
     return json({
-      error: data.errorMessage || "Jupiter returned a quote without an executable transaction",
-      errorCode: data.errorCode ?? null,
-      router: data.router || null
+      error: "Jupiter returned a quote without an executable transaction",
+      errorCode: null,
+      router: optionalProviderLabel(data.router)
     }, 422);
   }
   // Bound and validate the upstream transaction before forwarding it to a wallet.
@@ -290,15 +290,15 @@ async function handleOrder(request, env) {
     transaction: typeof data.transaction === "string" && data.transaction.length ? data.transaction : null,
     inAmount: data.inAmount || null,
     outAmount: data.outAmount || null,
-    router: data.router || null,
-    mode: data.mode || null,
+    router: optionalProviderLabel(data.router),
+    mode: optionalProviderLabel(data.mode),
     feeBps: optionalFeeBps(data.feeBps),
-    feeMint: data.feeMint || null,
+    feeMint: optionalFeeMint(data.feeMint),
     transactionVersion: data.transactionVersion ?? null,
     lastValidBlockHeight: data.lastValidBlockHeight ?? null,
-    expireAt: data.expireAt || null,
-    errorCode: data.errorCode ?? null,
-    errorMessage: data.errorMessage || null
+    expireAt: typeof data.expireAt === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.+-]+Z?$/.test(data.expireAt) && data.expireAt.length <= 48 ? data.expireAt : null,
+    errorCode: null,
+    errorMessage: null
   });
 }
 async function handleQuote(request, env) {
@@ -455,11 +455,11 @@ async function handlePumpCoin(request, env) {
   const supply = finiteNumber(data.total_supply);
   return json({
     mint,
-    name: typeof data.name === "string" ? data.name.slice(0, 100) : null,
+    name: typeof data.name === "string" ? optionalTokenLabel(data.name, null, 100) : null,
     verified: data.verified === true || data.is_verified === true,
     holderCount: holders !== null && Number.isSafeInteger(holders) && holders >= 0 ? holders : null,
-    symbol: typeof data.symbol === "string" ? data.symbol.slice(0, 32) : null,
-    description: typeof data.description === "string" ? data.description.slice(0, 2000) : null,
+    symbol: typeof data.symbol === "string" ? optionalTokenLabel(data.symbol, null, 32) : null,
+    description: typeof data.description === "string" ? optionalTokenLabel(data.description, null, 2000) : null,
     image: safeUrl(data.image_uri || data.image),
     website: safeUrl(data.website),
     twitter: safeUrl(data.twitter),

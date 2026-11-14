@@ -231,6 +231,12 @@ export class SwapOrderStore {
       const record = this.ctx.storage.kv.get("order");
       if (!record) return { action: "empty" };
       if (record.state === "ready") {
+        // Alarms normally fire long after the short order TTL, but early
+        // or manually retried alarms must never revoke an unexpired order.
+        // Keep the expiry check and delete in this SAME atomic transaction.
+        if (Number.isSafeInteger(record.expiresAt) && record.expiresAt > now) {
+          return { action: "reschedule", retainUntil: record.expiresAt };
+        }
         this.ctx.storage.kv.delete("order");
         return { action: "deleted" };
       }
