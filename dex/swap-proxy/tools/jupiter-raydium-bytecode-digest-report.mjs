@@ -13,15 +13,16 @@
  * Not sourced from the SAME RPC being checked. Never paste URLs/API keys
  * into terminal transcripts, issue trackers or public CI.
  *
- * The default digest check uses ONE bounded full finalized RPC response for
- * each program, not cross-slot chunk reads. Each program can still have a
- * different finalized slot. Provider honesty remains independently unproven.
+ * The default digest check uses ONE bounded full finalized getMultipleAccounts
+ * RPC response for BOTH program images. A provider with a response limit
+ * below the bound fails closed; there is no implicit fallback to separate
+ * per-program or cross-slot reads. Provider honesty is still unproven.
  *
  * This tool neither constructs nor signs/submits any transaction.
  */
 import { verifyOperatorRpcGenesisSet } from "../src/raydium-v4-rpc-genesis-preflight.mjs";
 import { fetchMainnetUpgradeableProgramProvenance } from "../src/upgradeable-program-provenance.mjs";
-import { hashPinnedProgramsSingleSnapshots } from "../src/upgradeable-program-single-snapshot-digest.mjs";
+import { hashPinnedProgramsJointFinalizedSnapshot } from "../src/upgradeable-program-joint-snapshot-digest.mjs";
 import { safeRaydiumOperatorError } from "./raydium-v4-safe-error.mjs";
 
 async function main() {
@@ -38,7 +39,7 @@ async function main() {
   const provenance = await fetchMainnetUpgradeableProgramProvenance({
     network: "mainnet-beta", rpcUrl
   });
-  const report = await hashPinnedProgramsSingleSnapshots({
+  const report = await hashPinnedProgramsJointFinalizedSnapshot({
     provenanceProof: provenance, rpcUrl,
     expectedJupiterSha256, expectedRaydiumSha256
   });
@@ -51,8 +52,10 @@ async function main() {
     bothMatchOperatorPinnedSha256: report.bothMatchOperatorPinnedSha256,
     programSourceAndBinaryIndependentAuditComplete: false,
     rpcIndependentlyTrusted: false,
-    singleFinalizedRpcResponsePerProgram: report.eachProgramReadInOneFinalizedRpcResponse,
-    sameFinalizedSlotAcrossBothProgramsVerified: report.sameFinalizedSlotAcrossBothProgramsVerified,
+    bothProgramImagesInOneFinalizedRpcResponse: report.bothProgramImagesInOneFinalizedRpcResponse,
+    providerReportedSameFinalizedContextForBothPrograms: report.providerReportedSameFinalizedContextForBothPrograms,
+    providerReportedFinalizedContextSlot: report.finalizedContextSlot,
+    independentlyAuthenticatedLedgerSnapshot: false,
     sourceToBinaryParityIndependentlyVerified: false,
     jupiterV6CpiSemanticsApproved: false,
     approvedForJupiterCpi: false,
