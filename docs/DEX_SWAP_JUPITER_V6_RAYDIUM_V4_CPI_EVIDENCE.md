@@ -459,3 +459,45 @@ this work. Never enable signing, execution or Launchpad creation based
 on these local test fixtures. Real independently corroborated pool
 selection, genesis, external reference binary hashes, Jupiter CPI
 custody/signer/fee verification and external audit remain mandatory.
+
+
+## 15. Optional two-host mainnet Jupiter/Raydium ProgramData witness (PR #401)
+
+Operator-only `src/upgradeable-program-dual-rpc-digest.mjs` extends §14 without
+opening any trading endpoint. If `CLIMBORIA_SOLANA_RPC_URL_SECONDARY` is set,
+`tools/jupiter-raydium-bytecode-digest-report.mjs` requires **both** distinct
+configured HTTPS hostnames to return the independently pinned mainnet genesis,
+the same upgradeable Program → ProgramData metadata and **both full allocated
+ProgramData payload SHA-256 matches**. Per RPC host, §14 still reads both
+program images in a single finalized `getMultipleAccounts` response. Each
+host can report a different finalized slot; its own response must still bind
+both program images to one context. The two views are queried sequentially.
+A changed upgrade authority, deployment slot, ProgramData address/bump, full
+payload size, program ID, hash, wrong chain, or unavailable secondary provider
+**rejects the entire dual-witness result**. It never degrades to one host.
+
+Required *private operator* environment values (do not paste values into
+GitHub, chat or logs):
+
+- `CLIMBORIA_SOLANA_RPC_URL`: trusted primary HTTPS Solana mainnet RPC
+- `CLIMBORIA_SOLANA_RPC_URL_SECONDARY`: differently hosted trusted HTTPS RPC
+- `CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH`: independently corroborated value
+- `CLIMBORIA_JUPITER_V6_EXPECTED_PROGRAMDATA_PAYLOAD_SHA256`: independently
+  reviewed exact allocated payload hash (including allocated padding)
+- `CLIMBORIA_RAYDIUM_V4_EXPECTED_PROGRAMDATA_PAYLOAD_SHA256`: same independent
+  full-payload standard for Raydium V4
+
+Run locally, with those already configured in a **private operator shell**:
+
+```sh
+node dex/swap-proxy/tools/jupiter-raydium-bytecode-digest-report.mjs
+```
+
+Do not use one RPC's returned hash as its own "independent" reference; a
+different hostname does not prove independent provider ownership or honest
+ledger state. This output explicitly keeps `approvedForJupiterCpi:false`,
+`jupiterV6CpiSemanticsApproved:false`, and
+`independentSourceToBinaryParityVerified:false`. The verified private
+two-RPC run has **NOT** been performed. Mock/unit coverage does not prove
+live on-chain bytes, custody, fee recipient, transaction settlement, or
+an external security audit. Native wallet signing/execution remains OFF.
