@@ -123,10 +123,17 @@ async function runCloseDuringLoad(browser, path) {
     const button = page.locator("[data-climboria-managed-swap-open]:visible").first();
     await button.waitFor({timeout:15000});
     await button.click();
-    await Promise.race([
-      loadStarted,
-      new Promise((_, reject) => setTimeout(() => reject(Error("provider request did not start")), 10000))
-    ]);
+    let requestTimer;
+    try {
+      await Promise.race([
+        loadStarted,
+        new Promise((_, reject) => {
+          requestTimer = setTimeout(() => reject(Error("provider request did not start")), 10000);
+        })
+      ]);
+    } finally {
+      clearTimeout(requestTimer);
+    }
     const panel = page.locator("[data-climboria-managed-swap-panel]");
     await panel.locator("[data-climboria-managed-swap-close]").click();
     assert.equal(await panel.isVisible(),false);
