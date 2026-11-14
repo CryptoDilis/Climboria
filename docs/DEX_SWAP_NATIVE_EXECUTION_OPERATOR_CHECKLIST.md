@@ -17,6 +17,14 @@
 
 **CLI alternative** (local trusted operator workstation, no cloud workflow required): keep the three `CLIMBORIA_...` variables private in the local environment and run `node dex/swap-proxy/tools/operator-private-rpc-setup-check.mjs`. No signing/transaction is performed.
 
+## Jupiter/Raydium deployed-program metadata comparison (2026-11-15)
+
+After the **real** two-private-RPC connectivity preflight succeeds, the same manual main-only workflow also runs `node dex/swap-proxy/tools/operator-dual-rpc-program-provenance-report.mjs`, using the **existing** encrypted primary and secondary RPC URL secrets and pinned public genesis hash. No additional credentials or RPC accounts are needed.
+
+This second, read-only step independently queries **both configured RPC hosts** for finalized Jupiter V6/Raydium V4 Upgradeable Loader program headers, derives canonical ProgramData PDAs locally, checks loader account ownership and deployment slots, then compares both providers' **program IDs, ProgramData addresses, PDA bumps, last deploy slots, upgrade authorities and immutability status**. Any missing, mismatched or unresponsive provider fails closed. Public metadata (including public upgrade authorities) may be printed, but RPC URLs, keys and untrusted transport errors are not. The code lives in `dex/swap-proxy/tools/`, deliberately outside deployed Worker source.
+
+**This is a public-metadata consistency check ONLY.** Two matching claims do not prove independent provider operation, full allocated ProgramData SHA-256, audited source/build parity, Jupiter CPI semantics, DEX vault/fee custody, authenticated Solana ledger finality or a safe order to sign. The next prerequisite is separately reviewed full-payload hashes via `jupiter-raydium-bytecode-digest-report.mjs` with independently sourced hash pins. If no such source-reviewed digest references exist, report **BLOCKED** rather than deriving the expected digest from the same RPC being checked or approving execution.
+
 ## Phase A — prerequisites, private operator environment
 
 1. Provision **two independently operated Solana HTTPS RPC endpoints** with different infrastructure/operators. Do not put credentials, endpoint tokens or wallet secrets into issues, PRs, logs, screenshots, or committed files. Use approved encrypted secret management. Confirm TLS, RPC rate limits, access control and key rotation.
