@@ -37,8 +37,8 @@ After upload, run `node game/scripts/verify-ella-default.mjs` from a checkout, o
 
 ## Source implementation prepared in the Game branch
 
-- `game/index.html`: Ella is the first/default public hero option; Jarrell and Lheiz remain; the old Adventurer is hidden in selection and available only to legacy users / tests; the editor uses the Mixamo neutral 3D preview path for Ella.
-- `game/play.html`: valid saved Ella record, `Climboria_Ella.glb` asset path and original fallback, procedural neutral idle and safe jump for the new rig.
+- `game/index.html`: Ella is the first/default public hero option; Jarrell and Lheiz remain; the old Adventurer is hidden from normal selection as a technical backup. On opening the Hero Hub, existing valid `Adventurer` saves migrate to `Ella` while keeping their name and createdAt. The editor uses the Mixamo neutral 3D preview path.
+- `game/play.html`: valid saved Ella record, `Climboria_Ella.glb` asset path, migration of old direct-play Adventurer saves to Ella, original fallback if the optimized file fails to load, procedural neutral idle and safe jump for the new rig.
 - `game/scripts/verify-ella-default.mjs`: exact uploaded source bytes/rigging/motion integrity gate.
 - `.github/scripts/game-ella-default-smoke.mjs` and `.github/workflows/game-ella-default-smoke.yml`: desktop/mobile Create Hero → save → world-ready gameplay, neutral rig, safe motion routing and screenshots. These tests **must fail when the binary is missing**.
 - Existing gameplay smoke tests continue checking the legacy Adventurer as a regression. The live hero selection is not production-ready until Ella binary is uploaded and runtime tests pass.
