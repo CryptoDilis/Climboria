@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 // Exercise the real inline DEX graduation collector, not a copied implementation.
-const html = readFileSync(new URL("../dex/index.html", import.meta.url), "utf8");
+const html = readFileSync(new URL("../../dex/index.html", import.meta.url), "utf8");
 const begin = html.indexOf("async function loadGraduations(){");
 const end = html.indexOf("\nfunction graduationAge(", begin);
 assert.ok(begin > 0 && end > begin, "DEX graduation collector must be present");
