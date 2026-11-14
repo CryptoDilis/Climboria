@@ -429,7 +429,7 @@ function biome(x,z,h){
 const mobileGraphicsBudget=('ontouchstart' in window)||(navigator.maxTouchPoints>0)||/Android|iPhone|iPad/i.test(navigator.userAgent);
 const renderer=new T3.WebGLRenderer({antialias:!mobileGraphicsBudget,powerPreference:'high-performance'});
 // Cap render resolution to reduce GPU fill-rate pressure on large open-world scenes.
-renderer.setPixelRatio(Math.min(devicePixelRatio,mobileGraphicsBudget?.9:1.25));renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,mobileGraphicsBudget ? 0.9 : 1.25));renderer.setSize(innerWidth,innerHeight);
 renderer.outputEncoding=T3.sRGBEncoding;renderer.toneMapping=T3.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
 renderer.domElement.style.zIndex='0';renderer.domElement.style.pointerEvents='auto';renderer.domElement.style.isolation='isolate';document.body.prepend(renderer.domElement);
 const scene=new T3.Scene();scene.background=L('#536b7c');scene.fog=new T3.FogExp2(0xffffff,.0022);
