@@ -1,0 +1,32 @@
+name: DEX Graduation Feed Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "dex/index.html"
+      - ".github/scripts/dex-graduation-feed.test.mjs"
+      - ".github/workflows/dex-graduation-feed.yml"
+  push:
+    branches: [main]
+    paths:
+      - "dex/index.html"
+      - ".github/scripts/dex-graduation-feed.test.mjs"
+      - ".github/workflows/dex-graduation-feed.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  graduation-feed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify real DEX graduation collector
+        run: node --test .github/scripts/dex-graduation-feed.test.mjs
