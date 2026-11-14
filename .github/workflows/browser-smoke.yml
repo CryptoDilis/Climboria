@@ -89,6 +89,9 @@ jobs:
               const page=await browser.newPage({viewport:{width:1365,height:900}});
               page.on('pageerror',e=>errors.push('PAGEERROR '+page.url()+' :: '+e.name+' :: '+e.message+' :: '+String(e.stack)));
               page.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('CONSOLE '+page.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
+              // DEX navigation regression must not depend on a changing external daily JSON feed.
+              // Empty is a genuine valid response shape; never invent graduated tokens in tests.
+              await page.route('https://pumpdata.fun/graduations/**',route=>route.fulfill({status:200,contentType:'application/json',body:'[]'}));
               const response=await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
               if(!response?.ok()) throw new Error('Homepage HTTP load failed');
               const ctas=page.locator('.hero-buttons button');
