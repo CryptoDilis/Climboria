@@ -346,13 +346,15 @@ jobs:
               let requestedRawAmount=null;
               await page.route('https://api.climboria.fun/api/swap/quote**',route=>{
                 requestedRawAmount=new URL(route.request().url()).searchParams.get('amount');
-                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({requestId:'test-quote',inAmount:requestedRawAmount,outAmount:'1234567',router:'Exact amount fixture'})});
+                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({requestId:'test-quote',inAmount:requestedRawAmount,outAmount:'1234567',otherAmountThreshold:'1200000',router:'Exact amount fixture'})});
               });
               await page.locator('#quoteAmount').fill('0.0000157');
               await page.locator('#getQuote').click();
               await page.waitForFunction(()=>document.querySelector('#quoteStatus')?.textContent.includes('Quote received'),null,{timeout:15000});
               if(requestedRawAmount!=='15700') throw new Error('Swap quote used rounded/truncated raw input units: '+requestedRawAmount);
-              if(!await page.locator('#quoteResults').textContent().then(x=>x.includes('1.234567'))) throw new Error('Swap exact-amount quote output was not rendered');
+              const quoteResults=await page.locator('#quoteResults').textContent();
+              if(!quoteResults.includes('1.234567')) throw new Error('Swap exact-amount quote output was not rendered');
+              if(!quoteResults.includes('Minimum received')||!quoteResults.includes('1.2')) throw new Error('Swap verified minimum-received output was not rendered');
               if(errors.length) throw new Error('Swap browser errors: '+errors.join(' | '));
               console.log('PASS standalone Swap route, wallet, token search, quote and feature-gated execution controls.');
             } finally { await browser.close(); }
