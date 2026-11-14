@@ -35,13 +35,19 @@ jobs:
         run: |
           node --test dex/swap-proxy/test/raydium-v4-rpc-genesis-preflight.test.mjs \
             dex/swap-proxy/test/operator-private-rpc-connectivity.test.mjs \
-            dex/swap-proxy/test/operator-dual-rpc-program-provenance.test.mjs
+            dex/swap-proxy/test/operator-dual-rpc-program-provenance.test.mjs \
+            dex/swap-proxy/test/observed-programdata-drift.test.mjs
       - name: Probe private RPC genesis and finalized slots without sharing credentials
         env:
           CLIMBORIA_SOLANA_RPC_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL }}
           CLIMBORIA_SOLANA_RPC_URL_SECONDARY: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL_SECONDARY }}
           CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH: ${{ vars.CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH }}
         run: node dex/swap-proxy/tools/operator-private-rpc-setup-check.mjs
+      # Additional change alarm requires the exact observed Jupiter/Raydium
+      # ProgramData deployment slot, authority and address pinned from prior
+      # main run 43622879520; this is NOT independently audited source parity.
+      # Any real on-chain program upgrade must trigger independent binary
+      # re-review and a dedicated public reference update, never auto-approval.
       # The provenance code separately rejects provider snapshots more than
       # 2048 finalized slots apart, even when all metadata values agree.
       - name: Verify actual Jupiter V6 and Raydium V4 Upgradeable Loader metadata across both private RPCs (read-only)

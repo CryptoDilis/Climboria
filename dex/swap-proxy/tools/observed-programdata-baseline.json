@@ -1,0 +1,32 @@
+{
+  "kind": "CLIMBORIA_OBSERVED_PROGRAMDATA_METADATA_BASELINE_NOT_AUDITED",
+  "network": "mainnet-beta",
+  "expectedGenesisHash": "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d",
+  "observationSource": {
+    "githubActionsRun": "https://github.com/CryptoDilis/Climboria/actions/runs/43622879520",
+    "mainCommit": "b1085a7fd1cc6290efc702497a9722e343ff2fcd",
+    "providerReportedFinalizedSlot": 469416561,
+    "summary": "Two configured RPC hostnames reported matching program metadata. This is a change-detection baseline, not independently audited binary evidence."
+  },
+  "programs": {
+    "jupiterV6": {
+      "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+      "programDataAddress": "4Ec7ZxZS6Sbdg5UGSLHbAnM7GQHp2eFd4KYWRexAipQT",
+      "programDataPdaBump": 254,
+      "lastDeploySlot": 468023491,
+      "upgradeAuthority": "CvQZZ23qYDWF2RUpxYJ8y9K4skmuvYEEjH7fK58jtipQ",
+      "immutable": false
+    },
+    "raydiumV4": {
+      "programId": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
+      "programDataAddress": "A7ZG7ByDi8DpzT9Ab7CiXhvgYTJQmaDPJkMDoPitaCQV",
+      "programDataPdaBump": 255,
+      "lastDeploySlot": 445763204,
+      "upgradeAuthority": "FytDrVzDybM1TwFQPGb8qaxZR7dBCzNeqT3vtQsceZQK",
+      "immutable": false
+    }
+  },
+  "independentlyAuditedReferenceDigestAvailable": false,
+  "sourceToBinaryParityVerified": false,
+  "approvedForProductionExecution": false
+}

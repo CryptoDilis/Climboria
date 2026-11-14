@@ -10,6 +10,8 @@
  */
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+import { assertNoObservedProgramUpgradeDrift } from "./observed-programdata-drift.mjs";
 import { verifyDualRpcProgramProvenance } from "./operator-dual-rpc-program-provenance.mjs";
 
 export async function runDualRpcProgramMetadata({
@@ -28,11 +30,17 @@ export async function runDualRpcProgramMetadata({
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
     const result = await runDualRpcProgramMetadata();
-    console.log(JSON.stringify(result, null, 2));
+    // This repo-reviewed source snapshot is ONLY a change alarm. It is
+    // NOT a substitute for independently pinned full executable-image SHA256.
+    const baseline = JSON.parse(await readFile(
+      new URL("./observed-programdata-baseline.json", import.meta.url), "utf8"
+    ));
+    const drift = assertNoObservedProgramUpgradeDrift(result, baseline);
+    console.log(JSON.stringify({ ...result, observedProgramMetadataBaseline: drift }, null, 2));
     console.log("NO-GO: matching provider-reported loader metadata does not verify executable bytes, source parity, CPI, independent operators, ledger finality or native trading");
   } catch {
     // Do not reflect upstream URLs, credentials, fetch exceptions or stack.
-    console.error("FAIL private dual-RPC program provenance: pinned network, finalized loader metadata or endpoint observations unavailable/inconsistent. No credentials logged.");
+    console.error("FAIL private dual-RPC program provenance or reviewed observed-metadata drift check. If any deployment slot/authority changed, review new binary before release. No credentials logged.");
     process.exitCode = 1;
   }
 }
