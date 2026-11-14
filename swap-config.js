@@ -5,5 +5,13 @@ window.CLIMBORIA_SWAP_CONFIG = Object.freeze({
   proxyEnabled: true,
   // Keep transaction signing and execution disabled until the separate security release gates pass.
   enabled: false,
-  apiBase: "https://api.climboria.fun"
+  apiBase: "https://api.climboria.fun",
+  // OFF until the official in-site provider SDK, source/integrity and
+  // wallet-owned transaction flow are verified. Never enables our Worker.
+  managedProvider: Object.freeze({
+    enabled: false,
+    provider: "jupiter-terminal",
+    scriptUrl: null,
+    integrity: null
+  })
 });
