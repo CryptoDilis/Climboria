@@ -138,3 +138,15 @@ test("DEX exposes a keyboard-accessible read-only quote toggle without enabling 
   assert.equal(panel.hidden, false);
   assert.equal(invalidations.length, 1);
 });
+
+
+test("Swap and DEX quote/token search never silently bypass the Climboria backend", () => {
+  for (const page of ["swap/index.html", "dex/index.html"]) {
+    const html = readFileSync(new URL("../../" + page, import.meta.url), "utf8");
+    assert.doesNotMatch(html, /https:\/\/api\.jup\.ag\/(?:swap\/v2\/order|tokens\/v2\/search)/, page);
+    assert.match(html, /if\(!swapProxyReady\(\)\)throw new Error\('Climboria Swap API is unavailable; token search is paused\.'\)/, page);
+    assert.match(html, /if\(!swapProxyReady\(\)\)throw new Error\('Climboria Swap API is unavailable; quote preview is paused\.'\)/, page);
+    assert.match(html, /const tokenUrl=swapConfig\.apiBase\.replace\(/, page);
+    assert.match(html, /const quoteUrl=swapConfig\.apiBase\.replace\(/, page);
+  }
+});
