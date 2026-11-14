@@ -125,6 +125,34 @@ test("Swap public market requests time out without substituting cached data", as
   assert.equal(cleared, 42);
 });
 
+test("an older Swap market refresh cannot overwrite a newer response", async () => {
+  const html = readFileSync(new URL("../../swap/index.html", import.meta.url), "utf8");
+  const start = html.indexOf("async function loadMajorMarkets(){");
+  const end = html.indexOf("async function restoreSwapFromUrl", start);
+  assert.ok(start >= 0 && end > start, "Expected request-sequenced Swap market loader");
+  assert.ok(html.indexOf("let majorMarketsRequest=0;") < html.indexOf("loadMajorMarkets();updateSelectedAsset"),
+    "Market request sequence must be initialized before the first page-load refresh");
+  const loader = "let majorMarketsRequest=0;\n" + html.slice(start, end);
+  const elements = { majorCoins: { innerHTML: "" }, majorStatus: { textContent: "" } };
+  const pending = [];
+  const loadMajorMarkets = runInNewContext(loader + "\nloadMajorMarkets", {
+    $: id => elements[id],
+    esc: value => String(value),
+    miniSparkline: () => "",
+    usdFmt: value => "price-" + value,
+    fetchMarketJson: () => new Promise(resolve => pending.push(resolve))
+  });
+  const older = loadMajorMarkets();
+  const newer = loadMajorMarkets();
+  assert.equal(pending.length, 2);
+  pending[1]([{ id: "bitcoin", symbol: "btc", name: "Bitcoin", current_price: 2, price_change_percentage_24h: 1, sparkline_in_7d: { price: [] } }]);
+  await newer;
+  pending[0]([{ id: "bitcoin", symbol: "btc", name: "Bitcoin", current_price: 1, price_change_percentage_24h: 1, sparkline_in_7d: { price: [] } }]);
+  await older;
+  assert.match(elements.majorCoins.innerHTML, /price-2/);
+  assert.doesNotMatch(elements.majorCoins.innerHTML, /price-1/);
+});
+
 
 test("DEX exposes a keyboard-accessible read-only quote toggle without enabling swaps", () => {
   const html = readFileSync(new URL("../../dex/index.html", import.meta.url), "utf8");
