@@ -781,6 +781,16 @@ try {
   });
   await mobile.waitForSelector('canvas', { timeout: 45000 });
   await mobile.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
+  // Mobile GLB scenes must use the low-fill-rate renderer and expose actual draw-call metrics.
+  const mobileGraphicsAudit=await mobile.evaluate(()=>({
+    mobileBudget:window.__climboriaRenderState?.mobileBudget,
+    pixelRatio:window.__climboriaRenderState?.pixelRatio,
+    triangles:window.__climboriaRenderState?.triangles,
+    drawCalls:window.__climboriaRenderState?.drawCalls,
+  }));
+  if(!mobileGraphicsAudit.mobileBudget||!Number.isFinite(mobileGraphicsAudit.pixelRatio)||mobileGraphicsAudit.pixelRatio>.901||
+    !Number.isFinite(mobileGraphicsAudit.drawCalls)||!Number.isFinite(mobileGraphicsAudit.triangles))
+    errors.push('Mobile render budget or WebGL counters unavailable: '+JSON.stringify(mobileGraphicsAudit));
   // Mobile Hub-to-game now enters gameplay directly; the character picker belongs in the Hub.
   const portraitGate = await mobile.evaluate(() => ({
     visible: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display !== 'none',
