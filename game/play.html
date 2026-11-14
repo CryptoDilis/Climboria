@@ -425,7 +425,8 @@ function biome(x,z,h){
  return fd(x,z)>.5?'Whispering Forest':'Wild Fields';
 }
 /* ---------- renderer / scene ---------- */
-const renderer=new T3.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+const lowPowerTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+const renderer=new T3.WebGLRenderer({antialias:!lowPowerTouch,powerPreference:'high-performance'});
 // Cap render resolution to reduce GPU fill-rate pressure on large open-world scenes.
 renderer.setPixelRatio(Math.min(devicePixelRatio,'ontouchstart' in window?1:1.25));renderer.setSize(innerWidth,innerHeight);
 renderer.outputEncoding=T3.sRGBEncoding;renderer.toneMapping=T3.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
@@ -966,6 +967,21 @@ const parkFixtureSolids=[];
  sc(mk(BOX,M('#b08a55'),0,1.5,0,g),4,3,4);const rf=sc(mk(CON,M('#8a5a2b'),0,4.2,0,g),3.8,2.4,3.8);rf.rotation.y=Math.PI/4}}
 /* Soldiers */
 const soldiers=[];
+ // Soldiers are visual decorations (not combat AI). Render only when nearby.
+ // Keep their procedural motion/state and original spawn positions unchanged.
+ const soldierWorldPosition=new T3.Vector3();
+ let soldierVisibilityElapsed=0;
+ function updateSoldierVisibility(cameraPos,dt){
+  soldierVisibilityElapsed+=dt;
+  if(soldierVisibilityElapsed<.6)return;
+  soldierVisibilityElapsed=0;
+  const radius=MOB?110:170,radius2=radius*radius;
+  for(const o of soldiers){
+   o.s.getWorldPosition(soldierWorldPosition);
+   const dx=soldierWorldPosition.x-cameraPos.x,dz=soldierWorldPosition.z-cameraPos.z;
+   o.s.visible=dx*dx+dz*dz<=radius2;
+  }
+ }
 function soldier(){const g=new T3.Group(),cl=M('#3a4234'),sk=M('#8f9d86'),ar=M('#5b5850');
  sc(mk(BOX,cl,-.22,.45,0,g),.22,.9,.26);sc(mk(BOX,cl,.22,.45,0,g),.22,.9,.26);sc(mk(BOX,ar,0,1.3,0,g),.7,.85,.4);
  sc(mk(SPH,sk,0,1.95,0,g),.22,.25,.22);sc(mk(CYL,ar,0,2.12,0,g),.26,.14,.26);
@@ -3304,6 +3320,7 @@ function update(dt){
  // excluded so its subdued intensity stays correct throughout gameplay.
  lights.forEach((l,i)=>{if(i>0&&l.color.r>.5&&!l.userData.fixedCaveAccent)l.intensity=l.intensity*.9+.1*(2.6+Math.sin(Tm*11+i)*.5)*(l.distance>100?1.1:1)});
  spikes.forEach(o=>{const w=Math.sin(Tm*1.6+o.ph);o.s.position.y=w>.55?1.2:w>.3?-.2:-2});
+ updateSoldierVisibility(cp,dt);
  soldiers.forEach(o=>{o.s.rotation.z=Math.sin(Tm*.8+o.ph)*o.tilt;o.s.rotation.x=Math.sin(Tm*.6+o.ph)*o.tilt*.6});
  const pa=flag.geometry.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i);pa.setZ(i,Math.sin(x*1.1-Tm*5)*.3*(x+3)/6)}pa.needsUpdate=true;wavingFlags.forEach(({geometry,base,phase})=>{const p=geometry.attributes.position;for(let i=0;i<p.count;i++){const x=base[i*3],y=base[i*3+1],fall=Math.max(0,(x+1.125)/2.25);p.setZ(i,base[i*3+2]+fall*(Math.sin(x*3.1-Tm*4.2+phase+y*.7)*.17+Math.sin(x*5.4-Tm*6.1+phase)*.035))}p.needsUpdate=true;geometry.computeVertexNormals()});
  // Wild-animal simulation disabled along with placeholder wildlife models.
