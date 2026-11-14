@@ -1,0 +1,60 @@
+name: Game Sanctuary Vendor and Tambay NPC Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "game/play.html"
+      - "game/scripts/verify-sanctuary-actors.mjs"
+      - "assets/characters/Climboria_Arcane_Cart_optimized.glb"
+      - "assets/characters/Climboria_Starting_Tambay_NPC_optimized.glb"
+      - ".github/scripts/game-camp-actors-smoke.mjs"
+      - ".github/workflows/game-camp-actors-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: game-camp-actors-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  real-static-actors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout candidate
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check exact optimized GLB bytes / preserved original heroes
+        run: node game/scripts/verify-sanctuary-actors.mjs
+      - name: Install Chromium
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install chromium
+      - name: Start test web server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/camp-actors-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4173/game/play.html >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/camp-actors-http.log
+          exit 1
+      - name: Test real GLB assets in desktop / mobile browser
+        timeout-minutes: 12
+        run: timeout --signal=TERM --kill-after=30s 11m node .github/scripts/game-camp-actors-smoke.mjs
+      - name: Publish screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-sanctuary-vendor-tambay-screenshots
+          path: |
+            climboria-sanctuary-npc-*.png
+            climboria-arcane-vendor-*.png
+          retention-days: 7
+          if-no-files-found: warn
