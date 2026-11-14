@@ -1649,6 +1649,8 @@ let camY=null,lookY=0,cameraDistance=MOB?4.6:5.8,targetCameraDistance=MOB?4.6:5.
 // Camera orbit is independent from the explorer's body heading. Rotating the view
 // must never spin the hero in place; movement/facing continue to use P.yaw.
 let cameraYaw=0,cameraPitch=-.08;
+// CI-only high lookout. Normal gameplay always uses the collision-safe follow camera.
+let mountainSmokeVista=null;
 window.__climboriaCameraOrbit={get yaw(){return cameraYaw},get pitch(){return cameraPitch},get playerYaw(){return P.yaw},get heroYaw(){return assetHero?.rotation.y??hero.rotation.y},get heroUsesGlb(){return !!assetHero&&assetHero.visible},get distance(){return cameraDistance},get targetDistance(){return targetCameraDistance},get safeBack(){return cameraSafeBack},get actualDistance(){return cameraActualDistance},get groundClearance(){return cameraGroundClearance},get mobile(){return MOB},get fov(){return cam.fov}};
 const free=on=>document.body.classList.toggle('free',on);
 const climboriaMusic=new Audio('./assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;climboriaMusic.preload='auto';
@@ -2706,22 +2708,45 @@ function geodeChestLifecycleAudit(){
  }finally{Object.assign(P,saved)}
 }
 function positionAtMountainCliffForSmoke(){
- // Diagnostic-only view of the real eastern alpine slopes; never overwrite
- // the saved spawn or Hero GLB. Next smoke positioner handles cave relocation.
+ // The regular follow camera looks at the hero's waist. At a steep summit
+ // viewpoint this points into a solid green terrain face, a false art review.
+ // Use an elevated real-world panorama in ?smoke ONLY; never change the user's
+ // gameplay camera, movement, Hero GLB, terrain, or stored spawn.
  const origin={x:POI.summit.x-220,z:POI.summit.z+260};
- const target={x:POI.summit.x,z:POI.summit.z};
  updateChunks(origin.x,origin.z,200);
  P.mode='walk';P.x=origin.x;P.z=origin.z;P.y=groundAt(P.x,P.z)+1.75;
  P.vy=0;P.moveTarget=null;
+ let focus=null;
+ for(let x=POI.summit.x-220;x<=POI.summit.x+140;x+=30)
+  for(let z=POI.summit.z-200;z<=POI.summit.z+170;z+=30){
+   const h=heightAt(x,z);
+   if(h<80||h>238)continue;
+   const nx=heightAt(x-5,z)-heightAt(x+5,z),nz=heightAt(x,z-5)-heightAt(x,z+5);
+   const ny=10/Math.hypot(nx,10,nz),cliff=mountainCliffStrata(x,z,h,ny);
+   const score=cliff.weight*(.7+.3*cliff.strata)+.12*(1-ny);
+   if(score>.22&&(!focus||score>focus.score))focus={x,z,h,score,weight:cliff.weight};
+  }
+ if(!focus)focus={x:POI.summit.x-100,z:POI.summit.z+130,
+  h:heightAt(POI.summit.x-100,POI.summit.z+130),score:0,weight:0};
+ const target={x:focus.x,y:focus.h+16,z:focus.z};
+ const camera={x:target.x-320,z:target.z+365};
+ let crest=0;
+ for(let i=0;i<=28;i++){
+  const t=i/28,x=camera.x+(target.x-camera.x)*t,z=camera.z+(target.z-camera.z)*t;
+  crest=Math.max(crest,heightAt(x,z));
+ }
+ camera.y=Math.max(crest+125,target.y+145,groundAt(camera.x,camera.z)+100);
+ mountainSmokeVista={camera,target,focusWeight:focus.weight};
  const facing=Math.atan2(target.x-P.x,target.z-P.z);
  P.yaw=facing;cameraYaw=facing+Math.PI;cameraPitch=-.24;
  return {origin:{x:P.x,z:P.z,height:+(P.y-1.75).toFixed(2)},
-  target,viewDistance:+Math.hypot(target.x-P.x,target.z-P.z).toFixed(2),
+  target,camera,viewDistance:+Math.hypot(target.x-camera.x,target.z-camera.z).toFixed(2),
   facing,cameraYaw,cameraPitch,loadedChunks:chunks.size,
-  sampleStrata:mountainCliffStrata(POI.summit.x-100,POI.summit.z+130,
-   heightAt(POI.summit.x-100,POI.summit.z+130),.72)};
+  smokeOverlook:true,focusWeight:+focus.weight.toFixed(3),
+  cameraGroundClearance:+(camera.y-groundAt(camera.x,camera.z)).toFixed(2)};
 }
 function positionAtCaveEntranceForSmoke(){
+ mountainSmokeVista=null; // Restore ordinary follow camera for cave and coast QA.
  // Capture from the exterior approach, not beneath the near-mouth rock overhang.
  // Keep the hero facing into the opening with the follow camera behind them.
  const local={x:0,z:-20},world=l2w(caveG,local.x,local.z);
@@ -3112,6 +3137,12 @@ function update(dt){
   cam.near=0.15;
   cam.updateProjectionMatrix();
   cam.lookAt(terrainCameraTarget);
+  // Screenshot-only wide alpine lookout, not enabled in real gameplay.
+  if(mountainSmokeVista&&new URLSearchParams(location.search).has('smoke')){
+   const v=mountainSmokeVista;
+   cam.position.set(v.camera.x,v.camera.y,v.camera.z);
+   cam.lookAt(v.target.x,v.target.y,v.target.z);
+  }
   const locomotionState=moving?(sprinting?'run':'walk'):'idle';
   const animState=P.swim?'swim':(['takeoff','airborne','descent'].includes(P.jumpState)?'jump-'+P.jumpState:P.jumpState==='land'?'land':locomotionState);
   document.documentElement.dataset.climboriaJumpState=P.swim?'swim':(P.jumpState||'grounded');

@@ -696,9 +696,11 @@ try {
   if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' , timeout: 90000, animations: 'disabled' });
   const desktopMountain=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtMountainCliffForSmoke?.()??null);
-  if(!desktopMountain||desktopMountain.viewDistance<290||
+  if(!desktopMountain||desktopMountain.viewDistance<400||
     desktopMountain.origin.x!==420||desktopMountain.origin.z!==-360||
-    desktopMountain.loadedChunks<40||
+    desktopMountain.loadedChunks<40||!desktopMountain.smokeOverlook||
+    desktopMountain.focusWeight<.2||desktopMountain.cameraGroundClearance<90||
+    desktopMountain.camera.y-desktopMountain.target.y<120||
     Math.abs(Math.atan2(Math.sin(desktopMountain.cameraYaw-desktopMountain.facing),Math.cos(desktopMountain.cameraYaw-desktopMountain.facing))-Math.PI)>.01)
     errors.push('Desktop actual alpine mountain-view camera setup invalid: '+JSON.stringify(desktopMountain));
   await page.waitForTimeout(1800);
@@ -1061,9 +1063,11 @@ try {
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' , timeout: 90000, animations: 'disabled' });
   const mobileMountain=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtMountainCliffForSmoke?.()??null);
-  if(!mobileMountain||mobileMountain.viewDistance<290||
+  if(!mobileMountain||mobileMountain.viewDistance<400||
     mobileMountain.origin.x!==420||mobileMountain.origin.z!==-360||
-    mobileMountain.loadedChunks<40)
+    mobileMountain.loadedChunks<40||!mobileMountain.smokeOverlook||
+    mobileMountain.focusWeight<.2||mobileMountain.cameraGroundClearance<90||
+    mobileMountain.camera.y-mobileMountain.target.y<120)
     errors.push('Mobile actual alpine mountain-view camera setup invalid: '+JSON.stringify(mobileMountain));
   await mobile.waitForTimeout(1800);
   await mobile.screenshot({path:'climboria-mobile-mountain-cliff.png',timeout:90000,animations:'disabled'});
