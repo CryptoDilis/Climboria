@@ -352,7 +352,8 @@ test("namespace diagnostics remain deterministic and include actual indices for 
   const live = structuredClone(repo);
   live.instructions.push(structuredClone(live.instructions[0]));
   const evidence = compareCriticalIdls(repo, live);
-  assert.match(evidence.idlNamespaceMismatches[0], /indices 0 and 13/);
+  assert.match(evidence.idlNamespaceMismatches[0],
+    new RegExp("indices 0 and " + (live.instructions.length - 1) + "$"));
   assert.deepEqual(evidence.idlNamespaceMismatches,
     compareCriticalIdls(repo, live).idlNamespaceMismatches);
 });
