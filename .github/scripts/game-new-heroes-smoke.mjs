@@ -46,13 +46,28 @@ try{
     await page.goto(base+'/game/index.html',{waitUntil:'domcontentloaded',timeout:60000});
     await page.locator('#openHeroCreator').click();
     await page.locator('#heroModelSelect').selectOption(hero.name);
-    await page.waitForFunction(name=>
-      document.documentElement.dataset.climboriaHeroPreviewModel===name.toLowerCase()
-      &&document.documentElement.dataset.climboriaHeroPreviewPose==='neutral-idle'
-      &&document.documentElement.dataset.climboriaHeroPreviewClip==='procedural-neutral'
-      &&window.__climboriaHeroNeutralPoseAudit?.leftArm?.[1]<-.6
-      &&window.__climboriaHeroNeutralPoseAudit?.rightArm?.[1]<-.6,
-      hero.name,{timeout:90000});
+    try{
+      await page.waitForFunction(name=>
+        document.documentElement.dataset.climboriaHeroPreviewModel===name.toLowerCase()
+        &&document.documentElement.dataset.climboriaHeroPreviewPose==='neutral-idle'
+        &&document.documentElement.dataset.climboriaHeroPreviewClip==='procedural-neutral'
+        &&window.__climboriaHeroNeutralPoseAudit?.leftArm?.[1]<-.6
+        &&window.__climboriaHeroNeutralPoseAudit?.rightArm?.[1]<-.6,
+        hero.name,{timeout:20000});
+    }catch(error){
+      const details=await page.evaluate(()=>({
+        active:document.querySelector('#heroModelSelect')?.value,
+        status:document.querySelector('#heroPreviewStatus')?.textContent,
+        feedback:document.querySelector('#heroCreateFeedback')?.textContent,
+        pose:document.documentElement.dataset.climboriaHeroPreviewPose,
+        clip:document.documentElement.dataset.climboriaHeroPreviewClip,
+        model:document.documentElement.dataset.climboriaHeroPreviewModel,
+        directions:window.__climboriaHeroNeutralPoseAudit,
+        hasScene:!!document.querySelector('#heroPreviewCanvas')
+      }));
+      await page.screenshot({path:'climboria-'+hero.name.toLowerCase()+'-'+device.name+'-creator-diagnostic.png',timeout:25000});
+      throw Error('Neutral creator preview failed: '+JSON.stringify(details)+'; browserErrors='+JSON.stringify(errors)+'; '+error.message);
+    }
     await page.waitForTimeout(500);
     const preview=await page.evaluate(()=>({
       canvas:document.querySelector('#heroPreviewCanvas')?.width||0,
