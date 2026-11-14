@@ -163,3 +163,37 @@ The regression tests use hostile synthetic request streams and Worker
 integration tests; they do not claim an actual public load test or a
 real wallet transaction. This change does not enable trading or token
 creation and does not modify public quotes, auth, CLIMBX or the game.
+
+
+## Reviewed Worker source auto-release on main (2026-11-14)
+
+The guarded `Deploy Climboria API` workflow now starts on **reviewed
+`main` pushes** changing `dex/swap-proxy/src/**`,
+`dex/swap-proxy/wrangler.toml`, or its own workflow YAML. The previous
+configuration watched **only the deployment workflow YAML** and could
+leave merged Worker security fixes (such as #390) unapplied to the
+production API until a separate manual dispatch.
+
+An explicit `workflow_dispatch` is still available, **but the deploy
+job rejects any ref other than `refs/heads/main`**. Pull requests
+never deploy, and changes only to tests/docs/Game/ClimbX/Auth/Launchpad
+do not start this production job. GitHub Actions must still check out
+`main`, run the entire Worker security test suite, verify the source,
+config and frontend transaction kill switches, validate
+account-specific rate limiter configuration and secrets, inject the
+exact Git commit SHA, and verify the live quote-only Worker,
+`/health.deployedGitSha`, token search, CORS, and an unsigned quote.
+Post-deploy API readiness checks are triggered only after a successful
+deployment workflow.
+
+This automation is a **conditional attempted quote-only deployment**,
+not proof that Cloudflare credentials, DNS, API routes, or the current
+live Worker are ready. Missing Cloudflare secrets, Jupiter API key,
+rate-limit namespace, or failing CI abort deployment. In particular,
+a release workflow succeeding is not permission to change
+`EXECUTION_ENABLED = "false"`,
+`SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false`,
+`EXECUTION_SECURITY_REVIEW_COMPLETE = false`, or frontend
+`enabled: false`. No source-review or mainnet transaction gate was
+weakened. Verify the main-push Actions run ID and post-deploy probe
+before reporting any new release live.
