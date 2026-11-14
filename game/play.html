@@ -1500,7 +1500,7 @@ function cacheAssetRig(root){
   const n=o.name.toLowerCase();
   if(/hip|pelvis/.test(n))assetRig.hips={bone:o,baseQuaternion:o.quaternion.clone()};
   if(/spine|chest/.test(n)&&!assetRig.spine)assetRig.spine={bone:o,baseQuaternion:o.quaternion.clone()};
-  if(n==='head'&&!assetRig.head)assetRig.head={bone:o,baseQuaternion:o.quaternion.clone()};
+  if(/(?:^|:)head$/.test(n)&&!assetRig.head)assetRig.head={bone:o,baseQuaternion:o.quaternion.clone()};
   if(/thigh|upleg|calf|lowerleg|knee|leg/.test(n))assetRig.legs.push({bone:o,base:o.rotation.x,baseQuaternion:o.quaternion.clone(),side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.legs.length%2? -1:1});
   if(/upperarm|lowerarm|arm|shoulder|forearm/.test(n))assetRig.arms.push({bone:o,base:o.rotation.x,baseY:o.rotation.y,baseZ:o.rotation.z,baseQuaternion:o.quaternion.clone(),shoulder:/shoulder/.test(n),lower:/lower|forearm/.test(n),side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.arms.length%2? -1:1});
  });
@@ -1512,19 +1512,21 @@ const FORBIDDEN_REST_CLIP=/(?:^|[_\\s-])(sit|sitting|seated|crouch|kneel|prone|s
 const NATURAL_STANDING_SHOULDER_DROP=-.6;
 function findStandingRestClip(){
  const safe=assetActions.filter(a=>!FORBIDDEN_REST_CLIP.test(a.name)&&!/(swim|swimming|combat|weapon|rifle|sword|aim|attack)/i.test(a.name));
- const preferred=['Standing_Idle','Idle_Standing','Standing','Idle','Idle_01','Breathing_Idle','Idle_Breathing'];
+ const preferred=['Standing_Idle','Idle_Standing','Standing','Idle','Idle_01','Idle_03','Breathing_Idle','Idle_Breathing'];
  for(const name of preferred){const clip=safe.find(a=>a.name.toLowerCase()===name.toLowerCase());if(clip)return clip;}
  return safe.find(a=>/(?:^|[_\\s-])(idle|stand|standing|breath|relax)(?:$|[_\\s-])/i.test(a.name))||null;
 }
 function chooseAssetAnimation(state,speed=0){
  if(!assetMixer||!assetActions.length)return false;
  const jumping=state.startsWith('jump-');
- const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':jumping?'Jump':state==='land'?'Landing':'';
+ const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':state==='climb'?'climbing_up_wall':jumping?'Regular_Jump':state==='land'?'Landing':'';
  let clip=exact?assetActions.find(a=>a.name.toLowerCase()===exact.toLowerCase()):null;
  if(state==='idle'||state==='land')clip=findStandingRestClip();
  else if(!clip){
-  const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:state==='swim'?/swim|stroke/i:jumping?/jump|takeoff|airborne/i:/land|touchdown/i;
-  clip=assetActions.find(a=>patterns.test(a.name)&&!FORBIDDEN_REST_CLIP.test(a.name));
+  const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:state==='swim'?/swim|stroke/i:state==='climb'?/climb/i:jumping?/jump|takeoff|airborne/i:/land|touchdown/i;
+  // The Lheiz pack has 'Jumping_Punch', not a locomotion jump: do NOT
+  // trigger combat clips automatically for jumping or any movement state.
+  clip=assetActions.find(a=>patterns.test(a.name)&&!FORBIDDEN_REST_CLIP.test(a.name)&&!/(punch|jab|slash|sword|attack|combat|weapon|fight)/i.test(a.name));
  }
  if(!clip&&state==='run')clip=assetActions.find(a=>/walk|locomotion|move/i.test(a.name));
  if(!clip&&state==='walk')clip=assetActions.find(a=>/run|jog|locomotion|move/i.test(a.name));
@@ -1644,7 +1646,9 @@ heroReady=true;
   console.warn('[Climboria] GLB unavailable; procedural placeholder suppressed:',assetChoices[choice],error);
  });
 }
-const saved=(()=>{try{return localStorage.getItem('climboria-selected-hero')||'ClimboriaHero'}catch(_){return 'ClimboriaHero'}})();
+// The validated saved hero record is canonical. Do not load an unrelated
+// model based on a stale convenience key in localStorage.
+const saved=window.__climboriaCreatedHero.model;
 loadAssetHero(saved);
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
