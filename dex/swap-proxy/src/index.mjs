@@ -92,17 +92,29 @@ async function upstream(path, init, env) {
   if (!env.JUPITER_API_KEY) throw new Error("Backend is not configured: missing Jupiter server API key");
   const target = path.startsWith("https://api.jup.ag/") ? path : JUPITER + path;
   try {
-    return await fetch(target, {
+    const response = await fetch(target, {
       ...init,
-      // Never forward a server-side API key to a redirected third-party origin.
-      redirect: "error",
+      // Only the exact api.jup.ag URL receives the x-api-key. Cloudflare
+      // Workers can reject redirect:"error" at fetch time; manual does not
+      // follow redirects and lets us distinguish a 3xx from transport failure.
+      redirect: "manual",
       headers: { ...(init?.headers || {}), "x-api-key": env.JUPITER_API_KEY },
-      // Bound provider latency so stalled upstream requests cannot pin Worker capacity.
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
     });
+    // Explicitly refuse provider redirects, regardless of Location/host.
+    // Never issue a second request or forward credentials to a new origin.
+    if (response?.redirected === true || response?.type === "opaqueredirect" ||
+        response?.status === 0 ||
+        (response?.status >= 300 && response?.status < 400)) {
+      throw new Error("Jupiter upstream redirect blocked");
+    }
+    return response;
   } catch (error) {
-    // Never pass raw fetch errors with possible credential-bearing URLs to
-    // browser clients or logs. Keep the existing timeout signal distinct.
+    // Fixed error phrases only: never reflect raw Worker/provider exceptions
+    // containing endpoints, query credentials or network internals.
+    if (error?.message === "Jupiter upstream redirect blocked") {
+      throw new Error("Jupiter upstream redirect blocked");
+    }
     if (error?.name === "TimeoutError" || error?.name === "AbortError") {
       throw new Error("Jupiter upstream request timed out");
     }
