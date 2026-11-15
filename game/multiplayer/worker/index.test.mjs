@@ -151,7 +151,7 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   c1.dispatch('message',JSON.stringify({type:'world-chat',text:'spam'}));
   assert.equal(c1.packets.at(-1).reason,'world-chat-rate-limit');
   assert.equal(c2.packets.length,chatCount,'rate-limited content never broadcasts');
-  for(const text of ['', 'line\\nfeed', 'x'.repeat(161),'€'.repeat(130)]){
+  for(const text of ['', 'line\nfeed', 'x'.repeat(161),'€'.repeat(130)]){
    c1.dispatch('message',JSON.stringify({type:'world-chat',text}));
    assert.equal(c1.packets.at(-1).reason,'world-chat-invalid-text');
    assert.equal(c2.packets.length,chatCount);
