@@ -118,6 +118,10 @@ try{
  await send(a,{type:'duel-request',targetId:welcomeB.selfId,actorId:welcomeB.selfId});
  await packet(a,{type:'rejected',reason:'sanctuary-pvp-disabled'},'Sanctuary invitation denied');
 
+ // Wait for the server movement window after the preceding x=.2m update.
+ // This prevents a valid first step from being rejected by the 50ms rate
+ // guard or the 14m/s budget on a fast local/staging round trip.
+ await new Promise(resolve=>setTimeout(resolve,400));
  // Walk in small validated server-time steps (not a forged teleport) outside
  // the 74m protected Sanctuary. This is socket policy QA, NOT real terrain QA.
  // Send two independent sessions; each 2.5m/300ms stays under the 14m/s limit.
