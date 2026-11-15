@@ -1027,8 +1027,25 @@ try {
       const a=controls[i],b=controls[j];
       if(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top) overlaps.push([a.action,b.action]);
     }
-    return { viewport:{width:innerWidth,height:innerHeight}, controls, overlaps };
+    const attack = document.querySelector('[data-mobile-action="punch"]');
+    const labelRange = document.createRange();
+    if (attack) labelRange.selectNodeContents(attack);
+    const labelRect = attack ? labelRange.getBoundingClientRect() : null;
+    const buttonRect = attack?.getBoundingClientRect();
+    const labelCenter = attack ? {
+      label: attack.textContent.trim(),
+      display: getComputedStyle(attack).display,
+      dx: Math.abs((labelRect.left + labelRect.right - buttonRect.left - buttonRect.right)/2),
+      dy: Math.abs((labelRect.top + labelRect.bottom - buttonRect.top - buttonRect.bottom)/2)
+    } : null;
+    return { viewport:{width:innerWidth,height:innerHeight}, controls, overlaps, labelCenter };
   });
+  if (!mobileActionLayout.labelCenter ||
+      mobileActionLayout.labelCenter.label !== 'ATTACK' ||
+      mobileActionLayout.labelCenter.display !== 'flex' ||
+      mobileActionLayout.labelCenter.dx > 5 || mobileActionLayout.labelCenter.dy > 5) {
+    errors.push('Mobile ATTACK label is not centered inside its visible action button: ' + JSON.stringify(mobileActionLayout.labelCenter));
+  }
   if (mobileActionLayout.controls.length !== 5 ||
       !['punch','jump-surface','run','use','dive'].every(id=>mobileActionLayout.controls.some(c=>c.action===id)) ||
       mobileActionLayout.controls.some(c => c.display === 'none' || c.visibility !== 'visible' ||
