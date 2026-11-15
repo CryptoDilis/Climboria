@@ -375,7 +375,11 @@
    const {data,error}=await auth.auth.getSession();
    if(disposed||epoch!==connectEpoch)return;
    const session=data?.session;
-   if(error||!session?.user?.id||!session.access_token){
+   // Supabase anonymous sign-in returns a real UUID and bearer token.
+   // Only registered accounts may join the authenticated Game room.
+   if(error||!session?.user?.id||!session.access_token||
+      session.user.is_anonymous===true||
+      session.user.app_metadata?.provider==='anonymous'){
     clientUser=null;showStatus('login-required','MULTIPLAYER · SIGN IN REQUIRED');return;
    }
    clientUser=session.user.id;
@@ -427,7 +431,12 @@
  document.addEventListener('climboria:visual-punch',()=>{if(selfId)send({type:'punch'});});
  authSubscription=auth.auth.onAuthStateChange((_event,session)=>{
   if(disposed)return;
-  const verifiedUser=session?.user?.id||null;
+  // Guest JWTs must behave like signed-out state even when Supabase returns
+  // a valid user.id. This also closes any prior registered user's socket on
+  // a switch to an anonymous login, removing stale 3D peers and World Chat.
+  const verifiedUser=session?.user?.is_anonymous===true||
+    session?.user?.app_metadata?.provider==='anonymous'
+    ?null:(session?.user?.id||null);
   if(!verifiedUser){
    // Logout must remove ghosts, transcript and socket immediately, without
    // forbidding the next independent login on this open Game page.

@@ -204,6 +204,50 @@ test('World Chat is room-gated, server-confirmed, safe as text and cleared on di
 });
 
 
+test('Supabase anonymous guest with a valid access token does not open an authenticated Game room',async()=>{
+ const guest={user:{id:'guest-uuid',is_anonymous:true},access_token:'valid-guest-supabase-token'};
+ const h=harness(true,{initialSession:guest});
+ await flush();
+ assert.equal(h.clients.length,0,'valid anonymous Supabase session is not a registered multiplayer account');
+ assert.equal(h.calls.filter(c=>c.url.includes('/ticket')).length,0,
+  'anonymous credentials must never request a one-time World Chat ticket');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'login-required');
+ h.authChange({user:{id:'registered-account',is_anonymous:false},access_token:'real-token'},'SIGNED_IN');
+ assert.equal(h.runNextTimer(),0,'account upgrade must reconnect without reloading Game');
+ await flush();await waitFor(()=>h.clients.length===1);
+ assert.equal(h.clients.length,1,'verified account can open authenticated room after guest upgrade');
+});
+
+test('switching from registered player to anonymous guest drops old room, avatars and transcript',async()=>{
+ const registered={user:{id:'registered-1',is_anonymous:false,app_metadata:{provider:'email'}},access_token:'registered-token'};
+ const h=harness(true,{initialSession:registered});
+ await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];
+ ws.onopen();
+ const selfId='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId,peers:[peer]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:selfId,position:{x:0,y:9.55,z:-30},peers:[peer]})});
+ assert.equal(h.adds.length,1);
+ const toggle=h.created.find(el=>el.id==='climboria-world-chat-toggle');
+ const panel=h.created.find(el=>el.id==='climboria-world-chat-panel');
+ assert.equal(toggle.style.display,'block');
+ const ticketCount=h.calls.filter(c=>c.url.includes('/ticket')).length;
+ h.authChange({user:{id:'guest-id',is_anonymous:true,app_metadata:{provider:'anonymous'}},access_token:'guest-token'},'SIGNED_IN');
+ assert.equal(ws.readyState,3,'switching to guest immediately closes registered player socket');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'login-required');
+ assert.deepEqual(h.removes,[peer.id],'switch to guest clears remote avatar');
+ assert.equal(toggle.style.display,'none');
+ assert.equal(panel.style.display,'none');
+ await flush();
+ assert.equal(h.clients.length,1,'anonymous session cannot spawn a second socket');
+ assert.equal(h.calls.filter(c=>c.url.includes('/ticket')).length,ticketCount,
+  'guest must not inherit or obtain authenticated room ticket');
+ h.authChange({user:{id:'registered-2',is_anonymous:false,app_metadata:{provider:'email'}},access_token:'registered-token-2'},'SIGNED_IN');
+ assert.equal(h.runNextTimer(),0,'upgraded account may reconnect in existing Game page');
+ await flush();await waitFor(()=>h.clients.length===2);
+ assert.equal(h.clients.length,2);
+});
+
 test('login after first guest load connects without reloading; logout clears World Chat and new login reconnects',async()=>{
  const h=harness(true,{initialSession:null});
  await flush();
