@@ -81,6 +81,7 @@ export class JarrellRoom {
   if(!state?.storage)throw Error('Durable Object storage required for one-use session tickets');
   this.room=new PresenceRoom({roomId:ROOM,limit:32});
   this.lastPunch=new Map();
+  this.spawned=new Set();
  }
  async fetch(req){
   const url=new URL(req.url);
@@ -124,13 +125,33 @@ export class JarrellRoom {
    send:packet=>socket.send(JSON.stringify(packet))
   });
   if(!connected.ok){socket.close(1013,'room-unavailable');return response(503,{error:connected.reason})}
-  const cleanup=()=>{this.room.disconnect(id);this.lastPunch.delete(id)};
+  const cleanup=()=>{this.room.disconnect(id);this.lastPunch.delete(id);this.spawned.delete(id)};
   socket.addEventListener('message',event=>{
    if(typeof event.data!=='string'||event.data.length>512){socket.close(1009,'message-too-large');cleanup();return}
    let message;
    try{message=JSON.parse(event.data)}catch{socket.send(JSON.stringify({type:'rejected',reason:'invalid-json'}));return}
    if(!message||typeof message!=='object')return;
+   if(message.type==='spawn'){
+    const p=message.position;
+    // Visual-only initial terrain elevation: player starts at Sanctuary.
+    // Do NOT reuse this client-requested Y as trusted combat or reward physics.
+    if(this.spawned.has(id)||!p||!Number.isFinite(p.x)||!Number.isFinite(p.y)||!Number.isFinite(p.z)
+       ||Math.hypot(p.x,p.z+30)>6||p.y<0||p.y>45){
+      socket.send(JSON.stringify({type:'rejected',reason:'invalid-initial-spawn'}));return;
+    }
+    const member=this.room.members.get(id);
+    if(!member)return;
+    member.position={x:p.x,y:p.y,z:p.z};
+    member.lastMoveAt=Date.now();
+    this.spawned.add(id);
+    this.room.broadcast({type:'player-moved',id,position:{...member.position}},id);
+    return;
+   }
+   if(message.type==='move'&&!this.spawned.has(id)){
+    socket.send(JSON.stringify({type:'rejected',reason:'spawn-required'}));return;
+   }
    if(message.type==='punch'){
+    if(!this.spawned.has(id))return;
     const now=Date.now(),last=this.lastPunch.get(id)??0;
     if(now-last<950)return;
     this.lastPunch.set(id,now);
