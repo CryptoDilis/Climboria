@@ -10,6 +10,7 @@ import {
 
 const approved = Object.freeze({
   enabled: true,
+  runtimeApproved: true,
   provider: "jupiter-terminal",
   scriptUrl: "https://terminal.jup.ag/main-v3.js",
   integrity: "sha384-" + "A".repeat(64)
@@ -20,6 +21,7 @@ test("provider mode remains explicitly OFF in public production config and custo
   const worker = readFileSync(new URL("../../dex/swap-proxy/src/index.mjs", import.meta.url), "utf8");
   assert.match(cfg, /enabled:\s*false/);
   assert.match(cfg, /managedProvider:\s*Object\.freeze\(\{\s*enabled:\s*false/);
+  assert.match(cfg, /runtimeApproved:\s*false/);
   assert.match(cfg, /scriptUrl:\s*null/);
   assert.match(cfg, /integrity:\s*null/);
   assert.match(worker, /const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;/);
@@ -28,6 +30,8 @@ test("provider mode remains explicitly OFF in public production config and custo
 
 test("provider-loader refuses unreviewed hosts, protocols, missing SRI and redirects", () => {
   assert.equal(validateManagedProviderConfig({ ...approved, enabled: false }), null);
+  assert.equal(validateManagedProviderConfig({ ...approved, runtimeApproved: false }), null);
+  assert.equal(validateManagedProviderConfig({ ...approved, runtimeApproved: undefined }), null);
   assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "https://evil.example/main-v3.js" }), null);
   assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "http://terminal.jup.ag/main-v3.js" }), null);
   assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "https://terminal.jup.ag.evil.example/main-v3.js" }), null);

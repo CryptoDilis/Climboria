@@ -9,7 +9,7 @@ const SCRIPT_PATH = /^\/main-v[1-9][0-9]*\.js$/;
 const SHA384_SRI = /^sha384-[A-Za-z0-9+/]{64}$/;
 
 export function validateManagedProviderConfig(config) {
-  if (!config || config.enabled !== true || config.provider !== "jupiter-terminal" ||
+  if (!config || config.enabled !== true || config.runtimeApproved !== true || config.provider !== "jupiter-terminal" ||
       typeof config.scriptUrl !== "string" || typeof config.integrity !== "string" ||
       !SHA384_SRI.test(config.integrity)) return null;
   try {
