@@ -510,6 +510,24 @@ try {
   }, null, { timeout: 15000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroRenderer === 'glb' && document.documentElement.dataset.climboriaHero === 'adventurer', undefined, { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
+  // Real user-input exercise: local punch must play without fake network
+  // damage, cannot spam past cooldown, and consumes the existing stamina pool.
+  const punchInput=await page.evaluate(()=>{
+    const p=window.__climboriaJarrellsPeak?.player;
+    const before={stamina:p?.stamina,hp:p?.hp};
+    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));
+    const once={stamina:p?.stamina,hp:p?.hp,mode:document.documentElement.dataset.climboriaPunch};
+    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));
+    const twice={stamina:p?.stamina,hp:p?.hp};
+    window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyJ',bubbles:true}));
+    return {before,once,twice};
+  });
+  console.log('Real input punch visual-only cooldown audit:',JSON.stringify(punchInput));
+  if(punchInput?.once?.mode!=='visual-only'||punchInput.once.stamina!==punchInput.before.stamina-5||
+     punchInput.twice.stamina!==punchInput.once.stamina||punchInput.once.hp!==punchInput.before.hp)
+    errors.push('Punch must trigger once with stamina cost, cooldown and no fake client-side PvP damage: '+JSON.stringify(punchInput));
+  await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='idle',undefined,{timeout:15000});
+
   const idleAnimationAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);
   if (!idleAnimationAudit || idleAnimationAudit.forbiddenRestClip || /(?:^|[_\\s-])(sit|sitting|seated|crouch|kneel|prone|sleep|lying|lie|fall|death|swim|swimming)(?:$|[_\\s-])/i.test(idleAnimationAudit.activeClip)) {
     errors.push('Hero idle selected a forbidden seated/fallen pose: ' + JSON.stringify(idleAnimationAudit));
