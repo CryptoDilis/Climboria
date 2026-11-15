@@ -63,7 +63,8 @@ if (localRuntimeApproved) {
 }
 const mime = { '.html':'text/html', '.js':'application/javascript', '.mjs':'application/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png' };
 
-createServer(async (request, response) => {
+// Export the local server only so offline tests can close it cleanly.
+export const stagingServer = createServer(async (request, response) => {
   try {
     const path = new URL(request.url, stagingOrigin).pathname;
     // Mirror the merged production approval contract, only on this isolated
@@ -108,6 +109,7 @@ createServer(async (request, response) => {
   } catch (error) {
     response.writeHead(error.code === 'ENOENT' ? 404 : 500).end();
   }
-}).listen(Number(process.env.SWAP_STAGING_PORT ?? 4173), '127.0.0.1', () => {
+});
+stagingServer.listen(Number(process.env.SWAP_STAGING_PORT ?? 4173), '127.0.0.1', () => {
   console.log('Swap staging ready: ' + stagingOrigin.origin);
 });
