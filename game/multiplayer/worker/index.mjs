@@ -23,7 +23,7 @@ async function readBoundedJSON(req){
  // Enforce the actual UTF-8 WIRE byte budget while reading. A forged or
  // missing Content-Length must never let us buffer an unbounded request.
  const header=req.headers.get('content-length');
- if(header!==null&&(!/^\\d+$/.test(header)||Number(header)>MAX_JSON_BYTES))
+ if(header!==null&&(!/^\d+$/.test(header)||Number(header)>MAX_JSON_BYTES))
   return null;
  if(!req.body)return null;
  const reader=req.body.getReader(),decoder=new TextDecoder('utf-8',{fatal:true});
