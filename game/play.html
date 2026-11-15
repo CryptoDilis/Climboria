@@ -1800,6 +1800,9 @@ function requestVisualPunch(){
  if(P.mode!=='walk'||P.swim||!window.__climboriaGameReady||document.hidden||P.stamina<PUNCH_COST||now-punchLastAt<PUNCH_COOLDOWN_MS)return false;
  punchLastAt=now;punchEndAt=now+PUNCH_DURATION_MS;
  P.stamina=Math.max(0,P.stamina-PUNCH_COST);
+ // Start the authored animation at input time, not at the next WebGL tick.
+ // A busy software renderer must not silently drop a 650ms ATTACK input.
+ if(assetHero&&assetMixer&&assetActions.length)chooseAssetAnimation('punch');
  document.documentElement.dataset.climboriaPunch='visual-only';
  document.dispatchEvent(new Event('climboria:visual-punch'));
  return true;
@@ -3397,6 +3400,9 @@ window.__CLIMBORIA_GAME_PEERS={
   const p={id:data.id,group,model:data.model,position:{...position},target:null,root:null,mixer:null,clips:null,action:null,actionName:'',loading:false,retryAt:0,punchUntil:0,walkUntil:0};
   const spot=remoteRootAt(position.x,position.z,position.y);p.target=spot;group.position.set(spot.x,spot.y,spot.z);
   scene.add(group);livePeers.set(data.id,p);
+  // Reflect a verified join instantly; sparse WebGL frames must not hide
+  // a genuine explorer on the field map until the next rendered frame.
+  drawWorldMapPlayer();
  },
  move(id,position){
   const p=livePeers.get(id);if(!p||!Number.isFinite(position?.x)||!Number.isFinite(position?.y)||!Number.isFinite(position?.z))return;
@@ -3411,6 +3417,7 @@ window.__CLIMBORIA_GAME_PEERS={
   p.group.traverse(n=>{if(n.isSprite){n.material?.map?.dispose();n.material?.dispose()}else if(n.name==='RemoteMarkerRing'){n.geometry?.dispose();n.material?.dispose()}});
   unloadPeerHero(p);
   livePeers.delete(id);
+  drawWorldMapPlayer();
  },
  clear(){for(const id of [...livePeers.keys()])this.remove(id)},
  update(dt){
