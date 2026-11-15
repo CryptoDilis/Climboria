@@ -164,6 +164,7 @@ test("explicit user click loads only SRI-pinned official-script origin and initi
   assert.deepEqual(calls, [{ displayMode: "integrated", integratedTargetId: ui.target.id }]);
   assert.match(ui.status.textContent, /Wallet prompts and execution are handled by the provider/);
   await ui.btn.click();
+  assert.match(ui.status.textContent, /Provider interface loaded/, "reopening a mounted widget must not leave a checking message");
   assert.equal(ui.created.length, 1, "reopening cannot inject second script");
   assert.equal(calls.length, 1, "reopening cannot duplicate widget");
   ui.close.click();
@@ -290,6 +291,7 @@ test("closing during a pending approval request never loads a hidden widget", as
   };
   initializeManagedSwapHost({ doc: ui.doc, scope, config: approved });
   const opening = ui.btn.click();
+  assert.equal(ui.panel.hidden, true, "pending approval must not expose the wallet panel");
   ui.close.click();
   resolveApproval({
     status: 200, headers: { get: () => "no-store" }, json: async () => ({ enabled: true })
@@ -298,6 +300,37 @@ test("closing during a pending approval request never loads a hidden widget", as
   assert.equal(ui.created.length, 0);
   assert.equal(initCalls, 0);
   assert.equal(ui.panel.hidden, true);
+});
+
+test("a mounted provider remains concealed while its fresh reopen status check is pending", async () => {
+  const ui = createDom();
+  let calls = 0;
+  let statusRequests = 0;
+  let resolvePendingStatus;
+  const response = enabled => ({
+    status: 200, headers: { get: () => "no-store" }, json: async () => ({ enabled })
+  });
+  const scope = {
+    Jupiter: { init() { ++calls; } },
+    fetch() {
+      statusRequests++;
+      if (statusRequests === 3) return new Promise(resolve => { resolvePendingStatus = resolve; });
+      return Promise.resolve(response(true));
+    }
+  };
+  initializeManagedSwapHost({ doc: ui.doc, scope, config: approved });
+  await ui.btn.click();
+  assert.equal(calls, 1);
+  assert.equal(ui.panel.hidden, false);
+  ui.close.click();
+  const reopening = ui.btn.click();
+  assert.equal(ui.panel.hidden, true, "previously mounted widget must remain hidden while awaiting approval");
+  assert.equal(typeof resolvePendingStatus, "function");
+  resolvePendingStatus(response(false));
+  await reopening;
+  assert.equal(ui.panel.hidden, true);
+  assert.equal(ui.btn.hidden, true);
+  assert.equal(calls, 1, "rollback must never reinitialize the prior widget");
 });
 
 test("all provider launch controls reference the actual expanded panel, not the SDK target", () => {
