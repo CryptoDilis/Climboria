@@ -133,4 +133,39 @@ assert.equal(disposals,2,'Expired new model frees its geometry and material');
 assert.equal(swap.api.audit().loadedDecorations,0);
 console.log('PASS approved Meshy tree replaces only after load and restores CC0 forest on unload');
 
+// A user may move hundreds of meters while an approved GLB is still loading.
+// Late success must release its decoded buffers and NOT spawn a distant model,
+// hide legacy trees or permanently blacklist an otherwise-valid model.
+const stale=harness({schema:1,enabled:true,guardModels:[],decorations:[
+ {file:'late-but-valid-tree.glb',anchor:'park',dx:0,dz:0,height:8,
+  loadRadius:110,replaceLegacyTrees:true,colliderRadius:1.2}
+]});
+let lateAdded=0,lateReplacements=0,lateDisposed=0;
+stale.opts.scene={add(){lateAdded++},remove(){}};
+stale.opts.replaceLegacyTrees=()=>{lateReplacements++;return()=>{};};
+stale.opts.T3.Vector3=class {constructor(){this.x=this.y=this.z=0}};
+stale.opts.T3.Box3=class {
+ constructor(){this.min={y:0}}
+ setFromObject(){return this}
+ getSize(out){out.y=8;return out}
+ getCenter(out){out.x=0;out.y=4;out.z=0;return out}
+};
+await stale.api.install(stale.opts);
+stale.api.tick({x:0,z:0});
+assert.equal(stale.calls.length,1);
+stale.advance();stale.api.tick({x:900,z:900});
+const lateMesh={isMesh:true,geometry:{index:{count:240},dispose(){lateDisposed++}},
+ material:{dispose(){lateDisposed++}}};
+const lateRoot={scale:{setScalar(){}},position:{set(){}},traverse(fn){fn(lateMesh)}};
+stale.calls[0].success({scene:lateRoot});
+for(let i=0;i<6;i++)await Promise.resolve();
+assert.equal(stale.api.audit().loadedDecorations,0,'Too-far completed load must not enter scene');
+assert.equal(lateAdded,0);
+assert.equal(lateReplacements,0,'Must not hide existing trees after player travels');
+assert.equal(lateDisposed,2,'Late GLB buffers should be reclaimed');
+assert.equal(stale.api.audit().failedFiles.length,0,'Valid far-away GLB may retry later');
+stale.advance();stale.api.tick({x:0,z:0});
+assert.equal(stale.calls.length,2,'Return to area should allow a fresh load');
+console.log('PASS in-flight Meshy model unloaded safely after player teleports away');
+
 console.log('PASS all Game Meshy loader unit tests');
