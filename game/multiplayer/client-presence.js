@@ -22,7 +22,7 @@
  const world=window.__climboriaJarrellsPeak;
  if(!auth?.auth?.getSession||!renderer||!world?.player){doc.dataset.climboriaMultiplayer='unavailable';return}
  let socket=null,disposed=false,reconnect=null,movement=null,clientUser=null,selfId=null;
- let connecting=false,connectEpoch=0,authSubscription=null;
+ let connecting=false,connectEpoch=0,authSubscription=null,spawnConfirmed=false;
  const known=new Map(),validId=x=>typeof x==='string'&&/^s_[a-f0-9]{32}$/.test(x);
  const validPosition=p=>p&&['x','y','z'].every(k=>typeof p[k]==='number'&&Number.isFinite(p[k])&&Math.abs(p[k])<50000);
  const validPlayer=p=>p&&validId(p.id)&&typeof p.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(p.name)
@@ -59,7 +59,7 @@
   chatUi.notice.textContent='';
  }
  function sendWorldChat(){
-  if(!chatUi||!selfId)return;
+  if(!chatUi||!selfId||!spawnConfirmed)return;
   const text=String(chatUi.input.value||'').trim();
   if(!text||[...text].length>160){
    chatUi.notice.textContent='Enter a message of 1–160 characters.';return;
@@ -247,13 +247,13 @@
  }
  function clearPeers(){
   for(const id of known.keys())renderer.remove(id);
-  known.clear();selfId=null;clearDuelUi();clearWorldChatUi();
+  known.clear();selfId=null;spawnConfirmed=false;clearDuelUi();clearWorldChatUi();
  }
  function addPlayer(player){
   if(!validPlayer(player)||player.id===selfId||known.size>=32)return;
   known.set(player.id,player);renderer.add(player);
   renderDuelUi();renderChatCount();
-  showStatus('connected','ONLINE · '+known.size+' other explorers');
+  if(spawnConfirmed)showStatus('connected','ONLINE · '+known.size+' other explorers');
  }
  function leave(id){
   if(!known.has(id))return;
@@ -263,7 +263,7 @@
    duelNotice='Explorer disconnected; consent cleared.';
   }
   renderDuelUi();renderChatCount();
-  showStatus('connected','ONLINE · '+known.size+' other explorers');
+  if(spawnConfirmed)showStatus('connected','ONLINE · '+known.size+' other explorers');
  }
  function onPacket(data){
   if(typeof data!=='string'||data.length>10000)return;
@@ -273,8 +273,15 @@
    if(!validId(msg.selfId)||!Array.isArray(msg.peers)||msg.peers.length>32)return;
    selfId=msg.selfId;clearPeers();selfId=msg.selfId;
    for(const p of msg.peers)addPlayer(p);
-   ensureDuelUi();ensureWorldChatUi();
-   showStatus('connected','ONLINE · '+known.size+' other explorers');
+   // Welcome proves a room ticket, not a valid terrain spawn. Keep chat and
+   // duel controls hidden until the server confirms our initial position.
+   showStatus('connecting','MULTIPLAYER · JOINING WORLD');
+  }else if(msg.type==='spawn-accepted'){
+   if(validId(msg.id)&&msg.id===selfId&&validPosition(msg.position)){
+    spawnConfirmed=true;
+    ensureDuelUi();ensureWorldChatUi();
+    showStatus('connected','ONLINE · '+known.size+' other explorers');
+   }
   }else if(msg.type==='player-joined'){
    addPlayer(msg.player);
   }else if(msg.type==='player-moved'){
@@ -284,6 +291,9 @@
    }
   }else if(msg.type==='player-left')leave(msg.id);
   else if(msg.type==='world-chat')appendWorldChat(msg);
+  else if(msg.type==='rejected'&&msg.reason==='invalid-initial-spawn'){
+   showStatus('spawn-rejected','MULTIPLAYER · RETURN TO SANCTUARY');
+  }
   else if(msg.type==='rejected'&&['world-chat-rate-limit','world-chat-invalid-text'].includes(msg.reason)){
    if(chatUi)chatUi.notice.textContent=msg.reason==='world-chat-rate-limit'?'Please wait a moment before chatting again.':'Message not accepted. Use 1–160 readable characters.';
   }
@@ -316,7 +326,7 @@
  function isReady(){return window.__climboriaGameReady===true&&world.player.mode==='walk'}
  let previous=null;
  function publishMovement(){
-  if(!selfId||!isReady())return;
+  if(!selfId||!spawnConfirmed||!isReady())return;
   const p=localPosition();
   if(!validPosition(p))return;
   if(previous&&Math.hypot(p.x-previous.x,p.y-previous.y,p.z-previous.z)<.035)return;
