@@ -10,6 +10,8 @@ import {ServerCombatState} from '../server-combat-state.mjs';
 const ROOM='jarrell-peak';
 const TRUSTED_ORIGINS=new Set(['https://climboria.fun','https://www.climboria.fun']);
 const MAX_AUTH_BYTES=4096,MAX_JSON_BYTES=1024,SESSION_TTL=30_000,MAX_PENDING=32;
+// Bound abusive socket bursts; normal Game presence publishes movement at ~4 Hz.
+const MESSAGE_WINDOW_MS=1000,MAX_MESSAGES_PER_WINDOW=24;
 const allowedName=/^[A-Za-z0-9 _-]{2,24}$/;
 const allowedModels=new Set(['Adventurer','Jarrell','Lheiz']);
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -169,7 +171,17 @@ export class JarrellRoom {
    this.room.disconnect(id);this.lastPunch.delete(id);this.spawned.delete(id);
    if(this.userSockets.get(entry.userId)?.id===id)this.userSockets.delete(entry.userId);
   };
+  let windowStart=Date.now(),messagesThisWindow=0;
   socket.addEventListener('message',event=>{
+   const receivedAt=Date.now();
+   if(receivedAt-windowStart>=MESSAGE_WINDOW_MS){
+    windowStart=receivedAt;messagesThisWindow=0;
+   }
+   if(++messagesThisWindow>MAX_MESSAGES_PER_WINDOW){
+    // Attack/movement spam must not become unbounded parser work or denial-
+    // response amplification. End this authenticated session and all consent.
+    socket.close(1008,'message-rate-limit');cleanup();return;
+   }
    if(typeof event.data!=='string'||event.data.length>512){socket.close(1009,'message-too-large');cleanup();return}
    let message;
    try{message=JSON.parse(event.data)}catch{socket.send(JSON.stringify({type:'rejected',reason:'invalid-json'}));return}
