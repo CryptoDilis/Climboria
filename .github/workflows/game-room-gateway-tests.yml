@@ -1,0 +1,39 @@
+name: Game Authenticated Room Gateway (No Live PvP)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "game/multiplayer/**"
+      - ".github/workflows/game-room-gateway-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gateway-security-unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate Worker module and room core syntax
+        run: |
+          node --check game/multiplayer/worker/index.mjs
+          node --check game/multiplayer/presence-room.mjs
+          node --check game/multiplayer/server-authority-rules.mjs
+      - name: Test real socket sessions, authenticated one-use tickets and visual-only punch sync
+        run: node --test game/multiplayer/*.test.mjs game/multiplayer/worker/*.test.mjs
+      - name: Reject premature damage enablement and live-client configuration
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          gateway=Path('game/multiplayer/worker/index.mjs').read_text()
+          assert "gameplayPvP:false" in gateway
+          assert "combat-and-loot-not-connected-to-authoritative-server" in Path('game/multiplayer/presence-room.mjs').read_text()
+          assert 'wallet' in Path('game/multiplayer/server-authority-rules.mjs').read_text()
+          print('PASS cosmetic presence only, server attack and grab remain disabled')
+          PY
