@@ -1,5 +1,16 @@
 # Climboria Game Development Record
 
+## GAME CSS ROOT CAUSE — mobile ATTACK must NEVER appear on keyboard desktop (2026-11-15)
+
+- **Reproduced true regression on 1280px desktop in exact-head Chest CI #43678544536:** `GAME device-input-mode desktop {"viewport":1280,"touchPoints":0,"coarse":false,"touchHandlerPresent":false,"bodyClass":"free","controlDisplay":"grid","controlWidth":68}`. Although all touch detectors correctly reported desktop and body lacked `mobile-device`, circular ATTACK button still showed. The Chest QA diagnostic commit `d2ccbc9aa76f26c388fcf9352405e8de11e4021a` failed deliberately for this real UI bug.
+- **Root cause:** stylesheet had `body.free [data-mobile-action]{display:grid!important;...}` applying to **all devices** and overriding the button's `display:none` even on keyboard-only desktop. This explains why modifying JS touch detection alone did not help.
+- **Actual fix `55d884c65dc3f0fba6886d0a93808f7cd0895453`:** only `body.free.mobile-device [data-mobile-action]` gets forced visible. Desktop remains `display:none`; mobile continues to show five correctly-sized non-overlapping touch actions and centered ATTACK label.
+- **Verification:** new exact-head Game Chest test must pass with desktop `controlDisplay:none` and mobile visible, and full Jarrell Gameplay must preserve Q key attack, real authored GLB clip, cooldown/stamina/no fake damage plus desktop/mobile screenshots. Do NOT merge until all 5 required exact-head checks succeed. The original merged Game Worker security PR #480 must be included in main reconciliation before release.
+- **Scope:** Game-only. Do not activate Game multiplayer (client still default-off), nonconsensual PvP or unverified Meshy art; never change DEX, Swap, Launchpad or ClimbX.
+
+---
+
+
 ## GAME DESKTOP INPUT MODE — ATTACK button hidden on keyboard-only PCs (2026-11-15)
 
 - **Visual QA found actual desktop bug:** Game Rarity Chest desktop Playwright capture at 1280×720 (context `hasTouch:false`) showed a floating mobile ATTACK circle. Original detection `('ontouchstart' in window)||navigator.maxTouchPoints>0` misidentified a desktop with an exposed event-handler property as a touch device. The user requires desktop **Q key ATTACK**, not mobile touch overlay.
