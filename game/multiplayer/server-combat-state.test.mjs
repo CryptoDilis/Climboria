@@ -17,15 +17,18 @@ const start=state=>{
 };
 
 test('two distinct connected accounts must request and accept, not arbitrary client target ids',()=>{
- const {combat}=make();
+ const {combat,setClock}=make();
  assert.equal(combat.attack(A).reason,'no-active-consensual-duel');
  assert.equal(combat.respond(B,A,true).reason,'no-valid-duel-invitation');
  assert.equal(combat.request(A,A).reason,'invalid-or-disconnected-peer');
  assert.equal(combat.request('forged',B).reason,'invalid-or-disconnected-peer');
  assert.equal(combat.request(A,B).ok,true);
+ assert.equal(combat.request(A,C).reason,'challenger-has-pending-request');
  assert.equal(combat.respond(C,A,true).reason,'no-valid-duel-invitation');
  assert.equal(combat.respond(B,A,false).reason,'duel-declined');
  assert.equal(combat.attack(A).reason,'no-active-consensual-duel');
+ assert.equal(combat.request(A,C).reason,'duel-request-cooldown');
+ setClock(45_001);
  start(combat);
  assert.equal(combat.opponents.get(A),B);
  assert.equal(combat.opponents.get(B),A);
@@ -96,4 +99,20 @@ test('trusted-position provider failures deny damage without changing HP',()=>{
  start(combat);
  assert.equal(combat.attack(A).reason,'untrusted-terrain-position');
  assert.equal(combat.health.get(B),500);
+});
+
+test('single sender cannot flood other recipients or spam after decline',()=>{
+ const {combat,setClock}=make();
+ assert.equal(combat.request(A,B).ok,true);
+ assert.equal(combat.request(A,C).reason,'challenger-has-pending-request');
+ assert.equal(combat.respond(B,A,false).reason,'duel-declined');
+ assert.equal(combat.request(A,C).reason,'duel-request-cooldown');
+ setClock(44_999);
+ assert.equal(combat.request(A,C).reason,'duel-request-cooldown');
+ setClock(45_000);
+ assert.equal(combat.request(A,C).ok,true);
+ assert.equal(combat.request(A,B).reason,'challenger-has-pending-request');
+ combat.disconnect(A);
+ assert.equal(combat.pending.size,0);
+ assert.equal(combat.lastRequestAt.has(A),false);
 });
