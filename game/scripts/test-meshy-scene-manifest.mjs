@@ -25,7 +25,10 @@ let mobile=0,desktop=0;
 for(const d of config.decorations){
  assert.ok(allowed.has(d.file),`Unknown scene prop: ${d.file}`);
  assert.ok(anchors.has(d.anchor),`Unknown placement region: ${d.anchor}`);
- if(d.replaceLegacyTrees===true)assert.equal(d.anchor,'park',`Legacy tree replacement outside forest: ${d.file}`);
+ if(d.replaceLegacyTrees===true){assert.equal(d.anchor,'park',`Legacy tree replacement outside forest: ${d.file}`);
+  assert.ok(Number.isFinite(d.colliderRadius)&&d.colliderRadius>=.7&&d.colliderRadius<=3.2,
+   `Missing/unsafe physical tree trunk collider radius: ${d.file}`);
+ }
  assert.ok(Number.isFinite(d.dx)&&Number.isFinite(d.dz)&&Math.abs(d.dx)<=500&&Math.abs(d.dz)<=500);
  assert.ok(Number.isFinite(d.height)&&d.height>0&&d.height<=45);
  assert.ok(Number.isFinite(d.loadRadius)&&d.loadRadius>=50&&d.loadRadius<=300);
