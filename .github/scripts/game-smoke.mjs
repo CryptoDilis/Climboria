@@ -165,27 +165,44 @@ try {
   // Gated room integration: never display invented connected players on boot.
   // Verify that only the 3D rendering adapter (not a networking connection)
   // can create/remove a strictly temporary QA marker, then clear it.
-  const remotePresenceQA=await page.evaluate(()=>{
+  const remotePresenceQA=await page.evaluate(async()=>{
     const renderer=window.__CLIMBORIA_GAME_PEERS;
     const status=document.documentElement.dataset.climboriaMultiplayer;
     const initial=renderer?.count?.()??-1;
     if(!renderer)return {status,initial,error:'remote-peer-renderer-missing'};
     const markerId='s_'+('f'.repeat(32));
     const p=window.__climboriaJarrellsPeak?.player;
-    renderer.add({id:markerId,name:'QA Explorer',model:'Adventurer',position:{x:p.x+3,y:p.y,z:p.z-4}});
+    const pos={x:p.x+200,y:p.y,z:p.z+200};
+    const canvas=document.querySelector('#world-map');
+    const mapCtx=canvas?.getContext('2d');
+    renderer.add({id:markerId,name:'QA Explorer',model:'Adventurer',position:pos});
     const added=renderer.count();
     const during=renderer.audit();
+    // Cached terrain map refreshes every 120 ms. Exercise the real render
+    // loop rather than faking canvas pixels or direct marker mutations.
+    await new Promise(resolve=>setTimeout(resolve,300));
+    const legendDuring=document.querySelector('#world-map-legend')?.textContent||'';
+    const x=Math.floor(Math.max(8,Math.min(canvas.width-8,canvas.width/2+pos.x/3000*canvas.width)));
+    const y=Math.floor(Math.max(8,Math.min(canvas.height-8,canvas.height/2+pos.z/2000*canvas.height)));
+    const pixel=mapCtx?Array.from(mapCtx.getImageData(x,y,1,1).data):[];
+    const cyan=pixel.length===4&&pixel[0]<165&&pixel[1]>160&&pixel[2]>200;
     renderer.remove(markerId);
     const removed=renderer.count();
     const after=renderer.audit();
-    return {status,initial,added,removed,during,after};
+    await new Promise(resolve=>setTimeout(resolve,300));
+    const legendAfter=document.querySelector('#world-map-legend')?.textContent||'';
+    return {status,initial,added,removed,during,after,
+      fieldMap:{legendDuring,legendAfter,pixel,cyan}};
   });
   console.log('GAME staged presence renderer (default-off) QA:',JSON.stringify(remotePresenceQA));
   if(remotePresenceQA.status!=='disabled'||remotePresenceQA.initial!==0||
      remotePresenceQA.added!==1||remotePresenceQA.removed!==0||
      remotePresenceQA.during?.resident!==0||remotePresenceQA.during?.loading!==0||
      remotePresenceQA.after?.resident!==0||remotePresenceQA.after?.loading!==0||
-     remotePresenceQA.after?.peers!==0||remotePresenceQA.after?.budget!==3)
+     remotePresenceQA.after?.peers!==0||remotePresenceQA.after?.budget!==3||
+     !remotePresenceQA.fieldMap?.legendDuring?.includes('Cyan = explorers (1)')||
+     !remotePresenceQA.fieldMap?.cyan||
+     remotePresenceQA.fieldMap?.legendAfter?.includes('Cyan = explorers'))
      errors.push('Multiplayer must be disabled without deployed auth backend and ephemeral QA marker must cleanly unload: '+JSON.stringify(remotePresenceQA));
 
   const world = await page.evaluate(() => {
