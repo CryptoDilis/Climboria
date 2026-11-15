@@ -26,7 +26,9 @@ The homepage hero contains one responsive `#climb-token-record` with the full So
 - **Source on branch:** `site/climb-official-token-record-2026-11-16`
 - **Homepage UI commit:** `0ae50bfe700a07e0da00b755d81b8560a8f967ca`
 - **Updated official-record CI validation commit:** `098b96eeef340c344772f08b087034b5c2305d7a`
-- **CI / PR / production deployment:** Pending at time of this initial checkpoint. Do not claim live homepage update until the PR is merged and Pages deployment is actually verified.
+- **Site-only PR:** [#510](https://github.com/CryptoDilis/Climboria/pull/510) **MERGED** to `main` via squash **`0ba579b13688a8a0e37a8d67626155a4565e6c6b`** from exact reviewed PR head `e202b159bb9462024a7bf50c3902e56e64e4fa9e`. Reviewed diff: only `index.html`, `.github/workflows/validate-climboria.yml`, this file. No Game, DEX, Swap, Launchpad or ClimbX modifications.
+- **Exact-head required CI verified terminal SUCCESS prior to merge:** [Validate Climboria #43775330513](https://github.com/CryptoDilis/Climboria/actions/runs/43775330513) and [Climboria Browser Smoke Test #43775330507](https://github.com/CryptoDilis/Climboria/actions/runs/43775330507). The obsolete prelaunch-text CI failure from prior Game PRs was corrected by replacing its old assertion with strict exact official announced CA/URL/accessibility/no-countdown checks rather than bypassing the validation.
+- **Postmerge source confirmed:** `main/index.html` contains `#climb-token-record`, exact announced CA, matching Pump.fun and Solscan URLs, and no `PLANNED LAUNCH TARGET` copy. **GitHub Pages production publish and live-browser render NOT verified by available GitHub connector**; do not claim that the production website has already refreshed without deployment/browser evidence.
 
 ## Exact next steps
 
