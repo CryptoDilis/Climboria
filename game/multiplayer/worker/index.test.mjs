@@ -63,6 +63,29 @@ test('multibyte UTF-8 payload uses wire-byte cap, not JavaScript character count
  const request=mkRequest('/ticket',{method:'POST',headers:{Authorization:'Bearer '+token},body:payload});
  assert.equal((await gateway.fetch(request,env({fetch:async()=>{throw Error('must not issue ticket')}}))).status,400);
 });
+test('valid numeric Content-Length permits authenticated JSON ticket requests',async()=>{
+ const payload=JSON.stringify({name:'Jarrell',model:'Jarrell'});
+ const bytes=new TextEncoder().encode(payload).length;
+ const oldFetch=globalThis.fetch;
+ let ticketCalls=0;
+ globalThis.fetch=async(url,options)=>{
+  assert.match(String(url),/\/auth\/v1\/user$/);
+  assert.equal(options.headers.Authorization,'Bearer '+token);
+  return new Response(JSON.stringify({id:uid}),{status:200});
+ };
+ try{
+  const stub={fetch:async()=>{ticketCalls++;return new Response('{}',{status:201})}};
+  const request=mkRequest('/ticket',{method:'POST',headers:{
+   Authorization:'Bearer '+token,'Content-Type':'application/json',
+   'Content-Length':String(bytes)
+  },body:payload});
+  assert.equal(request.headers.get('content-length'),String(bytes));
+  const reply=await gateway.fetch(request,env(stub));
+  assert.equal(reply.status,200,'numeric Content-Length must not be treated as malformed');
+  assert.equal(ticketCalls,1,'one verified user may issue one room ticket');
+ }finally{globalThis.fetch=oldFetch}
+});
+
 test('malformed Content-Length is denied before auth or upstream room access',async()=>{
  const request=mkRequest('/ticket',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Length':'nonsense'},body:'{}'});
  const response=await gateway.fetch(request,env({fetch:async()=>{throw Error('must not issue ticket')}}));
