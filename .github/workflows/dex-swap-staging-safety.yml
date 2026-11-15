@@ -9,6 +9,8 @@ on:
       - ".github/scripts/dex-swap-staging-runtime-policy.test.mjs"
       - ".github/scripts/dex-swap-staging-off-browser-smoke.mjs"
       - ".github/scripts/dex-swap-staging-approval-browser-smoke.mjs"
+      - ".github/scripts/dex-swap-jupiter-source-provenance.mjs"
+      - ".github/scripts/dex-swap-jupiter-source-provenance.test.mjs"
       - ".github/workflows/dex-swap-staging-safety.yml"
       - "dex/provider-managed-swap.mjs"
       - "swap-config.js"
@@ -35,10 +37,13 @@ jobs:
           node --check .github/scripts/dex-swap-pinned-staging.mjs
           node --check .github/scripts/dex-swap-staging-runtime-policy.mjs
           node --check .github/scripts/dex-swap-staging-runtime-policy.test.mjs
+          node --check .github/scripts/dex-swap-jupiter-source-provenance.mjs
+          node --check .github/scripts/dex-swap-jupiter-source-provenance.test.mjs
       - name: Test staging release status and production fail-closed gates OFFLINE
         run: |
           node --test .github/scripts/dex-swap-staging-runtime-policy.test.mjs
           node --test .github/scripts/dex-swap-managed-provider-shell.test.mjs
+          node --test .github/scripts/dex-swap-jupiter-source-provenance.test.mjs
 
   staging-browser:
     name: Browser checks of disabled Swap and DEX staging on desktop/mobile
@@ -62,3 +67,18 @@ jobs:
         run: |
           node --check .github/scripts/dex-swap-staging-approval-browser-smoke.mjs
           node .github/scripts/dex-swap-staging-approval-browser-smoke.mjs
+
+  source-provenance:
+    name: Compare immutable Jupiter source assets against pinned staging CDN hashes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Read ONLY exact upstream SHA-pinned release assets and compare hashes
+        run: |
+          node .github/scripts/dex-swap-jupiter-source-provenance.mjs --check-pinned-source
