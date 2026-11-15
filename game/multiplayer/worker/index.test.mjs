@@ -41,6 +41,34 @@ test('invalid bearer and oversized untrusted payload are fail-closed',async()=>{
  const oversized=await gateway.fetch(mkRequest('/ticket',{method:'POST',headers:{Authorization:'Bearer '+token},body:'x'.repeat(1200)}),env(stub));
  assert.equal(oversized.status,400);
 });
+test('streaming oversized JSON without Content-Length is cancelled before buffering unbounded bytes',async()=>{
+ let cancelled=0;const body=new ReadableStream({
+  start(controller){
+   controller.enqueue(new TextEncoder().encode('a'.repeat(600)));
+   controller.enqueue(new TextEncoder().encode('b'.repeat(600)));
+  },
+  cancel(){cancelled++}
+ });
+ const request=new Request('https://game-room.example/ticket',{method:'POST',duplex:'half',
+  headers:{Origin:ORIGIN,Authorization:'Bearer '+token,'Content-Type':'application/json'},body});
+ assert.equal(request.headers.get('content-length'),null);
+ const response=await gateway.fetch(request,env({fetch:async()=>{throw Error('must not issue ticket')}}));
+ assert.equal(response.status,400);
+ assert.equal(cancelled,1,'oversized request stream must be cancelled early');
+});
+test('multibyte UTF-8 payload uses wire-byte cap, not JavaScript character count',async()=>{
+ const payload=JSON.stringify({name:'€'.repeat(360)});
+ assert.ok(payload.length<1024);
+ assert.ok(new TextEncoder().encode(payload).length>1024);
+ const request=mkRequest('/ticket',{method:'POST',headers:{Authorization:'Bearer '+token},body:payload});
+ assert.equal((await gateway.fetch(request,env({fetch:async()=>{throw Error('must not issue ticket')}}))).status,400);
+});
+test('malformed Content-Length is denied before auth or upstream room access',async()=>{
+ const request=mkRequest('/ticket',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Length':'nonsense'},body:'{}'});
+ const response=await gateway.fetch(request,env({fetch:async()=>{throw Error('must not issue ticket')}}));
+ assert.equal(response.status,400);
+});
+
 test('realtime ticket is one-time; no spoofed attack damage; two actual connections join, punch sync and leave',async()=>{
  const oldPair=globalThis.WebSocketPair,oldResponse=globalThis.Response;
  class FakeSocket {

@@ -22,7 +22,7 @@ body.free #hud{opacity:1}
 body.free #help{opacity:.8}
 /* Direct gameplay: no title or character picker. */
 body:not(.free) [data-mobile-action]{display:none!important;visibility:hidden!important;pointer-events:none!important}
-body.free [data-mobile-action]{display:grid!important;visibility:visible!important;pointer-events:auto!important}
+body.free.mobile-device [data-mobile-action]{display:grid!important;visibility:visible!important;pointer-events:auto!important}
 body:not(.free) #world-map-panel,body:not(.free) #expedition-settings-toggle{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 body.free #world-map-panel,body.free #expedition-settings-toggle{visibility:visible!important;opacity:1!important;pointer-events:auto!important}
 /* Persistent adventure HUD */
@@ -533,7 +533,7 @@ gl_FragColor=vec4(c,1.);
 sky.renderOrder=-1;sky.frustumCulled=false;scene.add(sky);
 /* ---------- water ---------- */
 const wU=T3.UniformsUtils.merge([T3.UniformsLib.fog,{uT:{value:0},uSun:{value:sunDir},uSunC:{value:cur.sun},uTop:{value:cur.top},uHor:{value:cur.hor},uDeep:{value:L('#0d3b4a')}}]);
-const MOB=navigator.maxTouchPoints>0||matchMedia('(pointer: coarse)').matches; if(MOB){document.body.classList.add('mobile-device');resizeClimboriaViewport()} const R=MOB?4:6,WS=(2*R+1)*200,WSEG=120;
+const MOB=navigator.maxTouchPoints>0; if(MOB){document.body.classList.add('mobile-device');resizeClimboriaViewport()} const R=MOB?4:6,WS=(2*R+1)*200,WSEG=120;
 const waterGeo=new T3.PlaneGeometry(WS,WS,WSEG,WSEG);waterGeo.rotateX(-Math.PI/2);
 const water=new T3.Mesh(waterGeo,new T3.ShaderMaterial({uniforms:wU,fog:true,transparent:true,depthWrite:false,
 vertexShader:`uniform float uT;varying vec3 vW;
@@ -1808,10 +1808,8 @@ const punchButton=document.getElementById('climboria-punch-button');
 punchButton.addEventListener('pointerdown',e=>e.stopPropagation());
 punchButton.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();requestVisualPunch();});
 
-// Chat, settings and any future name/input fields own their keyboard input.
-// Never let typing trigger movement, teleports, ATTACK or UI shortcuts.
-const isEditingText=e=>e.isComposing===true||
-  !!e.target?.closest?.('input,textarea,select,[contenteditable]');
+// Input/chat/settings fields own their keyboard events; never teleport or ATTACK while composing.
+const isEditingText=e=>e.isComposing===true||!!e.target?.closest?.('input,textarea,select,[contenteditable]');
 addEventListener('keydown',e=>{
  if(isEditingText(e))return;
  if(e.code=='Space')e.preventDefault();

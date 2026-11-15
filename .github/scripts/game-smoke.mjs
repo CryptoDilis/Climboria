@@ -64,8 +64,8 @@ try {
       mobileClass:document.body.classList.contains('mobile-device'),
       attackButtonDisplay:attack?getComputedStyle(attack).display:null};
   });
-  if(desktopInputMode.touchPoints!==0||desktopInputMode.coarsePointer||
-     desktopInputMode.mobileClass||desktopInputMode.attackButtonDisplay!=='none')
+  if(desktopInputMode.touchPoints!==0||desktopInputMode.mobileClass||
+     desktopInputMode.attackButtonDisplay!=='none')
     errors.push('Keyboard desktop incorrectly enabled mobile ATTACK button: '+JSON.stringify(desktopInputMode));
   try {
     await page.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
@@ -551,8 +551,7 @@ try {
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
   // Real left-hand Q attack while walking. The attack animation must play without fake network
   // damage, cannot spam past cooldown, and consumes the existing stamina pool.
-  // Auth/chat composers and settings inputs must not turn text into movement,
-  // ATTACK, teleport, map, inventory or interaction shortcuts.
+  // Verify chat/settings focus blocks all gameplay shortcuts, not only Q.
   const focusedInputAudit=await page.evaluate(()=>{
     const player=window.__climboriaJarrellsPeak?.player;
     const map=document.getElementById('world-map-panel');
