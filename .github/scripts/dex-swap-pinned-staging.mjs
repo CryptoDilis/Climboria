@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { resolve, sep, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseStagingOrigin, stagingRuntimeEnabled, stagingStatusResult } from './dex-swap-staging-runtime-policy.mjs';
+import { parseStagingOrigin, stagingRuntimeEnabled, stagingStatusResult, isStagingPublicAsset } from './dex-swap-staging-runtime-policy.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const stagingOrigin = parseStagingOrigin(process.env.SWAP_STAGING_ORIGIN ?? 'http://127.0.0.1:4173');
@@ -82,7 +82,11 @@ export const stagingServer = createServer(async (request, response) => {
       return;
     }
     const file = resolve(root, '.' + path + (page ? 'index.html' : ''));
-    if (request.method !== 'GET' || !file.startsWith(resolve(root) + sep) ||
+    if (request.method !== 'GET' ||
+        // Staging must never expose backend Worker sources or unrelated
+        // repository files simply because they have a readable extension.
+        (!page && !path.startsWith(prefix) && !isStagingPublicAsset(path)) ||
+        !file.startsWith(resolve(root) + sep) ||
         (!page && extname(file).toLowerCase() === '.html') ||
         path.split('/').some(part => part.startsWith('.'))) {
       response.writeHead(404).end();
