@@ -11,6 +11,18 @@
 ---
 
 
+## GAME AUTHENTICATED DUEL CONSENT SIGNALING — default OFF (2026-11-15 PHT)
+
+- **Scope and release truth:** Game-only branch `game/duel-consent-signaling-2026-11-15` based on last verified `main` `c6484dac1017fc91573ac2ed7f5c6edda312bd44`. No DEX, Swap, Launchpad, ClimbX, wallet, loot or production deployment changes. `game/multiplayer/client-config.json` stays `enabled:false` and `endpoint:null` until owner explicitly deploys isolated Worker staging and verifies two real accounts. Existing server-side `attack` remains REJECTED.
+- **New Game-only Worker signaling**, commits `f0a94b0cc5c257115b758ac462f876d1148669a9` and `7a1740951a70e4ec28100097a0529584faa78302`: WebSocket session-bound `duel-request`, `duel-response` (explicit boolean accept/decline), `duel-cancel`. Invitation is addressed only to an authenticated connected, spawned `s_<32hex>` peer ID. The server never trusts client `actorId`, health, damage, wallet, inventory, or account ID. Responses carry `combatDamageEnabled:false`; no player health modification via websocket and no imported `ServerCombatState.attack` call. Successful opt-in is a staged ephemeral room signal, **not playable PvP**. A failed recipient delivery revokes consent instead of falsely acknowledging acceptance.
+- **Duel-state hardening**, commits `dad474211704ead8d392ef3ab9e555301184f3d6` and `77c6992c6171789a621d1ad82cc158d2998166fe`: consent cancellation clears incoming/outgoing invites and active HP/opponent pairing without bypassing the 5s invite anti-spam clock; server disconnect/session replacement clears state even if presence membership was already removed; prohibit cyclic simultaneous inbound/outbound invitations. Existing 30s invite TTL, per-session rate limiting, Sanctuary protection and server-trusted-position default null remain intact.
+- **Tests committed**, `b9f4d92efeb75ac167dee2db125667d4dbde24a9` adds two focused tests for cycle prevention, opt-out/cooldown and disconnect-before-cleanup; `997d6b5241794ad92345ff43184bc06feff4c170` extends actual mock-socket authenticated two-peer protocol, verifies safe-area rejection, normal invitation and response, forged ID/damage ignored, explicit cancellation, unchanged 500 HP, still-rejected client ATTACK and invitation cooldown. Existing Worker abuse/replay and authenticated ticket tests remain unchanged.
+- **Caveats:** No Game client invitation UI or consent-modal wiring yet; source is in the disabled future Cloudflare Game Worker, not live. The room's visual positions still come from client messages and **must never authorize attacks**; any future actual HP damage requires a newly audited trusted terrain verifier, consent revocation and safe-zone design decision. This does not solve independent two-account staging, hosting/secrets or mobile GLB/FPS.
+- **Exact next tests and workflow:** open a Game-only draft PR targeting `main`. Require exact-head Gateway, Server Authority, Validate and Jarrell Gameplay runs, fix real failures without bypassing checks, verify three/four/five-file Game-only diff and default-off config. Perform manual two-account staging only with explicitly approved isolated Cloudflare Worker secrets; inspect role-based invitation/cancel/reconnect and player model FPS; build a usable consent dialog separately before considering public release. Document tested run IDs/commit and never call a GitHub CI success proof of production PvP. [Multiplayer release gate #479](https://github.com/CryptoDilis/Climboria/issues/479), [Meshy import #466](https://github.com/CryptoDilis/Climboria/pull/466).
+
+---
+
+
 ## GAME SERVER COMBAT STATE — consent and trusted-position release gate (2026-11-15 PHT)
 
 ### Game server ATTACK draft #478 exact CI checkpoint — 2026-11-15 PHT

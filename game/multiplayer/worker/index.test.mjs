@@ -141,6 +141,43 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   c1.dispatch('message',JSON.stringify({type:'attack',damage:999}));
   assert.equal(c1.packets.at(-1).type,'rejected');
   assert.equal(room.room.members.size,2,'client attacks never modify peers');
+
+  // Consent signaling is authenticated/session-bound and has NO player damage.
+  const idA=c1.packets[0].selfId,idB=c2.packets[0].selfId;
+  c1.dispatch('message',JSON.stringify({type:'duel-request',targetId:idB,actorId:idB}));
+  assert.equal(c1.packets.at(-1).reason,'sanctuary-pvp-disabled','protected Sanctuary cannot receive a duel request');
+  // Server-owned fixture moves peer positions beyond Sanctuary for protocol QA.
+  // The production browser cannot legitimately move 200m in a single packet.
+  room.room.members.get(idA).position={x:200,y:10,z:20};
+  room.room.members.get(idB).position={x:201,y:10,z:20};
+  c2.dispatch('message',JSON.stringify({type:'duel-response',challengerId:idA,accepted:true}));
+  assert.equal(c2.packets.at(-1).reason,'no-valid-duel-invitation');
+  c1.dispatch('message',JSON.stringify({type:'duel-request',targetId:idB,
+   actorId:idB,health:1,damage:999}));
+  assert.deepEqual({
+   type:c2.packets.at(-1).type,
+   fromId:c2.packets.at(-1).fromId,
+   combatDamageEnabled:c2.packets.at(-1).combatDamageEnabled
+  },{type:'duel-invitation',fromId:idA,combatDamageEnabled:false});
+  assert.equal(c1.packets.at(-1).type,'duel-request-sent');
+  c2.dispatch('message',JSON.stringify({type:'duel-response',challengerId:idA,
+   accepted:true,health:1,damage:999}));
+  assert.equal(c1.packets.at(-1).type,'duel-response-received');
+  assert.equal(c1.packets.at(-1).accepted,true);
+  assert.equal(c1.packets.at(-1).combatDamageEnabled,false);
+  assert.equal(room.combat.health.get(idA),500);
+  assert.equal(room.combat.health.get(idB),500);
+  c1.dispatch('message',JSON.stringify({type:'attack',targetId:idB,damage:999}));
+  assert.equal(c1.packets.at(-1).type,'rejected','client ATTACK packet is always denied');
+  assert.equal(room.combat.health.get(idB),500,'no browser-requested HP mutation');
+  c2.dispatch('message',JSON.stringify({type:'duel-cancel'}));
+  assert.equal(c1.packets.at(-1).type,'duel-cancelled');
+  assert.equal(c1.packets.at(-1).combatDamageEnabled,false);
+  assert.equal(room.combat.health.size,0);
+  assert.equal(room.combat.opponents.size,0);
+  c1.dispatch('message',JSON.stringify({type:'duel-request',targetId:idB}));
+  assert.equal(c1.packets.at(-1).reason,'duel-request-cooldown');
+
   c2.close();
   assert.equal(room.room.members.size,1);
   assert.equal(c1.packets.at(-1).type,'player-left');

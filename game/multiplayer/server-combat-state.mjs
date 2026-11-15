@@ -39,6 +39,12 @@ export class ServerCombatState {
   if(!state.ok)return state;
   const now=this.now();
   if(!Number.isFinite(now)||now<0)return {ok:false,reason:'invalid-server-time'};
+  // Do not allow a peer to have simultaneous inbound and outbound invites.
+  // This also prevents cycles that could leave a revoked peer undisclosed.
+  const incoming=this.pending.get(challengerId);
+  if(incoming&&incoming.expiresAt>now)return {ok:false,reason:'challenger-has-incoming-request'};
+  if([...this.pending.values()].some(p=>p.challengerId===targetId&&p.expiresAt>now))
+   return {ok:false,reason:'target-has-outgoing-request'};
   // One outgoing invitation per authenticated session, and a bounded rate
   // even when the recipient repeatedly declines the request.
   if([...this.pending.values()].some(p=>p.challengerId===challengerId&&p.expiresAt>now))
@@ -97,12 +103,21 @@ export class ServerCombatState {
   this.lastAttackAt.set(actorId,now);
   return {ok:true,reason:'server-melee-hit',targetId,health:hp,downed:hp===0};
  }
- /** Disconnect, cancel or replacement clears stale consent and duel health. */
- disconnect(id){
-  this.pending.delete(id);
-  this.lastRequestAt.delete(id);
+ /** An authenticated participant can revoke an invitation or active duel.
+  * Keep invite rate-limit state on voluntary cancellation (anti-spam). */
+ cancel(id){
+  if(typeof id!=='string'||!id)return {ok:false,reason:'invalid-peer-id'};
+  let counterpartId=this.opponents.get(id)||null;
+  const incoming=this.pending.get(id);
+  if(incoming){
+   counterpartId=incoming.challengerId;
+   this.pending.delete(id);
+  }
   for(const [recipient,pending] of this.pending){
-   if(pending.challengerId===id)this.pending.delete(recipient);
+   if(pending.challengerId===id){
+    counterpartId=recipient;
+    this.pending.delete(recipient);
+   }
   }
   const opponent=this.opponents.get(id);
   this.opponents.delete(id);
@@ -113,5 +128,18 @@ export class ServerCombatState {
    this.health.delete(opponent);
    this.lastAttackAt.delete(opponent);
   }
+  return counterpartId
+   ?{ok:true,reason:'duel-cancelled',counterpartId}
+   :{ok:false,reason:'no-pending-or-active-duel'};
+ }
+ /** Disconnect/replacement also clears per-session invitation cooldowns. */
+ disconnect(id){
+  this.cancel(id);
+  // A disconnected session has no authority to retain rate-limit state.
+  this.lastRequestAt.delete(id);
+  this.pending.delete(id);
+  this.opponents.delete(id);
+  this.health.delete(id);
+  this.lastAttackAt.delete(id);
  }
 }
