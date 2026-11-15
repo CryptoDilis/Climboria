@@ -241,6 +241,22 @@ async function runRollbackWithCache(browser) {
         const button = page.locator("[data-climboria-managed-swap-open]:visible").first();
         const panel = page.locator("[data-climboria-managed-swap-panel]");
         await page.goto(url, {waitUntil:"domcontentloaded"});
+        await button.waitFor();
+        // Stale-tab regression: runtime was approved when this page loaded,
+        // but the operator disabled it just BEFORE the user first clicked.
+        const scriptsBeforeRevocation = fixtureRequests;
+        enabled = false;
+        await button.click();
+        await page.waitForFunction(() =>
+          [...document.querySelectorAll("[data-climboria-managed-swap-open]")].every(node => node.hidden));
+        assert.equal(await panel.isVisible(), false);
+        assert.equal(fixtureRequests, scriptsBeforeRevocation,
+          "revoked open tab must not load the provider SDK");
+        assert.equal(await page.evaluate(() => !!window.Jupiter), false);
+        enabled = true;
+        // Restore the test fixture only; production is not touched.
+        await page.reload({waitUntil:"domcontentloaded"});
+        await button.waitFor();
         await button.click();
         await page.waitForFunction(() => window.__mockProviderCalls?.length === 1);
         const beforeConfig = configRequests;
