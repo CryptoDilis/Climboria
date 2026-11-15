@@ -116,3 +116,30 @@ test('single sender cannot flood other recipients or spam after decline',()=>{
  assert.equal(combat.pending.size,0);
  assert.equal(combat.lastRequestAt.has(A),false);
 });
+
+test('duel invites cannot form cycles and either participant can withdraw without bypassing cooldown',()=>{
+ const {combat,setClock}=make();
+ assert.equal(combat.request(A,B).ok,true);
+ assert.equal(combat.request(B,C).reason,'challenger-has-incoming-request');
+ assert.equal(combat.request(C,A).reason,'target-has-outgoing-request');
+ assert.deepEqual(combat.cancel(B),{ok:true,reason:'duel-cancelled',counterpartId:A});
+ assert.equal(combat.pending.size,0);
+ assert.equal(combat.request(A,B).reason,'duel-request-cooldown');
+ setClock(45_000);
+ start(combat);
+ assert.equal(combat.opponents.get(A),B);
+ assert.deepEqual(combat.cancel(A),{ok:true,reason:'duel-cancelled',counterpartId:B});
+ assert.equal(combat.opponents.size,0);
+ assert.equal(combat.health.size,0);
+ assert.equal(combat.lastRequestAt.has(A),true,'voluntary cancel must not erase invitation cooldown');
+ assert.equal(combat.request(A,B).reason,'duel-request-cooldown');
+});
+test('server disconnect cleans duel even when transport removed the peer first',()=>{
+ const {combat,room}=make();
+ start(combat);
+ room.members.delete(B);
+ combat.disconnect(B);
+ assert.equal(combat.opponents.size,0);
+ assert.equal(combat.health.size,0);
+ assert.equal(combat.lastRequestAt.has(B),false);
+});
