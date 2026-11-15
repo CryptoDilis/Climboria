@@ -52,7 +52,7 @@ test('disabled multiplayer never creates fake socket or player',async()=>{
 });
 test('real authenticated WebSocket messages are required before peers appear',async()=>{
  const h=harness(true);await flush();
- assert.equal(h.clients.length,1);
+ assert.equal(h.clients.length,1,JSON.stringify({status:h.document.documentElement.dataset,requests:h.calls.map(c=>c.url),timers:h.timers.map(t=>t.delay)}));
  assert.equal(h.adds.length,0,'no synthesized/ghost players before trusted welcome');
  const socket=h.clients[0];
  socket.onopen();
