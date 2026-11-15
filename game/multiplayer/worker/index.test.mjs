@@ -48,7 +48,7 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   accept(){}
   addEventListener(kind,fn){(this.handlers.get(kind)||this.handlers.set(kind,[]).get(kind)).push(fn);}
   send(data){this.other.packets.push(JSON.parse(data));}
-  dispatch(kind,data){for(const fn of this.handlers.get(kind)||[])fn(kind==='message'?{data}:{})}
+  dispatch(kind,data){const target=kind==='message'?this.other:this;for(const fn of target.handlers.get(kind)||[])fn(kind==='message'?{data}:{})}
   close(){this.dispatch('close');this.other?.dispatch('close');}
  }
  globalThis.WebSocketPair=class {
