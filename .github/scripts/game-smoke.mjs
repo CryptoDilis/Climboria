@@ -555,6 +555,10 @@ try {
   if(punchInput?.once?.mode!=='visual-only'||punchInput.once.stamina!==punchInput.before.stamina-5||
      punchInput.twice.stamina!==punchInput.once.stamina||punchInput.once.hp!==punchInput.before.hp||punchInput.events!==1)
     errors.push('Attack must trigger once with stamina cost, cooldown and no fake client-side PvP damage: '+JSON.stringify(punchInput));
+  // The original Adventurer GLB actually exports Punch_Combo_1, not the
+  // Jarrell model's Punch_Combo. Enforce a REAL authored attack clip.
+  await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='punch' &&
+    document.documentElement.dataset.climboriaHeroClip==='Punch_Combo_1',undefined,{timeout:2000});
   await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='idle',undefined,{timeout:15000});
 
   const idleAnimationAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);
