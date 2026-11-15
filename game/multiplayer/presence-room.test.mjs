@@ -1,0 +1,91 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {PresenceRoom} from './presence-room.mjs';
+
+let current=1000;
+const clock=()=>current;
+const fresh=()=>{current=1000;return new PresenceRoom({roomId:'jarrell-peak',now:clock,limit:3})};
+const connect=(room,id,name,model='Jarrell')=>{
+ const packets=[];
+ const result=room.connect({trustedSessionId:id,name,model,send:packet=>packets.push(packet)});
+ return {result,packets};
+};
+const a='session_aaaaaaaaaaaaaaaa',b='session_bbbbbbbbbbbbbbbb',c='session_cccccccccccccccc';
+test('two actual connected sessions see each other; disconnect cleans up peer state',()=>{
+ const room=fresh(),one=connect(room,a,'Jarrell'),two=connect(room,b,'Lheiz','Lheiz');
+ assert.equal(one.result.ok,true);assert.equal(two.result.ok,true);
+ assert.equal(room.members.size,2);
+ assert.equal(two.packets[0].type,'welcome');
+ assert.deepEqual(two.packets[0].peers.map(p=>p.name),['Jarrell']);
+ assert.equal(one.packets.at(-1).type,'player-joined');
+ assert.equal(one.packets.at(-1).player.name,'Lheiz');
+ assert.equal(room.disconnect(b),true);
+ assert.equal(one.packets.at(-1).type,'player-left');
+ assert.equal(one.packets.at(-1).id,b);
+ assert.equal(room.members.size,1);
+ assert.equal(room.disconnect(b),false);
+});
+test('authoritative room binds movement to actual socket session, ignoring spoofed client ID',()=>{
+ const room=fresh(),one=connect(room,a,'Jarrell'),two=connect(room,b,'Lheiz');
+ current+=200;
+ const result=room.receive(a,{type:'move',id:b,roomId:'foreign-room',name:'HACKED',position:{x:.5,y:2,z:-30}});
+ assert.equal(result.ok,true);
+ assert.equal(one.packets.find(x=>x.type==='player-moved'),undefined);
+ const move=two.packets.at(-1);
+ assert.equal(move.type,'player-moved');
+ assert.equal(move.id,a);
+ assert.equal(move.position.x,.5);
+ assert.equal(room.snapshot().find(x=>x.id===a).name,'Jarrell');
+});
+test('teleport exploits, untrusted packets and flood are rejected before broadcast',()=>{
+ const room=fresh(),one=connect(room,a,'Jarrell'),two=connect(room,b,'Lheiz');
+ current+=100;
+ assert.equal(room.receive(a,{type:'move',position:{x:1000,y:2,z:0}}).reason,'move-too-fast');
+ assert.equal(room.receive(a,{type:'move',position:{x:.3,y:2,z:-30}}).ok,true);
+ assert.equal(room.receive(a,{type:'move',position:{x:.4,y:2,z:-30}}).reason,'move-rate-limited');
+ assert.equal(room.receive('missing-session',{type:'move',position:{x:0,y:2,z:-30}}).ok,false);
+ assert.equal(two.packets.filter(x=>x.type==='player-moved').length,1);
+});
+test('after a long idle the first small real movement works, but no giant teleport credit',()=>{
+ const room=fresh(),one=connect(room,a,'Jarrell'),two=connect(room,b,'Lheiz');
+ current+=9000;
+ const small=room.receive(a,{type:'move',position:{x:.6,y:2,z:-30}});
+ assert.equal(small.ok,true,'idle must not permanently disable a real player');
+ assert.equal(two.packets.at(-1).type,'player-moved');
+ current+=9000;
+ const huge=room.receive(a,{type:'move',position:{x:300,y:2,z:300}});
+ assert.equal(huge.ok,false);
+ assert.equal(huge.reason,'move-too-fast','idle time must never grant teleport distance');
+ assert.equal(room.snapshot().find(p=>p.id===a).position.x,.6);
+});
+test('no fake opponents or claims of live combat/loot from client packets',()=>{
+ const room=fresh();
+ assert.deepEqual(room.snapshot(),[]);
+ const one=connect(room,a,'Jarrell');
+ assert.equal(room.receive(a,{type:'attack',damage:999,targetId:b}).reason,'combat-and-loot-not-connected-to-authoritative-server');
+ assert.equal(room.receive(a,{type:'grab',item:{onChain:true}}).ok,false);
+ assert.equal(one.packets.filter(p=>p.type==='player-joined').length,0);
+});
+test('invalid/duplicate sessions are rejected and room limit is enforced',()=>{
+ const room=fresh();
+ assert.equal(room.connect({trustedSessionId:'attacker',send:()=>{}}).ok,false);
+ assert.equal(connect(room,a,'Jarrell').result.ok,true);
+ assert.equal(connect(room,a,'Jarrell').result.reason,'duplicate-session');
+ assert.equal(connect(room,b,'Lheiz').result.ok,true);
+ assert.equal(connect(room,c,'Explorer').result.ok,true);
+ assert.equal(room.connect({trustedSessionId:'session_dddddddddddddddd',name:'Extra',send:()=>{}}).reason,'room-full');
+});
+test('closed or throwing WebSocket write is rejected / evicted, not kept as ghost presence',()=>{
+ const room=fresh();
+ const bad=room.connect({trustedSessionId:a,name:'Bad Link',model:'Jarrell',send:()=>{throw Error('socket closed')}});
+ assert.equal(bad.ok,false);assert.equal(room.members.size,0);
+ const first=connect(room,a,'Jarrell');
+ const second=room.connect({trustedSessionId:b,name:'Lheiz',model:'Lheiz',send:packet=>{
+  if(packet.type==='player-moved')throw Error('socket closed');
+ }});
+ assert.equal(second.ok,true);
+ current+=200;
+ assert.equal(room.receive(a,{type:'move',position:{x:.2,y:2,z:-30}}).ok,true);
+ assert.equal(room.members.has(b),false);
+ assert.equal(first.packets.at(-1).type,'player-left');
+});

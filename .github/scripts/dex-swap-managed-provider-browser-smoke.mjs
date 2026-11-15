@@ -60,6 +60,20 @@ async function runPage(browser, path, {badHash = false} = {}) {
     assert.equal(response.status(),200,path + " must load");
     const button = page.locator("[data-climboria-managed-swap-open]:visible").first();
     await button.waitFor({timeout:15000});
+    // Every launcher, including the DEX token-detail action, must point to the
+    // actual expandable region, never the embedded third-party SDK mount node.
+    const panelId = path === "/swap/" ? "climboriaSwapProviderPanel" : "climboriaDexProviderPanel";
+    const launchers = await page.locator("[data-climboria-managed-swap-open]")
+      .evaluateAll(nodes => nodes.map(node => ({
+        controls: node.getAttribute("aria-controls"),
+        expanded: node.getAttribute("aria-expanded")
+      })));
+    assert.equal(launchers.length, path === "/dex/" ? 3 : 1);
+    for (const launcher of launchers) {
+      assert.equal(launcher.controls, panelId, "launcher should control the provider panel");
+      assert.equal(launcher.expanded, "false", "panel must begin collapsed");
+    }
+    assert.equal(await page.locator("#" + panelId).getAttribute("role"), "region");
     assert.equal(scriptLoads,0,"widget script must not load before user gesture");
     assert.equal(await page.locator("[data-climboria-managed-swap-panel]").isVisible(),false);
     assert.deepEqual(forbidden,[],"old custom execution endpoints must never be requested");
