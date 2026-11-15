@@ -10,6 +10,38 @@ const env=(doStub)=>({
  SUPABASE_PUBLISHABLE_KEY:'public-only',
  ROOMS:{idFromName:name=>name,get:id=>doStub}
 });
+test('staging /ready is fail-closed without required bindings, never claims real multiplayer QA',async()=>{
+ const health=await gateway.fetch(mkRequest('/health'),{});
+ assert.equal(health.status,200,'deployed gateway health alone is not authenticated-room readiness');
+ const unknown=await gateway.fetch(mkRequest('/ready'),{});
+ assert.equal(unknown.status,503,'empty environment cannot claim configured room');
+ assert.deepEqual(await unknown.json(),{
+  service:'climboria-game-room',bindingsConfigured:false,gameplayPvP:false
+ });
+ const bindings={
+  ...env({fetch:async()=>new Response('{}',{status:201})}),
+  SUPABASE_PUBLISHABLE_KEY:'sb_publishable_TEST1234567890'
+ };
+ const ready=await gateway.fetch(mkRequest('/ready'),bindings);
+ assert.equal(ready.status,200);
+ assert.equal(ready.headers.get('cache-control'),'no-store');
+ assert.deepEqual(await ready.json(),{
+  service:'climboria-game-room',bindingsConfigured:true,gameplayPvP:false
+ },'readiness reports ONLY configuration, never live two-account QA');
+ const malformed=await gateway.fetch(mkRequest('/ready'),{
+  ...bindings,SUPABASE_URL:'https://forged.example'
+ });
+ assert.equal(malformed.status,503,'wrong Supabase origin must be rejected');
+ const missingRoom=await gateway.fetch(mkRequest('/ready'),{...bindings,ROOMS:null});
+ assert.equal(missingRoom.status,503,'absent Durable Object binding must be rejected');
+ const shortKey=await gateway.fetch(mkRequest('/ready'),{
+  ...bindings,SUPABASE_PUBLISHABLE_KEY:'short'
+ });
+ assert.equal(shortKey.status,503,'an unset/invalid placeholder cannot appear configured');
+ const blob=JSON.stringify(await shortKey.json());
+ assert.equal(blob.includes('sb_publishable'),false,'no credential material is included in readiness replies');
+});
+
 test('zero fake live claim: gateway health says damage disabled, bad origin rejected',async()=>{
  const status=await gateway.fetch(mkRequest('/health'),{});
  assert.equal((await status.json()).gameplayPvP,false);
