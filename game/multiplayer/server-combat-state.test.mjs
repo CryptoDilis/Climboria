@@ -89,3 +89,11 @@ test('browser-reported positions cannot override independent trusted collision c
  assert.equal(combat.attack(A).reason,'target-out-of-range');
  assert.equal(combat.health.get(B),100);
 });
+
+test('trusted-position provider failures deny damage without changing HP',()=>{
+ const {room}=make();
+ const combat=new ServerCombatState({room,now:()=>40_000,trustedPosition:()=>{throw Error('terrain unavailable')}});
+ start(combat);
+ assert.equal(combat.attack(A).reason,'untrusted-terrain-position');
+ assert.equal(combat.health.get(B),100);
+});
