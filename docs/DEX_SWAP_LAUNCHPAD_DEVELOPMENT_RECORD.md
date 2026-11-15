@@ -2123,3 +2123,11 @@ The temporary HTTPS staging host was restarted against this code with a staging-
 Production still serves its disabled config from GitHub Pages with `max-age=600`. This PR prevents the cached config alone from activating a new widget. Before public rollout, deploy an authoritative same-origin status endpoint with CDN caching disabled and verify its behavior on the actual production delivery path. There was no production deployment or change to the Worker or fee settings.
 
 GitHub checks passed on PR #476, including [quote-state and rollback regression](https://github.com/CryptoDilis/Climboria/actions/runs/43674837563), [browser smoke](https://github.com/CryptoDilis/Climboria/actions/runs/43674837537), and [validation](https://github.com/CryptoDilis/Climboria/actions/runs/43674837558). A final HTTPS read confirmed staging status `{"enabled":false}` with `Cache-Control: no-store`.
+
+### 2026-11-15 PH — Disabled production status handler prepared; apex routing pending
+
+[Draft PR #476](https://github.com/CryptoDilis/Climboria/pull/476) head `7c37cfa` prepares a standalone worker for the exact production status path. It serves only `https://climboria.fun/swap-runtime-status.json`, returns `{"enabled":false}` and `Cache-Control: no-store`, and has no public workers.dev or preview URL. Local handler checks passed for GET, HEAD, unsupported method, unrelated path, and unrelated origin.
+
+Production remains on GitHub Pages. The apex resolved directly to GitHub Pages IPs, and the status URL returned 404 from GitHub. [Cloudflare Worker routing](https://developers.cloudflare.com/workers/configuration/routing/routes/) requires a proxied DNS record for this route. Deploying the worker alone cannot intercept the apex request. The next infrastructure action is an apex routing change by the zone operator, preserving and verifying the existing Pages delivery for the rest of the site, followed by deployment of the exact-path worker. Verify public GET returns 200, `enabled:false` and `no-store`, and rerun quote-only smoke on both routes before considering the endpoint deployed. No DNS, route, or production deployment was changed.
+
+Production Worker health still reported execution disabled. [Jupiter issue #238](https://github.com/jup-ag/plugin/issues/238) remained open without comments.
