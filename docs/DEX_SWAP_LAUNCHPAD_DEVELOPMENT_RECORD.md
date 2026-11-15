@@ -2145,3 +2145,7 @@ GitHub confirmed the `CLOUDFLARE_RUNTIME_DNS_TOKEN` secret exists and injected i
 ### 2026-11-15 PH — Updated DNS secret retry rejected before deployment
 
 [Retry run 43677488557](https://github.com/CryptoDilis/Climboria/actions/runs/43677488557) received the updated GitHub secret but Cloudflare again returned 9109 at the initial zone lookup. No DNS record, Worker, or route was changed. Removed the one-time deploy trigger from [PR #476](https://github.com/CryptoDilis/Climboria/pull/476), retaining the existing handler. Independent live checks returned 404 for the status endpoint and 200 for both Swap and DEX pages. The native Worker still reported execution disabled. Before another deployment, verify token authentication with a read-only lookup from Actions or use the signed-in Cloudflare dashboard.
+
+### 2026-11-15 PH — Token is active, but Cloudflare zone access still rejected
+
+The read-only [Actions run 43677950409](https://github.com/CryptoDilis/Climboria/actions/runs/43677950409) confirmed the GitHub secret authenticates at Cloudflare's user token verification endpoint with status `active`. Cloudflare still returned error 9109 on the `climboria.fun` zone lookup, so DNS listing could not proceed. The underlying reason for the zone-specific rejection was not established. The one-time workflow was removed from #476. No changes were made to DNS, Workers, or production execution. The signed-in Cloudflare dashboard remains the alternate deployment path.
