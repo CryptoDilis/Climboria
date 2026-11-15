@@ -56,8 +56,14 @@ createServer(async (request, response) => {
   try {
     const path = new URL(request.url, stagingOrigin).pathname;
     const page = path === '/swap/' || path === '/dex/';
+    if (request.method === 'GET' && /^\/(swap|dex)(?:\/index\.html)?$/i.test(path)) {
+      const route = path.split('/')[1].toLowerCase();
+      response.writeHead(308, { Location: '/' + route + '/', 'Cache-Control': 'no-store' }).end();
+      return;
+    }
     const file = resolve(root, '.' + path + (page ? 'index.html' : ''));
     if (request.method !== 'GET' || !file.startsWith(resolve(root) + sep) ||
+        (!page && extname(file).toLowerCase() === '.html') ||
         path.split('/').some(part => part.startsWith('.'))) {
       response.writeHead(404).end();
       return;
