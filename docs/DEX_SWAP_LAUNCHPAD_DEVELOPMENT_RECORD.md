@@ -2141,3 +2141,7 @@ Next, use Cloudflare zone access that can read and edit the apex DNS records. Ve
 ### 2026-11-15 PH — Disabled endpoint deploy stopped at DNS token authentication
 
 GitHub confirmed the `CLOUDFLARE_RUNTIME_DNS_TOKEN` secret exists and injected it into [deployment run 43676907287](https://github.com/CryptoDilis/Climboria/actions/runs/43676907287). Cloudflare returned error 9109, “Invalid access token,” on the initial zone lookup. This occurred before any DNS write, Worker deployment, or route change. The one-time deployment trigger was removed from [PR #476](https://github.com/CryptoDilis/Climboria/pull/476), which retains the existing endpoint handler. The public status URL remained HTTP 404, and production Worker health still reported execution disabled. Restore a valid zone-scoped DNS token in the existing secret before retrying.
+
+### 2026-11-15 PH — Updated DNS secret retry rejected before deployment
+
+[Retry run 43677488557](https://github.com/CryptoDilis/Climboria/actions/runs/43677488557) received the updated GitHub secret but Cloudflare again returned 9109 at the initial zone lookup. No DNS record, Worker, or route was changed. Removed the one-time deploy trigger from [PR #476](https://github.com/CryptoDilis/Climboria/pull/476), retaining the existing handler. Independent live checks returned 404 for the status endpoint and 200 for both Swap and DEX pages. The native Worker still reported execution disabled. Before another deployment, verify token authentication with a read-only lookup from Actions or use the signed-in Cloudflare dashboard.
