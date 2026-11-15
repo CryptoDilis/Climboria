@@ -1000,7 +1000,8 @@ try {
     }
     return { viewport:{width:innerWidth,height:innerHeight}, controls, overlaps };
   });
-  if (mobileActionLayout.controls.length !== 4 ||
+  if (mobileActionLayout.controls.length !== 5 ||
+      !['punch','jump-surface','run','use','dive'].every(id=>mobileActionLayout.controls.some(c=>c.action===id)) ||
       mobileActionLayout.controls.some(c => c.display === 'none' || c.visibility !== 'visible' ||
         c.width < 48 || c.height < 48 || c.left < 0 || c.top < 0 ||
         c.right > mobileActionLayout.viewport.width || c.bottom > mobileActionLayout.viewport.height) ||
