@@ -111,6 +111,13 @@ test('staged duel panel is interactive only after authenticated real peers, neve
  buttons().find(node=>node.textContent==='CHALLENGE').click();
  assert.equal(socket.sent.at(-1).type,'duel-request');
  assert.equal(socket.sent.at(-1).targetId,peer.id);
+ // A peer may disconnect after the button click but before server processing:
+ // do not leave the UI stuck in a "Waiting..." state after a rejection.
+ socket.onmessage({data:JSON.stringify({type:'rejected',reason:'invalid-or-unspawned-peer'})});
+ assert.ok(buttons().some(node=>node.textContent==='CHALLENGE'),
+  'server denial must clear optimistic duel request and allow future choices');
+ buttons().find(node=>node.textContent==='CHALLENGE').click();
+ assert.equal(socket.sent.at(-1).targetId,peer.id);
  socket.onmessage({data:JSON.stringify({type:'duel-request-sent',targetId:peer.id,combatDamageEnabled:false})});
  socket.onmessage({data:JSON.stringify({type:'duel-response-received',fromId:peer.id,accepted:true,combatDamageEnabled:false})});
  buttons().find(node=>node.textContent==='CANCEL DUEL').click();
