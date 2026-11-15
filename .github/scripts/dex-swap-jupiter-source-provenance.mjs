@@ -55,13 +55,26 @@ export async function verifyOneSourceAsset(asset, fetchImpl) {
   if (!response || response.status !== 200 || !response.ok) {
     throw new Error("Pinned source download refused: " + asset.name);
   }
-  // Bounded, size-checked body before hashing: no eval and no disk writes.
-  const contentLength = response.headers?.get?.("content-length");
-  if (contentLength !== null && contentLength !== undefined &&
-      Number(contentLength) !== asset.bytes) {
-    throw new Error("Unexpected HTTP asset size: " + asset.name);
+  // fetch() automatically decompresses encoded responses, while some
+  // servers report COMPRESSED Content-Length. The trusted quantity is the
+  // actual decoded byte stream. Limit it BEFORE accumulation/crypto hashing.
+  if (!response.body?.getReader) throw new Error("Missing upstream asset stream");
+  const reader = response.body.getReader();
+  const chunks = [];
+  let length = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      length += value.byteLength;
+      if (length > asset.bytes) throw new Error("Upstream asset exceeds pinned size: " + asset.name);
+      chunks.push(Buffer.from(value));
+    }
+  } catch (error) {
+    await reader.cancel().catch(() => {});
+    throw error;
   }
-  const bytes = Buffer.from(await response.arrayBuffer());
+  const bytes = Buffer.concat(chunks, length);
   if (bytes.length !== asset.bytes || gitBlobDigest(bytes) !== asset.gitBlob) {
     throw new Error("Upstream pinned Git blob mismatch: " + asset.name);
   }
