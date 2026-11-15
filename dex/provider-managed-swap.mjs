@@ -30,6 +30,24 @@ export function integratedTerminalOptions(targetId) {
   return Object.freeze({ displayMode: "integrated", integratedTargetId: targetId });
 }
 
+/**
+ * A previously approved page must not bypass a later production rollback.
+ * Recheck before every widget open and immediately before provider init.
+ */
+export async function isManagedSwapRuntimeApproved(scope) {
+  if (!scope || typeof scope.fetch !== "function") return false;
+  try {
+    const response = await scope.fetch("/swap-runtime-status.json", {
+      cache: "no-store", redirect: "error", signal: AbortSignal.timeout(3000)
+    });
+    const cachePolicy = response.headers.get("Cache-Control") ?? "";
+    return response.status === 200 && /(?:^|,)\s*no-store\s*(?:,|$)/i.test(cachePolicy) &&
+      (await response.json())?.enabled === true;
+  } catch {
+    return false;
+  }
+}
+
 function loadReviewedScript(doc, source) {
   return new Promise((resolve, reject) => {
     const script = doc.createElement("script");
@@ -79,6 +97,15 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   // response must never mount wallet-enabled UI behind a closed panel.
   let openRequestId = 0;
   const expanded = value => buttons.forEach(button => button.setAttribute?.("aria-expanded", String(value)));
+  // Negative status permanently hides launchers until this document reloads.
+  // It cannot cancel an already granted wallet prompt or signed transaction.
+  const hideRevoked = () => {
+    ++openRequestId;
+    panel.hidden = true;
+    expanded(false);
+    buttons.forEach(control => { control.hidden = true; });
+    status.textContent = "Provider access has been paused. Refresh to check again. Existing wallet requests and submitted transactions are not cancelled.";
+  };
   expanded(false);
   buttons.forEach(button => {
     button.hidden = false;
@@ -87,7 +114,6 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
       lastTrigger = button;
       expanded(true);
       panel.scrollIntoView?.({ behavior: "smooth", block: "start" });
-      if (mounted) return;
       if (loading) {
         status.textContent = "Provider is finishing a previous load. If the panel stays empty, click Swap again.";
         return;
@@ -95,13 +121,29 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
       const requestId = ++openRequestId;
       loading = true;
       buttons.forEach(control => { control.disabled = true; });
-      status.textContent = "Loading verified provider integration. No wallet transaction has been requested by Climboria.";
+      status.textContent = "Checking current provider release approval. No wallet transaction has been requested by Climboria.";
       try {
+        // Page-load approval may be revoked while this document stays open.
+        const allowedOnOpen = await isManagedSwapRuntimeApproved(scope);
+        if (requestId !== openRequestId || panel.hidden) return;
+        if (!allowedOnOpen) {
+          hideRevoked();
+          return;
+        }
+        if (mounted) return;
+        status.textContent = "Loading verified provider integration. No wallet transaction has been requested by Climboria.";
         if (!scriptLoaded) {
           await loadReviewedScript(doc, approved);
           scriptLoaded = true;
         }
         if (requestId !== openRequestId || panel.hidden) return;
+        // Approval may also be revoked during the external script download.
+        const allowedOnInit = await isManagedSwapRuntimeApproved(scope);
+        if (requestId !== openRequestId || panel.hidden) return;
+        if (!allowedOnInit) {
+          hideRevoked();
+          return;
+        }
         if (!scope.Jupiter || typeof scope.Jupiter.init !== "function") {
           throw new Error("The reviewed provider did not expose the expected integration API");
         }
@@ -135,19 +177,8 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
 if (typeof window !== "undefined" && typeof document !== "undefined") {
   const boot = async () => {
     const config = window.CLIMBORIA_SWAP_CONFIG?.managedProvider;
-    let runtimeEnabled = false;
-    if (validateManagedProviderConfig(config)) {
-      try {
-        const response = await window.fetch("/swap-runtime-status.json", {
-          cache: "no-store", redirect: "error", signal: AbortSignal.timeout(3000)
-        });
-        const cachePolicy = response.headers.get("Cache-Control") ?? "";
-        runtimeEnabled = response.ok && /(?:^|,)\s*no-store\s*(?:,|$)/i.test(cachePolicy) &&
-          (await response.json())?.enabled === true;
-      } catch {
-        // A missing or unavailable release status keeps the provider disabled.
-      }
-    }
+    const runtimeEnabled = validateManagedProviderConfig(config) &&
+      await isManagedSwapRuntimeApproved(window);
     initializeManagedSwapHost({ doc: document, scope: window, config: runtimeEnabled ? config : null });
   };
   if (document.readyState === "loading") {
