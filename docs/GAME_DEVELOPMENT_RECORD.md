@@ -1,5 +1,17 @@
 # Climboria Game Development Record
 
+## GAME ROOM STAGING /READY PREFLIGHT — TEST BRANCH (2026-11-15)
+
+- **Target:** eliminate false staging readiness claims. Existing `/health` answers 200 for deployed Game Worker code even before Cloudflare Durable Object and Supabase secret bindings are configured. This is expected liveness behavior, but it is insufficient to judge whether two authenticated explorers can connect.
+- **Proposed Game-only staging fix** on `game/worker-staging-readiness-2026-11-15`: introduce `GET /ready` returning `HTTP 200` with `bindingsConfigured:true` only if the scoped `ROOMS` Durable Object binding, supported existing Supabase URL and plausible publishable key exist. Return `HTTP 503` and `bindingsConfigured:false` when missing; no credentials or keys returned. No runtime auth or player UI release switch changed.
+- **Regression coverage:** `game/multiplayer/worker/index.test.mjs` asserts health-vs-ready distinction, missing binding failures, wrong Supabase URL/short placeholder key refusal, safe content and cache prevention. Real two-account `e2e-two-accounts.mjs` now calls `/ready` before using JWTs; `game/multiplayer/worker/STAGING_READINESS.md` instructs operator to check /health then /ready then actual signed-in browser test.
+- **Limitations:** `/ready` reports **configuration only**. It does NOT verify third-party Supabase availability, valid user tokens, actual rendered remote GLBs/map, World Chat round trip, mobile FPS, or deployed custom domain. All require separate real acceptance; no Cloudflare staging deployed from this chat.
+- **Verification:** commits are staged on a separate Game-only branch; **exact-head CI NOT YET VERIFIED** in this checkpoint. Public Game `client-config.json` must stay `enabled:false`, `endpoint:null`. PvP damage/grab/loot/wallet behavior stays OFF; no DEX/Swap/Launchpad/ClimbX modifications.
+- **NEXT:** create draft PR, wait for exact-head Validate and Game Gateway checks, inspect any full gameplay CI, fix failures, merge only after confirmed pass; verify post-merge outcomes. Then owner-authorized protected Cloudflare staging deploy and two independently signed-in Supabase test users/physical mobile rendering acceptance; only afterward a separate public Game client activation PR.
+
+---
+
+
 ## GAME VERIFIED SPAWN + WORLD CHAT ROSTER MERGED — 4/4 CI (2026-11-15)
 
 - **MERGED [Game PR #490](https://github.com/CryptoDilis/Climboria/pull/490)** into `main` as squash SHA `e92a45de1ed79de84fffa153a468fe03d41f5c76` after confirming exact reviewed PR head `d9ddea3cc3d8c7e206b7d822de594ec392412a22`. Changed exactly 8 Game-related files: client presence and tests; server `presence-room.mjs` and tests; Worker and tests; owner-only two-account staging acceptance script; this record. No DEX/Swap/Launchpad/ClimbX, token/wallet or public multiplayer config changes.
