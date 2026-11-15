@@ -135,7 +135,7 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   assert.equal(room.room.snapshot().length,1);
   const c2=(await connect(b)).webSocket;
   assert.equal(room.room.members.size,2);
-  assert.equal(c1.packets.at(-1).type,'welcome','joining B has no visible ghost until spawn');
+  assert.equal(c1.packets.at(-1).type,'spawn-accepted','joining B has no visible ghost until B spawns');
   assert.equal(c2.packets[0].peers.length,1,'only validated spawn A appears to joining B');
   assert.equal(room.room.snapshot().length,1,'B is still pending in the visible roster');
   const reused=await connect(a);assert.equal(reused.status,401);
