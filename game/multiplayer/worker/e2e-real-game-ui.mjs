@@ -86,6 +86,15 @@ async function openExplorer(account,emulateMobile){
    !!window.__CLIMBORIA_GAME_PEERS?.audit,
   undefined,{timeout:MAX_WAIT}
  );
+ // Game boots in 'cine' (intro), while the multiplayer client intentionally
+ // refuses to connect unless the real avatar is walking on validated terrain.
+ // Trigger normal keyboard gameplay entry, NOT a forged player.mode mutation.
+ await page.keyboard.press('w');
+ await page.waitForFunction(
+  ()=>window.__climboriaJarrellsPeak?.player?.mode==='walk'&&
+   Number.isFinite(window.__climboriaJarrellsPeak?.player?.y),
+  undefined,{timeout:30000}
+ );
  // Use the real Supabase Auth client instead of constructing fake user IDs.
  const signedIn=await page.evaluate(async ({email,password})=>{
   const auth=window.__CLIMBORIA_GAME_SAVE_CLIENT?.auth;
@@ -144,6 +153,36 @@ try{
  const b=await openExplorer(accounts[1],env.GAME_QA_LANDSCAPE_MOBILE==='1');
  await Promise.all([assertPeer(a,1),assertPeer(b,1)]);
  await Promise.all([waitForGlb(a),waitForGlb(b)]);
+ // Movement QA must observe actual keyboard-driven Game physics, real room
+ // validation and updated coordinates in the OTHER browser's remote model.
+ // A mere online count or loaded GLB is not sufficient for multiplayer.
+ const initialLocal=await a.evaluate(()=>{
+  const p=window.__climboriaJarrellsPeak.player;
+  return {x:p.x,z:p.z};
+ });
+ const initialRemote=await b.evaluate(()=>{
+  const peer=window.__CLIMBORIA_GAME_PEERS.audit().positions[0];
+  if(!peer)throw Error('Verified remote peer position missing');
+  return {x:peer.x,z:peer.z};
+ });
+ // Make sure the previously focused World Chat field cannot swallow W/Shift.
+ await a.evaluate(()=>document.activeElement?.blur?.());
+ await a.keyboard.down('Shift');
+ await a.keyboard.down('w');
+ try{await a.waitForTimeout(1700)}finally{
+  await a.keyboard.up('w');await a.keyboard.up('Shift');
+ }
+ const movedLocal=await a.evaluate(()=>{
+  const p=window.__climboriaJarrellsPeak.player;
+  return {x:p.x,z:p.z};
+ });
+ check(Math.hypot(movedLocal.x-initialLocal.x,movedLocal.z-initialLocal.z)>.3,
+  'Keyboard-driven real Game player did not sprint; inspect focus, FPS or collisions');
+ await b.waitForFunction(({initial,after})=>{
+  const peer=window.__CLIMBORIA_GAME_PEERS.audit().positions[0];
+  return peer&&Math.hypot(peer.x-initial.x,peer.z-initial.z)>.3&&
+   Math.hypot(peer.x-after.x,peer.z-after.z)<7;
+ },{initial:initialRemote,after:movedLocal},{timeout:30000});
  await sendChat(a,'QA real game world chat A');
  await Promise.all([
   expectChat(a,'QA Explorer A','QA real game world chat A'),

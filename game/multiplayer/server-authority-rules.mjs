@@ -11,7 +11,11 @@ export const ROOM_RULES=Object.freeze({
  meleeRangeMeters:2.8,
  grabRangeMeters:2,
  attackCooldownMs:950,
- maxPlayerSpeedMetersPerSecond:14,
+ // Jarrell Gameplay walk = 9 m/s; stamina sprint = 22 m/s. A jump can
+ // add up to 11 m/s vertical, giving ~24.6 m/s total displacement.
+ // Bound cosmetic presence updates at 28 m/s with a small packet-jitter
+ // allowance below; never reuse client positions for PvP or rewards.
+ maxPlayerSpeedMetersPerSecond:28,
  maxAcceptedMoveAgeMs:1000
 });
 const finite=n=>typeof n==='number'&&Number.isFinite(n);

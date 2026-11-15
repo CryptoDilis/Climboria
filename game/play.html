@@ -3450,7 +3450,11 @@ window.__CLIMBORIA_GAME_PEERS={
  },
  count(){return livePeers.size},
  audit(){return {peers:livePeers.size,loading:remoteGLBLoading,resident:remoteGLBResidents,
-  budget:MAX_REMOTE_GLB,desktop:!MOB}}
+  budget:MAX_REMOTE_GLB,desktop:!MOB,
+  // Read-only transport acceptance diagnostics. These are positions already
+  // received via authenticated peer packets, not server-trusted physics.
+  // Allows actual two-browser QA to prove remote avatars MOVE, not just join.
+  positions:[...livePeers.values()].map(p=>({id:p.id,x:p.position.x,y:p.position.y,z:p.position.z}))}}
 };
 
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
