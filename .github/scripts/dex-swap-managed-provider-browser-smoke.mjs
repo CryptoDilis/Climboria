@@ -189,8 +189,13 @@ async function runRollbackWithCache(browser) {
   const host = await readFile(new URL("dex/provider-managed-swap.mjs", root), "utf8");
   // Serve the fixture over real HTTP. Playwright request interception disables
   // the browser cache, so it cannot exercise this rollback.
-  const fixtureHost = host.replace("script.src = source.url;", 'script.src = "/fixture.js";');
+  const fixtureHost = host
+    .replace("script.src = source.url;", 'script.src = "/fixture.js";')
+    // Accelerate only the offline browser fixture; production polls every 15s.
+    .replace("const ACTIVE_APPROVAL_POLL_MS = 15000;", "const ACTIVE_APPROVAL_POLL_MS = 100;");
   assert.notEqual(fixtureHost, host);
+  assert.match(fixtureHost, /ACTIVE_APPROVAL_POLL_MS = 100;/,
+    "browser fixture must run the active-session rollback timer");
   const routes = new Map();
   for (const path of ["/swap/", "/dex/"]) {
     routes.set(path, ["text/html", await readFile(new URL(path.slice(1) + "index.html", root))]);
@@ -266,8 +271,19 @@ async function runRollbackWithCache(browser) {
         const beforeConfig = configRequests;
         const beforeFixture = fixtureRequests;
         enabled = false;
-        // Confirm the test's boundary: the loaded document keeps its old state.
-        assert.equal(await panel.isVisible(), true);
+        // A previously mounted widget must now be hidden on an operator
+        // rollback, WITHOUT asking the user to reload or reopen the panel.
+        // This is a fast synthetic timer, never a production-time guarantee.
+        await page.waitForFunction(() =>
+          [...document.querySelectorAll("[data-climboria-managed-swap-open]")]
+            .every(node => node.hidden), null, {timeout: 5000});
+        assert.equal(await panel.isVisible(), false,
+          "operator rollback must hide an already mounted widget");
+        assert.match(await page.locator("[data-climboria-managed-swap-status]").textContent(),
+          /Existing wallet requests and submitted transactions are not cancelled/);
+        assert.equal(fixtureRequests, beforeFixture, "no second script load after revocation");
+        assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length), 1,
+          "active rollback cannot resubmit or reinitialize a provider");
         await page.goto("about:blank");
         const statusResponse = page.waitForResponse(response => response.url() === origin + "/swap-runtime-status.json");
         await page.goto(url, {waitUntil:"load"});

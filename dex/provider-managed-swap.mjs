@@ -97,9 +97,39 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   // response must never mount wallet-enabled UI behind a closed panel.
   let openRequestId = 0;
   const expanded = value => buttons.forEach(button => button.setAttribute?.("aria-expanded", String(value)));
+  // Even when a widget remains open, the operator may revoke the release
+  // switch. Check periodically while the panel is visible. This only blocks
+  // future interaction with the UI: an active third-party wallet prompt or
+  // already signed/submitted transaction cannot be cancelled here.
+  const ACTIVE_APPROVAL_POLL_MS = 15000;
+  let activeCheckTimer = null;
+  let activeCheckInFlight = false;
+  const stopActiveApprovalChecks = () => {
+    if (activeCheckTimer !== null) {
+      scope.clearInterval?.(activeCheckTimer);
+      activeCheckTimer = null;
+    }
+  };
+  const recheckActivePanel = async () => {
+    if (activeCheckInFlight || panel.hidden) return;
+    activeCheckInFlight = true;
+    const requestId = openRequestId;
+    try {
+      const stillApproved = await isManagedSwapRuntimeApproved(scope);
+      if (requestId === openRequestId && !panel.hidden && !stillApproved) hideRevoked();
+    } finally {
+      activeCheckInFlight = false;
+    }
+  };
+  const startActiveApprovalChecks = () => {
+    if (activeCheckTimer === null && typeof scope.setInterval === "function") {
+      activeCheckTimer = scope.setInterval(recheckActivePanel, ACTIVE_APPROVAL_POLL_MS);
+    }
+  };
   // Negative status permanently hides launchers until this document reloads.
   // It cannot cancel an already granted wallet prompt or signed transaction.
   const hideRevoked = () => {
+    stopActiveApprovalChecks();
     ++openRequestId;
     panel.hidden = true;
     expanded(false);
@@ -131,6 +161,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         }
         panel.hidden = false;
         expanded(true);
+        startActiveApprovalChecks();
         panel.scrollIntoView?.({ behavior: "smooth", block: "start" });
         if (mounted) {
           status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
@@ -168,6 +199,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     });
   });
   close.addEventListener("click", () => {
+    stopActiveApprovalChecks();
     ++openRequestId;
     panel.hidden = true;
     expanded(false);
