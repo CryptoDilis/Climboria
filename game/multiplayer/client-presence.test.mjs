@@ -6,8 +6,8 @@ import vm from 'node:vm';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,sessionGate=null,ticketFailures=0}={}){
- const state={session:initialSession,ticketFailures};
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[]}={}){
+ const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses]};
  const authListeners=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],calls=[],timers=[],created=[];
  const createElement=tag=>{
@@ -47,6 +47,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
   if(String(url)==='https://rooms.climboria.fun/ticket'){
    assert.equal(options.headers.Authorization,'Bearer '+state.session?.access_token);
    if(ticketGate)await ticketGate;
+   if(state.ticketStatuses.length)return {ok:false,status:state.ticketStatuses.shift()};
    if(state.ticketFailures-->0)return {ok:false};
    return {ok:true,json:async()=>({ticket:'b'.repeat(64)})};
   }
@@ -338,6 +339,25 @@ test('temporary ticket request failure retries once and recovers without duplica
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
 });
 
+
+test('temporary room capacity 429 displays busy without fake peers then retries successfully',async()=>{
+ const h=harness(true,{ticketStatuses:[429]});
+ await flush();
+ assert.equal(h.clients.length,0,'full room cannot fabricate a WebSocket or remote player');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'room-busy');
+ const badge=h.created.find(node=>node.id==='climboria-room-status');
+ assert.ok(badge?.textContent.includes('ROOM BUSY'));
+ assert.equal(h.runNextTimer(),10000,'capacity response should retry in a bounded 10 seconds');
+ await flush();await waitFor(()=>h.clients.length===1);
+ assert.equal(h.calls.filter(call=>call.url.endsWith('/ticket')).length,2,
+  'retry should use a new authenticated ticket without duplicate requests');
+ const ws=h.clients[0];ws.onopen();
+ const id='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.equal(h.adds.length,0,'connected roster contains no invented peers');
+});
 
 test('session transition during unresolved getSession never authenticates an old player',async()=>{
  let releaseSession;
