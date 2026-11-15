@@ -70,7 +70,7 @@ export const gateway={
     env.SUPABASE_URL==='https://unadepiwbovblkfjlksk.supabase.co');
    return response(configured?200:503,{
     service:'climboria-game-room',bindingsConfigured:configured,
-    gameplayPvP:false,realMultiplayerQaVerified:false
+    gameplayPvP:false
    },origin);
   }
   if(!validOrigin(req))return response(403,{error:'origin-not-allowed'},origin);
