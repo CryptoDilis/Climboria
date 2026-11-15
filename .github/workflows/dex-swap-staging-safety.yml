@@ -1,0 +1,39 @@
+name: DEX Swap Isolated Staging Runtime Safety
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/dex-swap-pinned-staging.mjs"
+      - ".github/scripts/dex-swap-staging-runtime-policy.mjs"
+      - ".github/scripts/dex-swap-staging-runtime-policy.test.mjs"
+      - ".github/workflows/dex-swap-staging-safety.yml"
+      - "dex/provider-managed-swap.mjs"
+      - "swap-config.js"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dex-swap-isolated-staging-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  staging-static:
+    name: Confirm staging cannot enable production or execute trades
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check isolated staging harness syntax
+        run: |
+          node --check .github/scripts/dex-swap-pinned-staging.mjs
+          node --check .github/scripts/dex-swap-staging-runtime-policy.mjs
+          node --check .github/scripts/dex-swap-staging-runtime-policy.test.mjs
+      - name: Test staging release status and production fail-closed gates OFFLINE
+        run: |
+          node --test .github/scripts/dex-swap-staging-runtime-policy.test.mjs
+          node --test .github/scripts/dex-swap-managed-provider-shell.test.mjs
