@@ -3279,7 +3279,7 @@ window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,chestVisualAudit,cav
 // added. The optional gateway/client are disabled until two-browser QA is green.
 // Use name markers for all real peers and at most 2 mobile / 3 desktop GLBs.
 const livePeers=new Map(),MAX_REMOTE_GLB=MOB?2:3;
-let remoteGLBLoading=0,remoteGLBResidents=0;
+let remoteGLBLoading=0,remoteGLBResidents=0,remoteModelClock=0;
 function peerMarker(name){
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=64;
  const ctx=canvas.getContext('2d');
@@ -3315,23 +3315,38 @@ function disposeRemoteHero(root){
  });
 }
 function loadPeerHero(peer){
- if(remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB||!T3.GLTFLoader||peer.model==='Adventurer'&&MOB)return;
+ if(!peer||peer.loading||peer.root||peer.retryAt>Date.now()||
+    remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB||!T3.GLTFLoader)return;
  const path=peer.model==='Lheiz'?'../assets/characters/Climboria_Lheiz.glb':peer.model==='Jarrell'?'../assets/characters/Climboria_Jarrell.glb':null;
  if(!path)return;
- remoteGLBLoading++;
+ peer.loading=true;remoteGLBLoading++;
  new T3.GLTFLoader().load(path,gltf=>{
-  remoteGLBLoading--;
-  if(livePeers.get(peer.id)!==peer){disposeRemoteHero(gltf.scene);return;}
+  remoteGLBLoading--;peer.loading=false;
+  if(livePeers.get(peer.id)!==peer||
+     Math.hypot(peer.group.position.x-cam.position.x,peer.group.position.z-cam.position.z)>180){
+   disposeRemoteHero(gltf.scene);return;
+  }
   const root=gltf.scene,box=new T3.Box3().setFromObject(root),size=new T3.Vector3();
   box.getSize(size);
-  if(!Number.isFinite(size.y)||size.y<.01||size.y>20000){disposeRemoteHero(root);return;}
+  if(!Number.isFinite(size.y)||size.y<.01||size.y>20000){
+   disposeRemoteHero(root);peer.retryAt=Date.now()+60000;return;
+  }
   const factor=Math.min(100,2.9/size.y);
   root.scale.setScalar(factor);root.position.y=-box.min.y*factor;
   root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false}});
   peer.group.add(root);peer.root=root;remoteGLBResidents++;peer.mixer=gltf.animations?.length?new T3.AnimationMixer(root):null;
   peer.clips=gltf.animations||[];peer.action=null;peer.actionName='';
   setPeerAnimation(peer,'idle');
- },undefined,()=>{remoteGLBLoading--});
+ },undefined,()=>{
+  remoteGLBLoading--;peer.loading=false;peer.retryAt=Date.now()+30000;
+ });
+}
+function unloadPeerHero(peer){
+ if(!peer.root)return;
+ peer.mixer?.stopAllAction();peer.group.remove(peer.root);
+ disposeRemoteHero(peer.root);
+ remoteGLBResidents=Math.max(0,remoteGLBResidents-1);
+ peer.root=null;peer.mixer=null;peer.clips=null;peer.action=null;peer.actionName='';
 }
 function setPeerAnimation(peer,state){
  if(!peer.mixer||!peer.clips?.length||peer.actionName===state)return;
@@ -3352,9 +3367,9 @@ window.__CLIMBORIA_GAME_PEERS={
   const ring=new T3.Mesh(new T3.TorusGeometry(.55,.045,6,22),new T3.MeshBasicMaterial({color:0xd8b46b,transparent:true,opacity:.72,depthWrite:false}));
   ring.name='RemoteMarkerRing';ring.rotation.x=-Math.PI/2;ring.position.y=.08;
   group.add(ring,peerMarker(data.name));
-  const p={id:data.id,group,model:data.model,position:{...position},target:null,root:null,mixer:null,clips:null,action:null,actionName:'',punchUntil:0,walkUntil:0};
+  const p={id:data.id,group,model:data.model,position:{...position},target:null,root:null,mixer:null,clips:null,action:null,actionName:'',loading:false,retryAt:0,punchUntil:0,walkUntil:0};
   const spot=remoteRootAt(position.x,position.z,position.y);p.target=spot;group.position.set(spot.x,spot.y,spot.z);
-  scene.add(group);livePeers.set(data.id,p);loadPeerHero(p);
+  scene.add(group);livePeers.set(data.id,p);
  },
  move(id,position){
   const p=livePeers.get(id);if(!p||!Number.isFinite(position?.x)||!Number.isFinite(position?.y)||!Number.isFinite(position?.z))return;
@@ -3367,8 +3382,7 @@ window.__CLIMBORIA_GAME_PEERS={
   const p=livePeers.get(id);if(!p)return;
   scene.remove(p.group);
   p.group.traverse(n=>{if(n.isSprite){n.material?.map?.dispose();n.material?.dispose()}else if(n.name==='RemoteMarkerRing'){n.geometry?.dispose();n.material?.dispose()}});
-  p.mixer?.stopAllAction();
-  if(p.root){disposeRemoteHero(p.root);remoteGLBResidents=Math.max(0,remoteGLBResidents-1);}
+  unloadPeerHero(p);
   livePeers.delete(id);
  },
  clear(){for(const id of [...livePeers.keys()])this.remove(id)},
@@ -3379,8 +3393,25 @@ window.__CLIMBORIA_GAME_PEERS={
    p.group.position.x+=(at.x-p.group.position.x)*t;
    p.group.position.y+=(at.y-p.group.position.y)*t;
    p.group.position.z+=(at.z-p.group.position.z)*t;
+   const dist=Math.hypot(p.group.position.x-cam.position.x,p.group.position.z-cam.position.z);
+   p.group.visible=dist<350;
+   // Beyond the mobile-safe visual range keep the low-cost identity marker
+   // record but release owned heavy GLB geometry/textures.
+   if(dist>260&&p.root)unloadPeerHero(p);
    if(p.mixer){setPeerAnimation(p,now<p.punchUntil?'punch':now<p.walkUntil?'walk':'idle');p.mixer.update(dt);}
-   p.group.visible=Math.hypot(p.group.position.x-cam.position.x,p.group.position.z-cam.position.z)<350;
+  }
+  remoteModelClock+=dt;
+  if(remoteModelClock>=1){
+   remoteModelClock=0;
+   const available=MAX_REMOTE_GLB-remoteGLBLoading-remoteGLBResidents;
+   if(available>0){
+    const peers=[...livePeers.values()].filter(p=>!p.root&&!p.loading&&p.retryAt<=Date.now()&&
+      (p.model==='Jarrell'||p.model==='Lheiz')&&
+      Math.hypot(p.group.position.x-cam.position.x,p.group.position.z-cam.position.z)<120)
+      .sort((a,b)=>Math.hypot(a.group.position.x-cam.position.x,a.group.position.z-cam.position.z)-
+                    Math.hypot(b.group.position.x-cam.position.x,b.group.position.z-cam.position.z));
+    for(const peer of peers.slice(0,available))loadPeerHero(peer);
+   }
   }
  },
  count(){return livePeers.size}
