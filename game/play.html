@@ -3257,7 +3257,7 @@ window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,chestVisualAudit,cav
 // added. The optional gateway/client are disabled until two-browser QA is green.
 // Use name markers for all real peers and at most 2 mobile / 3 desktop GLBs.
 const livePeers=new Map(),MAX_REMOTE_GLB=MOB?2:3;
-let remoteGLBLoading=0;
+let remoteGLBLoading=0,remoteGLBResidents=0;
 function peerMarker(name){
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=64;
  const ctx=canvas.getContext('2d');
@@ -3274,7 +3274,7 @@ function remoteRootAt(x,z,y){
  return {x,z,y:Math.max(gy-.1,Math.min(gy+2,Number(y)-1.75))};
 }
 function loadPeerHero(peer){
- if(remoteGLBLoading>=MAX_REMOTE_GLB||peer.model==='Adventurer'&&MOB)return;
+ if(remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB||!T3.GLTFLoader||peer.model==='Adventurer'&&MOB)return;
  const path=peer.model==='Lheiz'?'../assets/characters/Climboria_Lheiz.glb':peer.model==='Jarrell'?'../assets/characters/Climboria_Jarrell.glb':null;
  if(!path)return;
  remoteGLBLoading++;
@@ -3287,7 +3287,7 @@ function loadPeerHero(peer){
   const factor=Math.min(100,2.9/size.y);
   root.scale.setScalar(factor);root.position.y=-box.min.y*factor;
   root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false}});
-  peer.group.add(root);peer.root=root;peer.mixer=gltf.animations?.length?new T3.AnimationMixer(root):null;
+  peer.group.add(root);peer.root=root;remoteGLBResidents++;peer.mixer=gltf.animations?.length?new T3.AnimationMixer(root):null;
   peer.clips=gltf.animations||[];peer.action=null;peer.actionName='';
   setPeerAnimation(peer,'idle');
  },undefined,()=>{remoteGLBLoading--});
@@ -3311,30 +3311,31 @@ window.__CLIMBORIA_GAME_PEERS={
   const ring=new T3.Mesh(new T3.TorusGeometry(.55,.045,6,22),new T3.MeshBasicMaterial({color:0xd8b46b,transparent:true,opacity:.72,depthWrite:false}));
   ring.name='RemoteMarkerRing';ring.rotation.x=-Math.PI/2;ring.position.y=.08;
   group.add(ring,peerMarker(data.name));
-  const p={id:data.id,group,model:data.model,position:{...position},root:null,mixer:null,clips:null,action:null,actionName:'',punchUntil:0,walkUntil:0};
-  const spot=remoteRootAt(position.x,position.z,position.y);group.position.set(spot.x,spot.y,spot.z);
+  const p={id:data.id,group,model:data.model,position:{...position},target:null,root:null,mixer:null,clips:null,action:null,actionName:'',punchUntil:0,walkUntil:0};
+  const spot=remoteRootAt(position.x,position.z,position.y);p.target=spot;group.position.set(spot.x,spot.y,spot.z);
   scene.add(group);livePeers.set(data.id,p);loadPeerHero(p);
  },
  move(id,position){
   const p=livePeers.get(id);if(!p||!Number.isFinite(position?.x)||!Number.isFinite(position?.y)||!Number.isFinite(position?.z))return;
   const dx=position.x-p.position.x,dz=position.z-p.position.z;
   if(Math.hypot(dx,dz)>.05){p.group.rotation.y=Math.atan2(-dx,-dz)+Math.PI;p.walkUntil=performance.now()+420;}
-  p.position={x:position.x,y:position.y,z:position.z};
+  p.position={x:position.x,y:position.y,z:position.z};p.target=remoteRootAt(position.x,position.z,position.y);
  },
  punch(id){const p=livePeers.get(id);if(!p)return;p.punchUntil=performance.now()+680;p.actionName='';setPeerAnimation(p,'punch');},
  remove(id){
   const p=livePeers.get(id);if(!p)return;
   scene.remove(p.group);
   p.group.traverse(n=>{if(n.isSprite){n.material?.map?.dispose();n.material?.dispose()}else if(n.name==='RemoteMarkerRing'){n.geometry?.dispose();n.material?.dispose()}});
-  p.mixer?.stopAllAction();livePeers.delete(id);
+  p.mixer?.stopAllAction();if(p.root)remoteGLBResidents=Math.max(0,remoteGLBResidents-1);livePeers.delete(id);
  },
  clear(){for(const id of [...livePeers.keys()])this.remove(id)},
  update(dt){
   const now=performance.now();
   for(const p of livePeers.values()){
-   const at=remoteRootAt(p.position.x,p.position.z,p.position.y);
-   const t=Math.min(1,dt*9);
-   p.group.position.lerp(new T3.Vector3(at.x,at.y,at.z),t);
+   const at=p.target,t=Math.min(1,dt*9);
+   p.group.position.x+=(at.x-p.group.position.x)*t;
+   p.group.position.y+=(at.y-p.group.position.y)*t;
+   p.group.position.z+=(at.z-p.group.position.z)*t;
    if(p.mixer){setPeerAnimation(p,now<p.punchUntil?'punch':now<p.walkUntil?'walk':'idle');p.mixer.update(dt);}
    p.group.visible=Math.hypot(p.group.position.x-cam.position.x,p.group.position.z-cam.position.z)<350;
   }
