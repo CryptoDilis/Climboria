@@ -210,7 +210,10 @@ export class JarrellRoom {
     this.room.announce(id);
     // A real server acknowledgement lets the client enable World Chat only
     // after the initial spawn has been accepted, never just on WS upgrade.
-    socket.send(JSON.stringify({type:'spawn-accepted',id,position:{...member.position}}));
+    // A pending socket may have missed peer joins while waiting to spawn.
+    // Reconcile only currently server-validated peers in the acceptance ack.
+    const peers=this.room.snapshot().filter(peer=>peer.id!==id);
+    socket.send(JSON.stringify({type:'spawn-accepted',id,position:{...member.position},peers}));
     this.room.broadcast({type:'player-moved',id,position:{...member.position}},id);
     return;
    }
