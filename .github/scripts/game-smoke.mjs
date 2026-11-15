@@ -149,6 +149,32 @@ try {
   }
   if (renderState?.errors?.length) errors.push('3D/game frame errors: ' + JSON.stringify(renderState.errors));
 
+  // Gated room integration: never display invented connected players on boot.
+  // Verify that only the 3D rendering adapter (not a networking connection)
+  // can create/remove a strictly temporary QA marker, then clear it.
+  const remotePresenceQA=await page.evaluate(()=>{
+    const renderer=window.__CLIMBORIA_GAME_PEERS;
+    const status=document.documentElement.dataset.climboriaMultiplayer;
+    const initial=renderer?.count?.()??-1;
+    if(!renderer)return {status,initial,error:'remote-peer-renderer-missing'};
+    const markerId='s_'+('f'.repeat(32));
+    const p=window.__climboriaJarrellsPeak?.player;
+    renderer.add({id:markerId,name:'QA Explorer',model:'Adventurer',position:{x:p.x+3,y:p.y,z:p.z-4}});
+    const added=renderer.count();
+    const during=renderer.audit();
+    renderer.remove(markerId);
+    const removed=renderer.count();
+    const after=renderer.audit();
+    return {status,initial,added,removed,during,after};
+  });
+  console.log('GAME staged presence renderer (default-off) QA:',JSON.stringify(remotePresenceQA));
+  if(remotePresenceQA.status!=='disabled'||remotePresenceQA.initial!==0||
+     remotePresenceQA.added!==1||remotePresenceQA.removed!==0||
+     remotePresenceQA.during?.resident!==0||remotePresenceQA.during?.loading!==0||
+     remotePresenceQA.after?.resident!==0||remotePresenceQA.after?.loading!==0||
+     remotePresenceQA.after?.peers!==0||remotePresenceQA.after?.budget!==3)
+     errors.push('Multiplayer must be disabled without deployed auth backend and ephemeral QA marker must cleanly unload: '+JSON.stringify(remotePresenceQA));
+
   const world = await page.evaluate(() => {
     const w = window.__climboriaJarrellsPeak;
     const p = w?.player;
