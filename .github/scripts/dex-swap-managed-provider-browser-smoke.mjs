@@ -110,6 +110,7 @@ async function runPage(browser, path, {badHash = false} = {}) {
       assert.equal(await panel.isVisible(),false);
       assert.equal(await button.getAttribute("aria-expanded"),"false");
       await button.click();
+      await panel.waitFor({ state: "visible", timeout: 10000 });
       assert.equal(await panel.isVisible(),true);
       assert.equal(await page.evaluate(() => window.__mockProviderCalls.length),1,
         "reopen must not reinitialize provider");
