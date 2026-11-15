@@ -7,7 +7,7 @@
 import {authorizeMelee,inSanctuarySafeZone,ROOM_RULES} from './server-authority-rules.mjs';
 
 const REQUEST_TTL_MS=30_000;
-const MAX_HEALTH=100;
+const MAX_HEALTH=500;
 const MELEE_DAMAGE=5;
 
 export class ServerCombatState {
