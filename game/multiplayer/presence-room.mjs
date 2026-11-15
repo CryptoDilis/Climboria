@@ -21,13 +21,13 @@ export class PresenceRoom{
   this.members=new Map();
  }
  snapshot(){
-  return [...this.members.values()].map(m=>({
+  return [...this.members.values()].filter(m=>m.visible!==false).map(m=>({
    id:m.id,name:m.name,model:m.model,
    position:{...m.position}
   }));
  }
  /** Connections MUST have passed the external server's authentication check. */
- connect({trustedSessionId,name,model,send}={}){
+ connect({trustedSessionId,name,model,send,announceImmediately=true}={}){
   if(!VALID_ID.test(trustedSessionId||'')||typeof send!=='function')
    return {ok:false,reason:'invalid-trusted-session'};
   if(this.members.has(trustedSessionId))return {ok:false,reason:'duplicate-session'};
@@ -35,21 +35,34 @@ export class PresenceRoom{
   const entry={
    id:trustedSessionId,name:VALID_NAME.test(name||'')?name:'Explorer',
    model:ALLOWED_MODELS.has(model)?model:'Adventurer',
-   position:{...INITIAL_POSITION},lastMoveAt:this.now(),send
+   position:{...INITIAL_POSITION},lastMoveAt:this.now(),send,
+   // Game Worker can keep an authenticated socket invisible until an initial
+   // Sanctuary spawn has passed validation (prevents fabricated map ghosts).
+   visible:announceImmediately===true
   };
   const peers=this.snapshot();
   try{send({type:'welcome',roomId:this.roomId,selfId:entry.id,peers})}
   catch(_){return {ok:false,reason:'connection-not-writable'}}
   this.members.set(entry.id,entry);
-  this.broadcast({type:'player-joined',player:{
+  if(entry.visible)this.broadcast({type:'player-joined',player:{
    id:entry.id,name:entry.name,model:entry.model,position:{...entry.position}
   }},entry.id);
   return {ok:true,id:entry.id,count:this.members.size};
  }
+ /** Promote a validated initial spawn to real peer/map visibility exactly once. */
+ announce(trustedSessionId){
+  const member=this.members.get(trustedSessionId);
+  if(!member||member.visible)return false;
+  member.visible=true;
+  this.broadcast({type:'player-joined',player:{
+   id:member.id,name:member.name,model:member.model,position:{...member.position}
+  }},member.id);
+  return true;
+ }
  broadcast(packet,exceptId){
   const failed=[];
   for(const [id,member] of this.members){
-   if(id===exceptId)continue;
+   if(id===exceptId||member.visible===false)continue;
    try{member.send(packet)}catch(_){failed.push(id)}
   }
   // Explicitly evict failed transports to avoid displaying ghost players.
@@ -58,6 +71,7 @@ export class PresenceRoom{
  move(trustedSessionId,payload={}){
   const m=this.members.get(trustedSessionId);
   if(!m)return {ok:false,reason:'unknown-or-disconnected-session'};
+  if(m.visible===false)return {ok:false,reason:'spawn-required'};
   const now=this.now(),dt=now-m.lastMoveAt;
   if(dt<50)return {ok:false,reason:'move-rate-limited'};
   // A player can be idle for minutes: validation must not permanently lock
@@ -80,8 +94,10 @@ export class PresenceRoom{
   return {ok:false,reason:'unsupported-packet'};
  }
  disconnect(trustedSessionId){
-  if(!this.members.delete(trustedSessionId))return false;
-  this.broadcast({type:'player-left',id:trustedSessionId},trustedSessionId);
+  const member=this.members.get(trustedSessionId);
+  if(!member)return false;
+  this.members.delete(trustedSessionId);
+  if(member.visible!==false)this.broadcast({type:'player-left',id:trustedSessionId},trustedSessionId);
   return true;
  }
 }

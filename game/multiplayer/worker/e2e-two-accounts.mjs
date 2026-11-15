@@ -95,13 +95,21 @@ try{
  const a=await makeBrowserPlayer(env.GAME_USER_A_JWT,'E2E Explorer A','Jarrell');
  const welcomeA=await packet(a,{type:'welcome'},'A welcome');
  verify(typeof welcomeA.selfId==='string','Missing trusted server ID for A');
+ verify((welcomeA.peers||[]).length===0,'Expected fresh empty staging room for first session');
+ // A must complete server-validated Sanctuary spawn before B is allowed to
+ // see A in B's welcome snapshot; pending sockets are not visible map peers.
+ await send(a,{type:'spawn',position:{x:0,y:9.55,z:-30}});
+ const acceptedA=await packet(a,{type:'spawn-accepted',id:welcomeA.selfId},'A initial spawn accepted by server');
+ verify(Array.isArray(acceptedA.peers),'A spawn acknowledgement must include the verified room roster');
  const b=await makeBrowserPlayer(env.GAME_USER_B_JWT,'E2E Explorer B','Lheiz');
  const welcomeB=await packet(b,{type:'welcome'},'B welcome');
  verify(welcomeA.selfId!==welcomeB.selfId,'Two accounts did not receive distinct peer identities');
- await packet(a,{type:'player-joined',playerId:welcomeB.selfId},'A sees B join');
- verify((welcomeB.peers||[]).some(p=>p.id===welcomeA.selfId),'B cannot see real connected A');
- await send(a,{type:'spawn',position:{x:0,y:9.55,z:-30}});
+ verify((welcomeB.peers||[]).some(p=>p.id===welcomeA.selfId),'B cannot see verified spawned A');
  await send(b,{type:'spawn',position:{x:0,y:9.55,z:-30}});
+ const acceptedB=await packet(b,{type:'spawn-accepted',id:welcomeB.selfId},'B initial spawn accepted by server');
+ verify((acceptedB.peers||[]).some(p=>p.id===welcomeA.selfId),
+  'B accepted spawn must reconcile the authoritative roster including A');
+ await packet(a,{type:'player-joined',playerId:welcomeB.selfId},'A sees B only after validated spawn');
  await packet(a,{type:'player-moved',id:welcomeB.selfId},'B spawn visible to A');
  // The authoritative movement policy requires >=20ms of elapsed server time;
  // never expect teleport-style instant position updates on spawn.

@@ -167,6 +167,7 @@ export class JarrellRoom {
   }
   const connected=this.room.connect({
    trustedSessionId:id,name:entry.name,model:entry.model,
+   announceImmediately:false, // not visible until valid Sanctuary spawn
    send:packet=>socket.send(JSON.stringify(packet))
   });
   if(!connected.ok){socket.close(1013,'room-unavailable');return response(503,{error:connected.reason})}
@@ -204,6 +205,15 @@ export class JarrellRoom {
     member.position={x:p.x,y:p.y,z:p.z};
     member.lastMoveAt=Date.now();
     this.spawned.add(id);
+    // The validated server-approved initial position is the first moment
+    // other explorers may see this peer in 3D, the field map or chat roster.
+    this.room.announce(id);
+    // A real server acknowledgement lets the client enable World Chat only
+    // after the initial spawn has been accepted, never just on WS upgrade.
+    // A pending socket may have missed peer joins while waiting to spawn.
+    // Reconcile only currently server-validated peers in the acceptance ack.
+    const peers=this.room.snapshot().filter(peer=>peer.id!==id);
+    socket.send(JSON.stringify({type:'spawn-accepted',id,position:{...member.position},peers}));
     this.room.broadcast({type:'player-moved',id,position:{...member.position}},id);
     return;
    }
