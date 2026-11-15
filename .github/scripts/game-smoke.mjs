@@ -536,7 +536,7 @@ try {
   }, null, { timeout: 15000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroRenderer === 'glb' && document.documentElement.dataset.climboriaHero === 'adventurer', undefined, { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
-  // Real left-hand Q punch while walking; Q still descends when flying. Local punch must play without fake network
+  // Real left-hand Q attack while walking. The attack animation must play without fake network
   // damage, cannot spam past cooldown, and consumes the existing stamina pool.
   const punchInput=await page.evaluate(()=>{
     const p=window.__climboriaJarrellsPeak?.player;
@@ -551,10 +551,10 @@ try {
     document.removeEventListener('climboria:visual-punch',listener);
     return {before,once,twice,events};
   });
-  console.log('Real input punch visual-only cooldown audit:',JSON.stringify(punchInput));
+  console.log('Real input attack visual-only cooldown audit:',JSON.stringify(punchInput));
   if(punchInput?.once?.mode!=='visual-only'||punchInput.once.stamina!==punchInput.before.stamina-5||
      punchInput.twice.stamina!==punchInput.once.stamina||punchInput.once.hp!==punchInput.before.hp||punchInput.events!==1)
-    errors.push('Punch must trigger once with stamina cost, cooldown and no fake client-side PvP damage: '+JSON.stringify(punchInput));
+    errors.push('Attack must trigger once with stamina cost, cooldown and no fake client-side PvP damage: '+JSON.stringify(punchInput));
   await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='idle',undefined,{timeout:15000});
 
   const idleAnimationAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);
@@ -1130,7 +1130,7 @@ try {
       ready: window.__climboriaGameReady === true,
       renderFrames: window.__climboriaRenderState?.frames ?? 0,
       renderErrors: window.__climboriaRenderState?.errors ?? [],
-      controls: ['JUMP','RUN','USE','DIVE','PUNCH'].every(label => text.includes(label)),
+      controls: ['JUMP','RUN','USE','DIVE','ATTACK'].every(label => text.includes(label)),
       mobileActions: [...document.querySelectorAll('[data-mobile-action]')].map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return {id:e.dataset.mobileAction,visible:c.display!=='none'&&c.visibility!=='hidden'&&Number(c.opacity)>.8&&r.width>=50&&r.height>=50&&r.left>=0&&r.top>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1}}),
       playerName: !!document.querySelector('#player-name'),
       playerVisible: (()=>{const e=document.querySelector('#player-card'),c=e&&getComputedStyle(e);return !!e&&c.visibility!=='hidden'&&Number(c.opacity)>.8})(),
