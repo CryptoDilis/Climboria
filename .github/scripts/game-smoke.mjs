@@ -514,17 +514,20 @@ try {
   // damage, cannot spam past cooldown, and consumes the existing stamina pool.
   const punchInput=await page.evaluate(()=>{
     const p=window.__climboriaJarrellsPeak?.player;
+    let events=0;const listener=()=>events++;
+    document.addEventListener('climboria:visual-punch',listener);
     const before={stamina:p?.stamina,hp:p?.hp};
     window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));
     const once={stamina:p?.stamina,hp:p?.hp,mode:document.documentElement.dataset.climboriaPunch};
     window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));
     const twice={stamina:p?.stamina,hp:p?.hp};
     window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyJ',bubbles:true}));
-    return {before,once,twice};
+    document.removeEventListener('climboria:visual-punch',listener);
+    return {before,once,twice,events};
   });
   console.log('Real input punch visual-only cooldown audit:',JSON.stringify(punchInput));
   if(punchInput?.once?.mode!=='visual-only'||punchInput.once.stamina!==punchInput.before.stamina-5||
-     punchInput.twice.stamina!==punchInput.once.stamina||punchInput.once.hp!==punchInput.before.hp)
+     punchInput.twice.stamina!==punchInput.once.stamina||punchInput.once.hp!==punchInput.before.hp||punchInput.events!==1)
     errors.push('Punch must trigger once with stamina cost, cooldown and no fake client-side PvP damage: '+JSON.stringify(punchInput));
   await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='idle',undefined,{timeout:15000});
 
