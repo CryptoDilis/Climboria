@@ -91,4 +91,46 @@ assert.deepEqual(freed,{geometry:1,material:1,texture:1},
  'Rejected shared GLB GPU allocations must dispose exactly once');
 console.log('PASS failed mobile GLBs reclaim shared GPU resources without double-dispose');
 
+// A good Meshy tree must replace exactly one old tree only when its actual
+// GLB resolves; restore the original visibility + collision on streaming out.
+const swap=harness({schema:1,enabled:true,guardModels:[],decorations:[
+ {file:'approved-tree.glb',anchor:'park',dx:0,dz:0,height:6,loadRadius:120,replaceLegacyTrees:true}
+]});
+let swaps=0,restores=0,adds=0,removes=0,disposals=0;
+swap.opts.replaceLegacyTrees=(x,z,radius)=>{
+ assert.equal(x,0);assert.equal(z,0);assert.equal(radius,28);
+ swaps++;return()=>restores++;
+};
+swap.opts.scene={add(){adds++},remove(){removes++}};
+swap.opts.T3.Vector3=class {constructor(){this.x=0;this.y=0;this.z=0}};
+swap.opts.T3.Box3=class {
+ constructor(){this.min={y:0}}
+ setFromObject(){return this}
+ getSize(v){v.y=8;return v}
+ getCenter(v){v.x=0;v.y=4;v.z=0;return v}
+};
+swap.opts.T3.Group=class {
+ constructor(){this.children=[];this.position={set() {}}}
+ add(v){this.children.push(v)}
+ traverse(fn){for(const c of this.children)c.traverse(fn)}
+};
+await swap.api.install(swap.opts);
+swap.api.tick({x:0,z:0});
+assert.equal(swaps,0,'Original trees must remain while GLB is pending');
+const goodMesh={isMesh:true,geometry:{index:{count:600},dispose(){disposals++}},
+ material:{dispose(){disposals++}}};
+const root={scale:{setScalar(){}},position:{set(){}},traverse(fn){fn(goodMesh)}};
+swap.calls[0].success({scene:root});
+for(let i=0;i<6;i++)await Promise.resolve();
+assert.equal(swaps,1,'Only successfully loaded natural tree hides old forest/collider');
+assert.equal(adds,1);
+assert.equal(swap.api.audit().loadedDecorations,1);
+swap.advance();
+swap.api.tick({x:1200,z:1200});
+assert.equal(restores,1,'Distant new model restores old tree AND its collider');
+assert.equal(removes,1);
+assert.equal(disposals,2,'Expired new model frees its geometry and material');
+assert.equal(swap.api.audit().loadedDecorations,0);
+console.log('PASS approved Meshy tree replaces only after load and restores CC0 forest on unload');
+
 console.log('PASS all Game Meshy loader unit tests');
