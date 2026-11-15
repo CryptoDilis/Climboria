@@ -11,7 +11,7 @@ const MAX_HEALTH=100;
 const MELEE_DAMAGE=5;
 
 export class ServerCombatState {
- constructor({room,now=()=>Date.now(),trustedPosition=()=>false}={}){
+ constructor({room,now=()=>Date.now(),trustedPosition=()=>null}={}){
   if(!room?.members||typeof room.members.get!=='function'||typeof now!=='function'||typeof trustedPosition!=='function')
    throw Error('Trusted room, clock and position gate required');
   this.room=room;
@@ -69,12 +69,14 @@ export class ServerCombatState {
    return {ok:false,reason:'no-active-consensual-duel'};
   // The existing browser movement transport is NOT authoritative terrain
   // physics. Default deny until a trusted server-backed verifier exists.
-  if(this.trustedPosition(actorId)!==true||this.trustedPosition(targetId)!==true)
-   return {ok:false,reason:'untrusted-terrain-position'};
-  const a=this.room.members.get(actorId),b=this.room.members.get(targetId);
-  const attacker={serverId:actorId,roomId:this.room.roomId,position:a.position,
+  // Resolve independently from audited server terrain physics, NOT the
+  // browser-updated PresenceRoom member.position field.
+  const aPos=this.trustedPosition(actorId),bPos=this.trustedPosition(targetId);
+  const trusted=p=>p&&typeof p==='object'&&['x','y','z'].every(k=>typeof p[k]==='number'&&Number.isFinite(p[k]));
+  if(!trusted(aPos)||!trusted(bPos))return {ok:false,reason:'untrusted-terrain-position'};
+  const attacker={serverId:actorId,roomId:this.room.roomId,position:aPos,
    pvpEnabled:true,health:this.health.get(actorId)};
-  const target={serverId:targetId,roomId:this.room.roomId,position:b.position,
+  const target={serverId:targetId,roomId:this.room.roomId,position:bPos,
    pvpEnabled:true,health:this.health.get(targetId)};
   const last=this.lastAttackAt.get(actorId)??Math.max(0,now-ROOM_RULES.attackCooldownMs);
   const allowed=authorizeMelee({attacker,target,nowMs:now,lastAttackAtMs:last,duelConsent:true});
