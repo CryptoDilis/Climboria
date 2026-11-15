@@ -27,6 +27,12 @@ jobs:
         run: node --check game/meshy-world-assets.js
       - name: Unit test mobile request cap, disabled manifest and path safety
         run: node game/scripts/test-meshy-world-assets.mjs
+      - name: Reject competing partial ZIP import workflows
+        run: |
+          test ! -e .github/workflows/game-import-meshy-packs.yml
+          test ! -e .github/scripts/game-import-meshy-packs.py
+          test -f .github/workflows/game-import-meshy-asset-packs.yml
+          echo 'PASS only the strict all-five-packs SHA-verifying importer remains'
       - name: Validate 44 exact approved GLB hashes in immutable source manifest
         run: python3 game/scripts/verify-meshy-asset-packs.py --manifest
       - name: Validate extracted assets if already imported
