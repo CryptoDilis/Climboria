@@ -136,3 +136,51 @@ test('staged duel panel is interactive only after authenticated real peers, neve
  socket.close();
  assert.equal(toggle.style.display,'none','room disconnect hides invitation UI');
 });
+
+
+test('World Chat is room-gated, server-confirmed, safe as text and cleared on disconnect',async()=>{
+ const offline=harness(false);await flush();
+ assert.equal(offline.created.some(node=>node.id==='climboria-world-chat-toggle'),false,
+  'offline Game cannot expose a fake usable World Chat');
+ const h=harness(true);await flush();
+ await waitFor(()=>h.clients.length===1);
+ assert.equal(h.clients.length,1);
+ const socket=h.clients[0];socket.onopen();
+ assert.equal(h.created.some(node=>node.id==='climboria-world-chat-panel'),false,
+  'unverified socket does not make World Chat visible before welcome');
+ socket.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'c'.repeat(32),peers:[peer]})});
+ const toggle=h.created.find(node=>node.id==='climboria-world-chat-toggle');
+ const panel=h.created.find(node=>node.id==='climboria-world-chat-panel');
+ assert.ok(toggle&&panel,'authenticated room welcome creates World Chat');
+ assert.ok(panel.children[0].textContent.includes('2 ONLINE'));
+ toggle.click();
+ assert.equal(panel.style.display,'block');
+ const log=panel.children[1],controls=panel.children[2],notice=panel.children[3];
+ const input=controls.children[0],sendButton=controls.children[1];
+ assert.equal(log.children.length,0,'no invented messages before server echo');
+ input.value='Kamusta all <script>alert(1)</script>';
+ sendButton.click();
+ assert.equal(socket.sent.at(-1).type,'world-chat');
+ assert.equal(socket.sent.at(-1).text,'Kamusta all <script>alert(1)</script>');
+ assert.equal(log.children.length,0,'local send is not forged as server acknowledgement');
+ socket.onmessage({data:JSON.stringify({
+  type:'world-chat',id:peer.id,name:'Explorer B',
+  text:'Welcome <img onerror=alert(1)>',at:1730000000000
+ })});
+ assert.equal(log.children.length,1);
+ assert.equal(log.children[0].textContent,'Explorer B: Welcome <img onerror=alert(1)>');
+ assert.equal(log.children[0].children.length,0,
+  'remote HTML-like text is never interpreted into child elements');
+ socket.onmessage({data:JSON.stringify({
+  type:'world-chat',id:'s_'+'d'.repeat(32),name:'Unknown',text:'forged',at:1730000000000
+ })});
+ assert.equal(log.children.length,1,'unknown room peers may not inject text');
+ socket.onmessage({data:JSON.stringify({type:'rejected',reason:'world-chat-rate-limit'})});
+ assert.ok(notice.textContent.includes('wait'));
+ socket.onmessage({data:JSON.stringify({type:'player-left',id:peer.id})});
+ assert.ok(panel.children[0].textContent.includes('1 ONLINE'));
+ socket.close();
+ assert.equal(toggle.style.display,'none');
+ assert.equal(panel.style.display,'none');
+ assert.equal(log.children.length,0,'disconnect erases room-only transcript');
+});

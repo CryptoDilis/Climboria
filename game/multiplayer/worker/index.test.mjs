@@ -133,6 +133,32 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   c1.dispatch('message',JSON.stringify({type:'spawn',position:{x:0,y:9.55,z:-30}}));
   c2.dispatch('message',JSON.stringify({type:'spawn',position:{x:0,y:9.55,z:-30}}));
   assert.equal(room.spawned.size,2);
+  // WORLD CHAT is real signed-in room broadcast, not an untrusted client name/ID.
+  const authenticatedA=c1.packets[0].selfId;
+  const beforeChat=c2.packets.length;
+  c1.dispatch('message',JSON.stringify({
+   type:'world-chat',text:'Kamusta, world <b>hello</b>!',name:'Impersonator',
+   id:c2.packets[0].selfId,at:1,damage:999,wallet:'forged'
+  }));
+  const chat=c2.packets.at(-1);
+  assert.equal(c2.packets.length,beforeChat+1);
+  assert.deepEqual(chat,{
+   type:'world-chat',id:authenticatedA,name:'Explorer A',
+   text:'Kamusta, world <b>hello</b>!',at:chat.at
+  },'server must stamp authenticated player identity, never trust user-supplied name or damage');
+  assert.equal(c1.packets.at(-1).type,'world-chat','sender receives confirmed chat echo');
+  const chatCount=c2.packets.length;
+  c1.dispatch('message',JSON.stringify({type:'world-chat',text:'spam'}));
+  assert.equal(c1.packets.at(-1).reason,'world-chat-rate-limit');
+  assert.equal(c2.packets.length,chatCount,'rate-limited content never broadcasts');
+  for(const text of ['', 'line\nfeed', 'x'.repeat(161),'€'.repeat(130)]){
+   c1.dispatch('message',JSON.stringify({type:'world-chat',text}));
+   assert.equal(c1.packets.at(-1).reason,'world-chat-invalid-text');
+   assert.equal(c2.packets.length,chatCount);
+  }
+  room.lastChat.set(authenticatedA,Date.now()-3000);
+  c1.dispatch('message',JSON.stringify({type:'world-chat',text:'  Mabuhay!  '}));
+  assert.equal(c2.packets.at(-1).text,'Mabuhay!','trim and broadcast safe Unicode');
   c1.dispatch('message',JSON.stringify({type:'punch',damage:999,targetId:'fake'}));
   assert.equal(c2.packets.at(-1).type,'player-punched');
   assert.equal(Object.hasOwn(c2.packets.at(-1),'damage'),false);

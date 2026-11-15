@@ -69,7 +69,8 @@ async function packet(page,selector,label){
    (predicate.positionX===undefined||m.position?.x===predicate.positionX)&&
    (predicate.fromId===undefined||m.fromId===predicate.fromId)&&
    (predicate.accepted===undefined||m.accepted===predicate.accepted)&&
-   (predicate.reason===undefined||m.reason===predicate.reason)
+   (predicate.reason===undefined||m.reason===predicate.reason)&&
+   (predicate.text===undefined||m.text===predicate.text)
  ),selector,{timeout});
  const obj=await page.evaluate(predicate=>window.__CLIMBORIA_GAME_E2E.messages.find(m=>
   m?.type===predicate.type&&(!predicate.id||m.id===predicate.id)&&
@@ -77,7 +78,8 @@ async function packet(page,selector,label){
   (predicate.positionX===undefined||m.position?.x===predicate.positionX)&&
   (predicate.fromId===undefined||m.fromId===predicate.fromId)&&
   (predicate.accepted===undefined||m.accepted===predicate.accepted)&&
-  (predicate.reason===undefined||m.reason===predicate.reason)
+  (predicate.reason===undefined||m.reason===predicate.reason)&&
+  (predicate.text===undefined||m.text===predicate.text)
  ),selector);
  verify(!!obj,'Missing '+label);
  return obj;
@@ -106,6 +108,24 @@ try{
  await new Promise(resolve=>setTimeout(resolve,100));
  await send(a,{type:'move',position:{x:.2,y:9.55,z:-30}});
  await packet(b,{type:'player-moved',id:welcomeA.selfId,positionX:.2},'A real movement visible to B');
+ // Signed-in WORLD CHAT: verify both peers receive server-confirmed identity,
+ // no client-supplied impersonation or fake HP, and per-socket anti-spam.
+ const greetings='Climboria world chat acceptance';
+ await send(a,{type:'world-chat',text:greetings,id:welcomeB.selfId,
+  name:'Impersonator',damage:999,wallet:'fake'});
+ const echoA=await packet(a,{type:'world-chat',id:welcomeA.selfId,text:greetings},
+  'A receives the server-confirmed World Chat echo');
+ const echoB=await packet(b,{type:'world-chat',id:welcomeA.selfId,text:greetings},
+  'B sees the real authenticated World Chat sender');
+ verify(echoA.name==='E2E Explorer A'&&echoB.name==='E2E Explorer A'&&
+  Number.isFinite(echoB.at)&&!('damage' in echoB)&&!('wallet' in echoB),
+  'World Chat identity, server time or no-damage contract failed');
+ await send(a,{type:'world-chat',text:'spam'});
+ await packet(a,{type:'rejected',reason:'world-chat-rate-limit'},
+  'World Chat rate limiter rejected immediate repeat');
+ await send(b,{type:'world-chat',text:'Hello back'});
+ await packet(a,{type:'world-chat',id:welcomeB.selfId,text:'Hello back'},
+  'A sees authenticated second account chat reply');
  await send(a,{type:'punch'});
  const emote=await packet(b,{type:'player-punched',id:welcomeA.selfId},'A cosmetic punch visible to B');
  verify(!('damage' in emote)&&!('hp' in emote)&&!('loot' in emote),
@@ -157,7 +177,7 @@ try{
 
  await b.evaluate(()=>window.__CLIMBORIA_GAME_E2E.socket.close());
  await packet(a,{type:'player-left',id:welcomeB.selfId},'B leaves on disconnect');
- console.log('PASS: real independent authenticated sessions joined/moved; ATTACK damage rejected; Sanctuary consent blocked; verified outside-zone invitation, acceptance, revocation and invitation cooldown; disconnect cleanup.');
+ console.log('PASS: two independent authenticated players join/move, exchange server-confirmed World Chat with rate limits, preserve ATTACK damage denial, Sanctuary consent, invitation/revocation and disconnect cleanup.');
  console.log('Still required: actual Game remote GLB rendering, mobile FPS, independently trusted terrain positions, player-facing duel UI, release approval and production auth QA.');
 }finally{
  await Promise.all(contexts.map(ctx=>ctx.close().catch(()=>{})));

@@ -27,6 +27,91 @@
  const validPlayer=p=>p&&validId(p.id)&&typeof p.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(p.name)
   &&['Adventurer','Jarrell','Lheiz'].includes(p.model)&&validPosition(p.position);
  let badge=null;
+
+ // World Chat never appears without a verified room welcome. Messages are
+ // plain text, room-scoped, short-lived in the DOM and never stored locally.
+ let chatUi=null,chatExpanded=false;
+ function renderChatCount(){
+  if(chatUi)chatUi.count.textContent='WORLD CHAT · '+(known.size+(selfId?1:0))+' ONLINE';
+ }
+ function clearWorldChatUi(){
+  chatExpanded=false;
+  if(!chatUi)return;
+  chatUi.toggle.style.display='none';
+  chatUi.panel.style.display='none';
+  chatUi.log.replaceChildren();
+  chatUi.input.value='';
+  chatUi.notice.textContent='';
+ }
+ function appendWorldChat(msg){
+  if(!chatUi||!validId(msg.id)||!(msg.id===selfId||known.has(msg.id))||
+     typeof msg.name!=='string'||!(/^[A-Za-z0-9 _-]{2,24}$/.test(msg.name))||
+     typeof msg.text!=='string'||![...msg.text].length||[...msg.text].length>160||
+     typeof msg.at!=='number'||!Number.isFinite(msg.at))return;
+  const line=document.createElement('div');
+  line.style.cssText='padding:5px 0;border-bottom:1px solid #d8b46b25;white-space:pre-wrap;overflow-wrap:anywhere';
+  line.textContent=msg.name+': '+msg.text;
+  const entries=Array.from(chatUi.log.children);
+  if(entries.length>=40)chatUi.log.replaceChildren(...entries.slice(-39));
+  chatUi.log.appendChild(line);
+  chatUi.log.scrollTop=chatUi.log.scrollHeight;
+  chatUi.notice.textContent='';
+ }
+ function sendWorldChat(){
+  if(!chatUi||!selfId)return;
+  const text=String(chatUi.input.value||'').trim();
+  if(!text||[...text].length>160){
+   chatUi.notice.textContent='Enter a message of 1–160 characters.';return;
+  }
+  if(send({type:'world-chat',text})){
+   chatUi.input.value='';
+   chatUi.notice.textContent='Sending…';
+  }else chatUi.notice.textContent='Not connected. Message not sent.';
+ }
+ function ensureWorldChatUi(){
+  if(!chatUi){
+   const mobile=!!document.body.classList?.contains?.('mobile-device');
+   const toggle=document.createElement('button'),panel=document.createElement('section');
+   const count=document.createElement('div'),log=document.createElement('div');
+   const controls=document.createElement('div'),input=document.createElement('input');
+   const sendButton=document.createElement('button'),notice=document.createElement('div');
+   toggle.id='climboria-world-chat-toggle';toggle.textContent='WORLD CHAT';
+   toggle.setAttribute('aria-label','Toggle World Chat');
+   toggle.style.cssText='position:fixed;left:10px;z-index:1300;padding:8px 11px;border:1px solid #d8b46b;border-radius:9px;background:#101925f2;color:#ffe3a3;font:800 11px system-ui;cursor:pointer;touch-action:manipulation;'+
+    (mobile?'top:140px;':'bottom:18px;');
+   panel.id='climboria-world-chat-panel';
+   panel.style.cssText='position:fixed;left:10px;z-index:1300;width:min(320px,calc(100vw - 20px));max-height:52dvh;display:none;padding:10px;border:1px solid #d8b46b99;border-radius:10px;background:#070c14f2;color:#ffe3a3;font:600 12px system-ui;box-shadow:0 8px 28px #000a;touch-action:auto;'+
+    (mobile?'top:178px;width:min(310px,43vw);':'bottom:62px;');
+   count.style.cssText='font-weight:800;letter-spacing:.05em;margin-bottom:6px';
+   log.style.cssText='height:112px;max-height:26dvh;overflow-y:auto;overscroll-behavior:contain;font:12px/1.45 system-ui';
+   log.setAttribute('role','log');log.setAttribute('aria-live','polite');
+   controls.style.cssText='display:flex;gap:6px;margin-top:9px';
+   input.type='text';input.maxLength=160;input.placeholder='Message all explorers';
+   input.setAttribute('aria-label','World Chat message');
+   input.style.cssText='flex:1;min-width:0;padding:8px;border:1px solid #d8b46b88;border-radius:6px;background:#111c29;color:#fff;font:12px system-ui;touch-action:auto';
+   sendButton.type='button';sendButton.textContent='SEND';
+   sendButton.style.cssText='padding:8px;border:1px solid #d8b46b;border-radius:6px;background:#293547;color:#ffe3a3;font:800 11px system-ui;cursor:pointer';
+   notice.style.cssText='min-height:14px;margin-top:5px;font:10px system-ui;color:#e5c98c';
+   input.addEventListener('keydown',e=>{
+    e.stopPropagation();
+    if(e.key==='Enter'){e.preventDefault();sendWorldChat()}
+   });
+   sendButton.addEventListener('click',sendWorldChat);
+   toggle.addEventListener('click',()=>{
+    chatExpanded=!chatExpanded;panel.style.display=chatExpanded?'block':'none';
+    renderChatCount();
+   });
+   // Mobile map/joystick gestures must not also move the player's avatar
+   // when an explorer scrolls their World Chat transcript.
+   panel.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+   panel.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
+   controls.appendChild(input);controls.appendChild(sendButton);
+   panel.appendChild(count);panel.appendChild(log);panel.appendChild(controls);panel.appendChild(notice);
+   document.body.appendChild(toggle);document.body.appendChild(panel);
+   chatUi={toggle,panel,count,log,input,notice};
+  }
+  chatUi.toggle.style.display='block';renderChatCount();
+ }
  // Game-only, disabled by the outer client-config release gate. Consent is
  // separate from ATTACK damage: the room NEVER accepts client-requested HP.
  let duelUi=null,duelExpanded=false,inviteFrom=null,outgoingTo=null,activeWith=null;
@@ -161,12 +246,12 @@
  }
  function clearPeers(){
   for(const id of known.keys())renderer.remove(id);
-  known.clear();selfId=null;clearDuelUi();
+  known.clear();selfId=null;clearDuelUi();clearWorldChatUi();
  }
  function addPlayer(player){
   if(!validPlayer(player)||player.id===selfId||known.size>=32)return;
   known.set(player.id,player);renderer.add(player);
-  renderDuelUi();
+  renderDuelUi();renderChatCount();
   showStatus('connected','ONLINE · '+known.size+' other explorers');
  }
  function leave(id){
@@ -176,7 +261,7 @@
    clearDuelExpiry();inviteFrom=null;outgoingTo=null;activeWith=null;
    duelNotice='Explorer disconnected; consent cleared.';
   }
-  renderDuelUi();
+  renderDuelUi();renderChatCount();
   showStatus('connected','ONLINE · '+known.size+' other explorers');
  }
  function onPacket(data){
@@ -187,7 +272,7 @@
    if(!validId(msg.selfId)||!Array.isArray(msg.peers)||msg.peers.length>32)return;
    selfId=msg.selfId;clearPeers();selfId=msg.selfId;
    for(const p of msg.peers)addPlayer(p);
-   ensureDuelUi();
+   ensureDuelUi();ensureWorldChatUi();
    showStatus('connected','ONLINE · '+known.size+' other explorers');
   }else if(msg.type==='player-joined'){
    addPlayer(msg.player);
@@ -197,6 +282,10 @@
     renderer.move(msg.id,msg.position);
    }
   }else if(msg.type==='player-left')leave(msg.id);
+  else if(msg.type==='world-chat')appendWorldChat(msg);
+  else if(msg.type==='rejected'&&['world-chat-rate-limit','world-chat-invalid-text'].includes(msg.reason)){
+   if(chatUi)chatUi.notice.textContent=msg.reason==='world-chat-rate-limit'?'Please wait a moment before chatting again.':'Message not accepted. Use 1–160 readable characters.';
+  }
   else if(msg.type==='player-punched'&&validId(msg.id)&&known.has(msg.id))renderer.punch(msg.id);
   else if(typeof msg.type==='string'&&msg.type.startsWith('duel-'))onDuelPacket(msg);
   else if(msg.type==='rejected'&&typeof msg.reason==='string'&&
