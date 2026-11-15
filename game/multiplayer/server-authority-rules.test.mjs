@@ -46,6 +46,26 @@ test('server movement policy rejects impossible teleports and malformed packets'
  assert.equal(validatePlayerMove({previous,next:{x:0,y:2,z:-30},elapsedMs:5000}).reason,'invalid-or-stale-position');
  assert.equal(validatePlayerMove({previous,next:{x:Infinity,y:2,z:0},elapsedMs:100}).ok,false);
 });
+test('real Jarrell sprint and sprint-jump cosmetic movement sync without allowing teleports',()=>{
+ // game/play.html uses 9m/s walking, 22m/s stamina sprint, and initial
+ // jump vertical speed 11m/s. Server validates a 3D vector, not just X/Z.
+ assert.ok(ROOM_RULES.maxPlayerSpeedMetersPerSecond>=Math.hypot(22,11),
+  'real sprint+jump must not freeze the peer avatar due to a 14m/s limit');
+ assert.ok(ROOM_RULES.maxPlayerSpeedMetersPerSecond<=30,
+  'visual-only speed must remain bounded rather than enabling teleports');
+ const prior={x:0,y:9.55,z:-30};
+ const sprint={x:6.6,y:9.55,z:-30};
+ const jump={x:6.6+6.6,y:9.55+3.3,z:-30};
+ assert.equal(validatePlayerMove({previous:prior,next:sprint,elapsedMs:300}).ok,true,
+  '6.6m per 300ms is the actual 22m/s sprint pace');
+ assert.equal(validatePlayerMove({previous:sprint,next:jump,elapsedMs:300}).ok,true,
+  'real 22m/s sprint with 11m/s upward jump can synchronize');
+ assert.equal(validatePlayerMove({previous:jump,next:{x:32.6,y:12.85,z:-30},elapsedMs:300}).reason,
+  'move-too-fast','20m in 300ms must still fail closed');
+ assert.equal(validatePlayerMove({previous:prior,next:{x:50,y:9.55,z:-30},elapsedMs:3000}).reason,
+  'invalid-or-stale-position','long elapsed delay must not grant teleport credit');
+});
+
 test('grabbing requires a nearby public unclaimed nonfinancial world drop',()=>{
  assert.equal(authorizeWorldGrab({actor:actor(),drop:drop(),nowMs:2000}).ok,true);
  assert.equal(authorizeWorldGrab({actor:actor(),drop:drop({type:'player_inventory'}),nowMs:2000}).ok,false);
