@@ -4,15 +4,13 @@ import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { resolve, sep, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseStagingOrigin, stagingRuntimeEnabled, stagingStatusResult } from './dex-swap-staging-runtime-policy.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const stagingOrigin = new URL(process.env.SWAP_STAGING_ORIGIN ?? 'http://127.0.0.1:4173');
-if (stagingOrigin.hostname.endsWith('climboria.fun') || !['http:', 'https:'].includes(stagingOrigin.protocol)) {
-  throw new Error('Use a separate staging origin');
-}
+const stagingOrigin = parseStagingOrigin(process.env.SWAP_STAGING_ORIGIN ?? 'http://127.0.0.1:4173');
 // The isolated test harness MUST remain off unless manually opted in.
 // This does not change public Swap/DEX flags or enable any production path.
-const localRuntimeApproved = process.env.SWAP_STAGING_RUNTIME_APPROVED === 'true';
+const localRuntimeApproved = stagingRuntimeEnabled(process.env);
 const prefix = '/__staging_jupiter/';
 const pins = {
   'plugin-1.0.18.js': 'aPExK0yy7w5DZjkLRMWvSKhuEz9kvz/9vESgWrctox51YnSfx6WWIWrsZBHqVJSy',
@@ -62,12 +60,8 @@ createServer(async (request, response) => {
     // staging origin. A failed request, other method or default-off state
     // must never cause an in-site wallet widget to initialize.
     if (path === '/swap-runtime-status.json') {
-      if (request.method !== 'GET' && request.method !== 'HEAD') {
-        response.writeHead(405, { 'Allow':'GET, HEAD', 'Cache-Control':'no-store' }).end();
-        return;
-      }
-      response.writeHead(200, { 'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff' });
-      response.end(request.method === 'HEAD' ? undefined : JSON.stringify({ enabled: localRuntimeApproved }));
+      const status = stagingStatusResult(request.method, localRuntimeApproved);
+      response.writeHead(status.status, status.headers).end(status.body);
       return;
     }
     const page = path === '/swap/' || path === '/dex/';
