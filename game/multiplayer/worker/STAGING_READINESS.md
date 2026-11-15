@@ -65,6 +65,15 @@ GAME_USER_B_JWT="<private-ephemeral-JWT-B>" \
 node game/multiplayer/worker/e2e-two-accounts.mjs
 ```
 
+The Worker issues at most **two outstanding 30-second one-use tickets per
+registered Supabase account**, enforced in an atomic Durable Object storage
+transaction. A third still-pending request gets `HTTP 429
+account-ticket-limit` and must not be treated as a room outage; wait for the
+previous ticket to be consumed/expire rather than bypassing the rate limit.
+The global 32-pending-ticket cap and per-room 32-live-peer cap remain intact.
+This prevents one account from filling all pending room slots while leaving
+other registered test users able to join.
+
 This manual script loads a blank first-party-origin QA browser document,
 never the public Game or a third-party site. It tests real server-authenticated
 WebSocket join, **spawn-accepted**, two-way movement, server-stamped World
