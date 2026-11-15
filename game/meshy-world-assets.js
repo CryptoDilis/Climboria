@@ -8,7 +8,7 @@ const BASE='../assets/game/new_optimized/';
 const manifestURL=BASE+'manifest.json';
 const allowed=/^[A-Za-z0-9_.() -]+\.glb$/;
 const state={started:false,enabled:false,guardCount:0,decorations:0,failures:[],queued:0,loaded:0};
-let opts=null,settings=null,decorations=[],lastTick=0,guardStarted=false;
+let opts=null,settings=null,decorations=[],lastTick=0,guardStarted=false,lastCamera=null;
 function safeURL(name){return typeof name==='string'&&allowed.test(name)&&!name.includes('..')?BASE+encodeURIComponent(name):null;}
 function groundPosition(anchor,dx,dz){
  const p=opts.POI;
@@ -104,7 +104,8 @@ function prepareDecorations(entries){
  }).filter(Boolean);
 }
 function tick(camera){
- if(!state.enabled||!camera)return;
+ if(!state.enabled||!camera||!Number.isFinite(camera.x)||!Number.isFinite(camera.z))return;
+ lastCamera={x:camera.x,z:camera.z};
  const now=performance.now();if(now-lastTick<1300)return;lastTick=now;
  const mobile=('ontouchstart' in window)||navigator.maxTouchPoints>0;
  const maxLoaded=mobile?2:4;
@@ -127,7 +128,13 @@ function tick(camera){
    if(root)disposeMeshyRoot(root);
    candidate.failed=true;state.failures.push(candidate.file);return;
   }
-  const x=candidate.at.x,z=candidate.at.z,h=candidate.water?0:opts.heightAt(x,z);
+  const x=candidate.at.x,z=candidate.at.z;
+  // A multi-MB GLB may finish after travel/teleport. Never upload geometry
+  // into the scene or replace an old tree if it is now far outside the view.
+  if(lastCamera&&Math.hypot(lastCamera.x-x,lastCamera.z-z)>candidate.loadRadius+85){
+   disposeMeshyRoot(root);return;
+  }
+  const h=candidate.water?0:opts.heightAt(x,z);
   if(!Number.isFinite(h)){disposeMeshyRoot(root);candidate.failed=true;return;}
   const group=new opts.T3.Group();group.name='OptionalMeshy:'+candidate.file;
   group.position.set(x,h,z);group.add(root);opts.scene.add(group);
