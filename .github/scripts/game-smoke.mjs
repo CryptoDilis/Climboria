@@ -54,6 +54,19 @@ try {
     timeout: 90000,
   });
   await page.waitForSelector('#game canvas, canvas', { timeout: 45000 });
+  // Desktop keyboard-only mode must not render the touch ATTACK button.
+  // Chromium may expose 'ontouchstart' in window even with zero real touch
+  // points; use actual pointer capabilities rather than that property.
+  const desktopInputMode=await page.evaluate(()=>{
+    const attack=document.querySelector('#climboria-punch-button');
+    return {touchPoints:navigator.maxTouchPoints,
+      coarsePointer:matchMedia('(pointer: coarse)').matches,
+      mobileClass:document.body.classList.contains('mobile-device'),
+      attackButtonDisplay:attack?getComputedStyle(attack).display:null};
+  });
+  if(desktopInputMode.touchPoints!==0||desktopInputMode.coarsePointer||
+     desktopInputMode.mobileClass||desktopInputMode.attackButtonDisplay!=='none')
+    errors.push('Keyboard desktop incorrectly enabled mobile ATTACK button: '+JSON.stringify(desktopInputMode));
   try {
     await page.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
   } catch (error) {
