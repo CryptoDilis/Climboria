@@ -1,5 +1,16 @@
 # Climboria Game Development Record
 
+## GAME OWNER MESHY ZIP LIBRARY RECOVERY — integrity verified, upload still blocked (2026-11-15 PHT)
+- **Located owner files in the user Library:** `Climboria_Meshy_Assets_Pack_01.zip` through `05.zip`. Materialized exact bytes for offline verification; **nothing was uploaded to GitHub**, and production Game models remain unchanged.
+- **Offline integrity PASS:** pack GLB counts 7 + 8 + 9 + 10 + 10 = **44 unique** GLBs; all five ZIP CRC scans clean, each GLB 2.0 magic and declared byte length valid. Unpacked 87,664,552 bytes; combined ZIP size 74,525,112 bytes (16,103,275 + 16,131,708 + 16,068,152 + 15,699,674 + 10,522,303).
+- **Allowlist identity check:** canonical sorted inventory (all 44 filenames + actual byte lengths + individually computed SHA-256 digests + assigned ZIP) matches the committed `assets/game/new_optimized/source_manifest.json` inventory fingerprint **`78ffd506186b6b4e`** over 7,033 UTF-8 bytes. The repository source manifest was not modified. This is input identity evidence, **not** WebGL rendering/art-license/mobile FPS acceptance.
+- **Still blocked:** GitHub connector supports text commits/blob strings but no direct upload of 10–16MB local ZIP file references. GitHub branch still has zero optimized ZIP/GLB assets; do not bypass the strict importer by enabling the scene or declaring release.
+- **EXACT NEXT GAME ONLY:** owner downloads the recovered five files and uploads all unchanged ZIPs on the branch `game/meshy-asset-pipeline-2026-11-15` in `assets/game/new_optimized/`; branch importer validates exact independent GLB SHA-256 values and all 44 structural/triangle/image bounds. Trigger post-import CI and screenshot/art visual inspection, check 100 chests/12 Sanctuary pillars/cave-coast path and physical Android FPS/thermals; only then approve curated subset and merge Game-only PR #466. Keep DEX/Swap/Launchpad/ClimbX untouched.
+- [PR #466 checkpoint](https://github.com/CryptoDilis/Climboria/pull/466) contains the evidence and upload directions; local verified JSON digest inventory is retained in this conversation's working files, not a public repo asset.
+
+---
+
+
 ## GAME CHECKPOINT: stagger realistic guard replacement, strengthen 12-NPC acceptance (2026-11-15)
 
 - **GAME-ONLY continuation, PR [#466](https://github.com/CryptoDilis/Climboria/pull/466) remains DRAFT and default OFF.** Source inspection confirms `camp()` creates **12 soldiers** (`for(let i=0;i<12;i++)`), NOT 17 as an older historical record incorrectly stated. The prior 17 figure is superseded for the camp guard replacement feature. Hero, chest, physics and other workstreams were not intentionally changed.
