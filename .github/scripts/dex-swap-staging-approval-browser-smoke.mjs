@@ -55,6 +55,9 @@ async function checkPage(browser, path, width, mode) {
   const context = await browser.newContext({ viewport: { width, height: 850 } });
   const page = await context.newPage();
   let approved = true;
+  // Drive a fresh failure AFTER the initial approved page boot. Every case
+  // must fail closed without creating a provider script or wallet prompt.
+  let statusFault = "none";
   let scriptRequests = 0;
   let statusRequests = 0;
   let releaseScript = null;
@@ -84,9 +87,19 @@ async function checkPage(browser, path, width, mode) {
     }
     if (url.pathname === "/swap-runtime-status.json") {
       ++statusRequests;
-      return route.fulfill({ status: 200, contentType: "application/json",
-        headers: { "Cache-Control": "no-store" },
-        body: JSON.stringify({ enabled: approved }) });
+      if (statusFault === "network-error") return route.abort("failed");
+      if (statusFault === "redirect") {
+        return route.fulfill({ status: 302,
+          headers: { "Location": "/swap-runtime-status.json", "Cache-Control": "no-store" },
+          body: "" });
+      }
+      return route.fulfill({
+        status: statusFault === "http-503" ? 503 : 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": statusFault === "cacheable" ? "public, max-age=600" : "no-store" },
+        body: statusFault === "invalid-json" ? "{invalid json" :
+          JSON.stringify({ enabled: statusFault === "string-true" ? "true" : approved })
+      });
     }
     if (url.pathname === scriptPath) {
       ++scriptRequests;
@@ -113,13 +126,18 @@ async function checkPage(browser, path, width, mode) {
     assert.equal((await page.locator("[data-climboria-managed-swap-open]").count()),
       path === "/dex/" ? 3 : 1);
 
-    if (mode === "before-first") {
-      approved = false;
+    if (mode === "before-first" || [
+      "network-error", "redirect", "http-503", "cacheable",
+      "invalid-json", "string-true"
+    ].includes(mode)) {
+      if (mode === "before-first") approved = false;
+      else statusFault = mode;
       await button.click();
       await page.waitForFunction(() => [...document.querySelectorAll(
         "[data-climboria-managed-swap-open]")].every(button => button.hidden));
       assert.equal(await panel.isVisible(), false);
-      assert.equal(scriptRequests, 0, "no SDK on revoked first click");
+      assert.equal(scriptRequests, 0,
+        "no SDK on revoked or invalid fresh runtime approval (" + mode + ")");
     } else if (mode === "during-download") {
       await button.click();
       await Promise.race([
@@ -203,7 +221,11 @@ try {
   for (const [path,width] of [
     ["/swap/",1280], ["/swap/",390], ["/dex/",1280], ["/dex/",390]
   ]) {
-    for (const mode of ["before-first", "after-mounted", "during-download"]) {
+    for (const mode of [
+      "before-first", "after-mounted", "during-download",
+      "network-error", "redirect", "http-503",
+      "cacheable", "invalid-json", "string-true"
+    ]) {
       await checkPage(browser, path, width, mode);
     }
   }
