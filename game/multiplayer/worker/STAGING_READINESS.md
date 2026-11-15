@@ -67,11 +67,11 @@ closed. Never paste full shell commands containing tokens into support chats.
 
 ## 3. Owner-only real Game UI acceptance (separate from room socket QA)
 
-When the approved custom domain \`https://rooms.climboria.fun/\` has been bound
+When the approved custom domain `https://rooms.climboria.fun/` has been bound
 to the isolated Game Worker and /health + /ready checks are both green, run
 the additional real Game WebGL integration test:
 
-\`\`\`sh
+```sh
 npm install --no-save playwright
 npx playwright install chromium
 
@@ -84,19 +84,19 @@ export GAME_QA_B_EMAIL="(private disposable Supabase QA account B)"
 export GAME_QA_B_PASSWORD="(private password B)"
 GAME_QA_LANDSCAPE_MOBILE=1 node game/multiplayer/worker/e2e-real-game-ui.mjs
 unset GAME_QA_A_EMAIL GAME_QA_A_PASSWORD GAME_QA_B_EMAIL GAME_QA_B_PASSWORD
-\`\`\`
+```
 
 The script connects to the actual **https://climboria.fun/game/play.html**
 in two isolated Chromium browser contexts. It routes only each QA browser's
-\`/game/multiplayer/client-config.json\` response to the owned secure
-\`rooms.climboria.fun\` endpoint **in that browser**, not on the public site
+`/game/multiplayer/client-config.json` response to the owned secure
+`rooms.climboria.fun` endpoint **in that browser**, not on the public site
 or in any tracked file. It exercises *real Supabase password sign-in*,
 server-confirmed initial spawn, both real remote Jarrell/Lheiz GLB models,
 cyan map/online roster, two-way World Chat, logout cleanup and same-tab
 re-login/rejoin. It can measure approximate Chromium software-render FPS.
 Only dummy QA account credentials are permitted; never run against customer
 accounts. Screenshots are optional via a **private local**
-\`GAME_QA_SCREENSHOT_DIR\` folder, never commit or upload them without review.
+`GAME_QA_SCREENSHOT_DIR` folder, never commit or upload them without review.
 
 This script is **only syntax-checked in CI**, and does **not** automatically
 run or deploy anything. Its mobile mode is *emulation*, not a physical
@@ -104,7 +104,7 @@ Android GPU/performance acceptance. Even a full PASS does not prove
 all production browsers or the public multiplayer release gate; owner must
 perform physical Android gameplay and verify deployment/domain ownership.
 
-## 3. Verify production Game visuals before enabling everyone
+## 4. Verify production Game visuals before enabling everyone
 
 Use the actual owned `rooms.climboria.fun` Cloudflare custom domain
 (HTTPS/WSS) for the eventual public browser endpoint; `workers.dev` is
