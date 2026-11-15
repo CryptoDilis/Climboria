@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {TextEncoder} from 'node:util';
 
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
@@ -52,7 +53,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
   }
   throw Error('unexpected fetch');
  };
- const context={window,document,fetch,URL,WebSocket:Socket,
+ const context={window,document,fetch,URL,TextEncoder,WebSocket:Socket,
   location:{href:'https://climboria.fun/game/play.html'},
   setTimeout:(fn,delay)=>{timers.push({fn,delay,cancelled:false});return timers.length},
   setInterval:()=>1,clearInterval(){},clearTimeout:id=>{if(timers[id-1])timers[id-1].cancelled=true},console};
@@ -203,6 +204,32 @@ test('World Chat is room-gated, server-confirmed, safe as text and cleared on di
  assert.equal(log.children.length,0,'disconnect erases room-only transcript');
 });
 
+
+test('World Chat preserves text rejected by UTF-8 wire limit or Unicode controls',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const socket=h.clients[0];socket.onopen();
+ const id='s_'+'c'.repeat(32);
+ socket.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
+ socket.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
+ const panel=h.created.find(el=>el.id==='climboria-world-chat-panel');
+ assert.ok(panel,'only a confirmed server spawn grants chat input');
+ const controls=panel.children[2],input=controls.children[0];
+ const sendButton=controls.children[1],notice=panel.children[3],log=panel.children[1];
+ const before=socket.sent.length;
+ const oversized='€'.repeat(150); // 150 Unicode chars, 450 UTF-8 bytes
+ input.value=oversized;sendButton.click();
+ assert.equal(socket.sent.length,before,'server-invalid wire bytes never leave the browser');
+ assert.equal(input.value,oversized,'rejected message must remain editable instead of vanishing');
+ assert.match(notice.textContent,/384 UTF-8 bytes/);
+ input.value='safe\u202Ebad';sendButton.click();
+ assert.equal(socket.sent.length,before,'bidi-control payload is denied locally');
+ assert.ok(input.value.includes('\u202E'),'invalid text stays in the input for correction');
+ input.value='Cafe\u0301';sendButton.click();
+ assert.equal(socket.sent.at(-1).type,'world-chat');
+ assert.equal(socket.sent.at(-1).text,'Café','NFC normalization matches the room server');
+ assert.equal(input.value,'','only a successfully transmitted message clears the input');
+ assert.equal(log.children.length,0,'client never fabricates an unconfirmed chat echo');
+});
 
 test('Supabase anonymous guest with a valid access token does not open an authenticated Game room',async()=>{
  const guest={user:{id:'guest-uuid',is_anonymous:true},access_token:'valid-guest-supabase-token'};
