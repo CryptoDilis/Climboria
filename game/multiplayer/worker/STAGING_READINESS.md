@@ -29,8 +29,17 @@ ClimbX and token/wallet infrastructure out of this task.
 
 Check `https://<approved-worker-host>/health` and verify
 `service === 'climboria-game-room'` and `gameplayPvP === false`. **Health
-alone does not prove Supabase key readiness, chat, 3D players or FPS**. A
-successful deployment log alone is not a two-account acceptance result.
+alone proves only that code responds**, not that the Worker is configured.
+
+Also check `https://<approved-worker-host>/ready` and require **HTTP 200**
+with `bindingsConfigured:true` and `gameplayPvP:false`. HTTP 503 means
+the Worker does **not** currently have the required Durable Object binding,
+valid Supabase URL, or publishable-key binding: inspect protected GitHub
+environment secrets and staging deploy logs rather than enabling the
+public Game. The readiness response never reveals a key or admin secret.
+**Even HTTP 200 here does not prove Supabase login works, authenticated
+two-account movement/chat, 3D remote avatars or mobile FPS.** A successful
+deployment log alone is not a two-account acceptance result.
 
 With **two different test users**, sign in to the existing Game Supabase
 project and obtain short-lived account JWTs in a *private* local shell.
