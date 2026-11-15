@@ -607,7 +607,13 @@ try {
     document.addEventListener('climboria:visual-punch',listener);
     const before={stamina:p?.stamina,hp:p?.hp};
     window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyQ',bubbles:true}));
-    const once={stamina:p?.stamina,hp:p?.hp,mode:document.documentElement.dataset.climboriaPunch};
+    // Capture the authored clip synchronously with the Q input. The game's
+    // genuine ATTACK only lasts 650 ms; waiting from Node/Playwright for a
+    // transient dataset state can miss it under software-rendered WebGL load.
+    const once={stamina:p?.stamina,hp:p?.hp,mode:document.documentElement.dataset.climboriaPunch,
+      animation:document.documentElement.dataset.climboriaHeroAnimation,
+      clip:document.documentElement.dataset.climboriaHeroClip,
+      activeClip:window.__climboriaJarrellsPeak?.heroAnimationAudit?.()?.activeClip};
     window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyQ',bubbles:true}));
     const twice={stamina:p?.stamina,hp:p?.hp};
     window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyQ',bubbles:true}));
@@ -619,9 +625,14 @@ try {
      punchInput.twice.stamina!==punchInput.once.stamina||punchInput.once.hp!==punchInput.before.hp||punchInput.events!==1)
     errors.push('Attack must trigger once with stamina cost, cooldown and no fake client-side PvP damage: '+JSON.stringify(punchInput));
   // The original Adventurer GLB actually exports Punch_Combo_1, not the
-  // Jarrell model's Punch_Combo. Enforce a REAL authored attack clip.
-  await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='punch' &&
-    document.documentElement.dataset.climboriaHeroClip==='Punch_Combo_1',undefined,{timeout:2000,polling:50});
+  // Jarrell model's Punch_Combo. Require genuine authored clip selection at
+  // keydown, and do not claim an animated attack from a dummy dataset alone.
+  // This catches a missing/incorrect clip deterministically, without trying
+  // to poll a transient 650 ms state across a busy WebGL rendering boundary.
+  if(punchInput.once.animation!=='punch'||
+     punchInput.once.clip!=='Punch_Combo_1'||
+     punchInput.once.activeClip!=='Punch_Combo_1')
+    errors.push('Q ATTACK did not synchronously select the authored Adventurer Punch_Combo_1 clip: '+JSON.stringify(punchInput.once));
   await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='idle',undefined,{timeout:15000});
 
   const idleAnimationAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);
