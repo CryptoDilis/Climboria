@@ -43,7 +43,14 @@ function harness(enabled){
  vm.runInNewContext(source,context,{filename:'client-presence.js'});
  return {window,document,clients,adds,moves,removes,punches,calls,timers};
 }
-async function flush(){for(let i=0;i<12;i++)await Promise.resolve();await new Promise(resolve=>setImmediate(resolve));}
+async function flush(){
+  for(let i=0;i<12;i++)await Promise.resolve();
+  await new Promise(resolve=>setImmediate(resolve));
+}
+async function waitFor(check, ms=600){
+  const deadline=Date.now()+ms;
+  while(!check()&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,10));
+}
 test('disabled multiplayer never creates fake socket or player',async()=>{
  assert.equal(config.enabled,false);
  const h=harness(false);await flush();
@@ -52,6 +59,7 @@ test('disabled multiplayer never creates fake socket or player',async()=>{
 });
 test('real authenticated WebSocket messages are required before peers appear',async()=>{
  const h=harness(true);await flush();
+ await waitFor(()=>h.clients.length===1||h.document.documentElement.dataset.climboriaMultiplayer==='offline');
  assert.equal(h.clients.length,1,JSON.stringify({status:h.document.documentElement.dataset,requests:h.calls.map(c=>c.url),timers:h.timers.map(t=>t.delay)}));
  assert.equal(h.adds.length,0,'no synthesized/ghost players before trusted welcome');
  const socket=h.clients[0];
