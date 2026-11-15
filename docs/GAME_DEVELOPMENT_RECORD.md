@@ -1,5 +1,15 @@
 # Climboria Game Development Record
 
+## GAME PR #501 — POSTMERGE CI CLARIFICATION (2026-11-15)
+
+- **Authoritative merge and PR-head gate:** Game-only PR #501 merged as `307cfc1e4a222995f82883b8a9f2405321f97f0f` after exact-head 3/3 SUCCESS (full Jarrell desktop/mobile Gameplay #43715728651, Validate #43715728731, Browser Smoke #43715728645). Real Q ATTACK authored-clip verification remains strict; no Game behavior changed.
+- **Independently checked merged commit:** [postmerge Validate #43716410992](https://github.com/CryptoDilis/Climboria/actions/runs/43716410992) **SUCCESS**; [postmerge static Pages #43716411024](https://github.com/CryptoDilis/Climboria/actions/runs/43716411024) **SUCCESS**; [postmerge Browser Smoke #43716410946](https://github.com/CryptoDilis/Climboria/actions/runs/43716410946) **FAILURE**, inspected job #132818803753 raw logs. Failure was in generic cross-product browser workflow's **'Test homepage CTAs, DEX routing, and mobile navigation'**, specifically CoinGecko market API external CORS rejection on `/swap/?chain=solana` (`https://api.coingecko.com/api/v3/coins/markets...` lacked Access-Control-Allow-Origin for `http://127.0.0.1:4173`). This is **not evidence of a Game/WebGL regression** and is outside this chat's user-locked Game-only scope. Do NOT edit Swap, DEX, Launchpad or ClimbX files here; responsible separate workstream should own the cross-product Browser Smoke/CoinGecko fixture failure.
+- **Postmerge full Game check:** [Jarrell Gameplay #43716410958](https://github.com/CryptoDilis/Climboria/actions/runs/43716410958) **IN PROGRESS** when last checked. Obtain terminal status and exact log if it fails; never assert postmerge all green until actually verified.
+- **Next Game-only action:** prioritize protected Cloudflare `game-room-staging` owner secrets + approved separate Worker deployment and real `rooms.climboria.fun` mapping, `/health` + `/ready`, two distinct registered Supabase account WebGL/GLB/World Chat/keyboard movement, logout/reconnect and physical Android FPS verification. Public Game `client-config.json` stays `enabled:false,endpoint:null` until actual owner-approved release. Never expose tokens, enable PvP damage/steal/grab or modify DEX/Swap/Launchpad/ClimbX.
+
+---
+
+
 ## GAME Q ATTACK WEBGL CLIP QA DETERMINISM MERGED — POSTMERGE FAILURE REMEDIATED (2026-11-15)
 
 - **MERGED Game-only [PR #501](https://github.com/CryptoDilis/Climboria/pull/501)** to `main` as squash SHA `307cfc1e4a222995f82883b8a9f2405321f97f0f`, from exact reviewed head `500cbe8bb47bbf5047bfb53615a5006c18f489fc`. Exactly TWO Game-only files changed: `.github/scripts/game-smoke.mjs` plus this `docs/GAME_DEVELOPMENT_RECORD.md`. Production Game assets, ATTACK cooldown/duration, networking/auth/room code and public multiplayer config were not modified.
