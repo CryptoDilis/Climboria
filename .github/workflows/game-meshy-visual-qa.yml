@@ -1,0 +1,95 @@
+name: Game Meshy Visual QA — Real GLBs, Default OFF in Production
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "assets/game/new_optimized/**"
+      - "game/meshy-world-assets.js"
+      - "game/scripts/meshy-visual-qa.mjs"
+      - ".github/workflows/game-meshy-visual-qa.yml"
+      - "docs/GAME_DEVELOPMENT_RECORD.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: game-meshy-visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  game-meshy-art-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Probe all 44 approved model binaries
+        id: assets
+        shell: bash
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          root=Path('assets/game/new_optimized')
+          approved=json.loads((root/'source_manifest.json').read_text())
+          count=sum((root/item['file']).is_file() for item in approved['models'])
+          print('ready='+str(count==44).lower())
+          print(f'count={count}')
+          PY
+          echo "Only complete 44/44 imports qualify for manual visual QA; no implicit production activation."
+      - name: Confirm imported GLB bytes against immutable SHA, geometry and texture budgets
+        if: steps.assets.outputs.ready == 'true'
+        run: python3 game/scripts/verify-meshy-asset-packs.py --files
+      - name: Install local screenshot tooling
+        if: steps.assets.outputs.ready == 'true'
+        run: |
+          npm init -y
+          npm install --no-save playwright @gltf-transform/cli
+          npx playwright install chromium
+      - name: Resize CI-only original Hero GLB to avoid software-rendering timeout
+        if: steps.assets.outputs.ready == 'true'
+        run: |
+          mv assets/characters/Climboria_Hero.glb /tmp/climboria-original-hero.glb
+          npx gltf-transform resize /tmp/climboria-original-hero.glb assets/characters/Climboria_Hero.glb --width 2048 --height 2048
+          test -s assets/characters/Climboria_Hero.glb
+      - name: Enable new Meshy scenery ONLY in temporary Actions checkout
+        if: steps.assets.outputs.ready == 'true'
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('assets/game/new_optimized/manifest.json')
+          d=json.loads(p.read_text())
+          assert d['schema']==1 and d['enabled'] is False
+          d['enabled']=True
+          p.write_text(json.dumps(d,indent=2)+'\n')
+          print('Local visual staging enabled in throwaway runner; GitHub commit and live manifest unchanged')
+          PY
+      - name: Run local WebGL test server
+        if: steps.assets.outputs.ready == 'true'
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/game-meshy-qa-http.log 2>&1 &
+          for n in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/game/play.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/game-meshy-qa-http.log
+          exit 1
+      - name: Capture actual desktop/mobile GLB scene screenshots and audit model-load failures
+        if: steps.assets.outputs.ready == 'true'
+        timeout-minutes: 15
+        run: |
+          node --check game/scripts/meshy-visual-qa.mjs
+          node game/scripts/meshy-visual-qa.mjs
+      - name: Upload the real Game art acceptance report and screenshots
+        if: always() && steps.assets.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: climboria-owner-meshy-visual-qa
+          path: meshy-game-qa/
+          retention-days: 14
+          if-no-files-found: warn
