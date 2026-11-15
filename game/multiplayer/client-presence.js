@@ -325,7 +325,7 @@
  // Auth transitions must not permanently disable presence. Keep the
  // explicit config.enabled release gate above; this runs only on approved rooms.
  function scheduleConnect(delay){
-  if(disposed||socket||connecting)return;
+  if(disposed||socket)return;
   if(reconnect)clearTimeout(reconnect);
   reconnect=setTimeout(()=>{reconnect=null;void connect()},delay);
  }
