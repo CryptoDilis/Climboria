@@ -8,12 +8,12 @@ const out='meshy-game-qa';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--enable-webgl','--use-gl=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
 await mkdir(out,{recursive:true});
 const destinations=[
- {name:'camp-armored-guards',anchor:'camp',dx:0,dz:0,guards:true},
- {name:'forest-apple-tree',anchor:'park',dx:87,dz:67},
- {name:'forest-branches',anchor:'park',dx:-115,dz:52},
- {name:'cave-stone',anchor:'cave',dx:87,dz:79},
- {name:'summit-stone',anchor:'summit',dx:60,dz:39},
- {name:'coast-docks',anchor:'coast',dx:-40,dz:-36}
+ {name:'camp-armored-guards',anchor:'camp',dx:0,dz:0,guards:true,model:'Meshy_AI_Nordic_Teepee_viking_1114220617_texture.glb'},
+ {name:'forest-apple-tree',anchor:'park',dx:87,dz:67,model:'Meshy_AI_farm_apple_tree_1114194155_image-to-3d-texture.glb',tree:true},
+ {name:'forest-branches',anchor:'park',dx:-115,dz:52,model:'Meshy_AI_Whispering_Branches_1114193441_texture.glb'},
+ {name:'cave-stone',anchor:'cave',dx:87,dz:79,model:'Meshy_AI_Primitive_cave_rock_d_1114220636_texture.glb'},
+ {name:'summit-stone',anchor:'summit',dx:60,dz:39,model:'Meshy_AI_Icebound_Summit_1114193414_texture.glb'},
+ {name:'coast-docks',anchor:'coast',dx:-40,dz:-36,model:'Meshy_AI_Rustic_Nautical_Dock_1114221245_texture.glb'}
 ];
 const reports=[],failures=[];
 try{
@@ -52,7 +52,10 @@ try{
    reports.push({device:device.name,area:d.name,location,assetAudit:audit,screenshot});
    if(audit.failedFiles.length)failures.push(device.name+' '+d.name+' GLB failure: '+audit.failedFiles.join(','));
    if(d.guards&&audit.guardCount<1)failures.push(device.name+': authentic armored guard model did not load');
-   if(!d.guards&&audit.loadedDecorations<1)failures.push(device.name+' '+d.name+': no approved Meshy prop loaded');
+   if(!audit.loadedFiles?.includes(d.model))
+    failures.push(device.name+' '+d.name+': the EXACT approved model was not loaded: '+d.model);
+   if(d.tree&&audit.replacedTreeCount<1)
+    failures.push(device.name+' '+d.name+': Meshy replacement tree failed to register fallback restoration');
   }
   if(pageErrors.length)failures.push(device.name+' page errors: '+pageErrors.join(' | '));
   await context.close();
