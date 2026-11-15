@@ -3414,7 +3414,9 @@ window.__CLIMBORIA_GAME_PEERS={
    }
   }
  },
- count(){return livePeers.size}
+ count(){return livePeers.size},
+ audit(){return {peers:livePeers.size,loading:remoteGLBLoading,resident:remoteGLBResidents,
+  budget:MAX_REMOTE_GLB,desktop:!MOB}}
 };
 
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
