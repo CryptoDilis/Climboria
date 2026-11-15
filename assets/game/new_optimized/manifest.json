@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "enabled": false,
-  "reason": "Disabled until all 44 optimized owner GLBs are SHA-imported and actual desktop/mobile model placement, collisions and FPS are visually accepted. Local VTK GLB previews are only initial shape QA.",
+  "reason": "Production staging OFF: all 44 exact owner GLBs must be imported, visuals/collisions/Android FPS accepted, including reversible nearby CC0 tree replacements and armored guards.",
   "guardModels": [
     "Meshy_AI_Azure_Spear_Guardian_1114220249_texture.glb",
     "Meshy_AI_Medieval_Warrior_1114220223_texture.glb"
@@ -13,7 +13,8 @@
       "dx": 87,
       "dz": 67,
       "height": 10,
-      "loadRadius": 155
+      "loadRadius": 155,
+      "replaceLegacyTrees": true
     },
     {
       "file": "Meshy_AI_Whispering_Branches_1114193441_texture.glb",
@@ -29,7 +30,8 @@
       "dx": -180,
       "dz": -10,
       "height": 9,
-      "loadRadius": 145
+      "loadRadius": 145,
+      "replaceLegacyTrees": true
     },
     {
       "file": "Meshy_AI_The_Lanterned_Heart_T_1114193326_texture.glb",
@@ -37,7 +39,8 @@
       "dx": -165,
       "dz": 82,
       "height": 12,
-      "loadRadius": 180
+      "loadRadius": 180,
+      "replaceLegacyTrees": true
     },
     {
       "file": "Meshy_AI_Elder_Skywillow_1114194042_texture.glb",
@@ -46,7 +49,8 @@
       "dz": 140,
       "height": 13,
       "loadRadius": 180,
-      "desktopOnly": true
+      "desktopOnly": true,
+      "replaceLegacyTrees": true
     },
     {
       "file": "Meshy_AI_Crimson_Maple_Majesty_1114193624_texture.glb",
@@ -55,7 +59,8 @@
       "dz": 165,
       "height": 13,
       "loadRadius": 200,
-      "desktopOnly": true
+      "desktopOnly": true,
+      "replaceLegacyTrees": true
     },
     {
       "file": "Meshy_AI_The_Luminous_Worldroo_1114193642_texture.glb",
@@ -64,7 +69,8 @@
       "dz": 165,
       "height": 14,
       "loadRadius": 190,
-      "desktopOnly": true
+      "desktopOnly": true,
+      "replaceLegacyTrees": true
     },
     {
       "file": "Meshy_AI_Gothic_Stone_Church_1114193505_texture.glb",
