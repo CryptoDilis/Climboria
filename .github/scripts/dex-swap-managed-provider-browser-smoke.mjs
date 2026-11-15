@@ -89,6 +89,9 @@ async function runPage(browser, path, {badHash = false} = {}) {
 
     await button.click();
     const panel = page.locator("[data-climboria-managed-swap-panel]");
+    // The panel is intentionally concealed until the fresh no-store
+    // runtime check resolves, so wait for the approved visible state.
+    await panel.waitFor({ state: "visible", timeout: 10000 });
     assert.equal(await panel.isVisible(),true);
     if (badHash) {
       await page.waitForFunction(() =>
