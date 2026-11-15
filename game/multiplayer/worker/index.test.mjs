@@ -202,6 +202,72 @@ test('malformed Content-Length is denied before auth or upstream room access',as
  assert.equal(response.status,400);
 });
 
+test('pending room tickets are atomically capped per registered account, not per room',async()=>{
+ const memory=new Map();
+ let chain=Promise.resolve();
+ const txn={
+  get:async key=>memory.get(key),
+  put:async(key,value)=>{memory.set(key,value)},
+  delete:async key=>memory.delete(key),
+  list:async({prefix}={})=>new Map([...memory].filter(([key])=>key.startsWith(prefix||'')))
+ };
+ const storage={...txn,transaction(fn){
+  // This models Durable Object storage transactions as serializable, even
+  // when several authenticated /ticket requests arrive concurrently.
+  const next=chain.then(()=>fn(txn));chain=next.catch(()=>{});
+  return next;
+ }};
+ const room=new JarrellRoom({storage},{});
+ const issue=(ticket,userId)=>room.fetch(mkRequest('/_ticket',{
+  method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({ticket,userId,name:'Valid Explorer',model:'Jarrell'})
+ }));
+ const [first,second,third]=await Promise.all([
+  issue('a'.repeat(64),uid),issue('b'.repeat(64),uid),issue('c'.repeat(64),uid)
+ ]);
+ assert.deepEqual([first.status,second.status,third.status],[201,201,429],
+  'concurrent requests from one user can own at most two pending tickets');
+ assert.deepEqual(await third.json(),{error:'account-ticket-limit'});
+ assert.equal(memory.size,2,'a rejected third ticket must never be stored');
+ const other=await issue('d'.repeat(64),uid2);
+ assert.equal(other.status,201,'another registered user can still join the same room');
+ assert.equal(memory.size,3);
+ const duplicate=await issue('d'.repeat(64),uid2);
+ assert.equal(duplicate.status,409,'server must not overwrite an outstanding one-time ticket');
+ assert.deepEqual(await duplicate.json(),{error:'duplicate-ticket'});
+ const expired=memory.get('ticket:'+'a'.repeat(64));
+ expired.expiresAt=Date.now()-1;
+ const refreshed=await issue('e'.repeat(64),uid);
+ assert.equal(refreshed.status,201,'expired ticket must release this account slot');
+ assert.equal(memory.has('ticket:'+'a'.repeat(64)),false);
+ assert.equal(memory.size,3);
+ const overLimit=await issue('f'.repeat(64),uid);
+ assert.equal(overLimit.status,429,'two unexpired slots remain bounded after cleanup');
+});
+
+test('global pending Game tickets stay capped at 32 independent registered accounts',async()=>{
+ const memory=new Map(),storage={
+  async get(key){return memory.get(key)},
+  async put(key,val){memory.set(key,val)},
+  async delete(key){return memory.delete(key)},
+  async list({prefix}={}){return new Map([...memory].filter(([key])=>key.startsWith(prefix||'')))},
+  async transaction(fn){return fn(this)}
+ };
+ const room=new JarrellRoom({storage},{});
+ const issues=[];
+ for(let n=0;n<33;n++){
+  const ticket=n.toString(16).padStart(64,'0');
+  const userId='f3ead054-abb4-47ba-b311-'+(n+1).toString(16).padStart(12,'0');
+  issues.push(await room.fetch(mkRequest('/_ticket',{
+   method:'POST',body:JSON.stringify({ticket,userId,name:'Account '+n,model:'Jarrell'})
+  })));
+ }
+ assert.equal(issues.slice(0,32).every(x=>x.status===201),true);
+ assert.equal(issues[32].status,429,'33rd independent user cannot oversubscribe the room');
+ assert.deepEqual(await issues[32].json(),{error:'room-full'});
+ assert.equal(memory.size,32);
+});
+
 test('realtime ticket is one-time; no spoofed attack damage; two actual connections join, punch sync and leave',async()=>{
  const oldPair=globalThis.WebSocketPair,oldResponse=globalThis.Response;
  class FakeSocket {
