@@ -1,107 +1,108 @@
 #!/usr/bin/env node
 /**
- * GAME ONLY — run explicitly after a real isolated Game room deployment.
- * Requires two DIFFERENT authenticated Supabase accounts and an APPROVED Game
- * HTTPS hostname. NEVER logs bearer tokens, tickets, private data or wallets.
- * Not a production activation switch and not a simulated fake-online test.
+ * GAME ONLY — browser-origin acceptance against a REAL deployed Game Worker.
+ * Explicit operator action; never runs on normal CI or turns multiplayer on.
+ * Requires two DIFFERENT independently authenticated accounts. Playwright is
+ * used instead of Node WebSocket because the Worker enforces Origin strictly.
+ * No token, ticket, wallet or customer data is ever printed.
  *
  * GAME_ROOM_BASE=https://rooms.climboria.fun/ GAME_ROOM_APPROVED_HOST=rooms.climboria.fun \
  * GAME_USER_A_JWT=... GAME_USER_B_JWT=... node game/multiplayer/worker/e2e-two-accounts.mjs
  */
 import assert from 'node:assert/strict';
+import {chromium} from 'playwright';
+const env=process.env,timeout=18000;
+function verify(cond,message){if(!cond)throw Error(message)}
+const base=new URL(env.GAME_ROOM_BASE||'https://rooms.climboria.fun/');
+verify(base.protocol==='https:'&&base.hostname===env.GAME_ROOM_APPROVED_HOST&&
+ base.pathname==='/'&&!base.username&&!base.password&&!base.port&&!base.search&&!base.hash,
+ 'Refusing unknown Game room host; explicitly approve the HTTPS hostname');
+verify(env.GAME_USER_A_JWT&&env.GAME_USER_B_JWT&&env.GAME_USER_A_JWT!==env.GAME_USER_B_JWT,
+ 'Two distinct valid Supabase account access tokens are required in environment variables');
+const health=await fetch(new URL('health',base),{signal:AbortSignal.timeout(timeout)});
+verify(health.ok,'Game room health endpoint unavailable');
+const status=await health.json();
+verify(status.service==='climboria-game-room'&&status.gameplayPvP===false,
+ 'Wrong WebSocket service or unsafe damage enablement');
 
-const env=process.env;
-const abortAfter=15_000;
-function requirement(cond,message){if(!cond)throw Error(message)}
-function parseBase(){
- const url=new URL(env.GAME_ROOM_BASE||'https://rooms.climboria.fun/');
- requirement(url.protocol==='https:'&&url.hostname===env.GAME_ROOM_APPROVED_HOST&&url.pathname==='/'&&
-  !url.username&&!url.password&&!url.search&&!url.hash&&url.port==='',
-  'Refusing unapproved room endpoint; supply an exact authorized HTTPS host');
- return url;
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const contexts=[];
+async function makeBrowserPlayer(token,name,model){
+ const ctx=await browser.newContext({serviceWorkers:'block'});contexts.push(ctx);
+ const page=await ctx.newPage();
+ // Browser-origin parity matters: the Worker accepts only climboria.fun, not
+ // curl/Node's absent Origin. No third-party pages are allowed in this test.
+ await page.goto('https://climboria.fun/',{waitUntil:'domcontentloaded',timeout:timeout});
+ await page.evaluate(async ({base,token,name,model,timeout})=>{
+  const res=await fetch(new URL('ticket',base),{
+   method:'POST',mode:'cors',credentials:'omit',
+   headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+   body:JSON.stringify({name,model})
+  });
+  if(!res.ok)throw Error('Room server rejected authenticated user ticket');
+  const ticket=await res.json();
+  if(!/^[a-f0-9]{64}$/.test(ticket.ticket||''))throw Error('Invalid room ticket');
+  const socketURL=new URL('ws',base);socketURL.protocol='wss:';
+  const ws=new WebSocket(socketURL.href,['climboria-v1','t-'+ticket.ticket]);
+  const client=window.__CLIMBORIA_GAME_E2E={socket:ws,messages:[],closed:false};
+  ws.addEventListener('message',e=>{try{client.messages.push(JSON.parse(e.data))}catch{}});
+  ws.addEventListener('close',()=>{client.closed=true});
+  await Promise.race([
+   new Promise((resolve,reject)=>{
+    ws.addEventListener('open',resolve,{once:true});
+    ws.addEventListener('error',()=>reject(Error('Real browser WebSocket failed')),{once:true});
+   }),
+   new Promise((_,reject)=>setTimeout(()=>reject(Error('Real WebSocket timed out')),timeout))
+  ]);
+ },{base:base.href,token,name,model,timeout});
+ return page;
 }
-function waitForPacket(messages,predicate,label,timeoutMs=abortAfter){
- return new Promise((resolve,reject)=>{
-  const start=Date.now();
-  (function poll(){
-   const found=messages.find(predicate);
-   if(found){resolve(found);return}
-   if(Date.now()-start>timeoutMs){reject(Error('Timed out waiting for '+label));return}
-   setTimeout(poll,35);
-  })();
- });
+async function packet(page,selector,label){
+ await page.waitForFunction(predicate=>window.__CLIMBORIA_GAME_E2E?.messages.some(m=>
+   m?.type===predicate.type&&(!predicate.id||m.id===predicate.id)&&
+   (!predicate.playerId||m.player?.id===predicate.playerId)&&
+   (!predicate.positionX&&predicate.positionX!==0||m.position?.x===predicate.positionX)
+ ),selector,{timeout});
+ const obj=await page.evaluate(predicate=>window.__CLIMBORIA_GAME_E2E.messages.find(m=>
+  m?.type===predicate.type&&(!predicate.id||m.id===predicate.id)&&
+  (!predicate.playerId||m.player?.id===predicate.playerId)&&
+  (predicate.positionX===undefined||m.position?.x===predicate.positionX)
+ ),selector);
+ verify(!!obj,'Missing '+label);
+ return obj;
 }
-async function issue(base,accessToken,name,model){
- const response=await fetch(new URL('ticket',base),{
-  method:'POST',headers:{Origin:'https://climboria.fun',
-   Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
-  body:JSON.stringify({name,model}),signal:AbortSignal.timeout(abortAfter)
- });
- requirement(response.ok,'Authenticated room rejected a session ticket; check server origin/auth and account login');
- const data=await response.json();
- requirement(/^[a-f0-9]{64}$/.test(data.ticket||''),'Invalid server-issued one-time ticket');
- return data.ticket;
+async function send(page,message){
+ await page.evaluate(packet=>{
+  const ws=window.__CLIMBORIA_GAME_E2E?.socket;
+  if(ws?.readyState!==WebSocket.OPEN)throw Error('Peer disconnected unexpectedly');
+  ws.send(JSON.stringify(packet));
+ },message);
 }
-function connect(base,ticket){
- const wsURL=new URL('ws',base);wsURL.protocol='wss:';
- const ws=new WebSocket(wsURL,['climboria-v1','t-'+ticket]);
- const messages=[];let closed=false;
- ws.addEventListener('message',e=>{
-  try{const m=JSON.parse(String(e.data));if(m&&typeof m.type==='string')messages.push(m)}catch{}
- });
- ws.addEventListener('close',()=>{closed=true});
- const opened=new Promise((resolve,reject)=>{
-  const timer=setTimeout(()=>reject(Error('Timed out connecting real WebSocket')),abortAfter);
-  ws.addEventListener('open',()=>{clearTimeout(timer);resolve()},{once:true});
-  ws.addEventListener('error',()=>{clearTimeout(timer);reject(Error('Real room WebSocket failed'))},{once:true});
- });
- return {ws,messages,opened,get closed(){return closed}};
+try{
+ const a=await makeBrowserPlayer(env.GAME_USER_A_JWT,'E2E Explorer A','Jarrell');
+ const welcomeA=await packet(a,{type:'welcome'},'A welcome');
+ verify(typeof welcomeA.selfId==='string','Missing trusted server ID for A');
+ const b=await makeBrowserPlayer(env.GAME_USER_B_JWT,'E2E Explorer B','Lheiz');
+ const welcomeB=await packet(b,{type:'welcome'},'B welcome');
+ verify(welcomeA.selfId!==welcomeB.selfId,'Two accounts did not receive distinct peer identities');
+ await packet(a,{type:'player-joined',playerId:welcomeB.selfId},'A sees B join');
+ verify((welcomeB.peers||[]).some(p=>p.id===welcomeA.selfId),'B cannot see real connected A');
+ await send(a,{type:'spawn',position:{x:0,y:9.55,z:-30}});
+ await send(b,{type:'spawn',position:{x:0,y:9.55,z:-30}});
+ await packet(a,{type:'player-moved',id:welcomeB.selfId},'B spawn visible to A');
+ await send(a,{type:'move',position:{x:.2,y:9.55,z:-30}});
+ await packet(b,{type:'player-moved',id:welcomeA.selfId,positionX:.2},'A real movement visible to B');
+ await send(a,{type:'punch'});
+ const emote=await packet(b,{type:'player-punched',id:welcomeA.selfId},'A cosmetic punch visible to B');
+ verify(!('damage' in emote)&&!('hp' in emote)&&!('loot' in emote),
+  'Client punch affected authoritative health or inventory');
+ await send(a,{type:'attack',damage:999,targetId:welcomeB.selfId});
+ await packet(a,{type:'rejected'},'untrusted damage attack rejected');
+ await b.evaluate(()=>window.__CLIMBORIA_GAME_E2E.socket.close());
+ await packet(a,{type:'player-left',id:welcomeB.selfId},'B leaves on disconnect');
+ console.log('PASS: two independent real Chrome sessions authenticated, joined, moved, punched visually and cleaned up on disconnect.');
+ console.log('Further gates: real game remote GLB view, mobile FPS, server combat state and separate PvP consent tests.');
+}finally{
+ await Promise.all(contexts.map(ctx=>ctx.close().catch(()=>{})));
+ await browser.close();
 }
-function send(connection,msg){
- requirement(connection.ws.readyState===WebSocket.OPEN,'Room closed before message could be sent');
- connection.ws.send(JSON.stringify(msg));
-}
-async function main(){
- requirement(typeof WebSocket==='function','Run with Node 22+ global WebSocket support');
- requirement(env.GAME_USER_A_JWT&&env.GAME_USER_B_JWT&&env.GAME_USER_A_JWT!==env.GAME_USER_B_JWT,
-  'Two independently authenticated user access tokens required; do not commit or paste them');
- const base=parseBase();
- const health=await fetch(new URL('health',base),{signal:AbortSignal.timeout(abortAfter)});
- requirement(health.ok,'Room health endpoint not reachable');
- const status=await health.json();
- requirement(status.service==='climboria-game-room'&&status.gameplayPvP===false,
-  'Wrong service or unsafe gameplay damage flag');
- const ticketA=await issue(base,env.GAME_USER_A_JWT,'E2E Explorer A','Jarrell');
- const ticketB=await issue(base,env.GAME_USER_B_JWT,'E2E Explorer B','Lheiz');
- const a=connect(base,ticketA),b=connect(base,ticketB);
- try{
-  await Promise.all([a.opened,b.opened]);
-  const welcomeA=await waitForPacket(a.messages,m=>m.type==='welcome','A verified welcome');
-  const welcomeB=await waitForPacket(b.messages,m=>m.type==='welcome','B verified welcome');
-  requirement(welcomeA.selfId&&welcomeB.selfId&&welcomeA.selfId!==welcomeB.selfId,'Server did not create two distinct real peers');
-  await waitForPacket(a.messages,m=>m.type==='player-joined'&&m.player?.id===welcomeB.selfId,'A sees B join');
-  const peersB=(welcomeB.peers||[]).map(p=>p.id);
-  requirement(peersB.includes(welcomeA.selfId),'B did not see A already connected');
-  send(a,{type:'spawn',position:{x:0,y:9.55,z:-30}});
-  send(b,{type:'spawn',position:{x:0,y:9.55,z:-30}});
-  await waitForPacket(a.messages,m=>m.type==='player-moved'&&m.id===welcomeB.selfId,'B spawn visibility');
-  send(a,{type:'move',position:{x:.2,y:9.55,z:-30}});
-  await waitForPacket(b.messages,m=>m.type==='player-moved'&&m.id===welcomeA.selfId&&m.position?.x===.2,'verified peer movement');
-  send(a,{type:'punch'});
-  const cosmetic=await waitForPacket(b.messages,m=>m.type==='player-punched'&&m.id===welcomeA.selfId,'remote punch emote');
-  requirement(!('damage' in cosmetic)&&!('hp' in cosmetic)&&!('loot' in cosmetic),'Untrusted punch transferred game state');
-  send(a,{type:'attack',damage:999,targetId:welcomeB.selfId});
-  await waitForPacket(a.messages,m=>m.type==='rejected','unsupported damage denied');
-  b.ws.close();
-  await waitForPacket(a.messages,m=>m.type==='player-left'&&m.id===welcomeB.selfId,'disconnected peer leave');
-  console.log('PASS: two different authenticated accounts connected, joined, spawned, moved, punched visually, rejected fake damage and left cleanly.');
-  console.log('Status: backend acceptance only. Browser remote GLB rendering, mobile FPS and PvP damage remain separate gated checks.');
- }finally{
-  if(a.ws.readyState<2)a.ws.close();
-  if(b.ws.readyState<2)b.ws.close();
- }
-}
-main().catch(error=>{
- console.error('GAME room E2E FAILED:',error.message);
- process.exitCode=1;
-});
