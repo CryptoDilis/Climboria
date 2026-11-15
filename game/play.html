@@ -3292,8 +3292,27 @@ function peerMarker(name){
  return sprite;
 }
 function remoteRootAt(x,z,y){
- const gy=groundAt(x,z);
+ const height=groundAt(x,z),gy=Number.isFinite(height)?height:Math.max(0,Number(y)-1.75);
  return {x,z,y:Math.max(gy-.1,Math.min(gy+2,Number(y)-1.75))};
+}
+// Remote GLB geometries/textures are NOT world templates. Release the owned GPU
+// resources when a real peer leaves or a pending GLB resolves after disconnect.
+function disposeRemoteHero(root){
+ const geometries=new Set(),materials=new Set(),textures=new Set();
+ root.traverse(n=>{
+  if(!n.isMesh)return;
+  if(n.geometry&&!geometries.has(n.geometry)){geometries.add(n.geometry);n.geometry.dispose();}
+  const list=Array.isArray(n.material)?n.material:[n.material];
+  for(const material of list){
+   if(!material||materials.has(material))continue;
+   materials.add(material);
+   for(const key of ['map','normalMap','roughnessMap','metalnessMap','aoMap','emissiveMap','alphaMap','bumpMap']){
+    const tex=material[key];
+    if(tex?.isTexture&&!textures.has(tex)){textures.add(tex);tex.dispose();}
+   }
+   material.dispose();
+  }
+ });
 }
 function loadPeerHero(peer){
  if(remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB||!T3.GLTFLoader||peer.model==='Adventurer'&&MOB)return;
@@ -3302,10 +3321,10 @@ function loadPeerHero(peer){
  remoteGLBLoading++;
  new T3.GLTFLoader().load(path,gltf=>{
   remoteGLBLoading--;
-  if(livePeers.get(peer.id)!==peer)return;
+  if(livePeers.get(peer.id)!==peer){disposeRemoteHero(gltf.scene);return;}
   const root=gltf.scene,box=new T3.Box3().setFromObject(root),size=new T3.Vector3();
   box.getSize(size);
-  if(!Number.isFinite(size.y)||size.y<.01||size.y>20000)return;
+  if(!Number.isFinite(size.y)||size.y<.01||size.y>20000){disposeRemoteHero(root);return;}
   const factor=Math.min(100,2.9/size.y);
   root.scale.setScalar(factor);root.position.y=-box.min.y*factor;
   root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false}});
@@ -3348,7 +3367,9 @@ window.__CLIMBORIA_GAME_PEERS={
   const p=livePeers.get(id);if(!p)return;
   scene.remove(p.group);
   p.group.traverse(n=>{if(n.isSprite){n.material?.map?.dispose();n.material?.dispose()}else if(n.name==='RemoteMarkerRing'){n.geometry?.dispose();n.material?.dispose()}});
-  p.mixer?.stopAllAction();if(p.root)remoteGLBResidents=Math.max(0,remoteGLBResidents-1);livePeers.delete(id);
+  p.mixer?.stopAllAction();
+  if(p.root){disposeRemoteHero(p.root);remoteGLBResidents=Math.max(0,remoteGLBResidents-1);}
+  livePeers.delete(id);
  },
  clear(){for(const id of [...livePeers.keys()])this.remove(id)},
  update(dt){
