@@ -7,6 +7,7 @@
 import {authorizeMelee,inSanctuarySafeZone,ROOM_RULES} from './server-authority-rules.mjs';
 
 const REQUEST_TTL_MS=30_000;
+const REQUEST_COOLDOWN_MS=5_000;
 const MAX_HEALTH=500;
 const MELEE_DAMAGE=5;
 
@@ -18,6 +19,7 @@ export class ServerCombatState {
   this.now=now;
   this.trustedPosition=trustedPosition;
   this.pending=new Map();
+  this.lastRequestAt=new Map();
   this.opponents=new Map();
   this.health=new Map();
   this.lastAttackAt=new Map();
@@ -37,10 +39,17 @@ export class ServerCombatState {
   if(!state.ok)return state;
   const now=this.now();
   if(!Number.isFinite(now)||now<0)return {ok:false,reason:'invalid-server-time'};
+  // One outgoing invitation per authenticated session, and a bounded rate
+  // even when the recipient repeatedly declines the request.
+  if([...this.pending.values()].some(p=>p.challengerId===challengerId&&p.expiresAt>now))
+   return {ok:false,reason:'challenger-has-pending-request'};
+  if(now-(this.lastRequestAt.get(challengerId)??-Infinity)<REQUEST_COOLDOWN_MS)
+   return {ok:false,reason:'duel-request-cooldown'};
   // A target gets one pending request at a time; never leave infinite invites.
   const prior=this.pending.get(targetId);
   if(prior&&prior.expiresAt>now)return {ok:false,reason:'target-has-pending-request'};
   this.pending.set(targetId,{challengerId,expiresAt:now+REQUEST_TTL_MS});
+  this.lastRequestAt.set(challengerId,now);
   return {ok:true,reason:'duel-request-pending'};
  }
  /** Target can accept only the exact live invitation addressed to their socket. */
@@ -91,6 +100,7 @@ export class ServerCombatState {
  /** Disconnect, cancel or replacement clears stale consent and duel health. */
  disconnect(id){
   this.pending.delete(id);
+  this.lastRequestAt.delete(id);
   for(const [recipient,pending] of this.pending){
    if(pending.challengerId===id)this.pending.delete(recipient);
   }
