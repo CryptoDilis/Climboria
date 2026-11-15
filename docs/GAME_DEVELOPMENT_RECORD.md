@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## GAME ROOM CAPACITY RESPONSE & UI CLARITY — DRAFT (2026-11-16)
+
+- **Scope:** Game-only branch `game/room-ticket-429-gateway-2026-11-16` based on main after merged PR #503. This follows the exact ticket-flood protection checkpoint. Public multiplayer stays `enabled:false`, `endpoint:null`; no Cloudflare staging deploy, live players, wallet, token, loot, PvP damage, DEX, Swap, Launchpad or ClimbX changes.
+- **Fix:** The verified-account gateway previously forwarded internal room HTTP 429 as generic `room-unavailable`, while the client treated any failed ticket as a server outage. Now a recognized internal 429 is exposed as bounded HTTP 429 `room-busy`, with internal room details hidden; unexpected internal failures map to sanitized 503 `room-unavailable`. The Game client displays **ROOM BUSY · RETRYING** and retries after 10 seconds instead of falsely announcing an outage. Authentication/one-use tickets and room caps remain unchanged.
+- **Regression:** New Worker gateway test stubs verified registered Supabase identity; checks internal 429 => public 429 and sanitized error, 409/503 => sanitized public 503, no-store CORS response. No real server deployment or two-account E2E claimed. Source commits `41f6d89b`, `a5fe550d`, `0e934db3`; **exact-head CI not yet verified**.
+- **EXACT NEXT GAME ONLY:** open Game-only PR and verify exact-head Gateway, Validate, full Jarrell Gameplay and browser smoke CI. If failing, repair and rerun before merge; verify client busy-state behavior in browser staging. Record PR number, CI IDs, merge SHA and postmerge evidence. Owner must still approve isolated Game Worker staging environment, real Durable Object `/ready`, two distinct registered accounts with shared GLB/map/World Chat and physical Android FPS before any separate public enable PR. Optimized owner Meshy ZIP import on #466 remains pending.
+
+---
+
 ## GAME ROOM PER-ACCOUNT TICKET FLOOD PROTECTION — MERGED (2026-11-16)
 
 - **MERGED Game-only PR #503** https://github.com/CryptoDilis/Climboria/pull/503 into main via squash **`9d43a8dddf68e8e7491b59dc02bb49cf4be3490f`**, exact PR head **`c6d8c5fa50f4af73d037992000c9af25bfeaf52c`**. Reviewed diff limited to `game/multiplayer/worker/index.mjs`, `index.test.mjs`, `STAGING_READINESS.md`, and this record. No DEX, Swap, Launchpad, ClimbX, wallet/reward or public client-config changes.
