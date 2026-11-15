@@ -190,10 +190,10 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
 <div id="player-card"><img id="player-avatar" src="../climboria-favicon.png" alt="Climboria emblem" onerror="this.outerHTML='C'"><div><div><div id="player-name">CLIMBORIA EXPLORER</div><div id="player-rank">JARRELL’S PEAK · SURVIVOR</div></div></div></div>
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>DAMAGE</span><span id="damage-value">5</span></div><div class="stat-track"><div class="stat-fill" id="damage-fill" style="width:25%;background:#c66b54"></div></div></div>
 <div id="summit-chest-status" role="status" aria-live="polite"><span>JARRELL’S PEAK · SUMMIT CHEST</span><strong id="summit-chest-countdown">READY</strong><small>HIGH-TIER LOOT · 15-MINUTE RESPAWN</small></div>
-<button id="world-map-toggle" type="button">WORLD MAP · M</button><button id="climboria-punch-button" data-mobile-action="punch" type="button" aria-label="Punch animation (PvP damage not enabled)" title="Punch · J">PUNCH</button>
+<button id="world-map-toggle" type="button">WORLD MAP · M</button><button id="climboria-punch-button" data-mobile-action="punch" type="button" aria-label="Punch animation (PvP damage not enabled)" title="Punch · Q (walking)">PUNCH</button>
 <section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="time-cycle-control" type="button">TIME OF DAY · GOLDEN HOUR</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
 
-<div id="help">WASD move · Shift sprint · Space jump · J punch · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · Weather changes automatically every 15 min · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
+<div id="help">WASD move · Shift sprint · Space jump · Q punch · Mouse look (drag if not locked)<br>F fly/walk · Q down/E up (fly) · E interact (walk) · T time · Weather changes automatically every 15 min · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
 
 <script>
 /* Client-side preflight: do not boot the 3D world before a named hero exists. */
@@ -1810,7 +1810,7 @@ addEventListener('keydown',e=>{
  if(['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
  
  if(!e.repeat&&e.code=='KeyT'){todI=(todI+1)%TOD.length;syncEnvironmentControls()}if(!e.repeat&&e.code=='KeyR'&&new URLSearchParams(location.search).has('debug-weather')){wx=(wx+1)%weatherNames.length;weatherElapsedMs=0;persistWeather()}if(e.code=='KeyE'&&!e.repeat)interact();
- if(e.code==='KeyJ'&&!e.repeat&&!e.target?.matches?.('input,textarea,select,[contenteditable]'))requestVisualPunch();
+ if(e.code==='KeyQ'&&!e.repeat&&!e.target?.matches?.('input,textarea,select,[contenteditable]'))requestVisualPunch();
  if(e.code=='KeyV'){P.mode='walk';camY=null;free(true);document.exitPointerLock&&document.exitPointerLock()}
  const m=e.code.match(/^Digit([1-8])$/);if(m)TP[m[1]]();
 });
