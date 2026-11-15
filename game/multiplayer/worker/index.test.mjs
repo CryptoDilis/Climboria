@@ -132,6 +132,7 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   c1.dispatch('message',JSON.stringify({type:'spawn',position:{x:0,y:9.55,z:-30}}));
   assert.equal(c1.packets.at(-1).type,'spawn-accepted','A sees trusted initial spawn confirmation');
   assert.equal(c1.packets.at(-1).id,c1.packets[0].selfId);
+  assert.deepEqual(c1.packets.at(-1).peers,[],'first accepted spawn has no other verified peers');
   assert.equal(room.room.snapshot().length,1);
   const c2=(await connect(b)).webSocket;
   assert.equal(room.room.members.size,2);
@@ -147,6 +148,8 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   c2.dispatch('message',JSON.stringify({type:'spawn',position:{x:0,y:9.55,z:-30}}));
   assert.equal(c2.packets.at(-1).type,'spawn-accepted','B sees trusted initial spawn confirmation');
   assert.equal(c2.packets.at(-1).id,c2.packets[0].selfId);
+  assert.deepEqual(c2.packets.at(-1).peers.map(p=>p.id),[c1.packets[0].selfId],
+   'spawn confirmation includes authoritative roster of already-validated peers');
   assert.equal(room.spawned.size,2);
   assert.equal(room.room.snapshot().length,2,'only accepted B spawn makes two visible members');
   assert.equal(c1.packets.some(p=>p.type==='player-joined'&&p.player.id===c2.packets[0].selfId),true);
