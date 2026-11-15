@@ -14,7 +14,8 @@
       "dz": 67,
       "height": 10,
       "loadRadius": 155,
-      "replaceLegacyTrees": true
+      "replaceLegacyTrees": true,
+      "colliderRadius": 1.2
     },
     {
       "file": "Meshy_AI_Whispering_Branches_1114193441_texture.glb",
@@ -31,7 +32,8 @@
       "dz": -10,
       "height": 9,
       "loadRadius": 145,
-      "replaceLegacyTrees": true
+      "replaceLegacyTrees": true,
+      "colliderRadius": 1
     },
     {
       "file": "Meshy_AI_The_Lanterned_Heart_T_1114193326_texture.glb",
@@ -40,7 +42,8 @@
       "dz": 82,
       "height": 12,
       "loadRadius": 180,
-      "replaceLegacyTrees": true
+      "replaceLegacyTrees": true,
+      "colliderRadius": 1.5
     },
     {
       "file": "Meshy_AI_Elder_Skywillow_1114194042_texture.glb",
@@ -50,7 +53,8 @@
       "height": 13,
       "loadRadius": 180,
       "desktopOnly": true,
-      "replaceLegacyTrees": true
+      "replaceLegacyTrees": true,
+      "colliderRadius": 2.2
     },
     {
       "file": "Meshy_AI_Crimson_Maple_Majesty_1114193624_texture.glb",
@@ -60,7 +64,8 @@
       "height": 13,
       "loadRadius": 200,
       "desktopOnly": true,
-      "replaceLegacyTrees": true
+      "replaceLegacyTrees": true,
+      "colliderRadius": 1.6
     },
     {
       "file": "Meshy_AI_The_Luminous_Worldroo_1114193642_texture.glb",
@@ -70,7 +75,8 @@
       "height": 14,
       "loadRadius": 190,
       "desktopOnly": true,
-      "replaceLegacyTrees": true
+      "replaceLegacyTrees": true,
+      "colliderRadius": 2.4
     },
     {
       "file": "Meshy_AI_Gothic_Stone_Church_1114193505_texture.glb",
