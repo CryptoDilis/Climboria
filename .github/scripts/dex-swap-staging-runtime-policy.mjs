@@ -41,3 +41,23 @@ export function stagingStatusResult(method, enabled) {
     body: method === "HEAD" ? null : JSON.stringify({ enabled: enabled === true })
   };
 }
+
+
+/**
+ * Staging HTTP host only: explicitly expose assets needed to render the two
+ * public trading shells. Never serve repo internals, game models, Worker
+ * source/tests, contracts, credentials, or arbitrary JSON/JS files.
+ */
+const STAGING_PUBLIC_ASSETS = new Set([
+  "/climboria-favicon.png",
+  "/swap-config.js",
+  "/dex/swap-amount.js",
+  "/dex/premium-terminal.js",
+  "/dex/terminal-premium.css",
+  "/dex/provider-managed-swap.css",
+  "/dex/provider-managed-swap.mjs"
+]);
+
+export function isStagingPublicAsset(path) {
+  return typeof path === "string" && STAGING_PUBLIC_ASSETS.has(path);
+}
