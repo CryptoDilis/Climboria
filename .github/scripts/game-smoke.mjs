@@ -161,13 +161,18 @@ try {
     const p=window.__climboriaJarrellsPeak?.player;
     renderer.add({id:markerId,name:'QA Explorer',model:'Adventurer',position:{x:p.x+3,y:p.y,z:p.z-4}});
     const added=renderer.count();
+    const during=renderer.audit();
     renderer.remove(markerId);
     const removed=renderer.count();
-    return {status,initial,added,removed};
+    const after=renderer.audit();
+    return {status,initial,added,removed,during,after};
   });
   console.log('GAME staged presence renderer (default-off) QA:',JSON.stringify(remotePresenceQA));
   if(remotePresenceQA.status!=='disabled'||remotePresenceQA.initial!==0||
-     remotePresenceQA.added!==1||remotePresenceQA.removed!==0)
+     remotePresenceQA.added!==1||remotePresenceQA.removed!==0||
+     remotePresenceQA.during?.resident!==0||remotePresenceQA.during?.loading!==0||
+     remotePresenceQA.after?.resident!==0||remotePresenceQA.after?.loading!==0||
+     remotePresenceQA.after?.peers!==0||remotePresenceQA.after?.budget!==3)
      errors.push('Multiplayer must be disabled without deployed auth backend and ephemeral QA marker must cleanly unload: '+JSON.stringify(remotePresenceQA));
 
   const world = await page.evaluate(() => {
