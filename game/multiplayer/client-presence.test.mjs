@@ -43,7 +43,7 @@ function harness(enabled){
  vm.runInNewContext(source,context,{filename:'client-presence.js'});
  return {window,document,clients,adds,moves,removes,punches,calls,timers};
 }
-async function flush(){for(let i=0;i<8;i++)await Promise.resolve()}
+async function flush(){for(let i=0;i<12;i++)await Promise.resolve();await new Promise(resolve=>setImmediate(resolve));}
 test('disabled multiplayer never creates fake socket or player',async()=>{
  assert.equal(config.enabled,false);
  const h=harness(false);await flush();
