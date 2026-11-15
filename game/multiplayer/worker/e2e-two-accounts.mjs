@@ -66,12 +66,18 @@ async function packet(page,selector,label){
  await page.waitForFunction(predicate=>window.__CLIMBORIA_GAME_E2E?.messages.some(m=>
    m?.type===predicate.type&&(!predicate.id||m.id===predicate.id)&&
    (!predicate.playerId||m.player?.id===predicate.playerId)&&
-   (predicate.positionX===undefined||m.position?.x===predicate.positionX)
+   (predicate.positionX===undefined||m.position?.x===predicate.positionX)&&
+   (predicate.fromId===undefined||m.fromId===predicate.fromId)&&
+   (predicate.accepted===undefined||m.accepted===predicate.accepted)&&
+   (predicate.reason===undefined||m.reason===predicate.reason)
  ),selector,{timeout});
  const obj=await page.evaluate(predicate=>window.__CLIMBORIA_GAME_E2E.messages.find(m=>
   m?.type===predicate.type&&(!predicate.id||m.id===predicate.id)&&
   (!predicate.playerId||m.player?.id===predicate.playerId)&&
-  (predicate.positionX===undefined||m.position?.x===predicate.positionX)
+  (predicate.positionX===undefined||m.position?.x===predicate.positionX)&&
+  (predicate.fromId===undefined||m.fromId===predicate.fromId)&&
+  (predicate.accepted===undefined||m.accepted===predicate.accepted)&&
+  (predicate.reason===undefined||m.reason===predicate.reason)
  ),selector);
  verify(!!obj,'Missing '+label);
  return obj;
@@ -105,11 +111,50 @@ try{
  verify(!('damage' in emote)&&!('hp' in emote)&&!('loot' in emote),
   'Client punch affected authoritative health or inventory');
  await send(a,{type:'attack',damage:999,targetId:welcomeB.selfId});
- await packet(a,{type:'rejected'},'untrusted damage attack rejected');
+ await packet(a,{type:'rejected',reason:'combat-and-loot-not-connected-to-authoritative-server'},'untrusted damage ATTACK rejected');
+
+ // Consent protocol remains disabled for fighting. Check that the Sanctuary
+ // blocks opt-in invitations even when the sender and recipient are signed in.
+ await send(a,{type:'duel-request',targetId:welcomeB.selfId,actorId:welcomeB.selfId});
+ await packet(a,{type:'rejected',reason:'sanctuary-pvp-disabled'},'Sanctuary invitation denied');
+
+ // Walk in small validated server-time steps (not a forged teleport) outside
+ // the 74m protected Sanctuary. This is socket policy QA, NOT real terrain QA.
+ // Send two independent sessions; each 2.5m/300ms stays under the 14m/s limit.
+ for(let step=1;step<=32;step++){
+  const x=step*2.5;
+  await Promise.all([
+   send(a,{type:'move',position:{x,y:9.55,z:-30}}),
+   send(b,{type:'move',position:{x,y:9.55,z:-30}})
+  ]);
+  await new Promise(resolve=>setTimeout(resolve,300));
+ }
+ await packet(b,{type:'player-moved',id:welcomeA.selfId,positionX:80},'A visible outside protected area');
+ await packet(a,{type:'player-moved',id:welcomeB.selfId,positionX:80},'B visible outside protected area');
+
+ // The server derives the true actor from each WebSocket. Deliberately spoof
+ // actorId/health/damage and verify only the authorized session may consent.
+ await send(a,{type:'duel-request',targetId:welcomeB.selfId,
+  actorId:welcomeB.selfId,health:1,damage:999});
+ await packet(a,{type:'duel-request-sent'},'A invitation acknowledgement');
+ const invitation=await packet(b,{type:'duel-invitation',fromId:welcomeA.selfId},'B authentic invitation');
+ verify(invitation.combatDamageEnabled===false,'Duel invitation incorrectly advertises enabled damage');
+ await send(b,{type:'duel-response',challengerId:welcomeA.selfId,accepted:true,
+  actorId:welcomeA.selfId,damage:999});
+ const accepted=await packet(a,{type:'duel-response-received',fromId:welcomeB.selfId,accepted:true},
+  'A receives B explicit consent');
+ verify(accepted.combatDamageEnabled===false,'Consent must never imply working player damage');
+ await send(b,{type:'duel-cancel'});
+ const cancelled=await packet(a,{type:'duel-cancelled',fromId:welcomeB.selfId},
+  'A receives voluntary revocation');
+ verify(cancelled.combatDamageEnabled===false,'Revocation must never enable damage');
+ await send(a,{type:'duel-request',targetId:welcomeB.selfId});
+ await packet(a,{type:'rejected',reason:'duel-request-cooldown'},'Invitation spam rate limited');
+
  await b.evaluate(()=>window.__CLIMBORIA_GAME_E2E.socket.close());
  await packet(a,{type:'player-left',id:welcomeB.selfId},'B leaves on disconnect');
- console.log('PASS: two independent real Chrome sessions authenticated, joined, moved, punched visually and cleaned up on disconnect.');
- console.log('Further gates: real game remote GLB view, mobile FPS, server combat state and separate PvP consent tests.');
+ console.log('PASS: real independent authenticated sessions joined/moved; ATTACK damage rejected; Sanctuary consent blocked; verified outside-zone invitation, acceptance, revocation and invitation cooldown; disconnect cleanup.');
+ console.log('Still required: actual Game remote GLB rendering, mobile FPS, independently trusted terrain positions, player-facing duel UI, release approval and production auth QA.');
 }finally{
  await Promise.all(contexts.map(ctx=>ctx.close().catch(()=>{})));
  await browser.close();
