@@ -69,4 +69,26 @@ idle.api.tick({x:0,z:0});
 assert.equal(idle.calls.length,0);
 console.log('PASS guards stay lazy when player is away from camp and cave');
 
+// Rejected over-budget GLBs must release GPU allocations without double-free,
+// even if multiple submeshes share the same optimized material and texture.
+const reject=harness({schema:1,enabled:true,guardModels:[],decorations:[
+ {file:'oversized.glb',anchor:'park',dx:0,dz:0,height:4}
+]},true);
+await reject.api.install(reject.opts);
+reject.api.tick({x:0,z:0});
+assert.equal(reject.calls.length,1);
+const freed={geometry:0,material:0,texture:0};
+const geometry={index:{count:120003},dispose(){freed.geometry++}};
+const texture={isTexture:true,dispose(){freed.texture++}};
+const material={map:texture,normalMap:texture,dispose(){freed.material++}};
+const firstMesh={isMesh:true,geometry,material};
+const secondMesh={isMesh:true,geometry,material};
+reject.calls[0].success({scene:{traverse(fn){fn(firstMesh);fn(secondMesh)}}});
+for(let i=0;i<6;i++)await Promise.resolve();
+assert.equal(reject.api.audit().activeLoads,0);
+assert.equal(reject.api.audit().failedFiles.length,1);
+assert.deepEqual(freed,{geometry:1,material:1,texture:1},
+ 'Rejected shared GLB GPU allocations must dispose exactly once');
+console.log('PASS failed mobile GLBs reclaim shared GPU resources without double-dispose');
+
 console.log('PASS all Game Meshy loader unit tests');
