@@ -33,6 +33,7 @@ jobs:
           node --check game/multiplayer/worker/index.mjs
           node --check game/multiplayer/client-presence.js
           node --check game/multiplayer/worker/e2e-two-accounts.mjs
+          node --check game/multiplayer/worker/e2e-real-game-ui.mjs
           node --test game/multiplayer/*.test.mjs game/multiplayer/worker/*.test.mjs
           node - <<'NODE'
           const fs=require('fs'),c=JSON.parse(fs.readFileSync('game/multiplayer/client-config.json','utf8'));
