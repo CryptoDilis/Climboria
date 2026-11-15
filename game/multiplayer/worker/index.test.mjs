@@ -66,6 +66,37 @@ test('ticket issuance needs verified authenticated Supabase user, never trusts c
   assert.equal(JSON.stringify(data).includes(token),false);
  }finally{globalThis.fetch=oldFetch}
 });
+test('verified Supabase anonymous guests cannot obtain multiplayer or World Chat tickets',async()=>{
+ const oldFetch=globalThis.fetch,issued=[];
+ const stub={fetch:async(_url,request)=>{issued.push(JSON.parse(request.body));return new Response('{}',{status:201})}};
+ const request=()=>mkRequest('/ticket',{
+  method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+  body:JSON.stringify({name:'Guest Explorer',model:'Jarrell'})
+ });
+ let identity={id:uid,is_anonymous:true,app_metadata:{provider:'anonymous'}};
+ globalThis.fetch=async()=>new Response(JSON.stringify(identity),{status:200});
+ try{
+  const guest=await gateway.fetch(request(),env(stub));
+  assert.equal(guest.status,401);
+  assert.deepEqual(await guest.json(),{error:'registered-game-account-required'});
+  assert.equal(issued.length,0,'a guest must never reach the Durable Object ticket issuer');
+  identity={id:uid,is_anonymous:false,app_metadata:{provider:'anonymous'}};
+  const legacy=await gateway.fetch(request(),env(stub));
+  assert.equal(legacy.status,401,'anonymous provider is denied even with missing/stale is_anonymous flag');
+  assert.equal(issued.length,0,'anonymous provider must not mint a one-use ticket');
+  identity={id:uid,is_anonymous:true,app_metadata:{provider:'email'}};
+  const inconsistent=await gateway.fetch(request(),env(stub));
+  assert.equal(inconsistent.status,401,'true anonymous state cannot be bypassed by forged provider metadata');
+  assert.equal(issued.length,0);
+  identity={id:uid,is_anonymous:false,app_metadata:{provider:'email'}};
+  const signedIn=await gateway.fetch(request(),env(stub));
+  assert.equal(signedIn.status,200,'normal registered account still obtains a valid room ticket');
+  assert.equal(issued.length,1);
+  assert.equal(issued[0].userId,uid,'server-supplied Supabase ID stays authoritative');
+  assert.equal(JSON.stringify(await signedIn.json()).includes(token),false);
+ }finally{globalThis.fetch=oldFetch}
+});
+
 test('invalid bearer and oversized untrusted payload are fail-closed',async()=>{
  const stub={fetch:async()=>{throw Error('must not reach room')}};
  const noToken=await gateway.fetch(mkRequest('/ticket',{method:'POST',body:'{}'}),env(stub));
