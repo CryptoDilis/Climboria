@@ -463,6 +463,42 @@ try {
   if (!world.mountainSpawnRouteAudit || world.mountainSpawnRouteAudit.steps < 100 || world.mountainSpawnRouteAudit.fixedColliderCount < 1 || !Number.isFinite(world.mountainSpawnRouteAudit.terrain.maxAbsoluteGrade) || (world.mountainSpawnRouteAudit.blockedAt && !world.mountainSpawnRouteAudit.blockedAt.reason)) errors.push('Mountain spawn-to-summit collision trace is incomplete or missing blocker diagnostics: '+JSON.stringify(world.mountainSpawnRouteAudit));
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
+  // GAME performance regression: each terrain-chunk grass/rock instanced batch
+  // must use a world-space culling sphere that CONTAINS sampled transformed mesh
+  // vertices, not the tiny shared origin geometry. False negatives cause pop-in.
+  const batchCulling=await page.evaluate(()=>{
+    const chunks=window.__climboriaJarrellsPeak?.chunks;
+    const issues=[];let batches=0,vertices=0;
+    if(!chunks)return {batches,vertices,issues:['no chunks API']};
+    const THREE=window.THREE,matrix=new THREE.Matrix4(),v=new THREE.Vector3();
+    for(const chunk of chunks.values())for(const mesh of chunk.objs||[]){
+      if(!mesh.isInstancedMesh)continue;
+      batches++;
+      const sphere=mesh.geometry?.boundingSphere;
+      if(!mesh.frustumCulled||!mesh.userData?.ownsChunkBoundsGeometry||!sphere||!Number.isFinite(sphere.radius)){
+        issues.push('unbounded chunk instanced batch');
+        continue;
+      }
+      const pos=mesh.geometry.attributes.position;
+      for(const i of [...new Set([0,Math.floor(mesh.count/2),mesh.count-1])]){
+        if(i<0||i>=mesh.count)continue;
+        mesh.getMatrixAt(i,matrix);
+        for(const j of [...new Set([0,Math.floor(pos.count/2),pos.count-1])]){
+          v.fromBufferAttribute(pos,j).applyMatrix4(matrix);vertices++;
+          if(v.distanceTo(sphere.center)>sphere.radius+.01){
+            issues.push('instance world vertex excluded by culling sphere');
+            break;
+          }
+        }
+      }
+    }
+    return {batches,vertices,issues:issues.slice(0,10)};
+  });
+  console.log('Jarrell instanced chunk frustum-culling audit:',JSON.stringify(batchCulling));
+  if(batchCulling.batches<1||batchCulling.vertices<1||batchCulling.issues.length)
+    errors.push('Instanced grass/rock chunk frustum bounds are unsafe or absent: '+JSON.stringify(batchCulling));
+
+
   // Direct-entry gameplay: no expedition title overlay or click-to-enter gate.
   if (await page.locator('#title').count() !== 0) {
     throw new Error('Direct gameplay must not contain the expedition title overlay');
