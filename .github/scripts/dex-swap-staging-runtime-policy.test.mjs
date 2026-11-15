@@ -97,3 +97,74 @@ test("real production Swap, managed provider and Climboria fees remain OFF", () 
   assert.match(worker, /const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;/);
   assert.match(worker, /const EXECUTION_SECURITY_REVIEW_COMPLETE = false;/);
 });
+
+
+test("default-OFF staging server starts without ANY vendor fetch and serves safe Swap/DEX routes", async t => {
+  const original = {
+    SWAP_STAGING_ORIGIN: process.env.SWAP_STAGING_ORIGIN,
+    SWAP_STAGING_PORT: process.env.SWAP_STAGING_PORT,
+    SWAP_STAGING_RUNTIME_APPROVED: process.env.SWAP_STAGING_RUNTIME_APPROVED
+  };
+  const oldFetch = globalThis.fetch;
+  let vendorCalls = 0;
+  let server;
+  try {
+    process.env.SWAP_STAGING_ORIGIN = "http://127.0.0.1:4173";
+    process.env.SWAP_STAGING_PORT = "0";
+    delete process.env.SWAP_STAGING_RUNTIME_APPROVED;
+    // Import must not even ATTEMPT an external provider download.
+    globalThis.fetch = () => {
+      vendorCalls++;
+      throw new Error("No external requests permitted in disabled staging");
+    };
+    server = (await import("./dex-swap-pinned-staging.mjs?offline-disabled-smoke")).stagingServer;
+  } finally {
+    globalThis.fetch = oldFetch;
+    for (const [key,value] of Object.entries(original)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+  assert.ok(server, "isolated server must start");
+  if (!server.listening) await new Promise(resolve => server.once("listening", resolve));
+  t.after(async () => {
+    await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+  });
+  assert.equal(vendorCalls, 0, "disabled stage cannot fetch Jupiter or any remote asset");
+  const base = "http://127.0.0.1:" + server.address().port;
+  const get = (path, init = {}) => oldFetch(base + path, { redirect: "manual", ...init });
+  const status = await get("/swap-runtime-status.json");
+  assert.equal(status.status, 200);
+  assert.equal(status.headers.get("Cache-Control"), "no-store");
+  assert.deepEqual(await status.json(), { enabled: false });
+  const head = await get("/swap-runtime-status.json", { method: "HEAD" });
+  assert.equal(head.status, 200);
+  assert.equal(await head.text(), "");
+  assert.equal((await get("/swap-runtime-status.json", { method: "POST" })).status, 405);
+  assert.equal((await get("/__staging_jupiter/plugin-1.0.18.js")).status, 404,
+    "no vendor JS may be served by default");
+  assert.equal((await get("/__staging_jupiter/plugin-1.0.18-app.js")).status, 404);
+  const stageConfig = await (await get("/swap-config.js")).text();
+  const productionConfig = readFileSync(new URL("../../swap-config.js", import.meta.url), "utf8");
+  assert.equal(stageConfig, productionConfig,
+    "disabled staging must serve the real, OFF production config byte-for-byte");
+  const stageHost = await (await get("/dex/provider-managed-swap.mjs")).text();
+  const productionHost = readFileSync(new URL("../../dex/provider-managed-swap.mjs", import.meta.url), "utf8");
+  assert.equal(stageHost, productionHost,
+    "disabled staging must not rewrite the provider host");
+  for (const page of ["/swap/", "/dex/"]) {
+    const response = await get(page);
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("content-security-policy") ?? "", /object-src 'none'/);
+    assert.match(await response.text(), /data-climboria-managed-swap-panel/);
+  }
+  for (const [alias, canonical] of [
+    ["/swap", "/swap/"], ["/dex", "/dex/"],
+    ["/swap/index.html", "/swap/"], ["/dex/index.html", "/dex/"]
+  ]) {
+    const response = await get(alias);
+    assert.equal(response.status, 308);
+    assert.equal(response.headers.get("location"), canonical);
+  }
+  assert.equal((await get("/index.html")).status, 404);
+});
