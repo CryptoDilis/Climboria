@@ -22,7 +22,7 @@ body.free #hud{opacity:1}
 body.free #help{opacity:.8}
 /* Direct gameplay: no title or character picker. */
 body:not(.free) [data-mobile-action]{display:none!important;visibility:hidden!important;pointer-events:none!important}
-body.free [data-mobile-action]{display:grid!important;visibility:visible!important;pointer-events:auto!important}
+body.free.mobile-device [data-mobile-action]{display:grid!important;visibility:visible!important;pointer-events:auto!important}
 body:not(.free) #world-map-panel,body:not(.free) #expedition-settings-toggle{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 body.free #world-map-panel,body.free #expedition-settings-toggle{visibility:visible!important;opacity:1!important;pointer-events:auto!important}
 /* Persistent adventure HUD */
