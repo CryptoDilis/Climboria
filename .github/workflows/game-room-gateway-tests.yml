@@ -27,6 +27,10 @@ jobs:
           node --check game/multiplayer/server-authority-rules.mjs
       - name: Test real socket sessions, authenticated one-use tickets and visual-only punch sync
         run: node --test game/multiplayer/*.test.mjs game/multiplayer/worker/*.test.mjs
+      - name: Verify browser client remains disabled until authenticated production two-user QA
+        run: |
+          node --check game/multiplayer/client-presence.js
+          node --test game/multiplayer/client-presence.test.mjs
       - name: Reject premature damage enablement and live-client configuration
         run: |
           python3 - <<'PY'
