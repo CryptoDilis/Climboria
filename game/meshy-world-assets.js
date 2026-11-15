@@ -98,8 +98,9 @@ function unload(obj){
 function prepareDecorations(entries){
  decorations=(Array.isArray(entries)?entries:[]).slice(0,30).map(d=>{
   const at=groundPosition(d.anchor,d.dx,d.dz);
-  if(!at||!safeURL(d.file)||!(d.height>0&&d.height<=45))return null;
-  return {at,file:d.file,height:d.height,water:!!d.water,desktopOnly:d.desktopOnly===true,replaceLegacyTrees:d.replaceLegacyTrees===true,restoreLegacy:null,loadRadius:Math.min(300,Math.max(50,d.loadRadius||145)),mesh:null,pending:false,failed:false};
+  if(!at||!safeURL(d.file)||!(d.height>0&&d.height<=45)||
+   (d.replaceLegacyTrees===true&&(!Number.isFinite(d.colliderRadius)||d.colliderRadius<.7||d.colliderRadius>3.2)))return null;
+  return {at,file:d.file,height:d.height,water:!!d.water,desktopOnly:d.desktopOnly===true,replaceLegacyTrees:d.replaceLegacyTrees===true,colliderRadius:d.replaceLegacyTrees===true?d.colliderRadius:0,restoreLegacy:null,loadRadius:Math.min(300,Math.max(50,d.loadRadius||145)),mesh:null,pending:false,failed:false};
  }).filter(Boolean);
 }
 function tick(camera){
@@ -134,7 +135,7 @@ function tick(camera){
   // Replace one nearby existing CC0 tree only after the Meshy model really
   // loaded. The cleanup restores both the old mesh and its original collider.
   if(candidate.replaceLegacyTrees&&typeof opts.replaceLegacyTrees==='function'){
-   try{candidate.restoreLegacy=opts.replaceLegacyTrees(x,z,28);}
+   try{candidate.restoreLegacy=opts.replaceLegacyTrees(x,z,28,candidate.colliderRadius);}
    catch(e){state.failures.push('legacy-tree-replacement:'+candidate.file);}
   }
  }).catch(()=>{candidate.pending=false;state.queued--;candidate.failed=true;state.failures.push(candidate.file);});
