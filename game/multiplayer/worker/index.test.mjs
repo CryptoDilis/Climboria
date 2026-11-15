@@ -187,5 +187,17 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   assert.equal(room.room.members.size,1,'a second login for the same account evicts previous avatar');
   assert.equal(room.userSockets.size,1);
   assert.equal(c3.packets[0].peers.length,0,'no duplicate visible peer from the same account');
+
+  // Existing game client sends ~4 movement messages/second. Normal inputs
+  // stay under the 24-message burst budget; a malicious client attempting
+  // unbounded WebSocket spam is disconnected before 25th JSON parse/reply.
+  const attemptedMove=JSON.stringify({type:'move',position:{x:0,y:9.55,z:-30}});
+  for(let i=0;i<24;i++)c3.dispatch('message',attemptedMove);
+  assert.equal(room.room.members.size,1,'24 one-second messages remain within the budget');
+  assert.equal(c3.packets.at(-1).reason,'spawn-required','normal rejection remains supported');
+  c3.dispatch('message',attemptedMove);
+  assert.equal(room.room.members.size,0,'25th immediate message closes the abusive session');
+  assert.equal(room.userSockets.size,0,'rate-limit cleanup evicts the verified session');
+  assert.equal(room.combat.opponents.size,0,'rate-limit cleanup revokes any duel consent');
  }finally{globalThis.Response=oldResponse;globalThis.WebSocketPair=oldPair}
 });
