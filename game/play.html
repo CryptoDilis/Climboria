@@ -40,6 +40,9 @@ body.free #status-card{opacity:1}
 .stat-track{height:5px;background:#ffffff20;border-radius:9px;overflow:hidden;margin-bottom:4px}
 .stat-fill{height:100%;width:100%;border-radius:9px;background:#b94c48}
 #stamina-fill{background:#c9a34d}
+#climboria-punch-button{display:none;position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(56px + env(safe-area-inset-bottom));z-index:1200;width:68px;height:68px;border-radius:50%;border:2px solid #d9b46b;background:#18212eea;color:#ffe3a3;font:800 12px/1 system-ui;touch-action:manipulation;box-shadow:0 4px 18px #0009;cursor:pointer}
+body.free.mobile-device #climboria-punch-button{display:grid;place-items:center}
+body.mobile-device.climboria-portrait #climboria-punch-button{display:none!important}
 #world-map-toggle{display:none}
 #world-map-panel{position:fixed;pointer-events:auto!important;z-index:1000!important;right:0!important;top:0!important;margin:0!important;width:240px;box-sizing:border-box;padding:9px;border:1px solid #d8b46b99;border-top:0;border-right:0;border-radius:0 0 0 13px;background:#080d14ed;box-shadow:0 12px 40px #000b;display:block;transition:width .2s}#world-map-panel.map-expanded{width:min(340px,calc(100vw - 32px))}
 #expedition-settings-toggle{position:fixed;display:grid;place-items:center;pointer-events:auto;z-index:1205;top:10px;right:250px;width:40px;height:40px;border:1px solid #d8b46b99;border-radius:10px;background:#080d14ed;color:#ffe3a3;font-size:22px;cursor:pointer;box-shadow:0 8px 24px #0008}
@@ -187,10 +190,10 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
 <div id="player-card"><img id="player-avatar" src="../climboria-favicon.png" alt="Climboria emblem" onerror="this.outerHTML='C'"><div><div><div id="player-name">CLIMBORIA EXPLORER</div><div id="player-rank">JARRELL’S PEAK · SURVIVOR</div></div></div></div>
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>DAMAGE</span><span id="damage-value">5</span></div><div class="stat-track"><div class="stat-fill" id="damage-fill" style="width:25%;background:#c66b54"></div></div></div>
 <div id="summit-chest-status" role="status" aria-live="polite"><span>JARRELL’S PEAK · SUMMIT CHEST</span><strong id="summit-chest-countdown">READY</strong><small>HIGH-TIER LOOT · 15-MINUTE RESPAWN</small></div>
-<button id="world-map-toggle" type="button">WORLD MAP · M</button>
+<button id="world-map-toggle" type="button">WORLD MAP · M</button><button id="climboria-punch-button" data-mobile-action type="button" aria-label="Punch animation (PvP damage not enabled)" title="Punch · J">PUNCH</button>
 <section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="time-cycle-control" type="button">TIME OF DAY · GOLDEN HOUR</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
 
-<div id="help">WASD move · Shift sprint · Space jump · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · Weather changes automatically every 15 min · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
+<div id="help">WASD move · Shift sprint · Space jump · J punch · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · Weather changes automatically every 15 min · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
 
 <script>
 /* Client-side preflight: do not boot the 3D world before a named hero exists. */
@@ -1598,7 +1601,7 @@ function findStandingRestClip(){
 function chooseAssetAnimation(state,speed=0){
  if(!assetMixer||!assetActions.length)return false;
  const jumping=state.startsWith('jump-');
- const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':state==='climb'?'climbing_up_wall':jumping?'Regular_Jump':state==='land'?'Landing':'';
+ const exact=state==='punch'?(window.__climboriaCreatedHero.model==='Lheiz'?'Right_Jab_from_Guard':'Punch_Combo'):state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':state==='climb'?'climbing_up_wall':jumping?'Regular_Jump':state==='land'?'Landing':'';
  let clip=exact?assetActions.find(a=>a.name.toLowerCase()===exact.toLowerCase()):null;
  if(state==='idle'||state==='land')clip=findStandingRestClip();
  else if(!clip){
@@ -1615,7 +1618,7 @@ function chooseAssetAnimation(state,speed=0){
  }
  if(assetActive&&assetActive.getClip()===clip){assetAnimState=state;document.documentElement.dataset.climboriaHeroAnimation=state;document.documentElement.dataset.climboriaHeroClip=clip.name;return true;}
  if(assetActive)assetActive.fadeOut(.16);
- assetActive=assetMixer.clipAction(clip);assetActive.reset().fadeIn(.16).play();assetAnimState=state;document.documentElement.dataset.climboriaHeroAnimation=state;document.documentElement.dataset.climboriaHeroClip=clip.name;return true;
+ assetActive=assetMixer.clipAction(clip);assetActive.reset().fadeIn(.16);if(state==='punch'){assetActive.setLoop(T3.LoopOnce,1);assetActive.clampWhenFinished=true;}else{assetActive.setLoop(T3.LoopRepeat,Infinity);assetActive.clampWhenFinished=false;}assetActive.play();assetAnimState=state;document.documentElement.dataset.climboriaHeroAnimation=state;document.documentElement.dataset.climboriaHeroClip=clip.name;return true;
 }
 function heroAnimationAudit(){
  const active=assetActive?.getClip()?.name||'procedural-fallback';
@@ -1635,8 +1638,8 @@ function heroAnimationAudit(){
 }
 function getJumpLimbSignature(){return [...assetRig.arms.map(({bone})=>bone),...assetRig.legs.map(({bone})=>bone)].reduce((sum,b)=>sum+b.rotation.x*3+b.rotation.y*2+b.rotation.z,0)}
 function animateAssetFallback(t,state,speed){
- const moving=state==='walk'||state==='run',swimming=state==='swim',jumpPhase=state.startsWith('jump-')?state.slice(5):'',jumping=!!jumpPhase,landing=state==='land';
- const resting=!moving&&!swimming&&!jumping&&!landing;
+ const moving=state==='walk'||state==='run',swimming=state==='swim',punching=state==='punch',jumpPhase=state.startsWith('jump-')?state.slice(5):'',jumping=!!jumpPhase,landing=state==='land';
+ const resting=!moving&&!swimming&&!jumping&&!landing&&!punching;
  const jumpPose=jumpPhase==='takeoff'?{upperLeg:-.34,lowerLeg:.52,upperArm:.30,lowerArm:-.18,spine:.11,hips:.025}:jumpPhase==='airborne'?{upperLeg:.16,lowerLeg:-.12,upperArm:-.25,lowerArm:.12,spine:-.045,hips:-.015}:jumpPhase==='descent'?{upperLeg:-.10,lowerLeg:.30,upperArm:.17,lowerArm:-.07,spine:.055,hips:.018}:null;
  const amp=moving?(state==='run'?.72:.42):0,phase=t*(state==='run'?11:8.5);
  for(const item of assetRig.legs){
@@ -1654,6 +1657,7 @@ function animateAssetFallback(t,state,speed){
    if(item.shoulder&&!assetHeroIsNewMeshy)b.rotateX(NATURAL_STANDING_SHOULDER_DROP);
    continue;
   }
+  if(punching){b.quaternion.copy(item.baseQuaternion);b.rotateX((item.side<0?-1.25:-.23)+.55*Math.sin(t*21)*(item.side<0?1:.15));continue;}
   if(swimming)b.rotation.x=item.base+Math.PI*.42+Math.sin(phase+item.side)*.16;
   else if(jumping){b.quaternion.copy(item.baseQuaternion);b.rotateX(item.lower?jumpPose.lowerArm:jumpPose.upperArm);}
   else if(landing)b.rotation.x=item.base+.22;
@@ -1782,6 +1786,21 @@ function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
 function tp(x,z,yaw){P.x=x;P.z=z;P.yaw=yaw;cameraYaw=yaw;cameraPitch=-.05;P.vy=0;P.mode='walk';P.y=groundAt(x,z)+1.75;free(true);updateChunks(x,z,200)}
 const TP={1:()=>tp(0,-30,0),2:()=>tp(POI.summit.px+6,POI.summit.pz+6,Math.PI*.75),3:()=>{const c=POI.cave;tp(c.x+c.dir.x*45,c.z+c.dir.z*45,Math.atan2(c.dir.x,c.dir.z))},
  4:()=>tp(RICE.x-60,RICE.z+40,Math.PI*.6),5:()=>tp(100,1000,Math.PI),6:()=>tp(-960,0,Math.PI/2),7:()=>tp(-170,160,0),8:()=>tp(-150,-120,Math.PI*.6)};
+let punchEndAt=0,punchLastAt=-100000;
+const PUNCH_COST=5,PUNCH_COOLDOWN_MS=900,PUNCH_DURATION_MS=650;
+// Local punch animation only. Trusted backend required for PvP hit/damage and loot.
+function requestVisualPunch(){
+ const now=performance.now();
+ if(P.mode!=='walk'||P.swim||!window.__climboriaGameReady||document.hidden||P.stamina<PUNCH_COST||now-punchLastAt<PUNCH_COOLDOWN_MS)return false;
+ punchLastAt=now;punchEndAt=now+PUNCH_DURATION_MS;
+ P.stamina=Math.max(0,P.stamina-PUNCH_COST);
+ document.documentElement.dataset.climboriaPunch='visual-only';
+ return true;
+}
+const punchButton=document.getElementById('climboria-punch-button');
+punchButton.addEventListener('pointerdown',e=>e.stopPropagation());
+punchButton.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();requestVisualPunch();});
+
 addEventListener('keydown',e=>{
  if(e.code=='Space')e.preventDefault();
  // Direct player input always takes priority over a queued Dota-style click destination.
@@ -1790,6 +1809,7 @@ addEventListener('keydown',e=>{
  if(['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
  
  if(!e.repeat&&e.code=='KeyT'){todI=(todI+1)%TOD.length;syncEnvironmentControls()}if(!e.repeat&&e.code=='KeyR'&&new URLSearchParams(location.search).has('debug-weather')){wx=(wx+1)%weatherNames.length;weatherElapsedMs=0;persistWeather()}if(e.code=='KeyE'&&!e.repeat)interact();
+ if(e.code==='KeyJ'&&!e.repeat&&!e.target?.matches?.('input,textarea,select,[contenteditable]'))requestVisualPunch();
  if(e.code=='KeyV'){P.mode='walk';camY=null;free(true);document.exitPointerLock&&document.exitPointerLock()}
  const m=e.code.match(/^Digit([1-8])$/);if(m)TP[m[1]]();
 });
@@ -2368,7 +2388,8 @@ function moveWalk(mx,mz){
 /* health, respawn */
 P.hp=500;P.maxHp=500;P.stamina=200;P.maxStamina=200;P.sprintExhausted=false;P.damage=5;P.inv=0;
 /* Survival sprint uses the existing stamina bar. Regeneration is automatic when walking/resting. */
-const STAMINA_SPRINT_DRAIN=26,STAMINA_RECOVERY=18,STAMINA_RESTART=40;
+// ~16.7 seconds sustained sprint and ~25 seconds full rest recovery.
+const STAMINA_SPRINT_DRAIN=12,STAMINA_RECOVERY=8,STAMINA_RESTART=40;
 function sprintStaminaStep(current,exhausted,wantsSprint,dt){
  const clamped=Math.max(0,Math.min(200,Number(current)||0)),delta=Math.max(0,Math.min(.1,dt));
  const recovering=!!exhausted&&clamped<STAMINA_RESTART;
@@ -3324,7 +3345,7 @@ function update(dt){
    cam.lookAt(v.target.x,v.target.y,v.target.z);
   }
   const locomotionState=moving?(sprinting?'run':'walk'):'idle';
-  const animState=P.swim?'swim':(['takeoff','airborne','descent'].includes(P.jumpState)?'jump-'+P.jumpState:P.jumpState==='land'?'land':locomotionState);
+  const animState=!P.swim&&performance.now()<punchEndAt?'punch':P.swim?'swim':(['takeoff','airborne','descent'].includes(P.jumpState)?'jump-'+P.jumpState:P.jumpState==='land'?'land':locomotionState);
   document.documentElement.dataset.climboriaJumpState=P.swim?'swim':(P.jumpState||'grounded');
   if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset+(P.swim?.42:0),P.z);assetHero.rotation.y=P.yaw+Math.PI;assetHero.rotation.x=P.swim&&!assetHeroUsesAuthoredAnimations?-Math.PI/2:0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
    // Swimming uses a deliberate prone body pose instead of an arbitrary imported clip
