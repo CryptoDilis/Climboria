@@ -43,6 +43,20 @@ Sanctuary spawning, validated movement, visual-only punch broadcast, rejection
 of fake damage, and removal on disconnect. It does not print JWTs or tickets.
 It is **never run by standard GitHub CI**; only syntax is checked by default.
 
+**Duels after server signaling PR #482 (still release-disabled):** the manual
+script also checks that signed-in sessions cannot start an invitation inside
+protected Sanctuary; advances two clients through conservative speed-limited
+outward positions (no instant teleport), confirms both are visibly outside the
+Sanctuary radius, then verifies `duel-request`, `duel-invitation`,
+`duel-response` (explicit consent), `duel-cancel` (revocation), and the
+anti-spam request cooldown. All observed protocol packets must declare
+`combatDamageEnabled:false`; a client ATTACK packet must still be
+rejected. **This is network protocol QA only, not proof of trusted terrain,
+hit detection, functioning PvP, or real gameplay movement across obstacles.**
+Run it ONLY on an explicitly owner-approved isolated Game staging Worker with
+two fresh independent test-account JWTs in the local environment. On standard
+GitHub CI the script is syntax-checked but never executed with real logins.
+
 This is a **backend connection acceptance**, not proof of Game player model
 rendering. Before enabling `game/multiplayer/client-config.json`, also use two
 actual signed-in browsers on `climboria.fun/game/play.html` to check

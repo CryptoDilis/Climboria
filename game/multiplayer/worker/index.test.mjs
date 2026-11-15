@@ -41,6 +41,57 @@ test('invalid bearer and oversized untrusted payload are fail-closed',async()=>{
  const oversized=await gateway.fetch(mkRequest('/ticket',{method:'POST',headers:{Authorization:'Bearer '+token},body:'x'.repeat(1200)}),env(stub));
  assert.equal(oversized.status,400);
 });
+test('streaming oversized JSON without Content-Length is cancelled before buffering unbounded bytes',async()=>{
+ let cancelled=0;const body=new ReadableStream({
+  start(controller){
+   controller.enqueue(new TextEncoder().encode('a'.repeat(600)));
+   controller.enqueue(new TextEncoder().encode('b'.repeat(600)));
+  },
+  cancel(){cancelled++}
+ });
+ const request=new Request('https://game-room.example/ticket',{method:'POST',duplex:'half',
+  headers:{Origin:ORIGIN,Authorization:'Bearer '+token,'Content-Type':'application/json'},body});
+ assert.equal(request.headers.get('content-length'),null);
+ const response=await gateway.fetch(request,env({fetch:async()=>{throw Error('must not issue ticket')}}));
+ assert.equal(response.status,400);
+ assert.equal(cancelled,1,'oversized request stream must be cancelled early');
+});
+test('multibyte UTF-8 payload uses wire-byte cap, not JavaScript character count',async()=>{
+ const payload=JSON.stringify({name:'€'.repeat(360)});
+ assert.ok(payload.length<1024);
+ assert.ok(new TextEncoder().encode(payload).length>1024);
+ const request=mkRequest('/ticket',{method:'POST',headers:{Authorization:'Bearer '+token},body:payload});
+ assert.equal((await gateway.fetch(request,env({fetch:async()=>{throw Error('must not issue ticket')}}))).status,400);
+});
+test('valid numeric Content-Length permits authenticated JSON ticket requests',async()=>{
+ const payload=JSON.stringify({name:'Jarrell',model:'Jarrell'});
+ const bytes=new TextEncoder().encode(payload).length;
+ const oldFetch=globalThis.fetch;
+ let ticketCalls=0;
+ globalThis.fetch=async(url,options)=>{
+  assert.match(String(url),/\/auth\/v1\/user$/);
+  assert.equal(options.headers.Authorization,'Bearer '+token);
+  return new Response(JSON.stringify({id:uid}),{status:200});
+ };
+ try{
+  const stub={fetch:async()=>{ticketCalls++;return new Response('{}',{status:201})}};
+  const request=mkRequest('/ticket',{method:'POST',headers:{
+   Authorization:'Bearer '+token,'Content-Type':'application/json',
+   'Content-Length':String(bytes)
+  },body:payload});
+  assert.equal(request.headers.get('content-length'),String(bytes));
+  const reply=await gateway.fetch(request,env(stub));
+  assert.equal(reply.status,200,'numeric Content-Length must not be treated as malformed');
+  assert.equal(ticketCalls,1,'one verified user may issue one room ticket');
+ }finally{globalThis.fetch=oldFetch}
+});
+
+test('malformed Content-Length is denied before auth or upstream room access',async()=>{
+ const request=mkRequest('/ticket',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Length':'nonsense'},body:'{}'});
+ const response=await gateway.fetch(request,env({fetch:async()=>{throw Error('must not issue ticket')}}));
+ assert.equal(response.status,400);
+});
+
 test('realtime ticket is one-time; no spoofed attack damage; two actual connections join, punch sync and leave',async()=>{
  const oldPair=globalThis.WebSocketPair,oldResponse=globalThis.Response;
  class FakeSocket {
@@ -90,6 +141,43 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   c1.dispatch('message',JSON.stringify({type:'attack',damage:999}));
   assert.equal(c1.packets.at(-1).type,'rejected');
   assert.equal(room.room.members.size,2,'client attacks never modify peers');
+
+  // Consent signaling is authenticated/session-bound and has NO player damage.
+  const idA=c1.packets[0].selfId,idB=c2.packets[0].selfId;
+  c1.dispatch('message',JSON.stringify({type:'duel-request',targetId:idB,actorId:idB}));
+  assert.equal(c1.packets.at(-1).reason,'sanctuary-pvp-disabled','protected Sanctuary cannot receive a duel request');
+  // Server-owned fixture moves peer positions beyond Sanctuary for protocol QA.
+  // The production browser cannot legitimately move 200m in a single packet.
+  room.room.members.get(idA).position={x:200,y:10,z:20};
+  room.room.members.get(idB).position={x:201,y:10,z:20};
+  c2.dispatch('message',JSON.stringify({type:'duel-response',challengerId:idA,accepted:true}));
+  assert.equal(c2.packets.at(-1).reason,'no-valid-duel-invitation');
+  c1.dispatch('message',JSON.stringify({type:'duel-request',targetId:idB,
+   actorId:idB,health:1,damage:999}));
+  assert.deepEqual({
+   type:c2.packets.at(-1).type,
+   fromId:c2.packets.at(-1).fromId,
+   combatDamageEnabled:c2.packets.at(-1).combatDamageEnabled
+  },{type:'duel-invitation',fromId:idA,combatDamageEnabled:false});
+  assert.equal(c1.packets.at(-1).type,'duel-request-sent');
+  c2.dispatch('message',JSON.stringify({type:'duel-response',challengerId:idA,
+   accepted:true,health:1,damage:999}));
+  assert.equal(c1.packets.at(-1).type,'duel-response-received');
+  assert.equal(c1.packets.at(-1).accepted,true);
+  assert.equal(c1.packets.at(-1).combatDamageEnabled,false);
+  assert.equal(room.combat.health.get(idA),500);
+  assert.equal(room.combat.health.get(idB),500);
+  c1.dispatch('message',JSON.stringify({type:'attack',targetId:idB,damage:999}));
+  assert.equal(c1.packets.at(-1).type,'rejected','client ATTACK packet is always denied');
+  assert.equal(room.combat.health.get(idB),500,'no browser-requested HP mutation');
+  c2.dispatch('message',JSON.stringify({type:'duel-cancel'}));
+  assert.equal(c1.packets.at(-1).type,'duel-cancelled');
+  assert.equal(c1.packets.at(-1).combatDamageEnabled,false);
+  assert.equal(room.combat.health.size,0);
+  assert.equal(room.combat.opponents.size,0);
+  c1.dispatch('message',JSON.stringify({type:'duel-request',targetId:idB}));
+  assert.equal(c1.packets.at(-1).reason,'duel-request-cooldown');
+
   c2.close();
   assert.equal(room.room.members.size,1);
   assert.equal(c1.packets.at(-1).type,'player-left');

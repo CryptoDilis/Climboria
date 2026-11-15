@@ -5,6 +5,7 @@
  * accounts, inventory, loot or payment values enter the room state.
  */
 import {PresenceRoom} from '../presence-room.mjs';
+import {ServerCombatState} from '../server-combat-state.mjs';
 
 const ROOM='jarrell-peak';
 const TRUSTED_ORIGINS=new Set(['https://climboria.fun','https://www.climboria.fun']);
@@ -12,17 +13,39 @@ const MAX_AUTH_BYTES=4096,MAX_JSON_BYTES=1024,SESSION_TTL=30_000,MAX_PENDING=32;
 const allowedName=/^[A-Za-z0-9 _-]{2,24}$/;
 const allowedModels=new Set(['Adventurer','Jarrell','Lheiz']);
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const verifiedPeerId=/^s_[a-f0-9]{32}$/;
 const response=(status,data,origin)=>new Response(JSON.stringify(data),{
  status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store',
   ...(TRUSTED_ORIGINS.has(origin)?{'access-control-allow-origin':origin,'vary':'Origin'}:{})}
 });
 function validOrigin(request){return TRUSTED_ORIGINS.has(request.headers.get('Origin'))}
 async function readBoundedJSON(req){
- const len=Number(req.headers.get('content-length')||0);
- if(len>MAX_JSON_BYTES)return null;
- const text=await req.text();
- if(text.length>MAX_JSON_BYTES)return null;
- try{return JSON.parse(text)}catch{return null}
+ // Enforce the actual UTF-8 WIRE byte budget while reading. A forged or
+ // missing Content-Length must never let us buffer an unbounded request.
+ const header=req.headers.get('content-length');
+ if(header!==null&&(!/^\d+$/.test(header)||Number(header)>MAX_JSON_BYTES))
+  return null;
+ if(!req.body)return null;
+ const reader=req.body.getReader(),decoder=new TextDecoder('utf-8',{fatal:true});
+ let bytes=0,text='';
+ try{
+  while(true){
+   const {value,done}=await reader.read();
+   if(done)break;
+   if(!(value instanceof Uint8Array))throw Error('invalid-body-chunk');
+   bytes+=value.byteLength;
+   if(bytes>MAX_JSON_BYTES){
+    await reader.cancel('body-too-large');
+    return null;
+   }
+   text+=decoder.decode(value,{stream:true});
+  }
+  text+=decoder.decode();
+  return JSON.parse(text);
+ }catch{
+  try{await reader.cancel('invalid-body')}catch{}
+  return null;
+ }
 }
 export const gateway={
  async fetch(req,env){
@@ -80,6 +103,9 @@ export class JarrellRoom {
   this.state=state;this.env=env;
   if(!state?.storage)throw Error('Durable Object storage required for one-use session tickets');
   this.room=new PresenceRoom({roomId:ROOM,limit:32});
+  // The client is still disabled. This state handles invitation consent only;
+  // no ATTACK packet is ever passed to ServerCombatState.attack.
+  this.combat=new ServerCombatState({room:this.room});
   this.lastPunch=new Map();
   this.userSockets=new Map();
   this.spawned=new Set();
@@ -126,6 +152,7 @@ export class JarrellRoom {
   const prior=this.userSockets.get(entry.userId);
   if(prior){
    this.userSockets.delete(entry.userId);
+   this.combat.disconnect(prior.id);
    this.room.disconnect(prior.id);
    this.lastPunch.delete(prior.id);
    this.spawned.delete(prior.id);
@@ -138,6 +165,7 @@ export class JarrellRoom {
   if(!connected.ok){socket.close(1013,'room-unavailable');return response(503,{error:connected.reason})}
   this.userSockets.set(entry.userId,{id,socket});
   const cleanup=()=>{
+   this.combat.disconnect(id);
    this.room.disconnect(id);this.lastPunch.delete(id);this.spawned.delete(id);
    if(this.userSockets.get(entry.userId)?.id===id)this.userSockets.delete(entry.userId);
   };
@@ -164,6 +192,65 @@ export class JarrellRoom {
    }
    if(message.type==='move'&&!this.spawned.has(id)){
     socket.send(JSON.stringify({type:'rejected',reason:'spawn-required'}));return;
+   }
+   // Authenticated duel invitations are CONSENT SIGNALS, not HP damage.
+   // The server binds the requesting identity to this socket's trusted id.
+   // Client-supplied actorId/health/damage are always ignored.
+   if(message.type==='duel-request'){
+    if(!this.spawned.has(id)){
+     socket.send(JSON.stringify({type:'rejected',reason:'spawn-required'}));return;
+    }
+    if(!verifiedPeerId.test(message.targetId||'')||!this.spawned.has(message.targetId)){
+     socket.send(JSON.stringify({type:'rejected',reason:'invalid-or-unspawned-peer'}));return;
+    }
+    const result=this.combat.request(id,message.targetId);
+    if(!result.ok){socket.send(JSON.stringify({type:'rejected',reason:result.reason}));return}
+    try{
+     const target=this.room.members.get(message.targetId);
+     if(!target)throw Error('recipient-disconnected');
+     target.send({type:'duel-invitation',fromId:id,expiresInMs:30000,combatDamageEnabled:false});
+     socket.send(JSON.stringify({type:'duel-request-sent',targetId:message.targetId,combatDamageEnabled:false}));
+    }catch{
+     this.combat.cancel(id);
+     socket.send(JSON.stringify({type:'rejected',reason:'duel-peer-unreachable'}));
+    }
+    return;
+   }
+   if(message.type==='duel-response'){
+    if(!this.spawned.has(id)){
+     socket.send(JSON.stringify({type:'rejected',reason:'spawn-required'}));return;
+    }
+    if(!verifiedPeerId.test(message.challengerId||'')||typeof message.accepted!=='boolean'){
+     socket.send(JSON.stringify({type:'rejected',reason:'invalid-duel-response'}));return;
+    }
+    const result=this.combat.respond(id,message.challengerId,message.accepted);
+    if(!result.ok){socket.send(JSON.stringify({type:'rejected',reason:result.reason}));return}
+    // Acceptance records mutual intent ONLY. Real ATTACK damage remains
+    // disabled: browser positions are not authoritative terrain physics.
+    const data={type:'duel-response-received',fromId:id,accepted:message.accepted,combatDamageEnabled:false};
+    const challenger=this.room.members.get(message.challengerId);
+    try{
+     if(!challenger)throw Error('challenger-disconnected');
+     challenger.send(data);
+    }catch{
+     // Never acknowledge an accepted duel if the other socket cannot be
+     // notified; withdraw consent and let a later authenticated invite retry.
+     this.combat.cancel(id);
+     socket.send(JSON.stringify({type:'rejected',reason:'duel-peer-unreachable'}));
+     return;
+    }
+    socket.send(JSON.stringify({type:'duel-response-sent',challengerId:message.challengerId,accepted:message.accepted,combatDamageEnabled:false}));
+    return;
+   }
+   if(message.type==='duel-cancel'){
+    const state=this.combat.cancel(id);
+    if(!state.ok){socket.send(JSON.stringify({type:'rejected',reason:state.reason}));return}
+    const counterpart=this.room.members.get(state.counterpartId);
+    if(counterpart){
+     try{counterpart.send({type:'duel-cancelled',fromId:id,combatDamageEnabled:false})}catch{}
+    }
+    socket.send(JSON.stringify({type:'duel-cancelled',fromId:id,combatDamageEnabled:false}));
+    return;
    }
    if(message.type==='punch'){
     if(!this.spawned.has(id))return;
