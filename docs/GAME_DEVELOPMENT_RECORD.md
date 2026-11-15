@@ -1,5 +1,16 @@
 # Climboria Game Development Record
 
+## GAME DESKTOP INPUT MODE — ATTACK button hidden on keyboard-only PCs (2026-11-15)
+
+- **Visual QA found actual desktop bug:** Game Rarity Chest desktop Playwright capture at 1280×720 (context `hasTouch:false`) showed a floating mobile ATTACK circle. Original detection `('ontouchstart' in window)||navigator.maxTouchPoints>0` misidentified a desktop with an exposed event-handler property as a touch device. The user requires desktop **Q key ATTACK**, not mobile touch overlay.
+- **Fix** `f7dcf3eb4bd12023d2a228fd9585cff0e459b511`: mobile mode now uses actual `navigator.maxTouchPoints>0` or CSS `(pointer:coarse)`, preserving mobile Android/iPhone and touch laptop support while hiding touch ATTACK on keyboard-only desktops.
+- **Regression** `fe4d70b00148a7aa12e58c77fb2b81cccba36c0d`: real-browser Desktop Gameplay Smoke explicitly checks `touchPoints===0`, pointer not coarse, `body.mobile-device` absent and touch ATTACK button computed `display:none`; existing mobile tests still require visible, centered, non-overlapping ATTACK button and existing Q key attack/state checks.
+- **Current branch** Game-only draft PR #477; no merge or deployment yet, no claim of CI pass after these changes. **EXACT NEXT:** run all five exact-head Validate, Browser, Hero, Chest, full Jarrell Gameplay tests; inspect true desktop/mobile screenshots, verify no unintended loss of Android touch controls, then merge only after all pass and record final main SHA and Pages deployment evidence.
+- **Other Game workstreams:** PR #478 server-owned consent/damage core remains default-deny and unstaged; PR #480 fixes request body streaming limit in the still-off Game Worker, and owner Meshy binaries remain blocked in PR #466. No non-Game modules touched.
+
+---
+
+
 ## GAME ATTACK CONTROLS — deterministic CSS test and real authored animation selection (2026-11-15)
 
 - **Game-only draft [PR #477](https://github.com/CryptoDilis/Climboria/pull/477):** desktop Q ATTACK, mobile ATTACK button, tooltip/help/ARIA, and legacy internal wire format remain isolated from DEX/Swap/Launchpad/ClimbX; no online client activation. Original comparison review found UI label centering issues; game button now uses positioned `.attack-control-label` to center regardless of parent display layout.
