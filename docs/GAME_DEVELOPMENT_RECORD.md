@@ -1,5 +1,15 @@
 # Climboria Game Development Record
 
+## WORLD CHAT UNICODE / WIRE-BYTE CLIENT GUARD — DRAFT (2026-11-16)
+
+- **Problem:** Game Worker validates every authenticated World Chat message after NFC normalization against 160 Unicode code points, 384 actual UTF-8 bytes and a control/bidi-character denial set. The staged browser chat input previously checked only 160 characters, then cleared the message immediately after WebSocket send; e.g. 150 `€` (450 UTF-8 bytes) would be locally cleared but server-rejected. This does not mean public chat is currently live.
+- **Game-only change:** on `game/world-chat-wire-validation-2026-11-16`, `game/multiplayer/client-presence.js` now locally mirrors normalization/byte/control policy before sending and clearing. Invalid chat remains editable, shows explanatory limits; valid messages still await server confirmation to appear in transcript. No client-authoritative chat echo, peer creation or bypass of guest/room auth.
+- **Regression:** `game/multiplayer/client-presence.test.mjs` VM harness now includes `TextEncoder` and tests 150 euro signs (450 bytes) rejected without losing input, bidi controls denied, NFC combining-accent normalization accepted, and no fake optimistic chat echo. Source commits `cb53645fad0cbd9dafb83fd35f3399ca9373d9d4`, `cd11167c98e6fb9dd5379c6526024ae7c44ffceb`. **Exact-head CI not yet verified at this checkpoint.**
+- **Release:** strictly Game-only and default OFF (`game/multiplayer/client-config.json` `enabled:false`, `endpoint:null`). No actual Game Worker deployment, account-to-account Chat proof, remote GLB or real physical Android QA. No DEX, Swap, Launchpad, ClimbX, wallet, trading or rewards changes.
+- **EXACT NEXT:** open separate draft Game-only PR for this focused World Chat guard, inspect exact changed paths, run Game Authenticated Room Gateway tests and Jarrell Gameplay Smoke on latest head; Validate Climboria may still fail on pre-existing non-Game homepage token-launch copy, which must be resolved by its owning workstream without weakening assertions. Merge only when all required checks are green, record exact PR merge SHA/workflow IDs, then proceed to owner-authorized Cloudflare Game staging with two registered browser users and Android FPS. Draft room-capacity PR #504 remains separate and unmerged pending homepage check resolution.
+
+---
+
 ## GAME ROOM PER-ACCOUNT TICKET FLOOD PROTECTION — MERGED (2026-11-16)
 
 - **MERGED Game-only PR #503** https://github.com/CryptoDilis/Climboria/pull/503 into main via squash **`9d43a8dddf68e8e7491b59dc02bb49cf4be3490f`**, exact PR head **`c6d8c5fa50f4af73d037992000c9af25bfeaf52c`**. Reviewed diff limited to `game/multiplayer/worker/index.mjs`, `index.test.mjs`, `STAGING_READINESS.md`, and this record. No DEX, Swap, Launchpad, ClimbX, wallet/reward or public client-config changes.
