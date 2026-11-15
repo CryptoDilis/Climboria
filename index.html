@@ -292,26 +292,28 @@ footer:first-of-type>div{
 }
 }
 
-/* Premium token launch announcement + live countdown */
-.launch-countdown{position:absolute;z-index:4;top:48%;left:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 36px));padding:22px 24px 20px;text-align:center;border:1px solid rgba(245,197,91,.52);border-radius:20px;background:linear-gradient(145deg,rgba(8,12,22,.91),rgba(17,12,19,.82));box-shadow:0 18px 55px rgba(0,0,0,.42),0 0 30px rgba(217,119,6,.12),inset 0 1px rgba(255,255,255,.07);backdrop-filter:blur(18px)}
-.launch-countdown:before{content:"";position:absolute;inset:5px;border:1px solid rgba(245,197,91,.14);border-radius:15px;pointer-events:none}
-.launch-kicker{display:flex;align-items:center;justify-content:center;gap:8px;color:#f4c96c;font-size:10px;font-weight:800;letter-spacing:2.6px;text-transform:uppercase}
-.launch-kicker:before,.launch-kicker:after{content:"";height:1px;width:26px;background:linear-gradient(90deg,transparent,#d7a64a)}
-.launch-kicker:after{transform:rotate(180deg)}
-.launch-countdown h2{font:900 clamp(22px,3vw,32px)/1.15 Cinzel,serif;letter-spacing:1.2px;color:#fff2cf;margin:10px 0 7px;text-shadow:0 2px 18px #d99b3633}
-.launch-meta{font-size:12px;letter-spacing:.6px;color:rgba(255,255,255,.72)}
-.launch-meta strong{color:#f5cb6b;font-weight:800}
-.launch-timer{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:17px auto 14px;max-width:410px}
-.launch-time-unit{padding:10px 5px 8px;border:1px solid rgba(245,197,91,.2);border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(0,0,0,.2))}
-.launch-time-unit b{display:block;font:800 clamp(23px,3vw,30px)/1 Inter,sans-serif;color:#fff;letter-spacing:1px;font-variant-numeric:tabular-nums}
-.launch-time-unit span{display:block;margin-top:5px;color:#d4b77b;font-size:8px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase}
-.launch-foot{display:flex;align-items:center;justify-content:center;gap:7px;font-size:9px;letter-spacing:1.3px;color:rgba(255,255,255,.52);text-transform:uppercase}
-.launch-foot i{width:5px;height:5px;border-radius:50%;background:#e7b653;box-shadow:0 0 8px #e7b653;display:inline-block}
-.launch-follow{display:inline-flex;margin-top:13px;padding:9px 17px;border:1px solid rgba(245,197,91,.38);border-radius:999px;color:#f5d88f;text-decoration:none;font-size:10px;font-weight:800;letter-spacing:1.4px;transition:.2s}
-.launch-follow:hover{background:rgba(245,197,91,.1);border-color:#f5c55b;box-shadow:0 0 16px #e0a33b22}
-@media(min-width:901px){.launch-countdown{left:32%;right:auto;top:53%;transform:translateX(-50%);width:min(520px,36vw);padding:18px 20px 16px;box-shadow:0 16px 42px rgba(0,0,0,.48),0 0 34px rgba(245,197,91,.3),0 0 72px rgba(217,119,6,.17),inset 0 1px rgba(255,255,255,.08);border-color:rgba(255,205,94,.76)}.launch-timer{gap:7px;margin:13px auto 11px}.launch-time-unit{padding:8px 4px 7px}.launch-countdown h2{font-size:clamp(21px,2.2vw,28px)}}
-@media(max-width:900px){.launch-countdown{top:47%;padding:16px 14px 14px;width:min(440px,calc(100% - 30px));border-radius:16px}.launch-countdown:before{border-radius:12px}.launch-kicker{font-size:8px;letter-spacing:1.8px}.launch-countdown h2{font-size:clamp(19px,5.2vw,25px);margin:8px 0 6px}.launch-meta{font-size:10px}.launch-timer{gap:6px;margin:12px auto 10px}.launch-time-unit{padding:8px 3px 7px;border-radius:8px}.launch-time-unit b{font-size:clamp(20px,6vw,26px)}.launch-time-unit span{font-size:7px;letter-spacing:1px}.launch-foot{font-size:8px;letter-spacing:.8px}.launch-follow{margin-top:10px;padding:8px 14px;font-size:9px}}
-@media(max-height:700px) and (max-width:900px){.launch-countdown{top:45%;padding:11px 12px}.launch-countdown h2{font-size:19px}.launch-timer{margin:8px auto}.launch-time-unit{padding:5px 2px}.launch-follow{margin-top:7px}}
+/* Official $CLIMB token announcement record — no countdown or unverified market metrics. */
+.token-record{position:absolute;z-index:4;top:48%;left:50%;transform:translate(-50%,-50%);width:min(590px,calc(100% - 32px));box-sizing:border-box;padding:24px;text-align:left;border:1px solid rgba(244,198,97,.58);border-radius:20px;background:linear-gradient(145deg,rgba(9,13,23,.96),rgba(29,21,25,.91));box-shadow:0 22px 64px rgba(0,0,0,.52),0 0 32px rgba(219,157,46,.12),inset 0 1px rgba(255,255,255,.07);backdrop-filter:blur(16px)}
+.token-record:before{content:"";position:absolute;inset:6px;border:1px solid rgba(245,197,91,.12);border-radius:15px;pointer-events:none}
+.token-record>*{position:relative}
+.token-record-eyebrow{display:flex;align-items:center;flex-wrap:wrap;gap:8px;color:#f5ce76;font:800 10px/1.5 Inter,system-ui,sans-serif;letter-spacing:1.6px;text-transform:uppercase}
+.token-record-dot{display:inline-block;width:7px;height:7px;flex:none;border-radius:50%;background:#e9b84e;box-shadow:0 0 10px #e8b34a88}
+.token-record h2{font:900 clamp(23px,2.6vw,32px)/1.18 Cinzel,serif;letter-spacing:.8px;color:#fff1cf;margin:10px 0 7px;text-shadow:0 2px 16px #d99b3633}
+.token-record-meta{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 14px}
+.token-record-meta span{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid rgba(245,197,91,.2);border-radius:7px;background:rgba(255,255,255,.04);font-size:10px;font-weight:800;letter-spacing:.5px;color:#d7dbe4}
+.token-record-label{display:block;margin-bottom:7px;font:800 10px/1.4 Inter,system-ui,sans-serif;letter-spacing:1.1px;text-transform:uppercase;color:#e9c885}
+.token-record-address{margin:0;padding:12px;border:1px solid rgba(245,197,91,.34);border-radius:10px;background:rgba(0,0,0,.35);color:#fff3d5;font:700 clamp(11px,1.14vw,14px)/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;word-break:break-word;user-select:all}
+.token-record-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.token-record-action{display:inline-flex;align-items:center;justify-content:center;min-height:40px;box-sizing:border-box;padding:9px 14px;border:1px solid rgba(245,197,91,.45);border-radius:9px;background:rgba(245,197,91,.08);color:#ffe7af;text-decoration:none;font:800 10px/1.4 Inter,system-ui,sans-serif;letter-spacing:.55px;cursor:pointer;transition:background .2s,border-color .2s}
+.token-record-action:hover,.token-record-action:focus-visible{background:rgba(245,197,91,.18);border-color:#f5cb6b}
+.token-record-action-primary{background:linear-gradient(115deg,#f1c56a,#d9a84c);color:#1b1611;border-color:#f8dd99}
+.token-record-action-primary:hover,.token-record-action-primary:focus-visible{background:#ffe0a0}
+.token-record-note{margin:12px 0 0;font:500 11px/1.55 Inter,system-ui,sans-serif;color:#c7c0b5}
+.token-record-status{display:block;min-height:16px;margin-top:6px;font:700 11px/1.4 Inter,system-ui,sans-serif;color:#ffdb8d}
+@media(min-width:901px){.token-record{left:32%;right:auto;top:51%;transform:translateX(-50%);width:min(540px,37vw);padding:20px 22px}}
+@media(max-width:900px){.token-record{top:46%;padding:16px;width:min(450px,calc(100% - 24px));border-radius:15px}.token-record h2{font-size:clamp(20px,5vw,26px)}.token-record-meta{margin:8px 0 10px}.token-record-address{padding:10px}.token-record-note{font-size:10px}.token-record-action{min-height:36px;padding:8px 10px;font-size:9px}}
+@media(max-height:660px) and (max-width:900px){.token-record{top:43%;padding:11px}.token-record h2{font-size:18px;margin:5px 0}.token-record-meta{margin:5px 0 7px}.token-record-actions{gap:5px;margin-top:7px}.token-record-note{margin-top:7px}}
+@media(prefers-reduced-motion:reduce){.token-record-action{transition:none}}
 
 /* Accessible page title without changing the approved hero artwork or layout. */
 .visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
@@ -528,7 +530,7 @@ footer:first-of-type>div{
 <button class="btn-gold" data-open-auth>SIGN IN / CREATE ACCOUNT</button>
 </div>
 <a href="https://x.com/ClimboriaHQ" target="_blank" style="display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;margin-top:10px"><span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;font-weight:900">𝕏</span> @ClimboriaHQ</a>
-<div style="margin-top:20px;font-size:10px;color:rgba(255,255,255,.3);letter-spacing:2px">PLANNED LAUNCH TARGET • NOV 15, 2026 • SOLANA</div>
+<a href="#climb-token-record" style="display:block;margin-top:20px;color:#f5d88f;font-size:11px;font-weight:800;letter-spacing:1px;text-decoration:none">OFFICIAL $CLIMB TOKEN RECORD · SOLANA ↗</a>
 </div>
 
 <div class="auth-backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
@@ -565,14 +567,19 @@ footer:first-of-type>div{
     <img src="./857289992_1755402102906767_7411463028840030192_n-1.webp" alt="CLIMBORIA Official Hero" loading="eager" fetchpriority="high">
   </picture>
   <div class="hero-overlay"></div>
-  <section class="launch-countdown" aria-label="Official CLIMB token contract address">
-    <div class="launch-kicker">Official $CLIMB token announcement</div>
-    <h2>$CLIMB CONTRACT ADDRESS</h2>
-    <div class="launch-meta">SOLANA · PUMP.FUN · NOVEMBER 15, 2026</div>
-    <p style="margin:14px auto 8px;max-width:100%;overflow-wrap:anywhere;word-break:break-word;color:#ffe5a4;font-size:clamp(11px,1.15vw,15px);font-weight:700;line-height:1.6" id="climbOfficialCa">9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump</p>
-    <button type="button" id="copyClimbCa" class="launch-follow" style="cursor:pointer;margin:4px 6px 8px">COPY CA</button>
-    <a class="launch-follow" href="https://pump.fun/coin/9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump" target="_blank" rel="noopener noreferrer" style="margin:4px 6px 8px">VIEW ON PUMP.FUN ↗</a>
-    <div class="launch-foot">Verify this address on our official X account before trading. Beware of impersonators.</div>
+  <section class="token-record" id="climb-token-record" aria-labelledby="climb-token-record-title">
+    <div class="token-record-eyebrow"><span class="token-record-dot" aria-hidden="true"></span>OFFICIAL $CLIMB ANNOUNCEMENT · LAUNCH RECORD 001</div>
+    <h2 id="climb-token-record-title">$CLIMB TOKEN RECORD</h2>
+    <div class="token-record-meta"><span>SOLANA</span><span>PUMP.FUN</span><span>ANNOUNCED NOV 15, 2026</span></div>
+    <span class="token-record-label">Official announced mint / contract address</span>
+    <p class="token-record-address" id="climbOfficialCa">9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump</p>
+    <div class="token-record-actions">
+      <button type="button" id="copyClimbCa" class="token-record-action token-record-action-primary" aria-describedby="copyClimbCaStatus">COPY CONTRACT ADDRESS</button>
+      <a class="token-record-action" href="https://pump.fun/coin/9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump" target="_blank" rel="noopener noreferrer">PUMP.FUN ↗</a>
+      <a class="token-record-action" href="https://solscan.io/token/9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump" target="_blank" rel="noopener noreferrer">SOLANA EXPLORER ↗</a>
+    </div>
+    <span id="copyClimbCaStatus" class="token-record-status" role="status" aria-live="polite"></span>
+    <p class="token-record-note">Announcement record only. Market liquidity, token safety and returns are not verified or guaranteed. Compare this mint with our <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer" style="color:#ffdc91">official X announcements</a>; beware of impersonators.</p>
   </section>
   <div class="hero-content">
     <div class="hero-buttons">
@@ -752,14 +759,20 @@ footer:first-of-type>div{
 (() => {
   const ham = document.getElementById('hamburger');
   const copyClimbCaButton = document.getElementById('copyClimbCa');
-  if (copyClimbCaButton) copyClimbCaButton.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText('9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump');
-      copyClimbCaButton.textContent = 'COPIED!';
-    } catch {
-      copyClimbCaButton.textContent = 'SELECT CA ABOVE TO COPY';
-    }
-  });
+  const tokenRecordAddress = document.getElementById('climbOfficialCa');
+  const tokenCopyStatus = document.getElementById('copyClimbCaStatus');
+  if (copyClimbCaButton && tokenRecordAddress && tokenCopyStatus) {
+    copyClimbCaButton.addEventListener('click', async () => {
+      const address = tokenRecordAddress.textContent.trim();
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+        await navigator.clipboard.writeText(address);
+        tokenCopyStatus.textContent = 'Contract address copied.';
+      } catch {
+        tokenCopyStatus.textContent = 'Copy unavailable. Select the address above to copy it manually.';
+      }
+    });
+  }
 
   const menu = document.getElementById('mobileMenu');
   let menuOpen = false;
