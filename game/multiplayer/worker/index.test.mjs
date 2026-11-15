@@ -79,6 +79,9 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   assert.equal(c1.packets.at(-1).type,'player-joined');
   assert.equal(c2.packets[0].peers.length,1);
   const reused=await connect(a);assert.equal(reused.status,401);
+  c1.dispatch('message',JSON.stringify({type:'spawn',position:{x:0,y:9.55,z:-30}}));
+  c2.dispatch('message',JSON.stringify({type:'spawn',position:{x:0,y:9.55,z:-30}}));
+  assert.equal(room.spawned.size,2);
   c1.dispatch('message',JSON.stringify({type:'punch',damage:999,targetId:'fake'}));
   assert.equal(c2.packets.at(-1).type,'player-punched');
   assert.equal(Object.hasOwn(c2.packets.at(-1),'damage'),false);
