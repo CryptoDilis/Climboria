@@ -613,7 +613,7 @@ try {
   // The original Adventurer GLB actually exports Punch_Combo_1, not the
   // Jarrell model's Punch_Combo. Enforce a REAL authored attack clip.
   await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='punch' &&
-    document.documentElement.dataset.climboriaHeroClip==='Punch_Combo_1',undefined,{timeout:2000});
+    document.documentElement.dataset.climboriaHeroClip==='Punch_Combo_1',undefined,{timeout:2000,polling:50});
   await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='idle',undefined,{timeout:15000});
 
   const idleAnimationAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);
