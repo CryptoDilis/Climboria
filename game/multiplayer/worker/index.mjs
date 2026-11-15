@@ -12,6 +12,9 @@ const TRUSTED_ORIGINS=new Set(['https://climboria.fun','https://www.climboria.fu
 const MAX_AUTH_BYTES=4096,MAX_JSON_BYTES=1024,SESSION_TTL=30_000,MAX_PENDING=32;
 // Bound abusive socket bursts; normal Game presence publishes movement at ~4 Hz.
 const MESSAGE_WINDOW_MS=1000,MAX_MESSAGES_PER_WINDOW=24;
+// Authenticated, room-only WORLD CHAT. Never persist chat or trust client identity.
+const CHAT_COOLDOWN_MS=2500,CHAT_MAX_CHARACTERS=160,CHAT_MAX_WIRE_BYTES=384;
+const chatForbidden=/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/u;
 const allowedName=/^[A-Za-z0-9 _-]{2,24}$/;
 const allowedModels=new Set(['Adventurer','Jarrell','Lheiz']);
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -109,6 +112,7 @@ export class JarrellRoom {
   // no ATTACK packet is ever passed to ServerCombatState.attack.
   this.combat=new ServerCombatState({room:this.room});
   this.lastPunch=new Map();
+  this.lastChat=new Map();
   this.userSockets=new Map();
   this.spawned=new Set();
  }
@@ -157,6 +161,7 @@ export class JarrellRoom {
    this.combat.disconnect(prior.id);
    this.room.disconnect(prior.id);
    this.lastPunch.delete(prior.id);
+   this.lastChat.delete(prior.id);
    this.spawned.delete(prior.id);
    try{prior.socket.close(4001,'replaced-by-same-account')}catch{}
   }
@@ -168,7 +173,7 @@ export class JarrellRoom {
   this.userSockets.set(entry.userId,{id,socket});
   const cleanup=()=>{
    this.combat.disconnect(id);
-   this.room.disconnect(id);this.lastPunch.delete(id);this.spawned.delete(id);
+   this.room.disconnect(id);this.lastPunch.delete(id);this.lastChat.delete(id);this.spawned.delete(id);
    if(this.userSockets.get(entry.userId)?.id===id)this.userSockets.delete(entry.userId);
   };
   let windowStart=Date.now(),messagesThisWindow=0;
@@ -204,6 +209,32 @@ export class JarrellRoom {
    }
    if(message.type==='move'&&!this.spawned.has(id)){
     socket.send(JSON.stringify({type:'rejected',reason:'spawn-required'}));return;
+   }
+   if(message.type==='world-chat'){
+    if(!this.spawned.has(id)){
+     socket.send(JSON.stringify({type:'rejected',reason:'spawn-required'}));return;
+    }
+    if(typeof message.text!=='string'||message.text.length>320){
+     socket.send(JSON.stringify({type:'rejected',reason:'world-chat-invalid-text'}));return;
+    }
+    const text=message.text.trim().normalize('NFC');
+    // Unicode and emoji are allowed; control/bidi characters and oversized
+    // messages are rejected before reaching other authenticated peers.
+    if(!text||[...text].length>CHAT_MAX_CHARACTERS||chatForbidden.test(text)||
+       new TextEncoder().encode(text).byteLength>CHAT_MAX_WIRE_BYTES){
+     socket.send(JSON.stringify({type:'rejected',reason:'world-chat-invalid-text'}));return;
+    }
+    const now=Date.now();
+    if(now-(this.lastChat.get(id)??-Infinity)<CHAT_COOLDOWN_MS){
+     socket.send(JSON.stringify({type:'rejected',reason:'world-chat-rate-limit'}));return;
+    }
+    const member=this.room.members.get(id);
+    if(!member)return;
+    this.lastChat.set(id,now);
+    // Include the sender for a server-confirmed echo; never accept client IDs,
+    // account info, timestamps, player HP, wallet, inventory or payment fields.
+    this.room.broadcast({type:'world-chat',id,name:member.name,text,at:now});
+    return;
    }
    // Authenticated duel invitations are CONSENT SIGNALS, not HP damage.
    // The server binds the requesting identity to this socket's trusted id.
