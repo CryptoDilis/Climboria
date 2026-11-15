@@ -21,14 +21,18 @@ const pins = {
 };
 const hash = bytes => createHash('sha384').update(bytes).digest('base64');
 const assets = new Map();
-for (const [name, expected] of Object.entries(pins)) {
-  const response = await fetch('https://plugin.jup.ag/' + name, {
-    redirect: 'error', signal: AbortSignal.timeout(15000)
-  });
-  if (!response.ok) throw new Error('Cannot download ' + name);
-  const bytes = Buffer.from(await response.arrayBuffer());
-  if (hash(bytes) !== expected) throw new Error('Integrity mismatch: ' + name);
-  assets.set(prefix + name, bytes);
+// No vendor network, asset rehosting, or wallet-capable code is fetched in the
+// default-OFF state. Only an explicit isolated staging opt-in may fetch pins.
+if (localRuntimeApproved) {
+  for (const [name, expected] of Object.entries(pins)) {
+    const response = await fetch('https://plugin.jup.ag/' + name, {
+      redirect: 'error', signal: AbortSignal.timeout(15000)
+    });
+    if (!response.ok) throw new Error('Cannot download ' + name);
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (hash(bytes) !== expected) throw new Error('Integrity mismatch: ' + name);
+    assets.set(prefix + name, bytes);
+  }
 }
 function replaceRequired(source, search, replacement) {
   const output = source.replace(search, replacement);
@@ -36,21 +40,27 @@ function replaceRequired(source, search, replacement) {
   return output;
 }
 const bootstrapPath = prefix + 'plugin-1.0.18.js';
-let bootstrap = assets.get(bootstrapPath).toString();
-bootstrap = replaceRequired(bootstrap, '||"https://plugin.jup.ag"', '||' + JSON.stringify(stagingOrigin.origin + prefix.slice(0, -1)));
-bootstrap = replaceRequired(bootstrap, /https:\/\/fonts\.googleapis\.com\/css2\?[^"']+/, prefix + 'fonts.css');
-assets.set(bootstrapPath, Buffer.from(bootstrap));
-assets.set(prefix + 'fonts.css', Buffer.alloc(0));
 const host = await readFile(resolve(root, 'dex/provider-managed-swap.mjs'), 'utf8');
-let stagedHost = replaceRequired(host, '"terminal.jup.ag"', JSON.stringify(stagingOrigin.hostname));
-stagedHost = replaceRequired(stagedHost, /^const SCRIPT_PATH = .*$/m, 'const SCRIPT_PATH = /^\\/__staging_jupiter\\/plugin-1\\.0\\.18\\.js$/;');
-stagedHost = replaceRequired(stagedHost.replace(/\r\n/g, '\n'), 'url.protocol !== "https:" || url.hostname !== OFFICIAL_TERMINAL_HOST ||\n        url.port', 'url.origin !== ' + JSON.stringify(stagingOrigin.origin) + ' || url.hostname !== OFFICIAL_TERMINAL_HOST');
-stagedHost = replaceRequired(stagedHost, 'displayMode: "integrated",', 'displayMode: "integrated", autoConnect: false,');
 const config = await readFile(resolve(root, 'swap-config.js'), 'utf8');
-const stagedConfig = replaceRequired(config, /managedProvider: Object.freeze\(\{[\s\S]*?\}\)/, 'managedProvider: Object.freeze(' + JSON.stringify({
-  enabled: true, runtimeApproved: true, provider: 'jupiter-terminal', scriptUrl: stagingOrigin.origin + bootstrapPath,
-  integrity: 'sha384-' + hash(bootstrap)
-}) + ')');
+let stagedHost = host;
+let stagedConfig = config;
+// The disabled-by-default staging host serves the exact production OFF config
+// and does not patch the production provider loader or rehost vendor assets.
+if (localRuntimeApproved) {
+  let bootstrap = assets.get(bootstrapPath).toString();
+  bootstrap = replaceRequired(bootstrap, '||"https://plugin.jup.ag"', '||' + JSON.stringify(stagingOrigin.origin + prefix.slice(0, -1)));
+  bootstrap = replaceRequired(bootstrap, /https:\/\/fonts\.googleapis\.com\/css2\?[^"']+/, prefix + 'fonts.css');
+  assets.set(bootstrapPath, Buffer.from(bootstrap));
+  assets.set(prefix + 'fonts.css', Buffer.alloc(0));
+  stagedHost = replaceRequired(host, '"terminal.jup.ag"', JSON.stringify(stagingOrigin.hostname));
+  stagedHost = replaceRequired(stagedHost, /^const SCRIPT_PATH = .*$/m, 'const SCRIPT_PATH = /^\\/__staging_jupiter\\/plugin-1\\.0\\.18\\.js$/;');
+  stagedHost = replaceRequired(stagedHost.replace(/\r\n/g, '\n'), 'url.protocol !== "https:" || url.hostname !== OFFICIAL_TERMINAL_HOST ||\n        url.port', 'url.origin !== ' + JSON.stringify(stagingOrigin.origin) + ' || url.hostname !== OFFICIAL_TERMINAL_HOST');
+  stagedHost = replaceRequired(stagedHost, 'displayMode: "integrated",', 'displayMode: "integrated", autoConnect: false,');
+  stagedConfig = replaceRequired(config, /managedProvider: Object.freeze\(\{[\s\S]*?\}\)/, 'managedProvider: Object.freeze(' + JSON.stringify({
+    enabled: true, runtimeApproved: true, provider: 'jupiter-terminal', scriptUrl: stagingOrigin.origin + bootstrapPath,
+    integrity: 'sha384-' + hash(bootstrap)
+  }) + ')');
+}
 const mime = { '.html':'text/html', '.js':'application/javascript', '.mjs':'application/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png' };
 
 createServer(async (request, response) => {
