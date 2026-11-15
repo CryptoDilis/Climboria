@@ -178,6 +178,10 @@ try {
     renderer.add({id:markerId,name:'QA Explorer',model:'Adventurer',position:pos});
     const added=renderer.count();
     const during=renderer.audit();
+    // QA-only renderer movement is not a network peer; check read-only audit
+    // used later by real owner-operated two-browser movement acceptance.
+    renderer.move(markerId,{x:pos.x+2,y:pos.y,z:pos.z});
+    const moved=renderer.audit();
     // Cached terrain map refreshes every 120 ms. Exercise the real render
     // loop rather than faking canvas pixels or direct marker mutations.
     await new Promise(resolve=>setTimeout(resolve,300));
@@ -191,7 +195,7 @@ try {
     const after=renderer.audit();
     await new Promise(resolve=>setTimeout(resolve,300));
     const legendAfter=document.querySelector('#world-map-legend')?.textContent||'';
-    return {status,initial,added,removed,during,after,
+    return {status,initial,added,removed,during,moved,after,
       fieldMap:{legendDuring,legendAfter,pixel,cyan}};
   });
   console.log('GAME staged presence renderer (default-off) QA:',JSON.stringify(remotePresenceQA));
@@ -200,6 +204,10 @@ try {
      remotePresenceQA.during?.resident!==0||remotePresenceQA.during?.loading!==0||
      remotePresenceQA.after?.resident!==0||remotePresenceQA.after?.loading!==0||
      remotePresenceQA.after?.peers!==0||remotePresenceQA.after?.budget!==3||
+     remotePresenceQA.during?.positions?.length!==1||
+     remotePresenceQA.moved?.positions?.length!==1||
+     Math.abs(remotePresenceQA.moved.positions[0].x-remotePresenceQA.during.positions[0].x-2)>.01||
+     remotePresenceQA.after?.positions?.length!==0||
      !remotePresenceQA.fieldMap?.legendDuring?.includes('Cyan = explorers (1)')||
      !remotePresenceQA.fieldMap?.cyan||
      remotePresenceQA.fieldMap?.legendAfter?.includes('Cyan = explorers'))
@@ -599,7 +607,13 @@ try {
     document.addEventListener('climboria:visual-punch',listener);
     const before={stamina:p?.stamina,hp:p?.hp};
     window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyQ',bubbles:true}));
-    const once={stamina:p?.stamina,hp:p?.hp,mode:document.documentElement.dataset.climboriaPunch};
+    // Capture the authored clip synchronously with the Q input. The game's
+    // genuine ATTACK only lasts 650 ms; waiting from Node/Playwright for a
+    // transient dataset state can miss it under software-rendered WebGL load.
+    const once={stamina:p?.stamina,hp:p?.hp,mode:document.documentElement.dataset.climboriaPunch,
+      animation:document.documentElement.dataset.climboriaHeroAnimation,
+      clip:document.documentElement.dataset.climboriaHeroClip,
+      activeClip:window.__climboriaJarrellsPeak?.heroAnimationAudit?.()?.activeClip};
     window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyQ',bubbles:true}));
     const twice={stamina:p?.stamina,hp:p?.hp};
     window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyQ',bubbles:true}));
@@ -611,9 +625,14 @@ try {
      punchInput.twice.stamina!==punchInput.once.stamina||punchInput.once.hp!==punchInput.before.hp||punchInput.events!==1)
     errors.push('Attack must trigger once with stamina cost, cooldown and no fake client-side PvP damage: '+JSON.stringify(punchInput));
   // The original Adventurer GLB actually exports Punch_Combo_1, not the
-  // Jarrell model's Punch_Combo. Enforce a REAL authored attack clip.
-  await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='punch' &&
-    document.documentElement.dataset.climboriaHeroClip==='Punch_Combo_1',undefined,{timeout:2000,polling:50});
+  // Jarrell model's Punch_Combo. Require genuine authored clip selection at
+  // keydown, and do not claim an animated attack from a dummy dataset alone.
+  // This catches a missing/incorrect clip deterministically, without trying
+  // to poll a transient 650 ms state across a busy WebGL rendering boundary.
+  if(punchInput.once.animation!=='punch'||
+     punchInput.once.clip!=='Punch_Combo_1'||
+     punchInput.once.activeClip!=='Punch_Combo_1')
+    errors.push('Q ATTACK did not synchronously select the authored Adventurer Punch_Combo_1 clip: '+JSON.stringify(punchInput.once));
   await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='idle',undefined,{timeout:15000});
 
   const idleAnimationAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);

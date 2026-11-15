@@ -28,7 +28,7 @@ const ready=await fetch(new URL('ready',base),{signal:AbortSignal.timeout(timeou
 verify(ready.ok,'Game room Worker is deployed but its required bindings are not configured');
 const readiness=await ready.json();
 verify(readiness.service==='climboria-game-room'&&
- readiness.bindingsConfigured===true&&readiness.gameplayPvP===false,
+ readiness.bindingsConfigured===true&&readiness.durableObjectReady===true&&readiness.gameplayPvP===false,
  'Game Worker is not configured for safe authenticated room acceptance');
 // /ready is a binding preflight only. Two real accounts must still prove
 // Supabase auth, bidirectional peer/chat traffic and room safety below.
@@ -171,6 +171,24 @@ try{
  }
  await packet(b,{type:'player-moved',id:welcomeA.selfId,positionX:80},'A visible outside protected area');
  await packet(a,{type:'player-moved',id:welcomeB.selfId,positionX:80},'B visible outside protected area');
+
+ // Real Game stamina sprint is 22m/s, above the former 14m/s gateway cap.
+ // Verify three sequential 6.6m/300ms legitimate updates are all forwarded
+ // to the other authenticated player and the server still denies teleports.
+ for(let step=1;step<=3;step++){
+  const x=80+step*6.6;
+  await Promise.all([
+   send(a,{type:'move',position:{x,y:9.55,z:-30}}),
+   send(b,{type:'move',position:{x,y:9.55,z:-30}})
+  ]);
+  await new Promise(resolve=>setTimeout(resolve,320));
+ }
+ await packet(b,{type:'player-moved',id:welcomeA.selfId,positionX:99.8},
+  'Actual Game sprint pace visible to B');
+ await packet(a,{type:'player-moved',id:welcomeB.selfId,positionX:99.8},
+  'Actual Game sprint pace visible to A');
+ await send(a,{type:'move',position:{x:900,y:9.55,z:-30}});
+ await packet(a,{type:'rejected',reason:'move-too-fast'},'Teleport rejected after sprint');
 
  // The server derives the true actor from each WebSocket. Deliberately spoof
  // actorId/health/damage and verify only the authorized session may consent.

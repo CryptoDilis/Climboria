@@ -32,17 +32,25 @@ Check `https://<approved-worker-host>/health` and verify
 alone proves only that code responds**, not that the Worker is configured.
 
 Also check `https://<approved-worker-host>/ready` and require **HTTP 200**
-with `bindingsConfigured:true` and `gameplayPvP:false`. HTTP 503 means
-the Worker does **not** currently have the required Durable Object binding,
-valid Supabase URL, or publishable-key binding: inspect protected GitHub
-environment secrets and staging deploy logs rather than enabling the
-public Game. The readiness response never reveals a key or admin secret.
-**Even HTTP 200 here does not prove Supabase login works, authenticated
-two-account movement/chat, 3D remote avatars or mobile FPS.** A successful
-deployment log alone is not a two-account acceptance result.
+with `bindingsConfigured:true`, **`durableObjectReady:true`**, and
+`gameplayPvP:false`. This endpoint performs a bounded read-only probe of the
+**real single-room Durable Object storage**; an installed binding that cannot
+initialize its migration/storage **must** return HTTP 503. HTTP 503 can
+therefore mean required key/URL/DO bindings are absent **or** that the DO
+object/storage is unavailable: inspect protected environment secrets,
+migrations, deployment logs and Cloudflare Durable Object availability rather
+than enabling the public Game. Only boolean readiness is exposed: never key
+material, account data, tickets or real chat. **Even HTTP 200 here does not
+prove Supabase login works, authenticated two-account movement/chat, 3D
+remote avatars or mobile FPS.** A successful deployment log alone is not a
+two-account acceptance result.
 
-With **two different test users**, sign in to the existing Game Supabase
-project and obtain short-lived account JWTs in a *private* local shell.
+With **two different registered (non-anonymous) test users**, sign in to
+the existing Game Supabase project and obtain short-lived account JWTs in a
+*private* local shell. **Supabase anonymous/guest sessions must not enter the
+authenticated multiplayer room**, even when they have a valid JWT. The Game
+client prevents guest room tickets and the server independently rejects
+`is_anonymous:true` or an `app_metadata.provider` of `anonymous`.
 Do not commit or paste JWTs, refresh tokens, tickets or personal user data.
 Run from a local checkout with Node 22 and Playwright Chromium installed:
 
@@ -57,6 +65,15 @@ GAME_USER_B_JWT="<private-ephemeral-JWT-B>" \
 node game/multiplayer/worker/e2e-two-accounts.mjs
 ```
 
+The Worker issues at most **two outstanding 30-second one-use tickets per
+registered Supabase account**, enforced in an atomic Durable Object storage
+transaction. A third still-pending request gets `HTTP 429
+account-ticket-limit` and must not be treated as a room outage; wait for the
+previous ticket to be consumed/expire rather than bypassing the rate limit.
+The global 32-pending-ticket cap and per-room 32-live-peer cap remain intact.
+This prevents one account from filling all pending room slots while leaving
+other registered test users able to join.
+
 This manual script loads a blank first-party-origin QA browser document,
 never the public Game or a third-party site. It tests real server-authenticated
 WebSocket join, **spawn-accepted**, two-way movement, server-stamped World
@@ -65,7 +82,48 @@ disconnection. **It does not verify actual remote GLB rendering or mobile
 gameplay**. An exact approved hostname is required; unrecognized hosts fail
 closed. Never paste full shell commands containing tokens into support chats.
 
-## 3. Verify production Game visuals before enabling everyone
+## 3. Owner-only real Game UI acceptance (separate from room socket QA)
+
+When the approved custom domain `https://rooms.climboria.fun/` has been bound
+to the isolated Game Worker and /health + /ready checks are both green, run
+the additional real Game WebGL integration test:
+
+```sh
+npm install --no-save playwright
+npx playwright install chromium
+
+# Enter throwaway Supabase QA credentials interactively; private values
+# stay out of typed shell commands, logs, files, git history and ChatGPT.
+export GAME_QA_APPROVAL=I_APPROVE_GAME_STAGING_QA
+read -rp "QA A email: " GAME_QA_A_EMAIL
+read -rsp "QA A password: " GAME_QA_A_PASSWORD; printf '\n'
+read -rp "QA B email: " GAME_QA_B_EMAIL
+read -rsp "QA B password: " GAME_QA_B_PASSWORD; printf '\n'
+export GAME_QA_A_EMAIL GAME_QA_A_PASSWORD GAME_QA_B_EMAIL GAME_QA_B_PASSWORD
+GAME_QA_LANDSCAPE_MOBILE=1 node game/multiplayer/worker/e2e-real-game-ui.mjs
+unset GAME_QA_A_EMAIL GAME_QA_A_PASSWORD GAME_QA_B_EMAIL GAME_QA_B_PASSWORD
+```
+
+The script connects to the actual **https://climboria.fun/game/play.html**
+in two isolated Chromium browser contexts. It routes only each QA browser's
+`/game/multiplayer/client-config.json` response to the owned secure
+`rooms.climboria.fun` endpoint **in that browser**, not on the public site
+or in any tracked file. It exercises *real Supabase password sign-in*,
+server-confirmed initial spawn, both real remote Jarrell/Lheiz GLB models,
+**actual keyboard Shift+W sprint movement replicated to the other browser**,
+cyan map/online roster, two-way World Chat, logout cleanup and same-tab
+re-login/rejoin. It can measure approximate Chromium software-render FPS.
+Only dummy QA account credentials are permitted; never run against customer
+accounts. Screenshots are optional via a **private local**
+`GAME_QA_SCREENSHOT_DIR` folder, never commit or upload them without review.
+
+This script is **only syntax-checked in CI**, and does **not** automatically
+run or deploy anything. Its mobile mode is *emulation*, not a physical
+Android GPU/performance acceptance. Even a full PASS does not prove
+all production browsers or the public multiplayer release gate; owner must
+perform physical Android gameplay and verify deployment/domain ownership.
+
+## 4. Verify production Game visuals before enabling everyone
 
 Use the actual owned `rooms.climboria.fun` Cloudflare custom domain
 (HTTPS/WSS) for the eventual public browser endpoint; `workers.dev` is

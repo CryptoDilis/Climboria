@@ -565,18 +565,14 @@ footer:first-of-type>div{
     <img src="./857289992_1755402102906767_7411463028840030192_n-1.webp" alt="CLIMBORIA Official Hero" loading="eager" fetchpriority="high">
   </picture>
   <div class="hero-overlay"></div>
-  <section class="launch-countdown" aria-label="Climboria token launch countdown">
-    <div class="launch-kicker">Planned launch target · subject to readiness</div>
-    <h2>$CLIMB LAUNCH TARGET</h2>
-    <div class="launch-meta">PUMP.FUN · <strong>NOVEMBER 15, 2026</strong> · <strong>15:00 UTC</strong></div>
-    <div class="launch-timer" role="timer" aria-live="off">
-      <div class="launch-time-unit"><b id="launchDays">--</b><span>Days</span></div>
-      <div class="launch-time-unit"><b id="launchHours">--</b><span>Hours</span></div>
-      <div class="launch-time-unit"><b id="launchMinutes">--</b><span>Minutes</span></div>
-      <div class="launch-time-unit"><b id="launchSeconds">--</b><span>Seconds</span></div>
-    </div>
-    <div class="launch-foot"><i></i>Planned target only · date may change · verify launch link and token address on official channels</div>
-    <a class="launch-follow" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer">FOLLOW @CLIMBORIAHQ ↗</a>
+  <section class="launch-countdown" aria-label="Official CLIMB token contract address">
+    <div class="launch-kicker">Official $CLIMB token announcement</div>
+    <h2>$CLIMB CONTRACT ADDRESS</h2>
+    <div class="launch-meta">SOLANA · PUMP.FUN · NOVEMBER 15, 2026</div>
+    <p style="margin:14px auto 8px;max-width:100%;overflow-wrap:anywhere;word-break:break-word;color:#ffe5a4;font-size:clamp(11px,1.15vw,15px);font-weight:700;line-height:1.6" id="climbOfficialCa">9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump</p>
+    <button type="button" id="copyClimbCa" class="launch-follow" style="cursor:pointer;margin:4px 6px 8px">COPY CA</button>
+    <a class="launch-follow" href="https://pump.fun/coin/9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump" target="_blank" rel="noopener noreferrer" style="margin:4px 6px 8px">VIEW ON PUMP.FUN ↗</a>
+    <div class="launch-foot">Verify this address on our official X account before trading. Beware of impersonators.</div>
   </section>
   <div class="hero-content">
     <div class="hero-buttons">
@@ -755,18 +751,15 @@ footer:first-of-type>div{
 <script>
 (() => {
   const ham = document.getElementById('hamburger');
-  const launchAt = Date.UTC(2026, 10, 15, 15, 0, 0);
-  const updateLaunchCountdown = () => {
-    let remaining = Math.max(0, launchAt - Date.now());
-    const days = Math.floor(remaining / 86400000); remaining %= 86400000;
-    const hours = Math.floor(remaining / 3600000); remaining %= 3600000;
-    const minutes = Math.floor(remaining / 60000); remaining %= 60000;
-    const seconds = Math.floor(remaining / 1000);
-    const put = (id, value) => { const el=document.getElementById(id); if(el) el.textContent=String(value).padStart(2,"0"); };
-    put("launchDays",days); put("launchHours",hours); put("launchMinutes",minutes); put("launchSeconds",seconds);
-    if(Date.now() >= launchAt){ const foot=document.querySelector(".launch-foot"); if(foot) foot.textContent="Scheduled launch time reached · check @ClimboriaHQ for official status and link"; }
-  };
-  updateLaunchCountdown(); window.setInterval(updateLaunchCountdown,1000);
+  const copyClimbCaButton = document.getElementById('copyClimbCa');
+  if (copyClimbCaButton) copyClimbCaButton.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText('9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump');
+      copyClimbCaButton.textContent = 'COPIED!';
+    } catch {
+      copyClimbCaButton.textContent = 'SELECT CA ABOVE TO COPY';
+    }
+  });
 
   const menu = document.getElementById('mobileMenu');
   let menuOpen = false;

@@ -9,7 +9,7 @@ import {ServerCombatState} from '../server-combat-state.mjs';
 
 const ROOM='jarrell-peak';
 const TRUSTED_ORIGINS=new Set(['https://climboria.fun','https://www.climboria.fun']);
-const MAX_AUTH_BYTES=4096,MAX_JSON_BYTES=1024,SESSION_TTL=30_000,MAX_PENDING=32;
+const MAX_AUTH_BYTES=4096,MAX_JSON_BYTES=1024,SESSION_TTL=30_000,MAX_PENDING=32,MAX_PENDING_PER_USER=2;
 // Bound abusive socket bursts; normal Game presence publishes movement at ~4 Hz.
 const MESSAGE_WINDOW_MS=1000,MAX_MESSAGES_PER_WINDOW=24;
 // Authenticated, room-only WORLD CHAT. Never persist chat or trust client identity.
@@ -58,9 +58,10 @@ export const gateway={
   const url=new URL(req.url);
   if(url.pathname==='/health'&&req.method==='GET')
    return response(200,{service:'climboria-game-room',deployedGateway:true,gameplayPvP:false},origin);
-  // /health proves only that code is deployed. Staging readiness explicitly
-  // requires bound Durable Objects and a scoped Supabase publishable key.
-  // This never returns key material and does NOT claim two-account QA passed.
+  // /health proves only that code is deployed. /ready must also contact
+  // the real ROOM durable object and perform a bounded read of its storage.
+  // An installed binding alone cannot certify migration/storage availability.
+  // No authentication tokens, accounts or public gameplay state are used.
   if(url.pathname==='/ready'&&req.method==='GET'){
    const configured=!!(env?.ROOMS&&typeof env.ROOMS.get==='function'&&
     typeof env.ROOMS.idFromName==='function'&&
@@ -68,9 +69,25 @@ export const gateway={
     env.SUPABASE_PUBLISHABLE_KEY.length>=16&&
     env.SUPABASE_PUBLISHABLE_KEY.length<=512&&
     env.SUPABASE_URL==='https://unadepiwbovblkfjlksk.supabase.co');
-   return response(configured?200:503,{
+   let durableObjectReady=false;
+   if(configured){
+    try{
+     const stub=env.ROOMS.get(env.ROOMS.idFromName(ROOM));
+     const probe=await stub.fetch(new Request('https://room.internal/_ready',{
+      method:'GET',signal:AbortSignal.timeout(3500)
+     }));
+     if(probe.status===200){
+      const data=await probe.json();
+      durableObjectReady=data?.durableObjectReady===true;
+     }
+    }catch{
+     // Fail closed on missing migration, Durable Object storage errors,
+     // unavailable object or malformed internal /_ready response.
+    }
+   }
+   return response(configured&&durableObjectReady?200:503,{
     service:'climboria-game-room',bindingsConfigured:configured,
-    gameplayPvP:false
+    durableObjectReady,gameplayPvP:false
    },origin);
   }
   if(!validOrigin(req))return response(403,{error:'origin-not-allowed'},origin);
@@ -99,6 +116,12 @@ export const gateway={
     verifiedUser=await userResponse.json();
    }catch{return response(503,{error:'auth-service-unavailable'},origin)}
    if(!uuid.test(verifiedUser?.id||''))return response(401,{error:'invalid-auth-identity'},origin);
+   // Supabase anonymous sign-ins may have real UUIDs and valid short-lived
+   // bearer tokens. A verified UUID alone is not a registered Game account.
+   // Mirror the browser's guest restriction at the trusted ticket issuer;
+   // do not allow direct /ticket calls to bypass signed-in-only World Chat.
+   if(verifiedUser.is_anonymous===true||verifiedUser.app_metadata?.provider==='anonymous')
+    return response(401,{error:'registered-game-account-required'},origin);
    const ticket=crypto.randomUUID().replace(/-/g,'')+crypto.randomUUID().replace(/-/g,'');
    const name=allowedName.test(payload.name||'')?payload.name:'Explorer';
    const model=allowedModels.has(payload.model)?payload.model:'Adventurer';
@@ -133,22 +156,46 @@ export class JarrellRoom {
  }
  async fetch(req){
   const url=new URL(req.url);
+  if(url.pathname==='/_ready'&&req.method==='GET'){
+   // Server-internal, read-only storage probe: neither mints tickets nor
+   // advertises that Supabase accounts/GLBs/World Chat were actually tested.
+   try{
+    await this.state.storage.get('climboria-game-room-readiness-probe');
+    return response(200,{durableObjectReady:true});
+   }catch{return response(503,{durableObjectReady:false})}
+  }
   if(url.pathname==='/_ticket'&&req.method==='POST'){
    const data=await readBoundedJSON(req);
    if(!data||!new RegExp('^[a-f0-9]{64}$').test(data.ticket||'')||
       !uuid.test(data.userId||'')||!allowedName.test(data.name||'')||!allowedModels.has(data.model))
     return response(400,{error:'invalid-ticket-data'});
-   const now=Date.now();
-   const tickets=await this.state.storage.list({prefix:'ticket:'});
-   let pending=0;
-   for(const [key,entry] of tickets){
-    if(entry.expiresAt<=now)await this.state.storage.delete(key);
-    else pending++;
-   }
-   if(pending>=MAX_PENDING||this.room.members.size>=32)
-    return response(429,{error:'room-full'});
-   await this.state.storage.put('ticket:'+data.ticket,{...data,expiresAt:now+SESSION_TTL});
-   return response(201,{ok:true});
+   // One authenticated Supabase user must not fill all 32 pending tickets
+   // and deny the room to everybody else. Count, prune and issue atomically;
+   // multiple simultaneous ticket requests cannot race the limit.
+   const result=await this.state.storage.transaction(async txn=>{
+    const now=Date.now();
+    const tickets=await txn.list({prefix:'ticket:'});
+    let pending=0,owned=0;
+    for(const [key,entry] of tickets){
+     if(!entry||entry.expiresAt<=now){
+      await txn.delete(key);
+     }else{
+      pending++;
+      if(entry.userId===data.userId)owned++;
+     }
+    }
+    if(pending>=MAX_PENDING||this.room.members.size>=32)
+     return {status:429,error:'room-full'};
+    // Two pending tickets permit a brief reconnect while still bounding
+    // abuse from a single account; tickets expire after only 30 seconds.
+    if(owned>=MAX_PENDING_PER_USER)
+     return {status:429,error:'account-ticket-limit'};
+    if(await txn.get('ticket:'+data.ticket))
+     return {status:409,error:'duplicate-ticket'};
+    await txn.put('ticket:'+data.ticket,{...data,expiresAt:now+SESSION_TTL});
+    return {status:201,ok:true};
+   });
+   return response(result.status,result.ok?{ok:true}:{error:result.error});
   }
   if(url.pathname!=='/ws'||!(/websocket/i.test(req.headers.get('Upgrade')||'')))
    return response(404,{error:'not-found'});

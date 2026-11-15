@@ -16,30 +16,77 @@ test('staging /ready is fail-closed without required bindings, never claims real
  const unknown=await gateway.fetch(mkRequest('/ready'),{});
  assert.equal(unknown.status,503,'empty environment cannot claim configured room');
  assert.deepEqual(await unknown.json(),{
-  service:'climboria-game-room',bindingsConfigured:false,gameplayPvP:false
+  service:'climboria-game-room',bindingsConfigured:false,
+  durableObjectReady:false,gameplayPvP:false
  });
+ let probed=false;
  const bindings={
-  ...env({fetch:async()=>new Response('{}',{status:201})}),
+  ...env({fetch:async(request)=>{
+   assert.equal(request.url,'https://room.internal/_ready');
+   assert.equal(request.method,'GET');
+   assert.ok(request.signal,'staging probe must be time bounded');
+   probed=true;
+   return new Response(JSON.stringify({durableObjectReady:true}),{status:200});
+  }}),
   SUPABASE_PUBLISHABLE_KEY:'sb_publishable_TEST1234567890'
  };
  const ready=await gateway.fetch(mkRequest('/ready'),bindings);
  assert.equal(ready.status,200);
+ assert.equal(probed,true,'installed Durable Object binding alone is not sufficient');
  assert.equal(ready.headers.get('cache-control'),'no-store');
  assert.deepEqual(await ready.json(),{
-  service:'climboria-game-room',bindingsConfigured:true,gameplayPvP:false
- },'readiness reports ONLY configuration, never live two-account QA');
+  service:'climboria-game-room',bindingsConfigured:true,
+  durableObjectReady:true,gameplayPvP:false
+ },'readiness checks only bindings + real Durable Object storage, NOT live two-account QA');
  const malformed=await gateway.fetch(mkRequest('/ready'),{
   ...bindings,SUPABASE_URL:'https://forged.example'
  });
  assert.equal(malformed.status,503,'wrong Supabase origin must be rejected');
  const missingRoom=await gateway.fetch(mkRequest('/ready'),{...bindings,ROOMS:null});
  assert.equal(missingRoom.status,503,'absent Durable Object binding must be rejected');
+ const storageUnavailable=await gateway.fetch(mkRequest('/ready'),{
+  ...bindings,ROOMS:{
+   idFromName:name=>name,
+   get:()=>({fetch:async()=>new Response(JSON.stringify({durableObjectReady:false}),{status:503})})
+  }
+ });
+ assert.equal(storageUnavailable.status,503,'Durable Object migration/storage error must deny staging ready');
+ assert.equal((await storageUnavailable.json()).durableObjectReady,false);
+ const bogus=await gateway.fetch(mkRequest('/ready'),{
+  ...bindings,ROOMS:{
+   idFromName:name=>name,
+   get:()=>({fetch:async()=>new Response(JSON.stringify({ready:true}),{status:200})})
+  }
+ });
+ assert.equal(bogus.status,503,'successful HTTP alone cannot counterfeit an internal storage probe');
+ const missingMigration=await gateway.fetch(mkRequest('/ready'),{
+  ...bindings,ROOMS:{idFromName:name=>name,get:()=>{throw Error('missing Durable Object migration')}}
+ });
+ assert.equal(missingMigration.status,503,'binding exists but DO cannot be initialized');
  const shortKey=await gateway.fetch(mkRequest('/ready'),{
   ...bindings,SUPABASE_PUBLISHABLE_KEY:'short'
  });
  assert.equal(shortKey.status,503,'an unset/invalid placeholder cannot appear configured');
  const blob=JSON.stringify(await shortKey.json());
  assert.equal(blob.includes('sb_publishable'),false,'no credential material is included in readiness replies');
+});
+
+test('Durable Object internal readiness probes its actual storage without issuing tickets',async()=>{
+ let reads=0;
+ const storage={async get(key){
+  assert.equal(key,'climboria-game-room-readiness-probe');
+  reads++;return undefined;
+ }};
+ const room=new JarrellRoom({storage},{});
+ const probe=await room.fetch(mkRequest('/_ready'));
+ assert.equal(probe.status,200);
+ assert.deepEqual(await probe.json(),{durableObjectReady:true});
+ assert.equal(reads,1);
+ assert.equal(room.room.members.size,0,'storage probe must not spawn fake peers');
+ const unavailable=new JarrellRoom({storage:{async get(){throw Error('DO storage unavailable')}}},{});
+ const failed=await unavailable.fetch(mkRequest('/_ready'));
+ assert.equal(failed.status,503,'a broken storage read must not be hidden as configured');
+ assert.deepEqual(await failed.json(),{durableObjectReady:false});
 });
 
 test('zero fake live claim: gateway health says damage disabled, bad origin rejected',async()=>{
@@ -66,6 +113,37 @@ test('ticket issuance needs verified authenticated Supabase user, never trusts c
   assert.equal(JSON.stringify(data).includes(token),false);
  }finally{globalThis.fetch=oldFetch}
 });
+test('verified Supabase anonymous guests cannot obtain multiplayer or World Chat tickets',async()=>{
+ const oldFetch=globalThis.fetch,issued=[];
+ const stub={fetch:async(_url,request)=>{issued.push(JSON.parse(request.body));return new Response('{}',{status:201})}};
+ const request=()=>mkRequest('/ticket',{
+  method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+  body:JSON.stringify({name:'Guest Explorer',model:'Jarrell'})
+ });
+ let identity={id:uid,is_anonymous:true,app_metadata:{provider:'anonymous'}};
+ globalThis.fetch=async()=>new Response(JSON.stringify(identity),{status:200});
+ try{
+  const guest=await gateway.fetch(request(),env(stub));
+  assert.equal(guest.status,401);
+  assert.deepEqual(await guest.json(),{error:'registered-game-account-required'});
+  assert.equal(issued.length,0,'a guest must never reach the Durable Object ticket issuer');
+  identity={id:uid,is_anonymous:false,app_metadata:{provider:'anonymous'}};
+  const legacy=await gateway.fetch(request(),env(stub));
+  assert.equal(legacy.status,401,'anonymous provider is denied even with missing/stale is_anonymous flag');
+  assert.equal(issued.length,0,'anonymous provider must not mint a one-use ticket');
+  identity={id:uid,is_anonymous:true,app_metadata:{provider:'email'}};
+  const inconsistent=await gateway.fetch(request(),env(stub));
+  assert.equal(inconsistent.status,401,'true anonymous state cannot be bypassed by forged provider metadata');
+  assert.equal(issued.length,0);
+  identity={id:uid,is_anonymous:false,app_metadata:{provider:'email'}};
+  const signedIn=await gateway.fetch(request(),env(stub));
+  assert.equal(signedIn.status,200,'normal registered account still obtains a valid room ticket');
+  assert.equal(issued.length,1);
+  assert.equal(issued[0].userId,uid,'server-supplied Supabase ID stays authoritative');
+  assert.equal(JSON.stringify(await signedIn.json()).includes(token),false);
+ }finally{globalThis.fetch=oldFetch}
+});
+
 test('invalid bearer and oversized untrusted payload are fail-closed',async()=>{
  const stub={fetch:async()=>{throw Error('must not reach room')}};
  const noToken=await gateway.fetch(mkRequest('/ticket',{method:'POST',body:'{}'}),env(stub));
@@ -122,6 +200,72 @@ test('malformed Content-Length is denied before auth or upstream room access',as
  const request=mkRequest('/ticket',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Length':'nonsense'},body:'{}'});
  const response=await gateway.fetch(request,env({fetch:async()=>{throw Error('must not issue ticket')}}));
  assert.equal(response.status,400);
+});
+
+test('pending room tickets are atomically capped per registered account, not per room',async()=>{
+ const memory=new Map();
+ let chain=Promise.resolve();
+ const txn={
+  get:async key=>memory.get(key),
+  put:async(key,value)=>{memory.set(key,value)},
+  delete:async key=>memory.delete(key),
+  list:async({prefix}={})=>new Map([...memory].filter(([key])=>key.startsWith(prefix||'')))
+ };
+ const storage={...txn,transaction(fn){
+  // This models Durable Object storage transactions as serializable, even
+  // when several authenticated /ticket requests arrive concurrently.
+  const next=chain.then(()=>fn(txn));chain=next.catch(()=>{});
+  return next;
+ }};
+ const room=new JarrellRoom({storage},{});
+ const issue=(ticket,userId)=>room.fetch(mkRequest('/_ticket',{
+  method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({ticket,userId,name:'Valid Explorer',model:'Jarrell'})
+ }));
+ const [first,second,third]=await Promise.all([
+  issue('a'.repeat(64),uid),issue('b'.repeat(64),uid),issue('c'.repeat(64),uid)
+ ]);
+ assert.deepEqual([first.status,second.status,third.status],[201,201,429],
+  'concurrent requests from one user can own at most two pending tickets');
+ assert.deepEqual(await third.json(),{error:'account-ticket-limit'});
+ assert.equal(memory.size,2,'a rejected third ticket must never be stored');
+ const other=await issue('d'.repeat(64),uid2);
+ assert.equal(other.status,201,'another registered user can still join the same room');
+ assert.equal(memory.size,3);
+ const duplicate=await issue('d'.repeat(64),uid2);
+ assert.equal(duplicate.status,409,'server must not overwrite an outstanding one-time ticket');
+ assert.deepEqual(await duplicate.json(),{error:'duplicate-ticket'});
+ const expired=memory.get('ticket:'+'a'.repeat(64));
+ expired.expiresAt=Date.now()-1;
+ const refreshed=await issue('e'.repeat(64),uid);
+ assert.equal(refreshed.status,201,'expired ticket must release this account slot');
+ assert.equal(memory.has('ticket:'+'a'.repeat(64)),false);
+ assert.equal(memory.size,3);
+ const overLimit=await issue('f'.repeat(64),uid);
+ assert.equal(overLimit.status,429,'two unexpired slots remain bounded after cleanup');
+});
+
+test('global pending Game tickets stay capped at 32 independent registered accounts',async()=>{
+ const memory=new Map(),storage={
+  async get(key){return memory.get(key)},
+  async put(key,val){memory.set(key,val)},
+  async delete(key){return memory.delete(key)},
+  async list({prefix}={}){return new Map([...memory].filter(([key])=>key.startsWith(prefix||'')))},
+  async transaction(fn){return fn(this)}
+ };
+ const room=new JarrellRoom({storage},{});
+ const issues=[];
+ for(let n=0;n<33;n++){
+  const ticket=n.toString(16).padStart(64,'0');
+  const userId='f3ead054-abb4-47ba-b311-'+(n+1).toString(16).padStart(12,'0');
+  issues.push(await room.fetch(mkRequest('/_ticket',{
+   method:'POST',body:JSON.stringify({ticket,userId,name:'Account '+n,model:'Jarrell'})
+  })));
+ }
+ assert.equal(issues.slice(0,32).every(x=>x.status===201),true);
+ assert.equal(issues[32].status,429,'33rd independent user cannot oversubscribe the room');
+ assert.deepEqual(await issues[32].json(),{error:'room-full'});
+ assert.equal(memory.size,32);
 });
 
 test('realtime ticket is one-time; no spoofed attack damage; two actual connections join, punch sync and leave',async()=>{
