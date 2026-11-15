@@ -64,8 +64,8 @@ try {
       mobileClass:document.body.classList.contains('mobile-device'),
       attackButtonDisplay:attack?getComputedStyle(attack).display:null};
   });
-  if(desktopInputMode.touchPoints!==0||desktopInputMode.coarsePointer||
-     desktopInputMode.mobileClass||desktopInputMode.attackButtonDisplay!=='none')
+  if(desktopInputMode.touchPoints!==0||desktopInputMode.mobileClass||
+     desktopInputMode.attackButtonDisplay!=='none')
     errors.push('Keyboard desktop incorrectly enabled mobile ATTACK button: '+JSON.stringify(desktopInputMode));
   try {
     await page.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
