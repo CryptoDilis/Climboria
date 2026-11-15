@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { resolve, sep, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseStagingOrigin, stagingRuntimeEnabled, stagingStatusResult, isStagingPublicAsset } from './dex-swap-staging-runtime-policy.mjs';
+import { parseStagingOrigin, stagingRuntimeEnabled, stagingStatusResult, isStagingPublicAsset, patchIsolatedStagingHost, patchIsolatedStagingConfig } from './dex-swap-staging-runtime-policy.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const stagingOrigin = parseStagingOrigin(process.env.SWAP_STAGING_ORIGIN ?? 'http://127.0.0.1:4173');
@@ -52,14 +52,12 @@ if (localRuntimeApproved) {
   bootstrap = replaceRequired(bootstrap, /https:\/\/fonts\.googleapis\.com\/css2\?[^"']+/, prefix + 'fonts.css');
   assets.set(bootstrapPath, Buffer.from(bootstrap));
   assets.set(prefix + 'fonts.css', Buffer.alloc(0));
-  stagedHost = replaceRequired(host, '"terminal.jup.ag"', JSON.stringify(stagingOrigin.hostname));
-  stagedHost = replaceRequired(stagedHost, /^const SCRIPT_PATH = .*$/m, 'const SCRIPT_PATH = /^\\/__staging_jupiter\\/plugin-1\\.0\\.18\\.js$/;');
-  stagedHost = replaceRequired(stagedHost.replace(/\r\n/g, '\n'), 'url.protocol !== "https:" || url.hostname !== OFFICIAL_TERMINAL_HOST ||\n        url.port', 'url.origin !== ' + JSON.stringify(stagingOrigin.origin) + ' || url.hostname !== OFFICIAL_TERMINAL_HOST');
-  stagedHost = replaceRequired(stagedHost, 'displayMode: "integrated",', 'displayMode: "integrated", autoConnect: false,');
-  stagedConfig = replaceRequired(config, /managedProvider: Object.freeze\(\{[\s\S]*?\}\)/, 'managedProvider: Object.freeze(' + JSON.stringify({
-    enabled: true, runtimeApproved: true, provider: 'jupiter-terminal', scriptUrl: stagingOrigin.origin + bootstrapPath,
-    integrity: 'sha384-' + hash(bootstrap)
-  }) + ')');
+  // Testable, staging-only transformations; fail closed when the first-party
+  // host or security gates change. No modified vendor file enters production.
+  stagedHost = patchIsolatedStagingHost(host, stagingOrigin.origin);
+  stagedConfig = patchIsolatedStagingConfig(
+    config, stagingOrigin.origin, bootstrapPath, hash(bootstrap));
+
 }
 const mime = { '.html':'text/html', '.js':'application/javascript', '.mjs':'application/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png' };
 
