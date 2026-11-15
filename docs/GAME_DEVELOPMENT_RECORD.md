@@ -1,5 +1,16 @@
 # Climboria Game Development Record
 
+## GAME CONTROL LABEL — ATTACK in player-facing UI (2026-11-15 PHT)
+
+- **Owner direction:** use **ATTACK** consistently in visible desktop instructions, mobile button, tooltip and accessibility label. Q remains the near-WASD desktop attack key. Do not imply damage/duels are live.
+- **Draft [PR #477](https://github.com/CryptoDilis/Climboria/pull/477):** `game/play.html` visible button text now ATTACK, help says `Q attack`, title and aria-label use Attack; `.github/scripts/game-smoke.mjs` validates the ATTACK label with the existing five mobile actions and retains Q press/cooldown/stamina/no-fake-damage checks. Internal event identifiers and actual authored animation filenames stay unchanged for compatibility.
+- **Commits:** UI `0c25f523bb584f55d2fb6b01e873d881cf36726c`; test `c1bddede1bd87e1316c11b66fc00aeebe78f668e`. These are committed source edits, NOT a released live site.
+- **Verification carried forward:** prior draft HEAD `4e00e3d9524155f14816b0064da02064743a2639` had Validate run #43673301732 SUCCESS and Browser #43673301756 SUCCESS; Gameplay #43673301693, Hero #43673301739, Chest #43673301803 were still in-progress when last inspected. **Older checks cannot prove this newer UI HEAD**.
+- **EXACT NEXT:** inspect all five required CI runs on final PR HEAD, desktop/mobile screenshots and mobile ATTACK position, keyboard Q, existing walk/sprint/jump/interact, five action buttons, real model animation, no HP mutation; then merge only after successful review and write exact merge/deploy status. Optimized Meshy binaries/real multiplayer still blocked separately per prior checkpoint; do not touch DEX/Swap/Launchpad/ClimbX.
+
+---
+
+
 ## GAME CONTROLS — left-hand desktop punch + prioritized current Game work (2026-11-15 PHT)
 
 - **Scope/branch:** Game-only draft `game/desktop-q-punch-2026-11-15` forked from current `main`; do not touch DEX, Swap, Launchpad, ClimbX, shared release configuration, original Hero GLBs or wallet/economy logic.
