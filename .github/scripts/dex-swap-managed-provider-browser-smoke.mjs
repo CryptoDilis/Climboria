@@ -89,6 +89,9 @@ async function runPage(browser, path, {badHash = false} = {}) {
 
     await button.click();
     const panel = page.locator("[data-climboria-managed-swap-panel]");
+    // The panel is intentionally concealed until the fresh no-store
+    // runtime check resolves, so wait for the approved visible state.
+    await panel.waitFor({ state: "visible", timeout: 10000 });
     assert.equal(await panel.isVisible(),true);
     if (badHash) {
       await page.waitForFunction(() =>
@@ -107,6 +110,7 @@ async function runPage(browser, path, {badHash = false} = {}) {
       assert.equal(await panel.isVisible(),false);
       assert.equal(await button.getAttribute("aria-expanded"),"false");
       await button.click();
+      await panel.waitFor({ state: "visible", timeout: 10000 });
       assert.equal(await panel.isVisible(),true);
       assert.equal(await page.evaluate(() => window.__mockProviderCalls.length),1,
         "reopen must not reinitialize provider");

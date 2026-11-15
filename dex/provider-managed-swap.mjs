@@ -110,10 +110,9 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   buttons.forEach(button => {
     button.hidden = false;
     button.addEventListener("click", async () => {
-      panel.hidden = false;
+      // Keep an already-mounted wallet widget concealed until a NEW
+      // uncached approval check passes; never expose stale-tab controls.
       lastTrigger = button;
-      expanded(true);
-      panel.scrollIntoView?.({ behavior: "smooth", block: "start" });
       if (loading) {
         status.textContent = "Provider is finishing a previous load. If the panel stays empty, click Swap again.";
         return;
@@ -125,12 +124,18 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
       try {
         // Page-load approval may be revoked while this document stays open.
         const allowedOnOpen = await isManagedSwapRuntimeApproved(scope);
-        if (requestId !== openRequestId || panel.hidden) return;
+        if (requestId !== openRequestId) return;
         if (!allowedOnOpen) {
           hideRevoked();
           return;
         }
-        if (mounted) return;
+        panel.hidden = false;
+        expanded(true);
+        panel.scrollIntoView?.({ behavior: "smooth", block: "start" });
+        if (mounted) {
+          status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
+          return;
+        }
         status.textContent = "Loading verified provider integration. No wallet transaction has been requested by Climboria.";
         if (!scriptLoaded) {
           await loadReviewedScript(doc, approved);
