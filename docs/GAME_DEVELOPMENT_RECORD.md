@@ -1,5 +1,16 @@
 # Climboria Game Development Record
 
+## GAME ROOM SOCKET BURST PROTECTION — default OFF (2026-11-15)
+
+- **Isolated Game-only security branch:** `game/room-socket-message-rate-limit-2026-11-15` based on verified `main` `90076fec3d1348e401c09a2e6dba4f149750a419`. Cloudflare Game Worker is NOT deployed and `game/multiplayer/client-config.json` remains `enabled:false, endpoint:null`. No DEX/Swap/Launchpad/ClimbX, paid inventory or wallet modifications.
+- **Source commit `a26c0e98dceb99777b2b765003a5ce8667457efc`:** each authenticated WebSocket session now has a bounded 1-second window, allowing at most 24 inbound messages; the 25th immediate message closes with policy code 1008, executes disconnect cleanup and revokes any ephemeral duel consent. This caps server JSON parsing/rejection amplification from abusive clients. Normal Game remote movement is emitted at approximately 4Hz (one every 250ms), well below the budget; packet/byte caps and movement-rate rules remain independent.
+- **Focused regression `2dd406e7056aa3b9006309f19aa24fb530aac873`:** extend real mock WebSocket fixture with 24 rapid messages remaining connected, then 25th rapid message terminating session, userSockets map cleanup and no retained opponent consent. No response body, health or wallet change is exposed.
+- **Verification status:** source/tests committed, exact-head CI **NOT YET VERIFIED**, no merge, no deployment. Follow strict review/CI gates and investigate any legitimate burst/latency behavior before release. This protects only the Worker, not an online Game that is currently live.
+- **EXACT NEXT:** open Game-only draft PR; require exact-head Game Authenticated Room Gateway, Validate, and Jarrell Gameplay test SUCCESS. Keep changes limited to Worker, its test and this Game record. Merge only after full green, then reconcile any pending DUELS UI draft [#485](https://github.com/CryptoDilis/Climboria/pull/485) with newest main and preserve UI regression. Do not enable multiplayer until owner-approved isolated Cloudflare Game staging/two-real-account WebSocket tests, live GLB/mobile FPS and safe-area/trusted terrain policy review. Five optimized Meshy owner ZIP archives remain absent in [asset PR #466](https://github.com/CryptoDilis/Climboria/pull/466).
+
+---
+
+
 ## GAME REAL TWO-ACCOUNT DUEL E2E — manual staging only (2026-11-15 PHT)
 
 - **Dependent Game-only draft** `game/two-account-duel-e2e-2026-11-15`, initially forked from consent signaling PR #482, now **retargeted to current main** after #482 merged as `f1faf476e270119e3f4de2f5a8f94d1da5ada125`. Two-parent Game-only reconciliation `ca70b5d34ff3407c9471a03f09e39e150885e666` includes merged room signaling without modifying server or client configuration. This does NOT modify the production `game/multiplayer/client-config.json`, DOES NOT deploy Cloudflare, and DOES NOT use or store live Supabase JWTs. No DEX/Swap/Launchpad/ClimbX changes.
