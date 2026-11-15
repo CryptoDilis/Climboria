@@ -1,5 +1,16 @@
 # Climboria Game Development Record
 
+## GAME REAL TWO-ACCOUNT DUEL E2E — manual staging only (2026-11-15 PHT)
+
+- **Dependent Game-only draft** `game/two-account-duel-e2e-2026-11-15`, forked from unmerged Game consent signaling PR #482. This does NOT modify the production `game/multiplayer/client-config.json`, DOES NOT deploy Cloudflare, and DOES NOT use or store live Supabase JWTs. No DEX/Swap/Launchpad/ClimbX changes.
+- **Script commit `ae128ed5c2cc171b5215f8726047ba1d38de8c39`:** `game/multiplayer/worker/e2e-two-accounts.mjs` (explicitly operator-run only) now checks authenticated Sanctuary invitation rejection, two separately authenticated Chromium contexts advancing via ~2.5m per 300ms server-validated moves to x=80m outside protected radius, verified peer position broadcasts, server-bound challenge/accept/revoke, `combatDamageEnabled:false`, client ATTACK rejection and invitation rate-limit. ActorId/health/damage spoof fields are deliberately sent but never authorize damage. Includes predicate filters for server response reason and peer identity. THIS IS a staging protocol acceptance script, NOT a certified terrain or in-game avatar movement test.
+- **Documentation commit `8cc7f845695c0f69c195d851215aba3ee6f2f68b`:** Worker README now explains the full manual two-account consent protocol, required staging approval, and clear gameplay/terrain/FPS limitations.
+- **Verification truth:** no staging Worker deployed, no test account secrets available to this change, no actual two-account execution performed. This script must never be run by default CI because it requires temporary real test-account JWTs; only safe `node --check`/static syntax validation can run automatically. The parent #482 consent signaling may still be awaiting exact-head Gameplay CI. Do NOT call real multiplayer or fighting live.
+- **EXACT NEXT:** open dependent Game-only draft PR targeted at `game/duel-consent-signaling-2026-11-15` to keep diff focused, obtain exact-head Gateway/Validate as appropriate, and fix any syntax/test failures. After parent #482 is separately merged if all required CI pass, reconcile this child to `main` (preserve default-off client and all merged Game files). Only execute script on explicit owner-authorized isolated Cloudflare Game staging with two independent Supabase test accounts, inspect both acceptance logs, real in-game peer/ATTACK UI, disconnect/reconnect, mobile FPS and actual user consent before any public enablement. Owner needs to resolve Sanctuary/no-safe-zone conflict for production PvP.
+
+---
+
+
 ## GAME AUTHENTICATED DUEL CONSENT SIGNALING — default OFF (2026-11-15 PHT)
 
 - **Scope and release truth:** Game-only branch `game/duel-consent-signaling-2026-11-15` based on last verified `main` `c6484dac1017fc91573ac2ed7f5c6edda312bd44`. No DEX, Swap, Launchpad, ClimbX, wallet, loot or production deployment changes. `game/multiplayer/client-config.json` stays `enabled:false` and `endpoint:null` until owner explicitly deploys isolated Worker staging and verifies two real accounts. Existing server-side `attack` remains REJECTED.
