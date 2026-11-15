@@ -1,5 +1,16 @@
 # Climboria Game Development Record
 
+## GAME ROOM WORKER VALID LENGTH HOTFIX — numeric header regression (2026-11-15 PHT)
+
+- **Game-only security/availability fix** on branch `game/worker-content-length-fix-2026-11-15`, forked from verified Game `main` SHA `c6484dac1017fc91573ac2ed7f5c6edda312bd44`. Original bounded request reader accidentally used the JavaScript regular expression literal `/^\\d+$/` (TWO actual backslashes before `d`) to validate the incoming HTTP `Content-Length`; it matches the literal sequence `\\d`, not decimal digits. Thus a legitimate numeric `Content-Length` header could be denied with a 400 before Supabase auth. The existing malformed-header, chunk size and UTF-8 overflow tests did not cover this ordinary valid-header case.
+- **Fix commit `784f3c7e1f6ecc5f6a583ce6f02e2f87b4d6363d`:** use one regex escape `/^\d+$/` to match real nonnegative ASCII numeric lengths. Keep the independent read-stream <=1024 UTF-8 **wire bytes** budget, early cancel on overflow, strict UTF-8 decoder, malformed length rejection, allowed Origin, Supabase auth and one-use WebSocket ticket security unchanged.
+- **Regression commit `1d6c35105a71e81345cd5ee8756ea0c0adc09d6a`:** a real Node Request with correctly declared decimal Content-Length and valid JSON passes the trusted Supabase-account verification path and issues exactly one room ticket. Existing malformed/oversized denial tests remain.
+- **Status:** only Game Worker code, its Node unit tests and this Game record changed. **NOT YET verified by final exact-head Game Gateway/Validate/Gameplay CI; no deployment.** The Game room client remains `enabled:false`, `endpoint:null`. This hotfix is independent from in-flight Game duel consent PR #482 and dependent E2E PR #483; do not let those branches later overwrite this fixed Worker file.
+- **EXACT NEXT:** open Game-only draft PR, require exact-head Gateway/Validate and any full Jarrell Gameplay CI, review diff and merge only if checks pass. Then reconcile PR #482 against updated `main` preserving BOTH this numeric-header fix and new authenticated consent signaling, and retarget #483 after parent merge. Owner still has to approve isolated Cloudflare Game staging/two real accounts; do not infer online gameplay or PvP from static Pages success. Preserve DEX/Swap/Launchpad/ClimbX.
+
+---
+
+
 ## GAME SERVER COMBAT STATE — consent and trusted-position release gate (2026-11-15 PHT)
 
 ### Game server ATTACK draft #478 exact CI checkpoint — 2026-11-15 PHT
