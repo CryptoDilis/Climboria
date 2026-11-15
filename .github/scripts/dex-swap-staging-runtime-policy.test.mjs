@@ -7,7 +7,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  parseStagingOrigin, stagingRuntimeEnabled, stagingStatusResult
+  parseStagingOrigin, stagingRuntimeEnabled, stagingStatusResult, isStagingPublicAsset
 } from "./dex-swap-staging-runtime-policy.mjs";
 
 test("staging origin accepts local loopback HTTP and isolated HTTPS", () => {
@@ -32,6 +32,29 @@ test("staging origin rejects production, lookalike subdomains, credentials, path
   ]) {
     assert.throws(() => parseStagingOrigin(uri), /staging origin|required/);
   }
+});
+
+test("staging static allowlist rejects backend code, metadata and unrelated pages", () => {
+  for (const path of [
+    "/climboria-favicon.png", "/swap-config.js",
+    "/dex/swap-amount.js", "/dex/premium-terminal.js",
+    "/dex/terminal-premium.css", "/dex/provider-managed-swap.css",
+    "/dex/provider-managed-swap.mjs"
+  ]) assert.equal(isStagingPublicAsset(path), true, path);
+  for (const path of [
+    "/dex/swap-proxy/src/index.mjs",
+    "/dex/swap-proxy/tools/observed-programdata-baseline.json",
+    "/dex/swap-proxy/test/worker.test.mjs",
+    "/dex/runtime-status/index.mjs",
+    "/dex/partners/sponsor-inquiry.mjs",
+    "/dex/climbx/index.html",
+    "/.github/scripts/dex-swap-pinned-staging.mjs",
+    "/docs/DEX_SWAP_LAUNCHPAD_DEVELOPMENT_RECORD.md",
+    "/assets/characters/Climboria_Hero.glb",
+    "/swap-config.js/../dex/swap-proxy/src/index.mjs",
+    "/swap-config.js%2f..%2fsecret.js",
+    "/SWAP-CONFIG.JS", "", null, undefined
+  ]) assert.equal(isStagingPublicAsset(path), false, String(path));
 });
 
 test("provider approval is strictly OFF unless the isolated opt-in is exact lower-case true", () => {
@@ -167,4 +190,28 @@ test("default-OFF staging server starts without ANY vendor fetch and serves safe
     assert.equal(response.headers.get("location"), canonical);
   }
   assert.equal((await get("/index.html")).status, 404);
+  // This HTTPS-capable staging host must not become a source-code server.
+  for (const sensitive of [
+    "/dex/swap-proxy/src/index.mjs",
+    "/dex/swap-proxy/tools/observed-programdata-baseline.json",
+    "/dex/swap-proxy/test/worker.test.mjs",
+    "/dex/runtime-status/index.mjs",
+    "/dex/partners/sponsor-inquiry.mjs",
+    "/dex/climbx/index.html",
+    "/.github/scripts/dex-swap-pinned-staging.mjs",
+    "/docs/DEX_SWAP_LAUNCHPAD_DEVELOPMENT_RECORD.md",
+    "/assets/characters/Climboria_Hero.glb"
+  ]) {
+    const response = await get(sensitive);
+    assert.equal(response.status, 404, sensitive + " must not be served");
+  }
+  for (const asset of [
+    "/climboria-favicon.png",
+    "/dex/swap-amount.js", "/dex/premium-terminal.js",
+    "/dex/terminal-premium.css", "/dex/provider-managed-swap.css"
+  ]) {
+    const response = await get(asset);
+    assert.equal(response.status, 200, asset + " is needed for the trading shells");
+    assert.equal(response.headers.get("X-Content-Type-Options"), "nosniff");
+  }
 });
