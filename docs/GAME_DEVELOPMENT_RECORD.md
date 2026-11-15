@@ -1,5 +1,16 @@
 # Climboria Game Development Record
 
+## GAME ATTACK CONTROLS — deterministic CSS test and real authored animation selection (2026-11-15)
+
+- **Game-only draft [PR #477](https://github.com/CryptoDilis/Climboria/pull/477):** desktop Q ATTACK, mobile ATTACK button, tooltip/help/ARIA, and legacy internal wire format remain isolated from DEX/Swap/Launchpad/ClimbX; no online client activation. Original comparison review found UI label centering issues; game button now uses positioned `.attack-control-label` to center regardless of parent display layout.
+- **Verified exact failure:** previous Game HEAD `4b29c9172c2332634e905b99b043d654fd955f2e` had Validate #43675331796, Browser #43675331809, Hero #43675331786, Chest #43675332134 SUCCESS, **full Gameplay #43675331872 FAILURE**. Inspected the actual job logs: the only final error was `Mobile ATTACK label is not centered ... {"label":"ATTACK","display":"grid","dx":0,"dy":0}`. The geometry was correctly centered but the test incorrectly required CSS `display:flex`; mobile override computes `display:grid`. Commit `a605701a67806ea30c8d0533361dd4569b489ed7` permits `flex` or `grid` while retaining exact visible label, computed geometry <= 5 px and all five button collision/size tests.
+- **Real hero animation mismatch fixed:** source audit and prior CI output showed original Adventurer exports authored `Punch_Combo_1`; Jarrell exports `Punch_Combo`, Lheiz exports `Right_Jab_from_Guard`. The old animation selector only tried `Punch_Combo` for non-Lheiz, so original Adventurer incorrectly fell through to procedural animation. Commit `2b083aadc8b390296910cccaf52125043f09303a` picks authored clips explicitly per model. Strict Game browser smoke commit `59eb5d9d8190736b2ff09d52ff4ff789fdb8fe2b` requires real `Punch_Combo_1` when desktop Adventurer ATTACK is triggered; never call a procedural fallback an authored clip.
+- **EXACT CURRENT STATUS:** these commits change source/tests; no final exact-head combined CI result yet, no merge, no Pages/live Game deployment. Do not reuse successes on earlier heads as proof. Combat remains visual-only; validated HP damage in PR #478 is isolated and still default-deny.
+- **EXACT NEXT:** wait for newest HEAD Game Validate, Browser, full Jarrell Gameplay, Hero and Chest CI; inspect actual latest desktop/mobile PNGs and ATTACK button placement; fix any failure before merging. After 5/5 exact-head success and visual acceptance, mark #477 ready then squash merge with expected HEAD SHA, check post-merge main workflows and record deployed Pages SHA if available. Never claim real multiplayer without owner-approved staging deployment/two real accounts. Meshy owner ZIP upload on draft PR #466 remains separate blocker.
+
+---
+
+
 ## GAME CONTROL LABEL — ATTACK in player-facing UI (2026-11-15 PHT)
 
 - **Owner direction:** use **ATTACK** consistently in visible desktop instructions, mobile button, tooltip and accessibility label. Q remains the near-WASD desktop attack key. Do not imply damage/duels are live.
