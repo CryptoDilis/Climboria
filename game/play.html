@@ -1602,8 +1602,13 @@ function findStandingRestClip(){
 function chooseAssetAnimation(state,speed=0){
  if(!assetMixer||!assetActions.length)return false;
  const jumping=state.startsWith('jump-');
- const exact=state==='punch'?(window.__climboriaCreatedHero.model==='Lheiz'?'Right_Jab_from_Guard':'Punch_Combo'):state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':state==='climb'?'climbing_up_wall':jumping?'Regular_Jump':state==='land'?'Landing':'';
- let clip=exact?assetActions.find(a=>a.name.toLowerCase()===exact.toLowerCase()):null;
+ // Match each hero's actual authored GLB clip names. Adventurer uses
+ // Punch_Combo_1; Jarrell uses Punch_Combo; Lheiz uses Right_Jab_from_Guard.
+ const attackClips=window.__climboriaCreatedHero.model==='Lheiz'?['Right_Jab_from_Guard']:['Punch_Combo','Punch_Combo_1'];
+ const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':state==='climb'?'climbing_up_wall':jumping?'Regular_Jump':state==='land'?'Landing':'';
+ let clip=state==='punch'
+  ?assetActions.find(a=>attackClips.some(name=>a.name.toLowerCase()===name.toLowerCase()))
+  :exact?assetActions.find(a=>a.name.toLowerCase()===exact.toLowerCase()):null;
  if(state==='idle'||state==='land')clip=findStandingRestClip();
  else if(!clip){
   const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:state==='swim'?/swim|stroke/i:state==='climb'?/climb/i:jumping?/jump|takeoff|airborne/i:/land|touchdown/i;
