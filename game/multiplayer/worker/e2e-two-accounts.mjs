@@ -28,7 +28,7 @@ const ready=await fetch(new URL('ready',base),{signal:AbortSignal.timeout(timeou
 verify(ready.ok,'Game room Worker is deployed but its required bindings are not configured');
 const readiness=await ready.json();
 verify(readiness.service==='climboria-game-room'&&
- readiness.bindingsConfigured===true&&readiness.gameplayPvP===false,
+ readiness.bindingsConfigured===true&&readiness.durableObjectReady===true&&readiness.gameplayPvP===false,
  'Game Worker is not configured for safe authenticated room acceptance');
 // /ready is a binding preflight only. Two real accounts must still prove
 // Supabase auth, bidirectional peer/chat traffic and room safety below.
