@@ -113,6 +113,29 @@ test('ticket issuance needs verified authenticated Supabase user, never trusts c
   assert.equal(JSON.stringify(data).includes(token),false);
  }finally{globalThis.fetch=oldFetch}
 });
+test('gateway distinguishes bounded ticket capacity from unavailable room without leaking internal errors',async()=>{
+ const oldFetch=globalThis.fetch;
+ globalThis.fetch=async()=>new Response(JSON.stringify({id:uid,is_anonymous:false}),{status:200});
+ const request=()=>mkRequest('/ticket',{
+  method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+  body:JSON.stringify({name:'Jarrell',model:'Jarrell'})
+ });
+ try{
+  for(const [internalStatus,publicStatus,publicError] of [
+   [429,429,'room-busy'],
+   [409,503,'room-unavailable'],
+   [503,503,'room-unavailable']
+  ]){
+   const stub={fetch:async()=>new Response(JSON.stringify({error:'private-room-detail'}),{status:internalStatus})};
+   const res=await gateway.fetch(request(),env(stub));
+   assert.equal(res.status,publicStatus,'gateway must preserve only expected public capacity status');
+   assert.deepEqual(await res.json(),{error:publicError});
+   assert.equal(res.headers.get('cache-control'),'no-store');
+   assert.equal(res.headers.get('access-control-allow-origin'),ORIGIN);
+  }
+ }finally{globalThis.fetch=oldFetch}
+});
+
 test('verified Supabase anonymous guests cannot obtain multiplayer or World Chat tickets',async()=>{
  const oldFetch=globalThis.fetch,issued=[];
  const stub={fetch:async(_url,request)=>{issued.push(JSON.parse(request.body));return new Response('{}',{status:201})}};
