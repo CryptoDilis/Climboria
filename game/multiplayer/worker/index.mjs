@@ -78,7 +78,7 @@ export default gateway;
 export class JarrellRoom {
  constructor(state,env){
   this.state=state;this.env=env;
-  this.tickets=new Map();
+  if(!state?.storage)throw Error('Durable Object storage required for one-use session tickets');
   this.room=new PresenceRoom({roomId:ROOM,limit:32});
   this.lastPunch=new Map();
  }
@@ -90,10 +90,15 @@ export class JarrellRoom {
       !uuid.test(data.userId||'')||!allowedName.test(data.name||'')||!allowedModels.has(data.model))
     return response(400,{error:'invalid-ticket-data'});
    const now=Date.now();
-   for(const [id,entry] of this.tickets)if(entry.expiresAt<=now)this.tickets.delete(id);
-   if(this.tickets.size>=MAX_PENDING||this.room.members.size>=32)
+   const tickets=await this.state.storage.list({prefix:'ticket:'});
+   let pending=0;
+   for(const [key,entry] of tickets){
+    if(entry.expiresAt<=now)await this.state.storage.delete(key);
+    else pending++;
+   }
+   if(pending>=MAX_PENDING||this.room.members.size>=32)
     return response(429,{error:'room-full'});
-   this.tickets.set(data.ticket,{...data,expiresAt:now+SESSION_TTL});
+   await this.state.storage.put('ticket:'+data.ticket,{...data,expiresAt:now+SESSION_TTL});
    return response(201,{ok:true});
   }
   if(url.pathname!=='/ws'||!(/websocket/i.test(req.headers.get('Upgrade')||'')))
@@ -102,9 +107,14 @@ export class JarrellRoom {
   const ticketPart=parts.find(x=>/^t-[a-f0-9]{64}$/.test(x));
   if(!parts.includes('climboria-v1')||!ticketPart)
    return response(401,{error:'invalid-upgrade-ticket'});
-  const ticket=ticketPart.slice(2),entry=this.tickets.get(ticket);
-  // One-time atomic consume; later reconnects must authenticate again.
-  this.tickets.delete(ticket);
+  const ticket=ticketPart.slice(2);
+  // Durable Object storage transaction prevents ticket loss on a cold restart
+  // and atomically consumes it so concurrent WebSocket replays cannot join.
+  const entry=await this.state.storage.transaction(async txn=>{
+   const key='ticket:'+ticket,record=await txn.get(key);
+   if(record)await txn.delete(key);
+   return record;
+  });
   if(!entry||entry.expiresAt<=Date.now())return response(401,{error:'expired-or-used-ticket'});
   const pair=new WebSocketPair(),client=pair[0],socket=pair[1];
   socket.accept();
