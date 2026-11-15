@@ -23,7 +23,7 @@ function groundPosition(anchor,dx,dz){
  return {x,z};
 }
 function audit(){
- return {enabled:state.enabled,guardCount:state.guardCount,loadedDecorations:state.decorations,failedFiles:state.failures.slice(),activeLoads:state.queued,assetDirectory:BASE};
+ return {enabled:state.enabled,guardCount:state.guardCount,loadedDecorations:state.decorations,loadedFiles:decorations.filter(d=>!!d.mesh).map(d=>d.file),replacedTreeCount:decorations.filter(d=>d.mesh&&typeof d.restoreLegacy==='function').length,failedFiles:state.failures.slice(),activeLoads:state.queued,assetDirectory:BASE};
 }
 function glbLoad(path){
  return new Promise(resolve=>{
