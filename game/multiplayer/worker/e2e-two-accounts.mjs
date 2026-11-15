@@ -30,9 +30,14 @@ const contexts=[];
 async function makeBrowserPlayer(token,name,model){
  const ctx=await browser.newContext({serviceWorkers:'block'});contexts.push(ctx);
  const page=await ctx.newPage();
- // Browser-origin parity matters: the Worker accepts only climboria.fun, not
- // curl/Node's absent Origin. No third-party pages are allowed in this test.
- await page.goto('https://climboria.fun/',{waitUntil:'domcontentloaded',timeout:timeout});
+ // Fulfill a blank first-party test document: Chromium sends the authentic
+ // https://climboria.fun Origin header, but no real site's scripts ever see the
+ // temporary QA JWTs. This checks server connectivity, NOT live Game UI.
+ const qaOrigin='https://climboria.fun/__climboria_game_room_acceptance__';
+ await page.route(qaOrigin,route=>route.fulfill({
+  status:200,contentType:'text/html',body:'<!doctype html><title>Climboria game room QA</title>'
+ }));
+ await page.goto(qaOrigin,{waitUntil:'domcontentloaded',timeout});
  await page.evaluate(async ({base,token,name,model,timeout})=>{
   const res=await fetch(new URL('ticket',base),{
    method:'POST',mode:'cors',credentials:'omit',
@@ -61,7 +66,7 @@ async function packet(page,selector,label){
  await page.waitForFunction(predicate=>window.__CLIMBORIA_GAME_E2E?.messages.some(m=>
    m?.type===predicate.type&&(!predicate.id||m.id===predicate.id)&&
    (!predicate.playerId||m.player?.id===predicate.playerId)&&
-   (!predicate.positionX&&predicate.positionX!==0||m.position?.x===predicate.positionX)
+   (predicate.positionX===undefined||m.position?.x===predicate.positionX)
  ),selector,{timeout});
  const obj=await page.evaluate(predicate=>window.__CLIMBORIA_GAME_E2E.messages.find(m=>
   m?.type===predicate.type&&(!predicate.id||m.id===predicate.id)&&
