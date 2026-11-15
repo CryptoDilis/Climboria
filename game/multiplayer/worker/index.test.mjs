@@ -58,7 +58,15 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   constructor(body,opts={}){if(opts.status===101){super(null,{status:200});this.webSocket=opts.webSocket;this.upgraded=true;}else super(body,opts)}
  };
  try{
-  const room=new JarrellRoom({},{});
+  const memory=new Map();
+  const storage={
+   async get(k){return memory.get(k)},
+   async put(k,v){memory.set(k,v)},
+   async delete(k){return memory.delete(k)},
+   async list({prefix}={}){return new Map([...memory].filter(([k])=>k.startsWith(prefix||'')))},
+   async transaction(fn){return fn(this)}
+  };
+  const room=new JarrellRoom({storage},{});
   const a='a'.repeat(64),b='b'.repeat(64);
   const issue=async(ticket,name)=>room.fetch(mkRequest('/_ticket',{method:'POST',
    body:JSON.stringify({ticket,userId:uid,name,model:'Jarrell'})}));
