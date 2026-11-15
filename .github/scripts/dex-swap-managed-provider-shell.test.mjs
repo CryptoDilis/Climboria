@@ -333,6 +333,127 @@ test("a mounted provider remains concealed while its fresh reopen status check i
   assert.equal(calls, 1, "rollback must never reinitialize the prior widget");
 });
 
+test("open provider panel polls uncached release status and hides on operator rollback", async () => {
+  const ui = createDom();
+  let approvedNow = true;
+  let tick;
+  let started = 0;
+  let stopped = 0;
+  let statusRequests = 0;
+  const base = withRuntime({
+    Jupiter: { init() {} },
+    setInterval(callback, interval) {
+      assert.equal(interval, 15000, "revocation checks must run while the widget is visible");
+      tick = callback;
+      ++started;
+      return 789;
+    },
+    clearInterval(id) {
+      assert.equal(id, 789);
+      ++stopped;
+    }
+  }, () => approvedNow);
+  const originalFetch = base.fetch;
+  base.fetch = async (...args) => {
+    ++statusRequests;
+    return originalFetch(...args);
+  };
+  initializeManagedSwapHost({ doc: ui.doc, scope: base, config: approved });
+  assert.equal(started, 0, "no polling before explicit user click");
+  await ui.btn.click();
+  assert.equal(ui.panel.hidden, false);
+  assert.equal(started, 1);
+  assert.equal(statusRequests, 2, "open and pre-init each check the release");
+  await tick();
+  assert.equal(ui.panel.hidden, false, "approved widget stays open");
+  assert.equal(statusRequests, 3);
+  approvedNow = false;
+  await tick();
+  assert.equal(statusRequests, 4);
+  assert.equal(ui.panel.hidden, true, "operator rollback hides an ALREADY open widget");
+  assert.equal(ui.btn.hidden, true);
+  assert.equal(stopped, 1, "operator rollback stops interval");
+  assert.match(ui.status.textContent, /Existing wallet requests and submitted transactions are not cancelled/);
+});
+
+test("closing the provider stops polling; authorized reopen starts one fresh monitor", async () => {
+  const ui = createDom();
+  let tick;
+  let started = 0;
+  let stopped = 0;
+  let statusRequests = 0;
+  const api = withRuntime({
+    Jupiter: { init() {} },
+    setInterval(callback, ms) {
+      assert.equal(ms, 15000);
+      tick = callback;
+      ++started;
+      return started;
+    },
+    clearInterval(id) {
+      assert.ok(id >= 1);
+      ++stopped;
+    }
+  });
+  const fetchOld = api.fetch;
+  api.fetch = async (...args) => { ++statusRequests; return fetchOld(...args); };
+  initializeManagedSwapHost({ doc: ui.doc, scope: api, config: approved });
+  await ui.btn.click();
+  assert.equal(started, 1);
+  ui.close.click();
+  assert.equal(stopped, 1, "close must stop status checks");
+  const requestsBefore = statusRequests;
+  await tick();
+  assert.equal(statusRequests, requestsBefore, "closed panel must never perform release polling");
+  await ui.btn.click();
+  assert.equal(started, 2, "authorized reopening creates exactly one new interval");
+  assert.equal(stopped, 1);
+  assert.equal(ui.panel.hidden, false);
+  ui.close.click();
+  assert.equal(stopped, 2);
+});
+
+test("late failed active-panel poll cannot revoke a newly reapproved reopening", async () => {
+  const ui = createDom();
+  let pendingResolve;
+  let tick;
+  let counter = 0;
+  let started = 0;
+  const yes = { status: 200,
+    headers: { get: () => "no-store" }, json: async () => ({ enabled: true }) };
+  const no = { status: 200,
+    headers: { get: () => "no-store" }, json: async () => ({ enabled: false }) };
+  const scope = {
+    Jupiter: { init() {} },
+    fetch() {
+      ++counter;
+      if (counter === 3) return new Promise(resolve => { pendingResolve = resolve; });
+      return Promise.resolve(yes);
+    },
+    setInterval(fn, period) {
+      assert.equal(period, 15000);
+      tick = fn;
+      ++started;
+      return started;
+    },
+    clearInterval() {}
+  };
+  initializeManagedSwapHost({ doc: ui.doc, scope, config: approved });
+  await ui.btn.click();
+  assert.equal(started, 1);
+  const stalePoll = tick();
+  assert.equal(typeof pendingResolve, "function");
+  ui.close.click();
+  await ui.btn.click();
+  assert.equal(started, 2);
+  assert.equal(ui.panel.hidden, false);
+  pendingResolve(no);
+  await stalePoll;
+  assert.equal(ui.panel.hidden, false, "old response may not close a newer approved session");
+  assert.equal(ui.btn.hidden, false);
+  ui.close.click();
+});
+
 test("all provider launch controls reference the actual expanded panel, not the SDK target", () => {
   for (const [path, id, count] of [
     ["swap/index.html", "climboriaSwapProviderPanel", 1],
