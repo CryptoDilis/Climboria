@@ -51,7 +51,12 @@ try{
    await page.screenshot({path:screenshot,timeout:60000});
    reports.push({device:device.name,area:d.name,location,assetAudit:audit,screenshot});
    if(audit.failedFiles.length)failures.push(device.name+' '+d.name+' GLB failure: '+audit.failedFiles.join(','));
-   if(d.guards&&audit.guardCount<1)failures.push(device.name+': authentic armored guard model did not load');
+   if(d.guards){
+    const approved=['Meshy_AI_Azure_Spear_Guardian_1114220249_texture.glb',
+      'Meshy_AI_Medieval_Warrior_1114220223_texture.glb'];
+    if(audit.guardCount!==12||!approved.every(name=>audit.guardFiles?.includes(name)))
+      failures.push(device.name+': all 12 camp NPCs must use BOTH approved single-figure guard models, not the cardboard fallbacks');
+   }
    if(!audit.loadedFiles?.includes(d.model))
     failures.push(device.name+' '+d.name+': the EXACT approved model was not loaded: '+d.model);
    if(d.tree&&audit.replacedTreeCount<1)
