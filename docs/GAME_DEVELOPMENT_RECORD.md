@@ -1,5 +1,15 @@
 # Climboria Game Development Record
 
+## GAME ROOM PER-ACCOUNT TICKET FLOOD PROTECTION — MERGED (2026-11-16)
+
+- **MERGED Game-only PR #503** https://github.com/CryptoDilis/Climboria/pull/503 into main via squash **`9d43a8dddf68e8e7491b59dc02bb49cf4be3490f`**, exact PR head **`c6d8c5fa50f4af73d037992000c9af25bfeaf52c`**. Reviewed diff limited to `game/multiplayer/worker/index.mjs`, `index.test.mjs`, `STAGING_READINESS.md`, and this record. No DEX, Swap, Launchpad, ClimbX, wallet/reward or public client-config changes.
+- **Verified 3/3 exact-head PR CI terminal SUCCESS:** Game Authenticated Room Gateway #43725489876; Validate Climboria #43725489871; Jarrell's Peak Gameplay Smoke #43725489874. Previous draft changed to ready after confirmed status and mergeability; GitHub merge returned success. No postmerge CI asserted in this entry.
+- **Security effect:** atomically limit pending room tickets to 2 per verified registered Supabase account, global 32-ticket cap, reject duplicate token, prune expired tickets. Unit regressions for concurrent ticket requests, separate-account fairness, expiry and room capacity are present and covered by successful Gateway suite. No evidence of deployed real room, exploit or genuine two-player browser success.
+- **Release boundary:** public `game/multiplayer/client-config.json` is still `enabled:false`, `endpoint:null` as verified before merge and untouched in PR. World Chat and real peer models are not publicly live; actual damage, grab, steal and loot remain disabled.
+- **EXACT NEXT GAME ONLY:** (1) verify postmerge main Game Gateway, Validate and Gameplay CI if triggered; (2) owner configures protected `game-room-staging` Cloudflare deployment, costs, narrow secrets and isolated `rooms.climboria.fun`, check `/health` and real DO `/ready` success; (3) run documented two-registered-account real WebSocket and actual two-browser WebGL E2E including GLB avatars, remote positions/map markers, World Chat, ATTACK cosmetic event, reconnection/logout and observed mobile FPS; (4) only with owner approval + evidence consider separate public client-config PR; (5) independently import owner-provided optimized Meshy ZIPs on asset PR #466, then validate game scenery/collision/performance. Do not declare public multiplayer LIVE prematurely or modify other workstreams.
+
+---
+
 ## GAME ROOM TICKET-FLOOD SECURITY HARDENING — PRE-MERGE (2026-11-15)
 
 - **Root cause confirmed from Game Worker source:** `JarrellRoom.fetch('/_ticket')` formerly counted at most 32 outstanding 30-second tickets **globally**, without a per-verified-Supabase-account pending-ticket cap. Any authenticated malicious registered account could request 32 unconsumed tickets repeatedly, receive `room-full` for all others, and deny legitimate players access to multiplayer/World Chat. No deployed exploit observed; release remains disabled.
