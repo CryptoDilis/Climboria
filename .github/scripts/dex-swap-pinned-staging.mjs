@@ -10,6 +10,9 @@ const stagingOrigin = new URL(process.env.SWAP_STAGING_ORIGIN ?? 'http://127.0.0
 if (stagingOrigin.hostname.endsWith('climboria.fun') || !['http:', 'https:'].includes(stagingOrigin.protocol)) {
   throw new Error('Use a separate staging origin');
 }
+// The isolated test harness MUST remain off unless manually opted in.
+// This does not change public Swap/DEX flags or enable any production path.
+const localRuntimeApproved = process.env.SWAP_STAGING_RUNTIME_APPROVED === 'true';
 const prefix = '/__staging_jupiter/';
 const pins = {
   'plugin-1.0.18.js': 'aPExK0yy7w5DZjkLRMWvSKhuEz9kvz/9vESgWrctox51YnSfx6WWIWrsZBHqVJSy',
@@ -47,7 +50,7 @@ stagedHost = replaceRequired(stagedHost.replace(/\r\n/g, '\n'), 'url.protocol !=
 stagedHost = replaceRequired(stagedHost, 'displayMode: "integrated",', 'displayMode: "integrated", autoConnect: false,');
 const config = await readFile(resolve(root, 'swap-config.js'), 'utf8');
 const stagedConfig = replaceRequired(config, /managedProvider: Object.freeze\(\{[\s\S]*?\}\)/, 'managedProvider: Object.freeze(' + JSON.stringify({
-  enabled: true, provider: 'jupiter-terminal', scriptUrl: stagingOrigin.origin + bootstrapPath,
+  enabled: true, runtimeApproved: true, provider: 'jupiter-terminal', scriptUrl: stagingOrigin.origin + bootstrapPath,
   integrity: 'sha384-' + hash(bootstrap)
 }) + ')');
 const mime = { '.html':'text/html', '.js':'application/javascript', '.mjs':'application/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png' };
@@ -55,6 +58,18 @@ const mime = { '.html':'text/html', '.js':'application/javascript', '.mjs':'appl
 createServer(async (request, response) => {
   try {
     const path = new URL(request.url, stagingOrigin).pathname;
+    // Mirror the merged production approval contract, only on this isolated
+    // staging origin. A failed request, other method or default-off state
+    // must never cause an in-site wallet widget to initialize.
+    if (path === '/swap-runtime-status.json') {
+      if (request.method !== 'GET' && request.method !== 'HEAD') {
+        response.writeHead(405, { 'Allow':'GET, HEAD', 'Cache-Control':'no-store' }).end();
+        return;
+      }
+      response.writeHead(200, { 'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff' });
+      response.end(request.method === 'HEAD' ? undefined : JSON.stringify({ enabled: localRuntimeApproved }));
+      return;
+    }
     const page = path === '/swap/' || path === '/dex/';
     if (request.method === 'GET' && /^\/(swap|dex)(?:\/index\.html)?$/i.test(path)) {
       const route = path.split('/')[1].toLowerCase();
