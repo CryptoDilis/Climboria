@@ -510,6 +510,27 @@ try {
   }, null, { timeout: 15000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroRenderer === 'glb' && document.documentElement.dataset.climboriaHero === 'adventurer', undefined, { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
+  // Real user-input exercise: local punch must play without fake network
+  // damage, cannot spam past cooldown, and consumes the existing stamina pool.
+  const punchInput=await page.evaluate(()=>{
+    const p=window.__climboriaJarrellsPeak?.player;
+    let events=0;const listener=()=>events++;
+    document.addEventListener('climboria:visual-punch',listener);
+    const before={stamina:p?.stamina,hp:p?.hp};
+    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));
+    const once={stamina:p?.stamina,hp:p?.hp,mode:document.documentElement.dataset.climboriaPunch};
+    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));
+    const twice={stamina:p?.stamina,hp:p?.hp};
+    window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyJ',bubbles:true}));
+    document.removeEventListener('climboria:visual-punch',listener);
+    return {before,once,twice,events};
+  });
+  console.log('Real input punch visual-only cooldown audit:',JSON.stringify(punchInput));
+  if(punchInput?.once?.mode!=='visual-only'||punchInput.once.stamina!==punchInput.before.stamina-5||
+     punchInput.twice.stamina!==punchInput.once.stamina||punchInput.once.hp!==punchInput.before.hp||punchInput.events!==1)
+    errors.push('Punch must trigger once with stamina cost, cooldown and no fake client-side PvP damage: '+JSON.stringify(punchInput));
+  await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='idle',undefined,{timeout:15000});
+
   const idleAnimationAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);
   if (!idleAnimationAudit || idleAnimationAudit.forbiddenRestClip || /(?:^|[_\\s-])(sit|sitting|seated|crouch|kneel|prone|sleep|lying|lie|fall|death|swim|swimming)(?:$|[_\\s-])/i.test(idleAnimationAudit.activeClip)) {
     errors.push('Hero idle selected a forbidden seated/fallen pose: ' + JSON.stringify(idleAnimationAudit));
@@ -982,7 +1003,8 @@ try {
     }
     return { viewport:{width:innerWidth,height:innerHeight}, controls, overlaps };
   });
-  if (mobileActionLayout.controls.length !== 4 ||
+  if (mobileActionLayout.controls.length !== 5 ||
+      !['punch','jump-surface','run','use','dive'].every(id=>mobileActionLayout.controls.some(c=>c.action===id)) ||
       mobileActionLayout.controls.some(c => c.display === 'none' || c.visibility !== 'visible' ||
         c.width < 48 || c.height < 48 || c.left < 0 || c.top < 0 ||
         c.right > mobileActionLayout.viewport.width || c.bottom > mobileActionLayout.viewport.height) ||
@@ -1082,7 +1104,7 @@ try {
       ready: window.__climboriaGameReady === true,
       renderFrames: window.__climboriaRenderState?.frames ?? 0,
       renderErrors: window.__climboriaRenderState?.errors ?? [],
-      controls: ['JUMP','RUN','USE','DIVE'].every(label => text.includes(label)),
+      controls: ['JUMP','RUN','USE','DIVE','PUNCH'].every(label => text.includes(label)),
       mobileActions: [...document.querySelectorAll('[data-mobile-action]')].map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return {id:e.dataset.mobileAction,visible:c.display!=='none'&&c.visibility!=='hidden'&&Number(c.opacity)>.8&&r.width>=50&&r.height>=50&&r.left>=0&&r.top>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1}}),
       playerName: !!document.querySelector('#player-name'),
       playerVisible: (()=>{const e=document.querySelector('#player-card'),c=e&&getComputedStyle(e);return !!e&&c.visibility!=='hidden'&&Number(c.opacity)>.8})(),
@@ -1095,7 +1117,7 @@ try {
       document: document.documentElement.scrollWidth,
     };
   });
-  if (!mobileState.canvas || !mobileState.ready || !mobileState.controls || mobileState.mobileActions.length!==4 || mobileState.mobileActions.some(a=>!a.visible) || !mobileState.playerName || !mobileState.playerVisible || !mobileState.statusVisible || !mobileState.worldMap || !mobileState.settingsVisible || !mobileState.hero || !mobileState.bag || mobileState.renderFrames < 2) errors.push('Mobile gameplay/render/HUD/visible-touch-control initialization failed: ' + JSON.stringify(mobileState));
+  if (!mobileState.canvas || !mobileState.ready || !mobileState.controls || mobileState.mobileActions.length!==5 || !['punch','jump-surface','run','use','dive'].every(id=>mobileState.mobileActions.some(a=>a.id===id&&a.visible)) || mobileState.mobileActions.some(a=>!a.visible) || !mobileState.playerName || !mobileState.playerVisible || !mobileState.statusVisible || !mobileState.worldMap || !mobileState.settingsVisible || !mobileState.hero || !mobileState.bag || mobileState.renderFrames < 2) errors.push('Mobile gameplay/render/HUD/visible-touch-control initialization failed: ' + JSON.stringify(mobileState));
   if (mobileState.renderErrors.length) errors.push('Mobile 3D frame loop reported errors: ' + JSON.stringify(mobileState.renderErrors));
   if (mobileState.document > mobileState.viewport + 2) errors.push('Mobile game overflows horizontally: ' + JSON.stringify(mobileState));
   // Camera-orbit and pinch tests above deliberately change the view. Capture a
