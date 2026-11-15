@@ -58,6 +58,21 @@ export const gateway={
   const url=new URL(req.url);
   if(url.pathname==='/health'&&req.method==='GET')
    return response(200,{service:'climboria-game-room',deployedGateway:true,gameplayPvP:false},origin);
+  // /health proves only that code is deployed. Staging readiness explicitly
+  // requires bound Durable Objects and a scoped Supabase publishable key.
+  // This never returns key material and does NOT claim two-account QA passed.
+  if(url.pathname==='/ready'&&req.method==='GET'){
+   const configured=!!(env?.ROOMS&&typeof env.ROOMS.get==='function'&&
+    typeof env.ROOMS.idFromName==='function'&&
+    typeof env.SUPABASE_PUBLISHABLE_KEY==='string'&&
+    env.SUPABASE_PUBLISHABLE_KEY.length>=16&&
+    env.SUPABASE_PUBLISHABLE_KEY.length<=512&&
+    env.SUPABASE_URL==='https://unadepiwbovblkfjlksk.supabase.co');
+   return response(configured?200:503,{
+    service:'climboria-game-room',bindingsConfigured:configured,
+    gameplayPvP:false,realMultiplayerQaVerified:false
+   },origin);
+  }
   if(!validOrigin(req))return response(403,{error:'origin-not-allowed'},origin);
   if(url.pathname==='/ticket'&&req.method==='OPTIONS')
    return new Response(null,{status:204,headers:{'access-control-allow-origin':origin,'vary':'Origin',
