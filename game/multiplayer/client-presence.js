@@ -250,7 +250,14 @@
   known.clear();selfId=null;spawnConfirmed=false;clearDuelUi();clearWorldChatUi();
  }
  function addPlayer(player){
-  if(!validPlayer(player)||player.id===selfId||known.size>=32)return;
+  if(!validPlayer(player)||player.id===selfId)return;
+  if(known.has(player.id)){
+   // A peer may arrive in both welcome and the post-spawn authoritative
+   // roster; update its position without allocating a duplicate 3D model.
+   known.set(player.id,player);renderer.move(player.id,player.position);
+   return;
+  }
+  if(known.size>=32)return;
   known.set(player.id,player);renderer.add(player);
   renderDuelUi();renderChatCount();
   if(spawnConfirmed)showStatus('connected','ONLINE · '+known.size+' other explorers');
@@ -277,7 +284,15 @@
    // duel controls hidden until the server confirms our initial position.
    showStatus('connecting','MULTIPLAYER · JOINING WORLD');
   }else if(msg.type==='spawn-accepted'){
-   if(validId(msg.id)&&msg.id===selfId&&validPosition(msg.position)){
+   if(validId(msg.id)&&msg.id===selfId&&validPosition(msg.position)&&
+      Array.isArray(msg.peers)&&msg.peers.length<=32){
+    // Pending WebSockets intentionally receive no peer join/leave broadcasts.
+    // Treat the accepted spawn roster as the complete CURRENT verified set,
+    // dropping old welcome ghosts and adding peers spawned during our wait.
+    const peers=msg.peers.filter(p=>validPlayer(p)&&p.id!==selfId);
+    const verifiedIds=new Set(peers.map(p=>p.id));
+    for(const id of [...known.keys()])if(!verifiedIds.has(id))leave(id);
+    for(const peer of peers)addPlayer(peer);
     spawnConfirmed=true;
     ensureDuelUi();ensureWorldChatUi();
     showStatus('connected','ONLINE · '+known.size+' other explorers');
