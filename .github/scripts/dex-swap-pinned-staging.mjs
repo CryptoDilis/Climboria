@@ -74,7 +74,10 @@ createServer(async (request, response) => {
     if (page) {
       const inline = [...body.toString().matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
         .filter(match => match[1].trim()).map(match => "'sha384-" + hash(match[1].replace(/\r\n?/g, '\n')) + "'");
-      headers['Content-Security-Policy'] = "script-src 'self' " + inline.join(' ') + "; object-src 'none'; base-uri 'none'; worker-src 'none'";
+      const scripts = ['/swap-config.js', '/dex/swap-amount.js', '/dex/provider-managed-swap.mjs',
+        '/dex/premium-terminal.js', bootstrapPath, prefix + 'plugin-1.0.18-app.js'];
+      headers['Content-Security-Policy'] = 'script-src ' + scripts.map(path => stagingOrigin.origin + path).concat(inline).join(' ') +
+        "; object-src 'none'; base-uri 'none'; worker-src 'none'; frame-src 'none'";
     }
     response.writeHead(200, headers).end(body);
   } catch (error) {
