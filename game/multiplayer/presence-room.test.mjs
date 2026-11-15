@@ -37,6 +37,26 @@ test('authoritative room binds movement to actual socket session, ignoring spoof
  assert.equal(move.position.x,.5);
  assert.equal(room.snapshot().find(x=>x.id===a).name,'Jarrell');
 });
+test('signed-in peer broadcasts authentic sprint+jump updates without teleporting',()=>{
+ const room=fresh(),one=connect(room,a,'Jarrell'),two=connect(room,b,'Lheiz');
+ current+=300;
+ assert.equal(room.receive(a,{type:'move',position:{x:6.6,y:2,z:-30}}).ok,true,
+  'normal Game sprint reaches another authenticated room peer');
+ current+=300;
+ assert.equal(room.receive(a,{type:'move',position:{x:13.2,y:5.3,z:-30}}).ok,true,
+  'normal sprint jump vertical displacement reaches room peer');
+ const synced=two.packets.filter(p=>p.type==='player-moved');
+ assert.equal(synced.length,2);
+ assert.deepEqual(synced.map(p=>p.position.x),[6.6,13.2]);
+ assert.equal(one.packets.some(p=>p.type==='player-moved'),false,
+  'the trusted local user does not get duplicate movement echoes');
+ current+=300;
+ assert.equal(room.receive(a,{type:'move',position:{x:100,y:5.3,z:-30}}).reason,
+  'move-too-fast','impossible one-frame teleport stays blocked');
+ assert.equal(two.packets.filter(p=>p.type==='player-moved').length,2,
+  'rejected teleport must not broadcast or change the visible avatar');
+});
+
 test('teleport exploits, untrusted packets and flood are rejected before broadcast',()=>{
  const room=fresh(),one=connect(room,a,'Jarrell'),two=connect(room,b,'Lheiz');
  current+=100;
