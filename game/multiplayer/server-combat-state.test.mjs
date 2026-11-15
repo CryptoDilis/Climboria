@@ -44,7 +44,7 @@ test('pending invitations expire and can never be replayed',()=>{
 test('current client-owned terrain positions cannot enable damage by default',()=>{
  const {combat}=make();start(combat);
  assert.equal(combat.attack(A).reason,'untrusted-terrain-position');
- assert.equal(combat.health.get(B),100);
+ assert.equal(combat.health.get(B),500);
  assert.equal(combat.lastAttackAt.size,0);
 });
 test('trusted server positions enforce range, cooldown, safe zones and server-owned HP',()=>{
@@ -52,20 +52,20 @@ test('trusted server positions enforce range, cooldown, safe zones and server-ow
  trustedPositions.set(B,{x:700,y:10,z:20});
  assert.equal(combat.attack(A).reason,'target-out-of-range');
  trustedPositions.set(B,{x:201,y:10,z:20});
- assert.deepEqual(combat.attack(A),{ok:true,reason:'server-melee-hit',targetId:B,health:95,downed:false});
+ assert.deepEqual(combat.attack(A),{ok:true,reason:'server-melee-hit',targetId:B,health:495,downed:false});
  assert.equal(combat.attack(A).reason,'attack-cooldown');
  setClock(40_951);
  assert.equal(combat.attack(A).ok,true);
- assert.equal(combat.health.get(B),90);
+ assert.equal(combat.health.get(B),490);
  trustedPositions.set(A,{x:0,y:10,z:-30});
  assert.equal(combat.attack(A).reason,'sanctuary-pvp-disabled');
- assert.equal(combat.health.get(B),90);
+ assert.equal(combat.health.get(B),490);
 });
 test('only trusted positions, never a caller supplied damage, determine a hit',()=>{
  const {room}=make();const combat=new ServerCombatState({room,now:()=>40_000,trustedPosition:id=>id===A?{x:200,y:10,z:20}:null});
  start(combat);
  assert.equal(combat.attack(A).reason,'untrusted-terrain-position');
- assert.equal(combat.health.get(B),100);
+ assert.equal(combat.health.get(B),500);
 });
 test('disconnect removes active duel, health and pending invitations, even after account replacement',()=>{
  const {combat,room}=make({verified:true});start(combat);
@@ -87,7 +87,7 @@ test('browser-reported positions cannot override independent trusted collision c
  trustedPositions.set(B,{x:800,y:10,z:20});
  room.members.get(B).position={x:201,y:10,z:20}; // spoofed near-by browser state
  assert.equal(combat.attack(A).reason,'target-out-of-range');
- assert.equal(combat.health.get(B),100);
+ assert.equal(combat.health.get(B),500);
 });
 
 test('trusted-position provider failures deny damage without changing HP',()=>{
@@ -95,5 +95,5 @@ test('trusted-position provider failures deny damage without changing HP',()=>{
  const combat=new ServerCombatState({room,now:()=>40_000,trustedPosition:()=>{throw Error('terrain unavailable')}});
  start(combat);
  assert.equal(combat.attack(A).reason,'untrusted-terrain-position');
- assert.equal(combat.health.get(B),100);
+ assert.equal(combat.health.get(B),500);
 });
