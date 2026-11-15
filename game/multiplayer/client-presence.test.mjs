@@ -204,6 +204,20 @@ test('World Chat is room-gated, server-confirmed, safe as text and cleared on di
 });
 
 
+test('Supabase anonymous guest with a valid access token does not open an authenticated Game room',async()=>{
+ const guest={user:{id:'guest-uuid',is_anonymous:true},access_token:'valid-guest-supabase-token'};
+ const h=harness(true,{initialSession:guest});
+ await flush();
+ assert.equal(h.clients.length,0,'valid anonymous Supabase session is not a registered multiplayer account');
+ assert.equal(h.calls.filter(c=>c.url.includes('/ticket')).length,0,
+  'anonymous credentials must never request a one-time World Chat ticket');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'login-required');
+ h.authChange({user:{id:'registered-account',is_anonymous:false},access_token:'real-token'},'SIGNED_IN');
+ assert.equal(h.runNextTimer(),0,'account upgrade must reconnect without reloading Game');
+ await flush();await waitFor(()=>h.clients.length===1);
+ assert.equal(h.clients.length,1,'verified account can open authenticated room after guest upgrade');
+});
+
 test('login after first guest load connects without reloading; logout clears World Chat and new login reconnects',async()=>{
  const h=harness(true,{initialSession:null});
  await flush();
