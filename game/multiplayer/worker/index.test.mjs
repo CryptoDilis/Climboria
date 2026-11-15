@@ -16,30 +16,77 @@ test('staging /ready is fail-closed without required bindings, never claims real
  const unknown=await gateway.fetch(mkRequest('/ready'),{});
  assert.equal(unknown.status,503,'empty environment cannot claim configured room');
  assert.deepEqual(await unknown.json(),{
-  service:'climboria-game-room',bindingsConfigured:false,gameplayPvP:false
+  service:'climboria-game-room',bindingsConfigured:false,
+  durableObjectReady:false,gameplayPvP:false
  });
+ let probed=false;
  const bindings={
-  ...env({fetch:async()=>new Response('{}',{status:201})}),
+  ...env({fetch:async(request)=>{
+   assert.equal(request.url,'https://room.internal/_ready');
+   assert.equal(request.method,'GET');
+   assert.ok(request.signal,'staging probe must be time bounded');
+   probed=true;
+   return new Response(JSON.stringify({durableObjectReady:true}),{status:200});
+  }}),
   SUPABASE_PUBLISHABLE_KEY:'sb_publishable_TEST1234567890'
  };
  const ready=await gateway.fetch(mkRequest('/ready'),bindings);
  assert.equal(ready.status,200);
+ assert.equal(probed,true,'installed Durable Object binding alone is not sufficient');
  assert.equal(ready.headers.get('cache-control'),'no-store');
  assert.deepEqual(await ready.json(),{
-  service:'climboria-game-room',bindingsConfigured:true,gameplayPvP:false
- },'readiness reports ONLY configuration, never live two-account QA');
+  service:'climboria-game-room',bindingsConfigured:true,
+  durableObjectReady:true,gameplayPvP:false
+ },'readiness checks only bindings + real Durable Object storage, NOT live two-account QA');
  const malformed=await gateway.fetch(mkRequest('/ready'),{
   ...bindings,SUPABASE_URL:'https://forged.example'
  });
  assert.equal(malformed.status,503,'wrong Supabase origin must be rejected');
  const missingRoom=await gateway.fetch(mkRequest('/ready'),{...bindings,ROOMS:null});
  assert.equal(missingRoom.status,503,'absent Durable Object binding must be rejected');
+ const storageUnavailable=await gateway.fetch(mkRequest('/ready'),{
+  ...bindings,ROOMS:{
+   idFromName:name=>name,
+   get:()=>({fetch:async()=>new Response(JSON.stringify({durableObjectReady:false}),{status:503})})
+  }
+ });
+ assert.equal(storageUnavailable.status,503,'Durable Object migration/storage error must deny staging ready');
+ assert.equal((await storageUnavailable.json()).durableObjectReady,false);
+ const bogus=await gateway.fetch(mkRequest('/ready'),{
+  ...bindings,ROOMS:{
+   idFromName:name=>name,
+   get:()=>({fetch:async()=>new Response(JSON.stringify({ready:true}),{status:200})})
+  }
+ });
+ assert.equal(bogus.status,503,'successful HTTP alone cannot counterfeit an internal storage probe');
+ const missingMigration=await gateway.fetch(mkRequest('/ready'),{
+  ...bindings,ROOMS:{idFromName:name=>name,get:()=>{throw Error('missing Durable Object migration')}}
+ });
+ assert.equal(missingMigration.status,503,'binding exists but DO cannot be initialized');
  const shortKey=await gateway.fetch(mkRequest('/ready'),{
   ...bindings,SUPABASE_PUBLISHABLE_KEY:'short'
  });
  assert.equal(shortKey.status,503,'an unset/invalid placeholder cannot appear configured');
  const blob=JSON.stringify(await shortKey.json());
  assert.equal(blob.includes('sb_publishable'),false,'no credential material is included in readiness replies');
+});
+
+test('Durable Object internal readiness probes its actual storage without issuing tickets',async()=>{
+ let reads=0;
+ const storage={async get(key){
+  assert.equal(key,'climboria-game-room-readiness-probe');
+  reads++;return undefined;
+ }};
+ const room=new JarrellRoom({storage},{});
+ const probe=await room.fetch(mkRequest('/_ready'));
+ assert.equal(probe.status,200);
+ assert.deepEqual(await probe.json(),{durableObjectReady:true});
+ assert.equal(reads,1);
+ assert.equal(room.room.members.size,0,'storage probe must not spawn fake peers');
+ const unavailable=new JarrellRoom({storage:{async get(){throw Error('DO storage unavailable')}}},{});
+ const failed=await unavailable.fetch(mkRequest('/_ready'));
+ assert.equal(failed.status,503,'a broken storage read must not be hidden as configured');
+ assert.deepEqual(await failed.json(),{durableObjectReady:false});
 });
 
 test('zero fake live claim: gateway health says damage disabled, bad origin rejected',async()=>{

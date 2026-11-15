@@ -47,7 +47,8 @@ for(const [path,expected] of [['health','deployedGateway'],['ready','bindingsCon
  const res=await fetch(new URL(path,ROOM),{signal:AbortSignal.timeout(15000)});
  check(res.ok,'Game Worker '+path+' preflight failed; do not enable public multiplayer');
  const data=await res.json();
- check(data?.service==='climboria-game-room'&&data[expected]===true&&data.gameplayPvP===false,
+ check(data?.service==='climboria-game-room'&&data[expected]===true&&
+  (path!=='ready'||data.durableObjectReady===true)&&data.gameplayPvP===false,
   'Unexpected or unready Game Worker '+path+' response');
 }
 const browser=await chromium.launch({

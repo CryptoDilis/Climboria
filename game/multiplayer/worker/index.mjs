@@ -58,9 +58,10 @@ export const gateway={
   const url=new URL(req.url);
   if(url.pathname==='/health'&&req.method==='GET')
    return response(200,{service:'climboria-game-room',deployedGateway:true,gameplayPvP:false},origin);
-  // /health proves only that code is deployed. Staging readiness explicitly
-  // requires bound Durable Objects and a scoped Supabase publishable key.
-  // This never returns key material and does NOT claim two-account QA passed.
+  // /health proves only that code is deployed. /ready must also contact
+  // the real ROOM durable object and perform a bounded read of its storage.
+  // An installed binding alone cannot certify migration/storage availability.
+  // No authentication tokens, accounts or public gameplay state are used.
   if(url.pathname==='/ready'&&req.method==='GET'){
    const configured=!!(env?.ROOMS&&typeof env.ROOMS.get==='function'&&
     typeof env.ROOMS.idFromName==='function'&&
@@ -68,9 +69,25 @@ export const gateway={
     env.SUPABASE_PUBLISHABLE_KEY.length>=16&&
     env.SUPABASE_PUBLISHABLE_KEY.length<=512&&
     env.SUPABASE_URL==='https://unadepiwbovblkfjlksk.supabase.co');
-   return response(configured?200:503,{
+   let durableObjectReady=false;
+   if(configured){
+    try{
+     const stub=env.ROOMS.get(env.ROOMS.idFromName(ROOM));
+     const probe=await stub.fetch(new Request('https://room.internal/_ready',{
+      method:'GET',signal:AbortSignal.timeout(3500)
+     }));
+     if(probe.status===200){
+      const data=await probe.json();
+      durableObjectReady=data?.durableObjectReady===true;
+     }
+    }catch{
+     // Fail closed on missing migration, Durable Object storage errors,
+     // unavailable object or malformed internal /_ready response.
+    }
+   }
+   return response(configured&&durableObjectReady?200:503,{
     service:'climboria-game-room',bindingsConfigured:configured,
-    gameplayPvP:false
+    durableObjectReady,gameplayPvP:false
    },origin);
   }
   if(!validOrigin(req))return response(403,{error:'origin-not-allowed'},origin);
@@ -139,6 +156,14 @@ export class JarrellRoom {
  }
  async fetch(req){
   const url=new URL(req.url);
+  if(url.pathname==='/_ready'&&req.method==='GET'){
+   // Server-internal, read-only storage probe: neither mints tickets nor
+   // advertises that Supabase accounts/GLBs/World Chat were actually tested.
+   try{
+    await this.state.storage.get('climboria-game-room-readiness-probe');
+    return response(200,{durableObjectReady:true});
+   }catch{return response(503,{durableObjectReady:false})}
+  }
   if(url.pathname==='/_ticket'&&req.method==='POST'){
    const data=await readBoundedJSON(req);
    if(!data||!new RegExp('^[a-f0-9]{64}$').test(data.ticket||'')||
