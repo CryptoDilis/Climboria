@@ -229,9 +229,16 @@ export class JarrellRoom {
     // disabled: browser positions are not authoritative terrain physics.
     const data={type:'duel-response-received',fromId:id,accepted:message.accepted,combatDamageEnabled:false};
     const challenger=this.room.members.get(message.challengerId);
-    if(challenger){
-     try{challenger.send(data)}catch{this.combat.cancel(id)}
-    }else this.combat.cancel(id);
+    try{
+     if(!challenger)throw Error('challenger-disconnected');
+     challenger.send(data);
+    }catch{
+     // Never acknowledge an accepted duel if the other socket cannot be
+     // notified; withdraw consent and let a later authenticated invite retry.
+     this.combat.cancel(id);
+     socket.send(JSON.stringify({type:'rejected',reason:'duel-peer-unreachable'}));
+     return;
+    }
     socket.send(JSON.stringify({type:'duel-response-sent',challengerId:message.challengerId,accepted:message.accepted,combatDamageEnabled:false}));
     return;
    }
