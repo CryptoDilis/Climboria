@@ -91,6 +91,7 @@ function loadGuards(){
 function unload(obj){
  if(!obj.mesh)return;
  opts.scene.remove(obj.mesh);
+ if(typeof obj.restoreLegacy==='function'){obj.restoreLegacy();obj.restoreLegacy=null;}
  disposeMeshyRoot(obj.mesh);
  obj.mesh=null;state.decorations=Math.max(0,state.decorations-1);
 }
@@ -98,7 +99,7 @@ function prepareDecorations(entries){
  decorations=(Array.isArray(entries)?entries:[]).slice(0,30).map(d=>{
   const at=groundPosition(d.anchor,d.dx,d.dz);
   if(!at||!safeURL(d.file)||!(d.height>0&&d.height<=45))return null;
-  return {at,file:d.file,height:d.height,water:!!d.water,desktopOnly:d.desktopOnly===true,loadRadius:Math.min(300,Math.max(50,d.loadRadius||145)),mesh:null,pending:false,failed:false};
+  return {at,file:d.file,height:d.height,water:!!d.water,desktopOnly:d.desktopOnly===true,replaceLegacyTrees:d.replaceLegacyTrees===true,restoreLegacy:null,loadRadius:Math.min(300,Math.max(50,d.loadRadius||145)),mesh:null,pending:false,failed:false};
  }).filter(Boolean);
 }
 function tick(camera){
@@ -130,6 +131,12 @@ function tick(camera){
   const group=new opts.T3.Group();group.name='OptionalMeshy:'+candidate.file;
   group.position.set(x,h,z);group.add(root);opts.scene.add(group);
   candidate.mesh=group;state.decorations++;
+  // Replace one nearby existing CC0 tree only after the Meshy model really
+  // loaded. The cleanup restores both the old mesh and its original collider.
+  if(candidate.replaceLegacyTrees&&typeof opts.replaceLegacyTrees==='function'){
+   try{candidate.restoreLegacy=opts.replaceLegacyTrees(x,z,28);}
+   catch(e){state.failures.push('legacy-tree-replacement:'+candidate.file);}
+  }
  }).catch(()=>{candidate.pending=false;state.queued--;candidate.failed=true;state.failures.push(candidate.file);});
 }
 async function install(options){
