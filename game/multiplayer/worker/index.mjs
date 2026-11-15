@@ -18,11 +18,32 @@ const response=(status,data,origin)=>new Response(JSON.stringify(data),{
 });
 function validOrigin(request){return TRUSTED_ORIGINS.has(request.headers.get('Origin'))}
 async function readBoundedJSON(req){
- const len=Number(req.headers.get('content-length')||0);
- if(len>MAX_JSON_BYTES)return null;
- const text=await req.text();
- if(text.length>MAX_JSON_BYTES)return null;
- try{return JSON.parse(text)}catch{return null}
+ // Enforce the actual UTF-8 WIRE byte budget while reading. A forged or
+ // missing Content-Length must never let us buffer an unbounded request.
+ const header=req.headers.get('content-length');
+ if(header!==null&&(!/^\\d+$/.test(header)||Number(header)>MAX_JSON_BYTES))
+  return null;
+ if(!req.body)return null;
+ const reader=req.body.getReader(),decoder=new TextDecoder('utf-8',{fatal:true});
+ let bytes=0,text='';
+ try{
+  while(true){
+   const {value,done}=await reader.read();
+   if(done)break;
+   if(!(value instanceof Uint8Array))throw Error('invalid-body-chunk');
+   bytes+=value.byteLength;
+   if(bytes>MAX_JSON_BYTES){
+    await reader.cancel('body-too-large');
+    return null;
+   }
+   text+=decoder.decode(value,{stream:true});
+  }
+  text+=decoder.decode();
+  return JSON.parse(text);
+ }catch{
+  try{await reader.cancel('invalid-body')}catch{}
+  return null;
+ }
 }
 export const gateway={
  async fetch(req,env){
