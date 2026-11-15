@@ -1,0 +1,161 @@
+{
+  "schema": 1,
+  "enabled": false,
+  "reason": "Production staging OFF: all 44 exact owner GLBs must be imported, visuals/collisions/Android FPS accepted, including reversible nearby CC0 tree replacements and armored guards.",
+  "guardModels": [
+    "Meshy_AI_Azure_Spear_Guardian_1114220249_texture.glb",
+    "Meshy_AI_Medieval_Warrior_1114220223_texture.glb"
+  ],
+  "decorations": [
+    {
+      "file": "Meshy_AI_farm_apple_tree_1114194155_image-to-3d-texture.glb",
+      "anchor": "park",
+      "dx": 87,
+      "dz": 67,
+      "height": 10,
+      "loadRadius": 155,
+      "replaceLegacyTrees": true,
+      "colliderRadius": 1.2
+    },
+    {
+      "file": "Meshy_AI_Whispering_Branches_1114193441_texture.glb",
+      "anchor": "park",
+      "dx": -115,
+      "dz": 52,
+      "height": 10,
+      "loadRadius": 145
+    },
+    {
+      "file": "Meshy_AI_USING_L_SYSTEMS_Axio_1114194308_texture.glb",
+      "anchor": "park",
+      "dx": -180,
+      "dz": -10,
+      "height": 9,
+      "loadRadius": 145,
+      "replaceLegacyTrees": true,
+      "colliderRadius": 1
+    },
+    {
+      "file": "Meshy_AI_The_Lanterned_Heart_T_1114193326_texture.glb",
+      "anchor": "park",
+      "dx": -165,
+      "dz": 82,
+      "height": 12,
+      "loadRadius": 180,
+      "replaceLegacyTrees": true,
+      "colliderRadius": 1.5
+    },
+    {
+      "file": "Meshy_AI_Elder_Skywillow_1114194042_texture.glb",
+      "anchor": "park",
+      "dx": -135,
+      "dz": 140,
+      "height": 13,
+      "loadRadius": 180,
+      "desktopOnly": true,
+      "replaceLegacyTrees": true,
+      "colliderRadius": 2.2
+    },
+    {
+      "file": "Meshy_AI_Crimson_Maple_Majesty_1114193624_texture.glb",
+      "anchor": "park",
+      "dx": -45,
+      "dz": 165,
+      "height": 13,
+      "loadRadius": 200,
+      "desktopOnly": true,
+      "replaceLegacyTrees": true,
+      "colliderRadius": 1.6
+    },
+    {
+      "file": "Meshy_AI_The_Luminous_Worldroo_1114193642_texture.glb",
+      "anchor": "park",
+      "dx": -245,
+      "dz": 165,
+      "height": 14,
+      "loadRadius": 190,
+      "desktopOnly": true,
+      "replaceLegacyTrees": true,
+      "colliderRadius": 2.4
+    },
+    {
+      "file": "Meshy_AI_Gothic_Stone_Church_1114193505_texture.glb",
+      "anchor": "park",
+      "dx": -280,
+      "dz": 240,
+      "height": 18,
+      "loadRadius": 200,
+      "desktopOnly": true
+    },
+    {
+      "file": "Meshy_AI_Nordic_Teepee_viking_1114220617_texture.glb",
+      "anchor": "camp",
+      "dx": 36,
+      "dz": -43,
+      "height": 4,
+      "loadRadius": 145
+    },
+    {
+      "file": "Meshy_AI_Primitive_cave_rock_d_1114220636_texture.glb",
+      "anchor": "cave",
+      "dx": 87,
+      "dz": 79,
+      "height": 5,
+      "loadRadius": 130
+    },
+    {
+      "file": "Meshy_AI_Icebound_Summit_1114193414_texture.glb",
+      "anchor": "summit",
+      "dx": 60,
+      "dz": 39,
+      "height": 8,
+      "loadRadius": 150
+    },
+    {
+      "file": "Meshy_AI_Rustic_Nautical_Dock_1114221245_texture.glb",
+      "anchor": "coast",
+      "dx": -40,
+      "dz": -36,
+      "height": 5,
+      "water": true,
+      "loadRadius": 170
+    },
+    {
+      "file": "Meshy_AI_wooden_pier_1114221253_texture.glb",
+      "anchor": "coast",
+      "dx": -77,
+      "dz": -31,
+      "height": 4,
+      "water": true,
+      "loadRadius": 190
+    },
+    {
+      "file": "Meshy_AI_Fisherman_Dock_House__1114221317_image-to-3d-texture.glb",
+      "anchor": "coast",
+      "dx": -110,
+      "dz": 42,
+      "height": 9,
+      "loadRadius": 200,
+      "desktopOnly": true
+    },
+    {
+      "file": "Meshy_AI_Sails_of_Midnight_1114221416_texture.glb",
+      "anchor": "coast",
+      "dx": -147,
+      "dz": -122,
+      "height": 18,
+      "water": true,
+      "loadRadius": 260,
+      "desktopOnly": true
+    }
+  ],
+  "visualQA": "Local VTK thumbnails reviewed for visual candidate triage only; actual in-game screenshots, texture/licensing review and FPS still PENDING",
+  "excludedFromAutoLoading": [
+    "Meshy_AI_Medieval_Guards_1114220324_texture.glb (contains TWO soldiers; would duplicate every NPC)",
+    "Meshy_AI_Majestic_Red_Lauan_Tr_1114194124_texture.glb (sparse foliage)",
+    "Meshy_AI_Mushroom_Tree_1114193612_texture.glb (cartoonish for target biome)",
+    "Meshy_AI_Galleon_Odyssey_1114221407_texture.glb (visually broken silhouette after decimation)",
+    "Meshy_AI_Realistic_T_rex_with_1114221002_texture.glb (off-theme)",
+    "Meshy_AI_Titanic_Ocean_Liner_M_1114221449_image-to-3d-texture.glb (off-theme)"
+  ]
+}

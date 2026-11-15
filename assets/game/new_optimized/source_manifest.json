@@ -1,0 +1,402 @@
+{
+  "version": 1,
+  "description": "Immutable hashes for 44 locally optimized owner Meshy GLB candidates. Structural verification does not imply visual acceptance or license clearance.",
+  "models": [
+    {
+      "file": "Meshy_AI_Ancient_Guardian_1113231534_texture.glb",
+      "bytes": 1546608,
+      "sha256": "df1df9abebc4396060eb2dbaf0bbb9f04272d248cb19946ee3938245307d8c5c",
+      "triangles": 18000,
+      "images": 1,
+      "pack": "Climboria_Meshy_Assets_Pack_05.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Azure_Spear_Guardian_1114220249_texture.glb",
+      "bytes": 1182140,
+      "sha256": "16b1b0c8f44aa03423a79ae220898224e4f65b07e0c366e3be622ae9b8b9c33f",
+      "triangles": 4999,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_01.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Crimson_Maple_Majesty_1114193624_texture.glb",
+      "bytes": 2183504,
+      "sha256": "885cf11588030fa6838a48f0c562d4048a9ec4d83087af22103a9d44cf708409",
+      "triangles": 58892,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_03.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Ein_Steg_mit_Meer__1113223821_texture.glb",
+      "bytes": 1832684,
+      "sha256": "d2c70389c8f1ee98cb259fd689619b8b252be38517ef82b463226e043b6d81d5",
+      "triangles": 31999,
+      "images": 4,
+      "pack": "Climboria_Meshy_Assets_Pack_04.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Elder_Skywillow_1114194042_texture.glb",
+      "bytes": 1807136,
+      "sha256": "59ea669a0b5e2c39328990a64738e4b00ddafcfe41df8f5ee57c6f92fb982201",
+      "triangles": 42395,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_04.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Eldritch_Pier_1114221251_texture.glb",
+      "bytes": 2181188,
+      "sha256": "80c3398b0cfb26f7b08a0786bcc2519352c0322c9755aa2b946ad5640e519ca7",
+      "triangles": 32000,
+      "images": 4,
+      "pack": "Climboria_Meshy_Assets_Pack_03.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Eu_quero_um_mapa_3d_r_1114221520_texture.glb",
+      "bytes": 2346168,
+      "sha256": "d700086a5e8a8093c21156d104e02e950c10b5a83bac90185de878090da89646",
+      "triangles": 68183,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_03.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Fireside_Teepee_Camp_1114220647_texture.glb",
+      "bytes": 2112440,
+      "sha256": "6b20e96d9b426fddf69066825a01cd8e8511c1eed8415f6dc283e3b1b61e7945",
+      "triangles": 32000,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_03.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Fisherman_Dock_House__1114221317_image-to-3d-texture.glb",
+      "bytes": 2335456,
+      "sha256": "3626578fd2dceea06c68f53f75393ecd1ccb35201b076fb01768f3705f30fbef",
+      "triangles": 52690,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_03.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Galleon_Odyssey_1114221407_texture.glb",
+      "bytes": 3075540,
+      "sha256": "4d2811dd0bd92e3c17549f2ffbbf1f675f9e2dd4d1e58daafdaea1628b88026e",
+      "triangles": 40000,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_01.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Gothic_Stone_Church_1114193505_texture.glb",
+      "bytes": 2166044,
+      "sha256": "8ca5a615d13bf2de69c9b83092fd172dc2bdcff61630dc5837b2b8d3bd74a394",
+      "triangles": 32000,
+      "images": 4,
+      "pack": "Climboria_Meshy_Assets_Pack_03.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Haunted_Armada_Hall_1114221223_texture.glb",
+      "bytes": 3131988,
+      "sha256": "0cc7f2dacd6831ada6cac455ff3ad3f2a288f3a680bb0be18e9adb4d7ae74011",
+      "triangles": 40000,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_01.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Heavy_Armor_Warrior_3_1114220244_image-to-3d-texture.glb",
+      "bytes": 1713996,
+      "sha256": "3817c1ec221d018bf17729029f1b8550c7dc33b63637f17313e215a5f001b7b4",
+      "triangles": 17999,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_05.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Hut_1114095309_texture.glb",
+      "bytes": 2902280,
+      "sha256": "c3e1fc62850da206d4fa05a445a3306bae800f43b11d791cb8a166de39f81cc7",
+      "triangles": 87768,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_01.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Icebound_Summit_1114193414_texture.glb",
+      "bytes": 1798700,
+      "sha256": "6df5c1b4494b1602f7688b43233e20a7dbb4817d95f29735483dbf02f76c92bf",
+      "triangles": 29999,
+      "images": 4,
+      "pack": "Climboria_Meshy_Assets_Pack_04.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Ironclad_Airworks_1114125006_texture.glb",
+      "bytes": 2490188,
+      "sha256": "12c0902095e8ce1d65096e681f602e453602c169199603c5d59cfa5504594b78",
+      "triangles": 31999,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_02.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_It_needs_to_be_a_deta_1114220632_texture.glb",
+      "bytes": 1962352,
+      "sha256": "c03caa57d0dc745372bd1b6cf2982b528b01ab11f60c71179f29c54de775f7dc",
+      "triangles": 32000,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_04.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Lighthouse_Haven_1114221306_texture.glb",
+      "bytes": 2690936,
+      "sha256": "a3457a2b68708b1382cbc8c92a13030f8f585292b46cd87ca975ee0fa553f116",
+      "triangles": 32000,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_01.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Majestic_Red_Lauan_Tr_1114194124_texture.glb",
+      "bytes": 840716,
+      "sha256": "90aca183c6477b9164f6d43974c7f83d1f38637b247e7c1543dca80d74ae82a0",
+      "triangles": 8000,
+      "images": 1,
+      "pack": "Climboria_Meshy_Assets_Pack_05.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Medieval_Guards_1114220324_texture.glb",
+      "bytes": 585152,
+      "sha256": "e8c29402907de54c471c85c052b4a39b72585b4c0fe11a3ef1620fe06e5a085d",
+      "triangles": 4999,
+      "images": 1,
+      "pack": "Climboria_Meshy_Assets_Pack_05.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Medieval_Warrior_1114220223_texture.glb",
+      "bytes": 521924,
+      "sha256": "9e119a3695a40685f4054be10338f5840e3525a97e86a89657c01aced84c056a",
+      "triangles": 4999,
+      "images": 1,
+      "pack": "Climboria_Meshy_Assets_Pack_05.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Mushroom_Tree_1114193612_texture.glb",
+      "bytes": 1057380,
+      "sha256": "3abdff073225b62a74b2857a3253e625c27f04ff81f548a48151db81ad4459a1",
+      "triangles": 8000,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_03.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Mystic_Crystal_Hideou_1114220457_texture.glb",
+      "bytes": 1665768,
+      "sha256": "86e48d186559cd5c665d61b7e627ebc68fc85beb1ada7ca1b2089dc805539879",
+      "triangles": 30000,
+      "images": 1,
+      "pack": "Climboria_Meshy_Assets_Pack_05.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Nordic_Teepee_viking_1114220617_texture.glb",
+      "bytes": 1453864,
+      "sha256": "faa57e3698707051428dec0141e17609a1a35d794b37c18bdb3f9467555a36fe",
+      "triangles": 30000,
+      "images": 1,
+      "pack": "Climboria_Meshy_Assets_Pack_05.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Primitive_cave_rock_d_1114220636_texture.glb",
+      "bytes": 1282572,
+      "sha256": "bee2e4c0c0ec48267d56b544ed8f38f5e28ae914e9f548adf5f9e254636e6e18",
+      "triangles": 9994,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_02.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Rainforest_Stairway_1114221331_texture.glb",
+      "bytes": 2427556,
+      "sha256": "65a42f6aa577067e94fda9b30372d25b7a729732d67c71a3cba749003e1770ce",
+      "triangles": 28374,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_02.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Realistic_T_rex_with_1114221002_texture.glb",
+      "bytes": 1415252,
+      "sha256": "9b194f029b4edda6eedcb4fda9de8845a622b8c2331846d4de600d87b34fa5fc",
+      "triangles": 31999,
+      "images": 1,
+      "pack": "Climboria_Meshy_Assets_Pack_05.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Rustic_Nautical_Dock_1114221245_texture.glb",
+      "bytes": 2484456,
+      "sha256": "394e47359077fd5e25ac359dd6e1bdb09fccf78669b651ebbd011e017e707640",
+      "triangles": 29999,
+      "images": 4,
+      "pack": "Climboria_Meshy_Assets_Pack_02.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Sails_of_Midnight_1114221416_texture.glb",
+      "bytes": 2657796,
+      "sha256": "c111fec03fcbd2756cfe0daa12f5150a8a5842f7b1f85291eeee36f9de6eef5f",
+      "triangles": 39999,
+      "images": 4,
+      "pack": "Climboria_Meshy_Assets_Pack_02.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Stone_Guardian_1114221549_texture.glb",
+      "bytes": 3057060,
+      "sha256": "b975ddee10821febc15531800324a87a2e0324be16d6b7575edd91d33fd2552f",
+      "triangles": 68966,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_01.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_The_Lanterned_Heart_T_1114193326_texture.glb",
+      "bytes": 2064192,
+      "sha256": "99f56585791e6137bff059320c69994b548a3064e1d59568eb3088ef9c57621e",
+      "triangles": 29999,
+      "images": 4,
+      "pack": "Climboria_Meshy_Assets_Pack_03.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_The_Luminous_Worldroo_1114193642_texture.glb",
+      "bytes": 2009992,
+      "sha256": "94c14d1319ce9d6e8b92bd48726caff2e250b1dbce21cbc927fa2e5b4a83e38e",
+      "triangles": 50289,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_04.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_The_Plains_Warrior_1114220420_texture.glb",
+      "bytes": 1836612,
+      "sha256": "7b0239cacbc3e1a2b3c8f4b094dc9ee88c4bcabb0b7460e9b769738c00da388e",
+      "triangles": 18000,
+      "images": 4,
+      "pack": "Climboria_Meshy_Assets_Pack_04.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Titanic_Ocean_Liner_M_1114221449_image-to-3d-texture.glb",
+      "bytes": 2485096,
+      "sha256": "57e221915f8317e073665628ffd3dcac30cc82d8022e7609377985396a66873b",
+      "triangles": 40000,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_02.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_USING_L_SYSTEMS_Axio_1114194308_texture.glb",
+      "bytes": 748904,
+      "sha256": "1203d69635d6c5875de8d9ce00bed9360f9b09884867ab072f9a8251506df8f6",
+      "triangles": 8000,
+      "images": 1,
+      "pack": "Climboria_Meshy_Assets_Pack_05.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Vinebound_Forest_Corr_1114221507_texture.glb",
+      "bytes": 2471000,
+      "sha256": "16f24b0a53a656494ba6b61f659666d812a121cff0934f3cc3d57cfdfc150f2f",
+      "triangles": 72604,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_02.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Warrior_in_Armor_1114220214_texture.glb",
+      "bytes": 1898932,
+      "sha256": "87bd7dfe80cfc1e1facf9613612b6f42b9b8b785f19a2b5be0cf129aac49e844",
+      "triangles": 18000,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_04.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Whispering_Branches_1114193441_texture.glb",
+      "bytes": 1982424,
+      "sha256": "6103034afa87ba1a3b6e77cb79fd6a85380cb85bfbc4fea31ef1763b6f13aeab",
+      "triangles": 32000,
+      "images": 4,
+      "pack": "Climboria_Meshy_Assets_Pack_04.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI__1114221522_texture.glb",
+      "bytes": 1720160,
+      "sha256": "8bbb3e53e18e24fd22230f245b26297e3a8533e3adfac0463f6fe781cd1aafb7",
+      "triangles": 29999,
+      "images": 1,
+      "pack": "Climboria_Meshy_Assets_Pack_04.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_auf_grund_gelaufenes__1114221210_texture.glb",
+      "bytes": 2644632,
+      "sha256": "2f33687347baf4777f76f13d9479a2a3bb374ac6b39b13e81face8d4dc97207b",
+      "triangles": 32000,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_02.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_farm_apple_tree_1114194155_image-to-3d-texture.glb",
+      "bytes": 1942860,
+      "sha256": "8ff286899f1b95f1795527ed094e8bc52462e1af4961749e9b0f146e0ec0fc03",
+      "triangles": 32000,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_04.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_hero_tree_roblox_3d_1114193908_image-to-3d-texture.glb",
+      "bytes": 2917968,
+      "sha256": "f41edfda64d3010040f9430aceb08c4c92d8e47ee070866fa8e72839db9fb99a",
+      "triangles": 92031,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_01.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_wooden_pier_1114221253_texture.glb",
+      "bytes": 2397228,
+      "sha256": "b5edd8bbc738505b5f4c09c301ef854b7c5fe43b7cfdbdc34555ae7f6aefa14a",
+      "triangles": 32000,
+      "images": 3,
+      "pack": "Climboria_Meshy_Assets_Pack_03.zip",
+      "visualQA": "PENDING"
+    },
+    {
+      "file": "Meshy_AI_Фентазийное_1114220720_texture.glb",
+      "bytes": 1635708,
+      "sha256": "36a449c755d12faf961868764ce6e95ce222df41553a8475d5bc6c68c01133c3",
+      "triangles": 32000,
+      "images": 1,
+      "pack": "Climboria_Meshy_Assets_Pack_05.zip",
+      "visualQA": "PENDING"
+    }
+  ]
+}
