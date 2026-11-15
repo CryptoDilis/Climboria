@@ -99,6 +99,12 @@ export const gateway={
     verifiedUser=await userResponse.json();
    }catch{return response(503,{error:'auth-service-unavailable'},origin)}
    if(!uuid.test(verifiedUser?.id||''))return response(401,{error:'invalid-auth-identity'},origin);
+   // Supabase anonymous sign-ins may have real UUIDs and valid short-lived
+   // bearer tokens. A verified UUID alone is not a registered Game account.
+   // Mirror the browser's guest restriction at the trusted ticket issuer;
+   // do not allow direct /ticket calls to bypass signed-in-only World Chat.
+   if(verifiedUser.is_anonymous===true||verifiedUser.app_metadata?.provider==='anonymous')
+    return response(401,{error:'registered-game-account-required'},origin);
    const ticket=crypto.randomUUID().replace(/-/g,'')+crypto.randomUUID().replace(/-/g,'');
    const name=allowedName.test(payload.name||'')?payload.name:'Explorer';
    const model=allowedModels.has(payload.model)?payload.model:'Adventurer';
