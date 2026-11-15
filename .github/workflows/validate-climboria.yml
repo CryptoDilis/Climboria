@@ -149,7 +149,17 @@ jobs:
           assert "PLANNED LAUNCH TARGET" not in html, "Past launch must not show an obsolete target countdown"
           assert "launch-countdown" not in html and "launch-timer" not in html, "Retired countdown UI must stay removed"
           assert "Market liquidity, token safety and returns are not verified or guaranteed." in html
-          print("Official CLIMB announcement record, copied CA, links, caution copy and no countdown verified.")
+          assert html.count('id="climb-token-record"') == 1, "Never duplicate the public mint record"
+          hero = html.split('<div class="hero">', 1)[1].split('<section class="sec" id="climboria-signature"', 1)[0]
+          assert 'id="climbOfficialCa"' not in hero, "Do not cover the hero with a token announcement"
+          tokenomics = html.split('<div id="tokenomics" class="sec">', 1)[1].split('<div id="roadmap"', 1)[0]
+          assert 'id="climb-token-record"' in tokenomics, "Permanent CA must live in Tokenomics"
+          assert 'id="climb-fee-heading"' in tokenomics and "NOT YET LIVE" in tokenomics
+          assert "TBD" not in tokenomics, "Raw placeholder rows must not return"
+          assert 'class="tok-wrap climb-token-layout"' in tokenomics, "Responsive two-card layout required"
+          assert "2.5% buy fee" in tokenomics and "2.5% sell fee" in tokenomics
+          assert "No percentages, market prices or reserves are implied." in tokenomics
+          print("Permanent CLIMB CA in Tokenomics, premium disclosure layout and clean hero verified.")
           PY
       - name: Syntax-check inline JavaScript
         run: |
