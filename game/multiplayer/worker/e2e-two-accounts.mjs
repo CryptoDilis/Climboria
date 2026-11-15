@@ -95,6 +95,9 @@ try{
  await send(a,{type:'spawn',position:{x:0,y:9.55,z:-30}});
  await send(b,{type:'spawn',position:{x:0,y:9.55,z:-30}});
  await packet(a,{type:'player-moved',id:welcomeB.selfId},'B spawn visible to A');
+ // The authoritative movement policy requires >=20ms of elapsed server time;
+ // never expect teleport-style instant position updates on spawn.
+ await new Promise(resolve=>setTimeout(resolve,100));
  await send(a,{type:'move',position:{x:.2,y:9.55,z:-30}});
  await packet(b,{type:'player-moved',id:welcomeA.selfId,positionX:.2},'A real movement visible to B');
  await send(a,{type:'punch'});
