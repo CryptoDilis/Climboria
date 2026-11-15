@@ -60,9 +60,16 @@
  }
  function sendWorldChat(){
   if(!chatUi||!selfId||!spawnConfirmed)return;
-  const text=String(chatUi.input.value||'').trim();
-  if(!text||[...text].length>160){
-   chatUi.notice.textContent='Enter a message of 1–160 characters.';return;
+  // Match the trusted room's Unicode normalization, control-character
+  // rejection and 384-byte UTF-8 budget before clearing the input.
+  // Otherwise a message that looks <=160 characters could be rejected
+  // server-side after the explorer has already lost their typed text.
+  const text=String(chatUi.input.value||'').trim().normalize('NFC');
+  const forbidden=/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/u;
+  if(!text||[...text].length>160||forbidden.test(text)||
+     new TextEncoder().encode(text).byteLength>384){
+   chatUi.notice.textContent='Use 1–160 readable characters (max 384 UTF-8 bytes).';
+   return;
   }
   if(send({type:'world-chat',text})){
    chatUi.input.value='';
