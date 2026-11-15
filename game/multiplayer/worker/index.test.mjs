@@ -124,15 +124,28 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   assert.equal((await issue(a,'Explorer A')).status,201);
   assert.equal((await issue(b,'Explorer B',uid2)).status,201);
   const connect=async(ticket)=>room.fetch(mkRequest('/ws',{headers:{Upgrade:'websocket','Sec-WebSocket-Protocol':'climboria-v1, t-'+ticket}}));
-  const c1=(await connect(a)).webSocket,c2=(await connect(b)).webSocket;
-  assert.equal(room.room.members.size,2);
+  const c1=(await connect(a)).webSocket;
+  assert.equal(room.room.members.size,1);
   assert.equal(c1.packets[0].type,'welcome');
-  assert.equal(c1.packets.at(-1).type,'player-joined');
-  assert.equal(c2.packets[0].peers.length,1);
-  const reused=await connect(a);assert.equal(reused.status,401);
+  assert.deepEqual(room.room.snapshot(),[],'authenticated but unspawned A is not on the public map');
+  // A must be accepted before B can discover A in the initial welcome.
   c1.dispatch('message',JSON.stringify({type:'spawn',position:{x:0,y:9.55,z:-30}}));
+  assert.equal(room.room.snapshot().length,1);
+  const c2=(await connect(b)).webSocket;
+  assert.equal(room.room.members.size,2);
+  assert.equal(c1.packets.at(-1).type,'welcome','joining B has no visible ghost until spawn');
+  assert.equal(c2.packets[0].peers.length,1,'only validated spawn A appears to joining B');
+  assert.equal(room.room.snapshot().length,1,'B is still pending in the visible roster');
+  const reused=await connect(a);assert.equal(reused.status,401);
+  const beforeInvalid=c1.packets.length;
+  c2.dispatch('message',JSON.stringify({type:'spawn',position:{x:2000,y:9.55,z:2000}}));
+  assert.equal(c2.packets.at(-1).reason,'invalid-initial-spawn');
+  assert.equal(c1.packets.length,beforeInvalid,'rejected B spawn must not generate map presence');
+  assert.equal(room.room.snapshot().length,1,'invalid B spawn stays invisible');
   c2.dispatch('message',JSON.stringify({type:'spawn',position:{x:0,y:9.55,z:-30}}));
   assert.equal(room.spawned.size,2);
+  assert.equal(room.room.snapshot().length,2,'only accepted B spawn makes two visible members');
+  assert.equal(c1.packets.some(p=>p.type==='player-joined'&&p.player.id===c2.packets[0].selfId),true);
   // WORLD CHAT is real signed-in room broadcast, not an untrusted client name/ID.
   const authenticatedA=c1.packets[0].selfId;
   const beforeChat=c2.packets.length;
