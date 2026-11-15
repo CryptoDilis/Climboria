@@ -2113,3 +2113,11 @@ Once delivery is confirmed, build the production candidate with provider off by 
 Production Worker health still reported execution disabled. No production deployment or configuration change was made. Jupiter issue #238 remained open without comments at this check.
 
 Exact-head CI completed successfully: [quote-state regression including rollback](https://github.com/CryptoDilis/Climboria/actions/runs/43674453805), [browser smoke](https://github.com/CryptoDilis/Climboria/actions/runs/43674453913), and [validation](https://github.com/CryptoDilis/Climboria/actions/runs/43674454346).
+
+### 2026-11-15 PH — HTTPS rollback verified despite a cached enabled config
+
+[PR #476](https://github.com/CryptoDilis/Climboria/pull/476) head `1ac8dc1941d25cd94e00e769dc556f6f3e0d4e17` adds a fail-closed, same-origin runtime status check. Even with valid enabled flags and a script pin in `swap-config.js`, a new page only exposes the provider after a successful non-redirected `/swap-runtime-status.json` response with `Cache-Control: no-store` and JSON `enabled: true`. Requests bypass browser caching. A timeout, missing or invalid response, or cacheable response keeps the page quote-only. Both routes reference the new host version.
+
+The temporary HTTPS staging host was restarted against this code with a staging-only status endpoint and `max-age=600` on the enabled config to reproduce the live header. Chrome tested both routes at desktop and mobile viewport widths without request interception. All four cases loaded the pinned runtime while on. After setting the status off and revisiting the URL in the same session, the browser still reused the enabled config from cache, read the fresh disabled status, hid the provider controls and made no additional SDK requests. An already-open widget continued to exist until navigation. No wallet signing or transaction was performed in this rehearsal. The staging switch was returned to off.
+
+Production still serves its disabled config from GitHub Pages with `max-age=600`. This PR prevents the cached config alone from activating a new widget. Before public rollout, deploy an authoritative same-origin status endpoint with CDN caching disabled and verify its behavior on the actual production delivery path. There was no production deployment or change to the Worker or fee settings.
