@@ -208,6 +208,9 @@ export class JarrellRoom {
     // The validated server-approved initial position is the first moment
     // other explorers may see this peer in 3D, the field map or chat roster.
     this.room.announce(id);
+    // A real server acknowledgement lets the client enable World Chat only
+    // after the initial spawn has been accepted, never just on WS upgrade.
+    socket.send(JSON.stringify({type:'spawn-accepted',id,position:{...member.position}}));
     this.room.broadcast({type:'player-moved',id,position:{...member.position}},id);
     return;
    }
