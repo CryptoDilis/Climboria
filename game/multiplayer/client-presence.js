@@ -200,7 +200,14 @@
   else if(msg.type==='player-punched'&&validId(msg.id)&&known.has(msg.id))renderer.punch(msg.id);
   else if(typeof msg.type==='string'&&msg.type.startsWith('duel-'))onDuelPacket(msg);
   else if(msg.type==='rejected'&&typeof msg.reason==='string'&&
-          (msg.reason.startsWith('duel-')||msg.reason==='sanctuary-pvp-disabled'||msg.reason==='no-valid-duel-invitation')){
+          (msg.reason.startsWith('duel-')||
+           ['sanctuary-pvp-disabled','no-valid-duel-invitation',
+            'invalid-or-unspawned-peer','invalid-or-disconnected-peer',
+            'challenger-has-pending-request','challenger-has-incoming-request',
+            'target-has-pending-request','target-has-outgoing-request'].includes(msg.reason))){
+   // A server rejection must clear any optimistic waiting state. This also
+   // covers a target who disconnects after we clicked CHALLENGE but before
+   // the Worker accepts the request.
    clearDuelExpiry();inviteFrom=null;outgoingTo=null;
    duelNotice='Duel action unavailable. Check proximity, cooldown or invitation expiry.';
    renderDuelUi();
