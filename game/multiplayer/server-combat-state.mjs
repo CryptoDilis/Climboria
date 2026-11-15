@@ -39,6 +39,12 @@ export class ServerCombatState {
   if(!state.ok)return state;
   const now=this.now();
   if(!Number.isFinite(now)||now<0)return {ok:false,reason:'invalid-server-time'};
+  // Do not allow a peer to have simultaneous inbound and outbound invites.
+  // This also prevents cycles that could leave a revoked peer undisclosed.
+  const incoming=this.pending.get(challengerId);
+  if(incoming&&incoming.expiresAt>now)return {ok:false,reason:'challenger-has-incoming-request'};
+  if([...this.pending.values()].some(p=>p.challengerId===targetId&&p.expiresAt>now))
+   return {ok:false,reason:'target-has-outgoing-request'};
   // One outgoing invitation per authenticated session, and a bounded rate
   // even when the recipient repeatedly declines the request.
   if([...this.pending.values()].some(p=>p.challengerId===challengerId&&p.expiresAt>now))
@@ -100,7 +106,7 @@ export class ServerCombatState {
  /** An authenticated participant can revoke an invitation or active duel.
   * Keep invite rate-limit state on voluntary cancellation (anti-spam). */
  cancel(id){
-  if(!this.hasPeer(id))return {ok:false,reason:'invalid-or-disconnected-peer'};
+  if(typeof id!=='string'||!id)return {ok:false,reason:'invalid-peer-id'};
   let counterpartId=this.opponents.get(id)||null;
   const incoming=this.pending.get(id);
   if(incoming){
