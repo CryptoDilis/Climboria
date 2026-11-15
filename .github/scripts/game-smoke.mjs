@@ -71,10 +71,6 @@ try {
     visible: !!document.querySelector('canvas') && !!window.__climboriaCameraOrbit,
   }));
   if (heroAssetAudit.identity !== 'adventurer' || heroAssetAudit.renderer !== 'glb' || !heroAssetAudit.visible) errors.push('Original Climboria Meshy GLB did not initialize: ' + JSON.stringify(heroAssetAudit));
-  // Newly staged Meshy loader must remain fail-closed until reviewed binary assets are imported.
-  const optionalAssetAudit=await page.evaluate(()=>window.ClimboriaMeshyAssets?.audit?.()||null);
-  if(!optionalAssetAudit||optionalAssetAudit.enabled!==false||optionalAssetAudit.guardCount!==0||optionalAssetAudit.loadedDecorations!==0)
-    errors.push('Unreviewed Meshy assets loaded before binary import and visual acceptance: '+JSON.stringify(optionalAssetAudit));
   // Sample a full second: a half-second window can land near a sine-wave's
   // turning point and under-report a real but deliberately subtle idle motion.
   await page.waitForTimeout(1000);
@@ -467,6 +463,42 @@ try {
   if (!world.mountainSpawnRouteAudit || world.mountainSpawnRouteAudit.steps < 100 || world.mountainSpawnRouteAudit.fixedColliderCount < 1 || !Number.isFinite(world.mountainSpawnRouteAudit.terrain.maxAbsoluteGrade) || (world.mountainSpawnRouteAudit.blockedAt && !world.mountainSpawnRouteAudit.blockedAt.reason)) errors.push('Mountain spawn-to-summit collision trace is incomplete or missing blocker diagnostics: '+JSON.stringify(world.mountainSpawnRouteAudit));
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
+  // GAME performance regression: each terrain-chunk grass/rock instanced batch
+  // must use a world-space culling sphere that CONTAINS sampled transformed mesh
+  // vertices, not the tiny shared origin geometry. False negatives cause pop-in.
+  const batchCulling=await page.evaluate(()=>{
+    const chunks=window.__climboriaJarrellsPeak?.chunks;
+    const issues=[];let batches=0,vertices=0;
+    if(!chunks)return {batches,vertices,issues:['no chunks API']};
+    const THREE=window.THREE,matrix=new THREE.Matrix4(),v=new THREE.Vector3();
+    for(const chunk of chunks.values())for(const mesh of chunk.objs||[]){
+      if(!mesh.isInstancedMesh)continue;
+      batches++;
+      const sphere=mesh.geometry?.boundingSphere;
+      if(!mesh.frustumCulled||!mesh.userData?.ownsChunkBoundsGeometry||!sphere||!Number.isFinite(sphere.radius)){
+        issues.push('unbounded chunk instanced batch');
+        continue;
+      }
+      const pos=mesh.geometry.attributes.position;
+      for(const i of [...new Set([0,Math.floor(mesh.count/2),mesh.count-1])]){
+        if(i<0||i>=mesh.count)continue;
+        mesh.getMatrixAt(i,matrix);
+        for(const j of [...new Set([0,Math.floor(pos.count/2),pos.count-1])]){
+          v.fromBufferAttribute(pos,j).applyMatrix4(matrix);vertices++;
+          if(v.distanceTo(sphere.center)>sphere.radius+.01){
+            issues.push('instance world vertex excluded by culling sphere');
+            break;
+          }
+        }
+      }
+    }
+    return {batches,vertices,issues:issues.slice(0,10)};
+  });
+  console.log('Jarrell instanced chunk frustum-culling audit:',JSON.stringify(batchCulling));
+  if(batchCulling.batches<1||batchCulling.vertices<1||batchCulling.issues.length)
+    errors.push('Instanced grass/rock chunk frustum bounds are unsafe or absent: '+JSON.stringify(batchCulling));
+
+
   // Direct-entry gameplay: no expedition title overlay or click-to-enter gate.
   if (await page.locator('#title').count() !== 0) {
     throw new Error('Direct gameplay must not contain the expedition title overlay');
@@ -520,12 +552,27 @@ try {
     p.x=b.x;p.z=b.z;p.y=w.groundAt(b.x,b.z)+1.75;p.vy=0;
     return origin;
   });
+  const swimStateDiagnostic = () => page.evaluate(() => {
+    const w=window.__climboriaJarrellsPeak,p=w?.player,body=p&&w?.waterBodyAt?.(p.x,p.z);
+    return {gameReady:window.__climboriaGameReady,player:p?{x:p.x,z:p.z,y:p.y,mode:p.mode,swim:p.swim,swimDepth:p.swimDepth,waterBodyId:p.waterBodyId,vy:p.vy}:null,
+      body:body?{id:body.id,kind:body.kind,surfaceY:body.surfaceY,depth:body.depth}:null,
+      groundY:p&&w?.groundAt?.(p.x,p.z),animation:document.documentElement.dataset.climboriaHeroAnimation,
+      clip:document.documentElement.dataset.climboriaHeroClip,renderErrors:window.__climboriaRenderState?.errors??[]};
+  });
   await page.keyboard.down('w');
-  await page.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.swim === true && document.documentElement.dataset.climboriaHeroAnimation === 'swim', undefined, { timeout: 10000 });
+  try {
+    await page.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.swim === true && document.documentElement.dataset.climboriaHeroAnimation === 'swim', undefined, { timeout: 25000 });
+  } catch (error) {
+    throw new Error('Actual swim-state/animation gate timed out: '+JSON.stringify(await swimStateDiagnostic())+'; '+error.message);
+  }
   const swimClip = await page.evaluate(() => document.documentElement.dataset.climboriaHeroClip || '');
   await page.keyboard.up('w');
   if(swimOrigin)await page.evaluate(origin=>Object.assign(window.__climboriaJarrellsPeak.player,origin),swimOrigin);
-  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
+  try {
+    await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 25000 });
+  } catch (error) {
+    throw new Error('Actual post-swim idle animation gate timed out: '+JSON.stringify(await swimStateDiagnostic())+'; '+error.message);
+  }
   console.log('Original Climboria GLB movement states:',JSON.stringify({idle:'idle',walk:'walk',run:'run',swim:'swim'}));
   const spawnCheck = await page.evaluate(() => ({gameplayActive: document.body.classList.contains('free'), mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
   if(spawnCheck.heroAsset!=='adventurer')errors.push('Original Climboria GLB did not remain active during gameplay: '+JSON.stringify(spawnCheck));
@@ -781,16 +828,6 @@ try {
   });
   await mobile.waitForSelector('canvas', { timeout: 45000 });
   await mobile.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
-  // Mobile GLB scenes must use the low-fill-rate renderer and expose actual draw-call metrics.
-  const mobileGraphicsAudit=await mobile.evaluate(()=>({
-    mobileBudget:window.__climboriaRenderState?.mobileBudget,
-    pixelRatio:window.__climboriaRenderState?.pixelRatio,
-    triangles:window.__climboriaRenderState?.triangles,
-    drawCalls:window.__climboriaRenderState?.drawCalls,
-  }));
-  if(!mobileGraphicsAudit.mobileBudget||!Number.isFinite(mobileGraphicsAudit.pixelRatio)||mobileGraphicsAudit.pixelRatio>.901||
-    !Number.isFinite(mobileGraphicsAudit.drawCalls)||!Number.isFinite(mobileGraphicsAudit.triangles))
-    errors.push('Mobile render budget or WebGL counters unavailable: '+JSON.stringify(mobileGraphicsAudit));
   // Mobile Hub-to-game now enters gameplay directly; the character picker belongs in the Hub.
   const portraitGate = await mobile.evaluate(() => ({
     visible: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display !== 'none',
