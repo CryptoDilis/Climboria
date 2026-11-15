@@ -95,6 +95,7 @@ test('real authenticated WebSocket messages are required before peers appear',as
  assert.ok(socket.protocols.includes('climboria-v1'));
  assert.equal(socket.url,'wss://rooms.climboria.fun/ws');
  socket.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'c'.repeat(32),peers:[]})});
+ socket.onmessage({data:JSON.stringify({type:'spawn-accepted',id:'s_'+'c'.repeat(32),position:{x:0,y:9.55,z:-30}})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
  assert.equal(h.adds.length,0);
  socket.onmessage({data:JSON.stringify({type:'player-joined',player:peer})});
@@ -114,9 +115,10 @@ test('staged duel panel is interactive only after authenticated real peers, neve
  assert.equal(h.clients.length,1);
  const socket=h.clients[0];socket.onopen();
  socket.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'c'.repeat(32),peers:[peer]})});
+ socket.onmessage({data:JSON.stringify({type:'spawn-accepted',id:'s_'+'c'.repeat(32),position:{x:0,y:9.55,z:-30}})});
  const toggle=h.created.find(node=>node.id==='climboria-duel-toggle');
  const panel=h.created.find(node=>node.id==='climboria-duel-panel');
- assert.ok(toggle&&panel,'DUELS toggle is created only by authenticated room welcome');
+ assert.ok(toggle&&panel,'DUELS toggle requires server-verified initial spawn');
  const buttons=()=>{const result=[];const visit=node=>{
   if(node.tag==='button')result.push(node);
   for(const child of node.children||[])visit(child);
@@ -164,9 +166,10 @@ test('World Chat is room-gated, server-confirmed, safe as text and cleared on di
  assert.equal(h.created.some(node=>node.id==='climboria-world-chat-panel'),false,
   'unverified socket does not make World Chat visible before welcome');
  socket.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'c'.repeat(32),peers:[peer]})});
+ socket.onmessage({data:JSON.stringify({type:'spawn-accepted',id:'s_'+'c'.repeat(32),position:{x:0,y:9.55,z:-30}})});
  const toggle=h.created.find(node=>node.id==='climboria-world-chat-toggle');
  const panel=h.created.find(node=>node.id==='climboria-world-chat-panel');
- assert.ok(toggle&&panel,'authenticated room welcome creates World Chat');
+ assert.ok(toggle&&panel,'server-accepted initial spawn creates World Chat');
  assert.ok(panel.children[0].textContent.includes('2 ONLINE'));
  toggle.click();
  assert.equal(panel.style.display,'block');
@@ -214,6 +217,7 @@ test('login after first guest load connects without reloading; logout clears Wor
  const first=h.clients[0];
  first.onopen();
  first.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'c'.repeat(32),peers:[peer]})});
+ first.onmessage({data:JSON.stringify({type:'spawn-accepted',id:'s_'+'c'.repeat(32),position:{x:0,y:9.55,z:-30}})});
  assert.equal(h.adds.length,1);
  const toggle=h.created.find(el=>el.id==='climboria-world-chat-toggle');
  const panel=h.created.find(el=>el.id==='climboria-world-chat-panel');
@@ -233,6 +237,7 @@ test('login after first guest load connects without reloading; logout clears Wor
  await waitFor(()=>h.clients.length===2);
  const second=h.clients[1];second.onopen();
  second.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'e'.repeat(32),peers:[]})});
+ second.onmessage({data:JSON.stringify({type:'spawn-accepted',id:'s_'+'e'.repeat(32),position:{x:0,y:9.55,z:-30}})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
  assert.equal(toggle.style.display,'block','new verified session restores chat panel');
  assert.equal(h.adds.length,1,'no fabricated peers on second account');
@@ -243,6 +248,7 @@ test('account switch closes previous socket; token refresh does not duplicate se
  await waitFor(()=>h.clients.length===1);
  const first=h.clients[0];first.onopen();
  first.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'c'.repeat(32),peers:[peer]})});
+ first.onmessage({data:JSON.stringify({type:'spawn-accepted',id:'s_'+'c'.repeat(32),position:{x:0,y:9.55,z:-30}})});
  h.authChange({user:{id:'verified-uuid'},access_token:'new-token'},'TOKEN_REFRESHED');
  assert.equal(first.readyState,1,'same account token refresh keeps healthy room session');
  assert.equal(h.clients.length,1);
@@ -253,6 +259,7 @@ test('account switch closes previous socket; token refresh does not duplicate se
  await flush();await waitFor(()=>h.clients.length===2);
  const next=h.clients[1];next.onopen();
  next.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'e'.repeat(32),peers:[]})});
+ next.onmessage({data:JSON.stringify({type:'spawn-accepted',id:'s_'+'e'.repeat(32),position:{x:0,y:9.55,z:-30}})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
 });
 
@@ -283,6 +290,7 @@ test('temporary ticket request failure retries once and recovers without duplica
  assert.equal(h.clients.length,1,'successful retry opens exactly one room socket');
  const ws=h.clients[0];ws.onopen();
  ws.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'b'.repeat(32),peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:'s_'+'b'.repeat(32),position:{x:0,y:9.55,z:-30}})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
 });
 
@@ -302,5 +310,28 @@ test('session transition during unresolved getSession never authenticates an old
  assert.equal(h.calls.find(x=>x.url.endsWith('/ticket')).options.headers.Authorization,'Bearer fresh-login-token');
  const ws=h.clients[0];ws.onopen();
  ws.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'b'.repeat(32),peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:'s_'+'b'.repeat(32),position:{x:0,y:9.55,z:-30}})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+});
+
+test('unconfirmed spawn cannot advertise connection, chat, or duel UI',async()=>{
+ const h=harness(true);await flush();
+ await waitFor(()=>h.clients.length===1);
+ const socket=h.clients[0];socket.onopen();
+ const id='s_'+'c'.repeat(32);
+ socket.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
+ assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false,
+  'ticket alone is insufficient for a functional World Chat');
+ assert.equal(h.created.some(el=>el.id==='climboria-duel-toggle'),false);
+ socket.onmessage({data:JSON.stringify({type:'rejected',reason:'invalid-initial-spawn'})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'spawn-rejected');
+ socket.onmessage({data:JSON.stringify({type:'spawn-accepted',
+  id:'s_'+'d'.repeat(32),position:{x:0,y:9.55,z:-30}})});
+ assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false,
+  'another session ID cannot authorize local World Chat');
+ socket.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30}})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.ok(h.created.some(el=>el.id==='climboria-world-chat-toggle'));
+ assert.ok(h.created.some(el=>el.id==='climboria-duel-toggle'));
 });
