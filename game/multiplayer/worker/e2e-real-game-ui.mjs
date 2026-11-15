@@ -86,6 +86,15 @@ async function openExplorer(account,emulateMobile){
    !!window.__CLIMBORIA_GAME_PEERS?.audit,
   undefined,{timeout:MAX_WAIT}
  );
+ // Game boots in 'cine' (intro), while the multiplayer client intentionally
+ // refuses to connect unless the real avatar is walking on validated terrain.
+ // Trigger normal keyboard gameplay entry, NOT a forged player.mode mutation.
+ await page.keyboard.press('w');
+ await page.waitForFunction(
+  ()=>window.__climboriaJarrellsPeak?.player?.mode==='walk'&&
+   Number.isFinite(window.__climboriaJarrellsPeak?.player?.y),
+  undefined,{timeout:30000}
+ );
  // Use the real Supabase Auth client instead of constructing fake user IDs.
  const signedIn=await page.evaluate(async ({email,password})=>{
   const auth=window.__CLIMBORIA_GAME_SAVE_CLIENT?.auth;
