@@ -46,6 +46,18 @@ test('teleport exploits, untrusted packets and flood are rejected before broadca
  assert.equal(room.receive('missing-session',{type:'move',position:{x:0,y:2,z:-30}}).ok,false);
  assert.equal(two.packets.filter(x=>x.type==='player-moved').length,1);
 });
+test('after a long idle the first small real movement works, but no giant teleport credit',()=>{
+ const room=fresh(),one=connect(room,a,'Jarrell'),two=connect(room,b,'Lheiz');
+ current+=9000;
+ const small=room.receive(a,{type:'move',position:{x:.6,y:2,z:-30}});
+ assert.equal(small.ok,true,'idle must not permanently disable a real player');
+ assert.equal(two.packets.at(-1).type,'player-moved');
+ current+=9000;
+ const huge=room.receive(a,{type:'move',position:{x:300,y:2,z:300}});
+ assert.equal(huge.ok,false);
+ assert.equal(huge.reason,'move-too-fast','idle time must never grant teleport distance');
+ assert.equal(room.snapshot().find(p=>p.id===a).position.x,.6);
+});
 test('no fake opponents or claims of live combat/loot from client packets',()=>{
  const room=fresh();
  assert.deepEqual(room.snapshot(),[]);
