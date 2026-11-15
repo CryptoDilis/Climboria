@@ -89,3 +89,36 @@ test('closed or throwing WebSocket write is rejected / evicted, not kept as ghos
  assert.equal(room.members.has(b),false);
  assert.equal(first.packets.at(-1).type,'player-left');
 });
+
+test('deferred Game Worker peers stay invisible until server validates spawn',()=>{
+ const room=fresh(),sentA=[],sentB=[],sentC=[];
+ const aSession=room.connect({trustedSessionId:a,name:'Jarrell',model:'Jarrell',
+  announceImmediately:false,send:p=>sentA.push(p)});
+ assert.equal(aSession.ok,true);
+ assert.equal(sentA[0].type,'welcome');
+ assert.equal(room.members.size,1,'pending socket still consumes the capacity budget');
+ assert.deepEqual(room.snapshot(),[],'unauthorized spawn cannot invent a map peer');
+ const bSession=room.connect({trustedSessionId:b,name:'Lheiz',model:'Lheiz',
+  announceImmediately:false,send:p=>sentB.push(p)});
+ assert.equal(bSession.ok,true);
+ assert.deepEqual(sentB[0].peers,[],'second pending socket sees no ghost peers');
+ assert.equal(sentA.filter(p=>p.type==='player-joined').length,0);
+ assert.equal(room.receive(a,{type:'move',position:{x:0,y:2,z:-30}}).reason,'spawn-required');
+ assert.equal(room.announce(a),true,'accepted spawn promotes visible peer exactly once');
+ assert.equal(room.announce(a),false,'duplicate spawn announcement is ignored');
+ assert.equal(room.snapshot().length,1);
+ assert.equal(sentB.filter(p=>p.type==='player-joined').length,0,'not-yet-spawned socket cannot see others');
+ const cSession=room.connect({trustedSessionId:c,name:'Explorer',model:'Adventurer',
+  announceImmediately:false,send:p=>sentC.push(p)});
+ assert.equal(cSession.ok,true);
+ assert.deepEqual(sentC[0].peers.map(p=>p.id),[a],'welcome snapshot includes only verified spawns');
+ assert.equal(room.disconnect(c),true);
+ assert.equal(sentA.some(p=>p.type==='player-left'&&p.id===c),false,'pending socket cannot produce a fake leave');
+ assert.equal(room.announce(b),true);
+ const joined=sentA.find(p=>p.type==='player-joined'&&p.player.id===b);
+ assert.ok(joined,'already-spawned A sees B only after accepted B spawn');
+ assert.equal(sentB.filter(p=>p.type==='player-joined').length,0);
+ assert.equal(room.snapshot().length,2);
+ assert.equal(room.disconnect(b),true);
+ assert.equal(sentA.at(-1).type,'player-left','validated peer leave is visible');
+});
