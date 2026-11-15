@@ -35,3 +35,37 @@ Tracking: issue #463, draft PR #466, `docs/GAME_DEVELOPMENT_RECORD.md`.
 - Import workflow: `.github/workflows/game-import-meshy-asset-packs.yml`; waits for all five ZIPs, tests and commits all 44 verified GLBs, removes ZIP files, and retains a disabled runtime manifest.
 - PR checks: `.github/workflows/game-meshy-pipeline-checks.yml` invokes `node game/scripts/test-meshy-world-assets.mjs` and manifest validation. Passing here **does not** substitute for actual Game visual QA, anti-obstruction, FPS and hardware tests.
 - After bot binary import, issue a user-authored Game documentation checkpoint commit to retrigger standard PR CI. Do not change `enabled` prematurely.
+
+## Automated in-Game visual QA after binary import
+
+`game/scripts/meshy-visual-qa.mjs` and
+`.github/workflows/game-meshy-visual-qa.yml` are the next safe QA gates.
+They can only exercise the new models once **all 44 GLBs** have been
+imported onto this PR branch. Before import the visual stage is skipped
+rather than reporting false screenshot success.
+
+After the five owner ZIP uploads, the **strict canonical** import workflow
+verifies every SHA-256, commits all 44 GLBs and deletes the temporary ZIPs.
+Because its own GitHub Actions bot push might not trigger ordinary PR
+workflows, have a maintainer create a short documentation checkpoint commit
+on this branch. The visual workflow then:
+
+1. Checks all 44 actual binary GLBs using the committed independent allowlist.
+2. Temporarily turns `manifest.enabled` on **inside the ephemeral Actions
+   checkout only**; the GitHub branch and published website remain OFF.
+3. Exercises real Three.js/Playwright software WebGL in desktop and mobile
+   viewports near the camp, realistic guard replacements, forest, cave,
+   summit and coast. Uploads screenshots and `meshy-game-qa/report.json`.
+4. Flags missing/invalid model loading and guard swaps, but **never**
+   treats headless CI timings as a physical Android FPS benchmark.
+
+Review ALL generated Game screenshots for wrong scale, duplicated guards,
+cartoonish shapes, texture breakage, chest/cave-path obstruction and poor
+spacing before approving any curated model for real release. Verify FPS,
+draw calls, thermal performance and device memory separately on a physical
+Android device. Keep the original Game five rarity chests and fallback
+props unchanged. Owner rights/usage permissions also need review.
+
+**Important:** this is a visual testing mechanism, not automatic deployment.
+The live Game will continue using the old assets until a separately
+reviewed, Game-only PR enables the approved subset of the new 3D models.
