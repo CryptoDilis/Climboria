@@ -8,6 +8,7 @@ on:
       - ".github/scripts/dex-swap-staging-runtime-policy.mjs"
       - ".github/scripts/dex-swap-staging-runtime-policy.test.mjs"
       - ".github/scripts/dex-swap-staging-off-browser-smoke.mjs"
+      - ".github/scripts/dex-swap-staging-approval-browser-smoke.mjs"
       - ".github/workflows/dex-swap-staging-safety.yml"
       - "dex/provider-managed-swap.mjs"
       - "swap-config.js"
@@ -57,3 +58,7 @@ jobs:
         run: |
           node --check .github/scripts/dex-swap-staging-off-browser-smoke.mjs
           node .github/scripts/dex-swap-staging-off-browser-smoke.mjs
+      - name: Synthetic approval and revocation on live Swap/DEX DOM (no Jupiter or wallet)
+        run: |
+          node --check .github/scripts/dex-swap-staging-approval-browser-smoke.mjs
+          node .github/scripts/dex-swap-staging-approval-browser-smoke.mjs
