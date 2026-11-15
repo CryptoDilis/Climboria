@@ -1,0 +1,6 @@
+name = "climboria-swap-runtime-status"
+main = "index.mjs"
+compatibility_date = "2026-11-15"
+workers_dev = false
+preview_urls = false
+routes = [{ pattern = "climboria.fun/swap-runtime-status.json", zone_name = "climboria.fun" }]
