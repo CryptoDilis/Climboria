@@ -390,6 +390,13 @@
     body:JSON.stringify({name:hero.name,model:hero.model})
    });
    if(disposed||epoch!==connectEpoch)return;
+   if(reply.status===429){
+    // An authenticated room can be temporarily full or this account may
+    // already have two outstanding tickets. Do not claim the server is down.
+    showStatus('room-busy','MULTIPLAYER · ROOM BUSY · RETRYING');
+    scheduleConnect(10000);
+    return;
+   }
    if(!reply.ok)throw Error('Room ticket denied');
    const ticket=await reply.json();
    if(disposed||epoch!==connectEpoch)return;
