@@ -2205,7 +2205,7 @@ addEventListener('touchend',tend);addEventListener('touchcancel',tend);
 const solids=[],SLOPE=3.8,PLAYER_RADIUS=.34,MAX_STEP_UP=3.0;
 
 function l2w(g,lx,lz){const r=g.rotation.y,c=Math.cos(r),n=Math.sin(r);return[g.position.x+lx*c+lz*n,g.position.z-lx*n+lz*c]}
-const solid=(x,z,r,label=null)=>solids.push({x,z,r,label});
+const solid=(x,z,r,label=null)=>{const entry={x,z,r,label,disabled:false};solids.push(entry);return entry;};
 /* ---------- CC0 rainforest dressing from 3DAssets.dev ----------
    The existing streamed/instanced procedural forest remains the lightweight fallback.
    These few hero props are loaded once, cloned, and placed only on valid forest ground.
@@ -2218,6 +2218,33 @@ const cc0ForestDefinitions={
  fallenLog:{url:'https://cdn.3dassets.dev/assets/36143/v1/model.glb',collider:1.15,scale:.9}
 };
 const cc0ForestLoaded=new Map();
+// A successfully loaded approved Meshy tree can temporarily replace ONE
+// nearby legacy CC0 tree; its original geometry/collider remain for fallback.
+const legacyForestTrees=[],activeMeshyTreeZones=new Map();
+function syncLegacyTreeReplacements(){
+ const hidden=new Set();
+ for(const zone of activeMeshyTreeZones.values()){
+  let nearest=null,distance=zone.radius;
+  for(const tree of legacyForestTrees){
+   if(hidden.has(tree))continue;
+   const d=Math.hypot(tree.x-zone.x,tree.z-zone.z);
+   if(d<distance){nearest=tree;distance=d;}
+  }
+  if(nearest)hidden.add(nearest);
+ }
+ for(const tree of legacyForestTrees){
+  const suppressed=hidden.has(tree);
+  tree.root.visible=!suppressed;
+  if(tree.collider)tree.collider.disabled=suppressed;
+ }
+}
+function replaceLegacyTreesNear(x,z,radius=28){
+ if(!Number.isFinite(x)||!Number.isFinite(z))return null;
+ const token=Symbol('meshy-tree-replacement');
+ activeMeshyTreeZones.set(token,{x,z,radius:Math.min(35,Math.max(8,radius))});
+ syncLegacyTreeReplacements();
+ return ()=>{activeMeshyTreeZones.delete(token);syncLegacyTreeReplacements();};
+}
 function findCC0ForestSpots(count,minSpacing,excluded=[]){
  const found=[],blockedSpots=excluded.slice();
  for(let ring=105;ring<=1450&&found.length<count;ring+=38){
@@ -2246,7 +2273,11 @@ function placeCC0ForestModel(key,spot,index){
  root.scale.setScalar(def.scale);
  root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=true}});
  scene.add(root);
- if(def.collider>0)solid(spot.x,spot.z,def.collider);
+ const collider=def.collider>0?solid(spot.x,spot.z,def.collider):null;
+ if((key==='buttress'||key==='canopy')&&collider){
+  legacyForestTrees.push({root,collider,x:spot.x,z:spot.z});
+  syncLegacyTreeReplacements();
+ }
 }
 function loadCC0ForestModel(key,spots){
  const def=cc0ForestDefinitions[key];
@@ -2325,7 +2356,7 @@ function blocked(nx,nz,ox,oz,feet){
   return true;
  }
  // Swept checks against fixed and streamed circular colliders.
- for(const o of solids)if(sweptCircleCollides(o.x,o.z,o.r)){window.__climboriaLastCollision={type:'fixed-solid',x:o.x,z:o.z,r:o.r,label:o.label||null};return true;}
+ for(const o of solids)if(!o.disabled&&sweptCircleCollides(o.x,o.z,o.r)){window.__climboriaLastCollision={type:'fixed-solid',x:o.x,z:o.z,r:o.r,label:o.label||null};return true;}
  for(const t of ts){
   const cx=ox+dirX*t,cz=oz+dirZ*t,ccx=Math.floor(cx/CS),ccz=Math.floor(cz/CS);
   for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){
@@ -3542,7 +3573,7 @@ function publishGameReady(){
  // Start optional chest visuals after game controls are already interactive.
  requestAnimationFrame(loadChestModels);
  // Optional owner Meshy GLBs remain disabled until binary import, visual QA and FPS acceptance.
- requestAnimationFrame(()=>window.ClimboriaMeshyAssets?.install({T3,scene,POI,soldiers,heightAt}));
+ requestAnimationFrame(()=>window.ClimboriaMeshyAssets?.install({T3,scene,POI,soldiers,heightAt,replaceLegacyTrees:replaceLegacyTreesNear}));
 }
 function initChunks(){
  const buildNext=()=>{
