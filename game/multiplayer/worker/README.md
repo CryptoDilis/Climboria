@@ -17,3 +17,40 @@ This is **server source and tests**, not deployed multiplayer. It builds on the 
 
 ## Deployment status
 **NOT DEPLOYED. NOT LIVE.** No application endpoint, custom domain, Worker secret, or two-browser production proof has been established by this source work.
+
+## Actual two-browser acceptance (manual; no saved tokens)
+
+After an isolated Game Worker has been configured and deployed by an authorized owner, run:
+
+```bash
+npm install --no-save playwright
+npx playwright install chromium
+
+# Supply two fresh Supabase access JWTs from TWO DIFFERENT test accounts only
+# in your own local environment; never store them in scripts, GitHub or issues.
+GAME_ROOM_BASE="https://rooms.climboria.fun/" \
+GAME_ROOM_APPROVED_HOST="rooms.climboria.fun" \
+GAME_USER_A_JWT="<locally provided test account A JWT>" \
+GAME_USER_B_JWT="<locally provided test account B JWT>" \
+node game/multiplayer/worker/e2e-two-accounts.mjs
+```
+
+`e2e-two-accounts.mjs` launches **two independent Chromium contexts**, each
+with a blank first-party origin page (so no website scripts are exposed to QA
+tokens), obtains an actual server-authenticated single-use room ticket, upgrades
+to a real WebSocket, verifies distinct identities and two-way visibility,
+Sanctuary spawning, validated movement, visual-only punch broadcast, rejection
+of fake damage, and removal on disconnect. It does not print JWTs or tickets.
+It is **never run by standard GitHub CI**; only syntax is checked by default.
+
+This is a **backend connection acceptance**, not proof of Game player model
+rendering. Before enabling `game/multiplayer/client-config.json`, also use two
+actual signed-in browsers on `climboria.fun/game/play.html` to check
+remote Jarrell/Lheiz GLB models, orientation, mobile FPS, reconnection,
+account replacement, and that the default-off flag/zero-fake-peer guarantees
+hold on logout. Then separately verify safe-zone and opt-in PvP logic before
+allowing any server-authoritative damage. A successful E2E test alone must NOT
+automatically enable or deploy the multiplayer client.
+
+**Current live state remains OFF**; this document does not assert that a Worker
+was deployed or that a production two-user session has been observed.
