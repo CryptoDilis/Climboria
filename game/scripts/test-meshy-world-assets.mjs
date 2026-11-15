@@ -7,9 +7,9 @@ import vm from 'node:vm';
 const script = readFileSync('game/meshy-world-assets.js', 'utf8');
 
 function harness(manifest, mobile = false) {
-  const calls = [];
+  const calls = [],frames=[];
   let now = 2_000;
-  const window = {};
+  const window = {requestAnimationFrame(fn){frames.push(fn);return frames.length}};
   const sandbox = {
     window,
     performance: {now: () => now},
@@ -34,6 +34,8 @@ function harness(manifest, mobile = false) {
   };
   return {
     api:window.ClimboriaMeshyAssets,opts,calls,
+    nextFrame:()=>{const queued=frames.splice(0);queued.forEach(fn=>fn());},
+    framesWaiting:()=>frames.length,
     advance: () => { now += 1_500; }
   };
 }
@@ -167,5 +169,42 @@ assert.equal(stale.api.audit().failedFiles.length,0,'Valid far-away GLB may retr
 stale.advance();stale.api.tick({x:0,z:0});
 assert.equal(stale.calls.length,2,'Return to area should allow a fresh load');
 console.log('PASS in-flight Meshy model unloaded safely after player teleports away');
+
+// Loading both armored prefabs may complete in the same millisecond, but
+// applying the 12 real camp NPC replacements must take >=6 render frames.
+const guards=harness({schema:1,enabled:true,guardModels:['guard-a.glb','guard-b.glb'],decorations:[]});
+guards.opts.soldiers=Array.from({length:12},()=>{
+ const fallback={visible:true};
+ return {s:{children:[fallback],add(obj){this.children.push(obj)}},fallback};
+});
+guards.opts.T3.Vector3=class {constructor(){this.x=this.y=this.z=0}};
+guards.opts.T3.Box3=class {
+ constructor(){this.min={y:0}}
+ setFromObject(){return this}
+ getSize(v){v.y=2;return v}
+ getCenter(v){v.x=0;v.y=1;v.z=0;return v}
+};
+await guards.api.install(guards.opts);
+guards.api.tick({x:1000,z:1000});
+assert.equal(guards.calls.length,2,'Camp receives exactly two approved guard prefab requests');
+const clone=()=>({
+ scale:{setScalar(){}},position:{set(){}},
+ traverse(fn){fn({isMesh:true,geometry:{index:{count:240}}})}
+});
+const prefab={traverse(fn){fn({isMesh:true,geometry:{index:{count:240}}})},clone};
+for(const call of guards.calls)call.success({scene:prefab});
+for(let k=0;k<8;k++)await Promise.resolve();
+assert.equal(guards.api.audit().guardCount,0,'Never swap every guard in one decode callback');
+assert.equal(guards.framesWaiting(),1,'Begin installing guards on next animation frame');
+for(let frame=1;frame<=6;frame++){
+ guards.nextFrame();
+ assert.equal(guards.api.audit().guardCount,frame*2,
+  'At most 2 guard NPC visual replacements per animation frame');
+}
+assert.equal(guards.framesWaiting(),0);
+assert.equal(guards.opts.soldiers.filter(x=>!x.fallback.visible&&x.s.children.length===2).length,12,
+ 'All original camp soldier fallbacks remain preserved but visually replaced');
+assert.equal(guards.api.audit().failedFiles.length,0);
+console.log('PASS 12 armored guards stream at 2 per frame with fallback preserved');
 
 console.log('PASS all Game Meshy loader unit tests');
