@@ -41,8 +41,12 @@ public Game. The readiness response never reveals a key or admin secret.
 two-account movement/chat, 3D remote avatars or mobile FPS.** A successful
 deployment log alone is not a two-account acceptance result.
 
-With **two different test users**, sign in to the existing Game Supabase
-project and obtain short-lived account JWTs in a *private* local shell.
+With **two different registered (non-anonymous) test users**, sign in to
+the existing Game Supabase project and obtain short-lived account JWTs in a
+*private* local shell. **Supabase anonymous/guest sessions must not enter the
+authenticated multiplayer room**, even when they have a valid JWT. The Game
+client prevents guest room tickets and the server independently rejects
+`is_anonymous:true` or an `app_metadata.provider` of `anonymous`.
 Do not commit or paste JWTs, refresh tokens, tickets or personal user data.
 Run from a local checkout with Node 22 and Playwright Chromium installed:
 
