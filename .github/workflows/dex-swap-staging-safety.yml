@@ -7,6 +7,7 @@ on:
       - ".github/scripts/dex-swap-pinned-staging.mjs"
       - ".github/scripts/dex-swap-staging-runtime-policy.mjs"
       - ".github/scripts/dex-swap-staging-runtime-policy.test.mjs"
+      - ".github/scripts/dex-swap-staging-off-browser-smoke.mjs"
       - ".github/workflows/dex-swap-staging-safety.yml"
       - "dex/provider-managed-swap.mjs"
       - "swap-config.js"
@@ -37,3 +38,22 @@ jobs:
         run: |
           node --test .github/scripts/dex-swap-staging-runtime-policy.test.mjs
           node --test .github/scripts/dex-swap-managed-provider-shell.test.mjs
+
+  staging-browser:
+    name: Browser checks of disabled Swap and DEX staging on desktop/mobile
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install isolated Playwright Chromium
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Real DOM, network blocked, disabled-provider proof on both routes
+        run: |
+          node --check .github/scripts/dex-swap-staging-off-browser-smoke.mjs
+          node .github/scripts/dex-swap-staging-off-browser-smoke.mjs
