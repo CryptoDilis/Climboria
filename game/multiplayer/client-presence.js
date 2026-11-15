@@ -161,16 +161,22 @@
  }
  function clearPeers(){
   for(const id of known.keys())renderer.remove(id);
-  known.clear();selfId=null;
+  known.clear();selfId=null;clearDuelUi();
  }
  function addPlayer(player){
   if(!validPlayer(player)||player.id===selfId||known.size>=32)return;
   known.set(player.id,player);renderer.add(player);
+  renderDuelUi();
   showStatus('connected','ONLINE · '+known.size+' other explorers');
  }
  function leave(id){
   if(!known.has(id))return;
   renderer.remove(id);known.delete(id);
+  if([inviteFrom,outgoingTo,activeWith].includes(id)){
+   clearDuelExpiry();inviteFrom=null;outgoingTo=null;activeWith=null;
+   duelNotice='Explorer disconnected; consent cleared.';
+  }
+  renderDuelUi();
   showStatus('connected','ONLINE · '+known.size+' other explorers');
  }
  function onPacket(data){
@@ -181,6 +187,7 @@
    if(!validId(msg.selfId)||!Array.isArray(msg.peers)||msg.peers.length>32)return;
    selfId=msg.selfId;clearPeers();selfId=msg.selfId;
    for(const p of msg.peers)addPlayer(p);
+   ensureDuelUi();
    showStatus('connected','ONLINE · '+known.size+' other explorers');
   }else if(msg.type==='player-joined'){
    addPlayer(msg.player);
@@ -191,6 +198,13 @@
    }
   }else if(msg.type==='player-left')leave(msg.id);
   else if(msg.type==='player-punched'&&validId(msg.id)&&known.has(msg.id))renderer.punch(msg.id);
+  else if(typeof msg.type==='string'&&msg.type.startsWith('duel-'))onDuelPacket(msg);
+  else if(msg.type==='rejected'&&typeof msg.reason==='string'&&
+          (msg.reason.startsWith('duel-')||msg.reason==='sanctuary-pvp-disabled'||msg.reason==='no-valid-duel-invitation')){
+   clearDuelExpiry();inviteFrom=null;outgoingTo=null;
+   duelNotice='Duel action unavailable. Check proximity, cooldown or invitation expiry.';
+   renderDuelUi();
+  }
  }
  function send(packet){
   if(socket?.readyState!==WebSocket.OPEN)return false;
