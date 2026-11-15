@@ -536,18 +536,18 @@ try {
   }, null, { timeout: 15000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroRenderer === 'glb' && document.documentElement.dataset.climboriaHero === 'adventurer', undefined, { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
-  // Real user-input exercise: local punch must play without fake network
+  // Real left-hand Q punch while walking; Q still descends when flying. Local punch must play without fake network
   // damage, cannot spam past cooldown, and consumes the existing stamina pool.
   const punchInput=await page.evaluate(()=>{
     const p=window.__climboriaJarrellsPeak?.player;
     let events=0;const listener=()=>events++;
     document.addEventListener('climboria:visual-punch',listener);
     const before={stamina:p?.stamina,hp:p?.hp};
-    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));
+    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyQ',bubbles:true}));
     const once={stamina:p?.stamina,hp:p?.hp,mode:document.documentElement.dataset.climboriaPunch};
-    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));
+    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyQ',bubbles:true}));
     const twice={stamina:p?.stamina,hp:p?.hp};
-    window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyJ',bubbles:true}));
+    window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyQ',bubbles:true}));
     document.removeEventListener('climboria:visual-punch',listener);
     return {before,once,twice,events};
   });
