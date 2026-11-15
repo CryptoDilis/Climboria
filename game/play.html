@@ -1795,6 +1795,7 @@ function requestVisualPunch(){
  punchLastAt=now;punchEndAt=now+PUNCH_DURATION_MS;
  P.stamina=Math.max(0,P.stamina-PUNCH_COST);
  document.documentElement.dataset.climboriaPunch='visual-only';
+ document.dispatchEvent(new Event('climboria:visual-punch'));
  return true;
 }
 const punchButton=document.getElementById('climboria-punch-button');
