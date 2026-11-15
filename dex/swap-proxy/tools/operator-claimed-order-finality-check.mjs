@@ -6,7 +6,7 @@
  * This is not independent RPC authentication, source-to-bytecode CPI auditing,
  * a privileged release endpoint, or ledger-consensus proof.
  */
-import { createHash } from "node:crypto";
+import { createHash, createPublicKey, verify } from "node:crypto";
 import { parseSolanaV0Transaction, encodeBase58, validateUnsignedOrderTransaction } from "../src/transaction-validation.mjs";
 import { verifyDualRpcCorrelatedSwapEvidence } from "../src/correlated-finalized-swap-evidence.mjs";
 
@@ -46,6 +46,15 @@ export function validateOperatorClaimedOrder({orderRecord,expectedRequestId,sign
     const original=parseSolanaV0Transaction(r.transaction);
     const signed=parseSolanaV0Transaction(signedTransaction);
     const signature=encodeBase58(signed.signatures[0]);
+    // Re-verify Ed25519 locally. Matching a stored string is not proof that
+    // the submitted signature authenticates the exact originally issued wire.
+    const key=createPublicKey({
+      key:Buffer.concat([
+        Buffer.from("302a300506032b6570032100","hex"),
+        Buffer.from(signed.staticAccountKeys[0])
+      ]),format:"der",type:"spki"
+    });
+    if(!verify(null,Buffer.from(signed.message),key,Buffer.from(signed.signatures[0])))fail();
     if(encodeBase58(original.staticAccountKeys[0])!==r.taker||
        encodeBase58(signed.staticAccountKeys[0])!==r.taker||
        signature!==r.claimedSignature||
@@ -58,6 +67,7 @@ export function validateOperatorClaimedOrder({orderRecord,expectedRequestId,sign
       claimedSignature:r.claimedSignature,
       taker:r.taker,
       originalMessageSha256:sha(original.message),
+      exactSignedTransactionWireSha256:sha(signed.bytes),
       sourceTokenAccount:account.source.address,
       destinationTokenAccount:account.destination.address,
       inputMint:account.inputMint.address,
@@ -75,16 +85,19 @@ export function validateOperatorClaimedOrder({orderRecord,expectedRequestId,sign
  * Strict conservative join. Correlated evidence must come from the companion
  * async two-RPC verifier, NOT from an untrusted user/provider JSON blob.
  */
-export function assessUnreleasedOrderFinality({orderRecord,expectedRequestId,signedTransaction,correlatedEvidence}={}){
+export function assessUnreleasedOrderFinality({orderRecord,expectedRequestId,signedTransaction,correlatedEvidence,network}={}){
   try{
     const o=validateOperatorClaimedOrder({orderRecord,expectedRequestId,signedTransaction});
     const c=correlatedEvidence;
-    if(c?.kind!=="CLIMBORIA_READ_ONLY_CORRELATED_FINALIZED_SWAP_EVIDENCE"||
+    if(!["mainnet-beta","devnet"].includes(network)||
+       c?.kind!=="CLIMBORIA_READ_ONLY_CORRELATED_FINALIZED_SWAP_EVIDENCE"||
+       c.network!==network||
        c.claimedSignature!==o.claimedSignature||
        c.taker!==o.taker||
        !HASH(c.exactServerIssuedMessageSha256)||
        c.exactServerIssuedMessageSha256!==o.originalMessageSha256||
        !HASH(c.exactFullSignedTransactionWireSha256)||
+       c.exactFullSignedTransactionWireSha256!==o.exactSignedTransactionWireSha256||
        !HASH(c.exactCompiledAccountRolesSha256)||
        !HASH(c.providerReportedAccountSnapshotSha256)||
        !SLOT(c.providerReportedFinalizedSlot)||
@@ -156,6 +169,6 @@ export async function checkUnreleasedClaimedOrderWithDualRpc({
       maxFeeLamports,
       expectedReceiptSlot,expectedReceiptFeeLamports,fetchImpl
     });
-    return assessUnreleasedOrderFinality({orderRecord,expectedRequestId,signedTransaction,correlatedEvidence:c});
+    return assessUnreleasedOrderFinality({orderRecord,expectedRequestId,signedTransaction,correlatedEvidence:c,network});
   }catch{fail();}
 }

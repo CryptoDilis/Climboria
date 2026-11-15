@@ -217,7 +217,7 @@ test("proxies quote-only orders with server-side Jupiter key", async () => {
     globalThis.fetch = async (url, init) => {
       target = String(url);
       assert.equal(init.headers["x-api-key"], "test-server-key");
-      return Response.json({ requestId: "quote-request-123", inAmount: "100000000", outAmount: "1234567", otherAmountThreshold: "1200000", slippageBps: 50, router: "metis", feeBps: 0 });
+      return Response.json({ requestId: "quote-request-123", inAmount: "100000000", outAmount: "1234567", otherAmountThreshold: "1230000", slippageBps: 50, router: "metis", feeBps: 0 });
     };
     const req = new Request("https://worker.test/api/swap/quote?inputMint=" + valid + "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000&slippageBps=50", { headers: { origin } });
     const res = await worker.fetch(req, env);
@@ -226,7 +226,7 @@ test("proxies quote-only orders with server-side Jupiter key", async () => {
     assert.match(target, /slippageBps=50/);
     const quote = await res.json();
     assert.equal(quote.outAmount, "1234567");
-    assert.equal(quote.otherAmountThreshold, "1200000");
+    assert.equal(quote.otherAmountThreshold, "1230000");
     assert.equal(quote.slippageBps, 50);
   } finally { globalThis.fetch = originalFetch; }
 });
@@ -284,6 +284,37 @@ test("rejects malformed requested slippage and mismatched confirmed custom slipp
     const res = await worker.fetch(new Request(target + "&slippageBps=50", { headers: { origin } }), env);
     assert.equal(res.status, 502);
     assert.match((await res.json()).error, /requested slippage/i);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("rejects provider-confirmed custom slippage when minimum received violates the requested floor", async () => {
+  const originalFetch = globalThis.fetch;
+  const target = "https://worker.test/api/swap/quote?inputMint=" + valid +
+    "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000&slippageBps=50";
+  try {
+    for (const [label, threshold, expectedStatus] of [
+      ["attacker minimum of one raw unit", "1", 502],
+      ["one unit below exact 50-bps floor", "994999", 502],
+      ["missing minimum", undefined, 502],
+      ["unparseable minimum", "NaN", 502],
+      ["exact floor", "995000", 200],
+      ["stronger minimum", "995001", 200]
+    ]) {
+      globalThis.fetch = async () => Response.json({
+        requestId: "quote-request-123", inAmount: "100000000",
+        outAmount: "1000000", slippageBps: 50,
+        ...(threshold === undefined ? {} : { otherAmountThreshold: threshold })
+      });
+      const response = await worker.fetch(new Request(target, { headers: { origin } }), env);
+      assert.equal(response.status, expectedStatus, label);
+      const body = await response.json();
+      if (expectedStatus === 502) {
+        assert.match(body.error, /minimum received.*requested slippage/i, label);
+        assert.equal(body.outAmount, undefined, label + " must not display an inconsistent quote");
+      } else {
+        assert.equal(body.otherAmountThreshold, threshold, label);
+      }
+    }
   } finally { globalThis.fetch = originalFetch; }
 });
 
@@ -424,6 +455,39 @@ test("proxies pump.fun token metadata server-side and sanitizes public fields", 
     assert.equal(body.telegram, null);
     assert.equal(body.source, "pump.fun");
   } finally { globalThis.fetch = originalFetch; }
+});
+
+test("strips controls and bidi overrides from pump.fun token name, symbol and description", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => Response.json({
+      mint: valid,
+      name: "SOL\u202EEVIL\u202C",
+      symbol: "SOL\u200F",
+      description: "hello\u0007world\u2066test\u2069",
+      image_uri: "https://images.example/token.png"
+    });
+    const res = await worker.fetch(new Request("https://worker.test/api/pump/coin?mint=" + valid, { headers: { origin } }), env);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.name, "SOLEVIL");
+    assert.equal(data.symbol, "SOL");
+    assert.equal(data.description, "helloworldtest");
+    assert.doesNotMatch(JSON.stringify([data.name, data.symbol, data.description]), /[\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("dormant signable order path never echoes upstream provider diagnostics or unvalidated labels", () => {
+  const source = readFileSync(new URL("../src/index.mjs", import.meta.url), "utf8");
+  const order = source.split("async function handleOrder(request, env) {")[1]?.split("async function handleQuote(request, env) {")[0];
+  assert.ok(order, "future order handler must still exist");
+  assert.doesNotMatch(order, /error:\s*data\.errorMessage|errorMessage:\s*data\.errorMessage/);
+  assert.match(order, /error:\s*"Jupiter returned a quote without an executable transaction"/);
+  assert.match(order, /router:\s*optionalProviderLabel\(data\.router\)/);
+  assert.match(order, /mode:\s*optionalProviderLabel\(data\.mode\)/);
+  assert.match(order, /feeMint:\s*optionalFeeMint\(data\.feeMint\)/);
+  assert.match(source, /const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false/);
+  assert.match(source, /const EXECUTION_SECURITY_REVIEW_COMPLETE = false/);
 });
 
 test("keeps absent and malformed Pump.fun metrics unavailable instead of coercing them to zero", async () => {

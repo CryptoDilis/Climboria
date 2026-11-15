@@ -1,0 +1,40 @@
+name: Climboria Game Live Chest CDN Verification
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "game/scripts/verify-live-chest-assets.mjs"
+      - ".github/workflows/game-live-chest-assets.yml"
+  push:
+    branches: [main]
+    paths:
+      - "game/scripts/verify-live-chest-assets.mjs"
+      - ".github/workflows/game-live-chest-assets.yml"
+      - "game/play.html"
+      - "assets/chests/**"
+  workflow_dispatch:
+  schedule:
+    - cron: '37 5 * * 0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climboria-game-live-chests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-production-asset-bytes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Checkout real source checksums
+        uses: actions/checkout@v4
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify custom-domain HTML plus all five live optimized chest GLBs
+        timeout-minutes: 6
+        run: node game/scripts/verify-live-chest-assets.mjs
