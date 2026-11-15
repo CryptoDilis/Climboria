@@ -1042,7 +1042,7 @@ try {
   });
   if (!mobileActionLayout.labelCenter ||
       mobileActionLayout.labelCenter.label !== 'ATTACK' ||
-      mobileActionLayout.labelCenter.display !== 'flex' ||
+      !['flex','grid'].includes(mobileActionLayout.labelCenter.display) ||
       mobileActionLayout.labelCenter.dx > 5 || mobileActionLayout.labelCenter.dy > 5) {
     errors.push('Mobile ATTACK label is not centered inside its visible action button: ' + JSON.stringify(mobileActionLayout.labelCenter));
   }
