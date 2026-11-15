@@ -414,6 +414,10 @@
   if(clientUser&&clientUser!==verifiedUser){
    // A different authenticated user must NEVER inherit the old room socket.
    resetConnection();clientUser=null;
+  }else if(connecting&&!clientUser){
+   // Auth initialized or switched while getSession() was unresolved. Invalidate
+   // its possible stale result and obtain a fresh session for this login.
+   resetConnection();
   }
   if(!socket&&!connecting)scheduleConnect(0);
  })?.data?.subscription;
