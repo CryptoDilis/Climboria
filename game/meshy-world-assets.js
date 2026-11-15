@@ -42,6 +42,27 @@ function dimensions(root,target){
  root.traverse(n=>{if(n.isMesh){n.castShadow=false;n.receiveShadow=false;n.frustumCulled=true;}});
  return true;
 }
+// Static Meshy GLBs own their loader allocations. Dispose rejected/distant
+// scenery exactly once per shared resource; never dispose live guard prefabs.
+function disposeMeshyRoot(root){
+ const geometries=new Set(),materials=new Set(),textures=new Set();
+ root?.traverse?.(n=>{
+  if(!n.isMesh)return;
+  if(n.geometry&&!geometries.has(n.geometry)){
+   geometries.add(n.geometry);n.geometry.dispose?.();
+  }
+  const mats=Array.isArray(n.material)?n.material:[n.material];
+  for(const mat of mats){
+   if(!mat||materials.has(mat))continue;
+   materials.add(mat);
+   for(const key of ['map','normalMap','metalnessMap','roughnessMap','aoMap','emissiveMap','alphaMap','bumpMap']){
+    const tex=mat[key];
+    if(tex?.isTexture&&!textures.has(tex)){textures.add(tex);tex.dispose?.();}
+   }
+   mat.dispose?.();
+  }
+ });
+}
 function geometryCount(root){
  let sum=0;root.traverse(n=>{if(n.isMesh&&n.geometry){
   const geo=n.geometry;sum+=geo.index?geo.index.count/3:geo.attributes.position?geo.attributes.position.count/3:0;
@@ -54,6 +75,7 @@ function loadGuards(){
  if(!files.length)return;
  Promise.all(files.map(f=>glbLoad(safeURL(f)))).then(models=>{
   const ready=models.filter((m)=>m&&geometryCount(m)<=12000);
+  models.forEach(m=>{if(m&&!ready.includes(m))disposeMeshyRoot(m);});
   if(!ready.length){state.failures.push('guards: unavailable or over budget');return;}
   opts.soldiers.forEach((o,i)=>{
    const prefab=ready[i%ready.length].clone(true);
@@ -69,11 +91,7 @@ function loadGuards(){
 function unload(obj){
  if(!obj.mesh)return;
  opts.scene.remove(obj.mesh);
- obj.mesh.traverse(n=>{if(!n.isMesh)return;
-  n.geometry?.dispose?.();
-  const materials=Array.isArray(n.material)?n.material:[n.material];
-  materials.forEach(m=>{if(!m)return;for(const k of ['map','normalMap','metalnessMap','roughnessMap','aoMap','emissiveMap','alphaMap'])m[k]?.dispose?.();m.dispose?.();});
- });
+ disposeMeshyRoot(obj.mesh);
  obj.mesh=null;state.decorations=Math.max(0,state.decorations-1);
 }
 function prepareDecorations(entries){
@@ -103,9 +121,12 @@ function tick(camera){
  candidate.pending=true;state.queued++;
  glbLoad(safeURL(candidate.file)).then(root=>{
   candidate.pending=false;state.queued--;
-  if(!root||geometryCount(root)>(mobile?35000:65000)||!dimensions(root,candidate.height)){candidate.failed=true;state.failures.push(candidate.file);return;}
+  if(!root||geometryCount(root)>(mobile?35000:65000)||!dimensions(root,candidate.height)){
+   if(root)disposeMeshyRoot(root);
+   candidate.failed=true;state.failures.push(candidate.file);return;
+  }
   const x=candidate.at.x,z=candidate.at.z,h=candidate.water?0:opts.heightAt(x,z);
-  if(!Number.isFinite(h)){candidate.failed=true;return;}
+  if(!Number.isFinite(h)){disposeMeshyRoot(root);candidate.failed=true;return;}
   const group=new opts.T3.Group();group.name='OptionalMeshy:'+candidate.file;
   group.position.set(x,h,z);group.add(root);opts.scene.add(group);
   candidate.mesh=group;state.decorations++;
