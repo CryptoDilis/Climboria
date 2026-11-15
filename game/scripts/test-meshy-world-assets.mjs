@@ -94,11 +94,11 @@ console.log('PASS failed mobile GLBs reclaim shared GPU resources without double
 // A good Meshy tree must replace exactly one old tree only when its actual
 // GLB resolves; restore the original visibility + collision on streaming out.
 const swap=harness({schema:1,enabled:true,guardModels:[],decorations:[
- {file:'approved-tree.glb',anchor:'park',dx:0,dz:0,height:6,loadRadius:120,replaceLegacyTrees:true}
+ {file:'approved-tree.glb',anchor:'park',dx:0,dz:0,height:6,loadRadius:120,replaceLegacyTrees:true,colliderRadius:1.4}
 ]});
 let swaps=0,restores=0,adds=0,removes=0,disposals=0;
-swap.opts.replaceLegacyTrees=(x,z,radius)=>{
- assert.equal(x,0);assert.equal(z,0);assert.equal(radius,28);
+swap.opts.replaceLegacyTrees=(x,z,radius,colliderRadius)=>{
+ assert.equal(x,0);assert.equal(z,0);assert.equal(radius,28);assert.equal(colliderRadius,1.4);
  swaps++;return()=>restores++;
 };
 swap.opts.scene={add(){adds++},remove(){removes++}};
