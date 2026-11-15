@@ -54,3 +54,35 @@ automatically enable or deploy the multiplayer client.
 
 **Current live state remains OFF**; this document does not assert that a Worker
 was deployed or that a production two-user session has been observed.
+
+## Optional approval-only GitHub staging deployment
+
+A **manual-only** GitHub Actions workflow is staged at
+`.github/workflows/game-room-worker-manual-staging.yml`. Once this
+Game-only code has passed exact-head CI and is merged to `main`, a
+repository maintainer may optionally configure a protected GitHub environment
+named `game-room-staging` with the scoped secrets below:
+
+- `CLOUDFLARE_API_TOKEN` — Cloudflare token with only the required Worker/DO deployment permissions
+- `CLOUDFLARE_ACCOUNT_ID` — target account ID (not a password)
+- `GAME_SUPABASE_PUBLISHABLE_KEY` — existing public auth verification key scoped to this Game server
+
+Go to GitHub → Actions → **GAME Room Worker — Manual Staging Deployment Only**
+→ Run workflow on **main**, and type the exact confirmation
+`DEPLOY_GAME_ROOM_STAGING`. The workflow does NOT run on pushes or pull
+requests, does NOT share DEX/Swap infrastructure, and leaves
+`game/multiplayer/client-config.json.enabled=false` even after a successful
+staging deployment. Do not paste Cloudflare tokens or Supabase access JWTs into
+chat or GitHub issues.
+
+A hosted Worker may have account, plan and billing requirements that have
+**not been verified**. Review Cloudflare account settings/costs before
+manually approving deployment. `workers_dev=true` is a staging endpoint,
+not the approved `rooms.climboria.fun` production hostname. Configure an
+owned secure game-only custom domain after staging QA; do not enable the
+browser client against an arbitrary URL.
+
+After deploying, run the real two-browser script above and separately verify
+actual game remote-GLB appearance, mobile FPS, reconnect/logout, anti-cheat
+and availability. **Do not mistake deployment alone for activated multiplayer
+or production-ready PvP.**
