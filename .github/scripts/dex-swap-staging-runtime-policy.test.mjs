@@ -6,8 +6,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 import {
-  parseStagingOrigin, stagingRuntimeEnabled, stagingStatusResult, isStagingPublicAsset
+  parseStagingOrigin, stagingRuntimeEnabled, stagingStatusResult, isStagingPublicAsset,
+  patchIsolatedStagingHost, patchIsolatedStagingConfig
 } from "./dex-swap-staging-runtime-policy.mjs";
 
 test("staging origin accepts local loopback HTTP and isolated HTTPS", () => {
@@ -57,6 +59,77 @@ test("staging static allowlist rejects backend code, metadata and unrelated page
   ]) assert.equal(isStagingPublicAsset(path), false, String(path));
 });
 
+test("staging transformation preserves all current runtime gates and exact pinned origin", async () => {
+  const origin = "http://127.0.0.1:4173";
+  const script = origin + "/__staging_jupiter/plugin-1.0.18.js";
+  const prodHost = readFileSync(new URL("../../dex/provider-managed-swap.mjs", import.meta.url), "utf8");
+  const prodCfg = readFileSync(new URL("../../swap-config.js", import.meta.url), "utf8");
+  const stagedHostSource = patchIsolatedStagingHost(prodHost, origin);
+  const pin = "A".repeat(64);
+  const stagedConfigSource = patchIsolatedStagingConfig(
+    prodCfg, origin, "/__staging_jupiter/plugin-1.0.18.js", pin);
+  assert.notEqual(stagedHostSource, prodHost);
+  assert.match(stagedHostSource, /autoConnect:\s*false/);
+  assert.match(stagedHostSource, /const allowedOnOpen = await isManagedSwapRuntimeApproved\(scope\)/);
+  assert.match(stagedHostSource, /const allowedOnInit = await isManagedSwapRuntimeApproved\(scope\)/);
+  assert.match(stagedConfigSource, /^\s*enabled:\s*false,\s*$/m,
+    "custom native execution stays OFF while staging the managed provider");
+  assert.match(stagedConfigSource, /feeCollectionEnabled:\s*false/);
+  assert.match(stagedConfigSource, /feeRecipient:\s*null/);
+  // Import ONLY our first-party transformed source via data URL, with no
+  // browser globals and NO Jupiter asset download, wallet, or RPC.
+  const module = await import("data:text/javascript;base64," +
+    Buffer.from(stagedHostSource).toString("base64"));
+  const flags = {
+    enabled: true, runtimeApproved: true, provider: "jupiter-terminal",
+    scriptUrl: script, integrity: "sha384-" + pin
+  };
+  assert.equal(module.validateManagedProviderConfig(flags)?.url, script);
+  assert.equal(module.validateManagedProviderConfig(flags)?.integrity, "sha384-" + pin);
+  for (const invalid of [
+    { ...flags, enabled: false },
+    { ...flags, runtimeApproved: false },
+    { ...flags, scriptUrl: script.replace("4173", "4174") },
+    { ...flags, scriptUrl: script.replace("127.0.0.1", "example.org") },
+    { ...flags, scriptUrl: script.replace("http:", "https:") },
+    { ...flags, scriptUrl: script + "?cache=off" },
+    { ...flags, scriptUrl: script.replace("1.0.18", "1.0.19") },
+    { ...flags, integrity: null }
+  ]) assert.equal(module.validateManagedProviderConfig(invalid), null);
+  assert.equal(module.integratedTerminalOptions("climboriaSwapProviderTarget").autoConnect, false);
+  const scope = { window: {} };
+  runInNewContext(stagedConfigSource, scope, { timeout: 1000 });
+  const cfg = scope.window.CLIMBORIA_SWAP_CONFIG;
+  assert.equal(cfg.enabled, false);
+  assert.equal(cfg.managedProvider.enabled, true);
+  assert.equal(cfg.managedProvider.runtimeApproved, true);
+  assert.equal(cfg.managedProvider.scriptUrl, script);
+  assert.equal(cfg.managedProvider.integrity, "sha384-" + pin);
+  assert.equal(cfg.revenue.feeCollectionEnabled, false);
+  assert.equal(cfg.revenue.feeRecipient, null);
+});
+
+test("staging transform fails closed for a drifted host, altered release gate or bad pin", () => {
+  const origin = "http://127.0.0.1:4173";
+  const prodHost = readFileSync(new URL("../../dex/provider-managed-swap.mjs", import.meta.url), "utf8");
+  const prodCfg = readFileSync(new URL("../../swap-config.js", import.meta.url), "utf8");
+  for (const altered of [
+    prodHost.replace('"terminal.jup.ag"', '"other.example"'),
+    prodHost.replace('const allowedOnInit = await isManagedSwapRuntimeApproved(scope)', 'const allowedOnInit = true'),
+    prodHost.replace('const allowedOnOpen = await isManagedSwapRuntimeApproved(scope)', 'const allowedOnOpen = true'),
+    prodHost.replace('config.runtimeApproved !== true', 'false')
+  ]) assert.throws(() => patchIsolatedStagingHost(altered, origin), /source contract changed|missing current release guard/);
+  for (const invalid of [
+    ["http://climboria.fun", "/__staging_jupiter/plugin-1.0.18.js", "A".repeat(64)],
+    [origin, "/__staging_jupiter/unpinned.js", "A".repeat(64)],
+    [origin, "/__staging_jupiter/plugin-1.0.18.js", "not-a-hash"]
+  ]) assert.throws(() => patchIsolatedStagingConfig(prodCfg, ...invalid),
+    /Invalid pinned|staging origin/);
+  const feeOn = prodCfg.replace("feeCollectionEnabled: false", "feeCollectionEnabled: true");
+  assert.throws(() => patchIsolatedStagingConfig(
+    feeOn, origin, "/__staging_jupiter/plugin-1.0.18.js", "A".repeat(64)), /unreviewed production config/);
+});
+
 test("provider approval is strictly OFF unless the isolated opt-in is exact lower-case true", () => {
   for (const env of [
     {}, { SWAP_STAGING_RUNTIME_APPROVED: "" },
@@ -100,7 +173,8 @@ test("staging harness imports the shared policy and current main provider securi
   assert.match(harness, /stagingRuntimeEnabled\(process\.env\)/);
   assert.match(harness, /stagingStatusResult\(request\.method, localRuntimeApproved\)/);
   assert.match(harness, /readFile\(resolve\(root, 'dex\/provider-managed-swap\.mjs'\)/);
-  assert.match(harness, /runtimeApproved: true, provider: 'jupiter-terminal'/);
+  assert.match(harness, /patchIsolatedStagingHost\(host, stagingOrigin\.origin\)/);
+  assert.match(harness, /patchIsolatedStagingConfig\(/);
   assert.match(host, /isManagedSwapRuntimeApproved\(scope\)/);
   assert.match(host, /const allowedOnOpen = await isManagedSwapRuntimeApproved\(scope\)/);
   assert.match(host, /const allowedOnInit = await isManagedSwapRuntimeApproved\(scope\)/);
