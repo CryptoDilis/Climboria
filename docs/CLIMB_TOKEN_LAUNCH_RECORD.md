@@ -4,7 +4,17 @@
 **Last website update:** 2026-11-16  
 **Source:** Climboria project owner's public launch announcement and the official CA already present in the homepage announcement, committed as `8e0bf6db1fa669aa851153810d9fa8d808f63acc` on 2026-11-15.
 
-## Permanent premium Tokenomics position — 2026-11-16 (new site-only draft)
+## Permanent $CLIMB Tokenomics UI — MERGED (2026-11-16)
+
+- **Completed in repo:** [PR #513](https://github.com/CryptoDilis/Climboria/pull/513) merged into main via squash **`1f1241652167c9a1db6844e405f2ef355fd9f731`**. Exact validated PR head: `65010d249a0ff0f959977825d9dc225c29403af6`. Diff limited to `index.html`, `.github/scripts/climb-token-record-smoke.mjs`, `.github/workflows/browser-smoke.yml`, `.github/workflows/validate-climboria.yml`, this record. Game, DEX, Swap, Launchpad, ClimbX and contracts untouched.
+- **Exact-head CI proof:** Validate Climboria [run #43777277988](https://github.com/CryptoDilis/Climboria/actions/runs/43777277988) **SUCCESS** and full Climboria Browser Smoke [run #43777277995](https://github.com/CryptoDilis/Climboria/actions/runs/43777277995) **SUCCESS**. Browser Smoke contains new 1365px desktop and 390/360px mobile geometry, visible CA, precise external links, local copy-button success/failure, no token promo overlay above hero, no TBD tests; full existing homepage, auth, DEX/Swap Browser Smoke also completed without failures.
+- **Verified on main source after merge:** hero contains no `id="climbOfficialCa"`; `#tokenomics` contains the sole `#climb-token-record` and exact project-announced Solana CA; no raw tokenomics `TBD` remains. Permanent footer link `/#climb-token-record` lets visitors jump to the card. Previous incorrect Whitepaper layout nesting corrected.
+- **Important release boundary:** GitHub merge and CI are verified. The available GitHub connector does not independently prove GitHub Pages has published commit `1f124165` or show an actual production browser render. **Production `https://climboria.fun/#climb-token-record` is NOT independently verified here.** The CA is owner-announced, not an independent claim about actual market liquidity or safety.
+- **EXACT NEXT:** verify GitHub Pages deployment SHA for merged code, manually open `https://climboria.fun/` on desktop and narrow phones (or Cloud Browser in Work), confirm there is no hero CA overlay, scroll to the permanent Tokenomics CA panel, test copy button, official Pump.fun/Solscan links and footer anchor. Investigate any deployed-cache/CSS issue without changing unrelated applications; record actual evidence in this file.
+
+---
+
+## Permanent premium Tokenomics position — 2026-11-16 (historical draft handoff)
 
 - **Owner request:** remove the temporary homepage hero launch announcement. Give the CA a permanent, prominently styled position **inside the Tokenomics & Game Funding section pictured by the owner**, rather than another countdown/card overlay over the official hero artwork. Preserve Play / DEX / Launchpad hero buttons and official brand photography.
 - **Implementation on** `site/permanent-climb-tokenomics-premium-2026-11-16`: retire the old hero `#climb-token-record` overlay, move the unique `#climbOfficialCa` plus `#copyClimbCa` button and `#copyClimbCaStatus` into a premium dark/gold `#tokenomics #climb-token-record` card, matching the same exact official owner-announced Solana mint in Pump.fun and Solscan links. Keep the copy/status handler reading the visible DOM address; preserve its safe fallback.
