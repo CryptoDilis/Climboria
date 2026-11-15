@@ -21,8 +21,8 @@ test('staging /ready is fail-closed without required bindings, never claims real
  });
  let probed=false;
  const bindings={
-  ...env({fetch:async(url,request)=>{
-   assert.equal(String(url),'https://room.internal/_ready');
+  ...env({fetch:async(request)=>{
+   assert.equal(request.url,'https://room.internal/_ready');
    assert.equal(request.method,'GET');
    assert.ok(request.signal,'staging probe must be time bounded');
    probed=true;
