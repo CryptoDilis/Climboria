@@ -66,6 +66,21 @@ try{
     undefined,{timeout:120000});
    await page.waitForFunction(()=>window.__climboriaJarrellsPeak?.chestVisualAudit?.().allLoaded===true,
     undefined,{timeout:120000});
+   const inputMode=await page.evaluate(()=>{
+    const control=document.getElementById('climboria-punch-button');
+    const rect=control?.getBoundingClientRect();
+    return {viewport:innerWidth,touchPoints:navigator.maxTouchPoints,
+     coarse:matchMedia('(pointer: coarse)').matches,
+     touchHandlerPresent:'ontouchstart' in window,
+     userAgent:navigator.userAgent.slice(0,180),
+     bodyClass:document.body.className,
+     controlDisplay:control?getComputedStyle(control).display:'missing',
+     controlWidth:rect?.width||0};
+   });
+   console.log('GAME device-input-mode',device.name,JSON.stringify(inputMode));
+   const touchControlVisible=inputMode.controlDisplay!=='none'&&inputMode.controlWidth>0;
+   if(touchControlVisible!==device.isMobile)
+    throw Error('Touch ATTACK must appear only in mobile Playwright context: '+JSON.stringify({device:device.name,inputMode}));
    if(device.isMobile){
     await page.waitForFunction(()=>{
      const overlay=document.querySelector('#rotate-phone-overlay');

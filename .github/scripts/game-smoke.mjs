@@ -54,6 +54,19 @@ try {
     timeout: 90000,
   });
   await page.waitForSelector('#game canvas, canvas', { timeout: 45000 });
+  // Desktop keyboard-only mode must not render the touch ATTACK button.
+  // Chromium may expose 'ontouchstart' in window even with zero real touch
+  // points; use actual pointer capabilities rather than that property.
+  const desktopInputMode=await page.evaluate(()=>{
+    const attack=document.querySelector('#climboria-punch-button');
+    return {touchPoints:navigator.maxTouchPoints,
+      coarsePointer:matchMedia('(pointer: coarse)').matches,
+      mobileClass:document.body.classList.contains('mobile-device'),
+      attackButtonDisplay:attack?getComputedStyle(attack).display:null};
+  });
+  if(desktopInputMode.touchPoints!==0||desktopInputMode.mobileClass||
+     desktopInputMode.attackButtonDisplay!=='none')
+    errors.push('Keyboard desktop incorrectly enabled mobile ATTACK button: '+JSON.stringify(desktopInputMode));
   try {
     await page.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
   } catch (error) {
@@ -148,6 +161,49 @@ try {
     if (flag.width < 2 || flag.height < 1.4) errors.push('Sanctuary flag is below readable geometry size: ' + JSON.stringify(flag));
   }
   if (renderState?.errors?.length) errors.push('3D/game frame errors: ' + JSON.stringify(renderState.errors));
+
+  // Gated room integration: never display invented connected players on boot.
+  // Verify that only the 3D rendering adapter (not a networking connection)
+  // can create/remove a strictly temporary QA marker, then clear it.
+  const remotePresenceQA=await page.evaluate(async()=>{
+    const renderer=window.__CLIMBORIA_GAME_PEERS;
+    const status=document.documentElement.dataset.climboriaMultiplayer;
+    const initial=renderer?.count?.()??-1;
+    if(!renderer)return {status,initial,error:'remote-peer-renderer-missing'};
+    const markerId='s_'+('f'.repeat(32));
+    const p=window.__climboriaJarrellsPeak?.player;
+    const pos={x:p.x+200,y:p.y,z:p.z+200};
+    const canvas=document.querySelector('#world-map');
+    const mapCtx=canvas?.getContext('2d');
+    renderer.add({id:markerId,name:'QA Explorer',model:'Adventurer',position:pos});
+    const added=renderer.count();
+    const during=renderer.audit();
+    // Cached terrain map refreshes every 120 ms. Exercise the real render
+    // loop rather than faking canvas pixels or direct marker mutations.
+    await new Promise(resolve=>setTimeout(resolve,300));
+    const legendDuring=document.querySelector('#world-map-legend')?.textContent||'';
+    const x=Math.floor(Math.max(8,Math.min(canvas.width-8,canvas.width/2+pos.x/3000*canvas.width)));
+    const y=Math.floor(Math.max(8,Math.min(canvas.height-8,canvas.height/2+pos.z/2000*canvas.height)));
+    const pixel=mapCtx?Array.from(mapCtx.getImageData(x,y,1,1).data):[];
+    const cyan=pixel.length===4&&pixel[0]<165&&pixel[1]>160&&pixel[2]>200;
+    renderer.remove(markerId);
+    const removed=renderer.count();
+    const after=renderer.audit();
+    await new Promise(resolve=>setTimeout(resolve,300));
+    const legendAfter=document.querySelector('#world-map-legend')?.textContent||'';
+    return {status,initial,added,removed,during,after,
+      fieldMap:{legendDuring,legendAfter,pixel,cyan}};
+  });
+  console.log('GAME staged presence renderer (default-off) QA:',JSON.stringify(remotePresenceQA));
+  if(remotePresenceQA.status!=='disabled'||remotePresenceQA.initial!==0||
+     remotePresenceQA.added!==1||remotePresenceQA.removed!==0||
+     remotePresenceQA.during?.resident!==0||remotePresenceQA.during?.loading!==0||
+     remotePresenceQA.after?.resident!==0||remotePresenceQA.after?.loading!==0||
+     remotePresenceQA.after?.peers!==0||remotePresenceQA.after?.budget!==3||
+     !remotePresenceQA.fieldMap?.legendDuring?.includes('Cyan = explorers (1)')||
+     !remotePresenceQA.fieldMap?.cyan||
+     remotePresenceQA.fieldMap?.legendAfter?.includes('Cyan = explorers'))
+     errors.push('Multiplayer must be disabled without deployed auth backend and ephemeral QA marker must cleanly unload: '+JSON.stringify(remotePresenceQA));
 
   const world = await page.evaluate(() => {
     const w = window.__climboriaJarrellsPeak;
@@ -510,25 +566,54 @@ try {
   }, null, { timeout: 15000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroRenderer === 'glb' && document.documentElement.dataset.climboriaHero === 'adventurer', undefined, { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
-  // Real user-input exercise: local punch must play without fake network
+  // Real left-hand Q attack while walking. The attack animation must play without fake network
   // damage, cannot spam past cooldown, and consumes the existing stamina pool.
+  // Verify chat/settings focus blocks all gameplay shortcuts, not only Q.
+  const focusedInputAudit=await page.evaluate(()=>{
+    const player=window.__climboriaJarrellsPeak?.player;
+    const map=document.getElementById('world-map-panel');
+    const inventory=document.getElementById('climboriaInventoryPanel');
+    let attacks=0;const onAttack=()=>attacks++;
+    document.addEventListener('climboria:visual-punch',onAttack);
+    const input=document.createElement('textarea');
+    input.id='game-smoke-chat-input';document.body.appendChild(input);input.focus();
+    const capture=()=>({x:player?.x,z:player?.z,stamina:player?.stamina,
+      mapExpanded:map?.classList.contains('map-expanded'),
+      inventoryVisible:inventory?.style.display});
+    const before=capture();
+    for(const code of ['KeyQ','Digit2','KeyW','KeyE','KeyM','KeyI','Space']){
+      input.dispatchEvent(new KeyboardEvent('keydown',{code,bubbles:true,cancelable:true}));
+      input.dispatchEvent(new KeyboardEvent('keyup',{code,bubbles:true}));
+    }
+    const after=capture();
+    input.remove();
+    document.removeEventListener('climboria:visual-punch',onAttack);
+    return {before,after,attacks};
+  });
+  if(focusedInputAudit.attacks!==0||
+     JSON.stringify(focusedInputAudit.before)!==JSON.stringify(focusedInputAudit.after))
+    errors.push('Text/chat input leaked gameplay keyboard shortcuts: '+JSON.stringify(focusedInputAudit));
   const punchInput=await page.evaluate(()=>{
     const p=window.__climboriaJarrellsPeak?.player;
     let events=0;const listener=()=>events++;
     document.addEventListener('climboria:visual-punch',listener);
     const before={stamina:p?.stamina,hp:p?.hp};
-    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));
+    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyQ',bubbles:true}));
     const once={stamina:p?.stamina,hp:p?.hp,mode:document.documentElement.dataset.climboriaPunch};
-    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));
+    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyQ',bubbles:true}));
     const twice={stamina:p?.stamina,hp:p?.hp};
-    window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyJ',bubbles:true}));
+    window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyQ',bubbles:true}));
     document.removeEventListener('climboria:visual-punch',listener);
     return {before,once,twice,events};
   });
-  console.log('Real input punch visual-only cooldown audit:',JSON.stringify(punchInput));
+  console.log('Real input attack visual-only cooldown audit:',JSON.stringify(punchInput));
   if(punchInput?.once?.mode!=='visual-only'||punchInput.once.stamina!==punchInput.before.stamina-5||
      punchInput.twice.stamina!==punchInput.once.stamina||punchInput.once.hp!==punchInput.before.hp||punchInput.events!==1)
-    errors.push('Punch must trigger once with stamina cost, cooldown and no fake client-side PvP damage: '+JSON.stringify(punchInput));
+    errors.push('Attack must trigger once with stamina cost, cooldown and no fake client-side PvP damage: '+JSON.stringify(punchInput));
+  // The original Adventurer GLB actually exports Punch_Combo_1, not the
+  // Jarrell model's Punch_Combo. Enforce a REAL authored attack clip.
+  await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='punch' &&
+    document.documentElement.dataset.climboriaHeroClip==='Punch_Combo_1',undefined,{timeout:2000,polling:50});
   await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='idle',undefined,{timeout:15000});
 
   const idleAnimationAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);
@@ -1001,8 +1086,25 @@ try {
       const a=controls[i],b=controls[j];
       if(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top) overlaps.push([a.action,b.action]);
     }
-    return { viewport:{width:innerWidth,height:innerHeight}, controls, overlaps };
+    const attack = document.querySelector('[data-mobile-action="punch"]');
+    const labelRange = document.createRange();
+    if (attack) labelRange.selectNodeContents(attack);
+    const labelRect = attack ? labelRange.getBoundingClientRect() : null;
+    const buttonRect = attack?.getBoundingClientRect();
+    const labelCenter = attack ? {
+      label: attack.textContent.trim(),
+      display: getComputedStyle(attack).display,
+      dx: Math.abs((labelRect.left + labelRect.right - buttonRect.left - buttonRect.right)/2),
+      dy: Math.abs((labelRect.top + labelRect.bottom - buttonRect.top - buttonRect.bottom)/2)
+    } : null;
+    return { viewport:{width:innerWidth,height:innerHeight}, controls, overlaps, labelCenter };
   });
+  if (!mobileActionLayout.labelCenter ||
+      mobileActionLayout.labelCenter.label !== 'ATTACK' ||
+      !['flex','grid'].includes(mobileActionLayout.labelCenter.display) ||
+      mobileActionLayout.labelCenter.dx > 5 || mobileActionLayout.labelCenter.dy > 5) {
+    errors.push('Mobile ATTACK label is not centered inside its visible action button: ' + JSON.stringify(mobileActionLayout.labelCenter));
+  }
   if (mobileActionLayout.controls.length !== 5 ||
       !['punch','jump-surface','run','use','dive'].every(id=>mobileActionLayout.controls.some(c=>c.action===id)) ||
       mobileActionLayout.controls.some(c => c.display === 'none' || c.visibility !== 'visible' ||
@@ -1104,7 +1206,7 @@ try {
       ready: window.__climboriaGameReady === true,
       renderFrames: window.__climboriaRenderState?.frames ?? 0,
       renderErrors: window.__climboriaRenderState?.errors ?? [],
-      controls: ['JUMP','RUN','USE','DIVE','PUNCH'].every(label => text.includes(label)),
+      controls: ['JUMP','RUN','USE','DIVE','ATTACK'].every(label => text.includes(label)),
       mobileActions: [...document.querySelectorAll('[data-mobile-action]')].map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return {id:e.dataset.mobileAction,visible:c.display!=='none'&&c.visibility!=='hidden'&&Number(c.opacity)>.8&&r.width>=50&&r.height>=50&&r.left>=0&&r.top>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1}}),
       playerName: !!document.querySelector('#player-name'),
       playerVisible: (()=>{const e=document.querySelector('#player-card'),c=e&&getComputedStyle(e);return !!e&&c.visibility!=='hidden'&&Number(c.opacity)>.8})(),

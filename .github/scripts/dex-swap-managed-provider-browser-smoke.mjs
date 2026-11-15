@@ -9,6 +9,8 @@
  */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { createServer } from "node:http";
 import { chromium } from "playwright";
 
 const ORIGIN = "http://127.0.0.1:4173";
@@ -33,10 +35,16 @@ const sri = "sha384-" + createHash("sha384").update(MOCK_SCRIPT).digest("base64"
 function mockConfig(integrity = sri) {
   return "window.CLIMBORIA_SWAP_CONFIG = Object.freeze({" +
     "proxyEnabled:true,enabled:false,apiBase:'https://api.climboria.fun'," +
-    "managedProvider:Object.freeze({enabled:true,provider:'jupiter-terminal'," +
+    "managedProvider:Object.freeze({enabled:true,runtimeApproved:true,provider:'jupiter-terminal'," +
     "scriptUrl:'" + SCRIPT_URL + "',integrity:'" + integrity + "'})," +
     "revenue:Object.freeze({integratorFeeTargetBps:50,feeCollectionEnabled:false," +
     "feeRecipient:null,providerFeeIntegrationVerified:false})});";
+}
+
+function approveRuntime(page) {
+  return page.route("**/swap-runtime-status.json", route => route.fulfill({
+    json: { enabled: true }, headers: { "Cache-Control": "no-store" }
+  }));
 }
 
 async function runPage(browser, path, {badHash = false} = {}) {
@@ -47,6 +55,7 @@ async function runPage(browser, path, {badHash = false} = {}) {
     if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(req.url())) forbidden.push(req.url());
   });
   page.on("dialog", dialog => { throw Error("Unexpected popup: " + dialog.message()); });
+  await approveRuntime(page);
   await page.route("**/swap-config.js", route =>
     route.fulfill({status:200,contentType:"application/javascript",
       body:mockConfig(badHash ? "sha384-" + "A".repeat(64) : sri)}));
@@ -80,6 +89,9 @@ async function runPage(browser, path, {badHash = false} = {}) {
 
     await button.click();
     const panel = page.locator("[data-climboria-managed-swap-panel]");
+    // The panel is intentionally concealed until the fresh no-store
+    // runtime check resolves, so wait for the approved visible state.
+    await panel.waitFor({ state: "visible", timeout: 10000 });
     assert.equal(await panel.isVisible(),true);
     if (badHash) {
       await page.waitForFunction(() =>
@@ -98,6 +110,7 @@ async function runPage(browser, path, {badHash = false} = {}) {
       assert.equal(await panel.isVisible(),false);
       assert.equal(await button.getAttribute("aria-expanded"),"false");
       await button.click();
+      await panel.waitFor({ state: "visible", timeout: 10000 });
       assert.equal(await panel.isVisible(),true);
       assert.equal(await page.evaluate(() => window.__mockProviderCalls.length),1,
         "reopen must not reinitialize provider");
@@ -122,6 +135,7 @@ async function runCloseDuringLoad(browser, path) {
   page.on("request", req => {
     if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(req.url())) forbidden.push(req.url());
   });
+  await approveRuntime(page);
   await page.route("**/swap-config.js", route =>
     route.fulfill({status:200,contentType:"application/javascript",body:mockConfig()}));
   await page.route(SCRIPT_URL, async route => {
@@ -169,6 +183,111 @@ async function runCloseDuringLoad(browser, path) {
   }
 }
 
+async function runRollbackWithCache(browser) {
+  const root = new URL("../../", import.meta.url);
+  const enabledConfig = mockConfig();
+  const host = await readFile(new URL("dex/provider-managed-swap.mjs", root), "utf8");
+  // Serve the fixture over real HTTP. Playwright request interception disables
+  // the browser cache, so it cannot exercise this rollback.
+  const fixtureHost = host.replace("script.src = source.url;", 'script.src = "/fixture.js";');
+  assert.notEqual(fixtureHost, host);
+  const routes = new Map();
+  for (const path of ["/swap/", "/dex/"]) {
+    routes.set(path, ["text/html", await readFile(new URL(path.slice(1) + "index.html", root))]);
+  }
+  for (const path of ["/dex/swap-amount.js", "/dex/premium-terminal.js"]) {
+    routes.set(path, ["application/javascript", await readFile(new URL(path.slice(1), root))]);
+  }
+  routes.set("/dex/provider-managed-swap.mjs", ["application/javascript", fixtureHost]);
+  routes.set("/fixture.js", ["application/javascript", MOCK_SCRIPT]);
+
+  let enabled = true;
+  let configRequests = 0;
+  let fixtureRequests = 0;
+  const server = createServer((request, response) => {
+    const path = new URL(request.url, "http://localhost").pathname;
+    if (path === "/swap-runtime-status.json") {
+      response.writeHead(200, {"Content-Type":"application/json", "Cache-Control":"no-store"});
+      response.end(JSON.stringify({enabled}));
+      return;
+    }
+    if (path === "/swap-config.js") {
+      configRequests++;
+      response.writeHead(200, {"Content-Type":"application/javascript", "Cache-Control":"public, max-age=600"});
+      response.end(enabledConfig);
+      return;
+    }
+    const asset = routes.get(path);
+    if (!asset) {
+      response.writeHead(404).end();
+      return;
+    }
+    if (path === "/fixture.js") fixtureRequests++;
+    const [type, body] = asset;
+    const headers = {"Content-Type":type, "Cache-Control":type === "text/html" ? "no-store" : "public, max-age=600"};
+    if (type === "text/html") {
+      headers["Content-Security-Policy"] = "connect-src 'self'; img-src 'none'; frame-src 'none'; script-src 'self' 'unsafe-inline'";
+    }
+    response.writeHead(200, headers).end(body);
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const origin = "http://127.0.0.1:" + server.address().port;
+    for (const [path, width] of [["/swap/",1280], ["/swap/",390], ["/dex/",1280], ["/dex/",390]]) {
+      enabled = true;
+      const page = await browser.newPage({viewport:{width,height:850}});
+      try {
+        const forbidden = [];
+        page.on("request", request => {
+          if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(request.url())) forbidden.push(request.url());
+        });
+        const url = origin + path;
+        const button = page.locator("[data-climboria-managed-swap-open]:visible").first();
+        const panel = page.locator("[data-climboria-managed-swap-panel]");
+        await page.goto(url, {waitUntil:"domcontentloaded"});
+        await button.waitFor();
+        // Stale-tab regression: runtime was approved when this page loaded,
+        // but the operator disabled it just BEFORE the user first clicked.
+        const scriptsBeforeRevocation = fixtureRequests;
+        enabled = false;
+        await button.click();
+        await page.waitForFunction(() =>
+          [...document.querySelectorAll("[data-climboria-managed-swap-open]")].every(node => node.hidden));
+        assert.equal(await panel.isVisible(), false);
+        assert.equal(fixtureRequests, scriptsBeforeRevocation,
+          "revoked open tab must not load the provider SDK");
+        assert.equal(await page.evaluate(() => !!window.Jupiter), false);
+        enabled = true;
+        // Restore the test fixture only; production is not touched.
+        await page.reload({waitUntil:"domcontentloaded"});
+        await button.waitFor();
+        await button.click();
+        await page.waitForFunction(() => window.__mockProviderCalls?.length === 1);
+        const beforeConfig = configRequests;
+        const beforeFixture = fixtureRequests;
+        enabled = false;
+        // Confirm the test's boundary: the loaded document keeps its old state.
+        assert.equal(await panel.isVisible(), true);
+        await page.goto("about:blank");
+        const statusResponse = page.waitForResponse(response => response.url() === origin + "/swap-runtime-status.json");
+        await page.goto(url, {waitUntil:"load"});
+        assert.equal((await statusResponse).headers()["cache-control"], "no-store");
+        assert.equal(configRequests, beforeConfig, "enabled config should still be cached");
+        assert.equal(await button.count(), 0);
+        assert.equal(await panel.isVisible(), false);
+        assert.equal(await page.evaluate(() => !!window.Jupiter), false);
+        assert.equal(fixtureRequests, beforeFixture);
+        assert.deepEqual(forbidden, []);
+        console.log("PASS " + path + " width " + width + " rollback with browser cache enabled");
+      } finally {
+        await page.close();
+      }
+    }
+  } finally {
+    await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+  }
+}
+
 const browser = await chromium.launch({headless:true});
 try {
   await runPage(browser,"/swap/");
@@ -176,6 +295,7 @@ try {
   await runPage(browser,"/swap/",{badHash:true});
   await runCloseDuringLoad(browser,"/swap/");
   await runCloseDuringLoad(browser,"/dex/");
+  await runRollbackWithCache(browser);
 } finally {
   await browser.close();
 }

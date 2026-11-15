@@ -1,0 +1,60 @@
+name: GAME Room Worker — Manual Staging Deployment Only
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type DEPLOY_GAME_ROOM_STAGING to authorize one staging deploy"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: game-room-worker-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ github.ref == 'refs/heads/main' && inputs.confirmation == 'DEPLOY_GAME_ROOM_STAGING' }}
+    runs-on: ubuntu-latest
+    environment: game-room-staging
+    timeout-minutes: 15
+    steps:
+      - name: Checkout approved Game-only source on main
+        uses: actions/checkout@v4
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify locked-off frontend and scripts before deployment
+        run: |
+          node --check game/multiplayer/worker/index.mjs
+          node --check game/multiplayer/client-presence.js
+          node --check game/multiplayer/worker/e2e-two-accounts.mjs
+          node --test game/multiplayer/*.test.mjs game/multiplayer/worker/*.test.mjs
+          node - <<'NODE'
+          const fs=require('fs'),c=JSON.parse(fs.readFileSync('game/multiplayer/client-config.json','utf8'));
+          if(c.enabled!==false||c.endpoint!==null)throw Error('Game room client release gate must remain disabled');
+          console.log('PASS Game user-facing multiplayer remains disabled');
+          NODE
+      - name: Install Wrangler without modifying tracked files
+        run: npm install --no-save wrangler@4
+      - name: Publish isolated Game Worker and configure existing secret
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GAME_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.GAME_SUPABASE_PUBLISHABLE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${CLOUDFLARE_API_TOKEN:?Missing Cloudflare deploy token in the game-room-staging environment}"
+          : "${CLOUDFLARE_ACCOUNT_ID:?Missing Cloudflare account ID in game-room-staging}"
+          : "${GAME_SUPABASE_PUBLISHABLE_KEY:?Missing scoped Supabase publishable key in game-room-staging}"
+          # First deploy is fail-closed for tickets while the key is missing.
+          npx wrangler deploy --config game/multiplayer/worker/wrangler.toml
+          # Do not place the key in code, process argv or workflow logs.
+          printf '%s' "$GAME_SUPABASE_PUBLISHABLE_KEY" | npx wrangler secret put SUPABASE_PUBLISHABLE_KEY --config game/multiplayer/worker/wrangler.toml
+          echo 'Game staging Worker deployment requested. User-facing multiplayer config is STILL OFF.'
+          echo 'NEXT: run authenticated two-Chromium-account E2E and inspect real Game mobile FPS before any public enablement.'

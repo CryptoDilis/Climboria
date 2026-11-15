@@ -10,6 +10,7 @@ window.CLIMBORIA_SWAP_CONFIG = Object.freeze({
   // wallet-owned transaction flow are verified. Never enables our Worker.
   managedProvider: Object.freeze({
     enabled: false,
+    runtimeApproved: false,
     provider: "jupiter-terminal",
     scriptUrl: null,
     integrity: null
