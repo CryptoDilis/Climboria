@@ -81,6 +81,7 @@ export class JarrellRoom {
   if(!state?.storage)throw Error('Durable Object storage required for one-use session tickets');
   this.room=new PresenceRoom({roomId:ROOM,limit:32});
   this.lastPunch=new Map();
+  this.userSockets=new Map();
   this.spawned=new Set();
  }
  async fetch(req){
@@ -120,12 +121,26 @@ export class JarrellRoom {
   const pair=new WebSocketPair(),client=pair[0],socket=pair[1];
   socket.accept();
   const id='s_'+crypto.randomUUID().replace(/-/g,'');
+  // Bind one visible peer to one *server-verified* Supabase user identity.
+  // Reconnecting from a second tab/device replaces the prior live socket.
+  const prior=this.userSockets.get(entry.userId);
+  if(prior){
+   this.userSockets.delete(entry.userId);
+   this.room.disconnect(prior.id);
+   this.lastPunch.delete(prior.id);
+   this.spawned.delete(prior.id);
+   try{prior.socket.close(4001,'replaced-by-same-account')}catch{}
+  }
   const connected=this.room.connect({
    trustedSessionId:id,name:entry.name,model:entry.model,
    send:packet=>socket.send(JSON.stringify(packet))
   });
   if(!connected.ok){socket.close(1013,'room-unavailable');return response(503,{error:connected.reason})}
-  const cleanup=()=>{this.room.disconnect(id);this.lastPunch.delete(id);this.spawned.delete(id)};
+  this.userSockets.set(entry.userId,{id,socket});
+  const cleanup=()=>{
+   this.room.disconnect(id);this.lastPunch.delete(id);this.spawned.delete(id);
+   if(this.userSockets.get(entry.userId)?.id===id)this.userSockets.delete(entry.userId);
+  };
   socket.addEventListener('message',event=>{
    if(typeof event.data!=='string'||event.data.length>512){socket.close(1009,'message-too-large');cleanup();return}
    let message;
