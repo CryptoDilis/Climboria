@@ -22,6 +22,7 @@
  const world=window.__climboriaJarrellsPeak;
  if(!auth?.auth?.getSession||!renderer||!world?.player){doc.dataset.climboriaMultiplayer='unavailable';return}
  let socket=null,disposed=false,reconnect=null,movement=null,clientUser=null,selfId=null;
+ let connecting=false,connectEpoch=0,authSubscription=null;
  const known=new Map(),validId=x=>typeof x==='string'&&/^s_[a-f0-9]{32}$/.test(x);
  const validPosition=p=>p&&['x','y','z'].every(k=>typeof p[k]==='number'&&Number.isFinite(p[k])&&Math.abs(p[k])<50000);
  const validPlayer=p=>p&&validId(p.id)&&typeof p.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(p.name)
@@ -321,14 +322,37 @@
   if(previous&&Math.hypot(p.x-previous.x,p.y-previous.y,p.z-previous.z)<.035)return;
   if(send({type:'move',position:p}))previous=p;
  }
+ // Auth transitions must not permanently disable presence. Keep the
+ // explicit config.enabled release gate above; this runs only on approved rooms.
+ function scheduleConnect(delay){
+  if(disposed||socket)return;
+  if(reconnect)clearTimeout(reconnect);
+  reconnect=setTimeout(()=>{reconnect=null;void connect()},delay);
+ }
+ function resetConnection(){
+  // Invalidate pending getSession/ticket responses so a signed-out account
+  // cannot later create a socket or revive its World Chat after logout.
+  connectEpoch++;
+  connecting=false;
+  if(reconnect){clearTimeout(reconnect);reconnect=null}
+  if(movement){clearInterval(movement);movement=null}
+  const old=socket;socket=null;previous=null;
+  if(old){try{old.close()}catch{}}
+  clearPeers();
+ }
  async function connect(){
-  if(disposed)return;
-  if(!isReady()){reconnect=setTimeout(connect,1200);return}
+  if(disposed||connecting||socket)return;
+  if(!isReady()){scheduleConnect(1200);return}
+  connecting=true;
+  const epoch=++connectEpoch;
   doc.dataset.climboriaMultiplayer='connecting';
   try{
    const {data,error}=await auth.auth.getSession();
+   if(disposed||epoch!==connectEpoch)return;
    const session=data?.session;
-   if(error||!session?.user?.id||!session.access_token){showStatus('login-required','MULTIPLAYER · SIGN IN REQUIRED');return}
+   if(error||!session?.user?.id||!session.access_token){
+    clientUser=null;showStatus('login-required','MULTIPLAYER · SIGN IN REQUIRED');return;
+   }
    clientUser=session.user.id;
    const hero=window.__climboriaCreatedHero||{};
    const reply=await fetch(new URL('ticket',base),{
@@ -336,42 +360,66 @@
     headers:{Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
     body:JSON.stringify({name:hero.name,model:hero.model})
    });
+   if(disposed||epoch!==connectEpoch)return;
    if(!reply.ok)throw Error('Room ticket denied');
    const ticket=await reply.json();
+   if(disposed||epoch!==connectEpoch)return;
    if(!/^[a-f0-9]{64}$/.test(ticket?.ticket||''))throw Error('Invalid room ticket');
    const socketURL=new URL('ws',base);socketURL.protocol='wss:';
    const ws=new WebSocket(socketURL.toString(),['climboria-v1','t-'+ticket.ticket]);
    socket=ws;
-   ws.onmessage=e=>onPacket(e.data);
+   ws.onmessage=e=>{if(!disposed&&socket===ws&&epoch===connectEpoch)onPacket(e.data)};
    ws.onopen=()=>{
-    if(disposed||!isReady()){ws.close();return}
+    if(disposed||socket!==ws||epoch!==connectEpoch||!isReady()){ws.close();return}
     previous=null;
     send({type:'spawn',position:localPosition()});
     if(movement)clearInterval(movement);
     movement=setInterval(publishMovement,250);
    };
    ws.onclose=()=>{
-    if(socket!==ws)return;
+    if(socket!==ws||disposed||epoch!==connectEpoch)return;
     socket=null;clearPeers();previous=null;
     if(movement){clearInterval(movement);movement=null}
-    if(!disposed){showStatus('offline','MULTIPLAYER · RECONNECTING');reconnect=setTimeout(connect,5000)}
+    showStatus('offline','MULTIPLAYER · RECONNECTING');
+    scheduleConnect(5000);
    };
    ws.onerror=()=>{if(ws.readyState!==WebSocket.CLOSED)ws.close()};
   }catch(error){
+   if(disposed||epoch!==connectEpoch)return;
    showStatus('offline','MULTIPLAYER · UNAVAILABLE');
-   if(!disposed)reconnect=setTimeout(connect,10000);
+   scheduleConnect(10000);
+  }finally{
+   if(epoch===connectEpoch)connecting=false;
   }
  }
  function stop(){
-  disposed=true;if(reconnect)clearTimeout(reconnect);if(movement)clearInterval(movement);
-  socket?.close();socket=null;clearPeers();
+  if(disposed)return;
+  disposed=true;
+  resetConnection();
+  authSubscription?.unsubscribe?.();
  }
  window.addEventListener('beforeunload',stop,{once:true});
  document.addEventListener('climboria:visual-punch',()=>{if(selfId)send({type:'punch'});});
- const {data:{subscription}={}}=auth.auth.onAuthStateChange((_event,session)=>{
-  if(clientUser&&session?.user?.id!==clientUser){
-   stop();showStatus('login-required','MULTIPLAYER · SIGN IN REQUIRED');
+ authSubscription=auth.auth.onAuthStateChange((_event,session)=>{
+  if(disposed)return;
+  const verifiedUser=session?.user?.id||null;
+  if(!verifiedUser){
+   // Logout must remove ghosts, transcript and socket immediately, without
+   // forbidding the next independent login on this open Game page.
+   if(clientUser||socket||connecting)resetConnection();
+   clientUser=null;
+   showStatus('login-required','MULTIPLAYER · SIGN IN REQUIRED');
+   return;
   }
- });
+  if(clientUser&&clientUser!==verifiedUser){
+   // A different authenticated user must NEVER inherit the old room socket.
+   resetConnection();clientUser=null;
+  }else if(connecting&&!clientUser){
+   // Auth initialized or switched while getSession() was unresolved. Invalidate
+   // its possible stale result and obtain a fresh session for this login.
+   resetConnection();
+  }
+  if(!socket&&!connecting)scheduleConnect(0);
+ })?.data?.subscription;
  void connect();
 })();

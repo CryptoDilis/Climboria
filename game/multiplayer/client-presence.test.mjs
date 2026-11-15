@@ -6,7 +6,9 @@ import vm from 'node:vm';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled){
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,sessionGate=null,ticketFailures=0}={}){
+ const state={session:initialSession,ticketFailures};
+ const authListeners=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],calls=[],timers=[],created=[];
  const createElement=tag=>{
   const node={tag,style:{},children:[],textContent:'',id:'',listeners:new Map(),
@@ -30,8 +32,8 @@ function harness(enabled){
    remove:id=>removes.push(id),punch:id=>punches.push(id)
   },
   __CLIMBORIA_GAME_SAVE_CLIENT:{auth:{
-   getSession:async()=>({data:{session:{user:{id:'verified-uuid'},access_token:'verified-token'}}}),
-   onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})
+   getSession:async()=>{const snapshot=state.session;if(sessionGate)await sessionGate;return {data:{session:snapshot}}},
+   onAuthStateChange:fn=>{authListeners.push(fn);return {data:{subscription:{unsubscribe(){const i=authListeners.indexOf(fn);if(i>=0)authListeners.splice(i,1)}}}}}
   }},addEventListener(){}};
  class Socket{
   static OPEN=1;static CLOSED=3;
@@ -43,17 +45,30 @@ function harness(enabled){
   calls.push({url:String(url),options});
   if(String(url).includes('client-config.json'))return {ok:true,json:async()=>({schema:1,enabled,endpoint:enabled?'https://rooms.climboria.fun/':null})};
   if(String(url)==='https://rooms.climboria.fun/ticket'){
-   assert.equal(options.headers.Authorization,'Bearer verified-token');
+   assert.equal(options.headers.Authorization,'Bearer '+state.session?.access_token);
+   if(ticketGate)await ticketGate;
+   if(state.ticketFailures-->0)return {ok:false};
    return {ok:true,json:async()=>({ticket:'b'.repeat(64)})};
   }
   throw Error('unexpected fetch');
  };
  const context={window,document,fetch,URL,WebSocket:Socket,
   location:{href:'https://climboria.fun/game/play.html'},
-  setTimeout:(fn,delay)=>{timers.push({fn,delay});return timers.length},
-  setInterval:()=>1,clearInterval(){},clearTimeout(){},console};
+  setTimeout:(fn,delay)=>{timers.push({fn,delay,cancelled:false});return timers.length},
+  setInterval:()=>1,clearInterval(){},clearTimeout:id=>{if(timers[id-1])timers[id-1].cancelled=true},console};
  vm.runInNewContext(source,context,{filename:'client-presence.js'});
- return {window,document,clients,adds,moves,removes,punches,calls,timers,created};
+ return {window,document,clients,adds,moves,removes,punches,calls,timers,created,
+  authChange:(session,event=session?'SIGNED_IN':'SIGNED_OUT')=>{
+   state.session=session;
+   for(const fn of [...authListeners])fn(event,session);
+  },
+  runNextTimer:()=>{
+   const timer=timers.find(t=>!t.cancelled);
+   if(!timer)throw Error('No active connection or UI timer to run');
+   timer.cancelled=true;timer.fn();return timer.delay;
+  },
+  state
+ };
 }
 async function flush(){
   for(let i=0;i<12;i++)await Promise.resolve();
@@ -183,4 +198,109 @@ test('World Chat is room-gated, server-confirmed, safe as text and cleared on di
  assert.equal(toggle.style.display,'none');
  assert.equal(panel.style.display,'none');
  assert.equal(log.children.length,0,'disconnect erases room-only transcript');
+});
+
+
+test('login after first guest load connects without reloading; logout clears World Chat and new login reconnects',async()=>{
+ const h=harness(true,{initialSession:null});
+ await flush();
+ assert.equal(h.clients.length,0,'anonymous session must not open room WebSocket');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'login-required');
+ const session={user:{id:'account-a'},access_token:'token-a'};
+ h.authChange(session);
+ assert.equal(h.runNextTimer(),0,'successful login should retry immediately');
+ await flush();
+ await waitFor(()=>h.clients.length===1);
+ const first=h.clients[0];
+ first.onopen();
+ first.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'c'.repeat(32),peers:[peer]})});
+ assert.equal(h.adds.length,1);
+ const toggle=h.created.find(el=>el.id==='climboria-world-chat-toggle');
+ const panel=h.created.find(el=>el.id==='climboria-world-chat-panel');
+ assert.equal(toggle.style.display,'block');
+ h.authChange(null);
+ assert.equal(first.readyState,3,'logout closes prior authenticated room socket');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'login-required');
+ assert.deepEqual(h.removes,[peer.id],'logout removes real avatar to prevent ghosts');
+ assert.equal(toggle.style.display,'none');
+ assert.equal(panel.children[1].children.length,0,'logout deletes ephemeral chat');
+ const before=h.adds.length;
+ first.onmessage({data:JSON.stringify({type:'player-joined',player:{...peer,id:'s_'+'d'.repeat(32)}})});
+ assert.equal(h.adds.length,before,'stale socket cannot revive players after logout');
+ h.authChange({user:{id:'account-b'},access_token:'token-b'});
+ assert.equal(h.runNextTimer(),0,'independent new account must reconnect without reload');
+ await flush();
+ await waitFor(()=>h.clients.length===2);
+ const second=h.clients[1];second.onopen();
+ second.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'e'.repeat(32),peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.equal(toggle.style.display,'block','new verified session restores chat panel');
+ assert.equal(h.adds.length,1,'no fabricated peers on second account');
+});
+
+test('account switch closes previous socket; token refresh does not duplicate session',async()=>{
+ const h=harness(true);await flush();
+ await waitFor(()=>h.clients.length===1);
+ const first=h.clients[0];first.onopen();
+ first.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'c'.repeat(32),peers:[peer]})});
+ h.authChange({user:{id:'verified-uuid'},access_token:'new-token'},'TOKEN_REFRESHED');
+ assert.equal(first.readyState,1,'same account token refresh keeps healthy room session');
+ assert.equal(h.clients.length,1);
+ h.authChange({user:{id:'different-account'},access_token:'account-b-token'},'SIGNED_IN');
+ assert.equal(first.readyState,3,'switching verified user evicts prior socket');
+ assert.equal(h.removes.at(-1),peer.id,'old account avatars must be removed');
+ assert.equal(h.runNextTimer(),0);
+ await flush();await waitFor(()=>h.clients.length===2);
+ const next=h.clients[1];next.onopen();
+ next.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'e'.repeat(32),peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+});
+
+test('logout during delayed authenticated ticket prevents stale WebSocket resurrection',async()=>{
+ let releaseTicket;
+ const ticketGate=new Promise(resolve=>{releaseTicket=resolve});
+ const h=harness(true,{ticketGate});
+ await flush();
+ assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,1,'ticket request is in flight');
+ assert.equal(h.clients.length,0);
+ h.authChange(null);
+ releaseTicket();
+ await flush();
+ assert.equal(h.clients.length,0,'stale ticket must not open room after logout');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'login-required');
+ assert.equal(h.timers.filter(t=>!t.cancelled&&[5000,10000].includes(t.delay)).length,0,
+  'old connection must not enqueue retries after logout');
+});
+
+test('temporary ticket request failure retries once and recovers without duplicate sockets',async()=>{
+ const h=harness(true,{ticketFailures:1});
+ await flush();
+ assert.equal(h.clients.length,0);
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline');
+ assert.equal(h.runNextTimer(),10000,'failed ticket should schedule a bounded retry');
+ await flush();
+ await waitFor(()=>h.clients.length===1);
+ assert.equal(h.clients.length,1,'successful retry opens exactly one room socket');
+ const ws=h.clients[0];ws.onopen();
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'b'.repeat(32),peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+});
+
+
+test('session transition during unresolved getSession never authenticates an old player',async()=>{
+ let releaseSession;
+ const sessionGate=new Promise(resolve=>{releaseSession=resolve});
+ const h=harness(true,{sessionGate});
+ await flush();
+ assert.equal(h.clients.length,0,'initial getSession is unresolved');
+ h.authChange({user:{id:'new-account'},access_token:'fresh-login-token'});
+ assert.equal(h.runNextTimer(),0,'auth change should invalidate the old in-flight session');
+ releaseSession();
+ await flush();await waitFor(()=>h.clients.length===1);
+ assert.equal(h.calls.filter(x=>x.url.endsWith('/ticket')).length,1,
+  'only the latest authenticated user may request a room ticket');
+ assert.equal(h.calls.find(x=>x.url.endsWith('/ticket')).options.headers.Authorization,'Bearer fresh-login-token');
+ const ws=h.clients[0];ws.onopen();
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'b'.repeat(32),peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
 });
