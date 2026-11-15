@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import gateway,{JarrellRoom} from './index.mjs';
 
 const ORIGIN='https://climboria.fun',uid='f3ead054-abb4-47ba-b311-5aa7fe483f10';
-const token='eyJ.abcdef.signature';
+const token='eyJ.abcdef.signature',uid2='2790d4fe-1a26-4f5c-96d2-9a0fbcfb3021';
 const mkRequest=(path,{method='GET',headers={},body}={})=>new Request('https://game-room.example'+path,{method,headers:{Origin:ORIGIN,...headers},body});
 const env=(doStub)=>({
  SUPABASE_URL:'https://unadepiwbovblkfjlksk.supabase.co',
@@ -67,11 +67,11 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
    async transaction(fn){return fn(this)}
   };
   const room=new JarrellRoom({storage},{});
-  const a='a'.repeat(64),b='b'.repeat(64);
-  const issue=async(ticket,name)=>room.fetch(mkRequest('/_ticket',{method:'POST',
-   body:JSON.stringify({ticket,userId:uid,name,model:'Jarrell'})}));
+  const a='a'.repeat(64),b='b'.repeat(64),c='c'.repeat(64);
+  const issue=async(ticket,name,userId=uid)=>room.fetch(mkRequest('/_ticket',{method:'POST',
+   body:JSON.stringify({ticket,userId,name,model:'Jarrell'})}));
   assert.equal((await issue(a,'Explorer A')).status,201);
-  assert.equal((await issue(b,'Explorer B')).status,201);
+  assert.equal((await issue(b,'Explorer B',uid2)).status,201);
   const connect=async(ticket)=>room.fetch(mkRequest('/ws',{headers:{Upgrade:'websocket','Sec-WebSocket-Protocol':'climboria-v1, t-'+ticket}}));
   const c1=(await connect(a)).webSocket,c2=(await connect(b)).webSocket;
   assert.equal(room.room.members.size,2);
@@ -93,5 +93,11 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   c2.close();
   assert.equal(room.room.members.size,1);
   assert.equal(c1.packets.at(-1).type,'player-left');
+  assert.equal(room.userSockets.size,1);
+  assert.equal((await issue(c,'Explorer A new session',uid)).status,201);
+  const c3=(await connect(c)).webSocket;
+  assert.equal(room.room.members.size,1,'a second login for the same account evicts previous avatar');
+  assert.equal(room.userSockets.size,1);
+  assert.equal(c3.packets[0].peers.length,0,'no duplicate visible peer from the same account');
  }finally{globalThis.Response=oldResponse;globalThis.WebSocketPair=oldPair}
 });
