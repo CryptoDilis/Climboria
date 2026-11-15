@@ -820,7 +820,11 @@ function buildChunk(cx,cz){
  geo.setAttribute('color',new T3.BufferAttribute(col,3));geo.setIndex(IDX);geo.computeBoundingSphere();
  if(worldUV)geo.setAttribute('uv',new T3.BufferAttribute(worldUV,2));
  const m=new T3.Mesh(geo,detailed?sanctuaryTerrainMaterial:terrMat);m.position.set(ox,0,oz);scene.add(m);
- const objs=[m],cl=props(cx,cz,objs);makeGrass(cx,cz,objs);return{cx,cz,objs,geo,col:cl};
+ const objs=[m],cl=props(cx,cz,objs);
+ // Prior grass batches were allocated and retained per chunk but NEVER
+ // attached to the scene: skip that expensive invisible work, while retaining
+ // the authored visible Sanctuary undergrowth and all terrain/collision logic.
+ return{cx,cz,objs,geo,col:cl};
 }
 const chunks=new Map();
 function updateChunks(px,pz,budget){
