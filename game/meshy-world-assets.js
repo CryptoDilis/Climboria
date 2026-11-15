@@ -7,7 +7,7 @@
 const BASE='../assets/game/new_optimized/';
 const manifestURL=BASE+'manifest.json';
 const allowed=/^[A-Za-z0-9_.() -]+\.glb$/;
-const state={started:false,enabled:false,guardCount:0,decorations:0,failures:[],queued:0,loaded:0};
+const state={started:false,enabled:false,guardCount:0,guardFiles:[],decorations:0,failures:[],queued:0,loaded:0};
 let opts=null,settings=null,decorations=[],lastTick=0,guardStarted=false,lastCamera=null;
 function safeURL(name){return typeof name==='string'&&allowed.test(name)&&!name.includes('..')?BASE+encodeURIComponent(name):null;}
 function groundPosition(anchor,dx,dz){
@@ -23,7 +23,7 @@ function groundPosition(anchor,dx,dz){
  return {x,z};
 }
 function audit(){
- return {enabled:state.enabled,guardCount:state.guardCount,loadedDecorations:state.decorations,loadedFiles:decorations.filter(d=>!!d.mesh).map(d=>d.file),replacedTreeCount:decorations.filter(d=>d.mesh&&typeof d.restoreLegacy==='function').length,failedFiles:state.failures.slice(),activeLoads:state.queued,assetDirectory:BASE};
+ return {enabled:state.enabled,guardCount:state.guardCount,guardFiles:state.guardFiles.slice(),loadedDecorations:state.decorations,loadedFiles:decorations.filter(d=>!!d.mesh).map(d=>d.file),replacedTreeCount:decorations.filter(d=>d.mesh&&typeof d.restoreLegacy==='function').length,failedFiles:state.failures.slice(),activeLoads:state.queued,assetDirectory:BASE};
 }
 function glbLoad(path){
  return new Promise(resolve=>{
@@ -74,8 +74,9 @@ function loadGuards(){
  const files=settings.guardModels.slice(0,2).filter(safeURL);
  if(!files.length)return;
  Promise.all(files.map(f=>glbLoad(safeURL(f)))).then(models=>{
-  const ready=models.filter((m)=>m&&geometryCount(m)<=12000);
-  models.forEach(m=>{if(m&&!ready.includes(m))disposeMeshyRoot(m);});
+  const ready=models.map((m,i)=>m&&geometryCount(m)<=12000?{root:m,file:files[i]}:null).filter(Boolean);
+  models.forEach(m=>{if(m&&!ready.some(item=>item.root===m))disposeMeshyRoot(m);});
+  state.guardFiles=ready.map(item=>item.file);
   if(!ready.length){state.failures.push('guards: unavailable or over budget');return;}
   // Avoid a single 12-NPC GPU/scene-graph spike when first entering camp.
   // Keep original soldier fallback visible until EACH real mesh passes scale QA.
@@ -85,7 +86,7 @@ function loadGuards(){
    for(;index<upper;index++){
     const o=opts.soldiers[index];
     try{
-     const prefab=ready[index%ready.length].clone(true);
+     const prefab=ready[index%ready.length].root.clone(true);
      if(!dimensions(prefab,2.55)){
       state.failures.push('guard scale rejected: '+index);
       continue;
