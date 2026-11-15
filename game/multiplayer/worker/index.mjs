@@ -9,7 +9,7 @@ import {ServerCombatState} from '../server-combat-state.mjs';
 
 const ROOM='jarrell-peak';
 const TRUSTED_ORIGINS=new Set(['https://climboria.fun','https://www.climboria.fun']);
-const MAX_AUTH_BYTES=4096,MAX_JSON_BYTES=1024,SESSION_TTL=30_000,MAX_PENDING=32;
+const MAX_AUTH_BYTES=4096,MAX_JSON_BYTES=1024,SESSION_TTL=30_000,MAX_PENDING=32,MAX_PENDING_PER_USER=2;
 // Bound abusive socket bursts; normal Game presence publishes movement at ~4 Hz.
 const MESSAGE_WINDOW_MS=1000,MAX_MESSAGES_PER_WINDOW=24;
 // Authenticated, room-only WORLD CHAT. Never persist chat or trust client identity.
@@ -169,17 +169,33 @@ export class JarrellRoom {
    if(!data||!new RegExp('^[a-f0-9]{64}$').test(data.ticket||'')||
       !uuid.test(data.userId||'')||!allowedName.test(data.name||'')||!allowedModels.has(data.model))
     return response(400,{error:'invalid-ticket-data'});
-   const now=Date.now();
-   const tickets=await this.state.storage.list({prefix:'ticket:'});
-   let pending=0;
-   for(const [key,entry] of tickets){
-    if(entry.expiresAt<=now)await this.state.storage.delete(key);
-    else pending++;
-   }
-   if(pending>=MAX_PENDING||this.room.members.size>=32)
-    return response(429,{error:'room-full'});
-   await this.state.storage.put('ticket:'+data.ticket,{...data,expiresAt:now+SESSION_TTL});
-   return response(201,{ok:true});
+   // One authenticated Supabase user must not fill all 32 pending tickets
+   // and deny the room to everybody else. Count, prune and issue atomically;
+   // multiple simultaneous ticket requests cannot race the limit.
+   const result=await this.state.storage.transaction(async txn=>{
+    const now=Date.now();
+    const tickets=await txn.list({prefix:'ticket:'});
+    let pending=0,owned=0;
+    for(const [key,entry] of tickets){
+     if(!entry||entry.expiresAt<=now){
+      await txn.delete(key);
+     }else{
+      pending++;
+      if(entry.userId===data.userId)owned++;
+     }
+    }
+    if(pending>=MAX_PENDING||this.room.members.size>=32)
+     return {status:429,error:'room-full'};
+    // Two pending tickets permit a brief reconnect while still bounding
+    // abuse from a single account; tickets expire after only 30 seconds.
+    if(owned>=MAX_PENDING_PER_USER)
+     return {status:429,error:'account-ticket-limit'};
+    if(await txn.get('ticket:'+data.ticket))
+     return {status:409,error:'duplicate-ticket'};
+    await txn.put('ticket:'+data.ticket,{...data,expiresAt:now+SESSION_TTL});
+    return {status:201,ok:true};
+   });
+   return response(result.status,result.ok?{ok:true}:{error:result.error});
   }
   if(url.pathname!=='/ws'||!(/websocket/i.test(req.headers.get('Upgrade')||'')))
    return response(404,{error:'not-found'});
