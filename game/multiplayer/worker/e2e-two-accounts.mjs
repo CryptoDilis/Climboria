@@ -24,6 +24,14 @@ verify(health.ok,'Game room health endpoint unavailable');
 const status=await health.json();
 verify(status.service==='climboria-game-room'&&status.gameplayPvP===false,
  'Wrong WebSocket service or unsafe damage enablement');
+const ready=await fetch(new URL('ready',base),{signal:AbortSignal.timeout(timeout)});
+verify(ready.ok,'Game room Worker is deployed but its required bindings are not configured');
+const readiness=await ready.json();
+verify(readiness.service==='climboria-game-room'&&
+ readiness.bindingsConfigured===true&&readiness.gameplayPvP===false,
+ 'Game Worker is not configured for safe authenticated room acceptance');
+// /ready is a binding preflight only. Two real accounts must still prove
+// Supabase auth, bidirectional peer/chat traffic and room safety below.
 
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const contexts=[];
