@@ -40,8 +40,8 @@ body.free #status-card{opacity:1}
 .stat-track{height:5px;background:#ffffff20;border-radius:9px;overflow:hidden;margin-bottom:4px}
 .stat-fill{height:100%;width:100%;border-radius:9px;background:#b94c48}
 #stamina-fill{background:#c9a34d}
-#climboria-punch-button{display:none;position:fixed;right:calc(180px + env(safe-area-inset-right));bottom:calc(52px + env(safe-area-inset-bottom));z-index:1200;width:68px;height:68px;border-radius:50%;border:2px solid #d9b46b;background:#18212eea;color:#ffe3a3;font:800 12px/1 system-ui;touch-action:manipulation;box-shadow:0 4px 18px #0009;cursor:pointer}
-body.free.mobile-device #climboria-punch-button{display:grid;place-items:center}
+#climboria-punch-button{display:none;position:fixed;right:calc(180px + env(safe-area-inset-right));bottom:calc(52px + env(safe-area-inset-bottom));z-index:1200;box-sizing:border-box;width:68px;height:68px;padding:0;border-radius:50%;border:2px solid #d9b46b;background:#18212eea;color:#ffe3a3;font:800 12px/1 system-ui;text-align:center;white-space:nowrap;touch-action:manipulation;box-shadow:0 4px 18px #0009;cursor:pointer}
+body.free.mobile-device #climboria-punch-button{display:flex;align-items:center;justify-content:center}
 body.mobile-device.climboria-portrait #climboria-punch-button{display:none!important}
 #world-map-toggle{display:none}
 #world-map-panel{position:fixed;pointer-events:auto!important;z-index:1000!important;right:0!important;top:0!important;margin:0!important;width:240px;box-sizing:border-box;padding:9px;border:1px solid #d8b46b99;border-top:0;border-right:0;border-radius:0 0 0 13px;background:#080d14ed;box-shadow:0 12px 40px #000b;display:block;transition:width .2s}#world-map-panel.map-expanded{width:min(340px,calc(100vw - 32px))}
