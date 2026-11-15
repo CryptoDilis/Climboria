@@ -261,7 +261,7 @@
    clearDuelExpiry();inviteFrom=null;outgoingTo=null;activeWith=null;
    duelNotice='Explorer disconnected; consent cleared.';
   }
-  renderDuelUi();
+  renderDuelUi();renderChatCount();
   showStatus('connected','ONLINE · '+known.size+' other explorers');
  }
  function onPacket(data){
