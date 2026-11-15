@@ -1,5 +1,16 @@
 # Climboria Game Development Record
 
+## GAME PLAYER DUEL CONSENT UI — offline by default (2026-11-15 PHT)
+
+- **Game-only draft** `game/duel-consent-client-ui-2026-11-15`, based on merged authenticated room consent Worker `main` SHA `f1faf476e270119e3f4de2f5a8f94d1da5ada125`. Importantly, `game/multiplayer/client-config.json` still has `enabled:false`, `endpoint:null`. Thus the new UI does **NOT** render on today's static Game site, and no real two-user session or damage is enabled. DEX/Swap/Launchpad/ClimbX unaffected.
+- **Client code commits** `5d61ce1062f8c6a199c4725cde5772b61398dd9d` and `3859035a8530c120e503a0a9950fb2ab3cde7f51`: add a compact DUELS toggle and invitation list for real authenticated remote peers only after a server `welcome`. Players may send a challenge, accept/decline authenticated invitations, withdraw consent, and see expiry/connection/cooldown errors. The client never trusts incoming `duel-*` packets unless `combatDamageEnabled:false` and real known peer IDs match; all player names use DOM `textContent`, not HTML injection. Any disconnect clears invite/consent state, hides controls and removes peers. UI explicitly states `CONSENT ONLY · PLAYER DAMAGE OFF` and does not send/handle HP/damage/grab. Short-lived pending requests auto-expire locally after 30 seconds.
+- **Test commit** `e1a65f386c638c729bcf947f8f15748b41b5db86`: extend the VM-harness fake DOM with actual clickable event handlers and focused children, assert no DUELS UI while release config disabled, only connected peer names produce challenge buttons, correct client `duel-request`, `duel-response` and `duel-cancel` packets are sent, forged damage-enabled invitation is discarded, and disconnection hides UI. Existing authenticated remote-presence and no-synthetic-peer tests stay intact.
+- **Release gates:** no exact-head Game Gateway, Validate or Gameplay CI result yet, no live staging/browser interaction and no mobile screenshot acceptance. UI placement may overlap mobile HUD until real connected mobile WebGL QA; do NOT switch on `enabled` to preview without owner-approved staging. Actual PvP damage is still denied by the server. Future state updates must not mutate inventory, paid loot or wallet balances.
+- **EXACT NEXT:** open a Game-only draft PR, require exact-head Game Gateway/Validate/browser tests, fix all test failures and inspect changed files. Then reconcile any intervening merge (independent valid `Content-Length` hotfix PR #484) before considering merge. Next, owner explicitly configures Cloudflare Game Worker staging and two independent test accounts; use manual E2E PR #483 and live client-browser/mobile acceptance before any multiplayer enablement. Owner must resolve Sanctuary safe-area policy and trusted server terrain before any actual damage.
+
+---
+
+
 ## GAME AUTHENTICATED DUEL CONSENT SIGNALING — default OFF (2026-11-15 PHT)
 
 - **Scope and release truth:** Game-only branch `game/duel-consent-signaling-2026-11-15` based on last verified `main` `c6484dac1017fc91573ac2ed7f5c6edda312bd44`. No DEX, Swap, Launchpad, ClimbX, wallet, loot or production deployment changes. `game/multiplayer/client-config.json` stays `enabled:false` and `endpoint:null` until owner explicitly deploys isolated Worker staging and verifies two real accounts. Existing server-side `attack` remains REJECTED.
