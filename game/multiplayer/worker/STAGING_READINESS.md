@@ -75,13 +75,14 @@ the additional real Game WebGL integration test:
 npm install --no-save playwright
 npx playwright install chromium
 
-# Supply in a private environment, never paste secrets into chat, commit
-# .env files, store credentials in shell history, or use actual customer logins.
+# Enter throwaway Supabase QA credentials interactively; private values
+# stay out of typed shell commands, logs, files, git history and ChatGPT.
 export GAME_QA_APPROVAL=I_APPROVE_GAME_STAGING_QA
-export GAME_QA_A_EMAIL="(private disposable Supabase QA account A)"
-export GAME_QA_A_PASSWORD="(private password A)"
-export GAME_QA_B_EMAIL="(private disposable Supabase QA account B)"
-export GAME_QA_B_PASSWORD="(private password B)"
+read -rp "QA A email: " GAME_QA_A_EMAIL
+read -rsp "QA A password: " GAME_QA_A_PASSWORD; printf '\n'
+read -rp "QA B email: " GAME_QA_B_EMAIL
+read -rsp "QA B password: " GAME_QA_B_PASSWORD; printf '\n'
+export GAME_QA_A_EMAIL GAME_QA_A_PASSWORD GAME_QA_B_EMAIL GAME_QA_B_PASSWORD
 GAME_QA_LANDSCAPE_MOBILE=1 node game/multiplayer/worker/e2e-real-game-ui.mjs
 unset GAME_QA_A_EMAIL GAME_QA_A_PASSWORD GAME_QA_B_EMAIL GAME_QA_B_PASSWORD
 ```
