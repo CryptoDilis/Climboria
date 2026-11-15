@@ -80,8 +80,14 @@ test("fail closed on hash drift, unexpected size, bad status, network errors, ma
     new Response(null, {status:302,headers:{"location":"https://evil.example"}})
   ]) await assert.rejects(verifyOneSourceAsset(asset, async () => response));
   await assert.rejects(verifyOneSourceAsset(asset, async () => {throw Error("offline");}));
+  // Encoded HTTP transfers may have a compressed Content-Length. The
+  // decoded, bounded body is the authoritative size for hash verification.
+  const mismatchedHeader = await verifyOneSourceAsset(asset, async () =>
+    new Response(body, {headers:{"content-length":"12345"}}));
+  assert.equal(mismatchedHeader.sourceSha384, asset.sha384);
   await assert.rejects(verifyOneSourceAsset(asset, async () =>
-    new Response(body, {headers:{"content-length":"12345"}})));
+    new Response(Buffer.concat([body,Buffer.from("overflow")]))),
+    /exceeds pinned size/);
   const manipulated = Buffer.from(body);
   manipulated[0] ^= 1;
   await assert.rejects(verifyOneSourceAsset(asset, async () => validResponse(manipulated)));
