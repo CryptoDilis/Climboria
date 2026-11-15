@@ -2149,3 +2149,7 @@ GitHub confirmed the `CLOUDFLARE_RUNTIME_DNS_TOKEN` secret exists and injected i
 ### 2026-11-15 PH — Token is active, but Cloudflare zone access still rejected
 
 The read-only [Actions run 43677950409](https://github.com/CryptoDilis/Climboria/actions/runs/43677950409) confirmed the GitHub secret authenticates at Cloudflare's user token verification endpoint with status `active`. Cloudflare still returned error 9109 on the `climboria.fun` zone lookup, so DNS listing could not proceed. The underlying reason for the zone-specific rejection was not established. The one-time workflow was removed from #476. No changes were made to DNS, Workers, or production execution. The signed-in Cloudflare dashboard remains the alternate deployment path.
+
+### 2026-11-15 PH — Disabled runtime status endpoint verified in production
+
+The owner deployed the existing [PR #476](https://github.com/CryptoDilis/Climboria/pull/476) handler and added the exact Cloudflare route through the dashboard. Independent GET to [the production status URL](https://climboria.fun/swap-runtime-status.json) returned HTTP 200, `Cache-Control: no-store`, and `{"enabled":false}`. Both Swap and Signature DEX pages returned 200. The live frontend config still has native execution, managed provider, and fee collection disabled, and the API Worker health reported execution disabled. This resolves the disabled endpoint routing blocker. Production remains quote-only.
