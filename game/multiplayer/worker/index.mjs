@@ -167,6 +167,7 @@ export class JarrellRoom {
   }
   const connected=this.room.connect({
    trustedSessionId:id,name:entry.name,model:entry.model,
+   announceImmediately:false, // not visible until valid Sanctuary spawn
    send:packet=>socket.send(JSON.stringify(packet))
   });
   if(!connected.ok){socket.close(1013,'room-unavailable');return response(503,{error:connected.reason})}
@@ -204,6 +205,9 @@ export class JarrellRoom {
     member.position={x:p.x,y:p.y,z:p.z};
     member.lastMoveAt=Date.now();
     this.spawned.add(id);
+    // The validated server-approved initial position is the first moment
+    // other explorers may see this peer in 3D, the field map or chat roster.
+    this.room.announce(id);
     this.room.broadcast({type:'player-moved',id,position:{...member.position}},id);
     return;
    }
