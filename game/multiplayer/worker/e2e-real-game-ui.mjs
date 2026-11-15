@@ -106,8 +106,8 @@ async function assertPeer(page,expected){
  await page.waitForFunction(n=>{
   const legend=document.getElementById('world-map-legend')?.textContent||'';
   const count=document.querySelector('#climboria-world-chat-panel')?.firstChild?.textContent||'';
-  return legend.includes('Cyan = explorers ('+n+')')&&
-   count.includes((n+1)+' ONLINE');
+  return (n>0?legend.includes('Cyan = explorers ('+n+')'):
+   !legend.includes('Cyan = explorers'))&&count.includes((n+1)+' ONLINE');
  },expected,{timeout:30000});
 }
 async function waitForGlb(page){
