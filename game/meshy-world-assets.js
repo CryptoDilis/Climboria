@@ -77,15 +77,28 @@ function loadGuards(){
   const ready=models.filter((m)=>m&&geometryCount(m)<=12000);
   models.forEach(m=>{if(m&&!ready.includes(m))disposeMeshyRoot(m);});
   if(!ready.length){state.failures.push('guards: unavailable or over budget');return;}
-  opts.soldiers.forEach((o,i)=>{
-   const prefab=ready[i%ready.length].clone(true);
-   if(!dimensions(prefab,2.55))return;
-   const old=o.s.children.slice();
-   // Keep original fallback in memory, hidden; preserve soldier group and existing animations.
-   old.forEach(child=>child.visible=false);
-   o.s.add(prefab);
-   state.guardCount++;
-  });
+  // Avoid a single 12-NPC GPU/scene-graph spike when first entering camp.
+  // Keep original soldier fallback visible until EACH real mesh passes scale QA.
+  let index=0;
+  const populateFrame=()=>{
+   const upper=Math.min(index+2,opts.soldiers.length);
+   for(;index<upper;index++){
+    const o=opts.soldiers[index];
+    try{
+     const prefab=ready[index%ready.length].clone(true);
+     if(!dimensions(prefab,2.55)){
+      state.failures.push('guard scale rejected: '+index);
+      continue;
+     }
+     const previous=o.s.children.slice();
+     o.s.add(prefab);
+     previous.forEach(child=>child.visible=false);
+     state.guardCount++;
+    }catch(e){state.failures.push('guard install rejected: '+index);}
+   }
+   if(index<opts.soldiers.length)window.requestAnimationFrame(populateFrame);
+  };
+  window.requestAnimationFrame(populateFrame);
  }).catch(()=>state.failures.push('guard loading failed'));
 }
 function unload(obj){
