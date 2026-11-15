@@ -195,6 +195,7 @@ const prefab={traverse(fn){fn({isMesh:true,geometry:{index:{count:240}}})},clone
 for(const call of guards.calls)call.success({scene:prefab});
 for(let k=0;k<8;k++)await Promise.resolve();
 assert.equal(guards.api.audit().guardCount,0,'Never swap every guard in one decode callback');
+assert.equal(guards.api.audit().guardFiles.join(','),'guard-a.glb,guard-b.glb','Both real approved single-person models must be decoded');
 assert.equal(guards.framesWaiting(),1,'Begin installing guards on next animation frame');
 for(let frame=1;frame<=6;frame++){
  guards.nextFrame();
