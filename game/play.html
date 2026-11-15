@@ -2238,12 +2238,23 @@ function syncLegacyTreeReplacements(){
   if(tree.collider)tree.collider.disabled=suppressed;
  }
 }
-function replaceLegacyTreesNear(x,z,radius=28){
- if(!Number.isFinite(x)||!Number.isFinite(z))return null;
+function replaceLegacyTreesNear(x,z,radius=28,trunkRadius=1.3){
+ if(!Number.isFinite(x)||!Number.isFinite(z)||!Number.isFinite(trunkRadius))return null;
  const token=Symbol('meshy-tree-replacement');
+ // A loaded replacement is physical: never hide the old tree collider without
+ // installing the approved new trunk collider in the same atomic operation.
+ const trunk=solid(x,z,Math.min(3.2,Math.max(.7,trunkRadius)),'meshy-tree-trunk');
  activeMeshyTreeZones.set(token,{x,z,radius:Math.min(35,Math.max(8,radius))});
  syncLegacyTreeReplacements();
- return ()=>{activeMeshyTreeZones.delete(token);syncLegacyTreeReplacements();};
+ let disposed=false;
+ return ()=>{
+  if(disposed)return;disposed=true;
+  activeMeshyTreeZones.delete(token);
+  trunk.disabled=true;
+  const index=solids.indexOf(trunk);
+  if(index>=0)solids.splice(index,1); // no accumulating stale collision entries
+  syncLegacyTreeReplacements(); // restore previous tree AND old collider
+ };
 }
 function findCC0ForestSpots(count,minSpacing,excluded=[]){
  const found=[],blockedSpots=excluded.slice();
