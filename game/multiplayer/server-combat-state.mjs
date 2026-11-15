@@ -71,7 +71,9 @@ export class ServerCombatState {
   // physics. Default deny until a trusted server-backed verifier exists.
   // Resolve independently from audited server terrain physics, NOT the
   // browser-updated PresenceRoom member.position field.
-  const aPos=this.trustedPosition(actorId),bPos=this.trustedPosition(targetId);
+  let aPos,bPos;
+  try{aPos=this.trustedPosition(actorId);bPos=this.trustedPosition(targetId)}
+  catch{return {ok:false,reason:'untrusted-terrain-position'}}
   const trusted=p=>p&&typeof p==='object'&&['x','y','z'].every(k=>typeof p[k]==='number'&&Number.isFinite(p[k]));
   if(!trusted(aPos)||!trusted(bPos))return {ok:false,reason:'untrusted-terrain-position'};
   const attacker={serverId:actorId,roomId:this.room.roomId,position:aPos,
