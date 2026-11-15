@@ -54,6 +54,19 @@ try {
     timeout: 90000,
   });
   await page.waitForSelector('#game canvas, canvas', { timeout: 45000 });
+  // Desktop keyboard-only mode must not render the touch ATTACK button.
+  // Chromium may expose 'ontouchstart' in window even with zero real touch
+  // points; use actual pointer capabilities rather than that property.
+  const desktopInputMode=await page.evaluate(()=>{
+    const attack=document.querySelector('#climboria-punch-button');
+    return {touchPoints:navigator.maxTouchPoints,
+      coarsePointer:matchMedia('(pointer: coarse)').matches,
+      mobileClass:document.body.classList.contains('mobile-device'),
+      attackButtonDisplay:attack?getComputedStyle(attack).display:null};
+  });
+  if(desktopInputMode.touchPoints!==0||desktopInputMode.mobileClass||
+     desktopInputMode.attackButtonDisplay!=='none')
+    errors.push('Keyboard desktop incorrectly enabled mobile ATTACK button: '+JSON.stringify(desktopInputMode));
   try {
     await page.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
   } catch (error) {
@@ -536,25 +549,29 @@ try {
   }, null, { timeout: 15000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroRenderer === 'glb' && document.documentElement.dataset.climboriaHero === 'adventurer', undefined, { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
-  // Real user-input exercise: local punch must play without fake network
+  // Real left-hand Q attack while walking. The attack animation must play without fake network
   // damage, cannot spam past cooldown, and consumes the existing stamina pool.
   const punchInput=await page.evaluate(()=>{
     const p=window.__climboriaJarrellsPeak?.player;
     let events=0;const listener=()=>events++;
     document.addEventListener('climboria:visual-punch',listener);
     const before={stamina:p?.stamina,hp:p?.hp};
-    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));
+    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyQ',bubbles:true}));
     const once={stamina:p?.stamina,hp:p?.hp,mode:document.documentElement.dataset.climboriaPunch};
-    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));
+    window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyQ',bubbles:true}));
     const twice={stamina:p?.stamina,hp:p?.hp};
-    window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyJ',bubbles:true}));
+    window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyQ',bubbles:true}));
     document.removeEventListener('climboria:visual-punch',listener);
     return {before,once,twice,events};
   });
-  console.log('Real input punch visual-only cooldown audit:',JSON.stringify(punchInput));
+  console.log('Real input attack visual-only cooldown audit:',JSON.stringify(punchInput));
   if(punchInput?.once?.mode!=='visual-only'||punchInput.once.stamina!==punchInput.before.stamina-5||
      punchInput.twice.stamina!==punchInput.once.stamina||punchInput.once.hp!==punchInput.before.hp||punchInput.events!==1)
-    errors.push('Punch must trigger once with stamina cost, cooldown and no fake client-side PvP damage: '+JSON.stringify(punchInput));
+    errors.push('Attack must trigger once with stamina cost, cooldown and no fake client-side PvP damage: '+JSON.stringify(punchInput));
+  // The original Adventurer GLB actually exports Punch_Combo_1, not the
+  // Jarrell model's Punch_Combo. Enforce a REAL authored attack clip.
+  await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='punch' &&
+    document.documentElement.dataset.climboriaHeroClip==='Punch_Combo_1',undefined,{timeout:2000});
   await page.waitForFunction(()=>document.documentElement.dataset.climboriaHeroAnimation==='idle',undefined,{timeout:15000});
 
   const idleAnimationAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);
@@ -1027,8 +1044,25 @@ try {
       const a=controls[i],b=controls[j];
       if(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top) overlaps.push([a.action,b.action]);
     }
-    return { viewport:{width:innerWidth,height:innerHeight}, controls, overlaps };
+    const attack = document.querySelector('[data-mobile-action="punch"]');
+    const labelRange = document.createRange();
+    if (attack) labelRange.selectNodeContents(attack);
+    const labelRect = attack ? labelRange.getBoundingClientRect() : null;
+    const buttonRect = attack?.getBoundingClientRect();
+    const labelCenter = attack ? {
+      label: attack.textContent.trim(),
+      display: getComputedStyle(attack).display,
+      dx: Math.abs((labelRect.left + labelRect.right - buttonRect.left - buttonRect.right)/2),
+      dy: Math.abs((labelRect.top + labelRect.bottom - buttonRect.top - buttonRect.bottom)/2)
+    } : null;
+    return { viewport:{width:innerWidth,height:innerHeight}, controls, overlaps, labelCenter };
   });
+  if (!mobileActionLayout.labelCenter ||
+      mobileActionLayout.labelCenter.label !== 'ATTACK' ||
+      !['flex','grid'].includes(mobileActionLayout.labelCenter.display) ||
+      mobileActionLayout.labelCenter.dx > 5 || mobileActionLayout.labelCenter.dy > 5) {
+    errors.push('Mobile ATTACK label is not centered inside its visible action button: ' + JSON.stringify(mobileActionLayout.labelCenter));
+  }
   if (mobileActionLayout.controls.length !== 5 ||
       !['punch','jump-surface','run','use','dive'].every(id=>mobileActionLayout.controls.some(c=>c.action===id)) ||
       mobileActionLayout.controls.some(c => c.display === 'none' || c.visibility !== 'visible' ||
@@ -1130,7 +1164,7 @@ try {
       ready: window.__climboriaGameReady === true,
       renderFrames: window.__climboriaRenderState?.frames ?? 0,
       renderErrors: window.__climboriaRenderState?.errors ?? [],
-      controls: ['JUMP','RUN','USE','DIVE','PUNCH'].every(label => text.includes(label)),
+      controls: ['JUMP','RUN','USE','DIVE','ATTACK'].every(label => text.includes(label)),
       mobileActions: [...document.querySelectorAll('[data-mobile-action]')].map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return {id:e.dataset.mobileAction,visible:c.display!=='none'&&c.visibility!=='hidden'&&Number(c.opacity)>.8&&r.width>=50&&r.height>=50&&r.left>=0&&r.top>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1}}),
       playerName: !!document.querySelector('#player-name'),
       playerVisible: (()=>{const e=document.querySelector('#player-card'),c=e&&getComputedStyle(e);return !!e&&c.visibility!=='hidden'&&Number(c.opacity)>.8})(),

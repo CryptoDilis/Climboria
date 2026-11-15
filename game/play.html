@@ -22,7 +22,7 @@ body.free #hud{opacity:1}
 body.free #help{opacity:.8}
 /* Direct gameplay: no title or character picker. */
 body:not(.free) [data-mobile-action]{display:none!important;visibility:hidden!important;pointer-events:none!important}
-body.free [data-mobile-action]{display:grid!important;visibility:visible!important;pointer-events:auto!important}
+body.free.mobile-device [data-mobile-action]{display:grid!important;visibility:visible!important;pointer-events:auto!important}
 body:not(.free) #world-map-panel,body:not(.free) #expedition-settings-toggle{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 body.free #world-map-panel,body.free #expedition-settings-toggle{visibility:visible!important;opacity:1!important;pointer-events:auto!important}
 /* Persistent adventure HUD */
@@ -40,8 +40,9 @@ body.free #status-card{opacity:1}
 .stat-track{height:5px;background:#ffffff20;border-radius:9px;overflow:hidden;margin-bottom:4px}
 .stat-fill{height:100%;width:100%;border-radius:9px;background:#b94c48}
 #stamina-fill{background:#c9a34d}
-#climboria-punch-button{display:none;position:fixed;right:calc(180px + env(safe-area-inset-right));bottom:calc(52px + env(safe-area-inset-bottom));z-index:1200;width:68px;height:68px;border-radius:50%;border:2px solid #d9b46b;background:#18212eea;color:#ffe3a3;font:800 12px/1 system-ui;touch-action:manipulation;box-shadow:0 4px 18px #0009;cursor:pointer}
-body.free.mobile-device #climboria-punch-button{display:grid;place-items:center}
+#climboria-punch-button{display:none;position:fixed;right:calc(180px + env(safe-area-inset-right));bottom:calc(52px + env(safe-area-inset-bottom));z-index:1200;box-sizing:border-box;width:68px;height:68px;padding:0;border-radius:50%;border:2px solid #d9b46b;background:#18212eea;color:#ffe3a3;font:800 12px/1 system-ui;text-align:center;white-space:nowrap;touch-action:manipulation;box-shadow:0 4px 18px #0009;cursor:pointer}
+body.free.mobile-device #climboria-punch-button{display:flex;align-items:center;justify-content:center}
+#climboria-punch-button .attack-control-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;line-height:1;white-space:nowrap}
 body.mobile-device.climboria-portrait #climboria-punch-button{display:none!important}
 #world-map-toggle{display:none}
 #world-map-panel{position:fixed;pointer-events:auto!important;z-index:1000!important;right:0!important;top:0!important;margin:0!important;width:240px;box-sizing:border-box;padding:9px;border:1px solid #d8b46b99;border-top:0;border-right:0;border-radius:0 0 0 13px;background:#080d14ed;box-shadow:0 12px 40px #000b;display:block;transition:width .2s}#world-map-panel.map-expanded{width:min(340px,calc(100vw - 32px))}
@@ -190,10 +191,10 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
 <div id="player-card"><img id="player-avatar" src="../climboria-favicon.png" alt="Climboria emblem" onerror="this.outerHTML='C'"><div><div><div id="player-name">CLIMBORIA EXPLORER</div><div id="player-rank">JARRELL’S PEAK · SURVIVOR</div></div></div></div>
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>DAMAGE</span><span id="damage-value">5</span></div><div class="stat-track"><div class="stat-fill" id="damage-fill" style="width:25%;background:#c66b54"></div></div></div>
 <div id="summit-chest-status" role="status" aria-live="polite"><span>JARRELL’S PEAK · SUMMIT CHEST</span><strong id="summit-chest-countdown">READY</strong><small>HIGH-TIER LOOT · 15-MINUTE RESPAWN</small></div>
-<button id="world-map-toggle" type="button">WORLD MAP · M</button><button id="climboria-punch-button" data-mobile-action="punch" type="button" aria-label="Punch animation (PvP damage not enabled)" title="Punch · J">PUNCH</button>
+<button id="world-map-toggle" type="button">WORLD MAP · M</button><button id="climboria-punch-button" data-mobile-action="punch" type="button" aria-label="Attack animation (PvP damage not enabled)" title="Attack · Q (walking)"><span class="attack-control-label">ATTACK</span></button>
 <section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="time-cycle-control" type="button">TIME OF DAY · GOLDEN HOUR</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
 
-<div id="help">WASD move · Shift sprint · Space jump · J punch · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · Weather changes automatically every 15 min · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
+<div id="help">WASD move · Shift sprint · Space jump · Q attack · Mouse look (drag if not locked)<br>E interact · T time · Weather changes automatically every 15 min · V return to walk<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
 
 <script>
 /* Client-side preflight: do not boot the 3D world before a named hero exists. */
@@ -532,7 +533,7 @@ gl_FragColor=vec4(c,1.);
 sky.renderOrder=-1;sky.frustumCulled=false;scene.add(sky);
 /* ---------- water ---------- */
 const wU=T3.UniformsUtils.merge([T3.UniformsLib.fog,{uT:{value:0},uSun:{value:sunDir},uSunC:{value:cur.sun},uTop:{value:cur.top},uHor:{value:cur.hor},uDeep:{value:L('#0d3b4a')}}]);
-const MOB=('ontouchstart' in window)||navigator.maxTouchPoints>0; if(MOB){document.body.classList.add('mobile-device');resizeClimboriaViewport()} const R=MOB?4:6,WS=(2*R+1)*200,WSEG=120;
+const MOB=navigator.maxTouchPoints>0; if(MOB){document.body.classList.add('mobile-device');resizeClimboriaViewport()} const R=MOB?4:6,WS=(2*R+1)*200,WSEG=120;
 const waterGeo=new T3.PlaneGeometry(WS,WS,WSEG,WSEG);waterGeo.rotateX(-Math.PI/2);
 const water=new T3.Mesh(waterGeo,new T3.ShaderMaterial({uniforms:wU,fog:true,transparent:true,depthWrite:false,
 vertexShader:`uniform float uT;varying vec3 vW;
@@ -1601,8 +1602,13 @@ function findStandingRestClip(){
 function chooseAssetAnimation(state,speed=0){
  if(!assetMixer||!assetActions.length)return false;
  const jumping=state.startsWith('jump-');
- const exact=state==='punch'?(window.__climboriaCreatedHero.model==='Lheiz'?'Right_Jab_from_Guard':'Punch_Combo'):state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':state==='climb'?'climbing_up_wall':jumping?'Regular_Jump':state==='land'?'Landing':'';
- let clip=exact?assetActions.find(a=>a.name.toLowerCase()===exact.toLowerCase()):null;
+ // Match each hero's actual authored GLB clip names. Adventurer uses
+ // Punch_Combo_1; Jarrell uses Punch_Combo; Lheiz uses Right_Jab_from_Guard.
+ const attackClips=window.__climboriaCreatedHero.model==='Lheiz'?['Right_Jab_from_Guard']:['Punch_Combo','Punch_Combo_1'];
+ const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':state==='climb'?'climbing_up_wall':jumping?'Regular_Jump':state==='land'?'Landing':'';
+ let clip=state==='punch'
+  ?assetActions.find(a=>attackClips.some(name=>a.name.toLowerCase()===name.toLowerCase()))
+  :exact?assetActions.find(a=>a.name.toLowerCase()===exact.toLowerCase()):null;
  if(state==='idle'||state==='land')clip=findStandingRestClip();
  else if(!clip){
   const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:state==='swim'?/swim|stroke/i:state==='climb'?/climb/i:jumping?/jump|takeoff|airborne/i:/land|touchdown/i;
@@ -1810,7 +1816,7 @@ addEventListener('keydown',e=>{
  if(['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
  
  if(!e.repeat&&e.code=='KeyT'){todI=(todI+1)%TOD.length;syncEnvironmentControls()}if(!e.repeat&&e.code=='KeyR'&&new URLSearchParams(location.search).has('debug-weather')){wx=(wx+1)%weatherNames.length;weatherElapsedMs=0;persistWeather()}if(e.code=='KeyE'&&!e.repeat)interact();
- if(e.code==='KeyJ'&&!e.repeat&&!e.target?.matches?.('input,textarea,select,[contenteditable]'))requestVisualPunch();
+ if(e.code==='KeyQ'&&!e.repeat&&!e.target?.matches?.('input,textarea,select,[contenteditable]'))requestVisualPunch();
  if(e.code=='KeyV'){P.mode='walk';camY=null;free(true);document.exitPointerLock&&document.exitPointerLock()}
  const m=e.code.match(/^Digit([1-8])$/);if(m)TP[m[1]]();
 });
