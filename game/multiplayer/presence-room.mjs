@@ -5,7 +5,7 @@
  *
  * Not wired to the live Game. No fake player ghosts, loot, damage or rewards.
  */
-import {validatePlayerMove} from './server-authority-rules.mjs';
+import {ROOM_RULES,validatePlayerMove} from './server-authority-rules.mjs';
 const VALID_ID=/^[a-zA-Z0-9_-]{16,100}$/;
 const VALID_NAME=/^[a-zA-Z0-9 _-]{2,24}$/;
 const ALLOWED_MODELS=new Set(['Adventurer','Jarrell','Lheiz']);
@@ -60,7 +60,11 @@ export class PresenceRoom{
   if(!m)return {ok:false,reason:'unknown-or-disconnected-session'};
   const now=this.now(),dt=now-m.lastMoveAt;
   if(dt<50)return {ok:false,reason:'move-rate-limited'};
-  const result=validatePlayerMove({previous:m.position,next:payload.position,elapsedMs:dt});
+  // A player can be idle for minutes: validation must not permanently lock
+  // movement after the 1s freshness window. Cap the displacement budget to
+  // a single trusted second; never trust huge elapsed time as teleport credit.
+  const acceptedInterval=Math.min(dt,ROOM_RULES.maxAcceptedMoveAgeMs);
+  const result=validatePlayerMove({previous:m.position,next:payload.position,elapsedMs:acceptedInterval});
   if(!result.ok)return result;
   // Ignore any client-provided id, name, room or health fields.
   m.position={x:payload.position.x,y:payload.position.y,z:payload.position.z};
