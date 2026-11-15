@@ -425,7 +425,8 @@ function biome(x,z,h){
  return fd(x,z)>.5?'Whispering Forest':'Wild Fields';
 }
 /* ---------- renderer / scene ---------- */
-const renderer=new T3.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+const lowPowerTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+const renderer=new T3.WebGLRenderer({antialias:!lowPowerTouch,powerPreference:'high-performance'});
 // Cap render resolution to reduce GPU fill-rate pressure on large open-world scenes.
 renderer.setPixelRatio(Math.min(devicePixelRatio,'ontouchstart' in window?1:1.25));renderer.setSize(innerWidth,innerHeight);
 renderer.outputEncoding=T3.sRGBEncoding;renderer.toneMapping=T3.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
@@ -691,6 +692,26 @@ const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
   sh.vertexShader=sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nfloat grassBend=uv.y*uv.y*(sin(uGrassTime*1.7+instanceMatrix[3][0]*0.035+instanceMatrix[3][2]*0.027)*0.12+sin(uGrassTime*0.8+instanceMatrix[3][0]*0.012)*0.045);\ntransformed.x += grassBend;');
  };
  grassMat.customProgramCacheKey=()=>'climboria-grass-wind-v1';
+ // A world-space sphere per instanced chunk avoids drawing vegetation and rocks
+ // behind the camera. In Three r128, the culling sphere belongs to geometry,
+ // so each batch owns only a tiny geometry clone (never mutate shared templates).
+ function boundWorldInstances(batch,instances,radiusAt,yAt){
+  const bounds=new T3.Box3(),lower=new T3.Vector3(),upper=new T3.Vector3();
+  for(const t of instances){
+   const rad=radiusAt(t),y=yAt(t);
+   lower.set(t.x-rad,y-rad,t.z-rad);
+   upper.set(t.x+rad,y+rad,t.z+rad);
+   bounds.expandByPoint(lower);bounds.expandByPoint(upper);
+  }
+  if(bounds.isEmpty())return batch;
+  const ownedGeometry=batch.geometry.clone();
+  ownedGeometry.boundingSphere=bounds.getBoundingSphere(new T3.Sphere());
+  batch.geometry=ownedGeometry;
+  batch.userData.ownsChunkBoundsGeometry=true;
+  batch.frustumCulled=true;
+  return batch;
+ }
+
  function makeGrass(cx,cz,out){
   const ox=cx*CS,oz=cz*CS,rand=rng(cx*1877+cz*3181+991),items=[];
   const count=MOB?150:330;
@@ -706,7 +727,9 @@ const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
   if(!items.length)return;
   const im=new T3.InstancedMesh(grassGeo,grassMat,items.length);
   items.forEach((t,i)=>{D.position.set(t.x,t.h+.02,t.z);D.rotation.set(0,t.rot,0);D.scale.set(t.scale,t.scale,t.scale);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});
-  im.instanceMatrix.needsUpdate=true;im.frustumCulled=false;out.push(im);
+  im.instanceMatrix.needsUpdate=true;
+  boundWorldInstances(im,items,t=>Math.max(1.5,t.scale*1.6),t=>t.h+.3*t.scale);
+  out.push(im);
  }
 // Visual-only Sanctuary field-edge undergrowth: tiny original 5-blade
 // cluster, one instanced material/mesh, never in solids or click navigation.
@@ -753,7 +776,9 @@ const sanctuaryEdgeUndergrowth=(()=>{
  return {mesh,desired,patches};
 })();
 function inst(geo,mat,list,fn){if(!list.length)return null;const im=new T3.InstancedMesh(geo,mat,list.length);
- list.forEach((t,i)=>{fn(t);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});im.frustumCulled=false;return im}
+ list.forEach((t,i)=>{fn(t);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});
+ boundWorldInstances(im,list,t=>Math.max(1.5,t.s*2.3),t=>t.h+t.s*.2);
+ return im}
 /* Keep terrestrial dressing outside water and the full sandy bank buffer for every water type. */
 function shoreClear(x,z,h){
  const radius=18;
@@ -795,13 +820,17 @@ function buildChunk(cx,cz){
  geo.setAttribute('color',new T3.BufferAttribute(col,3));geo.setIndex(IDX);geo.computeBoundingSphere();
  if(worldUV)geo.setAttribute('uv',new T3.BufferAttribute(worldUV,2));
  const m=new T3.Mesh(geo,detailed?sanctuaryTerrainMaterial:terrMat);m.position.set(ox,0,oz);scene.add(m);
- const objs=[m],cl=props(cx,cz,objs);makeGrass(cx,cz,objs);return{cx,cz,objs,geo,col:cl};
+ const objs=[m],cl=props(cx,cz,objs);
+ // Prior grass batches were allocated and retained per chunk but NEVER
+ // attached to the scene: skip that expensive invisible work, while retaining
+ // the authored visible Sanctuary undergrowth and all terrain/collision logic.
+ return{cx,cz,objs,geo,col:cl};
 }
 const chunks=new Map();
 function updateChunks(px,pz,budget){
  const ccx=Math.floor(px/CS),ccz=Math.floor(pz/CS);
  for(const[k,c]of chunks)if(Math.max(Math.abs(c.cx-ccx),Math.abs(c.cz-ccz))>R+1){
-  c.objs.forEach(o=>{scene.remove(o);o.dispose&&o.dispose()});c.geo.dispose();chunks.delete(k)}
+  c.objs.forEach(o=>{scene.remove(o);if(o.userData?.ownsChunkBoundsGeometry)o.geometry.dispose();o.dispose&&o.dispose()});c.geo.dispose();chunks.delete(k)}
  const need=[];
  for(let i=-R;i<=R;i++)for(let j=-R;j<=R;j++){const cx=ccx+i,cz=ccz+j;if(!chunks.has(cx+','+cz))need.push([cx,cz,i*i+j*j])}
  need.sort((a,b)=>a[2]-b[2]);
@@ -966,6 +995,21 @@ const parkFixtureSolids=[];
  sc(mk(BOX,M('#b08a55'),0,1.5,0,g),4,3,4);const rf=sc(mk(CON,M('#8a5a2b'),0,4.2,0,g),3.8,2.4,3.8);rf.rotation.y=Math.PI/4}}
 /* Soldiers */
 const soldiers=[];
+ // Soldiers are visual decorations (not combat AI). Render only when nearby.
+ // Keep their procedural motion/state and original spawn positions unchanged.
+ const soldierWorldPosition=new T3.Vector3();
+ let soldierVisibilityElapsed=0;
+ function updateSoldierVisibility(cameraPos,dt){
+  soldierVisibilityElapsed+=dt;
+  if(soldierVisibilityElapsed<.6)return;
+  soldierVisibilityElapsed=0;
+  const radius=MOB?110:170,radius2=radius*radius;
+  for(const o of soldiers){
+   o.s.getWorldPosition(soldierWorldPosition);
+   const dx=soldierWorldPosition.x-cameraPos.x,dz=soldierWorldPosition.z-cameraPos.z;
+   o.s.visible=dx*dx+dz*dz<=radius2;
+  }
+ }
 function soldier(){const g=new T3.Group(),cl=M('#3a4234'),sk=M('#8f9d86'),ar=M('#5b5850');
  sc(mk(BOX,cl,-.22,.45,0,g),.22,.9,.26);sc(mk(BOX,cl,.22,.45,0,g),.22,.9,.26);sc(mk(BOX,ar,0,1.3,0,g),.7,.85,.4);
  sc(mk(SPH,sk,0,1.95,0,g),.22,.25,.22);sc(mk(CYL,ar,0,2.12,0,g),.26,.14,.26);
@@ -2524,6 +2568,84 @@ const CHEST_INGREDIENTS={
  epic:['Ancient Geode Shard','Emerald Core'],
  legendary:['Summit Relic','Crown of the Summit']
 };
+/* Five owner-supplied rarity chest models.
+ * Each rarity is loaded ONCE, and all chest instances share GPU geometry
+ * and textures through glTF scene clones. Missing files keep the old crate;
+ * this Game PR must not merge until all five optimized files are installed.
+ * The actual reward rarity is fixed when a chest spawns, not on opening.
+ */
+const CHEST_MODEL_PATHS=Object.freeze({
+ common:'../assets/chests/Climboria_Chest_Common.glb',
+ uncommon:'../assets/chests/Climboria_Chest_Uncommon.glb',
+ rare:'../assets/chests/Climboria_Chest_Rare.glb',
+ epic:'../assets/chests/Climboria_Chest_Epic.glb',
+ legendary:'../assets/chests/Climboria_Chest_Legendary.glb'
+});
+const chestTemplates=Object.create(null),chestModelStatus=Object.fromEntries(
+ Object.keys(CHEST_MODEL_PATHS).map(rarity=>[rarity,'pending']));
+let chestModelsStarted=false;
+function attachChestModel(c){
+ if(c.assetVisual){c.g.remove(c.assetVisual);c.assetVisual=null;}
+ const template=chestTemplates[c.rarity];
+ if(!template){c.fallback.visible=true;return}
+ const copy=template.clone(true);
+ copy.userData.rarity=c.rarity;
+ c.g.add(copy);c.assetVisual=copy;c.fallback.visible=false;
+}
+function loadChestModels(){
+ if(chestModelsStarted)return;
+ chestModelsStarted=true;
+ if(!T3.GLTFLoader){
+  for(const r of Object.keys(CHEST_MODEL_PATHS))chestModelStatus[r]='unavailable';
+  return;
+ }
+ const loader=new T3.GLTFLoader();
+ for(const [rarity,path] of Object.entries(CHEST_MODEL_PATHS)){
+  chestModelStatus[rarity]='loading';
+  loader.load(path,gltf=>{
+   try{
+    const root=gltf.scene;
+    let meshes=0;
+    root.traverse(o=>{if(o.isMesh){meshes++;o.castShadow=false;o.receiveShadow=false}});
+    if(!meshes)throw Error('No mesh in GLB');
+    let bounds=new T3.Box3().setFromObject(root),size=bounds.getSize(new T3.Vector3());
+    if(!Number.isFinite(size.y)||size.y<=.01)throw Error('Invalid chest GLB dimensions');
+    // g.scale is 0.62. Normalize the source mesh to ~1m world height,
+    // pivot on the ground, and center horizontally at the spawn point.
+    root.scale.multiplyScalar(Math.min(1.7/size.y,2.6/Math.max(size.x,size.z,.01)));
+    root.updateMatrixWorld(true);
+    bounds=new T3.Box3().setFromObject(root);
+    const center=bounds.getCenter(new T3.Vector3());
+    root.position.x-=center.x;
+    root.position.z-=center.z;
+    root.position.y-=bounds.min.y;
+    chestTemplates[rarity]=root;
+    chestModelStatus[rarity]='loaded';
+    for(const c of chests)if(c.rarity===rarity)attachChestModel(c);
+    console.info('[Climboria Game] Optimized chest rarity loaded',rarity,path);
+   }catch(error){
+    chestModelStatus[rarity]='unavailable';
+    console.warn('[Climboria Game] Chest model invalid, using default crate',rarity,error);
+   }
+  },undefined,error=>{
+   chestModelStatus[rarity]='unavailable';
+   console.warn('[Climboria Game] Chest model unavailable, using default crate',rarity,error);
+  });
+ }
+}
+function chestVisualAudit(){
+ const tiers=Object.fromEntries(Object.keys(CHEST_MODEL_PATHS).map(r=>[r,{
+  status:chestModelStatus[r],
+  inWorld:chests.filter(c=>!c.open&&c.rarity===r).length
+ }]));
+ return {modelStatus:tiers,counts:chests.length,
+  active:chests.filter(c=>!c.open).length,
+  rewardTiersMatchVisuals:chests.every(c=>c.reward?.rarity===c.rarity),
+  allLoaded:Object.values(chestModelStatus).every(s=>s==='loaded'),
+  modelsMatchAssignedRarity:chests.every(c=>!c.assetVisual||c.assetVisual.userData.rarity===c.rarity),
+  fallbackChests:chests.filter(c=>!c.assetVisual).length,
+  totalKinds:5};
+}
 function rollChestReward(c){
  const table=CHEST_RARITY_ODDS[c.kind==='cave'||c.kind==='geode'?'cave':c.kind==='summit'?'summit':'world'];
  let roll=Math.random()*100,rarity=table[table.length-1][0];
@@ -2536,8 +2658,9 @@ function chestRespawnDelay(c){
  if(c.kind==='cave'||c.kind==='geode')return 120+Math.random()*120;
  return 90+Math.random()*60;
 }
-function chest(kind,fixed,anchor,rad){const g=new T3.Group();const wood=M('#68452b'),lid=M('#805936'),iron=M('#b58a43');sc(mk(DOD,wood,0,.42,0,g),.82,.43,.58);sc(mk(DOD,lid,0,.79,-.015,g),.84,.34,.6);[-.38,0,.38].forEach((x)=>{const band=mk(BOX,iron,x,.58,0,g);sc(band,.09,.72,1.03)});sc(mk(BOX,iron,0,.68,.57,g),.24,.28,.08);sc(mk(SPH,M('#ffd27a',1),0,1.12,.02,g),.1,.1,.1);g.scale.setScalar(.62);scene.add(g);
- const c={g,kind,fixed,anchor,rad,open:true,t:0,x:0,z:0,spawnSlot:null};chests.push(c);place(c)}
+function chest(kind,fixed,anchor,rad){const g=new T3.Group(),fallback=new T3.Group();g.add(fallback);
+ const wood=M('#68452b'),lid=M('#805936'),iron=M('#b58a43');sc(mk(DOD,wood,0,.42,0,fallback),.82,.43,.58);sc(mk(DOD,lid,0,.79,-.015,fallback),.84,.34,.6);[-.38,0,.38].forEach((x)=>{const band=mk(BOX,iron,x,.58,0,fallback);sc(band,.09,.72,1.03)});sc(mk(BOX,iron,0,.68,.57,fallback),.24,.28,.08);sc(mk(SPH,M('#ffd27a',1),0,1.12,.02,fallback),.1,.1,.1);g.scale.setScalar(.62);scene.add(g);
+ const c={g,fallback,assetVisual:null,rarity:null,reward:null,kind,fixed,anchor,rad,open:true,t:0,x:0,z:0,spawnSlot:null};chests.push(c);place(c)}
 function place(c){
  let x,z;
  if(c.fixed){[x,z]=c.fixed}
@@ -2549,6 +2672,10 @@ function place(c){
   c.spawnSlot=slot;[x,z]=l2w(caveG,...CAVE_CHEST_SPAWNS[slot]);
  }else{[x,z]=snap(c.anchor[0],c.anchor[1],c,c.rad||160)}
  c.x=x;c.z=z;
+ // Pre-roll the same weighted rarity ONCE for this spawn. Visual and
+ // eventual reward are identical; reroll only on the next respawn.
+ c.reward=rollChestReward(c);c.rarity=c.reward.rarity;
+ attachChestModel(c);
  const floorY=(c.kind==='geode'||c.kind==='cave')?groundAt(x,z):heightAt(x,z);
  c.g.position.set(x,floorY,z);c.g.rotation.y=Math.random()*6;c.g.visible=true;c.open=false;
 }
@@ -2575,7 +2702,7 @@ function chestDistributionAudit(){
 }
 function interact(){if(P.mode!='walk')return;
  if(recoverDeathLoot())return;
- for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){c.open=true;c.t=chestRespawnDelay(c);c.g.visible=false;const reward=rollChestReward(c);addInventoryItem(reward.item,1);toast('Chest opened · '+reward.rarity.toUpperCase()+' · '+reward.item);emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});return}
+ for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){c.open=true;c.t=chestRespawnDelay(c);c.g.visible=false;const reward=c.reward;addInventoryItem(reward.item,1);toast('Chest opened · '+reward.rarity.toUpperCase()+' · '+reward.item);emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});return}
  for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){if(P.fish>0)return;P.fish=2+Math.random()*4;P.fishSource=f.waterBodyId||'open_sea';toast('Line cast at '+f.label+'…')}else{toast(f.label);emit(f.type,{})}return}}
 P.fish=0;
 /* weather: clear / rain / thunderstorm */
@@ -3125,7 +3252,96 @@ function caveApproachGroundAudit(){
   hasColorTexture:!!ground?.material?.map,hasBumpTexture:!!ground?.material?.bumpMap,
   textureRepeat:ground?.material?.map?.repeat?.x||0};
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveApproachGroundAudit:new URLSearchParams(location.search).has('smoke')?caveApproachGroundAudit:undefined,caveInteriorSkyOcclusionAudit:new URLSearchParams(location.search).has('smoke')?caveInteriorSkyOcclusionAudit:undefined,caveNorthAnnexPaletteAudit:new URLSearchParams(location.search).has('smoke')?caveNorthAnnexPaletteAudit:undefined,automaticWeatherAudit:new URLSearchParams(location.search).has('smoke')?automaticWeatherAudit:undefined,caveEntranceTraversalAudit,caveCoastalTraversalAudit,caveCoastalFloorMaterialAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalFloorMaterialAudit:undefined,caveCoastalRockSilhouetteAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalRockSilhouetteAudit:undefined,sanctuaryPillarCollisionAudit,sanctuaryGroundPigmentAudit:new URLSearchParams(location.search).has('smoke')?sanctuaryGroundPigmentAudit:undefined,sanctuarySoilTextureAudit:new URLSearchParams(location.search).has('smoke')?sanctuarySoilTextureAudit:undefined,sanctuaryEdgeUndergrowthAudit:new URLSearchParams(location.search).has('smoke')?sanctuaryEdgeUndergrowthAudit:undefined,mountainCliffStrataAudit:new URLSearchParams(location.search).has('smoke')?mountainCliffStrataAudit:undefined,positionAtMountainCliffForSmoke:new URLSearchParams(location.search).has('smoke')?positionAtMountainCliffForSmoke:undefined,positionAtCaveCoastalExitForSmoke,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,texturedRockMaterials:caveRockMaterials.filter(m=>m.userData?.caveRockTexture&&m.map&&m.bumpMap).length,bumpedRockMaterials:caveRockMaterials.filter(m=>!!m.bumpMap).length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,deathLootSnapshot:()=>deathLootBag?{x:deathLootBag.x,z:deathLootBag.z,items:deathLootBag.items.map(i=>({...i})),expiresAt:deathLootBag.expiresAt}:null,deathLootLifecycleAudit:new URLSearchParams(location.search).has('smoke')?deathLootLifecycleAudit:undefined,deathLootMapMarkerAudit:new URLSearchParams(location.search).has('smoke')?deathLootMapMarkerAudit:undefined,lootRecoveryDirectionAudit:new URLSearchParams(location.search).has('smoke')?lootRecoveryDirectionAudit:undefined,sprintStaminaAudit:new URLSearchParams(location.search).has('smoke')?sprintStaminaAudit:undefined,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,sanctuaryDressingAudit:()=>({pathSlabs:sanctuaryPathSlabs.length,lanterns:sanctuaryPathLanterns.length,planters:sanctuaryPlanters.length,span:{minZ:Math.min(...sanctuaryPathSlabs.map(o=>o.position.z)),maxZ:Math.max(...sanctuaryPathSlabs.map(o=>o.position.z))},attached:sanctuaryPathSlabs.every(o=>o.parent===sanctuaryGroup)&&sanctuaryPathLanterns.every(o=>o.base.parent===sanctuaryGroup&&o.post.parent===sanctuaryGroup&&o.cap.parent===sanctuaryGroup&&o.lamp.parent===sanctuaryGroup)&&sanctuaryPlanters.every(o=>o.bed.parent===sanctuaryGroup&&o.shrub.parent===sanctuaryGroup&&o.bloom.parent===sanctuaryGroup)}),collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,chestVisualAudit,caveApproachGroundAudit:new URLSearchParams(location.search).has('smoke')?caveApproachGroundAudit:undefined,caveInteriorSkyOcclusionAudit:new URLSearchParams(location.search).has('smoke')?caveInteriorSkyOcclusionAudit:undefined,caveNorthAnnexPaletteAudit:new URLSearchParams(location.search).has('smoke')?caveNorthAnnexPaletteAudit:undefined,automaticWeatherAudit:new URLSearchParams(location.search).has('smoke')?automaticWeatherAudit:undefined,caveEntranceTraversalAudit,caveCoastalTraversalAudit,caveCoastalFloorMaterialAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalFloorMaterialAudit:undefined,caveCoastalRockSilhouetteAudit:new URLSearchParams(location.search).has('smoke')?caveCoastalRockSilhouetteAudit:undefined,sanctuaryPillarCollisionAudit,sanctuaryGroundPigmentAudit:new URLSearchParams(location.search).has('smoke')?sanctuaryGroundPigmentAudit:undefined,sanctuarySoilTextureAudit:new URLSearchParams(location.search).has('smoke')?sanctuarySoilTextureAudit:undefined,sanctuaryEdgeUndergrowthAudit:new URLSearchParams(location.search).has('smoke')?sanctuaryEdgeUndergrowthAudit:undefined,mountainCliffStrataAudit:new URLSearchParams(location.search).has('smoke')?mountainCliffStrataAudit:undefined,positionAtMountainCliffForSmoke:new URLSearchParams(location.search).has('smoke')?positionAtMountainCliffForSmoke:undefined,positionAtCaveCoastalExitForSmoke,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,texturedRockMaterials:caveRockMaterials.filter(m=>m.userData?.caveRockTexture&&m.map&&m.bumpMap).length,bumpedRockMaterials:caveRockMaterials.filter(m=>!!m.bumpMap).length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,deathLootSnapshot:()=>deathLootBag?{x:deathLootBag.x,z:deathLootBag.z,items:deathLootBag.items.map(i=>({...i})),expiresAt:deathLootBag.expiresAt}:null,deathLootLifecycleAudit:new URLSearchParams(location.search).has('smoke')?deathLootLifecycleAudit:undefined,deathLootMapMarkerAudit:new URLSearchParams(location.search).has('smoke')?deathLootMapMarkerAudit:undefined,lootRecoveryDirectionAudit:new URLSearchParams(location.search).has('smoke')?lootRecoveryDirectionAudit:undefined,sprintStaminaAudit:new URLSearchParams(location.search).has('smoke')?sprintStaminaAudit:undefined,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,sanctuaryDressingAudit:()=>({pathSlabs:sanctuaryPathSlabs.length,lanterns:sanctuaryPathLanterns.length,planters:sanctuaryPlanters.length,span:{minZ:Math.min(...sanctuaryPathSlabs.map(o=>o.position.z)),maxZ:Math.max(...sanctuaryPathSlabs.map(o=>o.position.z))},attached:sanctuaryPathSlabs.every(o=>o.parent===sanctuaryGroup)&&sanctuaryPathLanterns.every(o=>o.base.parent===sanctuaryGroup&&o.post.parent===sanctuaryGroup&&o.cap.parent===sanctuaryGroup&&o.lamp.parent===sanctuaryGroup)&&sanctuaryPlanters.every(o=>o.bed.parent===sanctuaryGroup&&o.shrub.parent===sanctuaryGroup&&o.bloom.parent===sanctuaryGroup)}),collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
+// Real peer visuals: only server-confirmed authenticated room members may be
+// added. The optional gateway/client are disabled until two-browser QA is green.
+// Use name markers for all real peers and at most 2 mobile / 3 desktop GLBs.
+const livePeers=new Map(),MAX_REMOTE_GLB=MOB?2:3;
+let remoteGLBLoading=0;
+function peerMarker(name){
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=64;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='rgba(6,11,20,.88)';ctx.fillRect(0,0,256,64);
+ ctx.strokeStyle='#d8b46b';ctx.lineWidth=3;ctx.strokeRect(2,2,252,60);
+ ctx.font='700 22px sans-serif';ctx.textAlign='center';ctx.fillStyle='#ffe3a3';
+ ctx.fillText(String(name).slice(0,24),128,40,245);
+ const tex=new T3.CanvasTexture(canvas),material=new T3.SpriteMaterial({map:tex,transparent:true,depthWrite:false});
+ const sprite=new T3.Sprite(material);sprite.position.y=3.35;sprite.scale.set(3.65,.92,1);
+ return sprite;
+}
+function remoteRootAt(x,z,y){
+ const gy=groundAt(x,z);
+ return {x,z,y:Math.max(gy-.1,Math.min(gy+2,Number(y)-1.75))};
+}
+function loadPeerHero(peer){
+ if(remoteGLBLoading>=MAX_REMOTE_GLB||peer.model==='Adventurer'&&MOB)return;
+ const path=peer.model==='Lheiz'?'../assets/characters/Climboria_Lheiz.glb':peer.model==='Jarrell'?'../assets/characters/Climboria_Jarrell.glb':null;
+ if(!path)return;
+ remoteGLBLoading++;
+ new T3.GLTFLoader().load(path,gltf=>{
+  remoteGLBLoading--;
+  if(livePeers.get(peer.id)!==peer)return;
+  const root=gltf.scene,box=new T3.Box3().setFromObject(root),size=new T3.Vector3();
+  box.getSize(size);
+  if(!Number.isFinite(size.y)||size.y<.01||size.y>20000)return;
+  const factor=Math.min(100,2.9/size.y);
+  root.scale.setScalar(factor);root.position.y=-box.min.y*factor;
+  root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false}});
+  peer.group.add(root);peer.root=root;peer.mixer=gltf.animations?.length?new T3.AnimationMixer(root):null;
+  peer.clips=gltf.animations||[];peer.action=null;peer.actionName='';
+  setPeerAnimation(peer,'idle');
+ },undefined,()=>{remoteGLBLoading--});
+}
+function setPeerAnimation(peer,state){
+ if(!peer.mixer||!peer.clips?.length||peer.actionName===state)return;
+ const pattern=state==='punch'?/^(Punch_Combo|Right_Jab_from_Guard)$/i:state==='walk'?/^(Walking|Running)$/i:/^(Idle_03|Standing_Idle|Idle)$/i;
+ const clip=peer.clips.find(c=>pattern.test(c.name));if(!clip)return;
+ if(peer.action)peer.action.fadeOut(.12);
+ peer.action=peer.mixer.clipAction(clip);peer.action.reset().fadeIn(.12);
+ if(state==='punch'){peer.action.setLoop(T3.LoopOnce,1);peer.action.clampWhenFinished=true;}
+ else{peer.action.setLoop(T3.LoopRepeat,Infinity);peer.action.clampWhenFinished=false;}
+ peer.action.play();peer.actionName=state;
+}
+window.__CLIMBORIA_GAME_PEERS={
+ add(data){
+  if(!data||typeof data.id!=='string'||livePeers.has(data.id)||livePeers.size>=32)return;
+  const position=data.position;
+  if(!position||!Number.isFinite(position.x)||!Number.isFinite(position.z)||!Number.isFinite(position.y))return;
+  const group=new T3.Group();group.name='RealRemoteExplorer:'+data.id;
+  const ring=new T3.Mesh(new T3.TorusGeometry(.55,.045,6,22),new T3.MeshBasicMaterial({color:0xd8b46b,transparent:true,opacity:.72,depthWrite:false}));
+  ring.name='RemoteMarkerRing';ring.rotation.x=-Math.PI/2;ring.position.y=.08;
+  group.add(ring,peerMarker(data.name));
+  const p={id:data.id,group,model:data.model,position:{...position},root:null,mixer:null,clips:null,action:null,actionName:'',punchUntil:0,walkUntil:0};
+  const spot=remoteRootAt(position.x,position.z,position.y);group.position.set(spot.x,spot.y,spot.z);
+  scene.add(group);livePeers.set(data.id,p);loadPeerHero(p);
+ },
+ move(id,position){
+  const p=livePeers.get(id);if(!p||!Number.isFinite(position?.x)||!Number.isFinite(position?.y)||!Number.isFinite(position?.z))return;
+  const dx=position.x-p.position.x,dz=position.z-p.position.z;
+  if(Math.hypot(dx,dz)>.05){p.group.rotation.y=Math.atan2(-dx,-dz)+Math.PI;p.walkUntil=performance.now()+420;}
+  p.position={x:position.x,y:position.y,z:position.z};
+ },
+ punch(id){const p=livePeers.get(id);if(!p)return;p.punchUntil=performance.now()+680;p.actionName='';setPeerAnimation(p,'punch');},
+ remove(id){
+  const p=livePeers.get(id);if(!p)return;
+  scene.remove(p.group);
+  p.group.traverse(n=>{if(n.isSprite){n.material?.map?.dispose();n.material?.dispose()}else if(n.name==='RemoteMarkerRing'){n.geometry?.dispose();n.material?.dispose()}});
+  p.mixer?.stopAllAction();livePeers.delete(id);
+ },
+ clear(){for(const id of [...livePeers.keys()])this.remove(id)},
+ update(dt){
+  const now=performance.now();
+  for(const p of livePeers.values()){
+   const at=remoteRootAt(p.position.x,p.position.z,p.position.y);
+   const t=Math.min(1,dt*9);
+   p.group.position.lerp(new T3.Vector3(at.x,at.y,at.z),t);
+   if(p.mixer){setPeerAnimation(p,now<p.punchUntil?'punch':now<p.walkUntil?'walk':'idle');p.mixer.update(dt);}
+   p.group.visible=Math.hypot(p.group.position.x-cam.position.x,p.group.position.z-cam.position.z)<350;
+  }
+ },
+ count(){return livePeers.size}
+};
+
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
@@ -3209,7 +3425,7 @@ function update(dt){
   }else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='awaiting-saved-glb';}
  }
  mapMarkerClock+=dt;if(mapMarkerClock>=.12){mapMarkerClock=0;drawWorldMapPlayer();}
- const cp=cam.position;gameTick(dt,cp);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
+ const cp=cam.position;gameTick(dt,cp);window.__CLIMBORIA_GAME_PEERS?.update(dt);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
  updateChunks(cp.x,cp.z,ready?1:0);
  sky.position.copy(cp);const sx=(Math.floor(cp.x/CS)+.5)*CS,sz=(Math.floor(cp.z/CS)+.5)*CS;water.position.set(sx,0,sz);
  sunL.position.copy(cp).addScaledVector(sunDir,200);sunL.target.position.copy(cp);
@@ -3221,6 +3437,7 @@ function update(dt){
  // excluded so its subdued intensity stays correct throughout gameplay.
  lights.forEach((l,i)=>{if(i>0&&l.color.r>.5&&!l.userData.fixedCaveAccent)l.intensity=l.intensity*.9+.1*(2.6+Math.sin(Tm*11+i)*.5)*(l.distance>100?1.1:1)});
  spikes.forEach(o=>{const w=Math.sin(Tm*1.6+o.ph);o.s.position.y=w>.55?1.2:w>.3?-.2:-2});
+ updateSoldierVisibility(cp,dt);
  soldiers.forEach(o=>{o.s.rotation.z=Math.sin(Tm*.8+o.ph)*o.tilt;o.s.rotation.x=Math.sin(Tm*.6+o.ph)*o.tilt*.6});
  const pa=flag.geometry.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i);pa.setZ(i,Math.sin(x*1.1-Tm*5)*.3*(x+3)/6)}pa.needsUpdate=true;wavingFlags.forEach(({geometry,base,phase})=>{const p=geometry.attributes.position;for(let i=0;i<p.count;i++){const x=base[i*3],y=base[i*3+1],fall=Math.max(0,(x+1.125)/2.25);p.setZ(i,base[i*3+2]+fall*(Math.sin(x*3.1-Tm*4.2+phase+y*.7)*.17+Math.sin(x*5.4-Tm*6.1+phase)*.035))}p.needsUpdate=true;geometry.computeVertexNormals()});
  // Wild-animal simulation disabled along with placeholder wildlife models.
@@ -3244,6 +3461,8 @@ function publishGameReady(){
  document.documentElement.dataset.climboriaLandscape='ready';
  document.documentElement.dataset.climboriaReady='true';
  takeOver();
+ // Start optional chest visuals after game controls are already interactive.
+ requestAnimationFrame(loadChestModels);
 }
 function initChunks(){
  const buildNext=()=>{
@@ -3287,5 +3506,6 @@ initChunks();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
 <script src="/game-save.js"></script>
+<script src="./multiplayer/client-presence.js"></script>
 </body>
 </html>
