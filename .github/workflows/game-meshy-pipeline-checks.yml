@@ -35,6 +35,8 @@ jobs:
           echo 'PASS only the strict all-five-packs SHA-verifying importer remains'
       - name: Validate all staged guard, scenery and desktop/mobile triangle budgets
         run: node game/scripts/test-meshy-scene-manifest.mjs
+      - name: Check separate manual WebGL preview runner syntax (no binary requirements)
+        run: node --check game/scripts/meshy-visual-qa.mjs
       - name: Validate 44 exact approved GLB hashes in immutable source manifest
         run: python3 game/scripts/verify-meshy-asset-packs.py --manifest
       - name: Validate extracted assets if already imported
