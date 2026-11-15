@@ -2152,6 +2152,8 @@ function drawWorldMap(){
  for(const [name,x,z] of marks){const mx=sx(x),my=sy(z);c.fillStyle='#ffdf8a';c.beginPath();c.arc(mx,my,5,0,Math.PI*2);c.fill();c.strokeStyle='#171b17';c.lineWidth=2;c.stroke();c.fillStyle='#fff0c9';c.shadowColor='#000';c.shadowBlur=4;c.fillText(name,mx+8,my-7)}
 }
 let worldMapBase=null,mapMarkerClock=0;
+// Real authenticated room peers share their positions with this map.
+const livePeers=new Map();
 function deathLootMapMarkerState(){
  if(!deathLootBag||Date.now()>=deathLootBag.expiresAt)return null;
  const w=mapCanvas.width,h=mapCanvas.height;
@@ -2174,10 +2176,26 @@ function drawWorldMapPlayer(){
   c.shadowColor='#111';c.shadowBlur=4;c.fillText('LOOT',bag.px,bag.py-13);
   c.restore();
  }
+ // Field map shows the same authenticated remote peers as the 3D world.
+ // This does not invent player positions when multiplayer is disabled.
+ if(livePeers.size){
+  c.save();
+  for(const peer of livePeers.values()){
+   const p=peer.position;
+   if(!Number.isFinite(p?.x)||!Number.isFinite(p?.z))continue;
+   const x=Math.max(8,Math.min(w-8,w/2+p.x/3000*w));
+   const y=Math.max(8,Math.min(h-8,h/2+p.z/2000*h));
+   c.shadowColor='#42d8fc';c.shadowBlur=10;c.fillStyle='#62dffc';
+   c.beginPath();c.arc(x,y,7,0,Math.PI*2);c.fill();
+   c.shadowBlur=0;c.strokeStyle='#082337';c.lineWidth=2;c.stroke();
+  }
+  c.restore();
+ }
  const legend=document.getElementById('world-map-legend');
- if(legend)legend.textContent=bag?
+ if(legend)legend.textContent=(bag?
   'Gold = landmarks · Green = you · Orange = dropped loot':
-  'Terrain map · Green = you · Gold = landmarks';
+  'Terrain map · Green = you · Gold = landmarks')+
+  (livePeers.size?' · Cyan = explorers ('+livePeers.size+')':'');
  const px=Math.max(8,Math.min(w-8,w/2+P.x/3000*w)),py=Math.max(8,Math.min(h-8,h/2+P.z/2000*h));
  c.save();c.shadowColor='#8cff55';c.shadowBlur=28;c.fillStyle='#a8ff62';c.beginPath();c.arc(px,py,13,0,Math.PI*2);c.fill();c.shadowBlur=0;c.strokeStyle='#fff';c.lineWidth=3;c.beginPath();c.arc(px,py,7,0,Math.PI*2);c.stroke();c.fillStyle='#eaffd5';c.beginPath();c.arc(px,py,3,0,Math.PI*2);c.fill();c.restore();
 }
@@ -3287,7 +3305,7 @@ window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,chestVisualAudit,cav
 // Real peer visuals: only server-confirmed authenticated room members may be
 // added. The optional gateway/client are disabled until two-browser QA is green.
 // Use name markers for all real peers and at most 2 mobile / 3 desktop GLBs.
-const livePeers=new Map(),MAX_REMOTE_GLB=MOB?2:3;
+const MAX_REMOTE_GLB=MOB?2:3;
 let remoteGLBLoading=0,remoteGLBResidents=0,remoteModelClock=0;
 function peerMarker(name){
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=64;
