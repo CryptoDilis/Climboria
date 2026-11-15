@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "enabled": false,
+  "endpoint": null,
+  "releaseGate": "DO NOT ENABLE until isolated Worker is deployed, Supabase login verified, two independent real browsers exchange real peer updates and mobile FPS/GLB visuals pass."
+}
