@@ -1,0 +1,99 @@
+#!/usr/bin/env node
+/**
+ * Offline staging-only contract tests. No vendor downloads, wallets, RPC,
+ * signed transactions, production runtime flips or fee collection.
+ */
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import {
+  parseStagingOrigin, stagingRuntimeEnabled, stagingStatusResult
+} from "./dex-swap-staging-runtime-policy.mjs";
+
+test("staging origin accepts local loopback HTTP and isolated HTTPS", () => {
+  for (const uri of [
+    "http://127.0.0.1:4173", "http://localhost:4173",
+    "http://[::1]:4173", "https://isolated.example:443"
+  ]) {
+    const parsed = parseStagingOrigin(uri);
+    assert.equal(parsed.protocol === "https:" || parsed.hostname === "localhost" ||
+      parsed.hostname === "127.0.0.1" || parsed.hostname === "[::1]", true);
+  }
+});
+
+test("staging origin rejects production, lookalike subdomains, credentials, paths and remote HTTP", () => {
+  for (const uri of [
+    "https://climboria.fun", "https://www.climboria.fun",
+    "https://api.climboria.fun", "https://preview.climboria.fun",
+    "http://different-host.example", "https://other.example/path",
+    "https://other.example/?release=true", "https://other.example/#x",
+    "https://alice:secret@other.example", "ftp://other.example",
+    "javascript:alert(1)", "/swap", "", "not-an-origin"
+  ]) {
+    assert.throws(() => parseStagingOrigin(uri), /staging origin|required/);
+  }
+});
+
+test("provider approval is strictly OFF unless the isolated opt-in is exact lower-case true", () => {
+  for (const env of [
+    {}, { SWAP_STAGING_RUNTIME_APPROVED: "" },
+    { SWAP_STAGING_RUNTIME_APPROVED: "TRUE" },
+    { SWAP_STAGING_RUNTIME_APPROVED: "1" },
+    { SWAP_STAGING_RUNTIME_APPROVED: true },
+    { SWAP_STAGING_RUNTIME_APPROVED: false },
+    { SWAP_STAGING_RUNTIME_APPROVED: "false" }
+  ]) assert.equal(stagingRuntimeEnabled(env), false);
+  assert.equal(stagingRuntimeEnabled({ SWAP_STAGING_RUNTIME_APPROVED: "true" }), true);
+});
+
+test("GET runtime approval uses no-store, strict boolean JSON and no-cache safety headers", () => {
+  for (const [enabled, expected] of [[false, false],[true,true],["true",false],[1,false],[null,false]]) {
+    const res = stagingStatusResult("GET", enabled);
+    assert.equal(res.status, 200);
+    assert.equal(res.headers["Cache-Control"], "no-store");
+    assert.equal(res.headers["X-Content-Type-Options"], "nosniff");
+    assert.deepEqual(JSON.parse(res.body), { enabled: expected });
+  }
+});
+
+test("HEAD has no body and other methods fail closed without executing a widget", () => {
+  const head = stagingStatusResult("HEAD", true);
+  assert.equal(head.status, 200);
+  assert.equal(head.body, null);
+  assert.equal(head.headers["Cache-Control"], "no-store");
+  for (const method of ["POST", "PUT", "PATCH", "DELETE", "OPTIONS", "post", ""]) {
+    const response = stagingStatusResult(method, true);
+    assert.equal(response.status, 405);
+    assert.equal(response.body, null);
+    assert.equal(response.headers.Allow, "GET, HEAD");
+    assert.equal(response.headers["Cache-Control"], "no-store");
+  }
+});
+
+test("staging harness imports the shared policy and current main provider security host", () => {
+  const harness = readFileSync(new URL("./dex-swap-pinned-staging.mjs", import.meta.url), "utf8");
+  const host = readFileSync(new URL("../../dex/provider-managed-swap.mjs", import.meta.url), "utf8");
+  assert.match(harness, /parseStagingOrigin\(process\.env\.SWAP_STAGING_ORIGIN/);
+  assert.match(harness, /stagingRuntimeEnabled\(process\.env\)/);
+  assert.match(harness, /stagingStatusResult\(request\.method, localRuntimeApproved\)/);
+  assert.match(harness, /readFile\(resolve\(root, 'dex\/provider-managed-swap\.mjs'\)/);
+  assert.match(harness, /runtimeApproved: true, provider: 'jupiter-terminal'/);
+  assert.match(host, /isManagedSwapRuntimeApproved\(scope\)/);
+  assert.match(host, /const allowedOnOpen = await isManagedSwapRuntimeApproved\(scope\)/);
+  assert.match(host, /const allowedOnInit = await isManagedSwapRuntimeApproved\(scope\)/);
+  assert.match(host, /panel\.hidden = false;\s*expanded\(true\)/);
+  assert.doesNotMatch(harness, /\/api\/swap\/(?:order|execute)/);
+});
+
+test("real production Swap, managed provider and Climboria fees remain OFF", () => {
+  const config = readFileSync(new URL("../../swap-config.js", import.meta.url), "utf8");
+  const worker = readFileSync(new URL("../../dex/swap-proxy/src/index.mjs", import.meta.url), "utf8");
+  assert.match(config, /managedProvider:\s*Object\.freeze\(\{\s*enabled:\s*false/);
+  assert.match(config, /runtimeApproved:\s*false/);
+  assert.match(config, /scriptUrl:\s*null/);
+  assert.match(config, /integrity:\s*null/);
+  assert.match(config, /feeCollectionEnabled:\s*false/);
+  assert.match(config, /feeRecipient:\s*null/);
+  assert.match(worker, /const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;/);
+  assert.match(worker, /const EXECUTION_SECURITY_REVIEW_COMPLETE = false;/);
+});
