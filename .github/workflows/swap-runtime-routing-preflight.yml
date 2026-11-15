@@ -1,0 +1,32 @@
+name: Swap runtime routing preflight
+on:
+  push:
+    branches: [codex/swap-dex-production-release-gate]
+    paths: [.github/workflows/swap-runtime-routing-preflight.yml]
+permissions: {}
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - name: Check existing apex routing access without making changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN"
+          api=https://api.cloudflare.com/client/v4
+          auth="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+          cf() {
+            local response
+            response=$(curl -sS -H "$auth" "$api/$1")
+            if ! jq -e '.success == true' <<<"$response" >/dev/null; then
+              jq -c '{errors}' <<<"$response" >&2
+              return 1
+            fi
+            printf '%s\n' "$response"
+          }
+          zone=$(cf 'zones?name=climboria.fun' | jq -er '.result | select(length == 1) | .[0].id')
+          cf "zones/$zone/dns_records?name=climboria.fun" | jq -c '.result | map({type,proxied,proxiable})'
+          cf "zones/$zone/settings/ssl" | jq -c '.result | {id,value}'
+          cf "zones/$zone/workers/routes" | jq -c '.result | map({pattern,script})'
