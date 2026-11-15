@@ -2081,3 +2081,9 @@ Opened [jup-ag/plugin issue #238](https://github.com/jup-ag/plugin/issues/238) r
 ### 2026-11-15 PH — Staging page aliases now enforce the canonical route policy
 
 Commit `98758613161748062c4b163be09dc1509c6ced0e` redirects slashless and direct `index.html` entry paths for Swap and Signature DEX to their canonical routes and denies other HTML in the staging server. Local HTTP checks verified all four alias redirects, HTTP 200 with CSP on both canonical pages, and 404 for the root `index.html`. Local Chrome smoke passed both routes at desktop and mobile viewport sizes with the pinned app script and one synthetic wallet connect callback with zero signing calls per case. The old temporary HTTPS staging deployment was not updated. Production Worker health still reported execution disabled.
+
+### 2026-11-15 PH — Alias fix deployed and verified on temporary HTTPS staging
+
+Deployed the staging script from PR head `e9310e28b637a481a0ff099ffedc5ed37be7e4f9` to the existing HTTPS staging tunnel. Verified that `/swap`, `/swap/index.html`, `/dex`, and `/dex/index.html` return 308 to their respective canonical routes, both canonical pages return 200 with Content Security Policy, and the root `/index.html` returns 404.
+
+Chrome HTTPS smoke passed all four combinations of Swap/DEX and desktop/mobile viewports with the pinned Jupiter runtime. The synthetic Wallet Standard adapter received exactly one connect callback and zero signing calls per case. Real-wallet approval and settlement were not rerun for this alias fix. The production Worker still reported execution disabled.
