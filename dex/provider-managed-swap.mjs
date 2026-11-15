@@ -133,11 +133,23 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
 }
 
 if (typeof window !== "undefined" && typeof document !== "undefined") {
-  const boot = () => initializeManagedSwapHost({
-    doc: document,
-    scope: window,
-    config: window.CLIMBORIA_SWAP_CONFIG?.managedProvider
-  });
+  const boot = async () => {
+    const config = window.CLIMBORIA_SWAP_CONFIG?.managedProvider;
+    let runtimeEnabled = false;
+    if (validateManagedProviderConfig(config)) {
+      try {
+        const response = await window.fetch("/swap-runtime-status.json", {
+          cache: "no-store", redirect: "error", signal: AbortSignal.timeout(3000)
+        });
+        const cachePolicy = response.headers.get("Cache-Control") ?? "";
+        runtimeEnabled = response.ok && /(?:^|,)\s*no-store\s*(?:,|$)/i.test(cachePolicy) &&
+          (await response.json())?.enabled === true;
+      } catch {
+        // A missing or unavailable release status keeps the provider disabled.
+      }
+    }
+    initializeManagedSwapHost({ doc: document, scope: window, config: runtimeEnabled ? config : null });
+  };
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot, { once: true });
   } else boot();

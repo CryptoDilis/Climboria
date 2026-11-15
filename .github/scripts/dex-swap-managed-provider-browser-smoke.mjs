@@ -41,6 +41,12 @@ function mockConfig(integrity = sri) {
     "feeRecipient:null,providerFeeIntegrationVerified:false})});";
 }
 
+function approveRuntime(page) {
+  return page.route("**/swap-runtime-status.json", route => route.fulfill({
+    json: { enabled: true }, headers: { "Cache-Control": "no-store" }
+  }));
+}
+
 async function runPage(browser, path, {badHash = false} = {}) {
   const page = await browser.newPage({viewport:{width: path === "/dex/" ? 390 : 1280,height:850}});
   let scriptLoads = 0;
@@ -49,6 +55,7 @@ async function runPage(browser, path, {badHash = false} = {}) {
     if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(req.url())) forbidden.push(req.url());
   });
   page.on("dialog", dialog => { throw Error("Unexpected popup: " + dialog.message()); });
+  await approveRuntime(page);
   await page.route("**/swap-config.js", route =>
     route.fulfill({status:200,contentType:"application/javascript",
       body:mockConfig(badHash ? "sha384-" + "A".repeat(64) : sri)}));
@@ -124,6 +131,7 @@ async function runCloseDuringLoad(browser, path) {
   page.on("request", req => {
     if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(req.url())) forbidden.push(req.url());
   });
+  await approveRuntime(page);
   await page.route("**/swap-config.js", route =>
     route.fulfill({status:200,contentType:"application/javascript",body:mockConfig()}));
   await page.route(SCRIPT_URL, async route => {
@@ -173,7 +181,7 @@ async function runCloseDuringLoad(browser, path) {
 
 async function runRollbackWithCache(browser) {
   const root = new URL("../../", import.meta.url);
-  const productionConfig = await readFile(new URL("swap-config.js", root), "utf8");
+  const enabledConfig = mockConfig();
   const host = await readFile(new URL("dex/provider-managed-swap.mjs", root), "utf8");
   // Serve the fixture over real HTTP. Playwright request interception disables
   // the browser cache, so it cannot exercise this rollback.
@@ -194,10 +202,15 @@ async function runRollbackWithCache(browser) {
   let fixtureRequests = 0;
   const server = createServer((request, response) => {
     const path = new URL(request.url, "http://localhost").pathname;
+    if (path === "/swap-runtime-status.json") {
+      response.writeHead(200, {"Content-Type":"application/json", "Cache-Control":"no-store"});
+      response.end(JSON.stringify({enabled}));
+      return;
+    }
     if (path === "/swap-config.js") {
       configRequests++;
-      response.writeHead(200, {"Content-Type":"application/javascript", "Cache-Control":"no-store"});
-      response.end(enabled ? mockConfig() : productionConfig);
+      response.writeHead(200, {"Content-Type":"application/javascript", "Cache-Control":"public, max-age=600"});
+      response.end(enabledConfig);
       return;
     }
     const asset = routes.get(path);
@@ -209,7 +222,7 @@ async function runRollbackWithCache(browser) {
     const [type, body] = asset;
     const headers = {"Content-Type":type, "Cache-Control":type === "text/html" ? "no-store" : "public, max-age=600"};
     if (type === "text/html") {
-      headers["Content-Security-Policy"] = "connect-src 'none'; img-src 'none'; frame-src 'none'; script-src 'self' 'unsafe-inline'";
+      headers["Content-Security-Policy"] = "connect-src 'self'; img-src 'none'; frame-src 'none'; script-src 'self' 'unsafe-inline'";
     }
     response.writeHead(200, headers).end(body);
   });
@@ -236,10 +249,10 @@ async function runRollbackWithCache(browser) {
         // Confirm the test's boundary: the loaded document keeps its old state.
         assert.equal(await panel.isVisible(), true);
         await page.goto("about:blank");
-        const configResponse = page.waitForResponse(response => response.url() === origin + "/swap-config.js");
+        const statusResponse = page.waitForResponse(response => response.url() === origin + "/swap-runtime-status.json");
         await page.goto(url, {waitUntil:"load"});
-        assert.equal((await configResponse).headers()["cache-control"], "no-store");
-        assert.equal(configRequests, beforeConfig + 1);
+        assert.equal((await statusResponse).headers()["cache-control"], "no-store");
+        assert.equal(configRequests, beforeConfig, "enabled config should still be cached");
         assert.equal(await button.count(), 0);
         assert.equal(await panel.isVisible(), false);
         assert.equal(await page.evaluate(() => !!window.Jupiter), false);
