@@ -2004,3 +2004,11 @@ After the prior PR #458 exact-head CI green and merge SHA `d19b2cb8eca55110c4d76
 An intentionally empty `POST /api/swap/execute` returned `503`, message `Swap execution is disabled pending semantic instruction validation and independent security review`, and no signature. It did not build, sign, submit or retry a transaction. No wallet was connected and no customer funds were involved.
 
 **NEXT EXACT:** Keep the provider and native execution paths OFF. Use the complete-runtime integrity blocker from PR #469 / audit as the P0 external requirement. If that provider requirement is met, resume with a dedicated current-source code PR and focused browser tests; otherwise preserve this verified quote-only production behavior.
+
+### 2026-11-15 PH — Published Jupiter npm package retains the runtime integrity blocker
+
+Downloaded [`@jup-ag/plugin` 1.0.18](https://registry.npmjs.org/@jup-ag%2fplugin/1.0.18) from the npm registry and independently matched the tarball SHA-512 against registry `dist.integrity`: `sha512-piB2fP16TsT1m6voTOAepWEbJbUDd6/IBBRdQ+g/R2CfcDai8DnEG7L7lFtxn1zCex2pxkTKYSqUUk51TmH/hQ==`.
+
+The extracted package exports `dist/index.js`. Its production `RenderLoadableJupiter` effect invokes `loadJupiter()`, which calls `loadRemote` for `https://plugin.jup.ag/plugin-1.0.18-app.js` under default settings. The loader sets the script URL and appends it to the page without setting `integrity`. A package lock and ordinary bundling of this entry point therefore leave the remote executable outside the pinned build. This was verified by static inspection of the published bytes. No browser, wallet, trade, or deployment test was performed.
+
+**Next:** Evaluate a separately reviewed, locally built or integrity-pinned complete Jupiter runtime with remote executable loading blocked, or obtain a supported immutable runtime manifest from Jupiter. Validate the exact artifacts in staging on both routes before any owner-wallet acceptance. Production config and execution gates were untouched.
