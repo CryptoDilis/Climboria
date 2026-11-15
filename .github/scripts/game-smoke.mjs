@@ -551,6 +551,31 @@ try {
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
   // Real left-hand Q attack while walking. The attack animation must play without fake network
   // damage, cannot spam past cooldown, and consumes the existing stamina pool.
+  // Verify chat/settings focus blocks all gameplay shortcuts, not only Q.
+  const focusedInputAudit=await page.evaluate(()=>{
+    const player=window.__climboriaJarrellsPeak?.player;
+    const map=document.getElementById('world-map-panel');
+    const inventory=document.getElementById('climboriaInventoryPanel');
+    let attacks=0;const onAttack=()=>attacks++;
+    document.addEventListener('climboria:visual-punch',onAttack);
+    const input=document.createElement('textarea');
+    input.id='game-smoke-chat-input';document.body.appendChild(input);input.focus();
+    const capture=()=>({x:player?.x,z:player?.z,stamina:player?.stamina,
+      mapExpanded:map?.classList.contains('map-expanded'),
+      inventoryVisible:inventory?.style.display});
+    const before=capture();
+    for(const code of ['KeyQ','Digit2','KeyW','KeyE','KeyM','KeyI','Space']){
+      input.dispatchEvent(new KeyboardEvent('keydown',{code,bubbles:true,cancelable:true}));
+      input.dispatchEvent(new KeyboardEvent('keyup',{code,bubbles:true}));
+    }
+    const after=capture();
+    input.remove();
+    document.removeEventListener('climboria:visual-punch',onAttack);
+    return {before,after,attacks};
+  });
+  if(focusedInputAudit.attacks!==0||
+     JSON.stringify(focusedInputAudit.before)!==JSON.stringify(focusedInputAudit.after))
+    errors.push('Text/chat input leaked gameplay keyboard shortcuts: '+JSON.stringify(focusedInputAudit));
   const punchInput=await page.evaluate(()=>{
     const p=window.__climboriaJarrellsPeak?.player;
     let events=0;const listener=()=>events++;

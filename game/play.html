@@ -1808,7 +1808,10 @@ const punchButton=document.getElementById('climboria-punch-button');
 punchButton.addEventListener('pointerdown',e=>e.stopPropagation());
 punchButton.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();requestVisualPunch();});
 
+// Input/chat/settings fields own their keyboard events; never teleport or ATTACK while composing.
+const isEditingText=e=>e.isComposing===true||!!e.target?.closest?.('input,textarea,select,[contenteditable]');
 addEventListener('keydown',e=>{
+ if(isEditingText(e))return;
  if(e.code=='Space')e.preventDefault();
  // Direct player input always takes priority over a queued Dota-style click destination.
  if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))P.moveTarget=null;
@@ -1816,7 +1819,7 @@ addEventListener('keydown',e=>{
  if(['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
  
  if(!e.repeat&&e.code=='KeyT'){todI=(todI+1)%TOD.length;syncEnvironmentControls()}if(!e.repeat&&e.code=='KeyR'&&new URLSearchParams(location.search).has('debug-weather')){wx=(wx+1)%weatherNames.length;weatherElapsedMs=0;persistWeather()}if(e.code=='KeyE'&&!e.repeat)interact();
- if(e.code==='KeyQ'&&!e.repeat&&!e.target?.matches?.('input,textarea,select,[contenteditable]'))requestVisualPunch();
+ if(e.code==='KeyQ'&&!e.repeat)requestVisualPunch();
  if(e.code=='KeyV'){P.mode='walk';camY=null;free(true);document.exitPointerLock&&document.exitPointerLock()}
  const m=e.code.match(/^Digit([1-8])$/);if(m)TP[m[1]]();
 });
@@ -2190,9 +2193,9 @@ function deathLootMapMarkerAudit(){
 // Cached Climboria terrain and landmarks; refresh only the glowing player marker during play.
 drawWorldMap();worldMapBase=mapCtx.getImageData(0,0,mapCanvas.width,mapCanvas.height);drawWorldMapPlayer();
 mapToggle.addEventListener('click',toggleWorldMap);
-addEventListener('keydown',e=>{if(e.code==='KeyM'&&!e.repeat){e.preventDefault();toggleWorldMap()}});
+addEventListener('keydown',e=>{if(!isEditingText(e)&&e.code==='KeyM'&&!e.repeat){e.preventDefault();toggleWorldMap()}});
 
-addEventListener('keydown',e=>{if(e.code==='KeyI'&&!e.repeat){e.preventDefault();toggleInventory()}});
+addEventListener('keydown',e=>{if(!isEditingText(e)&&e.code==='KeyI'&&!e.repeat){e.preventDefault();toggleInventory()}});
 if(MOB){document.body.style.touchAction='none';
  [['JUMP / SURFACE','Space',16,120],['RUN','ShiftLeft',16,40],['USE',null,96,80],['DIVE','ControlLeft',96,160]].forEach(([t,k,r,b])=>{const e=css(document.createElement('div'),`position:fixed;right:${r}px;bottom:calc(${b}px + env(safe-area-inset-bottom));z-index:9;width:62px;height:62px;border-radius:50%;background:#0008;border:2px solid #ffe3a3aa;color:#ffe3a3;font:11px system-ui;display:grid;place-content:center;touch-action:none`);e.textContent=t;e.dataset.mobileAction=t.toLowerCase().replace(/[^a-z]+/g,'-').replace(/^-|-$/g,'');
   e.addEventListener('touchstart',ev=>{ev.stopPropagation();ev.preventDefault();k?keys[k]=true:interact()},{passive:false});e.addEventListener('touchend',ev=>{ev.stopPropagation();k&&(keys[k]=false)});document.body.appendChild(e)});}
