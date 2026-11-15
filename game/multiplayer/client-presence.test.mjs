@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketFailures=0}={}){
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,sessionGate=null,ticketFailures=0}={}){
  const state={session:initialSession,ticketFailures};
  const authListeners=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],calls=[],timers=[],created=[];
@@ -32,7 +32,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
    remove:id=>removes.push(id),punch:id=>punches.push(id)
   },
   __CLIMBORIA_GAME_SAVE_CLIENT:{auth:{
-   getSession:async()=>({data:{session:state.session}}),
+   getSession:async()=>{const snapshot=state.session;if(sessionGate)await sessionGate;return {data:{session:snapshot}}},
    onAuthStateChange:fn=>{authListeners.push(fn);return {data:{subscription:{unsubscribe(){const i=authListeners.indexOf(fn);if(i>=0)authListeners.splice(i,1)}}}}}
   }},addEventListener(){}};
  class Socket{
@@ -281,6 +281,25 @@ test('temporary ticket request failure retries once and recovers without duplica
  await flush();
  await waitFor(()=>h.clients.length===1);
  assert.equal(h.clients.length,1,'successful retry opens exactly one room socket');
+ const ws=h.clients[0];ws.onopen();
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'b'.repeat(32),peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+});
+
+
+test('session transition during unresolved getSession never authenticates an old player',async()=>{
+ let releaseSession;
+ const sessionGate=new Promise(resolve=>{releaseSession=resolve});
+ const h=harness(true,{sessionGate});
+ await flush();
+ assert.equal(h.clients.length,0,'initial getSession is unresolved');
+ h.authChange({user:{id:'new-account'},access_token:'fresh-login-token'});
+ assert.equal(h.runNextTimer(),0,'auth change should invalidate the old in-flight session');
+ releaseSession();
+ await flush();await waitFor(()=>h.clients.length===1);
+ assert.equal(h.calls.filter(x=>x.url.endsWith('/ticket')).length,1,
+  'only the latest authenticated user may request a room ticket');
+ assert.equal(h.calls.find(x=>x.url.endsWith('/ticket')).options.headers.Authorization,'Bearer fresh-login-token');
  const ws=h.clients[0];ws.onopen();
  ws.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'b'.repeat(32),peers:[]})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
