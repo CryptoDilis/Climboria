@@ -302,6 +302,66 @@ test('streaming oversized JSON without Content-Length is cancelled before buffer
  assert.equal(response.status,400);
  assert.equal(cancelled,1,'oversized request stream must be cancelled early');
 });
+test('ticket JSON body returns bounded invalid-request when client stalls and abort ignores cancellation',async()=>{
+ const originalTimeout=globalThis.setTimeout;
+ globalThis.setTimeout=(fn,ms,...args)=>originalTimeout(fn,ms===5000?20:ms,...args);
+ const guarded=operation=>Promise.race([
+  operation,
+  new Promise((_,reject)=>originalTimeout(()=>reject(Error('stalled ticket stream deadline never returned')),500))
+ ]);
+ const request=body=>new Request('https://game-room.example/ticket',{
+  method:'POST',duplex:'half',
+  headers:{Origin:ORIGIN,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+  body
+ });
+ const noAuthEnv=env({fetch:async()=>{throw Error('bad body must never issue a ticket')}});
+ try{
+  for(const partial of ['', '{"name":"Jar']){
+   let cancelled=0;
+   const body=new ReadableStream({
+    start(controller){
+     if(partial)controller.enqueue(new TextEncoder().encode(partial));
+     // Client deliberately never closes, even after the partial JSON chunk.
+    },
+    cancel(){
+     cancelled++;
+     return new Promise(()=>{}); // Deliberately ignore stream cancellation.
+    }
+   });
+   const res=await guarded(gateway.fetch(request(body),noAuthEnv));
+   assert.equal(res.status,400,'stalled or partial streamed JSON must fail closed');
+   assert.deepEqual(await res.json(),{error:'invalid-request'});
+   assert.equal(cancelled,1,'deadline must attempt to cancel untrusted request body');
+  }
+ }finally{globalThis.setTimeout=originalTimeout}
+});
+
+test('oversized streamed ticket JSON does not wait for a blocked body cancellation',async()=>{
+ let cancelled=0;
+ const body=new ReadableStream({
+  start(controller){
+   controller.enqueue(new Uint8Array(600));
+   controller.enqueue(new Uint8Array(600));
+  },
+  cancel(){
+   cancelled++;
+   return new Promise(()=>{}); // Slow request stream cancellation cannot block 400.
+  }
+ });
+ const req=new Request('https://game-room.example/ticket',{
+  method:'POST',duplex:'half',
+  headers:{Origin:ORIGIN,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+  body
+ });
+ const res=await Promise.race([
+  gateway.fetch(req,env({fetch:async()=>{throw Error('oversized ticket must be denied')}})),
+  new Promise((_,reject)=>setTimeout(()=>reject(Error('oversized body stuck awaiting cancel')),500))
+ ]);
+ assert.equal(res.status,400);
+ assert.deepEqual(await res.json(),{error:'invalid-request'});
+ assert.equal(cancelled,1,'oversized body is cancelled promptly despite stalled cancel promise');
+});
+
 test('multibyte UTF-8 payload uses wire-byte cap, not JavaScript character count',async()=>{
  const payload=JSON.stringify({name:'€'.repeat(360)});
  assert.ok(payload.length<1024);
