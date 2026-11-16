@@ -50,9 +50,20 @@ Launchpad-created tokens may receive fast-track sponsor review after basic eligi
 
 After payment verification, announcements may appear on X.com, the homepage, game menu, and running announcements in both worlds. Arena branding may include the central sponsor flag, entrance panel, and event banners. Automatic renewal at the same price is intended, with a three-day grace period; new announcements and activations pause while unpaid. Cancellation and refund outcomes follow the signed agreement and applicable law.
 
-## 9. Token and platform status
+## 9. Official $CLIMB token details and platform status
 
-Solana is the initial chain focus; Base is a later possibility. $CLIMB is the intended ticker, not proof of an official token. A token address must be verified through Climboria’s official channels. Launchpad, DEX, swap, liquidity, marketplace, NFTs, Chatworld, Arena, wagers, sponsor management, and on-chain rewards are planned until implemented, tested, and officially released.
+**Token:** Climboria ($CLIMB)  
+**Network:** Solana mainnet  
+**Official owner-announced mint / contract address (CA):** `9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump`  
+**Total token supply at the recorded finalized RPC snapshot:** **1,000,000,000 CLIMB**  
+**Token decimals:** **6**  
+**Circulating supply:** **Not independently verified.**
+
+The published [Solana mainnet finalized RPC supply snapshot](../data/climb-supply.json) recorded mint `9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump`, raw supply `1000000000000000`, `6` decimals, finalized slot `469991633`, and observation time **2026-11-16 04:07:31 UTC**. Dividing the raw units by `10^6` gives **1,000,000,000 CLIMB** at that moment. This is an **historical total-supply snapshot**, not a live guarantee: values may change with permitted mint activity. It is not independent confirmation of circulating supply, allocation, liquidity, treasury, market capitalization, token safety, or mint-authority status.
+
+**Verification:** [Official homepage token record](https://climboria.fun/#climb-token-record) · [Mint on Solscan](https://solscan.io/token/9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump) · [Pump.fun token page](https://pump.fun/coin/9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump). Always compare the exact mint with owner announcements and current on-chain records before interacting.
+
+Solana remains the initial chain focus; Base is a later possibility. The official CLIMB mint announcement and finalized supply snapshot do not mean that its planned ecosystem utilities are live. Launchpad, DEX, swap, marketplace, NFTs, Chatworld, Arena, wagers, sponsorship operations, and on-chain rewards must each be independently implemented, tested, and explicitly released before being described as operational.
 
 ## 10. Roadmap principles
 
