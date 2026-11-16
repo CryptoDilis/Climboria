@@ -200,7 +200,8 @@ test('World Chat is room-gated, server-confirmed, safe as text and cleared on di
   type:'world-chat',id:'s_'+'d'.repeat(32),name:'Unknown',text:'forged',at:1730000000000
  })});
  assert.equal(log.children.length,1,'unknown room peers may not inject text');
- socket.onmessage({data:JSON.stringify({type:'rejected',reason:'world-chat-rate-limit'})});
+ socket.onmessage({data:JSON.stringify({type:'rejected',reason:'world-chat-rate-limit',
+  chatSeq:socket.sent.at(-1).chatSeq})});
  assert.ok(notice.textContent.includes('wait'));
  assert.equal(input.value,'Kamusta all <script>alert(1)</script>',
   'server chat cooldown rejection must not destroy typed messages');
@@ -277,7 +278,8 @@ test('World Chat one-message in flight avoids duplicates and preserves edits on 
  sendButton.click();
  assert.equal(socket.sent.at(-1).text,'Second draft while waiting');
  assert.equal(input.value,'Second draft while waiting');
- socket.onmessage({data:JSON.stringify({type:'rejected',reason:'world-chat-invalid-text'})});
+ socket.onmessage({data:JSON.stringify({type:'rejected',reason:'world-chat-invalid-text',
+  chatSeq:socket.sent.at(-1).chatSeq})});
  assert.equal(input.value,'Second draft while waiting','async server invalid-text rejection preserves draft');
  assert.match(notice.textContent,/still editable/);
  sendButton.click(); // explicit user retry, never background resend
@@ -305,6 +307,11 @@ test('World Chat late identical self echo never confirms a newer retry sequence'
  sendButton.click(); // manual retry of same draft, never auto-resend
  const newer=socket.sent.at(-1).chatSeq;
  assert.ok(newer>older,'retry uses a new correlation sequence');
+ socket.onmessage({data:JSON.stringify({type:'rejected',reason:'world-chat-rate-limit',chatSeq:older})});
+ assert.equal(input.value,'Same content','delayed older rejection must not erase draft');
+ assert.match(notice.textContent,/awaiting room confirmation/i);
+ const sentBefore=socket.sent.length;sendButton.click();
+ assert.equal(socket.sent.length,sentBefore,'older rejection cannot release the current pending send');
  socket.onmessage({data:JSON.stringify({type:'world-chat',id,name:'Explorer A',
   text:'Same content',chatSeq:older,at:1730000000000})});
  assert.equal(input.value,'Same content','delayed echo from timed-out send must NOT clear new draft');
