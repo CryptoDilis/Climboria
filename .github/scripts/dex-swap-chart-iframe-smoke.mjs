@@ -142,6 +142,46 @@ async function checkChart(test) {
     } else {
       console.log("WARN " + test.name + " provider frame DOM unavailable; embedded candle rendering unverified.");
     }
+    // A chart vendor may delegate actual drawing to another iframe. Diagnose
+    // direct children without trusting them as audited chart renderers. Print
+    // origins and bounded counts only: never log nested full URLs, page text,
+    // scripts, token search history, cookies or request credentials.
+    if (providerFrame && !providerFrame.isDetached()) {
+      const nested = providerFrame.childFrames().slice(0, 4);
+      const snapshots = await Promise.all(nested.map(async child => {
+        let origin = "unknown";
+        try { origin = new URL(child.url()).origin; } catch { /* opaque frame */ }
+        try {
+          const data = await child.evaluate(() => {
+            const large = el => {
+              const r = el.getBoundingClientRect();
+              return r.width >= 60 && r.height >= 60;
+            };
+            const text = (document.title || "") + " " +
+              (document.body?.textContent || "").slice(0, 1200);
+            return {
+              bodyPresent: Boolean(document.body),
+              canvas: document.querySelectorAll("canvas").length,
+              largeCanvas: [...document.querySelectorAll("canvas")].filter(large).length,
+              svg: document.querySelectorAll("svg").length,
+              largeSvg: [...document.querySelectorAll("svg")].filter(large).length,
+              likelyChallenge: /just a moment|checking your browser|verify you are human|attention required|access denied|captcha/i.test(text)
+            };
+          });
+          return { origin, ...data };
+        } catch {
+          return { origin, inaccessible: true };
+        }
+      }));
+      console.log("INFO " + test.name + " nested vendor frame diagnostic: " +
+        JSON.stringify({ totalDirectChildren: providerFrame.childFrames().length, sampled: snapshots }) + ".");
+      if (snapshots.some(x => x.largeCanvas || x.largeSvg))
+        console.log("INFO " + test.name + " nested frame has a sizeable graphic surface, NOT verified candle pixels or market data.");
+      else if (snapshots.some(x => x.likelyChallenge))
+        console.log("WARN " + test.name + " nested vendor frame shows a browser challenge signal.");
+      else if (nested.length)
+        console.log("WARN " + test.name + " nested frame has no observed sizeable chart surface; actual candles remain unverified.");
+    }
     // The tested external-link fallback remains the safe supported escape
     // hatch regardless of whether the vendor renders inside our sandbox.
 
