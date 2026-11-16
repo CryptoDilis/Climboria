@@ -71,18 +71,34 @@ export const gateway={
     env.SUPABASE_URL==='https://unadepiwbovblkfjlksk.supabase.co');
    let durableObjectReady=false;
    if(configured){
+    const abort=new AbortController();
+    let deadlineTimer;
     try{
-     const stub=env.ROOMS.get(env.ROOMS.idFromName(ROOM));
-     const probe=await stub.fetch(new Request('https://room.internal/_ready',{
-      method:'GET',signal:AbortSignal.timeout(3500)
-     }));
-     if(probe.status===200){
+     // A Request.signal alone does not guarantee a response: a broken
+     // Durable Object stub or a stalled response.json() may ignore abort.
+     // Bound the entire internal storage probe with a real deadline, and
+     // never claim staging ready when the probe is late or malformed.
+     const probeWork=(async()=>{
+      const stub=env.ROOMS.get(env.ROOMS.idFromName(ROOM));
+      const probe=await stub.fetch(new Request('https://room.internal/_ready',{
+       method:'GET',signal:abort.signal
+      }));
+      if(probe.status!==200)return false;
       const data=await probe.json();
-      durableObjectReady=data?.durableObjectReady===true;
-     }
+      return data?.durableObjectReady===true;
+     })();
+     const timedOut=new Promise(resolve=>{
+      deadlineTimer=setTimeout(()=>{
+       abort.abort();
+       resolve(false);
+      },3500);
+     });
+     durableObjectReady=(await Promise.race([probeWork,timedOut]))===true;
     }catch{
      // Fail closed on missing migration, Durable Object storage errors,
-     // unavailable object or malformed internal /_ready response.
+     // unavailable object, stalled storage response or malformed JSON.
+    }finally{
+     clearTimeout(deadlineTimer);
     }
    }
    return response(configured&&durableObjectReady?200:503,{
