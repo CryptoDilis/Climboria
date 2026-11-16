@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { classifyQuoteJourneyRequest as classify, KNOWN_CLOUDFLARE_BEACON } from "./dex-swap-quote-request-guard.mjs";
+import { classifyQuoteJourneyRequest as classify, KNOWN_CLOUDFLARE_BEACON, isDexScreenerChartFrame } from "./dex-swap-quote-request-guard.mjs";
 
 function inspect(url, method = "GET", resourceType = "fetch") {
   return classify({ url, method, resourceType });
@@ -64,4 +64,21 @@ test("Jupiter widget hosts are forbidden regardless of resource type", () => {
     assert.equal(inspect("https://" + host + "/config", "GET", "fetch").jupiterProviderRequest, true);
   }
   assert.equal(inspect("https://quote-api.jup.ag/v6/quote").jupiterProviderRequest, false);
+});
+
+test("only actual direct-child DexScreener Solana pair embeds are classified as isolated chart frames", () => {
+  const pair = "So11111111111111111111111111111111111111112";
+  const good = "https://dexscreener.com/solana/" + pair + "?embed=1&theme=dark";
+  assert.equal(isDexScreenerChartFrame({ frameUrl: good, directChildOfMainFrame: true }), true);
+  for (const frameUrl of [
+    "https://dexscreener.com/solana/" + pair + "?theme=dark",
+    "http://dexscreener.com/solana/" + pair + "?embed=1",
+    "https://dexscreener.com.evil.example/solana/" + pair + "?embed=1",
+    "https://dexscreener.com/ethereum/" + pair + "?embed=1",
+    "https://dexscreener.com/solana/not-a-mint?embed=1",
+    "about:blank"
+  ]) {
+    assert.equal(isDexScreenerChartFrame({ frameUrl, directChildOfMainFrame: true }), false, frameUrl);
+  }
+  assert.equal(isDexScreenerChartFrame({ frameUrl: good, directChildOfMainFrame: false }), false);
 });
