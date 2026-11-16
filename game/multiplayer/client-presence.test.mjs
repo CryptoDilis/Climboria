@@ -621,6 +621,83 @@ test('session transition during unresolved getSession never authenticates an old
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
 });
 
+test('actual WebSocket never-opening handshake times out and retries without ghost peers',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ assert.equal(h.clients.length,1);
+ const old=h.clients[0];
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
+ assert.equal(h.runNextTimer(),12000,'WebSocket opening needs a bounded deadline');
+ assert.equal(old.readyState,3,'unopened socket must be explicitly closed');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline');
+ assert.equal(h.adds.length,0);
+ old.onopen(); // An obsolete open event cannot use its stale one-time ticket.
+ await flush();
+ assert.equal(h.clients.length,1);
+ assert.equal(h.runNextTimer(),5000,'failed admission retries independently');
+ await flush();await waitFor(()=>h.clients.length===2);
+ assert.equal(h.clients.length,2,'retry must issue a fresh ticket and socket');
+ assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,2);
+});
+
+test('trusted welcome without valid spawn-accepted times out, clears peers and retries',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const old=h.clients[0];old.onopen();
+ const own='s_'+'c'.repeat(32);
+ old.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[peer]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
+ assert.equal(h.adds.length,1,'server welcome may populate provisional remote models');
+ old.onmessage({data:JSON.stringify({type:'spawn-accepted',
+  id:'s_'+'d'.repeat(32),position:{x:0,y:9.55,z:-30},peers:[peer]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting',
+  'forged spawn id must not confirm admission');
+ assert.equal(h.created.some(n=>n.id==='climboria-world-chat-panel'),false);
+ assert.equal(h.runNextTimer(),12000,'server spawn confirmation also needs a deadline');
+ assert.equal(old.readyState,3);
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline');
+ assert.ok(h.removes.includes(peer.id),'provisional peers are removed on timeout');
+ old.onmessage({data:JSON.stringify({type:'spawn-accepted',
+  id:own,position:{x:0,y:9.55,z:-30},peers:[peer]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline',
+  'late stale server acknowledgement cannot revive a timed-out socket');
+ assert.equal(h.runNextTimer(),5000);
+ await flush();await waitFor(()=>h.clients.length===2);
+ const fresh=h.clients[1];fresh.onopen();
+ fresh.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
+ fresh.onmessage({data:JSON.stringify({type:'spawn-accepted',
+  id:own,position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected',
+  'only a new authenticated server-confirmed spawn may show online');
+});
+
+test('verified server spawn cancels both admission deadlines and keeps live socket',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];ws.onopen();
+ const own='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',
+  id:own,position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.equal(h.timers.filter(t=>t.delay===12000&&!t.cancelled).length,0,
+  'both WebSocket open and spawn-ack timers must be cancelled');
+ assert.equal(ws.readyState,1,'healthy verified room socket must stay open');
+ assert.equal(h.clients.length,1);
+});
+
+test('logout during pending WebSocket admission cancels timer without reconnect',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const old=h.clients[0];
+ assert.equal(h.timers.filter(t=>t.delay===12000&&!t.cancelled).length,1);
+ h.authChange(null);
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'login-required');
+ assert.equal(old.readyState,3,'sign-out closes unverified room socket');
+ assert.equal(h.timers.filter(t=>t.delay===12000&&!t.cancelled).length,0);
+ old.onopen();
+ old.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'c'.repeat(32),peers:[peer]})});
+ await flush();
+ assert.equal(h.clients.length,1,'old account must not retry after logout');
+ assert.equal(h.adds.length,0,'stale socket must not add ghost peer models');
+});
+
 test('unconfirmed spawn cannot advertise connection, chat, or duel UI',async()=>{
  const h=harness(true);await flush();
  await waitFor(()=>h.clients.length===1);

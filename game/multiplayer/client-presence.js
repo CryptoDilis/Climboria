@@ -23,6 +23,7 @@
  if(!auth?.auth?.getSession||!renderer||!world?.player){doc.dataset.climboriaMultiplayer='unavailable';return}
  let socket=null,disposed=false,reconnect=null,movement=null,clientUser=null,selfId=null;
  let connecting=false,connectEpoch=0,authSubscription=null,spawnConfirmed=false;
+ let admissionTimer=null;
  let sessionLookupCancel=null;
  const known=new Map(),validId=x=>typeof x==='string'&&/^s_[a-f0-9]{32}$/.test(x);
  const validPosition=p=>p&&['x','y','z'].every(k=>typeof p[k]==='number'&&Number.isFinite(p[k])&&Math.abs(p[k])<50000);
@@ -340,6 +341,8 @@
     for(const id of [...known.keys()])if(!verifiedIds.has(id))leave(id);
     for(const peer of peers)addPlayer(peer);
     spawnConfirmed=true;
+    // Only a verified server spawn-accepted completes room admission.
+    clearAdmissionTimer();
     ensureDuelUi();ensureWorldChatUi();
     showStatus('connected','ONLINE · '+known.size+' other explorers');
    }
@@ -407,7 +410,27 @@
   if(reconnect)clearTimeout(reconnect);
   reconnect=setTimeout(()=>{reconnect=null;void connect()},delay);
  }
+ function clearAdmissionTimer(){
+  if(admissionTimer!==null){clearTimeout(admissionTimer);admissionTimer=null}
+ }
+ function armAdmissionTimer(ws,epoch){
+  clearAdmissionTimer();
+  // The browser WebSocket constructor can succeed yet never open, and a
+  // healthy open can still wait forever for a server-verified spawn.
+  // Independently bound both stages; never treat open/welcome as ONLINE.
+  admissionTimer=setTimeout(()=>{
+   admissionTimer=null;
+   if(disposed||socket!==ws||epoch!==connectEpoch||spawnConfirmed)return;
+   socket=null;previous=null;
+   if(movement){clearInterval(movement);movement=null}
+   clearPeers();
+   try{ws.close()}catch{}
+   showStatus('offline','MULTIPLAYER · RECONNECTING');
+   scheduleConnect(5000);
+  },12000);
+ }
  function resetConnection(){
+  clearAdmissionTimer();
   // Invalidate pending getSession/ticket responses so a signed-out account
   // cannot later create a socket or revive its World Chat after logout.
   connectEpoch++;
@@ -504,16 +527,19 @@
    const socketURL=new URL('ws',base);socketURL.protocol='wss:';
    const ws=new WebSocket(socketURL.toString(),['climboria-v1','t-'+ticket.ticket]);
    socket=ws;
+   armAdmissionTimer(ws,epoch); // WebSocket CONNECTING cannot stall forever.
    ws.onmessage=e=>{if(!disposed&&socket===ws&&epoch===connectEpoch)onPacket(e.data)};
    ws.onopen=()=>{
     if(disposed||socket!==ws||epoch!==connectEpoch||!isReady()){ws.close();return}
     previous=null;
+    armAdmissionTimer(ws,epoch); // OPEN is not an accepted terrain spawn.
     send({type:'spawn',position:localPosition()});
     if(movement)clearInterval(movement);
     movement=setInterval(publishMovement,250);
    };
    ws.onclose=()=>{
     if(socket!==ws||disposed||epoch!==connectEpoch)return;
+    clearAdmissionTimer();
     socket=null;clearPeers();previous=null;
     if(movement){clearInterval(movement);movement=null}
     showStatus('offline','MULTIPLAYER · RECONNECTING');
