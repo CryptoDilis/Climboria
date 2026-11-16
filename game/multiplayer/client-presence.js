@@ -31,7 +31,7 @@
 
  // World Chat never appears without a verified room welcome. Messages are
  // plain text, room-scoped, short-lived in the DOM and never stored locally.
- let chatUi=null,chatExpanded=false,pendingWorldChat=null;
+ let chatUi=null,chatExpanded=false,pendingWorldChat=null,worldChatSequence=0;
  function clearPendingWorldChat(){
   if(pendingWorldChat?.timeout)clearTimeout(pendingWorldChat.timeout);
   pendingWorldChat=null;
@@ -66,7 +66,8 @@
   // Only the authoritative server echo from our own room identity confirms
   // delivery. Never erase a draft merely because WebSocket.send succeeded,
   // or because another explorer spoke while our message is pending.
-  if(pendingWorldChat && msg.id===selfId && msg.text===pendingWorldChat.text){
+  if(pendingWorldChat && msg.id===selfId &&
+     msg.chatSeq===pendingWorldChat.chatSeq && msg.text===pendingWorldChat.text){
    const confirmed=pendingWorldChat;
    clearPendingWorldChat();
    if(String(chatUi.input.value||'').trim().normalize('NFC')===confirmed.text)
@@ -93,8 +94,13 @@
    chatUi.notice.textContent='Use 1–160 readable characters (max 384 UTF-8 bytes).';
    return;
   }
-  if(send({type:'world-chat',text})){
-   const pending={text,timeout:null};
+  // Match only an echo carrying this exact request sequence. Text and self ID
+  // alone are insufficient: a late echo after an 8-second timeout could
+  // otherwise falsely acknowledge a new retry of identical text.
+  worldChatSequence=worldChatSequence>=2147483647?1:worldChatSequence+1;
+  const chatSeq=worldChatSequence;
+  if(send({type:'world-chat',text,chatSeq})){
+   const pending={text,chatSeq,timeout:null};
    pendingWorldChat=pending;
    chatUi.notice.textContent='Sending… awaiting room confirmation';
    // The room normally sends either a broadcast echo or an explicit reject.
