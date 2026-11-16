@@ -289,29 +289,40 @@ export class JarrellRoom {
     socket.send(JSON.stringify({type:'rejected',reason:'spawn-required'}));return;
    }
    if(message.type==='world-chat'){
-    if(!this.spawned.has(id)){
-     socket.send(JSON.stringify({type:'rejected',reason:'spawn-required'}));return;
-    }
-    if(typeof message.text!=='string'||message.text.length>320){
+    const chatSeq=message.chatSeq;
+    if(chatSeq!==undefined &&
+       (!Number.isSafeInteger(chatSeq)||chatSeq<1||chatSeq>2147483647)){
      socket.send(JSON.stringify({type:'rejected',reason:'world-chat-invalid-text'}));return;
     }
+    // Attach the validated per-message sequence to BOTH positive echoes
+    // and rejections, so delayed cooldown failures cannot cancel a retry.
+    const rejectChat=reason=>socket.send(JSON.stringify({type:'rejected',reason,
+     ...(chatSeq===undefined?{}:{chatSeq})}));
+    if(!this.spawned.has(id)){
+     rejectChat('spawn-required');return;
+    }
+    if(typeof message.text!=='string'||message.text.length>320){
+     rejectChat('world-chat-invalid-text');return;
+    }
+    // Optional validated sequence preserves legacy/manual QA clients.
     const text=message.text.trim().normalize('NFC');
     // Unicode and emoji are allowed; control/bidi characters and oversized
     // messages are rejected before reaching other authenticated peers.
     if(!text||[...text].length>CHAT_MAX_CHARACTERS||chatForbidden.test(text)||
        new TextEncoder().encode(text).byteLength>CHAT_MAX_WIRE_BYTES){
-     socket.send(JSON.stringify({type:'rejected',reason:'world-chat-invalid-text'}));return;
+     rejectChat('world-chat-invalid-text');return;
     }
     const now=Date.now();
     if(now-(this.lastChat.get(id)??-Infinity)<CHAT_COOLDOWN_MS){
-     socket.send(JSON.stringify({type:'rejected',reason:'world-chat-rate-limit'}));return;
+     rejectChat('world-chat-rate-limit');return;
     }
     const member=this.room.members.get(id);
     if(!member)return;
     this.lastChat.set(id,now);
     // Include the sender for a server-confirmed echo; never accept client IDs,
     // account info, timestamps, player HP, wallet, inventory or payment fields.
-    this.room.broadcast({type:'world-chat',id,name:member.name,text,at:now});
+    this.room.broadcast({type:'world-chat',id,name:member.name,text,at:now,
+     ...(chatSeq===undefined?{}:{chatSeq})});
     return;
    }
    // Authenticated duel invitations are CONSENT SIGNALS, not HP damage.
