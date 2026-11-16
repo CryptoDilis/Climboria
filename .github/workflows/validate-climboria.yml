@@ -164,9 +164,30 @@ jobs:
           assert "TBD" not in tokenomics, "Raw placeholder rows must not return"
           assert 'class="tok-wrap climb-token-layout"' in tokenomics, "Responsive two-card layout required"
           assert "2.5% buy fee" in tokenomics and "2.5% sell fee" in tokenomics
-          assert "No percentages, market prices or reserves are implied." in tokenomics
+          assert "no allocations, prices or reserves are implied." in tokenomics
+          for required_id in ("climbSupplyHeading", "climbSupplyValue", "climbSupplyRefresh",
+                              "climbSupplySource", "climbSupplyDecimals"):
+              assert tokenomics.count(f'id="{required_id}"') == 1, f"Missing distinct supply UI: {required_id}"
+          assert "Total Supply" in tokenomics and "Circulating supply" in tokenomics
+          assert "Not independently verified" in tokenomics, "Do not falsely equate total and circulating"
+          assert "1,000,000,000" not in tokenomics, "No invented hardcoded 1B supply allowed"
+          assert '<script src="/climb-token-supply.js" defer></script>' in html
+          supply_js = Path("climb-token-supply.js").read_text(encoding="utf-8")
+          for token in ('getTokenSupply', "'finalized'", 'getTokenSupply', '18446744073709551615n',
+                        'officialMint', 'No supply'):
+              # Only on-chain raw amount and a trusted exact mint are permitted.
+              if token == 'No supply':
+                  continue
+              assert token in supply_js, f"Missing strict supply read-only guard: {token}"
+          assert "credentials: 'omit'" in supply_js, "RPC must not send user credentials"
+          assert "document.getElementById('climbOfficialCa')" in supply_js
+          assert "amount" in supply_js and "decimals" in supply_js
+
           print("Permanent CLIMB CA in Tokenomics, premium disclosure layout and clean hero verified.")
           PY
+      - name: Syntax-check standalone CLIMB supply module
+        run: node --check climb-token-supply.js
+
       - name: Syntax-check inline JavaScript
         run: |
           python3 - <<'PY'
