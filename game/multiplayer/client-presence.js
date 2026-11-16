@@ -31,12 +31,19 @@
 
  // World Chat never appears without a verified room welcome. Messages are
  // plain text, room-scoped, short-lived in the DOM and never stored locally.
- let chatUi=null,chatExpanded=false;
+ let chatUi=null,chatExpanded=false,pendingWorldChat=null;
+ function clearPendingWorldChat(){
+  if(pendingWorldChat?.timeout)clearTimeout(pendingWorldChat.timeout);
+  pendingWorldChat=null;
+ }
  function renderChatCount(){
   if(chatUi)chatUi.count.textContent='WORLD CHAT · '+(known.size+(selfId?1:0))+' ONLINE';
  }
  function clearWorldChatUi(){
   chatExpanded=false;
+  // Clear drafts on sign-out/disconnect to avoid leaking text between
+  // authenticated accounts or reviving messages after room reconnection.
+  clearPendingWorldChat();
   if(!chatUi)return;
   chatUi.toggle.style.display='none';
   chatUi.panel.style.display='none';
@@ -56,10 +63,25 @@
   if(entries.length>=40)chatUi.log.replaceChildren(...entries.slice(-39));
   chatUi.log.appendChild(line);
   chatUi.log.scrollTop=chatUi.log.scrollHeight;
-  chatUi.notice.textContent='';
+  // Only the authoritative server echo from our own room identity confirms
+  // delivery. Never erase a draft merely because WebSocket.send succeeded,
+  // or because another explorer spoke while our message is pending.
+  if(pendingWorldChat && msg.id===selfId && msg.text===pendingWorldChat.text){
+   const confirmed=pendingWorldChat;
+   clearPendingWorldChat();
+   if(String(chatUi.input.value||'').trim().normalize('NFC')===confirmed.text)
+    chatUi.input.value='';
+   chatUi.notice.textContent='';
+  }else if(!pendingWorldChat){
+   chatUi.notice.textContent='';
+  }
  }
  function sendWorldChat(){
   if(!chatUi||!selfId||!spawnConfirmed)return;
+  if(pendingWorldChat){
+   chatUi.notice.textContent='Waiting for the server to confirm the previous message.';
+   return;
+  }
   // Match the trusted room's Unicode normalization, control-character
   // rejection and 384-byte UTF-8 budget before clearing the input.
   // Otherwise a message that looks <=160 characters could be rejected
@@ -72,8 +94,18 @@
    return;
   }
   if(send({type:'world-chat',text})){
-   chatUi.input.value='';
-   chatUi.notice.textContent='Sending…';
+   const pending={text,timeout:null};
+   pendingWorldChat=pending;
+   chatUi.notice.textContent='Sending… awaiting room confirmation';
+   // The room normally sends either a broadcast echo or an explicit reject.
+   // Avoid locking the compose box forever if the server never responds.
+   // Do not automatically resend: late echoes could otherwise duplicate chat.
+   pending.timeout=setTimeout(()=>{
+    if(pendingWorldChat!==pending)return;
+    pendingWorldChat=null;
+    if(chatUi)chatUi.notice.textContent=
+     'Not confirmed. Check the transcript before sending again.';
+   },8000);
   }else chatUi.notice.textContent='Not connected. Message not sent.';
  }
  function ensureWorldChatUi(){
@@ -317,7 +349,12 @@
    showStatus('spawn-rejected','MULTIPLAYER · RETURN TO SANCTUARY');
   }
   else if(msg.type==='rejected'&&['world-chat-rate-limit','world-chat-invalid-text'].includes(msg.reason)){
-   if(chatUi)chatUi.notice.textContent=msg.reason==='world-chat-rate-limit'?'Please wait a moment before chatting again.':'Message not accepted. Use 1–160 readable characters.';
+   // Rate-limit errors are asynchronous and may arrive after WebSocket.send.
+   // Preserve the typed text for correction/retry instead of deleting it.
+   clearPendingWorldChat();
+   if(chatUi)chatUi.notice.textContent=msg.reason==='world-chat-rate-limit'?
+    'Please wait a moment before chatting again. Your message is still editable.':
+    'Message not accepted. Use 1–160 readable characters. Your text is still editable.';
   }
   else if(msg.type==='player-punched'&&validId(msg.id)&&known.has(msg.id))renderer.punch(msg.id);
   else if(typeof msg.type==='string'&&msg.type.startsWith('duel-'))onDuelPacket(msg);
