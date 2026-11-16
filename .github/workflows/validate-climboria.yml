@@ -166,10 +166,14 @@ jobs:
           assert "2.5% buy fee" in tokenomics and "2.5% sell fee" in tokenomics
           assert "no allocations, prices or reserves are implied." in tokenomics
           for required_id in ("climbSupplyHeading", "climbSupplyValue", "climbSupplyRefresh",
-                              "climbSupplySource", "climbSupplyDecimals"):
+                              "climbSupplySource", "climbSupplyDecimals", "climbSupplyState",
+                              "climbSupplyChecked", "climbSupplyPanel"):
               assert tokenomics.count(f'id="{required_id}"') == 1, f"Missing distinct supply UI: {required_id}"
           assert "Total Supply" in tokenomics and "Circulating supply" in tokenomics
           assert "Not independently verified" in tokenomics, "Do not falsely equate total and circulating"
+          assert 'aria-busy="false"' in tokenomics and "Awaiting lookup" in tokenomics
+          assert "VIEW MINT ON SOLSCAN" in tokenomics, "Visitors need a direct explorer fallback"
+          assert "https://solscan.io/token/" + mint in tokenomics, "Explorer must use exact announced mint"
           assert "1,000,000,000" not in tokenomics, "No invented hardcoded 1B supply allowed"
           assert '<script src="/climb-token-supply.js" defer></script>' in html
           supply_js = Path("climb-token-supply.js").read_text(encoding="utf-8")
@@ -182,6 +186,9 @@ jobs:
           assert "credentials: 'omit'" in supply_js, "RPC must not send user credentials"
           assert "document.getElementById('climbOfficialCa')" in supply_js
           assert "amount" in supply_js and "decimals" in supply_js
+          assert "Promise.race([request, deadline])" in supply_js and "controller.abort()" in supply_js
+          assert "DEADLINE_MS = 6500" in supply_js, "Never leave clients permanently checking public RPC"
+          assert "No current on-chain supply snapshot is available." in supply_js, "An unavailable source must not show guessed totals"
 
           print("Permanent CLIMB CA in Tokenomics, premium disclosure layout and clean hero verified.")
           PY

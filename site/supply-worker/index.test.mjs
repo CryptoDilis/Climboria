@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import worker, {MINT, PATH, CACHE_KEY, parseRpcSupply} from './index.mjs';
+import worker, {MINT, PATH, CACHE_KEY, CACHE_SECONDS, parseRpcSupply, parseCachedSnapshot} from './index.mjs';
 
 const RPC = 'https://example-rpc.test/v1/private-key-not-exposed';
 const endpoint = 'https://supply.climboria.fun' + PATH;
@@ -44,6 +44,34 @@ test('reject malformed response values, RPC errors and u64 overflow', () => {
     change(changed);
     assert.throws(() => parseRpcSupply(changed), /RPC/);
   }
+});
+test('cached supply is validated, fresh, and strips unknown injected fields', () => {
+  const timestamp='2026-11-16T00:00:00.000Z';
+  const at=Date.parse(timestamp);
+  const raw={...parseRpcSupply(valid,timestamp), providerKey:'secret-leak', extra:{foo:'bar'}};
+  const safe=parseCachedSnapshot(raw,at+1000);
+  assert.deepEqual(Object.keys(safe).sort(),
+    ['schema','mint','source','commitment','amount','decimals','slot','observedAt'].sort());
+  assert.equal(safe.providerKey,undefined);
+  for(const change of [
+    x=>x.mint='wrong-mint',
+    x=>x.source='unverified-explorer',
+    x=>x.commitment='processed',
+    x=>x.amount='1.2',
+    x=>x.amount='18446744073709551616',
+    x=>x.decimals=-1,
+    x=>x.decimals=200,
+    x=>x.slot=0,
+    x=>x.slot='456',
+    x=>x.observedAt='not-a-date',
+    x=>x.schema=2
+  ]) {
+    const bad=structuredClone(raw);change(bad);
+    assert.throws(()=>parseCachedSnapshot(bad,at+1000),/cached/);
+  }
+  assert.throws(()=>parseCachedSnapshot(raw,at+CACHE_SECONDS*1000+1),/Expired/);
+  assert.throws(()=>parseCachedSnapshot(raw,at-5001),/Expired/);
+  assert.equal(parseCachedSnapshot(raw,at+CACHE_SECONDS*1000).mint,MINT);
 });
 test('reject non-GET, unknown routes, disallowed Origin and unconfigured RPC', async () => {
   const ready = await worker.fetch(req('https://supply.climboria.fun/ready'), {}, {});
@@ -112,6 +140,31 @@ test('only finalized exact-mint successful snapshots are cached; no provider sec
     globalThis.fetch=originalFetch;
     globalThis.caches=originalCaches;
   }
+});
+test('corrupt, stale, or poisoned edge cache is ignored and replaced by validated RPC', async () => {
+  const originalFetch=globalThis.fetch, originalCaches=globalThis.caches;
+  const bad=[
+    {...parseRpcSupply(valid,'2026-11-16T00:00:00.000Z'), providerToken:'should-never-leak'},
+    {...parseRpcSupply(valid),mint:'attacker-mint',amount:'1'},
+    {...parseRpcSupply(valid),amount:'18446744073709551616'}
+  ];
+  let calls=0;
+  globalThis.fetch=async()=>{calls++;return body(valid)};
+  try{
+    for(const payload of bad){
+      globalThis.caches={default:{
+        async match(){return new Response(JSON.stringify(payload),{status:200})},
+        async put(){}
+      }};
+      const res=await worker.fetch(req(),env,{waitUntil:()=>{}});
+      assert.equal(res.status,200);
+      const safe=await res.json();
+      assert.equal(safe.mint,MINT);
+      assert.equal(safe.amount,'123456789000000');
+      assert.equal(safe.providerToken,undefined);
+    }
+    assert.equal(calls,3,'invalid cache entries must trigger fresh validated RPC');
+  }finally{globalThis.fetch=originalFetch;globalThis.caches=originalCaches}
 });
 test('upstream failure and invalid values produce sanitized 503 with no cache or stale fake number', async () => {
   const originalFetch=globalThis.fetch, originalCaches=globalThis.caches;

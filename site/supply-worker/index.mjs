@@ -3,7 +3,7 @@
 export const MINT = '9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump';
 export const PATH = '/api/climb/supply';
 export const CACHE_SECONDS = 75;
-export const CACHE_KEY = 'https://supply.climboria.fun/.supply-cache/climb-v1';
+export const CACHE_KEY = 'https://supply.climboria.fun/.supply-cache/climb-v2';
 const MAX_U64 = 18446744073709551615n;
 const ALLOWED_ORIGINS = new Set(['https://climboria.fun', 'https://www.climboria.fun']);
 
@@ -41,6 +41,34 @@ export function parseRpcSupply(raw, observedAt = new Date().toISOString()) {
       !Number.isSafeInteger(slot) || slot <= 0) throw Error('RPC fields');
   return {schema: 1, mint: MINT, source: 'solana-mainnet-finalized-rpc', commitment: 'finalized',
     amount, decimals, slot, observedAt};
+}
+
+// Cloudflare's edge cache is an optimization, not a source of truth. Treat a
+// cached body as untrusted and reconstruct only fields from a valid, recent
+// finalized snapshot. In particular, do not echo additional cached fields
+// (such as a mistakenly persisted RPC URL or provider-specific metadata).
+export function parseCachedSnapshot(raw, now = Date.now()) {
+  if (raw?.schema !== 1 || raw?.mint !== MINT ||
+      raw?.source !== 'solana-mainnet-finalized-rpc' ||
+      raw?.commitment !== 'finalized' ||
+      typeof raw?.amount !== 'string' ||
+      !/^(?:0|[1-9][0-9]{0,19})$/.test(raw.amount) ||
+      BigInt(raw.amount) > MAX_U64 ||
+      !Number.isInteger(raw.decimals) || raw.decimals < 0 || raw.decimals > 18 ||
+      !Number.isSafeInteger(raw.slot) || raw.slot <= 0 ||
+      typeof raw.observedAt !== 'string' ||
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(raw.observedAt)) {
+    throw Error('Invalid cached supply snapshot');
+  }
+  const observed = Date.parse(raw.observedAt);
+  if (!Number.isFinite(observed) || new Date(observed).toISOString() !== raw.observedAt ||
+      !Number.isFinite(now) || observed - now > 5000 ||
+      now - observed > CACHE_SECONDS * 1000) {
+    throw Error('Expired cached supply snapshot');
+  }
+  return {schema: 1, mint: MINT, source: 'solana-mainnet-finalized-rpc',
+    commitment: 'finalized', amount: raw.amount, decimals: raw.decimals,
+    slot: raw.slot, observedAt: raw.observedAt};
 }
 async function getSupply(env, signal) {
   const upstream = await fetch(env.SOLANA_RPC_URL, {
@@ -81,11 +109,10 @@ export default {
       if (cache) {
         const match = await cache.match(CACHE_KEY);
         if (match?.ok) {
-          const body = await match.text();
-          const parsed = JSON.parse(body);
-          if (parsed?.mint === MINT && parsed?.schema === 1 && parsed?.commitment === 'finalized') {
-            return new Response(body, {status: 200, headers: headers(origin)});
-          }
+          const rawCached = await match.text();
+          if (rawCached.length > 8192) throw Error('Oversized cached supply');
+          const parsed = parseCachedSnapshot(JSON.parse(rawCached));
+          return new Response(JSON.stringify(parsed), {status: 200, headers: headers(origin)});
         }
       }
     } catch { /* Cache unavailable: request a new validated snapshot. */ }
