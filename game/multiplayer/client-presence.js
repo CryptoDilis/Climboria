@@ -436,23 +436,45 @@
    }
    clientUser=session.user.id;
    const hero=window.__climboriaCreatedHero||{};
-   const reply=await fetch(new URL('ticket',base),{
-    method:'POST',mode:'cors',cache:'no-store',credentials:'omit',
-    headers:{Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
-    body:JSON.stringify({name:hero.name,model:hero.model})
-   });
+   const ticketAbort=new AbortController();
+   let ticketDeadline;
+   let issued;
+   try{
+    // Bound the entire signed-in ticket stage (fetch AND response JSON), even
+    // if a stalled Worker or body reader ignores AbortSignal. A timed-out
+    // request must never manufacture a peer, open a stale socket, or leave
+    // the Game UI stuck on CONNECTING.
+    const work=(async()=>{
+     const reply=await fetch(new URL('ticket',base),{
+      method:'POST',mode:'cors',cache:'no-store',credentials:'omit',
+      signal:ticketAbort.signal,
+      headers:{Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
+      body:JSON.stringify({name:hero.name,model:hero.model})
+     });
+     if(reply.status===429)return {busy:true};
+     if(!reply.ok)throw Error('Room ticket denied');
+     return {ticket:await reply.json()};
+    })();
+    const deadline=new Promise((_,reject)=>{
+     ticketDeadline=setTimeout(()=>{
+      ticketAbort.abort();
+      reject(Error('Room ticket deadline expired'));
+     },18000);
+    });
+    issued=await Promise.race([work,deadline]);
+   }finally{clearTimeout(ticketDeadline)}
    if(disposed||epoch!==connectEpoch)return;
-   if(reply.status===429){
+   if(issued.busy){
     // An authenticated room can be temporarily full or this account may
     // already have two outstanding tickets. Do not claim the server is down.
     showStatus('room-busy','MULTIPLAYER · ROOM BUSY · RETRYING');
     scheduleConnect(10000);
     return;
    }
-   if(!reply.ok)throw Error('Room ticket denied');
-   const ticket=await reply.json();
-   if(disposed||epoch!==connectEpoch)return;
-   if(!/^[a-f0-9]{64}$/.test(ticket?.ticket||''))throw Error('Invalid room ticket');
+   const ticket=issued.ticket;
+   if(!/^[a-f0-9]{64}$/.test(ticket?.ticket||'')||
+      ticket.protocol!=='climboria-v1'||ticket.ttlSeconds!==30)
+    throw Error('Invalid room ticket');
    const socketURL=new URL('ws',base);socketURL.protocol='wss:';
    const ws=new WebSocket(socketURL.toString(),['climboria-v1','t-'+ticket.ticket]);
    socket=ws;
