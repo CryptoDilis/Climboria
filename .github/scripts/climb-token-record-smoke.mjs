@@ -114,6 +114,11 @@ try{
    assert.equal(await page.locator('.climb-supply-metric-label').textContent(),
     'On-chain total supply');
    assert.equal(await page.locator('.climb-supply-mark').getAttribute('aria-hidden'),'true');
+   assert.equal(await page.locator('.climb-supply-mark img').getAttribute('src'),'/assets/climb-token-official.webp',
+    'official CLIMB coin art, not the generic site favicon, must appear in the supply badge');
+   await page.waitForFunction(()=>{const im=document.querySelector('.climb-supply-mark img');return im?.complete&&im.naturalWidth===96;},null,{timeout:4000});
+   assert.equal(await page.locator('.climb-supply-mark').evaluate(e=>getComputedStyle(e).overflow),'hidden',
+    'coin artwork stays inset inside the circular frame');
    assert.equal(await page.locator('#climbSupplyValue').count(),1,
     'only one dynamic total-supply number');
    if(width===1536||width===1365||width===1200||width===1180||width===1160||width===1024||width===430){

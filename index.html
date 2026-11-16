@@ -401,8 +401,8 @@ footer:first-of-type>div{
 #tokenomics .climb-supply-value{font:800 clamp(26px,3.1vw,43px)/1.13 Inter,system-ui,sans-serif;color:#ffe0a0;letter-spacing:-1.2px;text-shadow:0 1px 15px rgba(245,189,93,.13);overflow-wrap:anywhere}
 #tokenomics .climb-supply-panel[data-state="loading"] .climb-supply-value,#tokenomics .climb-supply-panel[data-state="unavailable"] .climb-supply-value{font-size:clamp(22px,2.4vw,29px);color:#efd3ad}
 #tokenomics .climb-supply-unit{font-size:clamp(11px,1.1vw,14px);letter-spacing:.9px;color:#efcc8b}
-#tokenomics .climb-supply-mark{flex:none;display:grid;place-items:center;width:86px;height:86px;padding:12px;border:1px solid rgba(246,189,85,.36);border-radius:50%;background:linear-gradient(145deg,rgba(250,206,116,.12),rgba(6,12,26,.2));box-shadow:0 0 18px rgba(239,175,76,.13),inset 0 1px rgba(255,236,184,.12)}
-#tokenomics .climb-supply-mark img{display:block;max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
+#tokenomics .climb-supply-mark{flex:none;display:grid;place-items:center;isolation:isolate;overflow:hidden;width:86px;height:86px;padding:2px;border:1px solid rgba(246,189,85,.42);border-radius:50%;background:radial-gradient(circle at 50% 43%,#252431 22%,#141720 71%,#b4874e 130%);box-shadow:0 0 18px rgba(239,175,76,.12),inset 0 1px rgba(255,236,184,.15)}
+#tokenomics .climb-supply-mark img{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;border-radius:50%;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
 #tokenomics .climb-supply-meta{gap:11px;margin:0 0 16px}
 #tokenomics .climb-supply-meta>div{padding:15px;border-color:rgba(176,197,226,.18);border-radius:13px;background:linear-gradient(135deg,rgba(21,33,52,.88),rgba(13,19,32,.78))}
 #tokenomics .climb-supply-meta span{margin-bottom:6px;font-size:10px;letter-spacing:1px;color:#bcc9df}
@@ -416,8 +416,8 @@ footer:first-of-type>div{
 #tokenomics .climb-supply-checked{margin:0 0 15px;color:#d7c5a8;font-size:10px;line-height:1.55}
 #tokenomics .climb-supply-disclaimer{margin:0;padding-top:14px;border-color:rgba(224,192,132,.19);color:#b4c0d1;font-size:11px}
 #tokenomics .climb-supply-disclaimer strong{color:#e6d0a4}
-@media(max-width:600px){#tokenomics .climb-token-mint-shell{padding:12px}#tokenomics .climb-token-heading h3{font-size:clamp(19px,5.4vw,25px)}#tokenomics .climb-token-pill{padding:7px 9px}#tokenomics .climb-supply-panel{padding:17px 14px;border-radius:15px}#tokenomics .climb-supply-top{align-items:flex-start}#tokenomics .climb-supply-state{max-width:100%;font-size:8px}#tokenomics .climb-supply-summary{font-size:11px;margin:10px 0 13px}#tokenomics .climb-supply-main{min-height:107px;padding:15px 13px;gap:8px;border-radius:12px}#tokenomics .climb-supply-metric-label{font-size:9px;margin-bottom:8px}#tokenomics .climb-supply-value{font-size:clamp(24px,7.1vw,33px);letter-spacing:-.7px}#tokenomics .climb-supply-mark{width:50px;height:50px;padding:5px}#tokenomics .climb-supply-meta{gap:8px;margin-bottom:12px}#tokenomics .climb-supply-meta>div{padding:11px}#tokenomics .climb-supply-actions{gap:8px}#tokenomics .climb-supply-actions .climb-supply-refresh,#tokenomics .climb-supply-explorer{min-height:44px}}
-@media(max-width:480px){#tokenomics .climb-supply-mark{display:grid;width:42px;height:42px;padding:6px}#tokenomics .climb-supply-main{flex-wrap:wrap}#tokenomics .climb-supply-value{font-size:clamp(24px,7.3vw,34px)}}
+@media(max-width:600px){#tokenomics .climb-token-mint-shell{padding:12px}#tokenomics .climb-token-heading h3{font-size:clamp(19px,5.4vw,25px)}#tokenomics .climb-token-pill{padding:7px 9px}#tokenomics .climb-supply-panel{padding:17px 14px;border-radius:15px}#tokenomics .climb-supply-top{align-items:flex-start}#tokenomics .climb-supply-state{max-width:100%;font-size:8px}#tokenomics .climb-supply-summary{font-size:11px;margin:10px 0 13px}#tokenomics .climb-supply-main{min-height:107px;padding:15px 13px;gap:8px;border-radius:12px}#tokenomics .climb-supply-metric-label{font-size:9px;margin-bottom:8px}#tokenomics .climb-supply-value{font-size:clamp(24px,7.1vw,33px);letter-spacing:-.7px}#tokenomics .climb-supply-mark{width:50px;height:50px;padding:2px}#tokenomics .climb-supply-meta{gap:8px;margin-bottom:12px}#tokenomics .climb-supply-meta>div{padding:11px}#tokenomics .climb-supply-actions{gap:8px}#tokenomics .climb-supply-actions .climb-supply-refresh,#tokenomics .climb-supply-explorer{min-height:44px}}
+@media(max-width:480px){#tokenomics .climb-supply-mark{display:grid;width:42px;height:42px;padding:1px}#tokenomics .climb-supply-main{flex-wrap:wrap}#tokenomics .climb-supply-value{font-size:clamp(24px,7.3vw,34px)}}
 @media(max-width:380px){#tokenomics .climb-supply-meta{grid-template-columns:1fr}#tokenomics .climb-supply-amount{gap:5px}}
 
 /* Accessible page title without changing the approved hero artwork or layout. */
@@ -758,7 +758,7 @@ footer:first-of-type>div{
        <span class="climb-supply-unit">CLIMB</span>
       </div>
      </div>
-     <span class="climb-supply-mark" aria-hidden="true"><img src="/climboria-favicon.png" alt="" width="64" height="64" decoding="async"></span>
+     <span class="climb-supply-mark" aria-hidden="true"><img src="/assets/climb-token-official.webp" alt="" width="96" height="96" decoding="async"></span>
     </div>
     <div class="climb-supply-meta">
      <div class="climb-supply-stat"><span>Token decimals</span><strong id="climbSupplyDecimals">—</strong></div>
