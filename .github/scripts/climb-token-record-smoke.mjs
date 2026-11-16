@@ -7,7 +7,7 @@ const MINT='9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump';
 const base='http://127.0.0.1:4173/';
 const browser=await chromium.launch({headless:true});
 try{
- for(const width of [1536,1365,768,390,360]){
+ for(const width of [1536,1365,1024,768,390,360]){
   const context=await browser.newContext({viewport:{width,height:850},deviceScaleFactor:1});
   const page=await context.newPage();
   try{
@@ -20,13 +20,28 @@ try{
    // Supply is read only and user-initiated. Keep all tests offline with
    // explicitly synthetic RPC fixtures; never claim these values on mainnet.
    let rpcRequests=0;
+   let snapshotRequests=0;
+   await page.route('**/data/climb-supply.json', async route=>{
+    snapshotRequests++;
+    // All fixtures below are synthetic. None represent live CLIMB supply.
+    const valid={
+     schema:1,mint:MINT,status:'ready',
+     source:'solana-mainnet-finalized-rpc',commitment:'finalized',
+     amount:'123456789000000',decimals:9,slot:345678901,
+     observedAt:new Date().toISOString()
+    };
+    if(width===390) valid.status='pending';
+    if(width===768) valid.observedAt='2020-01-01T00:00:00.000Z';
+    if(width===360) valid.mint='incorrect-mint';
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(valid)});
+   });
    await page.route(/^https:\/\/api\.mainnet-beta\.solana\.com\/?$/, async route=>{
     rpcRequests++;
     const payload=JSON.parse(route.request().postData()||'{}');
     assert.equal(payload.method,'getTokenSupply');
     assert.equal(payload.params[0],MINT);
     assert.equal(payload.params[1].commitment,'finalized');
-    const mode=width===390?'malformed':width===360?'unavailable':width===768?'timeout':'valid';
+    const mode=width===390?'malformed':width===360||width===1024?'unavailable':width===768?'timeout':'valid';
     if(mode==='unavailable')return route.fulfill({status:503,contentType:'application/json',body:'{"error":"mock-offline"}'});
     if(mode==='timeout')await new Promise(resolve=>setTimeout(resolve,450));
     const valid={jsonrpc:'2.0',id:'climb-supply',result:{context:{slot:345678901},value:{amount:'123456789000000',decimals:9,uiAmountString:'123456.789'}}};
@@ -47,16 +62,26 @@ try{
    assert.equal((await record.locator('#climbOfficialCa').textContent()).trim(),MINT);
    assert.equal((await section.textContent()).includes('TBD'),false,'no raw TBD placeholders');
    assert.match(await utility.textContent(),/NOT YET LIVE/);
-   assert.equal(await page.locator('#climbSupplyValue').textContent(),'Not loaded',
-    'supply must not be guessed or fetched without explicit user action');
-   assert.equal(rpcRequests,0,'homepage load must not contact external Solana RPC');
-   assert.equal(await page.locator('#climbSupplyDecimals').textContent(),'—');
-   assert.match(await page.locator('#climbSupplySource').textContent(),/No supply number is assumed/);
-   assert.equal(await page.locator('#climbSupplyState').textContent(),'Awaiting lookup');
+   await page.waitForFunction(()=>{
+    const value=document.querySelector('#climbSupplyValue')?.textContent;
+    return value==='123,456.789'||value==='Unavailable';
+   },null,{timeout:6000});
+   assert.equal(snapshotRequests,1,'homepage must automatically fetch one same-origin snapshot');
+   assert.equal(rpcRequests,0,'homepage load must never automatically contact cross-origin Solana RPC');
    assert.equal(await page.locator('#climbSupplyPanel').getAttribute('aria-busy'),'false');
+   if(width===1536||width===1365||width===1024){
+    assert.equal(await page.locator('#climbSupplyValue').textContent(),'123,456.789');
+    assert.equal(await page.locator('#climbSupplyDecimals').textContent(),'9');
+    assert.equal(await page.locator('#climbSupplyState').textContent(),'Finalized RPC snapshot');
+    assert.match(await page.locator('#climbSupplyChecked').textContent(),/Finalized snapshot observed at/);
+   }else{
+    assert.equal(await page.locator('#climbSupplyValue').textContent(),'Unavailable');
+    assert.equal(await page.locator('#climbSupplyDecimals').textContent(),'—');
+    assert.equal(await page.locator('#climbSupplyState').textContent(),'Supply unavailable');
+    assert.match(await page.locator('#climbSupplySource').textContent(),/No fresh server-side supply snapshot/);
+   }
    assert.equal(await record.locator('.climb-supply-explorer').getAttribute('href'),
     'https://solscan.io/token/'+MINT);
-   assert.match(await page.locator('#climbSupplyChecked').textContent(),/No finalized snapshot loaded yet/);
    // The owner-approved CA must remain reachable from the main nav, even
    // though the temporary launch hero announcement has been removed.
    const desktopNav=page.locator('#climbCaNavLink');
@@ -140,19 +165,26 @@ try{
    assert.equal(await supplyButton.count(),1);
    await supplyButton.click();
    await page.waitForFunction(()=>{
-    const value=document.querySelector('#climbSupplyValue')?.textContent;
-    return value==='123,456.789'||value==='Unavailable';
+    const label=document.querySelector('#climbSupplyState')?.textContent;
+    return label==='Live RPC snapshot' || label==='Supply unavailable' ||
+      label==='Cached snapshot · live RPC unavailable';
    },null,{timeout:8000});
    assert.equal(rpcRequests,1,'one user action must make exactly one read-only RPC request');
    assert.equal(await page.locator('#climbSupplyPanel').getAttribute('aria-busy'),'false',
     'load must always finish or return a fail-closed state');
-   if(width===390||width===360||width===768){
+   if(width===1024){
+    assert.equal(await page.locator('#climbSupplyValue').textContent(),'123,456.789',
+      'failed live refresh must preserve a still-fresh verified static snapshot');
+    assert.equal(await page.locator('#climbSupplyState').textContent(),
+      'Cached snapshot · live RPC unavailable');
+    assert.match(await supplyButton.textContent(),/RETRY LIVE SOLANA/);
+   }else if(width===390||width===360||width===768){
     assert.equal(await page.locator('#climbSupplyValue').textContent(),'Unavailable',
       'malformed or unreachable RPC must fail closed, never show invented supply');
     assert.equal(await page.locator('#climbSupplyDecimals').textContent(),'—');
     assert.match(await page.locator('#climbSupplySource').textContent(),/Browser CORS, rate limits or timeout may block/i);
-    assert.match(await page.locator('#climbSupplyState').textContent(),/RPC unavailable/);
-    assert.equal(await supplyButton.textContent(),'TRY AGAIN ↗');
+    assert.match(await page.locator('#climbSupplyState').textContent(),/Supply unavailable/);
+    assert.equal(await supplyButton.textContent(),'CHECK LIVE SOLANA ↗');
     assert.match(await page.locator('#climbSupplyChecked').textContent(),/No current on-chain supply snapshot/);
     if(width===768){
      await page.waitForTimeout(500);
@@ -164,9 +196,9 @@ try{
       'precision-safe response must use raw amount and decimals, not rounded uiAmount');
     assert.equal(await page.locator('#climbSupplyDecimals').textContent(),'9');
     assert.match(await page.locator('#climbSupplySource').textContent(),/finalized RPC snapshot · slot 345,678,901/);
-    assert.equal(await page.locator('#climbSupplyState').textContent(),'RPC snapshot loaded');
-    assert.match(await page.locator('#climbSupplyChecked').textContent(),/Browser checked at/);
-    assert.match(await supplyButton.textContent(),/REFRESH SUPPLY/);
+    assert.equal(await page.locator('#climbSupplyState').textContent(),'Live RPC snapshot');
+    assert.match(await page.locator('#climbSupplyChecked').textContent(),/Finalized snapshot observed at/);
+    assert.match(await supplyButton.textContent(),/RECHECK LIVE SOLANA/);
    }
    assert.match(await page.locator('.climb-supply-meta').textContent(),/Not independently verified/,
     'circulating supply cannot be inferred from total mint supply');
