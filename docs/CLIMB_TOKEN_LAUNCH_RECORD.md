@@ -4,7 +4,18 @@
 **Last website update:** 2026-11-16  
 **Source:** Climboria project owner's public launch announcement and the official CA already present in the homepage announcement, committed as `8e0bf6db1fa669aa851153810d9fa8d808f63acc` on 2026-11-15.
 
-## TOTAL SUPPLY PANEL — SITE-ONLY DRAFT (2026-11-16)
+## TOTAL SUPPLY PANEL — MERGED (2026-11-16)
+
+- **Repository update:** [PR #517](https://github.com/CryptoDilis/Climboria/pull/517) merged via squash **`bb1607a9cfd782d39cfbf881d758dc498267da36`**, exact PR head `a84dcf84e143c83fd2147eb0d9896b77dd382678`. Reviewed diff restricted to `index.html`, `climb-token-supply.js`, `.github/scripts/climb-token-record-smoke.mjs`, `.github/workflows/browser-smoke.yml`, `.github/workflows/validate-climboria.yml`, and this record.
+- **Exact-head CI:** [Validate Climboria #43781332909](https://github.com/CryptoDilis/Climboria/actions/runs/43781332909) **SUCCESS** and [Climboria Browser Smoke Test #43781332913](https://github.com/CryptoDilis/Climboria/actions/runs/43781332913) **SUCCESS**. Read-only fixture tests confirm successful precision-safe display from raw mint amount, decimals and finalized slot; rejection of malformed/503 RPC responses; no automatic background RPC, wrong mint, fake circulating supply or hardcoded 1-billion value. Fixtures are **synthetic**, not an independent on-chain supply observation.
+- **Postmerge main source verified:** premium `#tokenomics #climb-token-record` contains **Total Supply**, `#climbSupplyRefresh`, `#climbSupplyValue`, read-only Solana module, decimals and separate not-verified circulating supply. No token CA overlay in hero; numeric total supply is **not** hardcoded.
+- **Truth in production:** no specific live supply number was independently retrieved in this session. Browser must receive a valid user-triggered finalized Solana RPC `getTokenSupply` response before showing a numeric total supply. If unavailable (CORS, rate-limit, no response), the UI shows **Unavailable** and links to the exact mint on Solscan. No promise of automatic numeric availability.
+- **Deployment boundary:** GitHub main merge and test CI proven; published GitHub Pages deployment SHA and `climboria.fun` real-domain visual/RPC acceptance **not** independently verified through the installed connector. Do not claim live site update until independently confirmed.
+- **EXACT NEXT:** inspect GitHub Pages deploy revision and actual `climboria.fun/#climb-token-record` on desktop and mobile; click **LOAD ON-CHAIN SUPPLY** and check whether exact-mint finalized RPC returns a valid integer amount and slot or fails due to CORS/rate limits. Independently compare supply and decimals against trusted Solana explorer/mint-account evidence before referring to a specific number as verified. If public RPC blocks browser requests, propose an owner-approved, rate-limited, trusted read-only supply proxy; do not bypass wallet/trading gates or create estimated figures. Preserve site-only scope.
+
+---
+
+## TOTAL SUPPLY PANEL — historical site-only draft checkpoint (2026-11-16)
 
 - **Owner request:** Existing premium Tokenomics card showed the official $CLIMB mint but omitted the supply metric. Supply value was **not provided** in the owner's launch announcement, repository record, or supported Whitepaper facts. Neither the 1-billion standard used by some launch tools nor any allocation/circulating figure may be asserted as factual for this mint without actual evidence.
 - **Site-only feature on `site/climb-onchain-supply-card-2026-11-16`:** Prominent dark-and-gold **Total Supply** panel inside the permanent `#climb-token-record`, with visible **CLIMB** unit, Solana decimals when returned, explicitly **unverified circulating supply**, source/slot/status and an explicit **LOAD ON-CHAIN SUPPLY** action.
