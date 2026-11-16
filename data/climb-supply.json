@@ -1,6 +1,11 @@
 {
+  "status": "ready",
   "schema": 1,
   "mint": "9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump",
-  "status": "pending",
-  "message": "Awaiting a verified finalized Solana mint snapshot. No supply number is asserted."
+  "source": "solana-mainnet-finalized-rpc",
+  "commitment": "finalized",
+  "amount": "1000000000000000",
+  "decimals": 6,
+  "slot": 469948260,
+  "observedAt": "2026-11-16T01:32:18.852Z"
 }
