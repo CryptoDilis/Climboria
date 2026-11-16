@@ -11,6 +11,7 @@
  */
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
+import {verifyGameRoomPreflight} from './staging-preflight.mjs';
 const env=process.env,timeout=18000;
 function verify(cond,message){if(!cond)throw Error(message)}
 const base=new URL(env.GAME_ROOM_BASE||'https://rooms.climboria.fun/');
@@ -19,17 +20,10 @@ verify(base.protocol==='https:'&&base.hostname===env.GAME_ROOM_APPROVED_HOST&&
  'Refusing unknown Game room host; explicitly approve the HTTPS hostname');
 verify(env.GAME_USER_A_JWT&&env.GAME_USER_B_JWT&&env.GAME_USER_A_JWT!==env.GAME_USER_B_JWT,
  'Two distinct valid Supabase account access tokens are required in environment variables');
-const health=await fetch(new URL('health',base),{signal:AbortSignal.timeout(timeout)});
-verify(health.ok,'Game room health endpoint unavailable');
-const status=await health.json();
-verify(status.service==='climboria-game-room'&&status.gameplayPvP===false,
- 'Wrong WebSocket service or unsafe damage enablement');
-const ready=await fetch(new URL('ready',base),{signal:AbortSignal.timeout(timeout)});
-verify(ready.ok,'Game room Worker is deployed but its required bindings are not configured');
-const readiness=await ready.json();
-verify(readiness.service==='climboria-game-room'&&
- readiness.bindingsConfigured===true&&readiness.durableObjectReady===true&&readiness.gameplayPvP===false,
- 'Game Worker is not configured for safe authenticated room acceptance');
+// Both the read-only HTTP response and its body parsing must complete within
+// one strict deadline, even when a stalled Worker ignores AbortSignal.
+await verifyGameRoomPreflight(base,'health',{deadlineMs:timeout});
+await verifyGameRoomPreflight(base,'ready',{deadlineMs:timeout});
 // /ready is a binding preflight only. Two real accounts must still prove
 // Supabase auth, bidirectional peer/chat traffic and room safety below.
 
