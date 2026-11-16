@@ -108,6 +108,21 @@ readiness; keep `client-config.json` OFF.
 Offline Worker tests use deliberately unresolved fake upstreams, not real
 Supabase/Cloudflare calls.
 
+**Operator browser-ticket timeout:** The manual socket-only
+`e2e-two-accounts.mjs` QA now calls `browser-ticket-request.mjs` from
+the real first-party-origin Chromium tab. That helper bounds the *entire*
+`POST /ticket` response (network fetch **and** response-body parsing)
+to **18 seconds**, using an independent wall-clock deadline even if the
+browser fetch/body ignores abort. It requires HTTP **200**, a valid lowercase
+64-character one-use ticket, `protocol:'climboria-v1'`,
+`ttlSeconds:30`, and a <=4KB response body. An unavailable, malformed,
+oversized or timed-out response fails the operator QA safely without
+opening a WebSocket; it never prints ticket bytes, JWTs or provider bodies.
+Offline `browser-ticket-request.test.mjs` tests fake healthy, rejected,
+stalled-fetch and stalled-body results. This guard does **not** modify
+the Worker, public config, the actual Game UI, or real staging deployment.
+Owner-approved two-account tests must still be run before activation.
+
 The Worker issues at most **two outstanding 30-second one-use tickets per
 registered Supabase account**, enforced in an atomic Durable Object storage
 transaction. A third still-pending request gets `HTTP 429
