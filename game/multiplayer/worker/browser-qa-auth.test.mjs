@@ -82,6 +82,11 @@ test('stalled sign-out is bounded; healthy sign-out and re-login recover indepen
  assert.equal(await ok.run({action:'sign-out',timeoutMs:20000}),true);
  const denied=browser({signOut:async()=>({error:{message:'private-token'}})});
  assert.equal(await denied.run({action:'sign-out',timeoutMs:20000}),false);
+ for(const empty of [undefined,null,{},false]){
+  const missing=browser({signOut:async()=>empty});
+  assert.equal(await missing.run({action:'sign-out',timeoutMs:20000}),false,
+   'missing sign-out result/error field must never count as authenticated logout');
+ }
 });
 
 test('invalid actions/timeouts and throwing provider fail safely, no credentials in errors',async()=>{
