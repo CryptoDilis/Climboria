@@ -1,0 +1,12 @@
+# Separate opt-in read-only supply service; never use the DEX/Swap, Game or auth Worker route.
+name = "climboria-token-supply-readonly"
+main = "index.mjs"
+compatibility_date = "2026-11-16"
+workers_dev = false
+
+# Deliberately NO route/custom_domain binding.
+# Provision supply.climboria.fun manually only after owner approval,
+# reviewed CI and a real staging supply/health inspection.
+#
+# Provide SOLANA_RPC_URL using Wrangler *secret* or Cloudflare dashboard.
+# Do NOT place credentials, API keys, or a provider URL with a token here.
