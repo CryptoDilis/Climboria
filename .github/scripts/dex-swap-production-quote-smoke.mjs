@@ -7,7 +7,7 @@
  */
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
-import { classifyQuoteJourneyRequest } from "./dex-swap-quote-request-guard.mjs";
+import { classifyQuoteJourneyRequest, KNOWN_CLOUDFLARE_BEACON } from "./dex-swap-quote-request-guard.mjs";
 
 const SITE = "https://climboria.fun";
 const API = "api.climboria.fun";
@@ -97,13 +97,23 @@ function assertQuoteRequest(url) {
   assert.equal(u.searchParams.get("outputMint"), USDC, "Quote used wrong output mint");
   assert.equal(u.searchParams.get("amount"), RAW, "Browser sent an incorrect raw amount");
 }
-async function assertPage(browser, { name, path, viewport, isMobile = false }) {
+async function assertPage(browser, { name, path, viewport, isMobile = false, blockAnalytics = false }) {
   const page = await browser.newPage({ viewport, isMobile, hasTouch: isMobile });
   const forbidden = [];
   const unexpectedApiWrites = [];
   const unexpectedSiteSwapWrites = [];
   const unexpectedProviderLoads = [];
   const knownCloudflareAnalyticsLoads = [];
+  let blockedAnalyticsLoads = 0;
+  // Negative-control browser route is opt-in and affects this isolated QA tab
+  // only. Live Cloudflare analytics configuration and site HTML are untouched.
+  // Pin the exact observed beacon; changed vendor URLs must FAIL the script guard.
+  if (blockAnalytics) {
+    await page.route(KNOWN_CLOUDFLARE_BEACON, async route => {
+      blockedAnalyticsLoads += 1;
+      await route.abort("blockedbyclient");
+    });
+  }
   const errors = [];
   const dexMarketResponses = [];
   page.on("pageerror", error => errors.push(error.message));
@@ -223,6 +233,11 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
       "Quote-only page must not fetch unapproved cross-origin executable scripts/workers or Jupiter provider assets");
     console.log("INFO " + name + " observed known Cloudflare analytics script " +
       knownCloudflareAnalyticsLoads.length + " time(s); this is NOT Jupiter/provider integrity approval.");
+    if (blockAnalytics) {
+      assert.equal(blockedAnalyticsLoads, 1,
+        name + " telemetry-block resilience test must actually intercept exactly one known beacon load");
+      console.log("PASS " + name + " exact telemetry JS blocked in the isolated QA browser; this does NOT disable production analytics.");
+    }
     assert.equal(errors.length, 0, "Browser errors: " + errors.join(" | "));
     console.log("PASS " + name + " real browser quote via Jupiter proxy; exact raw units, no transaction.");
 
@@ -256,7 +271,18 @@ try {
   await assertPage(browser, { name: "Swap mobile", path: "/swap/", viewport: { width: 390, height: 844 }, isMobile: true });
   await assertPage(browser, { name: "DEX desktop", path: "/dex/", viewport: { width: 1440, height: 900 } });
   await assertPage(browser, { name: "DEX mobile", path: "/dex/", viewport: { width: 390, height: 844 }, isMobile: true });
-  console.log("PASS: production read-only DEX/Swap browser acceptance (no live execution claimed).");
+  // Operator decision support: verify quote UX still works when the observed
+  // third-party telemetry JS is denied in this test tab (no production change).
+  // Normal unblocked 4/4 journeys above remain the primary live acceptance.
+  await assertPage(browser, {
+    name: "Swap desktop (analytics blocked)", path: "/swap/", viewport: { width: 1440, height: 900 },
+    blockAnalytics: true
+  });
+  await assertPage(browser, {
+    name: "DEX mobile (analytics blocked)", path: "/dex/", viewport: { width: 390, height: 844 },
+    isMobile: true, blockAnalytics: true
+  });
+  console.log("PASS: production read-only DEX/Swap browser acceptance + isolated telemetry-denied resilience (no live execution claimed).");
 } finally {
   await browser.close();
 }

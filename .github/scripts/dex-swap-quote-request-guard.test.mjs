@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { classifyQuoteJourneyRequest as classify } from "./dex-swap-quote-request-guard.mjs";
+import { classifyQuoteJourneyRequest as classify, KNOWN_CLOUDFLARE_BEACON } from "./dex-swap-quote-request-guard.mjs";
 
 function inspect(url, method = "GET", resourceType = "fetch") {
   return classify({ url, method, resourceType });
@@ -49,6 +49,8 @@ test("spoofed domains do not inherit first-party or Cloudflare-script trust", ()
 
 test("only exact observed Cloudflare analytics script is exempted, not arbitrary vendors", () => {
   const exact = "https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092";
+  assert.equal(KNOWN_CLOUDFLARE_BEACON, exact,
+    "Known telemetry URL must be reviewed explicitly before any version change");
   assert.equal(inspect(exact, "GET", "script").knownCloudflareAnalyticsScript, true);
   assert.equal(inspect(exact, "GET", "script").unexpectedExternalExecutable, false);
   assert.equal(inspect(exact + "?changed=1", "GET", "script").unexpectedExternalExecutable, true);
