@@ -367,12 +367,15 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   },'server must stamp authenticated player identity, never trust user-supplied name or damage');
   assert.equal(c1.packets.at(-1).type,'world-chat','sender receives confirmed chat echo');
   const chatCount=c2.packets.length;
-  c1.dispatch('message',JSON.stringify({type:'world-chat',text:'spam'}));
+  c1.dispatch('message',JSON.stringify({type:'world-chat',text:'spam',chatSeq:8}));
   assert.equal(c1.packets.at(-1).reason,'world-chat-rate-limit');
+  assert.equal(c1.packets.at(-1).chatSeq,8,'cooldown rejection must identify the exact chat request');
   assert.equal(c2.packets.length,chatCount,'rate-limited content never broadcasts');
   for(const text of ['', 'line\nfeed', 'x'.repeat(161),'€'.repeat(130)]){
-   c1.dispatch('message',JSON.stringify({type:'world-chat',text}));
+   c1.dispatch('message',JSON.stringify({type:'world-chat',text,chatSeq:9}));
    assert.equal(c1.packets.at(-1).reason,'world-chat-invalid-text');
+   assert.equal(c1.packets.at(-1).chatSeq,9,
+    'server-invalid chat must echo its validated correlation sequence');
    assert.equal(c2.packets.length,chatCount);
   }
   for(const chatSeq of [-1,0,2147483648,1.5,'7',null]){
