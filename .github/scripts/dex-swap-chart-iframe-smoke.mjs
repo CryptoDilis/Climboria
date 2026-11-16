@@ -39,6 +39,15 @@ async function checkChart(test) {
   try {
     const response = await page.goto(SITE + test.path, { waitUntil: "domcontentloaded", timeout: 60000 });
     assert.ok(response?.ok(), test.name + " main page failed to load");
+    if (test.mobile && test.name.startsWith("Swap")) {
+      // Mobile Swap starts on its trade workspace; chart is intentionally hidden
+      // until a real user selects the Chart tab in the bottom workspace nav.
+      const chartTab = page.locator('[data-workspace-tab="chart"]');
+      await chartTab.waitFor({ state: "visible", timeout: 15000 });
+      await chartTab.click({ timeout: 15000 });
+      assert.equal(await chartTab.getAttribute("aria-selected"), "true",
+        "Swap mobile Chart tab must be active before checking the iframe");
+    }
     const chart = page.locator(test.chart);
     const link = page.locator(test.link);
     await chart.waitFor({ state: "visible", timeout: 30000 });
