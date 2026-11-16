@@ -182,6 +182,8 @@ test('World Chat is room-gated, server-confirmed, safe as text and cleared on di
  sendButton.click();
  assert.equal(socket.sent.at(-1).type,'world-chat');
  assert.equal(socket.sent.at(-1).text,'Kamusta all <script>alert(1)</script>');
+ assert.equal(input.value,'Kamusta all <script>alert(1)</script>',
+  'an unconfirmed send must preserve the typed draft for server rejection');
  assert.equal(log.children.length,0,'local send is not forged as server acknowledgement');
  socket.onmessage({data:JSON.stringify({
   type:'world-chat',id:peer.id,name:'Explorer B',
@@ -191,12 +193,23 @@ test('World Chat is room-gated, server-confirmed, safe as text and cleared on di
  assert.equal(log.children[0].textContent,'Explorer B: Welcome <img onerror=alert(1)>');
  assert.equal(log.children[0].children.length,0,
   'remote HTML-like text is never interpreted into child elements');
+ assert.equal(input.value,'Kamusta all <script>alert(1)</script>',
+  'a different explorer speaking must not confirm or clear our unsent draft');
  socket.onmessage({data:JSON.stringify({
   type:'world-chat',id:'s_'+'d'.repeat(32),name:'Unknown',text:'forged',at:1730000000000
  })});
  assert.equal(log.children.length,1,'unknown room peers may not inject text');
  socket.onmessage({data:JSON.stringify({type:'rejected',reason:'world-chat-rate-limit'})});
  assert.ok(notice.textContent.includes('wait'));
+ assert.equal(input.value,'Kamusta all <script>alert(1)</script>',
+  'server chat cooldown rejection must not destroy typed messages');
+ const sentAfterRejected=socket.sent.length;
+ sendButton.click();
+ assert.equal(socket.sent.length,sentAfterRejected+1,'rejected chat can be manually retried once');
+ socket.onmessage({data:JSON.stringify({type:'world-chat',id:'s_'+'c'.repeat(32),
+  name:'Explorer A',text:'Kamusta all <script>alert(1)</script>',at:1730000000000})});
+ assert.equal(input.value,'','only a real trusted self echo confirms delivery');
+ assert.equal(log.children.length,2,'transcript contains only authenticated server echoes');
  socket.onmessage({data:JSON.stringify({type:'player-left',id:peer.id})});
  assert.ok(panel.children[0].textContent.includes('1 ONLINE'));
  socket.close();
@@ -228,8 +241,48 @@ test('World Chat preserves text rejected by UTF-8 wire limit or Unicode controls
  input.value='Cafe\u0301';sendButton.click();
  assert.equal(socket.sent.at(-1).type,'world-chat');
  assert.equal(socket.sent.at(-1).text,'Café','NFC normalization matches the room server');
- assert.equal(input.value,'','only a successfully transmitted message clears the input');
+ assert.equal(input.value,'Cafe\u0301','before server-confirmed echo, valid text stays editable');
  assert.equal(log.children.length,0,'client never fabricates an unconfirmed chat echo');
+ socket.onmessage({data:JSON.stringify({type:'world-chat',id,name:'Explorer A',text:'Café',at:1730000000000})});
+ assert.equal(input.value,'','only the real normalized server echo clears the matching draft');
+ assert.equal(log.children.length,1,'confirmed chat renders once from the real server');
+});
+
+test('World Chat one-message in flight avoids duplicates and preserves edits on server confirmation',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const socket=h.clients[0];socket.onopen();
+ const id='s_'+'c'.repeat(32);
+ socket.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
+ socket.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
+ const panel=h.created.find(el=>el.id==='climboria-world-chat-panel');
+ const controls=panel.children[2],input=controls.children[0];
+ const sendButton=controls.children[1],notice=panel.children[3],log=panel.children[1];
+ input.value='First message';sendButton.click();
+ const sent=socket.sent.length;
+ assert.equal(input.value,'First message','WebSocket.send is not a delivery acknowledgement');
+ sendButton.click();
+ assert.equal(socket.sent.length,sent,'double-click cannot create duplicate pending messages');
+ assert.match(notice.textContent,/Waiting for the server/);
+ input.value='Second draft while waiting';
+ socket.onmessage({data:JSON.stringify({type:'world-chat',id,
+  name:'Explorer A',text:'First message',at:1730000000000})});
+ assert.equal(input.value,'Second draft while waiting',
+  'a genuine first-message acknowledgement cannot erase newer typed edits');
+ assert.equal(log.children.length,1);
+ sendButton.click();
+ assert.equal(socket.sent.at(-1).text,'Second draft while waiting');
+ assert.equal(input.value,'Second draft while waiting');
+ socket.onmessage({data:JSON.stringify({type:'rejected',reason:'world-chat-invalid-text'})});
+ assert.equal(input.value,'Second draft while waiting','async server invalid-text rejection preserves draft');
+ assert.match(notice.textContent,/still editable/);
+ sendButton.click(); // explicit user retry, never background resend
+ assert.equal(socket.sent.at(-1).text,'Second draft while waiting');
+ assert.equal(h.runNextTimer(),8000,'pending confirmation is bounded');
+ assert.equal(input.value,'Second draft while waiting','missing acknowledgement never erases text');
+ assert.match(notice.textContent,/Not confirmed/);
+ socket.close();
+ assert.equal(input.value,'','logout/disconnect clears temporary room-only draft for privacy');
+ assert.equal(log.children.length,0,'chat transcript is room-scoped');
 });
 
 test('Supabase anonymous guest with a valid access token does not open an authenticated Game room',async()=>{
