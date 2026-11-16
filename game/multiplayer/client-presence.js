@@ -355,12 +355,14 @@
    showStatus('spawn-rejected','MULTIPLAYER · RETURN TO SANCTUARY');
   }
   else if(msg.type==='rejected'&&['world-chat-rate-limit','world-chat-invalid-text'].includes(msg.reason)){
-   // Rate-limit errors are asynchronous and may arrive after WebSocket.send.
-   // Preserve the typed text for correction/retry instead of deleting it.
-   clearPendingWorldChat();
-   if(chatUi)chatUi.notice.textContent=msg.reason==='world-chat-rate-limit'?
-    'Please wait a moment before chatting again. Your message is still editable.':
-    'Message not accepted. Use 1–160 readable characters. Your text is still editable.';
+   // Only the server rejection for THIS request can release its pending
+   // state. A late error for an earlier retry cannot cancel a newer send.
+   if(pendingWorldChat && msg.chatSeq===pendingWorldChat.chatSeq){
+    clearPendingWorldChat();
+    if(chatUi)chatUi.notice.textContent=msg.reason==='world-chat-rate-limit'?
+     'Please wait a moment before chatting again. Your message is still editable.':
+     'Message not accepted. Use 1–160 readable characters. Your text is still editable.';
+   }
   }
   else if(msg.type==='player-punched'&&validId(msg.id)&&known.has(msg.id))renderer.punch(msg.id);
   else if(typeof msg.type==='string'&&msg.type.startsWith('duel-'))onDuelPacket(msg);
