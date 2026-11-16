@@ -295,6 +295,14 @@ export class JarrellRoom {
     if(typeof message.text!=='string'||message.text.length>320){
      socket.send(JSON.stringify({type:'rejected',reason:'world-chat-invalid-text'}));return;
     }
+    // Optional integer sequence keeps older/manual QA clients compatible,
+    // while new browser clients can distinguish a late echo of an identical
+    // previous send from acknowledgement of the current draft.
+    const chatSeq=message.chatSeq;
+    if(chatSeq!==undefined &&
+       (!Number.isSafeInteger(chatSeq)||chatSeq<1||chatSeq>2147483647)){
+     socket.send(JSON.stringify({type:'rejected',reason:'world-chat-invalid-text'}));return;
+    }
     const text=message.text.trim().normalize('NFC');
     // Unicode and emoji are allowed; control/bidi characters and oversized
     // messages are rejected before reaching other authenticated peers.
@@ -311,7 +319,8 @@ export class JarrellRoom {
     this.lastChat.set(id,now);
     // Include the sender for a server-confirmed echo; never accept client IDs,
     // account info, timestamps, player HP, wallet, inventory or payment fields.
-    this.room.broadcast({type:'world-chat',id,name:member.name,text,at:now});
+    this.room.broadcast({type:'world-chat',id,name:member.name,text,at:now,
+     ...(chatSeq===undefined?{}:{chatSeq})});
     return;
    }
    // Authenticated duel invitations are CONSENT SIGNALS, not HP damage.
