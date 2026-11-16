@@ -561,6 +561,47 @@ test('temporary room capacity 429 displays busy without fake peers then retries 
  assert.equal(h.adds.length,0,'connected roster contains no invented peers');
 });
 
+test('stalled initial Supabase session lookup times out and retries without ghost room state',async()=>{
+ let releaseSession;
+ const gate=new Promise(resolve=>{releaseSession=resolve});
+ const h=harness(true,{sessionGate:gate});
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
+ assert.equal(h.clients.length,0,'no socket before a verified session');
+ assert.equal(h.runNextTimer(),8000,'session lookup must have an independent finite deadline');
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline');
+ assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,0,
+  'stalled identity must not create an authenticated room ticket');
+ assert.equal(h.clients.length,0,'timeout must not create fake remote peers');
+ releaseSession(); // A very late first lookup must not create an old-epoch socket.
+ await flush();
+ assert.equal(h.clients.length,0);
+ assert.equal(h.runNextTimer(),10000,'unavailable session should retry, not strand CONNECTING');
+ await flush();
+ await waitFor(()=>h.clients.length===1);
+ assert.equal(h.clients.length,1,'second fresh authenticated session may recover');
+ assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,1);
+});
+
+test('logout cancels an unresolved initial session deadline and prevents late stale socket',async()=>{
+ let releaseSession;
+ const gate=new Promise(resolve=>{releaseSession=resolve});
+ const h=harness(true,{sessionGate:gate});
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
+ assert.ok(h.timers.some(timer=>timer.delay===8000&&!timer.cancelled));
+ h.authChange(null);
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'login-required');
+ assert.equal(h.timers.filter(timer=>timer.delay===8000&&!timer.cancelled).length,0,
+  'logout must cancel a stale session timer');
+ releaseSession();
+ await flush();
+ assert.equal(h.clients.length,0,'logged-out identity must never open a WebSocket');
+ assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,0);
+});
+
 test('session transition during unresolved getSession never authenticates an old player',async()=>{
  let releaseSession;
  const sessionGate=new Promise(resolve=>{releaseSession=resolve});
