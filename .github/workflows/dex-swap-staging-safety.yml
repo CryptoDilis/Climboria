@@ -9,6 +9,7 @@ on:
       - ".github/scripts/dex-swap-staging-runtime-policy.test.mjs"
       - ".github/scripts/dex-swap-staging-off-browser-smoke.mjs"
       - ".github/scripts/dex-swap-staging-approval-browser-smoke.mjs"
+      - ".github/scripts/dex-swap-synthetic-runtime-integrity-browser-smoke.mjs"
       - ".github/scripts/dex-swap-jupiter-source-provenance.mjs"
       - ".github/scripts/dex-swap-jupiter-source-provenance.test.mjs"
       - ".github/scripts/dex-swap-jupiter-runtime-contract-audit.mjs"
@@ -72,6 +73,10 @@ jobs:
         run: |
           node --check .github/scripts/dex-swap-staging-approval-browser-smoke.mjs
           node .github/scripts/dex-swap-staging-approval-browser-smoke.mjs
+      - name: Synthetic transitive app SRI and CSS SHA-384 runtime (6 cases x Swap/DEX x desktop/mobile)
+        run: |
+          node --check .github/scripts/dex-swap-synthetic-runtime-integrity-browser-smoke.mjs
+          node .github/scripts/dex-swap-synthetic-runtime-integrity-browser-smoke.mjs
 
   source-provenance:
     name: Compare immutable Jupiter source assets against pinned staging CDN hashes
