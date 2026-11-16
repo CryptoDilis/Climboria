@@ -46,6 +46,15 @@ function matchesQuote(response) {
   const u = new URL(response.url());
   return u.protocol === "https:" && u.hostname === API && u.pathname === "/api/swap/quote";
 }
+// Independent of the UI formatting helper: assert actual human-visible USDC
+// quote amounts without floating-point rounding or locale-dependent commas.
+function canonicalUsdcFromRaw(raw) {
+  assert.match(raw, /^[1-9][0-9]*$/, "Expected canonical positive raw USDC units");
+  const units = BigInt(raw);
+  const decimals = (units % 1000000n).toString().padStart(6, "0").replace(/0+$/, "");
+  return (units / 1000000n).toString() + (decimals ? "." + decimals : "");
+}
+
 function assertQuoteRequest(url) {
   const u = new URL(url);
   assert.equal(u.searchParams.get("inputMint"), SOL, "Quote used wrong input mint");
@@ -114,7 +123,10 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
       null, { timeout: 15000 }
     );
     const results = await page.locator("#quoteResults").innerText();
-    assert.match(results, /Estimated output/i);
+    const outputRow = page.locator("#quoteResults .quote-result").filter({ hasText: "Estimated output" });
+    assert.equal(await outputRow.count(), 1, name + " must show exactly one estimated-output row");
+    assert.equal((await outputRow.locator("b").innerText()).trim(), canonicalUsdcFromRaw(data.outAmount),
+      name + " displayed estimated USDC output must exactly match Jupiter's raw quote");
 
     // Production quote preview is not a wallet-approval guarantee. Verify that
     // the displayed read-only minimum reflects Jupiter's actual raw amount,
@@ -127,21 +139,18 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
       /^[1-9][0-9]*$/.test(rawMinimum) &&
       BigInt(rawMinimum) <= BigInt(data.outAmount);
     if (validMinimum) {
-      // SOL -> canonical USDC uses exactly 6 decimals. Independent BigInt
-      // formatting avoids reproducing a frontend Number rounding defect.
-      const units = BigInt(rawMinimum);
-      const fractional = (units % 1000000n).toString().padStart(6, "0").replace(/0+$/, "");
-      const expectedMinimum = (units / 1000000n).toString() + (fractional ? "." + fractional : "");
-      assert.equal(minimumText, expectedMinimum,
+      assert.equal(minimumText, canonicalUsdcFromRaw(rawMinimum),
         name + " displayed minimum must exactly match the provider's raw USDC floor");
+      console.log("PASS " + name + " minimum received: verified raw provider threshold.");
     } else {
       assert.equal(minimumText, "Unavailable · not verified",
         name + " must not invent a minimum received if Jupiter has no valid threshold");
       assert.match(await page.locator("#quoteStatus").innerText(), /minimum received was not verified/i,
         name + " must disclose when a minimum received cannot be verified");
+      console.log("PASS " + name + " minimum received: explicit unverified fallback.");
     }
     assert.match(results, /Not requested/);
-    console.log("PASS " + name + " exact minimum-received preview or explicit unverified fallback.");
+    console.log("PASS " + name + " exact estimated output and minimum-received read-only preview.");
     assert.equal(forbidden.length, 0, "Unexpected wallet/order/execute request: " + forbidden.join(", "));
     assert.deepEqual(unexpectedProviderLoads, [], "Quote-only page must not fetch wallet-capable provider scripts");
     assert.equal(errors.length, 0, "Browser errors: " + errors.join(" | "));
