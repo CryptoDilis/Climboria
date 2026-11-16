@@ -111,6 +111,16 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
     await page.locator("#getQuote").click({ timeout: 25000 });
     const response = await quotePromise;
     assertQuoteRequest(response.request().url());
+    assert.equal(response.request().method(), "GET", name + " read-only quote must use GET");
+    // No-store is mandatory: a browser/CDN must not reuse a stale quote on
+    // the next click, even while the local 30s quote-preview TTL is enforced.
+    const quoteHeaders = response.headers();
+    assert.match(quoteHeaders["cache-control"] || "", /(?:^|,)\s*no-store\s*(?:,|$)/i,
+      name + " Jupiter quote response must be no-store");
+    assert.match(quoteHeaders["content-type"] || "", /^application\/json(?:\s*;|$)/i,
+      name + " Jupiter quote response must be JSON");
+    assert.equal((quoteHeaders["x-content-type-options"] || "").toLowerCase(), "nosniff",
+      name + " Jupiter quote must prohibit MIME sniffing");
     const data = await response.json().catch(() => null);
     assert.equal(response.status(), 200, name + " real Jupiter quote unavailable (HTTP " + response.status() + "; error " + String(data?.error || "unknown") + ")");
     assert.equal(data?.inAmount, RAW, name + " provider returned mismatched raw input");
