@@ -24,7 +24,8 @@ export async function requestBoundedGameQaAuth({action,email,password,timeoutMs=
     auth.signInWithPassword({email,password}):auth.signOut()),
    timeout
   ]);
-  if(action==='sign-out')return result?.error==null;
+  // Do not mistake an empty/undefined provider reply for successful logout.
+  if(action==='sign-out')return !!result&&typeof result==='object'&&result.error===null;
   const session=result?.data?.session;
   const user=session?.user||result?.data?.user;
   return result?.error==null&&!!session?.access_token&&
