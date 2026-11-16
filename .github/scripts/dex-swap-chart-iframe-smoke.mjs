@@ -138,7 +138,7 @@ async function checkChart(test) {
       else if (diagnostic.visibleCanvasCount || diagnostic.largeSvgCount)
         console.log("INFO " + test.name + " graphical DOM surface found; actual candle data/pixels not independently verified.");
       else
-        console.log("WARN " + test.name + " no sizeable chart canvas/SVG after bounded hydration; embedded candle rendering unverified.");
+        console.log("WARN " + test.name + " no sizeable canvas/SVG in OUTER vendor iframe after bounded hydration; nested iframe is inspected separately and candles remain unverified.");
     } else {
       console.log("WARN " + test.name + " provider frame DOM unavailable; embedded candle rendering unverified.");
     }
