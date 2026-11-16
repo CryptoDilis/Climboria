@@ -115,7 +115,33 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
     );
     const results = await page.locator("#quoteResults").innerText();
     assert.match(results, /Estimated output/i);
+
+    // Production quote preview is not a wallet-approval guarantee. Verify that
+    // the displayed read-only minimum reflects Jupiter's actual raw amount,
+    // or unmistakably says unverified when the provider supplies no valid floor.
+    const minimumRow = page.locator("#quoteResults .quote-result").filter({ hasText: "Minimum received" });
+    assert.equal(await minimumRow.count(), 1, name + " must display one minimum-received preview row");
+    const minimumText = (await minimumRow.locator("b").innerText()).trim();
+    const rawMinimum = data?.otherAmountThreshold;
+    const validMinimum = typeof rawMinimum === "string" &&
+      /^[1-9][0-9]*$/.test(rawMinimum) &&
+      BigInt(rawMinimum) <= BigInt(data.outAmount);
+    if (validMinimum) {
+      // SOL -> canonical USDC uses exactly 6 decimals. Independent BigInt
+      // formatting avoids reproducing a frontend Number rounding defect.
+      const units = BigInt(rawMinimum);
+      const fractional = (units % 1000000n).toString().padStart(6, "0").replace(/0+$/, "");
+      const expectedMinimum = (units / 1000000n).toString() + (fractional ? "." + fractional : "");
+      assert.equal(minimumText, expectedMinimum,
+        name + " displayed minimum must exactly match the provider's raw USDC floor");
+    } else {
+      assert.equal(minimumText, "Unavailable · not verified",
+        name + " must not invent a minimum received if Jupiter has no valid threshold");
+      assert.match(await page.locator("#quoteStatus").innerText(), /minimum received was not verified/i,
+        name + " must disclose when a minimum received cannot be verified");
+    }
     assert.match(results, /Not requested/);
+    console.log("PASS " + name + " exact minimum-received preview or explicit unverified fallback.");
     assert.equal(forbidden.length, 0, "Unexpected wallet/order/execute request: " + forbidden.join(", "));
     assert.deepEqual(unexpectedProviderLoads, [], "Quote-only page must not fetch wallet-capable provider scripts");
     assert.equal(errors.length, 0, "Browser errors: " + errors.join(" | "));
