@@ -6,7 +6,11 @@
   const decimalsEl = document.getElementById('climbSupplyDecimals');
   const sourceEl = document.getElementById('climbSupplySource');
   const addressEl = document.getElementById('climbOfficialCa');
-  if (!button || !valueEl || !decimalsEl || !sourceEl || !addressEl) return;
+  const stateEl = document.getElementById('climbSupplyState');
+  const checkedEl = document.getElementById('climbSupplyChecked');
+  const panelEl = document.getElementById('climbSupplyPanel');
+  if (!button || !valueEl || !decimalsEl || !sourceEl || !addressEl ||
+      !stateEl || !checkedEl || !panelEl) return;
 
   // The query is always tied to the exact owner-announced mint displayed on the
   // page; never take a wallet, URL query, or user-provided arbitrary mint.
@@ -36,52 +40,80 @@
     return { formatted: integer + (fraction ? '.' + fraction : ''), decimals, slot };
   }
 
+  const DEADLINE_MS = 6500;
   let busy = false;
   let lastRequest = 0;
+
+  function setState(state, label) {
+    stateEl.dataset.state = state;
+    stateEl.textContent = label;
+    panelEl.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
+  }
+  function unavailable(message) {
+    valueEl.textContent = 'Unavailable';
+    decimalsEl.textContent = '—';
+    setState('unavailable', 'RPC unavailable');
+    sourceEl.textContent = message;
+    checkedEl.textContent = 'No current on-chain supply snapshot is available.';
+    button.textContent = 'TRY AGAIN ↗';
+  }
   async function loadSupply() {
     if (busy) return;
     if (addressEl.textContent.trim() !== officialMint) {
-      valueEl.textContent = 'Unavailable';
-      sourceEl.textContent = 'Official mint mismatch. No supply data displayed.';
-      decimalsEl.textContent = '—';
+      unavailable('The displayed mint does not match the official project announcement.');
       return;
     }
-    // Avoid rapid repeated calls against a public shared Solana RPC endpoint.
     if (Date.now() - lastRequest < 5000) return;
     lastRequest = Date.now();
     busy = true;
     button.disabled = true;
+    button.textContent = 'CHECKING…';
+    setState('loading', 'Request in progress');
     valueEl.textContent = 'Checking…';
     decimalsEl.textContent = '—';
-    sourceEl.textContent = 'Reading finalized mint supply from Solana mainnet…';
+    sourceEl.textContent = 'Checking finalized Solana data. This lookup will stop after 7 seconds.';
+    checkedEl.textContent = 'Waiting for a finalized RPC response…';
+
+    // AbortController alone cannot guarantee a visible response if a browser
+    // stalls before dispatch. Race the entire fetch + JSON processing against
+    // a fixed deadline. Late responses cannot overwrite a newer UI state.
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6500);
+    let timeoutId;
     try {
-      const response = await fetch(rpcEndpoint, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          jsonrpc: '2.0', id: 'climb-supply', method: 'getTokenSupply',
-          params: [officialMint, {commitment: 'finalized'}]
-        }),
-        signal: controller.signal,
-        cache: 'no-store',
-        credentials: 'omit'
+      const request = (async () => {
+        const response = await fetch(rpcEndpoint, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            jsonrpc: '2.0', id: 'climb-supply', method: 'getTokenSupply',
+            params: [officialMint, {commitment: 'finalized'}]
+          }),
+          signal: controller.signal,
+          cache: 'no-store',
+          credentials: 'omit'
+        });
+        if (!response.ok) throw new Error('RPC request failed');
+        return parseSupply(await response.json());
+      })();
+      const deadline = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => {
+          controller.abort();
+          reject(new Error('Request timed out'));
+        }, DEADLINE_MS);
       });
-      if (!response.ok) throw new Error('RPC response unavailable');
-      const data = parseSupply(await response.json());
+      const data = await Promise.race([request, deadline]);
       valueEl.textContent = data.formatted;
       decimalsEl.textContent = String(data.decimals);
+      setState('loaded', 'RPC snapshot loaded');
       sourceEl.textContent = 'Solana mainnet finalized RPC snapshot · slot ' +
         data.slot.toLocaleString('en-US') + '. Not a circulating-supply audit.';
+      checkedEl.textContent = 'Browser checked at ' + new Date().toLocaleString() +
+        ' · Snapshot may change with mint activity.';
       button.textContent = 'REFRESH SUPPLY ↗';
     } catch {
-      valueEl.textContent = 'Unavailable';
-      decimalsEl.textContent = '—';
-      sourceEl.textContent = 'Supply could not be retrieved from public Solana RPC. Verify the mint in Solscan; no estimate is shown.';
-      button.textContent = 'TRY AGAIN ↗';
+      unavailable('Public Solana RPC did not return a usable finalized snapshot. Browser CORS, rate limits or timeout may block it; check the mint on Solscan.');
     } finally {
-      clearTimeout(timeout);
+      clearTimeout(timeoutId);
       busy = false;
       button.disabled = false;
     }
