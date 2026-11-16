@@ -502,8 +502,8 @@ test("a background tab return immediately hides mounted provider until fresh no-
   assert.equal(stops,1);
   assert.equal(calls,3);
   assert.match(ui.status.textContent,/Rechecking provider release approval/);
-  assert.equal(listeners.focus(),undefined,"concurrent focus must not open duplicate check");
-  assert.equal(calls,3);
+  await listeners.focus();
+  assert.equal(calls,3,"concurrent focus must not open duplicate check");
   resolvePending(response(false));
   await pending;
   assert.equal(ui.panel.hidden,true);
