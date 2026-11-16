@@ -9,6 +9,7 @@ on:
     branches: [main, codex/jarrell-natural-wilderness-pass, codex/mountain-stability-v2, codex/ten-summit-expedition, codex/hero-banga-mountain-results, fix/browser-smoke-homepage-check]
     paths:
       - "index.html"
+      - "climb-token-supply.js"
       - "dex/**"
       - "swap/**"
       - "launchpad/**"
@@ -22,6 +23,7 @@ on:
     branches: [main]
     paths:
       - "index.html"
+      - "climb-token-supply.js"
       - "dex/**"
       - "swap/**"
       - "launchpad/**"
@@ -62,6 +64,9 @@ jobs:
           npm init -y
           timeout --signal=TERM --kill-after=20s 2m npm install --no-save playwright
           timeout --signal=TERM --kill-after=20s 4m npx playwright install chromium
+
+      - name: Syntax-check read-only CLIMB supply client
+        run: node --check climb-token-supply.js
 
       - name: Start local web server
         run: |
