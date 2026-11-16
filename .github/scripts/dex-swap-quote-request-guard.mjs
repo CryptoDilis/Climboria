@@ -7,7 +7,7 @@
  */
 const SITE_ORIGIN = "https://climboria.fun";
 const API_HOST = "api.climboria.fun";
-const KNOWN_CLOUDFLARE_BEACON =
+export const KNOWN_CLOUDFLARE_BEACON =
   "https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092";
 const SWAP_PRIVATE_ROUTE = /^\/api\/swap\/(?:order|execute)(?:\/|$)/;
 const READ_METHODS = new Set(["GET", "HEAD"]);
