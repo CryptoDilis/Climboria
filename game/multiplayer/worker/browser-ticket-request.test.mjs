@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 import {requestGameRoomTicket} from './browser-ticket-request.mjs';
 
 const BASE='https://rooms.climboria.fun/';
@@ -30,6 +31,24 @@ test('registered player ticket QA accepts one exact validated server-issued tick
  }}));
  assert.equal(output,ticket);
  assert.equal(calls,1);
+});
+
+test('Playwright can serialize ticket requester into a standalone browser-like context',async()=>{
+ let called=false;
+ const context=vm.createContext({
+  URL,AbortController,setTimeout,clearTimeout,
+  fetch:async(url,options)=>{
+   called=true;
+   assert.equal(url.href,'https://rooms.climboria.fun/ticket');
+   assert.equal(options.headers.Authorization,'Bearer '+jwt);
+   return result(valid);
+  }
+ });
+ // page.evaluate serializes the imported function. This VM has no imports
+ // or Node globals, only capabilities available on a Chromium web page.
+ const browserFunction=vm.runInContext('('+requestGameRoomTicket.toString()+')',context);
+ assert.equal(await browserFunction(request({fetchImpl:undefined})),ticket);
+ assert.equal(called,true);
 });
 
 test('Game browser ticket refuses non-200, fake shape, oversized and malformed body',async()=>{
