@@ -7,8 +7,8 @@ import {TextEncoder} from 'node:util';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[]}={}){
- const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses]};
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[]}={}){
+ const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses],ticketPayloads:[...ticketPayloads]};
  const authListeners=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],calls=[],timers=[],created=[];
  const createElement=tag=>{
@@ -51,6 +51,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
    if(state.ticketStatuses.length)return {ok:false,status:state.ticketStatuses.shift()};
    if(state.ticketFailures-->0)return {ok:false};
    return {ok:true,json:async()=>{if(ticketJSONGate)await ticketJSONGate;
+    if(state.ticketPayloads.length)return state.ticketPayloads.shift();
     return {ticket:'b'.repeat(64),protocol:'climboria-v1',ttlSeconds:30};
    }};
   }
@@ -504,6 +505,41 @@ test('actual player ticket JSON parser cannot hang connecting, then allows retry
  await flush();
  await waitFor(()=>h.clients.length===1);
  assert.equal(h.clients.length,1);
+});
+
+test('invalid successful HTTP room-ticket envelopes never open a socket and retry safely',async()=>{
+ const valid={ticket:'b'.repeat(64),protocol:'climboria-v1',ttlSeconds:30};
+ const forged=[
+  {label:'wrong protocol',payload:{...valid,protocol:'wrong-room'}},
+  {label:'wrong TTL',payload:{...valid,ttlSeconds:31}},
+  {label:'upper-case token',payload:{...valid,ticket:'B'.repeat(64)}},
+  {label:'truncated token',payload:{...valid,ticket:'b'.repeat(63)}},
+  {label:'missing envelope',payload:null}
+ ];
+ for(const {label,payload} of forged){
+  const h=harness(true,{ticketPayloads:[payload]});
+  await flush();
+  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline',label);
+  assert.equal(h.clients.length,0,label+' must not create a WebSocket');
+  assert.equal(h.adds.length,0,label+' must not create a phantom peer');
+  assert.equal(h.runNextTimer(),10000,label+' should safely retry');
+  await flush();
+  await waitFor(()=>h.clients.length===1);
+  assert.equal(h.clients.length,1,label+' must recover only with a fresh verified ticket');
+ }
+});
+
+test('HTTP 401 and 503 ticket failures never open sockets and retry without false online state',async()=>{
+ for(const status of [401,503]){
+  const h=harness(true,{ticketStatuses:[status]});
+  await flush();
+  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline','HTTP '+status);
+  assert.equal(h.clients.length,0,'HTTP '+status+' cannot open a room socket');
+  assert.equal(h.runNextTimer(),10000,'HTTP '+status+' is unavailable, not room capacity');
+  await flush();
+  await waitFor(()=>h.clients.length===1);
+  assert.equal(h.clients.length,1,'healthy retry should recover after HTTP '+status);
+ }
 });
 
 test('temporary room capacity 429 displays busy without fake peers then retries successfully',async()=>{
