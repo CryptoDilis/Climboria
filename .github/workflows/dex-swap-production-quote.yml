@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - ".github/scripts/dex-swap-production-quote-smoke.mjs"
+      - ".github/scripts/dex-swap-quote-request-guard.mjs"
+      - ".github/scripts/dex-swap-quote-request-guard.test.mjs"
       - ".github/workflows/dex-swap-production-quote.yml"
   # Avoid workflow_run on GitHub's built-in Pages dynamic workflow: actual
   # Pages successes have not emitted that trigger in this repository.
@@ -15,6 +17,8 @@ on:
       - "swap/**"
       - "swap-config.js"
       - ".github/scripts/dex-swap-production-quote-smoke.mjs"
+      - ".github/scripts/dex-swap-quote-request-guard.mjs"
+      - ".github/scripts/dex-swap-quote-request-guard.test.mjs"
       - ".github/workflows/dex-swap-production-quote.yml"
   # Periodically verify real production read-only quotes even when no DEX files change.
   # The job never connects a wallet, signs a transaction, or calls execution.
@@ -54,8 +58,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate smoke syntax
-        run: node --check .github/scripts/dex-swap-production-quote-smoke.mjs
+      - name: Validate smoke syntax and negative-control request policy
+        run: |
+          node --check .github/scripts/dex-swap-production-quote-smoke.mjs
+          node --check .github/scripts/dex-swap-quote-request-guard.mjs
+          node --test .github/scripts/dex-swap-quote-request-guard.test.mjs
 
   production-browser:
     name: Verify deployed DEX and Swap Jupiter quote UI
