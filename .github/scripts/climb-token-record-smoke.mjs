@@ -82,7 +82,10 @@ try{
 
    for(const url of ['https://pump.fun/coin/'+MINT,'https://solscan.io/token/'+MINT]){
     const link=record.locator('a[href="'+url+'"]');
-    assert.equal(await link.count(),1,'external link must use identical owner-announced mint');
+    // Solscan is deliberately linked twice: the original CA verification
+    // action and the always-visible supply fallback. Both must share the mint.
+    const countExpected=url.includes('solscan.io/token/')?2:1;
+    assert.equal(await link.count(),countExpected,'external links must use identical owner-announced mint');
     assert.equal(await link.getAttribute('target'),'_blank');
     assert.match(await link.getAttribute('rel'),/noopener/);
    }
