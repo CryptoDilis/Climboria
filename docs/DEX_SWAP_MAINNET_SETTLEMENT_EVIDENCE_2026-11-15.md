@@ -48,3 +48,35 @@ This checkpoint transcribes prior owner-supplied signatures and already-recorded
 ## 2026-11-16 owner clarification — additional evidence may be in Codex / ChatGPT Work
 
 After this reconciliation was drafted, the owner explicitly stated that the **remaining acceptance evidence was already completed**, possibly in Codex or ChatGPT Work rather than committed to this repository. This entry confirms that **absence from the consulted GitHub staging file is not evidence that testing was not done**. The exact artifact/session location and whether it binds to the released candidate have not been independently inspected from this chat. Preserve the owner’s completion report, avoid duplicated real-money tests, and reconcile original screenshots/logs/review before closing any safety or rollout gate. No wallet transaction, staging bundle, or production switch was changed by this correction.
+
+
+## 2026-11-16 — Five owner-supplied wallet, Jupiter and Explorer screenshots reviewed
+
+**Provenance:** The owner uploaded FIVE screenshots in the 2026-11-16 ChatGPT conversation about the historical November 15 test. This documentation records only what is legible in those owner-provided images, compared against the already-recorded public Solana transaction receipts above. **The screenshot binary files are conversation attachments, NOT committed to this GitHub repository; don't claim images are retrievable from GitHub.** No new trade or new live RPC verification was performed in this step.
+
+**Swap SOL to USDC — pre-confirmation Phantom preview:**
+- Phantom `Confirm Transaction`, network **Solana**, destination shown as temporary **`animals-navy-warriors-earlier.trycloudflare.com`** staging domain. Phantom warns this domain is new and balances are estimates.
+- Estimated changes displayed: **-0.005 SOL** and **+0.353846 USDC**. Displayed network fee **< 0.00001 SOL**.
+- This is a real-looking wallet-confirmation UI screenshot, not by itself proof the user clicked Confirm; the later settled transaction and Jupiter completion receipt supply settlement evidence.
+
+**Swap SOL to USDC — Jupiter completion screenshot:**
+- In the Climboria page's in-site Jupiter provider panel, green check and **`Swapped 0.004999 SOL to 0.352733 USDC`**, `Platform Fee 0.02%`, `Network Fee 0.000006364 SOL`, and Solana Explorer link. This corroborates the finalized 0.352733 USDC amount and 6,364-lamport chain fee above.
+- A separate **Solana Explorer `Success` / `Finalized (MAX Confirmations)`** screenshot visibly shows the **same original Swap transaction signature** `5qizkUeng2abJnZ3VtXU3Kdz1SbeNva8jKbCKe2cCUzeMa3bS59v8VtiHceRHsnHZxfj4FJmCtiiX9FjvMGmm5TF`, slot **469,561,132**, fee **0.000006364 SOL**, timestamp **2026-11-15 02:25:10 UTC**, version v0.
+
+**Signature DEX USDC to SOL — pre-confirmation Phantom preview:**
+- Phantom `Confirm Transaction` on Solana via the same temporary staging domain, with estimated changes **-0.352743 USDC** and **+0.004924 SOL**, displayed network fee **< 0.00001 SOL**.
+- Again Phantom identifies estimates, not a binding minimum-output quote.
+
+**Signature DEX USDC to SOL — Jupiter completion screenshot:**
+- Embedded provider panel headed `Swap on Climboria · Jupiter provider`; green check and **`Swapped 0.352743 USDC to 0.004933645 SOL`** (gross output shown by Jupiter), `Platform Fee 0.02%`, `Network Fee 0.000009844 SOL`, Solana Explorer link.
+- The previous finalized RPC report reconciles the different gross received figure shown by Jupiter against the fee-payer's actual **0.004922815 SOL net** balance change, inclusive of the Jupiter fee and network fee. These are *not* contradictory measurements and must not be conflated.
+- This new screenshot batch does not itself show a second Solana Explorer details page, but the earlier GitHub staging report already contains the independently finalized **DEX** transaction signature `3ctyBwrwWo1EckaRGgfoLRtffHsHL1YPpvgF1SYLptPdVHJtNxaovE37gjrbZe1uNqajSTpWQCJUNPknfwA2deJd`.
+
+**What these screenshots establish and do not establish:**
+- They visually corroborate TWO real staging wallet-confirmation previews and TWO SUCCESS Jupiter completion receipts, and the Swap on-chain finalized Explorer receipt. Together with the original GitHub two-signature finalized RPC reconciliation, this is **strong evidence the owner already completed both mainnet staging settlement tests**. Do not request repeat wallet swaps as a matter of routine.
+- They show **estimated received** in Phantom, **not** the exact pre-approval Jupiter `minimum received` (slippage floor). The fact that Swap's Phantom estimate (**0.353846 USDC**) exceeds the actual fill (**0.352733 USDC**) is **not by itself a slippage-floor violation**: an estimate and a minimum received are different quantities. Neither floor nor signed preapproval acceptance can be reconstructed from these five screenshots.
+- Post-settlement Jupiter `Platform Fee 0.02%` is a **provider-displayed fee**, not proof Climboria collected a trading fee. Public Climboria fee collection remains disabled.
+- These images do **not** establish approval or immutability of the complete vendor runtime/JS/CSS/font/third-party network provenance, vendor license/attribution, or exact-current-**production** build. The temporary `trycloudflare.com` origin was an isolated staging tunnel, and Phantom rightly warned the owner to verify it before approving transactions.
+- The owner **reports** that additional acceptance evidence, possibly including preapproval and device checks, was completed with Codex or ChatGPT Work. The five shared images should not erase that report; seek the original matching artifact to independently mark that specific separate gate complete.
+
+**NEXT:** Preserve historical mainnet staging receipts as DONE. Reconcile any additional completed owner Codex/Work artifacts (minimum received, full before-approval fees, device checks, rollback), then resolve remaining provider runtime integrity/permissions and exact-release rollout review. **No additional owner-funded transaction is necessary to repeat the already established historical settlement fact.** No deployment/config/security switches changed here.
