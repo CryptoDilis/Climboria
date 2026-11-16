@@ -208,9 +208,10 @@ test('authenticated room ticket fails closed on stalled Supabase fetch, JSON or 
   }};
   const late=await bounded(gateway.fetch(request(),env(blockedStub)));
   assert.equal(late.status,503,'hung Durable Object ticket issuer cannot hold login');
-  assert.deepEqual(await late.json(),{error:'room-unavailable'});
+  const lateBody=await late.text();
+  assert.deepEqual(JSON.parse(lateBody),{error:'room-unavailable'});
   assert.equal(ticketSignal?.aborted,true);
-  assert.equal((await late.text()).includes(token),false,'never reveal bearer token');
+  assert.equal(lateBody.includes(token),false,'never reveal bearer token');
   lateResolve(new Response('{}',{status:201}));
   assert.equal(late.status,503,'late DO success cannot turn an expired request into a ticket');
 
