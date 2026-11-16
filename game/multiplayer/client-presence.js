@@ -435,7 +435,9 @@
    // deadline, and cancel the wait on sign-out or account switching.
    let sessionTimer,cancelSessionWait;
    const sessionDeadline=new Promise((_,reject)=>{
-    cancelSessionWait=()=>reject(Error('Game session lookup superseded'));
+    // Clear synchronously on account change: do not leave the stale 8s
+    // timer runnable until Promise.race's next microtask/finally callback.
+    cancelSessionWait=()=>{clearTimeout(sessionTimer);reject(Error('Game session lookup superseded'))};
     sessionTimer=setTimeout(()=>reject(Error('Game session lookup timed out')),8000);
    });
    sessionLookupCancel=cancelSessionWait;
