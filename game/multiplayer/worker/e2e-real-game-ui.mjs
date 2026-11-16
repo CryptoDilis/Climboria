@@ -23,6 +23,7 @@
  */
 import {chromium} from 'playwright';
 import {verifyGameRoomPreflight} from './staging-preflight.mjs';
+import {requestBoundedGameQaAuth} from './browser-qa-auth.mjs';
 import {mkdir} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 
@@ -93,12 +94,11 @@ async function openExplorer(account,emulateMobile){
   undefined,{timeout:30000}
  );
  // Use the real Supabase Auth client instead of constructing fake user IDs.
- const signedIn=await page.evaluate(async ({email,password})=>{
-  const auth=window.__CLIMBORIA_GAME_SAVE_CLIENT?.auth;
-  if(!auth)return false;
-  const result=await auth.signInWithPassword({email,password});
-  return !result.error&&!!result.data?.session?.access_token;
- },{email:account.email,password:account.password});
+ // A stalled provider response may ignore page/Playwright timeouts; bound the
+ // entire browser-side Supabase sign-in even when its promise never resolves.
+ const signedIn=await page.evaluate(requestBoundedGameQaAuth,{
+  action:'sign-in',email:account.email,password:account.password,timeoutMs:20000
+ });
  check(signedIn,'Real Supabase QA account sign-in failed (credentials not printed)');
  await page.waitForFunction(
   ()=>document.documentElement.dataset.climboriaMultiplayer==='connected',
@@ -229,9 +229,8 @@ try{
  }
  // A real Supabase logout must promptly clear the room and allow
  // reauthentication without reloading or duplicating peers.
- const loggedOut=await b.evaluate(async()=>{
-  const result=await window.__CLIMBORIA_GAME_SAVE_CLIENT.auth.signOut();
-  return !result.error;
+ const loggedOut=await b.evaluate(requestBoundedGameQaAuth,{
+  action:'sign-out',timeoutMs:20000
  });
  check(loggedOut,'QA account sign-out failed');
  await b.waitForFunction(
@@ -239,10 +238,10 @@ try{
    window.__CLIMBORIA_GAME_PEERS?.audit?.().peers===0,
   undefined,{timeout:25000});
  await assertPeer(a,0);
- const signedBackIn=await b.evaluate(async ({email,password})=>{
-  const result=await window.__CLIMBORIA_GAME_SAVE_CLIENT.auth.signInWithPassword({email,password});
-  return !result.error&&!!result.data?.session?.access_token;
- },{email:accounts[1].email,password:accounts[1].password});
+ const signedBackIn=await b.evaluate(requestBoundedGameQaAuth,{
+  action:'sign-in',email:accounts[1].email,password:accounts[1].password,
+  timeoutMs:20000
+ });
  check(signedBackIn,'QA re-login failed');
  await b.waitForFunction(
   ()=>document.documentElement.dataset.climboriaMultiplayer==='connected',
