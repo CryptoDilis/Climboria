@@ -162,6 +162,21 @@ GAME_QA_LANDSCAPE_MOBILE=1 node game/multiplayer/worker/e2e-real-game-ui.mjs
 unset GAME_QA_A_EMAIL GAME_QA_A_PASSWORD GAME_QA_B_EMAIL GAME_QA_B_PASSWORD
 ```
 
+**First-party QA Supabase authentication deadline:** `e2e-real-game-ui.mjs`
+now serializes `browser-qa-auth.mjs` into each approved Playwright
+`page.evaluate` call. Initial password sign-in, sign-out, and same-tab
+re-login each have an independent **20-second** wall-clock bound including
+provider response, even if the provider promise hangs without honoring
+cancellation. Only verified registered non-anonymous session identities with
+access tokens count as success. The helper returns only true/false for
+successful/denied auth; it never returns or logs JWTs, passwords, account IDs
+or raw Supabase errors. Deadline failure stops the **private** operator QA
+and closes its browser contexts via the script's existing `finally`; this
+is local wait cancellation only, not a claim that Supabase supports abort.
+The offline `browser-qa-auth.test.mjs` VM suite tests healthy, anonymous,
+invalid, provider-thrown and never-settling auth. CI tests only simulated
+responses, not actual Supabase staging sign-in.
+
 The script connects to the actual **https://climboria.fun/game/play.html**
 in two isolated Chromium browser contexts. It routes only each QA browser's
 `/game/multiplayer/client-config.json` response to the owned secure
