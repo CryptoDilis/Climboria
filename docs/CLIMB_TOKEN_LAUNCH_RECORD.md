@@ -4,7 +4,17 @@
 **Last website update:** 2026-11-16  
 **Source:** Climboria project owner's public launch announcement and the official CA already present in the homepage announcement, committed as `8e0bf6db1fa669aa851153810d9fa8d808f63acc` on 2026-11-15.
 
-## READ-ONLY CACHED SUPPLY WORKER — STAGING PREPARATION (2026-11-16)
+## ISOLATED CLIMB SUPPLY CACHE — MERGED, NOT DEPLOYED (2026-11-16)
+
+- **Game/DEX/Swap isolation:** [PR #519](https://github.com/CryptoDilis/Climboria/pull/519) merged to `main` via squash commit **`8691478165a4e80e22670861bb6bda9681f4bd42`**, exact reviewed PR head `59e914798ca364643b8fc93d50d2d8c82c041488`. Changed paths only `.github/workflows/climb-supply-worker-tests.yml`, `docs/CLIMB_TOKEN_LAUNCH_RECORD.md`, and `site/supply-worker/{README.md,index.mjs,index.test.mjs,wrangler.toml}`. No other existing services or homepage requests changed.
+- **Exact-head CI verified:** [CLIMB Supply Read-Only Worker Tests #43782960967](https://github.com/CryptoDilis/Climboria/actions/runs/43782960967) **SUCCESS**, [Validate Climboria #43782960995](https://github.com/CryptoDilis/Climboria/actions/runs/43782960995) **SUCCESS**. Includes synthetic validated response, cache reuse, strict origin/method/route rejection and sanitized upstream failures. These are test fixtures, **not independently observed live supply or deployed production results**.
+- **Postmerge main checked:** `site/supply-worker/index.mjs` exists with bound owner-announced CLIMB mint, finalized raw-u64 Solana supply, 75s success-only cache and secret `env.SOLANA_RPC_URL`. `site/supply-worker/wrangler.toml` has `workers_dev = false` and **no route/custom-domain binding**. Public `climb-token-supply.js` still queries its previously configured public Solana RPC endpoint only when visitors click LOAD ON-CHAIN SUPPLY. This PR **does not switch the homepage to the edge cache**.
+- **Deployment unknown:** no actual dedicated Cloudflare Worker deployed, no verified `supply.climboria.fun` DNS/health/cached-live RPC, no independently verified numerical $CLIMB supply, and no production GitHub Pages browser evidence. Do not mark supply cache, numerical tokenomics, or `climboria.fun` changes as live.
+- **EXACT NEXT:** Owner approves separate Cloudflare Worker/environment, sets `SOLANA_RPC_URL` as secret (no value in repository or chat), deploys using the isolated `site/supply-worker/` without impacting existing routes, binds a dedicated owner-controlled supply hostname, checks real `GET /ready` 200 and `GET /api/climb/supply` finalized response/slot against an independent Solana explorer, verifies 75s cache and 503 failure behavior. **Only after evidence** open site-only follow-up PR wiring `climb-token-supply.js` to that confirmed endpoint with strict response validation, resilient fallback tests, and real production/browser acceptance. If backend owner approval or credentials unavailable, keep existing direct RPC + Solscan user fallback; never hardcode supply figures.
+
+---
+
+## READ-ONLY CACHED SUPPLY WORKER — historical staging preparation (2026-11-16)
 
 - **Goal:** reduce false `Unavailable` results from direct public Solana RPC browser CORS or throttling without hardcoding a CLIMB supply figure, claiming circulating supply, or touching the existing Cloudflare Workers for Game, DEX or Swap.
 - **Branch:** `site/read-only-climb-supply-cache-2026-11-16`. Adds an **isolated** read-only Cloudflare Worker in `site/supply-worker/` with its own `wrangler.toml`, no public routes, `workers_dev=false`, and a comprehensive manual owner deployment/rollback guide. It is not connected to live DNS or GitHub Pages; public homepage remains on its existing user-triggered direct RPC behavior until a separate owner-approved activation.
