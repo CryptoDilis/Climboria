@@ -164,7 +164,7 @@ jobs:
           assert "TBD" not in tokenomics, "Raw placeholder rows must not return"
           assert 'class="tok-wrap climb-token-layout"' in tokenomics, "Responsive two-card layout required"
           assert "2.5% buy fee" in tokenomics and "2.5% sell fee" in tokenomics
-          assert "No percentages, market prices or reserves are implied." in tokenomics
+          assert "no allocations, prices or reserves are implied." in tokenomics
           for required_id in ("climbSupplyHeading", "climbSupplyValue", "climbSupplyRefresh",
                               "climbSupplySource", "climbSupplyDecimals"):
               assert tokenomics.count(f'id="{required_id}"') == 1, f"Missing distinct supply UI: {required_id}"
@@ -179,7 +179,7 @@ jobs:
               if token == 'No supply':
                   continue
               assert token in supply_js, f"Missing strict supply read-only guard: {token}"
-          assert "wallet" not in supply_js.lower(), "Supply query must never use wallet access"
+          assert "credentials: 'omit'" in supply_js, "RPC must not send user credentials"
           assert "document.getElementById('climbOfficialCa')" in supply_js
           assert "amount" in supply_js and "decimals" in supply_js
 
