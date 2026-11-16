@@ -69,6 +69,25 @@ GAME_USER_B_JWT="<private-ephemeral-JWT-B>" \
 node game/multiplayer/worker/e2e-two-accounts.mjs
 ```
 
+### Finite signed-in ticket issuance
+
+The external `POST /ticket` path has **separate bounded upstream stages**:
+**6.5 seconds** for Supabase registered-user verification, including its JSON
+response, and **3.5 seconds** for authenticated room Durable Object ticket
+issuance. A provider, response body, or DO stub that hangs despite an abort
+must yield a safe **HTTP 503** (`auth-service-unavailable` or
+`room-unavailable`) rather than leaving a joining player indefinitely
+on connecting. Timeouts never return ticket bytes or Supabase bearer tokens.
+A healthy registered-account request still returns one 30-second ticket;
+capacity limits still return HTTP 429 `room-busy` and must not be bypassed.
+
+These are **individual upstream stage timeouts**, not a promise that slow
+clients, malformed incoming streamed request bodies, or all network paths
+finish inside 10 seconds. Treat repeat timeouts as a staging availability
+failure, not public multiplayer readiness; keep `client-config.json` OFF.
+Offline Worker tests use deliberately unresolved fake upstreams, not real
+Supabase/Cloudflare calls.
+
 The Worker issues at most **two outstanding 30-second one-use tickets per
 registered Supabase account**, enforced in an atomic Durable Object storage
 transaction. A third still-pending request gets `HTTP 429
