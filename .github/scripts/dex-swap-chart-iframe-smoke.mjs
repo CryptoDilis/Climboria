@@ -159,12 +159,46 @@ async function checkChart(test) {
             };
             const text = (document.title || "") + " " +
               (document.body?.textContent || "").slice(0, 1200);
+            const canvases = [...document.querySelectorAll("canvas")];
+            const sizeable = canvases.filter(large);
+            // Best-effort numerical evidence that a chart-sized canvas has
+            // varying painted pixels. No screenshots, pixel values, account
+            // data, chart content or vendor HTML leave the browser test.
+            // A tainted/WebGL canvas may be unreadable; do not count as blank.
+            let readable = 0;
+            let unreadable = 0;
+            let varyingPaint = 0;
+            let maxDistinctSamples = 0;
+            for (const canvas of sizeable.slice(0, 4)) {
+              try {
+                if (canvas.width < 16 || canvas.height < 16) continue;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) { unreadable++; continue; }
+                const colors = new Set();
+                for (const fx of [0.1, 0.3, 0.5, 0.7, 0.9]) {
+                  for (const fy of [0.1, 0.3, 0.5, 0.7, 0.9]) {
+                    const x = Math.min(canvas.width - 1, Math.floor(canvas.width * fx));
+                    const y = Math.min(canvas.height - 1, Math.floor(canvas.height * fy));
+                    colors.add([...ctx.getImageData(x, y, 1, 1).data].join(","));
+                  }
+                }
+                readable++;
+                maxDistinctSamples = Math.max(maxDistinctSamples, colors.size);
+                if (colors.size >= 3) varyingPaint++;
+              } catch {
+                unreadable++; // CORS/security or transient vendor redraw
+              }
+            }
             return {
               bodyPresent: Boolean(document.body),
-              canvas: document.querySelectorAll("canvas").length,
-              largeCanvas: [...document.querySelectorAll("canvas")].filter(large).length,
+              canvas: canvases.length,
+              largeCanvas: sizeable.length,
               svg: document.querySelectorAll("svg").length,
               largeSvg: [...document.querySelectorAll("svg")].filter(large).length,
+              readableCanvas: readable,
+              unreadableCanvas: unreadable,
+              varyingPaintCanvas: varyingPaint,
+              maxDistinctPixelSamples: maxDistinctSamples,
               likelyChallenge: /just a moment|checking your browser|verify you are human|attention required|access denied|captcha/i.test(text)
             };
           });
@@ -175,8 +209,10 @@ async function checkChart(test) {
       }));
       console.log("INFO " + test.name + " nested vendor frame diagnostic: " +
         JSON.stringify({ totalDirectChildren: providerFrame.childFrames().length, sampled: snapshots }) + ".");
-      if (snapshots.some(x => x.largeCanvas || x.largeSvg))
-        console.log("INFO " + test.name + " nested frame has a sizeable graphic surface, NOT verified candle pixels or market data.");
+      if (snapshots.some(x => x.varyingPaintCanvas > 0))
+        console.log("INFO " + test.name + " nested canvas has varying sampled paint, NOT independently verified candles or correct market data.");
+      else if (snapshots.some(x => x.largeCanvas || x.largeSvg))
+        console.log("WARN " + test.name + " nested frame has sizeable graphics but no readable varying paint evidence; actual candles unverified.");
       else if (snapshots.some(x => x.likelyChallenge))
         console.log("WARN " + test.name + " nested vendor frame shows a browser challenge signal.");
       else if (nested.length)
