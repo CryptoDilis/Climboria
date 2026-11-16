@@ -20,6 +20,15 @@ on:
   # The job never connects a wallet, signs a transaction, or calls execution.
   schedule:
     - cron: '23 */6 * * *'
+  # Backup trigger: this repository's separate Live Site Smoke Test has
+  # independently observed successful schedule events. Run this read-only
+  # DEX/Swap canary after that workflow finishes ONLY when its own event
+  # was "schedule"; unrelated pushes, manual runs and Pages events are excluded.
+  # This does NOT prove GitHub will deliver either future trigger.
+  workflow_run:
+    workflows: ["Climboria Live Site Smoke Test"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -35,6 +44,9 @@ concurrency:
 jobs:
   syntax:
     name: Validate read-only browser smoke
+    # A normal Live Site Smoke Test can also run after Pages/push/manual events;
+    # only its genuine scheduled event is eligible for the DEX/Swap backup.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.event == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -47,7 +59,7 @@ jobs:
 
   production-browser:
     name: Verify deployed DEX and Swap Jupiter quote UI
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'schedule')
     needs: syntax
     runs-on: ubuntu-latest
     timeout-minutes: 15
