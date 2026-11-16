@@ -33,5 +33,10 @@ jobs:
           node --check site/supply-worker/index.test.mjs
       - name: Read-only supply cache, CORS and validation regression
         run: node --test site/supply-worker/index.test.mjs
+      - name: Test static snapshot publisher without network access
+        run: |
+          node --check site/supply-worker/publish-static.mjs
+          node --check site/supply-worker/publish-static.test.mjs
+          node --test site/supply-worker/publish-static.test.mjs
 
 # No secret access, no Cloudflare deployment action, and no live Solana RPC.
