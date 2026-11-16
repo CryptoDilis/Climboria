@@ -86,10 +86,10 @@ test("rejects non-finite OHLCV values", () => {
   assert.throws(() => normalize(response({ candles: [[3000000000, 1, "NaN", 0, 1, 1]] })), /non-finite/);
 });
 test("rejects impossible high/low relationships", () => {
-  assert.throws(() => normalize(response({ candles: [[3000000000, 2, 1, 0, 2, 1]] })), /high\/low invariants/);
+  assert.throws(() => normalize(response({ candles: [[3000000000, 2, 1, 0.5, 2, 1]] })), /high\/low invariants/);
 });
 test("rejects negative volume", () => {
-  assert.throws(() => normalize(response({ candles: [[3000000000, 1, 2, 0, 1, -1]] })), /negative volume/);
+  assert.throws(() => normalize(response({ candles: [[3000000000, 1, 2, 0.5, 1, -1]] })), /negative volume/);
 });
 test("rejects duplicate and unordered timestamps", () => {
   assert.throws(() => normalize(response({ candles: [rows[0], rows[0]] })), /strictly monotonic/);
