@@ -27,6 +27,7 @@ function assertQuoteRequest(url) {
 async function assertPage(browser, { name, path, viewport, isMobile = false }) {
   const page = await browser.newPage({ viewport, isMobile, hasTouch: isMobile });
   const forbidden = [];
+  const unexpectedProviderLoads = [];
   const errors = [];
   const dexMarketResponses = [];
   page.on("pageerror", error => errors.push(error.message));
@@ -34,6 +35,8 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
     const u = new URL(request.url());
     if (u.hostname === API && ["/api/swap/order", "/api/swap/execute"].includes(u.pathname))
       forbidden.push(request.method() + " " + u.pathname);
+    if (["terminal.jup.ag", "plugin.jup.ag"].includes(u.hostname))
+      unexpectedProviderLoads.push(u.hostname + u.pathname);
   });
   page.on("response", response => {
     try {
@@ -48,6 +51,12 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
     const config = await page.evaluate(() => window.CLIMBORIA_SWAP_CONFIG ?? null);
     assert.equal(config?.proxyEnabled, true, name + " must use server-side API proxy");
     assert.equal(config?.enabled, false, name + " wallet execution gate must remain disabled");
+    assert.equal(config?.managedProvider?.enabled, false, name + " third-party provider must remain disabled until approved");
+    assert.equal(config?.managedProvider?.runtimeApproved, false, name + " third-party runtime must not be approved");
+    assert.equal(config?.managedProvider?.scriptUrl, null, name + " provider script URL must not be configured");
+    assert.equal(config?.managedProvider?.integrity, null, name + " provider SRI must not be configured");
+    assert.equal(config?.revenue?.feeCollectionEnabled, false, name + " no platform trading fees may be collected");
+    assert.equal(config?.revenue?.feeRecipient, null, name + " fee recipient must remain unset");
 
     if (name.startsWith("DEX")) {
       await page.locator("#markets").waitFor({ state: "visible", timeout: 20000 });
@@ -80,6 +89,7 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
     assert.match(results, /Estimated output/i);
     assert.match(results, /Not requested/);
     assert.equal(forbidden.length, 0, "Unexpected wallet/order/execute request: " + forbidden.join(", "));
+    assert.deepEqual(unexpectedProviderLoads, [], "Quote-only page must not fetch wallet-capable provider scripts");
     assert.equal(errors.length, 0, "Browser errors: " + errors.join(" | "));
     console.log("PASS " + name + " real browser quote via Jupiter proxy; exact raw units, no transaction.");
 
