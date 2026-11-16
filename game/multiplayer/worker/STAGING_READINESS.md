@@ -49,6 +49,21 @@ prove Supabase login works, authenticated two-account movement/chat, 3D
 remote avatars or mobile FPS.** A successful deployment log alone is not a
 two-account acceptance result.
 
+**Operator preflight timeout:** Both manual QA scripts
+(`e2e-two-accounts.mjs` and `e2e-real-game-ui.mjs`) now reuse
+`staging-preflight.mjs`. Before any registered account session they
+verify that `/health` returns **HTTP 200** with `deployedGateway:true`
+and `gameplayPvP:false`, then `/ready` returns **HTTP 200** with
+`bindingsConfigured:true`, `durableObjectReady:true`, and
+`gameplayPvP:false`. The **entire** fetch and JSON body parsing is
+bounded by an external **18-second** deadline in socket-only QA and
+**15-second** deadline in WebGL UI QA, not merely an abort signal on
+`fetch`. The helper rejects malformed/oversized (over 8 KB) or
+unexpected responses and sanitizes errors without printing provider
+bodies, tokens, secrets or tickets. Its offline `staging-preflight.test.mjs`
+covers a hung response body, ignored abort, wrong service and false
+readiness. This is test infrastructure only, **not live staging proof**.
+
 With **two different registered (non-anonymous) test users**, sign in to
 the existing Game Supabase project and obtain short-lived account JWTs in a
 *private* local shell. **Supabase anonymous/guest sessions must not enter the

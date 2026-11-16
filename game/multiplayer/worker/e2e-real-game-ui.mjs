@@ -22,6 +22,7 @@
  * Desktop/mobile emulation cannot prove physical Android GPU/FPS behavior.
  */
 import {chromium} from 'playwright';
+import {verifyGameRoomPreflight} from './staging-preflight.mjs';
 import {mkdir} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 
@@ -42,15 +43,10 @@ check(accounts[0].email!==accounts[1].email,'Two DIFFERENT accounts are mandator
 check(!env.GAME_ROOM_BASE||env.GAME_ROOM_BASE===ROOM,
  'Real Game browser QA is restricted to owned rooms.climboria.fun; workers.dev is for socket-only QA');
 
-// A running Worker is not evidence of a functioning, authenticated room.
-for(const [path,expected] of [['health','deployedGateway'],['ready','bindingsConfigured']]){
- const res=await fetch(new URL(path,ROOM),{signal:AbortSignal.timeout(15000)});
- check(res.ok,'Game Worker '+path+' preflight failed; do not enable public multiplayer');
- const data=await res.json();
- check(data?.service==='climboria-game-room'&&data[expected]===true&&
-  (path!=='ready'||data.durableObjectReady===true)&&data.gameplayPvP===false,
-  'Unexpected or unready Game Worker '+path+' response');
-}
+// A running Worker is not evidence of functioning authenticated room storage.
+// Both the response AND full body validation are bound by one strict deadline.
+await verifyGameRoomPreflight(ROOM,'health',{deadlineMs:15000});
+await verifyGameRoomPreflight(ROOM,'ready',{deadlineMs:15000});
 const browser=await chromium.launch({
  headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']
 });
