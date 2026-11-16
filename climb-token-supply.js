@@ -77,6 +77,7 @@
   }
   function setState(state, label) {
     stateEl.dataset.state = state;
+    panelEl.dataset.state = state;
     stateEl.textContent = label;
     panelEl.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
   }
