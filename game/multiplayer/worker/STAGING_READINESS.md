@@ -81,10 +81,15 @@ on connecting. Timeouts never return ticket bytes or Supabase bearer tokens.
 A healthy registered-account request still returns one 30-second ticket;
 capacity limits still return HTTP 429 `room-busy` and must not be bypassed.
 
-These are **individual upstream stage timeouts**, not a promise that slow
-clients, malformed incoming streamed request bodies, or all network paths
-finish inside 10 seconds. Treat repeat timeouts as a staging availability
-failure, not public multiplayer readiness; keep `client-config.json` OFF.
+These are **individual upstream stage timeouts**, not a promise that all
+network paths finish inside 10 seconds. The small incoming ticket JSON body
+is separately capped at **1,024 UTF-8 bytes** and a **5-second wall-clock
+stream deadline**, even when the client never finishes sending bytes or the
+request stream ignores cancellation. Timed-out, malformed and oversized
+ticket bodies must fail closed as HTTP 400 `invalid-request` and never
+reach Supabase authentication or Durable Object ticket issuance. Treat
+repeated timeouts as a staging availability failure, not public multiplayer
+readiness; keep `client-config.json` OFF.
 Offline Worker tests use deliberately unresolved fake upstreams, not real
 Supabase/Cloudflare calls.
 
