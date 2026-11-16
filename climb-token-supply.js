@@ -17,6 +17,10 @@
   const officialMint = '9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump';
   const rpcEndpoint = 'https://api.mainnet-beta.solana.com';
   const snapshotPath = '/data/climb-supply.json'; // Same origin; GitHub Pages static file.
+  // Pages does not necessarily rebuild after a GITHUB_TOKEN-authored commit.
+  // A public read-only raw repository mirror exposes the latest published
+  // validated snapshot without needing another Cloudflare Worker or browser RPC.
+  const mirrorSnapshotUrl = 'https://raw.githubusercontent.com/CryptoDilis/Climboria/main/data/climb-supply.json';
   const maxRawSupply = 18446744073709551615n;
   const SNAPSHOT_MAX_AGE_MS = 4 * 60 * 60 * 1000;
   const DEADLINE_MS = 6500;
@@ -113,18 +117,34 @@
     valueEl.textContent = 'Checking…';
     sourceEl.textContent = 'Reading the latest finalized supply snapshot published by Climboria.';
     try {
-      const snapshot = await withDeadline(async signal => {
-        const response = await fetch(snapshotPath, {
-          method:'GET', signal, cache:'no-store', credentials:'omit', redirect:'error'
-        });
-        if (!response.ok) throw new Error('No published snapshot');
-        return parseStaticSnapshot(await response.json());
-      }, SNAPSHOT_DEADLINE_MS);
-      lastVerified = snapshot;
-      showSnapshot(snapshot, 'Finalized RPC snapshot',
-        'Verified-format server-side Solana mainnet supply snapshot');
+      let selected = null;
+      // Prefer own-origin Pages JSON. If GitHub Pages is behind its source
+      // branch, try the public main-branch file, which can be newer. In both
+      // cases the EXACT SAME schema/CA/freshness validation is mandatory.
+      for (const item of [
+        {url: snapshotPath, label:'Same-origin finalized Solana snapshot'},
+        {url: mirrorSnapshotUrl, label:'GitHub repository finalized Solana snapshot'}
+      ]) {
+        try {
+          const snapshot = await withDeadline(async signal => {
+            const response = await fetch(item.url, {
+              method:'GET', signal, cache:'no-store', credentials:'omit', redirect:'error'
+            });
+            if (!response.ok) throw new Error('No current snapshot at this source');
+            return parseStaticSnapshot(await response.json());
+          }, SNAPSHOT_DEADLINE_MS);
+          selected = {snapshot, label:item.label};
+          break;
+        } catch {
+          // A stale/missing/cross-origin-blocked source never creates a supply
+          // value; try the second source, then show an honest unavailable state.
+        }
+      }
+      if (!selected) throw new Error('No usable snapshot source');
+      lastVerified = selected.snapshot;
+      showSnapshot(selected.snapshot, 'Finalized RPC snapshot', selected.label);
     } catch {
-      unavailable('No fresh server-side supply snapshot is published yet. You can try a direct Solana lookup or verify this mint on Solscan.');
+      unavailable('No fresh finalized supply snapshot is reachable from Pages or GitHub. You can try the direct Solana lookup or check this exact mint on Solscan.');
     } finally {
       busy = false;
       button.disabled = false;
