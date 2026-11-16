@@ -11,6 +11,22 @@ try{
   const context=await browser.newContext({viewport:{width,height:850},deviceScaleFactor:1});
   const page=await context.newPage();
   try{
+   // Supply is read only and user-initiated. Keep all tests offline with
+   // explicitly synthetic RPC fixtures; never claim these values on mainnet.
+   let rpcRequests=0;
+   await page.route(/^https:\/\/api\.mainnet-beta\.solana\.com\/?$/, async route=>{
+    rpcRequests++;
+    const payload=JSON.parse(route.request().postData()||'{}');
+    assert.equal(payload.method,'getTokenSupply');
+    assert.equal(payload.params[0],MINT);
+    assert.equal(payload.params[1].commitment,'finalized');
+    const mode=width===390?'malformed':width===360?'unavailable':'valid';
+    if(mode==='unavailable')return route.fulfill({status:503,contentType:'application/json',body:'{"error":"mock-offline"}'});
+    const valid={jsonrpc:'2.0',id:'climb-supply',result:{context:{slot:345678901},value:{amount:'123456789000000',decimals:9,uiAmountString:'123456.789'}}};
+    if(mode==='malformed')valid.result.value.amount='123456.78';
+    return route.fulfill({status:200,contentType:'application/json',
+      headers:{'access-control-allow-origin':'*'},body:JSON.stringify(valid)});
+   });
    const response=await page.goto(base,{waitUntil:'domcontentloaded'});
    assert.equal(response?.ok(),true,'local Climboria homepage should load');
    const hero=page.locator('.hero');
@@ -24,6 +40,11 @@ try{
    assert.equal((await record.locator('#climbOfficialCa').textContent()).trim(),MINT);
    assert.equal((await section.textContent()).includes('TBD'),false,'no raw TBD placeholders');
    assert.match(await utility.textContent(),/NOT YET LIVE/);
+   assert.equal(await page.locator('#climbSupplyValue').textContent(),'Not loaded',
+    'supply must not be guessed or fetched without explicit user action');
+   assert.equal(rpcRequests,0,'homepage load must not contact external Solana RPC');
+   assert.equal(await page.locator('#climbSupplyDecimals').textContent(),'—');
+   assert.match(await page.locator('#climbSupplySource').textContent(),/No supply number is assumed/);
    // The owner-approved CA must remain reachable from the main nav, even
    // though the temporary launch hero announcement has been removed.
    const desktopNav=page.locator('#climbCaNavLink');
@@ -98,6 +119,27 @@ try{
    assert.equal(manualSelection,MINT,
      'when clipboard is blocked, automatically select exactly the displayed official CA');
    await record.scrollIntoViewIfNeeded();
+   const supplyButton=page.locator('#climbSupplyRefresh');
+   assert.equal(await supplyButton.count(),1);
+   await supplyButton.click();
+   await page.waitForFunction(()=>{
+    const value=document.querySelector('#climbSupplyValue')?.textContent;
+    return value==='123,456.789'||value==='Unavailable';
+   },null,{timeout:8000});
+   assert.equal(rpcRequests,1,'one user action must make exactly one read-only RPC request');
+   if(width===390||width===360){
+    assert.equal(await page.locator('#climbSupplyValue').textContent(),'Unavailable',
+      'malformed or unreachable RPC must fail closed, never show invented supply');
+    assert.equal(await page.locator('#climbSupplyDecimals').textContent(),'—');
+    assert.match(await page.locator('#climbSupplySource').textContent(),/no estimate is shown/i);
+   }else{
+    assert.equal(await page.locator('#climbSupplyValue').textContent(),'123,456.789',
+      'precision-safe response must use raw amount and decimals, not rounded uiAmount');
+    assert.equal(await page.locator('#climbSupplyDecimals').textContent(),'9');
+    assert.match(await page.locator('#climbSupplySource').textContent(),/finalized RPC snapshot · slot 345,678,901/);
+   }
+   assert.match(await page.locator('.climb-supply-meta').textContent(),/Not independently verified/,
+    'circulating supply cannot be inferred from total mint supply');
    await page.screenshot({path:'climb-tokenomics-'+width+'.png'});
    console.log('PASS permanent CLIMB Tokenomics layout, copy, links and CTA hierarchy at '+width+'px');
   }finally{await context.close()}
