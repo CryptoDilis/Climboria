@@ -119,9 +119,91 @@ async function checkChart(test) {
   }
 }
 
+
+/**
+ * Negative control against a false selected-pool chart. Provider data may
+ * contain only quote-side pools or return an HTTP failure. Neither should
+ * create an unrelated chart or remove the exact selected-token external link.
+ * The provider response is mocked ONLY inside these standalone QA tabs.
+ */
+async function checkSwapNoPoolFallback({ name, mobile, scenario }) {
+  const context = await browser.newContext({
+    viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 },
+    isMobile: mobile, hasTouch: mobile
+  });
+  const page = await context.newPage();
+  let providerIntercepted = 0;
+  const forbidden = [];
+  page.on("request", request => {
+    const u = new URL(request.url());
+    if (u.hostname === "api.climboria.fun" &&
+        (request.method() !== "GET" || ["/api/swap/order", "/api/swap/execute"].includes(u.pathname))) {
+      forbidden.push(request.method() + " " + u.pathname);
+    }
+  });
+  await page.route("https://api.dexscreener.com/latest/dex/tokens/" + SOL, async route => {
+    providerIntercepted++;
+    if (scenario === "quote-only-pool") {
+      await route.fulfill({
+        status: 200, contentType: "application/json",
+        body: JSON.stringify({ pairs: [{
+          chainId: "solana",
+          pairAddress: "11111111111111111111111111111111",
+          baseToken: { address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", symbol: "USDC" },
+          quoteToken: { address: SOL, symbol: "SOL" },
+          liquidity: { usd: 1000000 }
+        }] })
+      });
+    } else {
+      await route.fulfill({ status: 503, contentType: "application/json", body: '{"error":"provider unavailable"}' });
+    }
+  });
+  try {
+    const response = await page.goto(SITE + "/swap/", { waitUntil: "domcontentloaded", timeout: 60000 });
+    assert.ok(response?.ok(), name + " Swap page must load");
+    if (mobile) {
+      const tab = page.locator('[data-workspace-tab="chart"]');
+      await tab.waitFor({ state: "visible", timeout: 15000 });
+      await tab.click({ timeout: 15000 });
+      assert.equal(await tab.getAttribute("aria-selected"), "true");
+    }
+    await page.waitForFunction(() =>
+      document.querySelector("#selectedAssetNote")?.textContent?.startsWith("Chart unavailable:"),
+      null, { timeout: 20000 }
+    );
+    assert.ok(providerIntercepted > 0, name + " mock provider response must actually be exercised");
+    assert.equal(await page.locator("#selectedAssetChart").getAttribute("src"), null,
+      name + " may not render a misleading chart from an unavailable/base-mismatched provider pool");
+    assert.equal(await page.locator("#selectedChartEmpty").isVisible(), true,
+      name + " must show chart unavailable state");
+    const external = page.locator("#selectedChartExternal");
+    await external.waitFor({ state: "visible", timeout: 10000 });
+    assert.equal(await external.getAttribute("href"), chartOrigin + "/solana/" + SOL,
+      name + " must fall back to the selected mint, not a fabricated pool address");
+    assert.deepEqual(forbidden, [], name + " no quote-only test journey may write to the Swap API or request execution");
+
+    const popupPromise = context.waitForEvent("page", { timeout: 12000 });
+    await external.click({ timeout: 12000 });
+    const popup = await popupPromise;
+    try {
+      await popup.waitForURL(url => url.origin === chartOrigin && url.pathname === "/solana/" + SOL,
+        { timeout: 15000 });
+      assert.equal(new URL(page.url()).origin, SITE,
+        name + " external provider link must not replace Climboria");
+    } finally {
+      await popup.close().catch(() => {});
+    }
+    console.log("PASS " + name + ": no misleading pool chart, clear failure message, exact selected-mint external link opens in a new tab.");
+  } finally {
+    await context.close();
+  }
+}
+
 try {
   for (const journey of cases) await checkChart(journey);
-  console.log("PASS: four read-only chart iframe / external-fallback journeys. Provider candle rendering is separately qualified above.");
+  await checkSwapNoPoolFallback({ name: "Swap desktop (quote-only pool)", mobile: false, scenario: "quote-only-pool" });
+  await checkSwapNoPoolFallback({ name: "Swap mobile (provider unavailable)", mobile: true, scenario: "http-503" });
+  console.log("PASS: four real chart-link journeys plus two isolated no-pool/provider-failure fallback journeys. Provider candle rendering is separately qualified above.");
 } finally {
   await browser.close();
 }
