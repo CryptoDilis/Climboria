@@ -3,6 +3,12 @@ name: CLIMB Verified Static Supply Snapshot
 # GitHub Pages is static. Fetch finalized Solana supply from GitHub Actions,
 # not from visitor browsers. Fail closed; never publish guessed numbers.
 on:
+  push:
+    branches: [main]
+    paths:
+      - "site/supply-worker/publish-static.mjs"
+      - ".github/workflows/climb-supply-static-snapshot.yml"
+      - "climb-token-supply.js"
   schedule:
     - cron: "17 */2 * * *"
   workflow_dispatch:
