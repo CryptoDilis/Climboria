@@ -7,7 +7,7 @@ import {TextEncoder} from 'node:util';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[]}={}){
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[]}={}){
  const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses]};
  const authListeners=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],calls=[],timers=[],created=[];
@@ -50,11 +50,13 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
    if(ticketGate)await ticketGate;
    if(state.ticketStatuses.length)return {ok:false,status:state.ticketStatuses.shift()};
    if(state.ticketFailures-->0)return {ok:false};
-   return {ok:true,json:async()=>({ticket:'b'.repeat(64)})};
+   return {ok:true,json:async()=>{if(ticketJSONGate)await ticketJSONGate;
+    return {ticket:'b'.repeat(64),protocol:'climboria-v1',ttlSeconds:30};
+   }};
   }
   throw Error('unexpected fetch');
  };
- const context={window,document,fetch,URL,TextEncoder,WebSocket:Socket,
+ const context={window,document,fetch,URL,TextEncoder,AbortController,WebSocket:Socket,
   location:{href:'https://climboria.fun/game/play.html'},
   setTimeout:(fn,delay)=>{timers.push({fn,delay,cancelled:false});return timers.length},
   setInterval:()=>1,clearInterval(){},clearTimeout:id=>{if(timers[id-1])timers[id-1].cancelled=true},console};
@@ -459,6 +461,50 @@ test('temporary ticket request failure retries once and recovers without duplica
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
 });
 
+
+test('actual player ticket fetch cannot strand Game connecting when an upstream ignores abort',async()=>{
+ let release;
+ const gate=new Promise(resolve=>{release=resolve});
+ const h=harness(true,{ticketGate:gate});
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
+ assert.equal(h.clients.length,0,'no WebSocket exists without a verified ticket');
+ const first=h.calls.find(c=>c.url==='https://rooms.climboria.fun/ticket');
+ assert.ok(first?.options?.signal,'Game ticket fetch needs an abort signal');
+ assert.equal(h.runNextTimer(),18000,'ticket fetch and reply must share a finite deadline');
+ await flush();
+ assert.equal(first.options.signal.aborted,true,'deadline cancels hung authenticated fetch');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline');
+ assert.equal(h.clients.length,0,'a timed-out ticket cannot create a phantom room peer');
+ release(); // A very late first HTTP success cannot upgrade that failed attempt.
+ await flush();
+ assert.equal(h.clients.length,0);
+ assert.equal(h.runNextTimer(),10000,'transient unavailability retries rather than blocking indefinitely');
+ await flush();
+ await waitFor(()=>h.clients.length===1);
+ assert.equal(h.clients.length,1,'new independent verified ticket can connect on retry');
+});
+
+test('actual player ticket JSON parser cannot hang connecting, then allows retry',async()=>{
+ let release;
+ const gate=new Promise(resolve=>{release=resolve});
+ const h=harness(true,{ticketJSONGate:gate});
+ await flush();
+ const first=h.calls.find(c=>c.url==='https://rooms.climboria.fun/ticket');
+ assert.ok(first?.options?.signal);
+ assert.equal(h.runNextTimer(),18000,'JSON body parsing is in same 18-second timeout');
+ await flush();
+ assert.equal(first.options.signal.aborted,true);
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline');
+ assert.equal(h.clients.length,0);
+ release(); // Unblock the stale response after deadline.
+ await flush();
+ assert.equal(h.clients.length,0,'late parsed ticket cannot open a stale socket');
+ assert.equal(h.runNextTimer(),10000);
+ await flush();
+ await waitFor(()=>h.clients.length===1);
+ assert.equal(h.clients.length,1);
+});
 
 test('temporary room capacity 429 displays busy without fake peers then retries successfully',async()=>{
  const h=harness(true,{ticketStatuses:[429]});
