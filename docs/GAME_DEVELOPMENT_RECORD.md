@@ -1,6 +1,16 @@
 # Climboria Game Development Record
 
 
+## REAL GAME CLIENT MALFORMED-TICKET REGRESSIONS — DRAFT (2026-11-16)
+
+- **Predecessor merged:** Game-only [PR #558](https://github.com/CryptoDilis/Climboria/pull/558) exact PR head `ed64272a65ce28ff8c771e23ed75789e69185b91`, squash merged `5cadec9a7792333e78b9ef146715941a51efd198` with exact-head 3/3 SUCCESS. Record checkpoint on `main` `73c74ff4f14f93ef8733ecfbcbfc4537968edd5d`. Public Game config still `enabled:false`, `endpoint:null`.
+- **Scope:** isolated test-only branch `game/client-invalid-ticket-regression-2026-11-16`. Existing real browser client already rejects wrong room ticket protocol, non-30-second TTL and non-lowercase/non-64-hex tokens before WebSocket; its offline VM test did not explicitly enforce those cases. Added one-shot forged-success ticket payload support to the VM harness. New regression covers wrong protocol, TTL, uppercase/truncated token and missing envelope; each must show offline/no socket/no fabricated peer then retry 10 seconds and connect only after a new valid ticket. HTTP 401/503 responses must show offline, open no socket and independently retry; 429 is already separately required to show room-busy. **No runtime behavior changed.**
+- **Game-only source test commit:** `2fea2756f5d5087cb2588d80c79976342677b24b`; touched `game/multiplayer/client-presence.test.mjs` only before this record. No Game Worker deploy, public client config change, DEX, Swap, Launchpad, ClimbX, token, wallet, Game art, real HP damage or loot.
+- **Status:** new regression committed; PR / exact-head Gateway, Validate and full Jarrell desktop/mobile Smoke **NOT YET VERIFIED**. This is static/offline harness work, not two real QA accounts or public multiplayer.
+- **EXACT NEXT GAME ONLY:** open draft PR; inspect changed paths, run required 3/3 exact-head Game Gateway, Validate Climboria, full Jarrell desktop/mobile Gameplay Smoke. Fix any failures, keep public config OFF; only mark ready and squash merge after exact-head all success. Then checkpoint PR/CI/merge SHA in this record on `main`. Owner-gated real Cloudflare Game Worker DO `/ready`, two registered accounts, real 3D/WebGL remote peers/chat/reconnect and Android FPS/owner approval remain mandatory before activating multiplayer.
+
+---
+
 ## REAL PLAYER ROOM-TICKET DEADLINE — MERGED WITH EXACT-HEAD 3/3 CI (2026-11-16)
 
 - **Merged Game-only [PR #558](https://github.com/CryptoDilis/Climboria/pull/558):** source PR head `ed64272a65ce28ff8c771e23ed75789e69185b91` was checked unchanged, then marked ready and squash-merged to `main` as **`5cadec9a7792333e78b9ef146715941a51efd198`**. Exactly `game/multiplayer/client-presence.js`, `game/multiplayer/client-presence.test.mjs` and this Game development record were in the PR. Public Game release config stayed `enabled:false`, `endpoint:null`; no DEX, Swap, Launchpad, ClimbX, wallet, Game asset, Worker deploy, real combat damage or token changes.
