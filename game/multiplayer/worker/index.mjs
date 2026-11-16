@@ -9,7 +9,7 @@ import {ServerCombatState} from '../server-combat-state.mjs';
 
 const ROOM='jarrell-peak';
 const TRUSTED_ORIGINS=new Set(['https://climboria.fun','https://www.climboria.fun']);
-const MAX_AUTH_BYTES=4096,MAX_JSON_BYTES=1024,SESSION_TTL=30_000,MAX_PENDING=32,MAX_PENDING_PER_USER=2;
+const MAX_AUTH_BYTES=4096,MAX_JSON_BYTES=1024,BODY_READ_DEADLINE_MS=5000,SESSION_TTL=30_000,MAX_PENDING=32,MAX_PENDING_PER_USER=2;
 // Bound abusive socket bursts; normal Game presence publishes movement at ~4 Hz.
 const MESSAGE_WINDOW_MS=1000,MAX_MESSAGES_PER_WINDOW=24;
 // Authenticated, room-only WORLD CHAT. Never persist chat or trust client identity.
@@ -44,30 +44,45 @@ async function withGatewayDeadline(task,ms){
 async function readBoundedJSON(req){
  // Enforce the actual UTF-8 WIRE byte budget while reading. A forged or
  // missing Content-Length must never let us buffer an unbounded request.
+ // A slow client can also hold reader.read() forever without exceeding
+ // MAX_JSON_BYTES; bound the entire stream and never await a blocked cancel.
  const header=req.headers.get('content-length');
  if(header!==null&&(!/^\d+$/.test(header)||Number(header)>MAX_JSON_BYTES))
   return null;
  if(!req.body)return null;
  const reader=req.body.getReader(),decoder=new TextDecoder('utf-8',{fatal:true});
- let bytes=0,text='';
- try{
-  while(true){
-   const {value,done}=await reader.read();
-   if(done)break;
-   if(!(value instanceof Uint8Array))throw Error('invalid-body-chunk');
-   bytes+=value.byteLength;
-   if(bytes>MAX_JSON_BYTES){
-    await reader.cancel('body-too-large');
-    return null;
+ const cancel=reason=>{
+  try{void Promise.resolve(reader.cancel(reason)).catch(()=>{})}catch{}
+ };
+ let bytes=0,text='',timer;
+ const readWork=(async()=>{
+  try{
+   while(true){
+    const {value,done}=await reader.read();
+    if(done)break;
+    if(!(value instanceof Uint8Array))throw Error('invalid-body-chunk');
+    bytes+=value.byteLength;
+    if(bytes>MAX_JSON_BYTES){
+     cancel('body-too-large');
+     return null;
+    }
+    text+=decoder.decode(value,{stream:true});
    }
-   text+=decoder.decode(value,{stream:true});
+   text+=decoder.decode();
+   return JSON.parse(text);
+  }catch{
+   cancel('invalid-body');
+   return null;
   }
-  text+=decoder.decode();
-  return JSON.parse(text);
- }catch{
-  try{await reader.cancel('invalid-body')}catch{}
-  return null;
- }
+ })();
+ const timedOut=new Promise(resolve=>{
+  timer=setTimeout(()=>{
+   cancel('body-deadline');
+   resolve(null);
+  },BODY_READ_DEADLINE_MS);
+ });
+ try{return await Promise.race([readWork,timedOut])}
+ finally{clearTimeout(timer)}
 }
 export const gateway={
  async fetch(req,env){
