@@ -128,14 +128,15 @@ try{
  // no client-supplied impersonation or fake HP, and per-socket anti-spam.
  const greetings='Climboria world chat acceptance';
  await send(a,{type:'world-chat',text:greetings,id:welcomeB.selfId,
-  name:'Impersonator',damage:999,wallet:'fake'});
+  name:'Impersonator',chatSeq:27,damage:999,wallet:'fake'});
  const echoA=await packet(a,{type:'world-chat',id:welcomeA.selfId,text:greetings},
   'A receives the server-confirmed World Chat echo');
  const echoB=await packet(b,{type:'world-chat',id:welcomeA.selfId,text:greetings},
   'B sees the real authenticated World Chat sender');
  verify(echoA.name==='E2E Explorer A'&&echoB.name==='E2E Explorer A'&&
-  Number.isFinite(echoB.at)&&!('damage' in echoB)&&!('wallet' in echoB),
-  'World Chat identity, server time or no-damage contract failed');
+  Number.isFinite(echoB.at)&&echoA.chatSeq===27&&echoB.chatSeq===27&&
+  !('damage' in echoB)&&!('wallet' in echoB),
+  'World Chat identity, echo correlation, server time or no-damage contract failed');
  await send(a,{type:'world-chat',text:'spam'});
  await packet(a,{type:'rejected',reason:'world-chat-rate-limit'},
   'World Chat rate limiter rejected immediate repeat');
