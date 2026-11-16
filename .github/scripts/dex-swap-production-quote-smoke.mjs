@@ -14,6 +14,34 @@ const SOL = "So11111111111111111111111111111111111111112";
 const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const RAW = "100000000"; // 0.1 SOL; use a liquid pair to avoid minimum-route artifacts.
 
+/**
+ * Production route regression probe: the owner's Cloudflare dashboard deployment
+ * previously fixed a 404 at the exact-path disabled operator release endpoint.
+ * Keep that deployed route readable, uncached, and explicitly OFF while the
+ * public provider runtime is unapproved. This never launches a wallet.
+ */
+async function assertDisabledRuntimeEndpoint(browser) {
+  const context = await browser.newContext();
+  try {
+    const response = await context.request.get(SITE + "/swap-runtime-status.json", {
+      timeout: 30000, maxRedirects: 0, failOnStatusCode: false,
+      headers: { "Cache-Control": "no-cache" }
+    });
+    assert.equal(response.status(), 200,
+      "Cloudflare production runtime-status route must return HTTP 200, not the historic 404/redirect");
+    const headers = response.headers();
+    assert.match(headers["content-type"] || "", /^application\/json(?:\s*;|$)/i,
+      "Production release switch must return JSON");
+    assert.match(headers["cache-control"] || "", /(?:^|,)\s*no-store\s*(?:,|$)/i,
+      "Production release switch must never be cached");
+    assert.deepEqual(await response.json(), { enabled: false },
+      "Production provider runtime switch must remain explicitly OFF in quote-only phase");
+    console.log("PASS production Cloudflare runtime-status endpoint: HTTP 200, no-store, enabled=false.");
+  } finally {
+    await context.close();
+  }
+}
+
 function matchesQuote(response) {
   const u = new URL(response.url());
   return u.protocol === "https:" && u.hostname === API && u.pathname === "/api/swap/quote";
@@ -117,6 +145,7 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
 
 const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
 try {
+  await assertDisabledRuntimeEndpoint(browser);
   await assertPage(browser, { name: "Swap desktop", path: "/swap/", viewport: { width: 1440, height: 900 } });
   await assertPage(browser, { name: "Swap mobile", path: "/swap/", viewport: { width: 390, height: 844 }, isMobile: true });
   await assertPage(browser, { name: "DEX desktop", path: "/dex/", viewport: { width: 1440, height: 900 } });
