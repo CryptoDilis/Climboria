@@ -398,6 +398,100 @@ async function assertDexMobileMarketNavigation(browser, width) {
   }
 }
 
+/**
+ * Production DEX mobile token-detail controls using a REAL provider token card.
+ * In-site navigation/history only: no provider wallet, order, execute or fee.
+ * Provider data can be unavailable; failure then honestly requires triage.
+ */
+async function assertDexMobileTokenHistory(browser, width) {
+  const name = "DEX mobile token detail " + width + "px";
+  const page = await browser.newPage({
+    viewport: { width, height: 844 }, isMobile: true, hasTouch: true
+  });
+  try {
+    const response = await page.goto(SITE + "/dex/", {
+      waitUntil: "domcontentloaded", timeout: 60000
+    });
+    assert.ok(response?.ok(), name + " DEX site response failed");
+    const marketNav = page.locator("#dexMobileNav");
+    const detailNav = page.locator("#detailMobileTabs");
+    const firstCard = page.locator("#solanaMobileCards button[data-mint]").first();
+    await firstCard.waitFor({ state: "visible", timeout: 25000 });
+    const mint = await firstCard.getAttribute("data-mint");
+    assert.match(mint || "", /^[1-9A-HJ-NP-Za-km-z]{32,50}$/,
+      name + " card must carry a real Solana mint");
+    await firstCard.click({ timeout: 20000 });
+    await page.waitForFunction(expected =>
+      document.body.classList.contains("mobile-token-view") &&
+      new URLSearchParams(location.search).get("token") === expected,
+      mint, { timeout: 15000 });
+    assert.equal(await marketNav.isVisible(), false,
+      name + " market bottom bar must hide inside token details");
+    assert.equal(await detailNav.isVisible(), true,
+      name + " token-detail bottom bar must be visible");
+    const tabs = detailNav.locator('[role="tab"][data-detail-tab]');
+    assert.equal(await tabs.count(), 4, name + " requires four detail tabs");
+    const dimensions = await tabs.evaluateAll(elements => elements.map(el => ({
+      label: el.textContent.trim(), height: el.getBoundingClientRect().height
+    })));
+    for (const entry of dimensions) {
+      assert.ok(entry.height >= 44,
+        name + " detail tab " + entry.label + " below 44px target: " + entry.height);
+    }
+    const checkTab = async tab => {
+      const selected = page.locator('#detailMobileTabs [role="tab"][aria-selected="true"]');
+      assert.equal(await selected.count(), 1,
+        name + " must have exactly one selected detail tab");
+      assert.equal(await selected.getAttribute("data-detail-tab"), tab,
+        name + " selected tab mismatch");
+      assert.equal(await page.locator("#detailWorkspace").evaluate((el, state) =>
+        el.classList.contains("mobile-tab-" + state), tab), true,
+        name + " workspace did not follow the selected tab");
+    };
+    await checkTab("chart");
+    await page.locator("#detailTabTrade").click({ timeout: 15000 });
+    await checkTab("trade");
+    await page.locator("#detailTabTrade").press("ArrowRight");
+    await checkTab("chat");
+    await page.locator("#detailTabPools").click({ timeout: 15000 });
+    await checkTab("pools");
+    await page.locator("#detailTabChart").click({ timeout: 15000 });
+    await checkTab("chart");
+
+    // Closing pushes market state; Back must restore the real selected token,
+    // then Forward must restore the market view (without a page reload).
+    await page.locator("#closeDetail").click({ timeout: 15000 });
+    assert.equal(await marketNav.isVisible(), true,
+      name + " Close must restore market bottom navigation");
+    assert.equal(await detailNav.isVisible(), false,
+      name + " Close must hide token tabs");
+    assert.equal(new URL(page.url()).searchParams.has("token"), false,
+      name + " Close must clear selected token URL");
+    await page.goBack({ timeout: 20000 });
+    await page.waitForFunction(expected =>
+      new URLSearchParams(location.search).get("token") === expected &&
+      document.body.classList.contains("mobile-token-view"),
+      mint, { timeout: 20000 });
+    assert.equal(await detailNav.isVisible(), true,
+      name + " browser Back must restore token details");
+    assert.equal(await marketNav.isVisible(), false,
+      name + " browser Back must hide market nav");
+    await page.goForward({ timeout: 20000 });
+    await page.waitForFunction(() =>
+      !new URLSearchParams(location.search).has("token") &&
+      !document.body.classList.contains("mobile-token-view"),
+      null, { timeout: 20000 });
+    assert.equal(await marketNav.isVisible(), true,
+      name + " browser Forward must restore market nav");
+    assert.equal(await detailNav.isVisible(), false,
+      name + " browser Forward must hide detail tabs");
+    console.log("PASS " + name +
+      " live token card opens detail; single 44px detail bar, tab/keyboard and Close/Back/Forward state.");
+  } finally {
+    await page.close();
+  }
+}
+
 const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
 try {
   await assertDisabledRuntimeEndpoint(browser);
@@ -408,6 +502,8 @@ try {
   await assertPage(browser, { name: "DEX mobile", path: "/dex/", viewport: { width: 390, height: 844 }, isMobile: true });
   await assertDexMobileMarketNavigation(browser, 360);
   await assertDexMobileMarketNavigation(browser, 390);
+  await assertDexMobileTokenHistory(browser, 360);
+  await assertDexMobileTokenHistory(browser, 390);
   // Verify quote UX when known telemetry is absent, or is denied by the
   // exact-match test-tab route if an unexpected request returns.
   // Normal unblocked 4/4 journeys above remain the primary live acceptance.
