@@ -23,6 +23,7 @@
  if(!auth?.auth?.getSession||!renderer||!world?.player){doc.dataset.climboriaMultiplayer='unavailable';return}
  let socket=null,disposed=false,reconnect=null,movement=null,clientUser=null,selfId=null;
  let connecting=false,connectEpoch=0,authSubscription=null,spawnConfirmed=false;
+ let sessionLookupCancel=null;
  const known=new Map(),validId=x=>typeof x==='string'&&/^s_[a-f0-9]{32}$/.test(x);
  const validPosition=p=>p&&['x','y','z'].every(k=>typeof p[k]==='number'&&Number.isFinite(p[k])&&Math.abs(p[k])<50000);
  const validPlayer=p=>p&&validId(p.id)&&typeof p.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(p.name)
@@ -411,6 +412,11 @@
   // cannot later create a socket or revive its World Chat after logout.
   connectEpoch++;
   connecting=false;
+  // Cancel any unresolved identity lookup on logout/account change, so no
+  // old session can keep the client waiting or outlive the current epoch.
+  if(sessionLookupCancel){
+   const cancel=sessionLookupCancel;sessionLookupCancel=null;cancel();
+  }
   if(reconnect){clearTimeout(reconnect);reconnect=null}
   if(movement){clearInterval(movement);movement=null}
   const old=socket;socket=null;previous=null;
@@ -424,7 +430,25 @@
   const epoch=++connectEpoch;
   doc.dataset.climboriaMultiplayer='connecting';
   try{
-   const {data,error}=await auth.auth.getSession();
+   // A wedged Supabase getSession must not strand the Game on CONNECTING.
+   // Its public API has no AbortSignal; race an independent wall-clock
+   // deadline, and cancel the wait on sign-out or account switching.
+   let sessionTimer,cancelSessionWait;
+   const sessionDeadline=new Promise((_,reject)=>{
+    cancelSessionWait=()=>reject(Error('Game session lookup superseded'));
+    sessionTimer=setTimeout(()=>reject(Error('Game session lookup timed out')),8000);
+   });
+   sessionLookupCancel=cancelSessionWait;
+   let sessionResult;
+   try{
+    sessionResult=await Promise.race([
+     Promise.resolve().then(()=>auth.auth.getSession()),sessionDeadline
+    ]);
+   }finally{
+    clearTimeout(sessionTimer);
+    if(sessionLookupCancel===cancelSessionWait)sessionLookupCancel=null;
+   }
+   const {data,error}=sessionResult;
    if(disposed||epoch!==connectEpoch)return;
    const session=data?.session;
    // Supabase anonymous sign-in returns a real UUID and bearer token.
