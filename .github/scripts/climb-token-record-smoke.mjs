@@ -118,7 +118,20 @@ try{
     'official CLIMB coin art, not the generic site favicon, must appear in the supply badge');
    await page.waitForFunction(()=>{const im=document.querySelector('.climb-supply-mark img');return im?.complete&&im.naturalWidth===96;},null,{timeout:4000});
    assert.equal(await page.locator('.climb-supply-mark').evaluate(e=>getComputedStyle(e).overflow),'hidden',
-    'coin artwork stays inset inside the circular frame');
+    'coin artwork stays within the circular frame');
+   const badge=await page.locator('.climb-supply-mark').boundingBox();
+   const supplyCard=await page.locator('.climb-supply-main').boundingBox();
+   const supplyMetric=await page.locator('.climb-supply-number').boundingBox();
+   const expectedBadge=width>600?124:width>480?90:width>380?74:62;
+   assert.ok(Math.abs(badge.width-expectedBadge)<1,
+    'official CLIMB badge size must be visible at '+width+'px; got '+badge.width);
+   assert.ok(Math.abs(badge.height-expectedBadge)<1,'coin artwork stays circular');
+   assert.ok(badge.x>=supplyMetric.x+supplyMetric.width+5,
+    'medallion must not overlap the token supply number');
+   assert.ok(badge.x+badge.width<=supplyCard.x+supplyCard.width+1,
+    'medallion must remain inside the total-supply card');
+   assert.equal(await page.locator('.climb-supply-mark').evaluate(e=>getComputedStyle(e).borderTopWidth),'0px',
+    'no extra circular border stacked over the minted coin artwork');
    assert.equal(await page.locator('#climbSupplyValue').count(),1,
     'only one dynamic total-supply number');
    if(width===1536||width===1365||width===1200||width===1180||width===1160||width===1024||width===430){
