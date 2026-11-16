@@ -215,6 +215,12 @@ jobs:
           client = Path('climb-token-supply.js').read_text(encoding='utf-8')
           assert "const snapshotPath = '/data/climb-supply.json'" in client
           assert "https://raw.githubusercontent.com/CryptoDilis/Climboria/main/data/climb-supply.json" in client
+          assert "MIRROR_CHECK_AFTER_MS = 30 * 60 * 1000" in client
+          assert "BACKGROUND_CHECK_INTERVAL_MS = 20 * 60 * 1000" in client
+          assert "mirror.slot > pagesSnapshot.slot" in client, "Do not downgrade to older mint-supply slots"
+          assert "expireVisibleSnapshot()" in client and "visibilitychange" in client
+          assert "queueMicrotask(() => { void upgradeOlderPagesSnapshot(selected.snapshot); })" in client
+          assert "isSnapshotFresh(lastVerified)" in client, "Never treat expired static supply as current"
           assert "parseStaticSnapshot(await response.json())" in client, "Both Pages and GitHub raw must be strictly validated"
           assert "credentials:'omit'" in client, "No account credentials on public snapshot requests"
           assert 'parseStaticSnapshot' in client and 'loadStaticSnapshot' in client
