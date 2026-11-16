@@ -163,6 +163,68 @@ test('ticket issuance needs verified authenticated Supabase user, never trusts c
   assert.equal(JSON.stringify(data).includes(token),false);
  }finally{globalThis.fetch=oldFetch}
 });
+test('authenticated room ticket fails closed on stalled Supabase fetch, JSON or DO issuance',async()=>{
+ const originalFetch=globalThis.fetch,originalTimeout=globalThis.setTimeout;
+ // Accelerate only the exact production auth (6.5s) and ticket (3.5s)
+ // deadlines. An independent real watchdog catches regressions where
+ // upstream AbortSignal is ignored and a request never resolves.
+ globalThis.setTimeout=(fn,ms,...args)=>originalTimeout(fn,
+  (ms===6500||ms===3500)?25:ms,...args);
+ const bounded=promise=>Promise.race([promise,new Promise((_,reject)=>
+  originalTimeout(()=>reject(Error('upstream Gateway request hung')),500))]);
+ const request=()=>mkRequest('/ticket',{
+  method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+  body:JSON.stringify({name:'Explorer A',model:'Jarrell'})
+ });
+ const normalUser=()=>new Response(JSON.stringify({id:uid,is_anonymous:false}),{status:200});
+ const readyStub={fetch:async()=>new Response('{}',{status:201})};
+ try{
+  let authSignal;
+  globalThis.fetch=async(_endpoint,options)=>{
+   authSignal=options.signal;
+   return new Promise(()=>{}); // Intentionally ignores abort.
+  };
+  const authTimeout=await bounded(gateway.fetch(request(),env(readyStub)));
+  assert.equal(authTimeout.status,503);
+  assert.deepEqual(await authTimeout.json(),{error:'auth-service-unavailable'});
+  assert.equal(authSignal?.aborted,true,'timeout should abort the Supabase fetch');
+
+  let parseSignal;
+  globalThis.fetch=async(_endpoint,options)=>{
+   parseSignal=options.signal;
+   return {ok:true,json:async()=>new Promise(()=>{})}; // Stalled body.
+  };
+  const jsonTimeout=await bounded(gateway.fetch(request(),env(readyStub)));
+  assert.equal(jsonTimeout.status,503,'hung auth JSON cannot hold the room login');
+  assert.equal(parseSignal?.aborted,true);
+  assert.deepEqual(await jsonTimeout.json(),{error:'auth-service-unavailable'});
+
+  globalThis.fetch=async()=>normalUser();
+  let ticketSignal,lateResolve;
+  const stuckTicket=new Promise(resolve=>{lateResolve=resolve});
+  const blockedStub={fetch:async(_url,options)=>{
+   ticketSignal=options.signal;
+   return stuckTicket; // DO stub deliberately ignores cancellation.
+  }};
+  const late=await bounded(gateway.fetch(request(),env(blockedStub)));
+  assert.equal(late.status,503,'hung Durable Object ticket issuer cannot hold login');
+  assert.deepEqual(await late.json(),{error:'room-unavailable'});
+  assert.equal(ticketSignal?.aborted,true);
+  assert.equal((await late.text()).includes(token),false,'never reveal bearer token');
+  lateResolve(new Response('{}',{status:201}));
+  assert.equal(late.status,503,'late DO success cannot turn an expired request into a ticket');
+
+  const valid=await bounded(gateway.fetch(request(),env(readyStub)));
+  assert.equal(valid.status,200,'healthy authentication and DO still issue tickets');
+  const data=await valid.json();
+  assert.match(data.ticket,/^[a-f0-9]{64}$/);
+  assert.equal(data.ttlSeconds,30);
+ }finally{
+  globalThis.fetch=originalFetch;
+  globalThis.setTimeout=originalTimeout;
+ }
+});
+
 test('gateway distinguishes bounded ticket capacity from unavailable room without leaking internal errors',async()=>{
  const oldFetch=globalThis.fetch;
  globalThis.fetch=async()=>new Response(JSON.stringify({id:uid,is_anonymous:false}),{status:200});
