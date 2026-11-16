@@ -169,22 +169,33 @@ async function checkChart(test) {
             let unreadable = 0;
             let varyingPaint = 0;
             let maxDistinctSamples = 0;
+            let horizontalVariation = 0;
+            let verticalVariation = 0;
             for (const canvas of sizeable.slice(0, 4)) {
               try {
                 if (canvas.width < 16 || canvas.height < 16) continue;
                 const ctx = canvas.getContext("2d");
                 if (!ctx) { unreadable++; continue; }
                 const colors = new Set();
-                for (const fx of [0.1, 0.3, 0.5, 0.7, 0.9]) {
-                  for (const fy of [0.1, 0.3, 0.5, 0.7, 0.9]) {
-                    const x = Math.min(canvas.width - 1, Math.floor(canvas.width * fx));
-                    const y = Math.min(canvas.height - 1, Math.floor(canvas.height * fy));
-                    colors.add([...ctx.getImageData(x, y, 1, 1).data].join(","));
+                const rows = Array.from({ length: 5 }, () => new Set());
+                const columns = Array.from({ length: 5 }, () => new Set());
+                const fractions = [0.1, 0.3, 0.5, 0.7, 0.9];
+                for (let ix = 0; ix < fractions.length; ix++) {
+                  for (let iy = 0; iy < fractions.length; iy++) {
+                    const x = Math.min(canvas.width - 1, Math.floor(canvas.width * fractions[ix]));
+                    const y = Math.min(canvas.height - 1, Math.floor(canvas.height * fractions[iy]));
+                    // Aggregate colours only in-browser: never print pixel values.
+                    const color = [...ctx.getImageData(x, y, 1, 1).data].join(",");
+                    colors.add(color);
+                    rows[iy].add(color);
+                    columns[ix].add(color);
                   }
                 }
                 readable++;
                 maxDistinctSamples = Math.max(maxDistinctSamples, colors.size);
                 if (colors.size >= 3) varyingPaint++;
+                if (rows.some(row => row.size >= 2)) horizontalVariation++;
+                if (columns.some(column => column.size >= 2)) verticalVariation++;
               } catch {
                 unreadable++; // CORS/security or transient vendor redraw
               }
@@ -198,6 +209,8 @@ async function checkChart(test) {
               readableCanvas: readable,
               unreadableCanvas: unreadable,
               varyingPaintCanvas: varyingPaint,
+              horizontalVariationCanvas: horizontalVariation,
+              verticalVariationCanvas: verticalVariation,
               maxDistinctPixelSamples: maxDistinctSamples,
               likelyChallenge: /just a moment|checking your browser|verify you are human|attention required|access denied|captcha/i.test(text)
             };
