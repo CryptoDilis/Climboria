@@ -376,6 +376,49 @@ footer:first-of-type>div{
 @media(max-width:600px){#tokenomics .climb-token-layout{margin-top:18px;gap:12px}#tokenomics .climb-token-card{padding:16px;border-radius:16px}#tokenomics .climb-token-heading{flex-wrap:wrap;gap:8px;margin-bottom:14px}#tokenomics .climb-token-heading h3{font-size:20px}#tokenomics .climb-token-mint-shell{padding:12px}#tokenomics .climb-token-mint{font-size:12px;padding:9px}#tokenomics .climb-token-actions{grid-template-columns:1fr;gap:7px}#tokenomics .climb-token-action{min-height:39px}#tokenomics .climb-token-facts{gap:7px;margin:14px 0}#tokenomics .climb-token-fact{padding:10px}#tokenomics .climb-token-fact strong{font-size:12px}#tokenomics .climb-token-feature{padding:13px 0}#tokenomics .climb-token-feature p{font-size:12px}}
 @media(prefers-reduced-motion:reduce){#tokenomics .climb-token-action{transition:none}}
 
+
+/* CLIMB premium token record — values continue to come ONLY from verified finalized snapshots. */
+#tokenomics .climb-token-primary{overflow:hidden;border-color:rgba(240,195,105,.42);box-shadow:0 18px 52px rgba(0,0,0,.34),inset 0 1px rgba(255,232,183,.08)}
+#tokenomics .climb-token-heading h3{font-size:clamp(21px,2.2vw,30px);text-shadow:0 1px 22px rgba(246,190,95,.08)}
+#tokenomics .climb-token-pill{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(120deg,rgba(251,202,95,.15),rgba(255,217,140,.035));box-shadow:inset 0 1px rgba(255,235,181,.12)}
+#tokenomics .climb-token-pill:not(.climb-token-pill-muted):before{content:"✓";display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#eac16f;color:#182032;font-size:11px}
+#tokenomics .climb-token-mint-shell{border-color:rgba(243,199,121,.39);background:linear-gradient(145deg,rgba(231,175,74,.09),rgba(4,8,16,.33))}
+#tokenomics .climb-token-mint{padding:14px 15px;border-color:rgba(243,200,125,.31);background:#090e19;color:#ffe9bf;line-height:1.65;box-shadow:inset 0 1px 3px rgba(0,0,0,.35)}
+#tokenomics .climb-token-action{min-height:46px;border-radius:11px;letter-spacing:.5px;box-shadow:inset 0 1px rgba(255,227,173,.04)}
+#tokenomics .climb-token-action-primary{background:linear-gradient(115deg,#ffe5aa,#dfae58);box-shadow:0 6px 20px rgba(229,172,78,.14)}
+#tokenomics .climb-supply-panel{position:relative;overflow:hidden;margin-top:21px;padding:24px;border:1px solid rgba(244,197,114,.43);border-radius:19px;background:radial-gradient(ellipse at 85% 0%,rgba(227,170,75,.16),transparent 51%),linear-gradient(155deg,#131d2b,#0c101b 78%);box-shadow:0 15px 30px rgba(0,0,0,.16),inset 0 1px rgba(255,235,193,.06)}
+#tokenomics .climb-supply-panel:before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,transparent,rgba(255,220,143,.45),transparent);pointer-events:none}
+#tokenomics .climb-supply-top{position:relative;z-index:1;align-items:center;gap:14px}
+#tokenomics .climb-supply-eyebrow{margin-bottom:8px;letter-spacing:1.65px;color:#e5c17f;font-size:9px}
+#tokenomics .climb-supply-top h4{font:700 clamp(21px,2.5vw,28px)/1.2 Cinzel,Georgia,serif;letter-spacing:.25px}
+#tokenomics .climb-supply-state{white-space:normal;max-width:180px;padding:8px 11px;background:rgba(19,25,37,.88)}
+#tokenomics .climb-supply-summary{position:relative;z-index:1;max-width:56ch;margin:11px 0 17px;color:#bac5d6;font:500 12px/1.7 Inter,system-ui,sans-serif}
+#tokenomics .climb-supply-main{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:122px;margin:0 0 14px;padding:20px 22px;border:1px solid rgba(255,216,135,.49);border-radius:16px;background:radial-gradient(circle at 100% 80%,rgba(200,148,68,.23),transparent 43%),linear-gradient(115deg,#192538,#131a29 78%);box-shadow:inset 0 1px rgba(255,236,184,.1),0 8px 18px rgba(0,0,0,.12)}
+#tokenomics .climb-supply-main:after{content:"";position:absolute;left:12%;right:12%;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(247,198,106,.72),transparent)}
+#tokenomics .climb-supply-number{z-index:1;min-width:0;flex:1}
+#tokenomics .climb-supply-metric-label{display:block;margin-bottom:10px;color:#e8c78e;font:800 10px/1.45 Inter,system-ui,sans-serif;letter-spacing:1.2px;text-transform:uppercase}
+#tokenomics .climb-supply-amount{display:flex;flex-wrap:wrap;align-items:baseline;gap:7px 11px}
+#tokenomics .climb-supply-value{font:800 clamp(26px,3.1vw,43px)/1.13 Inter,system-ui,sans-serif;color:#ffe0a0;letter-spacing:-1.2px;text-shadow:0 1px 15px rgba(245,189,93,.13);overflow-wrap:anywhere}
+#tokenomics .climb-supply-panel[data-state="loading"] .climb-supply-value,#tokenomics .climb-supply-panel[data-state="unavailable"] .climb-supply-value{font-size:clamp(22px,2.4vw,29px);color:#efd3ad}
+#tokenomics .climb-supply-unit{font-size:clamp(11px,1.1vw,14px);letter-spacing:.9px;color:#efcc8b}
+#tokenomics .climb-supply-mark{flex:none;width:86px;height:86px;padding:8px;border:1px solid rgba(246,189,85,.36);border-radius:50%;color:#e6af57;background:linear-gradient(145deg,rgba(250,206,116,.12),rgba(6,12,26,.2));filter:drop-shadow(0 0 12px rgba(239,175,76,.12));opacity:.9}
+#tokenomics .climb-supply-meta{gap:11px;margin:0 0 16px}
+#tokenomics .climb-supply-meta>div{padding:15px;border-color:rgba(176,197,226,.18);border-radius:13px;background:linear-gradient(135deg,rgba(21,33,52,.88),rgba(13,19,32,.78))}
+#tokenomics .climb-supply-meta span{margin-bottom:6px;font-size:10px;letter-spacing:1px;color:#bcc9df}
+#tokenomics .climb-supply-meta strong{font-size:clamp(12px,1.35vw,17px);line-height:1.4;color:#ffe8ba}
+#tokenomics .climb-supply-meta .climb-supply-unverified{font-size:clamp(11px,1vw,13px);color:#f6d6a8}
+#tokenomics .climb-supply-actions{gap:11px;margin:0 0 15px}
+#tokenomics .climb-supply-actions .climb-supply-refresh,#tokenomics .climb-supply-explorer{min-height:46px;border-radius:11px;font:800 10px/1.5 Inter,system-ui,sans-serif;letter-spacing:.4px}
+#tokenomics .climb-supply-actions .climb-supply-refresh{border-color:rgba(249,211,142,.67);background:linear-gradient(115deg,#ffe2a0,#d9a450);box-shadow:0 6px 20px rgba(213,154,66,.1)}
+#tokenomics .climb-supply-explorer{border-color:rgba(240,193,109,.48);background:rgba(239,191,109,.055)}
+#tokenomics .climb-supply-source{min-height:0;margin:0 0 6px;color:#aebcd1;font-size:11px;line-height:1.6}
+#tokenomics .climb-supply-checked{margin:0 0 15px;color:#d7c5a8;font-size:10px;line-height:1.55}
+#tokenomics .climb-supply-disclaimer{margin:0;padding-top:14px;border-color:rgba(224,192,132,.19);color:#b4c0d1;font-size:11px}
+#tokenomics .climb-supply-disclaimer strong{color:#e6d0a4}
+@media(max-width:600px){#tokenomics .climb-token-mint-shell{padding:12px}#tokenomics .climb-token-heading h3{font-size:clamp(19px,5.4vw,25px)}#tokenomics .climb-token-pill{padding:7px 9px}#tokenomics .climb-supply-panel{padding:17px 14px;border-radius:15px}#tokenomics .climb-supply-top{align-items:flex-start}#tokenomics .climb-supply-state{max-width:100%;font-size:8px}#tokenomics .climb-supply-summary{font-size:11px;margin:10px 0 13px}#tokenomics .climb-supply-main{min-height:107px;padding:15px 13px;gap:8px;border-radius:12px}#tokenomics .climb-supply-metric-label{font-size:9px;margin-bottom:8px}#tokenomics .climb-supply-value{font-size:clamp(24px,7.1vw,33px);letter-spacing:-.7px}#tokenomics .climb-supply-mark{width:50px;height:50px;padding:5px}#tokenomics .climb-supply-meta{gap:8px;margin-bottom:12px}#tokenomics .climb-supply-meta>div{padding:11px}#tokenomics .climb-supply-actions{gap:8px}#tokenomics .climb-supply-actions .climb-supply-refresh,#tokenomics .climb-supply-explorer{min-height:44px}}
+@media(max-width:480px){#tokenomics .climb-supply-mark{display:none}#tokenomics .climb-supply-value{font-size:clamp(24px,7.3vw,34px)}}
+@media(max-width:380px){#tokenomics .climb-supply-meta{grid-template-columns:1fr}#tokenomics .climb-supply-amount{gap:5px}}
+
 /* Accessible page title without changing the approved hero artwork or layout. */
 .visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 
@@ -697,7 +740,7 @@ footer:first-of-type>div{
     </div>
     <span id="copyClimbCaStatus" class="climb-token-copy-status" role="status" aria-live="polite"></span>
    </div>
-   <section class="climb-supply-panel" id="climbSupplyPanel" aria-labelledby="climbSupplyHeading" aria-busy="false">
+   <section class="climb-supply-panel" id="climbSupplyPanel" data-state="idle" aria-labelledby="climbSupplyHeading" aria-busy="false">
     <div class="climb-supply-top">
      <div>
       <span class="climb-supply-eyebrow">Solana mainnet · Read-only</span>
@@ -705,21 +748,28 @@ footer:first-of-type>div{
      </div>
      <span id="climbSupplyState" class="climb-supply-state" data-state="idle" role="status" aria-live="polite">Awaiting lookup</span>
     </div>
-    <div class="climb-supply-main">
-     <span id="climbSupplyValue" class="climb-supply-value" role="status" aria-live="polite">Not loaded</span>
-     <span class="climb-supply-unit">CLIMB</span>
+    <p class="climb-supply-summary">Finalized Solana mint data for the official CLIMB address. Every loaded value includes its source and observation time.</p>
+    <div class="climb-supply-main" aria-label="Solana finalized mint total supply">
+     <div class="climb-supply-number">
+      <span class="climb-supply-metric-label">On-chain total supply</span>
+      <div class="climb-supply-amount">
+       <span id="climbSupplyValue" class="climb-supply-value" role="status" aria-live="polite">Checking…</span>
+       <span class="climb-supply-unit">CLIMB</span>
+      </div>
+     </div>
+     <svg class="climb-supply-mark" viewBox="0 0 100 100" fill="none" aria-hidden="true" focusable="false"><circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="3"/><path d="m18 67 20-30 12 17 13-23 20 36M25 70h52" stroke="currentColor" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/></svg>
     </div>
-    <p id="climbSupplySource" class="climb-supply-source" aria-live="polite">Load a finalized Solana RPC supply snapshot for this exact mint. No supply number is assumed.</p>
+    <div class="climb-supply-meta">
+     <div class="climb-supply-stat"><span>Token decimals</span><strong id="climbSupplyDecimals">—</strong></div>
+     <div class="climb-supply-stat"><span>Circulating supply</span><strong class="climb-supply-unverified">Not independently verified</strong></div>
+    </div>
     <div class="climb-supply-actions">
      <button type="button" class="climb-supply-refresh" id="climbSupplyRefresh" aria-describedby="climbSupplySource">CHECK ON-CHAIN SUPPLY ↗</button>
      <a class="climb-supply-explorer" href="https://solscan.io/token/9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump" target="_blank" rel="noopener noreferrer">VIEW MINT ON SOLSCAN ↗</a>
     </div>
-    <p class="climb-supply-checked" id="climbSupplyChecked">No finalized snapshot loaded yet.</p>
-    <div class="climb-supply-meta">
-     <div><span>Token decimals</span><strong id="climbSupplyDecimals">—</strong></div>
-     <div><span>Circulating supply</span><strong>Not independently verified</strong></div>
-    </div>
-    <p class="climb-supply-disclaimer">Total supply is not circulating supply. Figures from a public RPC are a point-in-time snapshot, not an audit of allocations, liquidity or token safety.</p>
+    <p id="climbSupplySource" class="climb-supply-source" aria-live="polite">Checking the latest published finalized snapshot. No supply number is assumed.</p>
+    <p class="climb-supply-checked" id="climbSupplyChecked">Checking source and observation time…</p>
+    <p class="climb-supply-disclaimer">Read-only blockchain data · Total supply is <strong>not</strong> circulating supply. Snapshots reflect a point in time and do not verify allocations, liquidity or token safety.</p>
    </section>
    <div class="climb-token-facts">
     <div class="climb-token-fact"><span>Network</span><strong>Solana</strong></div>
