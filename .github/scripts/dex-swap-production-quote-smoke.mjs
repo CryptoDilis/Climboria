@@ -7,6 +7,7 @@
  */
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
+import { classifyQuoteJourneyRequest } from "./dex-swap-quote-request-guard.mjs";
 
 const SITE = "https://climboria.fun";
 const API = "api.climboria.fun";
@@ -100,6 +101,7 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
   const page = await browser.newPage({ viewport, isMobile, hasTouch: isMobile });
   const forbidden = [];
   const unexpectedApiWrites = [];
+  const unexpectedSiteSwapWrites = [];
   const unexpectedProviderLoads = [];
   const knownCloudflareAnalyticsLoads = [];
   const errors = [];
@@ -107,25 +109,23 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
   page.on("pageerror", error => errors.push(error.message));
   page.on("request", request => {
     const u = new URL(request.url());
-    if (u.hostname === API && ["/api/swap/order", "/api/swap/execute"].includes(u.pathname))
-      forbidden.push(request.method() + " " + u.pathname);
-    // In quote-only mode, the Climboria API must be read-only from this page.
-    // This catches an unrecognized future write path, not only known order/execute URLs.
-    if (u.hostname === API && !["GET", "HEAD"].includes(request.method()))
-      unexpectedApiWrites.push(request.method() + " " + u.pathname);
-    // Explicit, observed Cloudflare Web Analytics injection is unrelated to
-    // the unapproved Jupiter wallet provider. Scope the exception to the
-    // single exact Cloudflare versioned beacon path seen on production; this
-    // is NOT a general allowlist or an audit of the analytics JS itself.
-    const knownAnalyticsBeacon = request.resourceType() === "script" &&
-      u.href === "https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092";
-    if (knownAnalyticsBeacon) knownCloudflareAnalyticsLoads.push(u.href);
-    // Any other cross-origin executable is a supply-chain regression while
-    // managed provider trading remains disabled.
-    if (["script", "worker", "shared_worker"].includes(request.resourceType()) &&
-        u.origin !== new URL(SITE).origin && !knownAnalyticsBeacon)
+    const method = request.method();
+    const guard = classifyQuoteJourneyRequest({
+      url: request.url(), method, resourceType: request.resourceType()
+    });
+    if (guard.protectedSwapRoute)
+      forbidden.push(method + " " + u.pathname);
+    // The browser canary must detect unexpected Worker writes even to future
+    // endpoints, plus same-origin reverse-proxy Swap writes.
+    if (guard.unexpectedApiWrite)
+      unexpectedApiWrites.push(method + " " + u.pathname);
+    if (guard.unexpectedSiteSwapWrite)
+      unexpectedSiteSwapWrites.push(method + " " + u.pathname);
+    if (guard.knownCloudflareAnalyticsScript)
+      knownCloudflareAnalyticsLoads.push(u.href);
+    if (guard.unexpectedExternalExecutable)
       unexpectedProviderLoads.push("unapproved external executable " + u.origin + u.pathname);
-    if (["terminal.jup.ag", "plugin.jup.ag"].includes(u.hostname))
+    if (guard.jupiterProviderRequest)
       unexpectedProviderLoads.push("Jupiter provider request " + u.hostname + u.pathname);
   });
   page.on("response", response => {
@@ -217,6 +217,8 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
     assert.equal(forbidden.length, 0, "Unexpected wallet/order/execute request: " + forbidden.join(", "));
     assert.deepEqual(unexpectedApiWrites, [],
       "Quote-only page must not write to the Climboria API (even unknown future endpoints)");
+    assert.deepEqual(unexpectedSiteSwapWrites, [],
+      "Quote-only page must not write to same-origin /api/swap/ routes");
     assert.deepEqual(unexpectedProviderLoads, [],
       "Quote-only page must not fetch unapproved cross-origin executable scripts/workers or Jupiter provider assets");
     console.log("INFO " + name + " observed known Cloudflare analytics script " +
