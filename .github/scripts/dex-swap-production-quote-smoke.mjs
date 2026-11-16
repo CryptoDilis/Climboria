@@ -72,8 +72,14 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
     const u = new URL(request.url());
     if (u.hostname === API && ["/api/swap/order", "/api/swap/execute"].includes(u.pathname))
       forbidden.push(request.method() + " " + u.pathname);
+    // Any cross-origin executable is a supply-chain regression while the
+    // managed provider is disabled. This catches unknown CDN/SDK hosts too,
+    // not only the two legacy Jupiter widget hostnames.
+    if (["script", "worker", "shared_worker"].includes(request.resourceType()) &&
+        u.origin !== new URL(SITE).origin)
+      unexpectedProviderLoads.push("unapproved external executable " + u.origin + u.pathname);
     if (["terminal.jup.ag", "plugin.jup.ag"].includes(u.hostname))
-      unexpectedProviderLoads.push(u.hostname + u.pathname);
+      unexpectedProviderLoads.push("Jupiter provider request " + u.hostname + u.pathname);
   });
   page.on("response", response => {
     try {
@@ -162,7 +168,8 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
     assert.match(results, /Not requested/);
     console.log("PASS " + name + " exact estimated output and minimum-received read-only preview.");
     assert.equal(forbidden.length, 0, "Unexpected wallet/order/execute request: " + forbidden.join(", "));
-    assert.deepEqual(unexpectedProviderLoads, [], "Quote-only page must not fetch wallet-capable provider scripts");
+    assert.deepEqual(unexpectedProviderLoads, [],
+      "Quote-only page must not fetch unapproved cross-origin executable scripts/workers or Jupiter provider assets");
     assert.equal(errors.length, 0, "Browser errors: " + errors.join(" | "));
     console.log("PASS " + name + " real browser quote via Jupiter proxy; exact raw units, no transaction.");
 
