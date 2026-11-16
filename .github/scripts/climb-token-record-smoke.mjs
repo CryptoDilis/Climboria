@@ -75,6 +75,31 @@ try{
    });
    const response=await page.goto(base,{waitUntil:'domcontentloaded'});
    assert.equal(response?.ok(),true,'local Climboria homepage should load');
+   // Regression for 2026-11-16: the main navigation has ELEVEN controls.
+   // A 10-column grid pushed the official X link into a second header row.
+   if(width===1536){
+    const header=await page.evaluate(()=>{
+     const nav=document.querySelector('nav');
+     const menu=nav.querySelector('.navl');
+     const headerBox=nav.getBoundingClientRect();
+     const items=[...menu.children].map(e=>{
+      const b=e.getBoundingClientRect();
+      return {left:b.left,right:b.right,top:b.top,bottom:b.bottom,width:b.width};
+     });
+     return {headerHeight:headerBox.height,viewport:document.documentElement.clientWidth,
+      gridColumns:getComputedStyle(menu).gridTemplateColumns.split(' ').length,items};
+    });
+    assert.equal(header.items.length,11,'desktop navigation includes the official X link');
+    assert.equal(header.gridColumns,11,'grid supplies one slot for every navigation item');
+    assert.ok(header.headerHeight<90,'desktop nav remains a single compact row');
+    for(const item of header.items){
+     assert.ok(item.width>0,'nav control has positive width');
+     assert.ok(Math.abs(item.top-header.items[0].top)<2,'no control may wrap to a second row');
+     assert.ok(item.left>=0&&item.right<=header.viewport+1,'nav control must stay within the viewport');
+    }
+    assert.ok(header.items.at(-1).left>header.items.at(-2).left,
+     'the X control remains the last item on the right');
+   }
    const hero=page.locator('.hero');
    const section=page.locator('#tokenomics');
    const record=section.locator('#climb-token-record');
