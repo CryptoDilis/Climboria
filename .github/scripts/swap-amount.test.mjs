@@ -60,11 +60,11 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
   const SOL = "So11111111111111111111111111111111111111112";
   const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
-  async function exercise(quote, slippage = 'auto') {
+  async function exercise(quote, slippage = 'auto', amountInput = '0.1') {
     const elements = {
       quoteStatus: { textContent: "" },
       getQuote: { disabled: false, textContent: "Get live quote" },
-      quoteAmount: { value: "0.1" },
+      quoteAmount: { value: amountInput },
       quoteResults: { innerHTML: "" },
       swapSlippage: { value: slippage }
     };
@@ -81,6 +81,8 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
       },
       quoteRequestSequence: 0,
       selectedChain: "solana",
+      clearQuoteFreshnessTimer: () => {},
+      armQuoteFreshnessTimer: () => {},
       esc: value => String(value),
       fetch: async url => {
         requested.push(String(url));
@@ -90,7 +92,7 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
     context.fetchSwapProxy = url => context.fetch(url);
     await runInNewContext(handler + "\nrequestJupiterQuote()", context);
     assert.equal(requested.length, 1);
-    assert.match(requested[0], /amount=100000000/);
+    assert.equal(new URL(requested[0]).searchParams.get("amount"), toRaw(amountInput, 9));
     assert.equal(elements.getQuote.disabled, false);
     elements._requested = requested;
     return elements;
@@ -112,6 +114,12 @@ test("Swap quote handler rejects mismatched and malformed provider raw amounts",
   assert.match(good.quoteResults.innerHTML, /Not requested/);
   assert.match(good.quoteResults.innerHTML, /Minimum received/);
   assert.match(good.quoteResults.innerHTML, /0\.495/);
+  const preciseInput = "12345678901.123456789";
+  const exact = await exercise({ inAmount: toRaw(preciseInput, 9), outAmount: "500000", otherAmountThreshold: "495000", requestId: "precise-input" }, "auto", preciseInput);
+  assert.match(exact.quoteStatus.textContent, /Quote received from Jupiter/);
+  assert.ok(exact.quoteResults.innerHTML.includes(preciseInput + " SOL"),
+    "Swap must display full exact decimal input, not a Number-rounded amount");
+
   const noMinimum = await exercise({ inAmount: "100000000", outAmount: "500000", requestId: "no-minimum" });
   assert.match(noMinimum.quoteResults.innerHTML, /Unavailable · not verified/);
   assert.match(noMinimum.quoteStatus.textContent, /minimum received was not verified/i);
@@ -249,5 +257,94 @@ test("Swap and DEX quote/token search never silently bypass the Climboria backen
     assert.match(html, /Climboria quote request timed out\. No cached estimate was used\./, page);
     assert.match(html, /await fetchSwapProxy\(quoteUrl,'Climboria quote request timed out\. No cached estimate was used\.'\)/, page);
     assert.match(html, /await fetchSwapProxy\(tokenUrl,'Climboria token search timed out\. No token was selected\.'\)/, page);
+  }
+});
+
+
+test("Swap and DEX expire successful read-only quote snapshots after 30s, including on tab return", () => {
+  for (const [file, name, invalidator] of [
+    ["swap/index.html", "Swap", "invalidateSwapQuote"],
+    ["dex/index.html", "DEX", "invalidateDexQuote"]
+  ]) {
+    const html = readFileSync(new URL("../../" + file, import.meta.url), "utf8");
+    const start = html.indexOf("const QUOTE_PREVIEW_MAX_AGE_MS=30000;");
+    const end = html.indexOf("function chooseQuoteToken(", start);
+    assert.ok(start > 0 && end > start, name + " quote freshness helpers missing");
+    const source = html.slice(start, end);
+    const docListeners = {};
+    const windowListeners = {};
+    const timers = [];
+    const cancelled = [];
+    let now = 1_700_000_000_000;
+    const elements = {
+      quoteStatus: { textContent: "Fresh quote" },
+      quoteResults: { innerHTML: "<b>Fresh quote</b>" },
+      swapReview: { hidden: false },
+      getQuote: { disabled: true, textContent: "Quoting…" }
+    };
+    const ctx = {
+      Date: { now: () => now },
+      setTimeout: (callback, duration) => {
+        const timer = { callback, duration };
+        timers.push(timer);
+        return timer;
+      },
+      clearTimeout: timer => cancelled.push(timer),
+      document: {
+        visibilityState: "visible",
+        addEventListener: (event, listener) => { docListeners[event] = listener; }
+      },
+      window: { addEventListener: (event, listener) => { windowListeners[event] = listener; } },
+      $: id => elements[id],
+      selectedChain: "solana",
+      quoteRequestSequence: 0,
+      dexQuoteRequestSequence: 0,
+      pendingSwapOrder: { test: true }
+    };
+    const freshness = runInNewContext(
+      source + "\n({armQuoteFreshnessTimer,clearQuoteFreshnessTimer,expireQuotePreviewOnReturn})",
+      ctx
+    );
+    assert.equal(typeof docListeners.visibilitychange, "function");
+    assert.equal(typeof windowListeners.focus, "function");
+    assert.equal(typeof windowListeners.pageshow, "function");
+
+    // A fresh quote must survive a tab focus before the 30-second policy.
+    freshness.armQuoteFreshnessTimer(() => true);
+    assert.equal(timers.at(-1).duration, 30000);
+    now += 29_999;
+    windowListeners.focus();
+    assert.equal(elements.quoteStatus.textContent, "Fresh quote");
+    assert.match(elements.quoteResults.innerHTML, /Fresh quote/);
+
+    // Timers may be throttled while tab is backgrounded. A visibility return
+    // must invalidate the stale quote even before its delayed timer fires.
+    now += 2;
+    docListeners.visibilitychange();
+    assert.match(elements.quoteStatus.textContent, /over 30 seconds old/);
+    assert.equal(elements.swapReview.hidden, true);
+    assert.equal(elements.getQuote.disabled, false);
+    assert.ok(cancelled.length > 0, "expiry clears pending timer");
+    assert.doesNotMatch(elements.quoteResults.innerHTML, /Fresh quote/);
+
+    // A newly fetched preview receives a fresh timeout which removes it
+    // even if the user never changes amount or token.
+    elements.quoteStatus.textContent = "New quote";
+    freshness.armQuoteFreshnessTimer(() => true);
+    assert.equal(timers.at(-1).duration, 30000);
+    timers.at(-1).callback();
+    assert.match(elements.quoteStatus.textContent, /over 30 seconds old/);
+
+    // An old response/timer must not clear a newer quote after requests
+    // are invalidated and their generation changes.
+    elements.quoteStatus.textContent = "Newer quote";
+    freshness.armQuoteFreshnessTimer(() => false);
+    timers.at(-1).callback();
+    assert.equal(elements.quoteStatus.textContent, "Newer quote");
+    freshness.clearQuoteFreshnessTimer();
+
+    // Verify that the expiry logic really called the page's own invalidator,
+    // not a stub that only changed the banner.
+    assert.match(source, new RegExp(invalidator + "\\('Quote preview is over 30 seconds old"));
   }
 });

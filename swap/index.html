@@ -585,7 +585,37 @@ let autoQuoteTimer=null;
 function autoQuoteAfterChange(delay=450){clearTimeout(autoQuoteTimer);if(selectedChain!=='solana'||!quoteTokens.from?.id||!quoteTokens.to?.id||quoteTokens.from.id===quoteTokens.to.id||!(Number($('quoteAmount').value)>0))return;autoQuoteTimer=setTimeout(()=>{if(selectedChain==='solana'&&quoteTokens.from.id!==quoteTokens.to.id)requestJupiterQuote();},delay)}
 
 let quoteRequestSequence=0;
-function invalidateSwapQuote(reason){quoteRequestSequence++;pendingSwapOrder=null;$('swapReview').hidden=true;$('getQuote').disabled=selectedChain!=='solana';$('getQuote').textContent='Get live quote';$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output</small><b>—</b></div><div class="quote-result"><small>Routing engine</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div><div class="quote-result"><small>Price impact</small><b>—</b></div><div class="quote-result"><small>Input amount</small><b>—</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';$('quoteStatus').textContent=reason||'Quote invalidated. Request a fresh quote for the current assets and amount.';}
+// A displayed read-only quote is a snapshot, not an executable promise.
+// This is a local UI freshness policy, NOT a claim about Jupiter route validity.
+const QUOTE_PREVIEW_MAX_AGE_MS=30000;
+let quoteFreshnessTimer=null;
+let quoteFreshnessReceivedAt=0;
+function clearQuoteFreshnessTimer(){
+  if(quoteFreshnessTimer!==null)clearTimeout(quoteFreshnessTimer);
+  quoteFreshnessTimer=null;
+  quoteFreshnessReceivedAt=0;
+}
+function expireQuotePreviewOnReturn(){
+  // Browsers throttle timers in background tabs; discard a >30s-old preview
+  // synchronously when the page becomes active again.
+  if(quoteFreshnessReceivedAt && Date.now()-quoteFreshnessReceivedAt>=QUOTE_PREVIEW_MAX_AGE_MS){
+    invalidateSwapQuote('Quote preview is over 30 seconds old. Request a fresh Jupiter quote.');
+  }
+}
+function armQuoteFreshnessTimer(stillCurrent){
+  clearQuoteFreshnessTimer();
+  quoteFreshnessReceivedAt=Date.now();
+  quoteFreshnessTimer=setTimeout(()=>{
+    quoteFreshnessTimer=null;
+    if(stillCurrent())invalidateSwapQuote('Quote preview is over 30 seconds old. Request a fresh Jupiter quote.');
+  },QUOTE_PREVIEW_MAX_AGE_MS);
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible')expireQuotePreviewOnReturn();
+});
+window.addEventListener('focus',expireQuotePreviewOnReturn);
+window.addEventListener('pageshow',expireQuotePreviewOnReturn);
+function invalidateSwapQuote(reason){clearQuoteFreshnessTimer();quoteRequestSequence++;pendingSwapOrder=null;$('swapReview').hidden=true;$('getQuote').disabled=selectedChain!=='solana';$('getQuote').textContent='Get live quote';$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output</small><b>—</b></div><div class="quote-result"><small>Routing engine</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div><div class="quote-result"><small>Price impact</small><b>—</b></div><div class="quote-result"><small>Input amount</small><b>—</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';$('quoteStatus').textContent=reason||'Quote invalidated. Request a fresh quote for the current assets and amount.';}
 function chooseQuoteToken(side,token){if(!token||!token.id||!Number.isInteger(Number(token.decimals))||Number(token.decimals)<0||Number(token.decimals)>18){$('quoteStatus').textContent='Token metadata is incomplete; selection rejected.';return}quoteTokens[side]={id:token.id,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:Number(token.decimals),isVerified:token.isVerified===true};invalidateSwapQuote('Asset updated. Refreshing your live quote…');if(side==='from')updateSelectedAsset(quoteTokens.from);$(side==='from'?'quoteFromSearch':'quoteToSearch').value=(token.symbol||token.id);$(side==='from'?'fromSelected':'toSelected').textContent=(token.symbol||'TOKEN')+' · '+token.decimals+' decimals · '+(token.isVerified===true?'Jupiter verified':'Unverified');$(side==='from'?'fromResults':'toResults').innerHTML='';setSwapUrl();autoQuoteAfterChange();}
 const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
 let pendingSwapOrder=null;
@@ -656,6 +686,7 @@ async function signAndExecuteJupiterSwap(){
 async function requestJupiterQuote(){
  const status=$('quoteStatus'),button=$('getQuote');
  const request=++quoteRequestSequence;
+  clearQuoteFreshnessTimer();
  const amountInput=$('quoteAmount').value,amount=Number(amountInput),from={...quoteTokens.from},to={...quoteTokens.to};
  const slippage=$('swapSlippage')?.value||'auto';
  const stillCurrent=()=>request===quoteRequestSequence&&selectedChain==='solana'&&amountInput===$('quoteAmount').value&&slippage===($('swapSlippage')?.value||'auto')&&from.id===quoteTokens.from.id&&to.id===quoteTokens.to.id&&from.decimals===quoteTokens.from.decimals&&to.decimals===quoteTokens.to.decimals;
@@ -692,8 +723,9 @@ async function requestJupiterQuote(){
   const impact=typeof suppliedImpact==='number'&&Number.isFinite(suppliedImpact)&&suppliedImpact>=-1&&suppliedImpact<=1?suppliedImpact:null;
   const fee=Number.isInteger(data.feeBps)&&data.feeBps>=0&&data.feeBps<=10000?String(data.feeBps)+' bps':'Not supplied';
   const router=typeof data.router==='string'&&data.router.trim()?data.router:'Jupiter route';
-  $('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+esc(out)+'</b></div><div class="quote-result"><small>Minimum received · '+esc(to.symbol)+'</small><b>'+(minimum===null?'Unavailable · not verified':esc(minimum))+'</b></div><div class="quote-result"><small>Slippage setting</small><b>'+esc(protection)+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+amount+' '+esc(from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';
+  $('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+esc(out)+'</b></div><div class="quote-result"><small>Minimum received · '+esc(to.symbol)+'</small><b>'+(minimum===null?'Unavailable · not verified':esc(minimum))+'</b></div><div class="quote-result"><small>Slippage setting</small><b>'+esc(protection)+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+esc(window.ClimboriaSwapAmount.formatRaw(raw,from.decimals))+' '+esc(from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';
   status.textContent=minimum===null?'Quote received from Jupiter, but minimum received was not verified. This is indicative only; trading is disabled.':'Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';
+  armQuoteFreshnessTimer(stillCurrent);
  }catch(e){
   if(!stillCurrent())return;
   $('quoteResults').innerHTML='<div class="notice">'+esc(e.message)+'</div>';

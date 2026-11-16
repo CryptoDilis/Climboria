@@ -9,6 +9,7 @@ on:
       - "dex/swap-amount.js"
       - "swap-config.js"
       - ".github/scripts/dex-swap-quote-state-smoke.mjs"
+      - ".github/scripts/swap-amount.test.mjs"
       - ".github/scripts/dex-trade-rpc-race.test.mjs"
       - ".github/scripts/dex-swap-managed-provider-shell.test.mjs"
       - ".github/scripts/dex-swap-managed-provider-browser-smoke.mjs"
@@ -27,6 +28,7 @@ on:
       - "dex/swap-amount.js"
       - "swap-config.js"
       - ".github/scripts/dex-swap-quote-state-smoke.mjs"
+      - ".github/scripts/swap-amount.test.mjs"
       - ".github/scripts/dex-trade-rpc-race.test.mjs"
       - ".github/scripts/dex-swap-managed-provider-shell.test.mjs"
       - ".github/scripts/dex-swap-managed-provider-browser-smoke.mjs"
@@ -59,6 +61,7 @@ jobs:
       - name: Verify quote-state browser script and private DEX mint-RPC race guards
         run: |
           node --check .github/scripts/dex-swap-quote-state-smoke.mjs
+          node --test .github/scripts/swap-amount.test.mjs
           node --test .github/scripts/dex-trade-rpc-race.test.mjs
           node --test .github/scripts/dex-swap-managed-provider-shell.test.mjs
           node --test .github/scripts/dex-swap-monetization-readiness.test.mjs
