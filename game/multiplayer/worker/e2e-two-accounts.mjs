@@ -12,6 +12,7 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {verifyGameRoomPreflight} from './staging-preflight.mjs';
+import {requestGameRoomTicket} from './browser-ticket-request.mjs';
 const env=process.env,timeout=18000;
 function verify(cond,message){if(!cond)throw Error(message)}
 const base=new URL(env.GAME_ROOM_BASE||'https://rooms.climboria.fun/');
@@ -40,17 +41,16 @@ async function makeBrowserPlayer(token,name,model){
   status:200,contentType:'text/html',body:'<!doctype html><title>Climboria game room QA</title>'
  }));
  await page.goto(qaOrigin,{waitUntil:'domcontentloaded',timeout});
- await page.evaluate(async ({base,token,name,model,timeout})=>{
-  const res=await fetch(new URL('ticket',base),{
-   method:'POST',mode:'cors',credentials:'omit',
-   headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
-   body:JSON.stringify({name,model})
-  });
-  if(!res.ok)throw Error('Room server rejected authenticated user ticket');
-  const ticket=await res.json();
-  if(!/^[a-f0-9]{64}$/.test(ticket.ticket||''))throw Error('Invalid room ticket');
+ // The bounded ticket request is executed in the real first-party-origin
+ // QA browser context (same strict CORS/Origin behavior), not by Node fetch.
+ // The short-lived ticket only crosses the private Playwright process memory;
+ // it is never printed, persisted, or included in any report or screenshot.
+ const ticket=await page.evaluate(requestGameRoomTicket,{
+  base:base.href,token,name,model,timeout
+ });
+ await page.evaluate(async ({base,ticket,timeout})=>{
   const socketURL=new URL('ws',base);socketURL.protocol='wss:';
-  const ws=new WebSocket(socketURL.href,['climboria-v1','t-'+ticket.ticket]);
+  const ws=new WebSocket(socketURL.href,['climboria-v1','t-'+ticket]);
   const client=window.__CLIMBORIA_GAME_E2E={socket:ws,messages:[],closed:false};
   ws.addEventListener('message',e=>{try{client.messages.push(JSON.parse(e.data))}catch{}});
   ws.addEventListener('close',()=>{client.closed=true});
@@ -61,7 +61,7 @@ async function makeBrowserPlayer(token,name,model){
    }),
    new Promise((_,reject)=>setTimeout(()=>reject(Error('Real WebSocket timed out')),timeout))
   ]);
- },{base:base.href,token,name,model,timeout});
+ },{base:base.href,ticket,timeout});
  return page;
 }
 async function packet(page,selector,label){
