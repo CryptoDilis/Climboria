@@ -261,9 +261,22 @@ async function assertPage(browser, { name, path, viewport, isMobile = false, blo
     console.log("INFO " + name + " observed known Cloudflare analytics script " +
       knownCloudflareAnalyticsLoads.length + " time(s); this is NOT Jupiter/provider integrity approval.");
     if (blockAnalytics) {
-      assert.equal(blockedAnalyticsLoads, 1,
-        name + " telemetry-block resilience test must actually intercept exactly one known beacon load");
-      console.log("PASS " + name + " exact telemetry JS blocked in the isolated QA browser; this does NOT disable production analytics.");
+      // With Web Analytics disabled by the operator, zero beacon requests is the
+      // expected production state. Keep the exact-match deny route armed so an
+      // unexpected regression cannot silently load telemetry in this QA tab.
+      assert.equal(blockedAnalyticsLoads, knownCloudflareAnalyticsLoads.length,
+        name + " every observed known analytics script request must be denied");
+      assert.ok(blockedAnalyticsLoads <= 1,
+        name + " unexpected repeated analytics loads");
+      console.log("PASS " + name + (blockedAnalyticsLoads
+        ? " exact telemetry script request denied in isolated QA browser."
+        : " no analytics beacon requested; exact telemetry deny route armed in isolated QA browser."));
+    } else {
+      // This is a post-operator-disable release canary, not an approval to
+      // silently re-enable global Cloudflare Web Analytics on financial pages.
+      assert.equal(knownCloudflareAnalyticsLoads.length, 0,
+        name + " Cloudflare Analytics injection unexpectedly returned after operator disable");
+      console.log("PASS " + name + " no Cloudflare Analytics script requested on the live quote page.");
     }
     assert.equal(errors.length, 0, "Browser errors: " + errors.join(" | "));
     console.log("PASS " + name + " real browser quote via Jupiter proxy; exact raw units, no transaction.");
@@ -298,8 +311,8 @@ try {
   await assertPage(browser, { name: "Swap mobile", path: "/swap/", viewport: { width: 390, height: 844 }, isMobile: true });
   await assertPage(browser, { name: "DEX desktop", path: "/dex/", viewport: { width: 1440, height: 900 } });
   await assertPage(browser, { name: "DEX mobile", path: "/dex/", viewport: { width: 390, height: 844 }, isMobile: true });
-  // Operator decision support: verify quote UX still works when the observed
-  // third-party telemetry JS is denied in this test tab (no production change).
+  // Verify quote UX when known telemetry is absent, or is denied by the
+  // exact-match test-tab route if an unexpected request returns.
   // Normal unblocked 4/4 journeys above remain the primary live acceptance.
   await assertPage(browser, {
     name: "Swap desktop (analytics blocked)", path: "/swap/", viewport: { width: 1440, height: 900 },
