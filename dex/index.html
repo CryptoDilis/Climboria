@@ -1186,7 +1186,7 @@ async function openToken(mint,options={}){
   return;
  }
  const data=dexResult.value;
- const pairs=solPairs(data.pairs||[]).sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+ const pairs=solPairs(data.pairs||[]).filter(p=>p.baseToken.address===mint).sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
  activeDetailPairs=pairs;
  if(pairs[0]?.baseToken?.symbol)rememberClimboriaTokenMeta(mint,pairs[0].baseToken.symbol,pairs[0].baseToken.name||'');
  if(!pairs.length){
@@ -1205,7 +1205,7 @@ async function openToken(mint,options={}){
  $('detailMint').textContent='Mint: '+mint+' · '+pairs.length+' pool(s) discovered';
  $('detailUpdated').textContent='Updated '+new Date().toLocaleTimeString()+' · DexScreener provider';
  function selectPool(p,fromUrl=false){
-  if(fromUrl){if(!requestedPool)setDexUrl(mint,p.pairAddress,{fromUrl:true});}else setDexUrl(mint,p.pairAddress);
+  if(fromUrl){if(requestedPool!==p.pairAddress)setDexUrl(mint,p.pairAddress,{fromUrl:true});}else setDexUrl(mint,p.pairAddress);
   applySelectedPoolState(p,pairs,mint);
  }
  selectPool(best,!!options.fromUrl);
