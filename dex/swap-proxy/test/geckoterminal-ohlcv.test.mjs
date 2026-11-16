@@ -96,7 +96,7 @@ test("rejects duplicate and unordered timestamps", () => {
   assert.throws(() => normalize(response({ candles: [rows[0], rows[2], rows[1]] })), /strictly monotonic/);
 });
 test("rejects timestamps that are not Unix seconds", () => {
-  assert.throws(() => normalize(response({ candles: [[1700000000000, 1, 2, 0, 1, 1]] })), /Unix seconds/);
+  assert.throws(() => normalize(response({ candles: [[1700000000000, 1, 2, 0.5, 1, 1]] })), /Unix seconds/);
 });
 test("handles HTTP 429 with Retry-After without treating it as empty data", () => {
   const options = response();
