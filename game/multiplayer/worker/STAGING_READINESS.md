@@ -111,7 +111,9 @@ in two isolated Chromium browser contexts. It routes only each QA browser's
 or in any tracked file. It exercises *real Supabase password sign-in*,
 server-confirmed initial spawn, both real remote Jarrell/Lheiz GLB models,
 **actual keyboard Shift+W sprint movement replicated to the other browser**,
-cyan map/online roster, two-way World Chat, logout cleanup and same-tab
+cyan map/online roster, two-way World Chat **with real own-server-echo
+acknowledgements that clear only the delivered draft**, another authenticated
+player's reply **not clearing an unsent draft**, logout cleanup and same-tab
 re-login/rejoin. It can measure approximate Chromium software-render FPS.
 Only dummy QA account credentials are permitted; never run against customer
 accounts. Screenshots are optional via a **private local**
