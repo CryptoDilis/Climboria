@@ -36,7 +36,7 @@ try{
     await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},
       body:JSON.stringify(snapshot)});
    });
-   await page.route('**/data/climb-supply.json', async route=>{
+   await page.route('http://127.0.0.1:4173/data/climb-supply.json', async route=>{
     snapshotRequests++;
     // All fixtures below are synthetic. None represent live CLIMB supply.
     const valid={
