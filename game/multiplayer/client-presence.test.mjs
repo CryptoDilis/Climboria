@@ -315,7 +315,8 @@ test('World Chat late identical self echo never confirms a newer retry sequence'
  socket.onmessage({data:JSON.stringify({type:'world-chat',id,name:'Explorer A',
   text:'Same content',chatSeq:older,at:1730000000000})});
  assert.equal(input.value,'Same content','delayed echo from timed-out send must NOT clear new draft');
- assert.match(notice.textContent,/awaiting room confirmation/i);
+ assert.match(notice.textContent,/Waiting for the server/i,
+  'pending status must remain after stale echo, even if player clicked SEND twice');
  socket.onmessage({data:JSON.stringify({type:'world-chat',id,name:'Explorer A',
   text:'Same content',at:1730000000001})});
  assert.equal(input.value,'Same content','legacy unsequenced self echo must not fake current confirmation');
