@@ -214,6 +214,9 @@ jobs:
               assert re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z',data.get('observedAt',''))
           client = Path('climb-token-supply.js').read_text(encoding='utf-8')
           assert "const snapshotPath = '/data/climb-supply.json'" in client
+          assert "https://raw.githubusercontent.com/CryptoDilis/Climboria/main/data/climb-supply.json" in client
+          assert "parseStaticSnapshot(await response.json())" in client, "Both Pages and GitHub raw must be strictly validated"
+          assert "credentials:'omit'" in client, "No account credentials on public snapshot requests"
           assert 'parseStaticSnapshot' in client and 'loadStaticSnapshot' in client
           assert 'SNAPSHOT_MAX_AGE_MS' in client and "credentials:'omit'" in client
           publisher = Path('site/supply-worker/publish-static.mjs').read_text(encoding='utf-8')

@@ -7,7 +7,7 @@ const MINT='9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump';
 const base='http://127.0.0.1:4173/';
 const browser=await chromium.launch({headless:true});
 try{
- for(const width of [1536,1365,1024,768,390,360]){
+ for(const width of [1536,1365,1024,768,430,390,360]){
   const context=await browser.newContext({viewport:{width,height:850},deviceScaleFactor:1});
   const page=await context.newPage();
   try{
@@ -21,7 +21,22 @@ try{
    // explicitly synthetic RPC fixtures; never claim these values on mainnet.
    let rpcRequests=0;
    let snapshotRequests=0;
-   await page.route('**/data/climb-supply.json', async route=>{
+   let mirrorRequests=0;
+   await page.route('https://raw.githubusercontent.com/CryptoDilis/Climboria/main/data/climb-supply.json',async route=>{
+    mirrorRequests++;
+    const snapshot={
+     schema:1,mint:MINT,status:'ready',
+     source:'solana-mainnet-finalized-rpc',commitment:'finalized',
+     amount:'123456789000000',decimals:9,slot:345678901,
+     observedAt:new Date().toISOString()
+    };
+    if(width===390) snapshot.status='pending';
+    if(width===768) snapshot.observedAt='2020-01-01T00:00:00.000Z';
+    if(width===360) snapshot.mint='untrusted-mint';
+    await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},
+      body:JSON.stringify(snapshot)});
+   });
+   await page.route('http://127.0.0.1:4173/data/climb-supply.json', async route=>{
     snapshotRequests++;
     // All fixtures below are synthetic. None represent live CLIMB supply.
     const valid={
@@ -30,7 +45,7 @@ try{
      amount:'123456789000000',decimals:9,slot:345678901,
      observedAt:new Date().toISOString()
     };
-    if(width===390) valid.status='pending';
+    if(width===390||width===430) valid.status='pending';
     if(width===768) valid.observedAt='2020-01-01T00:00:00.000Z';
     if(width===360) valid.mint='incorrect-mint';
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(valid)});
@@ -66,19 +81,24 @@ try{
     const value=document.querySelector('#climbSupplyValue')?.textContent;
     return value==='123,456.789'||value==='Unavailable';
    },null,{timeout:6000});
-   assert.equal(snapshotRequests,1,'homepage must automatically fetch one same-origin snapshot');
+   assert.equal(snapshotRequests,1,'homepage first tries exactly one same-origin snapshot');
+   assert.equal(mirrorRequests,(width===1536||width===1365||width===1024)?0:1,
+    'GitHub public mirror is used only when the Pages file is unavailable or stale');
    assert.equal(rpcRequests,0,'homepage load must never automatically contact cross-origin Solana RPC');
    assert.equal(await page.locator('#climbSupplyPanel').getAttribute('aria-busy'),'false');
-   if(width===1536||width===1365||width===1024){
+   if(width===1536||width===1365||width===1024||width===430){
     assert.equal(await page.locator('#climbSupplyValue').textContent(),'123,456.789');
     assert.equal(await page.locator('#climbSupplyDecimals').textContent(),'9');
     assert.equal(await page.locator('#climbSupplyState').textContent(),'Finalized RPC snapshot');
     assert.match(await page.locator('#climbSupplyChecked').textContent(),/Finalized snapshot observed at/);
+    const source=await page.locator('#climbSupplySource').textContent();
+    if(width===430)assert.match(source,/GitHub repository finalized/);
+    else assert.match(source,/Same-origin finalized/);
    }else{
     assert.equal(await page.locator('#climbSupplyValue').textContent(),'Unavailable');
     assert.equal(await page.locator('#climbSupplyDecimals').textContent(),'—');
     assert.equal(await page.locator('#climbSupplyState').textContent(),'Supply unavailable');
-    assert.match(await page.locator('#climbSupplySource').textContent(),/No fresh server-side supply snapshot/);
+    assert.match(await page.locator('#climbSupplySource').textContent(),/No fresh finalized supply snapshot is reachable/);
    }
    assert.equal(await record.locator('.climb-supply-explorer').getAttribute('href'),
     'https://solscan.io/token/'+MINT);
