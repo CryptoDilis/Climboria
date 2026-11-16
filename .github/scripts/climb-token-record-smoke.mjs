@@ -86,8 +86,10 @@ try{
     // action and the always-visible supply fallback. Both must share the mint.
     const countExpected=url.includes('solscan.io/token/')?2:1;
     assert.equal(await link.count(),countExpected,'external links must use identical owner-announced mint');
-    assert.equal(await link.getAttribute('target'),'_blank');
-    assert.match(await link.getAttribute('rel'),/noopener/);
+    for(let i=0;i<countExpected;i++){
+     assert.equal(await link.nth(i).getAttribute('target'),'_blank');
+     assert.match(await link.nth(i).getAttribute('rel'),/noopener/);
+    }
    }
    await record.scrollIntoViewIfNeeded();
    const geometry=await page.evaluate(()=>{
