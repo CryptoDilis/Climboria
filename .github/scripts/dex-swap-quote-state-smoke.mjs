@@ -16,9 +16,12 @@ const fixture = extra => ({
   outAmount:'1234567',otherAmountThreshold:'1200000',...extra
 });
 const sleep = ms => new Promise(resolve => setTimeout(resolve,ms));
-async function quotePage(browser,kind,viewport,{walletProvider=false,tokenSearchUnavailable=false,marketUnavailable=false}={}) {
+async function quotePage(browser,kind,viewport,{walletProvider=false,tokenSearchUnavailable=false,marketUnavailable=false,virtualClock=false}={}) {
   const mobile = viewport.width < 600;
   const page = await browser.newPage({ viewport, isMobile:mobile, hasTouch:mobile });
+  // Virtual wall clock lets us verify the real in-browser expiry paths in milliseconds,
+  // without waiting 30 seconds or sending on-chain transactions.
+  if(virtualClock)await page.clock.install({time:new Date('2026-11-16T05:00:00.000Z')});
   if(walletProvider) await page.addInitScript(() => {
     const listeners = new Map();
     const primary = 'FirstWallet111111111111111111111111111111111';
@@ -128,6 +131,54 @@ async function mockResult(ctx,metadata) {
   assert.deepEqual(errors,[],'Quote UI threw a browser error');
   return result;
 }
+async function quoteExpiryResult(ctx,kind) {
+  const {page,forbidden,errors}=ctx;
+  const unexpectedScripts=[];
+  page.on('request',request=>{
+    const host=new URL(request.url()).hostname;
+    if(host==='terminal.jup.ag'||host==='plugin.jup.ag')
+      unexpectedScripts.push(request.url());
+  });
+  // Use the same exact Solana token/amount fixture as other quote-only E2E checks.
+  await page.route(QUOTE,route=>route.fulfill({
+    status:200,contentType:'application/json',
+    body:JSON.stringify(fixture({feeBps:15,router:'jupiter',slippageBps:50}))
+  }));
+  const fresh=async()=>{
+    await page.locator('#getQuote').click();
+    await page.waitForFunction(()=>
+      (document.querySelector('#quoteStatus')?.textContent||'').includes('Quote received from Jupiter'),
+      null,{timeout:10000});
+    assert.match(await page.locator('#quoteResults').innerText(),/1\.234567/);
+  };
+  await fresh();
+  await page.clock.fastForward(29_000);
+  assert.match(await page.locator('#quoteStatus').innerText(),/Quote received from Jupiter/,
+    kind+' must retain a quote before the 30-second local UI age');
+  assert.match(await page.locator('#quoteResults').innerText(),/1\.234567/);
+  await page.clock.fastForward(1_100);
+  assert.match(await page.locator('#quoteStatus').innerText(),/over 30 seconds old/,
+    kind+' must invalidate a quote when the 30s browser timer fires');
+  assert.doesNotMatch(await page.locator('#quoteResults').innerText(),/1\.234567|jupiter|15 bps/i,
+    kind+' must remove expired amounts, provider and fees');
+  assert.equal(await page.locator('#getQuote').isDisabled(),false,
+    kind+' must make a fresh read-only quote available after expiry');
+
+  // Simulate a backgrounded mobile tab with a throttled timer. setFixedTime
+  // advances Date.now() WITHOUT triggering timer callbacks. A real browser
+  // visibility return must drop the stale quote synchronously instead.
+  await fresh();
+  await page.clock.setFixedTime(new Date('2026-11-16T05:02:00.000Z'));
+  await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+  assert.match(await page.locator('#quoteStatus').innerText(),/over 30 seconds old/,
+    kind+' must invalidate an overage preview on visibility resume');
+  assert.doesNotMatch(await page.locator('#quoteResults').innerText(),/1\.234567|jupiter|15 bps/i,
+    kind+' must not expose a background-stale amount or fee');
+  assert.equal(forbidden.length,0,'Quote expiry must not call /order or /execute');
+  assert.deepEqual(unexpectedScripts,[],'Quote expiry must not inject a wallet-capable provider SDK');
+  assert.deepEqual(errors,[],'Quote expiry caused a browser page error');
+}
+
 async function customSlippageResult(ctx,kind) {
   const {page,forbidden,errors}=ctx;
   const control=kind==='DEX'?'#dexTradeSlippage':'#swapSlippage';
@@ -226,6 +277,13 @@ try {
       try {
         await mockResult(ctx,{feeBps:null,priceImpactPct:null,router:null,mode:null});
         console.log('PASS '+kind+' '+label+': unavailable fee, impact and router remain honest; no wallet requests');
+      } finally {await ctx.page.close();}
+    }
+    for(const kind of ['Swap','DEX']) {
+      const ctx=await quotePage(browser,kind,viewport,{virtualClock:true});
+      try {
+        await quoteExpiryResult(ctx,kind);
+        console.log('PASS '+kind+' '+label+': real browser 30-second timer and background-tab quote expiry; no wallet');
       } finally {await ctx.page.close();}
     }
     for(const kind of ['Swap','DEX']) {
