@@ -192,6 +192,37 @@ jobs:
 
           print("Permanent CLIMB CA in Tokenomics, premium disclosure layout and clean hero verified.")
           PY
+      - name: Verify safe same-origin CLIMB supply snapshot schema
+        run: |
+          python3 - <<'PY'
+          import json, re
+          from pathlib import Path
+          mint = '9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump'
+          data = json.loads(Path('data/climb-supply.json').read_text(encoding='utf-8'))
+          assert data.get('schema') == 1 and data.get('mint') == mint
+          assert data.get('status') in ('pending', 'ready')
+          if data['status'] == 'pending':
+              assert 'amount' not in data and 'decimals' not in data, 'Never invent an unverified supply'
+          else:
+              assert data.get('source') == 'solana-mainnet-finalized-rpc'
+              assert data.get('commitment') == 'finalized'
+              amount = data.get('amount')
+              assert isinstance(amount,str) and re.fullmatch(r'(0|[1-9][0-9]{0,19})',amount)
+              assert int(amount) <= 18446744073709551615
+              assert isinstance(data.get('decimals'),int) and 0 <= data['decimals'] <= 18
+              assert isinstance(data.get('slot'),int) and data['slot'] > 0
+              assert re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z',data.get('observedAt',''))
+          client = Path('climb-token-supply.js').read_text(encoding='utf-8')
+          assert "const snapshotPath = '/data/climb-supply.json'" in client
+          assert 'parseStaticSnapshot' in client and 'loadStaticSnapshot' in client
+          assert 'SNAPSHOT_MAX_AGE_MS' in client and "credentials:'omit'" in client
+          publisher = Path('site/supply-worker/publish-static.mjs').read_text(encoding='utf-8')
+          assert 'getTokenSupply' in publisher and "'finalized'" in publisher
+          assert 'parseRpcSupply' in publisher and 'writeSnapshot' in publisher
+          workflow = Path('.github/workflows/climb-supply-static-snapshot.yml').read_text(encoding='utf-8')
+          assert 'contents: write' in workflow and 'data/climb-supply.json' in workflow
+          print('CLIMB same-origin JSON snapshot and publisher security invariants verified')
+          PY
       - name: Syntax-check standalone CLIMB supply module
         run: node --check climb-token-supply.js
 
