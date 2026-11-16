@@ -146,6 +146,12 @@ jobs:
                          "noreferrer" in a.get("rel", "").split() for a in page.links), f"Missing trusted external mint link: {url}"
           assert 'id="copyClimbCaStatus"' in html
           assert 'tokenRecordAddress.textContent.trim()' in html, "Copy handler must use the rendered address, not a divergent mint"
+          for nav_id in ("climbCaNavLink", "mobileClimbCaNavLink"):
+              assert sum(1 for a in page.links if a.get("id") == nav_id and
+                         a.get("href") == "/#climb-token-record") == 1, (
+                         f"Permanent CLIMB CA link missing from navigation: {nav_id}")
+          assert 'id="climb-token-record"' in html and "scroll-margin-top" in html, "CA deep link must clear the fixed header"
+          assert 'range.selectNodeContents(tokenRecordAddress)' in html, "Blocked clipboard must select the exact visible address for manual copy"
           assert "PLANNED LAUNCH TARGET" not in html, "Past launch must not show an obsolete target countdown"
           assert "launch-countdown" not in html and "launch-timer" not in html, "Retired countdown UI must stay removed"
           assert "Market liquidity, token safety and returns are not verified or guaranteed." in html

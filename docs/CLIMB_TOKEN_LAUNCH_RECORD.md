@@ -4,6 +4,17 @@
 **Last website update:** 2026-11-16  
 **Source:** Climboria project owner's public launch announcement and the official CA already present in the homepage announcement, committed as `8e0bf6db1fa669aa851153810d9fa8d808f63acc` on 2026-11-15.
 
+## Permanent CA navigation and copy accessibility — DRAFT (2026-11-16)
+
+- **Objective:** keep the previous merged #513 permanent premium Tokenomics panel but make its published $CLIMB CA easy to reach and copy on both desktop and phones without resurrecting a hero announcement.
+- **Site-only source branch:** `site/climb-ca-nav-copy-polish-2026-11-16`. Adds a small gold `$CLIMB` link in desktop navigation plus an `OFFICIAL $CLIMB CA` item in mobile navigation, both going to `/#climb-token-record`. CSS `scroll-margin-top` prevents the fixed nav from hiding the card heading. Existing footer link, official mint, hero artwork and the three hero CTAs stay intact.
+- **Clipboard fallback:** browser still attempts to copy the exact rendered `#climbOfficialCa` value. If Clipboard API is blocked, the client selects only that visible address for manual copying and displays an accessible `aria-live` explanation. It never constructs a mint from untrusted input.
+- **Regression:** extends `.github/scripts/climb-token-record-smoke.mjs` to cover widths 1536/1365/390/360, desktop/mobile nav anchor activation, menu closing, scroll clearance, exact selected CA on copy denial, and all previously validated responsive/token-caution/copy cases. `.github/workflows/validate-climboria.yml` now requires the two exact navigation deep-links and text-selection fallback.
+- **Source commits:** `6270840dfe30a06d8be24166ad2da3f59248fb5c` (site), `a5df7f5bdd6255c5abb91b4f4d074dd281d7068b` (browser test), `79bcd93cd58e53e16fc99046c934f19b7040c1fa` (static validation). CI/PR/Pages production evidence **not yet available at this draft checkpoint**.
+- **EXACT NEXT:** Open a scoped site-only PR. Confirm diff restricted to homepage, existing token browser script, Validate workflow and this record. Run Validate + complete Browser Smoke for exact PR head. Fix legitimate desktop/mobile regressions, merge only on green checks, record PR/merge SHA/run IDs. Verify that GitHub Pages actually serves merged code (deployment SHA and real production browser desktop/mobile) before calling production live. Do not touch Game, DEX, Swap, Launchpad, ClimbX, finance, contracts or market-data services.
+
+---
+
 ## Permanent $CLIMB Tokenomics UI — MERGED (2026-11-16)
 
 - **Completed in repo:** [PR #513](https://github.com/CryptoDilis/Climboria/pull/513) merged into main via squash **`1f1241652167c9a1db6844e405f2ef355fd9f731`**. Exact validated PR head: `65010d249a0ff0f959977825d9dc225c29403af6`. Diff limited to `index.html`, `.github/scripts/climb-token-record-smoke.mjs`, `.github/workflows/browser-smoke.yml`, `.github/workflows/validate-climboria.yml`, this record. Game, DEX, Swap, Launchpad, ClimbX and contracts untouched.

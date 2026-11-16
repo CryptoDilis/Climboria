@@ -7,7 +7,7 @@ const MINT='9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump';
 const base='http://127.0.0.1:4173/';
 const browser=await chromium.launch({headless:true});
 try{
- for(const width of [1365,390,360]){
+ for(const width of [1536,1365,390,360]){
   const context=await browser.newContext({viewport:{width,height:850},deviceScaleFactor:1});
   const page=await context.newPage();
   try{
@@ -24,6 +24,29 @@ try{
    assert.equal((await record.locator('#climbOfficialCa').textContent()).trim(),MINT);
    assert.equal((await section.textContent()).includes('TBD'),false,'no raw TBD placeholders');
    assert.match(await utility.textContent(),/NOT YET LIVE/);
+   // The owner-approved CA must remain reachable from the main nav, even
+   // though the temporary launch hero announcement has been removed.
+   const desktopNav=page.locator('#climbCaNavLink');
+   const mobileNav=page.locator('#mobileClimbCaNavLink');
+   assert.equal(await desktopNav.getAttribute('href'),'/#climb-token-record');
+   assert.equal(await mobileNav.getAttribute('href'),'/#climb-token-record');
+   if(await desktopNav.isVisible()){
+    const logo=await page.locator('nav .logo').boundingBox();
+    const navToken=await desktopNav.boundingBox();
+    assert.ok(navToken.x>=logo.x+logo.width-2,
+     'desktop permanent CA entry must not collide with the wordmark');
+    await desktopNav.click();
+   }else{
+    await page.locator('#hamburger').click();
+    assert.equal(await mobileNav.isVisible(),true,'mobile token CA nav must be discoverable');
+    await mobileNav.click();
+    assert.equal(await page.locator('#mobileMenu').evaluate(el=>el.classList.contains('active')),false,
+     'mobile menu must close after navigating to the official CA');
+   }
+   assert.equal(new URL(page.url()).hash,'#climb-token-record');
+   const sectionTop=await record.evaluate(el=>el.getBoundingClientRect().top);
+   assert.ok(sectionTop>=60,'fixed navigation should not conceal CA heading: '+sectionTop);
+
    for(const url of ['https://pump.fun/coin/'+MINT,'https://solscan.io/token/'+MINT]){
     const link=record.locator('a[href="'+url+'"]');
     assert.equal(await link.count(),1,'external link must use identical owner-announced mint');
@@ -71,6 +94,9 @@ try{
    await page.locator('#copyClimbCa').click();
    assert.match(await page.locator('#copyClimbCaStatus').textContent(),/Copy unavailable/i,
      'clipboard failure must preserve selectable visible CA');
+   const manualSelection=await page.evaluate(()=>window.getSelection()?.toString());
+   assert.equal(manualSelection,MINT,
+     'when clipboard is blocked, automatically select exactly the displayed official CA');
    await record.scrollIntoViewIfNeeded();
    await page.screenshot({path:'climb-tokenomics-'+width+'.png'});
    console.log('PASS permanent CLIMB Tokenomics layout, copy, links and CTA hierarchy at '+width+'px');

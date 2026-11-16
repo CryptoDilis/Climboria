@@ -292,6 +292,14 @@ footer:first-of-type>div{
 }
 }
 
+/* Permanent $CLIMB mint is reachable from desktop/mobile navigation. */
+.navl a.climb-ca-nav{display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:6px 11px;white-space:nowrap;border:1px solid rgba(244,197,104,.43);border-radius:9px;color:#ffdf9d;background:rgba(226,168,73,.09);font-weight:800;letter-spacing:.45px}
+.navl a.climb-ca-nav:hover,.navl a.climb-ca-nav:focus-visible{color:#fff1cf;border-color:#f5cc82;background:rgba(235,181,80,.17)}
+.mobile-menu a.climb-ca-mobile{display:block;border:1px solid rgba(244,197,104,.4);border-radius:10px;padding:11px 13px;color:#ffdc93;background:rgba(220,160,74,.09);font-weight:800;letter-spacing:.55px;text-decoration:none}
+.mobile-menu a.climb-ca-mobile:focus-visible{outline:2px solid #ffe1a6;outline-offset:3px}
+#climb-token-record{scroll-margin-top:110px}
+@media(max-width:600px){#climb-token-record{scroll-margin-top:88px}}
+
 /* Permanent $CLIMB tokenomics and ecosystem record. No launch hero overlay. */
 #tokenomics{position:relative;isolation:isolate;background:radial-gradient(ellipse at 18% 12%,rgba(215,161,68,.085),transparent 44%),linear-gradient(180deg,#080c17,#090d18);scroll-margin-top:110px}
 #tokenomics .climb-token-title{max-width:930px;letter-spacing:.005em;text-wrap:balance}
@@ -533,7 +541,7 @@ footer:first-of-type>div{
 <body>
 <nav>
 <a class="logo" href="./" style="text-decoration:none;cursor:pointer">CLIMBORIA</a>
-<div class="navl" aria-label="Main navigation"><a href="/game/" id="gameNavLink">Game</a><a href="/dex/" id="dexNavLink">DEX</a><a href="/swap/" id="swapNavLink">Swap</a><a href="/launchpad/" id="launchpadNavLink">Launchpad</a><a href="/whitepaper/">Whitepaper</a><button class="hub-link" data-panel="announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg><span>Announcements</span></button><button class="hub-link" data-panel="notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg><span>Notifications</span></button><a href="/support/">Support</a><button class="btn-gold" data-open-auth>SIGN IN</button><a class="nav-x-link" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer" aria-label="Climboria on X">𝕏</a></div>
+<div class="navl" aria-label="Main navigation"><a href="/game/" id="gameNavLink">Game</a><a href="/dex/" id="dexNavLink">DEX</a><a href="/swap/" id="swapNavLink">Swap</a><a href="/launchpad/" id="launchpadNavLink">Launchpad</a><a href="/whitepaper/">Whitepaper</a><a class="climb-ca-nav" id="climbCaNavLink" href="/#climb-token-record" aria-label="Official CLIMB token contract address">$CLIMB</a><button class="hub-link" data-panel="announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg><span>Announcements</span></button><button class="hub-link" data-panel="notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg><span>Notifications</span></button><a href="/support/">Support</a><button class="btn-gold" data-open-auth>SIGN IN</button><a class="nav-x-link" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer" aria-label="Climboria on X">𝕏</a></div>
 <div style="display:flex;align-items:center;gap:12px">
 <a href="https://x.com/ClimboriaHQ" target="_blank" id="xLogo" style="display:none;align-items:center;justify-content:center;width:38px;height:38px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;color:#fff;text-decoration:none;font-weight:900;font-size:14px">𝕏</a>
 <button type="button" class="hamburger" id="hamburger" aria-label="Open navigation menu" aria-controls="mobileMenu" aria-expanded="false"><span></span><span></span><span></span></button>
@@ -541,6 +549,7 @@ footer:first-of-type>div{
 </nav>
 <div class="home-panel-backdrop" id="homePanelBackdrop" hidden><section class="home-panel" role="dialog" aria-modal="true" aria-labelledby="homePanelTitle"><button class="home-panel-close" id="homePanelClose" aria-label="Close">×</button><span>CLIMBORIA HUB</span><h2 id="homePanelTitle">Announcements</h2><div id="homePanelContent"></div></section></div><div class="mobile-menu" id="mobileMenu" aria-label="Mobile navigation" inert>
 <a href="/game/" id="mobileGameBtn">Game</a><a href="/dex/" id="mobileDexBtn">DEX</a><a href="/swap/" id="mobileSwapBtn">Swap</a><a href="/launchpad/" id="mobileLaunchpadBtn">Launchpad</a><a href="/whitepaper/">Whitepaper</a>
+<a class="climb-ca-mobile" id="mobileClimbCaNavLink" href="/#climb-token-record">OFFICIAL $CLIMB CA ↗</a>
 <button class="mobile-hub-link" data-panel="announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg>Announcements</button><button class="mobile-hub-link" data-panel="notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg>Notifications</button>
 <a href="/support/">Support</a>
 <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px">
@@ -802,7 +811,18 @@ footer:first-of-type>div{
         await navigator.clipboard.writeText(address);
         tokenCopyStatus.textContent = 'Contract address copied.';
       } catch {
-        tokenCopyStatus.textContent = 'Copy unavailable. Select the address above to copy it manually.';
+        // HTTPS/permissions can block Clipboard API. Select the exact visible
+        // mint for keyboard and mobile copy rather than losing the user's click.
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(tokenRecordAddress);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        } catch {
+          // The address is still rendered with user-select:all for manual copy.
+        }
+        tokenCopyStatus.textContent = 'Copy unavailable. Address selected above; copy it manually.';
       }
     });
   }
