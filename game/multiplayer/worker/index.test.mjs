@@ -71,6 +71,56 @@ test('staging /ready is fail-closed without required bindings, never claims real
  assert.equal(blob.includes('sb_publishable'),false,'no credential material is included in readiness replies');
 });
 
+test('staging readiness fails closed if Durable Object fetch or JSON parsing ignores abort',async()=>{
+ const originalTimeout=globalThis.setTimeout;
+ const base={
+  ...env({fetch:async()=>new Response(JSON.stringify({durableObjectReady:true}),{status:200})}),
+  SUPABASE_PUBLISHABLE_KEY:'sb_publishable_TEST1234567890'
+ };
+ // Speed up only the server's exact 3,500ms deadline in this focused Node
+ // test; production stays unchanged. A separate real watchdog prevents a
+ // hanging probe regression from hanging the entire Gateway suite.
+ globalThis.setTimeout=(callback,ms,...args)=>
+  originalTimeout(callback,ms===3500?25:ms,...args);
+ const bounded=operation=>Promise.race([
+  operation,
+  new Promise((_,reject)=>originalTimeout(()=>reject(Error('readiness deadline never returned')),500))
+ ]);
+ try{
+  let signal,release;
+  const stalled=new Promise(resolve=>{release=resolve});
+  const blockedFetch={
+   ...base,ROOMS:{idFromName:name=>name,get:()=>({fetch:async request=>{
+    signal=request.signal;
+    return stalled; // Intentionally ignores AbortSignal.
+   }})}
+  };
+  const res=await bounded(gateway.fetch(mkRequest('/ready'),blockedFetch));
+  assert.equal(res.status,503,'hung DO fetch must never leave /ready unresolved');
+  assert.deepEqual(await res.json(),{
+   service:'climboria-game-room',bindingsConfigured:true,
+   durableObjectReady:false,gameplayPvP:false
+  });
+  assert.equal(signal?.aborted,true,'deadline must cancel the outbound DO request');
+  release(new Response(JSON.stringify({durableObjectReady:true}),{status:200}));
+  assert.equal(res.status,503,'late DO success must never upgrade a failed readiness reply');
+
+  let parseSignal;
+  const stalledJson={
+   ...base,ROOMS:{idFromName:name=>name,get:()=>({fetch:async request=>{
+    parseSignal=request.signal;
+    return {status:200,json:async()=>new Promise(()=>{})};
+   }})}
+  };
+  const parseResult=await bounded(gateway.fetch(mkRequest('/ready'),stalledJson));
+  assert.equal(parseResult.status,503,'stalled JSON must obey the same deadline');
+  assert.equal((await parseResult.json()).durableObjectReady,false);
+  assert.equal(parseSignal?.aborted,true);
+ }finally{
+  globalThis.setTimeout=originalTimeout;
+ }
+});
+
 test('Durable Object internal readiness probes its actual storage without issuing tickets',async()=>{
  let reads=0;
  const storage={async get(key){

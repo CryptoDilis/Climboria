@@ -34,7 +34,11 @@ alone proves only that code responds**, not that the Worker is configured.
 Also check `https://<approved-worker-host>/ready` and require **HTTP 200**
 with `bindingsConfigured:true`, **`durableObjectReady:true`**, and
 `gameplayPvP:false`. This endpoint performs a bounded read-only probe of the
-**real single-room Durable Object storage**; an installed binding that cannot
+**real single-room Durable Object storage**; both the internal DO fetch and
+its JSON readiness response must complete within **3.5 seconds**, even if
+the underlying DO stub ignores abort or hangs while parsing. It must fail
+closed with HTTP 503 and `durableObjectReady:false` on a timeout; a later
+reply cannot upgrade the failed response. An installed binding that cannot
 initialize its migration/storage **must** return HTTP 503. HTTP 503 can
 therefore mean required key/URL/DO bindings are absent **or** that the DO
 object/storage is unavailable: inspect protected environment secrets,
