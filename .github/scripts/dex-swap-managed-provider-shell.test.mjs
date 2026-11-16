@@ -110,6 +110,9 @@ function createDom({ failure = false, deferLoad = false } = {}) {
     }
   };
   const doc = {
+    visibilityState: "visible",
+    listeners: {},
+    addEventListener(event, callback) { this.listeners[event] = callback; },
     querySelector(selector) {
       return selector === "[data-climboria-managed-swap-panel]" ? panel : null;
     },
@@ -451,6 +454,172 @@ test("late failed active-panel poll cannot revoke a newly reapproved reopening",
   await stalePoll;
   assert.equal(ui.panel.hidden, false, "old response may not close a newer approved session");
   assert.equal(ui.btn.hidden, false);
+  ui.close.click();
+});
+
+test("a background tab return immediately hides mounted provider until fresh no-store approval", async () => {
+  const ui = createDom();
+  let calls = 0;
+  let resolvePending;
+  let timers = 0;
+  let stops = 0;
+  let initCalls = 0;
+  const listeners = {};
+  const response = enabled => ({
+    status:200, headers:{get:() => "no-store"},
+    json:async () => ({enabled})
+  });
+  const scope = {
+    Jupiter:{init() {initCalls++;}},
+    addEventListener(event, fn) {listeners[event] = fn;},
+    setInterval(fn, ms) {assert.equal(ms,15000); timers++; return timers;},
+    clearInterval() {stops++;},
+    fetch(url, options) {
+      assert.equal(url,"/swap-runtime-status.json");
+      assert.equal(options.cache,"no-store");
+      assert.equal(options.redirect,"error");
+      calls++;
+      if (calls === 3) return new Promise(resolve => {resolvePending = resolve;});
+      return Promise.resolve(response(true));
+    }
+  };
+  initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  assert.equal(typeof ui.doc.listeners.visibilitychange,"function");
+  assert.equal(typeof listeners.focus,"function");
+  assert.equal(typeof listeners.pageshow,"function");
+  await ui.btn.click();
+  assert.equal(initCalls,1);
+  assert.equal(calls,2);
+  assert.equal(timers,1);
+  assert.equal(ui.panel.hidden,false);
+  ui.doc.visibilityState = "hidden";
+  assert.equal(ui.doc.listeners.visibilitychange(),undefined);
+  assert.equal(calls,2,"background event does not fetch");
+  ui.doc.visibilityState = "visible";
+  const pending = ui.doc.listeners.visibilitychange();
+  assert.equal(ui.panel.hidden,true,"conceal stale wallet UI BEFORE the network check");
+  assert.equal(ui.btn.hidden,false);
+  assert.equal(stops,1);
+  assert.equal(calls,3);
+  assert.match(ui.status.textContent,/Rechecking provider release approval/);
+  await listeners.focus();
+  assert.equal(calls,3,"concurrent focus must not open duplicate check");
+  resolvePending(response(false));
+  await pending;
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(ui.btn.hidden,true,"operator rollback hides launch controls");
+  assert.equal(initCalls,1,"no duplicate vendor init");
+  assert.equal(timers,1,"revoked provider monitoring never restarts");
+  assert.match(ui.status.textContent,/Existing wallet requests and submitted transactions are not cancelled/);
+});
+
+test("approved tab focus or BFCache resume rechecks and restores panel without provider re-init", async () => {
+  const ui = createDom();
+  const listeners = {};
+  let calls = 0;
+  let initCalls = 0;
+  let timers = 0;
+  let stops = 0;
+  const scope = withRuntime({
+    Jupiter:{init() {initCalls++;}},
+    addEventListener(event, fn) {listeners[event] = fn;},
+    setInterval(fn, ms) {assert.equal(ms,15000); timers++; return timers;},
+    clearInterval() {stops++;}
+  });
+  const oldFetch = scope.fetch;
+  scope.fetch = async (...args) => {calls++; return oldFetch(...args);};
+  initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  await ui.btn.click();
+  assert.equal(calls,2);
+  assert.equal(timers,1);
+  assert.equal(initCalls,1);
+  assert.equal(listeners.pageshow({persisted:false}),undefined,
+    "normal load does not cause another wallet approval check");
+  assert.equal(calls,2);
+  await listeners.focus();
+  assert.equal(calls,3);
+  assert.equal(stops,1);
+  assert.equal(timers,2);
+  assert.equal(ui.panel.hidden,false);
+  assert.equal(initCalls,1);
+  await listeners.pageshow({persisted:true});
+  assert.equal(calls,4);
+  assert.equal(stops,2);
+  assert.equal(timers,3);
+  assert.equal(ui.panel.hidden,false);
+  assert.equal(initCalls,1,"BFCache return must not initialize vendor SDK twice");
+  ui.close.click();
+  assert.equal(stops,3,"closing panel after refresh stops the newest timer");
+  const oldRequests = calls;
+  await listeners.focus();
+  assert.equal(calls,oldRequests,"closed provider must never auto-reopen on focus");
+  assert.equal(ui.panel.hidden,true);
+});
+
+test("a stale successful tab-resume response cannot resurrect a manually closed panel", async () => {
+  const ui = createDom();
+  let resolveStale;
+  let calls = 0;
+  const listeners = {};
+  const yes = {status:200,headers:{get:() => "no-store"},json:async () => ({enabled:true})};
+  const scope = {
+    Jupiter:{init() {}},
+    addEventListener(event,fn) {listeners[event] = fn;},
+    fetch() {
+      calls++;
+      return calls===3
+        ? new Promise(resolve => {resolveStale = resolve;})
+        : Promise.resolve(yes);
+    },
+    setInterval() {return 1;},
+    clearInterval() {}
+  };
+  initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  await ui.btn.click();
+  const pending = listeners.focus();
+  assert.equal(ui.panel.hidden,true);
+  ui.close.click();
+  const closedStatus = ui.status.textContent;
+  resolveStale(yes);
+  await pending;
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(ui.status.textContent,closedStatus);
+  assert.equal(ui.btn.hidden,false);
+  assert.equal(calls,3);
+});
+
+test("a stale denied tab-resume response cannot revoke a newer approved reopening", async () => {
+  const ui = createDom();
+  let resolveStale;
+  let calls = 0;
+  let initCalls = 0;
+  const listeners = {};
+  const yes = {status:200,headers:{get:() => "no-store"},json:async () => ({enabled:true})};
+  const no = {status:200,headers:{get:() => "no-store"},json:async () => ({enabled:false})};
+  const scope = {
+    Jupiter:{init() {initCalls++;}},
+    addEventListener(event,fn) {listeners[event] = fn;},
+    fetch() {
+      calls++;
+      return calls===3
+        ? new Promise(resolve => {resolveStale = resolve;})
+        : Promise.resolve(yes);
+    },
+    setInterval() {return 1;},
+    clearInterval() {}
+  };
+  initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  await ui.btn.click();
+  const pending = listeners.focus();
+  assert.equal(ui.panel.hidden,true);
+  ui.close.click();
+  await ui.btn.click();
+  assert.equal(ui.panel.hidden,false);
+  resolveStale(no);
+  await pending;
+  assert.equal(ui.panel.hidden,false,"older denied response cannot hide newer authorized panel");
+  assert.equal(ui.btn.hidden,false);
+  assert.equal(initCalls,1);
   ui.close.click();
 });
 
