@@ -16,7 +16,7 @@ This checkpoint transcribes prior owner-supplied signatures and already-recorded
 - Owner's canonical USDC token balance increased **352,733 base units = 0.352733 USDC**, matching the recorded Jupiter receipt.
 - Mints: wrapped SOL `So11111111111111111111111111111111111111112`; USDC `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`.
 - Separate prior failed attempt was reported as **transaction expired**, with **no signature provided**; do not count as a settled trade.
-- **Missing:** pre-wallet-approval Jupiter **minimum received** screenshot/data; cannot verify filled amount against the promised quote floor.
+- **Evidence location not yet reconciled:** this staging GitHub report does not show the pre-wallet-approval Jupiter **minimum received** capture. The owner states that additional acceptance evidence was already completed in **Codex or ChatGPT Work**, which is not directly linked to this repository checkpoint. Do not call the acceptance test undone without locating that original artifact.
 
 ## 2. Owner staging Signature DEX — USDC to SOL (confirmed settlement)
 
@@ -27,20 +27,24 @@ This checkpoint transcribes prior owner-supplied signatures and already-recorded
 - Separate wrapped SOL account increased **986 lamports**, consistent with the Jupiter-displayed **0.02%** fee. Network fee: **9,844 lamports** (0.000009844 SOL).
 - Fee payer net native SOL balance increased **4,922,815 lamports = 0.004922815 SOL**, reconciling gross output less the separate fee and network fee.
 - Mints: USDC `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`; wrapped SOL `So11111111111111111111111111111111111111112`.
-- Phantom wallet preview showed **estimated receive**, but the pre-approval Jupiter **minimum received** was not preserved; quote-floor validation remains incomplete.
+- The original staging GitHub report records Phantom's **estimated receive** preview but does not attach the pre-approval Jupiter **minimum received** capture. The owner says this additional evidence was completed in **Codex or Work**; treat its location/independent confirmation as **unreconciled**, not as proof the owner failed to test it.
 
 ## Release interpretation — do not retest historical trades unnecessarily
 
 **Completed and historical:** Owner-controlled wallet transactions on the temporary HTTPS staging integration settled on Solana mainnet for BOTH Swap and Signature DEX. Historical independent finalized RPC checks reconciled signatures, mints, token balance changes and chain fees. This is real wallet/mainnet settlement evidence, **not** a mocked browser or read-only quote-only test.
 
-**Not thereby completed:** The exact current production candidate's vendor runtime, end-to-end pinned JavaScript/CSS/font dependency integrity and distribution rights; immutable roll-forward/rollback; screenshot or immutable capture of the **minimum received before signing** and separate network/provider fee disclosures; exact-current-build physical-device desktop/mobile wallet acceptance; or production wallet-trade activation. Staging vendor artifacts were isolated in unmerged draft PR #475, and Climboria's public native Worker signing/execution source gates and `swap-config.js` managed provider/signing gates remain OFF. Any Jupiter-displayed **0.02%** fee observed on the staging transactions is **not evidence of Climboria fee revenue**; Climboria fee collection is disabled.
+**Not thereby completed:** The exact current production candidate's vendor runtime, end-to-end pinned JavaScript/CSS/font dependency integrity and distribution rights; immutable roll-forward/rollback; independently retrievable evidence in this repo for **minimum received before signing**, separate network/provider fee disclosures and exact-current-build physical-device desktop/mobile wallet acceptance (owner reports these may be completed in Codex/Work); or production wallet-trade activation. Staging vendor artifacts were isolated in unmerged draft PR #475, and Climboria's public native Worker signing/execution source gates and `swap-config.js` managed provider/signing gates remain OFF. Any Jupiter-displayed **0.02%** fee observed on the staging transactions is **not evidence of Climboria fee revenue**; Climboria fee collection is disabled.
 
 ## Exact next tasks (no repeat of completed owner mainnet tests)
 
 1. **Carry these two settlement receipts forward as completed historical mainnet staging evidence.** Do not ask the owner to repeat already verified 2026-11-15 swaps merely to recreate historical evidence.
 2. Resolve [upstream Jupiter full-runtime integrity/distribution question #238](https://github.com/jup-ag/plugin/issues/238), or secure a separately reviewed supported alternative with transitive JS/SRI, bounded CSS hash before insertion, font/network policy, licensing and attribution. Keep draft #475 unmerged until cleared.
-3. On the **exact separately approved deployable candidate**, capture before-signing minimum received and provider/network fees, wallet rejection/expiry/active-session rollback effects, plus current physical mobile and desktop acceptance. If another tiny owner-funded on-chain check is necessary because the release candidate changed, separately document why; don't erase the two already completed finalities.
+3. First locate and import/refer to the **already completed Codex/Work evidence** the owner reports for before-signing minimum received, provider/network fees, wallet rejection/expiry/active-session rollback and physical mobile/desktop acceptance. Validate it against the exact deployable candidate before assuming anything must be repeated. If an essential item truly is absent or candidate changed materially, identify the specific gap and why an incremental check is needed; do not ask to repeat the two completed historical mainnet settlements.
 4. Separately authorize and verify **Swap first, Signature DEX second**, starting with Climboria trading fees OFF and monitored rollback, without bypassing native Worker security gates. Record the deployed SHA, actual release switches, finalized receipts, and any revenue only when objectively proven.
 5. Update `docs/DEX_SWAP_LAUNCHPAD_DEVELOPMENT_RECORD.md` on every meaningful change. Scope remains Swap/DEX ONLY; Game, ClimbX, Launchpad, homepage and token economics are untouched.
 
 **Current public release state at this checkpoint:** real production **quote-only** on desktop/mobile. **Mainnet settlement testing completed on historical staging; public wallet trading NOT live.**
+
+## 2026-11-16 owner clarification — additional evidence may be in Codex / ChatGPT Work
+
+After this reconciliation was drafted, the owner explicitly stated that the **remaining acceptance evidence was already completed**, possibly in Codex or ChatGPT Work rather than committed to this repository. This entry confirms that **absence from the consulted GitHub staging file is not evidence that testing was not done**. The exact artifact/session location and whether it binds to the released candidate have not been independently inspected from this chat. Preserve the owner’s completion report, avoid duplicated real-money tests, and reconcile original screenshots/logs/review before closing any safety or rollout gate. No wallet transaction, staging bundle, or production switch was changed by this correction.
