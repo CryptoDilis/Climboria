@@ -25,6 +25,8 @@
   const SNAPSHOT_MAX_AGE_MS = 4 * 60 * 60 * 1000;
   const DEADLINE_MS = 6500;
   const SNAPSHOT_DEADLINE_MS = 3500;
+  const BACKGROUND_CHECK_INTERVAL_MS = 20 * 60 * 1000;
+  const MIRROR_CHECK_AFTER_MS = 30 * 60 * 1000;
 
   function parseUnits(amount, decimals, slot) {
     if (!Number.isSafeInteger(slot) || slot <= 0 ||
@@ -90,6 +92,8 @@
     button.textContent = 'CHECK LIVE SOLANA ↗';
   }
   function showSnapshot(data, label, detail) {
+    lastDisplayLabel = label;
+    lastDisplayDetail = detail;
     valueEl.textContent = data.formatted;
     decimalsEl.textContent = String(data.decimals);
     setState('loaded', label);
@@ -105,6 +109,50 @@
   let busy = false;
   let lastRequest = 0;
   let lastVerified = null;
+  let lastAutoCheckAt = 0;
+  let lastDisplayLabel = '';
+  let lastDisplayDetail = '';
+
+  function isSnapshotFresh(snapshot) {
+    if (!snapshot || typeof snapshot.observedAt !== 'string') return false;
+    const observed = Date.parse(snapshot.observedAt);
+    const age = Date.now() - observed;
+    return Number.isFinite(observed) && age >= -60000 && age <= SNAPSHOT_MAX_AGE_MS;
+  }
+
+  function expireVisibleSnapshot() {
+    if (lastVerified && !isSnapshotFresh(lastVerified)) {
+      lastVerified = null;
+      lastDisplayLabel = '';
+      lastDisplayDetail = '';
+      if (!busy) unavailable('The last finalized supply snapshot has expired. Reload the current record or check this mint on Solscan.');
+    }
+  }
+
+  async function upgradeOlderPagesSnapshot(pagesSnapshot) {
+    try {
+      const mirror = await withDeadline(async signal => {
+        const response = await fetch(mirrorSnapshotUrl, {
+          method:'GET', signal, cache:'no-store', credentials:'omit', redirect:'error'
+        });
+        if (!response.ok) throw new Error('GitHub snapshot unavailable');
+        return parseStaticSnapshot(await response.json());
+      }, SNAPSHOT_DEADLINE_MS);
+      // Only upgrade a still-displayed Pages snapshot. A manual live recheck,
+      // newer background request or expired data must never be overwritten by
+      // an older cross-origin response that arrives later.
+      if (!busy && lastVerified === pagesSnapshot && isSnapshotFresh(mirror) &&
+          mirror.slot > pagesSnapshot.slot &&
+          Date.parse(mirror.observedAt) >= Date.parse(pagesSnapshot.observedAt)) {
+        lastVerified = mirror;
+        showSnapshot(mirror, 'Finalized RPC snapshot',
+          'Newer GitHub repository finalized Solana snapshot');
+      }
+    } catch {
+      // The public GitHub mirror is optional; a valid Pages snapshot remains
+      // visible even when GitHub raw CORS/network access is unavailable.
+    }
+  }
 
   async function loadStaticSnapshot() {
     if (busy) return;
@@ -113,6 +161,8 @@
       return;
     }
     busy = true;
+    lastAutoCheckAt = Date.now();
+    const prior = isSnapshotFresh(lastVerified) ? lastVerified : null;
     button.disabled = true;
     setState('loading', 'Checking verified snapshot');
     valueEl.textContent = 'Checking…';
@@ -142,10 +192,34 @@
         }
       }
       if (!selected) throw new Error('No usable snapshot source');
-      lastVerified = selected.snapshot;
-      showSnapshot(selected.snapshot, 'Finalized RPC snapshot', selected.label);
+      const current = isSnapshotFresh(lastVerified) ? lastVerified : null;
+      if (current && (current.slot > selected.snapshot.slot ||
+          (current.slot === selected.snapshot.slot &&
+           Date.parse(current.observedAt) > Date.parse(selected.snapshot.observedAt)))) {
+        showSnapshot(current, lastDisplayLabel || 'Finalized RPC snapshot',
+          lastDisplayDetail || 'Previously verified, newer finalized Solana snapshot');
+      } else {
+        lastVerified = selected.snapshot;
+        showSnapshot(selected.snapshot, 'Finalized RPC snapshot', selected.label);
+      }
+      // Pages can lag a newer Actions-bot main-branch JSON commit yet remain
+      // younger than four hours. Check GitHub raw in the background when Pages
+      // is more than 30 minutes old; never hold up the initial render.
+      if (selected.label === 'Same-origin finalized Solana snapshot' &&
+          Date.now() - Date.parse(selected.snapshot.observedAt) > MIRROR_CHECK_AFTER_MS &&
+          lastVerified === selected.snapshot) {
+        // The request starts after the page has rendered its valid result.
+        queueMicrotask(() => { void upgradeOlderPagesSnapshot(selected.snapshot); });
+      }
     } catch {
-      unavailable('No fresh finalized supply snapshot is reachable from Pages or GitHub. You can try the direct Solana lookup or check this exact mint on Solscan.');
+      if (isSnapshotFresh(prior)) {
+        lastVerified = prior;
+        showSnapshot(prior, lastDisplayLabel || 'Last verified finalized snapshot',
+          lastDisplayDetail || 'Retained valid finalized snapshot during refresh failure');
+      } else {
+        lastVerified = null;
+        unavailable('No fresh finalized supply snapshot is reachable from Pages or GitHub. You can try the direct Solana lookup or check this exact mint on Solscan.');
+      }
     } finally {
       busy = false;
       button.disabled = false;
@@ -162,8 +236,7 @@
     lastRequest = Date.now();
     busy = true;
     button.disabled = true;
-    const preserveVerified = Boolean(lastVerified &&
-      Date.now() - Date.parse(lastVerified.observedAt) <= SNAPSHOT_MAX_AGE_MS);
+    const preserveVerified = isSnapshotFresh(lastVerified);
     button.textContent = 'CHECKING…';
     setState('loading', 'Checking live Solana RPC');
     if (!preserveVerified) {
@@ -203,7 +276,18 @@
     }
   }
   button.addEventListener('click', loadSupply);
-  // Static same-origin request is inexpensive, avoids browser RPC CORS and
-  // makes the supply card self-loading without visitor interaction.
+  // A long-open dashboard must not continue to present an expired supply
+  // number as current. Refresh periodically while visible and re-check when
+  // returning to the tab, always read-only and without wallet interaction.
+  const checkVisibleSnapshot = () => {
+    expireVisibleSnapshot();
+    if (document.visibilityState === 'visible' && !busy &&
+        Date.now() - lastAutoCheckAt >= BACKGROUND_CHECK_INTERVAL_MS) {
+      void loadStaticSnapshot();
+    }
+  };
+  document.addEventListener('visibilitychange', checkVisibleSnapshot);
+  window.setInterval(checkVisibleSnapshot, 60 * 1000);
+  // Same-origin JSON remains the initial cheap, no-CORS source.
   void loadStaticSnapshot();
 })();
