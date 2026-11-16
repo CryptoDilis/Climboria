@@ -300,6 +300,26 @@ footer:first-of-type>div{
 #climb-token-record{scroll-margin-top:110px}
 @media(max-width:600px){#climb-token-record{scroll-margin-top:88px}}
 
+/* CLIMB supply: premium visible ledger panel; no unverified static supply values. */
+#tokenomics .climb-supply-panel{min-width:0;margin-top:17px;padding:19px;border:1px solid rgba(248,207,125,.32);border-radius:16px;background:radial-gradient(circle at right top,rgba(214,151,58,.13),transparent 60%),linear-gradient(140deg,rgba(16,26,40,.96),rgba(11,14,24,.97));box-shadow:inset 0 1px rgba(255,255,255,.04)}
+#tokenomics .climb-supply-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+#tokenomics .climb-supply-eyebrow{display:block;margin-bottom:6px;color:#dabc7c;font:800 9px/1.5 Inter,system-ui,sans-serif;letter-spacing:1.2px;text-transform:uppercase}
+#tokenomics .climb-supply-top h4{margin:0;color:#fff3d8;font:800 19px/1.25 Cinzel,Georgia,serif}
+#tokenomics .climb-supply-refresh{flex:none;max-width:185px;min-height:36px;padding:7px 10px;border:1px solid rgba(246,202,117,.5);border-radius:9px;background:linear-gradient(120deg,#e5ba66,#ba8b43);font:800 10px/1.4 Inter,system-ui,sans-serif;letter-spacing:.28px;color:#1d160c;cursor:pointer}
+#tokenomics .climb-supply-refresh:hover,#tokenomics .climb-supply-refresh:focus-visible{background:#ffdc95}
+#tokenomics .climb-supply-refresh:disabled{opacity:.65;cursor:wait}
+#tokenomics .climb-supply-main{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;margin:16px 0 7px}
+#tokenomics .climb-supply-value{display:block;max-width:100%;overflow-wrap:anywhere;color:#ffe3a6;font:800 clamp(23px,3vw,37px)/1.2 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.7px}
+#tokenomics .climb-supply-unit{font:800 12px/1.5 Inter,system-ui,sans-serif;letter-spacing:.8px;color:#e0ca9e}
+#tokenomics .climb-supply-source{min-height:30px;margin:0 0 11px;color:#a9b6c6;font-size:11px;line-height:1.55}
+#tokenomics .climb-supply-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#tokenomics .climb-supply-meta>div{min-width:0;padding:10px 12px;border:1px solid rgba(225,197,147,.15);border-radius:9px;background:rgba(255,255,255,.025)}
+#tokenomics .climb-supply-meta span{display:block;margin-bottom:4px;font:700 9px/1.5 Inter,system-ui,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:#aab4c6}
+#tokenomics .climb-supply-meta strong{display:block;font:700 12px/1.45 Inter,system-ui,sans-serif;color:#f0dbb3;overflow-wrap:anywhere}
+#tokenomics .climb-supply-disclaimer{margin:12px 0 0;padding-top:11px;border-top:1px solid rgba(224,192,132,.14);color:#abb3c2;font-size:10px;line-height:1.65}
+@media(max-width:600px){#tokenomics .climb-supply-panel{padding:13px;border-radius:12px}#tokenomics .climb-supply-top{flex-wrap:wrap}#tokenomics .climb-supply-refresh{max-width:none;width:100%}#tokenomics .climb-supply-value{font-size:clamp(22px,7.1vw,31px)}#tokenomics .climb-supply-meta>div{padding:9px}#tokenomics .climb-supply-meta strong{font-size:11px}}
+@media(prefers-reduced-motion:reduce){#tokenomics .climb-supply-refresh{transition:none}}
+
 /* Permanent $CLIMB tokenomics and ecosystem record. No launch hero overlay. */
 #tokenomics{position:relative;isolation:isolate;background:radial-gradient(ellipse at 18% 12%,rgba(215,161,68,.085),transparent 44%),linear-gradient(180deg,#080c17,#090d18);scroll-margin-top:110px}
 #tokenomics .climb-token-title{max-width:930px;letter-spacing:.005em;text-wrap:balance}
@@ -661,13 +681,32 @@ footer:first-of-type>div{
     </div>
     <span id="copyClimbCaStatus" class="climb-token-copy-status" role="status" aria-live="polite"></span>
    </div>
+   <section class="climb-supply-panel" aria-labelledby="climbSupplyHeading">
+    <div class="climb-supply-top">
+     <div>
+      <span class="climb-supply-eyebrow">Solana mint data · Read-only</span>
+      <h4 id="climbSupplyHeading">Total Supply</h4>
+     </div>
+     <button type="button" class="climb-supply-refresh" id="climbSupplyRefresh" aria-describedby="climbSupplySource">LOAD ON-CHAIN SUPPLY ↗</button>
+    </div>
+    <div class="climb-supply-main">
+     <span id="climbSupplyValue" class="climb-supply-value" role="status" aria-live="polite">Not loaded</span>
+     <span class="climb-supply-unit">CLIMB</span>
+    </div>
+    <p id="climbSupplySource" class="climb-supply-source" aria-live="polite">Load a finalized Solana RPC supply snapshot for this exact mint. No supply number is assumed.</p>
+    <div class="climb-supply-meta">
+     <div><span>Token decimals</span><strong id="climbSupplyDecimals">—</strong></div>
+     <div><span>Circulating supply</span><strong>Not independently verified</strong></div>
+    </div>
+    <p class="climb-supply-disclaimer">Total supply is not circulating supply. Figures from a public RPC are a point-in-time snapshot, not an audit of allocations, liquidity or token safety.</p>
+   </section>
    <div class="climb-token-facts">
     <div class="climb-token-fact"><span>Network</span><strong>Solana</strong></div>
     <div class="climb-token-fact"><span>Launch platform</span><strong>Pump.fun</strong></div>
     <div class="climb-token-fact"><span>Original announcement</span><strong>November 15, 2026</strong></div>
     <div class="climb-token-fact"><span>Public record</span><strong>Official CA published</strong></div>
    </div>
-   <div class="climb-token-disclosure"><strong>Tokenomics disclosures</strong><p>Supply, allocation, liquidity, treasury and development distribution will be published here only after verification. No percentages, market prices or reserves are implied.</p></div>
+   <div class="climb-token-disclosure"><strong>Tokenomics disclosures</strong><p>An optional finalized Solana RPC lookup shows current on-chain mint supply above when available. Allocation, circulating supply, liquidity, treasury and development distribution require separate verification; no allocations, prices or reserves are implied.</p></div>
    <p class="climb-token-risk">Market liquidity, token safety and returns are not verified or guaranteed. Cross-check the mint with <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer">Climboria’s official X account</a>. Beware of impersonators.</p>
   </section>
   <article class="climb-token-card climb-token-utility" aria-labelledby="climb-fee-heading">
@@ -888,5 +927,6 @@ const homePanelBackdrop=document.getElementById("homePanelBackdrop");document.qu
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
 <script src="/auth.js"></script>
-<svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg></body>
+<svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg><script src="/climb-token-supply.js" defer></script>
+</body>
 </html>
