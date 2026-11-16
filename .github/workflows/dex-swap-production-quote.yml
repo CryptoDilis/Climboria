@@ -16,6 +16,10 @@ on:
       - "swap-config.js"
       - ".github/scripts/dex-swap-production-quote-smoke.mjs"
       - ".github/workflows/dex-swap-production-quote.yml"
+  # Periodically verify real production read-only quotes even when no DEX files change.
+  # The job never connects a wallet, signs a transaction, or calls execution.
+  schedule:
+    - cron: '23 */6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -41,7 +45,7 @@ jobs:
 
   production-browser:
     name: Verify deployed DEX and Swap Jupiter quote UI
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     needs: syntax
     runs-on: ubuntu-latest
     timeout-minutes: 15
