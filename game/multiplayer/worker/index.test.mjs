@@ -357,13 +357,13 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   const beforeChat=c2.packets.length;
   c1.dispatch('message',JSON.stringify({
    type:'world-chat',text:'Kamusta, world <b>hello</b>!',name:'Impersonator',
-   id:c2.packets[0].selfId,at:1,damage:999,wallet:'forged'
+   id:c2.packets[0].selfId,at:1,chatSeq:7,damage:999,wallet:'forged'
   }));
   const chat=c2.packets.at(-1);
   assert.equal(c2.packets.length,beforeChat+1);
   assert.deepEqual(chat,{
    type:'world-chat',id:authenticatedA,name:'Explorer A',
-   text:'Kamusta, world <b>hello</b>!',at:chat.at
+   text:'Kamusta, world <b>hello</b>!',at:chat.at,chatSeq:7
   },'server must stamp authenticated player identity, never trust user-supplied name or damage');
   assert.equal(c1.packets.at(-1).type,'world-chat','sender receives confirmed chat echo');
   const chatCount=c2.packets.length;
@@ -374,6 +374,13 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
    c1.dispatch('message',JSON.stringify({type:'world-chat',text}));
    assert.equal(c1.packets.at(-1).reason,'world-chat-invalid-text');
    assert.equal(c2.packets.length,chatCount);
+  }
+  for(const chatSeq of [-1,0,2147483648,1.5,'7',null]){
+   const beforeInvalidSeq=c2.packets.length;
+   c1.dispatch('message',JSON.stringify({type:'world-chat',text:'Valid chat',chatSeq}));
+   assert.equal(c1.packets.at(-1).reason,'world-chat-invalid-text',
+    'malformed client-side chat correlation must fail without any broadcast');
+   assert.equal(c2.packets.length,beforeInvalidSeq);
   }
   room.lastChat.set(authenticatedA,Date.now()-3000);
   c1.dispatch('message',JSON.stringify({type:'world-chat',text:'  Mabuhay!  '}));
