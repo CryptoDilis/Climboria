@@ -42,6 +42,41 @@ async function assertDisabledRuntimeEndpoint(browser) {
   }
 }
 
+/**
+ * Distinct from the front-end Pages runtime switch: verify the production
+ * Cloudflare Swap Worker itself still advertises execution explicitly OFF.
+ * This only reads /health; no wallet, quote, order, or execution is requested.
+ */
+async function assertDisabledWorkerHealth(browser) {
+  const context = await browser.newContext();
+  try {
+    const response = await context.request.get("https://" + API + "/health", {
+      timeout: 30000, maxRedirects: 0, failOnStatusCode: false,
+      headers: { "Cache-Control": "no-cache" }
+    });
+    assert.equal(response.status(), 200,
+      "Production Swap Worker /health must be HTTP 200 while quotes are available");
+    const headers = response.headers();
+    assert.match(headers["content-type"] || "", /^application\/json(?:\s*;|$)/i,
+      "Production Worker health must be JSON");
+    assert.match(headers["cache-control"] || "", /(?:^|,)\s*no-store\s*(?:,|$)/i,
+      "Production Worker health must never be cached");
+    const health = await response.json();
+    assert.equal(health?.service, "climboria-swap-proxy",
+      "Production Worker health must identify the Swap proxy");
+    assert.equal(health?.ok, true, "Production Swap Worker must report ready");
+    assert.equal(health?.execution, "disabled",
+      "Production Worker must keep wallet execution disabled, independent of the UI");
+    assert.equal(health?.configured?.executionEnabled, false,
+      "Production Worker executionEnabled configuration must remain false");
+    assert.match(health?.deployedGitSha || "", /^[0-9a-f]{40}$/,
+      "Production Worker must identify its deployed source SHA");
+    console.log("PASS production Swap Worker /health: ready, no-store, execution=disabled, deployment SHA present.");
+  } finally {
+    await context.close();
+  }
+}
+
 function matchesQuote(response) {
   const u = new URL(response.url());
   return u.protocol === "https:" && u.hostname === API && u.pathname === "/api/swap/quote";
@@ -207,6 +242,7 @@ async function assertPage(browser, { name, path, viewport, isMobile = false }) {
 const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
 try {
   await assertDisabledRuntimeEndpoint(browser);
+  await assertDisabledWorkerHealth(browser);
   await assertPage(browser, { name: "Swap desktop", path: "/swap/", viewport: { width: 1440, height: 900 } });
   await assertPage(browser, { name: "Swap mobile", path: "/swap/", viewport: { width: 390, height: 844 }, isMobile: true });
   await assertPage(browser, { name: "DEX desktop", path: "/dex/", viewport: { width: 1440, height: 900 } });
