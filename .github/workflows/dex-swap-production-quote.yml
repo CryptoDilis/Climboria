@@ -27,7 +27,9 @@ permissions:
   actions: read
 
 concurrency:
-  group: dex-swap-production-quote-${{ github.ref }}
+  # Keep the six-hour scheduled canary independent from push and manual runs
+  # on main; cancel only older runs of the SAME trigger type.
+  group: dex-swap-production-quote-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
