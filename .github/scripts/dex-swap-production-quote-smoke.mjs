@@ -7,7 +7,7 @@
  */
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
-import { classifyQuoteJourneyRequest, KNOWN_CLOUDFLARE_BEACON } from "./dex-swap-quote-request-guard.mjs";
+import { classifyQuoteJourneyRequest, KNOWN_CLOUDFLARE_BEACON, isDexScreenerChartFrame } from "./dex-swap-quote-request-guard.mjs";
 
 const SITE = "https://climboria.fun";
 const API = "api.climboria.fun";
@@ -103,6 +103,7 @@ async function assertPage(browser, { name, path, viewport, isMobile = false, blo
   const unexpectedApiWrites = [];
   const unexpectedSiteSwapWrites = [];
   const unexpectedProviderLoads = [];
+  const isolatedChartExecutableLoads = [];
   const knownCloudflareAnalyticsLoads = [];
   let blockedAnalyticsLoads = 0;
   // Negative-control browser route is opt-in and affects this isolated QA tab
@@ -133,8 +134,24 @@ async function assertPage(browser, { name, path, viewport, isMobile = false, blo
       unexpectedSiteSwapWrites.push(method + " " + u.pathname);
     if (guard.knownCloudflareAnalyticsScript)
       knownCloudflareAnalyticsLoads.push(u.href);
-    if (guard.unexpectedExternalExecutable)
-      unexpectedProviderLoads.push("unapproved external executable " + u.origin + u.pathname);
+    if (guard.unexpectedExternalExecutable) {
+      // DexScreener's existing pool chart is a *cross-origin iframe*, not a
+      // third-party script injected into Climboria's top-level quote document.
+      // The actual chart iframe must also pass strict sandbox/referrer checks
+      // below; no other frame, provider or script receives an exception.
+      let inIsolatedChartFrame = false;
+      try {
+        const frame = request.frame();
+        inIsolatedChartFrame = isDexScreenerChartFrame({
+          frameUrl: frame.url(),
+          directChildOfMainFrame: frame.parentFrame() === page.mainFrame()
+        });
+      } catch { /* Service Worker/unattributed requests are never trusted. */ }
+      if (inIsolatedChartFrame)
+        isolatedChartExecutableLoads.push(u.origin + u.pathname);
+      else
+        unexpectedProviderLoads.push("unapproved external executable " + u.origin + u.pathname);
+    }
     if (guard.jupiterProviderRequest)
       unexpectedProviderLoads.push("Jupiter provider request " + u.hostname + u.pathname);
   });
@@ -147,6 +164,14 @@ async function assertPage(browser, { name, path, viewport, isMobile = false, blo
   try {
     const first = await page.goto(SITE + path, { waitUntil: "domcontentloaded", timeout: 60000 });
     assert.ok(first?.ok(), name + " site response failed (HTTP " + (first?.status() ?? "none") + ")");
+    const chart = page.locator(name.startsWith("DEX") ? "#detailChart" : "#selectedAssetChart");
+    assert.equal(await chart.count(), 1, name + " must have exactly one declared pool-chart iframe");
+    assert.equal(await chart.getAttribute("sandbox"), "allow-scripts allow-same-origin",
+      name + " external chart must be sandboxed without top-navigation, popups or forms");
+    assert.equal(await chart.getAttribute("referrerpolicy"), "no-referrer",
+      name + " must not share the quote page URL with the external chart");
+    assert.ok((await page.locator('iframe[src^="https://dexscreener.com/solana/"]').count()) <= 1,
+      name + " may not introduce an additional unreviewed DexScreener iframe");
     await page.locator("#getQuote").waitFor({ state: "attached", timeout: 20000 });
     const config = await page.evaluate(() => window.CLIMBORIA_SWAP_CONFIG ?? null);
     assert.equal(config?.proxyEnabled, true, name + " must use server-side API proxy");
@@ -230,7 +255,9 @@ async function assertPage(browser, { name, path, viewport, isMobile = false, blo
     assert.deepEqual(unexpectedSiteSwapWrites, [],
       "Quote-only page must not write to same-origin /api/swap/ routes");
     assert.deepEqual(unexpectedProviderLoads, [],
-      "Quote-only page must not fetch unapproved cross-origin executable scripts/workers or Jupiter provider assets");
+      "Quote-only page must not load external executables outside the sandboxed direct-child pool chart or request Jupiter provider assets");
+    console.log("INFO " + name + " observed " + isolatedChartExecutableLoads.length +
+      " executable request(s) inside the sandboxed DexScreener pool chart; chart scripts are NOT approved to run in the main Climboria page.");
     console.log("INFO " + name + " observed known Cloudflare analytics script " +
       knownCloudflareAnalyticsLoads.length + " time(s); this is NOT Jupiter/provider integrity approval.");
     if (blockAnalytics) {
