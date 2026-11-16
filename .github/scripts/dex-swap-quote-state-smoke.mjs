@@ -159,8 +159,10 @@ async function quoteExpiryResult(ctx,kind) {
   await page.clock.fastForward(1_100);
   assert.match(await page.locator('#quoteStatus').innerText(),/over 30 seconds old/,
     kind+' must invalidate a quote when the 30s browser timer fires');
-  assert.doesNotMatch(await page.locator('#quoteResults').innerText(),/1\.234567|jupiter|15 bps/i,
+  assert.doesNotMatch(await page.locator('#quoteResults').innerText(),/1\.234567|15 bps|jupiter\s+route/i,
     kind+' must remove expired amounts, provider and fees');
+  // Stable section headings such as 'Jupiter fee' are allowed after expiry;
+  // it is the stale provider VALUE, amount and fee VALUE that must disappear.
   assert.equal(await page.locator('#getQuote').isDisabled(),false,
     kind+' must make a fresh read-only quote available after expiry');
 
@@ -172,7 +174,7 @@ async function quoteExpiryResult(ctx,kind) {
   await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
   assert.match(await page.locator('#quoteStatus').innerText(),/over 30 seconds old/,
     kind+' must invalidate an overage preview on visibility resume');
-  assert.doesNotMatch(await page.locator('#quoteResults').innerText(),/1\.234567|jupiter|15 bps/i,
+  assert.doesNotMatch(await page.locator('#quoteResults').innerText(),/1\.234567|15 bps|jupiter\s+route/i,
     kind+' must not expose a background-stale amount or fee');
   assert.equal(forbidden.length,0,'Quote expiry must not call /order or /execute');
   assert.deepEqual(unexpectedScripts,[],'Quote expiry must not inject a wallet-capable provider SDK');
