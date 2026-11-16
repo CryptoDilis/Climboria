@@ -129,7 +129,13 @@ export const gateway={
     method:'POST',headers:{'content-type':'application/json'},
     body:JSON.stringify({ticket,userId:verifiedUser.id,name,model})
    });
-   if(!issued.ok)return response(issued.status,{error:'room-unavailable'},origin);
+   // A full room or per-account ticket cap is a temporary capacity limit,
+   // not a service outage. Keep internal room details private, and do not
+   // promote an unexpected internal status to the public API.
+   if(!issued.ok){
+    if(issued.status===429)return response(429,{error:'room-busy'},origin);
+    return response(503,{error:'room-unavailable'},origin);
+   }
    return response(200,{ticket,protocol:'climboria-v1',ttlSeconds:30},origin);
   }
   if(url.pathname==='/ws'&&req.method==='GET'&&/websocket/i.test(req.headers.get('Upgrade')||'')){
