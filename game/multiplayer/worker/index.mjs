@@ -14,6 +14,7 @@ const MAX_AUTH_BYTES=4096,MAX_JSON_BYTES=1024,SESSION_TTL=30_000,MAX_PENDING=32,
 const MESSAGE_WINDOW_MS=1000,MAX_MESSAGES_PER_WINDOW=24;
 // Authenticated, room-only WORLD CHAT. Never persist chat or trust client identity.
 const CHAT_COOLDOWN_MS=2500,CHAT_MAX_CHARACTERS=160,CHAT_MAX_WIRE_BYTES=384;
+const AUTH_DEADLINE_MS=6500,TICKET_ISSUE_DEADLINE_MS=3500;
 const chatForbidden=/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/u;
 const allowedName=/^[A-Za-z0-9 _-]{2,24}$/;
 const allowedModels=new Set(['Adventurer','Jarrell','Lheiz']);
@@ -24,6 +25,22 @@ const response=(status,data,origin)=>new Response(JSON.stringify(data),{
   ...(TRUSTED_ORIGINS.has(origin)?{'access-control-allow-origin':origin,'vary':'Origin'}:{})}
 });
 function validOrigin(request){return TRUSTED_ORIGINS.has(request.headers.get('Origin'))}
+// AbortSignal alone cannot bound a hung fetch, response body parse or DO
+// operation that ignores abort. The actual wall-clock deadline encompasses
+// the whole stage and returns a safe 503 instead of hanging room login.
+async function withGatewayDeadline(task,ms){
+ const controller=new AbortController();
+ let timer;
+ try{
+  const deadline=new Promise((_,reject)=>{
+   timer=setTimeout(()=>{
+    controller.abort();
+    reject(Error('game-room-upstream-timeout'));
+   },ms);
+  });
+  return await Promise.race([Promise.resolve().then(()=>task(controller.signal)),deadline]);
+ }finally{clearTimeout(timer)}
+}
 async function readBoundedJSON(req){
  // Enforce the actual UTF-8 WIRE byte budget while reading. A forged or
  // missing Content-Length must never let us buffer an unbounded request.
@@ -125,11 +142,15 @@ export const gateway={
     const endpoint=new URL('/auth/v1/user',env.SUPABASE_URL);
     if(endpoint.protocol!=='https:'||endpoint.hostname!=='unadepiwbovblkfjlksk.supabase.co')
       return response(503,{error:'auth-provider-misconfigured'},origin);
-    const userResponse=await fetch(endpoint,{headers:{
-     Authorization:authorization,apikey:env.SUPABASE_PUBLISHABLE_KEY,Accept:'application/json'
-    },signal:AbortSignal.timeout(6500)});
-    if(!userResponse.ok)return response(401,{error:'invalid-auth-session'},origin);
-    verifiedUser=await userResponse.json();
+    const authResult=await withGatewayDeadline(async signal=>{
+     const userResponse=await fetch(endpoint,{headers:{
+      Authorization:authorization,apikey:env.SUPABASE_PUBLISHABLE_KEY,Accept:'application/json'
+     },signal});
+     if(!userResponse.ok)return {ok:false};
+     return {ok:true,user:await userResponse.json()};
+    },AUTH_DEADLINE_MS);
+    if(!authResult.ok)return response(401,{error:'invalid-auth-session'},origin);
+    verifiedUser=authResult.user;
    }catch{return response(503,{error:'auth-service-unavailable'},origin)}
    if(!uuid.test(verifiedUser?.id||''))return response(401,{error:'invalid-auth-identity'},origin);
    // Supabase anonymous sign-ins may have real UUIDs and valid short-lived
@@ -141,10 +162,18 @@ export const gateway={
    const ticket=crypto.randomUUID().replace(/-/g,'')+crypto.randomUUID().replace(/-/g,'');
    const name=allowedName.test(payload.name||'')?payload.name:'Explorer';
    const model=allowedModels.has(payload.model)?payload.model:'Adventurer';
-   const issued=await stub.fetch('https://room.internal/_ticket',{
-    method:'POST',headers:{'content-type':'application/json'},
-    body:JSON.stringify({ticket,userId:verifiedUser.id,name,model})
-   });
+   let issued;
+   try{
+    issued=await withGatewayDeadline(signal=>stub.fetch('https://room.internal/_ticket',{
+     method:'POST',headers:{'content-type':'application/json'},
+     body:JSON.stringify({ticket,userId:verifiedUser.id,name,model}),signal
+    }),TICKET_ISSUE_DEADLINE_MS);
+   }catch{
+    // A late Durable Object reply must never expose a stale ticket, even
+    // when the underlying stub ignores cancellation. This ticket's random
+    // value is not returned to any client on timeout.
+    return response(503,{error:'room-unavailable'},origin);
+   }
    // A full room or per-account ticket cap is a temporary capacity limit,
    // not a service outage. Keep internal room details private, and do not
    // promote an unexpected internal status to the public API.
