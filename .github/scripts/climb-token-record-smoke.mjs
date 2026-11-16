@@ -114,9 +114,9 @@ try{
    assert.equal(await page.locator('.climb-supply-metric-label').textContent(),
     'On-chain total supply');
    assert.equal(await page.locator('.climb-supply-mark').getAttribute('aria-hidden'),'true');
-   assert.equal(await page.locator('.climb-supply-mark img').getAttribute('src'),'/assets/climb-token-official.webp',
+   assert.equal(await page.locator('.climb-supply-mark img').getAttribute('src'),'/assets/climb-token-official-hd.webp',
     'official CLIMB coin art, not the generic site favicon, must appear in the supply badge');
-   await page.waitForFunction(()=>{const im=document.querySelector('.climb-supply-mark img');return im?.complete&&im.naturalWidth===96;},null,{timeout:4000});
+   await page.waitForFunction(()=>{const im=document.querySelector('.climb-supply-mark img');return im?.complete&&im.naturalWidth===180;},null,{timeout:4000});
    assert.equal(await page.locator('.climb-supply-mark').evaluate(e=>getComputedStyle(e).overflow),'hidden',
     'coin artwork stays within the circular frame');
    const badge=await page.locator('.climb-supply-mark').boundingBox();
