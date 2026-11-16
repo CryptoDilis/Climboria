@@ -86,6 +86,15 @@ try{
     'GitHub public mirror is used only when the Pages file is unavailable or stale');
    assert.equal(rpcRequests,0,'homepage load must never automatically contact cross-origin Solana RPC');
    assert.equal(await page.locator('#climbSupplyPanel').getAttribute('aria-busy'),'false');
+   const supplyPanel=page.locator('#climbSupplyPanel');
+   assert.equal(await supplyPanel.getAttribute('data-state'),
+    await page.locator('#climbSupplyState').getAttribute('data-state'),
+    'premium supply panel style always matches the actual validated data state');
+   assert.equal(await page.locator('.climb-supply-metric-label').textContent(),
+    'On-chain total supply');
+   assert.equal(await page.locator('.climb-supply-mark').getAttribute('aria-hidden'),'true');
+   assert.equal(await page.locator('#climbSupplyValue').count(),1,
+    'only one dynamic total-supply value, never a hardcoded amount elsewhere');
    if(width===1536||width===1365||width===1024||width===430){
     assert.equal(await page.locator('#climbSupplyValue').textContent(),'123,456.789');
     assert.equal(await page.locator('#climbSupplyDecimals').textContent(),'9');
@@ -147,6 +156,20 @@ try{
       mint:{left:mint.left,right:mint.right,width:mint.width}
     };
    });
+   const supplyGeometry=await page.evaluate(()=>{
+    const names=['.climb-supply-panel','.climb-supply-main','.climb-supply-meta',
+      '.climb-supply-actions','.climb-supply-value','.climb-supply-unverified'];
+    return names.map(name=>{
+      const el=document.querySelector('#climb-token-record '+name);
+      const rect=el.getBoundingClientRect();
+      return {name,left:rect.left,right:rect.right,width:rect.width};
+    });
+   });
+   for(const box of supplyGeometry){
+    assert.ok(box.width>0,box.name+' must be visible or laid out');
+    assert.ok(box.left>=-2&&box.right<=geometry.viewport+2,
+      box.name+' cannot overflow '+width+'px viewport: '+JSON.stringify(box));
+   }
    for(const box of [geometry.primary,geometry.secondary,geometry.mint]){
     assert.ok(box.width>100,'responsive token card must remain visibly sized: '+JSON.stringify(geometry));
     assert.ok(box.left>=-2 && box.right<=geometry.viewport+2,
@@ -220,6 +243,8 @@ try{
     assert.match(await page.locator('#climbSupplyChecked').textContent(),/Finalized snapshot observed at/);
     assert.match(await supplyButton.textContent(),/RECHECK LIVE SOLANA/);
    }
+   assert.equal(await supplyPanel.getAttribute('data-state'),
+    await page.locator('#climbSupplyState').getAttribute('data-state'));
    assert.match(await page.locator('.climb-supply-meta').textContent(),/Not independently verified/,
     'circulating supply cannot be inferred from total mint supply');
    await page.screenshot({path:'climb-tokenomics-'+width+'.png'});
