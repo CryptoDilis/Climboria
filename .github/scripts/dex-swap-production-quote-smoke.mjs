@@ -303,6 +303,101 @@ async function assertPage(browser, { name, path, viewport, isMobile = false, blo
   }
 }
 
+/**
+ * Real production DEX mobile layout and market-view navigation acceptance.
+ * No wallet interaction, quote execution, fabricated token data or remote click.
+ * Checks 360px/390px user-visible layout, not candle correctness.
+ */
+async function assertDexMobileMarketNavigation(browser, width) {
+  const name = "DEX mobile layout " + width + "px";
+  const page = await browser.newPage({
+    viewport: { width, height: 844 }, isMobile: true, hasTouch: true
+  });
+  try {
+    const response = await page.goto(SITE + "/dex/", {
+      waitUntil: "domcontentloaded", timeout: 60000
+    });
+    assert.ok(response?.ok(), name + " DEX site response failed");
+    const marketNav = page.locator("#dexMobileNav");
+    await marketNav.waitFor({ state: "visible", timeout: 20000 });
+    const detailNav = page.locator("#detailMobileTabs");
+    const solanaMarket = page.locator("#markets");
+    const baseMarket = page.locator("#evmMarkets");
+    const solanaButton = marketNav.locator('[data-dex-mobile-view="solana"]');
+    const baseButton = marketNav.locator('[data-dex-mobile-view="base"]');
+    const assertNoPageOverflow = async view => {
+      const size = await page.evaluate(() => ({
+        viewport: window.innerWidth,
+        document: document.documentElement.scrollWidth,
+        body: document.body.scrollWidth
+      }));
+      assert.ok(Math.max(size.document, size.body) <= size.viewport + 2,
+        name + " " + view + " unexpectedly scrolls horizontally: " + JSON.stringify(size));
+    };
+    const assertTouchTargets = async () => {
+      const targets = await marketNav.locator("button, a").evaluateAll(elements =>
+        elements.map(element => ({
+          text: element.textContent.trim(),
+          height: element.getBoundingClientRect().height
+        }))
+      );
+      assert.equal(targets.length, 4, name + " must show four market navigation controls");
+      for (const target of targets) {
+        assert.ok(target.height >= 44,
+          name + " " + target.text + " touch target below 44px: " + target.height);
+      }
+    };
+    assert.equal(await detailNav.isVisible(), false,
+      name + " token-detail bottom bar must not overlap the market bottom bar");
+    assert.equal(await solanaMarket.isVisible(), true, name + " Solana market not visible");
+    assert.equal(await baseMarket.isVisible(), false, name + " Base must start hidden");
+    assert.equal(await page.locator("#solanaMobileCards").isVisible(), true,
+      name + " should use a mobile Solana card container");
+    assert.equal(await page.locator("#markets .tablewrap").isVisible(), false,
+      name + " wide Solana desktop table must be hidden on mobile");
+    await assertTouchTargets();
+    await assertNoPageOverflow("Solana");
+    await baseButton.click({ timeout: 15000 });
+    assert.equal(await baseButton.getAttribute("aria-current"), "page",
+      name + " Base navigation must reflect active selection");
+    assert.equal(await baseMarket.isVisible(), true, name + " Base market did not open");
+    assert.equal(await solanaMarket.isVisible(), false,
+      name + " Solana market must hide in Base view");
+    assert.equal(await page.locator("#baseMobileCards").isVisible(), true,
+      name + " should use a mobile Base card container");
+    assert.equal(await page.locator("#evmMarkets .tablewrap").isVisible(), false,
+      name + " wide Base desktop table must be hidden on mobile");
+    await assertNoPageOverflow("Base");
+    await solanaButton.click({ timeout: 15000 });
+    assert.equal(await solanaButton.getAttribute("aria-current"), "page",
+      name + " Markets navigation must restore active selection");
+    assert.equal(await solanaMarket.isVisible(), true,
+      name + " Solana market did not restore");
+    assert.equal(await baseMarket.isVisible(), false,
+      name + " Base market did not hide on return");
+    assert.equal(await detailNav.isVisible(), false,
+      name + " detail tabs must remain hidden when browsing markets");
+    await assertNoPageOverflow("restored Solana");
+    // Cards depend on a live third-party discovery dataset. Do not fabricate
+    // rows or silently mark token-detail navigation as tested when unavailable.
+    const cards = page.locator("#solanaMobileCards .mobile-market-card");
+    const count = await cards.count();
+    if (count > 0) {
+      const height = await cards.first().evaluate(element =>
+        element.getBoundingClientRect().height
+      );
+      assert.ok(height >= 56, name + " token card tap target below 56px");
+      console.log("PASS " + name + " live token card tap target >=56px.");
+    } else {
+      console.log("INFO " + name + " no live token cards at this instant; card-to-detail navigation NOT verified.");
+    }
+    console.log("PASS " + name +
+      " one visible market bottom nav, 44px touch targets, no page overflow, Solana/Base switching.");
+  } finally {
+    await page.close();
+  }
+}
+
 const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
 try {
   await assertDisabledRuntimeEndpoint(browser);
@@ -311,6 +406,8 @@ try {
   await assertPage(browser, { name: "Swap mobile", path: "/swap/", viewport: { width: 390, height: 844 }, isMobile: true });
   await assertPage(browser, { name: "DEX desktop", path: "/dex/", viewport: { width: 1440, height: 900 } });
   await assertPage(browser, { name: "DEX mobile", path: "/dex/", viewport: { width: 390, height: 844 }, isMobile: true });
+  await assertDexMobileMarketNavigation(browser, 360);
+  await assertDexMobileMarketNavigation(browser, 390);
   // Verify quote UX when known telemetry is absent, or is denied by the
   // exact-match test-tab route if an unexpected request returns.
   // Normal unblocked 4/4 journeys above remain the primary live acceptance.
