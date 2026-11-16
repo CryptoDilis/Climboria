@@ -427,7 +427,7 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 </section>
 <aside class="swap-sidebar">
 
-<section class="side-panel selected-panel"><div class="chart-terminal-head"><div><span class="side-kicker">PRO SPOT TERMINAL</span><h2>Market chart</h2></div><span class="live-tag"><i></i> LIVE POOL</span></div><div class="side-head"><div><span class="side-kicker">ASSET INTELLIGENCE</span><h2 id="selectedAssetTitle">SOL · Solana</h2></div><span class="live-tag">SELECTED</span></div><div class="selected-price"><b id="selectedAssetPrice">—</b><span id="selectedAssetChange">—</span></div><div class="selected-chart-wrap premium-chart-wrap"><iframe id="selectedAssetChart" title="Selected token price chart" loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin"></iframe><div class="chart-empty" id="selectedChartEmpty">Choose a Solana token to load its pool chart.</div></div><div class="asset-stats"><div><small>24H VOLUME</small><b id="selectedAssetVolume">—</b></div><div><small>MARKET CAP / FDV</small><b id="selectedAssetMcap">—</b></div><div><small>POOL LIQUIDITY</small><b id="selectedAssetLiquidity">—</b></div><div><small>POOL</small><b id="selectedAssetVenue">—</b></div></div><div class="market-foot" id="selectedAssetNote">Metrics are provider-reported and may be incomplete.</div></section>
+<section class="side-panel selected-panel"><div class="chart-terminal-head"><div><span class="side-kicker">PRO SPOT TERMINAL</span><h2>Market chart</h2></div><span class="live-tag"><i></i> LIVE POOL</span></div><div class="side-head"><div><span class="side-kicker">ASSET INTELLIGENCE</span><h2 id="selectedAssetTitle">SOL · Solana</h2></div><span class="live-tag">SELECTED</span></div><div class="selected-price"><b id="selectedAssetPrice">—</b><span id="selectedAssetChange">—</span></div><div class="selected-chart-wrap premium-chart-wrap"><iframe id="selectedAssetChart" title="Selected token price chart" loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin"></iframe><div class="chart-empty" id="selectedChartEmpty">Choose a Solana token to load its pool chart.</div></div><a id="selectedChartExternal" class="selected-chart-external" href="#" target="_blank" rel="noopener noreferrer" hidden>Open token on DexScreener ↗</a><div class="asset-stats"><div><small>24H VOLUME</small><b id="selectedAssetVolume">—</b></div><div><small>MARKET CAP / FDV</small><b id="selectedAssetMcap">—</b></div><div><small>POOL LIQUIDITY</small><b id="selectedAssetLiquidity">—</b></div><div><small>POOL</small><b id="selectedAssetVenue">—</b></div></div><div class="market-foot" id="selectedAssetNote">Metrics are provider-reported and may be incomplete.</div></section>
 <section class="side-panel trust-panel"><h2>Trade with clarity.</h2><p>Non-custodial by design. Quotes first, transaction review before any wallet approval.</p><div class="side-item"><b><i class="status-dot"></i>Wallet stays yours</b><span>Climboria never asks for your seed phrase or private key.</span></div><div class="side-item"><b><i class="status-dot"></i>Review before approval</b><span>Check the transaction details in your wallet.</span></div><div class="side-item"><b><i class="status-dot"></i>Execution gate active</b><span>Real swaps remain locked until release checks pass.</span></div></section></aside></div>
 <p class="foot">CLIMBORIA SWAP · SOLANA NETWORK · ROUTING BY JUPITER · <a href="/dex/partners/">PARTNERSHIPS</a> · <a href="/support/">CUSTOMER SUPPORT</a></p></main></div>
 <script src="/dex/swap-amount.js"></script>
@@ -466,8 +466,15 @@ async function fetchMarketJson(url){const controller=new AbortController(),timer
 let selectedChartRequest=0;
 async function updateSelectedAsset(token){
  const chartRequest=++selectedChartRequest;
+ const external=$('selectedChartExternal');
+ if(external){external.hidden=true;external.removeAttribute('href');}
  const title=$('selectedAssetTitle'),price=$('selectedAssetPrice'),change=$('selectedAssetChange'),volume=$('selectedAssetVolume'),mcap=$('selectedAssetMcap'),liquidity=$('selectedAssetLiquidity'),venue=$('selectedAssetVenue'),note=$('selectedAssetNote'),chart=$('selectedAssetChart'),empty=$('selectedChartEmpty');
  if(!token||!token.id)return;
+ if(external){
+  external.href='https://dexscreener.com/solana/'+encodeURIComponent(token.id);
+  external.textContent='View token on DexScreener ↗';
+  external.hidden=false;
+ }
  title.textContent=(token.symbol||'TOKEN')+' · '+(token.name||'Selected asset');
  price.textContent='Loading…';change.textContent='—';volume.textContent='—';mcap.textContent='—';liquidity.textContent='—';venue.textContent='—';note.textContent='Looking up live Solana pool data…';empty.hidden=false;empty.textContent='Loading selected token chart…';chart.removeAttribute('src');
  try{
@@ -490,6 +497,10 @@ async function updateSelectedAsset(token){
   venue.textContent=pair.dexId||'Solana pool';
   note.textContent='Live DexScreener data · exact selected FROM mint is the chart base asset · '+pairs.length+' matching pool(s). Values may be incomplete.';
   chart.src='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress)+'?embed=1&theme=dark&trades=0&info=0&loadChartSettings=0&chartStyle=1&interval=15&chartType=price&chartLeftToolbar=0';
+  if(external){
+   external.href='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress);
+   external.textContent='Open full pool chart on DexScreener ↗';
+  }
   empty.hidden=true;
  }catch(error){
   if(chartRequest!==selectedChartRequest)return;
@@ -861,6 +872,8 @@ if(mobileWorkspaceTabs&&mobileWorkspace){
 </script><script>
 (()=>{const details=document.querySelector('.mobile-routing-details');if(!details)return;const media=window.matchMedia('(max-width:760px)');const sync=()=>{if(media.matches)details.removeAttribute('open');else details.setAttribute('open','')};sync();media.addEventListener?.('change',sync)})();
 </script><svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg>
+<style id="climboria-selected-chart-external-link">.selected-chart-external{display:inline-flex;align-items:center;margin:9px 0 3px;padding:8px 11px;border:1px solid #8d7148;border-radius:9px;background:linear-gradient(145deg,#1b2b40,#0b1421);color:#f0d18b;font-size:10px;font-weight:800;text-decoration:none}.selected-chart-external[hidden]{display:none!important}.selected-chart-external:hover{border-color:#e8c477;background:#26364b}
+</style>
 <style id="climboria-mobile-compact-swap-v1">
 @media(max-width:760px){
  body{padding-bottom:calc(82px + env(safe-area-inset-bottom))}
