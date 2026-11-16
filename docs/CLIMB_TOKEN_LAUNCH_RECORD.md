@@ -4,7 +4,17 @@
 **Last website update:** 2026-11-16  
 **Source:** Climboria project owner's public launch announcement and the official CA already present in the homepage announcement, committed as `8e0bf6db1fa669aa851153810d9fa8d808f63acc` on 2026-11-15.
 
-## Permanent CA navigation and copy accessibility — DRAFT (2026-11-16)
+## Permanent CA navigation and copy fallback — MERGED (2026-11-16)
+
+- **GitHub PR:** [#514](https://github.com/CryptoDilis/Climboria/pull/514), merged into `main` via squash **`b4874c6fd693bdae0a945ff2b808dc7461691dd1`**. Exact PR head `c9641d67da05332c20e3994a4b1956a678910f86`. Reviewed file list only `index.html`, `.github/scripts/climb-token-record-smoke.mjs`, `.github/workflows/validate-climboria.yml` and this record. No Game, DEX, Swap, Launchpad, ClimbX, token contract or trading execution source changes.
+- **Exact-head CI SUCCESS:** [Validate Climboria #43777794038](https://github.com/CryptoDilis/Climboria/actions/runs/43777794038) and [Climboria Browser Smoke Test #43777794052](https://github.com/CryptoDilis/Climboria/actions/runs/43777794052). The Playwright test includes desktop 1536/1365px, mobile 390/360px, both navigation pathways, URL anchor, no fixed-nav obscuring of CA card, copied exact owner-announced mint, and full visible text selection on clipboard refusal, plus prior market-claim and layout guards.
+- **Postmerge source proof:** `main/index.html` includes `#climbCaNavLink` and `#mobileClimbCaNavLink`, both pointing to `/#climb-token-record`; copy fallback selects only visible `#climbOfficialCa` text; the permanent Tokenomics card exists once and the hero no longer contains a CA overlay.
+- **Production boundary:** successful merged GitHub code and PR CI are **not** proof of GitHub Pages publishing or the current production page rendering. No GitHub Pages deployment SHA, production browser screenshot or live domain HTTP evidence was available from the installed connector. Do not assert `climboria.fun` has deployed #514 until verified.
+- **EXACT NEXT:** inspect GitHub Pages deployment for the `b4874c6f` revision, open `https://climboria.fun/` on actual mobile and desktop (or Cloud Browser in Work), test top navigation `$CLIMB` and hamburger `OFFICIAL $CLIMB CA`, confirm the footer deep link, visible full CA, copy success/fallback, readability and the original hero image/three CTAs; record real production evidence here. Correct any proven production CSS issue on a new site-only PR without changing unrelated systems.
+
+---
+
+## Permanent CA navigation and copy accessibility — historical draft checkpoint (2026-11-16)
 
 - **Objective:** keep the previous merged #513 permanent premium Tokenomics panel but make its published $CLIMB CA easy to reach and copy on both desktop and phones without resurrecting a hero announcement.
 - **Site-only source branch:** `site/climb-ca-nav-copy-polish-2026-11-16`. Adds a small gold `$CLIMB` link in desktop navigation plus an `OFFICIAL $CLIMB CA` item in mobile navigation, both going to `/#climb-token-record`. CSS `scroll-margin-top` prevents the fixed nav from hiding the card heading. Existing footer link, official mint, hero artwork and the three hero CTAs stay intact.
