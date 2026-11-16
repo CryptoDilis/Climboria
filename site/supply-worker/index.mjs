@@ -109,7 +109,9 @@ export default {
       if (cache) {
         const match = await cache.match(CACHE_KEY);
         if (match?.ok) {
-          const parsed = parseCachedSnapshot(JSON.parse(await match.text()));
+          const rawCached = await match.text();
+          if (rawCached.length > 8192) throw Error('Oversized cached supply');
+          const parsed = parseCachedSnapshot(JSON.parse(rawCached));
           return new Response(JSON.stringify(parsed), {status: 200, headers: headers(origin)});
         }
       }
