@@ -78,15 +78,15 @@ async function checkChart(test) {
     assert.ok(rel.includes("noopener"), test.name + " provider tab must be isolated from Climboria");
     console.log("PASS " + test.name + " selected pool iframe visible + sandboxed, with exact matching external fallback.");
 
-    // Visit the actual iframe URL, without assuming a remote vendor will
-    // always serve a usable chart. A 403/challenge or blank canvas is reported
-    // explicitly rather than being mislabeled as verified candle rendering.
+    // A 200 HTML document does NOT establish that remote candles rendered.
+    // Inspect the provider iframe after bounded hydration; avoid recording any
+    // user data, provider HTML, full URLs, or cookie/authorization headers.
     await page.waitForTimeout(1200);
     const provider = chartDocuments.find(x => x.url.startsWith(chartOrigin + parsed.pathname));
     if (provider) {
       console.log("INFO " + test.name + " chart provider document HTTP " + provider.status + ".");
     } else {
-      console.log("WARN " + test.name + " chart provider navigation was not observed before the check; full rendering unverified.");
+      console.log("WARN " + test.name + " chart provider navigation not observed; render unverified.");
     }
     const providerFrame = page.frames().find(frame => {
       try {
@@ -94,13 +94,56 @@ async function checkChart(test) {
         return u.origin === chartOrigin && u.pathname === parsed.pathname;
       } catch { return false; }
     });
-    if (providerFrame && provider?.status === 200) {
-      const canvasCount = await providerFrame.locator("canvas").count().catch(() => 0);
-      if (canvasCount > 0) console.log("PASS " + test.name + " provider frame exposed " + canvasCount + " chart canvas element(s).");
-      else console.log("WARN " + test.name + " no chart canvas found yet; visible candles not independently verified.");
-    } else {
-      console.log("WARN " + test.name + " full third-party chart render unverified; visible exact-pool external fallback remains available.");
+
+    const observeVendorFrame = async () => {
+      if (!providerFrame || providerFrame.isDetached()) return null;
+      try {
+        return await providerFrame.evaluate(() => {
+          const title = document.title || "";
+          const text = (document.body?.textContent || "").slice(0, 2400);
+          const canvases = [...document.querySelectorAll("canvas")];
+          const svgs = [...document.querySelectorAll("svg")];
+          const visible = el => {
+            const rect = el.getBoundingClientRect();
+            return rect.width > 50 && rect.height > 40;
+          };
+          return {
+            readyState: document.readyState,
+            bodyPresent: Boolean(document.body),
+            canvasCount: canvases.length,
+            visibleCanvasCount: canvases.filter(visible).length,
+            svgCount: svgs.length,
+            largeSvgCount: svgs.filter(visible).length,
+            svgPaths: document.querySelectorAll("svg path").length,
+            nestedIframes: document.querySelectorAll("iframe").length,
+            likelyChallenge: /just a moment|checking your browser|verify you are human|attention required|enable javascript and cookies|access denied|captcha/i.test(title + " " + text)
+          };
+        });
+      } catch {
+        // Vendor might navigate/destroy its document; this is diagnostic only.
+        return null;
+      }
+    };
+    let diagnostic = await observeVendorFrame();
+    if (provider?.status === 200 && diagnostic && !diagnostic.visibleCanvasCount &&
+        !diagnostic.largeSvgCount && !diagnostic.likelyChallenge) {
+      await page.waitForTimeout(3500);
+      diagnostic = await observeVendorFrame();
     }
+    if (diagnostic) {
+      console.log("INFO " + test.name + " vendor frame (bounded hydration): " +
+        JSON.stringify(diagnostic) + "; frame HTTP=" + (provider?.status ?? "unobserved") + ".");
+      if (diagnostic.likelyChallenge)
+        console.log("WARN " + test.name + " vendor challenge/blocking signals observed inside sandboxed frame.");
+      else if (diagnostic.visibleCanvasCount || diagnostic.largeSvgCount)
+        console.log("INFO " + test.name + " graphical DOM surface found; actual candle data/pixels not independently verified.");
+      else
+        console.log("WARN " + test.name + " no sizeable chart canvas/SVG after bounded hydration; embedded candle rendering unverified.");
+    } else {
+      console.log("WARN " + test.name + " provider frame DOM unavailable; embedded candle rendering unverified.");
+    }
+    // The tested external-link fallback remains the safe supported escape
+    // hatch regardless of whether the vendor renders inside our sandbox.
 
     // This is an actual user click test, not just an href comparison.
     const popupPromise = context.waitForEvent("page", { timeout: 12000 });
