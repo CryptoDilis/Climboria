@@ -292,7 +292,7 @@ export class JarrellRoom {
     const chatSeq=message.chatSeq;
     if(chatSeq!==undefined &&
        (!Number.isSafeInteger(chatSeq)||chatSeq<1||chatSeq>2147483647)){
-     rejectChat('world-chat-invalid-text');return;
+     socket.send(JSON.stringify({type:'rejected',reason:'world-chat-invalid-text'}));return;
     }
     // Attach the validated per-message sequence to BOTH positive echoes
     // and rejections, so delayed cooldown failures cannot cancel a retry.
