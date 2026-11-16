@@ -9,6 +9,7 @@ on:
     branches: [main, codex/jarrell-natural-wilderness-pass, codex/mountain-stability-v2, codex/ten-summit-expedition, codex/hero-banga-mountain-results, fix/browser-smoke-homepage-check]
     paths:
       - "index.html"
+      - "climb-token-supply.js"
       - "dex/**"
       - "swap/**"
       - "launchpad/**"
@@ -22,6 +23,7 @@ on:
     branches: [main]
     paths:
       - "index.html"
+      - "climb-token-supply.js"
       - "dex/**"
       - "swap/**"
       - "launchpad/**"
@@ -63,6 +65,9 @@ jobs:
           timeout --signal=TERM --kill-after=20s 2m npm install --no-save playwright
           timeout --signal=TERM --kill-after=20s 4m npx playwright install chromium
 
+      - name: Syntax-check read-only CLIMB supply client
+        run: node --check climb-token-supply.js
+
       - name: Start local web server
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/climboria-http.log 2>&1 &
@@ -74,6 +79,9 @@ jobs:
           done
           cat /tmp/climboria-http.log
           exit 1
+
+      - name: Verify permanent $CLIMB tokenomics on desktop and mobile
+        run: node .github/scripts/climb-token-record-smoke.mjs
 
       - name: Test Supabase auth UI and cloud-save account isolation
         run: node .github/scripts/auth-cloud-save-smoke.mjs
@@ -805,6 +813,7 @@ jobs:
           name: climboria-browser-smoke-screenshots
           path: |
             climboria-desktop-home.png
+            climb-tokenomics-*.png
             climboria-mobile-home.png
             climboria-desktop-gameplay.png
             climboria-mobile-gameplay.png

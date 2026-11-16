@@ -292,26 +292,73 @@ footer:first-of-type>div{
 }
 }
 
-/* Premium token launch announcement + live countdown */
-.launch-countdown{position:absolute;z-index:4;top:48%;left:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 36px));padding:22px 24px 20px;text-align:center;border:1px solid rgba(245,197,91,.52);border-radius:20px;background:linear-gradient(145deg,rgba(8,12,22,.91),rgba(17,12,19,.82));box-shadow:0 18px 55px rgba(0,0,0,.42),0 0 30px rgba(217,119,6,.12),inset 0 1px rgba(255,255,255,.07);backdrop-filter:blur(18px)}
-.launch-countdown:before{content:"";position:absolute;inset:5px;border:1px solid rgba(245,197,91,.14);border-radius:15px;pointer-events:none}
-.launch-kicker{display:flex;align-items:center;justify-content:center;gap:8px;color:#f4c96c;font-size:10px;font-weight:800;letter-spacing:2.6px;text-transform:uppercase}
-.launch-kicker:before,.launch-kicker:after{content:"";height:1px;width:26px;background:linear-gradient(90deg,transparent,#d7a64a)}
-.launch-kicker:after{transform:rotate(180deg)}
-.launch-countdown h2{font:900 clamp(22px,3vw,32px)/1.15 Cinzel,serif;letter-spacing:1.2px;color:#fff2cf;margin:10px 0 7px;text-shadow:0 2px 18px #d99b3633}
-.launch-meta{font-size:12px;letter-spacing:.6px;color:rgba(255,255,255,.72)}
-.launch-meta strong{color:#f5cb6b;font-weight:800}
-.launch-timer{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:17px auto 14px;max-width:410px}
-.launch-time-unit{padding:10px 5px 8px;border:1px solid rgba(245,197,91,.2);border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(0,0,0,.2))}
-.launch-time-unit b{display:block;font:800 clamp(23px,3vw,30px)/1 Inter,sans-serif;color:#fff;letter-spacing:1px;font-variant-numeric:tabular-nums}
-.launch-time-unit span{display:block;margin-top:5px;color:#d4b77b;font-size:8px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase}
-.launch-foot{display:flex;align-items:center;justify-content:center;gap:7px;font-size:9px;letter-spacing:1.3px;color:rgba(255,255,255,.52);text-transform:uppercase}
-.launch-foot i{width:5px;height:5px;border-radius:50%;background:#e7b653;box-shadow:0 0 8px #e7b653;display:inline-block}
-.launch-follow{display:inline-flex;margin-top:13px;padding:9px 17px;border:1px solid rgba(245,197,91,.38);border-radius:999px;color:#f5d88f;text-decoration:none;font-size:10px;font-weight:800;letter-spacing:1.4px;transition:.2s}
-.launch-follow:hover{background:rgba(245,197,91,.1);border-color:#f5c55b;box-shadow:0 0 16px #e0a33b22}
-@media(min-width:901px){.launch-countdown{left:32%;right:auto;top:53%;transform:translateX(-50%);width:min(520px,36vw);padding:18px 20px 16px;box-shadow:0 16px 42px rgba(0,0,0,.48),0 0 34px rgba(245,197,91,.3),0 0 72px rgba(217,119,6,.17),inset 0 1px rgba(255,255,255,.08);border-color:rgba(255,205,94,.76)}.launch-timer{gap:7px;margin:13px auto 11px}.launch-time-unit{padding:8px 4px 7px}.launch-countdown h2{font-size:clamp(21px,2.2vw,28px)}}
-@media(max-width:900px){.launch-countdown{top:47%;padding:16px 14px 14px;width:min(440px,calc(100% - 30px));border-radius:16px}.launch-countdown:before{border-radius:12px}.launch-kicker{font-size:8px;letter-spacing:1.8px}.launch-countdown h2{font-size:clamp(19px,5.2vw,25px);margin:8px 0 6px}.launch-meta{font-size:10px}.launch-timer{gap:6px;margin:12px auto 10px}.launch-time-unit{padding:8px 3px 7px;border-radius:8px}.launch-time-unit b{font-size:clamp(20px,6vw,26px)}.launch-time-unit span{font-size:7px;letter-spacing:1px}.launch-foot{font-size:8px;letter-spacing:.8px}.launch-follow{margin-top:10px;padding:8px 14px;font-size:9px}}
-@media(max-height:700px) and (max-width:900px){.launch-countdown{top:45%;padding:11px 12px}.launch-countdown h2{font-size:19px}.launch-timer{margin:8px auto}.launch-time-unit{padding:5px 2px}.launch-follow{margin-top:7px}}
+/* Permanent $CLIMB mint is reachable from desktop/mobile navigation. */
+.navl a.climb-ca-nav{display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:6px 11px;white-space:nowrap;border:1px solid rgba(244,197,104,.43);border-radius:9px;color:#ffdf9d;background:rgba(226,168,73,.09);font-weight:800;letter-spacing:.45px}
+.navl a.climb-ca-nav:hover,.navl a.climb-ca-nav:focus-visible{color:#fff1cf;border-color:#f5cc82;background:rgba(235,181,80,.17)}
+.mobile-menu a.climb-ca-mobile{display:block;border:1px solid rgba(244,197,104,.4);border-radius:10px;padding:11px 13px;color:#ffdc93;background:rgba(220,160,74,.09);font-weight:800;letter-spacing:.55px;text-decoration:none}
+.mobile-menu a.climb-ca-mobile:focus-visible{outline:2px solid #ffe1a6;outline-offset:3px}
+#climb-token-record{scroll-margin-top:110px}
+@media(max-width:600px){#climb-token-record{scroll-margin-top:88px}}
+
+/* CLIMB supply: premium visible ledger panel; no unverified static supply values. */
+#tokenomics .climb-supply-panel{min-width:0;margin-top:17px;padding:19px;border:1px solid rgba(248,207,125,.32);border-radius:16px;background:radial-gradient(circle at right top,rgba(214,151,58,.13),transparent 60%),linear-gradient(140deg,rgba(16,26,40,.96),rgba(11,14,24,.97));box-shadow:inset 0 1px rgba(255,255,255,.04)}
+#tokenomics .climb-supply-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+#tokenomics .climb-supply-eyebrow{display:block;margin-bottom:6px;color:#dabc7c;font:800 9px/1.5 Inter,system-ui,sans-serif;letter-spacing:1.2px;text-transform:uppercase}
+#tokenomics .climb-supply-top h4{margin:0;color:#fff3d8;font:800 19px/1.25 Cinzel,Georgia,serif}
+#tokenomics .climb-supply-refresh{flex:none;max-width:185px;min-height:36px;padding:7px 10px;border:1px solid rgba(246,202,117,.5);border-radius:9px;background:linear-gradient(120deg,#e5ba66,#ba8b43);font:800 10px/1.4 Inter,system-ui,sans-serif;letter-spacing:.28px;color:#1d160c;cursor:pointer}
+#tokenomics .climb-supply-refresh:hover,#tokenomics .climb-supply-refresh:focus-visible{background:#ffdc95}
+#tokenomics .climb-supply-refresh:disabled{opacity:.65;cursor:wait}
+#tokenomics .climb-supply-main{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;margin:16px 0 7px}
+#tokenomics .climb-supply-value{display:block;max-width:100%;overflow-wrap:anywhere;color:#ffe3a6;font:800 clamp(23px,3vw,37px)/1.2 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.7px}
+#tokenomics .climb-supply-unit{font:800 12px/1.5 Inter,system-ui,sans-serif;letter-spacing:.8px;color:#e0ca9e}
+#tokenomics .climb-supply-source{min-height:30px;margin:0 0 11px;color:#a9b6c6;font-size:11px;line-height:1.55}
+#tokenomics .climb-supply-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#tokenomics .climb-supply-meta>div{min-width:0;padding:10px 12px;border:1px solid rgba(225,197,147,.15);border-radius:9px;background:rgba(255,255,255,.025)}
+#tokenomics .climb-supply-meta span{display:block;margin-bottom:4px;font:700 9px/1.5 Inter,system-ui,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:#aab4c6}
+#tokenomics .climb-supply-meta strong{display:block;font:700 12px/1.45 Inter,system-ui,sans-serif;color:#f0dbb3;overflow-wrap:anywhere}
+#tokenomics .climb-supply-disclaimer{margin:12px 0 0;padding-top:11px;border-top:1px solid rgba(224,192,132,.14);color:#abb3c2;font-size:10px;line-height:1.65}
+@media(max-width:600px){#tokenomics .climb-supply-panel{padding:13px;border-radius:12px}#tokenomics .climb-supply-top{flex-wrap:wrap}#tokenomics .climb-supply-refresh{max-width:none;width:100%}#tokenomics .climb-supply-value{font-size:clamp(22px,7.1vw,31px)}#tokenomics .climb-supply-meta>div{padding:9px}#tokenomics .climb-supply-meta strong{font-size:11px}}
+@media(prefers-reduced-motion:reduce){#tokenomics .climb-supply-refresh{transition:none}}
+
+/* Permanent $CLIMB tokenomics and ecosystem record. No launch hero overlay. */
+#tokenomics{position:relative;isolation:isolate;background:radial-gradient(ellipse at 18% 12%,rgba(215,161,68,.085),transparent 44%),linear-gradient(180deg,#080c17,#090d18);scroll-margin-top:110px}
+#tokenomics .climb-token-title{max-width:930px;letter-spacing:.005em;text-wrap:balance}
+#tokenomics .climb-token-intro{max-width:780px;margin:16px 0 0;color:#b5bcc9;font-size:14px;line-height:1.75}
+#tokenomics .climb-token-layout{display:grid;grid-template-columns:minmax(0,1.24fr) minmax(0,.86fr);gap:24px;align-items:start;margin-top:30px}
+#tokenomics .climb-token-card{position:relative;min-width:0;box-sizing:border-box;padding:29px;border:1px solid rgba(239,191,101,.25);border-radius:23px;background:linear-gradient(148deg,rgba(21,27,41,.95),rgba(12,16,27,.98));box-shadow:0 18px 42px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.04)}
+#tokenomics .climb-token-primary{border-color:rgba(243,195,103,.48);background:radial-gradient(ellipse at top right,rgba(232,168,77,.12),transparent 58%),linear-gradient(145deg,#151925,#0d111d)}
+#tokenomics .climb-token-kicker{font:800 10px/1.5 Inter,system-ui,sans-serif;letter-spacing:1.8px;color:#efc579;text-transform:uppercase}
+#tokenomics .climb-token-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:8px 0 20px}
+#tokenomics .climb-token-heading h3{font:700 clamp(20px,2.1vw,28px)/1.25 Cinzel,Georgia,serif;letter-spacing:.1px;color:#fff0d3;margin:0}
+#tokenomics .climb-token-pill{flex:none;border:1px solid rgba(240,193,112,.42);border-radius:999px;padding:7px 10px;color:#ffe0a0;background:rgba(237,179,78,.08);font:800 9px/1.2 Inter,system-ui,sans-serif;letter-spacing:1px}
+#tokenomics .climb-token-pill-muted{color:#d4d8df;border-color:rgba(193,200,214,.23);background:rgba(255,255,255,.035)}
+#tokenomics .climb-token-mint-shell{min-width:0;padding:18px;border:1px solid rgba(241,194,104,.31);border-radius:15px;background:linear-gradient(135deg,rgba(229,165,61,.085),rgba(0,0,0,.23))}
+#tokenomics .climb-token-mint-label{display:block;margin-bottom:10px;font:800 10px/1.5 Inter,system-ui,sans-serif;letter-spacing:1.35px;color:#e7bb6c;text-transform:uppercase}
+#tokenomics .climb-token-mint{margin:0;padding:12px 13px;border:1px solid rgba(245,199,111,.24);border-radius:10px;background:rgba(2,6,16,.55);color:#ffebc0;font:700 clamp(12px,1.13vw,15px)/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;word-break:break-all;user-select:all}
+#tokenomics .climb-token-actions{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:9px;margin-top:13px}
+#tokenomics .climb-token-action{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:41px;padding:10px 9px;text-align:center;border:1px solid rgba(236,189,103,.39);border-radius:10px;background:rgba(239,194,109,.065);color:#ffdf98;text-decoration:none;font:800 10px/1.4 Inter,system-ui,sans-serif;letter-spacing:.35px;cursor:pointer;transition:background .15s,border-color .15s}
+#tokenomics .climb-token-action:hover,#tokenomics .climb-token-action:focus-visible{border-color:#f2c67e;background:rgba(237,187,97,.14)}
+#tokenomics .climb-token-action-primary{border-color:#efc778;background:linear-gradient(115deg,#ffe2a0,#d6a14b);color:#21180c}
+#tokenomics .climb-token-action-primary:hover,#tokenomics .climb-token-action-primary:focus-visible{background:#ffe6ae}
+#tokenomics .climb-token-copy-status{display:block;min-height:17px;margin-top:7px;font:600 11px/1.5 Inter,system-ui,sans-serif;color:#ffdc94}
+#tokenomics .climb-token-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:18px 0}
+#tokenomics .climb-token-fact{padding:12px;border:1px solid rgba(214,188,144,.13);border-radius:11px;background:rgba(255,255,255,.025)}
+#tokenomics .climb-token-fact span{display:block;margin-bottom:6px;color:#aab3c2;font:700 10px/1.4 Inter,system-ui,sans-serif;letter-spacing:.65px;text-transform:uppercase}
+#tokenomics .climb-token-fact strong{display:block;color:#fff0d3;font-size:13px;line-height:1.45}
+#tokenomics .climb-token-disclosure{padding:14px 0;border-top:1px solid rgba(221,197,158,.14);color:#b9c0cb;font-size:12px;line-height:1.7}
+#tokenomics .climb-token-disclosure strong{display:block;margin-bottom:5px;font-size:12px;color:#f0cc8e}
+#tokenomics .climb-token-disclosure p{margin:0}
+#tokenomics .climb-token-risk{margin:15px 0 0;font-size:11px;line-height:1.7;color:#aeb5c3}
+#tokenomics .climb-token-risk a{color:#ffdb8d;text-decoration:underline;text-underline-offset:3px}
+#tokenomics .climb-token-utility h3{font-size:clamp(18px,1.85vw,23px)}
+#tokenomics .climb-token-feature{border-top:1px solid rgba(207,180,130,.13);padding:17px 0}
+#tokenomics .climb-token-feature:last-child{padding-bottom:0}
+#tokenomics .climb-token-feature h4{margin:0 0 7px;color:#f4dba8;font:700 15px/1.35 Inter,system-ui,sans-serif}
+#tokenomics .climb-token-feature p{margin:0;color:#b9c0cb;font-size:13px;line-height:1.75}
+#tokenomics .climb-token-feature strong{color:#f5d393;font-weight:700}
+@media(max-width:1070px){#tokenomics .climb-token-layout{grid-template-columns:minmax(0,1fr);gap:15px}#tokenomics .climb-token-card{padding:23px}#tokenomics .climb-token-actions{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){#tokenomics .climb-token-layout{margin-top:18px;gap:12px}#tokenomics .climb-token-card{padding:16px;border-radius:16px}#tokenomics .climb-token-heading{flex-wrap:wrap;gap:8px;margin-bottom:14px}#tokenomics .climb-token-heading h3{font-size:20px}#tokenomics .climb-token-mint-shell{padding:12px}#tokenomics .climb-token-mint{font-size:12px;padding:9px}#tokenomics .climb-token-actions{grid-template-columns:1fr;gap:7px}#tokenomics .climb-token-action{min-height:39px}#tokenomics .climb-token-facts{gap:7px;margin:14px 0}#tokenomics .climb-token-fact{padding:10px}#tokenomics .climb-token-fact strong{font-size:12px}#tokenomics .climb-token-feature{padding:13px 0}#tokenomics .climb-token-feature p{font-size:12px}}
+@media(prefers-reduced-motion:reduce){#tokenomics .climb-token-action{transition:none}}
 
 /* Accessible page title without changing the approved hero artwork or layout. */
 .visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
@@ -514,7 +561,7 @@ footer:first-of-type>div{
 <body>
 <nav>
 <a class="logo" href="./" style="text-decoration:none;cursor:pointer">CLIMBORIA</a>
-<div class="navl" aria-label="Main navigation"><a href="/game/" id="gameNavLink">Game</a><a href="/dex/" id="dexNavLink">DEX</a><a href="/swap/" id="swapNavLink">Swap</a><a href="/launchpad/" id="launchpadNavLink">Launchpad</a><a href="/whitepaper/">Whitepaper</a><button class="hub-link" data-panel="announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg><span>Announcements</span></button><button class="hub-link" data-panel="notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg><span>Notifications</span></button><a href="/support/">Support</a><button class="btn-gold" data-open-auth>SIGN IN</button><a class="nav-x-link" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer" aria-label="Climboria on X">𝕏</a></div>
+<div class="navl" aria-label="Main navigation"><a href="/game/" id="gameNavLink">Game</a><a href="/dex/" id="dexNavLink">DEX</a><a href="/swap/" id="swapNavLink">Swap</a><a href="/launchpad/" id="launchpadNavLink">Launchpad</a><a href="/whitepaper/">Whitepaper</a><a class="climb-ca-nav" id="climbCaNavLink" href="/#climb-token-record" aria-label="Official CLIMB token contract address">$CLIMB</a><button class="hub-link" data-panel="announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg><span>Announcements</span></button><button class="hub-link" data-panel="notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg><span>Notifications</span></button><a href="/support/">Support</a><button class="btn-gold" data-open-auth>SIGN IN</button><a class="nav-x-link" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer" aria-label="Climboria on X">𝕏</a></div>
 <div style="display:flex;align-items:center;gap:12px">
 <a href="https://x.com/ClimboriaHQ" target="_blank" id="xLogo" style="display:none;align-items:center;justify-content:center;width:38px;height:38px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;color:#fff;text-decoration:none;font-weight:900;font-size:14px">𝕏</a>
 <button type="button" class="hamburger" id="hamburger" aria-label="Open navigation menu" aria-controls="mobileMenu" aria-expanded="false"><span></span><span></span><span></span></button>
@@ -522,13 +569,14 @@ footer:first-of-type>div{
 </nav>
 <div class="home-panel-backdrop" id="homePanelBackdrop" hidden><section class="home-panel" role="dialog" aria-modal="true" aria-labelledby="homePanelTitle"><button class="home-panel-close" id="homePanelClose" aria-label="Close">×</button><span>CLIMBORIA HUB</span><h2 id="homePanelTitle">Announcements</h2><div id="homePanelContent"></div></section></div><div class="mobile-menu" id="mobileMenu" aria-label="Mobile navigation" inert>
 <a href="/game/" id="mobileGameBtn">Game</a><a href="/dex/" id="mobileDexBtn">DEX</a><a href="/swap/" id="mobileSwapBtn">Swap</a><a href="/launchpad/" id="mobileLaunchpadBtn">Launchpad</a><a href="/whitepaper/">Whitepaper</a>
+<a class="climb-ca-mobile" id="mobileClimbCaNavLink" href="/#climb-token-record">OFFICIAL $CLIMB CA ↗</a>
 <button class="mobile-hub-link" data-panel="announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg>Announcements</button><button class="mobile-hub-link" data-panel="notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg>Notifications</button>
 <a href="/support/">Support</a>
 <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px">
 <button class="btn-gold" data-open-auth>SIGN IN / CREATE ACCOUNT</button>
 </div>
 <a href="https://x.com/ClimboriaHQ" target="_blank" style="display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;margin-top:10px"><span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;font-weight:900">𝕏</span> @ClimboriaHQ</a>
-<div style="margin-top:20px;font-size:10px;color:rgba(255,255,255,.3);letter-spacing:2px">PLANNED LAUNCH TARGET • NOV 15, 2026 • SOLANA</div>
+<a href="#climb-token-record" style="display:block;margin-top:20px;color:#f5d88f;font-size:11px;font-weight:800;letter-spacing:1px;text-decoration:none">OFFICIAL $CLIMB TOKEN RECORD · SOLANA ↗</a>
 </div>
 
 <div class="auth-backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
@@ -565,15 +613,6 @@ footer:first-of-type>div{
     <img src="./857289992_1755402102906767_7411463028840030192_n-1.webp" alt="CLIMBORIA Official Hero" loading="eager" fetchpriority="high">
   </picture>
   <div class="hero-overlay"></div>
-  <section class="launch-countdown" aria-label="Official CLIMB token contract address">
-    <div class="launch-kicker">Official $CLIMB token announcement</div>
-    <h2>$CLIMB CONTRACT ADDRESS</h2>
-    <div class="launch-meta">SOLANA · PUMP.FUN · NOVEMBER 15, 2026</div>
-    <p style="margin:14px auto 8px;max-width:100%;overflow-wrap:anywhere;word-break:break-word;color:#ffe5a4;font-size:clamp(11px,1.15vw,15px);font-weight:700;line-height:1.6" id="climbOfficialCa">9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump</p>
-    <button type="button" id="copyClimbCa" class="launch-follow" style="cursor:pointer;margin:4px 6px 8px">COPY CA</button>
-    <a class="launch-follow" href="https://pump.fun/coin/9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump" target="_blank" rel="noopener noreferrer" style="margin:4px 6px 8px">VIEW ON PUMP.FUN ↗</a>
-    <div class="launch-foot">Verify this address on our official X account before trading. Beware of impersonators.</div>
-  </section>
   <div class="hero-content">
     <div class="hero-buttons">
       <button class="btn-play" id="nextlevelVictoryButton">▶ PLAY</button>
@@ -622,15 +661,64 @@ footer:first-of-type>div{
  <p class="menu-destinations-foot">Jarrell’s Peak and Arena are the only game-world destinations. Marketplace and Inventory are supporting menu panels.</p>
 </div><div class="grid3"><div class="card"><h3>🌲 Jarrell’s Peak</h3><p>Explore forests, cliffs, a long river, fishing spots, hidden paths, landmarks, and treasure chests. Survival and exploration—not summit completion—define the journey.</p></div><div class="card"><h3>💬 Chatworld · Planned</h3><p>Global Chat, Proximity Chat, and Private Messages are planned for Jarrell’s Peak and the future Arena, with mute, block, report, anti-spam, and moderator tools.</p></div><div class="card"><h3>⚔ Public Arena · Future Map</h3><p>A separate public forest Arena is planned for free-for-all battles, Guild Battles, and sponsor events. Casual fights have no rewards; event prizes require full verified funding.</p></div></div></div>
 
-<div id="whitepaper" class="sec"><div class="label">Whitepaper</div><div class="title">The Climboria Ecosystem Whitepaper</div><div class="desc">Explore the full ecosystem, architecture, economics, development roadmap and risk disclosures in our official whitepaper. <a href="/whitepaper/" style="color:#fbbf24">Read the complete whitepaper →</a></div><div class="white">
-<div id="tokenomics" class="sec"><div class="label">Tokenomics & Game Funding</div><div class="title">$CLIMB — Designed for the Climboria Ecosystem</div><div class="tok-wrap"><div class="tok-chart">
-<div class="bar"><span>Token supply & allocation</span><span class="pct">TBD</span></div>
-<div class="bar"><span>Liquidity & launch details</span><span class="pct">TBD</span></div>
-<div class="bar"><span>Team & treasury</span><span class="pct">TBD</span></div>
-<div class="bar"><span>Community & development</span><span class="pct">TBD</span></div>
-<div style="margin-top:18px;font-size:13px;color:rgba(255,255,255,.5)">Token supply, allocation percentages, liquidity, and contract details must be officially verified before publication. No allocation is implied by this page.</div>
-</div><div class="card"><h3>Agreed fee design · not yet a live system</h3><p><strong>Marketplace:</strong> 2.5% buy fee and 2.5% sell fee. Five percent of the actual marketplace fee revenue collected is allocated to the Climboria game funding pool; this is not an additional 5% charge on trading volume.<br><br><strong>Future Arena wagers:</strong> optional wager matches would charge a 2.5% platform fee on the total pot, sent to the game funding pool. Casual fights remain free and have no rewards.<br><br><strong>Rewards:</strong> Jarrell’s Peak Top Gainers rewards can be paid only from a verified, funded pool under published rules. No rewards are guaranteed before launch readiness and funding.</p><p style="margin-top:12px">Marketplace items and eligible crafted gear are intended to use $CLIMB only. NFT minting is intended to have no Climboria minting fee; players pay network gas. These features are not live until implemented and verified.</p></div></div></div>
+<div id="whitepaper" class="sec"><div class="label">Whitepaper</div><div class="title">The Climboria Ecosystem Whitepaper</div><div class="desc">Explore the full ecosystem, architecture, economics, development roadmap and risk disclosures in our official whitepaper. <a href="/whitepaper/" style="color:#fbbf24">Read the complete whitepaper →</a></div></div>
 
+<div id="tokenomics" class="sec">
+ <div class="label">Tokenomics &amp; Game Funding</div>
+ <div class="title climb-token-title">$CLIMB — Designed for the Climboria Ecosystem</div>
+ <p class="climb-token-intro">The permanent $CLIMB token record, with the exact owner-announced Solana address and a clear distinction between confirmed public information and features still in development.</p>
+ <div class="tok-wrap climb-token-layout">
+  <section class="climb-token-card climb-token-primary" id="climb-token-record" aria-labelledby="climb-token-record-title">
+   <span class="climb-token-kicker">Official token record · Solana</span>
+   <div class="climb-token-heading"><h3 id="climb-token-record-title">$CLIMB Contract Address</h3><span class="climb-token-pill">CA PUBLISHED</span></div>
+   <div class="climb-token-mint-shell">
+    <span class="climb-token-mint-label">Owner-announced Solana mint / CA</span>
+    <p class="climb-token-mint" id="climbOfficialCa">9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump</p>
+    <div class="climb-token-actions">
+     <button type="button" class="climb-token-action climb-token-action-primary" id="copyClimbCa" aria-describedby="copyClimbCaStatus">COPY CA</button>
+     <a class="climb-token-action" href="https://pump.fun/coin/9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump" target="_blank" rel="noopener noreferrer">PUMP.FUN ↗</a>
+     <a class="climb-token-action" href="https://solscan.io/token/9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump" target="_blank" rel="noopener noreferrer">SOLSCAN ↗</a>
+    </div>
+    <span id="copyClimbCaStatus" class="climb-token-copy-status" role="status" aria-live="polite"></span>
+   </div>
+   <section class="climb-supply-panel" aria-labelledby="climbSupplyHeading">
+    <div class="climb-supply-top">
+     <div>
+      <span class="climb-supply-eyebrow">Solana mint data · Read-only</span>
+      <h4 id="climbSupplyHeading">Total Supply</h4>
+     </div>
+     <button type="button" class="climb-supply-refresh" id="climbSupplyRefresh" aria-describedby="climbSupplySource">LOAD ON-CHAIN SUPPLY ↗</button>
+    </div>
+    <div class="climb-supply-main">
+     <span id="climbSupplyValue" class="climb-supply-value" role="status" aria-live="polite">Not loaded</span>
+     <span class="climb-supply-unit">CLIMB</span>
+    </div>
+    <p id="climbSupplySource" class="climb-supply-source" aria-live="polite">Load a finalized Solana RPC supply snapshot for this exact mint. No supply number is assumed.</p>
+    <div class="climb-supply-meta">
+     <div><span>Token decimals</span><strong id="climbSupplyDecimals">—</strong></div>
+     <div><span>Circulating supply</span><strong>Not independently verified</strong></div>
+    </div>
+    <p class="climb-supply-disclaimer">Total supply is not circulating supply. Figures from a public RPC are a point-in-time snapshot, not an audit of allocations, liquidity or token safety.</p>
+   </section>
+   <div class="climb-token-facts">
+    <div class="climb-token-fact"><span>Network</span><strong>Solana</strong></div>
+    <div class="climb-token-fact"><span>Launch platform</span><strong>Pump.fun</strong></div>
+    <div class="climb-token-fact"><span>Original announcement</span><strong>November 15, 2026</strong></div>
+    <div class="climb-token-fact"><span>Public record</span><strong>Official CA published</strong></div>
+   </div>
+   <div class="climb-token-disclosure"><strong>Tokenomics disclosures</strong><p>An optional finalized Solana RPC lookup shows current on-chain mint supply above when available. Allocation, circulating supply, liquidity, treasury and development distribution require separate verification; no allocations, prices or reserves are implied.</p></div>
+   <p class="climb-token-risk">Market liquidity, token safety and returns are not verified or guaranteed. Cross-check the mint with <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer">Climboria’s official X account</a>. Beware of impersonators.</p>
+  </section>
+  <article class="climb-token-card climb-token-utility" aria-labelledby="climb-fee-heading">
+   <span class="climb-token-kicker">Ecosystem funding design</span>
+   <div class="climb-token-heading"><h3 id="climb-fee-heading">Planned Utility &amp; Fees</h3><span class="climb-token-pill climb-token-pill-muted">NOT YET LIVE</span></div>
+   <div class="climb-token-feature"><h4>Marketplace</h4><p>Planned <strong>2.5% buy fee</strong> and <strong>2.5% sell fee</strong>. Five percent of actual marketplace fee revenue collected is intended for the Climboria game funding pool—not an extra 5% charge on trading volume.</p></div>
+   <div class="climb-token-feature"><h4>Future Arena wagers</h4><p>Optional wager matches may charge a <strong>2.5% platform fee</strong> on the total pot, allocated to the game funding pool. Casual fights remain free with no rewards.</p></div>
+   <div class="climb-token-feature"><h4>Game rewards</h4><p>Jarrell’s Peak Top Gainers rewards require a <strong>verified, funded pool</strong> and published rules. Rewards are not guaranteed before implementation and funding.</p></div>
+   <div class="climb-token-feature"><h4>$CLIMB utility &amp; items</h4><p>Eligible marketplace items and crafted gear are intended to use <strong>$CLIMB</strong>. NFT minting is intended to have no Climboria platform minting fee; players pay network fees. These systems are not yet operational.</p></div>
+  </article>
+ </div>
+</div>
 
 <div id="roadmap" class="sec" style="background:rgba(255,255,255,.02)"><div class="label">Roadmap</div><div class="title">One World First. Expand When Ready.</div><div class="desc">Milestones are staged targets, not promises. Only Jarrell’s Peak is in the launch scope; additional maps wait until after token launch and a budget review.</div><div class="road">
 <div class="phase"><div class="num">PHASE 01 — BASE CAMP</div><h4>Jarrell’s Peak foundation</h4><li>Protect existing gameplay mechanics</li><li>Stabilize starting camp, river, swimming, collision, and treasure discovery</li><li>Validate desktop and mobile browser behavior</li><li>Publish consistent project documentation</li></div>
@@ -738,10 +826,10 @@ footer:first-of-type>div{
   <div class="climboria-footer-main">
     <div class="climboria-footer-about">
       <div class="climboria-footer-brand">CLIMBORIA</div>
-      <p>Planned target only—verify launch link and token address on official channels. Nothing here is financial advice.</p>
+      <p>$CLIMB official CA is permanently listed in Tokenomics. Planned game utilities are not yet live. Verify links on official channels; nothing here is financial advice.</p>
     </div>
     <div class="climboria-footer-links">
-      <div class="climboria-footer-group"><h2>EXPLORE</h2><a href="/game/">Game</a><a href="/dex/">DEX</a><a href="/launchpad/">Launchpad</a></div>
+      <div class="climboria-footer-group"><h2>EXPLORE</h2><a href="/game/">Game</a><a href="/#climb-token-record">$CLIMB Token</a><a href="/dex/">DEX</a><a href="/launchpad/">Launchpad</a></div>
       <div class="climboria-footer-group"><h2>SOCIAL</h2><a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer">@CLIMBORIAHQ</a><button type="button" data-panel="announcements">Announcements</button><a href="/support/">Support</a></div>
     </div>
   </div>
@@ -752,14 +840,31 @@ footer:first-of-type>div{
 (() => {
   const ham = document.getElementById('hamburger');
   const copyClimbCaButton = document.getElementById('copyClimbCa');
-  if (copyClimbCaButton) copyClimbCaButton.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText('9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump');
-      copyClimbCaButton.textContent = 'COPIED!';
-    } catch {
-      copyClimbCaButton.textContent = 'SELECT CA ABOVE TO COPY';
-    }
-  });
+  const tokenRecordAddress = document.getElementById('climbOfficialCa');
+  const tokenCopyStatus = document.getElementById('copyClimbCaStatus');
+  if (copyClimbCaButton && tokenRecordAddress && tokenCopyStatus) {
+    copyClimbCaButton.addEventListener('click', async () => {
+      const address = tokenRecordAddress.textContent.trim();
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+        await navigator.clipboard.writeText(address);
+        tokenCopyStatus.textContent = 'Contract address copied.';
+      } catch {
+        // HTTPS/permissions can block Clipboard API. Select the exact visible
+        // mint for keyboard and mobile copy rather than losing the user's click.
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(tokenRecordAddress);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        } catch {
+          // The address is still rendered with user-select:all for manual copy.
+        }
+        tokenCopyStatus.textContent = 'Copy unavailable. Address selected above; copy it manually.';
+      }
+    });
+  }
 
   const menu = document.getElementById('mobileMenu');
   let menuOpen = false;
@@ -822,5 +927,6 @@ const homePanelBackdrop=document.getElementById("homePanelBackdrop");document.qu
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
 <script src="/auth.js"></script>
-<svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg></body>
+<svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg><script src="/climb-token-supply.js" defer></script>
+</body>
 </html>

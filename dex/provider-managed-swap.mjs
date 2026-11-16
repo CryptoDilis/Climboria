@@ -104,6 +104,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   const ACTIVE_APPROVAL_POLL_MS = 15000;
   let activeCheckTimer = null;
   let activeCheckInFlight = false;
+  let resumeCheckInFlight = false;
   const stopActiveApprovalChecks = () => {
     if (activeCheckTimer !== null) {
       scope.clearInterval?.(activeCheckTimer);
@@ -208,6 +209,39 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
       ? "Provider panel hidden. Closing this page does not cancel wallet prompts or on-chain transactions."
       : "Provider panel closed. No swap was submitted by Climboria.";
   });
+  // Background tabs may throttle even the 15-second interval for minutes.
+  // On return, conceal any mounted provider BEFORE requesting a new no-store
+  // approval. This is only an exposure guard: it cannot recall a wallet
+  // prompt or a transaction already submitted by third-party software.
+  const recheckOnTabReturn = async () => {
+    if (!mounted || loading || panel.hidden || resumeCheckInFlight) return;
+    resumeCheckInFlight = true;
+    // Fence out an older active-interval response and any in-flight close.
+    const requestId = ++openRequestId;
+    stopActiveApprovalChecks();
+    panel.hidden = true;
+    expanded(false);
+    status.textContent = "Rechecking provider release approval after returning to this tab. Existing wallet requests and submitted transactions are not cancelled.";
+    try {
+      const stillApproved = await isManagedSwapRuntimeApproved(scope);
+      if (requestId !== openRequestId) return;
+      if (!stillApproved) {
+        hideRevoked();
+        return;
+      }
+      panel.hidden = false;
+      expanded(true);
+      status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
+      startActiveApprovalChecks();
+    } finally {
+      resumeCheckInFlight = false;
+    }
+  };
+  doc.addEventListener?.("visibilitychange", () =>
+    doc.visibilityState === "visible" ? recheckOnTabReturn() : undefined);
+  scope.addEventListener?.("focus", () => recheckOnTabReturn());
+  scope.addEventListener?.("pageshow", event =>
+    event?.persisted ? recheckOnTabReturn() : undefined);
   return { ready: true, reason: "approved-script-configured" };
 }
 

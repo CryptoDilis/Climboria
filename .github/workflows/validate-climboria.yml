@@ -93,25 +93,101 @@ jobs:
                   raise SystemExit(f"Missing expected homepage control: #{required_id}")
           print("Current homepage structure and hero controls validated.")
           PY
-      - name: Verify token launch copy is clearly marked as a target
+      - name: Verify announced CLIMB mint and exact official record links
         run: |
           python3 - <<'PY'
+          from html.parser import HTMLParser
           from pathlib import Path
+
           html = Path("index.html").read_text(encoding="utf-8")
-          required = [
-              "PLANNED LAUNCH TARGET",
-              "Planned launch target · subject to readiness",
-              "date may change",
-              "verify launch link and token address on official channels",
-              "TARGET NOV 15, 2026",
-          ]
-          missing = [text for text in required if text not in html]
-          if missing:
-              raise SystemExit(f"Missing transparent launch-status copy: {missing}")
-          if "Official launch announcement</div>" in html:
-              raise SystemExit("Homepage must not imply an unverified token launch is already official.")
-          print("Launch target wording is clearly marked as planned and subject to verification.")
+          mint = "9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump"
+          expected_pump = f"https://pump.fun/coin/{mint}"
+          expected_explorer = f"https://solscan.io/token/{mint}"
+
+          class TokenRecord(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.record = []
+                  self.address = []
+                  self.copy_buttons = []
+                  self.status = []
+                  self.links = []
+                  self.in_address = False
+              def handle_starttag(self, tag, attrs):
+                  a = dict(attrs)
+                  if a.get("id") == "climb-token-record":
+                      self.record.append((tag, a))
+                  if a.get("id") == "climbOfficialCa":
+                      self.address.append((tag, a))
+                      self.in_address = True
+                  if a.get("id") == "copyClimbCa":
+                      self.copy_buttons.append((tag, a))
+                  if a.get("id") == "copyClimbCaStatus":
+                      self.status.append((tag, a))
+                  if tag == "a":
+                      self.links.append(a)
+              def handle_endtag(self, tag):
+                  if tag == "p" and self.in_address:
+                      self.in_address = False
+              def handle_data(self, data):
+                  if self.in_address:
+                      self.address_text = getattr(self, "address_text", "") + data
+
+          page = TokenRecord()
+          page.feed(html)
+          assert len(page.record) == 1 and page.record[0][0] == "section", "One official token record section required"
+          assert len(page.address) == 1 and page.address[0][0] == "p"
+          assert getattr(page, "address_text", "").strip() == mint, "Exactly the owner-announced Solana mint must be shown"
+          assert len(page.copy_buttons) == 1 and page.copy_buttons[0][0] == "button"
+          assert len(page.status) == 1 and page.status[0][1].get("aria-live") == "polite"
+          for url in (expected_pump, expected_explorer):
+              assert any(a.get("href") == url and a.get("target") == "_blank" and
+                         "noopener" in a.get("rel", "").split() and
+                         "noreferrer" in a.get("rel", "").split() for a in page.links), f"Missing trusted external mint link: {url}"
+          assert 'id="copyClimbCaStatus"' in html
+          assert 'tokenRecordAddress.textContent.trim()' in html, "Copy handler must use the rendered address, not a divergent mint"
+          for nav_id in ("climbCaNavLink", "mobileClimbCaNavLink"):
+              assert sum(1 for a in page.links if a.get("id") == nav_id and
+                         a.get("href") == "/#climb-token-record") == 1, (
+                         f"Permanent CLIMB CA link missing from navigation: {nav_id}")
+          assert 'id="climb-token-record"' in html and "scroll-margin-top" in html, "CA deep link must clear the fixed header"
+          assert 'range.selectNodeContents(tokenRecordAddress)' in html, "Blocked clipboard must select the exact visible address for manual copy"
+          assert "PLANNED LAUNCH TARGET" not in html, "Past launch must not show an obsolete target countdown"
+          assert "launch-countdown" not in html and "launch-timer" not in html, "Retired countdown UI must stay removed"
+          assert "Market liquidity, token safety and returns are not verified or guaranteed." in html
+          assert html.count('id="climb-token-record"') == 1, "Never duplicate the public mint record"
+          hero = html.split('<div class="hero">', 1)[1].split('<section class="sec" id="climboria-signature"', 1)[0]
+          assert 'id="climbOfficialCa"' not in hero, "Do not cover the hero with a token announcement"
+          tokenomics = html.split('<div id="tokenomics" class="sec">', 1)[1].split('<div id="roadmap"', 1)[0]
+          assert 'id="climb-token-record"' in tokenomics, "Permanent CA must live in Tokenomics"
+          assert 'id="climb-fee-heading"' in tokenomics and "NOT YET LIVE" in tokenomics
+          assert "TBD" not in tokenomics, "Raw placeholder rows must not return"
+          assert 'class="tok-wrap climb-token-layout"' in tokenomics, "Responsive two-card layout required"
+          assert "2.5% buy fee" in tokenomics and "2.5% sell fee" in tokenomics
+          assert "no allocations, prices or reserves are implied." in tokenomics
+          for required_id in ("climbSupplyHeading", "climbSupplyValue", "climbSupplyRefresh",
+                              "climbSupplySource", "climbSupplyDecimals"):
+              assert tokenomics.count(f'id="{required_id}"') == 1, f"Missing distinct supply UI: {required_id}"
+          assert "Total Supply" in tokenomics and "Circulating supply" in tokenomics
+          assert "Not independently verified" in tokenomics, "Do not falsely equate total and circulating"
+          assert "1,000,000,000" not in tokenomics, "No invented hardcoded 1B supply allowed"
+          assert '<script src="/climb-token-supply.js" defer></script>' in html
+          supply_js = Path("climb-token-supply.js").read_text(encoding="utf-8")
+          for token in ('getTokenSupply', "'finalized'", 'getTokenSupply', '18446744073709551615n',
+                        'officialMint', 'No supply'):
+              # Only on-chain raw amount and a trusted exact mint are permitted.
+              if token == 'No supply':
+                  continue
+              assert token in supply_js, f"Missing strict supply read-only guard: {token}"
+          assert "credentials: 'omit'" in supply_js, "RPC must not send user credentials"
+          assert "document.getElementById('climbOfficialCa')" in supply_js
+          assert "amount" in supply_js and "decimals" in supply_js
+
+          print("Permanent CLIMB CA in Tokenomics, premium disclosure layout and clean hero verified.")
           PY
+      - name: Syntax-check standalone CLIMB supply module
+        run: node --check climb-token-supply.js
+
       - name: Syntax-check inline JavaScript
         run: |
           python3 - <<'PY'

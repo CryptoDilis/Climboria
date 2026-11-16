@@ -124,6 +124,83 @@ async function runPage(browser, path, {badHash = false} = {}) {
 }
 
 
+
+async function runTabReturnApproval(browser, path, width) {
+  const page = await browser.newPage({ viewport:{width,height:850} });
+  let approved = true;
+  let statuses = 0;
+  let sdkLoads = 0;
+  const forbidden = [];
+  page.on("request", request => {
+    if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(request.url()))
+      forbidden.push(request.url());
+  });
+  await page.route("**/swap-runtime-status.json", route => {
+    statuses++;
+    return route.fulfill({
+      status:200, json:{enabled:approved},
+      headers:{"Cache-Control":"no-store"}
+    });
+  });
+  await page.route("**/swap-config.js", route => route.fulfill({
+    status:200, contentType:"application/javascript", body:mockConfig()
+  }));
+  await page.route(SCRIPT_URL, route => {
+    sdkLoads++;
+    return route.fulfill({
+      status:200, contentType:"application/javascript",
+      headers:{"access-control-allow-origin":"*","cache-control":"no-store"},
+      body:MOCK_SCRIPT
+    });
+  });
+  try {
+    const response = await page.goto(ORIGIN+path, {waitUntil:"domcontentloaded",timeout:20000});
+    assert.equal(response.status(),200);
+    const button = page.locator("[data-climboria-managed-swap-open]:visible").first();
+    const panel = page.locator("[data-climboria-managed-swap-panel]");
+    await button.waitFor({timeout:15000});
+    await button.click();
+    await page.waitForFunction(() => window.__mockProviderCalls?.length===1,null,{timeout:15000});
+    assert.equal(await panel.isVisible(),true);
+    assert.equal(sdkLoads,1);
+    const beforeFocus = statuses;
+    const concealedImmediately = await page.evaluate(() => {
+      window.dispatchEvent(new Event("focus"));
+      return document.querySelector("[data-climboria-managed-swap-panel]").hidden;
+    });
+    assert.equal(concealedImmediately,true,
+      "returning focus must conceal an already-mounted provider synchronously");
+    await page.waitForFunction(() => {
+      const p = document.querySelector("[data-climboria-managed-swap-panel]");
+      return !p.hidden && p.querySelector("[data-climboria-managed-swap-status]")
+        .textContent.includes("Provider interface loaded");
+    },null,{timeout:10000});
+    assert.ok(statuses>beforeFocus,"focus performs fresh approval");
+    assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length),1,
+      "approved focus must not reinitialize wallet provider");
+    approved = false;
+    const beforeRollback = statuses;
+    const hiddenAtVisibilityReturn = await page.evaluate(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+      return document.querySelector("[data-climboria-managed-swap-panel]").hidden;
+    });
+    assert.equal(hiddenAtVisibilityReturn,true,
+      "tab visibility return must hide provider BEFORE revoked status resolves");
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll("[data-climboria-managed-swap-open]")]
+        .every(node => node.hidden),null,{timeout:10000});
+    assert.ok(statuses>beforeRollback,"visibility return checked operator switch");
+    assert.equal(await panel.isVisible(),false);
+    assert.equal(sdkLoads,1);
+    assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length),1);
+    assert.deepEqual(forbidden,[],"tab return may not request native swap execution");
+    console.log("PASS "+path+" width="+width+
+      " tab return focuses/reapproves, then synchronously hides on revoked visibility; no wallet/trade");
+  } finally {
+    await page.close();
+  }
+}
+
 async function runCloseDuringLoad(browser, path) {
   const page = await browser.newPage({viewport:{width: path === "/dex/" ? 390 : 1280,height:850}});
   let releaseLoad;
@@ -311,6 +388,9 @@ try {
   await runPage(browser,"/swap/",{badHash:true});
   await runCloseDuringLoad(browser,"/swap/");
   await runCloseDuringLoad(browser,"/dex/");
+  for (const path of ["/swap/","/dex/"]) {
+    for (const width of [1280,390]) await runTabReturnApproval(browser,path,width);
+  }
   await runRollbackWithCache(browser);
 } finally {
   await browser.close();
