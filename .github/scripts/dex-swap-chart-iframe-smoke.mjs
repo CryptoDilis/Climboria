@@ -331,8 +331,57 @@ async function checkSwapNoPoolFallback({ name, mobile, scenario }) {
   }
 }
 
+/**
+ * Isolated provider fixture: a deep link may name a stale/foreign pool, and
+ * token search can return a high-liquidity quote-side pair. Neither may
+ * override the exact mint or leave a misleading selected pool in the URL.
+ * Production quotes/signing/execution are never invoked in this control.
+ */
+async function checkDexPoolUrlIntegrity() {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const page = await context.newPage();
+  const stale = "33333333333333333333333333333333";
+  const valid = "22222222222222222222222222222222";
+  let intercepted = 0;
+  await page.route("https://api.dexscreener.com/latest/dex/tokens/" + SOL, async route => {
+    intercepted++;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ pairs: [
+      { chainId: "solana", pairAddress: "11111111111111111111111111111111",
+        baseToken: { address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", symbol: "USDC" },
+        quoteToken: { address: SOL, symbol: "SOL" }, liquidity: { usd: 1000000 } },
+      { chainId: "solana", pairAddress: valid,
+        baseToken: { address: SOL, symbol: "SOL", name: "Wrapped SOL" },
+        quoteToken: { address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", symbol: "USDC" },
+        liquidity: { usd: 1000 }, priceUsd: "150" }
+    ] }) });
+  });
+  try {
+    const res = await page.goto(SITE + "/dex/?token=" + SOL + "&pool=" + stale,
+      { waitUntil: "domcontentloaded", timeout: 60000 });
+    assert.ok(res?.ok(), "DEX deep link must load");
+    await page.waitForFunction(expected => {
+      const url = new URL(location.href);
+      return url.searchParams.get("pool") === expected &&
+        document.querySelector("#detailChart")?.getAttribute("src")?.includes("/solana/" + expected + "?");
+    }, valid, { timeout: 30000 });
+    assert.ok(intercepted > 0, "isolated DexScreener response must be exercised");
+    assert.equal(new URL(page.url()).searchParams.get("pool"), valid,
+      "stale shared pool must be replaced with the actual matching-mint pool");
+    const iframe = new URL(await page.locator("#detailChart").getAttribute("src"));
+    assert.equal(iframe.pathname, "/solana/" + valid, "quote-side pool must not be selected as chart");
+    assert.equal(await page.locator("#detailChartExternal").getAttribute("href"),
+      chartOrigin + "/solana/" + valid, "external pool link must match selected chart");
+    assert.equal(await page.locator("#detailPairs button[data-pool]").count(), 1,
+      "quote-side foreign-base pairs must not be offered in selected-mint pool picker");
+    console.log("PASS DEX mobile exact-mint pool filtering and stale deep-link canonicalization (isolated provider fixture).");
+  } finally {
+    await context.close();
+  }
+}
+
 try {
   for (const journey of cases) await checkChart(journey);
+  await checkDexPoolUrlIntegrity();
   await checkSwapNoPoolFallback({ name: "Swap desktop (quote-only pool)", mobile: false, scenario: "quote-only-pool" });
   await checkSwapNoPoolFallback({ name: "Swap mobile (provider unavailable)", mobile: true, scenario: "http-503" });
   console.log("PASS: four real chart-link journeys plus two isolated no-pool/provider-failure fallback journeys. Provider candle rendering is separately qualified above.");
