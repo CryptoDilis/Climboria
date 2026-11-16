@@ -1,0 +1,127 @@
+#!/usr/bin/env node
+/**
+ * Production origin, read-only chart acceptance after sandboxing vendor iframes.
+ * Checks actual selected pair URLs, displayed iframe geometry, chart-provider
+ * navigation evidence, and the external provider fallback link on desktop/mobile.
+ * Does NOT connect wallets, sign, execute, or approve third-party chart code.
+ */
+import assert from "node:assert/strict";
+import { chromium } from "playwright";
+
+const SITE = "https://climboria.fun";
+const SOL = "So11111111111111111111111111111111111111112";
+const chartOrigin = "https://dexscreener.com";
+const cases = [
+  { name: "Swap desktop", path: "/swap/", chart: "#selectedAssetChart", link: "#selectedChartExternal", mobile: false },
+  { name: "Swap mobile", path: "/swap/", chart: "#selectedAssetChart", link: "#selectedChartExternal", mobile: true },
+  { name: "DEX desktop", path: "/dex/?token=" + SOL, chart: "#detailChart", link: "#detailChartExternal", mobile: false },
+  { name: "DEX mobile", path: "/dex/?token=" + SOL, chart: "#detailChart", link: "#detailChartExternal", mobile: true }
+];
+const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
+const isPoolDocument = (response) => {
+  try {
+    const u = new URL(response.url());
+    return u.origin === chartOrigin && /^\/solana\/[1-9A-HJ-NP-Za-km-z]{32,44}\/?$/.test(u.pathname) &&
+      response.request().resourceType() === "document";
+  } catch { return false; }
+};
+
+async function checkChart(test) {
+  const context = await browser.newContext({
+    viewport: test.mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 },
+    isMobile: test.mobile, hasTouch: test.mobile
+  });
+  const page = await context.newPage();
+  const chartDocuments = [];
+  page.on("response", (response) => {
+    if (isPoolDocument(response)) chartDocuments.push({ status: response.status(), url: response.url() });
+  });
+  try {
+    const response = await page.goto(SITE + test.path, { waitUntil: "domcontentloaded", timeout: 60000 });
+    assert.ok(response?.ok(), test.name + " main page failed to load");
+    if (test.mobile && test.name.startsWith("Swap")) {
+      // Mobile Swap starts on its trade workspace; chart is intentionally hidden
+      // until a real user selects the Chart tab in the bottom workspace nav.
+      const chartTab = page.locator('[data-workspace-tab="chart"]');
+      await chartTab.waitFor({ state: "visible", timeout: 15000 });
+      await chartTab.click({ timeout: 15000 });
+      assert.equal(await chartTab.getAttribute("aria-selected"), "true",
+        "Swap mobile Chart tab must be active before checking the iframe");
+    }
+    const chart = page.locator(test.chart);
+    const link = page.locator(test.link);
+    await chart.waitFor({ state: "visible", timeout: 30000 });
+    await page.waitForFunction(selector => {
+      const src = document.querySelector(selector)?.getAttribute("src") || "";
+      return /^https:\/\/dexscreener\.com\/solana\/[1-9A-HJ-NP-Za-km-z]{32,44}\?/.test(src);
+    }, test.chart, { timeout: 45000 });
+
+    const src = await chart.getAttribute("src");
+    const parsed = new URL(src);
+    assert.equal(parsed.origin, chartOrigin, test.name + " chart must be first-party-selected DexScreener Solana pool");
+    assert.match(parsed.pathname, /^\/solana\/[1-9A-HJ-NP-Za-km-z]{32,44}$/, test.name + " pool address malformed");
+    assert.equal(parsed.searchParams.get("embed"), "1", test.name + " chart is not a pool embed");
+    assert.equal(await chart.getAttribute("sandbox"), "allow-scripts allow-same-origin",
+      test.name + " chart must stay sandboxed without popup, form or top-nav grants");
+    assert.equal(await chart.getAttribute("referrerpolicy"), "no-referrer",
+      test.name + " must not leak the user's Climboria URL through chart referrer");
+    const bounds = await chart.boundingBox();
+    assert.ok(bounds && bounds.width >= 260 && bounds.height >= 250,
+      test.name + " chart iframe must occupy a meaningful on-screen area");
+
+    await link.waitFor({ state: "visible", timeout: 10000 });
+    const href = await link.getAttribute("href");
+    assert.equal(href, chartOrigin + parsed.pathname,
+      test.name + " external fallback must open the SAME selected provider pool, not another mint/chart");
+    assert.equal(await link.getAttribute("target"), "_blank", test.name + " external fallback must use separate tab");
+    const rel = (await link.getAttribute("rel") || "").split(/\s+/);
+    assert.ok(rel.includes("noopener"), test.name + " provider tab must be isolated from Climboria");
+    console.log("PASS " + test.name + " selected pool iframe visible + sandboxed, with exact matching external fallback.");
+
+    // Visit the actual iframe URL, without assuming a remote vendor will
+    // always serve a usable chart. A 403/challenge or blank canvas is reported
+    // explicitly rather than being mislabeled as verified candle rendering.
+    await page.waitForTimeout(1200);
+    const provider = chartDocuments.find(x => x.url.startsWith(chartOrigin + parsed.pathname));
+    if (provider) {
+      console.log("INFO " + test.name + " chart provider document HTTP " + provider.status + ".");
+    } else {
+      console.log("WARN " + test.name + " chart provider navigation was not observed before the check; full rendering unverified.");
+    }
+    const providerFrame = page.frames().find(frame => {
+      try {
+        const u = new URL(frame.url());
+        return u.origin === chartOrigin && u.pathname === parsed.pathname;
+      } catch { return false; }
+    });
+    if (providerFrame && provider?.status === 200) {
+      const canvasCount = await providerFrame.locator("canvas").count().catch(() => 0);
+      if (canvasCount > 0) console.log("PASS " + test.name + " provider frame exposed " + canvasCount + " chart canvas element(s).");
+      else console.log("WARN " + test.name + " no chart canvas found yet; visible candles not independently verified.");
+    } else {
+      console.log("WARN " + test.name + " full third-party chart render unverified; visible exact-pool external fallback remains available.");
+    }
+
+    // This is an actual user click test, not just an href comparison.
+    const popupPromise = context.waitForEvent("page", { timeout: 12000 });
+    await link.click({ timeout: 12000 });
+    const popup = await popupPromise;
+    try {
+      await popup.waitForURL(url => url.origin === chartOrigin && url.pathname === parsed.pathname,
+        { timeout: 15000 });
+      assert.equal(new URL(page.url()).origin, SITE, test.name + " chart link must not navigate away from Climboria");
+      console.log("PASS " + test.name + " provider fallback opens correct pool in a new browser tab.");
+    } finally {
+      await popup.close().catch(() => {});
+    }
+  } finally {
+    await context.close();
+  }
+}
+
+try {
+  for (const journey of cases) await checkChart(journey);
+  console.log("PASS: four read-only chart iframe / external-fallback journeys. Provider candle rendering is separately qualified above.");
+} finally {
+  await browser.close();
+}
