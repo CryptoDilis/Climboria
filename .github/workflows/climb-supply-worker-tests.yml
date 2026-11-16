@@ -1,0 +1,37 @@
+name: CLIMB Supply Read-Only Worker Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "site/supply-worker/**"
+      - ".github/workflows/climb-supply-worker-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "site/supply-worker/**"
+      - ".github/workflows/climb-supply-worker-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  supply-readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Syntax-check isolated supply Worker
+        run: |
+          node --check site/supply-worker/index.mjs
+          node --check site/supply-worker/index.test.mjs
+      - name: Read-only supply cache, CORS and validation regression
+        run: node --test site/supply-worker/index.test.mjs
+
+# No secret access, no Cloudflare deployment action, and no live Solana RPC.
