@@ -128,11 +128,23 @@ async function waitForGlb(page){
   return a?.peers===1&&a?.resident>=1&&a.resident<=a.budget;
  },undefined,{timeout:MAX_WAIT});
 }
+async function openChat(page){
+ const panel=page.locator('#climboria-world-chat-panel');
+ if(!(await panel.isVisible())){
+  await page.locator('#climboria-world-chat-toggle').click();
+ }
+ await panel.waitFor({state:'visible'});
+ return panel;
+}
 async function sendChat(page,text){
- const toggle=page.locator('#climboria-world-chat-toggle');
- await toggle.click();
- await page.locator('#climboria-world-chat-panel input').fill(text);
- await page.locator('#climboria-world-chat-panel button').click();
+ const panel=await openChat(page);
+ await panel.locator('input').fill(text);
+ await panel.locator('button').click();
+}
+async function assertChatDraft(page,expected,label){
+ const panel=await openChat(page);
+ const actual=await panel.locator('input').inputValue();
+ check(actual===expected,label);
 }
 async function expectChat(page,name,text){
  await page.waitForFunction(({name,text})=>{
@@ -189,11 +201,28 @@ try{
   expectChat(a,'QA Explorer A','QA real game world chat A'),
   expectChat(b,'QA Explorer A','QA real game world chat A')
  ]);
+ // A real self-echo, not WebSocket.send(), must clear the matching draft.
+ // Wait for the acknowledgement to be processed before editing. This is
+ // a genuine staging check, not a simulated/forged server packet.
+ await a.waitForFunction(()=>document.querySelector(
+  '#climboria-world-chat-panel input')?.value==='',
+  undefined,{timeout:15000});
+ await assertChatDraft(a,'','Server-confirmed local chat was not cleared');
+ // An unsent edited draft must survive another authenticated player's
+ // chat reply and must never be mistaken for an acknowledgement to A.
+ const unsent='QA preserve my unsent draft';
+ await (await openChat(a)).locator('input').fill(unsent);
  await sendChat(b,'QA real game world chat B');
  await Promise.all([
   expectChat(a,'QA Explorer B','QA real game world chat B'),
   expectChat(b,'QA Explorer B','QA real game world chat B')
  ]);
+ await assertChatDraft(a,unsent,
+  'Incoming World Chat from another real player erased A unsent draft');
+ await b.waitForFunction(()=>document.querySelector(
+  '#climboria-world-chat-panel input')?.value==='',
+  undefined,{timeout:15000});
+ await assertChatDraft(b,'','B server-confirmed local chat was not cleared');
  const fpsA=await frameRate(a),fpsB=await frameRate(b);
  check(fpsA>0&&fpsB>0,'A real rendered Game frame stream is required');
  if(env.GAME_QA_SCREENSHOT_DIR){
@@ -223,7 +252,7 @@ try{
   ()=>document.documentElement.dataset.climboriaMultiplayer==='connected',
   undefined,{timeout:90000});
  await Promise.all([assertPeer(a,1),assertPeer(b,1)]);
- console.log('PASS: two REAL authenticated Game browsers exchanged World Chat, real remote GLB models and cyan field-map presence; logout/re-login removed/rejoined actual peers.');
+ console.log('PASS: two REAL authenticated Game browsers exchanged server-confirmed World Chat, kept drafts on remote chat, saw real remote GLB models/cyan map peers; logout/re-login removed/rejoined actual peers.');
  console.log('Observed software Chromium FPS A/B:',fpsA,fpsB,'— physical Android/desktop hardware and owner release acceptance are still required.');
 }finally{
  await Promise.all(contexts.map(ctx=>ctx.close().catch(()=>{})));
