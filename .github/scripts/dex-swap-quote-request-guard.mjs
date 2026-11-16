@@ -33,3 +33,22 @@ export function classifyQuoteJourneyRequest({ url, method, resourceType }) {
     jupiterProviderRequest: JUPITER_PROVIDER_HOSTS.has(target.hostname)
   };
 }
+
+/**
+ * Frame-scoped *test classification*, not approval of DexScreener scripts.
+ * Only a direct child iframe on the real DexScreener Solana pair URL qualifies.
+ * The browser canary separately verifies that the actual chart iframe is
+ * sandboxed with no top-navigation, popup or form permissions.
+ * Unrecognized third-party scripts in the top-level site still fail closed.
+ */
+export function isDexScreenerChartFrame({ frameUrl, directChildOfMainFrame }) {
+  if (directChildOfMainFrame !== true) return false;
+  try {
+    const u = new URL(frameUrl);
+    return u.origin === "https://dexscreener.com" &&
+      /^\/solana\/[1-9A-HJ-NP-Za-km-z]{32,44}\/?$/.test(u.pathname) &&
+      u.searchParams.get("embed") === "1";
+  } catch {
+    return false;
+  }
+}
