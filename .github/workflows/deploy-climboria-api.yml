@@ -187,4 +187,5 @@ jobs:
       - name: Verify production API quote, token search, and closed transaction gates
         env:
           CLIMBORIA_EXPECTED_DEPLOY_SHA: ${{ github.sha }}
-        run: node .github/scripts/api-production-readiness.mjs
+        # Retry entire pinned, fail-closed probe only if an edge reports an old Git SHA.
+        run: node .github/scripts/api-production-readiness-retry.mjs

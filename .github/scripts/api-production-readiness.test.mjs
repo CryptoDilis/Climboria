@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { probeProductionApi, classifyReadOnlyApiFailure, SOL } from "./api-production-readiness.mjs";
+import { runExactRevisionReadinessProbe } from "./api-production-readiness-retry.mjs";
 
 const ORIGIN = "https://climboria.fun";
 const REVISION = "a".repeat(40);
@@ -275,4 +276,107 @@ test("production probe transport exceptions cannot echo credential-bearing URLs"
     assert.doesNotMatch(error.message,/SECRET_DO_NOT_ECHO|private.provider.invalid/);
     return true;
   });
+});
+
+
+test("stale edge is retried by running the complete original quote-only probe", async () => {
+  const attemptCalls = [];
+  let count = 0, sleeps = 0;
+  const result = await runExactRevisionReadinessProbe({
+    expectedRevision: REVISION, maxAttempts: 3, delayMs: 0,
+    sleepImpl: async () => { sleeps++; },
+    probeImpl: async ({ expectedRevision }) => {
+      count++;
+      const f = fixture(count === 1 ? {
+        health: Response.json({ ...health, deployedGitSha: "b".repeat(40) },
+          { headers: { "access-control-allow-origin": ORIGIN } })
+      } : {});
+      try { return await probeProductionApi({ expectedRevision, fetchImpl: f.fakeFetch }); }
+      finally { attemptCalls.push(f.calls); }
+    }
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.attempts, 2);
+  assert.equal(count, 2);
+  assert.equal(sleeps, 1);
+  assert.deepEqual(attemptCalls[0].map(c => c.url), ["/health"]);
+  assert.ok(attemptCalls[1].some(c => c.url === "/api/tokens/search"));
+  assert.equal(attemptCalls[1].filter(c => c.url === "/api/swap/quote" && c.method === "GET").length, 2);
+  assert.deepEqual(attemptCalls[1].filter(c => c.method === "POST").map(c => c.url), ["/api/swap/execute"]);
+  assert.ok(attemptCalls.flat().every(c => c.url !== "/api/swap/order"));
+});
+
+test("perpetually stale Worker SHA exhausts the finite retry budget and fails", async () => {
+  let calls = 0, sleeps = 0;
+  await assert.rejects(runExactRevisionReadinessProbe({
+    expectedRevision: REVISION, maxAttempts: 3, delayMs: 0,
+    sleepImpl: async () => { sleeps++; },
+    probeImpl: async ({ expectedRevision }) => {
+      calls++;
+      const f = fixture({
+        health: Response.json({ ...health, deployedGitSha: "b".repeat(40) },
+          { headers: { "access-control-allow-origin": ORIGIN } })
+      });
+      return probeProductionApi({ expectedRevision, fetchImpl: f.fakeFetch });
+    }
+  }), /revision differs from the exact GitHub commit deployed/);
+  assert.equal(calls, 3);
+  assert.equal(sleeps, 2);
+});
+
+test("any unsafe execution, origin policy, or quote error is immediately fatal", async () => {
+  for (const [name, make, match] of [
+    ["execution", () => fixture({ health: Response.json({
+      ...health, execution: "enabled", configured: { ...health.configured, executionEnabled: true }
+    }, { headers: { "access-control-allow-origin": ORIGIN } }) }), /executable trading enabled/],
+    ["origin", () => fixture({ unknownOrigin: Response.json({ error: "wrong" }, { status: 200 }) }),
+      /Unknown browser origins must be rejected/],
+    ["quote", () => fixture({ quote: Response.json({ error: "Jupiter quote request failed" },
+      { status: 502, headers: { "access-control-allow-origin": ORIGIN } }) }),
+      /Live read-only Jupiter checks failed/]
+  ]) {
+    let count = 0, sleepCount = 0;
+    await assert.rejects(runExactRevisionReadinessProbe({
+      expectedRevision: REVISION, maxAttempts: 4, delayMs: 0,
+      sleepImpl: async () => { sleepCount++; },
+      probeImpl: ({ expectedRevision }) => {
+        count++;
+        return probeProductionApi({ expectedRevision, fetchImpl: make().fakeFetch });
+      }
+    }), match, name);
+    assert.equal(count, 1, name);
+    assert.equal(sleepCount, 0, name);
+  }
+});
+
+test("unsafe result after earlier stale revision is not mistaken for success", async () => {
+  let count = 0;
+  await assert.rejects(runExactRevisionReadinessProbe({
+    expectedRevision: REVISION, maxAttempts: 4, delayMs: 0,
+    sleepImpl: async () => {},
+    probeImpl: ({ expectedRevision }) => {
+      count++;
+      const f = fixture(count === 1
+        ? { health: Response.json({ ...health, deployedGitSha: "b".repeat(40) },
+          { headers: { "access-control-allow-origin": ORIGIN } }) }
+        : { execute: Response.json({ signature: "unsafe" },
+          { status: 200, headers: { "access-control-allow-origin": ORIGIN } }) });
+      return probeProductionApi({ expectedRevision, fetchImpl: f.fakeFetch });
+    }
+  }), /Execution must remain disabled/);
+  assert.equal(count, 2);
+});
+
+test("deployment runner requires exact pin and is wired to production-readiness CI", async () => {
+  let calls = 0;
+  await assert.rejects(runExactRevisionReadinessProbe({
+    expectedRevision: null, probeImpl: () => { calls++; }
+  }), /exact canonical Git SHA/);
+  assert.equal(calls, 0);
+  const deployment = readFileSync(new URL("../workflows/deploy-climboria-api.yml", import.meta.url), "utf8");
+  const readiness = readFileSync(new URL("../workflows/api-production-readiness.yml", import.meta.url), "utf8");
+  assert.match(deployment, /node \.github\/scripts\/api-production-readiness-retry\.mjs/);
+  assert.match(deployment, /CLIMBORIA_EXPECTED_DEPLOY_SHA: \${\{ github\.sha \}\}/);
+  assert.match(readiness, /"\.github\/scripts\/api-production-readiness-retry\.mjs"/);
+  assert.match(readiness, /node --check \.github\/scripts\/api-production-readiness-retry\.mjs/);
 });
