@@ -16,28 +16,30 @@ const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const RAW = "100000000"; // 0.1 SOL; use a liquid pair to avoid minimum-route artifacts.
 
 /**
- * Production route regression probe: the owner's Cloudflare dashboard deployment
- * previously fixed a 404 at the exact-path disabled operator release endpoint.
- * Keep that deployed route readable, uncached, and explicitly OFF while the
- * public provider runtime is unapproved. This never launches a wallet.
+ * Probe the exact independently selected status API, not the older same-origin
+ * Workers Route. The staged Swap Plugin bootstrap must remain invisible until
+ * this API issues an explicit true status in a separately reviewed release.
+ * This test never loads a wallet or attempts a transaction.
  */
 async function assertDisabledRuntimeEndpoint(browser) {
   const context = await browser.newContext();
   try {
-    const response = await context.request.get(SITE + "/swap-runtime-status.json", {
+    const response = await context.request.get("https://" + API + "/api/swap/provider-status", {
       timeout: 30000, maxRedirects: 0, failOnStatusCode: false,
-      headers: { "Cache-Control": "no-cache" }
+      headers: { "Cache-Control": "no-cache", "Origin": SITE }
     });
     assert.equal(response.status(), 200,
-      "Cloudflare production runtime-status route must return HTTP 200, not the historic 404/redirect");
+      "The selected existing API Worker status endpoint must return HTTP 200");
     const headers = response.headers();
     assert.match(headers["content-type"] || "", /^application\/json(?:\s*;|$)/i,
       "Production release switch must return JSON");
     assert.match(headers["cache-control"] || "", /(?:^|,)\s*no-store\s*(?:,|$)/i,
       "Production release switch must never be cached");
+    assert.equal(headers["access-control-allow-origin"], SITE,
+      "Selected API runtime status must authorize the real Climboria site origin");
     assert.deepEqual(await response.json(), { enabled: false },
       "Production provider runtime switch must remain explicitly OFF in quote-only phase");
-    console.log("PASS production Cloudflare runtime-status endpoint: HTTP 200, no-store, enabled=false.");
+    console.log("PASS production existing API Jupiter status endpoint: HTTP 200, no-store, enabled=false, CORS approved.");
   } finally {
     await context.close();
   }
@@ -176,10 +178,26 @@ async function assertPage(browser, { name, path, viewport, isMobile = false, blo
     const config = await page.evaluate(() => window.CLIMBORIA_SWAP_CONFIG ?? null);
     assert.equal(config?.proxyEnabled, true, name + " must use server-side API proxy");
     assert.equal(config?.enabled, false, name + " wallet execution gate must remain disabled");
-    assert.equal(config?.managedProvider?.enabled, false, name + " third-party provider must remain disabled until approved");
-    assert.equal(config?.managedProvider?.runtimeApproved, false, name + " third-party runtime must not be approved");
-    assert.equal(config?.managedProvider?.scriptUrl, null, name + " provider script URL must not be configured");
-    assert.equal(config?.managedProvider?.integrity, null, name + " provider SRI must not be configured");
+    assert.equal(config?.managedProvider?.enabled, true, name + " version-pinned Swap-only candidate should be configured");
+    assert.equal(config?.managedProvider?.runtimeApproved, true, name + " source staging does not bypass API status");
+    assert.equal(config?.managedProvider?.runtimeStatusUrl,
+      "https://api.climboria.fun/api/swap/provider-status",
+      name + " must check exact selected no-store API status");
+    assert.equal(config?.managedProvider?.surfaces?.swap, true, "only Swap is staged");
+    assert.equal(config?.managedProvider?.surfaces?.dex, false, "DEX wallet trading remains OFF");
+    assert.equal(config?.managedProvider?.scriptUrl, "https://plugin.jup.ag/plugin-1.0.18.js",
+      "only historical version-pinned official Jupiter bootstrap is permitted");
+    assert.equal(config?.managedProvider?.integrity,
+      "sha384-aPExK0yy7w5DZjkLRMWvSKhuEz9kvz/9vESgWrctox51YnSfx6WWIWrsZBHqVJSy",
+      "source SRI must match the recorded reviewed bootstrap exactly");
+    // The independent API Worker was just verified source-OFF above.
+    // Even with prepared frontend code, NO provider UI should be exposed.
+    const launchers = page.locator("[data-climboria-managed-swap-open]");
+    assert.equal(await launchers.count(), name.startsWith("DEX") ? 3 : 1);
+    assert.equal(await launchers.evaluateAll(nodes => nodes.every(node => node.hidden)), true,
+      name + " Jupiter wallet launchers must remain hidden while API status is false");
+    assert.equal(await page.locator("[data-climboria-managed-swap-panel]").isVisible(), false,
+      name + " no wallet-enabled panel can be displayed while release gate is OFF");
     assert.equal(config?.revenue?.feeCollectionEnabled, false, name + " no platform trading fees may be collected");
     assert.equal(config?.revenue?.feeRecipient, null, name + " fee recipient must remain unset");
 
