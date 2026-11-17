@@ -6,6 +6,7 @@ import {
   validateManagedProviderConfig,
   isManagedSwapRuntimeApproved,
   integratedTerminalOptions,
+  isCanonicalSolanaMint,
   isManagedProviderSurfaceApproved,
   initializeManagedSwapHost
 } from "../../dex/provider-managed-swap.mjs";
@@ -123,7 +124,49 @@ test("integrated widget target accepts only safe existing element IDs", () => {
   }
 });
 
-function createDom({ failure = false, deferLoad = false, surface = "swap" } = {}) {
+const SOL_MINT = "So11111111111111111111111111111111111111112";
+const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+
+test("Jupiter Plugin accepts exactly valid 32-byte mints as unsigned initial pair hints", () => {
+  assert.equal(isCanonicalSolanaMint(SOL_MINT), true);
+  assert.equal(isCanonicalSolanaMint(USDC_MINT), true);
+  for (const invalid of [null, undefined, "", "SOL", "USDC", "O".repeat(32), "I".repeat(32),
+                         "So1111111111111111111111111111111111111111", "Z".repeat(45)]) {
+    assert.equal(isCanonicalSolanaMint(invalid), false, String(invalid));
+  }
+  assert.deepEqual(integratedTerminalOptions("climboriaDexProviderTarget", {
+    inputMint: SOL_MINT, outputMint: USDC_MINT
+  }), {
+    displayMode: "integrated",
+    integratedTargetId: "climboriaDexProviderTarget",
+    formProps: { initialInputMint: SOL_MINT, initialOutputMint: USDC_MINT }
+  });
+  assert.deepEqual(integratedTerminalOptions("climboriaDexProviderTarget", {
+    inputMint: USDC_MINT, outputMint: SOL_MINT
+  }).formProps, { initialInputMint: USDC_MINT, initialOutputMint: SOL_MINT });
+  for (const bad of [
+    {}, {inputMint: SOL_MINT}, {outputMint: USDC_MINT},
+    {inputMint: SOL_MINT, outputMint: SOL_MINT},
+    {inputMint: SOL_MINT, outputMint: "Fake"},
+    {inputMint: "", outputMint: USDC_MINT}
+  ]) assert.throws(
+    () => integratedTerminalOptions("climboriaDexProviderTarget", bad),
+    /Invalid or incomplete Jupiter input\/output mint selection/
+  );
+});
+
+test("DEX token selection hook clears stale intent until mint proof and excludes Limit orders", () => {
+  const dex = readFileSync(new URL("../../dex/index.html", import.meta.url), "utf8");
+  assert.match(dex, /function syncDexJupiterMarketPair\(\)/);
+  assert.match(dex, /if\(dexTradeOrderType!=='market'\|\|!dexTradeToken/);
+  assert.match(dex, /dexTradeToken=\{id:token\.address[^;]+;\s*syncDexJupiterMarketPair\(\)/);
+  assert.match(dex, /function dexTradeApplyDirection\(\)[\s\S]*?syncDexJupiterMarketPair\(\);[\s\S]*?return true/);
+  assert.match(dex, /dexTradeOrderType=button\.dataset\.dexOrder;[^\n]*\n\s*syncDexJupiterMarketPair\(\)/);
+  assert.match(dex, /data-climboria-managed-swap-input-mint/);
+  assert.match(dex, /data-climboria-managed-swap-output-mint/);
+});
+
+function createDom({ failure = false, deferLoad = false, surface = "swap", pair = null } = {}) {
   const created = [];
   const btn = { hidden: true, disabled: false, addEventListener(event, callback) { this[event] = callback; } };
   const close = { addEventListener(event, callback) { this[event] = callback; } };
@@ -131,7 +174,13 @@ function createDom({ failure = false, deferLoad = false, surface = "swap" } = {}
   const target = { id: "climboriaSwapProviderTarget" };
   const panel = {
     hidden: true,
-    getAttribute(key) { return key === "data-climboria-managed-swap-surface" ? surface : null; },
+    pair,
+    getAttribute(key) {
+      if (key === "data-climboria-managed-swap-surface") return surface;
+      if (key === "data-climboria-managed-swap-input-mint") return this.pair?.inputMint ?? null;
+      if (key === "data-climboria-managed-swap-output-mint") return this.pair?.outputMint ?? null;
+      return null;
+    },
     querySelector(selector) {
       if (selector === "[data-climboria-managed-swap-target]") return target;
       if (selector === "[data-climboria-managed-swap-status]") return status;
@@ -186,6 +235,49 @@ test("Swap-only or DEX-only rollout refuses the other surface without loading ve
   noSurface.panel.getAttribute = () => null;
   const init = initializeManagedSwapHost({doc:noSurface.doc,scope:{},config:approved});
   assert.equal(init.ready,false);
+});
+
+test("DEX provider init receives a verified Buy or Sell pair but never a Climboria execution order", async () => {
+  const pair = { inputMint: SOL_MINT, outputMint: USDC_MINT };
+  const ui = createDom({surface:"dex",pair});
+  const calls = [];
+  initializeManagedSwapHost({
+    doc:ui.doc,
+    scope:withRuntime({Jupiter:{init(options){calls.push(options);}}}),
+    config:approved
+  });
+  await ui.btn.click();
+  assert.equal(ui.created.length,1);
+  assert.deepEqual(calls,[{
+    displayMode:"integrated", integratedTargetId:ui.target.id,
+    formProps:{initialInputMint:SOL_MINT,initialOutputMint:USDC_MINT}
+  }]);
+  ui.close.click();
+  ui.panel.pair = { inputMint: USDC_MINT, outputMint: SOL_MINT };
+  await ui.btn.click();
+  assert.equal(calls.length,1, "mounted provider may not silently restart wallet UI");
+  assert.match(ui.status.textContent,/widget may retain its previous pair.*verify/i);
+});
+
+test("incomplete or malformed DEX market pair cannot fetch vendor script or initialize Jupiter", async () => {
+  for (const pair of [
+    {inputMint: SOL_MINT, outputMint: null},
+    {inputMint: "FAKE", outputMint: USDC_MINT},
+    {inputMint: SOL_MINT, outputMint: SOL_MINT}
+  ]) {
+    const ui = createDom({surface:"dex",pair});
+    let called = 0;
+    initializeManagedSwapHost({
+      doc:ui.doc,
+      scope:withRuntime({Jupiter:{init(){called++;}}}),
+      config:approved
+    });
+    await ui.btn.click();
+    assert.equal(ui.created.length,0,"invalid pair cannot download any third-party executable");
+    assert.equal(called,0);
+    assert.equal(ui.panel.hidden,false,"first-party panel explains an invalid market without loading wallet UI");
+    assert.match(ui.status.textContent,/Selected token pair is invalid or incomplete/);
+  }
 });
 
 test("disabled integration hides all UI, never injects script or prompts a wallet", () => {
@@ -704,7 +796,7 @@ test("both Climboria swap interfaces retain quote-only path and use isolated hos
   assert.equal([...code.matchAll(/\bfetch\s*\(/g)].length, 1);
   for (const file of ["swap/index.html", "dex/index.html"]) {
     const source = readFileSync(new URL("../../" + file, import.meta.url), "utf8");
-    assert.match(source, /\/dex\/provider-managed-swap\.mjs\?v=3/);
+    assert.match(source, /\/dex\/provider-managed-swap\.mjs\?v=4/);
     assert.match(source, /\/dex\/provider-managed-swap\.css\?v=1/);
     assert.match(source, /data-climboria-managed-swap-panel hidden/);
     assert.match(source, /data-climboria-managed-swap-open hidden/);
