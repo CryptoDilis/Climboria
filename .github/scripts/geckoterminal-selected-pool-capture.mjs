@@ -26,6 +26,9 @@ const INTERVALS = Object.freeze({
 });
 const HEADER_NAMES = ["date", "cache-control", "age", "etag", "last-modified",
   "cf-cache-status", "retry-after", "ratelimit-limit", "ratelimit-remaining", "ratelimit-reset"];
+// Provider-denied, paywalled, rate-limited or legally restricted access is a
+// terminal audit result; do not probe a second orientation after refusal.
+const TERMINAL_PROVIDER_STATUSES = new Set([401, 402, 403, 429, 451]);
 
 export function parseOptions(argv) {
   const values = {};
@@ -157,7 +160,9 @@ export async function runCapture(options, fetcher = fetch) {
       output.errors.push(request.side + ": " + observation.error);
     }
     output.observations.push(observation);
-    if (observation.httpStatus === 429) break; // Respect rate limiting. Never retry blindly.
+    if (TERMINAL_PROVIDER_STATUSES.has(observation.httpStatus)) break;
+    // No second provider call after authentication/payment/permission/legal
+    // denial or HTTP 429. Preserve the first error and selected headers.
   }
   return output;
 }
