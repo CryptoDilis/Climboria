@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizeGeckoTerminalOhlcv } from "../src/geckoterminal-ohlcv.mjs";
+import { normalizeGeckoTerminalOhlcv, normalizeGeckoTerminalRequestedPoolOhlcv } from "../src/geckoterminal-ohlcv.mjs";
 
 const pool = {
   address: "C8Gr6AUuq9hEdSYJzoEpNcdjpojPZwqG5MtQbeouNNwg",
@@ -139,4 +139,84 @@ test("rejects missing OHLCV schema instead of silently reporting no candles", ()
   assert.throws(() => normalize(options), /OHLCV list missing or invalid/);
   options.body.data.attributes.ohlcv_list = null;
   assert.throws(() => normalize(options), /OHLCV list missing or invalid/);
+});
+
+
+function requestedSideResponse(requestedTokenSide, candles) {
+  const base = requestedTokenSide === "quote" ? wsol : jup;
+  const quote = requestedTokenSide === "quote" ? jup : wsol;
+  return {
+    status: 200,
+    headers: { "cache-control": "max-age=30" },
+    body: {
+      meta: { base: { address: base }, quote: { address: quote } },
+      data: { attributes: { ohlcv_list: candles } }
+    },
+    originalPool: pool,
+    requestedTokenSide
+  };
+}
+
+test("token=base maps returned USD prices to original base JUP, not quote WSOL", () => {
+  const result = normalizeGeckoTerminalRequestedPoolOhlcv(
+    requestedSideResponse("base", [[3000000000, 0.26, 0.28, 0.25, 0.264943, 12]])
+  );
+  assert.equal(result.selectedTokenAddress, jup);
+  assert.equal(result.baseTokenAddress, jup);
+  assert.equal(result.quoteTokenAddress, wsol);
+  assert.equal(result.requestedTokenSide, "base");
+  assert.equal(result.orientation, "base");
+  assert.equal(result.returnedSeriesTokenPosition, "base");
+  assert.equal(result.candles[0].close, 0.264943);
+});
+
+test("token=quote maps flipped response meta.base USD prices to original quote WSOL", () => {
+  // Historical provider evidence showed token=quote yields meta.base=WSOL and
+  // close~81 USD; it must never be mislabeled as a JUP/USD candle.
+  const result = normalizeGeckoTerminalRequestedPoolOhlcv(
+    requestedSideResponse("quote", [[3000000000, 80, 82, 79, 81.342713, 12]])
+  );
+  assert.equal(result.selectedTokenAddress, wsol);
+  assert.equal(result.baseTokenAddress, wsol);
+  assert.equal(result.quoteTokenAddress, jup);
+  assert.equal(result.requestedTokenSide, "quote");
+  assert.equal(result.orientation, "base");
+  assert.equal(result.returnedSeriesTokenPosition, "base");
+  assert.equal(result.candles[0].close, 81.342713);
+  assert.equal(result.priceCurrency, "USD");
+});
+
+test("token=quote fails closed if response metadata is still original-base oriented", () => {
+  const input = requestedSideResponse("quote", rows);
+  input.body.meta = { base: { address: jup }, quote: { address: wsol } };
+  assert.throws(() => normalizeGeckoTerminalRequestedPoolOhlcv(input),
+    /base\/quote pool identity is reversed or mismatched/);
+});
+
+test("request-side mapper rejects foreign pool token metadata without adopting its prices", () => {
+  const input = requestedSideResponse("base", rows);
+  input.body.meta.base.address = "UnrelatedMint";
+  assert.throws(() => normalizeGeckoTerminalRequestedPoolOhlcv(input),
+    /does not match the expected pool identities/);
+});
+
+test("request-side mapper rejects invalid or ambiguous selected pool and query side", () => {
+  const input = requestedSideResponse("base", rows);
+  assert.throws(() => normalizeGeckoTerminalRequestedPoolOhlcv({ ...input, requestedTokenSide: "other" }),
+    /request token side must be base or quote/);
+  assert.throws(() => normalizeGeckoTerminalRequestedPoolOhlcv({
+    ...input, originalPool: { ...pool, quoteTokenAddress: jup }
+  }), /distinct base\/quote mints/);
+  assert.throws(() => normalizeGeckoTerminalRequestedPoolOhlcv({
+    ...input, originalPool: { ...pool, address: "" }
+  }), /Original selected pool address/);
+});
+
+test("request-side mapper preserves valid empty candles; rejects null malformed series", () => {
+  const input = requestedSideResponse("quote", []);
+  const normalized = normalizeGeckoTerminalRequestedPoolOhlcv(input);
+  assert.equal(normalized.status, "empty");
+  assert.deepEqual(normalized.candles, []);
+  input.body.data.attributes.ohlcv_list = null;
+  assert.throws(() => normalizeGeckoTerminalRequestedPoolOhlcv(input), /OHLCV list missing or invalid/);
 });
