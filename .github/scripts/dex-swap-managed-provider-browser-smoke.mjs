@@ -215,31 +215,52 @@ async function runTabReturnApproval(browser, path, width) {
     const beforeFocus = statuses;
     const concealedImmediately = await page.evaluate(() => {
       window.dispatchEvent(new Event("focus"));
-      return document.querySelector("[data-climboria-managed-swap-panel]").hidden;
+      return {
+        panelHidden: document.querySelector("[data-climboria-managed-swap-panel]").hidden,
+        providerHidden: window.__mockProviderRoot?.style.display === "none",
+        closeCalls: window.__mockProviderCloseCalls || 0,
+        resumeCalls: window.__mockProviderResumeCalls || 0
+      };
     });
-    assert.equal(concealedImmediately,true,
+    assert.equal(concealedImmediately.panelHidden,true,
       "returning focus must conceal an already-mounted provider synchronously");
+    assert.equal(concealedImmediately.providerHidden,true,
+      "returning focus must immediately conceal Jupiter-owned root before network response");
+    assert.equal(concealedImmediately.closeCalls,1);
+    assert.equal(concealedImmediately.resumeCalls,0);
     await page.waitForFunction(() => {
       const p = document.querySelector("[data-climboria-managed-swap-panel]");
       return !p.hidden && p.querySelector("[data-climboria-managed-swap-status]")
         .textContent.includes("Provider interface loaded");
     },null,{timeout:10000});
     assert.ok(statuses>beforeFocus,"focus performs fresh approval");
+    assert.equal(await page.evaluate(() => window.__mockProviderRoot?.style.display),"block",
+      "approved focus must restore the provider-owned root only after no-store approval");
+    assert.equal(await page.evaluate(() => window.__mockProviderResumeCalls),1);
     assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length),1,
       "approved focus must not reinitialize wallet provider");
     approved = false;
     const beforeRollback = statuses;
     const hiddenAtVisibilityReturn = await page.evaluate(() => {
       document.dispatchEvent(new Event("visibilitychange"));
-      return document.querySelector("[data-climboria-managed-swap-panel]").hidden;
+      return {
+        panelHidden: document.querySelector("[data-climboria-managed-swap-panel]").hidden,
+        providerHidden: window.__mockProviderRoot?.style.display === "none"
+      };
     });
-    assert.equal(hiddenAtVisibilityReturn,true,
+    assert.equal(hiddenAtVisibilityReturn.panelHidden,true,
       "tab visibility return must hide provider BEFORE revoked status resolves");
+    assert.equal(hiddenAtVisibilityReturn.providerHidden,true,
+      "revoked visibility must hide the Jupiter-owned root immediately");
     await page.waitForFunction(() =>
       [...document.querySelectorAll("[data-climboria-managed-swap-open]")]
         .every(node => node.hidden),null,{timeout:10000});
     assert.ok(statuses>beforeRollback,"visibility return checked operator switch");
     assert.equal(await panel.isVisible(),false);
+    assert.equal(await page.evaluate(() => window.__mockProviderRoot?.style.display),"none",
+      "after operator rollback Jupiter-owned root stays hidden");
+    assert.equal(await page.evaluate(() => window.__mockProviderResumeCalls),1,
+      "operator rollback must never resume vendor root");
     assert.equal(sdkLoads,1);
     assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length),1);
     assert.deepEqual(forbidden,[],"tab return may not request native swap execution");
