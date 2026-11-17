@@ -1,0 +1,52 @@
+name: Jupiter API Provider Status Production Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/jupiter-provider-status-production.mjs"
+      - ".github/workflows/jupiter-provider-status-production.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/scripts/jupiter-provider-status-production.mjs"
+      - ".github/workflows/jupiter-provider-status-production.yml"
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Deploy Climboria API"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jupiter-provider-status-production-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify disabled Jupiter status through existing public API
+    # Never probe during a failing API deploy, or unreviewed pull-request code.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test source-disabled, origin-limited Jupiter status handler
+        run: |
+          node --check .github/scripts/jupiter-provider-status-production.mjs
+          node --test dex/swap-proxy/test/provider-widget-status.test.mjs
+          grep -Fqx 'const THIRD_PARTY_JUPITER_WIDGET_APPROVED = false;' dex/swap-proxy/src/index.mjs
+          grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
+          grep -Fqx 'const EXECUTION_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
+      - name: Check real production API kill switch and disabled custom execution
+        if: github.event_name != 'pull_request'
+        env:
+          EXPECTED_DEPLOY_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+        run: node .github/scripts/jupiter-provider-status-production.mjs
