@@ -329,6 +329,9 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
           panel.hidden = true;
           expanded(false);
           stopActiveApprovalChecks();
+          // A partially mounted provider instance may be in an unknown state.
+          // Require a new page load instead of retrying the same instance.
+          buttons.forEach(control => { control.hidden = true; });
         }
         if (requestId === openRequestId) {
           if (failedProviderInit) {
