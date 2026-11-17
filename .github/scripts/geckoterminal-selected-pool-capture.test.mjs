@@ -94,3 +94,53 @@ test("provider rate limit stops subsequent orientation request without retries o
   assert.equal(result.observations[0].candles, undefined);
   assert.match(result.errors[0], /429/);
 });
+
+
+test("HTML 429 response immediately stops the second GeckoTerminal request", async () => {
+  const urls = [];
+  const report = await runCapture({ ...opts, live: true }, async url => {
+    urls.push(url);
+    if (url.includes("dexscreener")) return reply({ pairs: [pair] });
+    return new Response("<html>Rate limited</html>", {
+      status: 429, headers: { "content-type": "text/html", "retry-after": "60" }
+    });
+  });
+  assert.equal(urls.length, 2, "must not request quote-side data after any 429");
+  assert.equal(report.observations.length, 1);
+  assert.equal(report.observations[0].httpStatus, 429);
+  assert.equal(report.observations[0].headers["retry-after"], "60");
+  assert.equal(report.observations[0].status, "unavailable");
+  assert.equal(report.observations[0].candles, undefined);
+  assert.match(report.errors[0], /429.*Retry-After: 60/);
+});
+
+test("HTML 429 on the initial pool lookup fails closed before OHLC requests", async () => {
+  const urls = [];
+  const report = await runCapture({ ...opts, live: true }, async url => {
+    urls.push(url);
+    return new Response("<html>Too Many Requests</html>", { status: 429 });
+  });
+  assert.equal(urls.length, 1);
+  assert.equal(report.observations.length, 0);
+  assert.match(report.errors.join(" "), /Market identity: DexScreener pair lookup HTTP 429/);
+});
+
+test("supported CLI interval names map to candidate provider URL without claiming live parity", () => {
+  const intervals = [
+    ["1m", "minute", "1"],
+    ["5m", "minute", "5"],
+    ["15m", "minute", "15"],
+    ["1h", "hour", "1"],
+    ["4h", "hour", "4"]
+  ];
+  for (const [interval, timeframe, aggregate] of intervals) {
+    const plan = makePlan({ ...opts, interval });
+    assert.equal(plan.verifiedLiveData, false);
+    assert.equal(plan.requests.length, 2);
+    for (const request of plan.requests) {
+      const url = new URL(request.url);
+      assert.ok(url.pathname.endsWith("/ohlcv/" + timeframe));
+      assert.equal(url.searchParams.get("aggregate"), aggregate);
+    }
+  }
+});
