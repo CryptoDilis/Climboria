@@ -39,16 +39,16 @@ try {
   verifyNoStore(status, "Jupiter status");
   assert.equal(status.headers.get("access-control-allow-origin"), ORIGIN);
   assert.equal(status.headers.get("x-content-type-options"), "nosniff");
-  assert.deepEqual(await status.json(), { enabled: false },
-    "Customer Jupiter trading must remain OFF during status-route verification");
+  assert.deepEqual(await status.json(), { enabled: true },
+    "Reviewed Jupiter Swap-only status must be ON after the exact Worker deploy");
 
   const tampered = await checkedFetch(BASE + "?enabled=true", {
     headers: { origin: ORIGIN, "x-jupiter-enabled": "true" }
   });
   assert.equal(tampered.status, 200);
   verifyNoStore(tampered, "Query override");
-  assert.deepEqual(await tampered.json(), { enabled: false },
-    "Client-provided query and headers must not enable provider trading");
+  assert.deepEqual(await tampered.json(), { enabled: true },
+    "Client-provided query and headers must not override source-approved status");
 
   const deniedOrigin = await checkedFetch(BASE, { headers: { origin: "https://evil.example" } });
   assert.equal(deniedOrigin.status, 403);
@@ -60,11 +60,11 @@ try {
   assert.match(deniedWrite.headers.get("allow") ?? "", /GET/);
 
   console.log("PASS: deployed quote API at api.climboria.fun, execution disabled");
-  console.log("PASS: Jupiter UI status false, public no-store, origin-limited, GET-only");
+  console.log("PASS: Jupiter UI status true, public no-store, origin-limited, GET-only");
   if (expectedSha) console.log("PASS: exact deployed API Worker Git SHA verified");
   console.log("No wallet/transaction/provider activation was tested or performed.");
 } catch (error) {
   // Never echo response bodies, API headers or potential secret material.
-  console.error("FAIL: public Jupiter provider-status API could not be verified as disabled and fail-closed.");
+  console.error("FAIL: public Jupiter provider-status API could not be verified as source-approved and origin-limited.");
   process.exitCode = 1;
 }
