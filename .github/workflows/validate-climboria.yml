@@ -56,6 +56,8 @@ jobs:
         run: node --test .github/scripts/geckoterminal-selected-pool-capture.test.mjs
       - name: Test live DEX trending cards refresh races and metric integrity (offline fixtures only)
         run: node --test .github/scripts/dex-premium-trending.test.mjs
+      - name: Verify DEX mint clipboard reports success only after write (offline)
+        run: node --test .github/scripts/dex-mint-clipboard.test.mjs
       - name: Test Swap market JSON-body and RPC mint-decimals timeouts (offline fixtures only)
         run: node --test .github/scripts/swap-provider-timeouts.test.mjs
       - name: Test Swap major-market missing values and sparklines (offline fixtures only)
