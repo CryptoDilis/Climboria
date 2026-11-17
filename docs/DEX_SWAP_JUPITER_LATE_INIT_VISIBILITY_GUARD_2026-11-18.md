@@ -1,0 +1,28 @@
+# Swap/DEX — late Jupiter init visibility guard (2026-11-18 PH)
+
+## Scope and status
+Swap / Signature DEX provider-loader only. **PR candidate, not merged or deployed; production third-party provider approval remains OFF.** No Game, ClimbX or Launchpad changes.
+
+## Evidence from current main
+Baseline `3d1d6d87e860837148f5f30aad5dd8fd3424560b` already stages the official version-pinned Jupiter Plugin candidate, while the API Worker constant `THIRD_PARTY_JUPITER_WIDGET_APPROVED = false` blocks public wallet trading. Native transaction signing and execute gates remain false. Historical Nov 15 two finalized mainnet staging swaps remain valid historical proof, not current production activation.
+
+## Change
+- `dex/provider-managed-swap.mjs`: after awaiting provider `Jupiter.init()`, if a close/revoke invalidated the request or the first-party panel is now hidden, call vendor `Jupiter.close()` best-effort and return without marking that stale initialization mounted. This prevents an async vendor-owned overlay from remaining visible behind a hidden panel where `Jupiter.close()` works.
+- `.github/scripts/dex-swap-managed-provider-shell.test.mjs`: assert one vendor close when async initialization completes after a user close; the hidden panel status remains intact, and a new explicit user click may retry.
+- Limits: vendor `close()` merely hides a widget; it **cannot cancel existing wallet popups, signed or broadcast transactions**. Third-party close may throw, so it is best effort, not a wallet cancellation guarantee. The vendor SDK is not mocked as a security boundary for already-granted wallet permissions.
+
+## Validation pending
+The branch commits were created through GitHub; automated PR-head Validate/Browser Smoke/regression are not yet evidenced. Do not declare pass or production live until actual exact-head checks and real vendor behavior are verified. In particular, assess whether Jupiter Plugin supports reinitializing after a stale init is hidden. If not, design explicit reload/recovery and keep gates OFF.
+
+## Exact next steps
+1. Run PR exact-head Validate, Browser Smoke, and DEX/Swap regression and fix any failures; inspect real Jupiter Plugin late-init/reinit behavior rather than inferring correctness from the stub.
+2. If safe, merge and separately record SHA/CI proof in `docs/DEX_SWAP_LAUNCHPAD_DEVELOPMENT_RECORD.md`. This small supplementary record does not replace that main log.
+3. Reconcile published official vendor usage/API/attribution terms and dynamically injected JS/CSS/font risks; bring in pre-sign wallet/device evidence already completed in Codex/Work instead of repeating funded swaps.
+4. Prepare separately reviewed operator approval PR for Swap-only API approval ON, while keeping native signing/execute and Climboria fees OFF. Verify actual production wallet interaction/rollback and finality before calling Swap live; approve DEX Buy/Sell independently after its own acceptance.
+
+
+## Verified follow-up — exact PR head and official upstream source
+- PR #617 head `64cdefb729bbfcffe6b424c3a4a27e848ddbf93a` had **three completed successful exact-head workflows**: [Validate #44125677790](https://github.com/CryptoDilis/Climboria/actions/runs/44125677790), [Browser Smoke #44125676675](https://github.com/CryptoDilis/Climboria/actions/runs/44125676675), [DEX Swap quote regression #44125675921](https://github.com/CryptoDilis/Climboria/actions/runs/44125675921). This evidence precedes this documentation-only update; new-head checks must be examined separately.
+- Verified upstream [`jup-ag/plugin/src/library.tsx`](https://github.com/jup-ag/plugin/blob/main/src/library.tsx), modified October 28, 2026: `init()` removes an existing `#jupiter-plugin-instance`, unmounts its React root and creates a replacement root in the requested integrated target; `close()` sets the instance element's `style.display = 'none'`; `resume()` makes it visible again. Thus a subsequent explicit `init()` has source-level support to replace a stale closed instance. This is **source inspection, not live browser/wallet acceptance**. The code also dynamically loads the separate `plugin-<version>-app.js` and styles without bootstrap-enforced transitive SRI. Do not claim end-to-end integrity.
+- [Jupiter issue #238](https://github.com/jup-ag/plugin/issues/238) remained open with zero comments at inspection. That issue is not itself universal evidence that officially documented unmodified embed use requires a personal approval, but full usage terms/runtime trust remain a distinct release decision.
+- No production switch changed, no deployment, and no customer-wallet transaction. Exact next tasks remain: confirm doc-updated PR CI, merge if all checks pass, reconcile release proof/terms, and prepare separate operator-reviewed Swap-only ON activation while native execution/fees and DEX stay OFF.

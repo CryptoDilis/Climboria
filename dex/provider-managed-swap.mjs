@@ -277,6 +277,12 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         }
         const options = integratedTerminalOptions(target.id, selection);
         await Promise.resolve(scope.Jupiter.init(options));
+        // Late vendor init may finish after close/revoke. Hide its own overlay,
+        // not only the first-party panel. This cannot cancel wallet prompts.
+        if (requestId !== openRequestId || panel.hidden) {
+          try { scope.Jupiter.close?.(); } catch { /* fail closed */ }
+          return;
+        }
         mountedPair = selection;
         mounted = true;
         if (requestId === openRequestId && !panel.hidden) {
