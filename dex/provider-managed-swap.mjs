@@ -4,8 +4,7 @@
  * signs a transaction, requests wallet keys or claims a completed trade.
  * The official provider must be verified separately before enabling.
  */
-const OFFICIAL_TERMINAL_HOST = "terminal.jup.ag";
-const SCRIPT_PATH = /^\/main-v[1-9][0-9]*\.js$/;
+// The official Jupiter Plugin, not the legacy terminal.jup.ag script.\n// The exact v1.0.18 bootstrap was independently hashed in the 2026-11-15\n// source audit; this source pin does NOT verify dynamically inserted app JS/CSS.\nconst OFFICIAL_PLUGIN_HOST = "plugin.jup.ag";\nconst REVIEWED_BOOTSTRAP_PATH = "/plugin-1.0.18.js";
 const SHA384_SRI = /^sha384-[A-Za-z0-9+/]{64}$/;
 
 export function validateManagedProviderConfig(config) {
@@ -14,9 +13,9 @@ export function validateManagedProviderConfig(config) {
       !SHA384_SRI.test(config.integrity)) return null;
   try {
     const url = new URL(config.scriptUrl);
-    if (url.protocol !== "https:" || url.hostname !== OFFICIAL_TERMINAL_HOST ||
+    if (url.protocol !== "https:" || url.hostname !== OFFICIAL_PLUGIN_HOST ||
         url.port || url.username || url.password || url.search || url.hash ||
-        !SCRIPT_PATH.test(url.pathname)) return null;
+        url.pathname !== REVIEWED_BOOTSTRAP_PATH) return null;
     return Object.freeze({ url: url.href, integrity: config.integrity });
   } catch {
     return null;
