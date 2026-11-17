@@ -184,6 +184,9 @@ jobs:
               await page.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{
                 const requestedMint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
                 if(requestedMint===quoteOnlyMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[quoteOnlyPair]})});
+                // Missing vs reported-zero market values must never be conflated in Swap.
+                if(requestedMint==='MissingMetricMint1111111111111111111111111')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{...mockPair,baseToken:{address:requestedMint,symbol:'MISSING',name:'Missing Metrics'},priceUsd:null,priceChange:{h24:null},volume:{h24:[]},marketCap:false,liquidity:{usd:''}}]})});
+                if(requestedMint==='ZeroMetricMint1111111111111111111111111111')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{...mockPair,baseToken:{address:requestedMint,symbol:'ZERO',name:'Real Zero Metrics'},priceUsd:'15.5',priceChange:{h24:0},volume:{h24:0},marketCap:0,liquidity:{usd:0}}]})});
                 if(requestedMint==='NoPoolMint11111111111111111111111111111111')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
                 if(requestedMint==='SlowAsset11111111111111111111111111111111') { await new Promise(resolve=>setTimeout(resolve,700)); return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{...mockPair,pairAddress:'SlowAssetPair111111111111111111111111111111',baseToken:{address:requestedMint,symbol:'SLOW',name:'Slow Asset'},priceUsd:'0.01'}]})}); }
                 return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mockPair]})});
@@ -212,6 +215,52 @@ jobs:
               if(selectedMint!==mockMint) throw new Error('Explicit BTC token choice did not persist the exact selected token mint URL');
               await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
               if(!(await page.locator('#selectedAssetTitle').innerText()).startsWith('BTC')||!(await page.locator('#selectedAssetPrice').innerText()).includes('65,000')) throw new Error('Selected BTC chart title/price did not match the explicitly selected mint');
+              // Provider null/blank/array/boolean values must show Unavailable,
+              // not invented $0 or 0.00%, while genuine numeric zero remains visible.
+              for(const [mint,symbol,missing] of [
+                ['MissingMetricMint1111111111111111111111111','MISSING',true],
+                ['ZeroMetricMint1111111111111111111111111111','ZERO',false]
+              ]){
+                await page.evaluate(({mint,symbol})=>window.updateSelectedAsset({id:mint,symbol,name:symbol}),{mint,symbol});
+                await page.waitForFunction(symbol=>document.querySelector('#selectedAssetTitle')?.textContent.startsWith(symbol)&&document.querySelector('#selectedAssetNote')?.textContent.includes('Live DexScreener data'),symbol,{timeout:10000});
+                const metricState=await page.evaluate(()=>({
+                  price:document.querySelector('#selectedAssetPrice')?.textContent,
+                  change:document.querySelector('#selectedAssetChange')?.textContent,
+                  changeClass:document.querySelector('#selectedAssetChange')?.className,
+                  volume:document.querySelector('#selectedAssetVolume')?.textContent,
+                  mcap:document.querySelector('#selectedAssetMcap')?.textContent,
+                  liquidity:document.querySelector('#selectedAssetLiquidity')?.textContent
+                }));
+                if(missing){
+                  if(metricState.price!=='—'||metricState.change!=='—'||metricState.changeClass!=='muted'||metricState.volume!=='—'||metricState.mcap!=='—'||metricState.liquidity!=='—')throw new Error('Missing provider metrics fabricated zero: '+JSON.stringify(metricState));
+                }else{
+                  if(!metricState.price.includes('15.50')||metricState.change!=='0.00%'||!metricState.volume.startsWith('$0')||!metricState.mcap.startsWith('$0')||!metricState.liquidity.startsWith('$0'))throw new Error('Provider-reported real zero was hidden: '+JSON.stringify(metricState));
+                }
+              }
+              // An untrusted RPC "decimals" null/blank/boolean/array/string
+              // previously converted to 0 via Number(), corrupting raw quotes.
+              // Keep all three RPC fallbacks mocked and reject malformed schema.
+              let rpcDecimalsFixture=null;
+              const overrideDecimalsRpc=route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:rpcDecimalsFixture,amount:'100000000'}}})});
+              const rpcUrls=['https://api.mainnet-beta.solana.com','https://solana-rpc.publicnode.com','https://rpc.ankr.com/solana'];
+              for(const url of rpcUrls)await page.route(url,overrideDecimalsRpc);
+              for(const invalid of [null,'',false,[],'8',{}]){
+                rpcDecimalsFixture=invalid;
+                const result=await page.evaluate(async mint=>{
+                  try{return {decimals:(await resolveSolanaTokenByMint(mint)).decimals};}
+                  catch(error){return {error:error.message};}
+                },mockMint);
+                if(!/Could not verify mint decimals from Solana RPC/.test(result.error||''))throw new Error('Malformed RPC mint decimals were accepted: '+JSON.stringify({invalid,result}));
+              }
+              for(const valid of [0,8]){
+                rpcDecimalsFixture=valid;
+                const result=await page.evaluate(async mint=>({decimals:(await resolveSolanaTokenByMint(mint)).decimals}),mockMint);
+                if(result.decimals!==valid)throw new Error('Valid on-chain decimals changed: '+JSON.stringify({valid,result}));
+              }
+              for(const url of rpcUrls)await page.unroute(url,overrideDecimalsRpc);
+              console.log('PASS Swap missing provider metrics vs genuine zero; reject malformed mint RPC decimals without coercing to zero.');
+              await page.evaluate(mint=>window.updateSelectedAsset({id:mint,symbol:'BTC',name:'Bitcoin'}),mockMint);
+              await page.waitForFunction(()=>document.querySelector('#selectedAssetPrice')?.textContent.includes('65,000'),null,{timeout:10000});
               // A pool where the selected mint is only the quote side must never show the base token's (e.g. SOL) chart or metrics.
               await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarC1ock11111111111111111111111111111111',symbol:'QONLY',name:'Quote Only'}));
               await page.waitForFunction(()=>document.querySelector('#selectedAssetNote')?.textContent.includes('No Solana pool with this exact mint'),null,{timeout:10000});

@@ -459,8 +459,15 @@ function setSwapChain(chain){
 let majorAssetChoices=[];
 let majorMarketsRequest=0;
 /* Public market data panels: CoinGecko majors + DexScreener selected Solana pool */
-const usdFmt=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:v>=1000?0:v>=1?2:6}).format(v)};
-const compactUsd=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:'compact',maximumFractionDigits:2}).format(v)};
+// Missing or malformed upstream metrics are unknown, not genuine zeros.
+const reportedSwapMarketNumber=(raw,{positive=false,nonnegative=false}={})=>{
+ if(typeof raw!=='number'&&(typeof raw!=='string'||!raw.trim()))return null;
+ const value=Number(raw);
+ if(!Number.isFinite(value)||(positive&&value<=0)||(nonnegative&&value<0))return null;
+ return value;
+};
+const usdFmt=n=>{const v=reportedSwapMarketNumber(n,{nonnegative:true});if(v===null)return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:v>=1000?0:v>=1?2:6}).format(v)};
+const compactUsd=n=>{const v=reportedSwapMarketNumber(n,{nonnegative:true});if(v===null)return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:'compact',maximumFractionDigits:2}).format(v)};
 const MARKET_REQUEST_TIMEOUT_MS=10000;
 async function fetchMarketJson(url){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),MARKET_REQUEST_TIMEOUT_MS);try{const response=await fetch(url,{headers:{accept:'application/json'},cache:'no-store',signal:controller.signal});if(!response.ok)throw new Error('Market provider HTTP '+response.status);return response.json()}catch(error){if(controller.signal.aborted)throw new Error('Market provider request timed out. No cached market data was substituted.');throw error}finally{clearTimeout(timer)}}
 let selectedChartRequest=0;
@@ -485,12 +492,12 @@ async function updateSelectedAsset(token){
   // misleading chart for the selected token.
   const pairs=(payload.pairs||[]).filter(p=>p&&p.chainId==='solana'&&p.pairAddress&&p.baseToken?.address===token.id);
   if(!pairs.length)throw new Error('No Solana pool with this exact mint as the chart base asset. Choose another verified representation or pool.');
-  pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+  pairs.sort((a,b)=>(reportedSwapMarketNumber(b.liquidity?.usd,{nonnegative:true})??-1)-(reportedSwapMarketNumber(a.liquidity?.usd,{nonnegative:true})??-1));
   if(chartRequest!==selectedChartRequest)return;
-  const pair=pairs[0],usd=Number(pair.priceUsd),change24=Number(pair.priceChange?.h24);
-  price.textContent=Number.isFinite(usd)?usdFmt(usd):'—';
-  change.textContent=Number.isFinite(change24)?(change24>0?'+':'')+change24.toFixed(2)+'%':'—';
-  change.className=Number.isFinite(change24)?(change24>=0?'positive':'negative'):'muted';
+  const pair=pairs[0],usd=reportedSwapMarketNumber(pair.priceUsd,{positive:true}),change24=reportedSwapMarketNumber(pair.priceChange?.h24);
+  price.textContent=usd===null?'—':usdFmt(usd);
+  change.textContent=change24===null?'—':(change24>0?'+':'')+change24.toFixed(2)+'%';
+  change.className=change24===null?'muted':(change24>=0?'positive':'negative');
   volume.textContent=compactUsd(pair.volume?.h24);
   mcap.textContent=compactUsd(pair.marketCap??pair.fdv);
   liquidity.textContent=compactUsd(pair.liquidity?.usd);
@@ -512,13 +519,13 @@ async function resolveSolanaTokenByMint(mint,fallbackSymbol='TOKEN',fallbackName
  const canonical={So11111111111111111111111111111111111111112:{symbol:'SOL',name:'Solana',decimals:9},EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v:{symbol:'USDC',name:'USD Coin',decimals:6}};
  const pairsPayload=await fetchMarketJson('https://api.dexscreener.com/latest/dex/tokens/'+encodeURIComponent(mint));
  const pairs=(pairsPayload.pairs||[]).filter(p=>p&&p.chainId==='solana'&&((p.baseToken?.address===mint)||(p.quoteToken?.address===mint)));
- pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+ pairs.sort((a,b)=>(reportedSwapMarketNumber(b.liquidity?.usd,{nonnegative:true})??-1)-(reportedSwapMarketNumber(a.liquidity?.usd,{nonnegative:true})??-1));
  const pair=pairs[0];
  const meta=pair?(pair.baseToken?.address===mint?pair.baseToken:pair.quoteToken):null;
  if(!meta&&!canonical[mint])throw new Error('No Solana market metadata found for this exact mint.');
  const endpoints=['https://api.mainnet-beta.solana.com','https://solana-rpc.publicnode.com','https://rpc.ankr.com/solana'];
  let decimals=null,lastError='No Solana RPC available';
- for(const endpoint of endpoints){try{const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenSupply',params:[mint,{commitment:'confirmed'}]})});if(!response.ok)throw new Error('HTTP '+response.status);const data=await response.json();if(data.error)throw new Error(data.error.message||'RPC error');const value=Number(data.result?.value?.decimals);if(!Number.isInteger(value)||value<0||value>18)throw new Error('Invalid on-chain mint decimals');decimals=value;break;}catch(error){lastError=error.message;}}
+ for(const endpoint of endpoints){try{const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenSupply',params:[mint,{commitment:'confirmed'}]})});if(!response.ok)throw new Error('HTTP '+response.status);const data=await response.json();if(data.error)throw new Error(data.error.message||'RPC error');const value=data.result?.value?.decimals;if(typeof value!=='number'||!Number.isInteger(value)||value<0||value>18)throw new Error('Invalid on-chain mint decimals');decimals=value;break;}catch(error){lastError=error.message;}}
  if(decimals===null){if(canonical[mint])decimals=canonical[mint].decimals;else throw new Error('Could not verify mint decimals from Solana RPC. '+lastError);}
  return {id:mint,symbol:meta?.symbol||canonical[mint]?.symbol||fallbackSymbol,name:meta?.name||canonical[mint]?.name||fallbackName,decimals,isVerified:false};
 }
