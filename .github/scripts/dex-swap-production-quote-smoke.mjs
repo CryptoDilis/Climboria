@@ -6,8 +6,16 @@
  * it proves quote-only access, NOT wallet signing or trade execution.
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { classifyQuoteJourneyRequest, KNOWN_CLOUDFLARE_BEACON, isDexScreenerChartFrame } from "./dex-swap-quote-request-guard.mjs";
+
+// The read-only production canary must stay valid after an emergency
+// source-only OFF rollback, rather than falsely insisting the provider is ON.
+const workerSource = readFileSync(new URL("../../dex/swap-proxy/src/index.mjs", import.meta.url), "utf8");
+const releaseValues = [...workerSource.matchAll(/^const THIRD_PARTY_JUPITER_WIDGET_APPROVED = (true|false);$/gm)];
+assert.equal(releaseValues.length, 1, "Expected exactly one literal third-party provider release gate");
+const expectedApproved = releaseValues[0][1] === "true";
 
 const SITE = "https://climboria.fun";
 const API = "api.climboria.fun";
@@ -21,12 +29,12 @@ const RAW = "100000000"; // 0.1 SOL; use a liquid pair to avoid minimum-route ar
  * this API issues an explicit true status in a separately reviewed release.
  * This test never loads a wallet or attempts a transaction.
  */
-async function assertApprovedRuntimeEndpoint(browser) {
+async function assertSourceMatchedRuntimeEndpoint(browser) {
   const context = await browser.newContext();
   try {
-    // A main-branch Worker release may finish deploying after Pages, so
-    // require an exact, bounded public ON observation rather than assuming
-    // the previous OFF deployment has already propagated at the edge.
+    // Check only the exact source-selected approval state, after a bounded
+    // edge-propagation window. Both ON rollout and OFF emergency rollback
+    // must be proven against the live API rather than assumed from checkout.
     let observed = false;
     for (let attempt = 1; attempt <= 24; attempt++) {
       const response = await context.request.get("https://" + API + "/api/swap/provider-status", {
@@ -44,14 +52,14 @@ async function assertApprovedRuntimeEndpoint(browser) {
         "Only the real Climboria site may read the provider release status");
       assert.equal(headers["x-content-type-options"], "nosniff");
       const body = await response.json();
-      if (body?.enabled === true) { observed = true; break; }
-      assert.deepEqual(body, { enabled: false },
-        "Unexpected or malformed provider release status; refusing activation acceptance");
+      if (body?.enabled === expectedApproved) { observed = true; break; }
+      assert.ok(body?.enabled === true || body?.enabled === false,
+        "Unexpected or malformed provider release status; refusing release acceptance");
       if (attempt < 24) await new Promise(resolve => setTimeout(resolve, 5000));
     }
     assert.equal(observed, true,
-      "Reviewed Swap-only API activation never became observable at the public edge");
-    console.log("PASS production Jupiter status endpoint: HTTP 200, no-store, enabled=true, restricted CORS.");
+      "Worker provider status never matched its exact release source at the public edge");
+    console.log("PASS production Jupiter status endpoint: HTTP 200, no-store, enabled=" + expectedApproved + ", restricted CORS.");
   } finally {
     await context.close();
   }
@@ -207,7 +215,7 @@ async function assertPage(browser, { name, path, viewport, isMobile = false, blo
     // Signature DEX remains independently OFF.
     const launchers = page.locator("[data-climboria-managed-swap-open]");
     assert.equal(await launchers.count(), name.startsWith("DEX") ? 3 : 1);
-    if (name.startsWith("Swap")) {
+    if (name.startsWith("Swap") && expectedApproved) {
       await page.waitForFunction(() =>
         [...document.querySelectorAll("[data-climboria-managed-swap-open]")].every(node => !node.hidden),
         null, { timeout: 20000 });
@@ -215,7 +223,7 @@ async function assertPage(browser, { name, path, viewport, isMobile = false, blo
         "Swap provider launcher must be visible after independently approved API status");
     } else {
       assert.equal(await launchers.evaluateAll(nodes => nodes.every(node => node.hidden)), true,
-        "DEX launcher must remain independently OFF after Swap-only approval");
+        "DEX or rolled-back Swap launcher must remain hidden without independent approval");
     }
     assert.equal(await page.locator("[data-climboria-managed-swap-panel]").isVisible(), false,
       name + " must never auto-open a wallet-enabled provider panel on page view");
@@ -558,7 +566,7 @@ async function assertDexMobileTokenHistory(browser, width) {
 
 const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
 try {
-  await assertApprovedRuntimeEndpoint(browser);
+  await assertSourceMatchedRuntimeEndpoint(browser);
   await assertDisabledWorkerHealth(browser);
   await assertPage(browser, { name: "Swap desktop", path: "/swap/", viewport: { width: 1440, height: 900 } });
   await assertPage(browser, { name: "Swap mobile", path: "/swap/", viewport: { width: 390, height: 844 }, isMobile: true });
