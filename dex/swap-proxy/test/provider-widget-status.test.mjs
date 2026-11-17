@@ -18,7 +18,7 @@ test("existing API Worker provides cross-origin, no-store OFF status for Jupiter
   const response = await request();
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("access-control-allow-origin"), origin);
-  assert.match(response.headers.get("cache-control"), /(?:^|,)\\s*no-store(?:,|$)/i);
+  assert.match(response.headers.get("cache-control"), /(?:^|,)\s*no-store(?:,|$)/i);
   assert.equal(response.headers.get("content-type"), "application/json; charset=utf-8");
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.deepEqual(await response.json(), {enabled:false});
