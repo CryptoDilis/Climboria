@@ -1055,36 +1055,47 @@ function loadAdvancedIntel(mint,pair){
 }
 async function loadIntelHolders(){
  const mint=activeIntelMint;if(!mint)return;
+ const epoch=intelContextEpoch,requestId=++intelHoldersRequestId;
+ const stillSelected=()=>epoch===intelContextEpoch&&requestId===intelHoldersRequestId&&activeIntelMint===mint;
  const list=$('topHolders'),kpis=$('holderKpis'),note=$('holderNote');
  list.innerHTML='<div class="intel-loading">Reading largest token accounts from Solana mainnet RPC…</div>';
  try{
   const rpc='https://api.mainnet-beta.solana.com';
   const call=async(method,params)=>{const r=await fetch(rpc,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params}),cache:'no-store'});if(!r.ok)throw new Error('Solana RPC HTTP '+r.status);const j=await r.json();if(j.error)throw new Error(j.error.message||'Solana RPC error');return j.result};
   const [largest,supply]=await Promise.all([call('getTokenLargestAccounts',[mint,{commitment:'confirmed'}]),call('getTokenSupply',[mint,{commitment:'confirmed'}])]);
+  if(!stillSelected())return;
   const accounts=(largest.value||[]).slice(0,20),total=Number(supply.value?.uiAmountString);
   if(!accounts.length||!Number.isFinite(total)||total<=0)throw new Error('No holder data returned for this mint');
   const details=await call('getMultipleAccounts',[accounts.map(a=>a.address),{encoding:'jsonParsed',commitment:'confirmed'}]);
+  if(!stillSelected())return;
   const owners=new Map();
   accounts.forEach((a,i)=>{const info=details.value?.[i]?.data?.parsed?.info;const owner=info?.owner;const amount=Number(a.uiAmountString);if(!owner||!Number.isFinite(amount))return;owners.set(owner,(owners.get(owner)||0)+amount)});
   const rows=[...owners.entries()].map(([owner,amount])=>({owner,amount,share:amount/total*100})).sort((a,b)=>b.amount-a.amount).slice(0,10);
+  if(!stillSelected())return;
   const top10=rows.reduce((n,x)=>n+x.share,0);const holderSignal=[...$('signalGrid').querySelectorAll('.signalitem')].find(el=>el.textContent.includes('Holder concentration'));if(holderSignal){holderSignal.classList.remove('missing');holderSignal.classList.add('good');holderSignal.querySelector('strong').textContent=top10.toFixed(2)+'%';holderSignal.querySelector('small').textContent='Top 10 owner share across returned largest 20 accounts · aggregated by owner wallet';holderSignal.title='Concentration evidence only; not a full holder-distribution audit.'}
   const creator=pumpCoinCache.get(mint)?.creator;let devShare='Unavailable';if(creator){try{const creatorAccounts=await call('getTokenAccountsByOwner',[creator,{mint},{encoding:'jsonParsed',commitment:'confirmed'}]);const creatorAmount=(creatorAccounts.value||[]).reduce((sum,row)=>sum+Number(row.account?.data?.parsed?.info?.tokenAmount?.uiAmountString||0),0);devShare=Number.isFinite(creatorAmount)?(creatorAmount/total*100).toFixed(3)+'%':'Unavailable';}catch(e){devShare='RPC unavailable';}}const holderCount=pumpCoinCache.get(mint)?.holderCount;
+  if(!stillSelected())return;
   kpis.innerHTML='<div><small>Top 10 owner share (largest 20 accounts)</small><b>'+top10.toFixed(2)+'%</b></div><div><small>Creator / dev holding</small><b>'+devShare+'</b></div><div><small>Holders · pump.fun</small><b>'+(holderCount??'Unavailable')+'</b></div><div><small>Accounts checked</small><b>'+accounts.length+'</b></div>';
   list.innerHTML=rows.length?'<div class="holder-table-head"><span>RANK</span><span>OWNER WALLET</span><span>SUPPLY SHARE</span></div>'+rows.map((x,i)=>'<div class="holder-row"><span class="holder-rank">#'+(i+1)+'</span><span class="holder-address"><a class="intel-link" href="https://solscan.io/account/'+encodeURIComponent(x.owner)+'" target="_blank" rel="noopener">'+esc(intelShort(x.owner))+' ↗</a></span><span class="holder-share">'+x.share.toFixed(3)+'%</span></div>').join(''):'<div class="intel-loading">Owner wallet records unavailable from RPC.</div>';
   note.textContent='Live Solana mainnet RPC · confirmed commitment · '+new Date().toLocaleString()+'. Top 10 share is calculated only across the returned largest 20 token accounts, not the entire holder population. Token accounts are aggregated by owner wallet.';
- }catch(e){kpis.innerHTML='<div><small>Top 10 owner share</small><b>Unavailable</b></div><div><small>Accounts checked</small><b>Unavailable</b></div>';list.innerHTML='<div class="intel-loading">Live holder lookup failed: '+esc(e.message)+'</div>';note.textContent='No holder numbers are estimated or fabricated. Try again later or configure a dedicated indexed RPC provider.'}
+ }catch(e){if(!stillSelected())return;kpis.innerHTML='<div><small>Top 10 owner share</small><b>Unavailable</b></div><div><small>Accounts checked</small><b>Unavailable</b></div>';list.innerHTML='<div class="intel-loading">Live holder lookup failed: '+esc(e.message)+'</div>';note.textContent='No holder numbers are estimated or fabricated. Try again later or configure a dedicated indexed RPC provider.'}
 }
 async function loadIntelActivity(){
  const pair=activeIntelPair;if(!pair)return;
+ const epoch=intelContextEpoch,requestId=++intelActivityRequestId;
+ const stillSelected=()=>epoch===intelContextEpoch&&requestId===intelActivityRequestId&&activeIntelPair?.pairAddress===pair.pairAddress;
  const box=$('recentActivity');box.innerHTML='<div class="intel-loading">Fetching latest indexed pool trades…</div>';
  try{
   const url='https://api.geckoterminal.com/api/v2/networks/solana/pools/'+encodeURIComponent(pair.pairAddress)+'/trades';
   const r=await fetch(url,{headers:{accept:'application/json;version=20230203'},cache:'no-store'});if(!r.ok)throw new Error('GeckoTerminal HTTP '+r.status);
-  const payload=await r.json(),trades=payload.data||[];
-  box.innerHTML=trades.length?'<div class="activity-table-head"><span>SIDE</span><span>WALLET · TIME · TRANSACTION</span><span>USD VALUE</span></div>'+trades.slice(0,20).map(item=>{const t=item.attributes||{},kind=String(t.kind||'trade').toLowerCase(),wallet=t.tx_from_address,tx=t.tx_hash,stamp=t.block_timestamp?new Date(t.block_timestamp):null,value=Number(t.volume_in_usd);return '<div class="activity-row"><span class="activity-kind '+(kind==='buy'?'buy':kind==='sell'?'sell':'')+'">'+esc(kind)+'</span><span><span class="activity-address">'+esc(intelShort(wallet))+'</span><small class="activity-meta">'+(stamp?esc(stamp.toLocaleString()):'Time unavailable')+(tx?' · <a class="intel-link" href="https://solscan.io/tx/'+encodeURIComponent(tx)+'" target="_blank" rel="noopener">View tx ↗</a>':'')+'</small></span><span class="activity-value">'+(Number.isFinite(value)?'$'+value.toLocaleString('en-US',{maximumFractionDigits:2}):'—')+'</span></div>'}).join(''):'<div class="intel-loading">No indexed trades returned for this pool.</div>';
+  const payload=await r.json();
+  if(!stillSelected())return;
+  if(!Array.isArray(payload.data))throw new Error('Invalid provider trade list');
+  const trades=payload.data;
+  box.innerHTML=trades.length?'<div class="activity-table-head"><span>SIDE</span><span>WALLET · TIME · TRANSACTION</span><span>USD VALUE</span></div>'+trades.slice(0,20).map(item=>{const t=item.attributes||{},kind=String(t.kind||'trade').toLowerCase(),wallet=t.tx_from_address,tx=t.tx_hash,stamp=t.block_timestamp?new Date(t.block_timestamp):null,value=reportedPoolNumber(t.volume_in_usd,{nonnegative:true});return '<div class="activity-row"><span class="activity-kind '+(kind==='buy'?'buy':kind==='sell'?'sell':'')+'">'+esc(kind)+'</span><span><span class="activity-address">'+esc(intelShort(wallet))+'</span><small class="activity-meta">'+(stamp?esc(stamp.toLocaleString()):'Time unavailable')+(tx?' · <a class="intel-link" href="https://solscan.io/tx/'+encodeURIComponent(tx)+'" target="_blank" rel="noopener">View tx ↗</a>':'')+'</small></span><span class="activity-value">'+(Number.isFinite(value)?'$'+value.toLocaleString('en-US',{maximumFractionDigits:2}):'—')+'</span></div>'}).join(''):'<div class="intel-loading">No indexed trades returned for this pool.</div>';
   $('activityUpdated').textContent='Provider response received · '+new Date().toLocaleString()+' · '+trades.length+' records';
   $('activityNote').textContent='Source: GeckoTerminal public API · selected pool '+intelShort(pair.pairAddress)+'. Data reflects provider indexing, not guaranteed real-time block streaming.';
- }catch(e){box.innerHTML='<div class="intel-loading">Recent trade lookup failed: '+esc(e.message)+'</div>';$('activityUpdated').textContent='Update failed · '+new Date().toLocaleString();$('activityNote').textContent='Provider unavailable or rate-limited. No synthetic trades are shown.'}
+ }catch(e){if(!stillSelected())return;box.innerHTML='<div class="intel-loading">Recent trade lookup failed: '+esc(e.message)+'</div>';$('activityUpdated').textContent='Update failed · '+new Date().toLocaleString();$('activityNote').textContent='Provider unavailable or rate-limited. No synthetic trades are shown.'}
 }
 document.addEventListener('click',e=>{
  const toggle=e.target.closest('[data-intel-panel]');
@@ -1157,16 +1168,20 @@ function renderPumpProfile(mint,data){
  const rail=$('detailSocialRail');if(rail)rail.innerHTML=social.length?social.map(([label,url])=>'<a href="'+esc(safeHttps(url))+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>').join(''):'<span class="social-empty">No official pump.fun links found.</span>';
 }
 async function loadMintAuthorityEvidence(mint){
+ const epoch=intelContextEpoch;
+ const stillSelected=()=>epoch===intelContextEpoch&&activeIntelMint===mint;
  try{
   const response=await fetch('https://api.mainnet-beta.solana.com',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getAccountInfo',params:[mint,{encoding:'jsonParsed',commitment:'confirmed'}]}),cache:'no-store',signal:AbortSignal.timeout(7000)});
   if(!response.ok)throw new Error('Solana RPC HTTP '+response.status);
   const payload=await response.json(),info=payload.result?.value?.data?.parsed?.info;
   if(payload.error||!info)throw new Error(payload.error?.message||'Parsed mint account unavailable');
+  if(!stillSelected())return;
   const mintRevoked=!info.mintAuthority,freezeRevoked=!info.freezeAuthority;
   const current=Array.from($('signalGrid').querySelectorAll('.signalitem')).map(el=>el.outerHTML).join('');
   $('signalGrid').innerHTML=current+'<div class="signalitem '+(mintRevoked?'good':'missing')+'"><b>'+(mintRevoked?'Revoked':'Not revoked')+' · Mint authority</b><small>Solana parsed mint account · confirmed</small></div>'+'<div class="signalitem '+(freezeRevoked?'good':'missing')+'"><b>'+(freezeRevoked?'Revoked':'Not revoked')+' · Freeze authority</b><small>Solana parsed mint account · confirmed</small></div>'+'<div class="signalitem missing"><b>Unknown · LP burned / locked</b><small>LP ownership and lock evidence not independently verified.</small></div>';
   $('signalFoot').textContent='Evidence checklist only — not a safety score. Mint and freeze authority are read from the parsed Solana mint account. LP lock/burn requires separate verification.';
  }catch(error){
+  if(!stillSelected())return;
   const current=Array.from($('signalGrid').querySelectorAll('.signalitem')).map(el=>el.outerHTML).join('');
   $('signalGrid').innerHTML=current+'<div class="signalitem missing"><b>Unknown · Mint authority</b><small>'+esc(error.message)+'</small></div><div class="signalitem missing"><b>Unknown · Freeze authority</b><small>Parsed mint authority data unavailable.</small></div><div class="signalitem missing"><b>Unknown · LP burned / locked</b><small>Not independently verified.</small></div>';
  }
