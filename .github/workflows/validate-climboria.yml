@@ -54,6 +54,8 @@ jobs:
           node --test dex/swap-proxy/test/*.test.mjs
       - name: Test manual GeckoTerminal selected-pool capture (offline fixtures only)
         run: node --test .github/scripts/geckoterminal-selected-pool-capture.test.mjs
+      - name: Test live DEX trending cards refresh races and metric integrity (offline fixtures only)
+        run: node --test .github/scripts/dex-premium-trending.test.mjs
       - name: Bundle Worker and validate Wrangler Durable Object configuration (dry run)
         working-directory: dex/swap-proxy
         run: npx wrangler@4.36.0 deploy --dry-run --outdir /tmp/climboria-swap-proxy-dry-run
