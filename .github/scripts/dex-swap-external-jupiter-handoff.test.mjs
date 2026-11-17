@@ -40,7 +40,9 @@ test("Swap uses the same disclosure and isolated provider homepage; native relea
  assert.match(config,/\bproxyEnabled:\s*true\b/,"Quote proxy remains available");
  assert.match(config,/\benabled:\s*false\b/,"Public execution stays disabled");
  assert.match(config,/\bfeeCollectionEnabled:\s*false\b/,"No integrator fee collection");
- assert.match(config,/\bmanagedProvider:\s*Object\.freeze\(\{\s*enabled:\s*false\b/,"Unreviewed widget stays off");
+ assert.match(config,/\bmanagedProvider:\s*Object\.freeze\(\{\s*enabled:\s*true\b/,"Swap-only source candidate configured");
+ assert.match(config,/\bsurfaces:\s*Object\.freeze\(\{\s*swap:\s*true,\s*dex:\s*false\s*\}\)/,"DEX trading must remain OFF");
+ assert.match(worker,/const THIRD_PARTY_JUPITER_WIDGET_APPROVED = false;/,"Production release status remains OFF");
  assert.match(worker,/const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;/);
  assert.match(worker,/const EXECUTION_SECURITY_REVIEW_COMPLETE = false;/);
 });
