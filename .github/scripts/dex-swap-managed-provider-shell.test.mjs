@@ -6,12 +6,14 @@ import {
   validateManagedProviderConfig,
   isManagedSwapRuntimeApproved,
   integratedTerminalOptions,
+  isManagedProviderSurfaceApproved,
   initializeManagedSwapHost
 } from "../../dex/provider-managed-swap.mjs";
 
 const approved = Object.freeze({
   enabled: true,
   runtimeApproved: true,
+  surfaces: Object.freeze({swap: true, dex: true}),
   provider: "jupiter-terminal",
   scriptUrl: "https://plugin.jup.ag/plugin-1.0.18.js",
   integrity: "sha384-" + "A".repeat(64)
@@ -59,6 +61,7 @@ test("provider mode remains explicitly OFF in public production config and custo
   assert.match(cfg, /enabled:\s*false/);
   assert.match(cfg, /managedProvider:\s*Object\.freeze\(\{\s*enabled:\s*false/);
   assert.match(cfg, /runtimeApproved:\s*false/);
+  assert.match(cfg, /surfaces:\s*Object\.freeze\(\{\s*swap:\s*false,\s*dex:\s*false\s*\}\)/);
   assert.match(cfg, /scriptUrl:\s*null/);
   assert.match(cfg, /integrity:\s*null/);
   assert.match(worker, /const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;/);
@@ -92,6 +95,24 @@ test("provider-loader refuses unreviewed hosts, protocols, missing SRI and redir
   });
 });
 
+test("separate provider surfaces prevent Swap activation from authorizing DEX", () => {
+  assert.equal(isManagedProviderSurfaceApproved(approved, "swap"), true);
+  assert.equal(isManagedProviderSurfaceApproved(approved, "dex"), true);
+  const onlySwap = {...approved, surfaces: Object.freeze({swap: true, dex: false})};
+  const onlyDex = {...approved, surfaces: Object.freeze({swap: false, dex: true})};
+  assert.equal(isManagedProviderSurfaceApproved(onlySwap, "swap"), true);
+  assert.equal(isManagedProviderSurfaceApproved(onlySwap, "dex"), false);
+  assert.equal(isManagedProviderSurfaceApproved(onlyDex, "swap"), false);
+  assert.equal(isManagedProviderSurfaceApproved(onlyDex, "dex"), true);
+  for (const bad of [null, undefined, {}, "true", {swap: 1, dex: "true"}]) {
+    assert.equal(isManagedProviderSurfaceApproved({...approved, surfaces: bad}, "swap"), false);
+    assert.equal(isManagedProviderSurfaceApproved({...approved, surfaces: bad}, "dex"), false);
+  }
+  for (const unknown of ["", "climbx", "launchpad", "Swap", null, undefined]) {
+    assert.equal(isManagedProviderSurfaceApproved(approved, unknown), false);
+  }
+});
+
 test("integrated widget target accepts only safe existing element IDs", () => {
   assert.deepEqual(integratedTerminalOptions("climboriaSwapProviderTarget"), {
     displayMode: "integrated",
@@ -102,7 +123,7 @@ test("integrated widget target accepts only safe existing element IDs", () => {
   }
 });
 
-function createDom({ failure = false, deferLoad = false } = {}) {
+function createDom({ failure = false, deferLoad = false, surface = "swap" } = {}) {
   const created = [];
   const btn = { hidden: true, disabled: false, addEventListener(event, callback) { this[event] = callback; } };
   const close = { addEventListener(event, callback) { this[event] = callback; } };
@@ -110,6 +131,7 @@ function createDom({ failure = false, deferLoad = false } = {}) {
   const target = { id: "climboriaSwapProviderTarget" };
   const panel = {
     hidden: true,
+    getAttribute(key) { return key === "data-climboria-managed-swap-surface" ? surface : null; },
     querySelector(selector) {
       if (selector === "[data-climboria-managed-swap-target]") return target;
       if (selector === "[data-climboria-managed-swap-status]") return status;
@@ -141,6 +163,30 @@ function createDom({ failure = false, deferLoad = false } = {}) {
   };
   return { doc, btn, close, panel, target, status, created };
 }
+
+test("Swap-only or DEX-only rollout refuses the other surface without loading vendor JavaScript", () => {
+  for (const [surface, surfaces] of [
+    ["swap", {swap: false, dex: true}],
+    ["dex", {swap: true, dex: false}],
+    ["swap", {swap: false, dex: false}],
+    ["dex", {swap: false, dex: false}]
+  ]) {
+    const ui = createDom({surface});
+    const init = initializeManagedSwapHost({
+      doc: ui.doc, scope: {Jupiter: {init() { throw Error("must not run"); }}},
+      config: {...approved, surfaces}
+    });
+    assert.deepEqual(init, {ready: false, reason: "provider-not-approved"});
+    assert.equal(ui.btn.hidden, true);
+    assert.equal(ui.panel.hidden, true);
+    assert.equal(ui.created.length, 0);
+  }
+  const noSurface = createDom({surface: undefined});
+  // Explicitly unrecognized panel attribute must never infer a product.
+  noSurface.panel.getAttribute = () => null;
+  const init = initializeManagedSwapHost({doc:noSurface.doc,scope:{},config:approved});
+  assert.equal(init.ready,false);
+});
 
 test("disabled integration hides all UI, never injects script or prompts a wallet", () => {
   const ui = createDom();
@@ -658,7 +704,7 @@ test("both Climboria swap interfaces retain quote-only path and use isolated hos
   assert.equal([...code.matchAll(/\bfetch\s*\(/g)].length, 1);
   for (const file of ["swap/index.html", "dex/index.html"]) {
     const source = readFileSync(new URL("../../" + file, import.meta.url), "utf8");
-    assert.match(source, /\/dex\/provider-managed-swap\.mjs\?v=2/);
+    assert.match(source, /\/dex\/provider-managed-swap\.mjs\?v=3/);
     assert.match(source, /\/dex\/provider-managed-swap\.css\?v=1/);
     assert.match(source, /data-climboria-managed-swap-panel hidden/);
     assert.match(source, /data-climboria-managed-swap-open hidden/);

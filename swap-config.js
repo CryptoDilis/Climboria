@@ -11,6 +11,8 @@ window.CLIMBORIA_SWAP_CONFIG = Object.freeze({
   managedProvider: Object.freeze({
     enabled: false,
     runtimeApproved: false,
+    // Independent, default-OFF release controls: Swap first, DEX second.
+    surfaces: Object.freeze({ swap: false, dex: false }),
     provider: "jupiter-terminal",
     scriptUrl: null,
     integrity: null
