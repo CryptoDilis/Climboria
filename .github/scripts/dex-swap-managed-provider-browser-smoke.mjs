@@ -271,6 +271,84 @@ async function runTabReturnApproval(browser, path, width) {
   }
 }
 
+// Reproduce the real first-party network switch during a HIDDEN, pending
+// Jupiter reopen. This must cancel the old async approval before it can
+// resurface a Solana wallet widget after the user switches to Base.
+async function runBaseSwitchDuringPendingReopen(browser, width) {
+  const page = await browser.newPage({viewport:{width,height:850}});
+  const forbidden = [];
+  let statusCalls = 0;
+  let releaseHeldStatus;
+  let markPendingStarted;
+  const pendingStarted = new Promise(resolve => { markPendingStarted = resolve; });
+  const heldStatus = new Promise(resolve => { releaseHeldStatus = resolve; });
+  page.on("request", request => {
+    if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(request.url()))
+      forbidden.push(request.url());
+  });
+  await page.route("**/swap-runtime-status.json", async route => {
+    statusCalls++;
+    if (statusCalls === 4) {
+      markPendingStarted();
+      await heldStatus;
+    }
+    await route.fulfill({
+      json:{enabled:true},
+      headers:{"Cache-Control":"no-store"}
+    });
+  });
+  await page.route("**/swap-config.js", route => route.fulfill({
+    status:200,contentType:"application/javascript",body:mockConfig()
+  }));
+  await page.route(SCRIPT_URL, route => route.fulfill({
+    status:200,contentType:"application/javascript",
+    headers:{"access-control-allow-origin":"*","cache-control":"no-store"},
+    body:MOCK_SCRIPT
+  }));
+  try {
+    const response = await page.goto(ORIGIN+"/swap/",{waitUntil:"domcontentloaded",timeout:20000});
+    assert.equal(response.status(),200);
+    const button = page.locator("[data-climboria-managed-swap-open]");
+    const panel = page.locator("[data-climboria-managed-swap-panel]");
+    await button.waitFor({state:"visible",timeout:15000});
+    await button.click();
+    await page.waitForFunction(() => window.__mockProviderCalls?.length === 1);
+    assert.equal(statusCalls,3,"boot, explicit open and pre-init checks");
+    await panel.locator("[data-climboria-managed-swap-close]").click();
+    assert.equal(await page.evaluate(() => window.__mockProviderRoot.style.display),"none");
+    await button.click();
+    await pendingStarted;
+    assert.equal(await panel.isVisible(),false,"reopen approval must not expose old wallet UI");
+    assert.equal(await page.evaluate(() => window.__mockProviderResumeCalls || 0),0);
+    await page.locator("#chainBase").click();
+    assert.equal(await panel.getAttribute("data-climboria-managed-swap-network"),"base");
+    assert.equal(await panel.isVisible(),false);
+    assert.equal(await button.isVisible(),false,"Base cannot expose Solana widget");
+    assert.equal(await page.evaluate(() => window.__mockProviderRoot.style.display),"none");
+    releaseHeldStatus();
+    await page.waitForResponse(response => response.url().endsWith("/swap-runtime-status.json") &&
+      response.status()===200,{timeout:10000}).catch(() => {});
+    await page.waitForTimeout(90);
+    assert.equal(await panel.isVisible(),false,"late approved response may not reopen widget on Base");
+    assert.equal(await page.evaluate(() => window.__mockProviderResumeCalls || 0),0,
+      "stale approval response must not resume Jupiter on Base");
+    assert.equal(await page.evaluate(() => window.__mockProviderRoot.style.display),"none");
+    await page.locator("#chainSolana").click();
+    await button.waitFor({state:"visible",timeout:10000});
+    await button.click();
+    await page.waitForFunction(() => window.__mockProviderResumeCalls === 1,null,{timeout:10000});
+    assert.equal(await page.evaluate(() => window.__mockProviderRoot.style.display),"block");
+    assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length),1,
+      "returning to Solana does not duplicate provider init");
+    await panel.locator("[data-climboria-managed-swap-close]").click();
+    assert.deepEqual(forbidden,[],"network race must never call native Climboria execution");
+    console.log("PASS /swap/ width "+width+" Base switch cancels hidden pending Jupiter reopen; no wallet/trade");
+  } finally {
+    releaseHeldStatus();
+    await page.close();
+  }
+}
+
 async function runCloseDuringLoad(browser, path) {
   const page = await browser.newPage({viewport:{width: path === "/dex/" ? 390 : 1280,height:850}});
   let releaseLoad;
@@ -462,6 +540,7 @@ try {
   await runPage(browser,"/swap/",{badHash:true});
   await runCloseDuringLoad(browser,"/swap/");
   await runCloseDuringLoad(browser,"/dex/");
+  for (const width of [1280,390]) await runBaseSwitchDuringPendingReopen(browser,width);
   for (const path of ["/swap/","/dex/"]) {
     for (const width of [1280,390]) await runTabReturnApproval(browser,path,width);
   }
