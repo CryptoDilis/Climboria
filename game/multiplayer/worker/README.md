@@ -9,14 +9,15 @@ This is **server source and tests**, not deployed multiplayer. It builds on the 
 - All state is in memory for the pilot room; no durable persisted character or combat state. A restart may disconnect players. Durable Object WebSocket lifecycle, hibernation and scaling MUST be verified in a real staging deployment before production.
 
 ## What is still REQUIRED before online multiplayer can be called live
-1. Game owner configures Cloudflare Worker deployment (Cloudflare plan/costs not verified) and keeps Supabase credential and account connection private. Set `SUPABASE_PUBLISHABLE_KEY` via `wrangler secret put SUPABASE_PUBLISHABLE_KEY -c game/multiplayer/worker/wrangler.toml`; do not paste secrets in GitHub or chat.
-2. Run `node --test game/multiplayer/*.test.mjs game/multiplayer/worker/*.test.mjs` and deploy Worker using Wrangler on isolated Game-specific subdomain/origin after policy review. **Never** use the DEX or swap Worker for game sessions.
-3. Build/enable an authenticated browser Game client that requests a ticket with its existing Supabase user session and upgrades with protocols `climboria-v1`, `t-<one-time-ticket>`. Verify join/move/leave, reconnection and crash cleanup across **two independent logged-in browsers**. Guest users remain solo until a trusted guest-token flow is approved.
-4. Integrate remote player models **without unbounded extra GLB downloads**, LOD and mobile budgets; measure actual FPS, network disconnect handling, correct player yaw, chat/profile privacy and visibility over the Sanctuary/cave/coast.
-5. The current room has an approximate initial spawn elevation and does not validate terrain physics. It cannot yet be trusted for damage. Real fighting requires mutual duel consent, authoritative positions, cooldowns and server-owned health/stamina, plus anti-griefing and safe-zone tests. In-game local punch clip in separate PR #473 is NOT a real hit.
+1. Verify **real HTTP 200** with exact expected JSON for both deployed Game staging `/health` and DO-backed `/ready` (owner screenshots already show the correct payloads, but did not display HTTP status codes). Run owner-only authenticated two-account socket acceptance against the approved staging hostname; no account credentials, access tokens or room tickets in repository/chat.
+2. Configure and verify the separate owned `rooms.climboria.fun` Game Worker custom domain, then execute first-party **real WebGL two-browser** acceptance: authenticated different users, actual remote Jarrell/Lheiz GLB, bidirectional movement and World Chat, map/roster, logout/reconnect and FPS. Keep `game/multiplayer/client-config.json` OFF during QA; guest users remain solo until an authorized guest flow is approved.
+3. Validate remote player model performance (bounded downloads, LOD and budgets), correct yaw/privacy, full Sanctuary/cave/coast movement and **physical Android** FPS/thermal behavior. The current room has approximate initial spawn elevation, not trusted terrain physics; no real damage/loot/theft without separately audited server-owned positions, consent and hit authorization. In-game local punch clip in separate PR #473 is NOT a real hit.
 
-## Deployment status
-**NOT DEPLOYED. NOT LIVE.** No application endpoint, custom domain, Worker secret, or two-browser production proof has been established by this source work.
+## Deployment status — staging deployed, public multiplayer NOT LIVE (2026-11-17)
+
+- Owner-approved Game-only [manual staging workflow #44031462447](https://github.com/CryptoDilis/Climboria/actions/runs/44031462447) **attempt 2 SUCCESS** on `main` SHA `a728542dfe9bd3a4e96bb50853859926a70cf158`: **87/87** Node Game tests passed, `climboria-game-room` deployed with `ROOMS (JarrellRoom)` binding on `https://climboria-game-room.escalante-wacom.workers.dev`, and Wrangler reported successful `SUPABASE_PUBLISHABLE_KEY` Worker secret upload. Earlier attempt 1 failed Cloudflare API `10007`; it is superseded by attempt 2.
+- Owner's screenshots of the above staging health/readiness pages show `{"service":"climboria-game-room","deployedGateway":true,"gameplayPvP":false}` and `{"service":"climboria-game-room","bindingsConfigured":true,"durableObjectReady":true,"gameplayPvP":false}`. This is **owner-supplied browser-visible JSON evidence**, not direct independently obtained HTTP 200 status verification, not a logged-in two-player test and not proof of public Game multiplayer. The `/ready` JSON reports a functioning DO storage probe.
+- Public `game/multiplayer/client-config.json` remains `enabled:false`, `endpoint:null`; `rooms.climboria.fun` custom domain, registered two-account socket/WebGL QA and physical mobile FPS acceptance are still pending. PvP damage, item grabbing and loot theft remain OFF. See `docs/GAME_DEVELOPMENT_RECORD.md` for exact next steps and checked run IDs.
 
 ## Actual two-browser acceptance (manual; no saved tokens)
 
@@ -66,8 +67,7 @@ hold on logout. Then separately verify safe-zone and opt-in PvP logic before
 allowing any server-authoritative damage. A successful E2E test alone must NOT
 automatically enable or deploy the multiplayer client.
 
-**Current live state remains OFF**; this document does not assert that a Worker
-was deployed or that a production two-user session has been observed.
+**Current public multiplayer remains OFF**. This document confirms only the Game staging Worker deployment and owner-visible health/readiness JSON; no production two-user session, real GLB acceptance or physical mobile performance has been observed.
 
 ## Optional approval-only GitHub staging deployment
 
@@ -89,9 +89,7 @@ requests, does NOT share DEX/Swap infrastructure, and leaves
 staging deployment. Do not paste Cloudflare tokens or Supabase access JWTs into
 chat or GitHub issues.
 
-A hosted Worker may have account, plan and billing requirements that have
-**not been verified**. Review Cloudflare account settings/costs before
-manually approving deployment. `workers_dev=true` is a staging endpoint,
+Owner screenshots confirmed **Workers Free** subscription and no payment method before staging deployment; these do not prove ongoing capacity, usage costs, or suitability for production. Recheck Cloudflare account limits before increasing use. `workers_dev=true` is a staging endpoint,
 not the approved `rooms.climboria.fun` production hostname. Configure an
 owned secure game-only custom domain after staging QA; do not enable the
 browser client against an arbitrary URL.
