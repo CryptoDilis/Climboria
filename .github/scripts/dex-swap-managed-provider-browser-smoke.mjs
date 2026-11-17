@@ -106,7 +106,14 @@ async function runPage(browser, path, {badHash = false} = {}) {
       await page.waitForFunction(() => (window.__mockProviderCalls?.length || 0)===1,null,{timeout:15000});
       const calls = await page.evaluate(() => window.__mockProviderCalls);
       const expected = path === "/swap/" ? "climboriaSwapProviderTarget" : "climboriaDexProviderTarget";
-      assert.deepEqual(calls,[{displayMode:"integrated",integratedTargetId:expected}]);
+      assert.deepEqual(calls,[path === "/swap/" ? {
+        displayMode:"integrated", integratedTargetId:expected,
+        formProps:{
+          initialInputMint:"So11111111111111111111111111111111111111112",
+          initialOutputMint:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        }
+      } : {displayMode:"integrated",integratedTargetId:expected}],
+      "Jupiter must receive the real selected Swap mints, not an unrelated default");
       assert.equal(await panel.locator("[data-climboria-test-widget]").count(),1);
       assert.equal(await button.getAttribute("aria-expanded"),"true");
       await panel.locator("[data-climboria-managed-swap-close]").click();
@@ -118,6 +125,22 @@ async function runPage(browser, path, {badHash = false} = {}) {
       assert.equal(await page.evaluate(() => window.__mockProviderCalls.length),1,
         "reopen must not reinitialize provider");
       assert.equal(scriptLoads,1,"reviewed script injected once only");
+      if (path === "/swap/") {
+        await page.locator("#chainBase").click();
+        assert.equal(await button.isVisible(),false,
+          "Base must not expose Solana Jupiter widget launcher");
+        assert.equal(await panel.isVisible(),false,
+          "Selecting Base closes a mounted Solana-only provider panel");
+        assert.equal(await panel.getAttribute("data-climboria-managed-swap-network"),"base");
+        assert.equal(await panel.getAttribute("data-climboria-managed-swap-input-mint"),null);
+        await page.locator("#chainSolana").click();
+        assert.equal(await button.isVisible(),true,
+          "Returning to Solana restores the original provider launcher");
+        assert.equal(await panel.getAttribute("data-climboria-managed-swap-network"),"solana");
+        assert.equal(await panel.getAttribute("data-climboria-managed-swap-input-mint"),
+          "So11111111111111111111111111111111111111112");
+        assert.equal(scriptLoads,1,"network switch must not reload Jupiter script");
+      }
     }
     assert.deepEqual(forbidden,[],"no /order or /execute calls even after mock widget click");
     console.log("PASS "+path+(badHash?" invalid-SRI fail-closed":" simulated in-site managed widget")+" no wallet/transaction");
