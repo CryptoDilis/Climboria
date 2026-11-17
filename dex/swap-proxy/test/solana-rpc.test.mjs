@@ -294,3 +294,60 @@ test("rejects malformed RPC ALT executable flags and account encodings instead o
     }),/missing or malformed|canonical base64/);
   }
 });
+
+test("rejects noncanonical base64 or malformed encoding tuple for classic SPL token accounts", async () => {
+  const canonical = tokenAccount(tokenInputMint, 1500n);
+  for (const data of [
+    [canonical.data[0] + " ", "base64"],
+    [" " + canonical.data[0], "base64"],
+    [canonical.data[0] + "\n", "base64"],
+    [canonical.data[0].replace(/A/, "A "), "base64"],
+    [canonical.data[0], "base58"],
+    [canonical.data[0], "base64", "ignored"],
+    ["", "base64"],
+    [canonical.data[0] + "=", "base64"]
+  ]) {
+    await assert.rejects(
+      verifyTokens({}, () => tokenRpcResponse([{ ...canonical, data }, ...validTokenAccounts().slice(1)])),
+      /base64 data must be canonical|classic SPL Token program/,
+      "Reject noncanonical or ambiguous token-account bytes before accepting RPC evidence"
+    );
+  }
+});
+
+test("rejects noncanonical base64 and extra tuple elements for classic SPL mint accounts", async () => {
+  const tokenAccounts = validTokenAccounts();
+  const canonical = mintAccount();
+  // Mint is 82 bytes, whose canonical base64 requires exactly one "=".
+  assert.equal(canonical.data[0].endsWith("="), true);
+  for (const data of [
+    [canonical.data[0].slice(0, -1), "base64"],
+    [canonical.data[0] + " ", "base64"],
+    [canonical.data[0] + "=", "base64"],
+    [canonical.data[0], "base64", "unused"],
+    [canonical.data[0], "base58"],
+    [canonical.data[0].replace(/\//g, "_"), "base64"]
+  ]) {
+    await assert.rejects(
+      verifyTokens({}, () => tokenRpcResponse([
+        ...tokenAccounts.slice(0, 2), { ...canonical, data }, tokenAccounts[3]
+      ])),
+      /base64 data must be canonical|classic SPL Token program/,
+      "Mint data must be a canonical, exact two-element RPC base64 tuple"
+    );
+  }
+});
+
+test("verifies independently that input token amount is a positive u64 before RPC fetch", async () => {
+  const invalid = ["18446744073709551616", "99999999999999999999", "01", "0", "-1", "1e3", "", 1000, null];
+  for (const amount of invalid) {
+    await assert.rejects(verifyTokens({
+      amount, fetchImpl: async () => { throw Error("RPC must not be used for invalid amount"); }
+    }), /Requested token input amount is invalid/);
+  }
+  const max = "18446744073709551615";
+  const accounts = validTokenAccounts();
+  accounts[0] = tokenAccount(tokenInputMint, BigInt(max));
+  const result = await verifyTokens({ amount: max }, () => tokenRpcResponse(accounts));
+  assert.equal(result.requestedAmount, max, "Canonical on-chain u64 max remains representable");
+});
