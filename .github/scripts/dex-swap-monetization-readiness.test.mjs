@@ -24,7 +24,7 @@ test("0.50% is an explicit business target, NOT an operational fee", () => {
   assert.equal(Object.isFrozen(c), true);
 });
 
-test("Swap-first provider release candidate requires API ON, zero integrator fees and native execution OFF", () => {
+test("Swap-first provider release or emergency rollback has zero integrator fees and native execution OFF", () => {
   const c = config();
   assert.equal(c.proxyEnabled, true, "quotes stay available");
   assert.equal(c.enabled, false, "custom wallet transaction flow stays off");
@@ -39,7 +39,7 @@ test("Swap-first provider release candidate requires API ON, zero integrator fee
   const worker = readFileSync(new URL("../../dex/swap-proxy/src/index.mjs", import.meta.url), "utf8");
   assert.match(worker, /const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;/);
   assert.match(worker, /const EXECUTION_SECURITY_REVIEW_COMPLETE = false;/);
-  assert.match(worker, /const THIRD_PARTY_JUPITER_WIDGET_APPROVED = true;/);
+  assert.match(worker, /const THIRD_PARTY_JUPITER_WIDGET_APPROVED = (?:true|false);/);
   assert.equal(c.revenue.feeCollectionEnabled,false);
   assert.equal(c.revenue.feeRecipient,null);
 });
