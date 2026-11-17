@@ -276,3 +276,21 @@ test("rejects redirects, missing accounts and malformed RPC responses", async ()
   await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([null, ...validTokenAccounts().slice(1)])), /missing, executable/i);
   await assert.rejects(() => verifyTokens({}, () => Response.json({ jsonrpc: "2.0", id: "wrong", result: { context: { slot: 120 }, value: validTokenAccounts() } })), /incomplete or stale/i);
 });
+
+test("rejects malformed RPC ALT executable flags and account encodings instead of coercing them",async()=>{
+  const variants=[
+    a=>({...a,executable:"false"}),
+    a=>({...a,executable:0}),
+    a=>({...a,executable:null}),
+    a=>({...a,data:[a.data[0]+" ","base64"]}),
+    a=>({...a,data:[a.data[0].slice(0,-1),"base64"]}),
+    a=>({...a,data:[a.data[0],"base64","ignored"]}),
+    a=>({...a,data:[a.data[0],"base58"]})
+  ];
+  for(const make of variants){
+    await assert.rejects(resolveTransactionLookups({
+      lookups:lookup,rpcUrl:"https://rpc.example.com",
+      fetchImpl:async()=>rpcResponse([make(validAccount())])
+    }),/missing or malformed|canonical base64/);
+  }
+});

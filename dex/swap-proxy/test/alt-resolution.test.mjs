@@ -52,3 +52,33 @@ test("rejects duplicate tables, invalid slots and malformed account layouts",asy
   await assert.rejects(resolveAddressLookupTables({lookups:[],fetchAccount:async()=>null,currentSlot:-1}),/finalized current slot/);
   await assert.rejects(resolveAddressLookupTables({lookups:[{accountKey:tableKey,writableIndexes:[0],readonlyIndexes:[]}],fetchAccount:fetcher({owner:ADDRESS_LOOKUP_TABLE_PROGRAM_ID,executable:false,data:new Uint8Array(57)}),currentSlot:9}),/invalid metadata\/address layout/);
 });
+
+test("rejects non-boolean executable state for an otherwise valid lookup table",async()=>{
+  for(const executable of [true,"false","true",0,null,undefined]){
+    const malformed={...account(),executable};
+    await assert.rejects(resolveAddressLookupTables({
+      lookups:[{accountKey:tableKey,writableIndexes:[0],readonlyIndexes:[]}],
+      fetchAccount:fetcher(malformed),currentSlot:9
+    }),/missing or not owned by the canonical ALT program/);
+  }
+});
+
+test("accepts canonical account base64; rejects unpadded, whitespace and mislabeled encodings",async()=>{
+  const canonical=Buffer.from(account().data).toString("base64");
+  const lookups=[{accountKey:tableKey,writableIndexes:[0],readonlyIndexes:[1]}];
+  const verify=data=>resolveAddressLookupTables({
+    lookups,fetchAccount:fetcher({owner:ADDRESS_LOOKUP_TABLE_PROGRAM_ID,executable:false,data}),currentSlot:9
+  });
+  const accepted=await verify([canonical,"base64"]);
+  assert.deepEqual(accepted.all,[encode(keys[0]),encode(keys[1])]);
+  for(const data of [
+    [canonical.trim()+" ","base64"],
+    [canonical.slice(0,-1),"base64"],
+    [canonical,"base58"],
+    [canonical,"base64","ignored"],
+    ["","base64"],
+    [canonical+"=","base64"]
+  ]){
+    await assert.rejects(verify(data),/canonical base64|missing or unsupported/);
+  }
+});
