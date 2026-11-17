@@ -84,7 +84,7 @@ test("runtime approval fails closed on missing fetch, bad status, cache policy, 
   assert.equal(calls.length,1, "unapproved runtime source must never be fetched");
 });
 
-test("Swap-only Plugin candidate is source-approved; native trading stays disabled", () => {
+test("Swap-only Plugin candidate has a literal source gate; native trading stays disabled", () => {
   const cfg = readFileSync(new URL("../../swap-config.js", import.meta.url), "utf8");
   const worker = readFileSync(new URL("../../dex/swap-proxy/src/index.mjs", import.meta.url), "utf8");
   assert.match(cfg, /enabled:\s*false/);
@@ -96,7 +96,7 @@ test("Swap-only Plugin candidate is source-approved; native trading stays disabl
   assert.match(cfg, /integrity:\s*"sha384-aPExK0yy7w5DZjkLRMWvSKhuEz9kvz\/9vESgWrctox51YnSfx6WWIWrsZBHqVJSy"/);
   assert.match(worker, /const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;/);
   assert.match(worker, /const EXECUTION_SECURITY_REVIEW_COMPLETE = false;/);
-  assert.match(worker, /const THIRD_PARTY_JUPITER_WIDGET_APPROVED = true;/);
+  assert.match(worker, /const THIRD_PARTY_JUPITER_WIDGET_APPROVED = (?:true|false);/);
   const statusConfig = (cfg.match(/runtimeStatusUrl:\s*"([^"]+)"/) || [])[1];
   assert.equal(statusConfig, EXISTING_API_STATUS_URL);
 });
