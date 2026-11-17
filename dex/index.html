@@ -723,6 +723,16 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
  .dex-partner-inquiry{display:inline-block;margin-top:9px;border:1px solid #d4ad64;background:#d4ad641a;border-radius:8px;padding:8px 13px;color:#f7daa0!important;text-decoration:none;font-size:12px;font-weight:800;transition:background .15s}
 .dex-partner-inquiry:hover,.dex-partner-inquiry:focus-visible{background:#d4ad6434;outline:2px solid #f7daa0;outline-offset:2px}
 .dex-fee-disclosure{font-size:11px;line-height:1.5;color:#a8b8c9;margin:8px 0 0}
+
+/* Deliberate off-site, user-initiated Solana trading escape hatch. No wallet JS or input transfer. */
+.external-jupiter-handoff{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0;padding:13px 14px;border:1px solid #ad8a52;border-radius:11px;background:linear-gradient(135deg,#192a3f,#0e1829);color:#e9eff8}
+.external-jupiter-handoff>div{flex:1 1 215px;min-width:0}
+.external-jupiter-handoff strong{display:block;color:#ffdc91;font-size:13px;line-height:1.4}
+.external-jupiter-handoff small{display:block;color:#bfccdd;font-size:11px;line-height:1.55;margin-top:5px}
+.external-jupiter-handoff a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 15px;border:1px solid #f0cd86;border-radius:10px;background:#2d2419;color:#ffe4a5!important;font-size:12px;font-weight:800;text-align:center;text-decoration:none;flex:0 0 auto}
+.external-jupiter-handoff a:hover,.external-jupiter-handoff a:focus-visible{background:#493820;outline:2px solid #f6d594;outline-offset:2px}
+.external-jupiter-handoff[hidden]{display:none}
+@media(max-width:560px){.external-jupiter-handoff a{width:100%}}
 </style>
 <link rel="stylesheet" href="/dex/terminal-premium.css?v=1">
 <link rel="stylesheet" href="/dex/provider-managed-swap.css?v=1">
@@ -820,6 +830,7 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
  <button type="button" class="dex-trade-prepare" id="dexTradePrepare" disabled>Order preparation disabled</button>
  <div class="dex-trade-status" id="dexTradeStatus" aria-live="polite" aria-atomic="true">Quote-only mode. No transaction can be created, signed or submitted from this panel.</div>
  <div class="dex-trade-safety">Execution will remain disabled until the API health check, rate limiter, wallet transaction validation and production security review are verified.</div>
+<section class="external-jupiter-handoff" id="dexExternalJupiterHandoff" aria-label="Trade on Jupiter external website"><div><strong>Trade on Jupiter · external website</strong><small>Climboria cannot execute the trade here. On Jupiter, enter and verify the selected mint yourself, then review the current route, slippage and fees in your wallet. No Climboria quote or token selection is transferred and no Climboria trading fee is collected.</small></div><a href="https://jup.ag/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" aria-label="Open Jupiter official website in a separate tab to trade there">Open Jupiter website ↗</a></section>
 <button type="button" class="climboria-managed-swap-launch" data-climboria-managed-swap-open hidden aria-controls="climboriaDexProviderPanel" aria-expanded="false">Swap with Jupiter · In Climboria</button>
  </aside><aside class="token-community">
  
