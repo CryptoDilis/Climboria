@@ -13,7 +13,7 @@ const approved = Object.freeze({
   enabled: true,
   runtimeApproved: true,
   provider: "jupiter-terminal",
-  scriptUrl: "https://terminal.jup.ag/main-v3.js",
+  scriptUrl: "https://plugin.jup.ag/plugin-1.0.18.js",
   integrity: "sha384-" + "A".repeat(64)
 });
 
@@ -73,8 +73,16 @@ test("provider-loader refuses unreviewed hosts, protocols, missing SRI and redir
   assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "http://terminal.jup.ag/main-v3.js" }), null);
   assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "https://terminal.jup.ag.evil.example/main-v3.js" }), null);
   assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "https://terminal.jup.ag:8443/main-v3.js" }), null);
-  assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "https://terminal.jup.ag/main-v3.js?redirect=1" }), null);
+  assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "https://plugin.jup.ag/plugin-1.0.18.js?redirect=1" }), null);
   assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "https://terminal.jup.ag/not-reviewed.js" }), null);
+  assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "https://terminal.jup.ag/main-v3.js" }), null,
+    "Deprecated Terminal origin must not be approved");
+  assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "https://plugin.jup.ag/plugin-v1.js" }), null,
+    "Mutable unversioned Plugin alias cannot be used as a source pin");
+  assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "https://plugin.jup.ag/plugin-1.0.18-app.js" }), null,
+    "Direct app bundle is not an approved bootstrap");
+  assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "https://plugin.jup.ag/plugin-1.0.19.js" }), null,
+    "New vendor version requires explicit review and code update");
   assert.equal(validateManagedProviderConfig({ ...approved, integrity: null }), null);
   assert.equal(validateManagedProviderConfig({ ...approved, integrity: "sha256-" + "A".repeat(64) }), null);
   assert.equal(validateManagedProviderConfig({ ...approved, provider: "untrusted" }), null);
