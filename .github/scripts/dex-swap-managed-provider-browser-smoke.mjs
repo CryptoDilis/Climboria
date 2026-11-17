@@ -14,7 +14,9 @@ import { createServer } from "node:http";
 import { chromium } from "playwright";
 
 const ORIGIN = "http://127.0.0.1:4173";
-// Synthetic browser fixture follows the versioned official Plugin host.\n// This does NOT validate real transitive vendor JS/CSS or authorize production.\nconst SCRIPT_URL = "https://plugin.jup.ag/plugin-1.0.18.js";
+// Synthetic browser fixture follows the versioned official Plugin host.
+// This does NOT validate real transitive vendor JS/CSS or authorize production.
+const SCRIPT_URL = "https://plugin.jup.ag/plugin-1.0.18.js";
 const MOCK_SCRIPT = [
   "window.Jupiter = {",
   " init: function(options) {",
