@@ -24,16 +24,24 @@ test("0.50% is an explicit business target, NOT an operational fee", () => {
   assert.equal(Object.isFrozen(c), true);
 });
 
-test("no fee flow accidentally enables wallet-signable custom Worker or third-party hosted provider", () => {
+test("Swap-first candidate is still denied by API status, with zero integrator fees and native execution off", () => {
   const c = config();
   assert.equal(c.proxyEnabled, true, "quotes stay available");
   assert.equal(c.enabled, false, "custom wallet transaction flow stays off");
-  assert.equal(c.managedProvider.enabled, false, "unverified external JS stays disabled");
-  assert.equal(c.managedProvider.scriptUrl, null);
-  assert.equal(c.managedProvider.integrity, null);
+  assert.equal(c.managedProvider.enabled, true, "only source-pinned Swap candidate prepared");
+  assert.equal(c.managedProvider.runtimeApproved, true, "not sufficient without actual API approval");
+  assert.equal(c.managedProvider.surfaces.swap, true);
+  assert.equal(c.managedProvider.surfaces.dex, false);
+  assert.equal(c.managedProvider.runtimeStatusUrl,"https://api.climboria.fun/api/swap/provider-status");
+  assert.equal(c.managedProvider.scriptUrl, "https://plugin.jup.ag/plugin-1.0.18.js");
+  assert.equal(c.managedProvider.integrity,
+    "sha384-aPExK0yy7w5DZjkLRMWvSKhuEz9kvz/9vESgWrctox51YnSfx6WWIWrsZBHqVJSy");
   const worker = readFileSync(new URL("../../dex/swap-proxy/src/index.mjs", import.meta.url), "utf8");
   assert.match(worker, /const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;/);
   assert.match(worker, /const EXECUTION_SECURITY_REVIEW_COMPLETE = false;/);
+  assert.match(worker, /const THIRD_PARTY_JUPITER_WIDGET_APPROVED = false;/);
+  assert.equal(c.revenue.feeCollectionEnabled,false);
+  assert.equal(c.revenue.feeRecipient,null);
 });
 
 test("DEX explicitly labels proposed fee as uncollected, not secretly live or revenue-generating", () => {
