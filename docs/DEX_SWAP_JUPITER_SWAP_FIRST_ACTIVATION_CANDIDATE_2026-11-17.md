@@ -2,7 +2,7 @@
 # Swap-first Jupiter Plugin in-site activation candidate — not customer live
 
 Date: 2026-11-17 PH. Scope: Climboria Swap and Signature DEX only.
-Status: REVIEW CANDIDATE; this PR should remain unmerged pending owner acceptance of current vendor runtime/usage terms and production rollout.
+Status: SAFE FRONTEND PREPARATION ONLY. Can merge after exact tests while the independently deployed API status remains source-OFF; public trading MUST remain OFF pending current vendor/runtime/usage acceptance.
 
 ## Source and intent
 
@@ -30,6 +30,6 @@ The pending official terms and dynamic vendor code trust must be reviewed; use t
 ## Next exact
 
 1. Run exact-head tests on this draft. Investigate any failure rather than relaxing source gate.
-2. Verify current official CDN artifact, embedded-wallet options, published terms and dynamic dependency/update policy. If unresolved, keep this PR DRAFT; do not merge or change API status. A paid custom CPI audit remains out of scope.
+2. Verify current official CDN artifact, embedded-wallet options, published terms and dynamic dependency/update policy. If unresolved, the frontend source pin may remain staged but keep the API runtime status source OFF. Never merge a revision that enables that API status before acceptance. A paid custom CPI audit remains out of scope.
 3. If accepted, explicitly approve a reviewed swap-only enablement with a reversible API status deployment (and the current source config), then verify live desktop/mobile wallet prompt, genuine mint pair, visible minimum received and every provider/network fee, and finalized receipt. Initial Climboria fee is zero.
 4. Only after that review, independently roll out DEX Buy/Sell surface. No changes to Game, ClimbX, Launchpad or native Climboria order/execute.
