@@ -64,8 +64,12 @@ function approveRuntime(page) {
 async function runPage(browser, path, {badHash = false, apiStatus = false} = {}) {
   const page = await browser.newPage({viewport:{width: path === "/dex/" ? 390 : 1280,height:850}});
   let scriptLoads = 0;
+  const hostModuleRequests = [];
   const forbidden = [];
   page.on("request", req => {
+    if (new URL(req.url()).pathname === "/dex/provider-managed-swap.mjs") {
+      hostModuleRequests.push(req.url());
+    }
     if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(req.url())) forbidden.push(req.url());
   });
   page.on("dialog", dialog => { throw Error("Unexpected popup: " + dialog.message()); });
@@ -88,6 +92,8 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
     assert.equal(response.status(),200,path + " must load");
     const button = page.locator("[data-climboria-managed-swap-open]:visible").first();
     await button.waitFor({timeout:15000});
+    assert.deepEqual(hostModuleRequests, [ORIGIN + "/dex/provider-managed-swap.mjs?v=7"],
+      "Swap and DEX must load exactly the reviewed cache-busted v7 host module");
     // Every launcher, including the DEX token-detail action, must point to the
     // actual expandable region, never the embedded third-party SDK mount node.
     const panelId = path === "/swap/" ? "climboriaSwapProviderPanel" : "climboriaDexProviderPanel";
