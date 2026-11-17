@@ -43,7 +43,7 @@ test("build plan binds all requests to exact pool and bounds GeckoTerminal reque
 
 test("rejects invalid mints, unknown flags, unsafe output paths and unsupported intervals", () => {
   assert.throws(() => parseOptions(["--pool", "a", "--base", base, "--quote", quote]), /Exact Solana/);
-  assert.throws(() => parseOptions([...flags, "--interval", "5m"]), /Duplicate/);
+  assert.throws(() => parseOptions([...flags, "--interval", "5m"]), /duplicate/i);
   assert.throws(() => parseOptions([...flags, "--output", "../credentials.json"]), /Output must/);
   assert.throws(() => parseOptions([...flags, "--bad"]), /Unrecognized/);
   assert.throws(() => parseOptions(["--pool", pool, "--base", base, "--quote", quote, "--interval", "30m"]), /Unsupported/);
