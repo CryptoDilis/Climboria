@@ -7,11 +7,9 @@ on:
       - ".github/scripts/jupiter-provider-status-production.mjs"
       - ".github/workflows/jupiter-provider-status-production.yml"
       - "dex/swap-proxy/src/index.mjs"
-  push:
-    branches: [main]
-    paths:
-      - ".github/scripts/jupiter-provider-status-production.mjs"
-      - ".github/workflows/jupiter-provider-status-production.yml"
+  # Postdeploy proof is triggered only by successful API Worker deployment.
+  # A push-triggered check could observe the *old* OFF Worker before the
+  # new reviewed ON revision finishes deploying and report a false failure.
   workflow_dispatch:
   workflow_run:
     workflows: ["Deploy Climboria API"]
