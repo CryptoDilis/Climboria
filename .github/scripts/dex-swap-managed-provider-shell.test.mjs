@@ -974,6 +974,54 @@ test("approved tab focus or BFCache resume rechecks and restores panel without p
   assert.equal(ui.panel.hidden,true);
 });
 
+test("tab-return vendor close/resume errors fail closed without claiming a safe wallet UI", async () => {
+  for (const failure of ["missing-close", "throws-close", "missing-resume", "throws-resume"]) {
+    const ui = createDom();
+    const listeners = {};
+    let initCalls = 0;
+    let vendorCloseCalls = 0;
+    let vendorResumeCalls = 0;
+    let statusRequests = 0;
+    const provider = {
+      init() { initCalls++; },
+      ...(failure !== "missing-close" ? {close() {
+        vendorCloseCalls++;
+        if (failure === "throws-close") throw Error("provider close failed");
+      }} : {}),
+      ...(failure !== "missing-resume" ? {resume() {
+        vendorResumeCalls++;
+        if (failure === "throws-resume") throw Error("provider resume failed");
+      }} : {})
+    };
+    const scope = withRuntime({
+      Jupiter: provider,
+      addEventListener(event, fn) {listeners[event] = fn;},
+      setInterval() {return 101;},
+      clearInterval() {}
+    });
+    const fetchOld = scope.fetch;
+    scope.fetch = (...args) => {statusRequests++;return fetchOld(...args);};
+    initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+    await ui.btn.click();
+    assert.equal(initCalls,1);
+    const initialRequests = statusRequests;
+    assert.equal(ui.panel.hidden,false);
+    await listeners.focus();
+    assert.equal(ui.panel.hidden,true,failure);
+    assert.equal(ui.btn.hidden,true,"an untrustworthy root must not be reopened in this page");
+    assert.match(ui.status.textContent,/Provider could not be safely (concealed|resumed)/,failure);
+    assert.equal(initCalls,1,"no new wallet init on tab return");
+    assert.equal(vendorResumeCalls,failure === "throws-resume" ? 1 : 0);
+    if (failure === "throws-resume") {
+      assert.equal(statusRequests,initialRequests+1,
+        "resume attempted only after fresh no-store approval");
+    } else {
+      assert.equal(statusRequests,initialRequests,
+        "missing/failed concealment must stop before requesting approval");
+    }
+  }
+});
+
 test("a stale successful tab-resume response cannot resurrect a manually closed panel", async () => {
   const ui = createDom();
   let resolveStale;
