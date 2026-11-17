@@ -150,6 +150,9 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   let loading = false;
   let mounted = false;
   let mountedPair = null;
+  // Jupiter.close() hides the vendor-owned root as well as our panel.
+  // A fresh, explicitly approved reopen must invoke the official resume().
+  let providerConcealedByClose = false;
   let scriptLoaded = false;
   let lastTrigger = null;
   // Closing invalidates any pending script-load result. A late third-party
@@ -239,6 +242,26 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         startActiveApprovalChecks();
         panel.scrollIntoView?.({ behavior: "smooth", block: "start" });
         if (mounted) {
+          if (providerConcealedByClose) {
+            // The official Plugin uses display:none on its own root when
+            // close() is called. Reopening the host alone would leave an
+            // invisible wallet widget unless resume() succeeds.
+            try {
+              if (typeof scope.Jupiter?.resume !== "function") {
+                throw new Error("Jupiter.resume is unavailable");
+              }
+              scope.Jupiter.resume();
+              providerConcealedByClose = false;
+            } catch {
+              // Never claim a working wallet UI when vendor resume failed.
+              try { scope.Jupiter?.close?.(); } catch { /* best effort */ }
+              stopActiveApprovalChecks();
+              panel.hidden = true;
+              expanded(false);
+              status.textContent = "Provider could not be reopened safely. Refresh the page to retry; existing wallet requests or transactions are not cancelled.";
+              return;
+            }
+          }
           const selection = readSelectedProviderPair(panel);
           // The provider may keep an earlier pair after it was mounted. Never
           // claim a new token is selected without a verified provider update.
@@ -285,6 +308,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         }
         mountedPair = selection;
         mounted = true;
+        providerConcealedByClose = false;
         if (requestId === openRequestId && !panel.hidden) {
           status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
         }
@@ -316,6 +340,14 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     ++openRequestId;
     panel.hidden = true;
     expanded(false);
+    // Closing the host must also hide the official Plugin-owned widget.
+    // It cannot cancel separate wallet confirmations or submitted swaps.
+    if (mounted && typeof scope.Jupiter?.close === "function") {
+      try {
+        scope.Jupiter.close();
+        providerConcealedByClose = true;
+      } catch { /* first-party panel is already hidden */ }
+    }
     lastTrigger?.focus?.();
     status.textContent = mounted
       ? "Provider panel hidden. Closing this page does not cancel wallet prompts or on-chain transactions."
