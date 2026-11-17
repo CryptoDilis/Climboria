@@ -457,12 +457,14 @@ function setSwapChain(chain){
  $('chainSolana').classList.toggle('active',chain==='solana');
  $('chainBase').classList.toggle('active',chain==='base');
  const isBase=chain==='base';
- // Prevent opening a Solana-only provider on Base. Closing also invalidates
- // a pending SDK load, but cannot cancel wallet prompts already issued.
+ // A Base switch must invalidate even a HIDDEN pending Jupiter reopen,
+ // not only a visible mounted panel. The host's Close fences stale async
+ // release responses and conceals provider-owned UI best-effort; this
+ // cannot recall wallet prompts or transactions already submitted.
  document.documentElement.dataset.climboriaSwapNetwork=chain;
  const managedPanel=$('climboriaSwapProviderPanel');
  managedPanel?.setAttribute('data-climboria-managed-swap-network',chain);
- if(isBase&&!managedPanel.hidden)managedPanel.querySelector('[data-climboria-managed-swap-close]')?.click();
+ if(isBase&&managedPanel)managedPanel.querySelector('[data-climboria-managed-swap-close]')?.click();
  syncSwapJupiterPair();
  $('swapExternalJupiterHandoff').hidden=isBase;
  $('chainNotice').textContent=isBase?'Base network selected · ERC-20 assets require a Base-compatible wallet and verified EVM routing backend. Quotes and execution are not enabled yet.':'Solana network selected · Jupiter route interface. Execution remains disabled pending backend verification.';
