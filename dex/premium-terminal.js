@@ -5,9 +5,10 @@ const USDC='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const HERO_MARKET_STALE_AFTER_MS=90_000;
 let heroMarketFetchedAt=0;
 let heroMarketRequest=0;
+let trendingRequest=0;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const metric=n=>{if(n===null||n===undefined||typeof n==='boolean'||(typeof n==='string'&&!n.trim()))return null;const v=Number(n);return Number.isFinite(v)?v:null};
+const metric=n=>{if(typeof n!=='number'&&(typeof n!=='string'||!n.trim()))return null;const v=Number(n);return Number.isFinite(v)?v:null};
 const money=n=>{const v=metric(n);if(v===null||v<0)return 'Unavailable';return v>=1e9?'$'+(v/1e9).toFixed(2)+'B':v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':'$'+v.toFixed(2)};
 const price=n=>{const v=metric(n);if(v===null||v<=0)return 'Unavailable';return '$'+(v<.0001?v.toExponential(2):v<1?v.toPrecision(4):v.toLocaleString('en-US',{maximumFractionDigits:4}))};
 async function get(path){const r=await fetch(API+path,{headers:{accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(9000)});if(!r.ok)throw new Error('DexScreener HTTP '+r.status);return r.json()}
@@ -30,13 +31,13 @@ async function loadHero(){
  try{
   const data=await get('/latest/dex/tokens/'+SOL);
   const fetchedAt=Date.now();
-  const pairs=(data.pairs||[]).filter(p=>p?.chainId==='solana'&&p.baseToken?.address===SOL&&p.quoteToken?.address===USDC&&isSolanaAddress(p.pairAddress)&&Number.isFinite(Number(p.priceUsd))&&Number(p.priceUsd)>0&&Number(p.liquidity?.usd)>0);
-  pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+  const pairs=(data.pairs||[]).filter(p=>p?.chainId==='solana'&&p.baseToken?.address===SOL&&p.quoteToken?.address===USDC&&isSolanaAddress(p.pairAddress)&&metric(p.priceUsd)>0&&metric(p.liquidity?.usd)>0);
+  pairs.sort((a,b)=>metric(b.liquidity?.usd)-metric(a.liquidity?.usd));
   const p=pairs[0];if(!p)throw new Error('No verified wrapped-SOL/USDC pool returned');
   if(request!==heroMarketRequest)return;
   const change=metric(p.priceChange?.h24),changeText=change!==null?(change>0?'+':'')+change.toFixed(2)+'%':'24h change unavailable';
   const changeClass=change!==null?(change>=0?'positive':'negative'):'muted';
-  const previous=Number(el.dataset.lastPrice),current=Number(p.priceUsd),flash=Number.isFinite(previous)&&Number.isFinite(current)&&current!==previous?(current>previous?'price-flash-up':'price-flash-down'):'';
+  const previous=Number(el.dataset.lastPrice),current=metric(p.priceUsd),flash=Number.isFinite(previous)&&Number.isFinite(current)&&current!==previous?(current>previous?'price-flash-up':'price-flash-down'):'';
   heroMarketFetchedAt=fetchedAt;
   el.dataset.marketState='fresh';
   el.dataset.marketLeaderPool=p.pairAddress;
@@ -47,6 +48,9 @@ async function loadHero(){
 }
 async function loadTrending(){
  const grid=$('premiumTrendingGrid');if(!grid)return;
+ // Refreshes can overlap after tab return and interval ticks. Only the
+ // latest request may update cards, availability or the displayed fetch time.
+ const request=++trendingRequest;
  const updated=$('premiumTrendingUpdated');
  try{
   // Discover beyond a fixed ticker watchlist. DexScreener's profile and boost
@@ -56,6 +60,7 @@ async function loadTrending(){
    get('/token-profiles/latest/v1'),
    get('/token-boosts/top/v1')
   ]);
+  if(request!==trendingRequest)return; // Do not fetch more data for superseded discovery.
   const candidates=new Map();
   const add=(rows,source)=>{
    for(const item of (Array.isArray(rows)?rows:[])){
@@ -76,6 +81,7 @@ async function loadTrending(){
   }
   // DexScreener supports up to 30 token addresses in one batch request.
   const pairPayload=await get('/tokens/v1/solana/'+addresses.join(','));
+  if(request!==trendingRequest)return;
   const pairs=Array.isArray(pairPayload)?pairPayload:(Array.isArray(pairPayload?.pairs)?pairPayload.pairs:[]);
   const bestByMint=new Map();
   for(const p of pairs){
@@ -104,6 +110,7 @@ async function loadTrending(){
   }).join('');
   if(updated)updated.textContent='Updated '+new Date().toLocaleTimeString()+' · '+list.length+' pools · latest profiles + active boosts · sorted by 24h volume';
  }catch(e){
+  if(request!==trendingRequest)return; // Old request failure must not erase newer live cards.
   grid.innerHTML='<div class="premium-trending-empty">Live Solana discovery is temporarily unavailable. No sample prices or fabricated market data are shown.</div>';
   if(updated)updated.textContent='Provider unavailable · retrying';
  }
