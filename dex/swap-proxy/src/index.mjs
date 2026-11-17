@@ -24,6 +24,10 @@ const UPSTREAM_TIMEOUT_MS = 12000;
 const EXECUTION_SECURITY_REVIEW_COMPLETE = false;
 // Do not return wallet-signable transactions until program semantics are independently reviewed.
 const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;
+// Separate third-party Jupiter UI release switch. This has NO relationship
+// to Climboria-native order signing/execution; both stay hard-disabled.
+// Never toggle through a request, query, cookie, or environment variable.
+const THIRD_PARTY_JUPITER_WIDGET_APPROVED = false;
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -600,12 +604,13 @@ export default {
     }
     if (origin && !allowed.includes(origin)) return json({ error: "Origin not allowed" }, 403, headers);
     const knownRoute = (url.pathname === "/health" && request.method === "GET") ||
-      (["/api/swap/quote", "/api/tokens/search", "/api/pump/coin"].includes(url.pathname) && request.method === "GET") ||
+      (["/api/swap/quote", "/api/tokens/search", "/api/pump/coin", "/api/swap/provider-status"].includes(url.pathname) && request.method === "GET") ||
       (["/api/swap/order", "/api/swap/execute"].includes(url.pathname) && request.method === "POST");
-    const knownPath = ["/health", "/api/swap/quote", "/api/tokens/search", "/api/pump/coin", "/api/swap/order", "/api/swap/execute"].includes(url.pathname);
-    if (knownPath && !knownRoute) return json({ error: "Method not allowed" }, 405, { ...headers, allow: url.pathname === "/health" || url.pathname.endsWith("/quote") || url.pathname.endsWith("/search") || url.pathname.endsWith("/coin") ? "GET, OPTIONS" : "POST, OPTIONS" });
+    const knownPath = ["/health", "/api/swap/quote", "/api/tokens/search", "/api/pump/coin", "/api/swap/provider-status", "/api/swap/order", "/api/swap/execute"].includes(url.pathname);
+    if (knownPath && !knownRoute) return json({ error: "Method not allowed" }, 405, { ...headers, allow: url.pathname === "/health" || url.pathname.endsWith("/quote") || url.pathname.endsWith("/search") || url.pathname.endsWith("/coin") || url.pathname.endsWith("/provider-status") ? "GET, OPTIONS" : "POST, OPTIONS" });
     try {
       if (request.method === "GET" && url.pathname === "/health") { const executionEnabled = EXECUTION_SECURITY_REVIEW_COMPLETE && env.EXECUTION_ENABLED === "true"; const deployedGitSha = typeof env.DEPLOYED_GIT_SHA === "string" && /^[0-9a-f]{40}$/.test(env.DEPLOYED_GIT_SHA) ? env.DEPLOYED_GIT_SHA : null; const ready = Boolean(deployedGitSha && env.JUPITER_API_KEY && env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function" && env.ORDER_STORE && typeof env.ORDER_STORE.idFromName === "function" && typeof env.ORDER_STORE.get === "function" && (!executionEnabled || env.SOLANA_RPC_URL)); return json({ ok: ready, service: "climboria-swap-proxy", deployedGitSha, execution: executionEnabled ? "enabled" : "disabled", configured: { jupiterKey: Boolean(env.JUPITER_API_KEY), rateLimiter: Boolean(env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function"), orderStore: Boolean(env.ORDER_STORE && typeof env.ORDER_STORE.idFromName === "function" && typeof env.ORDER_STORE.get === "function"), solanaRpc: Boolean(env.SOLANA_RPC_URL), executionEnabled } }, ready ? 200 : 503, headers); }
+      if (request.method === "GET" && url.pathname === "/api/swap/provider-status") return json({ enabled: THIRD_PARTY_JUPITER_WIDGET_APPROVED }, 200, headers);
       if (request.method === "GET" && url.pathname === "/api/swap/quote") return await handleQuote(request, env).then(r => addHeaders(r, headers));
       if (request.method === "GET" && url.pathname === "/api/tokens/search") return await handleTokenSearch(request, env).then(r => addHeaders(r, headers));
       if (request.method === "GET" && url.pathname === "/api/pump/coin") return await handlePumpCoin(request, env).then(r => addHeaders(r, headers));

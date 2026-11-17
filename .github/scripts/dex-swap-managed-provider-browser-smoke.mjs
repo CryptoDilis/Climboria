@@ -17,6 +17,7 @@ const ORIGIN = "http://127.0.0.1:4173";
 // Synthetic browser fixture follows the versioned official Plugin host.
 // This does NOT validate real transitive vendor JS/CSS or authorize production.
 const SCRIPT_URL = "https://plugin.jup.ag/plugin-1.0.18.js";
+const API_STATUS_URL = "https://api.climboria.fun/api/swap/provider-status";
 const MOCK_SCRIPT = [
   "window.Jupiter = {",
   " init: function(options) {",
@@ -34,12 +35,13 @@ const MOCK_SCRIPT = [
 ].join("\n");
 const sri = "sha384-" + createHash("sha384").update(MOCK_SCRIPT).digest("base64");
 
-function mockConfig(integrity = sri) {
+function mockConfig(integrity = sri, runtimeStatusUrl = null) {
   return "window.CLIMBORIA_SWAP_CONFIG = Object.freeze({" +
     "proxyEnabled:true,enabled:false,apiBase:'https://api.climboria.fun'," +
     "managedProvider:Object.freeze({enabled:true,runtimeApproved:true," +
     "surfaces:Object.freeze({swap:true,dex:true}),provider:'jupiter-terminal'," +
-    "scriptUrl:'" + SCRIPT_URL + "',integrity:'" + integrity + "'})," +
+    "scriptUrl:'" + SCRIPT_URL + "',integrity:'" + integrity + "'" +
+    (runtimeStatusUrl ? ",runtimeStatusUrl:'" + runtimeStatusUrl + "'" : "") + "})," +
     "revenue:Object.freeze({integratorFeeTargetBps:50,feeCollectionEnabled:false," +
     "feeRecipient:null,providerFeeIntegrationVerified:false})});";
 }
@@ -50,7 +52,7 @@ function approveRuntime(page) {
   }));
 }
 
-async function runPage(browser, path, {badHash = false} = {}) {
+async function runPage(browser, path, {badHash = false, apiStatus = false} = {}) {
   const page = await browser.newPage({viewport:{width: path === "/dex/" ? 390 : 1280,height:850}});
   let scriptLoads = 0;
   const forbidden = [];
@@ -58,10 +60,15 @@ async function runPage(browser, path, {badHash = false} = {}) {
     if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(req.url())) forbidden.push(req.url());
   });
   page.on("dialog", dialog => { throw Error("Unexpected popup: " + dialog.message()); });
-  await approveRuntime(page);
+  if (apiStatus) {
+    await page.route(API_STATUS_URL, route => route.fulfill({
+      json:{enabled:true}, headers:{"Cache-Control":"no-store","Access-Control-Allow-Origin":"*"}
+    }));
+  } else await approveRuntime(page);
   await page.route("**/swap-config.js", route =>
     route.fulfill({status:200,contentType:"application/javascript",
-      body:mockConfig(badHash ? "sha384-" + "A".repeat(64) : sri)}));
+      body:mockConfig(badHash ? "sha384-" + "A".repeat(64) : sri,
+        apiStatus ? API_STATUS_URL : null)}));
   await page.route(SCRIPT_URL, route => {
     scriptLoads++;
     return route.fulfill({status:200,contentType:"application/javascript",
@@ -411,6 +418,10 @@ const browser = await chromium.launch({headless:true});
 try {
   await runPage(browser,"/swap/");
   await runPage(browser,"/dex/");
+  // Cross-origin, existing API Worker status choice must work in both surfaces
+  // with a browser CORS check; the vendor SDK remains synthetic only.
+  await runPage(browser,"/swap/",{apiStatus:true});
+  await runPage(browser,"/dex/",{apiStatus:true});
   await runPage(browser,"/swap/",{badHash:true});
   await runCloseDuringLoad(browser,"/swap/");
   await runCloseDuringLoad(browser,"/dex/");

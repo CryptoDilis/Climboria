@@ -11,6 +11,9 @@ window.CLIMBORIA_SWAP_CONFIG = Object.freeze({
   managedProvider: Object.freeze({
     enabled: false,
     runtimeApproved: false,
+    // Existing quote API Worker status avoids a new Cloudflare zone-route binding.
+    // This is a read-only OFF source, NOT a customer trading release.
+    runtimeStatusUrl: "https://api.climboria.fun/api/swap/provider-status",
     // Independent, default-OFF release controls: Swap first, DEX second.
     surfaces: Object.freeze({ swap: false, dex: false }),
     provider: "jupiter-terminal",

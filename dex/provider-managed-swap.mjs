@@ -10,11 +10,18 @@
 const OFFICIAL_PLUGIN_HOST = "plugin.jup.ag";
 const REVIEWED_BOOTSTRAP_PATH = "/plugin-1.0.18.js";
 const SHA384_SRI = /^sha384-[A-Za-z0-9+/]{64}$/;
+// Choose exactly one operator-controlled status service per release, never an
+// OR/fallback that could authorize a widget after a failed/revoked status.
+const RUNTIME_STATUS_URLS = new Set([
+  "/swap-runtime-status.json",
+  "https://api.climboria.fun/api/swap/provider-status"
+]);
 
 export function validateManagedProviderConfig(config) {
   if (!config || config.enabled !== true || config.runtimeApproved !== true || config.provider !== "jupiter-terminal" ||
       typeof config.scriptUrl !== "string" || typeof config.integrity !== "string" ||
-      !SHA384_SRI.test(config.integrity)) return null;
+      !SHA384_SRI.test(config.integrity) ||
+      !RUNTIME_STATUS_URLS.has(config.runtimeStatusUrl ?? "/swap-runtime-status.json")) return null;
   try {
     const url = new URL(config.scriptUrl);
     if (url.protocol !== "https:" || url.hostname !== OFFICIAL_PLUGIN_HOST ||
@@ -82,10 +89,10 @@ export function integratedTerminalOptions(targetId, pair = null) {
  * A previously approved page must not bypass a later production rollback.
  * Recheck before every widget open and immediately before provider init.
  */
-export async function isManagedSwapRuntimeApproved(scope) {
-  if (!scope || typeof scope.fetch !== "function") return false;
+export async function isManagedSwapRuntimeApproved(scope, statusUrl = "/swap-runtime-status.json") {
+  if (!scope || typeof scope.fetch !== "function" || !RUNTIME_STATUS_URLS.has(statusUrl)) return false;
   try {
-    const response = await scope.fetch("/swap-runtime-status.json", {
+    const response = await scope.fetch(statusUrl, {
       cache: "no-store", redirect: "error", signal: AbortSignal.timeout(3000)
     });
     const cachePolicy = response.headers.get("Cache-Control") ?? "";
@@ -134,6 +141,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   const surface = panel.getAttribute?.("data-climboria-managed-swap-surface");
   const approved = isManagedProviderSurfaceApproved(config, surface)
     ? validateManagedProviderConfig(config) : null;
+  const runtimeStatusUrl = config?.runtimeStatusUrl ?? "/swap-runtime-status.json";
   if (!approved || !target || !target.id || !status || !close || !buttons.length) {
     buttons.forEach(button => { button.hidden = true; });
     panel.hidden = true;
@@ -167,7 +175,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     activeCheckInFlight = true;
     const requestId = openRequestId;
     try {
-      const stillApproved = await isManagedSwapRuntimeApproved(scope);
+      const stillApproved = await isManagedSwapRuntimeApproved(scope, runtimeStatusUrl);
       if (requestId === openRequestId && !panel.hidden && !stillApproved) hideRevoked();
     } finally {
       activeCheckInFlight = false;
@@ -213,7 +221,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         }
         integratedTerminalOptions(target.id, selectedPair);
         // Page-load approval may be revoked while this document stays open.
-        const allowedOnOpen = await isManagedSwapRuntimeApproved(scope);
+        const allowedOnOpen = await isManagedSwapRuntimeApproved(scope, runtimeStatusUrl);
         if (requestId !== openRequestId) return;
         if (!allowedOnOpen) {
           hideRevoked();
@@ -242,7 +250,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         }
         if (requestId !== openRequestId || panel.hidden) return;
         // Approval may also be revoked during the external script download.
-        const allowedOnInit = await isManagedSwapRuntimeApproved(scope);
+        const allowedOnInit = await isManagedSwapRuntimeApproved(scope, runtimeStatusUrl);
         if (requestId !== openRequestId || panel.hidden) return;
         if (!allowedOnInit) {
           hideRevoked();
@@ -314,7 +322,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     expanded(false);
     status.textContent = "Rechecking provider release approval after returning to this tab. Existing wallet requests and submitted transactions are not cancelled.";
     try {
-      const stillApproved = await isManagedSwapRuntimeApproved(scope);
+      const stillApproved = await isManagedSwapRuntimeApproved(scope, runtimeStatusUrl);
       if (requestId !== openRequestId) return;
       if (!stillApproved) {
         hideRevoked();
@@ -343,7 +351,7 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
       ?.getAttribute("data-climboria-managed-swap-surface");
     const runtimeEnabled = isManagedProviderSurfaceApproved(config, surface) &&
       validateManagedProviderConfig(config) &&
-      await isManagedSwapRuntimeApproved(window);
+      await isManagedSwapRuntimeApproved(window, config?.runtimeStatusUrl ?? "/swap-runtime-status.json");
     initializeManagedSwapHost({ doc: document, scope: window, config: runtimeEnabled ? config : null });
   };
   if (document.readyState === "loading") {
