@@ -77,6 +77,11 @@ jobs:
           grep -Eq '^DEPLOYED_GIT_SHA = "[a-f0-9]{40}"$' wrangler.toml
           grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' src/index.mjs
           grep -Fqx 'const EXECUTION_SECURITY_REVIEW_COMPLETE = false;' src/index.mjs
+          # Explicit third-party Swap-only release. Native /order and /execute
+          # remain source-denied. Rollback reverts this entire reviewed change.
+          grep -Fqx 'const THIRD_PARTY_JUPITER_WIDGET_APPROVED = true;' src/index.mjs
+          grep -Fq 'surfaces: Object.freeze({ swap: true, dex: false })' ../../swap-config.js
+          grep -Fq 'feeCollectionEnabled: false' ../../swap-config.js
           grep -Eq '^[[:space:]]*enabled:[[:space:]]*false' ../../swap-config.js
           grep -Fqx 'pattern = "api.climboria.fun"' wrangler.toml
           grep -Fqx 'custom_domain = true' wrangler.toml
