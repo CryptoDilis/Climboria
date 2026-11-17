@@ -911,6 +911,13 @@ try {
   await desktop.close();
   console.log('Desktop gameplay context closed before mobile GLB loading.');
 
+  // The desktop path has completed every assertion and evidence capture. Close
+  // its WebGL context before booting the independently-tested mobile path: a
+  // live desktop render loop otherwise competes with mobile GLB streaming and
+  // decoding in the same headless Chromium process. This preserves both device
+  // flows while ensuring their readiness measurements are independent.
+  await desktop.close();
+
   const mobile = await browser.newPage({
     // Start portrait to verify the rotate gate, then switch to landscape for gameplay evidence.
     viewport: { width: 390, height: 844 },
