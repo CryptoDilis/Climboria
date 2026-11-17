@@ -50,6 +50,33 @@ test("rejects invalid mints, unknown flags, unsafe output paths and unsupported 
   assert.throws(() => parseOptions(["--pool", pool, "--base", base, "--quote", quote, "--interval", "30m"]), /Unsupported/);
 });
 
+test("rejects Base58-looking pool/mint addresses without exactly 32 decoded bytes", async () => {
+  // Length/character-only validation previously allowed all of these.
+  const invalid = ["1".repeat(33), "1".repeat(31) + "2", "z".repeat(44)];
+  for (const address of invalid) {
+    for (const key of ["--pool", "--base", "--quote"]) {
+      const altered = [...flags];
+      altered[altered.indexOf(key) + 1] = address;
+      assert.throws(() => parseOptions(altered), /Exact Solana pool address/);
+    }
+    for (const key of ["pool", "base", "quote"]) {
+      assert.throws(() => makePlan({ ...opts, [key]: address }),
+        /Invalid selected Solana pool\/mint identity/);
+    }
+    let requests = 0;
+    await assert.rejects(
+      () => runCapture({ ...opts, pool: address, live: true },
+        async () => { requests++; throw new Error("network must not be reached"); }),
+      /Invalid selected Solana pool\/mint identity/
+    );
+    assert.equal(requests, 0, "invalid input must never trigger provider calls");
+  }
+  assert.equal(makePlan(opts).requests.length, 2,
+    "existing genuine 32-byte pool and mint identities remain accepted");
+  assert.equal(makePlan({ ...opts, pool: "1".repeat(32) }).requests.length, 2,
+    "canonical 32-byte all-zero Base58 key must pass syntax validation");
+});
+
 test("manual capture accepts exact market pool and correctly flipped quote OHLC identity", async () => {
   const urls = [];
   const mockFetch = async url => {
