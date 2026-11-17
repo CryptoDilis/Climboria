@@ -27,7 +27,7 @@ const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;
 // Separate third-party Jupiter UI release switch. This has NO relationship
 // to Climboria-native order signing/execution; both stay hard-disabled.
 // Never toggle through a request, query, cookie, or environment variable.
-const THIRD_PARTY_JUPITER_WIDGET_APPROVED = false;
+const THIRD_PARTY_JUPITER_WIDGET_APPROVED = true;
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), { status, headers: { ...JSON_HEADERS, ...headers } });
