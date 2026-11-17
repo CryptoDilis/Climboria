@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { parseOptions, makePlan, runCapture } from "./geckoterminal-selected-pool-capture.mjs";
+import { normalizeGeckoTerminalRequestedPoolOhlcv } from "../../dex/swap-proxy/src/geckoterminal-ohlcv.mjs";
 
 const pool = "C8Gr6AUuq9hEdSYJzoEpNcdjpojPZwqG5MtQbeouNNwg";
 const base = "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN";
@@ -143,4 +144,29 @@ test("supported CLI interval names map to candidate provider URL without claimin
       assert.equal(url.searchParams.get("aggregate"), aggregate);
     }
   }
+});
+
+
+test("missing provider OHLCV volume must not become a reported zero", () => {
+  const parseWithVolume = volume => normalizeGeckoTerminalRequestedPoolOhlcv({
+    status: 200,
+    originalPool: { address: pool, baseTokenAddress: base, quoteTokenAddress: quote },
+    requestedTokenSide: "base",
+    body: {
+      meta: { base: { address: base }, quote: { address: quote } },
+      data: { attributes: { ohlcv_list: [[1700000000, "1.1", "1.3", "1.0", "1.2", volume]] } }
+    }
+  });
+
+  // These all silently converted to numeric 0 with Number(value) before this fix.
+  for (const missing of [null, "", " ", false, []]) {
+    assert.throws(() => parseWithVolume(missing), /missing or invalid field/,
+      "must reject unreported volume instead of inventing zero");
+  }
+  assert.equal(parseWithVolume(0).candles[0].volume, 0,
+    "explicit numeric zero is valid reported volume");
+  assert.equal(parseWithVolume("0").candles[0].volume, 0,
+    "explicit string zero is valid reported volume");
+  assert.equal(parseWithVolume("5.25").candles[0].volume, 5.25,
+    "reported nonzero volume remains unchanged");
 });
