@@ -461,11 +461,93 @@ async function checkDexSelectedPoolMetricIntegrity(mobile) {
   }
 }
 
+
+/** Isolated old-pool deferred GeckoTerminal response vs newly selected pool. */
+async function checkDexIntelPoolSwitch(mobile) {
+  const name = mobile ? "DEX mobile" : "DEX desktop";
+  const context = await browser.newContext({
+    viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 },
+    isMobile: mobile, hasTouch: mobile
+  });
+  const page = await context.newPage();
+  const oldPool = "22222222222222222222222222222222";
+  const newPool = "33333333333333333333333333333333";
+  const quoteMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+  let oldStarted;
+  const oldRequested = new Promise(resolve => { oldStarted = resolve; });
+  let releaseOld = null;
+  let newRequests = 0;
+  await page.route("https://api.dexscreener.com/latest/dex/tokens/" + SOL, async route => {
+    const common = { chainId: "solana", dexId: "raydium",
+      baseToken: { address: SOL, name: "Wrapped SOL", symbol: "SOL" },
+      quoteToken: { address: quoteMint, symbol: "USDC" },
+      priceUsd: "150", liquidity: { usd: 1000 }, volume: { h24: 100 } };
+    await route.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ pairs: [
+        { ...common, pairAddress: oldPool, info: { websites: [{ label: "Old", url: "https://example.org/old-pool" }] } },
+        { ...common, pairAddress: newPool, info: { websites: [{ label: "New", url: "https://example.org/new-pool" }] } }
+      ] }) });
+  });
+  await page.route("https://api.geckoterminal.com/api/v2/networks/solana/pools/*/trades", async route => {
+    const parts = new URL(route.request().url()).pathname.split("/");
+    const pool = parts.at(-2);
+    if (pool === oldPool) {
+      oldStarted();
+      await new Promise(resolve => { releaseOld = resolve; });
+      await route.fulfill({ status: mobile ? 503 : 200, contentType: "application/json",
+        body: mobile ? '{"error":"old request failed"}' :
+          JSON.stringify({ data: [{ attributes: { kind: "buy", volume_in_usd: "999", tx_from_address: SOL } }] }) });
+    } else if (pool === newPool) {
+      newRequests++;
+      await route.fulfill({ status: 200, contentType: "application/json",
+        body: JSON.stringify({ data: [{ attributes: { kind: "sell", volume_in_usd: "23.45",
+          tx_from_address: quoteMint } }] }) });
+    } else {
+      throw new Error("Unexpected pool in isolated trade fixture");
+    }
+  });
+  try {
+    const response = await page.goto(SITE + "/dex/?token=" + SOL + "&pool=" + oldPool,
+      { waitUntil: "domcontentloaded", timeout: 60000 });
+    assert.ok(response?.ok(), name + " must load");
+    await page.waitForFunction(pool => document.querySelector("#detailChart")?.getAttribute("src")?.includes("/solana/" + pool + "?"),
+      oldPool, { timeout: 30000 });
+    const tradeToggle = page.locator('button[data-intel-panel="activity"]');
+    await tradeToggle.click({ timeout: 15000 });
+    await oldRequested;
+    if (mobile) await page.locator("#detailTabPools").click({ timeout: 15000 });
+    await page.locator('#detailPairs button[data-pool="' + newPool + '"]').click({ timeout: 15000 });
+    await page.waitForFunction(pool => new URL(location.href).searchParams.get("pool") === pool, newPool);
+    assert.equal(await tradeToggle.getAttribute("aria-expanded"), "false");
+    assert.match(await page.locator("#activityNote").textContent(), /33333…33333/);
+    assert.ok((await page.locator("#profileSocials").innerHTML()).includes("new-pool"));
+    assert.ok(!(await page.locator("#profileSocials").innerHTML()).includes("old-pool"));
+    if (mobile) await page.locator("#detailTabChart").click({ timeout: 15000 });
+    await tradeToggle.click({ timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector("#recentActivity")?.textContent?.includes("23.45"),
+      null, { timeout: 15000 });
+    assert.equal(newRequests, 1, name + " current pool trades must be requested once");
+    releaseOld();
+    releaseOld = null;
+    await page.waitForTimeout(500);
+    const tape = await page.locator("#recentActivity").textContent();
+    assert.match(tape, /23\.45/);
+    assert.doesNotMatch(tape, /999|lookup failed/i);
+    assert.match(await page.locator("#activityNote").textContent(), /33333…33333/);
+    console.log("PASS " + name + " selected-pool intel and stale provider response isolation (mocked).");
+  } finally {
+    if (releaseOld) releaseOld();
+    await context.close();
+  }
+}
+
 try {
   for (const journey of cases) await checkChart(journey);
   await checkDexPoolUrlIntegrity();
   await checkDexSelectedPoolMetricIntegrity(false);
   await checkDexSelectedPoolMetricIntegrity(true);
+  await checkDexIntelPoolSwitch(false);
+  await checkDexIntelPoolSwitch(true);
   await checkSwapNoPoolFallback({ name: "Swap desktop (quote-only pool)", mobile: false, scenario: "quote-only-pool" });
   await checkSwapNoPoolFallback({ name: "Swap mobile (provider unavailable)", mobile: true, scenario: "http-503" });
   console.log("PASS: four real chart-link journeys plus two isolated no-pool/provider-failure fallback journeys. Provider candle rendering is separately qualified above.");
