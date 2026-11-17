@@ -9,6 +9,11 @@ on:
       - 'dex/runtime-status/**'
       - '.github/workflows/deploy-jupiter-runtime-status.yml'
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'dex/runtime-status/**'
+      - '.github/workflows/deploy-jupiter-runtime-status.yml'
 
 permissions:
   contents: read
@@ -18,9 +23,31 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify-disabled:
+    name: Check disabled Jupiter status Worker without deploying
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate runtime-status Worker source and narrow Cloudflare route
+        working-directory: dex/runtime-status
+        run: |
+          set -euo pipefail
+          node --test test/*.test.mjs
+          node --check index.mjs
+          grep -Fqx 'name = "climboria-swap-runtime-status"' wrangler.toml
+          grep -Fqx 'main = "index.mjs"' wrangler.toml
+          grep -Fqx 'workers_dev = false' wrangler.toml
+          grep -Fqx 'preview_urls = false' wrangler.toml
+          grep -Fqx 'routes = [{ pattern = "climboria.fun/swap-runtime-status.json", zone_name = "climboria.fun" }]' wrangler.toml
+
   deploy-disabled:
     name: Verify and deploy disabled Jupiter UI release switch
-    if: github.ref == 'refs/heads/main'
+    needs: verify-disabled
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
