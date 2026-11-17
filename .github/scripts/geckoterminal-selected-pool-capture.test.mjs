@@ -126,6 +126,33 @@ test("HTML 429 on the initial pool lookup fails closed before OHLC requests", as
   assert.match(report.errors.join(" "), /Market identity: DexScreener pair lookup HTTP 429/);
 });
 
+test("access-denied or paywalled GeckoTerminal HTTP responses stop after one orientation", async () => {
+  for (const status of [401, 402, 403, 451]) {
+    for (const payloadKind of ["html", "json"]) {
+      const urls = [];
+      const report = await runCapture({ ...opts, live: true }, async url => {
+        urls.push(url);
+        if (url.includes("dexscreener")) return reply({ pairs: [pair] });
+        return payloadKind === "html"
+          ? new Response("<html>Provider access not permitted</html>", {
+              status, headers: { "content-type": "text/html" }
+            })
+          : reply({ errors: [{ status: String(status) }] }, status);
+      });
+      assert.equal(urls.length, 2,
+        `HTTP ${status} ${payloadKind}: must not request quote-side series`);
+      assert.equal(report.observations.length, 1);
+      assert.equal(report.observations[0].requestedSide, "base");
+      assert.equal(report.observations[0].httpStatus, status);
+      assert.equal(report.observations[0].status, "unavailable");
+      assert.equal(report.observations[0].candles, undefined);
+      assert.match(report.errors[0], new RegExp("HTTP " + status));
+      assert.equal(report.plan.verifiedLiveData, false,
+        "denial never implies source approval or verified OHLC");
+    }
+  }
+});
+
 test("supported CLI interval names map to candidate provider URL without claiming live parity", () => {
   const intervals = [
     ["1m", "minute", "1"],
