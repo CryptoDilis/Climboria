@@ -35,12 +35,18 @@ test("source-only OFF rollback returns uncached false under hostile client overr
     cpSync(originalSrcDir, copiedSrcDir, { recursive: true });
     const workerPath = join(copiedSrcDir, "index.mjs");
     const sourceToRevert = readFileSync(workerPath, "utf8");
-    const revertedSource = sourceToRevert.replace(
+    // Exercise the ON -> OFF transition even if the checked-out commit is
+    // itself an emergency OFF rollback; that commit must keep CI green.
+    const onSource = sourceToRevert.replace(
       /^const THIRD_PARTY_JUPITER_WIDGET_APPROVED = (?:true|false);$/m,
+      "const THIRD_PARTY_JUPITER_WIDGET_APPROVED = true;"
+    );
+    const revertedSource = onSource.replace(
+      /^const THIRD_PARTY_JUPITER_WIDGET_APPROVED = true;$/m,
       "const THIRD_PARTY_JUPITER_WIDGET_APPROVED = false;"
     );
-    assert.notEqual(revertedSource, sourceToRevert,
-      "Release branch must actually have an ON source gate for this rollback drill");
+    assert.notEqual(revertedSource, onSource,
+      "A source-only OFF rollback must change the canonical release constant");
     writeFileSync(workerPath, revertedSource, "utf8");
     const { default: worker } = await import(pathToFileURL(workerPath).href);
     const env = {
