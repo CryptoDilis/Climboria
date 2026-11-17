@@ -6,16 +6,34 @@ const ACTIVE_DEACTIVATION_SLOT = (1n << 64n) - 1n;
 
 function fail(message) { throw new Error(message); }
 
+// Only accept canonical, bounded base64 account bytes. Cloudflare/Node atob
+// can accept unpadded or whitespace-bearing variants; do not treat those as
+// independently verifiable RPC account evidence.
+const MAX_TABLE_BYTES = META_SIZE + MAX_ADDRESSES * ADDRESS_SIZE;
+const MAX_TABLE_BASE64_LENGTH = Math.ceil(MAX_TABLE_BYTES / 3) * 4;
+const CANONICAL_BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+function decodeCanonicalBase64(value) {
+  if (typeof value !== "string" || value.length < 4 ||
+      value.length > MAX_TABLE_BASE64_LENGTH || !CANONICAL_BASE64.test(value)) {
+    fail("Address lookup table account data must be canonical base64");
+  }
+  let binary;
+  try { binary = atob(value); }
+  catch { fail("Address lookup table account data must be canonical base64"); }
+  if (btoa(binary) !== value || binary.length > MAX_TABLE_BYTES) {
+    fail("Address lookup table account data must be canonical base64");
+  }
+  return Uint8Array.from(binary, char => char.charCodeAt(0));
+}
 function bytesFromAccountData(data) {
   if (data instanceof Uint8Array) return data;
-  if (Array.isArray(data) && typeof data[0] === "string") {
-    const binary = atob(data[0]);
-    return Uint8Array.from(binary, char => char.charCodeAt(0));
+  if (Array.isArray(data)) {
+    if (data.length !== 2 || data[1] !== "base64") {
+      fail("Address lookup table account data is missing or unsupported");
+    }
+    return decodeCanonicalBase64(data[0]);
   }
-  if (typeof data === "string") {
-    const binary = atob(data);
-    return Uint8Array.from(binary, char => char.charCodeAt(0));
-  }
+  if (typeof data === "string") return decodeCanonicalBase64(data);
   fail("Address lookup table account data is missing or unsupported");
 }
 
@@ -42,7 +60,7 @@ function encodeBase58(bytes) {
 }
 
 function decodeLookupTable(account, address) {
-  if (!account || account.owner !== ALT_PROGRAM_ID || account.executable === true) {
+  if (!account || account.owner !== ALT_PROGRAM_ID || account.executable !== false) {
     fail(`Address lookup table ${address} is missing or not owned by the canonical ALT program`);
   }
   const data = bytesFromAccountData(account.data);

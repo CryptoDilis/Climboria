@@ -103,9 +103,9 @@ export async function resolveTransactionLookups({
   const accounts = new Map();
   for (let i = 0; i < addresses.length; i++) {
     const account = payload.result.value[i];
-    if (!account || account.owner == null || account.executable == null ||
-        !Array.isArray(account.data) || account.data[1] !== "base64" ||
-        typeof account.data[0] !== "string") {
+    if (!account || typeof account.owner !== "string" || account.executable !== false ||
+        !Array.isArray(account.data) || account.data.length !== 2 ||
+        account.data[1] !== "base64" || typeof account.data[0] !== "string") {
       fail("Solana RPC returned a missing or malformed address lookup table account");
     }
     accounts.set(addresses[i], account);
