@@ -594,6 +594,8 @@ test("rejected Jupiter.init conceals partially created vendor UI and stops activ
     await ui.btn.click();
     assert.equal(ui.panel.hidden,true,
       "a vendor initialization error must conceal even a partially mounted widget");
+    assert.equal(ui.btn.hidden,true,
+      "uncertain vendor initialization must not be retried without a full refresh");
     assert.equal(closeCalls,1,"provider-owned root is best-effort concealed on init rejection");
     assert.equal(stopped,1,"failed init does not leave a live approval interval");
     assert.match(ui.status.textContent,/Provider initialization failed/);
