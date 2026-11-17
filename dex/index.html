@@ -1609,6 +1609,23 @@ function discardDexTradeQuote(reason){
  document.dispatchEvent(new CustomEvent('climboria:dex-quote-invalidate',{detail:{reason}}));
 }
 function dexTradeSetStatus(message){$('dexTradeStatus').textContent=message}
+// Jupiter Plugin takes only independently verified *mint selection hints*.
+// Every click must still obtain Jupiter's own fresh quote and wallet approval.
+// Clear stale intent while on-chain decimals are pending or Limit is selected.
+function syncDexJupiterMarketPair(){
+ const panel=$('climboriaDexProviderPanel');
+ if(!panel)return;
+ panel.removeAttribute('data-climboria-managed-swap-input-mint');
+ panel.removeAttribute('data-climboria-managed-swap-output-mint');
+ if(dexTradeOrderType!=='market'||!dexTradeToken||
+    !Number.isInteger(dexTradeToken.decimals)||dexTradeToken.decimals<0||
+    dexTradeToken.decimals>18)return;
+ const input=dexTradeSide==='buy'?DEX_SOL_TOKEN.id:dexTradeToken.id;
+ const output=dexTradeSide==='buy'?dexTradeToken.id:DEX_SOL_TOKEN.id;
+ if(input===output)return;
+ panel.setAttribute('data-climboria-managed-swap-input-mint',input);
+ panel.setAttribute('data-climboria-managed-swap-output-mint',output);
+}
 const DEX_SOL_TOKEN={id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9,isVerified:true};
 async function dexTradeSyncToken(pair){
  const token=pair?.baseToken;if(!token?.address)return;
@@ -1616,6 +1633,7 @@ async function dexTradeSyncToken(pair){
  // A new market makes every earlier quote and mint-supply RPC result obsolete.
  discardDexTradeQuote('Selected market changed. Confirm exact mint decimals and request a fresh quote.');
  dexTradeToken={id:token.address,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:null,isVerified:false};
+ syncDexJupiterMarketPair();
  $('dexTradeTokenSymbol').textContent=dexTradeToken.symbol;$('dexTradeTokenMint').textContent=dexTradeToken.id;
  const price=reportedPoolNumber(pair.priceUsd,{positive:true}),change=reportedPoolNumber(pair.priceChange?.h24);
  $('tokenIntro').querySelector('.token-overview-copy').textContent=dexTradeToken.name+' ('+dexTradeToken.symbol+') · Live Solana market overview · Provider-reported values for the selected pool.';
@@ -1648,7 +1666,9 @@ function dexTradeApplyDirection(){
  quoteTokens.from={...from};quoteTokens.to={...to};
  $('quoteFromSearch').value=from.symbol;$('quoteToSearch').value=to.symbol;
  $('fromSelected').textContent=from.symbol+' · '+from.decimals+' decimals';$('toSelected').textContent=to.symbol+' · '+to.decimals+' decimals';
- $('dexTradePaySymbol').textContent=from.symbol;return true;
+ $('dexTradePaySymbol').textContent=from.symbol;
+ syncDexJupiterMarketPair();
+ return true;
 }
 async function dexTradeWalletBalance(){
  if(!connectedWallet)throw new Error('Connect a Solana wallet first.');
@@ -1668,6 +1688,7 @@ document.querySelectorAll('[data-dex-side]').forEach(button=>button.addEventList
 document.querySelectorAll('[data-dex-order]').forEach(button=>button.addEventListener('click',()=>{
  discardDexTradeQuote('Order mode changed. Old estimate discarded; request a fresh quote.');
  dexTradeOrderType=button.dataset.dexOrder;document.querySelectorAll('[data-dex-order]').forEach(item=>item.classList.toggle('active',item===button));
+ syncDexJupiterMarketPair();
  $('dexLimitFields').hidden=dexTradeOrderType!=='limit';
  $('dexTradeGetQuote').disabled=!DEX_TRADE_TERMINAL_INTERACTION_ENABLED||dexTradeOrderType==='limit'||!Number.isInteger(dexTradeToken?.decimals);
  $('dexTradePrepare').disabled=!DEX_TRADE_TERMINAL_INTERACTION_ENABLED||dexTradeOrderType==='limit'||!Number.isInteger(dexTradeToken?.decimals);
