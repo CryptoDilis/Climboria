@@ -325,10 +325,13 @@ async function runBaseSwitchDuringPendingReopen(browser, width) {
     assert.equal(await panel.isVisible(),false);
     assert.equal(await button.isVisible(),false,"Base cannot expose Solana widget");
     assert.equal(await page.evaluate(() => window.__mockProviderRoot.style.display),"none");
+    const heldResponse = page.waitForResponse(response =>
+      response.url().endsWith("/swap-runtime-status.json") &&
+      response.status() === 200, {timeout:10000});
     releaseHeldStatus();
-    await page.waitForResponse(response => response.url().endsWith("/swap-runtime-status.json") &&
-      response.status()===200,{timeout:10000}).catch(() => {});
-    await page.waitForTimeout(90);
+    await heldResponse;
+    // Allow the already-returned approval handler to settle its microtasks.
+    await page.waitForTimeout(40);
     assert.equal(await panel.isVisible(),false,"late approved response may not reopen widget on Base");
     assert.equal(await page.evaluate(() => window.__mockProviderResumeCalls || 0),0,
       "stale approval response must not resume Jupiter on Base");
