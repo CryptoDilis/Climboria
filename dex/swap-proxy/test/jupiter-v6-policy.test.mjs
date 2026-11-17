@@ -126,7 +126,7 @@ test("binds Jupiter minimum output to the route instruction slippage floor", () 
   assert.equal(validate(parsed(), { otherAmountThreshold: "945" }).ok, true);
   assert.throws(() => validate(parsed(), { otherAmountThreshold: "944" }), /weaker than the route slippage limit/i);
   assert.throws(() => validate(parsed(), { otherAmountThreshold: "951" }), /weaker than the route slippage limit/i);
-  assert.throws(() => validate(parsed(), { otherAmountThreshold: "0" }), /positive integer string/i);
+  assert.throws(() => validate(parsed(), { otherAmountThreshold: "0" }), /canonical positive u64 strings/i);
 });
 
 
