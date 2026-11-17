@@ -31,11 +31,51 @@ export function isManagedProviderSurfaceApproved(config, surface) {
   return (surface === "swap" || surface === "dex") && config?.surfaces?.[surface] === true;
 }
 
-export function integratedTerminalOptions(targetId) {
+const SOLANA_BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+/** Reject malformed and non-32-byte Solana mint addresses without trusting UI labels. */
+export function isCanonicalSolanaMint(mint) {
+  if (typeof mint !== "string" || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(mint)) return false;
+  let number = 0n;
+  for (const ch of mint) {
+    const digit = SOLANA_BASE58.indexOf(ch);
+    if (digit < 0) return false;
+    number = number * 58n + BigInt(digit);
+  }
+  let byteLength = 0;
+  while (number > 0n) { ++byteLength; number >>= 8n; }
+  return byteLength + (mint.match(/^1*/)?.[0].length ?? 0) === 32;
+}
+
+function readSelectedProviderPair(panel) {
+  const inputMint = panel.getAttribute?.("data-climboria-managed-swap-input-mint") ?? null;
+  const outputMint = panel.getAttribute?.("data-climboria-managed-swap-output-mint") ?? null;
+  if (inputMint === null && outputMint === null) return null;
+  return { inputMint, outputMint };
+}
+
+/**
+ * The official Plugin supports initialInputMint/initialOutputMint as *hints*.
+ * Never pass stale Climboria quote amounts, fees, or its wallet context.
+ * Jupiter must independently quote and present wallet consent.
+ */
+export function integratedTerminalOptions(targetId, pair = null) {
   if (typeof targetId !== "string" || !/^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(targetId)) {
     throw new Error("A safe integrated Jupiter target ID is required");
   }
-  return Object.freeze({ displayMode: "integrated", integratedTargetId: targetId });
+  const base = { displayMode: "integrated", integratedTargetId: targetId };
+  if (pair === null) return Object.freeze(base);
+  if (!pair || !isCanonicalSolanaMint(pair.inputMint) ||
+      !isCanonicalSolanaMint(pair.outputMint) || pair.inputMint === pair.outputMint) {
+    throw new Error("Invalid or incomplete Jupiter input/output mint selection");
+  }
+  return Object.freeze({
+    ...base,
+    formProps: Object.freeze({
+      initialInputMint: pair.inputMint,
+      initialOutputMint: pair.outputMint
+    })
+  });
 }
 
 /**
@@ -101,6 +141,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   }
   let loading = false;
   let mounted = false;
+  let mountedPair = null;
   let scriptLoaded = false;
   let lastTrigger = null;
   // Closing invalidates any pending script-load result. A late third-party
@@ -175,7 +216,15 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         startActiveApprovalChecks();
         panel.scrollIntoView?.({ behavior: "smooth", block: "start" });
         if (mounted) {
-          status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
+          const selection = readSelectedProviderPair(panel);
+          // The provider may keep an earlier pair after it was mounted. Never
+          // claim a new token is selected without a verified provider update.
+          status.textContent = selection && (
+            !mountedPair || selection.inputMint !== mountedPair.inputMint ||
+            selection.outputMint !== mountedPair.outputMint
+          )
+            ? "DEX token selection changed. The open Jupiter widget may retain its previous pair; select and verify the intended mints inside Jupiter before signing."
+            : "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
           return;
         }
         status.textContent = "Loading verified provider integration. No wallet transaction has been requested by Climboria.";
@@ -194,7 +243,12 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         if (!scope.Jupiter || typeof scope.Jupiter.init !== "function") {
           throw new Error("The reviewed provider did not expose the expected integration API");
         }
-        await Promise.resolve(scope.Jupiter.init(integratedTerminalOptions(target.id)));
+        // Read the currently verified DEX pair only at the user-triggered
+        // initialization boundary. A partial or invalid pair fails closed.
+        const selection = readSelectedProviderPair(panel);
+        const options = integratedTerminalOptions(target.id, selection);
+        await Promise.resolve(scope.Jupiter.init(options));
+        mountedPair = selection;
         mounted = true;
         if (requestId === openRequestId && !panel.hidden) {
           status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
