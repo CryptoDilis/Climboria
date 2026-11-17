@@ -1,0 +1,39 @@
+# Climboria Swap — Third-party Jupiter Plugin release candidate (2026-11-18 PH)
+
+**STATUS: DRAFT, NOT MERGED, NOT DEPLOYED, NOT APPROVED FOR CUSTOMER FUNDS.**
+
+## Scope
+This change prepares **in-site Swap only** using the already-staged official Jupiter Plugin 1.0.18; it does **not** turn on the Climboria-built transaction pipeline, does not enable the Signature DEX Buy/Sell panel, and does not collect Climboria trading fees. No Game, ClimbX, Launchpad or tokenomics changes.
+
+## Baseline and why this is separate
+Based on main `aa6eaaf2ee0850832b027b06172391ff10555271`, after merged safety PR #617 and green read-only production quote-browser attempt 2 [#44133060998](https://github.com/CryptoDilis/Climboria/actions/runs/44133060998). Historical two owner-controlled, finalized Nov 15 mainnet staging swaps are **complete** and must not be requested again merely to recreate receipts. They do not establish production approval for this exact vendor runtime.
+
+The existing `swap-config.js` already stages the Swap-only Plugin URL/SHA384 and uses `https://api.climboria.fun/api/swap/provider-status` as independent runtime approval. The DEX managed surface is disabled. New candidate changes the **separate API Worker constant** `THIRD_PARTY_JUPITER_WIDGET_APPROVED` from false to true. This branch is deliberately a **draft PR**: the default production branch and current API Worker remain OFF until separately approved merge/deploy.
+
+## Release safeguards & tests on this branch
+- `dex/swap-proxy/src/index.mjs`: only third-party provider status turns ON. `EXECUTION_SECURITY_REVIEW_COMPLETE=false` and `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false` remain OFF; no signing, /order or /execute through Climboria.
+- `dex/swap-proxy/test/provider-widget-status.test.mjs`: proves source-approved ON status with HTTP 200, no-store, allowlisted CORS, GET-only method, and client headers/queries/env cannot change it. Native security gates remain OFF.
+- `.github/workflows/deploy-climboria-api.yml`: explicit ON-source, Swap-only surface and zero-fee checks before the existing main-only Worker deploy. **Merging a Worker-source change into main starts automatic deployment**. Never merge this PR as an unreviewed routine cleanup.
+- `.github/workflows/jupiter-provider-status-production.yml` and `.github/scripts/jupiter-provider-status-production.mjs`: strict deployed ON/no-store/origin-limited/non-writable status verification following a successful API Worker deploy; expected deployed Git SHA checked. Avoid a racy direct push status probe before the Worker deploy.
+- `.github/scripts/dex-swap-production-quote-smoke.mjs`: requires actual public API ON within a finite edge-propagation window, first-party Swap launcher visible, DEX launcher hidden, provider panel closed until user action, normal read-only raw quotes, desktop/mobile responsive and chart fallback behavior. Does **not** perform funded trades.
+- Supporting shell, sponsorship, external-handoff and monetization tests are aligned to ON while continuing to assert zero integrator fee and native execution OFF.
+
+## Required release decision — NOT YET GIVEN
+1. **Provider trust/permissions:** Verify relevant, currently applicable **official** Plugin/SDK/API usage, branding/attribution, and distribution terms for our unmodified in-site Jupiter embed. The [public official README](https://github.com/jup-ag/plugin/blob/main/README.md) documents HTML embed and package metadata lists MIT, but this alone does **not** prove applicable hosted API/branding permission. Do not invent Jupiter endorsement. [Issue #238](https://github.com/jup-ag/plugin/issues/238) is an upstream inquiry, not by itself a blanket paid custom CPI audit requirement.
+2. **Vendor dependency risk:** The v1.0.18 bootstrap is pinned with SHA384, **but** it injects a vendor-managed app JS and versioned/unversioned CSS and fonts without transitive SRI. Human owner/operator must explicitly accept that bounded third-party vendor risk after independent inspection of published docs/bytes, or choose a supported lower-risk packaging approach. Do not claim end-to-end locked runtime.
+3. **User acceptance evidence:** Reconcile existing Codex/Work owner wallet/device evidence (before-signing minimum received/slippage, actual mint direction, network/provider fees, reject/expire, desktop/mobile, cancellation/rollback). Do **not** ask for duplicate funded swaps merely to prove the Nov 15 staging receipts again. Identify a changed-build-specific missing check only if essential.
+4. **CI:** Exact PR-head Validate, Browser Smoke, DEX Swap Quote Regression, Worker status tests and syntax must pass. Review all changed files and PR merge base. This branch must remain draft until accepted; PR checks are not deployment or proof of wallet success.
+
+## Production ON runbook (after explicit owner acceptance and approved merge)
+1. Record reviewed PR/head SHA and decision on vendor dynamic dependencies and usage rights. Confirm the chosen provider script URL/SRI and zero Climboria fee. Confirm `surfaces.swap=true`, `surfaces.dex=false`.
+2. Merge only the exact reviewed head. [Deploy Climboria API](https://github.com/CryptoDilis/Climboria/actions/workflows/deploy-climboria-api.yml) is **automatic** on this source change. Require successful Worker tests, Wrangler deploy, exact SHA in `https://api.climboria.fun/health` and disabled native execution.
+3. Require `https://api.climboria.fun/api/swap/provider-status` to respond with `{"enabled":true}`, `Cache-Control: no-store`, CORS for `https://climboria.fun`, denied foreign origins, write methods 405 and rejected client override attempts. Require post-deploy Jupiter Provider Status smoke and production quote browser success.
+4. Verify actual `https://climboria.fun/swap/`: Solana only, explicit user click loads Jupiter Plugin inside Climboria, mints, quote, pre-consent minimum received/slippage and all disclosed Jupiter/network fees. Verify wallet reject and success flows on desktop/mobile. On-chain finalized receipt, not widget confirmation alone, establishes production successful trade. **A new funded trade is conditional on exact-release acceptance need, not a routine duplicate of historical staging transactions.**
+5. Monitor provider status, errors and wallet reports; record exact deployed SHA and timestamp. Only after verified Swap go-live should a **separate DEX approval PR** authorize DEX Buy/Sell with mint/direction/device acceptance.
+
+## Rollback (if status, vendor, or wallet acceptance fails)
+- **Stop further use and revert the entire ON activation PR immediately** via a new reviewed revert to `THIRD_PARTY_JUPITER_WIDGET_APPROVED=false` and corresponding OFF canary/tests/deploy-guard expectations; the main-branch Worker deploy then reverts the public API source status to OFF. Do not assume hiding a first-party panel cancels active wallet prompts or submitted on-chain transactions.
+- Verify the rollback deployment **actually** returned `{"enabled":false}` at the public URL with no-store/restricted CORS, and that production Swap launcher is hidden. Record revert SHA, GitHub deploy CI and operator incident notes. If Cloudflare or GitHub deployment is unavailable, treat the widget as potentially still accessible and use available infrastructure/provider emergency controls; do not claim rollback succeeded without a verified status.
+- Do **not** flip native Worker signing/execute gates as part of ON or OFF release, and do **not** activate Climboria integrator fees.
+
+**NEXT EXACT:** examine PR CI and fix failures; reconcile hosted vendor terms and exact acceptance evidence; request explicit owner approval of residual vendor risk and reviewed rollout; only then merge/deploy Swap ON, verify public status and real wallet UX, then separately approve Signature DEX Buy/Sell.
