@@ -414,11 +414,13 @@ test("closing while provider initialization awaits does not overwrite the closed
   const ui = createDom();
   let resolveProvider;
   let initCalls = 0;
+  let vendorCloseCalls = 0;
   const api = { Jupiter: {
     init() {
       ++initCalls;
-      return new Promise(resolve => { resolveProvider = resolve; });
-    }
+      if (initCalls === 1) return new Promise(resolve => { resolveProvider = resolve; });
+    },
+    close() { ++vendorCloseCalls; }
   } };
   initializeManagedSwapHost({ doc: ui.doc, scope: withRuntime(api), config: approved });
   const pending = ui.btn.click();
@@ -429,11 +431,12 @@ test("closing while provider initialization awaits does not overwrite the closed
   const closedStatus = ui.status.textContent;
   resolveProvider();
   await pending;
+  assert.equal(vendorCloseCalls, 1, "late vendor-owned overlay must also be hidden");
   assert.equal(ui.panel.hidden, true);
   assert.equal(ui.status.textContent, closedStatus,
     "late provider init success may not claim an open widget after close");
   await ui.btn.click();
-  assert.equal(initCalls, 1, "reopening does not duplicate already-started provider initialization");
+  assert.equal(initCalls, 2, "new explicit click may retry after stale init was hidden");
 });
 
 test("an open page cannot start a new widget after runtime rollback, without reload", async () => {
