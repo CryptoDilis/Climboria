@@ -469,7 +469,7 @@ const reportedSwapMarketNumber=(raw,{positive=false,nonnegative=false}={})=>{
 const usdFmt=n=>{const v=reportedSwapMarketNumber(n,{nonnegative:true});if(v===null)return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:v>=1000?0:v>=1?2:6}).format(v)};
 const compactUsd=n=>{const v=reportedSwapMarketNumber(n,{nonnegative:true});if(v===null)return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:'compact',maximumFractionDigits:2}).format(v)};
 const MARKET_REQUEST_TIMEOUT_MS=10000;
-async function fetchMarketJson(url){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),MARKET_REQUEST_TIMEOUT_MS);try{const response=await fetch(url,{headers:{accept:'application/json'},cache:'no-store',signal:controller.signal});if(!response.ok)throw new Error('Market provider HTTP '+response.status);return response.json()}catch(error){if(controller.signal.aborted)throw new Error('Market provider request timed out. No cached market data was substituted.');throw error}finally{clearTimeout(timer)}}
+async function fetchMarketJson(url){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),MARKET_REQUEST_TIMEOUT_MS);try{const response=await fetch(url,{headers:{accept:'application/json'},cache:'no-store',signal:controller.signal});if(!response.ok)throw new Error('Market provider HTTP '+response.status);return await response.json()}catch(error){if(controller.signal.aborted)throw new Error('Market provider request timed out. No cached market data was substituted.');throw error}finally{clearTimeout(timer)}}
 let selectedChartRequest=0;
 async function updateSelectedAsset(token){
  const chartRequest=++selectedChartRequest;
@@ -524,8 +524,26 @@ async function resolveSolanaTokenByMint(mint,fallbackSymbol='TOKEN',fallbackName
  const meta=pair?(pair.baseToken?.address===mint?pair.baseToken:pair.quoteToken):null;
  if(!meta&&!canonical[mint])throw new Error('No Solana market metadata found for this exact mint.');
  const endpoints=['https://api.mainnet-beta.solana.com','https://solana-rpc.publicnode.com','https://rpc.ankr.com/solana'];
+ const RPC_MINT_DECIMALS_TIMEOUT_MS=4500;
  let decimals=null,lastError='No Solana RPC available';
- for(const endpoint of endpoints){try{const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenSupply',params:[mint,{commitment:'confirmed'}]})});if(!response.ok)throw new Error('HTTP '+response.status);const data=await response.json();if(data.error)throw new Error(data.error.message||'RPC error');const value=data.result?.value?.decimals;if(typeof value!=='number'||!Number.isInteger(value)||value<0||value>18)throw new Error('Invalid on-chain mint decimals');decimals=value;break;}catch(error){lastError=error.message;}}
+ for(const endpoint of endpoints){
+  const controller=new AbortController();
+  // Bound both the initial response and the JSON body. A stalled first RPC
+  // must not hold token selection forever or silently invent decimals.
+  const timeout=setTimeout(()=>controller.abort(),RPC_MINT_DECIMALS_TIMEOUT_MS);
+  try{
+   const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenSupply',params:[mint,{commitment:'confirmed'}]}),signal:controller.signal});
+   if(!response.ok)throw new Error('HTTP '+response.status);
+   const data=await response.json();
+   if(controller.signal.aborted)throw new Error('Solana mint decimals RPC timed out');
+   if(data.error)throw new Error(data.error.message||'RPC error');
+   const value=data.result?.value?.decimals;
+   if(typeof value!=='number'||!Number.isInteger(value)||value<0||value>18)throw new Error('Invalid on-chain mint decimals');
+   decimals=value;break;
+  }catch(error){
+   lastError=controller.signal.aborted?'Solana mint decimals RPC timed out':(error?.message||'Solana mint decimals RPC unavailable');
+  }finally{clearTimeout(timeout);}
+ }
  if(decimals===null){if(canonical[mint])decimals=canonical[mint].decimals;else throw new Error('Could not verify mint decimals from Solana RPC. '+lastError);}
  return {id:mint,symbol:meta?.symbol||canonical[mint]?.symbol||fallbackSymbol,name:meta?.name||canonical[mint]?.name||fallbackName,decimals,isVerified:false};
 }
