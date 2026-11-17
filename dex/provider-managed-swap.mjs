@@ -194,6 +194,13 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     panel.hidden = true;
     expanded(false);
     buttons.forEach(control => { control.hidden = true; });
+    // The official Jupiter.close() only hides its own mounted instance;
+    // it does not cancel an external wallet popup or any signed transaction.
+    // Invoke it best-effort to conceal provider-owned overlays in addition
+    // to our enclosing panel, and never let vendor errors reopen the UI.
+    if (mounted && typeof scope.Jupiter?.close === "function") {
+      try { scope.Jupiter.close(); } catch { /* already hidden: fail closed */ }
+    }
     status.textContent = "Provider access has been paused. Refresh to check again. Existing wallet requests and submitted transactions are not cancelled.";
   };
   expanded(false);

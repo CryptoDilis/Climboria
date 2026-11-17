@@ -542,8 +542,9 @@ test("open provider panel polls uncached release status and hides on operator ro
   let started = 0;
   let stopped = 0;
   let statusRequests = 0;
+  let providerCloseCalls = 0;
   const base = withRuntime({
-    Jupiter: { init() {} },
+    Jupiter: { init() {}, close() { ++providerCloseCalls; } },
     setInterval(callback, interval) {
       assert.equal(interval, 15000, "revocation checks must run while the widget is visible");
       tick = callback;
@@ -575,7 +576,32 @@ test("open provider panel polls uncached release status and hides on operator ro
   assert.equal(ui.panel.hidden, true, "operator rollback hides an ALREADY open widget");
   assert.equal(ui.btn.hidden, true);
   assert.equal(stopped, 1, "operator rollback stops interval");
+  assert.equal(providerCloseCalls,1, "revocation also hides the official Jupiter-owned widget");
   assert.match(ui.status.textContent, /Existing wallet requests and submitted transactions are not cancelled/);
+});
+
+test("a throwing provider.close never defeats runtime revocation of the Climboria UI", async () => {
+  const ui = createDom();
+  let allowed = true;
+  let tick;
+  let called = 0;
+  const scope = withRuntime({
+    Jupiter:{
+      init(){},
+      close(){ ++called; throw Error("Provider close failed"); }
+    },
+    setInterval(fn){tick = fn;return 100;},
+    clearInterval(){}
+  }, () => allowed);
+  initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  await ui.btn.click();
+  assert.equal(ui.panel.hidden,false);
+  allowed = false;
+  await tick();
+  assert.equal(called,1);
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(ui.btn.hidden,true);
+  assert.match(ui.status.textContent,/Existing wallet requests and submitted transactions are not cancelled/);
 });
 
 test("closing the provider stops polling; authorized reopen starts one fresh monitor", async () => {
