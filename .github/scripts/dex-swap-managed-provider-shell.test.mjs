@@ -373,6 +373,98 @@ test("explicit user click loads only SRI-pinned official-script origin and initi
   assert.equal(ui.panel.hidden, true);
 });
 
+test("manual Close also hides Jupiter-owned overlay and an approved reopen explicitly resumes it", async () => {
+  const ui = createDom();
+  const vendor = { visible:false, initCalls:0, closeCalls:0, resumeCalls:0 };
+  const scope = withRuntime({ Jupiter: {
+    init() { vendor.initCalls++; vendor.visible = true; },
+    close() { vendor.closeCalls++; vendor.visible = false; },
+    resume() { vendor.resumeCalls++; vendor.visible = true; }
+  } });
+  initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  assert.equal(vendor.visible,false,"no vendor widget can be visible before user click");
+  await ui.btn.click();
+  assert.equal(ui.panel.hidden,false);
+  assert.equal(vendor.visible,true);
+  ui.close.click();
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(vendor.visible,false,"Close must conceal vendor root, not merely first-party wrapper");
+  assert.equal(vendor.closeCalls,1);
+  await ui.btn.click();
+  assert.equal(vendor.resumeCalls,1,"only an explicitly approved reopen may call Jupiter.resume()");
+  assert.equal(vendor.visible,true);
+  assert.equal(ui.panel.hidden,false);
+  assert.equal(vendor.initCalls,1,"resume must not repeat wallet initialization");
+  assert.equal(ui.created.length,1,"resume must not request another executable script");
+  ui.close.click();
+  assert.equal(vendor.closeCalls,2,"repeat Close must hide provider again");
+});
+
+test("missing or throwing Jupiter.resume fails closed rather than displaying an empty widget", async () => {
+  for (const resume of [undefined, () => { throw Error("vendor resume failure"); }]) {
+    const ui = createDom();
+    let closeCalls = 0;
+    let initCalls = 0;
+    const api = withRuntime({Jupiter:{
+      init(){initCalls++;},
+      close(){closeCalls++;},
+      ...(resume ? { resume } : {})
+    }});
+    initializeManagedSwapHost({doc:ui.doc,scope:api,config:approved});
+    await ui.btn.click();
+    ui.close.click();
+    assert.equal(closeCalls,1);
+    await ui.btn.click();
+    assert.equal(ui.panel.hidden,true,"cannot expose a broken provider after failed resume");
+    assert.match(ui.status.textContent,/could not be reopened safely/i);
+    assert.equal(initCalls,1,"never retry vendor wallet initialization without explicit reload");
+    assert.equal(ui.created.length,1,"no extra provider script");
+  }
+});
+
+test("revoked approval blocks Jupiter.resume after manual Close", async () => {
+  const ui = createDom();
+  let allowed = true;
+  let resumes = 0;
+  let closes = 0;
+  initializeManagedSwapHost({
+    doc:ui.doc,
+    scope:withRuntime({Jupiter:{
+      init(){},
+      close(){closes++;},
+      resume(){resumes++;}
+    }},()=>allowed),
+    config:approved
+  });
+  await ui.btn.click();
+  ui.close.click();
+  assert.equal(closes,1);
+  allowed = false;
+  await ui.btn.click();
+  assert.equal(resumes,0,"rollback must never re-expose vendor instance");
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(ui.btn.hidden,true);
+  assert.match(ui.status.textContent,/Provider access has been paused/);
+});
+
+test("throwing Jupiter.close does not prevent first-party user Close", async () => {
+  const ui = createDom();
+  let closes = 0;
+  initializeManagedSwapHost({
+    doc:ui.doc,
+    scope:withRuntime({Jupiter:{
+      init(){},
+      close(){closes++;throw Error("provider close failed");}
+    }}),
+    config:approved
+  });
+  await ui.btn.click();
+  ui.close.click();
+  assert.equal(closes,1);
+  assert.equal(ui.panel.hidden,true);
+  assert.match(ui.status.textContent,/Provider panel hidden/);
+});
+
 test("provider load or integrity failure cannot invoke widget", async () => {
   const ui = createDom({ failure: true });
   let called = false;
