@@ -29,7 +29,7 @@ const selected=(mint,symbol)=>({baseToken:{address:mint,symbol,name:symbol+' tok
 const rpcResult=decimals=>({ok:true,json:async()=>({jsonrpc:'2.0',id:1,result:{value:{decimals}}})});
 
 function harness(){
-  const nodes=new Map(),pending=[],updates=[],statuses=[],invalidations=[];
+  const nodes=new Map(),pending=[],updates=[],statuses=[],invalidations=[],mintIntentResets=[];
   const $=id=>{
     if(!nodes.has(id))nodes.set(id,{
       disabled:false,textContent:'',className:'',
@@ -44,6 +44,9 @@ function harness(){
     fmt:n=>String(n),
     dexTradeSetStatus:msg=>{statuses.push(msg);$('dexTradeStatus').textContent=msg;},
     discardDexTradeQuote:msg=>invalidations.push(msg),
+    // The new real DEX helper clears an older Jupiter mint preselection while
+    // the mint-decimals RPC is still pending; this mock tracks that call.
+    syncDexJupiterMarketPair:()=>mintIntentResets.push(api.inspect()),
     dexTradeApplyDirection:()=>{
       updates.push(api.inspect());
       return true;
@@ -65,7 +68,7 @@ function harness(){
     assert.ok(index>=0,'Expected queued mint RPC for '+mint);
     return pending.splice(index,1)[0];
   };
-  return {api, $,take,pending,updates,statuses,invalidations};
+  return {api, $,take,pending,updates,statuses,invalidations,mintIntentResets};
 }
 
 test('out-of-order RPC results cannot write old decimals to newly selected DEX token',async()=>{
@@ -90,6 +93,8 @@ test('out-of-order RPC results cannot write old decimals to newly selected DEX t
   assert.equal(t.updates.length,1,'Only the newest market may apply swap direction');
   assert.equal(t.updates[0].id,USDC);
   assert.equal(t.invalidations.length,2,'Each new token selection invalidates old quote');
+  assert.deepEqual(t.mintIntentResets.map(x=>x.decimals),[null,null],
+    'Each new market clears stale Jupiter mint intent before on-chain decimals return');
 });
 
 test('old RPC resolves before current one: stale result cannot reenable Get Quote',async()=>{
