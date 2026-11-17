@@ -383,11 +383,36 @@ async function assertDexMobileMarketNavigation(browser, width) {
     const cards = page.locator("#solanaMobileCards .mobile-market-card");
     const count = await cards.count();
     if (count > 0) {
-      const height = await cards.first().evaluate(element =>
-        element.getBoundingClientRect().height
-      );
-      assert.ok(height >= 56, name + " token card tap target below 56px");
-      console.log("PASS " + name + " live token card tap target >=56px.");
+      // The market feed is live and can rerender during Solana/Base tab
+      // restoration. Count alone does not prove that a card is visible.
+      // Wait for its real on-screen layout; do not count hidden DOM nodes
+      // as tappable or silently skip a populated but broken market.
+      const firstCard = cards.first();
+      const geometry = async () => firstCard.evaluate(element => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        const container = element.closest("#solanaMobileCards");
+        const market = element.closest("#markets");
+        return {
+          height: rect.height, width: rect.width,
+          display: style.display, visibility: style.visibility,
+          minHeight: style.minHeight,
+          containerDisplay: container ? getComputedStyle(container).display : "missing",
+          marketDisplay: market ? getComputedStyle(market).display : "missing",
+          bodyClass: document.body.className,
+          viewportWidth: window.innerWidth
+        };
+      });
+      try {
+        await firstCard.waitFor({ state: "visible", timeout: 8000 });
+      } catch {
+        throw new Error(name + " live token card stayed hidden after restoring Solana view: " +
+          JSON.stringify(await geometry()));
+      }
+      const size = await geometry();
+      assert.ok(size.height >= 56,
+        name + " VISIBLE token card tap target below 56px: " + JSON.stringify(size));
+      console.log("PASS " + name + " visible live token card tap target >=56px.");
     } else {
       console.log("INFO " + name + " no live token cards at this instant; card-to-detail navigation NOT verified.");
     }
