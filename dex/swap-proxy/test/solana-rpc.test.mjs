@@ -326,7 +326,7 @@ test("rejects noncanonical base64 and extra tuple elements for classic SPL mint 
     [canonical.data[0] + "=", "base64"],
     [canonical.data[0], "base64", "unused"],
     [canonical.data[0], "base58"],
-    [canonical.data[0].replace(/\//g, "_"), "base64"]
+    [canonical.data[0].replace(/A/, "_"), "base64"]
   ]) {
     await assert.rejects(
       verifyTokens({}, () => tokenRpcResponse([
