@@ -58,6 +58,8 @@ jobs:
         run: node --test .github/scripts/dex-premium-trending.test.mjs
       - name: Verify DEX mint clipboard reports success only after write (offline)
         run: node --test .github/scripts/dex-mint-clipboard.test.mjs
+      - name: Verify external Jupiter trade handoff is isolated and Solana-only (offline)
+        run: node --test .github/scripts/dex-swap-external-jupiter-handoff.test.mjs
       - name: Test Swap market JSON-body and RPC mint-decimals timeouts (offline fixtures only)
         run: node --test .github/scripts/swap-provider-timeouts.test.mjs
       - name: Test Swap major-market missing values and sparklines (offline fixtures only)
