@@ -23,7 +23,14 @@ function normalizeRows(rows) {
     if (!Array.isArray(row) || row.length < 6) {
       throw new Error(`OHLCV candle ${index} must contain timestamp, open, high, low, close and volume`);
     }
-    const values = row.slice(0, 6).map(Number);
+    const raw = row.slice(0, 6);
+    // Number(null), Number("") and Number(false) all equal 0. Missing
+    // provider volume must not be reported as a genuine zero-volume candle.
+    if (raw.some(value => typeof value !== "number" &&
+        (typeof value !== "string" || !value.trim()))) {
+      throw new Error(`OHLCV candle ${index} contains a missing or invalid field`);
+    }
+    const values = raw.map(Number);
     if (!values.every(finite)) throw new Error(`OHLCV candle ${index} contains a non-finite value`);
     const [timestamp, open, high, low, close, volume] = values;
     if ([open, high, low, close].some(value => value <= 0)) {
