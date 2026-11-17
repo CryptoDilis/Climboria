@@ -379,9 +379,93 @@ async function checkDexPoolUrlIntegrity() {
   }
 }
 
+/**
+ * Real DEX DOM, isolated provider fixture. Missing/null fields must never
+ * show as reported $0/0%, while explicit provider zero 24h movement/volume
+ * must remain zero. Changing pools must update both summary and chart metrics.
+ */
+async function checkDexSelectedPoolMetricIntegrity(mobile) {
+  const name = mobile ? "DEX mobile" : "DEX desktop";
+  const context = await browser.newContext({
+    viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 },
+    isMobile: mobile, hasTouch: mobile
+  });
+  const page = await context.newPage();
+  const unavailablePool = "22222222222222222222222222222222";
+  const reportedPool = "33333333333333333333333333333333";
+  const quote = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+  let intercepted = 0;
+  await page.route("https://api.dexscreener.com/latest/dex/tokens/" + SOL, async route => {
+    intercepted++;
+    const common = {
+      chainId: "solana",
+      baseToken: { address: SOL, symbol: "SOL", name: "Wrapped SOL" },
+      quoteToken: { address: quote, symbol: "USDC" }, dexId: "raydium"
+    };
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      pairs: [
+        { ...common, pairAddress: unavailablePool, priceUsd: null,
+          volume: { h24: null }, liquidity: { usd: null },
+          priceChange: { h24: null }, txns: { h24: { buys: null, sells: null } } },
+        { ...common, pairAddress: reportedPool, priceUsd: "174.22",
+          volume: { h24: 0 }, liquidity: { usd: 1000 },
+          priceChange: { h24: 0 }, txns: { h24: { buys: 0, sells: 0 } } }
+      ]
+    }) });
+  });
+  try {
+    const response = await page.goto(SITE + "/dex/?token=" + SOL + "&pool=" + unavailablePool,
+      { waitUntil: "domcontentloaded", timeout: 60000 });
+    assert.ok(response?.ok(), name + " source page must load");
+    await page.waitForFunction(pool => {
+      return new URL(location.href).searchParams.get("pool") === pool &&
+        document.querySelector("#detailChart")?.getAttribute("src")?.includes("/solana/" + pool + "?") &&
+        document.querySelector("#detailPrice")?.textContent === "Unavailable";
+    }, unavailablePool, { timeout: 30000 });
+    assert.ok(intercepted > 0, name + " mocked pool data must be used");
+    for (const id of ["#detailPrice", "#detailVolume", "#detailLiquidity", "#detailChange"]) {
+      assert.equal(await page.locator(id).textContent(), "Unavailable",
+        name + " missing provider field " + id + " must not become reported zero");
+    }
+    for (const id of ["#tokenOverviewPrice", "#tokenOverviewVolume",
+      "#tokenOverviewLiquidity", "#tokenOverviewChange"]) {
+      assert.equal(await page.locator(id).textContent(), "—",
+        name + " summary missing provider field " + id + " must not become reported zero");
+    }
+    assert.equal(await page.locator("#flowBuySell").textContent(), "N/A",
+      name + " missing provider trade counts must not imply zero buys/sells");
+    assert.equal(await page.locator("#flowShare").textContent(), "N/A",
+      name + " unknown liquidity in another pool must not yield false pool share");
+    assert.match(await page.locator("#detailUpdated").textContent(), /provider as-of unknown/i,
+      name + " must not confuse client response time with provider market timestamp");
+    if (mobile) await page.locator("#detailTabPools").click({ timeout: 15000 });
+    await page.locator('#detailPairs button[data-pool="' + reportedPool + '"]').click({ timeout: 15000 });
+    await page.waitForFunction(pool => {
+      return new URL(location.href).searchParams.get("pool") === pool &&
+        document.querySelector("#detailChart")?.getAttribute("src")?.includes("/solana/" + pool + "?") &&
+        document.querySelector("#detailPrice")?.textContent?.startsWith("$174.");
+    }, reportedPool, { timeout: 15000 });
+    assert.equal(await page.locator("#detailChange").textContent(), "0.00%",
+      name + " genuinely reported zero movement must remain zero");
+    assert.equal(await page.locator("#detailVolume").textContent(), "$0.000000",
+      name + " genuinely reported zero 24h volume must remain zero");
+    assert.equal(await page.locator("#tokenOverviewChange").textContent(), "0.00%");
+    assert.equal(await page.locator("#tokenOverviewVolume").textContent(), "$0.000000");
+    assert.equal(await page.locator("#flowShare").textContent(), "N/A",
+      name + " missing competing pool liquidity means aggregate share unknown");
+    assert.equal(await page.locator("#detailChartExternal").getAttribute("href"),
+      chartOrigin + "/solana/" + reportedPool);
+    console.log("PASS " + name + " reported vs missing pool metrics, exact pool switch and provider-as-of provenance (isolated fixture).");
+  } finally {
+    await context.close();
+  }
+}
+
 try {
   for (const journey of cases) await checkChart(journey);
   await checkDexPoolUrlIntegrity();
+  await checkDexSelectedPoolMetricIntegrity(false);
+  await checkDexSelectedPoolMetricIntegrity(true);
   await checkSwapNoPoolFallback({ name: "Swap desktop (quote-only pool)", mobile: false, scenario: "quote-only-pool" });
   await checkSwapNoPoolFallback({ name: "Swap mobile (provider unavailable)", mobile: true, scenario: "http-503" });
   console.log("PASS: four real chart-link journeys plus two isolated no-pool/provider-failure fallback journeys. Provider candle rendering is separately qualified above.");

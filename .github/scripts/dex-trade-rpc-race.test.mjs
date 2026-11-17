@@ -15,6 +15,12 @@ const start=html.indexOf('async function dexTradeSyncToken(pair){');
 const end=html.indexOf('\nfunction dexTradeApplyDirection(){',start);
 assert.ok(start>=0 && end>start,'Expected existing DEX mint verification handler');
 const source=html.slice(start,end);
+// This test runs the real isolated handler without executing the full DEX IIFE.
+// Supply the exact source of any local provider-metric helper it now calls.
+const metricStart=html.indexOf('const reportedPoolNumber=(');
+const metricEnd=html.indexOf('\nconst esc=',metricStart);
+assert.ok(metricStart>=0 && metricEnd>metricStart,'Expected DEX provider-metric decoder');
+const metricSource=html.slice(metricStart,metricEnd);
 
 const SOL='So11111111111111111111111111111111111111112';
 const USDC='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -50,7 +56,7 @@ function harness(){
     }
   };
   api=runInNewContext(
-    'let dexTradeToken=null;let dexTradeTokenSelectionSequence=0;\n'+source+
+    metricSource+'\nlet dexTradeToken=null;let dexTradeTokenSelectionSequence=0;\n'+source+
     '\n({sync:dexTradeSyncToken,inspect:()=>({id:dexTradeToken?.id,decimals:dexTradeToken?.decimals,sequence:dexTradeTokenSelectionSequence})})',
     sandbox
   );
@@ -130,4 +136,18 @@ test('latest invalid decimals fail closed and do not guess token precision',asyn
   assert.equal(t.$('dexTradePrepare').disabled,true);
   assert.match(t.$('dexTradeStatus').textContent,/No guessed decimals will be used/);
   assert.equal(t.updates.length,0);
+});
+
+
+test('reported pool metrics distinguish absent provider values from real zero',()=>{
+  const decoder=runInNewContext(metricSource+'\nreportedPoolNumber');
+  for(const raw of [null,undefined,'', '  ',false,[],{},'not-a-number']){
+    assert.ok(Number.isNaN(decoder(raw)), 'Missing/invalid provider metric must not become zero');
+  }
+  assert.equal(decoder(0),0,'Provider-reported numeric zero is meaningful for a change percentage');
+  assert.equal(decoder('0',{nonnegative:true}),0,'Provider-reported zero 24h volume remains zero');
+  assert.ok(Number.isNaN(decoder(null,{nonnegative:true})),'Missing volume is not zero');
+  assert.ok(Number.isNaN(decoder('0',{positive:true})),'Zero USD price is not a verified positive price');
+  assert.ok(Number.isNaN(decoder(-1,{nonnegative:true})),'Negative USD volume is invalid');
+  assert.equal(decoder('0.042',{positive:true}),0.042,'Positive quoted price is preserved');
 });
