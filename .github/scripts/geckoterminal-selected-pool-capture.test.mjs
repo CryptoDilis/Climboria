@@ -52,7 +52,7 @@ test("rejects invalid mints, unknown flags, unsafe output paths and unsupported 
 
 test("rejects Base58-looking pool/mint addresses without exactly 32 decoded bytes", async () => {
   // Length/character-only validation previously allowed all of these.
-  const invalid = ["1".repeat(33), "1".repeat(31) + "2", "z".repeat(44)];
+  const invalid = ["1".repeat(33), "2".repeat(32), "z".repeat(44)];
   for (const address of invalid) {
     for (const key of ["--pool", "--base", "--quote"]) {
       const altered = [...flags];
