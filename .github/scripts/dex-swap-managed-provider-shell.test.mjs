@@ -857,13 +857,20 @@ test("a background tab return immediately hides mounted provider until fresh no-
   let timers = 0;
   let stops = 0;
   let initCalls = 0;
+  let vendorCloseCalls = 0;
+  let vendorResumeCalls = 0;
+  let vendorVisible = false;
   const listeners = {};
   const response = enabled => ({
     status:200, headers:{get:() => "no-store"},
     json:async () => ({enabled})
   });
   const scope = {
-    Jupiter:{init() {initCalls++;}},
+    Jupiter:{
+      init() {initCalls++;vendorVisible=true;},
+      close() {vendorCloseCalls++;vendorVisible=false;},
+      resume() {vendorResumeCalls++;vendorVisible=true;}
+    },
     addEventListener(event, fn) {listeners[event] = fn;},
     setInterval(fn, ms) {assert.equal(ms,15000); timers++; return timers;},
     clearInterval() {stops++;},
@@ -891,6 +898,9 @@ test("a background tab return immediately hides mounted provider until fresh no-
   ui.doc.visibilityState = "visible";
   const pending = ui.doc.listeners.visibilitychange();
   assert.equal(ui.panel.hidden,true,"conceal stale wallet UI BEFORE the network check");
+  assert.equal(vendorVisible,false,"vendor-owned root must be concealed immediately");
+  assert.equal(vendorCloseCalls,1);
+  assert.equal(vendorResumeCalls,0);
   assert.equal(ui.btn.hidden,false);
   assert.equal(stops,1);
   assert.equal(calls,3);
@@ -902,6 +912,8 @@ test("a background tab return immediately hides mounted provider until fresh no-
   assert.equal(ui.panel.hidden,true);
   assert.equal(ui.btn.hidden,true,"operator rollback hides launch controls");
   assert.equal(initCalls,1,"no duplicate vendor init");
+  assert.equal(vendorVisible,false);
+  assert.equal(vendorResumeCalls,0,"revocation cannot re-expose provider");
   assert.equal(timers,1,"revoked provider monitoring never restarts");
   assert.match(ui.status.textContent,/Existing wallet requests and submitted transactions are not cancelled/);
 });
@@ -913,8 +925,15 @@ test("approved tab focus or BFCache resume rechecks and restores panel without p
   let initCalls = 0;
   let timers = 0;
   let stops = 0;
+  let vendorCloseCalls = 0;
+  let vendorResumeCalls = 0;
+  let vendorVisible = false;
   const scope = withRuntime({
-    Jupiter:{init() {initCalls++;}},
+    Jupiter:{
+      init() {initCalls++;vendorVisible=true;},
+      close() {vendorCloseCalls++;vendorVisible=false;},
+      resume() {vendorResumeCalls++;vendorVisible=true;}
+    },
     addEventListener(event, fn) {listeners[event] = fn;},
     setInterval(fn, ms) {assert.equal(ms,15000); timers++; return timers;},
     clearInterval() {stops++;}
@@ -935,12 +954,18 @@ test("approved tab focus or BFCache resume rechecks and restores panel without p
   assert.equal(timers,2);
   assert.equal(ui.panel.hidden,false);
   assert.equal(initCalls,1);
+  assert.equal(vendorCloseCalls,1);
+  assert.equal(vendorResumeCalls,1);
+  assert.equal(vendorVisible,true,"approved focus restores provider-owned root");
   await listeners.pageshow({persisted:true});
   assert.equal(calls,4);
   assert.equal(stops,2);
   assert.equal(timers,3);
   assert.equal(ui.panel.hidden,false);
   assert.equal(initCalls,1,"BFCache return must not initialize vendor SDK twice");
+  assert.equal(vendorCloseCalls,2);
+  assert.equal(vendorResumeCalls,2);
+  assert.equal(vendorVisible,true,"approved BFCache return restores provider-owned root");
   ui.close.click();
   assert.equal(stops,3,"closing panel after refresh stops the newest timer");
   const oldRequests = calls;
@@ -955,8 +980,14 @@ test("a stale successful tab-resume response cannot resurrect a manually closed 
   let calls = 0;
   const listeners = {};
   const yes = {status:200,headers:{get:() => "no-store"},json:async () => ({enabled:true})};
+  let providerVisible = false;
+  let resumeCalls = 0;
   const scope = {
-    Jupiter:{init() {}},
+    Jupiter:{
+      init() {providerVisible=true;},
+      close() {providerVisible=false;},
+      resume() {resumeCalls++;providerVisible=true;}
+    },
     addEventListener(event,fn) {listeners[event] = fn;},
     fetch() {
       calls++;
@@ -971,6 +1002,7 @@ test("a stale successful tab-resume response cannot resurrect a manually closed 
   await ui.btn.click();
   const pending = listeners.focus();
   assert.equal(ui.panel.hidden,true);
+  assert.equal(providerVisible,false);
   ui.close.click();
   const closedStatus = ui.status.textContent;
   resolveStale(yes);
@@ -978,6 +1010,8 @@ test("a stale successful tab-resume response cannot resurrect a manually closed 
   assert.equal(ui.panel.hidden,true);
   assert.equal(ui.status.textContent,closedStatus);
   assert.equal(ui.btn.hidden,false);
+  assert.equal(providerVisible,false);
+  assert.equal(resumeCalls,0,"stale approval must not revive manually closed provider");
   assert.equal(calls,3);
 });
 
@@ -986,11 +1020,17 @@ test("a stale denied tab-resume response cannot revoke a newer approved reopenin
   let resolveStale;
   let calls = 0;
   let initCalls = 0;
+  let resumeCalls = 0;
+  let providerVisible = false;
   const listeners = {};
   const yes = {status:200,headers:{get:() => "no-store"},json:async () => ({enabled:true})};
   const no = {status:200,headers:{get:() => "no-store"},json:async () => ({enabled:false})};
   const scope = {
-    Jupiter:{init() {initCalls++;}},
+    Jupiter:{
+      init() {initCalls++;providerVisible=true;},
+      close() {providerVisible=false;},
+      resume() {resumeCalls++;providerVisible=true;}
+    },
     addEventListener(event,fn) {listeners[event] = fn;},
     fetch() {
       calls++;
@@ -1005,9 +1045,12 @@ test("a stale denied tab-resume response cannot revoke a newer approved reopenin
   await ui.btn.click();
   const pending = listeners.focus();
   assert.equal(ui.panel.hidden,true);
+  assert.equal(providerVisible,false);
   ui.close.click();
   await ui.btn.click();
   assert.equal(ui.panel.hidden,false);
+  assert.equal(resumeCalls,1);
+  assert.equal(providerVisible,true);
   resolveStale(no);
   await pending;
   assert.equal(ui.panel.hidden,false,"older denied response cannot hide newer authorized panel");
