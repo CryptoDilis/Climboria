@@ -89,12 +89,19 @@ async function requestJson(url, fetcher) {
       ? "application/json;version=20230203" : "application/json" },
     signal: AbortSignal.timeout(15000)
   });
+  const headers = selectedHeaders(response.headers);
+  // A throttled upstream may return HTML (Cloudflare 429) rather than JSON.
+  // Preserve the HTTP status BEFORE parsing so the caller always stops on 429
+  // and never sends an extra provider request after a rate-limit response.
+  if (response.status < 200 || response.status >= 300) {
+    return { status: response.status, headers, body: null };
+  }
   const text = await response.text();
   if (text.length > 1_000_000) throw new Error("Provider response exceeds bounded size");
   let body;
   try { body = JSON.parse(text); }
   catch { throw new Error("Provider returned non-JSON data (HTTP " + response.status + ")"); }
-  return { status: response.status, headers: selectedHeaders(response.headers), body };
+  return { status: response.status, headers, body };
 }
 
 export async function runCapture(options, fetcher = fetch) {
