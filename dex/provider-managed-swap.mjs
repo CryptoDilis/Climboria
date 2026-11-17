@@ -4,7 +4,11 @@
  * signs a transaction, requests wallet keys or claims a completed trade.
  * The official provider must be verified separately before enabling.
  */
-// The official Jupiter Plugin, not the legacy terminal.jup.ag script.\n// The exact v1.0.18 bootstrap was independently hashed in the 2026-11-15\n// source audit; this source pin does NOT verify dynamically inserted app JS/CSS.\nconst OFFICIAL_PLUGIN_HOST = "plugin.jup.ag";\nconst REVIEWED_BOOTSTRAP_PATH = "/plugin-1.0.18.js";
+// The official Jupiter Plugin, not the legacy terminal.jup.ag script.
+// The exact v1.0.18 bootstrap was independently hashed in the 2026-11-15
+// source audit; this source pin does NOT verify dynamically inserted app JS/CSS.
+const OFFICIAL_PLUGIN_HOST = "plugin.jup.ag";
+const REVIEWED_BOOTSTRAP_PATH = "/plugin-1.0.18.js";
 const SHA384_SRI = /^sha384-[A-Za-z0-9+/]{64}$/;
 
 export function validateManagedProviderConfig(config) {
