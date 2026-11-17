@@ -275,7 +275,8 @@ test("incomplete or malformed DEX market pair cannot fetch vendor script or init
     await ui.btn.click();
     assert.equal(ui.created.length,0,"invalid pair cannot download any third-party executable");
     assert.equal(called,0);
-    assert.match(ui.status.textContent,/Provider integration unavailable/);
+    assert.equal(ui.panel.hidden,false,"first-party panel explains an invalid market without loading wallet UI");
+    assert.match(ui.status.textContent,/Selected token pair is invalid or incomplete/);
   }
 });
 
