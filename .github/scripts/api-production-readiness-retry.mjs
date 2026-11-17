@@ -13,7 +13,11 @@ const DELAY_MS = 5000;
 
 function isStaleEdgeRevision(error, expectedRevision) {
   return error?.code === "ERR_ASSERTION" &&
-    error.message === STALE_REVISION &&
+    error.operator === "strictEqual" &&
+    // Node.js AssertionError.message may append an indented actual/expected
+    // diff after a newline; require the unchanged fixed message boundary.
+    (error.message === STALE_REVISION ||
+      error.message?.startsWith(STALE_REVISION + "\n")) &&
     error.expected === expectedRevision &&
     typeof error.actual === "string" &&
     SHA.test(error.actual) &&
