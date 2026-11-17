@@ -513,16 +513,22 @@ async function checkDexIntelPoolSwitch(mobile) {
     await page.waitForFunction(pool => document.querySelector("#detailChart")?.getAttribute("src")?.includes("/solana/" + pool + "?"),
       oldPool, { timeout: 30000 });
     const tradeToggle = page.locator('button[data-intel-panel="activity"]');
+    if (mobile) {
+      assert.equal(await tradeToggle.isVisible(), false,
+        name + " chart workspace should not duplicate the intel accordion");
+      await page.locator("#detailTabPools").click({ timeout: 15000 });
+      await tradeToggle.waitFor({ state: "visible", timeout: 15000 });
+    }
     await tradeToggle.click({ timeout: 15000 });
     await oldRequested;
-    if (mobile) await page.locator("#detailTabPools").click({ timeout: 15000 });
     await page.locator('#detailPairs button[data-pool="' + newPool + '"]').click({ timeout: 15000 });
     await page.waitForFunction(pool => new URL(location.href).searchParams.get("pool") === pool, newPool);
     assert.equal(await tradeToggle.getAttribute("aria-expanded"), "false");
     assert.match(await page.locator("#activityNote").textContent(), /33333…33333/);
     assert.ok((await page.locator("#profileSocials").innerHTML()).includes("new-pool"));
     assert.ok(!(await page.locator("#profileSocials").innerHTML()).includes("old-pool"));
-    if (mobile) await page.locator("#detailTabChart").click({ timeout: 15000 });
+    if (mobile) assert.equal(await tradeToggle.isVisible(), true,
+      name + " new selected-pool intel must remain accessible from Pools tab");
     await tradeToggle.click({ timeout: 15000 });
     await page.waitForFunction(() => document.querySelector("#recentActivity")?.textContent?.includes("23.45"),
       null, { timeout: 15000 });
