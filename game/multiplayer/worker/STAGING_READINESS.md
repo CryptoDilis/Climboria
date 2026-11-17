@@ -216,6 +216,49 @@ visibility, cyan peer markers on field map, two-way World Chat, correct
 account names, logout/login/reconnect cleanup, desktop keyboard ATTACK
 animation, mobile chat input/joystick isolation and acceptable device FPS.
 
+### Preferred for Windows: owner-operated two-window launcher (no DevTools)
+
+The owner can avoid the manual Overrides setup by using the new
+`game/multiplayer/worker/START_GAME_QA_WINDOWS.cmd` launcher. This is
+**local, opt-in** software; ChatGPT does not control the owner's existing
+browser or have the sign-in sessions.
+
+1. Download/clone the **complete** `CryptoDilis/Climboria` repository,
+   not just the .cmd file, to a private Windows folder. Install **Node.js 22**
+   and ordinary **Google Chrome** if missing.
+2. Double-click `game/multiplayer/worker/START_GAME_QA_WINDOWS.cmd`.
+   It installs a pinned Playwright dependency **locally inside the Game
+   worker QA folder**, checks the exact owned Game Worker `/health` and
+   `/ready` under HTTPS, and launches two **temporary isolated Chrome
+   browser windows**. It does not open DevTools or edit the public website.
+3. In window A, log in yourself with your own *registered* provider
+   (Email/Google/X) and return to `https://climboria.fun/game/play.html`.
+   Enter normal walking mode in Jarrell's Peak. Press **Enter in the console**
+   after ready. Repeat for window B with a **different** registered account.
+   New windows cannot silently inherit the user's already-running Chrome
+   sessions; a separate interactive sign-in may be required. Never give this
+   tool or ChatGPT passwords, JWTs, session cookies or OAuth codes.
+4. The runner intercepts `/game/multiplayer/client-config.json` **only**
+   in the two temporary browsers, replaces its response in memory with
+   `{"schema":1,"enabled":true,"endpoint":"https://rooms.climboria.fun/"}`,
+   and uses real first-party Supabase authentication. It requires distinct
+   registered user IDs, actual accepted room spawns, reciprocal real GLB
+   presence, keyboard movement replication, **server-echoed** two-way World
+   Chat, unsent draft preservation, render frames and removal/rejoin of a
+   disconnected peer. It reports PASS only when every assertion succeeds.
+5. When done, the two test browser contexts and Chrome are closed, so the
+   browser-only override is removed. The on-disk/public Game config remains
+   `enabled:false`, `endpoint:null`. This does not turn on multiplayer for
+   other users, does not enable PvP damage/loot, and is **not proof of physical
+   Android FPS**. Real production customers' accounts should not be used.
+   If a provider blocks automated Chrome sign-in, **stop** rather than try to
+   bypass the provider; use the manual owner browser Overrides method below.
+
+**Honest acceptance status:** As of this documented source change, the
+new launcher is only code plus syntax/CI checks; no tool has executed a
+live mixed-provider sign-in, actual WebGL two-user QA or owner hardware
+test. Do not mark public multiplayer GO until owner-run evidence is recorded.
+
 ### Owner-only manual QA using two already logged-in, mixed-provider browsers
 
 This is an **operator test**, not the automated password-based Playwright
