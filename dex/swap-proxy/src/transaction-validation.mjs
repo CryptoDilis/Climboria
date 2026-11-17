@@ -246,19 +246,29 @@ export function validateJupiterOrderMetadata(order, { taker, amount } = {}) {
   if (order.gasless !== false || (order.signatureFeePayer && order.signatureFeePayer !== taker)) {
     fail("Gasless or externally fee-paid orders are not supported");
   }
-  if (typeof amount !== "string" || order.inAmount !== amount) {
-    fail("Jupiter input amount does not match the requested amount");
+  // Solana SPL token amounts are unsigned 64-bit integers. Reject oversized
+  // or non-canonical provider strings BEFORE BigInt conversion; a malicious
+  // 200-OK response can otherwise consume CPU parsing extremely long digits.
+  const U64_MAX = 18446744073709551615n;
+  const rawU64 = value => typeof value === "string" &&
+    value.length >= 1 && value.length <= 20 &&
+    /^[1-9][0-9]*$/.test(value) && BigInt(value) <= U64_MAX;
+  if (!rawU64(amount) || order.inAmount !== amount) {
+    fail("Jupiter input amount does not match the requested positive u64 amount");
   }
-  const positiveInteger = value => typeof value === "string" && /^[1-9][0-9]*$/.test(value);
-  if (!positiveInteger(order.outAmount) || !positiveInteger(order.otherAmountThreshold)) {
-    fail("Jupiter output and minimum-output amounts must be positive integer strings");
+  if (!rawU64(order.outAmount) || !rawU64(order.otherAmountThreshold)) {
+    fail("Jupiter output and minimum-output amounts must be positive integer strings within u64");
   }
   if (BigInt(order.otherAmountThreshold) > BigInt(order.outAmount)) {
     fail("Jupiter minimum output cannot exceed the quoted output");
   }
+  // The raw V6 route decoder supports at most 16 hops. Metadata claiming
+  // more hops cannot describe a route that our compiled-message review accepts.
   if (!Array.isArray(order.routePlan) || order.routePlan.length === 0 ||
-      order.routePlan.some(hop => !hop || typeof hop.swapInfo?.label !== "string" || !hop.swapInfo.label.trim())) {
-    fail("Jupiter Metis route plan is missing a valid DEX label");
+      order.routePlan.length > 16 ||
+      order.routePlan.some(hop => !hop || typeof hop.swapInfo?.label !== "string" ||
+        !hop.swapInfo.label.trim())) {
+    fail("Jupiter Metis route plan is missing valid DEX labels or exceeds 16 hops");
   }
   return true;
 }

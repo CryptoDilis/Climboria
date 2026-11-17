@@ -148,3 +148,70 @@ test("rejects non-v0, truncated, trailing-byte and non-canonical base64 transact
   assert.throws(() => parseSolanaV0Transaction(Buffer.from([...Buffer.from(fixture.original, "base64"), 0]).toString("base64")), /trailing/i);
   assert.throws(() => parseSolanaV0Transaction(fixture.original + " "), /canonical base64/i);
 });
+
+test("rejects noncanonical or oversized Jupiter output and minimum u64 amounts before BigInt", () => {
+  const base = {
+    router: "metis", transactionVersion: 0, gasless: false,
+    inAmount: "1000", outAmount: "950", otherAmountThreshold: "900",
+    routePlan: [{ swapInfo: { label: "Raydium" } }]
+  };
+  const options = { taker: "Taker111111111111111111111111111111111", amount: "1000" };
+  const invalid = [
+    "18446744073709551616", // u64 max + 1
+    "9".repeat(250000), // never parse provider-supplied oversized BigInt
+    "00", "01", "0", "-1", "1e6", "1.0", " 1", "1 ", 0, null
+  ];
+  for (const value of invalid) {
+    for (const field of ["outAmount", "otherAmountThreshold"]) {
+      assert.throws(
+        () => validateJupiterOrderMetadata({ ...base, [field]: value }, options),
+        /positive integer strings within u64/,
+        `${field} must be a canonical positive u64`
+      );
+    }
+  }
+  const largest = "18446744073709551615";
+  assert.equal(validateJupiterOrderMetadata({
+    ...base, outAmount: largest, otherAmountThreshold: largest
+  }, options), true, "Maximum on-chain u64 value is structurally representable");
+  assert.throws(
+    () => validateJupiterOrderMetadata({ ...base, otherAmountThreshold: largest }, options),
+    /minimum output cannot exceed/,
+    "A representable u64 threshold must still respect quoted output"
+  );
+});
+
+test("rejects invalid requested u64 input amounts and mismatched provider echoes", () => {
+  const base = {
+    router: "metis", transactionVersion: 0, gasless: false,
+    inAmount: "1000", outAmount: "950", otherAmountThreshold: "900",
+    routePlan: [{ swapInfo: { label: "Raydium" } }]
+  };
+  for (const amount of ["0", "01", "18446744073709551616", "9".repeat(250000), 1000, undefined]) {
+    assert.throws(
+      () => validateJupiterOrderMetadata({ ...base, inAmount: amount }, {
+        taker: "Taker111111111111111111111111111111111", amount
+      }),
+      /input amount/,
+      "A matching invalid provider echo must not turn an impossible input into a valid order"
+    );
+  }
+  assert.throws(() => validateJupiterOrderMetadata(base, {
+    taker: "Taker111111111111111111111111111111111", amount: "1001"
+  }), /input amount/);
+});
+
+test("rejects over-16-hop provider route metadata while retaining supported bounded plans", () => {
+  const base = {
+    router: "metis", transactionVersion: 0, gasless: false,
+    inAmount: "1000", outAmount: "950", otherAmountThreshold: "900",
+    routePlan: [{ swapInfo: { label: "Raydium" } }]
+  };
+  const options = { taker: "Taker111111111111111111111111111111111", amount: "1000" };
+  assert.equal(validateJupiterOrderMetadata({
+    ...base, routePlan: Array.from({ length: 16 }, () => ({ swapInfo: { label: "Raydium" } }))
+  }, options), true);
+  assert.throws(() => validateJupiterOrderMetadata({
+    ...base, routePlan: Array.from({ length: 17 }, () => ({ swapInfo: { label: "Raydium" } }))
+  }, options), /exceeds 16 hops/);
+});
