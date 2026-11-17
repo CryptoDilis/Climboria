@@ -26,6 +26,11 @@ export function validateManagedProviderConfig(config) {
   }
 }
 
+/** A release for Swap must never implicitly unlock DEX, or vice versa. */
+export function isManagedProviderSurfaceApproved(config, surface) {
+  return (surface === "swap" || surface === "dex") && config?.surfaces?.[surface] === true;
+}
+
 export function integratedTerminalOptions(targetId) {
   if (typeof targetId !== "string" || !/^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(targetId)) {
     throw new Error("A safe integrated Jupiter target ID is required");
@@ -86,7 +91,9 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   const target = panel.querySelector("[data-climboria-managed-swap-target]");
   const status = panel.querySelector("[data-climboria-managed-swap-status]");
   const close = panel.querySelector("[data-climboria-managed-swap-close]");
-  const approved = validateManagedProviderConfig(config);
+  const surface = panel.getAttribute?.("data-climboria-managed-swap-surface");
+  const approved = isManagedProviderSurfaceApproved(config, surface)
+    ? validateManagedProviderConfig(config) : null;
   if (!approved || !target || !target.id || !status || !close || !buttons.length) {
     buttons.forEach(button => { button.hidden = true; });
     panel.hidden = true;
@@ -251,7 +258,10 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
 if (typeof window !== "undefined" && typeof document !== "undefined") {
   const boot = async () => {
     const config = window.CLIMBORIA_SWAP_CONFIG?.managedProvider;
-    const runtimeEnabled = validateManagedProviderConfig(config) &&
+    const surface = document.querySelector("[data-climboria-managed-swap-panel]")
+      ?.getAttribute("data-climboria-managed-swap-surface");
+    const runtimeEnabled = isManagedProviderSurfaceApproved(config, surface) &&
+      validateManagedProviderConfig(config) &&
       await isManagedSwapRuntimeApproved(window);
     initializeManagedSwapHost({ doc: document, scope: window, config: runtimeEnabled ? config : null });
   };
