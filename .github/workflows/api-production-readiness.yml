@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - ".github/scripts/api-production-readiness.mjs"
+      - ".github/scripts/api-production-readiness-retry.mjs"
       - ".github/scripts/api-production-readiness.test.mjs"
       - ".github/workflows/api-production-readiness.yml"
       - ".github/workflows/deploy-climboria-api.yml"
@@ -12,6 +13,7 @@ on:
     branches: [main]
     paths:
       - ".github/scripts/api-production-readiness.mjs"
+      - ".github/scripts/api-production-readiness-retry.mjs"
       - ".github/scripts/api-production-readiness.test.mjs"
       - ".github/workflows/api-production-readiness.yml"
       - ".github/workflows/deploy-climboria-api.yml"
@@ -46,6 +48,7 @@ jobs:
       - name: Syntax and fail-closed unit tests
         run: |
           node --check .github/scripts/api-production-readiness.mjs
+          node --check .github/scripts/api-production-readiness-retry.mjs
           node --test .github/scripts/api-production-readiness.test.mjs
           node --test dex/swap-proxy/test/worker.test.mjs
       - name: Guard both source-level trading kill switches
