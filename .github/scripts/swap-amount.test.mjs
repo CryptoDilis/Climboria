@@ -164,7 +164,12 @@ test("an older Swap market refresh cannot overwrite a newer response", async () 
   assert.ok(start >= 0 && end > start, "Expected request-sequenced Swap market loader");
   assert.ok(html.indexOf("let majorMarketsRequest=0;") < html.indexOf("loadMajorMarkets();updateSelectedAsset"),
     "Market request sequence must be initialized before the first page-load refresh");
-  const loader = "let majorMarketsRequest=0;\n" + html.slice(start, end);
+  // Exercise the same scalar-only provider helper used by the production
+  // major-market loader; isolated VM tests must not silently omit dependencies.
+  const metricStart = html.indexOf("const reportedSwapMarketNumber=");
+  const metricEnd = html.indexOf("const usdFmt=", metricStart);
+  assert.ok(metricStart >= 0 && metricEnd > metricStart, "Expected actual Swap metric validation helper");
+  const loader = html.slice(metricStart, metricEnd) + "\nlet majorMarketsRequest=0;\n" + html.slice(start, end);
   const elements = { majorCoins: { innerHTML: "" }, majorStatus: { textContent: "" } };
   const pending = [];
   const loadMajorMarkets = runInNewContext(loader + "\nloadMajorMarkets", {
