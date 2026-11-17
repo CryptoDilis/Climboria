@@ -15,8 +15,18 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { pathToFileURL } from "node:url";
 import { normalizeGeckoTerminalRequestedPoolOhlcv } from "../../dex/swap-proxy/src/geckoterminal-ohlcv.mjs";
+import { decodeBase58 } from "../../dex/swap-proxy/src/transaction-validation.mjs";
 
 const B58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+// Exact 32-byte Solana public keys only. A Base58 string can have an
+// allowed character count and still decode to 31, 33 or more bytes.
+// Reuse the existing strict Worker wire decoder (no network requests).
+function validSolanaAddress(value) {
+  if (typeof value !== "string" || !B58.test(value)) return false;
+  try { return decodeBase58(value).length === 32; }
+  catch { return false; }
+}
 const INTERVALS = Object.freeze({
   "1m": { timeframe: "minute", aggregate: "1" },
   "5m": { timeframe: "minute", aggregate: "5" },
@@ -49,7 +59,7 @@ export function parseOptions(argv) {
     }
   }
   const pool = values["--pool"], base = values["--base"], quote = values["--quote"];
-  if (![pool, base, quote].every(v => typeof v === "string" && B58.test(v)) || base === quote) {
+  if (![pool, base, quote].every(validSolanaAddress) || base === quote) {
     throw new Error("Exact Solana pool address and two distinct base/quote mints are required");
   }
   const interval = values["--interval"] || "15m";
@@ -64,7 +74,8 @@ export function parseOptions(argv) {
 export function makePlan(options) {
   const { pool, base, quote, interval } = options;
   const spec = INTERVALS[interval];
-  if (!spec || !B58.test(pool) || !B58.test(base) || !B58.test(quote) || base === quote) {
+  if (!spec || !validSolanaAddress(pool) || !validSolanaAddress(base) ||
+      !validSolanaAddress(quote) || base === quote) {
     throw new Error("Invalid selected Solana pool/mint identity or timeframe");
   }
   const providerUrl = "https://api.dexscreener.com/latest/dex/pairs/solana/" + pool;
