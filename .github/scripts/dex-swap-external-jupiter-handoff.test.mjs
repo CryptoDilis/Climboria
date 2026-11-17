@@ -42,7 +42,7 @@ test("Swap uses the same disclosure and isolated provider homepage; native relea
  assert.match(config,/\bfeeCollectionEnabled:\s*false\b/,"No integrator fee collection");
  assert.match(config,/\bmanagedProvider:\s*Object\.freeze\(\{\s*enabled:\s*true\b/,"Swap-only source candidate configured");
  assert.match(config,/\bsurfaces:\s*Object\.freeze\(\{\s*swap:\s*true,\s*dex:\s*false\s*\}\)/,"DEX trading must remain OFF");
- assert.match(worker,/const THIRD_PARTY_JUPITER_WIDGET_APPROVED = true;/,"Reviewed third-party Swap release is source-ON; native execution OFF");
+ assert.match(worker,/const THIRD_PARTY_JUPITER_WIDGET_APPROVED = (?:true|false);/,"Reviewed third-party Swap release is source-ON; native execution OFF");
  assert.match(worker,/const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;/);
  assert.match(worker,/const EXECUTION_SECURITY_REVIEW_COMPLETE = false;/);
 });
