@@ -37,7 +37,8 @@ const sri = "sha384-" + createHash("sha384").update(MOCK_SCRIPT).digest("base64"
 function mockConfig(integrity = sri) {
   return "window.CLIMBORIA_SWAP_CONFIG = Object.freeze({" +
     "proxyEnabled:true,enabled:false,apiBase:'https://api.climboria.fun'," +
-    "managedProvider:Object.freeze({enabled:true,runtimeApproved:true,provider:'jupiter-terminal'," +
+    "managedProvider:Object.freeze({enabled:true,runtimeApproved:true," +
+    "surfaces:Object.freeze({swap:true,dex:true}),provider:'jupiter-terminal'," +
     "scriptUrl:'" + SCRIPT_URL + "',integrity:'" + integrity + "'})," +
     "revenue:Object.freeze({integratorFeeTargetBps:50,feeCollectionEnabled:false," +
     "feeRecipient:null,providerFeeIntegrationVerified:false})});";
