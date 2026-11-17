@@ -31,6 +31,13 @@ const APPROVED_READONLY_PROGRAM_IDS = new Set([
 ]);
 
 function fail(message) { throw new Error(message); }
+// Direct CPI/transaction structural checks must remain safe even if a future
+// caller skips the independently bounded Jupiter order-metadata validator.
+const TOKEN_U64_MAX = 18446744073709551615n;
+function isCanonicalPositiveU64(value) {
+  return typeof value === "string" && /^[1-9][0-9]{0,19}$/.test(value) &&
+    BigInt(value) <= TOKEN_U64_MAX;
+}
 function readU32(bytes, offset) {
   if (offset + 4 > bytes.length) fail("Truncated Jupiter route instruction");
   return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(offset, true);
@@ -156,6 +163,13 @@ export function validateJupiterV6Transaction({
   otherAmountThreshold
 }) {
   if (!parsed || parsed.requiredSignatures !== 1) fail("Only single-taker-signature transactions are supported");
+  // Fail closed BEFORE constructing BigInts from upstream-controlled strings.
+  // The outer order metadata validator already requires these bounds, but a
+  // future direct invocation of this policy must independently enforce them.
+  if (!isCanonicalPositiveU64(amount) || !isCanonicalPositiveU64(outAmount) ||
+      !isCanonicalPositiveU64(otherAmountThreshold)) {
+    fail("Jupiter route amounts and minimum output must be canonical positive u64 strings");
+  }
   // Defense in depth: the stored order independently verifies this again,
   // but a policy result must never accept an upstream-paid transaction.
   if (!Array.isArray(parsed.staticAccountKeys) || !parsed.staticAccountKeys.length ||
@@ -216,9 +230,6 @@ export function validateJupiterV6Transaction({
   const route = decodeJupiterV6Route(instruction.data);
   if (route.inAmount !== BigInt(amount) || route.quotedOutAmount !== BigInt(outAmount)) {
     fail("Jupiter route instruction amounts do not match the validated order metadata");
-  }
-  if (typeof otherAmountThreshold !== "string" || !/^[1-9][0-9]*$/.test(otherAmountThreshold)) {
-    fail("Jupiter minimum-output threshold must be a positive integer string");
   }
   const minimumFromInstruction = route.quotedOutAmount * BigInt(10_000 - route.slippageBps) / 10_000n;
   const suppliedMinimum = BigInt(otherAmountThreshold);
