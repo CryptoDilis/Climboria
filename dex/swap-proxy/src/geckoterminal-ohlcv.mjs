@@ -161,5 +161,5 @@ export function normalizeGeckoTerminalRequestedPoolOhlcv({
     selectedTokenAddress: selected,
     requestedOrientation: "base"
   });
-  return { ...result, requestedTokenSide, orientation: "selected-mint-as-returned-base" };
+  return { ...result, requestedTokenSide, returnedSeriesTokenPosition: "base" };
 }
