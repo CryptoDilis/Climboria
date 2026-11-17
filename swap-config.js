@@ -6,19 +6,22 @@ window.CLIMBORIA_SWAP_CONFIG = Object.freeze({
   // Keep transaction signing and execution disabled until the separate security release gates pass.
   enabled: false,
   apiBase: "https://api.climboria.fun",
-  // OFF until the official in-site provider SDK, source/integrity and
-  // wallet-owned transaction flow are verified. Never enables our Worker.
+  // SWAP-ONLY candidate: frontend source and official Plugin pin prepared,
+  // but the separately deployed API status is still source-disabled.
+  // DEX and native order/execute execution remain OFF. No customer trades.
   managedProvider: Object.freeze({
-    enabled: false,
-    runtimeApproved: false,
+    enabled: true,
+    runtimeApproved: true,
     // Existing quote API Worker status avoids a new Cloudflare zone-route binding.
     // This is a read-only OFF source, NOT a customer trading release.
     runtimeStatusUrl: "https://api.climboria.fun/api/swap/provider-status",
     // Independent, default-OFF release controls: Swap first, DEX second.
-    surfaces: Object.freeze({ swap: false, dex: false }),
+    surfaces: Object.freeze({ swap: true, dex: false }),
     provider: "jupiter-terminal",
-    scriptUrl: null,
-    integrity: null
+    // Source hash was independently observed 2026-11-15. Bootstrap SRI
+    // does NOT pin dynamically inserted Jupiter app JS/CSS/fonts.
+    scriptUrl: "https://plugin.jup.ag/plugin-1.0.18.js",
+    integrity: "sha384-aPExK0yy7w5DZjkLRMWvSKhuEz9kvz/9vESgWrctox51YnSfx6WWIWrsZBHqVJSy"
   }),
   // Business *target*, not a collected fee. Any future fee needs an
   // officially documented adapter, configured wallet recipient, explicit
