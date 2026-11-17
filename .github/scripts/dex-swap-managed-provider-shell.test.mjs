@@ -11,6 +11,7 @@ import {
   initializeManagedSwapHost
 } from "../../dex/provider-managed-swap.mjs";
 
+const EXISTING_API_STATUS_URL = "https://api.climboria.fun/api/swap/provider-status";
 const approved = Object.freeze({
   enabled: true,
   runtimeApproved: true,
@@ -54,6 +55,33 @@ test("runtime approval fails closed on missing fetch, bad status, cache policy, 
     }), false);
   }
   assert.equal(await isManagedSwapRuntimeApproved(withRuntime({})), true);
+  const calls = [];
+  const apiScope = {
+    async fetch(url, options) {
+      calls.push({url, options});
+      return {status:200,
+        headers:{get:header=>header==="Cache-Control"?"no-store, max-age=0":null},
+        json:async()=>({enabled:true})};
+    }
+  };
+  assert.equal(await isManagedSwapRuntimeApproved(apiScope, EXISTING_API_STATUS_URL),true);
+  assert.equal(calls.length,1,"only one explicit chosen runtime endpoint may approve");
+  assert.equal(calls[0].url,EXISTING_API_STATUS_URL);
+  assert.equal(calls[0].options.cache,"no-store");
+  assert.equal(calls[0].options.redirect,"error");
+  for (const invalid of [
+    "https://api.climboria.fun/health",
+    "https://api.climboria.fun/api/swap/provider-status?approved=true",
+    "http://api.climboria.fun/api/swap/provider-status",
+    "https://api.climboria.fun.evil.example/api/swap/provider-status",
+    "//api.climboria.fun/api/swap/provider-status",
+    "https://climboria.fun/api/swap/provider-status",
+    "",null
+  ]) {
+    assert.equal(await isManagedSwapRuntimeApproved(apiScope,invalid),false,
+      "unknown runtime source must be denied before any network call");
+  }
+  assert.equal(calls.length,1, "unapproved runtime source must never be fetched");
 });
 
 test("provider mode remains explicitly OFF in public production config and custom execution stays off", () => {
@@ -62,6 +90,7 @@ test("provider mode remains explicitly OFF in public production config and custo
   assert.match(cfg, /enabled:\s*false/);
   assert.match(cfg, /managedProvider:\s*Object\.freeze\(\{\s*enabled:\s*false/);
   assert.match(cfg, /runtimeApproved:\s*false/);
+  assert.match(cfg, /runtimeStatusUrl:\s*"https:\/\/api\.climboria\.fun\/api\/swap\/provider-status"/);
   assert.match(cfg, /surfaces:\s*Object\.freeze\(\{\s*swap:\s*false,\s*dex:\s*false\s*\}\)/);
   assert.match(cfg, /scriptUrl:\s*null/);
   assert.match(cfg, /integrity:\s*null/);
@@ -73,6 +102,13 @@ test("provider-loader refuses unreviewed hosts, protocols, missing SRI and redir
   assert.equal(validateManagedProviderConfig({ ...approved, enabled: false }), null);
   assert.equal(validateManagedProviderConfig({ ...approved, runtimeApproved: false }), null);
   assert.equal(validateManagedProviderConfig({ ...approved, runtimeApproved: undefined }), null);
+  assert.deepEqual(validateManagedProviderConfig({...approved,runtimeStatusUrl:EXISTING_API_STATUS_URL}),
+    {url:approved.scriptUrl,integrity:approved.integrity},
+    "exact existing API Worker is a supported fail-closed status source");
+  for (const badSource of ["", "https://evil.example/status",
+    "https://api.climboria.fun/api/swap/provider-status?enabled=true"]) {
+    assert.equal(validateManagedProviderConfig({...approved,runtimeStatusUrl:badSource}),null);
+  }
   assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "https://evil.example/main-v3.js" }), null);
   assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "http://terminal.jup.ag/main-v3.js" }), null);
   assert.equal(validateManagedProviderConfig({ ...approved, scriptUrl: "https://terminal.jup.ag.evil.example/main-v3.js" }), null);
@@ -806,11 +842,12 @@ test("all provider launch controls reference the actual expanded panel, not the 
 
 test("both Climboria swap interfaces retain quote-only path and use isolated hosted widget", () => {
   const code = readFileSync(new URL("../../dex/provider-managed-swap.mjs", import.meta.url), "utf8");
-  assert.deepEqual([...code.matchAll(/\bfetch\s*\(\s*"([^"]+)"/g)].map(match => match[1]), ["/swap-runtime-status.json"]);
+  assert.match(code, /scope\.fetch\(statusUrl,\s*\{/);
+  assert.match(code, /RUNTIME_STATUS_URLS\.has\(statusUrl\)/);
   assert.equal([...code.matchAll(/\bfetch\s*\(/g)].length, 1);
   for (const file of ["swap/index.html", "dex/index.html"]) {
     const source = readFileSync(new URL("../../" + file, import.meta.url), "utf8");
-    assert.match(source, /\/dex\/provider-managed-swap\.mjs\?v=5/);
+    assert.match(source, /\/dex\/provider-managed-swap\.mjs\?v=6/);
     assert.match(source, /\/dex\/provider-managed-swap\.css\?v=2/);
     assert.match(source, /data-climboria-managed-swap-panel hidden/);
     assert.match(source, /data-climboria-managed-swap-open hidden/);
