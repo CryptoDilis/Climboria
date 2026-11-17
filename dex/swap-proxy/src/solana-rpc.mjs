@@ -129,15 +129,22 @@ function readU64LE(bytes, offset) {
   if (offset + 8 > bytes.length) fail("SPL account data is truncated");
   return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getBigUint64(offset, true);
 }
+// RPC account bytes are untrusted: atob() permits some non-canonical encodings
+// (e.g. missing padding/whitespace). Only round-trip canonical base64 is
+// acceptable as independent evidence for SPL token account and mint bytes.
+const CANONICAL_BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 function decodeBase64(value) {
-  if (typeof value !== "string" || value.length > 1024) fail("SPL account base64 data is invalid");
+  if (typeof value !== "string" || value.length < 4 || value.length > 1024 ||
+      !CANONICAL_BASE64.test(value)) fail("SPL account base64 data must be canonical");
   let binary;
-  try { binary = atob(value); } catch { fail("SPL account base64 data is malformed"); }
+  try { binary = atob(value); } catch { fail("SPL account base64 data must be canonical"); }
+  if (btoa(binary) !== value) fail("SPL account base64 data must be canonical");
   return Uint8Array.from(binary, character => character.charCodeAt(0));
 }
 function parseClassicTokenAccount(address, account) {
   if (!account || account.executable !== false || account.owner !== SPL_TOKEN_PROGRAM_ID ||
-      !Array.isArray(account.data) || account.data[1] !== "base64") {
+      !Array.isArray(account.data) || account.data.length !== 2 ||
+      account.data[1] !== "base64") {
     fail("Token account is missing, executable or not owned by the classic SPL Token program");
   }
   const bytes = decodeBase64(account.data[0]);
@@ -160,7 +167,8 @@ function parseClassicTokenAccount(address, account) {
 }
 function parseClassicMint(address, account) {
   if (!account || account.executable !== false || account.owner !== SPL_TOKEN_PROGRAM_ID ||
-      !Array.isArray(account.data) || account.data[1] !== "base64") {
+      !Array.isArray(account.data) || account.data.length !== 2 ||
+      account.data[1] !== "base64") {
     fail("Mint account is missing or not owned by the classic SPL Token program");
   }
   const bytes = decodeBase64(account.data[0]);
@@ -210,7 +218,10 @@ export async function verifyJupiterTokenAccounts({
     if (typeof address !== "string" || decodeBase58(address).length !== 32) fail("Invalid " + label + " public key");
   }
   if (new Set(addresses).size !== addresses.length) fail("Jupiter source, destination and mint accounts must be distinct");
-  if (typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount)) fail("Requested token input amount is invalid");
+  // Independent u64 guard: do not assume the caller already validated a
+  // provider amount, or accept a 20-digit number > Solana token's u64 range.
+  if (typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount) ||
+      BigInt(amount) > 18446744073709551615n) fail("Requested token input amount is invalid");
   if (minContextSlot !== null && (!Number.isSafeInteger(minContextSlot) || minContextSlot < 0)) {
     fail("Minimum RPC context slot is invalid");
   }
