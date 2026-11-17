@@ -150,6 +150,9 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   let loading = false;
   let mounted = false;
   let mountedPair = null;
+  // Vendor init can asynchronously create its own root before resolving.
+  // Close/revoke must conceal that partial UI as well as mounted instances.
+  let providerInitInFlight = false;
   // Jupiter.close() hides the vendor-owned root as well as our panel.
   // A fresh, explicitly approved reopen must invoke the official resume().
   let providerConcealedByClose = false;
@@ -201,8 +204,8 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     // it does not cancel an external wallet popup or any signed transaction.
     // Invoke it best-effort to conceal provider-owned overlays in addition
     // to our enclosing panel, and never let vendor errors reopen the UI.
-    if (mounted && typeof scope.Jupiter?.close === "function") {
-      try { scope.Jupiter.close(); } catch { /* already hidden: fail closed */ }
+    if ((mounted || providerInitInFlight) && typeof scope.Jupiter?.close === "function") {
+      try { scope.Jupiter.close(); } catch { /* first-party panel is already hidden */ }
     }
     status.textContent = "Provider access has been paused. Refresh to check again. Existing wallet requests and submitted transactions are not cancelled.";
   };
@@ -299,7 +302,11 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
           throw new Error("Jupiter Plugin is unavailable on Base");
         }
         const options = integratedTerminalOptions(target.id, selection);
+        // A close/revoke during the vendor's asynchronous init must hide any
+        // partially mounted provider root immediately, not only on resolution.
+        providerInitInFlight = true;
         await Promise.resolve(scope.Jupiter.init(options));
+        providerInitInFlight = false;
         // Late vendor init may finish after close/revoke. Hide its own overlay,
         // not only the first-party panel. This cannot cancel wallet prompts.
         if (requestId !== openRequestId || panel.hidden) {
@@ -313,8 +320,20 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
           status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
         }
       } catch (error) {
+        const failedProviderInit = providerInitInFlight;
+        providerInitInFlight = false;
+        if (failedProviderInit) {
+          // The vendor may have built an overlay before rejecting init.
+          // Keep the first-party surface closed, even if close() throws.
+          try { scope.Jupiter?.close?.(); } catch { /* best effort */ }
+          panel.hidden = true;
+          expanded(false);
+          stopActiveApprovalChecks();
+        }
         if (requestId === openRequestId) {
-          if (error?.message === "Invalid or incomplete Jupiter input/output mint selection") {
+          if (failedProviderInit) {
+            status.textContent = "Provider initialization failed and its interface was hidden. Refresh before retrying. Existing wallet requests or submitted transactions are not cancelled.";
+          } else if (error?.message === "Invalid or incomplete Jupiter input/output mint selection") {
             // Invalid market hints are rejected before any provider script loads.
             // Reveal only an explanatory first-party panel, never the wallet UI.
             panel.hidden = false;
@@ -342,14 +361,14 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     expanded(false);
     // Closing the host must also hide the official Plugin-owned widget.
     // It cannot cancel separate wallet confirmations or submitted swaps.
-    if (mounted && typeof scope.Jupiter?.close === "function") {
+    if ((mounted || providerInitInFlight) && typeof scope.Jupiter?.close === "function") {
       try {
         scope.Jupiter.close();
-        providerConcealedByClose = true;
+        if (mounted) providerConcealedByClose = true;
       } catch { /* first-party panel is already hidden */ }
     }
     lastTrigger?.focus?.();
-    status.textContent = mounted
+    status.textContent = (mounted || providerInitInFlight)
       ? "Provider panel hidden. Closing this page does not cancel wallet prompts or on-chain transactions."
       : "Provider panel closed. No swap was submitted by Climboria.";
   });
