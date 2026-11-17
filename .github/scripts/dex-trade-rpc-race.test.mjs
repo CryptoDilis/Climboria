@@ -15,6 +15,12 @@ const start=html.indexOf('async function dexTradeSyncToken(pair){');
 const end=html.indexOf('\nfunction dexTradeApplyDirection(){',start);
 assert.ok(start>=0 && end>start,'Expected existing DEX mint verification handler');
 const source=html.slice(start,end);
+// This test runs the real isolated handler without executing the full DEX IIFE.
+// Supply the exact source of any local provider-metric helper it now calls.
+const metricStart=html.indexOf('const reportedPoolNumber=(');
+const metricEnd=html.indexOf('\nconst esc=',metricStart);
+assert.ok(metricStart>=0 && metricEnd>metricStart,'Expected DEX provider-metric decoder');
+const metricSource=html.slice(metricStart,metricEnd);
 
 const SOL='So11111111111111111111111111111111111111112';
 const USDC='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -50,7 +56,7 @@ function harness(){
     }
   };
   api=runInNewContext(
-    'let dexTradeToken=null;let dexTradeTokenSelectionSequence=0;\n'+source+
+    metricSource+'\nlet dexTradeToken=null;let dexTradeTokenSelectionSequence=0;\n'+source+
     '\n({sync:dexTradeSyncToken,inspect:()=>({id:dexTradeToken?.id,decimals:dexTradeToken?.decimals,sequence:dexTradeTokenSelectionSequence})})',
     sandbox
   );
