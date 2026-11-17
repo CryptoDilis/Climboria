@@ -520,15 +520,86 @@ test("closing while provider initialization awaits does not overwrite the closed
   assert.equal(initCalls, 1, "third-party init started once");
   assert.equal(typeof resolveProvider, "function");
   ui.close.click();
+  assert.equal(vendorCloseCalls, 1,
+    "manual Close must conceal vendor-owned partial UI while init is still pending");
   const closedStatus = ui.status.textContent;
+  assert.match(closedStatus, /does not cancel wallet prompts or on-chain transactions/);
   resolveProvider();
   await pending;
-  assert.equal(vendorCloseCalls, 1, "late vendor-owned overlay must also be hidden");
+  assert.equal(vendorCloseCalls, 2,
+    "late vendor init completion must conceal its own overlay again");
   assert.equal(ui.panel.hidden, true);
   assert.equal(ui.status.textContent, closedStatus,
     "late provider init success may not claim an open widget after close");
   await ui.btn.click();
   assert.equal(initCalls, 2, "new explicit click may retry after stale init was hidden");
+});
+
+test("runtime revocation closes provider partial root even before async init resolves", async () => {
+  const ui = createDom();
+  let finishProvider;
+  let tick;
+  let approvedNow = true;
+  let initCalls = 0;
+  let closeCalls = 0;
+  const scope = withRuntime({
+    Jupiter: {
+      init() {
+        ++initCalls;
+        return new Promise(resolve => { finishProvider = resolve; });
+      },
+      close() { ++closeCalls; }
+    },
+    setInterval(fn) { tick = fn; return 42; },
+    clearInterval() {}
+  }, () => approvedNow);
+  initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  const opening = ui.btn.click();
+  for (let i = 0; i < 30 && !finishProvider; i++) await new Promise(queueMicrotask);
+  assert.equal(initCalls,1);
+  assert.equal(ui.panel.hidden,false);
+  approvedNow = false;
+  await tick();
+  assert.equal(closeCalls,1,
+    "revocation must hide partially initialized vendor UI before init resolves");
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(ui.btn.hidden,true);
+  finishProvider();
+  await opening;
+  assert.equal(closeCalls,2,"late async init must be closed a second time");
+  assert.equal(ui.panel.hidden,true);
+  assert.match(ui.status.textContent,/Existing wallet requests and submitted transactions are not cancelled/);
+});
+
+test("rejected Jupiter.init conceals partially created vendor UI and stops active polling", async () => {
+  for (const failingInit of [
+    () => { throw new Error("synchronous provider failure"); },
+    () => Promise.reject(new Error("async provider failure"))
+  ]) {
+    const ui = createDom();
+    let closeCalls = 0;
+    let stopped = 0;
+    initializeManagedSwapHost({
+      doc:ui.doc,
+      scope:withRuntime({
+        Jupiter: {
+          init: failingInit,
+          close() { ++closeCalls; }
+        },
+        setInterval() { return 98; },
+        clearInterval(id) { assert.equal(id,98); ++stopped; }
+      }),
+      config:approved
+    });
+    await ui.btn.click();
+    assert.equal(ui.panel.hidden,true,
+      "a vendor initialization error must conceal even a partially mounted widget");
+    assert.equal(closeCalls,1,"provider-owned root is best-effort concealed on init rejection");
+    assert.equal(stopped,1,"failed init does not leave a live approval interval");
+    assert.match(ui.status.textContent,/Provider initialization failed/);
+    assert.match(ui.status.textContent,/Existing wallet requests or submitted transactions are not cancelled/);
+    assert.equal(ui.created.length,1,"failure cannot inject a second vendor SDK");
+  }
 });
 
 test("an open page cannot start a new widget after runtime rollback, without reload", async () => {
