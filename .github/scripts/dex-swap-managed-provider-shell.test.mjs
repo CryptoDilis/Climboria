@@ -166,7 +166,7 @@ test("DEX token selection hook clears stale intent until mint proof and excludes
   assert.match(dex, /data-climboria-managed-swap-output-mint/);
 });
 
-function createDom({ failure = false, deferLoad = false, surface = "swap", pair = null } = {}) {
+function createDom({ failure = false, deferLoad = false, surface = "swap", pair = null, network = "solana" } = {}) {
   const created = [];
   const btn = { hidden: true, disabled: false, addEventListener(event, callback) { this[event] = callback; } };
   const close = { addEventListener(event, callback) { this[event] = callback; } };
@@ -177,6 +177,7 @@ function createDom({ failure = false, deferLoad = false, surface = "swap", pair 
     pair,
     getAttribute(key) {
       if (key === "data-climboria-managed-swap-surface") return surface;
+      if (key === "data-climboria-managed-swap-network") return network;
       if (key === "data-climboria-managed-swap-input-mint") return this.pair?.inputMint ?? null;
       if (key === "data-climboria-managed-swap-output-mint") return this.pair?.outputMint ?? null;
       return null;
@@ -257,6 +258,19 @@ test("DEX provider init receives a verified Buy or Sell pair but never a Climbor
   await ui.btn.click();
   assert.equal(calls.length,1, "mounted provider may not silently restart wallet UI");
   assert.match(ui.status.textContent,/widget may retain its previous pair.*verify/i);
+});
+
+test("Swap Base-selected network cannot fetch or initialize the Solana Jupiter Plugin", async () => {
+  const ui = createDom({surface:"swap",network:"base",
+    pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+  let calls = 0;
+  initializeManagedSwapHost({doc:ui.doc,
+    scope:withRuntime({Jupiter:{init(){calls++;}}}),
+    config:approved});
+  await ui.btn.click();
+  assert.equal(ui.created.length,0,"Base view cannot load Solana executable");
+  assert.equal(calls,0,"Base view cannot start a Solana wallet prompt");
+  assert.match(ui.status.textContent,/Jupiter Plugin supports Solana swaps only/);
 });
 
 test("incomplete or malformed DEX market pair cannot fetch vendor script or initialize Jupiter", async () => {
@@ -796,8 +810,8 @@ test("both Climboria swap interfaces retain quote-only path and use isolated hos
   assert.equal([...code.matchAll(/\bfetch\s*\(/g)].length, 1);
   for (const file of ["swap/index.html", "dex/index.html"]) {
     const source = readFileSync(new URL("../../" + file, import.meta.url), "utf8");
-    assert.match(source, /\/dex\/provider-managed-swap\.mjs\?v=4/);
-    assert.match(source, /\/dex\/provider-managed-swap\.css\?v=1/);
+    assert.match(source, /\/dex\/provider-managed-swap\.mjs\?v=5/);
+    assert.match(source, /\/dex\/provider-managed-swap\.css\?v=2/);
     assert.match(source, /data-climboria-managed-swap-panel hidden/);
     assert.match(source, /data-climboria-managed-swap-open hidden/);
     assert.match(source, /data-climboria-managed-swap-target/);
