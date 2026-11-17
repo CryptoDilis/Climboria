@@ -387,12 +387,39 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     stopActiveApprovalChecks();
     panel.hidden = true;
     expanded(false);
+    // A first-party hidden panel may not conceal a vendor-owned overlay.
+    // Hide Jupiter's *own* root synchronously, before awaiting status.
+    // The official close()/resume() pair only controls the widget display:
+    // neither can cancel an existing wallet prompt or blockchain transaction.
+    try {
+      if (typeof scope.Jupiter?.close !== "function" ||
+          typeof scope.Jupiter?.resume !== "function") {
+        throw new Error("Jupiter close/resume is unavailable");
+      }
+      scope.Jupiter.close();
+      providerConcealedByClose = true;
+    } catch {
+      hideRevoked();
+      status.textContent = "Provider could not be safely concealed. Refresh before retrying. Existing wallet requests and submitted transactions are not cancelled.";
+      resumeCheckInFlight = false;
+      return;
+    }
     status.textContent = "Rechecking provider release approval after returning to this tab. Existing wallet requests and submitted transactions are not cancelled.";
     try {
       const stillApproved = await isManagedSwapRuntimeApproved(scope, runtimeStatusUrl);
       if (requestId !== openRequestId) return;
       if (!stillApproved) {
         hideRevoked();
+        return;
+      }
+      // Do not expose Jupiter-owned UI unless approval is still current.
+      // The call is synchronous in the official Jupiter Plugin library.
+      try {
+        scope.Jupiter.resume();
+        providerConcealedByClose = false;
+      } catch {
+        hideRevoked();
+        status.textContent = "Provider could not be safely resumed. Refresh before retrying. Existing wallet requests and submitted transactions are not cancelled.";
         return;
       }
       panel.hidden = false;
