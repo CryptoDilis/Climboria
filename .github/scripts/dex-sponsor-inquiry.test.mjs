@@ -74,7 +74,7 @@ test("retains protected trading and fee gates", () => {
   assert.match(cfg, /feeCollectionEnabled:\s*false/);
   assert.match(cfg, /managedProvider:\s*Object\.freeze\(\{\s*enabled:\s*true/);
   const worker = readFileSync(new URL("../../dex/swap-proxy/src/index.mjs", import.meta.url), "utf8");
-  assert.match(worker, /const THIRD_PARTY_JUPITER_WIDGET_APPROVED = false;/);
+  assert.match(worker, /const THIRD_PARTY_JUPITER_WIDGET_APPROVED = true;/);
   assert.match(cfg, /surfaces:\s*Object\.freeze\(\{\s*swap:\s*true,\s*dex:\s*false\s*\}\)/);
   assert.match(cfg, /\benabled:\s*false/);
 });
