@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Verify operator-approved Jupiter status through existing public API
+    name: Verify source-controlled Jupiter status through existing public API
     # Never probe during a failing API deploy, or unreviewed pull-request code.
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
@@ -37,11 +37,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Test source-approved, origin-limited Jupiter status handler
+      - name: Test source-matched, origin-limited Jupiter status handler
         run: |
           node --check .github/scripts/jupiter-provider-status-production.mjs
           node --test dex/swap-proxy/test/provider-widget-status.test.mjs
-          grep -Fqx 'const THIRD_PARTY_JUPITER_WIDGET_APPROVED = true;' dex/swap-proxy/src/index.mjs
+          # Must also pass after a one-line emergency OFF rollback.
+          gate_count="$(grep -Ec '^const THIRD_PARTY_JUPITER_WIDGET_APPROVED = (true|false);$' dex/swap-proxy/src/index.mjs)"
+          test "$gate_count" -eq 1
           grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
           grep -Fqx 'const EXECUTION_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
       - name: Check real production API kill switch and disabled custom execution
