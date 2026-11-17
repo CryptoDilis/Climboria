@@ -996,11 +996,25 @@ function exportTokenRoom(){
 
 
 let activeIntelMint=null,activeIntelPair=null,intelActivityTimer=null;
+let intelContextEpoch=0,intelActivityRequestId=0,intelHoldersRequestId=0;
 const intelLoaded=new Set();
+function invalidateSelectedIntel(){
+ intelContextEpoch++;intelActivityRequestId++;intelHoldersRequestId++;
+ activeIntelMint=null;activeIntelPair=null;intelLoaded.clear();
+ if(intelActivityTimer){clearInterval(intelActivityTimer);intelActivityTimer=null;}
+ document.querySelectorAll('[data-intel-panel]').forEach(b=>{b.setAttribute('aria-expanded','false');const indicator=b.querySelector('strong');if(indicator)indicator.textContent='＋'});
+ document.querySelectorAll('.intel-panel').forEach(panel=>panel.hidden=true);
+ $('recentActivity').innerHTML='<div class="intel-loading">Expand to fetch recent indexed swaps for the selected pool…</div>';
+ $('activityUpdated').textContent='Not loaded yet';
+ $('activityNote').textContent='Choose a pool and expand Recent trades. Previous pool records are not reused.';
+ $('topHolders').innerHTML='<div class="intel-loading">Expand to fetch on-chain holder records for the selected mint…</div>';
+ $('holderKpis').innerHTML='<div><small>Top 10 owner share</small><b>Not loaded</b></div><div><small>Accounts checked</small><b>Not loaded</b></div>';
+ $('holderNote').textContent='Not loaded for selected mint.';
+}
 function intelShort(v){return v?String(v).slice(0,5)+'…'+String(v).slice(-5):'—'}
 function intelSafeUrl(v){try{const u=new URL(v);return ['https:','http:'].includes(u.protocol)?u.href:null}catch(e){return null}}
-async function loadAdvancedIntel(mint,pair){
- activeIntelMint=mint;activeIntelPair=pair;intelLoaded.clear();if(intelActivityTimer){clearInterval(intelActivityTimer);intelActivityTimer=null;}
+function loadAdvancedIntel(mint,pair){
+ invalidateSelectedIntel();activeIntelMint=mint;activeIntelPair=pair;
  const websites=(pair.info?.websites||[]).map(x=>({label:x.label||'Website',url:intelSafeUrl(x.url)})).filter(x=>x.url);
  const socials=(pair.info?.socials||[]).map(x=>({label:x.type||'Social',url:intelSafeUrl(x.url)})).filter(x=>x.url);
  const age=pair.pairCreatedAt?Math.max(0,(Date.now()-Number(pair.pairCreatedAt))/86400000):null;
@@ -1013,7 +1027,7 @@ async function loadAdvancedIntel(mint,pair){
    ['Pool age',esc(ageLabel)],
    ['Pool created',esc(pair.pairCreatedAt?new Date(Number(pair.pairCreatedAt)).toLocaleString():'Unavailable')],
    ['Price USD',esc(pair.priceUsd?'$'+pair.priceUsd:'Unavailable')],
-   ['24h change',esc(pair.priceChange?.h24===undefined?'Unavailable':Number(pair.priceChange.h24).toFixed(2)+'%')],
+   ['24h change',esc(Number.isFinite(reportedPoolNumber(pair.priceChange?.h24))?reportedPoolNumber(pair.priceChange.h24).toFixed(2)+'%':'Unavailable')],
    ['Description',esc(pair.info?.description||'Not listed by provider')]
   ].map(([k,v])=>'<div class="intel-profile-item"><small>'+k+'</small><b>'+v+'</b></div>').join('');
   $('profileSocials').innerHTML=[...websites,...socials].map(x=>'<a href="'+esc(x.url)+'" target="_blank" rel="noopener noreferrer">'+esc(x.label)+' ↗</a>').join('');
@@ -1037,6 +1051,7 @@ async function loadAdvancedIntel(mint,pair){
  $('topHolders').innerHTML='<div class="intel-loading">Expand to fetch current on-chain holder records…</div>';
  $('recentActivity').innerHTML='<div class="intel-loading">Expand to fetch recent indexed swaps…</div>';
  $('activityUpdated').textContent='Not loaded yet';
+ $('activityNote').textContent='Source: GeckoTerminal public API · selected pool '+intelShort(pair.pairAddress)+'. Expand to fetch; no previous pool trades reused.';
 }
 async function loadIntelHolders(){
  const mint=activeIntelMint;if(!mint)return;
@@ -1082,6 +1097,7 @@ let activeDetailMint=null,activeDetailPairs=[],detailRequestId=0;
 function applySelectedPoolState(p,pairs,mint){
   dexTradeSyncToken(p);const chartSrc='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress)+'?embed=1&theme=dark&trades=0&info=0&loadChartSettings=0&chartStyle=1&interval=15&chartType=price&chartLeftToolbar=0';if($('detailChart').getAttribute('src')!==chartSrc)$('detailChart').src=chartSrc;
   $('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress);
+  loadAdvancedIntel(mint,p);
   const priceValue=reportedPoolNumber(p.priceUsd,{positive:true}),volumeValue=reportedPoolNumber(p.volume?.h24,{nonnegative:true}),liquidityValue=reportedPoolNumber(p.liquidity?.usd,{nonnegative:true}),changeValue=reportedPoolNumber(p.priceChange?.h24);
   $("detailPrice").textContent=Number.isFinite(priceValue)?"$"+priceValue.toPrecision(6):"Unavailable";
   $("detailVolume").textContent=Number.isFinite(volumeValue)?fmt(volumeValue):"Unavailable";
@@ -1164,7 +1180,7 @@ function renderPoolFailure(mint,message,meta){
  if(meta)renderPumpProfile(mint,meta);
 }
 async function openToken(mint,options={}){
- const requestId=++detailRequestId;activeDetailMint=mint;if(!options.fromUrl)setDexUrl(mint,null);openTokenRoom(mint);
+ const requestId=++detailRequestId;activeDetailMint=mint;invalidateSelectedIntel();if(!options.fromUrl)setDexUrl(mint,null);openTokenRoom(mint);
  const box=$('tokenDetail');box.classList.add('open');document.body.classList.add('mobile-token-view');document.body.classList.remove('mobile-base-view');$('tokenLoadState').hidden=true;
  // Avoid a moving mobile Close tap target while a remote chart iframe loads.
  // Keep desktop contextual smooth scrolling; mobile token view opens immediately.
@@ -1216,7 +1232,7 @@ async function openToken(mint,options={}){
   applySelectedPoolState(p,pairs,mint);
  }
  selectPool(best,!!options.fromUrl);
- loadAdvancedIntel(mint,best);if(pumpMeta)renderPumpProfile(mint,pumpMeta);
+ if(pumpMeta)renderPumpProfile(mint,pumpMeta);
  const maxPoolLiquidity=Math.max(0,...pairs.map(x=>Number(x.liquidity?.usd)).filter(Number.isFinite));
  $('detailPairs').innerHTML=pairs.slice(0,15).map(p=>{
   const age=p.pairCreatedAt?Math.max(0,(Date.now()-Number(p.pairCreatedAt))/86400000):null;
@@ -1493,7 +1509,7 @@ $('copyTokenMint').addEventListener('click',async()=>{if(!activeCommunityMint)re
 $('watchToken').addEventListener('click',()=>{if(!activeCommunityMint)return;const list=readWatchlist();const i=list.indexOf(activeCommunityMint);if(i>=0)list.splice(i,1);else list.push(activeCommunityMint);try{localStorage.setItem(WATCHLIST_KEY,JSON.stringify(list));openTokenRoom(activeCommunityMint)}catch(e){$('watchTokenNote').textContent='Browser storage unavailable.'}});
 function closeDexTokenDetail(event){
  event?.preventDefault?.();event?.stopPropagation?.();event?.stopImmediatePropagation?.();
- detailRequestId++;activeDetailMint=null;activeDetailPairs=[];
+ detailRequestId++;activeDetailMint=null;activeDetailPairs=[];invalidateSelectedIntel();
  $('tokenDetail').classList.remove('open');
  document.body.classList.remove('mobile-token-view','mobile-base-view');
  setDexUrl(null,null);
