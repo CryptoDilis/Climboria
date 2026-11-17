@@ -204,6 +204,10 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
       buttons.forEach(control => { control.disabled = true; });
       status.textContent = "Checking current provider release approval. No wallet transaction has been requested by Climboria.";
       try {
+        // Reject a forged or half-updated market selection before making any
+        // provider request or fetching third-party executable code.
+        const selectedPair = readSelectedProviderPair(panel);
+        integratedTerminalOptions(target.id, selectedPair);
         // Page-load approval may be revoked while this document stays open.
         const allowedOnOpen = await isManagedSwapRuntimeApproved(scope);
         if (requestId !== openRequestId) return;
@@ -245,6 +249,8 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         }
         // Read the currently verified DEX pair only at the user-triggered
         // initialization boundary. A partial or invalid pair fails closed.
+        // Revalidate after async script/runtime checks: the selected token
+        // may have changed while the browser was fetching the Plugin.
         const selection = readSelectedProviderPair(panel);
         const options = integratedTerminalOptions(target.id, selection);
         await Promise.resolve(scope.Jupiter.init(options));
