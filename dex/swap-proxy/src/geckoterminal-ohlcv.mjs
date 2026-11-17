@@ -118,3 +118,48 @@ export function normalizeGeckoTerminalOhlcv({
     }
   };
 }
+
+
+/**
+ * Match GeckoTerminal's query token=base/quote to the returned USD series.
+ *
+ * The API's token=quote response can flip meta.base/meta.quote to report USD
+ * candles for the original quote token. Therefore the request parameter
+ * is NOT the low-level requestedOrientation (which is relative to response
+ * meta). In both cases the returned meta.base must be the selected token.
+ *
+ * Does not prove that the OHLC response belongs to the requested pool:
+ * GeckoTerminal's OHLC payload does not reliably echo the pool address.
+ * The calling capture must bind its HTTP URL to the selected pool and record
+ * that provenance independently. This helper performs no network requests.
+ */
+export function normalizeGeckoTerminalRequestedPoolOhlcv({
+  status,
+  headers = null,
+  body,
+  originalPool,
+  requestedTokenSide
+}) {
+  if (requestedTokenSide !== "base" && requestedTokenSide !== "quote") {
+    throw new Error("GeckoTerminal request token side must be base or quote");
+  }
+  if (!originalPool || typeof originalPool.address !== "string" || !originalPool.address.trim() ||
+      typeof originalPool.baseTokenAddress !== "string" || !originalPool.baseTokenAddress.trim() ||
+      typeof originalPool.quoteTokenAddress !== "string" || !originalPool.quoteTokenAddress.trim() ||
+      originalPool.baseTokenAddress === originalPool.quoteTokenAddress) {
+    throw new Error("Original selected pool address and distinct base/quote mints are required");
+  }
+  const selected = requestedTokenSide === "base"
+    ? originalPool.baseTokenAddress : originalPool.quoteTokenAddress;
+  const other = requestedTokenSide === "base"
+    ? originalPool.quoteTokenAddress : originalPool.baseTokenAddress;
+  const result = normalizeGeckoTerminalOhlcv({
+    status,
+    headers,
+    body,
+    expectedPool: { address: originalPool.address, baseTokenAddress: selected, quoteTokenAddress: other },
+    selectedTokenAddress: selected,
+    requestedOrientation: "base"
+  });
+  return { ...result, requestedTokenSide, orientation: "selected-mint-as-returned-base" };
+}
