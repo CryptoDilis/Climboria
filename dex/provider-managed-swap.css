@@ -4,6 +4,8 @@
 .climboria-managed-swap-launch{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid #f4d68b;border-radius:9px;background:linear-gradient(140deg,#d5a747,#8f6224);color:#091523;font-weight:800;font-size:13px;padding:11px 16px;cursor:pointer;box-shadow:0 4px 24px #c9a15230}
 .climboria-managed-swap-launch:focus-visible,.climboria-managed-swap-close:focus-visible{outline:3px solid #f3cf84;outline-offset:3px}
 .climboria-managed-swap-launch[hidden],.climboria-managed-swap-panel[hidden]{display:none!important}
+/* The Jupiter Plugin is Solana-only: never offer its launcher on the Base tab. */
+html[data-climboria-swap-network="base"] .climboria-managed-swap-launch{display:none!important}
 .climboria-managed-swap-panel{position:relative;margin:14px 0;padding:16px;border:1px solid #b98e48;border-radius:14px;background:linear-gradient(135deg,#12283d,#09131f);color:#e8eff8;box-shadow:0 8px 32px #0309123f}
 .climboria-managed-swap-head{display:flex;align-items:start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}
 .climboria-managed-swap-head b{display:block;color:#f4d68b;font:700 20px Georgia,serif}

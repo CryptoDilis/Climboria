@@ -50,18 +50,59 @@ test("Swap Base tab hides offsite Solana-only Jupiter handoff; switching back re
  const end=swap.indexOf("\n}\n\n\nlet majorAssetChoices",start);
  assert.ok(start>0&&end>start,"Extract actual production chain-switching function");
  const nodes=Object.create(null);
- const element=id=>nodes[id]??=( { hidden:false, disabled:false, classList:{toggle(){}},textContent:"",innerHTML:"",placeholder:"" } );
- const actual="let selectedChain='solana';let autoQuoteTimer=null;let quoteTokens={from:{id:'SOL'},to:{id:'USDC'}};\n"+
-   swap.slice(start,end+2)+"\n({setSwapChain})";
- const {setSwapChain}=runInNewContext(actual,{
-  $:element,clearTimeout(){},invalidateSwapQuote(){},updateSelectedAsset(){},setSwapUrl(){}
+ let closeCalls=0;
+ const element=id=>{
+  if(nodes[id])return nodes[id];
+  const attrs=new Map();
+  const node={
+   hidden:id==="climboriaSwapProviderPanel",disabled:false,
+   classList:{toggle(){}},textContent:"",innerHTML:"",placeholder:"",
+   setAttribute(k,v){attrs.set(k,String(v));},
+   getAttribute(k){return attrs.get(k)??null;},
+   removeAttribute(k){attrs.delete(k);},
+   querySelector(){return {click(){node.hidden=true;++closeCalls;}};}
+  };
+  return nodes[id]=node;
+ };
+ const syncStart=swap.indexOf("function syncSwapJupiterPair(){");
+ const syncEnd=swap.indexOf("\n}\nsyncSwapJupiterPair();",syncStart);
+ assert.ok(syncStart>0&&syncEnd>syncStart,"Must test the real selected-mint synchronization helper");
+ const syncCode=swap.slice(syncStart,syncEnd+2);
+ const actual="let selectedChain='solana';let autoQuoteTimer=null;"+
+   "let quoteTokens={from:{id:'So11111111111111111111111111111111111111112',decimals:9},"+
+   "to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',decimals:6}};\n"+
+   syncCode+"\n"+swap.slice(start,end+2)+"\n({setSwapChain,syncSwapJupiterPair})";
+ const doc={documentElement:{dataset:{}}};
+ const {setSwapChain,syncSwapJupiterPair}=runInNewContext(actual,{
+  $:element,document:doc,clearTimeout(){},invalidateSwapQuote(){},updateSelectedAsset(){},setSwapUrl(){}
  },{filename:"swap/index.html"});
+ const panel=element("climboriaSwapProviderPanel");
+ syncSwapJupiterPair();
+ assert.equal(panel.getAttribute("data-climboria-managed-swap-input-mint"),
+  "So11111111111111111111111111111111111111112");
+ assert.equal(panel.getAttribute("data-climboria-managed-swap-output-mint"),
+  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+ panel.hidden=false;
  assert.equal(element("swapExternalJupiterHandoff").hidden,false,"Initial Solana handoff is available");
  setSwapChain("base");
  assert.equal(element("swapExternalJupiterHandoff").hidden,true,"Base must not direct users to Solana-only execution");
+ assert.equal(doc.documentElement.dataset.climboriaSwapNetwork,"base");
+ assert.equal(panel.hidden,true,"Selecting Base closes any open Solana widget");
+ assert.equal(closeCalls,1,"Operator-like user chain switch cancels pending host load");
+ assert.equal(panel.getAttribute("data-climboria-managed-swap-network"),"base");
+ assert.equal(panel.getAttribute("data-climboria-managed-swap-input-mint"),null,
+  "Base selection removes any Solana mint preselection");
  assert.equal(element("getQuote").disabled,true,"Base quote remains unavailable");
  setSwapChain("solana");
  assert.equal(element("swapExternalJupiterHandoff").hidden,false,"Solana restores independent link");
+ assert.equal(doc.documentElement.dataset.climboriaSwapNetwork,"solana");
+ assert.equal(panel.getAttribute("data-climboria-managed-swap-network"),"solana");
+ assert.equal(panel.getAttribute("data-climboria-managed-swap-input-mint"),
+  "So11111111111111111111111111111111111111112",
+  "Restoring Solana reselects the original provider input mint");
+ const providerCss=readFileSync(new URL("../../dex/provider-managed-swap.css",import.meta.url),"utf8");
+ assert.match(providerCss,/html\[data-climboria-swap-network="base"\] \.climboria-managed-swap-launch\{display:none!important\}/,
+  "Base must hide the Jupiter launcher even if a provider session was approved");
  assert.equal(element("getQuote").disabled,false,"Solana read-only quote remains available");
  assert.match(swap,/\.external-jupiter-handoff\[hidden\]\{display:none\}/,"Author CSS must honor HTML hidden state");
 });

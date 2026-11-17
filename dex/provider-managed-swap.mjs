@@ -207,6 +207,10 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         // Reject a forged or half-updated market selection before making any
         // provider request or fetching third-party executable code.
         const selectedPair = readSelectedProviderPair(panel);
+        if (surface === "swap" &&
+            panel.getAttribute?.("data-climboria-managed-swap-network") !== "solana") {
+          throw new Error("Jupiter Plugin is unavailable on Base");
+        }
         integratedTerminalOptions(target.id, selectedPair);
         // Page-load approval may be revoked while this document stays open.
         const allowedOnOpen = await isManagedSwapRuntimeApproved(scope);
@@ -252,6 +256,10 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         // Revalidate after async script/runtime checks: the selected token
         // may have changed while the browser was fetching the Plugin.
         const selection = readSelectedProviderPair(panel);
+        if (surface === "swap" &&
+            panel.getAttribute?.("data-climboria-managed-swap-network") !== "solana") {
+          throw new Error("Jupiter Plugin is unavailable on Base");
+        }
         const options = integratedTerminalOptions(target.id, selection);
         await Promise.resolve(scope.Jupiter.init(options));
         mountedPair = selection;
@@ -267,6 +275,11 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
             panel.hidden = false;
             expanded(true);
             status.textContent = "Selected token pair is invalid or incomplete. Verify the token mint and select Buy or Sell again; no Jupiter wallet request was made.";
+          } else if (error?.message === "Jupiter Plugin is unavailable on Base") {
+            // Solana provider never loads for a Base-selected user.
+            panel.hidden = false;
+            expanded(true);
+            status.textContent = "Jupiter Plugin supports Solana swaps only. Return to the Solana tab; no wallet request was made.";
           } else if (!panel.hidden) {
             status.textContent = "Provider integration unavailable. Review outstanding wallet prompts or activity before retrying. Climboria did not submit a swap.";
           }
