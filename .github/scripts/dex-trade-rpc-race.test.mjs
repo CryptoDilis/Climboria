@@ -137,3 +137,17 @@ test('latest invalid decimals fail closed and do not guess token precision',asyn
   assert.match(t.$('dexTradeStatus').textContent,/No guessed decimals will be used/);
   assert.equal(t.updates.length,0);
 });
+
+
+test('reported pool metrics distinguish absent provider values from real zero',()=>{
+  const decoder=runInNewContext(metricSource+'\nreportedPoolNumber');
+  for(const raw of [null,undefined,'', '  ',false,[],{},'not-a-number']){
+    assert.ok(Number.isNaN(decoder(raw)), 'Missing/invalid provider metric must not become zero');
+  }
+  assert.equal(decoder(0),0,'Provider-reported numeric zero is meaningful for a change percentage');
+  assert.equal(decoder('0',{nonnegative:true}),0,'Provider-reported zero 24h volume remains zero');
+  assert.ok(Number.isNaN(decoder(null,{nonnegative:true})),'Missing volume is not zero');
+  assert.ok(Number.isNaN(decoder('0',{positive:true})),'Zero USD price is not a verified positive price');
+  assert.ok(Number.isNaN(decoder(-1,{nonnegative:true})),'Negative USD volume is invalid');
+  assert.equal(decoder('0.042',{positive:true}),0.042,'Positive quoted price is preserved');
+});
