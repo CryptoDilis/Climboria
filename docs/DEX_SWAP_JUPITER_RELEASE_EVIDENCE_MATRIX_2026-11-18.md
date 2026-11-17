@@ -19,8 +19,7 @@ Source of record: [2026-11-15 reconciled mainnet settlement and wallet screensho
 | Wallet rejection / expiry | A prior expired attempt was reported without a signature; cannot claim comprehensive rejection QA | No linked rejection/expiry record | Historical screenshots do not supply a complete rejection/device acceptance ledger |
 | Exact current production widget/device test | **Not established by historical staging** | **Not established by historical staging** | Separate current-build acceptance required when public release is authorized |
 
-The owner previously shared a Codex/ChatGPT Work conversation locator:
-[https://chatgpt.com/s/cx_6afa8e0ed11881919fb5b2daf02e5956](https://chatgpt.com/s/cx_6afa8e0ed11881919fb5b2daf02e5956). This URL is recorded **only as an owner-supplied lead**, not a fetched or independently reviewed artifact. The owner says pre-sign/device acceptance was completed in a prior Codex/Work session; that claim must not be negated merely because its attachment is missing from GitHub. Likewise, **do not assert it was fully verified** without the original matching record.
+The owner previously supplied a private Codex/ChatGPT Work conversation locator in chat. **Do not publish the URL in the public repository.** Its content has not been fetched or independently verified for this release; request the relevant original pre-sign evidence through a private, authorized channel if necessary. The owner says pre-sign/device acceptance was completed in a prior session, which should not be negated merely because the artifact is missing from GitHub. Conversely, no minimum-received floor or device proof may be marked verified without the matching original record.
 
 ## Other evidence completed, with explicit limits
 
