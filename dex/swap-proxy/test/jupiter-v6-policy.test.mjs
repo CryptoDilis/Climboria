@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { decodeBase58, encodeBase58 } from "../src/transaction-validation.mjs";
 import { validateJupiterV6Transaction, decodeJupiterV6Route, JUPITER_V6_PROGRAM_ID, TOKEN_PROGRAM_ID, UNSUPPORTED_TOKEN_2022_PROGRAM_ID } from "../src/jupiter-v6-policy.mjs";
 
@@ -125,7 +126,7 @@ test("binds Jupiter minimum output to the route instruction slippage floor", () 
   assert.equal(validate(parsed(), { otherAmountThreshold: "945" }).ok, true);
   assert.throws(() => validate(parsed(), { otherAmountThreshold: "944" }), /weaker than the route slippage limit/i);
   assert.throws(() => validate(parsed(), { otherAmountThreshold: "951" }), /weaker than the route slippage limit/i);
-  assert.throws(() => validate(parsed(), { otherAmountThreshold: "0" }), /positive integer string/i);
+  assert.throws(() => validate(parsed(), { otherAmountThreshold: "0" }), /canonical positive u64 strings/i);
 });
 
 
@@ -366,4 +367,43 @@ test("accepts ordered branched Jupiter V6 route even when intermediate hops are 
   ]);
   assert.equal(decodeJupiterV6Route(orderedBranch).steps.length, 4);
   assert.equal(validate(parsed({ data: orderedBranch })).ok, true);
+});
+
+
+test("direct V6 structural validator independently rejects invalid u64 amounts before BigInt", () => {
+  const raw = parsed();
+  const invalid = [
+    "18446744073709551616", "99999999999999999999",
+    "9".repeat(250000), "01", "0", "-1", "1e3", "1.5", " 1",
+    "", 1000, null, undefined
+  ];
+  for (const field of ["amount", "outAmount", "otherAmountThreshold"]) {
+    for (const value of invalid) {
+      assert.throws(() => validate(raw, { [field]: value }),
+        /canonical positive u64 strings/,
+        "The direct structural policy must reject invalid " + field + " independently of outer metadata guards");
+    }
+  }
+  assert.equal(validate().ok, true, "Existing canonical Jupiter V6 fixture must remain structurally acceptable");
+});
+
+test("direct V6 structural validator supports u64 max when raw instruction amounts match", () => {
+  const max = "18446744073709551615";
+  const canonical = parsed({ data: routeData({ inAmount: BigInt(max), outAmount: BigInt(max), slippage: 0 }) });
+  const result = validate(canonical, {
+    amount: max, outAmount: max, otherAmountThreshold: max
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.route.inAmount, BigInt(max));
+  assert.equal(result.route.quotedOutAmount, BigInt(max));
+  assert.equal(result.route.platformFeeBps, 0);
+  // Structural acceptance is NOT CPI review or authorization for customer funds.
+});
+
+test("CPI signing deny-all remains unchanged after direct u64 route hardening", () => {
+  const cpi = readFileSync(new URL("../src/jupiter-v6-cpi-review.mjs", import.meta.url), "utf8");
+  const worker = readFileSync(new URL("../src/index.mjs", import.meta.url), "utf8");
+  assert.match(cpi, /throw new Error\(\s*"Jupiter V6 DEX CPI semantics are not independently verified for:/);
+  assert.match(worker, /const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;/);
+  assert.match(worker, /const EXECUTION_SECURITY_REVIEW_COMPLETE = false;/);
 });
