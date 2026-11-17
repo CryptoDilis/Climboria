@@ -36,9 +36,9 @@ async function assertApprovedRuntimeEndpoint(browser) {
       assert.equal(response.status(), 200,
         "Reviewed provider status endpoint must return HTTP 200");
       const headers = response.headers();
-      assert.match(headers["content-type"] || "", /^application\\/json(?:\\s*;|$)/i,
+      assert.match(headers["content-type"] || "", /^application\/json(?:\s*;|$)/i,
         "Production status response must be JSON");
-      assert.match(headers["cache-control"] || "", /(?:^|,)\\s*no-store\\s*(?:,|$)/i,
+      assert.match(headers["cache-control"] || "", /(?:^|,)\s*no-store\s*(?:,|$)/i,
         "Production provider status must never be cached");
       assert.equal(headers["access-control-allow-origin"], SITE,
         "Only the real Climboria site may read the provider release status");
