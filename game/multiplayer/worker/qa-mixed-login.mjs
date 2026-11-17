@@ -147,7 +147,7 @@ async function testTwoPlayers(a,b){
  });
  const remote=await b.evaluate(()=>{
   const p=window.__CLIMBORIA_GAME_PEERS.audit().positions[0];
-  requireCondition(!!p,'Remote peer missing');
+  if(!p)throw Error('Remote peer missing');
   return {x:p.x,z:p.z};
  });
  await a.evaluate(()=>document.activeElement?.blur?.());
@@ -229,8 +229,13 @@ try{
  log('Return to '+GAME+' after any OAuth redirect.');
  await prompt('Once Player B is logged in and walking in Jarrells Peak:');
  const aId=await a.evaluate(async()=>{
-  const result=await window.__CLIMBORIA_GAME_SAVE_CLIENT.auth.getSession();
-  return result.data?.session?.user?.id||null;
+  const res=await Promise.race([
+   window.__CLIMBORIA_GAME_SAVE_CLIENT.auth.getSession(),
+   new Promise((_,reject)=>setTimeout(()=>reject(Error('Session check timed out')),10000))
+  ]);
+  const s=res?.data?.session;
+  return s?.access_token&&s.user?.is_anonymous!==true&&
+   s.user?.app_metadata?.provider!=='anonymous'?s.user?.id:null;
  });
  const bId=await requireRegisteredSession(b);
  requireCondition(!!aId&&aId!==bId,'Both browsers must use DISTINCT registered users');
