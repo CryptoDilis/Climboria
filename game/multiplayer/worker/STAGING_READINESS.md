@@ -216,6 +216,72 @@ visibility, cyan peer markers on field map, two-way World Chat, correct
 account names, logout/login/reconnect cleanup, desktop keyboard ATTACK
 animation, mobile chat input/joystick isolation and acceptable device FPS.
 
+### Owner-only manual QA using two already logged-in, mixed-provider browsers
+
+This is an **operator test**, not the automated password-based Playwright
+`e2e-real-game-ui.mjs`. It works with two separately owned, already-signed-in
+non-anonymous Supabase sessions even if one account uses Google/X and the other
+uses a different login method. It is **not a PASS** until both accounts truly
+connect, see each other's real remote Game avatar, move and exchange server-
+confirmed World Chat. Never use actual customers' sessions or credentials.
+
+Prerequisites: `rooms.climboria.fun` is the independently approved isolated
+Game Worker; `GET /health` and `GET /ready` must both be HTTP **200** with
+the exact fail-closed fields listed above. Use **two separate browser profiles
+or applications** with only the two owned accounts already logged in to the
+first-party Game, and with the normal hero setup complete. Do not paste or
+print session objects, OAuth callbacks, JWTs, authorization headers, tickets,
+cookies, passwords or local storage. Do not install third-party extensions.
+
+For **each** temporary browser, independently:
+1. Open `https://climboria.fun/game/play.html` and its developer tools.
+   Choose **Sources → Overrides → Select folder for overrides**, selecting a
+   local temporary folder and explicitly allowing folder access. Do not use a
+   shared folder containing unrelated project content.
+2. Open **Network** (leave DevTools open), enable **Disable cache** while QA
+   is running, and reload the Game. Search the Network requests for the exact
+   URL `https://climboria.fun/game/multiplayer/client-config.json`.
+3. Right-click **that single config response** and choose **Override content**
+   (or **Save for overrides**, depending on browser version). Under
+   **Sources → Overrides**, edit the saved response body to the following
+   complete JSON and save locally:
+   ```json
+   {"schema":1,"enabled":true,"endpoint":"https://rooms.climboria.fun/"}
+   ```
+   Confirm that only the two QA browsers have this override, and that the
+   **public repository/server** `game/multiplayer/client-config.json` still
+   returns `{"schema":1,"enabled":false,"endpoint":null,...}` for other visitors.
+4. Reload **with DevTools open** and check the overridden config response is
+   the exact approved JSON above (not a modified JavaScript bundle, unrelated
+   request or persistent site change). Enter normal Game **walk** mode.
+   Inspect only the harmless status string:
+   `document.documentElement.dataset.climboriaMultiplayer`.
+   The client can transition through `connecting` to `connected` only after
+   registered session validation, one-use room ticket, WebSocket, and accepted
+   terrain spawn. `login-required`, `bad-config`, `unavailable`,
+   `offline` or `room-busy` are **not PASS**.
+5. With both owned users connected in the same private staging room, verify
+   each sees **exactly one** real remote hero, correct names/3D GLB poses and
+   field-map marker; test both directions of movement, keyboard sprint and
+   World Chat **with visible server-confirmed echo**. Check switching to the
+   chat input doesn't move the hero and input drafts are preserved until own
+   message acknowledgment. Confirm clean disconnect/remote removal on one
+   browser close and authentic rejoin on reopen. Carefully redact all UI
+   screenshots if needed; never send Network request headers or Auth panels.
+6. In **both** browsers immediately after QA, remove the single local config
+   override (or disable **Sources → Overrides**), close DevTools and reload.
+   Confirm `document.documentElement.dataset.climboriaMultiplayer` again
+   shows `disabled`; the production repo config remains OFF. If any browser
+   still reports `connected` solely due to cached override, close the tab,
+   remove the override, and reopen; do not claim cleanup success until OFF.
+
+Do not enable global public multiplayer or try to force client config with a
+URL query parameter, bookmarklet, browser extension, credential export or
+committed auth bypass. This browser-only acceptance is supplemental to the
+operator's actual registered two-account socket E2E and physical Android FPS
+evidence; record observed status, pass/fail, approximate latency, desktop
+rendering and device behavior **without** personal account identifiers.
+
 Record exact reproducible evidence and approval in
 `docs/GAME_DEVELOPMENT_RECORD.md`. Only then open a **separate Game-only PR**
 to change the public client config to `enabled:true` and
