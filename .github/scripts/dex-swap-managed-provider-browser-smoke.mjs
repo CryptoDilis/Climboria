@@ -29,7 +29,16 @@ const MOCK_SCRIPT = [
   "  label.dataset.climboriaTestWidget = 'rendered';",
   "  label.textContent = 'Mock provider widget - no transaction';",
   "  container.appendChild(label);",
+  "  window.__mockProviderRoot = label;",
   "  return Promise.resolve();",
+  " },",
+  " close: function() {",
+  "  window.__mockProviderCloseCalls = (window.__mockProviderCloseCalls || 0) + 1;",
+  "  if (window.__mockProviderRoot) window.__mockProviderRoot.style.display = 'none';",
+  " },",
+  " resume: function() {",
+  "  window.__mockProviderResumeCalls = (window.__mockProviderResumeCalls || 0) + 1;",
+  "  if (window.__mockProviderRoot) window.__mockProviderRoot.style.display = 'block';",
   " }",
   "};"
 ].join("\n");
@@ -126,8 +135,15 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
       await panel.locator("[data-climboria-managed-swap-close]").click();
       assert.equal(await panel.isVisible(),false);
       assert.equal(await button.getAttribute("aria-expanded"),"false");
+      assert.equal(await page.evaluate(() => window.__mockProviderCloseCalls || 0),1,
+        "user Close must hide Jupiter-owned widget");
+      assert.equal(await page.evaluate(() => window.__mockProviderRoot.style.display),"none",
+        "Jupiter-owned root must be concealed, not just Climboria wrapper");
       await button.click();
       await panel.waitFor({ state: "visible", timeout: 10000 });
+      await page.waitForFunction(() => window.__mockProviderResumeCalls === 1);
+      assert.equal(await page.evaluate(() => window.__mockProviderRoot.style.display),"block",
+        "reopen must restore Jupiter-owned widget after fresh API approval");
       assert.equal(await panel.isVisible(),true);
       assert.equal(await page.evaluate(() => window.__mockProviderCalls.length),1,
         "reopen must not reinitialize provider");
