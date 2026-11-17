@@ -259,9 +259,17 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         if (requestId === openRequestId && !panel.hidden) {
           status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
         }
-      } catch {
-        if (requestId === openRequestId && !panel.hidden) {
-          status.textContent = "Provider integration unavailable. Review outstanding wallet prompts or activity before retrying. Climboria did not submit a swap.";
+      } catch (error) {
+        if (requestId === openRequestId) {
+          if (error?.message === "Invalid or incomplete Jupiter input/output mint selection") {
+            // Invalid market hints are rejected before any provider script loads.
+            // Reveal only an explanatory first-party panel, never the wallet UI.
+            panel.hidden = false;
+            expanded(true);
+            status.textContent = "Selected token pair is invalid or incomplete. Verify the token mint and select Buy or Sell again; no Jupiter wallet request was made.";
+          } else if (!panel.hidden) {
+            status.textContent = "Provider integration unavailable. Review outstanding wallet prompts or activity before retrying. Climboria did not submit a swap.";
+          }
         }
       } finally {
         loading = false;
