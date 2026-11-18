@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## VERIFIED LIVE-SITE PAGES ROLLOUT FOR GAME CLIENT REPAIR (2026-11-18)
+
+- [GitHub Pages run #44245144676](https://github.com/CryptoDilis/Climboria/actions/runs/44245144676) **COMPLETED SUCCESS** after PR #639 merged. It deployed the repaired registered-only Game client from main (docs-only follow-up `44c110a814dc629d859f3d3332dbe98a39b0e4fc`). Earlier Pages run #44245067093 was superseded/cancelled by this newer successful run; do not characterize a superseded cancellation as a failed app deployment.
+- [Game Gateway #44244806859](https://github.com/CryptoDilis/Climboria/actions/runs/44244806859) and [Validate #44244806743](https://github.com/CryptoDilis/Climboria/actions/runs/44244806743) **SUCCESS** at exact PR head. **Still unresolved:** owner-observed two registered accounts did not see each other and World Chat was absent before repair; no subsequent accepted two-user gameplay evidence yet. [PR-head Game smoke #44244807187](https://github.com/CryptoDilis/Climboria/actions/runs/44244807187) and [postmerge Game smoke #44245068365](https://github.com/CryptoDilis/Climboria/actions/runs/44245068365) were still IN PROGRESS at this checkpoint. Do not claim a real multiplayer pass or successful Android FPS.
+- **Immediate next on return to this thread:** Check final Game smoke conclusions, investigate any red smoke, and use only safe visible browser room status to pinpoint live authentication versus ticket/WebSocket versus Sanctuary spawn. Verify two real registered browser identities in Jarrell's Peak with reciprocal GLBs and server-confirmed World Chat. Never request or post passwords/JWTs/cookies. DEX, Swap, Launchpad and ClimbX are out of scope.
+
+---
+
+
 ## GAME MULTIPLAYER LIVE REPAIR MERGED — REAL TWO-ACCOUNT ACCEPTANCE STILL FAILING / PENDING RETEST (2026-11-18)
 
 - **User-facing defect:** Owner reported two registered Game website accounts did not see one another and World Chat was absent after PR #638 activated public registered-only Game configuration. Treat this as a production user acceptance **FAIL**, regardless of healthy backend readiness or a successful GitHub Pages build.
