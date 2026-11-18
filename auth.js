@@ -18,6 +18,12 @@
   const solanaButton = document.getElementById('authSolana');
   const ethereumButton = document.getElementById('authEthereum');
   const guestButton = document.getElementById('authGuest');
+  const authTitle = document.getElementById('authTitle');
+  const authIntro = document.getElementById('authIntro');
+  const authEmailSection = document.getElementById('authEmailSection');
+  const authConnections = document.getElementById('authConnections');
+  const authConnectionSummary = document.getElementById('authConnectionSummary');
+  const authWalletStatus = document.getElementById('authWalletStatus');
 
   const setStatus = (message) => {
     if (authStatus) authStatus.textContent = message;
@@ -42,11 +48,30 @@
 
   let currentSession = null;
   let busy = false;
+  // A wallet connected in the browser is NOT a Supabase-linked identity.
+  // Never store an unverified wallet address as a verified user account link.
+  let connectedWallet = null;
+  let connectedWalletUserId = null;
+  const linkedProviders = () => new Set(
+    (currentSession?.user?.identities || []).map(identity => identity.provider)
+  );
+  const hasLinkedSocial = provider => {
+    const providers = linkedProviders();
+    return provider === 'x' ? providers.has('x') || providers.has('twitter')
+      : providers.has(provider);
+  };
+  const buttonLabel = (button, message) => {
+    const label = button?.querySelector('span');
+    if (label) label.textContent = message;
+  };
 
   const setBusy = (value) => {
     busy = value;
     for (const button of [signInButton, signUpButton, googleButton, xButton, solanaButton, ethereumButton]) {
-      if (button) button.disabled = value;
+      if (button) button.disabled = value ||
+        ((button === googleButton || button === xButton) &&
+          !!currentSession && !currentSession.user?.is_anonymous &&
+          hasLinkedSocial(button === googleButton ? 'google' : 'x'));
     }
   };
 
@@ -62,32 +87,76 @@
     if (/invalid login credentials/i.test(message)) return 'Email or password is incorrect.';
     if (/email not confirmed/i.test(message)) return 'Please confirm your email using the link we sent before signing in.';
     if (/user already registered/i.test(message)) return 'This email already has an account. Use Sign In instead.';
+    if (/wallet does not have a compatible|signMessage\(\)|publicKey\.toBase58\(\)/i.test(message)) {
+      return 'This wallet cannot sign a Supabase login challenge. Choose a compatible Phantom/Solflare wallet. Email sign-in never needs a wallet signature.';
+    }
+    if (/manual linking.*disabled|manual.*link.*not.*enabled/i.test(message)) {
+      return 'Account linking needs to be enabled in the Climboria Supabase Auth settings. Your current account has not been changed.';
+    }
+    if (/identity.*already.*linked|already linked to.*user/i.test(message)) {
+      return 'That Google or X identity is already linked to another account. Your current Climboria session was not switched.';
+    }
     if (/failed to fetch|network/i.test(message)) return 'Could not reach the authentication service. Check your connection and retry.';
     return message;
   };
 
   const renderSession = (session) => {
+    const priorId = currentSession?.user?.id || null;
     currentSession = session || null;
-    if (signOutButton) signOutButton.hidden = !currentSession;
-    if (!currentSession) {
-      setStatus('Not signed in. Create an account or sign in to sync your Climboria profile.');
-      return;
+    const user = currentSession?.user;
+    const userId = user?.id || null;
+    if (priorId !== userId) {
+      connectedWallet = null;
+      connectedWalletUserId = null;
     }
-    if (currentSession.user?.is_anonymous) {
-      setStatus('Guest session active in this browser. Guest progress is not yet linked to an email or social account.');
-      return;
+    const signedIn = !!user;
+    const guest = !!user?.is_anonymous;
+    const account = signedIn && !guest;
+
+    if (signOutButton) signOutButton.hidden = !signedIn;
+    if (authEmailSection) authEmailSection.hidden = signedIn;
+    if (authConnections) authConnections.hidden = !account;
+    if (authTitle) authTitle.textContent = account ? 'Your Climboria account' : 'Enter Climboria';
+    if (authIntro) authIntro.textContent = account
+      ? 'Keep your email session while connecting another login provider or wallet.'
+      : 'Email, Google, X and wallet sign-in are separate choices. Email sign-in never requires a wallet signature.';
+
+    for (const button of [googleButton,xButton,solanaButton,ethereumButton]) {
+      if (button) button.hidden = guest;
     }
-    const email = currentSession.user?.email;
-    const walletIdentity = (currentSession.user?.identities || []).find(identity => identity.provider === 'solana' || identity.provider === 'ethereum');
-    const walletAddress = walletIdentity?.identity_data?.address || walletIdentity?.identity_data?.sub || walletIdentity?.provider_id;
-    if (email) {
-      setStatus('Signed in as ' + email + '. Your Supabase session is active on this device.');
-    } else if (walletIdentity && walletAddress) {
-      const chainName = walletIdentity.provider === 'solana' ? 'Solana' : 'Ethereum';
-      const shortAddress = walletAddress.length > 14 ? walletAddress.slice(0, 6) + '…' + walletAddress.slice(-4) : walletAddress;
-      setStatus('Signed in with ' + chainName + ' wallet ' + shortAddress + '. Your verified Supabase session is active on this device.');
+    buttonLabel(googleButton, account ? 'Link Google to this account' : 'Continue with Google / Gmail');
+    buttonLabel(xButton, account ? 'Link X to this account' : 'Continue with X');
+    buttonLabel(solanaButton, account ? 'Connect Solana wallet (session only)' : 'Sign in with Solana wallet');
+    buttonLabel(ethereumButton, account ? 'Connect Ethereum wallet (session only)' : 'Sign in with Ethereum wallet');
+    if (googleButton) googleButton.disabled = busy || (account && hasLinkedSocial('google'));
+    if (xButton) xButton.disabled = busy || (account && hasLinkedSocial('x'));
+
+    if (authConnectionSummary) {
+      const linked = linkedProviders();
+      const methods = [];
+      if (user?.email) methods.push('Email');
+      if (linked.has('google')) methods.push('Google');
+      if (linked.has('x') || linked.has('twitter')) methods.push('X');
+      if (linked.has('solana')) methods.push('Solana identity');
+      if (linked.has('ethereum')) methods.push('Ethereum identity');
+      authConnectionSummary.textContent = account
+        ? 'Supabase identities on this account: ' + (methods.join(' · ') || 'Account authenticated') + '.'
+        : '';
+    }
+    if (authWalletStatus) {
+      authWalletStatus.textContent = account && connectedWallet && connectedWalletUserId === userId
+        ? connectedWallet.chain + ' wallet connected: ' + connectedWallet.address +
+          '. Browser connection only; it is NOT permanently linked to your account.'
+        : 'No wallet connected here. Connecting will not switch your email account or permanently link a wallet.';
+    }
+
+    if (!signedIn) {
+      setStatus('Not signed in. Use email/password, social login or a compatible wallet signer.');
+    } else if (guest) {
+      setStatus('Guest session active. Linking to other login methods is not enabled yet; your guest save stays protected.');
     } else {
-      setStatus('Climboria account authenticated. Your Supabase session is active on this device.');
+      setStatus('Signed in as ' + (user.email || 'Climboria account') +
+        '. Connect a wallet without signing in again, or link Google/X to keep this account.');
     }
   };
 
@@ -168,15 +237,42 @@
 
   const startOAuth = async (provider) => {
     if (busy) return;
-    if (!requireSignedOut()) return;
+    const signedInUser = currentSession?.user;
+    if (signedInUser?.is_anonymous) {
+      setStatus('Guest-to-account linking is not enabled yet. Keep the guest session to protect its save.');
+      return;
+    }
+    if (signedInUser && hasLinkedSocial(provider)) {
+      setStatus((provider === 'google' ? 'Google' : 'X') + ' is already linked to this Climboria account.');
+      return;
+    }
     setBusy(true);
     try {
-      const { error } = await authClient.auth.signInWithOAuth({
-        provider,
-        options: { redirectTo: AUTH_REDIRECT_URL }
-      });
-      if (error) throw error;
-      setStatus('Redirecting to ' + (provider === 'x' ? 'X' : 'Google') + ' to finish sign-in…');
+      if (signedInUser) {
+        // Never sign in with OAuth while another account is active. The server
+        // must confirm the current user before an OAuth account link can begin.
+        if (typeof authClient.auth.getUser !== 'function' ||
+            typeof authClient.auth.linkIdentity !== 'function') {
+          throw new Error('This Supabase client does not support secure identity linking.');
+        }
+        const { data: verified, error: verificationError } = await authClient.auth.getUser();
+        if (verificationError) throw verificationError;
+        if (!verified?.user || verified.user.id !== signedInUser.id) {
+          throw new Error('The current account could not be verified. Sign in again before linking.');
+        }
+        const { error } = await authClient.auth.linkIdentity({
+          provider, options: { redirectTo: AUTH_REDIRECT_URL }
+        });
+        if (error) throw error;
+        setStatus('Continue in ' + (provider === 'google' ? 'Google' : 'X') +
+          ' to LINK it to this existing account. We will confirm the link after Supabase redirects back.');
+      } else {
+        const { error } = await authClient.auth.signInWithOAuth({
+          provider, options: { redirectTo: AUTH_REDIRECT_URL }
+        });
+        if (error) throw error;
+        setStatus('Redirecting to ' + (provider === 'x' ? 'X' : 'Google') + ' to finish sign-in…');
+      }
     } catch (error) {
       setStatus(friendlyError(error, provider));
       setBusy(false);
@@ -187,46 +283,78 @@
   xButton?.addEventListener('click', () => startOAuth('x'));
 
   const signInWithWallet = async (chain) => {
-    if (busy || !requireSignedOut()) return;
+    if (busy) return;
+    if (currentSession?.user?.is_anonymous) {
+      setStatus('Guest-to-wallet linking is not enabled. Keep your guest save until the verified linking flow is ready.');
+      return;
+    }
     const isSolana = chain === 'solana';
-    let wallet = null;
-    let walletConnector = null;
-    if (isSolana) {
-      // Supabase's Phantom adapter expects window.phantom; its nested .solana
-      // provider is used only to establish the connection first.
-      wallet = window.phantom || window.solana || window.braveSolana || window.solflare || null;
-      walletConnector = wallet?.solana || wallet;
-      if (!walletConnector || typeof walletConnector.connect !== 'function') {
-        setStatus('No compatible Solana wallet found. Install Phantom, Solflare, or another Solana wallet and retry.');
-        return;
-      }
-    } else {
-      const providers = Array.isArray(window.ethereum?.providers) ? window.ethereum.providers : [];
-      wallet = providers.find(provider => provider.isMetaMask) || window.ethereum || null;
-      if (!wallet || typeof wallet.request !== 'function') {
-        setStatus('No compatible Ethereum wallet found. Install MetaMask or another EVM wallet and retry.');
-        return;
-      }
+    // Choose the actual Solana provider, not window.phantom's wrapper.
+    // Supabase Web3 sign-in requires signMessage() + publicKey.toBase58().
+    const solanaProviders = [
+      window.phantom?.solana, window.solana, window.braveSolana,
+      window.solflare, window.backpack?.solana
+    ].filter(Boolean);
+    const solanaWallet = solanaProviders.find(p => typeof p.connect === 'function' &&
+      typeof p.signMessage === 'function' && typeof p.publicKey?.toBase58 === 'function') ||
+      solanaProviders.find(p => typeof p.connect === 'function');
+    const ethereumProviders = Array.isArray(window.ethereum?.providers) ? window.ethereum.providers : [];
+    const ethereumWallet = ethereumProviders.find(p => p.isMetaMask) ||
+      window.ethereum || null;
+    const wallet = isSolana ? solanaWallet : ethereumWallet;
+    if (!wallet || (isSolana ? typeof wallet.connect !== 'function' : typeof wallet.request !== 'function')) {
+      setStatus(isSolana
+        ? 'No compatible Solana wallet detected. Open in Phantom, Solflare or another compatible wallet browser.'
+        : 'No EVM wallet detected. Install MetaMask or another compatible wallet.');
+      return;
     }
 
+    const originalUserId = currentSession?.user?.id || null;
+    if (!originalUserId && !requireSignedOut()) return;
     setBusy(true);
     try {
+      let address;
       if (isSolana) {
-        await walletConnector.connect();
+        const result = await wallet.connect();
+        const publicKey = wallet.publicKey || result?.publicKey;
+        address = typeof publicKey?.toBase58 === 'function'
+          ? publicKey.toBase58() : typeof publicKey?.toString === 'function'
+          ? publicKey.toString() : '';
+        if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) {
+          throw new Error('The wallet did not provide a valid Solana address.');
+        }
+        if (!originalUserId &&
+            (typeof wallet.signMessage !== 'function' ||
+             typeof wallet.publicKey?.toBase58 !== 'function')) {
+          throw new Error('Wallet does not have a compatible signMessage() and publicKey.toBase58() API');
+        }
       } else {
         const accounts = await wallet.request({ method: 'eth_requestAccounts' });
-        if (!Array.isArray(accounts) || accounts.length === 0) {
-          throw new Error('The Ethereum wallet did not return an account.');
+        address = Array.isArray(accounts) ? accounts[0] : null;
+        if (typeof address !== 'string' || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
+          throw new Error('The EVM wallet did not provide a valid Ethereum address.');
         }
       }
 
+      if (originalUserId) {
+        // This is a wallet *connection*, not a permanent account identity.
+        // No signInWithWeb3, updateUser({data:...}), or unverified DB write.
+        if (currentSession?.user?.id !== originalUserId) {
+          throw new Error('Your login changed during wallet connection. Reopen account settings and retry.');
+        }
+        connectedWallet = { chain: isSolana ? 'Solana' : 'Ethereum', address };
+        connectedWalletUserId = originalUserId;
+        renderSession(currentSession);
+        setStatus(connectedWallet.chain + ' wallet connected without changing your email login. ' +
+          'Permanent account linking requires a separate signed, server-verified ownership check.');
+        return;
+      }
+
       const { data, error } = await authClient.auth.signInWithWeb3({
-        chain,
-        statement: 'Sign in to Climboria.',
-        wallet
+        chain, statement: 'Sign in to Climboria.', wallet
       });
       if (error) throw error;
-      if (!data.session) throw new Error('Wallet signature was verified but no Climboria session was returned.');
+      if (!data?.session) throw new Error('Wallet signature returned no Climboria session.');
       renderSession(data.session);
     } catch (error) {
       setStatus(friendlyError(error, chain));
