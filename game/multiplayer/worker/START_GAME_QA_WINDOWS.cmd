@@ -23,6 +23,20 @@ if errorlevel 1 (
   exit /b 1
 )
 
+set "NODE_MAJOR="
+for /f "delims=" %%V in ('node -p "Number(process.versions.node.split('.')[0])" 2^>nul') do set "NODE_MAJOR=%%V"
+if not defined NODE_MAJOR (
+  echo Could not verify the installed Node.js version. Node 22 or newer is required.
+  pause
+  exit /b 1
+)
+if %NODE_MAJOR% LSS 22 (
+  echo Node.js %NODE_MAJOR% is too old. Please install Node.js 22 or newer.
+  pause
+  exit /b 1
+)
+echo Node.js %NODE_MAJOR% verified.
+
 if not exist "node_modules\playwright\package.json" (
   echo Setting up local Playwright dependency in the Game QA folder...
   echo This changes only local files; no website deployment.
