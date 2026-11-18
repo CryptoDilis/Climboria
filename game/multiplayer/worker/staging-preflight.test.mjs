@@ -32,6 +32,18 @@ test('Game staging preflight checks actual owner Worker health and DO storage fl
  assert.equal(calls,2);
 });
 
+test('post-deploy Nearby Chat probe rejects old or forged Worker capability',async()=>{
+ for(const payload of [health,{...health,nearbyChatEnabled:false},{
+  ...health,nearbyChatEnabled:'true'
+ }]){
+  await assert.rejects(
+   verifyGameRoomPreflight(BASE,'health',{deadlineMs:50,requireNearbyChat:true,
+    fetchImpl:async()=>response(payload)}),
+   /preflight unavailable or unready/);
+ }
+ assert.equal(await verifyGameRoomPreflight(BASE,'health',{deadlineMs:50,
+  requireNearbyChat:true,fetchImpl:async()=>response({...health,nearbyChatEnabled:true})}),true);
+});
 test('Game staging must never accept health alone or PvP-enabled/fake readiness',async()=>{
  const deny=[
   {kind:'health',data:{service:'climboria-game-room',gameplayPvP:false}},
