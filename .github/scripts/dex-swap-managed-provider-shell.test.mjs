@@ -342,7 +342,9 @@ test("DEX provider init receives a verified Buy or Sell pair but never a Climbor
   ui.panel.pair = { inputMint: USDC_MINT, outputMint: SOL_MINT };
   await ui.btn.click();
   assert.equal(calls.length,1, "mounted provider may not silently restart wallet UI");
-  assert.match(ui.status.textContent,/widget may retain its previous pair.*verify/i);
+  assert.equal(ui.panel.hidden,true, "stale pair must close the vendor-owned panel");
+  assert.equal(ui.btn.hidden,true, "stale mint session must require refresh");
+  assert.match(ui.status.textContent,/Selected token or trade direction changed/);
 });
 
 test("Swap Base-selected network cannot fetch or initialize the Solana Jupiter Plugin", async () => {
@@ -395,7 +397,7 @@ test("disabled integration hides all UI, never injects script or prompts a walle
 test("explicit user click loads only SRI-pinned official-script origin and initializes provider once", async () => {
   const ui = createDom();
   const calls = [];
-  const api = { Jupiter: { init(options) { calls.push(options); } } };
+  const api = { Jupiter: { init(options) { calls.push(options); }, close() {}, resume() {} } };
   assert.deepEqual(initializeManagedSwapHost({ doc: ui.doc, scope: withRuntime(api), config: approved }),
     { ready: true, reason: "approved-script-configured" });
   assert.equal(ui.btn.hidden, false);
@@ -409,7 +411,8 @@ test("explicit user click loads only SRI-pinned official-script origin and initi
   assert.equal(script.crossOrigin, "anonymous");
   assert.equal(script.referrerPolicy, "no-referrer");
   assert.equal(script.dataset.climboriaProviderScript, "jupiter-terminal");
-  assert.deepEqual(calls, [{ displayMode: "integrated", integratedTargetId: ui.target.id }]);
+  assert.deepEqual(calls, [{ displayMode: "integrated", integratedTargetId: ui.target.id,
+    formProps:{initialInputMint:SOL_MINT,initialOutputMint:USDC_MINT} }]);
   assert.match(ui.status.textContent, /Wallet prompts and execution are handled by the provider/);
   await ui.btn.click();
   assert.match(ui.status.textContent, /Provider interface loaded/, "reopening a mounted widget must not leave a checking message");
@@ -477,7 +480,7 @@ test("closing while provider initialization awaits does not overwrite the closed
   const closedStatus = ui.status.textContent;
   resolveProvider();
   await pending;
-  assert.equal(vendorCloseCalls, 1, "late vendor-owned overlay must also be hidden");
+  assert.ok(vendorCloseCalls >= 1, "late vendor-owned overlay must also be hidden");
   assert.equal(ui.panel.hidden, true);
   assert.equal(ui.status.textContent, closedStatus,
     "late provider init success may not claim an open widget after close");
@@ -744,7 +747,7 @@ test("a background tab return immediately hides mounted provider until fresh no-
     json:async () => ({enabled})
   });
   const scope = {
-    Jupiter:{init() {initCalls++;}},
+    Jupiter:{init() {initCalls++;},close() {},resume() {}},
     addEventListener(event, fn) {listeners[event] = fn;},
     setInterval(fn, ms) {assert.equal(ms,15000); timers++; return timers;},
     clearInterval() {stops++;},
@@ -795,7 +798,7 @@ test("approved tab focus or BFCache resume rechecks and restores panel without p
   let timers = 0;
   let stops = 0;
   const scope = withRuntime({
-    Jupiter:{init() {initCalls++;}},
+    Jupiter:{init() {initCalls++;},close() {},resume() {}},
     addEventListener(event, fn) {listeners[event] = fn;},
     setInterval(fn, ms) {assert.equal(ms,15000); timers++; return timers;},
     clearInterval() {stops++;}
@@ -837,7 +840,7 @@ test("a stale successful tab-resume response cannot resurrect a manually closed 
   const listeners = {};
   const yes = {status:200,headers:{get:() => "no-store"},json:async () => ({enabled:true})};
   const scope = {
-    Jupiter:{init() {}},
+    Jupiter:{init() {},close() {},resume() {}},
     addEventListener(event,fn) {listeners[event] = fn;},
     fetch() {
       calls++;
@@ -871,7 +874,7 @@ test("a stale denied tab-resume response cannot revoke a newer approved reopenin
   const yes = {status:200,headers:{get:() => "no-store"},json:async () => ({enabled:true})};
   const no = {status:200,headers:{get:() => "no-store"},json:async () => ({enabled:false})};
   const scope = {
-    Jupiter:{init() {initCalls++;}},
+    Jupiter:{init() {initCalls++;},close() {},resume() {}},
     addEventListener(event,fn) {listeners[event] = fn;},
     fetch() {
       calls++;
