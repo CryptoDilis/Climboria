@@ -191,7 +191,8 @@ async function runTabReturnApproval(browser, path, width) {
     statuses++;
     return route.fulfill({
       status:200, json:{enabled:approved},
-      headers:{"Cache-Control":"no-store"}
+      // Synthetic cross-origin DEX URL must pass browser CORS validation.
+      headers:{"Cache-Control":"no-store","Access-Control-Allow-Origin":"*"}
     });
   });
   await page.route("**/swap-config.js", route => route.fulfill({
