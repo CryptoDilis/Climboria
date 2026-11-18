@@ -18,6 +18,7 @@ const ORIGIN = "http://127.0.0.1:4173";
 // This does NOT validate real transitive vendor JS/CSS or authorize production.
 const SCRIPT_URL = "https://plugin.jup.ag/plugin-1.0.18.js";
 const API_STATUS_URL = "https://api.climboria.fun/api/swap/provider-status";
+const DEX_API_STATUS_URL = "https://api.climboria.fun/api/dex/provider-status";
 const MOCK_SCRIPT = [
   "window.Jupiter = {",
   " init: function(options) {",
@@ -49,15 +50,19 @@ function mockConfig(integrity = sri, runtimeStatusUrl = null) {
     "proxyEnabled:true,enabled:false,apiBase:'https://api.climboria.fun'," +
     "managedProvider:Object.freeze({enabled:true,runtimeApproved:true," +
     "surfaces:Object.freeze({swap:true,dex:true}),provider:'jupiter-terminal'," +
+    "dexRuntimeStatusUrl:'" + DEX_API_STATUS_URL + "'," +
     "scriptUrl:'" + SCRIPT_URL + "',integrity:'" + integrity + "'" +
     (runtimeStatusUrl ? ",runtimeStatusUrl:'" + runtimeStatusUrl + "'" : "") + "})," +
     "revenue:Object.freeze({integratorFeeTargetBps:50,feeCollectionEnabled:false," +
     "feeRecipient:null,providerFeeIntegrationVerified:false})});";
 }
 
-function approveRuntime(page) {
-  return page.route("**/swap-runtime-status.json", route => route.fulfill({
+async function approveRuntime(page) {
+  await page.route("**/swap-runtime-status.json", route => route.fulfill({
     json: { enabled: true }, headers: { "Cache-Control": "no-store" }
+  }));
+  await page.route(DEX_API_STATUS_URL, route => route.fulfill({
+    json: { enabled: true }, headers: { "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" }
   }));
 }
 
@@ -73,6 +78,9 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
     if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(req.url())) forbidden.push(req.url());
   });
   page.on("dialog", dialog => { throw Error("Unexpected popup: " + dialog.message()); });
+  await page.route(DEX_API_STATUS_URL, route => route.fulfill({
+    json:{enabled:true}, headers:{"Cache-Control":"no-store","Access-Control-Allow-Origin":"*"}
+  }));
   if (apiStatus) {
     await page.route(API_STATUS_URL, route => route.fulfill({
       json:{enabled:true}, headers:{"Cache-Control":"no-store","Access-Control-Allow-Origin":"*"}
@@ -230,7 +238,7 @@ async function runTabReturnApproval(browser, path, width) {
     if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(request.url()))
       forbidden.push(request.url());
   });
-  await page.route("**/swap-runtime-status.json", route => {
+  await page.route(path === "/dex/" ? DEX_API_STATUS_URL : "**/swap-runtime-status.json", route => {
     statuses++;
     return route.fulfill({
       status:200, json:{enabled:approved},
@@ -459,11 +467,13 @@ async function runCloseDuringLoad(browser, path) {
 
 async function runRollbackWithCache(browser) {
   const root = new URL("../../", import.meta.url);
-  const enabledConfig = mockConfig();
+  const enabledConfig = mockConfig().replace(DEX_API_STATUS_URL, "/dex-runtime-status.json");
   const host = await readFile(new URL("dex/provider-managed-swap.mjs", root), "utf8");
   // Serve the fixture over real HTTP. Playwright request interception disables
   // the browser cache, so it cannot exercise this rollback.
   const fixtureHost = host
+    .replace('const DEX_RUNTIME_STATUS_URL = "https://api.climboria.fun/api/dex/provider-status";',
+      'const DEX_RUNTIME_STATUS_URL = "/dex-runtime-status.json";')
     .replace("script.src = source.url;", 'script.src = "/fixture.js";')
     // Accelerate only the offline browser fixture; production polls every 15s.
     .replace("const ACTIVE_APPROVAL_POLL_MS = 15000;", "const ACTIVE_APPROVAL_POLL_MS = 100;");
@@ -485,7 +495,7 @@ async function runRollbackWithCache(browser) {
   let fixtureRequests = 0;
   const server = createServer((request, response) => {
     const path = new URL(request.url, "http://localhost").pathname;
-    if (path === "/swap-runtime-status.json") {
+    if (path === "/swap-runtime-status.json" || path === "/dex-runtime-status.json") {
       response.writeHead(200, {"Content-Type":"application/json", "Cache-Control":"no-store"});
       response.end(JSON.stringify({enabled}));
       return;
@@ -559,7 +569,8 @@ async function runRollbackWithCache(browser) {
         assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length), 1,
           "active rollback cannot resubmit or reinitialize a provider");
         await page.goto("about:blank");
-        const statusResponse = page.waitForResponse(response => response.url() === origin + "/swap-runtime-status.json");
+        const statusResponse = page.waitForResponse(response => response.url() === origin +
+          (path === "/dex/" ? "/dex-runtime-status.json" : "/swap-runtime-status.json"));
         await page.goto(url, {waitUntil:"load"});
         assert.equal((await statusResponse).headers()["cache-control"], "no-store");
         assert.equal(configRequests, beforeConfig, "enabled config should still be cached");
