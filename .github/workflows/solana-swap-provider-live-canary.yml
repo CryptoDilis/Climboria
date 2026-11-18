@@ -1,0 +1,49 @@
+name: Solana Swap Jupiter Live Widget Mount Canary
+
+# Distinct from quote-only smoke: explicitly loads the real third-party Jupiter
+# script in a fresh, no-wallet browser. Never creates, signs or sends a trade.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/solana-swap-provider-live-canary.mjs"
+      - ".github/workflows/solana-swap-provider-live-canary.yml"
+      - "swap/index.html"
+      - "swap-config.js"
+  push:
+    branches: [main]
+    paths:
+      - ".github/scripts/solana-swap-provider-live-canary.mjs"
+      - ".github/workflows/solana-swap-provider-live-canary.yml"
+      - "swap/index.html"
+      - "swap-config.js"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 2,14 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: solana-swap-live-widget-mount-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    name: Verify real Jupiter UI mount without wallet or network writes
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify read-only probe syntax
+        run: node --check .github/scripts/solana-swap-provider-live-canary.mjs
+      - name: Install isolated Playwright Chromium
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Probe only the public source-approved Solana Jupiter widget
+        run: node .github/scripts/solana-swap-provider-live-canary.mjs
