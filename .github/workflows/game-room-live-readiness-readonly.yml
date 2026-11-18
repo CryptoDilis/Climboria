@@ -1,4 +1,4 @@
-name: GAME Room Live Readiness — Read Only
+name: GAME Room Readiness + Unauthorized Denials (No Secrets)
 
 on:
   pull_request:
@@ -7,6 +7,8 @@ on:
       - ".github/workflows/game-room-live-readiness-readonly.yml"
       - "game/multiplayer/worker/qa-readiness-check.mjs"
       - "game/multiplayer/worker/qa-readiness-check.test.mjs"
+      - "game/multiplayer/worker/qa-access-denial-check.mjs"
+      - "game/multiplayer/worker/qa-access-denial-check.test.mjs"
       - "game/multiplayer/worker/staging-preflight.mjs"
       - "game/multiplayer/client-config.json"
   workflow_dispatch:
@@ -33,5 +35,10 @@ jobs:
         run: |
           node --test game/multiplayer/worker/qa-readiness-check.test.mjs
           node game/multiplayer/worker/qa-readiness-check.mjs
-      # This does not issue account tickets, open WebSockets, perform trade
-      # transactions, modify Cloudflare or toggle Game multiplayer.
+      - name: Check deployed Game ticket access-denial policy without credentials
+        run: |
+          node --test game/multiplayer/worker/qa-access-denial-check.test.mjs
+          node game/multiplayer/worker/qa-access-denial-check.mjs
+      # The intentionally rejected POST /ticket requests carry no tokens,
+      # return 401/403 before ticket issuance or room state writes, and do not
+      # open WebSockets, trade, modify Cloudflare or toggle Game multiplayer.
