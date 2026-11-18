@@ -30,7 +30,8 @@ export async function verifyReadOnlyGameQaStaging({
   throw Error('Public Game release config is NOT fail-closed');
  for(const kind of ['health','ready']){
   // verifyGameRoomPreflight checks HTTP status AND all expected fields.
-  await check(HOST,kind,{deadlineMs:15000});
+  const ready=await check(HOST,kind,{deadlineMs:15000});
+  if(ready!==true)throw Error('Game room '+kind+' readiness verification failed');
  }
  return Object.freeze({publicMultiplayer:'disabled',gameRoomReadiness:'pass'});
 }
