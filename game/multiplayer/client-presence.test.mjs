@@ -639,13 +639,13 @@ test('actual WebSocket never-opening handshake times out and retries without gho
  assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,2);
 });
 
-test('trusted welcome without valid spawn-accepted times out, clears peers and retries',async()=>{
+test('trusted welcome without valid spawn-accepted never renders peers and retries safely',async()=>{
  const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
  const old=h.clients[0];old.onopen();
  const own='s_'+'c'.repeat(32);
  old.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[peer]})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
- assert.equal(h.adds.length,1,'server welcome may populate provisional remote models');
+ assert.equal(h.adds.length,0,'provisional welcome must not render a remote 3D player');
  old.onmessage({data:JSON.stringify({type:'spawn-accepted',
   id:'s_'+'d'.repeat(32),position:{x:0,y:9.55,z:-30},peers:[peer]})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting',
@@ -654,7 +654,7 @@ test('trusted welcome without valid spawn-accepted times out, clears peers and r
  assert.equal(h.runNextTimer(),12000,'server spawn confirmation also needs a deadline');
  assert.equal(old.readyState,3);
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline');
- assert.ok(h.removes.includes(peer.id),'provisional peers are removed on timeout');
+ assert.equal(h.adds.length,0,'no remote 3D peers ever appeared before accepted spawn');
  old.onmessage({data:JSON.stringify({type:'spawn-accepted',
   id:own,position:{x:0,y:9.55,z:-30},peers:[peer]})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline',
@@ -720,18 +720,41 @@ test('unconfirmed spawn cannot advertise connection, chat, or duel UI',async()=>
  assert.ok(h.created.some(el=>el.id==='climboria-duel-toggle'));
 });
 
+test('welcome and provisional peer events cannot render ghost avatars before spawn admission',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];ws.onopen();const own='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[peer]})});
+ ws.onmessage({data:JSON.stringify({type:'player-joined',player:peer})});
+ ws.onmessage({data:JSON.stringify({type:'player-moved',id:peer.id,position:{x:3,y:9.5,z:-30}})});
+ ws.onmessage({data:JSON.stringify({type:'player-punched',id:peer.id})});
+ ws.onmessage({data:JSON.stringify({type:'world-chat',id:peer.id,name:peer.name,text:'premature',at:1730000000000})});
+ assert.equal(h.adds.length,0,'no remote 3D allocations before server-accepted spawn');
+ assert.equal(h.moves.length,0);
+ assert.equal(h.punches.length,0);
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
+ assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false);
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,position:{x:0,y:9.55,z:-30},peers:[peer]})});
+ assert.equal(h.adds.length,1,'accepted roster creates one real peer');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ // Late/replayed welcome packets cannot reset an established verified room.
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
+ assert.equal(h.adds.length,1,'late welcome must not erase verified remote peers');
+ assert.equal(h.removes.length,0);
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+});
+
 test('spawn-accepted roster corrects missed join/leave and avoids duplicate 3D peers',async()=>{
  const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
  const ws=h.clients[0];ws.onopen();const id='s_'+'c'.repeat(32);
  // The welcome roster can go stale while our own initial spawn is pending:
- // a previously visible peer may leave, while a new peer spawns.
+ // a provisional peer may leave before the authoritative spawn roster arrives.
  const former={...peer,id:'s_'+'d'.repeat(32),name:'Explorer Former'};
  ws.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[former]})});
- assert.equal(h.adds.length,1,'welcome contains initially valid peers');
+ assert.equal(h.adds.length,0,'welcome peers are provisional, not rendered');
  ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id,
   position:{x:0,y:9.55,z:-30},peers:[peer]})});
- assert.equal(h.removes.includes(former.id),true,'stale peer is removed');
- assert.equal(h.adds.length,2,'new verified peer is created once');
+ assert.equal(h.removes.includes(former.id),false,'provisional stale peers were never added');
+ assert.equal(h.adds.length,1,'only the server-accepted peer is created once');
  assert.equal(h.adds.at(-1).id,peer.id);
  const initialAdds=h.adds.length;
  ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id,
