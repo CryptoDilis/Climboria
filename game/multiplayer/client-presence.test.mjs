@@ -267,7 +267,7 @@ test('live Game maps the touch return event to its existing authorized local Dig
   'Game must handle touch request with existing local Sanctuary teleport only');
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261118-slow-boot-7/,
+ assert.match(game,/client-presence\.js\?v=20261118-config-retry-8/,
   'production Game must request the fresh mobile room client');
 });
 
