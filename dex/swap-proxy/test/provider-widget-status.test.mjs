@@ -82,3 +82,38 @@ test("Swap-only release never authorizes a future independent Solana DEX provide
   assert.match(cfg, /surfaces:\s*Object\.freeze\(\{\s*swap:\s*true,\s*dex:\s*false\s*\}\)/,
     "The public DEX surface remains explicitly OFF for a Swap-only release");
 });
+
+
+test("DEX uses its own permanently OFF provider status even while Solana Swap is ON", async () => {
+  const dexUrl = "https://api.climboria.fun/api/dex/provider-status";
+  assert.match(workerSource, /^const THIRD_PARTY_JUPITER_WIDGET_APPROVED = true;$/m);
+  assert.match(workerSource, /^const THIRD_PARTY_JUPITER_DEX_APPROVED = false;$/m);
+  for (const target of [
+    dexUrl, dexUrl + "?enabled=true", dexUrl + "?surface=swap",
+    dexUrl + "?runtimeApproved=true"
+  ]) {
+    const response = await request(target, "GET", {
+      origin, cookie: "approved=true",
+      "x-override-provider-status": "true",
+      "x-dex-provider-enabled": "true"
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("access-control-allow-origin"), origin);
+    assert.match(response.headers.get("cache-control") || "", /\bno-store\b/);
+    assert.deepEqual(await response.json(), {enabled: false}, target);
+  }
+  assert.deepEqual(await (await request(url)).json(), {enabled: true},
+    "DEX OFF must not revoke the already deployed Swap provider");
+  for (const method of ["POST", "PUT", "PATCH", "DELETE"]) {
+    const response = await request(dexUrl, method);
+    assert.equal(response.status, 405, method);
+    assert.match(response.headers.get("allow") || "", /GET/);
+  }
+  for (const badOrigin of ["https://evil.example", "https://climboria.fun.evil.example"]) {
+    const response = await request(dexUrl, "GET", {origin:badOrigin});
+    assert.equal(response.status, 403);
+    assert.equal(response.headers.get("access-control-allow-origin"), null);
+  }
+  assert.match(workerSource, /^const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;$/m);
+  assert.match(workerSource, /^const EXECUTION_SECURITY_REVIEW_COMPLETE = false;$/m);
+});
