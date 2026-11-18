@@ -426,7 +426,7 @@ test('World Chat is room-gated, server-confirmed, safe as text and cleared on di
  const toggle=h.created.find(node=>node.id==='climboria-world-chat-toggle');
  const panel=h.created.find(node=>node.id==='climboria-world-chat-panel');
  assert.ok(toggle&&panel,'server-accepted initial spawn creates World Chat');
- assert.ok(panel.children[0].textContent.includes('2 ONLINE'));
+ assert.equal(panel.children[0].textContent,'WORLD CHAT','online count is in top HUD badge only');
  assert.equal(panel.style.display,'block','compact World Chat starts visible without any click');
  assert.equal(toggle.textContent,'HIDE CHAT');
  toggle.click();
@@ -474,7 +474,7 @@ test('World Chat is room-gated, server-confirmed, safe as text and cleared on di
  assert.equal(input.value,'','only a real trusted self echo confirms delivery');
  assert.equal(log.children.length,2,'transcript contains only authenticated server echoes');
  socket.onmessage({data:JSON.stringify({type:'player-left',id:peer.id})});
- assert.ok(panel.children[0].textContent.includes('1 ONLINE'));
+ assert.equal(panel.children[0].textContent,'WORLD CHAT');
  socket.close();
  assert.equal(toggle.style.display,'none');
  assert.equal(panel.style.display,'none');
