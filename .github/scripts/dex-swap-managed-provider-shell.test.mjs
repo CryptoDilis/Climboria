@@ -251,7 +251,7 @@ test("DEX token selection hook clears stale intent until mint proof and excludes
   assert.match(dex, /data-climboria-managed-swap-output-mint/);
 });
 
-function createDom({ failure = false, deferLoad = false, surface = "swap", pair = null, network = "solana" } = {}) {
+function createDom({ failure = false, deferLoad = false, surface = "swap", pair = surface === "swap" ? { inputMint: SOL_MINT, outputMint: USDC_MINT } : null, network = "solana" } = {}) {
   const created = [];
   const btn = { hidden: true, disabled: false, addEventListener(event, callback) { this[event] = callback; } };
   const close = { addEventListener(event, callback) { this[event] = callback; } };
