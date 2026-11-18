@@ -1168,7 +1168,7 @@ test('Nearby Chat sends real authenticated channel packets and renders only veri
  const ws=h.clients[0];ws.onopen();
  const me='s_'+'c'.repeat(32);
  ws.onmessage({data:JSON.stringify({type:'welcome',selfId:me,peers:[peer]})});
- ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:me,position:{x:0,y:9.55,z:-30},peers:[peer]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:me,position:{x:0,y:9.55,z:-30},peers:[peer],nearbyChatEnabled:true})});
  const panel=h.created.find(n=>n.id==='climboria-world-chat-panel');
  assert.ok(panel,'confirmed Game join is necessary');
  const controls=panel.children[2],input=controls.children[0],send=controls.children[1],channel=controls.children[2];
@@ -1208,4 +1208,23 @@ test('Nearby Chat sends real authenticated channel packets and renders only veri
   type:'nearby-chat',id:peer.id,name:peer.name,text:'ghost speech',at:1730000000004
  })});
  assert.equal(h.speeches.length,1,'departed players cannot create fake bubbles');
+});
+
+test('older live Game Worker cannot accidentally advertise a broken Nearby channel',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];ws.onopen();
+ const id='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[peer]})});
+ ws.onmessage({data:JSON.stringify({
+  type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[peer]
+ })});
+ const panel=h.created.find(n=>n.id==='climboria-world-chat-panel');
+ const controls=panel.children[2],input=controls.children[0],send=controls.children[1],channel=controls.children[2];
+ assert.equal(channel.disabled,true,'unupgraded Worker must not expose nonfunctional local chat');
+ assert.match(channel.textContent,/UPDATING/);
+ channel.click();
+ input.value='World still works';send.click();
+ assert.equal(ws.sent.at(-1).type,'world-chat','compatibility gate cannot break public World Chat');
+ ws.onmessage({data:JSON.stringify({type:'nearby-chat',id:peer.id,name:peer.name,text:'not enabled',at:1730000000000})});
+ assert.equal(h.speeches.length,0,'legacy Worker cannot generate a fake nearby bubble');
 });
