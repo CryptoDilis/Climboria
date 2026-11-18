@@ -166,6 +166,11 @@ async function testTwoPlayers(a,b,originalBId){
  await b.waitForFunction(()=>
   window.__CLIMBORIA_GAME_PEERS?.audit?.().nearbyBubbles===1,
   undefined,{timeout:8000});
+ // Restore the global channel before the following bidirectional World QA.
+ await a.locator('#climboria-world-chat-panel button[aria-label="Switch between World Chat and Nearby Chat"]').click();
+ await a.waitForFunction(()=>
+  document.querySelector('#climboria-world-chat-panel')?.firstChild?.textContent?.includes('WORLD CHAT'),
+  undefined,{timeout:5000});
  qaProgress.pass();
  await a.waitForTimeout(2600); // Shared room chat cooldown before World Chat.
 
