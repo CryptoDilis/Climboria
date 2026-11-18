@@ -45,6 +45,8 @@ export async function runExactRevisionReadinessProbe({
       const result = await probeImpl({ expectedRevision });
       assert.equal(result?.ok, true, "Full production readiness probe did not pass");
       assert.ok(Array.isArray(result.checks) && result.checks.length >= 6 &&
+        result.checks.includes("Source-approved third-party Swap provider status") &&
+        result.checks.includes("Independent Solana DEX provider remains source-disabled") &&
         result.checks.includes("On-chain execute remains fail-closed") &&
         result.checks.includes("Real Jupiter SOL/USDC quote preview (no transaction)") &&
         result.checks.includes("Worker health, deployed Git revision, bindings, CORS and server-side execution gate"),

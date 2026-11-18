@@ -16,6 +16,9 @@ function fixture(overrides = {}) {
   const respond = (data, status = 200, cors = true) => Response.json(data, {
     status, headers: cors ? { "access-control-allow-origin": ORIGIN } : {}
   });
+  const respondStatus = (data) => Response.json(data, {
+    headers: { "access-control-allow-origin": ORIGIN, "cache-control": "no-store, max-age=0" }
+  });
   const fakeFetch = async (url, init) => {
     const u = new URL(url);
     calls.push({ url: u.pathname, method: init.method || "GET", origin: init.headers.origin, body: init.body });
@@ -24,6 +27,8 @@ function fixture(overrides = {}) {
     if (u.pathname === "/health") return overrides.health || respond(health);
     if (u.pathname === "/api/swap/quote" && init.method === "OPTIONS")
       return overrides.preflight || new Response(null, { status: 204, headers: { "access-control-allow-origin": ORIGIN } });
+    if (u.pathname === "/api/swap/provider-status") return overrides.swapStatus || respondStatus({ enabled: true });
+    if (u.pathname === "/api/dex/provider-status") return overrides.dexStatus || respondStatus({ enabled: false });
     if (u.pathname === "/api/tokens/search") return overrides.tokens || respond([{ id: SOL, decimals: 9, symbol: "SOL" }]);
     if (u.pathname === "/api/swap/quote") {
       if (u.searchParams.get("amount") === "15700") return overrides.smallQuote || respond({ inAmount: "15700", outAmount: "25", requestId: "test-small-request-id" });
@@ -40,13 +45,42 @@ test("production acceptance probe verifies real quote preview but never signs or
   const { fakeFetch, calls } = fixture();
   const result = await probeProductionApi({ fetchImpl: fakeFetch });
   assert.equal(result.ok, true);
-  assert.equal(result.checks.length, 7);
+  assert.equal(result.checks.length, 9);
+  assert.ok(result.checks.includes("Independent Solana DEX provider remains source-disabled"));
+  assert.deepEqual(calls.filter(c => c.url.endsWith("/provider-status")), [
+    { url: "/api/swap/provider-status", method: "GET", origin: ORIGIN, body: undefined },
+    { url: "/api/dex/provider-status", method: "GET", origin: ORIGIN, body: undefined }
+  ]);
   assert.deepEqual(result.observations, []);
   assert.equal(calls.filter(c => c.url === "/api/swap/quote" && c.method === "GET").length, 2);
   assert.deepEqual(calls.filter(c => c.method === "POST").map(c => c.url), ["/api/swap/execute"]);
   assert.ok(!calls.some(c => c.url === "/api/swap/order"), "Never create wallet-signable orders in production monitoring");
   assert.equal(calls.find(c => c.url === "/api/swap/execute").body, "{}");
   assert.ok(calls.every(c => c.origin === ORIGIN || c.origin === "https://unauthorized.example"));
+});
+
+test("production acceptance fails closed when independent Swap or DEX status disagrees", async () => {
+  for (const [overrides, expected] of [
+    [{ swapStatus: Response.json({ enabled: false }, { headers: { "access-control-allow-origin": ORIGIN, "cache-control": "no-store" } }) }, /swap[/]provider-status source approval differs/],
+    [{ dexStatus: Response.json({ enabled: true }, { headers: { "access-control-allow-origin": ORIGIN, "cache-control": "no-store" } }) }, /dex[/]provider-status source approval differs/],
+    [{ dexStatus: Response.json({ error: "not found" }, { status: 404, headers: { "access-control-allow-origin": ORIGIN } }) }, /dex[/]provider-status must return HTTP 200/]
+  ]) {
+    const { fakeFetch, calls } = fixture(overrides);
+    await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), expected);
+    assert.ok(!calls.some(c => c.method === "POST"), "No write request after failed release approval");
+  }
+});
+
+test("production acceptance requires uncached same-origin provider status responses", async () => {
+  for (const [overrides, expected] of [
+    [{ swapStatus: Response.json({ enabled: true }, { headers: { "access-control-allow-origin": ORIGIN } }) }, /swap[/]provider-status must not be cached/],
+    [{ dexStatus: Response.json({ enabled: false }, { headers: { "access-control-allow-origin": ORIGIN, "cache-control": "max-age=3600" } }) }, /dex[/]provider-status must not be cached/],
+    [{ dexStatus: Response.json({ enabled: false }, { headers: { "access-control-allow-origin": "https://evil.example", "cache-control": "no-store" } }) }, /dex[/]provider-status must allow only/],
+    [{ dexStatus: Response.json({ enabled: "false" }, { headers: { "access-control-allow-origin": ORIGIN, "cache-control": "no-store" } }) }, /dex[/]provider-status source approval differs/]
+  ]) {
+    const { fakeFetch } = fixture(overrides);
+    await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), expected);
+  }
 });
 
 test("production readiness matches the exact deploy commit after a guarded release", async () => {
@@ -155,7 +189,7 @@ test("legitimate unavailable tiny route is recorded without claiming quote succe
   const { fakeFetch, calls } = fixture({ smallQuote: Response.json({ error: "Jupiter quote request failed", upstreamStatus: 400, details: "No route" }, { status: 400, headers: { "access-control-allow-origin": ORIGIN } }) });
   const result = await probeProductionApi({ fetchImpl: fakeFetch });
   assert.equal(result.ok, true);
-  assert.equal(result.checks.length, 6);
+  assert.equal(result.checks.length, 8);
   assert.match(result.observations[0], /NOT available \(HTTP 400\)/);
   assert.ok(!calls.some(c => c.url === "/api/swap/order"));
 });
