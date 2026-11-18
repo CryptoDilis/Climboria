@@ -92,7 +92,7 @@ export const gateway={
   const origin=req.headers.get('Origin');
   const url=new URL(req.url);
   if(url.pathname==='/health'&&req.method==='GET')
-   return response(200,{service:'climboria-game-room',deployedGateway:true,gameplayPvP:false},origin);
+   return response(200,{service:'climboria-game-room',deployedGateway:true,nearbyChatEnabled:true,gameplayPvP:false},origin);
   // /health proves only that code is deployed. /ready must also contact
   // the real ROOM durable object and perform a bounded read of its storage.
   // An installed binding alone cannot certify migration/storage availability.
