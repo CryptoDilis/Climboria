@@ -536,6 +536,12 @@ footer:first-of-type>div{
 .auth-action-secondary{background:rgba(255,255,255,.06);color:#fff;border-color:rgba(255,255,255,.22)}
 .auth-action-primary:disabled,.auth-action-secondary:disabled{opacity:.55;cursor:wait}
 .auth-signout{margin-top:10px}
+.auth-connections{margin:14px 0;padding:14px;border:1px solid rgba(212,173,90,.35);border-radius:12px;background:rgba(14,29,46,.75)}
+.auth-connections[hidden],#authEmailSection[hidden]{display:none!important}
+.auth-connections h3{margin:0 0 8px;color:#f5d18d;font:700 15px Georgia,serif}
+.auth-connections p{color:#c9d5e7;font-size:12px;line-height:1.55;margin:6px 0!important;overflow-wrap:anywhere}
+.auth-connections small{display:block;color:#9daec3;font-size:11px;line-height:1.55;margin-top:8px}
+.auth-option[hidden]{display:none!important}
 .auth-footnote{margin:8px 0 0!important;font-size:10px!important;color:rgba(255,255,255,.4)!important}
 
 /* Desktop header: ordered, equally sized navigation cards; mobile retains the drawer. */
@@ -644,13 +650,13 @@ footer:first-of-type>div{
  <div class="auth-panel">
   <button class="auth-close" id="authClose" type="button" aria-label="Close sign-in">×</button>
   <h2 id="authTitle">Enter Climboria</h2>
-  <p>Sign in with a verified email, social account, or wallet signature to sync your player profile and expedition progress.</p>
+  <p id="authIntro">Email, Google, X and wallet sign-in are separate choices. Email sign-in never requires a wallet signature.</p>
   <button class="auth-option" id="authSolana" type="button"><span>Sign in with Solana wallet</span><span class="auth-tag">Phantom / Solflare</span></button>
   <button class="auth-option" id="authEthereum" type="button"><span>Sign in with Ethereum wallet</span><span class="auth-tag">MetaMask / EVM</span></button>
   <button class="auth-option" id="authX" type="button"><span>Continue with X</span><span class="auth-tag">X OAuth 2.0</span></button>
   <button class="auth-option" id="authGoogle" type="button"><span>Continue with Google / Gmail</span><span class="auth-tag">Google OAuth</span></button>
   <button class="auth-option" id="authGuest" type="button" disabled title="Guest sign-in requires Cloudflare Turnstile and Supabase CAPTCHA configuration."><span>Play as guest</span><span class="auth-tag">CAPTCHA setup pending</span></button>
-  <div class="auth-divider">OR USE EMAIL</div>
+  <div id="authEmailSection"><div class="auth-divider">OR USE EMAIL</div>
   <form id="authEmailForm" autocomplete="on">
    <label class="auth-label" for="authEmail">Email address</label>
    <input class="auth-field" id="authEmail" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com">
@@ -660,7 +666,13 @@ footer:first-of-type>div{
     <button class="auth-action-primary" id="authSignIn" type="submit">SIGN IN</button>
     <button class="auth-action-secondary" id="authSignUp" type="button">CREATE ACCOUNT</button>
    </div>
-  </form>
+  </form></div>
+  <section id="authConnections" class="auth-connections" hidden aria-label="Account connections">
+   <h3>Linked accounts and wallets</h3>
+   <p id="authConnectionSummary" role="status" aria-live="polite"></p>
+   <p id="authWalletStatus">No wallet connected here. Connecting will not switch your email account or permanently link a wallet.</p>
+   <small>Google and X use Supabase identity linking. Wallet connection is session-only until secure server-side signed-wallet linking is available. Never share a seed phrase.</small>
+  </section>
   <button class="auth-option auth-signout" id="authSignOut" type="button" hidden><span>Sign out on this device</span><span class="auth-tag">Local session</span></button>
   <p class="auth-note" id="authStatus" role="status" aria-live="polite">Checking your Climboria session…</p>
   <p class="auth-footnote">Guest accounts are browser-specific. Do not clear browser data before account linking is configured.</p>
