@@ -991,6 +991,96 @@ test("active poll rechecks mints after an in-flight status response", async () =
   assert.match(ui.status.textContent,/Selected token or trade direction changed/);
 });
 
+test("active runtime monitor closes mounted Solana vendor after a silent Base tab switch", async () => {
+  const ui=createDom({surface:"swap",pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+  let tick,closes=0,requests=0,stops=0,resumes=0;
+  const scope=withRuntime({
+    Jupiter:{init(){},close(){closes++;},resume(){resumes++;}},
+    setInterval(fn,ms){assert.equal(ms,15000);tick=fn;return 77;},
+    clearInterval(id){assert.equal(id,77);stops++;}
+  });
+  const previousFetch=scope.fetch;
+  scope.fetch=(...args)=>{requests++;return previousFetch(...args);};
+  initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  await ui.btn.click();
+  assert.equal(requests,2);
+  assert.equal(ui.panel.hidden,false);
+  const getAttribute=ui.panel.getAttribute.bind(ui.panel);
+  ui.panel.getAttribute=key=>key==="data-climboria-managed-swap-network"?"base":getAttribute(key);
+  // Same mints, missed Base-tab event, no new click: active poll must close.
+  await tick();
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(ui.btn.hidden,true);
+  assert.equal(closes,1,"close old Solana vendor-owned wallet overlay");
+  assert.equal(stops,1);
+  assert.equal(resumes,0);
+  assert.equal(requests,2,"known unsafe network must close before fetching status");
+  assert.match(ui.status.textContent,/Selected token or trade direction changed/);
+});
+
+test("late approved active poll cannot retain a Solana widget after silent Base switch", async () => {
+  const ui=createDom({surface:"swap",pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+  let tick,releaseStatus,closes=0,calls=0;
+  const scope=withRuntime({
+    Jupiter:{init(){},close(){closes++;}},
+    setInterval(fn,ms){assert.equal(ms,15000);tick=fn;return 78;},
+    clearInterval(id){assert.equal(id,78);}
+  });
+  const originalFetch=scope.fetch;
+  scope.fetch=(...args)=>{
+    calls++;
+    return calls===3 ? new Promise(resolve=>{releaseStatus=resolve;}) : originalFetch(...args);
+  };
+  initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  await ui.btn.click();
+  const pending=tick();
+  assert.equal(typeof releaseStatus,"function");
+  const getAttribute=ui.panel.getAttribute.bind(ui.panel);
+  ui.panel.getAttribute=key=>key==="data-climboria-managed-swap-network"?"base":getAttribute(key);
+  releaseStatus(await originalFetch("/swap-runtime-status.json",{cache:"no-store",redirect:"error"}));
+  await pending;
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(ui.btn.hidden,true);
+  assert.equal(closes,1);
+  assert.match(ui.status.textContent,/Selected token or trade direction changed/);
+});
+
+test("approved BFCache/focus return cannot resume old Solana wallet on silently selected Base tab", async () => {
+  const ui=createDom({surface:"swap",pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+  const listeners={};
+  let releaseStatus,requests=0,init=0,closes=0,resumes=0;
+  const scope=withRuntime({
+    Jupiter:{
+      init(){init++;},
+      close(){closes++;},
+      resume(){resumes++;}
+    },
+    addEventListener(name,fn){listeners[name]=fn;},
+    setInterval(){return 79;},
+    clearInterval(){}
+  });
+  const fetchOrig=scope.fetch;
+  scope.fetch=(...args)=>{
+    requests++;
+    return requests===3 ? new Promise(resolve=>{releaseStatus=resolve;}) : fetchOrig(...args);
+  };
+  initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  await ui.btn.click();
+  assert.equal(init,1);
+  const focusPending=listeners.focus();
+  assert.equal(ui.panel.hidden,true,"conceal vendor root before awaiting approval");
+  assert.equal(closes,1);
+  const attr=ui.panel.getAttribute.bind(ui.panel);
+  ui.panel.getAttribute=key=>key==="data-climboria-managed-swap-network"?"base":attr(key);
+  releaseStatus(await fetchOrig("/swap-runtime-status.json",{cache:"no-store",redirect:"error"}));
+  await focusPending;
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(ui.btn.hidden,true);
+  assert.equal(resumes,0,"approved response must not revive old Solana wallet on Base");
+  assert.ok(closes>=2);
+  assert.match(ui.status.textContent,/Selected token or trade direction changed/);
+});
+
 test("a throwing provider.close never defeats runtime revocation of the Climboria UI", async () => {
   const ui = createDom();
   let allowed = true;
