@@ -8,6 +8,7 @@ export async function installOfflineHeroAuthFixture(page) {
   route.fulfill({status:200,contentType:'application/javascript',
    body:`window.supabase={createClient:()=>({auth:{
      getUser:async()=>({data:{user:{id:'00000000-0000-4000-8000-000000000123',is_anonymous:false,app_metadata:{provider:'email'}}},error:null}),
+     getSession:async()=>({data:{session:null},error:null}),
      onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})
    }})};`
   })
