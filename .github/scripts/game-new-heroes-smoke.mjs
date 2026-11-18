@@ -3,6 +3,7 @@
 //   node .github/scripts/game-new-heroes-smoke.mjs
 // This intentionally FAILS when the actual binaries are absent.
 import { chromium } from 'playwright';
+import { installOfflineHeroAuthFixture } from './game-offline-hero-auth-fixture.mjs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
@@ -24,6 +25,7 @@ try{
    const context=await browser.newContext({viewport:{width:device.width,height:device.height},deviceScaleFactor:1,isMobile:device.isMobile,hasTouch:device.isMobile});
    try{
     const page=await context.newPage();
+    await installOfflineHeroAuthFixture(page);
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     if(device.isMobile){
@@ -44,6 +46,7 @@ try{
       });
     }
     await page.goto(base+'/game/index.html',{waitUntil:'domcontentloaded',timeout:60000});
+    await page.waitForFunction(()=>document.querySelector('#heroGateNotice')?.textContent?.includes('REGISTERED PLAYER'),undefined,{timeout:15000});
     await page.locator('#openHeroCreator').click();
     await page.locator('#heroModelSelect').selectOption(hero.name);
     try{
