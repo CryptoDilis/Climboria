@@ -274,8 +274,8 @@ test('live Game maps the touch return event to its existing authorized local Dig
   'Game must handle touch request with existing local Sanctuary teleport only');
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261118-teleport-resync-9/,
-  'production Game must request the fresh mobile room client');
+ assert.match(game,/client-presence\.js\?v=20261119-nearby-speech-10/,
+  'production Game must load fresh Nearby Chat and remote size renderer');
 });
 
 test('mobile blocked-room touch button emits only a real player Sanctuary return action',async()=>{
