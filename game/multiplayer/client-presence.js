@@ -203,10 +203,10 @@
    toggle.id='climboria-world-chat-toggle';toggle.textContent='HIDE CHAT';
    toggle.setAttribute('aria-label','Toggle World Chat');
    toggle.style.cssText='position:fixed;left:10px;z-index:1300;padding:8px 11px;border:1px solid #d8b46b;border-radius:9px;background:#101925f2;color:#ffe3a3;font:800 11px system-ui;cursor:pointer;touch-action:manipulation;'+
-    (mobile?'top:140px;':'bottom:18px;');
+    (mobile?'top:96px;':'bottom:18px;');
    panel.id='climboria-world-chat-panel';
    panel.style.cssText='position:fixed;left:10px;z-index:1300;width:min(270px,calc(100vw - 20px));max-height:39dvh;display:block;padding:8px;border:1px solid #d8b46b99;border-radius:10px;background:#070c14e9;color:#ffe3a3;font:600 11px system-ui;box-shadow:0 8px 20px #0009;touch-action:auto;'+
-    (mobile?'top:128px;width:min(236px,39vw);max-height:48dvh;':'bottom:54px;');
+    (mobile?'top:136px;width:min(236px,39vw);max-height:48dvh;':'bottom:54px;');
    count.style.cssText='font-weight:800;letter-spacing:.05em;margin-bottom:6px';
    log.style.cssText='height:76px;max-height:17dvh;overflow-y:auto;overscroll-behavior:contain;font:11px/1.4 system-ui';
    log.setAttribute('role','log');log.setAttribute('aria-live','polite');
