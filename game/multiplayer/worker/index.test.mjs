@@ -561,6 +561,23 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   room.lastChat.set(authenticatedA,Date.now()-3000);
   c1.dispatch('message',JSON.stringify({type:'world-chat',text:'  Mabuhay!  '}));
   assert.equal(c2.packets.at(-1).text,'Mabuhay!','trim and broadcast safe Unicode');
+  // Nearby chat uses the same authenticated sender and cooldown as World Chat.
+  room.lastChat.set(authenticatedA,Date.now()-3000);
+  c1.dispatch('message',JSON.stringify({type:'nearby-chat',text:'Nearby hello',
+   id:c2.packets[0].selfId,name:'Impersonator',chatSeq:21}));
+  assert.deepEqual(c2.packets.at(-1),{
+   type:'nearby-chat',id:authenticatedA,name:'Explorer A',
+   text:'Nearby hello',at:c2.packets.at(-1).at,chatSeq:21
+  },'server must stamp sender; close peer sees nearby chat');
+  assert.equal(c1.packets.at(-1).type,'nearby-chat','sender gets real echo');
+  // Server state fixture, not a client-authorized teleport/attack position.
+  room.room.members.get(c2.packets[0].selfId).position={x:90,y:9.55,z:-30};
+  const farCount=c2.packets.length;
+  room.lastChat.set(authenticatedA,Date.now()-3000);
+  c1.dispatch('message',JSON.stringify({type:'nearby-chat',text:'Close only',chatSeq:22}));
+  assert.equal(c1.packets.at(-1).type,'nearby-chat');
+  assert.equal(c2.packets.length,farCount,'out-of-range peer cannot receive nearby text');
+  room.room.members.get(c2.packets[0].selfId).position={x:0,y:9.55,z:-30};
   c1.dispatch('message',JSON.stringify({type:'punch',damage:999,targetId:'fake'}));
   assert.equal(c2.packets.at(-1).type,'player-punched');
   assert.equal(Object.hasOwn(c2.packets.at(-1),'damage'),false);
