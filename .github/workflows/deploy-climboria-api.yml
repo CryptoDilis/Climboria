@@ -39,6 +39,14 @@ jobs:
         working-directory: dex/swap-proxy
         run: node --test test/*.test.mjs
 
+      - name: Enforce exact-commit operator approval before source-ON Swap rollout
+        env:
+          # Set only AFTER reviewing the actual main merge SHA.
+          # Never use a boolean gate or a reusable approval from another commit.
+          CLIMBORIA_SWAP_RELEASE_APPROVED_SHA: ${{ vars.CLIMBORIA_SWAP_RELEASE_APPROVED_SHA }}
+        run: |
+          node .github/scripts/swap-release-sha-guard.mjs
+
       - name: Configure account-specific rate-limit namespace
         working-directory: dex/swap-proxy
         env:
