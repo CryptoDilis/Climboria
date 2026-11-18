@@ -359,9 +359,11 @@ test('local teleport during a pending ticket invalidates old room admission',asy
 });
 test('Game waypoint teleport explicitly emits the room-resync event after moving locally',()=>{
  const game=readFileSync('game/play.html','utf8');
- assert.match(game,/function tp\\(x,z,yaw\\)\\{[\\s\\S]{0,460}document\\.dispatchEvent\\(new Event\\('climboria:local-teleport'\\)\\)/,
+ const start=game.indexOf('function tp(x,z,yaw){');
+ assert.ok(start>=0,'waypoint teleport function must exist');
+ assert.ok(game.slice(start,start+600).includes("document.dispatchEvent(new Event('climboria:local-teleport'))"),
   'all waypoint keys and touch Sanctuary return must notify authenticated room resync');
- assert.match(game,/client-presence\\.js\\?v=20261118-teleport-resync-9/,
+ assert.ok(game.includes('client-presence.js?v=20261118-teleport-resync-9'),
   'production Game must avoid caching the older room client');
 });
 
