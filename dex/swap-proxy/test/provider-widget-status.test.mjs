@@ -80,7 +80,7 @@ test("independent Solana DEX provider status stays source-OFF despite Swap appro
     });
     assert.equal(result.status,200,target);
     assert.equal(result.headers.get("access-control-allow-origin"),origin);
-    assert.match(result.headers.get("cache-control"),/(?:^|,)\\s*no-store(?:,|$)/i);
+    assert.match(result.headers.get("cache-control"),/(?:^|,)\s*no-store(?:,|$)/i);
     assert.deepEqual(await result.json(),{enabled:false},target);
   }
   const swap = await request(url);
