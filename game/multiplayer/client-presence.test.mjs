@@ -10,7 +10,7 @@ const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x
 function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,configFailures=0,configGate=null,configBadSchema=false,refreshMode=null}={}){
  const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses],ticketPayloads:[...ticketPayloads],configFailures,configCalls:0};
  const authListeners=[];
- const clients=[],adds=[],moves=[],removes=[],punches=[],calls=[],timers=[],created=[];
+ const clients=[],adds=[],moves=[],removes=[],punches=[],speeches=[],calls=[],timers=[],created=[];
  const createElement=tag=>{
   const node={tag,style:{},children:[],textContent:'',id:'',listeners:new Map(),
    appendChild(child){this.children.push(child);return child},
@@ -39,7 +39,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
   __climboriaJarrellsPeak:{player:{x:0,y:9.55,z:-30,mode:'walk'}},
   __CLIMBORIA_GAME_PEERS:{
    add:x=>adds.push(x),move:(id,pos)=>moves.push({id,pos}),
-   remove:id=>removes.push(id),punch:id=>punches.push(id)
+   remove:id=>removes.push(id),punch:id=>punches.push(id),speak:(id,text)=>speeches.push({id,text})
   },
   __CLIMBORIA_GAME_SAVE_CLIENT:{auth:{
    getSession:async()=>{const snapshot=state.session;if(sessionGate)await sessionGate;return {data:{session:snapshot}}},
@@ -97,7 +97,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
   setTimeout:(fn,delay)=>{timers.push({fn,delay,cancelled:false});return timers.length},
   setInterval:()=>1,clearInterval(){},clearTimeout:id=>{if(timers[id-1])timers[id-1].cancelled=true},console};
  vm.runInNewContext(source,context,{filename:'client-presence.js'});
- return {window,document,clients,adds,moves,removes,punches,calls,timers,created,refreshCounts,events,
+ return {window,document,clients,adds,moves,removes,punches,speeches,calls,timers,created,refreshCounts,events,
   releaseGameClients:()=>{
    window.__CLIMBORIA_GAME_SAVE_CLIENT=lateAuth;
    window.__CLIMBORIA_GAME_PEERS=latePeers;
@@ -367,7 +367,7 @@ test('Game waypoint teleport explicitly emits the room-resync event after moving
  assert.ok(start>=0,'waypoint teleport function must exist');
  assert.ok(game.slice(start,start+600).includes("document.dispatchEvent(new Event('climboria:local-teleport'))"),
   'all waypoint keys and touch Sanctuary return must notify authenticated room resync');
- assert.ok(game.includes('client-presence.js?v=20261118-teleport-resync-9'),
+ assert.ok(game.includes('client-presence.js?v=20261119-nearby-speech-10'),
   'production Game must avoid caching the older room client');
 });
 
@@ -1161,4 +1161,51 @@ test('spawn-accepted roster corrects missed join/leave and avoids duplicate 3D p
  assert.equal(h.adds.length,initialAdds,'repeat roster never duplicates remote GLB');
  assert.ok(h.moves.some(m=>m.id===peer.id),'existing verified model may update position');
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+});
+
+test('Nearby Chat sends real authenticated channel packets and renders only verified remote speech',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];ws.onopen();
+ const me='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:me,peers:[peer]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:me,position:{x:0,y:9.55,z:-30},peers:[peer]})});
+ const panel=h.created.find(n=>n.id==='climboria-world-chat-panel');
+ assert.ok(panel,'confirmed Game join is necessary');
+ const controls=panel.children[2],input=controls.children[0],send=controls.children[1],channel=controls.children[2];
+ assert.equal(channel.textContent,'NEARBY','World Chat remains default to preserve existing UI');
+ ws.onmessage({data:JSON.stringify({
+  type:'world-chat',id:peer.id,name:peer.name,text:'World broadcasts do not become overhead speech',at:1730000000000
+ })});
+ assert.equal(h.speeches.length,0,'global World Chat does not spam nearby speech bubbles');
+ channel.click();
+ assert.equal(channel.textContent,'WORLD','player may switch back to global World Chat');
+ assert.ok(panel.children[0].textContent.includes('NEARBY CHAT'));
+ input.value='Hi friends';send.click();
+ assert.equal(ws.sent.at(-1).type,'nearby-chat');
+ assert.equal(ws.sent.at(-1).text,'Hi friends');
+ assert.equal(input.value,'Hi friends','client keeps draft before server echo');
+ channel.click();
+ assert.ok(panel.children[3].textContent.includes('Wait'),'pending message locks channel');
+ ws.onmessage({data:JSON.stringify({
+  type:'nearby-chat',id:peer.id,name:peer.name,text:'Close enough!',at:1730000000001
+ })});
+ assert.deepEqual(h.speeches,[{id:peer.id,text:'Close enough!'}],
+  'only authenticated known remote peer chat generates a bubble');
+ ws.onmessage({data:JSON.stringify({
+  type:'nearby-chat',id:'s_'+'d'.repeat(32),name:'Unknown',text:'forged',at:1730000000002
+ })});
+ assert.equal(h.speeches.length,1,'unknown/forged room peer cannot render speech');
+ ws.onmessage({data:JSON.stringify({
+  type:'nearby-chat',id:me,name:'Explorer A',text:'Hi friends',
+  chatSeq:ws.sent.at(-1).chatSeq,at:1730000000003
+ })});
+ assert.equal(input.value,'','nearby self echo confirms same channel and same send sequence');
+ assert.equal(h.speeches.length,1,'local sender is not an invented remote hero');
+ channel.click();
+ assert.ok(panel.children[0].textContent.includes('WORLD CHAT'),'switch back works after echo');
+ ws.onmessage({data:JSON.stringify({type:'player-left',id:peer.id})});
+ ws.onmessage({data:JSON.stringify({
+  type:'nearby-chat',id:peer.id,name:peer.name,text:'ghost speech',at:1730000000004
+ })});
+ assert.equal(h.speeches.length,1,'departed players cannot create fake bubbles');
 });
