@@ -34,7 +34,27 @@ const page = await context.newPage();
 const providerAssetRequests = [];
 const blockedWrites = [];
 const pageErrors = [];
+const liveStatusResponses = [];
+const failedStatusRequests = [];
+const providerResponses = [];
+const failedProviderRequests = [];
 page.on("pageerror", error => pageErrors.push(String(error?.message || error).slice(0, 200)));
+page.on("response", response => {
+  if (response.url() === STATUS) liveStatusResponses.push(response.status());
+  const url = new URL(response.url());
+  if (url.hostname === "jup.ag" || url.hostname.endsWith(".jup.ag")) {
+    providerResponses.push({ host: url.hostname, path: url.pathname.slice(0, 100), http: response.status() });
+  }
+});
+page.on("requestfailed", request => {
+  if (request.url() === STATUS) failedStatusRequests.push(
+    String(request.failure()?.errorText || "unknown").slice(0, 100));
+  const url = new URL(request.url());
+  if (url.hostname === "jup.ag" || url.hostname.endsWith(".jup.ag")) {
+    failedProviderRequests.push({ host: url.hostname, path: url.pathname.slice(0, 100),
+      failure: String(request.failure()?.errorText || "unknown").slice(0, 100) });
+  }
+});
 page.on("popup", popup => { void popup.close(); });
 
 // A production canary has no customer wallet or authority to submit writes.
@@ -93,6 +113,92 @@ try {
       null, { timeout: 15000 }).catch(() => {});
       targetNodes = await page.locator("#climboriaSwapProviderTarget > *").count();
     }
+    // The vendor could technically mount an empty app shell without a usable
+    // wallet/swap screen. Require at least one VISIBLE interactive affordance
+    // within the provider-owned target, not just a first-party "loaded" label.
+    // This still is not evidence of wallet consent, quote, or finality.
+    // Jupiter.init() may resolve before remote app hydration. Wait a bounded
+    // 25 seconds for real visible controls, rather than treating early React
+    // container insertion as a working wallet UI.
+    const interactiveSelector =
+      'button,input,select,[role="button"],[role="combobox"],[role="textbox"],iframe';
+    await page.waitForFunction(selector => {
+      const root = document.getElementById("climboriaSwapProviderTarget");
+      if (!root) return false;
+      // Vendor controls may live in an OPEN Shadow DOM. Native
+      // querySelectorAll() never pierces shadow roots, so a widget can be
+      // fully usable while an ordinary light-DOM scan sees only a container.
+      const nodes = [root];
+      for (let i = 0; i < nodes.length && i < 6000; i++) {
+        const element = nodes[i];
+        if (element.matches?.(selector)) {
+          const rect = element.getBoundingClientRect();
+          const style = getComputedStyle(element);
+          if (rect.width > 0 && rect.height > 0 &&
+              style.visibility !== "hidden" && style.display !== "none") return true;
+        }
+        nodes.push(...element.children);
+        if (element.shadowRoot) nodes.push(...element.shadowRoot.children);
+      }
+      return false;
+    }, interactiveSelector, { polling: 500, timeout: 25000 }).catch(() => {});
+
+    const widgetUi = await page.evaluate(selector => {
+      const root = document.getElementById("climboriaSwapProviderTarget");
+      const isVisible = element => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return rect.width > 0 && rect.height > 0 &&
+          style.visibility !== "hidden" && style.display !== "none";
+      };
+      const nodes = root ? [root] : [];
+      let openShadowHosts = 0;
+      for (let i = 0; i < nodes.length && i < 6000; i++) {
+        const element = nodes[i];
+        nodes.push(...element.children);
+        if (element.shadowRoot) {
+          openShadowHosts++;
+          nodes.push(...element.shadowRoot.children);
+        }
+      }
+      const controls = nodes.filter(el => el.matches?.(selector) && isVisible(el));
+      return {
+        visibleControls: controls.length,
+        visibleFrames: controls.filter(el => el.tagName === "IFRAME").length,
+        visibleInputs: controls.filter(el => ["INPUT", "SELECT"].includes(el.tagName)).length,
+        visibleButtons: controls.filter(el =>
+          el.tagName === "BUTTON" || el.getAttribute("role") === "button").length,
+        rootChildCount: root?.children.length || 0,
+        rootDescendants: root?.querySelectorAll("*").length || 0,
+        rootDeepDescendants: Math.max(0, nodes.length - 1),
+        openShadowHosts,
+        rootTextLength: (root?.innerText || "").length,
+        rootChildTags: [...(root?.children || [])].slice(0, 4).map(el => el.tagName),
+        rootChildSummaries: [...(root?.children || [])].slice(0, 4).map(el => ({
+          tag: el.tagName,
+          id: el.id.slice(0, 80),
+          className: typeof el.className === "string" ? el.className.slice(0, 100) : "",
+          openShadowRoot: !!el.shadowRoot,
+          width: Math.round(el.getBoundingClientRect().width),
+          height: Math.round(el.getBoundingClientRect().height)
+        })),
+        vendorTaggedNodes: [...document.querySelectorAll(
+          '[id*="jupiter" i],[class*="jupiter" i],[id*="jup-" i],[class*="jup-" i]'
+        )].slice(0, 10).map(el => ({ tag: el.tagName, id: el.id.slice(0, 65),
+          className: typeof el.className === "string" ? el.className.slice(0, 65) : "" })),
+        hasJupiterInit: typeof window.Jupiter?.init === "function",
+        hasJupiterClose: typeof window.Jupiter?.close === "function"
+      };
+    }, interactiveSelector);
+    console.log("DIAGNOSTIC real Jupiter UI after bounded hydration (no wallet): " +
+      JSON.stringify(widgetUi));
+    console.log("DIAGNOSTIC blocked vendor write endpoints (paths only, no payloads): " +
+      JSON.stringify([...new Set(blockedWrites.map(w =>
+        w.method + " " + w.origin + w.path))].slice(0, 12)));
+    console.log("DIAGNOSTIC public status checks from page: " +
+      JSON.stringify({http:liveStatusResponses.slice(0, 12),failures:failedStatusRequests.slice(0, 5)}));
+    console.log("DIAGNOSTIC Jupiter CDN/host responses (paths only, no keys): " +
+      JSON.stringify({ responses: providerResponses.slice(0, 30), failures: failedProviderRequests.slice(0, 12) }));
     const nativeWrites = blockedWrites.filter(w =>
       w.origin === SITE || w.origin === "https://api.climboria.fun");
     assert.equal(nativeWrites.length, 0,
@@ -103,6 +209,8 @@ try {
       "Real Jupiter widget did not finish initializing: " + outcome + " | " + statusText);
     assert.ok(targetNodes > 0,
       "Jupiter reported loaded but rendered no nodes in Climboria's actual integrated target");
+    assert.ok(widgetUi.visibleControls > 0,
+      "Jupiter mounted only an empty/inert shell: no visible interactive controls in its actual target");
     assert.equal(await page.locator("#climboriaSwapProviderPanel").isVisible(), true);
     assert.equal(context.pages().length, 1, "Provider must not navigate to a separate trading tab");
     console.log("PASS production Solana Jupiter provider loaded into the visible Climboria Swap target. " +
