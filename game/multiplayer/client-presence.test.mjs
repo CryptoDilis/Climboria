@@ -84,7 +84,8 @@ async function waitFor(check, ms=600){
   while(!check()&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,10));
 }
 test('disabled multiplayer never creates fake socket or player',async()=>{
- assert.equal(config.enabled,false);
+ assert.equal(config.enabled,true);
+ assert.equal(config.endpoint,'https://rooms.climboria.fun/');
  const h=harness(false);await flush();
  assert.equal(h.clients.length,0);assert.equal(h.adds.length,0);
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'disabled');
