@@ -1,0 +1,83 @@
+name: Game Private Two-Player QA Kit (No Secrets)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/game-two-player-qa-kit.yml"
+      - "game/multiplayer/worker/qa-mixed-login.mjs"
+      - "game/multiplayer/worker/qa-stage-report.mjs"
+      - "game/multiplayer/worker/qa-stage-report.test.mjs"
+      - "game/multiplayer/worker/staging-preflight.mjs"
+      - "game/multiplayer/worker/staging-preflight.test.mjs"
+      - "game/multiplayer/worker/START_GAME_QA_WINDOWS.cmd"
+      - "game/multiplayer/worker/QA_KIT_README.txt"
+      - "game/multiplayer/worker/package.json"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/game-two-player-qa-kit.yml"
+      - "game/multiplayer/worker/qa-mixed-login.mjs"
+      - "game/multiplayer/worker/qa-stage-report.mjs"
+      - "game/multiplayer/worker/qa-stage-report.test.mjs"
+      - "game/multiplayer/worker/staging-preflight.mjs"
+      - "game/multiplayer/worker/staging-preflight.test.mjs"
+      - "game/multiplayer/worker/START_GAME_QA_WINDOWS.cmd"
+      - "game/multiplayer/worker/QA_KIT_README.txt"
+      - "game/multiplayer/worker/package.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-owner-qa-kit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Checkout reviewed Game-only source
+        uses: actions/checkout@v4
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check Game QA syntax and offline redaction/preflight tests
+        run: |
+          node --check game/multiplayer/worker/qa-mixed-login.mjs
+          node --check game/multiplayer/worker/qa-stage-report.mjs
+          node --check game/multiplayer/worker/staging-preflight.mjs
+          node --test game/multiplayer/worker/qa-stage-report.test.mjs game/multiplayer/worker/staging-preflight.test.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          cfg=json.loads(Path('game/multiplayer/client-config.json').read_text())
+          assert cfg['schema']==1 and cfg['enabled'] is False and cfg['endpoint'] is None, 'Game public multiplayer must remain OFF'
+          pkg=json.loads(Path('game/multiplayer/worker/package.json').read_text())
+          assert pkg['private'] is True and pkg['dependencies']['playwright']=='1.56.1', 'QA browser must be pinned'
+          print('PASS: source Game config OFF, pinned local-only Playwright')
+          PY
+      - name: Assemble standalone private Windows QA folder
+        run: |
+          set -eu
+          kit="Climboria_Game_QA_Kit"
+          mkdir -p "$kit"
+          cp game/multiplayer/worker/START_GAME_QA_WINDOWS.cmd "$kit/"
+          cp game/multiplayer/worker/qa-mixed-login.mjs "$kit/"
+          cp game/multiplayer/worker/qa-stage-report.mjs "$kit/"
+          cp game/multiplayer/worker/staging-preflight.mjs "$kit/"
+          cp game/multiplayer/worker/package.json "$kit/"
+          cp game/multiplayer/worker/QA_KIT_README.txt "$kit/README_FIRST.txt"
+          test "$(find "$kit" -maxdepth 1 -type f | wc -l)" -eq 6
+          ! find "$kit" -type f -name '*.env*' | grep -q .
+          test ! -e "$kit/node_modules"
+          echo "PASS: six code/docs files, no accounts, sessions, site binaries or secrets."
+      - name: Publish downloadable QA kit
+        uses: actions/upload-artifact@v4
+        with:
+          name: Climboria_Game_QA_Kit
+          path: Climboria_Game_QA_Kit/
+          if-no-files-found: error
+          retention-days: 14
+
+# No credentials, test accounts, staging ticket issuance, Cloudflare deployment,
+# public multiplayer enablement, DEX, Swap, Launchpad or ClimbX operations.
