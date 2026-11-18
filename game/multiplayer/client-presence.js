@@ -322,7 +322,7 @@
  function showStatus(value,message){
   doc.dataset.climboriaMultiplayer=value;
   if(!badge){badge=document.createElement('div');badge.id='climboria-room-status';badge.style.cssText=
-   'position:fixed;right:8px;bottom:8px;z-index:1100;color:#ffe3a3;background:#070c14df;border:1px solid #d8b46b88;padding:6px 10px;border-radius:8px;font:700 10px system-ui;pointer-events:none';document.body.appendChild(badge)}
+   'position:fixed;right:8px;bottom:8px;z-index:1600;max-width:min(280px,80vw);color:#ffe3a3;background:#070c14f2;border:1px solid #d8b46bcc;padding:9px 12px;border-radius:9px;box-shadow:0 4px 16px #000a;font:700 12px/1.45 system-ui;pointer-events:none';document.body.appendChild(badge)}
   badge.textContent=message;
  }
  function clearPeers(){
