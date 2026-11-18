@@ -32,6 +32,7 @@
    config=await Promise.race([work,deadline]);
    break;
   }catch{
+   clearTimeout(deadlineTimer);
    showStatus('config-unavailable','MULTIPLAYER · ROOM SETTINGS UNAVAILABLE · RETRYING');
    await new Promise(resolve=>setTimeout(resolve,attempt<2?600:3000));
   }finally{clearTimeout(deadlineTimer)}
