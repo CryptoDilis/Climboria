@@ -1,0 +1,45 @@
+name: Jupiter Plugin Audited Asset Snapshot
+
+on:
+  # PRs verify only offline allowlist/hash logic. No external CDN requests
+  # are triggered from unreviewed pull-request code.
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/jupiter-plugin-asset-drift.mjs"
+      - ".github/workflows/jupiter-plugin-asset-drift.yml"
+  # An operator can separately request a bounded, READ-ONLY comparison of
+  # official CDN bytes after reviewing the pinned Nov 15 baseline.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-schema:
+    name: Verify fixed official asset manifest offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate immutable paths, digest schema and offline self-test
+        run: |
+          node --check .github/scripts/jupiter-plugin-asset-drift.mjs
+          node .github/scripts/jupiter-plugin-asset-drift.mjs --self-test
+
+  manual-live-snapshot:
+    name: Compare exact live vendor bytes to Nov 15 audit (manual only)
+    needs: offline-schema
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Read-only SHA384 for five official Jupiter Plugin artifacts
+        run: node .github/scripts/jupiter-plugin-asset-drift.mjs --check-live
