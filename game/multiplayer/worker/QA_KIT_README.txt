@@ -38,6 +38,7 @@ The runner checks:
 - Real accepted room join and reciprocal remote 3D GLB/map peers;
 - Keyboard-controlled movement replication;
 - Two-way server-echoed World Chat and preservation of unsent drafts;
+- Nearby Chat delivered within 20m with short overhead speech on the remote hero;
 - Chrome render frames and disconnect/rejoin without a ghost.
 
 It DOES NOT test physical Android device GPU/FPS, and does not authorize

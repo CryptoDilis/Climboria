@@ -142,3 +142,22 @@ test('deferred Game Worker peers stay invisible until server validates spawn',()
  assert.equal(room.disconnect(b),true);
  assert.equal(sentA.at(-1).type,'player-left','validated peer leave is visible');
 });
+
+test('nearby room chat reaches only visible, in-range members including sender',()=>{
+ const room=fresh(),one=connect(room,a,'Jarrell'),two=connect(room,b,'Lheiz'),three=connect(room,c,'Explorer');
+ // In-memory server-position fixture: never a combat-authority claim.
+ room.members.get(a).position={x:0,y:2,z:-30};
+ room.members.get(b).position={x:12,y:2,z:-30};
+ room.members.get(c).position={x:40,y:2,z:-30};
+ const packet={type:'nearby-chat',id:a,name:'Jarrell',text:'Hello close by',at:1000};
+ assert.equal(room.broadcastNearby(packet,a,20),2);
+ assert.equal(one.packets.at(-1),packet,'sender receives real room echo');
+ assert.equal(two.packets.at(-1),packet,'nearby peer receives chat');
+ assert.equal(three.packets.some(x=>x.type==='nearby-chat'),false,'distant peer has no local chat');
+ room.members.get(b).visible=false;
+ assert.equal(room.broadcastNearby({...packet,text:'only me'},a,20),1,
+  'unspawned/non-visible peer gets no nearby text');
+ assert.equal(two.packets.filter(x=>x.type==='nearby-chat').length,1);
+ assert.equal(room.broadcastNearby(packet,'unknown-session',20),0);
+ assert.equal(room.broadcastNearby(packet,a,300),0,'unbounded range is denied');
+});

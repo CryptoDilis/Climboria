@@ -3324,6 +3324,7 @@ window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,chestVisualAudit,cav
 // has a lightweight recognizable 3D body while its optional GLB loads;
 // preserve name/map markers and at most 2 mobile / 3 desktop heavy GLBs.
 const MAX_REMOTE_GLB=MOB?2:3;
+const REMOTE_HERO_HEIGHT=1.9,NEARBY_CHAT_METERS=20,NEARBY_BUBBLE_MS=5000;
 let remoteGLBLoading=0,remoteGLBResidents=0,remoteModelClock=0;
 // Shared geometry/materials remain owned by the Game scene for its lifetime:
 // 32 peers reuse these few GPU buffers instead of allocating 32 skeletons or
@@ -3338,7 +3339,7 @@ const remoteFallbackArmor=new T3.MeshLambertMaterial({color:0x354558});
 const remoteFallbackTrim=new T3.MeshLambertMaterial({color:0xb59858});
 const remoteFallbackCloth=new T3.MeshLambertMaterial({color:0x1c293a});
 function remoteExplorerSilhouette(){
- const body=new T3.Group();body.name='VerifiedRemoteHeroBody';
+ const body=new T3.Group();body.name='VerifiedRemoteHeroBody';body.scale.setScalar(.73);
  const part=(geometry,material,x,y,z=0,rotation=0)=>{
   const mesh=new T3.Mesh(geometry,material);
   mesh.position.set(x,y,z);mesh.rotation.z=rotation;
@@ -3356,13 +3357,38 @@ function remoteExplorerSilhouette(){
 function peerMarker(name){
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=64;
  const ctx=canvas.getContext('2d');
- ctx.fillStyle='rgba(6,11,20,.88)';ctx.fillRect(0,0,256,64);
- ctx.strokeStyle='#d8b46b';ctx.lineWidth=3;ctx.strokeRect(2,2,252,60);
- ctx.font='700 22px sans-serif';ctx.textAlign='center';ctx.fillStyle='#ffe3a3';
- ctx.fillText(String(name).slice(0,24),128,40,245);
+ ctx.fillStyle='rgba(6,11,20,.86)';ctx.fillRect(0,0,256,64);
+ ctx.strokeStyle='#d8b46b';ctx.lineWidth=2;ctx.strokeRect(2,2,252,60);
+ ctx.font='700 24px sans-serif';ctx.textAlign='center';ctx.fillStyle='#ffe3a3';
+ ctx.fillText(String(name).slice(0,24),128,42,235);
  const tex=new T3.CanvasTexture(canvas),material=new T3.SpriteMaterial({map:tex,transparent:true,depthWrite:false});
- const sprite=new T3.Sprite(material);sprite.position.y=3.35;sprite.scale.set(3.65,.92,1);
+ const sprite=new T3.Sprite(material);sprite.name='RemoteCompactNameplate';
+ sprite.position.y=2.28;sprite.scale.set(1.72,.43,1);
  return sprite;
+}
+function peerSpeechBubble(text){
+ // Server-echoed text only; two-line non-HTML preview avoids blocking play.
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=144;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='rgba(7,15,27,.92)';ctx.fillRect(5,5,502,134);
+ ctx.strokeStyle='#dfc38a';ctx.lineWidth=3;ctx.strokeRect(7,7,498,130);
+ const glyphs=[...String(text)],preview=glyphs.slice(0,76);
+ const first=preview.slice(0,38).join('');
+ const second=preview.slice(38).join('')+(glyphs.length>76?'…':'');
+ ctx.font='700 28px sans-serif';ctx.textAlign='center';ctx.fillStyle='#fff';
+ if(second){ctx.fillText(first,256,58,462);ctx.fillText(second,256,105,462);}
+ else ctx.fillText(first,256,86,462);
+ const map=new T3.CanvasTexture(canvas);
+ const sprite=new T3.Sprite(new T3.SpriteMaterial({map,transparent:true,depthWrite:false}));
+ sprite.name='RemoteNearbySpeech';sprite.position.y=3.12;
+ sprite.scale.set(2.75,.76,1);
+ return sprite;
+}
+function clearPeerSpeech(peer){
+ if(!peer?.bubble)return;
+ peer.group.remove(peer.bubble);
+ peer.bubble.material.map?.dispose();peer.bubble.material.dispose();
+ peer.bubble=null;peer.bubbleUntil=0;
 }
 function remoteRootAt(x,z,y){
  const height=groundAt(x,z),gy=Number.isFinite(height)?height:Math.max(0,Number(y)-1.75);
@@ -3404,7 +3430,7 @@ function loadPeerHero(peer){
   if(!Number.isFinite(size.y)||size.y<.01||size.y>20000){
    disposeRemoteHero(root);peer.retryAt=Date.now()+60000;return;
   }
-  const factor=Math.min(100,2.9/size.y);
+  const factor=Math.min(100,REMOTE_HERO_HEIGHT/size.y);
   root.scale.setScalar(factor);root.position.y=-box.min.y*factor;
   root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false}});
   peer.group.add(root);peer.root=root;
@@ -3442,9 +3468,9 @@ window.__CLIMBORIA_GAME_PEERS={
   const group=new T3.Group();group.name='RealRemoteExplorer:'+data.id;
   const ring=new T3.Mesh(new T3.TorusGeometry(.55,.045,6,22),new T3.MeshBasicMaterial({color:0xd8b46b,transparent:true,opacity:.72,depthWrite:false}));
   ring.name='RemoteMarkerRing';ring.rotation.x=-Math.PI/2;ring.position.y=.08;
-  const fallback=remoteExplorerSilhouette();
-  group.add(ring,peerMarker(data.name),fallback);
-  const p={id:data.id,group,fallback,model:data.model,position:{...position},target:null,root:null,mixer:null,clips:null,action:null,actionName:'',loading:false,retryAt:0,punchUntil:0,walkUntil:0};
+  const fallback=remoteExplorerSilhouette(),nameplate=peerMarker(data.name);
+  group.add(ring,nameplate,fallback);
+  const p={id:data.id,group,fallback,nameplate,bubble:null,bubbleUntil:0,model:data.model,position:{...position},target:null,root:null,mixer:null,clips:null,action:null,actionName:'',loading:false,retryAt:0,punchUntil:0,walkUntil:0};
   const spot=remoteRootAt(position.x,position.z,position.y);p.target=spot;group.position.set(spot.x,spot.y,spot.z);
   scene.add(group);livePeers.set(data.id,p);
   // Reflect a verified join instantly; sparse WebGL frames must not hide
@@ -3458,8 +3484,18 @@ window.__CLIMBORIA_GAME_PEERS={
   p.position={x:position.x,y:position.y,z:position.z};p.target=remoteRootAt(position.x,position.z,position.y);
  },
  punch(id){const p=livePeers.get(id);if(!p)return;p.punchUntil=performance.now()+680;p.actionName='';setPeerAnimation(p,'punch');},
+ speak(id,text){
+  const p=livePeers.get(id);
+  if(!p||typeof text!=='string'||!text||[...text].length>160||
+     Math.hypot(p.position.x-P.x,p.position.y-P.y,p.position.z-P.z)>NEARBY_CHAT_METERS)return false;
+  clearPeerSpeech(p);
+  p.bubble=peerSpeechBubble(text);p.group.add(p.bubble);
+  p.bubbleUntil=performance.now()+NEARBY_BUBBLE_MS;
+  return true;
+ },
  remove(id){
   const p=livePeers.get(id);if(!p)return;
+  clearPeerSpeech(p);
   scene.remove(p.group);
   p.group.traverse(n=>{if(n.isSprite){n.material?.map?.dispose();n.material?.dispose()}else if(n.name==='RemoteMarkerRing'){n.geometry?.dispose();n.material?.dispose()}});
   unloadPeerHero(p);
@@ -3476,6 +3512,12 @@ window.__CLIMBORIA_GAME_PEERS={
    p.group.position.z+=(at.z-p.group.position.z)*t;
    const dist=Math.hypot(p.group.position.x-cam.position.x,p.group.position.z-cam.position.z);
    p.group.visible=dist<350;
+   p.nameplate.visible=dist<65;
+   if(p.bubble){
+    const near=Math.hypot(p.position.x-P.x,p.position.y-P.y,p.position.z-P.z)<=NEARBY_CHAT_METERS;
+    if(now>=p.bubbleUntil)clearPeerSpeech(p);
+    else p.bubble.visible=near;
+   }
    // Full 3D silhouettes are only needed near the camera; distant peers
    // retain the cheap authenticated map/name markers for low-end devices.
    if(p.fallback)p.fallback.visible=!p.root&&dist<120;
@@ -3506,7 +3548,9 @@ window.__CLIMBORIA_GAME_PEERS={
   sceneVisibleResidents:[...livePeers.values()].filter(p=>
     !!p.root&&p.root.parent===p.group&&p.root.visible===true&&
     p.group.parent===scene&&p.group.visible===true).length,
-  budget:MAX_REMOTE_GLB,desktop:!MOB,
+  budget:MAX_REMOTE_GLB,desktop:!MOB,remoteHeroHeight:REMOTE_HERO_HEIGHT,
+  nameplateWidth:1.72,nearbyRangeMeters:NEARBY_CHAT_METERS,
+  nearbyBubbles:[...livePeers.values()].filter(p=>!!p.bubble&&p.bubble.parent===p.group).length,
   fallbackPeers:[...livePeers.values()].filter(p=>!!p.fallback&&p.fallback.parent===p.group).length,
   visibleFallbacks:[...livePeers.values()].filter(p=>!p.root&&!!p.fallback&&p.fallback.visible&&p.group.visible&&p.group.parent===scene).length,
   // Read-only transport acceptance diagnostics. These are positions already
@@ -3679,6 +3723,6 @@ initChunks();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
 <script src="/game-save.js"></script>
-<script src="./multiplayer/client-presence.js?v=20261118-teleport-resync-9"></script>
+<script src="./multiplayer/client-presence.js?v=20261119-nearby-speech-10"></script>
 </body>
 </html>

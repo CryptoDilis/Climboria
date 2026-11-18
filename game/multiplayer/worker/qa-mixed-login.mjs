@@ -128,13 +128,19 @@ async function openChat(page){
 async function sendChat(page,message){
  const panel=await openChat(page);
  await panel.locator('input').fill(message);
- await panel.locator('button').click();
+ await panel.locator('button').first().click();
 }
-async function expectChat(page,name,message){
- await page.waitForFunction(({name,message})=>
+async function sendNearby(page,message){
+ const panel=await openChat(page);
+ await panel.locator('button[aria-label="Switch between World Chat and Nearby Chat"]').click();
+ await panel.locator('input').fill(message);
+ await panel.locator('button').first().click();
+}
+async function expectChat(page,name,message,nearby=false){
+ await page.waitForFunction(({name,message,nearby})=>
   [...document.querySelectorAll('#climboria-world-chat-panel [role="log"] > div')]
-   .some(e=>e.textContent===name+': '+message),
-  {name,message},{timeout:30000});
+   .some(e=>e.textContent===name+(nearby?' [nearby]':'')+': '+message),
+  {name,message,nearby},{timeout:30000});
 }
 async function fps(page){
  const before=await page.evaluate(()=>window.__climboriaRenderState?.frames||0);
@@ -148,6 +154,25 @@ async function testTwoPlayers(a,b,originalBId){
  await Promise.all([assertPeer(a,1),assertPeer(b,1)]);
  await Promise.all([assertRealAvatar(a),assertRealAvatar(b)]);
  qaProgress.pass();
+
+ qaProgress.start('nearby-chat');
+ // Both owners just received the same verified Sanctuary spawn. Check local
+ // communication BEFORE the sprint test moves Player A beyond 20 meters.
+ await sendNearby(a,'QA actual nearby A');
+ await Promise.all([
+  expectChat(a,'QA Explorer A','QA actual nearby A',true),
+  expectChat(b,'QA Explorer A','QA actual nearby A',true)
+ ]);
+ await b.waitForFunction(()=>
+  window.__CLIMBORIA_GAME_PEERS?.audit?.().nearbyBubbles===1,
+  undefined,{timeout:8000});
+ // Restore the global channel before the following bidirectional World QA.
+ await a.locator('#climboria-world-chat-panel button[aria-label="Switch between World Chat and Nearby Chat"]').click();
+ await a.waitForFunction(()=>
+  document.querySelector('#climboria-world-chat-panel')?.firstChild?.textContent?.includes('WORLD CHAT'),
+  undefined,{timeout:5000});
+ qaProgress.pass();
+ await a.waitForTimeout(2600); // Shared room chat cooldown before World Chat.
 
  qaProgress.start('movement-sync');
  const local=await a.evaluate(()=>{
@@ -200,7 +225,6 @@ async function testTwoPlayers(a,b,originalBId){
   ()=>document.querySelector('#climboria-world-chat-panel input')?.value==='',
   undefined,{timeout:15000});
  qaProgress.pass();
-
  qaProgress.start('desktop-render');
  const rates=await Promise.all([fps(a),fps(b)]);
  requireCondition(rates.every(x=>x>0),'Real Game rendered frames required');

@@ -92,16 +92,26 @@
   &&['Adventurer','Jarrell','Lheiz'].includes(p.model)&&validPosition(p.position);
  // World Chat never appears without a verified room welcome. Messages are
  // plain text, room-scoped, short-lived in the DOM and never stored locally.
- let chatUi=null,chatExpanded=false,pendingWorldChat=null,worldChatSequence=0;
+ let chatUi=null,chatExpanded=false,pendingWorldChat=null,worldChatSequence=0,chatMode='world-chat',nearbyChatReady=false;
  function clearPendingWorldChat(){
   if(pendingWorldChat?.timeout)clearTimeout(pendingWorldChat.timeout);
   pendingWorldChat=null;
  }
  function renderChatCount(){
-  if(chatUi)chatUi.count.textContent='WORLD CHAT · '+(known.size+(selfId?1:0))+' ONLINE';
+  if(chatUi){
+   chatUi.count.textContent=chatMode==='nearby-chat'?'NEARBY CHAT · 20m RANGE':
+    'WORLD CHAT · '+(known.size+(selfId?1:0))+' ONLINE';
+   if(chatUi.channel){
+    chatUi.channel.disabled=!nearbyChatReady;
+    chatUi.channel.textContent=nearbyChatReady?(chatMode==='nearby-chat'?'WORLD':'NEARBY'):'NEARBY · UPDATING';
+    chatUi.channel.title=nearbyChatReady?'Switch between World Chat and Nearby Chat':
+     'Nearby Chat requires the updated Game room server; World Chat still works';
+    chatUi.channel.style.opacity=nearbyChatReady?'1':'.55';
+   }
+  }
  }
  function clearWorldChatUi(){
-  chatExpanded=false;
+  chatExpanded=false;chatMode='world-chat';nearbyChatReady=false;
   // Clear drafts on sign-out/disconnect to avoid leaking text between
   // authenticated accounts or reviving messages after room reconnection.
   clearPendingWorldChat();
@@ -119,7 +129,8 @@
      typeof msg.at!=='number'||!Number.isFinite(msg.at))return;
   const line=document.createElement('div');
   line.style.cssText='padding:5px 0;border-bottom:1px solid #d8b46b25;white-space:pre-wrap;overflow-wrap:anywhere';
-  line.textContent=msg.name+': '+msg.text;
+  line.textContent=msg.name+(msg.type==='nearby-chat'?' [nearby]':'')+': '+msg.text;
+  if(msg.type==='nearby-chat'&&msg.id!==selfId)renderer.speak?.(msg.id,msg.text);
   const entries=Array.from(chatUi.log.children);
   if(entries.length>=40)chatUi.log.replaceChildren(...entries.slice(-39));
   chatUi.log.appendChild(line);
@@ -128,7 +139,8 @@
   // delivery. Never erase a draft merely because WebSocket.send succeeded,
   // or because another explorer spoke while our message is pending.
   if(pendingWorldChat && msg.id===selfId &&
-     msg.chatSeq===pendingWorldChat.chatSeq && msg.text===pendingWorldChat.text){
+     msg.chatSeq===pendingWorldChat.chatSeq && msg.text===pendingWorldChat.text&&
+     msg.type===pendingWorldChat.mode){
    const confirmed=pendingWorldChat;
    clearPendingWorldChat();
    if(String(chatUi.input.value||'').trim().normalize('NFC')===confirmed.text)
@@ -139,7 +151,7 @@
   }
  }
  function sendWorldChat(){
-  if(!chatUi||!selfId||!spawnConfirmed)return;
+  if(!chatUi||!selfId||!spawnConfirmed||(chatMode==='nearby-chat'&&!nearbyChatReady))return;
   if(pendingWorldChat){
    chatUi.notice.textContent='Waiting for the server to confirm the previous message.';
    return;
@@ -160,8 +172,8 @@
   // otherwise falsely acknowledge a new retry of identical text.
   worldChatSequence=worldChatSequence>=2147483647?1:worldChatSequence+1;
   const chatSeq=worldChatSequence;
-  if(send({type:'world-chat',text,chatSeq})){
-   const pending={text,chatSeq,timeout:null};
+  if(send({type:chatMode,text,chatSeq})){
+   const pending={text,chatSeq,mode:chatMode,timeout:null};
    pendingWorldChat=pending;
    chatUi.notice.textContent='Sending… awaiting room confirmation';
    // The room normally sends either a broadcast echo or an explicit reject.
@@ -181,7 +193,7 @@
    const toggle=document.createElement('button'),panel=document.createElement('section');
    const count=document.createElement('div'),log=document.createElement('div');
    const controls=document.createElement('div'),input=document.createElement('input');
-   const sendButton=document.createElement('button'),notice=document.createElement('div');
+   const sendButton=document.createElement('button'),channelButton=document.createElement('button'),notice=document.createElement('div');
    toggle.id='climboria-world-chat-toggle';toggle.textContent='WORLD CHAT';
    toggle.setAttribute('aria-label','Toggle World Chat');
    toggle.style.cssText='position:fixed;left:10px;z-index:1300;padding:8px 11px;border:1px solid #d8b46b;border-radius:9px;background:#101925f2;color:#ffe3a3;font:800 11px system-ui;cursor:pointer;touch-action:manipulation;'+
@@ -197,6 +209,15 @@
    input.setAttribute('aria-label','World Chat message');
    input.style.cssText='flex:1;min-width:0;padding:8px;border:1px solid #d8b46b88;border-radius:6px;background:#111c29;color:#fff;font:12px system-ui;touch-action:auto';
    sendButton.type='button';sendButton.textContent='SEND';
+   channelButton.type='button';channelButton.textContent='NEARBY';
+   channelButton.setAttribute('aria-label','Switch between World Chat and Nearby Chat');
+   channelButton.style.cssText='padding:8px;border:1px solid #d8b46b88;border-radius:6px;background:#111c29;color:#ffe3a3;font:800 10px system-ui;cursor:pointer';
+   channelButton.addEventListener('click',()=>{
+    if(!nearbyChatReady)return;
+    if(pendingWorldChat){notice.textContent='Wait for message confirmation before switching channels.';return;}
+    chatMode=chatMode==='world-chat'?'nearby-chat':'world-chat';
+    renderChatCount();
+   });
    sendButton.style.cssText='padding:8px;border:1px solid #d8b46b;border-radius:6px;background:#293547;color:#ffe3a3;font:800 11px system-ui;cursor:pointer';
    notice.style.cssText='min-height:14px;margin-top:5px;font:10px system-ui;color:#e5c98c';
    input.addEventListener('keydown',e=>{
@@ -212,10 +233,10 @@
    // when an explorer scrolls their World Chat transcript.
    panel.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
    panel.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
-   controls.appendChild(input);controls.appendChild(sendButton);
+   controls.appendChild(input);controls.appendChild(sendButton);controls.appendChild(channelButton);
    panel.appendChild(count);panel.appendChild(log);panel.appendChild(controls);panel.appendChild(notice);
    document.body.appendChild(toggle);document.body.appendChild(panel);
-   chatUi={toggle,panel,count,log,input,notice};
+   chatUi={toggle,panel,count,log,input,notice,channel:channelButton};
   }
   chatUi.toggle.style.display='block';renderChatCount();
  }
@@ -439,7 +460,7 @@
     const verifiedIds=new Set(peers.map(p=>p.id));
     for(const id of [...known.keys()])if(!verifiedIds.has(id))leave(id);
     for(const peer of peers)addPlayer(peer);
-    spawnConfirmed=true;
+    spawnConfirmed=true;nearbyChatReady=msg.nearbyChatEnabled===true;
     // Only a verified server spawn-accepted completes room admission.
     clearAdmissionTimer();
     ensureDuelUi();ensureWorldChatUi();
@@ -453,7 +474,9 @@
     renderer.move(msg.id,msg.position);
    }
   }else if(msg.type==='player-left'){if(spawnConfirmed)leave(msg.id)}
-  else if(msg.type==='world-chat'){if(spawnConfirmed)appendWorldChat(msg)}
+  else if(msg.type==='world-chat'||msg.type==='nearby-chat'){
+   if(spawnConfirmed&&(msg.type==='world-chat'||nearbyChatReady))appendWorldChat(msg)
+  }
   else if(msg.type==='rejected'&&msg.reason==='invalid-initial-spawn'){
    // A rejected first spawn leaves the socket open on the Game Worker.
    // Close it and retry admission when the real hero returns to Sanctuary.

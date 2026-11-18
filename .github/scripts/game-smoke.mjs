@@ -182,6 +182,7 @@ try {
     // used later by real owner-operated two-browser movement acceptance.
     renderer.move(markerId,{x:pos.x+2,y:pos.y,z:pos.z});
     const moved=renderer.audit();
+    const farSpeech=renderer.speak(markerId,'Should not show at long range');
     // Cached terrain map refreshes every 120 ms. Exercise the real render
     // loop rather than faking canvas pixels or direct marker mutations.
     await new Promise(resolve=>setTimeout(resolve,300));
@@ -201,12 +202,15 @@ try {
       position:{x:p.x+8,y:p.y,z:p.z+8}});
     renderer.update(.016);
     const nearby=renderer.audit();
+    const nearbySpeech=renderer.speak(nearId,'Hello close by');
+    renderer.update(.016);
+    const nearbyWithSpeech=renderer.audit();
     const nearbyObject=document.querySelector('canvas')?true:false;
     renderer.remove(nearId);
     const afterNearby=renderer.audit();
     await new Promise(resolve=>setTimeout(resolve,300));
     const legendAfter=document.querySelector('#world-map-legend')?.textContent||'';
-    return {status,initial,added,removed,during,moved,after,nearby,afterNearby,nearbyObject,
+    return {status,initial,added,removed,during,moved,after,nearby,afterNearby,nearbyObject,farSpeech,nearbySpeech,nearbyWithSpeech,
       fieldMap:{legendDuring,legendAfter,pixel,cyan}};
   });
   console.log('GAME staged presence renderer (unauthenticated) QA:',JSON.stringify(remotePresenceQA));
@@ -216,6 +220,12 @@ try {
      remotePresenceQA.during?.sceneVisibleResidents!==0||
      remotePresenceQA.during?.fallbackPeers!==1||
      remotePresenceQA.moved?.sceneVisibleResidents!==0||
+     remotePresenceQA.farSpeech!==false||remotePresenceQA.nearbySpeech!==true||
+     remotePresenceQA.nearbyWithSpeech?.nearbyBubbles!==1||
+     remotePresenceQA.afterNearby?.nearbyBubbles!==0||
+     remotePresenceQA.nearby?.remoteHeroHeight!==1.9||
+     remotePresenceQA.nearby?.nameplateWidth!==1.72||
+     remotePresenceQA.nearby?.nearbyRangeMeters!==20||
      remotePresenceQA.after?.fallbackPeers!==0||
      remotePresenceQA.nearby?.fallbackPeers!==1||
      remotePresenceQA.nearby?.visibleFallbacks!==1||
