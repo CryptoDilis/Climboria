@@ -28,7 +28,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify locked-off frontend and scripts before deployment
+      - name: Verify approved registered-only Game frontend and scripts before deployment
         run: |
           node --check game/multiplayer/worker/index.mjs
           node --check game/multiplayer/client-presence.js
@@ -37,8 +37,8 @@ jobs:
           node --test game/multiplayer/*.test.mjs game/multiplayer/worker/*.test.mjs
           node - <<'NODE'
           const fs=require('fs'),c=JSON.parse(fs.readFileSync('game/multiplayer/client-config.json','utf8'));
-          if(c.enabled!==false||c.endpoint!==null)throw Error('Game room client release gate must remain disabled');
-          console.log('PASS Game user-facing multiplayer remains disabled');
+          if(c.enabled!==true||c.endpoint!=='https://rooms.climboria.fun/')throw Error('Game room must use approved authenticated endpoint');
+          console.log('PASS Game gateway points only to approved host');
           NODE
       - name: Install Wrangler without modifying tracked files
         run: npm install --no-save wrangler@4
@@ -57,5 +57,5 @@ jobs:
           npx wrangler deploy --config game/multiplayer/worker/wrangler.toml
           # Do not place the key in code, process argv or workflow logs.
           printf '%s' "$GAME_SUPABASE_PUBLISHABLE_KEY" | npx wrangler secret put SUPABASE_PUBLISHABLE_KEY --config game/multiplayer/worker/wrangler.toml
-          echo 'Game staging Worker deployment requested. User-facing multiplayer config is STILL OFF.'
+          echo 'Game staging Worker deployment requested. Game multiplayer is registered-user only; PvP damage/loot OFF.'
           echo 'NEXT: run authenticated two-Chromium-account E2E and inspect real Game mobile FPS before any public enablement.'
