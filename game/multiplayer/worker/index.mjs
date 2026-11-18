@@ -23,6 +23,11 @@ const allowedName=/^[A-Za-z0-9 _-]{2,24}$/;
 const allowedModels=new Set(['Adventurer','Jarrell','Lheiz']);
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const verifiedPeerId=/^s_[a-f0-9]{32}$/;
+const SERVER_RESUME_AGE_MS=30*86400000,SERVER_RESUME_WRITE_MS=6000;
+const validResumePosition=p=>p&&['x','y','z'].every(k=>Number.isFinite(p[k]))&&
+ Math.abs(p.x)<=10000&&Math.abs(p.z)<=10000&&p.y>=-200&&p.y<=2000;
+const isValidResumeRecord=r=>r&&validResumePosition(r.position)&&Number.isFinite(r.at)&&
+ r.at<=Date.now()+60000&&Date.now()-r.at<=SERVER_RESUME_AGE_MS;
 const response=(status,data,origin)=>new Response(JSON.stringify(data),{
  status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store',
   ...(TRUSTED_ORIGINS.has(origin)?{'access-control-allow-origin':origin,'vary':'Origin'}:{})}
@@ -182,10 +187,13 @@ export const gateway={
    const model=allowedModels.has(payload.model)?payload.model:'Adventurer';
    let issued;
    try{
-    issued=await withGatewayDeadline(signal=>stub.fetch('https://room.internal/_ticket',{
-     method:'POST',headers:{'content-type':'application/json'},
-     body:JSON.stringify({ticket,userId:verifiedUser.id,name,model}),signal
-    }),TICKET_ISSUE_DEADLINE_MS);
+    issued=await withGatewayDeadline(async signal=>{
+     const res=await stub.fetch('https://room.internal/_ticket',{
+      method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({ticket,userId:verifiedUser.id,name,model}),signal
+     });
+     return {res,body:res.ok?await res.json():null};
+    },TICKET_ISSUE_DEADLINE_MS);
    }catch{
     // A late Durable Object reply must never expose a stale ticket, even
     // when the underlying stub ignores cancellation. This ticket's random
@@ -195,11 +203,12 @@ export const gateway={
    // A full room or per-account ticket cap is a temporary capacity limit,
    // not a service outage. Keep internal room details private, and do not
    // promote an unexpected internal status to the public API.
-   if(!issued.ok){
-    if(issued.status===429)return response(429,{error:'room-busy'},origin);
+   if(!issued.res.ok){
+    if(issued.res.status===429)return response(429,{error:'room-busy'},origin);
     return response(503,{error:'room-unavailable'},origin);
    }
-   return response(200,{ticket,protocol:'climboria-v1',ttlSeconds:30},origin);
+   return response(200,{ticket,protocol:'climboria-v1',ttlSeconds:30,
+    ...(validResumePosition(issued.body?.resumePosition)?{resumePosition:issued.body.resumePosition}:{})},origin);
   }
   if(url.pathname==='/ws'&&req.method==='GET'&&/websocket/i.test(req.headers.get('Upgrade')||'')){
    return stub.fetch(new Request('https://room.internal/ws',{method:'GET',headers:req.headers}));
@@ -222,6 +231,7 @@ export class JarrellRoom {
   this.lastChat=new Map();
   this.userSockets=new Map();
   this.spawned=new Set();
+  this.lastResumeWrite=new Map();
  }
  async fetch(req){
   const url=new URL(req.url);
@@ -261,10 +271,14 @@ export class JarrellRoom {
      return {status:429,error:'account-ticket-limit'};
     if(await txn.get('ticket:'+data.ticket))
      return {status:409,error:'duplicate-ticket'};
-    await txn.put('ticket:'+data.ticket,{...data,expiresAt:now+SESSION_TTL});
-    return {status:201,ok:true};
+    const last=await txn.get('resume:'+data.userId);
+    const resumePosition=isValidResumeRecord(last)?last.position:null;
+    await txn.put('ticket:'+data.ticket,{...data,expiresAt:now+SESSION_TTL,
+     ...(resumePosition?{resumePosition}:{})});
+    return {status:201,ok:true,resumePosition};
    });
-   return response(result.status,result.ok?{ok:true}:{error:result.error});
+   return response(result.status,result.ok?{ok:true,
+    ...(validResumePosition(result.resumePosition)?{resumePosition:result.resumePosition}:{})}:{error:result.error});
   }
   if(url.pathname!=='/ws'||!(/websocket/i.test(req.headers.get('Upgrade')||'')))
    return response(404,{error:'not-found'});
