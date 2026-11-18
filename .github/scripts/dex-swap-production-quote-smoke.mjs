@@ -6,8 +6,16 @@
  * it proves quote-only access, NOT wallet signing or trade execution.
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { classifyQuoteJourneyRequest, KNOWN_CLOUDFLARE_BEACON, isDexScreenerChartFrame } from "./dex-swap-quote-request-guard.mjs";
+
+// The read-only production canary must stay valid after an emergency
+// source-only OFF rollback, rather than falsely insisting the provider is ON.
+const workerSource = readFileSync(new URL("../../dex/swap-proxy/src/index.mjs", import.meta.url), "utf8");
+const releaseValues = [...workerSource.matchAll(/^const THIRD_PARTY_JUPITER_WIDGET_APPROVED = (true|false);$/gm)];
+assert.equal(releaseValues.length, 1, "Expected exactly one literal third-party provider release gate");
+const expectedApproved = releaseValues[0][1] === "true";
 
 const SITE = "https://climboria.fun";
 const API = "api.climboria.fun";
@@ -21,25 +29,37 @@ const RAW = "100000000"; // 0.1 SOL; use a liquid pair to avoid minimum-route ar
  * this API issues an explicit true status in a separately reviewed release.
  * This test never loads a wallet or attempts a transaction.
  */
-async function assertDisabledRuntimeEndpoint(browser) {
+async function assertSourceMatchedRuntimeEndpoint(browser) {
   const context = await browser.newContext();
   try {
-    const response = await context.request.get("https://" + API + "/api/swap/provider-status", {
-      timeout: 30000, maxRedirects: 0, failOnStatusCode: false,
-      headers: { "Cache-Control": "no-cache", "Origin": SITE }
-    });
-    assert.equal(response.status(), 200,
-      "The selected existing API Worker status endpoint must return HTTP 200");
-    const headers = response.headers();
-    assert.match(headers["content-type"] || "", /^application\/json(?:\s*;|$)/i,
-      "Production release switch must return JSON");
-    assert.match(headers["cache-control"] || "", /(?:^|,)\s*no-store\s*(?:,|$)/i,
-      "Production release switch must never be cached");
-    assert.equal(headers["access-control-allow-origin"], SITE,
-      "Selected API runtime status must authorize the real Climboria site origin");
-    assert.deepEqual(await response.json(), { enabled: false },
-      "Production provider runtime switch must remain explicitly OFF in quote-only phase");
-    console.log("PASS production existing API Jupiter status endpoint: HTTP 200, no-store, enabled=false, CORS approved.");
+    // Check only the exact source-selected approval state, after a bounded
+    // edge-propagation window. Both ON rollout and OFF emergency rollback
+    // must be proven against the live API rather than assumed from checkout.
+    let observed = false;
+    for (let attempt = 1; attempt <= 24; attempt++) {
+      const response = await context.request.get("https://" + API + "/api/swap/provider-status", {
+        timeout: 15000, maxRedirects: 0, failOnStatusCode: false,
+        headers: { "Cache-Control": "no-cache", "Origin": SITE }
+      });
+      assert.equal(response.status(), 200,
+        "Reviewed provider status endpoint must return HTTP 200");
+      const headers = response.headers();
+      assert.match(headers["content-type"] || "", /^application\/json(?:\s*;|$)/i,
+        "Production status response must be JSON");
+      assert.match(headers["cache-control"] || "", /(?:^|,)\s*no-store\s*(?:,|$)/i,
+        "Production provider status must never be cached");
+      assert.equal(headers["access-control-allow-origin"], SITE,
+        "Only the real Climboria site may read the provider release status");
+      assert.equal(headers["x-content-type-options"], "nosniff");
+      const body = await response.json();
+      if (body?.enabled === expectedApproved) { observed = true; break; }
+      assert.ok(body?.enabled === true || body?.enabled === false,
+        "Unexpected or malformed provider release status; refusing release acceptance");
+      if (attempt < 24) await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+    assert.equal(observed, true,
+      "Worker provider status never matched its exact release source at the public edge");
+    console.log("PASS production Jupiter status endpoint: HTTP 200, no-store, enabled=" + expectedApproved + ", restricted CORS.");
   } finally {
     await context.close();
   }
@@ -190,14 +210,23 @@ async function assertPage(browser, { name, path, viewport, isMobile = false, blo
     assert.equal(config?.managedProvider?.integrity,
       "sha384-aPExK0yy7w5DZjkLRMWvSKhuEz9kvz/9vESgWrctox51YnSfx6WWIWrsZBHqVJSy",
       "source SRI must match the recorded reviewed bootstrap exactly");
-    // The independent API Worker was just verified source-OFF above.
-    // Even with prepared frontend code, NO provider UI should be exposed.
+    // The Swap-only API release is ON, but the vendor widget itself must
+    // NEVER be initialized until an explicit user click and wallet consent.
+    // Signature DEX remains independently OFF.
     const launchers = page.locator("[data-climboria-managed-swap-open]");
     assert.equal(await launchers.count(), name.startsWith("DEX") ? 3 : 1);
-    assert.equal(await launchers.evaluateAll(nodes => nodes.every(node => node.hidden)), true,
-      name + " Jupiter wallet launchers must remain hidden while API status is false");
+    if (name.startsWith("Swap") && expectedApproved) {
+      await page.waitForFunction(() =>
+        [...document.querySelectorAll("[data-climboria-managed-swap-open]")].every(node => !node.hidden),
+        null, { timeout: 20000 });
+      assert.equal(await launchers.evaluateAll(nodes => nodes.every(node => !node.hidden)), true,
+        "Swap provider launcher must be visible after independently approved API status");
+    } else {
+      assert.equal(await launchers.evaluateAll(nodes => nodes.every(node => node.hidden)), true,
+        "DEX or rolled-back Swap launcher must remain hidden without independent approval");
+    }
     assert.equal(await page.locator("[data-climboria-managed-swap-panel]").isVisible(), false,
-      name + " no wallet-enabled panel can be displayed while release gate is OFF");
+      name + " must never auto-open a wallet-enabled provider panel on page view");
     assert.equal(config?.revenue?.feeCollectionEnabled, false, name + " no platform trading fees may be collected");
     assert.equal(config?.revenue?.feeRecipient, null, name + " fee recipient must remain unset");
 
@@ -537,7 +566,7 @@ async function assertDexMobileTokenHistory(browser, width) {
 
 const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
 try {
-  await assertDisabledRuntimeEndpoint(browser);
+  await assertSourceMatchedRuntimeEndpoint(browser);
   await assertDisabledWorkerHealth(browser);
   await assertPage(browser, { name: "Swap desktop", path: "/swap/", viewport: { width: 1440, height: 900 } });
   await assertPage(browser, { name: "Swap mobile", path: "/swap/", viewport: { width: 390, height: 844 }, isMobile: true });

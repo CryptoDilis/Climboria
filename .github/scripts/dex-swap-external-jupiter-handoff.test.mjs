@@ -42,7 +42,7 @@ test("Swap uses the same disclosure and isolated provider homepage; native relea
  assert.match(config,/\bfeeCollectionEnabled:\s*false\b/,"No integrator fee collection");
  assert.match(config,/\bmanagedProvider:\s*Object\.freeze\(\{\s*enabled:\s*true\b/,"Swap-only source candidate configured");
  assert.match(config,/\bsurfaces:\s*Object\.freeze\(\{\s*swap:\s*true,\s*dex:\s*false\s*\}\)/,"DEX trading must remain OFF");
- assert.match(worker,/const THIRD_PARTY_JUPITER_WIDGET_APPROVED = false;/,"Production release status remains OFF");
+ assert.match(worker,/const THIRD_PARTY_JUPITER_WIDGET_APPROVED = (?:true|false);/,"Reviewed third-party Swap release is source-ON; native execution OFF");
  assert.match(worker,/const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;/);
  assert.match(worker,/const EXECUTION_SECURITY_REVIEW_COMPLETE = false;/);
 });
@@ -74,9 +74,11 @@ test("Swap Base tab hides offsite Solana-only Jupiter handoff; switching back re
    "let quoteTokens={from:{id:'So11111111111111111111111111111111111111112',decimals:9},"+
    "to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',decimals:6}};\n"+
    syncCode+"\n"+swap.slice(start,end+2)+"\n({setSwapChain,syncSwapJupiterPair})";
- const doc={documentElement:{dataset:{}}};
+ const emitted=[];
+ const doc={documentElement:{dataset:{}},dispatchEvent(event){emitted.push(event.type);}};
  const {setSwapChain,syncSwapJupiterPair}=runInNewContext(actual,{
-  $:element,document:doc,clearTimeout(){},invalidateSwapQuote(){},updateSelectedAsset(){},setSwapUrl(){}
+  $:element,document:doc,Event:class {constructor(type){this.type=type;}},
+  clearTimeout(){},invalidateSwapQuote(){},updateSelectedAsset(){},setSwapUrl(){}
  },{filename:"swap/index.html"});
  const panel=element("climboriaSwapProviderPanel");
  syncSwapJupiterPair();
@@ -102,6 +104,8 @@ test("Swap Base tab hides offsite Solana-only Jupiter handoff; switching back re
  assert.equal(panel.getAttribute("data-climboria-managed-swap-input-mint"),
   "So11111111111111111111111111111111111111112",
   "Restoring Solana reselects the original provider input mint");
+ assert.deepEqual(emitted,Array(3).fill("climboria:managed-provider-pair-change"),
+  "Initial Solana pair, Base cleared pair, and Solana restored pair must each notify the provider host");
  const providerCss=readFileSync(new URL("../../dex/provider-managed-swap.css",import.meta.url),"utf8");
  assert.match(providerCss,/html\[data-climboria-swap-network="base"\] \.climboria-managed-swap-launch\{display:none!important\}/,
   "Base must hide the Jupiter launcher even if a provider session was approved");

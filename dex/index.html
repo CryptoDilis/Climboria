@@ -853,7 +853,7 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 </main>
 <script src="/dex/swap-amount.js"></script>
 <script src="/swap-config.js"></script>
-<script type="module" src="/dex/provider-managed-swap.mjs?v=6"></script>
+<script type="module" src="/dex/provider-managed-swap.mjs?v=10"></script>
 <script src="/dex/premium-terminal.js?v=1" defer></script>
 <script>
 (()=>{'use strict';
@@ -1617,14 +1617,21 @@ function syncDexJupiterMarketPair(){
  if(!panel)return;
  panel.removeAttribute('data-climboria-managed-swap-input-mint');
  panel.removeAttribute('data-climboria-managed-swap-output-mint');
- if(dexTradeOrderType!=='market'||!dexTradeToken||
-    !Number.isInteger(dexTradeToken.decimals)||dexTradeToken.decimals<0||
-    dexTradeToken.decimals>18)return;
- const input=dexTradeSide==='buy'?DEX_SOL_TOKEN.id:dexTradeToken.id;
- const output=dexTradeSide==='buy'?dexTradeToken.id:DEX_SOL_TOKEN.id;
- if(input===output)return;
- panel.setAttribute('data-climboria-managed-swap-input-mint',input);
- panel.setAttribute('data-climboria-managed-swap-output-mint',output);
+ if(dexTradeOrderType==='market'&&dexTradeToken&&
+    Number.isInteger(dexTradeToken.decimals)&&dexTradeToken.decimals>=0&&
+    dexTradeToken.decimals<=18){
+   const input=dexTradeSide==='buy'?DEX_SOL_TOKEN.id:dexTradeToken.id;
+   const output=dexTradeSide==='buy'?dexTradeToken.id:DEX_SOL_TOKEN.id;
+   if(input!==output){
+     panel.setAttribute('data-climboria-managed-swap-input-mint',input);
+     panel.setAttribute('data-climboria-managed-swap-output-mint',output);
+   }
+ }
+ // During live market changes, hide any mounted provider for the old pair.
+ // Notify once after the final pair state, including an intentionally cleared pair.
+ if(typeof Event==='function'&&typeof document.dispatchEvent==='function'){
+   document.dispatchEvent(new Event('climboria:managed-provider-pair-change'));
+ }
 }
 const DEX_SOL_TOKEN={id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9,isVerified:true};
 async function dexTradeSyncToken(pair){

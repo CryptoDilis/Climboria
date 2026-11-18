@@ -443,7 +443,7 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 <p class="foot">CLIMBORIA SWAP · SOLANA NETWORK · ROUTING BY JUPITER · <a href="/dex/partners/">PARTNERSHIPS</a> · <a href="/support/">CUSTOMER SUPPORT</a></p></main></div>
 <script src="/dex/swap-amount.js"></script>
 <script src="/swap-config.js"></script>
-<script type="module" src="/dex/provider-managed-swap.mjs?v=6"></script>
+<script type="module" src="/dex/provider-managed-swap.mjs?v=10"></script>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -457,12 +457,14 @@ function setSwapChain(chain){
  $('chainSolana').classList.toggle('active',chain==='solana');
  $('chainBase').classList.toggle('active',chain==='base');
  const isBase=chain==='base';
- // Prevent opening a Solana-only provider on Base. Closing also invalidates
- // a pending SDK load, but cannot cancel wallet prompts already issued.
+ // A Base switch must invalidate even a HIDDEN pending Jupiter reopen,
+ // not only a visible mounted panel. The host's Close fences stale async
+ // release responses and conceals provider-owned UI best-effort; this
+ // cannot recall wallet prompts or transactions already submitted.
  document.documentElement.dataset.climboriaSwapNetwork=chain;
  const managedPanel=$('climboriaSwapProviderPanel');
  managedPanel?.setAttribute('data-climboria-managed-swap-network',chain);
- if(isBase&&!managedPanel.hidden)managedPanel.querySelector('[data-climboria-managed-swap-close]')?.click();
+ if(isBase&&managedPanel)managedPanel.querySelector('[data-climboria-managed-swap-close]')?.click();
  syncSwapJupiterPair();
  $('swapExternalJupiterHandoff').hidden=isBase;
  $('chainNotice').textContent=isBase?'Base network selected · ERC-20 assets require a Base-compatible wallet and verified EVM routing backend. Quotes and execution are not enabled yet.':'Solana network selected · Jupiter route interface. Execution remains disabled pending backend verification.';
@@ -621,13 +623,17 @@ function syncSwapJupiterPair(){
  if(!panel)return;
  panel.removeAttribute('data-climboria-managed-swap-input-mint');
  panel.removeAttribute('data-climboria-managed-swap-output-mint');
- if(selectedChain!=='solana')return;
- if(!quoteTokens.from?.id||!quoteTokens.to?.id)return;
- if(!Number.isInteger(quoteTokens.from.decimals)||!Number.isInteger(quoteTokens.to.decimals))return;
- // The provider validates both true 32-byte Solana pubkeys and distinctness
- // again before loading its third-party code.
- panel.setAttribute('data-climboria-managed-swap-input-mint',quoteTokens.from.id);
- panel.setAttribute('data-climboria-managed-swap-output-mint',quoteTokens.to.id);
+ if(selectedChain==='solana'&&quoteTokens.from?.id&&quoteTokens.to?.id&&
+    Number.isInteger(quoteTokens.from.decimals)&&Number.isInteger(quoteTokens.to.decimals)){
+   // Jupiter independently verifies canonical 32-byte mints on user click.
+   panel.setAttribute('data-climboria-managed-swap-input-mint',quoteTokens.from.id);
+   panel.setAttribute('data-climboria-managed-swap-output-mint',quoteTokens.to.id);
+ }
+ // A mounted third-party widget does not automatically adopt new mints.
+ // Alert the host only AFTER both final attributes have been updated.
+ if(typeof Event==='function'&&typeof document.dispatchEvent==='function'){
+   document.dispatchEvent(new Event('climboria:managed-provider-pair-change'));
+ }
 }
 syncSwapJupiterPair();
 let tokenSearchSequence={from:0,to:0};

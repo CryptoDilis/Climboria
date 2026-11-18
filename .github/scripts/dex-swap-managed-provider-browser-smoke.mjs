@@ -29,7 +29,16 @@ const MOCK_SCRIPT = [
   "  label.dataset.climboriaTestWidget = 'rendered';",
   "  label.textContent = 'Mock provider widget - no transaction';",
   "  container.appendChild(label);",
+  "  window.__mockProviderRoot = label;",
   "  return Promise.resolve();",
+  " },",
+  " close: function() {",
+  "  window.__mockProviderCloseCalls = (window.__mockProviderCloseCalls || 0) + 1;",
+  "  if (window.__mockProviderRoot) window.__mockProviderRoot.style.display = 'none';",
+  " },",
+  " resume: function() {",
+  "  window.__mockProviderResumeCalls = (window.__mockProviderResumeCalls || 0) + 1;",
+  "  if (window.__mockProviderRoot) window.__mockProviderRoot.style.display = 'block';",
   " }",
   "};"
 ].join("\n");
@@ -55,8 +64,12 @@ function approveRuntime(page) {
 async function runPage(browser, path, {badHash = false, apiStatus = false} = {}) {
   const page = await browser.newPage({viewport:{width: path === "/dex/" ? 390 : 1280,height:850}});
   let scriptLoads = 0;
+  const hostModuleRequests = [];
   const forbidden = [];
   page.on("request", req => {
+    if (new URL(req.url()).pathname === "/dex/provider-managed-swap.mjs") {
+      hostModuleRequests.push(req.url());
+    }
     if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(req.url())) forbidden.push(req.url());
   });
   page.on("dialog", dialog => { throw Error("Unexpected popup: " + dialog.message()); });
@@ -79,6 +92,8 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
     assert.equal(response.status(),200,path + " must load");
     const button = page.locator("[data-climboria-managed-swap-open]:visible").first();
     await button.waitFor({timeout:15000});
+    assert.deepEqual(hostModuleRequests, [ORIGIN + "/dex/provider-managed-swap.mjs?v=10"],
+      "Swap and DEX must load exactly the reviewed cache-busted v10 host module");
     // Every launcher, including the DEX token-detail action, must point to the
     // actual expandable region, never the embedded third-party SDK mount node.
     const panelId = path === "/swap/" ? "climboriaSwapProviderPanel" : "climboriaDexProviderPanel";
@@ -126,8 +141,15 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
       await panel.locator("[data-climboria-managed-swap-close]").click();
       assert.equal(await panel.isVisible(),false);
       assert.equal(await button.getAttribute("aria-expanded"),"false");
+      assert.equal(await page.evaluate(() => window.__mockProviderCloseCalls || 0),1,
+        "user Close must hide Jupiter-owned widget");
+      assert.equal(await page.evaluate(() => window.__mockProviderRoot.style.display),"none",
+        "Jupiter-owned root must be concealed, not just Climboria wrapper");
       await button.click();
       await panel.waitFor({ state: "visible", timeout: 10000 });
+      await page.waitForFunction(() => window.__mockProviderResumeCalls === 1);
+      assert.equal(await page.evaluate(() => window.__mockProviderRoot.style.display),"block",
+        "reopen must restore Jupiter-owned widget after fresh API approval");
       assert.equal(await panel.isVisible(),true);
       assert.equal(await page.evaluate(() => window.__mockProviderCalls.length),1,
         "reopen must not reinitialize provider");
@@ -147,7 +169,47 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
         assert.equal(await panel.getAttribute("data-climboria-managed-swap-input-mint"),
           "So11111111111111111111111111111111111111112");
         assert.equal(scriptLoads,1,"network switch must not reload Jupiter script");
+        // Base closes Jupiter. Reopening on Solana with the unchanged pair
+        // must still be possible after a fresh approval check.
+        await button.click();
+        await panel.waitFor({state:"visible",timeout:10000});
       }
+      // In either public surface, a newly selected mint must synchronously
+      // conceal an active third-party-owned wallet form. No live SDK or funds.
+      const pairChange = await page.evaluate(pagePath => {
+        // Exercise each real first-party selector's pair synchronizer, not
+        // synthetic direct DOM mutation or a manually forged change event.
+        const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+        const SOL = "So11111111111111111111111111111111111111112";
+        if (pagePath === "/swap/") {
+          quoteTokens.from={...quoteTokens.from,id:USDC,symbol:"USDC",decimals:6};
+          quoteTokens.to={...quoteTokens.to,id:SOL,symbol:"SOL",decimals:9};
+          syncSwapJupiterPair();
+        } else {
+          // Use the *actual* DEX Market/Limit control. Its handler runs inside
+          // a private closure and calls syncDexJupiterMarketPair() itself.
+          // A Limit change must close the old Jupiter wallet even if the
+          // DEX had no valid mint selection when the provider was mounted.
+          const limit = document.querySelector('[data-dex-order="limit"]');
+          if (!limit) throw new Error("DEX Limit trade control not found");
+          // Production keeps Limit disabled. In this synthetic-only fixture,
+          // enable this control in memory solely to exercise its existing
+          // event handler; do not change production HTML or release gates.
+          limit.disabled = false;
+          limit.click();
+        }
+        const host = document.querySelector("[data-climboria-managed-swap-panel]");
+        return {
+          panelHidden:host.hidden,
+          vendorHidden:window.__mockProviderRoot?.style.display==="none",
+          launchersHidden:[...document.querySelectorAll("[data-climboria-managed-swap-open]")].every(node=>node.hidden)
+        };
+      },path);
+      assert.equal(pairChange.panelHidden,true,"mint change must immediately conceal the old wallet panel");
+      assert.equal(pairChange.vendorHidden,true,"mint change must hide Jupiter-owned root, not only Climboria wrapper");
+      assert.equal(pairChange.launchersHidden,true,"old provider pair must not be reopened without refresh");
+      assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length),1,
+        "a pair change may not automatically reinitialize the vendor wallet");
     }
     assert.deepEqual(forbidden,[],"no /order or /execute calls even after mock widget click");
     console.log("PASS "+path+(badHash?" invalid-SRI fail-closed":" simulated in-site managed widget")+" no wallet/transaction");
@@ -199,37 +261,139 @@ async function runTabReturnApproval(browser, path, width) {
     const beforeFocus = statuses;
     const concealedImmediately = await page.evaluate(() => {
       window.dispatchEvent(new Event("focus"));
-      return document.querySelector("[data-climboria-managed-swap-panel]").hidden;
+      return {
+        panelHidden: document.querySelector("[data-climboria-managed-swap-panel]").hidden,
+        providerHidden: window.__mockProviderRoot?.style.display === "none",
+        closeCalls: window.__mockProviderCloseCalls || 0,
+        resumeCalls: window.__mockProviderResumeCalls || 0
+      };
     });
-    assert.equal(concealedImmediately,true,
+    assert.equal(concealedImmediately.panelHidden,true,
       "returning focus must conceal an already-mounted provider synchronously");
+    assert.equal(concealedImmediately.providerHidden,true,
+      "returning focus must immediately conceal Jupiter-owned root before network response");
+    assert.equal(concealedImmediately.closeCalls,1);
+    assert.equal(concealedImmediately.resumeCalls,0);
     await page.waitForFunction(() => {
       const p = document.querySelector("[data-climboria-managed-swap-panel]");
       return !p.hidden && p.querySelector("[data-climboria-managed-swap-status]")
         .textContent.includes("Provider interface loaded");
     },null,{timeout:10000});
     assert.ok(statuses>beforeFocus,"focus performs fresh approval");
+    assert.equal(await page.evaluate(() => window.__mockProviderRoot?.style.display),"block",
+      "approved focus must restore the provider-owned root only after no-store approval");
+    assert.equal(await page.evaluate(() => window.__mockProviderResumeCalls),1);
     assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length),1,
       "approved focus must not reinitialize wallet provider");
     approved = false;
     const beforeRollback = statuses;
     const hiddenAtVisibilityReturn = await page.evaluate(() => {
       document.dispatchEvent(new Event("visibilitychange"));
-      return document.querySelector("[data-climboria-managed-swap-panel]").hidden;
+      return {
+        panelHidden: document.querySelector("[data-climboria-managed-swap-panel]").hidden,
+        providerHidden: window.__mockProviderRoot?.style.display === "none"
+      };
     });
-    assert.equal(hiddenAtVisibilityReturn,true,
+    assert.equal(hiddenAtVisibilityReturn.panelHidden,true,
       "tab visibility return must hide provider BEFORE revoked status resolves");
+    assert.equal(hiddenAtVisibilityReturn.providerHidden,true,
+      "revoked visibility must hide the Jupiter-owned root immediately");
     await page.waitForFunction(() =>
       [...document.querySelectorAll("[data-climboria-managed-swap-open]")]
         .every(node => node.hidden),null,{timeout:10000});
     assert.ok(statuses>beforeRollback,"visibility return checked operator switch");
     assert.equal(await panel.isVisible(),false);
+    assert.equal(await page.evaluate(() => window.__mockProviderRoot?.style.display),"none",
+      "after operator rollback Jupiter-owned root stays hidden");
+    assert.equal(await page.evaluate(() => window.__mockProviderResumeCalls),1,
+      "operator rollback must never resume vendor root");
     assert.equal(sdkLoads,1);
     assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length),1);
     assert.deepEqual(forbidden,[],"tab return may not request native swap execution");
     console.log("PASS "+path+" width="+width+
       " tab return focuses/reapproves, then synchronously hides on revoked visibility; no wallet/trade");
   } finally {
+    await page.close();
+  }
+}
+
+// Reproduce the real first-party network switch during a HIDDEN, pending
+// Jupiter reopen. This must cancel the old async approval before it can
+// resurface a Solana wallet widget after the user switches to Base.
+async function runBaseSwitchDuringPendingReopen(browser, width) {
+  const page = await browser.newPage({viewport:{width,height:850}});
+  const forbidden = [];
+  let statusCalls = 0;
+  let releaseHeldStatus;
+  let markPendingStarted;
+  const pendingStarted = new Promise(resolve => { markPendingStarted = resolve; });
+  const heldStatus = new Promise(resolve => { releaseHeldStatus = resolve; });
+  page.on("request", request => {
+    if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(request.url()))
+      forbidden.push(request.url());
+  });
+  await page.route("**/swap-runtime-status.json", async route => {
+    statusCalls++;
+    if (statusCalls === 4) {
+      markPendingStarted();
+      await heldStatus;
+    }
+    await route.fulfill({
+      json:{enabled:true},
+      headers:{"Cache-Control":"no-store"}
+    });
+  });
+  await page.route("**/swap-config.js", route => route.fulfill({
+    status:200,contentType:"application/javascript",body:mockConfig()
+  }));
+  await page.route(SCRIPT_URL, route => route.fulfill({
+    status:200,contentType:"application/javascript",
+    headers:{"access-control-allow-origin":"*","cache-control":"no-store"},
+    body:MOCK_SCRIPT
+  }));
+  try {
+    const response = await page.goto(ORIGIN+"/swap/",{waitUntil:"domcontentloaded",timeout:20000});
+    assert.equal(response.status(),200);
+    const button = page.locator("[data-climboria-managed-swap-open]");
+    const panel = page.locator("[data-climboria-managed-swap-panel]");
+    await button.waitFor({state:"visible",timeout:15000});
+    await button.click();
+    await page.waitForFunction(() => window.__mockProviderCalls?.length === 1);
+    assert.equal(statusCalls,3,"boot, explicit open and pre-init checks");
+    await panel.locator("[data-climboria-managed-swap-close]").click();
+    assert.equal(await page.evaluate(() => window.__mockProviderRoot.style.display),"none");
+    await button.click();
+    await pendingStarted;
+    assert.equal(await panel.isVisible(),false,"reopen approval must not expose old wallet UI");
+    assert.equal(await page.evaluate(() => window.__mockProviderResumeCalls || 0),0);
+    await page.locator("#chainBase").click();
+    assert.equal(await panel.getAttribute("data-climboria-managed-swap-network"),"base");
+    assert.equal(await panel.isVisible(),false);
+    assert.equal(await button.isVisible(),false,"Base cannot expose Solana widget");
+    assert.equal(await page.evaluate(() => window.__mockProviderRoot.style.display),"none");
+    const heldResponse = page.waitForResponse(response =>
+      response.url().endsWith("/swap-runtime-status.json") &&
+      response.status() === 200, {timeout:10000});
+    releaseHeldStatus();
+    await heldResponse;
+    // Allow the already-returned approval handler to settle its microtasks.
+    await page.waitForTimeout(40);
+    assert.equal(await panel.isVisible(),false,"late approved response may not reopen widget on Base");
+    assert.equal(await page.evaluate(() => window.__mockProviderResumeCalls || 0),0,
+      "stale approval response must not resume Jupiter on Base");
+    assert.equal(await page.evaluate(() => window.__mockProviderRoot.style.display),"none");
+    await page.locator("#chainSolana").click();
+    await button.waitFor({state:"visible",timeout:10000});
+    await button.click();
+    await page.waitForFunction(() => window.__mockProviderResumeCalls === 1,null,{timeout:10000});
+    assert.equal(await page.evaluate(() => window.__mockProviderRoot.style.display),"block");
+    assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length),1,
+      "returning to Solana does not duplicate provider init");
+    await panel.locator("[data-climboria-managed-swap-close]").click();
+    assert.deepEqual(forbidden,[],"network race must never call native Climboria execution");
+    console.log("PASS /swap/ width "+width+" Base switch cancels hidden pending Jupiter reopen; no wallet/trade");
+  } finally {
+    releaseHeldStatus();
     await page.close();
   }
 }
@@ -425,6 +589,7 @@ try {
   await runPage(browser,"/swap/",{badHash:true});
   await runCloseDuringLoad(browser,"/swap/");
   await runCloseDuringLoad(browser,"/dex/");
+  for (const width of [1280,390]) await runBaseSwitchDuringPendingReopen(browser,width);
   for (const path of ["/swap/","/dex/"]) {
     for (const width of [1280,390]) await runTabReturnApproval(browser,path,width);
   }
