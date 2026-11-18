@@ -228,7 +228,11 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     if (surface === "swap" &&
         panel.getAttribute?.("data-climboria-managed-swap-network") !== "solana") return;
     if (!mounted && !loading && !providerInitInFlight) return;
-    if (mounted && sameMountedPair()) return;
+    // DEX market/limit selection may change trade intent before a verified
+    // token pair exists; both old/new pair attributes can still be null.
+    // Treat every explicit DEX selection update as session-invalidating.
+    // Swap may retain the same verified pair across unrelated UI updates.
+    if (surface === "swap" && mounted && sameMountedPair()) return;
     hideRevoked();
     status.textContent = stalePairMessage;
   });
