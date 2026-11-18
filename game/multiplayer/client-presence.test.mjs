@@ -275,10 +275,9 @@ test('invalid multiplayer settings schema fails closed with no retries or room s
  assert.equal(h.state.configCalls,1);
  assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false);
 });
-test('live Game maps the touch return event to its existing authorized local Digit1 teleport',()=>{
+test('live Game refuses the retired forced-Sanctuary mobile prompt',()=>{
  const game=readFileSync('game/play.html','utf8');
- assert.match(game,/document\.addEventListener\('climboria:room-return-to-sanctuary',[\s\S]{0,180}TP\[1\]\(\)/,
-  'Game must handle touch request with existing local Sanctuary teleport only');
+ assert.doesNotMatch(game,/climboria:room-return-to-sanctuary/);
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
  assert.match(game,/client-presence\.js\?v=20261119-nearby-speech-10/,
@@ -329,8 +328,8 @@ test('local teleport aborts an unverified pending room ticket, without new fake 
 });
 test('Game waypoint travel publishes network-invalidation without Sanctuary coercion',()=>{
  const game=readFileSync('game/play.html','utf8');
- assert.match(game,/document\\.dispatchEvent\\(new Event\\('climboria:local-teleport'\\)\\)/);
- assert.doesNotMatch(game,/document\\.addEventListener\\('climboria:room-return-to-sanctuary'/);
+ assert.ok(game.includes("document.dispatchEvent(new Event('climboria:local-teleport'))"));
+ assert.equal(game.includes('climboria:room-return-to-sanctuary'),false);
 });
 test('server close 4001 shows a truthful same-account warning instead of WebSocket eviction loops',async()=>{
  const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
