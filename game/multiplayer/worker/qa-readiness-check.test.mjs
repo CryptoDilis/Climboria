@@ -60,3 +60,9 @@ test('rejects unready Durable Object even after health PASS',async()=>{
   /DO unavailable/);
  assert.deepEqual(seen,['health','ready']);
 });
+
+test('rejects readiness helpers that return false instead of a verified PASS',async()=>{
+ await assert.rejects(
+  verifyReadOnlyGameQaStaging({loadConfig:async()=>DISABLED,check:async()=>false}),
+  /readiness verification failed/);
+});
