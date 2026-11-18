@@ -206,7 +206,8 @@ test("DEX token selection hook clears stale intent until mint proof and excludes
   assert.match(dex, /data-climboria-managed-swap-output-mint/);
 });
 
-function createDom({ failure = false, deferLoad = false, surface = "swap", pair = null, network = "solana" } = {}) {
+function createDom({ failure = false, deferLoad = false, surface = "swap",
+  pair = surface === "swap" ? {inputMint:SOL_MINT,outputMint:USDC_MINT} : null, network = "solana" } = {}) {
   const created = [];
   const btn = { hidden: true, disabled: false, addEventListener(event, callback) { this[event] = callback; } };
   const close = { addEventListener(event, callback) { this[event] = callback; } };
@@ -401,6 +402,39 @@ test("mint change during async Jupiter init hides partial vendor UI and fences l
   assert.equal(ui.panel.hidden,true);
 });
 
+test("Swap refuses missing, partial, duplicate or invalid Solana mint pairs before downloading Jupiter", async () => {
+  for (const pair of [null,
+    {inputMint:SOL_MINT,outputMint:null},
+    {inputMint:SOL_MINT,outputMint:SOL_MINT},
+    {inputMint:"FAKE",outputMint:USDC_MINT}
+  ]) {
+    const ui=createDom({surface:"swap",pair});
+    let calls=0;
+    initializeManagedSwapHost({doc:ui.doc,
+      scope:withRuntime({Jupiter:{init(){calls++;}}}),config:approved});
+    await ui.btn.click();
+    assert.equal(ui.created.length,0,"invalid Swap selection must never download vendor JS");
+    assert.equal(calls,0,"invalid Swap selection must never invoke Jupiter.init");
+    assert.match(ui.status.textContent,/Selected token pair is invalid or incomplete/);
+  }
+});
+
+test("clearing Swap pair during SDK download fails closed at the final init boundary", async () => {
+  const ui=createDom({surface:"swap"});
+  let calls=0;
+  ui.doc.head.appendChild=(script)=>{
+    // The mint selector cleared after first approval without notifying the host.
+    ui.panel.pair=null;
+    queueMicrotask(()=>script.onload());
+  };
+  initializeManagedSwapHost({doc:ui.doc,
+    scope:withRuntime({Jupiter:{init(){calls++;}}}),config:approved});
+  await ui.btn.click();
+  assert.equal(ui.created.length,1,"download started against an initially valid pair");
+  assert.equal(calls,0,"cleared pair must not reach the vendor init call");
+  assert.match(ui.status.textContent,/Selected token pair is invalid or incomplete/);
+});
+
 test("Swap Base-selected network cannot fetch or initialize the Solana Jupiter Plugin", async () => {
   const ui = createDom({surface:"swap",network:"base",
     pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
@@ -465,7 +499,8 @@ test("explicit user click loads only SRI-pinned official-script origin and initi
   assert.equal(script.crossOrigin, "anonymous");
   assert.equal(script.referrerPolicy, "no-referrer");
   assert.equal(script.dataset.climboriaProviderScript, "jupiter-terminal");
-  assert.deepEqual(calls, [{ displayMode: "integrated", integratedTargetId: ui.target.id }]);
+  assert.deepEqual(calls, [{ displayMode: "integrated", integratedTargetId: ui.target.id,
+    formProps:{initialInputMint:SOL_MINT,initialOutputMint:USDC_MINT} }]);
   assert.match(ui.status.textContent, /Wallet prompts and execution are handled by the provider/);
   await ui.btn.click();
   assert.match(ui.status.textContent, /Provider interface loaded/, "reopening a mounted widget must not leave a checking message");
