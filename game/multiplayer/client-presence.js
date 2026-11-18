@@ -7,17 +7,37 @@
  const doc=document.documentElement;
  let badge=null;
  showStatus('checking','MULTIPLAYER · CHECKING SERVER');
- let config;
- for(let attempt=0;attempt<3;attempt++){
+ // Transient CDN/network failures must not strand an otherwise healthy Game.
+ // Bound fetch AND JSON parsing; retry slowly until a valid config arrives or
+ // the page is left. Never assume a room exists or enable one on failed reads.
+ let config,configCancelled=false;
+ window.addEventListener('pagehide',()=>{configCancelled=true},{once:true});
+ for(let attempt=0;!configCancelled;attempt++){
+  const abort=new AbortController();
+  let deadlineTimer;
   try{
-   const res=await fetch('./multiplayer/client-config.json',{cache:'no-store'});
-   if(!res.ok)throw Error('Game multiplayer config unavailable');
-   config=await res.json();
+   const work=(async()=>{
+    const res=await fetch('./multiplayer/client-config.json',{
+     cache:'no-store',signal:abort.signal
+    });
+    if(!res.ok)throw Error('Game multiplayer config unavailable');
+    return res.json();
+   })();
+   const deadline=new Promise((_,reject)=>{
+    deadlineTimer=setTimeout(()=>{
+     abort.abort();
+     reject(Error('Game multiplayer config deadline expired'));
+    },8000);
+   });
+   config=await Promise.race([work,deadline]);
    break;
   }catch{
-   if(attempt<2)await new Promise(resolve=>setTimeout(resolve,600));
-  }
+   clearTimeout(deadlineTimer);
+   showStatus('config-unavailable','MULTIPLAYER · ROOM SETTINGS UNAVAILABLE · RETRYING');
+   await new Promise(resolve=>setTimeout(resolve,attempt<2?600:3000));
+  }finally{clearTimeout(deadlineTimer)}
  }
+ if(configCancelled)return;
  if(config?.schema!==1){
   showStatus('config-unavailable','MULTIPLAYER · SETTINGS UNAVAILABLE · RELOAD');
   return;

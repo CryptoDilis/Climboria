@@ -7,8 +7,8 @@ import {TextEncoder} from 'node:util';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,refreshMode=null}={}){
- const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses],ticketPayloads:[...ticketPayloads]};
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,configFailures=0,configGate=null,configBadSchema=false,refreshMode=null}={}){
+ const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses],ticketPayloads:[...ticketPayloads],configFailures,configCalls:0};
  const authListeners=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],calls=[],timers=[],created=[];
  const createElement=tag=>{
@@ -65,7 +65,13 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
  }
  const fetch=async(url,options)=>{
   calls.push({url:String(url),options});
-  if(String(url).includes('client-config.json'))return configUnavailable?{ok:false,status:503}:{ok:true,json:async()=>({schema:1,enabled,endpoint:enabled?'https://rooms.climboria.fun/':null})};
+  if(String(url).includes('client-config.json')){
+   state.configCalls++;
+   if(state.configCalls===1&&configGate)await configGate;
+   if(configUnavailable||state.configFailures-->0)return {ok:false,status:503};
+   return {ok:true,json:async()=>({schema:configBadSchema?2:1,enabled,
+    endpoint:enabled?'https://rooms.climboria.fun/':null})};
+  }
   if(String(url)==='https://rooms.climboria.fun/ticket'){
    assert.equal(options.headers.Authorization,'Bearer '+state.session?.access_token);
    if(ticketGate)await ticketGate;
@@ -206,19 +212,54 @@ test('origin-denied game ticket stays offline without fake peers or chat',async(
  assert.ok(h.created.some(node=>node.id==='climboria-room-status'&&node.textContent.includes('ROOM ACCESS DENIED')));
 });
 
-test('multiplayer config failures retry and show visible truthful status, never fake a chat',async()=>{
+test('multiplayer config failures stay visibly retryable without fake chat or socket',async()=>{
  const h=harness(true,{configUnavailable:true});
  await flush();
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'checking');
- assert.equal(h.runNextTimer(),600);
- await flush();
- assert.equal(h.runNextTimer(),600);
- await flush();
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'config-unavailable');
+ assert.equal(h.runNextTimer(),600);
+ await flush();
+ assert.equal(h.runNextTimer(),600);
+ await flush();
+ assert.equal(h.runNextTimer(),3000,'temporary CDN outage must keep a slow retry alive');
+ await flush();
+ assert.equal(h.state.configCalls,4,'a fourth config attempt must be possible');
  assert.equal(h.clients.length,0);
  assert.equal(h.adds.length,0);
  assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false);
  assert.ok(h.created.some(node=>node.id==='climboria-room-status'&&node.textContent.includes('SETTINGS UNAVAILABLE')));
+});
+test('temporary multiplayer config outage recovers after the old three-attempt limit',async()=>{
+ const h=harness(true,{configFailures:4});
+ await flush();
+ for(const delay of [600,600,3000,3000]){
+  assert.equal(h.runNextTimer(),delay,'retry backoff must be bounded');
+  await flush();
+ }
+ assert.equal(h.state.configCalls,5);
+ await waitFor(()=>h.clients.length===1);
+ assert.equal(h.clients.length,1,'same Game page must authenticate after CDN recovers');
+ assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false,
+  'successful config alone never unlocks chat without a trusted spawn');
+});
+test('stalled Game room config fetch is bounded and recovers on a second request',async()=>{
+ const h=harness(true,{configGate:new Promise(()=>{})});
+ await flush();
+ assert.equal(h.clients.length,0);
+ assert.equal(h.runNextTimer(),8000,'config fetch and body parsing must have a deadline');
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'config-unavailable');
+ assert.equal(h.runNextTimer(),600);
+ await flush();await waitFor(()=>h.clients.length===1);
+ assert.equal(h.state.configCalls,2);
+ assert.equal(h.clients.length,1,'hung config response must not block recovery forever');
+});
+test('invalid multiplayer settings schema fails closed with no retries or room socket',async()=>{
+ const h=harness(true,{configBadSchema:true});
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'config-unavailable');
+ assert.equal(h.clients.length,0);
+ assert.equal(h.state.configCalls,1);
+ assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false);
 });
 test('live Game maps the touch return event to its existing authorized local Digit1 teleport',()=>{
  const game=readFileSync('game/play.html','utf8');
@@ -226,7 +267,7 @@ test('live Game maps the touch return event to its existing authorized local Dig
   'Game must handle touch request with existing local Sanctuary teleport only');
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261118-slow-boot-7/,
+ assert.match(game,/client-presence\.js\?v=20261118-config-retry-8/,
   'production Game must request the fresh mobile room client');
 });
 
