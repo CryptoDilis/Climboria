@@ -7,7 +7,7 @@ import {TextEncoder} from 'node:util';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[]}={}){
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false}={}){
  const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses],ticketPayloads:[...ticketPayloads]};
  const authListeners=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],calls=[],timers=[],created=[];
@@ -36,6 +36,12 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
    getSession:async()=>{const snapshot=state.session;if(sessionGate)await sessionGate;return {data:{session:snapshot}}},
    onAuthStateChange:fn=>{authListeners.push(fn);return {data:{subscription:{unsubscribe(){const i=authListeners.indexOf(fn);if(i>=0)authListeners.splice(i,1)}}}}}
   }},addEventListener(){}};
+ const lateAuth=window.__CLIMBORIA_GAME_SAVE_CLIENT;
+ const latePeers=window.__CLIMBORIA_GAME_PEERS;
+ if(delayedClients){
+  delete window.__CLIMBORIA_GAME_SAVE_CLIENT;
+  delete window.__CLIMBORIA_GAME_PEERS;
+ }
  class Socket{
   static OPEN=1;static CLOSED=3;
   constructor(url,protocols){this.url=url;this.protocols=protocols;this.readyState=1;this.sent=[];clients.push(this)}
@@ -63,6 +69,10 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
   setInterval:()=>1,clearInterval(){},clearTimeout:id=>{if(timers[id-1])timers[id-1].cancelled=true},console};
  vm.runInNewContext(source,context,{filename:'client-presence.js'});
  return {window,document,clients,adds,moves,removes,punches,calls,timers,created,
+  releaseGameClients:()=>{
+   window.__CLIMBORIA_GAME_SAVE_CLIENT=lateAuth;
+   window.__CLIMBORIA_GAME_PEERS=latePeers;
+  },
   authChange:(session,event=session?'SIGNED_IN':'SIGNED_OUT')=>{
    state.session=session;
    for(const fn of [...authListeners])fn(event,session);
@@ -90,6 +100,43 @@ test('disabled multiplayer never creates fake socket or player',async()=>{
  assert.equal(h.clients.length,0);assert.equal(h.adds.length,0);
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'disabled');
 });
+test('live Game waits for delayed Supabase and renderer instead of permanently losing multiplayer and World Chat',async()=>{
+ const h=harness(true,{delayedClients:true});
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'starting');
+ assert.equal(h.clients.length,0);
+ assert.ok(h.created.some(node=>node.id==='climboria-room-status'&&node.textContent.includes('LOADING GAME')));
+ h.releaseGameClients();
+ assert.equal(h.runNextTimer(),500);
+ await flush();
+ await waitFor(()=>h.clients.length===1);
+ assert.equal(h.clients.length,1);
+ const ws=h.clients[0];
+ ws.onopen();
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'c'.repeat(32),peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:'s_'+'c'.repeat(32),position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.ok(h.created.some(node=>node.id==='climboria-world-chat-toggle'));
+});
+test('expired registered session ticket gives clear sign-in status and no fake chat',async()=>{
+ const h=harness(true,{ticketStatuses:[401]});
+ await flush();
+ await waitFor(()=>h.document.documentElement.dataset.climboriaMultiplayer==='login-required');
+ assert.equal(h.clients.length,0);
+ assert.equal(h.adds.length,0);
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'login-required');
+ assert.ok(h.created.some(node=>node.id==='climboria-room-status'&&node.textContent.includes('SIGN IN AGAIN')));
+ assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false);
+});
+test('origin-denied game ticket stays offline without fake peers or chat',async()=>{
+ const h=harness(true,{ticketStatuses:[403]});
+ await flush();
+ await waitFor(()=>h.document.documentElement.dataset.climboriaMultiplayer==='offline');
+ assert.equal(h.clients.length,0);
+ assert.equal(h.adds.length,0);
+ assert.ok(h.created.some(node=>node.id==='climboria-room-status'&&node.textContent.includes('ROOM ACCESS DENIED')));
+});
+
 test('real authenticated WebSocket messages are required before peers appear',async()=>{
  const h=harness(true);await flush();
  await waitFor(()=>h.clients.length===1||h.document.documentElement.dataset.climboriaMultiplayer==='offline');
