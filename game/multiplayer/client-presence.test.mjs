@@ -760,6 +760,48 @@ test('logout during pending WebSocket admission cancels timer without reconnect'
  assert.equal(h.adds.length,0,'stale socket must not add ghost peer models');
 });
 
+test('real hero outside Sanctuary must return before issuing a room ticket, then reconnects',async()=>{
+ const h=harness(true);
+ h.window.__climboriaJarrellsPeak.player.x=70;
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'awaiting-sanctuary');
+ assert.equal(h.clients.length,0);
+ assert.equal(h.calls.filter(c=>c.url.includes('/ticket')).length,0,
+  'out-of-Sanctuary initial position must never consume a room ticket');
+ assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false);
+ h.window.__climboriaJarrellsPeak.player.x=0;
+ assert.equal(h.runNextTimer(),1200);
+ await flush();await waitFor(()=>h.clients.length===1);
+ assert.equal(h.clients.length,1);
+ const socket=h.clients[0];socket.onopen();
+ assert.equal(socket.sent.at(-1).type,'spawn');
+ const id='s_'+'c'.repeat(32);
+ socket.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
+ socket.onmessage({data:JSON.stringify({type:'spawn-accepted',id,
+  position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.ok(h.created.some(el=>el.id==='climboria-world-chat-toggle'));
+});
+
+test('moving outside Sanctuary while room ticket is pending cannot spoof an initial spawn',async()=>{
+ let release;
+ const gate=new Promise(resolve=>{release=resolve});
+ const h=harness(true,{ticketGate:gate});
+ await flush();
+ assert.ok(h.calls.some(c=>c.url.endsWith('/ticket')));
+ h.window.__climboriaJarrellsPeak.player.x=100;
+ release();
+ await flush();await waitFor(()=>h.clients.length===1);
+ const old=h.clients[0];old.onopen();
+ assert.equal(old.sent.length,0,'invalid first position must not be sent');
+ assert.equal(old.readyState,3);
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'awaiting-sanctuary');
+ h.window.__climboriaJarrellsPeak.player.x=0;
+ assert.equal(h.runNextTimer(),1200);
+ await flush();await waitFor(()=>h.clients.length===2);
+ assert.equal(h.clients.length,2,'real return to Sanctuary must allow fresh ticket and socket');
+});
+
 test('unconfirmed spawn cannot advertise connection, chat, or duel UI',async()=>{
  const h=harness(true);await flush();
  await waitFor(()=>h.clients.length===1);
@@ -772,11 +814,20 @@ test('unconfirmed spawn cannot advertise connection, chat, or duel UI',async()=>
  assert.equal(h.created.some(el=>el.id==='climboria-duel-toggle'),false);
  socket.onmessage({data:JSON.stringify({type:'rejected',reason:'invalid-initial-spawn'})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'spawn-rejected');
- socket.onmessage({data:JSON.stringify({type:'spawn-accepted',
+ assert.equal(socket.readyState,3,'rejected first spawn must close the unusable socket');
+ socket.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false,
+  'late packets from the rejected socket cannot authorize World Chat');
+ assert.equal(h.runNextTimer(),1200,'rejected admission must schedule a safe retry');
+ await flush();
+ await waitFor(()=>h.clients.length===2);
+ const fresh=h.clients[1];fresh.onopen();
+ fresh.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
+ fresh.onmessage({data:JSON.stringify({type:'spawn-accepted',
   id:'s_'+'d'.repeat(32),position:{x:0,y:9.55,z:-30},peers:[]})});
  assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false,
-  'another session ID cannot authorize local World Chat');
- socket.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
+  'wrong second session ID cannot authorize World Chat');
+ fresh.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
  assert.ok(h.created.some(el=>el.id==='climboria-world-chat-toggle'));
  assert.ok(h.created.some(el=>el.id==='climboria-duel-toggle'));
