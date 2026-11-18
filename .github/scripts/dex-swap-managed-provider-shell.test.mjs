@@ -8,14 +8,17 @@ import {
   integratedTerminalOptions,
   isCanonicalSolanaMint,
   isManagedProviderSurfaceApproved,
+  managedProviderStatusUrl,
   initializeManagedSwapHost
 } from "../../dex/provider-managed-swap.mjs";
 
 const EXISTING_API_STATUS_URL = "https://api.climboria.fun/api/swap/provider-status";
+const DEX_API_STATUS_URL = "https://api.climboria.fun/api/dex/provider-status";
 const approved = Object.freeze({
   enabled: true,
   runtimeApproved: true,
   surfaces: Object.freeze({swap: true, dex: true}),
+  dexRuntimeStatusUrl: DEX_API_STATUS_URL,
   provider: "jupiter-terminal",
   scriptUrl: "https://plugin.jup.ag/plugin-1.0.18.js",
   integrity: "sha384-" + "A".repeat(64)
@@ -26,7 +29,8 @@ function withRuntime(scope, allowed = () => true) {
   return {
     ...scope,
     async fetch(path, options) {
-      assert.equal(path, "/swap-runtime-status.json");
+      assert.ok(path === "/swap-runtime-status.json" || path === DEX_API_STATUS_URL,
+        "Only the selected Swap or independent DEX approval service may be checked");
       assert.equal(options.cache, "no-store");
       assert.equal(options.redirect, "error");
       return {
@@ -1498,4 +1502,40 @@ test("public Solana Swap disclosure distinguishes independently approved Jupiter
   assert.match(worker, /^const EXECUTION_SECURITY_REVIEW_COMPLETE = false;$/m);
   assert.match(source, /data-climboria-managed-swap-surface="swap"/);
   assert.match(source, /href="https:\/\/jup\.ag\/"[^>]*target="_blank"/);
+});
+
+
+
+test("Solana DEX uses only its independent, exact source-OFF status URL, never live Swap status", async () => {
+  assert.equal(managedProviderStatusUrl(approved,"dex"), DEX_API_STATUS_URL);
+  assert.equal(managedProviderStatusUrl(approved,"swap"), "/swap-runtime-status.json");
+  assert.equal(managedProviderStatusUrl({...approved,runtimeStatusUrl:EXISTING_API_STATUS_URL},"swap"),EXISTING_API_STATUS_URL);
+  for (const wrong of [
+    null,undefined,EXISTING_API_STATUS_URL,"/swap-runtime-status.json",
+    DEX_API_STATUS_URL+"?enabled=true",
+    "https://api.climboria.fun.evil.example/api/dex/provider-status"
+  ]) {
+    assert.equal(managedProviderStatusUrl({...approved,dexRuntimeStatusUrl:wrong},"dex"),null,
+      "No Swap status, malformed or attacker URL may authorize DEX");
+  }
+  assert.equal(managedProviderStatusUrl({...approved,runtimeStatusUrl:DEX_API_STATUS_URL},"swap"),null);
+  assert.equal(managedProviderStatusUrl(approved,"climbx"),null);
+  const seen=[];
+  const dexScope={async fetch(url,options){
+    seen.push(url);
+    assert.equal(url,DEX_API_STATUS_URL);
+    assert.equal(options.cache,"no-store");
+    assert.equal(options.redirect,"error");
+    return {status:200,headers:{get:()=> "no-store"},json:async()=>({enabled:false})};
+  }};
+  assert.equal(await isManagedSwapRuntimeApproved(dexScope,DEX_API_STATUS_URL),false);
+  assert.deepEqual(seen,[DEX_API_STATUS_URL],"DEX must never read Swap's ON status");
+  const cfg = readFileSync(new URL("../../swap-config.js", import.meta.url),"utf8");
+  const worker = readFileSync(new URL("../../dex/swap-proxy/src/index.mjs", import.meta.url),"utf8");
+  assert.match(cfg,/dexRuntimeStatusUrl:\s*"https:\/\/api\.climboria\.fun\/api\/dex\/provider-status"/);
+  assert.match(cfg,/surfaces:\s*Object\.freeze\(\{\s*swap:\s*true,\s*dex:\s*false\s*\}\)/);
+  assert.match(worker,/^const THIRD_PARTY_JUPITER_WIDGET_APPROVED = true;$/m);
+  assert.match(worker,/^const THIRD_PARTY_JUPITER_DEX_APPROVED = false;$/m);
+  assert.match(worker,/^const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;$/m);
+  assert.match(worker,/^const EXECUTION_SECURITY_REVIEW_COMPLETE = false;$/m);
 });
