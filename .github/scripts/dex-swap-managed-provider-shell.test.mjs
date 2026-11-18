@@ -8,14 +8,17 @@ import {
   integratedTerminalOptions,
   isCanonicalSolanaMint,
   isManagedProviderSurfaceApproved,
+  managedProviderStatusUrl,
   initializeManagedSwapHost
 } from "../../dex/provider-managed-swap.mjs";
 
 const EXISTING_API_STATUS_URL = "https://api.climboria.fun/api/swap/provider-status";
+const DEX_API_STATUS_URL = "https://api.climboria.fun/api/dex/provider-status";
 const approved = Object.freeze({
   enabled: true,
   runtimeApproved: true,
   surfaces: Object.freeze({swap: true, dex: true}),
+  dexRuntimeStatusUrl: DEX_API_STATUS_URL,
   provider: "jupiter-terminal",
   scriptUrl: "https://plugin.jup.ag/plugin-1.0.18.js",
   integrity: "sha384-" + "A".repeat(64)
@@ -26,7 +29,8 @@ function withRuntime(scope, allowed = () => true) {
   return {
     ...scope,
     async fetch(path, options) {
-      assert.equal(path, "/swap-runtime-status.json");
+      assert.ok(path === "/swap-runtime-status.json" || path === DEX_API_STATUS_URL,
+        "no status origin other than exact Swap test URL or DEX API URL");
       assert.equal(options.cache, "no-store");
       assert.equal(options.redirect, "error");
       return {
@@ -91,6 +95,7 @@ test("Swap-only Plugin candidate is gated by source-OFF API status and native tr
   assert.match(cfg, /managedProvider:\s*Object\.freeze\(\{\s*enabled:\s*true/);
   assert.match(cfg, /runtimeApproved:\s*true/);
   assert.match(cfg, /runtimeStatusUrl:\s*"https:\/\/api\.climboria\.fun\/api\/swap\/provider-status"/);
+  assert.match(cfg, /dexRuntimeStatusUrl:\s*"https:\/\/api\.climboria\.fun\/api\/dex\/provider-status"/);
   assert.match(cfg, /surfaces:\s*Object\.freeze\(\{\s*swap:\s*true,\s*dex:\s*false\s*\}\)/);
   assert.match(cfg, /scriptUrl:\s*"https:\/\/plugin\.jup\.ag\/plugin-1\.0\.18\.js"/);
   assert.match(cfg, /integrity:\s*"sha384-aPExK0yy7w5DZjkLRMWvSKhuEz9kvz\/9vESgWrctox51YnSfx6WWIWrsZBHqVJSy"/);
@@ -151,6 +156,47 @@ test("separate provider surfaces prevent Swap activation from authorizing DEX", 
   for (const unknown of ["", "climbx", "launchpad", "Swap", null, undefined]) {
     assert.equal(isManagedProviderSurfaceApproved(approved, unknown), false);
   }
+});
+
+test("DEX requires its own exact provider approval URL, never Swap status", async () => {
+  assert.equal(managedProviderStatusUrl(approved,"dex"),DEX_API_STATUS_URL);
+  assert.equal(managedProviderStatusUrl(approved,"swap"),"/swap-runtime-status.json");
+  assert.equal(managedProviderStatusUrl({...approved,runtimeStatusUrl:EXISTING_API_STATUS_URL},"swap"),
+    EXISTING_API_STATUS_URL);
+  for (const wrong of [null,undefined,"",EXISTING_API_STATUS_URL,
+    "/swap-runtime-status.json",DEX_API_STATUS_URL+"?enabled=true",
+    "https://api.climboria.fun.evil.example/api/dex/provider-status"]) {
+    const invalid={...approved,dexRuntimeStatusUrl:wrong};
+    assert.equal(managedProviderStatusUrl(invalid,"dex"),null);
+    const ui=createDom({surface:"dex"});
+    const state=initializeManagedSwapHost({doc:ui.doc,scope:{},config:invalid});
+    assert.deepEqual(state,{ready:false,reason:"provider-not-approved"});
+    assert.equal(ui.btn.hidden,true);
+    assert.equal(ui.created.length,0);
+  }
+  assert.equal(managedProviderStatusUrl({...approved,runtimeStatusUrl:DEX_API_STATUS_URL},"swap"),null,
+    "DEX ON cannot replace the Swap approval source");
+  assert.equal(managedProviderStatusUrl(approved,"climbx"),null);
+
+  const ui=createDom({surface:"dex"});
+  const queried=[];
+  let vendorInit=0;
+  const scope={Jupiter:{init(){vendorInit++;}},async fetch(url,opts){
+    queried.push(url);
+    assert.equal(opts.cache,"no-store");
+    return {status:200,headers:{get:()=> "no-store"},json:async()=>({
+      enabled:url===EXISTING_API_STATUS_URL // Swap approval TRUE, DEX source FALSE
+    })};
+  }};
+  const outcome=initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  assert.equal(outcome.ready,true);
+  await ui.btn.click();
+  assert.deepEqual(queried,[DEX_API_STATUS_URL],
+    "DEX may not query or infer the Swap approval status");
+  assert.equal(vendorInit,0);
+  assert.equal(ui.created.length,0);
+  assert.equal(ui.btn.hidden,true,"independent DEX OFF status must conceal launcher");
+  assert.equal(ui.panel.hidden,true);
 });
 
 test("integrated widget target accepts only safe existing element IDs", () => {
