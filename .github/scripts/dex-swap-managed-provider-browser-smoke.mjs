@@ -18,6 +18,7 @@ const ORIGIN = "http://127.0.0.1:4173";
 // This does NOT validate real transitive vendor JS/CSS or authorize production.
 const SCRIPT_URL = "https://plugin.jup.ag/plugin-1.0.18.js";
 const API_STATUS_URL = "https://api.climboria.fun/api/swap/provider-status";
+const DEX_API_STATUS_URL = "https://api.climboria.fun/api/dex/provider-status";
 const MOCK_SCRIPT = [
   "window.Jupiter = {",
   " init: function(options) {",
@@ -40,15 +41,20 @@ function mockConfig(integrity = sri, runtimeStatusUrl = null) {
     "proxyEnabled:true,enabled:false,apiBase:'https://api.climboria.fun'," +
     "managedProvider:Object.freeze({enabled:true,runtimeApproved:true," +
     "surfaces:Object.freeze({swap:true,dex:true}),provider:'jupiter-terminal'," +
+    "dexRuntimeStatusUrl:'" + DEX_API_STATUS_URL + "'," +
     "scriptUrl:'" + SCRIPT_URL + "',integrity:'" + integrity + "'" +
     (runtimeStatusUrl ? ",runtimeStatusUrl:'" + runtimeStatusUrl + "'" : "") + "})," +
     "revenue:Object.freeze({integratorFeeTargetBps:50,feeCollectionEnabled:false," +
     "feeRecipient:null,providerFeeIntegrationVerified:false})});";
 }
 
-function approveRuntime(page) {
-  return page.route("**/swap-runtime-status.json", route => route.fulfill({
+async function approveRuntime(page) {
+  await page.route("**/swap-runtime-status.json", route => route.fulfill({
     json: { enabled: true }, headers: { "Cache-Control": "no-store" }
+  }));
+  // Synthetic DEX approval only; the real DEX Worker source gate remains OFF.
+  await page.route(DEX_API_STATUS_URL, route => route.fulfill({
+    json:{enabled:true}, headers:{"Cache-Control":"no-store","Access-Control-Allow-Origin":"*"}
   }));
 }
 
@@ -56,12 +62,20 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
   const page = await browser.newPage({viewport:{width: path === "/dex/" ? 390 : 1280,height:850}});
   let scriptLoads = 0;
   const forbidden = [];
+  const approvalRequests = [];
+  page.on("request", req => {
+    if (req.url() === API_STATUS_URL || req.url() === DEX_API_STATUS_URL ||
+        req.url().endsWith("/swap-runtime-status.json")) approvalRequests.push(req.url());
+  });
   page.on("request", req => {
     if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(req.url())) forbidden.push(req.url());
   });
   page.on("dialog", dialog => { throw Error("Unexpected popup: " + dialog.message()); });
   if (apiStatus) {
     await page.route(API_STATUS_URL, route => route.fulfill({
+      json:{enabled:true}, headers:{"Cache-Control":"no-store","Access-Control-Allow-Origin":"*"}
+    }));
+    await page.route(DEX_API_STATUS_URL, route => route.fulfill({
       json:{enabled:true}, headers:{"Cache-Control":"no-store","Access-Control-Allow-Origin":"*"}
     }));
   } else await approveRuntime(page);
@@ -96,6 +110,11 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
     assert.equal(scriptLoads,0,"widget script must not load before user gesture");
     assert.equal(await page.locator("[data-climboria-managed-swap-panel]").isVisible(),false);
     assert.deepEqual(forbidden,[],"old custom execution endpoints must never be requested");
+    const expectedStatus = path === "/dex/" ? DEX_API_STATUS_URL :
+      (apiStatus ? API_STATUS_URL : ORIGIN + "/swap-runtime-status.json");
+    assert.ok(approvalRequests.length >= 1,"surface must check its independent status");
+    assert.ok(approvalRequests.every(url => url === expectedStatus),
+      "DEX must never inherit Swap status; Swap must not use DEX status");
 
     await button.click();
     const panel = page.locator("[data-climboria-managed-swap-panel]");
