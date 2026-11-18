@@ -181,7 +181,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     // The first-party picker should send a pair-change notification, but an
     // interrupted or missed event must not leave the previous vendor wallet
     // form visible until the next user click or tab return.
-    if (mounted && !sameMountedPair()) {
+    if (mounted && !sameMountedTradeIntent()) {
       hideRevoked();
       status.textContent = stalePairMessage;
       return;
@@ -193,7 +193,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
       if (requestId !== openRequestId || panel.hidden) return;
       // The selected mints may have changed while the uncached approval fetch
       // was pending. Revalidate immediately before retaining the mounted UI.
-      if (mounted && !sameMountedPair()) {
+      if (mounted && !sameMountedTradeIntent()) {
         hideRevoked();
         status.textContent = stalePairMessage;
       } else if (!stillApproved) {
@@ -217,6 +217,12 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
        selected.inputMint === mountedPair.inputMint &&
        selected.outputMint === mountedPair.outputMint);
   };
+  // A missed UI network-change event can leave the Solana mint attributes
+  // unchanged while the active Swap tab has already switched to Base.
+  // Only a still-selected Solana pair is safe to keep in the old vendor UI.
+  const sameMountedTradeIntent = () =>
+    sameMountedPair() && (surface !== "swap" ||
+      panel.getAttribute?.("data-climboria-managed-swap-network") === "solana");
   const stalePairMessage = "Selected token or trade direction changed. The previous Jupiter widget was closed to avoid trading an outdated pair. Refresh the page, select the intended mints, and open a new provider session. Existing wallet prompts or submitted transactions cannot be cancelled.";
   const hideRevoked = () => {
     stopActiveApprovalChecks();
@@ -276,7 +282,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         // conceal the *already mounted* Jupiter wallet form for the old mints.
         // Otherwise the invalid-selection explanation below could re-expose
         // a stale third-party widget without invoking any fresh provider init.
-        if (mounted && !sameMountedPair()) {
+        if (mounted && !sameMountedTradeIntent()) {
           hideRevoked();
           status.textContent = stalePairMessage;
           return;
@@ -305,7 +311,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         // Never reopen the old wallet interface after the user changes a
         // Solana token or direction (or clears the pair for Limit/invalid mint).
         // Check BEFORE revealing either the first-party or vendor-owned UI.
-        if (mounted && !sameMountedPair()) {
+        if (mounted && !sameMountedTradeIntent()) {
           hideRevoked();
           status.textContent = stalePairMessage;
           return;
@@ -498,7 +504,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
       }
       // The market can change while this tab was hidden or the status
       // request was pending. Never resume a mounted form for the old mints.
-      if (!sameMountedPair()) {
+      if (!sameMountedTradeIntent()) {
         hideRevoked();
         status.textContent = stalePairMessage;
         return;
