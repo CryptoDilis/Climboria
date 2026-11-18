@@ -357,6 +357,23 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         // partially mounted provider root immediately, not only on resolution.
         providerInitInFlight = true;
         await Promise.resolve(scope.Jupiter.init(options));
+        // Even when the first-party selector misses its pair-change event,
+        // a vendor init can resolve after the user changed mints/network.
+        // Do not expose or record a mounted wallet form for the old selection.
+        const nowSelected = readSelectedProviderPair(panel);
+        const sameInitializedPair = selection === null ? nowSelected === null :
+          nowSelected !== null && selection.inputMint === nowSelected.inputMint &&
+          selection.outputMint === nowSelected.outputMint;
+        if (requestId === openRequestId && !panel.hidden &&
+            (!sameInitializedPair || (surface === "swap" &&
+              panel.getAttribute?.("data-climboria-managed-swap-network") !== "solana"))) {
+          // Keep providerInitInFlight true until hideRevoked() has closed the
+          // vendor-owned root, including any UI built by async init().
+          hideRevoked();
+          status.textContent = stalePairMessage;
+          providerInitInFlight = false;
+          return;
+        }
         providerInitInFlight = false;
         // Late vendor init may finish after close/revoke. Hide its own overlay,
         // not only the first-party panel. This cannot cancel wallet prompts.
