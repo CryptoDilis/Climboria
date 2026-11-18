@@ -1879,13 +1879,8 @@ function tp(x,z,yaw){
 }
 const TP={1:()=>tp(0,-30,0),2:()=>tp(POI.summit.px+6,POI.summit.pz+6,Math.PI*.75),3:()=>{const c=POI.cave;tp(c.x+c.dir.x*45,c.z+c.dir.z*45,Math.atan2(c.dir.x,c.dir.z))},
  4:()=>tp(RICE.x-60,RICE.z+40,Math.PI*.6),5:()=>tp(100,1000,Math.PI),6:()=>tp(-960,0,Math.PI/2),7:()=>tp(-170,160,0),8:()=>tp(-150,-120,Math.PI*.6)};
-// The authenticated room client can ask for the same local Sanctuary
-// teleport as Digit1 when a registered player cannot join from elsewhere.
-// An explicit mobile tap is required. No server/player identity is faked.
-document.addEventListener('climboria:room-return-to-sanctuary',()=>{
- if(!window.__climboriaGameReady||P.mode!=='walk')return;
- TP[1]();
-});
+// No forced Sanctuary return: saved locations are respected. Initial room
+// admission is validated against the registered user's trusted server anchor.
 let punchEndAt=0,punchLastAt=-100000;
 const PUNCH_COST=5,PUNCH_COOLDOWN_MS=900,PUNCH_DURATION_MS=650;
 // Local punch animation only. Trusted backend required for PvP hit/damage and loot.
@@ -2202,7 +2197,7 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
   },
   restore(data) {
     if (!data || typeof data !== 'object' || data.version !== 1) return false;
-    restoreExplorerPosition(data.player);
+    if(!window.ENDLESS_WILDS?.roomResumeVerified)restoreExplorerPosition(data.player);
 
     const savedInventory = Array.isArray(data.inventory)
       ? data.inventory
@@ -3654,6 +3649,15 @@ window.__CLIMBORIA_GAME_PEERS={
 };
 
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
+// A room may re-anchor a registered player only using coordinates that came
+// from the authenticated ticket's server-validated last position. This local
+// helper never grants WebSocket admission or combat/loot authority.
+window.ENDLESS_WILDS.roomResumeVerified=false;
+window.ENDLESS_WILDS.resumeAtRoomPosition=p=>{
+ if(window.__climboriaGuestMode||!p||!['x','y','z'].every(k=>Number.isFinite(p[k]))||
+   Math.abs(p.x)>10000||Math.abs(p.z)>10000||p.y< -200||p.y>2000)return false;
+ return restoreExplorerPosition({x:p.x,z:p.z,yaw:P.yaw});
+};
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
 let ready=false,Tm=0,hudT=0,last=performance.now(),tmpC=new T3.Color();
