@@ -30,7 +30,16 @@ const MOCK_SCRIPT = [
   "  label.dataset.climboriaTestWidget = 'rendered';",
   "  label.textContent = 'Mock provider widget - no transaction';",
   "  container.appendChild(label);",
+  "  window.__mockProviderRoot = label;",
   "  return Promise.resolve();",
+  " },",
+  " close: function() {",
+  "  window.__mockProviderCloseCalls = (window.__mockProviderCloseCalls || 0) + 1;",
+  "  if (window.__mockProviderRoot) window.__mockProviderRoot.style.display = 'none';",
+  " },",
+  " resume: function() {",
+  "  window.__mockProviderResumeCalls = (window.__mockProviderResumeCalls || 0) + 1;",
+  "  if (window.__mockProviderRoot) window.__mockProviderRoot.style.display = 'block';",
   " }",
   "};"
 ].join("\n");
