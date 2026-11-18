@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## GAME BUG AUDIT — 11-SCREENSHOT VISUAL REVIEW AFTER #647 (2026-11-18 PHT)
+
+- **Actual files inspected:** Downloaded the exact-head [Game gameplay smoke #44330824821](https://github.com/CryptoDilis/Climboria/actions/runs/44330824821) artifact `climboria-gameplay-screenshots` **#14439916745** (6.6 MB ZIP) and visually inspected all **11 PNGs**: Hero Creator desktop, Sanctuary desktop/mobile, mountain cliff desktop/mobile, cave entrance desktop/mobile, cave interior desktop/mobile and coastal exit desktop/mobile. Not a synthetic proof of registered room connection, since smoke pages show `MULTIPLAYER · SIGN IN REQUIRED`.
+- **Observed:** Hero Creator UI and complete Adventurer figure visible, Sanctuary hero and mobile ATTACK/DIVE/USE/RUN/JUMP controls displayed, both alpine viewports show actual mountains rather than the old invalid green wall, cave entrance arch and interior passage visible on both screen sizes, coastal cave exit screenshots show a real opening with sea/shore visible. No new obvious black WebGL frame, vanished hero, blank modal, or catastrophic mobile control overlap in these sampled images. Mountain remains visually stylized orange/brown with erosion banding; screenshots alone do not prove forest art realism, walkable physics, physical Android FPS, or production World Chat.
+- **Release boundary:** The exact reviewed PR was Game config retry only; there was no Game 3D, model, weather, combat or map CSS modification. Even all 11 visually plausible CI screenshots do not prove two independently registered players can see or chat with each other.
+- **NEXT:** Preserve these screenshots as visual baseline for subsequent Game-only changes; complete postmerge Jarrell's Peak Gameplay run #44332672807, live two registered-user peer/chat acceptance, and physical mobile FPS testing. Defer high-poly Meshy asset replacement until binary uploads/performance checks. Never conflate this visual QA with live multiplayer.
+
+---
+
 ## GAME CONFIG OUTAGE FIX — VERIFIED MERGE & PRODUCTION PAGES (2026-11-18 PHT)
 
 - **Merged Game-only [PR #647](https://github.com/CryptoDilis/Climboria/pull/647)** to `main` as squash SHA `c5e8cab0917aa3673d159d87ad8613fcff489e6b`; original exact PR HEAD `903e8e074384bea314b82a4aa948962e5cac25ce`. Draft conversion permission raced with merge; redundant PR [#648](https://github.com/CryptoDilis/Climboria/pull/648) was closed **unmerged** to avoid applying the same patch twice. Only `game/multiplayer/client-presence.js`, `game/multiplayer/client-presence.test.mjs`, `game/play.html`, and this Game record changed.
