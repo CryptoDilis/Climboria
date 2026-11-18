@@ -192,6 +192,10 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
           // DEX had no valid mint selection when the provider was mounted.
           const limit = document.querySelector('[data-dex-order="limit"]');
           if (!limit) throw new Error("DEX Limit trade control not found");
+          // Production keeps Limit disabled. In this synthetic-only fixture,
+          // enable this control in memory solely to exercise its existing
+          // event handler; do not change production HTML or release gates.
+          limit.disabled = false;
           limit.click();
         }
         const host = document.querySelector("[data-climboria-managed-swap-panel]");
