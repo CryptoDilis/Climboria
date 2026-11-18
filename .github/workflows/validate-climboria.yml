@@ -55,6 +55,10 @@ jobs:
           # Exercise the *real* Worker with a source-only OFF revert,
           # without touching Cloudflare or submitting any transaction.
           node --test .github/scripts/dex-swap-release-rollback-contract.test.mjs
+          # Prevent accidental auto-deployment of a provider-ON release after
+          # merge; emergency source-OFF rollback must remain available.
+          node --check .github/scripts/swap-release-sha-guard.mjs
+          node --test .github/scripts/swap-release-sha-guard.test.mjs
           # Offline only: verify immutable known-vendor asset allowlist and
           # SHA-384 verifier without contacting any third-party CDN.
           node --check .github/scripts/jupiter-plugin-asset-drift.mjs
