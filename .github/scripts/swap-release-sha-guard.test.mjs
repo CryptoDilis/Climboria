@@ -57,3 +57,19 @@ test("actual candidate source is either strict ON or rollback OFF without native
   const response = validateSwapReleaseAuthorization(SOURCE,reviewed,reviewed);
   assert.ok(["source-off","source-on"].includes(response.mode));
 });
+
+test("production Worker workflow must check approval BEFORE writing secrets or deploying", () => {
+  const yaml = readFileSync(new URL("../workflows/deploy-climboria-api.yml", import.meta.url), "utf8");
+  const approvalStep = yaml.indexOf("- name: Enforce exact-commit operator approval before source-ON Swap rollout");
+  const variable = yaml.indexOf("CLIMBORIA_SWAP_RELEASE_APPROVED_SHA: ${{ vars.CLIMBORIA_SWAP_RELEASE_APPROVED_SHA }}");
+  const script = yaml.indexOf("node .github/scripts/swap-release-sha-guard.mjs");
+  const firstMutation = yaml.indexOf("- name: Set Jupiter server key as a Worker secret");
+  const deploy = yaml.indexOf("- name: Deploy Worker");
+  assert.ok(approvalStep >= 0, "deploy workflow must have an explicit release-authorization step");
+  assert.ok(variable > approvalStep, "guard must receive the exact operator-controlled Actions variable");
+  assert.ok(script > variable && script < firstMutation,
+    "guard must execute before updating Cloudflare secrets");
+  assert.ok(deploy > script, "guard must execute before Wrangler production deployment");
+  assert.match(yaml, /if: github.ref == 'refs\/heads\/main'/,
+    "release may only deploy from the main branch");
+});
