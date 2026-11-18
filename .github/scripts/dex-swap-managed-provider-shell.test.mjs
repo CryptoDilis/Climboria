@@ -1219,7 +1219,7 @@ test("both Climboria swap interfaces retain quote-only path and use isolated hos
   assert.equal([...code.matchAll(/\bfetch\s*\(/g)].length, 1);
   for (const file of ["swap/index.html", "dex/index.html"]) {
     const source = readFileSync(new URL("../../" + file, import.meta.url), "utf8");
-    assert.match(source, /\/dex\/provider-managed-swap\.mjs\?v=8/);
+    assert.match(source, /\/dex\/provider-managed-swap\.mjs\?v=9/);
     assert.match(source, /\/dex\/provider-managed-swap\.css\?v=2/);
     assert.match(source, /data-climboria-managed-swap-panel hidden/);
     assert.match(source, /data-climboria-managed-swap-open hidden/);
