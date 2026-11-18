@@ -247,6 +247,11 @@ browser or have the sign-in sessions.
    visible** (not just a loaded GLB or empty map marker), keyboard movement
    replication, **server-echoed** two-way World Chat, unsent draft
    preservation, render frames and removal/rejoin of a disconnected peer.
+   Rejoin now **also** requires the identical registered Supabase user ID
+   as before the disconnect and renewed scene-visible remote GLBs in both
+   browsers; a valid but different login, empty marker, or roster-only
+   reconnection must NEVER count as a full PASS. IDs remain only in private
+   process memory; console output shows fixed stage labels, not identities.
    It reports PASS only when every assertion succeeds. This check cannot
    prove the avatar is in the camera frustum or correctly rendered on physical
    hardware; visual review and real Android FPS remain separate.
