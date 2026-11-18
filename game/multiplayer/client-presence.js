@@ -250,7 +250,9 @@
   chatUi.toggle.textContent='HIDE CHAT';
   renderChatCount();
  }
- // Duel-request UI removed. Player ATTACK stays available at any time as\n // animation only; untrusted clients may not modify HP or loot.\n let sameAccountRetryButton=null;
+ // Duel-request UI removed. Player ATTACK stays available at any time as
+ // animation only; untrusted clients may not modify HP or loot.
+ let sameAccountRetryButton=null;
  function showStatus(value,message){
   doc.dataset.climboriaMultiplayer=value;
   if(!badge){badge=document.createElement('div');badge.id='climboria-room-status';badge.style.cssText=
