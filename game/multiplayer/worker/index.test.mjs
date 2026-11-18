@@ -13,6 +13,7 @@ const env=(doStub)=>({
 test('staging /ready is fail-closed without required bindings, never claims real multiplayer QA',async()=>{
  const health=await gateway.fetch(mkRequest('/health'),{});
  assert.equal(health.status,200,'deployed gateway health alone is not authenticated-room readiness');
+ assert.equal((await health.json()).nearbyChatEnabled,true,'health advertises deployed Nearby Chat without any credentials');
  const unknown=await gateway.fetch(mkRequest('/ready'),{});
  assert.equal(unknown.status,503,'empty environment cannot claim configured room');
  assert.deepEqual(await unknown.json(),{
