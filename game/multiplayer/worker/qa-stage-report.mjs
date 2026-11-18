@@ -15,6 +15,7 @@ const STAGES=Object.freeze({
  'peer-avatars':'Two reciprocal 3D GLB remote avatars and map peers',
  'movement-sync':'Physical keyboard movement replicated to the other player',
  'world-chat':'Bidirectional room-echoed World Chat and safe unsent draft',
+ 'nearby-chat':'Real two-player Nearby Chat with in-range overhead speech',
  'desktop-render':'Rendered Chrome frames (not physical Android FPS)',
  'disconnect-rejoin':'No ghost peer after leaving; authenticated room rejoin'
 });
