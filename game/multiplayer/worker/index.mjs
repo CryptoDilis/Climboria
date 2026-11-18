@@ -344,7 +344,8 @@ export class JarrellRoom {
     // A pending socket may have missed peer joins while waiting to spawn.
     // Reconcile only currently server-validated peers in the acceptance ack.
     const peers=this.room.snapshot().filter(peer=>peer.id!==id);
-    socket.send(JSON.stringify({type:'spawn-accepted',id,position:{...member.position},peers}));
+    socket.send(JSON.stringify({type:'spawn-accepted',id,position:{...member.position},peers,
+      nearbyChatEnabled:true}));
     this.room.broadcast({type:'player-moved',id,position:{...member.position}},id);
     return;
    }
