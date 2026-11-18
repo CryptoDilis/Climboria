@@ -854,16 +854,14 @@ try {
   // The launch card performs a full document navigation. Playwright's click()
   // already waits for that navigation; a concurrent waitForURL can miss the
   // same-document/fast navigation edge and time out after the target URL loaded.
-  // The menu must gate entry for guests, then unlock for a stored valid hero.
-  await menu.locator('.card[data-level="11"]').click();
-  if(!(await menu.locator('#heroEditor').isVisible())) errors.push('Jarrell launch card did not open Create Hero for a guest');
-  await menu.locator('#closeHeroEditor').click();
-  await menu.evaluate(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Smoke Explorer',model:'Adventurer',createdAt:'2026-11-14T00:00:00Z'})));
-  await menu.reload({waitUntil:'domcontentloaded'});
+  // A logged-out explorer enters the playable world as a no-save guest,
+  // even if a legacy hero record happens to exist in localStorage.
+  await menu.evaluate(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Legacy',model:'Adventurer'})));
   await menu.locator('.card[data-level="11"]').click();
   await menu.waitForLoadState('domcontentloaded');
   const launchUrl=new URL(menu.url());
-  if(!launchUrl.pathname.endsWith('/game/play.html')||launchUrl.searchParams.get('level')!=='11') errors.push('Jarrell’s Peak launch card did not navigate to level 11: '+menu.url());
+  if(!launchUrl.pathname.endsWith('/game/play.html')||launchUrl.searchParams.get('level')!=='11'||launchUrl.searchParams.get('guest')!=='1')
+   errors.push('Logged-out Jarrell launch must be temporary guest exploration: '+menu.url());
   if(launchUrl.searchParams.has('hero')) errors.push('Launch menu still forces a retired character selection query');
   await menu.close();
   await page.locator('#player-card').dispatchEvent('click');
