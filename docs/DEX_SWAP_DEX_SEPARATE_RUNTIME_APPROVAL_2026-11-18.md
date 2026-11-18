@@ -40,3 +40,31 @@ All five workflows completed **SUCCESS** for code/test commit `cb39ef80a01834483
 6. Update this handoff with the **documentation-inclusive head's** exact CI before calling its full PR snapshot green. Do not overwrite the oversized (>1MB) historical `docs/DEX_SWAP_LAUNCHPAD_DEVELOPMENT_RECORD.md` via an incomplete GitHub Contents response; this dated supplement and PR conversation are non-destructive durable records.
 
 **Not verified:** Any production Jupiter customer swap, DEX Buy/Sell trade, hosted plugin legal permission, transitive JS integrity, browser wallet signing, on-chain production finality, Base/EVM execution, release acceptance or deployed DEX endpoint. **No trading claim is authorized by this PR.**
+
+
+## 2026-11-18 continuation: real-browser Swap-ON / DEX-OFF negative release gate
+
+**Exact code/test commit:** [`32ccf478c26bb75bab9b72d4fa1c38d0b3e101ce`](https://github.com/CryptoDilis/Climboria/commit/32ccf478c26bb75bab9b72d4fa1c38d0b3e101ce), still on **unmerged draft PR #624**. **No production deployment, no release approval, no wallet connection and no customer trading.**
+
+### Why the additional browser case was needed
+The earlier DEX host and unit tests already required a separate runtime status path, and synthetic browser *positive* fixtures tested independent DEX ON. The browser suite did not yet explicitly test a **Swap-ON / DEX-OFF** negative combination with `surfaces.dex=true` in an isolated test fixture. Such a case is essential so a later frontend change cannot regress to treating a successful Swap status as permission for DEX wallet UI.
+
+### Change
+- `.github/scripts/dex-swap-managed-provider-browser-smoke.mjs`: new `runDexIndependentOff` exercises the actual in-browser DEX page and its shared provider host with **Swap API approved in the fixture** and an independently mocked DEX API response in each of three conditions: `{enabled:false}`, invalid `{enabled:"true"}`, and `{enabled:true}` with **cacheable** headers (not no-store). Even though the fixture deliberately sets `surfaces.dex=true` to exercise the host, each case must request **only** `/api/dex/provider-status` and keep all three DEX launcher controls and the provider panel hidden, with zero `plugin.jup.ag` SDK downloads and zero Climboria native order/execute requests. Existing positive, close-during-load, tab-return and cache-rollback tests remain intact. The production DEX Worker literal approval gate and public `surfaces.dex=false` remain unchanged.
+
+### Exact code/test SHA GitHub Actions: all 5 SUCCESS
+- [Validate Climboria #44226316149](https://github.com/CryptoDilis/Climboria/actions/runs/44226316149)
+- [Climboria Browser Smoke Test #44226316173](https://github.com/CryptoDilis/Climboria/actions/runs/44226316173)
+- [DEX Swap Read-only Quote State Regression #44226316170](https://github.com/CryptoDilis/Climboria/actions/runs/44226316170) — includes the newly added negative synthetic Jupiter SDK/browser tests; no wallet signing or funded swaps
+- [DEX Swap CPI Security #44226316177](https://github.com/CryptoDilis/Climboria/actions/runs/44226316177)
+- [Climboria API Production Readiness #44226316227](https://github.com/CryptoDilis/Climboria/actions/runs/44226316227)
+
+Previous documentation-inclusive head `1b707302cfb8f40bb495fd63dba1cddaa65eb85f` also eventually completed its 5 GitHub Actions workflows successfully; its quote-browser run [#44225452268](https://github.com/CryptoDilis/Climboria/actions/runs/44225452268) was initially pending while installing Playwright Chromium. **Do not classify this as a failure.**
+
+### Evidence limits and exact next steps
+1. Historical two **November 15, 2026 finalized owner-controlled staging transactions** are already documented. Prior screenshot review shows *estimated received*, not separately verifiable exact *pre-sign minimum received*. Prior read-only Jupiter quote UI tests showing a minimum are **not** a signed-wallet approval witness. Do not mark the current-build pre-sign gate complete merely because the staging swaps settled; do not request duplicate paid staging solely for historical receipts.
+2. PR [#618 Swap-only activation](https://github.com/CryptoDilis/Climboria/pull/618) is still the current production priority, remains draft and unmerged. Review official Jupiter Plugin distribution/hosted SDK/API/branding terms, residual dynamically loaded vendor JS/CSS/font risk, Cloudflare analytics, existing owner-wallet acceptance proof and the manual read-only CDN live-drift check before seeking explicit exact-head approval. **A green CI run cannot authorize customer funds.**
+3. **Do not merge #624 now.** After reviewed and verified Solana Swap production activation, reconcile latest `main` and #618's shared Worker/host, pair-change invalidation, safety tests and source gates into this older DEX branch. Re-run exact-head CI, check the independent DEX status remains default OFF and then seek a separate DEX-only wallet and release acceptance. Only after Solana Swap **and** DEX are verified move to Base, other EVM, then deferred Launchpad.
+4. Documentation-only commit following this code SHA must have its **own** exact-head CI checked; the five runs above are explicitly for `32ccf478...` and must not be misattributed to the next docs commit.
+
+The oversized historical `docs/DEX_SWAP_LAUNCHPAD_DEVELOPMENT_RECORD.md` has been preserved intact; this dated report is the append-only continuation to avoid truncation via GitHub Contents.
