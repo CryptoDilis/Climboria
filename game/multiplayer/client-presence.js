@@ -377,31 +377,13 @@
   duelExpanded=false;
   if(duelUi){duelUi.toggle.style.display='none';duelUi.panel.style.display='none';renderDuelUi()}
  }
- let returnToSanctuaryButton=null,sameAccountRetryButton=null;
+ let sameAccountRetryButton=null;
  function showStatus(value,message){
   doc.dataset.climboriaMultiplayer=value;
   if(!badge){badge=document.createElement('div');badge.id='climboria-room-status';badge.style.cssText=
-   'position:fixed;right:8px;bottom:8px;z-index:1600;max-width:min(280px,80vw);color:#ffe3a3;background:#070c14f2;border:1px solid #d8b46bcc;padding:9px 12px;border-radius:9px;box-shadow:0 4px 16px #000a;font:700 12px/1.45 system-ui;pointer-events:none';document.body.appendChild(badge)}
-  badge.textContent=message;
-  if(value==='awaiting-sanctuary'||value==='spawn-rejected'){
-   // Mobile explorers have no physical Digit1 key. Reuse the same local
-   // Sanctuary teleport as the keyboard, but ONLY on an explicit click.
-   // This is a local player control, never a forged multiplayer spawn.
-   if(!returnToSanctuaryButton){
-    returnToSanctuaryButton=document.createElement('button');
-    returnToSanctuaryButton.id='climboria-room-return-sanctuary';
-    returnToSanctuaryButton.type='button';
-    returnToSanctuaryButton.textContent='RETURN TO SANCTUARY';
-    returnToSanctuaryButton.style.cssText='display:block;width:100%;margin-top:8px;padding:9px 11px;border:1px solid #d8b46b;border-radius:8px;background:#253448;color:#ffe3a3;font:800 11px/1.35 system-ui;cursor:pointer;pointer-events:auto;touch-action:manipulation';
-    returnToSanctuaryButton.addEventListener('click',event=>{
-     event?.stopPropagation?.();
-     if(doc.dataset.climboriaMultiplayer!=='awaiting-sanctuary'&&
-        doc.dataset.climboriaMultiplayer!=='spawn-rejected')return;
-     document.dispatchEvent(new Event('climboria:room-return-to-sanctuary'));
-    });
-   }
-   badge.appendChild(returnToSanctuaryButton);
-  }
+   'position:fixed;right:303px;top:10px;bottom:auto;z-index:1600;max-width:min(185px,45vw);color:#ffe3a3;background:#070c14e8;border:1px solid #d8b46b99;padding:6px 10px;border-radius:999px;box-shadow:0 4px 12px #0008;font:800 11px/1.2 system-ui;pointer-events:none';document.body.appendChild(badge)}
+  badge.setAttribute('data-state',value);
+  badge.textContent=value==='connected'?'ONLINE: '+(known.size+1):message;
   if(value==='same-account-in-use'){
    // The room enforces one live socket per real Supabase user ID.
    // A second browser using a linked login method replaces the first.
@@ -437,8 +419,8 @@
   }
   if(known.size>=32)return;
   known.set(player.id,player);renderer.add(player);
-  renderDuelUi();renderChatCount();
-  if(spawnConfirmed)showStatus('connected','ONLINE · '+known.size+' other explorers');
+  renderChatCount();
+  if(spawnConfirmed)showStatus('connected','ONLINE: '+(known.size+1));
  }
  function leave(id){
   if(!known.has(id))return;
@@ -447,8 +429,8 @@
    clearDuelExpiry();inviteFrom=null;outgoingTo=null;activeWith=null;
    duelNotice='Explorer disconnected; consent cleared.';
   }
-  renderDuelUi();renderChatCount();
-  if(spawnConfirmed)showStatus('connected','ONLINE · '+known.size+' other explorers');
+  renderChatCount();
+  if(spawnConfirmed)showStatus('connected','ONLINE: '+(known.size+1));
  }
  function onPacket(data){
   if(typeof data!=='string'||data.length>10000)return;
@@ -474,8 +456,8 @@
     spawnConfirmed=true;nearbyChatReady=msg.nearbyChatEnabled===true;
     // Only a verified server spawn-accepted completes room admission.
     clearAdmissionTimer();
-    ensureDuelUi();ensureWorldChatUi();
-    showStatus('connected','ONLINE · '+known.size+' other explorers');
+    ensureWorldChatUi();
+    showStatus('connected','ONLINE: '+(known.size+1));
    }
   }else if(msg.type==='player-joined'){
    if(spawnConfirmed)addPlayer(msg.player);
