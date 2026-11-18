@@ -1,6 +1,14 @@
 name: GAME Room Live Readiness — Read Only
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/game-room-live-readiness-readonly.yml"
+      - "game/multiplayer/worker/qa-readiness-check.mjs"
+      - "game/multiplayer/worker/qa-readiness-check.test.mjs"
+      - "game/multiplayer/worker/staging-preflight.mjs"
+      - "game/multiplayer/client-config.json"
   workflow_dispatch:
 
 permissions:
