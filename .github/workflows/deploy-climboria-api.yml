@@ -90,7 +90,13 @@ jobs:
           # source reaches main before this Swap-only release, reject any
           # accidental DEX approval instead of silently accepting both ON.
           if grep -Fq 'THIRD_PARTY_JUPITER_DEX_APPROVED' src/index.mjs; then
-            dex_gate_count="$(grep -Ec '^const THIRD_PARTY_JUPITER_DEX_APPROVED = false;
+            dex_gate_count="$(grep -Ec '^const THIRD_PARTY_JUPITER_DEX_APPROVED = false;$' src/index.mjs)"
+            if [ "$dex_gate_count" -ne 1 ]; then
+              echo "::error::Solana Swap-only release must keep independent DEX provider approval OFF."
+              exit 1
+            fi
+          fi
+          grep -Fq 'surfaces: Object.freeze({ swap: true, dex: false })' ../../swap-config.js
           grep -Fq 'feeCollectionEnabled: false' ../../swap-config.js
           grep -Eq '^[[:space:]]*enabled:[[:space:]]*false' ../../swap-config.js
           grep -Fqx 'pattern = "api.climboria.fun"' wrangler.toml
