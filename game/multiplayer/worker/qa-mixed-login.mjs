@@ -128,7 +128,7 @@ async function openChat(page){
 async function sendChat(page,message){
  const panel=await openChat(page);
  await panel.locator('input').fill(message);
- await panel.locator('button').click();
+ await panel.locator('button').first().click();
 }
 async function sendNearby(page,message){
  const panel=await openChat(page);
@@ -137,7 +137,7 @@ async function sendNearby(page,message){
  await panel.locator('button').first().click();
 }
 async function expectChat(page,name,message,nearby=false){
- await page.waitForFunction(({name,message})=>
+ await page.waitForFunction(({name,message,nearby})=>
   [...document.querySelectorAll('#climboria-world-chat-panel [role="log"] > div')]
    .some(e=>e.textContent===name+(nearby?' [nearby]':'')+': '+message),
   {name,message,nearby},{timeout:30000});
