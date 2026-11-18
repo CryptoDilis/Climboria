@@ -161,7 +161,7 @@ h2{font:700 18px/1.18 Cinzel,serif;margin:20px 40px 8px 0;min-height:2.36em;disp
 <h1>CHOOSE YOUR DESTINATION</h1>
 <p class="intro">One launch world. Three feature previews. Enter Jarrell’s Peak and explore.</p>
 
-<section class="hero-create-card" aria-label="Create your Jarrell's Peak hero"><div><strong id="heroCardTitle">CREATE YOUR HERO</strong><p id="heroCardDescription">Choose a hero name and see the full character in a live 3D preview before entering Jarrell’s Peak.</p></div><button id="openHeroCreator" type="button">CREATE HERO</button></section><section class="expedition-ad-slot"><span>CLIMBORIA PARTNERS</span><b>Advertising space</b><small>Premium placement reserved for verified sponsors</small></section><section class="grid" aria-label="Jarrell’s Peak, Arena, Marketplace, and Inventory">
+<section class="hero-create-card" aria-label="Create your Jarrell's Peak hero"><div><strong id="heroCardTitle">SIGN IN TO CREATE A HERO</strong><p id="heroCardDescription">A registered Climboria account is required to create a permanent hero. You can explore as a guest without creating one.</p><p id="heroGateNotice" role="status" aria-live="polite" style="color:#eacb8e;font-size:11px;margin-top:8px">Checking your Climboria login…</p></div><div style="display:flex;flex-wrap:wrap;gap:8px"><button id="openHeroCreator" type="button">CREATE HERO</button><button id="playGuestButton" type="button" style="background:#172b3b;border-color:#7898b1;color:#e4f1ff">PLAY AS GUEST</button><a id="heroSignInLink" href="../" style="padding:12px 15px;border-radius:10px;border:1px solid #d5b36c;color:#ffe6a7;font:800 12px system-ui;text-decoration:none">SIGN IN AT HOME</a></div></section><section class="expedition-ad-slot"><span>CLIMBORIA PARTNERS</span><b>Advertising space</b><small>Premium placement reserved for verified sponsors</small></section><section class="grid" aria-label="Jarrell’s Peak, Arena, Marketplace, and Inventory">
 <button class="card active jarrell" data-level="11" aria-disabled="false">
 <img class="crest crest-jarrell" src="../11_jarrells-peak-extreme-risk.png" alt="Jarrell’s Peak emblem" loading="lazy">
 <span class="expedition">LAUNCH WORLD</span><h2>JARRELL'S PEAK</h2>
@@ -212,9 +212,37 @@ h2{font:700 18px/1.18 Cinzel,serif;margin:20px 40px 8px 0;min-height:2.36em;disp
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
 <script>
 
 const HERO_RECORD_KEY='climboria-created-hero-v1';
+const HERO_AUTH_URL='https://unadepiwbovblkfjlksk.supabase.co';
+const HERO_AUTH_KEY='sb_publishable_5DTna9vCafWt4YEbkSSaAA_W0hEDiUK'; // Public/browser key, never service-role.
+const heroAuth=window.supabase?.createClient?.(HERO_AUTH_URL,HERO_AUTH_KEY,{
+ auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+});
+let heroAuthUser=null,heroAuthEpoch=0,heroAuthChecked=false;
+const registeredHeroUser=user=>!!user&&typeof user.id==='string'&&user.id.length>0&&
+ user.is_anonymous!==true&&user.app_metadata?.provider!=='anonymous';
+function userHeroKey(){return heroAuthUser?HERO_RECORD_KEY+':user:'+heroAuthUser.id:null}
+function requireHeroSignIn(){
+ if(heroAuthUser)return true;
+ document.getElementById('heroGateNotice').textContent='Sign in with a registered Climboria account at the homepage to create/save a hero. Guest exploration is available below.';
+ return false;
+}
+async function checkHeroLogin(){
+ const epoch=++heroAuthEpoch;
+ let user=null;
+ try{
+  const result=await heroAuth?.auth?.getUser?.();
+  if(!result?.error&&registeredHeroUser(result?.data?.user))user=result.data.user;
+ }catch{} // Auth network failure must never grant hero creation.
+ if(epoch!==heroAuthEpoch)return;
+ heroAuthUser=user;heroAuthChecked=true;
+ updateHeroCard();editorButtons();
+}
+heroAuth?.auth?.onAuthStateChange?.(()=>{void checkHeroLogin()});
+
 const heroEditor=document.getElementById('heroEditor');
 const heroNameInput=document.getElementById('heroNameInput');
 const heroModelSelect=document.getElementById('heroModelSelect');
@@ -231,19 +259,35 @@ const heroCanvas=document.getElementById('heroPreviewCanvas');
 let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.4,previewTouchX=null,previewTouchDistance=null,previewRequest=0,previewActiveModel='',previewNeutralSpine=null,previewNeutralTime=0;
 const validHeroName=name=>/^[A-Za-z0-9 _-]{2,24}$/.test(name)&&/[A-Za-z0-9]/.test(name);
 function savedHero(){
- try{const h=JSON.parse(localStorage.getItem(HERO_RECORD_KEY)||'null');return h&&['Adventurer','Jarrell','Lheiz'].includes(h.model)&&typeof h.name==='string'&&validHeroName(h.name)?h:null}catch(_){return null}
+ if(!heroAuthUser)return null;
+ try{
+  const owned=JSON.parse(localStorage.getItem(userHeroKey())||'null');
+  // Legacy pre-account heroes can be reclaimed only by a verified registered
+  // account; never expose another account's new, owner-bound hero.
+  const legacy=JSON.parse(localStorage.getItem(HERO_RECORD_KEY)||'null');
+  const h=owned||(legacy&&!legacy.ownerId?legacy:null);
+  return h&&['Adventurer','Jarrell','Lheiz'].includes(h.model)&&
+   typeof h.name==='string'&&validHeroName(h.name)&&
+   (!h.ownerId||h.ownerId===heroAuthUser.id)?h:null;
+ }catch{return null}
 }
 function updateHeroCard(){
  const h=savedHero();
- document.getElementById('heroCardTitle').textContent=h?'YOUR HERO · '+h.name:'CREATE YOUR HERO';
- document.getElementById('heroCardDescription').textContent=h?'Hero: '+h.model+' · Saved locally. View or edit before entering the wilderness.':'A hero is required before starting the game. Choose a model, name and inspect the live full-body 3D character.';
+ document.getElementById('heroCardTitle').textContent=h?'YOUR HERO · '+h.name:heroAuthUser?'CREATE YOUR HERO':'SIGN IN TO CREATE A HERO';
+ document.getElementById('heroCardDescription').textContent=h?'Hero: '+h.model+' · Saved for this account on this browser.':
+  heroAuthUser?'Choose a character and save your hero. Or explore in guest mode.':
+  'Sign in to create or edit a named hero. Explore Jarrell’s Peak immediately in Guest mode without saving a hero.';
+ document.getElementById('heroGateNotice').textContent=heroAuthUser?'REGISTERED PLAYER · HERO CREATION AVAILABLE':
+  heroAuthChecked?'GUEST MODE · HERO CREATION REQUIRES LOGIN':'CHECKING ACCOUNT SESSION…';
+ document.getElementById('heroSignInLink').style.display=heroAuthUser?'none':'inline-flex';
  document.getElementById('openHeroCreator').textContent=h?'EDIT / PREVIEW HERO':'CREATE HERO';
  document.getElementById('menuCreateHero').textContent=h?'EDIT HERO':'CREATE HERO';
- const launch=document.querySelector('.card.jarrell .status');if(launch)launch.textContent=h?'▶ ENTER JARRELL’S PEAK':'CREATE HERO TO UNLOCK';
+ const launch=document.querySelector('.card.jarrell .status');
+ if(launch)launch.textContent=h?'▶ ENTER JARRELL’S PEAK':heroAuthUser?'CREATE HERO TO UNLOCK':'PLAY AS GUEST · NO LOGIN';
 }
 function editorButtons(){
- saveHeroButton.disabled=!previewLoaded||!validHeroName(heroNameInput.value.trim());
- const h=savedHero();heroEnterButton.disabled=!previewLoaded||!h||h.name!==heroNameInput.value.trim()||h.model!==heroModelSelect.value;
+ saveHeroButton.disabled=!heroAuthUser||!previewLoaded||!validHeroName(heroNameInput.value.trim());
+ const h=savedHero();heroEnterButton.disabled=!heroAuthUser||!previewLoaded||!h||h.name!==heroNameInput.value.trim()||h.model!==heroModelSelect.value;
 }
 function previewRender(){
  if(!heroEditor.classList.contains('open')||!previewRenderer)return;
@@ -435,6 +479,7 @@ function startHeroPreview(){
  }catch(e){previewLoading=false;heroStatus.textContent='3D preview unavailable';heroFeedback.textContent='Unable to initialize 3D preview: '+e.message;}
 }
 function openHeroEditor(){
+ if(!requireHeroSignIn())return;
  const h=savedHero();heroNameInput.value=h?.name||'';heroModelSelect.value=h?.model||'Adventurer';
  heroEditor.classList.add('open');heroEditor.setAttribute('aria-hidden','false');heroFeedback.textContent='';
  editorButtons();startHeroPreview();heroNameInput.focus();
@@ -453,18 +498,35 @@ heroModelSelect.addEventListener('change',()=>{
  previewLoaded=false;editorButtons();startHeroPreview();
 });
 heroNameInput.addEventListener('input',()=>{heroFeedback.textContent=validHeroName(heroNameInput.value.trim())?'':'Enter 2–24 allowed characters and at least one letter or number.';editorButtons()});
-saveHeroButton.addEventListener('click',()=>{
- const name=heroNameInput.value.trim();
+saveHeroButton.addEventListener('click',async()=>{
+ const name=heroNameInput.value.trim(),epoch=heroAuthEpoch,userId=heroAuthUser?.id;
+ if(!userId){heroFeedback.textContent='Sign in to create or save a hero.';return}
  if(!previewLoaded||!validHeroName(name)){heroFeedback.textContent='Load the hero and enter a valid name first.';return}
+ saveHeroButton.disabled=true;
+ // A cached browser user ID or legacy localStorage record must never be
+ // sufficient to create heroes; revalidate the current provider identity.
  try{
-  const record={name,model:heroModelSelect.value,createdAt:new Date().toISOString()};
+  const result=await heroAuth.auth.getUser();
+  if(epoch!==heroAuthEpoch||result?.error||!registeredHeroUser(result?.data?.user)||
+     result.data.user.id!==userId){heroFeedback.textContent='Session expired · sign in again before saving.';void checkHeroLogin();return}
+  const record={name,model:heroModelSelect.value,ownerId:userId,createdAt:new Date().toISOString()};
+  localStorage.setItem(userHeroKey(),JSON.stringify(record));
+  // Game play still reads the active local hero; owner binding is preserved.
   localStorage.setItem(HERO_RECORD_KEY,JSON.stringify(record));
   localStorage.setItem('climboria-selected-hero',record.model);
-  heroFeedback.textContent='Hero saved in this browser. You can enter Jarrell’s Peak!';
-  updateHeroCard();editorButtons();
- }catch(_){heroFeedback.textContent='Hero could not be saved. Check browser storage permissions.'}
+  heroFeedback.textContent='Hero saved for your signed-in account on this device!';
+  updateHeroCard();
+ }catch{heroFeedback.textContent='Hero could not be saved. Verify login and browser storage.'}
+ finally{editorButtons()}
 });
-heroEnterButton.addEventListener('click',()=>{const h=savedHero();if(previewLoaded&&h?.name===heroNameInput.value.trim()&&h?.model===heroModelSelect.value)location.href='./play.html?level=11'});
+heroEnterButton.addEventListener('click',()=>{
+ if(!requireHeroSignIn())return;
+ const h=savedHero();
+ if(previewLoaded&&h?.name===heroNameInput.value.trim()&&h?.model===heroModelSelect.value){
+  try{localStorage.setItem(HERO_RECORD_KEY,JSON.stringify({...h,ownerId:heroAuthUser.id}))}catch{return}
+  location.href='./play.html?level=11';
+ }
+});
 let pointerStart=null;
 heroCanvas.addEventListener('pointerdown',e=>{pointerStart=e.clientX;heroCanvas.setPointerCapture(e.pointerId)});
 heroCanvas.addEventListener('pointermove',e=>{if(pointerStart!==null){previewAngle+=(e.clientX-pointerStart)*.012;pointerStart=e.clientX}});
@@ -473,7 +535,11 @@ heroCanvas.addEventListener('pointercancel',()=>pointerStart=null);
 heroCanvas.addEventListener('wheel',e=>{e.preventDefault();previewDistance=Math.max(2.4,Math.min(6.5,previewDistance+Math.sign(e.deltaY)*.3))},{passive:false});
 heroCanvas.addEventListener('touchmove',e=>{if(e.touches.length===2){e.preventDefault();const a=e.touches[0],b=e.touches[1],dist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);if(previewTouchDistance!==null)previewDistance=Math.max(2.3,Math.min(7,previewDistance+(previewTouchDistance-dist)*.01));previewTouchDistance=dist}},{passive:false});
 heroCanvas.addEventListener('touchend',()=>{previewTouchDistance=null});
+document.getElementById('playGuestButton').addEventListener('click',()=>{
+ location.href='./play.html?guest=1&level=11';
+});
 updateHeroCard();
+void checkHeroLogin();
 
 const shopProducts=[["⛏","Climber's Pick","250 Demo Coins"],["🪖","Ridgeguard Armor","500 Demo Coins"],["🎭","Wilderness Skin","750 Demo Coins"],["📿","Grip Charm","300 Demo Coins"],["🥾","Trail Boots","400 Demo Coins"],["🧤","Grip Gloves","350 Demo Coins"]];
 const shopGrid=document.getElementById("menuShopGrid");
@@ -486,7 +552,13 @@ document.getElementById("menuInventory").addEventListener("click",()=>openModal(
 document.getElementById("menuArena").addEventListener("click",()=>openModal("arenaStatusModal"));
 document.querySelectorAll("[data-close]").forEach(button=>button.addEventListener("click",()=>document.getElementById(button.dataset.close)?.classList.remove("open")));
 document.querySelectorAll(".menu-modal").forEach(modal=>{modal.addEventListener("click",event=>{if(event.target===modal)modal.classList.remove("open")});modal.addEventListener("keydown",event=>{if(event.key==="Escape")modal.classList.remove("open")})});
-document.querySelectorAll(".card[data-level]").forEach(card=>card.addEventListener("click",()=>{if(!savedHero()){openHeroEditor();heroFeedback.textContent='Create and save a hero before entering Jarrell’s Peak.';return}location.href='./play.html?level='+encodeURIComponent(card.dataset.level)}));
+document.querySelectorAll(".card[data-level]").forEach(card=>card.addEventListener("click",()=>{
+ if(!heroAuthUser){location.href='./play.html?guest=1&level='+encodeURIComponent(card.dataset.level);return}
+ const h=savedHero();
+ if(!h){openHeroEditor();heroFeedback.textContent='Create and save a hero before entering Jarrell’s Peak.';return}
+ try{localStorage.setItem(HERO_RECORD_KEY,JSON.stringify({...h,ownerId:heroAuthUser.id}))}catch{return}
+ location.href='./play.html?level='+encodeURIComponent(card.dataset.level);
+}));
 
 const climboriaPanelBackdrop=document.getElementById("climboriaPanelBackdrop");document.querySelectorAll("[data-panel]").forEach(button=>button.addEventListener("click",()=>{const type=button.dataset.panel;document.getElementById("climboriaPanelTitle").textContent=type==="announcements"?"Announcements":"Notifications";document.getElementById("climboriaPanelContent").innerHTML=type==="announcements"?'<p>Official Climboria expedition and ecosystem updates will appear here. Follow <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">@ClimboriaHQ</a> for verified announcements.</p>':'<p>You are all caught up. Expedition, event and account alerts will appear here when notification services are enabled.</p>';climboriaPanelBackdrop.hidden=false}));document.getElementById("climboriaPanelClose").addEventListener("click",()=>climboriaPanelBackdrop.hidden=true);climboriaPanelBackdrop.addEventListener("click",e=>{if(e.target===climboriaPanelBackdrop)climboriaPanelBackdrop.hidden=true});
 </script><svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg></body></html>
