@@ -186,9 +186,13 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
           quoteTokens.to={...quoteTokens.to,id:SOL,symbol:"SOL",decimals:9};
           syncSwapJupiterPair();
         } else {
-          dexTradeSide="sell";
-          dexTradeToken={id:USDC,symbol:"USDC",decimals:6};
-          syncDexJupiterMarketPair();
+          // Use the *actual* DEX Market/Limit control. Its handler runs inside
+          // a private closure and calls syncDexJupiterMarketPair() itself.
+          // A Limit change must close the old Jupiter wallet even if the
+          // DEX had no valid mint selection when the provider was mounted.
+          const limit = document.querySelector('[data-dex-order="limit"]');
+          if (!limit) throw new Error("DEX Limit trade control not found");
+          limit.click();
         }
         const host = document.querySelector("[data-climboria-managed-swap-panel]");
         return {
