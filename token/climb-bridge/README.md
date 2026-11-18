@@ -93,6 +93,16 @@ Different hostnames and matching genesis do **not** establish actual RPC operati
 
 Before selecting a provider or deploying a Base contract, complete [PROVIDER_SELECTION.md](./PROVIDER_SELECTION.md). Both Wormhole Token Bridge and NTT remain *unverified alternatives*, not selected live routes. Do not deploy a standalone Base CLIMB or give any mint rights to a non-verified contract.
 
+## Manual on-chain CLIMB mint evidence via GitHub Actions (no signing)
+
+There is a **manual-only** workflow at `.github/workflows/climb-mint-mainnet-evidence-manual.yml` which can run on `main` after this change merges. It is not triggered by pull requests, schedules, or pushes. It does not read token balances from wallets, sign transactions, deploy a bridge or transfer CLIMB. It has only `contents: read` GitHub permissions and does not use a signer. Do not add its secrets to workflows triggered by untrusted code.
+
+**Owner setup, only if these exact secrets/variable are not already present in GitHub:** under `Settings → Secrets and variables → Actions` configure repository **Secrets** `CLIMB_SOLANA_RPC_A_URL` and `CLIMB_SOLANA_RPC_B_URL` with HTTPS read-only RPC URLs from two independently operated Solana mainnet providers (don't copy URLs/keys into a PR, issue or chat). Configure repository **Variable** `CLIMB_SOLANA_MAINNET_GENESIS_HASH` using the public canonical mainnet genesis hash verified from **independent official Solana network documentation**, *not* copied from either RPC response; this repository intentionally does not invent that network fact. These three values are needed because GitHub cannot retrieve existing secrets stored in unrelated Cloudflare/Helius/other accounts. Confirm provider independence and endpoint access separately.
+
+Then open `Actions → CLIMB Mint Authority - Manual Read-only Evidence → Run workflow` and select `main`. The action checks required inputs, independently samples both finalized RPCs, compares mint/freeze authorities and supply, validates both reported genesis values against the operator-supplied independent reference, and archives a **sanitized public-data-only** `climb-mint-evidence.txt` artifact for seven days (repo readers may view artifact contents). Read run outcome, exact GitHub Actions run URL, UTC timestamp, slots, genesis, supply, authority fields and provider names/provenance (do **not** store URL/API keys). A network/rate-limit/permission error yields a failure, **not** a conclusion that the on-chain token is invalid.
+
+**Security caveats:** a successful workflow does not prove the RPC providers are independent or that the user-set genesis reference is authentically from Solana; independently verify both. The GitHub artifact reports only public token metadata and never contains private RPC URLs or keys by design. The result remains `bridgeRelease: NO_GO` because no bridge provider, escrow or Base CA is verified. If either RPC is down or does not support `minContextSlot`, do not bypass the checks or swap in unverified endpoints.
+
 ## Mainnet go/no-go prerequisites
 
 1. Confirm current `finalized` Solana mint account (program, supply, `mintAuthority`, `freezeAuthority`, token accounts, pump.fun compatibility) from multiple sources. Snapshot file does not establish current authority state.
