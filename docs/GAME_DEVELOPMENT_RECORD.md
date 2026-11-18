@@ -1,5 +1,16 @@
 # Climboria Game Development Record
 
+## USER REPORTED LIVE MULTIPLAYER + WORLD CHAT NOT CONNECTING — TARGETED CLIENT REPAIR (2026-11-18)
+
+- **Owner's observed production regression:** Two already registered website accounts did **not** see each other's heroes, and no World Chat appeared after [activation PR #638](https://github.com/CryptoDilis/Climboria/pull/638). This is real failed user acceptance; **do not** call multiplayer/chat live functioning just because the public JSON flag and GitHub Pages deployment succeeded.
+- **Code audit:** `game/multiplayer/client-presence.js` previously evaluated the Game Supabase save client, 3D peer renderer and world exactly **once** immediately after loading config. If any dependency was delayed or unavailable at that instant, the script set `unavailable` then **permanently returned** without subscribing to auth changes or retrying. This is a concrete startup race/fail-silent condition. It is not yet proven to be the sole root cause of the owner-specific failure.
+- **Game-only branch fix:** Bounded, dependency-aware startup waits for the real first-party Game/Supabase/renderer (max 30 seconds), displays loading/unavailable status rather than silently returning, and uses existing secure real-user ticket flow after initialization. HTTP 401 and 403 ticket failures show clear login revalidation vs. access-denied status (rather than generic outage); 429 room-busy and retry remain intact. Initial spawn rejection now instructs returning to Sanctuary with key 1. No fake clients, peers, World Chat transcripts or private tokens. Added offline unit regressions for delayed boot, 401 and 403 rejection.
+- **Release status:** Proposed source only at this record checkpoint; **not verified owner two-browser**. World Chat intentionally appears only after authenticated socket *and* trusted `spawn-accepted`. The Worker enforces registered Supabase users, exact origin, one-use tickets, capacity and visual-only ATTACK. No PvP damage, theft/grab or loot.
+- **Next:** (1) Open Game-only PR; validate Game gateway, client-presence tests, smoke and security workflows on exact head; repair any failures before merging. (2) On verified green, merge and verify GitHub Pages deployment. (3) Recheck public approved `client-config.json`, external Game room health/ready, denied unauthorized tickets. (4) Recheck owner's two distinct authenticated real Game browser sessions. If still offline, use **only visible room status** (login-required / unavailable / spawn-rejected / connected) to distinguish account, ticket, gateway/WS or initial spawn; never request account passwords, JWTs, cookies or console network traces. (5) Target precise failing stage; run Android GLB/chat acceptance. Do not modify DEX, Swap, Launchpad or ClimbX.
+
+---
+
+
 ## GAME LIVE MULTIPLAYER BETA PAGES DEPLOYED + SMOKE ASSERTION FIX (2026-11-18)
 
 - [Game PR #638](https://github.com/CryptoDilis/Climboria/pull/638) merged `af7f50e238784d59ddc7b1f7f937203f098ced97`, setting public registered-account multiplayer and World Chat `enabled:true`, endpoint `https://rooms.climboria.fun/` (no PvP damage/loot/grab).

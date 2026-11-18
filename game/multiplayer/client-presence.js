@@ -18,10 +18,31 @@
   if(base.protocol!=='https:'||base.hostname!=='rooms.climboria.fun'||base.pathname!=='/'||base.username||base.password||base.port)
    throw Error('Unapproved game room endpoint');
  }catch{doc.dataset.climboriaMultiplayer='bad-config';return}
- const auth=window.__CLIMBORIA_GAME_SAVE_CLIENT;
- const renderer=window.__CLIMBORIA_GAME_PEERS;
- const world=window.__climboriaJarrellsPeak;
- if(!auth?.auth?.getSession||!renderer||!world?.player){doc.dataset.climboriaMultiplayer='unavailable';return}
+ // Game and Supabase are loaded by separate scripts. A slow provider/CDN or
+ // 3D boot must not permanently skip multiplayer for this entire page load.
+ // Retry only approved first-party dependencies; never generate a fake peer.
+ let badge=null;
+ const dependencies=()=>{
+  const auth=window.__CLIMBORIA_GAME_SAVE_CLIENT;
+  const renderer=window.__CLIMBORIA_GAME_PEERS;
+  const world=window.__climboriaJarrellsPeak;
+  return auth?.auth?.getSession&&auth.auth.onAuthStateChange&&
+   renderer?.add&&renderer?.remove&&world?.player
+   ?{auth,renderer,world}:null;
+ };
+ let readyClients=dependencies();
+ if(!readyClients){
+  showStatus('starting','MULTIPLAYER · LOADING GAME & LOGIN');
+  for(let attempt=0;attempt<60&&!readyClients;attempt++){
+   await new Promise(resolve=>setTimeout(resolve,500));
+   readyClients=dependencies();
+  }
+ }
+ if(!readyClients){
+  showStatus('unavailable','MULTIPLAYER · GAME LOGIN NOT READY · RELOAD');
+  return;
+ }
+ const {auth,renderer,world}=readyClients;
  let socket=null,disposed=false,reconnect=null,movement=null,clientUser=null,selfId=null;
  let connecting=false,connectEpoch=0,authSubscription=null,spawnConfirmed=false;
  let admissionTimer=null;
@@ -30,8 +51,6 @@
  const validPosition=p=>p&&['x','y','z'].every(k=>typeof p[k]==='number'&&Number.isFinite(p[k])&&Math.abs(p[k])<50000);
  const validPlayer=p=>p&&validId(p.id)&&typeof p.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(p.name)
   &&['Adventurer','Jarrell','Lheiz'].includes(p.model)&&validPosition(p.position);
- let badge=null;
-
  // World Chat never appears without a verified room welcome. Messages are
  // plain text, room-scoped, short-lived in the DOM and never stored locally.
  let chatUi=null,chatExpanded=false,pendingWorldChat=null,worldChatSequence=0;
@@ -357,7 +376,7 @@
   }else if(msg.type==='player-left'){if(spawnConfirmed)leave(msg.id)}
   else if(msg.type==='world-chat'){if(spawnConfirmed)appendWorldChat(msg)}
   else if(msg.type==='rejected'&&msg.reason==='invalid-initial-spawn'){
-   showStatus('spawn-rejected','MULTIPLAYER · RETURN TO SANCTUARY');
+   showStatus('spawn-rejected','MULTIPLAYER · PRESS 1 TO RETURN TO SANCTUARY');
   }
   else if(msg.type==='rejected'&&['world-chat-rate-limit','world-chat-invalid-text'].includes(msg.reason)){
    // Only the server rejection for THIS request can release its pending
@@ -502,6 +521,8 @@
       body:JSON.stringify({name:hero.name,model:hero.model})
      });
      if(reply.status===429)return {busy:true};
+     if(reply.status===401)return {loginRequired:true};
+     if(reply.status===403)return {originDenied:true};
      if(!reply.ok)throw Error('Room ticket denied');
      return {ticket:await reply.json()};
     })();
@@ -518,6 +539,18 @@
     // An authenticated room can be temporarily full or this account may
     // already have two outstanding tickets. Do not claim the server is down.
     showStatus('room-busy','MULTIPLAYER · ROOM BUSY · RETRYING');
+    scheduleConnect(10000);
+    return;
+   }
+   if(issued.loginRequired){
+    // A stored but expired/revoked session is not a successful room login.
+    // Do not open sockets or pretend that a player joined.
+    showStatus('login-required','MULTIPLAYER · SIGN IN AGAIN TO JOIN');
+    scheduleConnect(10000);
+    return;
+   }
+   if(issued.originDenied){
+    showStatus('offline','MULTIPLAYER · ROOM ACCESS DENIED');
     scheduleConnect(10000);
     return;
    }
