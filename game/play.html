@@ -51,7 +51,7 @@ body.mobile-device.climboria-portrait #climboria-punch-button{display:none!impor
 #expedition-settings-panel strong{display:block;color:#ffe3a3;letter-spacing:.12em;margin-bottom:12px}
 #expedition-settings-panel button{display:block;width:100%;padding:10px;margin:8px 0;border:1px solid #9b7b4c;background:#18232c;color:#f4ecd8;border-radius:7px;font-weight:800;cursor:pointer}
 #expedition-settings-panel label{display:flex;justify-content:space-between;gap:8px;margin-top:14px;color:#ffe3a3;font-weight:700}
-#climboria-music-volume{width:100%;accent-color:#d8b46b;margin:12px 0}#world-map-panel strong{font-size:10px}#world-map{width:100%;height:auto;aspect-ratio:3/2}
+#climboria-music-volume,#climboria-effects-volume{width:100%;accent-color:#d8b46b;margin:10px 0}#world-map-panel strong{font-size:10px}#world-map{width:100%;height:auto;aspect-ratio:3/2}
 #world-map-panel strong{font:12px system-ui;letter-spacing:.12em;color:#ffe3a3}
 #world-map{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:3/2;background:#17251c;border:1px solid #ffffff25;border-radius:8px;margin-top:9px}
 #world-map-legend{font:10px/1.6 system-ui;color:#c6c0b3;margin-top:7px}
@@ -192,9 +192,9 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>DAMAGE</span><span id="damage-value">5</span></div><div class="stat-track"><div class="stat-fill" id="damage-fill" style="width:25%;background:#c66b54"></div></div></div>
 <div id="summit-chest-status" role="status" aria-live="polite"><span>JARRELL’S PEAK · SUMMIT CHEST</span><strong id="summit-chest-countdown">READY</strong><small>HIGH-TIER LOOT · 15-MINUTE RESPAWN</small></div>
 <button id="world-map-toggle" type="button">WORLD MAP · M</button><button id="climboria-punch-button" data-mobile-action="punch" type="button" aria-label="Attack animation (PvP damage not enabled)" title="Attack · Q (walking)"><span class="attack-control-label">ATTACK</span></button>
-<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="time-cycle-control" type="button">TIME OF DAY · GOLDEN HOUR</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
+<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><label for="climboria-music-volume">MUSIC <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><label for="climboria-effects-volume">SOUND EFFECTS <span id="climboria-effects-value">55%</span></label><input id="climboria-effects-volume" type="range" min="0" max="100" value="55" step="1"><div id="expedition-connected-account" role="status" style="font:700 11px/1.5 system-ui;color:#d1dbc6;padding:10px 0;border-top:1px solid #ffffff20">ACCOUNT · CHECKING…</div><button id="expedition-return-menu" type="button">RETURN TO MENU</button><button id="expedition-settings-close" type="button">CLOSE</button></section>
 
-<div id="help">WASD move · Shift sprint · Space jump · Q attack · Mouse look (drag if not locked)<br>E interact · T time · Weather changes automatically every 15 min · V return to walk<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
+<div id="help">WASD move · Shift sprint · Space jump · Q attack · Mouse look (drag if not locked)<br>E interact · Weather and daylight cycle automatically · V return to walk<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
 
 <script>
 /* Client-side preflight: do not boot the 3D world before a named hero exists. */
@@ -459,7 +459,10 @@ const TOD=[
  {n:'Dusk',el:.04,az:4.1,top:'#1f2a5a',hor:'#8a5a78',sun:'#ff8f6a',si:1.3,hi:.42,nt:.2},
  {n:'Moonlit night',el:.5,az:5.2,top:'#050a1c',hor:'#162340',sun:'#8fa9ff',si:.6,hi:.3,nt:1}
 ].map(t=>({...t,top:L(t.top),hor:L(t.hor),sun:L(t.sun)}));
-let todI=0,wx=0,flash=0,thT=5;const weatherNames=['Clear','Rain','Thunderstorm'];
+const TIME_OF_DAY_INTERVAL_MS=900000;
+let todI=Math.floor(Date.now()/TIME_OF_DAY_INTERVAL_MS)%TOD.length,wx=0,flash=0,thT=5;
+const weatherNames=['Clear','Rain','Thunderstorm'];
+function advanceAutomaticDaylight(){todI=Math.floor(Date.now()/TIME_OF_DAY_INTERVAL_MS)%TOD.length;}
 const WEATHER_INTERVAL_MS=900000,WEATHER_STORAGE_KEY='climboria_jarrell_weather_v1';
 let weatherElapsedMs=0,weatherVisual=0,weatherSaveMs=0;
 let weatherLastFrameTime=performance.now();
@@ -518,7 +521,7 @@ function automaticWeatherAudit(){
   notReadyElapsed:visibleWeatherDeltaMs(1500,1000,false,false),
   manualWeatherControlMissing:!document.getElementById('weather-cycle-control'),restoredWeatherIndex:wx,storedElapsedMs:weatherElapsedMs};
 }
-const cur={top:TOD[0].top.clone(),hor:TOD[0].hor.clone(),sun:TOD[0].sun.clone(),si:2.2,hi:.55,nt:0,el:.17,az:2.2};
+const cur={top:TOD[todI].top.clone(),hor:TOD[todI].hor.clone(),sun:TOD[todI].sun.clone(),si:TOD[todI].si,hi:TOD[todI].hi,nt:TOD[todI].nt,el:TOD[todI].el,az:TOD[todI].az};
 const sunDir=new T3.Vector3();
 /* ---------- sky ---------- */
 const skyU={uTop:{value:cur.top},uHor:{value:cur.hor},uSun:{value:sunDir},uSunC:{value:cur.sun},uNight:{value:0},uT:{value:0}};
@@ -1844,7 +1847,7 @@ addEventListener('keydown',e=>{
  keys[e.code]=true;
  if(['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
  
- if(!e.repeat&&e.code=='KeyT'){todI=(todI+1)%TOD.length;syncEnvironmentControls()}if(!e.repeat&&e.code=='KeyR'&&new URLSearchParams(location.search).has('debug-weather')){wx=(wx+1)%weatherNames.length;weatherElapsedMs=0;persistWeather()}if(e.code=='KeyE'&&!e.repeat)interact();
+ if(e.code==='KeyE'&&!e.repeat)interact();
  if(e.code==='KeyQ'&&!e.repeat)requestVisualPunch();
  if(e.code=='KeyV'){P.mode='walk';camY=null;free(true);document.exitPointerLock&&document.exitPointerLock()}
  const m=e.code.match(/^Digit([1-8])$/);if(m)TP[m[1]]();
@@ -2784,7 +2787,6 @@ P.fish=0;
 const RN=MOB?500:1100,rp=new Float32Array(RN*6),rox=new Float32Array(RN),roz=new Float32Array(RN),rdy=new Float32Array(RN);for(let i=0;i<RN;i++){rox[i]=(Math.random()-.5)*90;roz[i]=(Math.random()-.5)*90;rdy[i]=Math.random()*50}
 const rgeo=new T3.BufferGeometry();rgeo.setAttribute('position',new T3.BufferAttribute(rp,3));
 const rain=new T3.LineSegments(rgeo,new T3.LineBasicMaterial({color:0x9fb4d0,transparent:true,opacity:.45,fog:false}));rain.frustumCulled=false;rain.visible=false;scene.add(rain);
-function syncEnvironmentControls(){const t=document.getElementById('time-cycle-control');if(t)t.textContent='TIME OF DAY · '+TOD[todI].n.toUpperCase()}
 function updateSummitChestStatus(){
  const panel=document.getElementById('summit-chest-status'),countdown=document.getElementById('summit-chest-countdown');
  if(!panel||!countdown)return;
@@ -2795,7 +2797,6 @@ function updateSummitChestStatus(){
  if(chest.open){const seconds=Math.max(0,Math.ceil(chest.t));countdown.textContent='RESPAWN IN '+String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0')}
  else countdown.textContent='READY TO CLAIM';
 }
-document.getElementById('time-cycle-control').addEventListener('click',()=>{todI=(todI+1)%TOD.length;syncEnvironmentControls()});syncEnvironmentControls();
 function gameTick(dt,cp){
  updateDeathLootBag();
  const live=P.mode=='walk';P.inv=Math.max(0,P.inv-dt);
@@ -3574,6 +3575,7 @@ const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub'
 let ready=false,Tm=0,hudT=0,last=performance.now(),tmpC=new T3.Color();
 function update(dt){
  Tm+=dt;
+ advanceAutomaticDaylight();
  // time of day easing
  const tg=TOD[todI],k=Math.min(1,dt*1.2);
  cur.top.lerp(tg.top,k);cur.hor.lerp(tg.hor,k);cur.sun.lerp(tg.sun,k);
