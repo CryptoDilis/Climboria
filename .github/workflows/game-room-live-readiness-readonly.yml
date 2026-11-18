@@ -1,0 +1,37 @@
+name: GAME Room Live Readiness — Read Only
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/game-room-live-readiness-readonly.yml"
+      - "game/multiplayer/worker/qa-readiness-check.mjs"
+      - "game/multiplayer/worker/qa-readiness-check.test.mjs"
+      - "game/multiplayer/worker/staging-preflight.mjs"
+      - "game/multiplayer/client-config.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climboria-game-room-readonly-check
+  cancel-in-progress: true
+
+jobs:
+  game-room-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout Game source
+        uses: actions/checkout@v4
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify no customer-funds or public multiplayer enablement
+        run: |
+          node --test game/multiplayer/worker/qa-readiness-check.test.mjs
+          node game/multiplayer/worker/qa-readiness-check.mjs
+      # This does not issue account tickets, open WebSockets, perform trade
+      # transactions, modify Cloudflare or toggle Game multiplayer.
