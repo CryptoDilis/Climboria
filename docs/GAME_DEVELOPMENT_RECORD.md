@@ -1,6 +1,5 @@
 # Climboria Game Development Record
 
-
 ## GAME REGISTERED-PILOT DOCUMENTATION RECONCILIATION — STAGED (2026-11-18 PHT)
 
 - **Verified current main at start:** `708196d795b1e03b915088db8b60efeb986d7130`. Registered-only Game client config source is `enabled:true`, `endpoint:"https://rooms.climboria.fun/"`; only Game is in scope.
