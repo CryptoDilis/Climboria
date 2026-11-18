@@ -93,6 +93,29 @@ try {
       null, { timeout: 15000 }).catch(() => {});
       targetNodes = await page.locator("#climboriaSwapProviderTarget > *").count();
     }
+    // The vendor could technically mount an empty app shell without a usable
+    // wallet/swap screen. Require at least one VISIBLE interactive affordance
+    // within the provider-owned target, not just a first-party "loaded" label.
+    // This still is not evidence of wallet consent, quote, or finality.
+    const widgetUi = await page.evaluate(() => {
+      const root = document.getElementById("climboriaSwapProviderTarget");
+      const isVisible = element => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return rect.width > 0 && rect.height > 0 &&
+          style.visibility !== "hidden" && style.display !== "none";
+      };
+      const controls = [...(root?.querySelectorAll(
+        'button,input,select,[role="button"],[role="combobox"],[role="textbox"],iframe'
+      ) || [])].filter(isVisible);
+      const visibleFrames = controls.filter(el => el.tagName === "IFRAME").length;
+      const visibleInputs = controls.filter(el => ["INPUT", "SELECT"].includes(el.tagName)).length;
+      // Public static UI text only, capped and never wallet addresses/values.
+      const visibleButtons = controls.filter(el =>
+        el.tagName === "BUTTON" || el.getAttribute("role") === "button").length;
+      return { visibleControls: controls.length, visibleFrames, visibleInputs, visibleButtons };
+    });
+    console.log("DIAGNOSTIC real Jupiter UI affordances (no wallet): " + JSON.stringify(widgetUi));
     const nativeWrites = blockedWrites.filter(w =>
       w.origin === SITE || w.origin === "https://api.climboria.fun");
     assert.equal(nativeWrites.length, 0,
@@ -103,6 +126,8 @@ try {
       "Real Jupiter widget did not finish initializing: " + outcome + " | " + statusText);
     assert.ok(targetNodes > 0,
       "Jupiter reported loaded but rendered no nodes in Climboria's actual integrated target");
+    assert.ok(widgetUi.visibleControls > 0,
+      "Jupiter mounted only an empty/inert shell: no visible interactive controls in its actual target");
     assert.equal(await page.locator("#climboriaSwapProviderPanel").isVisible(), true);
     assert.equal(context.pages().length, 1, "Provider must not navigate to a separate trading tab");
     console.log("PASS production Solana Jupiter provider loaded into the visible Climboria Swap target. " +
