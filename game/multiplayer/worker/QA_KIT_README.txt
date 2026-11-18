@@ -20,15 +20,19 @@ GAME ONLY. No Swap, DEX, Launchpad or ClimbX changes.
    showing login, credentials, session cookies or OAuth codes.
 
 This kit is built in GitHub Actions from the reviewed Climboria source. The
-public Game source now enables a registered-only pilot. Each QA browser can
-still intercept the config in its own memory for isolated staging diagnostics;
-that interception is NOT proof of the public CDN's actual config or a real
-production two-user acceptance result. The QA kit does not edit the website.
+public Game source enables a registered-only pilot. Both QA browsers now use
+the actual published Game configuration WITHOUT any injected JSON, network
+route override, DevTools override, or fake online peers. The runner separately
+checks the public JSON HTTP status, exact approved endpoint and release gate.
+A successful run verifies real authenticated two-browser gameplay in those
+specific sessions; it does not by itself establish general uptime, every
+phone's performance or safe PvP. The QA kit does not edit the website.
 It does not inherit your existing logged-in Chrome sessions.
 Identity providers can decline automated Chrome; never bypass their rules.
 No personal credentials should ever be pasted into ChatGPT, CLI, issues or CI.
 
 The runner checks:
+- Actual published Game config HTTP 200, approved registered pilot and endpoint;
 - Actual HTTPS Game Worker /health and /ready;
 - Separate non-anonymous registered first-party Supabase login sessions;
 - Real accepted room join and reciprocal remote 3D GLB/map peers;
@@ -37,7 +41,7 @@ The runner checks:
 - Chrome render frames and disconnect/rejoin without a ghost.
 
 It DOES NOT test physical Android device GPU/FPS, and does not authorize
-production two-account multiplayer acceptance or PvP damage,
+PvP damage,
 theft, grabbing or loot. The owner and
 development team must separately review Android results before release.
 The browser contexts close after the run; the QA runner does not modify production config.

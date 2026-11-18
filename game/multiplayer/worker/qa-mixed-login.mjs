@@ -4,8 +4,8 @@
  *
  * Requires installed Chrome, Node 22, Playwright and the owner at the keyboard.
  * Public Game source currently enables the approved registered-only pilot.
- * This private QA tool still intercepts config in temporary browser contexts;
- * a passing injected-config QA run does not prove the public CDN release.
+ * Uses the unmodified published Game config. Never intercepts, fulfills,
+ * rewrites or injects multiplayer settings in temporary QA browsers.
  * The owner signs in interactively using existing registered Google/X/email
  * accounts. This tool NEVER asks for passwords, JWTs, cookies or browser data.
  * It never copies local Chrome profiles or writes provider sessions to disk.
@@ -17,7 +17,7 @@ import {chromium} from 'playwright';
 import {createInterface} from 'node:readline/promises';
 import {stdin,stdout} from 'node:process';
 import {verifyGameRoomPreflight} from './staging-preflight.mjs';
-import {createGameQaProgress,sameRegisteredQaAccount} from './qa-stage-report.mjs';
+import {createGameQaProgress,sameRegisteredQaAccount,isApprovedPublishedGameConfig} from './qa-stage-report.mjs';
 
 const SITE='https://climboria.fun';
 const GAME=SITE+'/game/play.html';
@@ -35,6 +35,20 @@ let browser;
 function log(message){stdout.write(message+'\n')}
 const qaProgress=createGameQaProgress(log);
 async function prompt(message){await prompts.question(message+'\nPress ENTER to continue... ')}
+async function assertPublishedConfig(page){
+ // Read the real public Game JSON independently, never fulfill or intercept it.
+ // Fail closed on non-200, malformed JSON, disabled release, or wrong hostname.
+ const response=await page.context().request.get(
+  SITE+'/game/multiplayer/client-config.json',
+  {timeout:15000,headers:{'Cache-Control':'no-cache'}}
+ );
+ requireCondition(response.status()===200,'Public Game room config must return HTTP 200');
+ let config;
+ try{config=await response.json()}
+ catch{throw Error('Public Game room config must be valid JSON')}
+ requireCondition(isApprovedPublishedGameConfig(config),
+  'Public Game config must be the exact approved registered pilot');
+}
 async function newExplorer(name,model){
  const context=await browser.newContext({
   viewport:{width:1280,height:760},serviceWorkers:'block'
@@ -44,19 +58,6 @@ async function newExplorer(name,model){
   if(location.origin==='https://climboria.fun')
    localStorage.setItem('climboria-created-hero-v1',JSON.stringify(hero));
  },{name,model,createdAt:'2026-11-18T00:00:00Z'});
- // This is only a response override INSIDE the two owner-controlled QA
- // browser contexts. The production client-config.json is NOT modified.
- await context.route('**/game/multiplayer/client-config.json',async route=>{
-  if(route.request().method()!=='GET'||
-     route.request().url()!==SITE+'/game/multiplayer/client-config.json'){
-   await route.abort();return;
-  }
-  await route.fulfill({
-   status:200,contentType:'application/json',
-   headers:{'cache-control':'no-store','access-control-allow-origin':SITE},
-   body:JSON.stringify({schema:1,enabled:true,endpoint:ROOM})
-  });
- });
  const page=await context.newPage();
  await page.goto(GAME,{waitUntil:'domcontentloaded',timeout:WAIT});
  return page;
@@ -223,7 +224,7 @@ async function testTwoPlayers(a,b,originalBId){
 }
 
 try{
- log('CLIMBORIA GAME — PRIVATE TWO-PLAYER QA (no public enablement)');
+ log('CLIMBORIA GAME — REAL PUBLIC PILOT TWO-PLAYER QA (no config override)');
  qaProgress.start('worker-readiness');
  await verifyGameRoomPreflight(ROOM,'health',{deadlineMs:15000});
  await verifyGameRoomPreflight(ROOM,'ready',{deadlineMs:15000});
@@ -235,6 +236,9 @@ try{
   args:['--enable-unsafe-swiftshader','--ignore-gpu-blocklist']
  });
  const a=await newExplorer('QA Explorer A','Jarrell');
+ qaProgress.start('public-game-config');
+ await assertPublishedConfig(a);
+ qaProgress.pass();
  qaProgress.start('player-a-session');
  log('PLAYER A: log in using your own Google / X / Email method.');
  log('You may visit the Climboria sign-in page, but RETURN to '+GAME);
@@ -246,6 +250,7 @@ try{
  qaProgress.pass();
  const b=await newExplorer('QA Explorer B','Lheiz');
  qaProgress.start('player-b-session');
+ await assertPublishedConfig(b);
  log('PLAYER B: log in with your OTHER registered Climboria account.');
  log('Return to '+GAME+' after any OAuth redirect.');
  await prompt('Once Player B is logged in and walking in Jarrells Peak:');
@@ -265,7 +270,7 @@ try{
  qaProgress.pass();
  await testTwoPlayers(a,b,bId);
  log('QA RESULT: PASS — real authenticated movement, GLBs, World Chat and reconnect.');
- log('Public Game config is STILL OFF. Physical mobile FPS and release review remain.');
+ log('Unmodified public Game config verified; physical Android and PvP remain unverified.');
 }catch{
  // Never print Supabase responses, browser headers, cookies or secrets.
  // Only this operator's local control-flow error or a generic failure.

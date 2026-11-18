@@ -7,6 +7,7 @@
  */
 const STAGES=Object.freeze({
  'worker-readiness':'Game Worker HTTPS and room storage readiness',
+ 'public-game-config':'Unmodified public Game room configuration is approved',
  'player-a-session':'Player A real registered sign-in and room admission',
  'player-a-alone':'Player A alone in the accepted staging room',
  'player-b-session':'Player B real registered sign-in and room admission',
@@ -43,7 +44,7 @@ export function createGameQaProgress(emit){
   fail(){
    // Only fixed internal stage label, never an arbitrary upstream error.
    emit('QA RESULT: NOT VERIFIED — '+(active?label(active):'Game QA setup')+
-    ' did not complete. Public Game multiplayer remains OFF.');
+    ' did not complete. Live two-account acceptance is NOT VERIFIED.');
    return Object.freeze({stage:active||'setup',passed:Object.freeze([...passed])});
   },
   summary(){return Object.freeze({stage:active||null,passed:Object.freeze([...passed])})}
@@ -58,4 +59,14 @@ export function createGameQaProgress(emit){
 export function sameRegisteredQaAccount(originalId,rejoinedId){
  return typeof originalId==='string'&&originalId.length>0&&
   typeof rejoinedId==='string'&&rejoinedId===originalId;
+}
+
+/**
+ * Validate only a real, published first-party registered-pilot config.
+ * No injected QA config may silently activate or substitute a room endpoint.
+ */
+export function isApprovedPublishedGameConfig(config){
+ return !!config&&typeof config==='object'&&!Array.isArray(config)&&
+  config.schema===1&&config.enabled===true&&
+  config.endpoint==='https://rooms.climboria.fun/';
 }
