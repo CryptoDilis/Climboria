@@ -5,6 +5,15 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 2 merged / exact-head CI verified — 2026-11-19
+
+- [PR #664](https://github.com/CryptoDilis/Climboria/pull/664) **MERGED** to `main` by squash commit [`0d542683385d108d2f7e33030c58dc74be7d27d4`](https://github.com/CryptoDilis/Climboria/commit/0d542683385d108d2f7e33030c58dc74be7d27d4). Tested exact PR head `0577f6c922f232c07c36705aca61f2158c6409ae`.
+- GitHub Actions verified **SUCCESS**: [CLIMB Bridge Read-Only Safety Tests #44376244026](https://github.com/CryptoDilis/Climboria/actions/runs/44376244026), [Validate Climboria #44376244137](https://github.com/CryptoDilis/Climboria/actions/runs/44376244137). No live RPC or mainnet transfer tests were executed; tests are deterministic mock fixtures.
+- Only the bridge-specific `token/climb-bridge` subtree, bridge-only GitHub workflow and this progress record changed. Existing Game, Swap, DEX, ClimbX and Launchpad operational code untouched. Deployment remains **NO-GO**.
+- **Exact NEXT:** obtain two independently operated HTTPS Solana mainnet RPC connections, perform actual `node token/climb-bridge/mint-inspect-cli.mjs` from an authorized local environment, compare sanitized supply/mint/freeze authority/slot against onchain explorer; then validate current audited bridge provider support for original SPL CLIMB lock + Base wrapped CLIMB mint. Do not insert invented Base CA or open public fund transfers prior to reviewed protocol/testnet evidence.
+
+---
+
 ## Stage 2 — Dual finalized Solana mint authority verification toolkit (2026-11-19)
 
 **Scope:** bridge-only read-only support. This stage does not deploy a Base CA, create bridge tokens, configure manager peers, move user funds or alter live Climboria trading/game products.
