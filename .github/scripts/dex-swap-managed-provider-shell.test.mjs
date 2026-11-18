@@ -1476,3 +1476,26 @@ test("both Climboria swap interfaces retain quote-only path and use isolated hos
     assert.match(source, /\/api\/swap\/quote/);
   }
 });
+
+
+test("public Solana Swap disclosure distinguishes independently approved Jupiter swaps from native execution OFF", () => {
+  const source = readFileSync(new URL("../../swap/index.html", import.meta.url), "utf8");
+  const config = readFileSync(new URL("../../swap-config.js", import.meta.url), "utf8");
+  const worker = readFileSync(new URL("../../dex/swap-proxy/src/index.mjs", import.meta.url), "utf8");
+
+  assert.match(source, /Trading options · Jupiter provider when approved/);
+  assert.match(source, /Climboria's own wallet signing and transaction execution remain disabled/);
+  assert.match(source, /The separate Jupiter Swap interface appears only after its live approval check succeeds/);
+  assert.match(source, /Native execution OFF/);
+  assert.match(source, /Only the separately approved Jupiter provider can handle a wallet-reviewed swap/);
+  assert.match(source, /Solana network selected · Jupiter provider access is controlled by live approval/);
+  assert.doesNotMatch(source, /Execution status · Not enabled|Real swaps remain locked until release checks pass/);
+
+  // Precise language must never be used to smuggle native order signing or DEX trading ON.
+  assert.match(config, /enabled:\s*false/);
+  assert.match(config, /surfaces:\s*Object\.freeze\(\{\s*swap:\s*true,\s*dex:\s*false\s*\}\)/);
+  assert.match(worker, /^const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;$/m);
+  assert.match(worker, /^const EXECUTION_SECURITY_REVIEW_COMPLETE = false;$/m);
+  assert.match(source, /data-climboria-managed-swap-surface="swap"/);
+  assert.match(source, /href="https:\/\/jup\.ag\/"[^>]*target="_blank"/);
+});
