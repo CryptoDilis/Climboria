@@ -160,6 +160,34 @@ try{
  const b=await openExplorer(accounts[1],env.GAME_QA_LANDSCAPE_MOBILE==='1');
  await Promise.all([assertPeer(a,1),assertPeer(b,1)]);
  await Promise.all([waitForGlb(a),waitForGlb(b)]);
+ // The transcript must already be visible on BOTH real accounts; the
+ // tester must not need to click a hidden WORLD CHAT card to see messages.
+ for(const page of [a,b]){
+  check(await page.locator('#climboria-world-chat-panel').isVisible(),
+   'Authenticated World Chat transcript did not auto-open');
+  const channel=page.locator('#climboria-world-chat-panel button[aria-label="Switch between World Chat and Nearby Chat"]');
+  check(await channel.isEnabled(),'Nearby Chat is not enabled by an upgraded authenticated Game Worker');
+  check((await channel.textContent())?.trim()==='NEARBY',
+   'Authenticated nearby-chat capability is missing from live Game UI');
+ }
+ // Test real in-range 20m server delivery AND the remote head speech model.
+ // This runs before the sprint test while both legitimate players are next
+ // to one another; no mocked WebSocket packets or forged peer coordinates.
+ const nearbyButton=a.locator('#climboria-world-chat-panel button[aria-label="Switch between World Chat and Nearby Chat"]');
+ await nearbyButton.click();
+ await a.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='NEARBY CHAT · 20m');
+ await sendChat(a,'QA nearby speech acceptance');
+ await Promise.all([
+  expectChat(a,'QA Explorer A [nearby]','QA nearby speech acceptance'),
+  expectChat(b,'QA Explorer A [nearby]','QA nearby speech acceptance')
+ ]);
+ await b.waitForFunction(()=>window.__CLIMBORIA_GAME_PEERS?.audit?.()?.nearbyBubbles===1,
+  undefined,{timeout:12000});
+ await nearbyButton.click();
+ await a.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='WORLD CHAT');
+ // Nearby and World share one server anti-spam cooldown, independently of
+ // which channel the UI currently has selected.
+ await a.waitForTimeout(2800);
  // Movement QA must observe actual keyboard-driven Game physics, real room
  // validation and updated coordinates in the OTHER browser's remote model.
  // A mere online count or loaded GLB is not sufficient for multiplayer.
