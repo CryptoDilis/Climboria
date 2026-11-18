@@ -243,9 +243,13 @@ browser or have the sign-in sessions.
    `{"schema":1,"enabled":true,"endpoint":"https://rooms.climboria.fun/"}`,
    and uses real first-party Supabase authentication. It requires distinct
    registered user IDs, actual accepted room spawns, reciprocal real GLB
-   presence, keyboard movement replication, **server-echoed** two-way World
-   Chat, unsent draft preservation, render frames and removal/rejoin of a
-   disconnected peer. It reports PASS only when every assertion succeeds.
+   presence **attached to each browser's active Three.js scene and marked
+   visible** (not just a loaded GLB or empty map marker), keyboard movement
+   replication, **server-echoed** two-way World Chat, unsent draft
+   preservation, render frames and removal/rejoin of a disconnected peer.
+   It reports PASS only when every assertion succeeds. This check cannot
+   prove the avatar is in the camera frustum or correctly rendered on physical
+   hardware; visual review and real Android FPS remain separate.
 5. When done, the two test browser contexts and Chrome are closed, so the
    browser-only override is removed. The on-disk/public Game config remains
    `enabled:false`, `endpoint:null`. This does not turn on multiplayer for
