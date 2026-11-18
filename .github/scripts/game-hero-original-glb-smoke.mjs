@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { installOfflineHeroAuthFixture } from './game-offline-hero-auth-fixture.mjs';
 
 // This test deliberately loads the ORIGINAL repository GLB. Do not resize or
 // replace assets/characters/Climboria_Hero.glb in the workflow running it.
@@ -12,10 +13,12 @@ try{
  ]){
   const context=await browser.newContext({viewport:config.viewport,isMobile:config.isMobile,hasTouch:config.hasTouch,deviceScaleFactor:1});
   const page=await context.newPage(),errors=[];
+  await installOfflineHeroAuthFixture(page);
   page.on('pageerror',e=>errors.push(e.message));
   const started=Date.now();
   try{
    await page.goto(base,{waitUntil:'domcontentloaded',timeout:45000});
+   await page.waitForFunction(()=>document.querySelector('#heroGateNotice')?.textContent?.includes('REGISTERED PLAYER'),undefined,{timeout:15000});
    await page.locator('#openHeroCreator').click();
    await page.locator('#heroNameInput').fill('Production GLB Check');
    // The production GLB is much larger than CI's resized surrogate. Give it
