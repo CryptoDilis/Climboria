@@ -439,6 +439,58 @@ async function runRollbackWithCache(browser) {
   }
 }
 
+// Explicit browser negative control: even with Swap API ON and synthetic
+// surfaces.dex=true, DEX's independent source OFF/malformed/cacheable status
+// must never expose a launcher, download the SDK, or submit a transaction.
+// This fixture does not enable the real DEX worker or customer funds.
+async function runDexIndependentOff(browser, {statusLabel, payload, cacheControl}) {
+  const page = await browser.newPage({viewport:{width:390,height:850}});
+  const statusRequests = [];
+  let scriptLoads = 0;
+  const forbidden = [];
+  page.on("request", request => {
+    if (request.url() === API_STATUS_URL || request.url() === DEX_API_STATUS_URL)
+      statusRequests.push(request.url());
+    if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(request.url()))
+      forbidden.push(request.url());
+  });
+  await page.route(API_STATUS_URL, route => route.fulfill({
+    json:{enabled:true}, headers:{"Cache-Control":"no-store","Access-Control-Allow-Origin":"*"}
+  }));
+  await page.route(DEX_API_STATUS_URL, route => route.fulfill({
+    json:payload, headers:{"Cache-Control":cacheControl,"Access-Control-Allow-Origin":"*"}
+  }));
+  await page.route("**/swap-config.js", route => route.fulfill({
+    status:200, contentType:"application/javascript", body:mockConfig(sri,API_STATUS_URL)
+  }));
+  await page.route(SCRIPT_URL, route => {
+    scriptLoads++;
+    return route.fulfill({status:200,contentType:"application/javascript",
+      headers:{"Access-Control-Allow-Origin":"*"},body:MOCK_SCRIPT});
+  });
+  try {
+    const checkedStatus = page.waitForResponse(r => r.url() === DEX_API_STATUS_URL);
+    const response = await page.goto(ORIGIN+"/dex/",{waitUntil:"domcontentloaded",timeout:20000});
+    assert.equal(response.status(),200);
+    await checkedStatus;
+    // Allow the async boot path to consume the response and update launchers.
+    await page.waitForTimeout(100);
+    assert.deepEqual(statusRequests,[DEX_API_STATUS_URL],
+      "DEX must never request or reuse the approved Swap status source");
+    const launchers = page.locator("[data-climboria-managed-swap-open]");
+    assert.equal(await launchers.count(),3);
+    assert.deepEqual(await launchers.evaluateAll(nodes=>nodes.map(n=>n.hidden)),
+      [true,true,true],"DEX OFF must hide every trading launcher");
+    assert.equal(await page.locator("[data-climboria-managed-swap-panel]").isVisible(),false);
+    assert.equal(scriptLoads,0,"DEX OFF must not download executable vendor code");
+    assert.equal(await page.evaluate(()=>Boolean(window.Jupiter)),false);
+    assert.deepEqual(forbidden,[],"DEX OFF must not invoke native order or execution");
+    console.log("PASS /dex/ independently OFF despite Swap ON ("+statusLabel+"); no wallet/trade");
+  } finally {
+    await page.close();
+  }
+}
+
 const browser = await chromium.launch({headless:true});
 try {
   await runPage(browser,"/swap/");
@@ -447,6 +499,11 @@ try {
   // with a browser CORS check; the vendor SDK remains synthetic only.
   await runPage(browser,"/swap/",{apiStatus:true});
   await runPage(browser,"/dex/",{apiStatus:true});
+  for (const specimen of [
+    {statusLabel:"source disabled",payload:{enabled:false},cacheControl:"no-store"},
+    {statusLabel:"string response",payload:{enabled:"true"},cacheControl:"no-store"},
+    {statusLabel:"cacheable response",payload:{enabled:true},cacheControl:"public, max-age=60"}
+  ]) await runDexIndependentOff(browser,specimen);
   await runPage(browser,"/swap/",{badHash:true});
   await runCloseDuringLoad(browser,"/swap/");
   await runCloseDuringLoad(browser,"/dex/");
