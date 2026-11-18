@@ -207,6 +207,7 @@ async function testTwoPlayers(a,b,originalBId){
   undefined,{timeout:15000});
  qaProgress.pass();
  qaProgress.start('nearby-chat');
+ await a.waitForTimeout(2600); // Honor shared Game server chat cooldown.
  await sendNearby(a,'QA actual nearby A');
  await Promise.all([
   expectChat(a,'QA Explorer A','QA actual nearby A',true),
