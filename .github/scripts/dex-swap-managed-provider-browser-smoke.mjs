@@ -601,6 +601,21 @@ async function runDexReadOnlyQuoteDirections(browser) {
   await page.route("**/swap-config.js", route => route.fulfill({
     status:200,contentType:"application/javascript",body:mockConfig()
   }));
+  // Only this offline HTML fixture exposes market selection through an
+  // injected test hook. The production DEX keeps its private script scope.
+  await page.route("**/dex/", async route => {
+    const response = await route.fetch();
+    const source = await response.text();
+    const marker = "async function dexTradeSyncToken(pair){";
+    assert.equal(source.split(marker).length, 2, "DEX market selection hook must exist exactly once");
+    const fixtureSource = source.replace(marker,
+      `window.__dexSyntheticSelectToken = (mint,symbol,decimals) => {
+        dexTradeToken={id:mint,symbol,name:symbol,decimals,isVerified:true};
+        syncDexJupiterMarketPair();
+      };
+      ` + marker);
+    await route.fulfill({response,body:fixtureSource});
+  });
   // The independent DEX provider is OFF. Preview controls are not a trading release.
   await page.route(DEX_API_STATUS_URL, route => route.fulfill({
     status:200,json:{enabled:false},
@@ -630,11 +645,8 @@ async function runDexReadOnlyQuoteDirections(browser) {
     assert.equal(await panel.getAttribute("data-climboria-managed-swap-input-mint"),null);
     assert.equal(await panel.getAttribute("data-climboria-managed-swap-output-mint"),null);
     // Mimic completed mint-decimals lookup. Never query/send a customer wallet.
-    await page.evaluate(() => {
-      dexTradeToken={id:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-        symbol:"USDC",name:"USD Coin",decimals:6,isVerified:true};
-      syncDexJupiterMarketPair();
-    });
+    await page.evaluate(() => window.__dexSyntheticSelectToken(
+      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","USDC",6));
     // SELL USDC spends USDC -> receives SOL; BUY USDC reverses pair.
     await sell.evaluate(button => button.click());
     assert.equal(await panel.getAttribute("data-climboria-managed-swap-input-mint"),
