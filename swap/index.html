@@ -623,13 +623,15 @@ function syncSwapJupiterPair(){
  if(!panel)return;
  panel.removeAttribute('data-climboria-managed-swap-input-mint');
  panel.removeAttribute('data-climboria-managed-swap-output-mint');
- if(selectedChain!=='solana')return;
- if(!quoteTokens.from?.id||!quoteTokens.to?.id)return;
- if(!Number.isInteger(quoteTokens.from.decimals)||!Number.isInteger(quoteTokens.to.decimals))return;
- // The provider validates both true 32-byte Solana pubkeys and distinctness
- // again before loading its third-party code.
- panel.setAttribute('data-climboria-managed-swap-input-mint',quoteTokens.from.id);
- panel.setAttribute('data-climboria-managed-swap-output-mint',quoteTokens.to.id);
+ if(selectedChain==='solana'&&quoteTokens.from?.id&&quoteTokens.to?.id&&
+    Number.isInteger(quoteTokens.from.decimals)&&Number.isInteger(quoteTokens.to.decimals)){
+   // Jupiter independently verifies canonical 32-byte mints on user click.
+   panel.setAttribute('data-climboria-managed-swap-input-mint',quoteTokens.from.id);
+   panel.setAttribute('data-climboria-managed-swap-output-mint',quoteTokens.to.id);
+ }
+ // A mounted third-party widget does not automatically adopt new mints.
+ // Alert the host only AFTER both final attributes have been updated.
+ document.dispatchEvent(new Event('climboria:managed-provider-pair-change'));
 }
 syncSwapJupiterPair();
 let tokenSearchSequence={from:0,to:0};
