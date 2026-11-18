@@ -195,7 +195,7 @@ test('visible room stage status distinguishes ticket, socket and Sanctuary spawn
  assert.ok(badge.textContent.includes('CONNECTING TO WORLD'));
  const ws=h.clients[0];ws.onopen();
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'spawn-pending');
- assert.ok(badge.textContent.includes('VERIFYING SANCTUARY SPAWN'));
+ assert.ok(badge.textContent.includes('VERIFYING SAVED POSITION'));
  assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false);
  const own='s_'+'c'.repeat(32);
  ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
