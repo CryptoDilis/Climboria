@@ -255,6 +255,16 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         // Reject a forged or half-updated market selection before making any
         // provider request or fetching third-party executable code.
         const selectedPair = readSelectedProviderPair(panel);
+        // A selector may have changed while its normal pair-change event was
+        // missed. Before handling even an invalid/cleared new selection,
+        // conceal the *already mounted* Jupiter wallet form for the old mints.
+        // Otherwise the invalid-selection explanation below could re-expose
+        // a stale third-party widget without invoking any fresh provider init.
+        if (mounted && !sameMountedPair()) {
+          hideRevoked();
+          status.textContent = stalePairMessage;
+          return;
+        }
         if (surface === "swap" &&
             panel.getAttribute?.("data-climboria-managed-swap-network") !== "solana") {
           throw new Error("Jupiter Plugin is unavailable on Base");
