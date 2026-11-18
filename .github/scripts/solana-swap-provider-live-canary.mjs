@@ -97,7 +97,23 @@ try {
     // wallet/swap screen. Require at least one VISIBLE interactive affordance
     // within the provider-owned target, not just a first-party "loaded" label.
     // This still is not evidence of wallet consent, quote, or finality.
-    const widgetUi = await page.evaluate(() => {
+    // Jupiter.init() may resolve before remote app hydration. Wait a bounded
+    // 25 seconds for real visible controls, rather than treating early React
+    // container insertion as a working wallet UI.
+    const interactiveSelector =
+      'button,input,select,[role="button"],[role="combobox"],[role="textbox"],iframe';
+    await page.waitForFunction(selector => {
+      const root = document.getElementById("climboriaSwapProviderTarget");
+      if (!root) return false;
+      return [...root.querySelectorAll(selector)].some(element => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return rect.width > 0 && rect.height > 0 &&
+          style.visibility !== "hidden" && style.display !== "none";
+      });
+    }, interactiveSelector, { polling: 500, timeout: 25000 }).catch(() => {});
+
+    const widgetUi = await page.evaluate(selector => {
       const root = document.getElementById("climboriaSwapProviderTarget");
       const isVisible = element => {
         const rect = element.getBoundingClientRect();
@@ -105,17 +121,21 @@ try {
         return rect.width > 0 && rect.height > 0 &&
           style.visibility !== "hidden" && style.display !== "none";
       };
-      const controls = [...(root?.querySelectorAll(
-        'button,input,select,[role="button"],[role="combobox"],[role="textbox"],iframe'
-      ) || [])].filter(isVisible);
-      const visibleFrames = controls.filter(el => el.tagName === "IFRAME").length;
-      const visibleInputs = controls.filter(el => ["INPUT", "SELECT"].includes(el.tagName)).length;
-      // Public static UI text only, capped and never wallet addresses/values.
-      const visibleButtons = controls.filter(el =>
-        el.tagName === "BUTTON" || el.getAttribute("role") === "button").length;
-      return { visibleControls: controls.length, visibleFrames, visibleInputs, visibleButtons };
-    });
-    console.log("DIAGNOSTIC real Jupiter UI affordances (no wallet): " + JSON.stringify(widgetUi));
+      const controls = [...(root?.querySelectorAll(selector) || [])].filter(isVisible);
+      return {
+        visibleControls: controls.length,
+        visibleFrames: controls.filter(el => el.tagName === "IFRAME").length,
+        visibleInputs: controls.filter(el => ["INPUT", "SELECT"].includes(el.tagName)).length,
+        visibleButtons: controls.filter(el =>
+          el.tagName === "BUTTON" || el.getAttribute("role") === "button").length,
+        rootChildCount: root?.children.length || 0,
+        rootDescendants: root?.querySelectorAll("*").length || 0,
+        rootTextLength: (root?.innerText || "").length,
+        rootChildTags: [...(root?.children || [])].slice(0, 4).map(el => el.tagName)
+      };
+    }, interactiveSelector);
+    console.log("DIAGNOSTIC real Jupiter UI after bounded hydration (no wallet): " +
+      JSON.stringify(widgetUi));
     const nativeWrites = blockedWrites.filter(w =>
       w.origin === SITE || w.origin === "https://api.climboria.fun");
     assert.equal(nativeWrites.length, 0,
