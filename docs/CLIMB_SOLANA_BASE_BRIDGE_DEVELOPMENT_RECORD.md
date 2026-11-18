@@ -5,6 +5,16 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 4 MERGED — finalized chain snapshot accounting (2026-11-19)
+
+- Focused [PR #667](https://github.com/CryptoDilis/Climboria/pull/667) **merged** via squash to `main` at [`f26ca83598a63ddecc4c5022d373e04b515f88f6`](https://github.com/CryptoDilis/Climboria/commit/f26ca83598a63ddecc4c5022d373e04b515f88f6); tested exact head `c1b7cd73c6cb6afb4ca5c6c17d1caae53a1cb9ef`.
+- CI on exact head verified **SUCCESS**: [CLIMB Bridge Read-Only Safety Tests #44379319855](https://github.com/CryptoDilis/Climboria/actions/runs/44379319855) and [Validate Climboria #44379318166](https://github.com/CryptoDilis/Climboria/actions/runs/44379318166). These are **mocked local safety tests only**, not real Solana/Base onchain execution or deployment evidence.
+- Verified changed paths: `token/climb-bridge/supply-audit.mjs`, new `token/climb-bridge/supply-audit-finality.test.mjs`, `token/climb-bridge/README.md`, and this bridge development record. Nothing else in Game/DEX/Swap/Launchpad/ClimbX/production Worker changed.
+- Fixed independent-solana-slot + Base-`latest` accounting hazard using `getMultipleAccounts` at one finalized Solana slot and a pinned `finalized` Base block number for code and total-supply readings. Fail-closed on invalid/unsupported finality, corrupt custodial token account or unbacked wrapped supply. **This does not validate bridge program identity, official onchain deployment addresses, replay protection or cross-chain atomic state.**
+- **EXACT NEXT (blocker):** run actual two independent Solana finalized RPC checks of CLIMB mint program, mint/freeze authority and supply with the existing `mint-inspect-cli.mjs`, verify the providers are operationally independent and save sanitized on-chain results. Then confirm current official audited bridge provider route for *this exact* existing Pump.fun SPL token to Base (Wormhole NTT/Token Bridge require separate compatibility research); pin protocol revisions, program IDs, escrow/manager peer configuration and audit scope. Only after this, prepare real devnet/Base Sepolia bidirectional transfer trials. Mainnet remains **NO-GO**; Base CA **NOT DEPLOYED**. No user keys/funds involved.
+
+---
+
 ## Stage 4 — Finalized snapshot accounting hardening (2026-11-19)
 
 **Scope:** bridge-only read-only RPC audit safety; no Base contract or bridge deployment, no signed transaction, no liquidity or live funds.
