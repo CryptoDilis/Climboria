@@ -198,8 +198,8 @@ try {
     return {status,initial,added,removed,during,moved,after,
       fieldMap:{legendDuring,legendAfter,pixel,cyan}};
   });
-  console.log('GAME staged presence renderer (default-off) QA:',JSON.stringify(remotePresenceQA));
-  if(remotePresenceQA.status!=='disabled'||remotePresenceQA.initial!==0||
+  console.log('GAME staged presence renderer (unauthenticated) QA:',JSON.stringify(remotePresenceQA));
+  if(remotePresenceQA.status!=='login-required'||remotePresenceQA.initial!==0||
      remotePresenceQA.added!==1||remotePresenceQA.removed!==0||
      remotePresenceQA.during?.resident!==0||remotePresenceQA.during?.loading!==0||
      remotePresenceQA.during?.sceneVisibleResidents!==0||
@@ -214,7 +214,7 @@ try {
      !remotePresenceQA.fieldMap?.legendDuring?.includes('Cyan = explorers (1)')||
      !remotePresenceQA.fieldMap?.cyan||
      remotePresenceQA.fieldMap?.legendAfter?.includes('Cyan = explorers'))
-     errors.push('Multiplayer must be disabled without deployed auth backend and ephemeral QA marker must cleanly unload: '+JSON.stringify(remotePresenceQA));
+     errors.push('Unauthenticated multiplayer must require login and ephemeral QA marker must cleanly unload: '+JSON.stringify(remotePresenceQA));
 
   const world = await page.evaluate(() => {
     const w = window.__climboriaJarrellsPeak;
