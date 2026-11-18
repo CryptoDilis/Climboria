@@ -1,27 +1,40 @@
 /* Climboria GAME ONLY. Authenticated remote-presence transport.
- * DISABLED by client-config.json until a real room gateway and two-user QA pass.
+ * Public registered-only pilot is controlled by client-config.json.
  * Never fabricates players, combat damage, loot, wallets or inventory claims.
  */
 (async function(){
  'use strict';
  const doc=document.documentElement;
- doc.dataset.climboriaMultiplayer='disabled';
+ let badge=null;
+ showStatus('checking','MULTIPLAYER · CHECKING SERVER');
  let config;
- try{const res=await fetch('./multiplayer/client-config.json',{cache:'no-store'});
-  if(!res.ok)return;config=await res.json();
- }catch{return}
- if(config?.schema!==1)return;
- if(config?.enabled!==true)return;
+ for(let attempt=0;attempt<3;attempt++){
+  try{
+   const res=await fetch('./multiplayer/client-config.json',{cache:'no-store'});
+   if(!res.ok)throw Error('Game multiplayer config unavailable');
+   config=await res.json();
+   break;
+  }catch{
+   if(attempt<2)await new Promise(resolve=>setTimeout(resolve,600));
+  }
+ }
+ if(config?.schema!==1){
+  showStatus('config-unavailable','MULTIPLAYER · SETTINGS UNAVAILABLE · RELOAD');
+  return;
+ }
+ if(config?.enabled!==true){
+  showStatus('disabled','MULTIPLAYER · CURRENTLY OFFLINE');
+  return;
+ }
  let base;
  try{
   base=new URL(config.endpoint);
   if(base.protocol!=='https:'||base.hostname!=='rooms.climboria.fun'||base.pathname!=='/'||base.username||base.password||base.port)
    throw Error('Unapproved game room endpoint');
- }catch{doc.dataset.climboriaMultiplayer='bad-config';return}
+ }catch{showStatus('bad-config','MULTIPLAYER · INVALID ROOM SETTINGS');return}
  // Game and Supabase are loaded by separate scripts. A slow provider/CDN or
  // 3D boot must not permanently skip multiplayer for this entire page load.
  // Retry only approved first-party dependencies; never generate a fake peer.
- let badge=null;
  const dependencies=()=>{
   const auth=window.__CLIMBORIA_GAME_SAVE_CLIENT;
   const renderer=window.__CLIMBORIA_GAME_PEERS;
@@ -309,7 +322,7 @@
  function showStatus(value,message){
   doc.dataset.climboriaMultiplayer=value;
   if(!badge){badge=document.createElement('div');badge.id='climboria-room-status';badge.style.cssText=
-   'position:fixed;right:8px;bottom:8px;z-index:1100;color:#ffe3a3;background:#070c14df;border:1px solid #d8b46b88;padding:6px 10px;border-radius:8px;font:700 10px system-ui;pointer-events:none';document.body.appendChild(badge)}
+   'position:fixed;right:8px;bottom:8px;z-index:1600;max-width:min(280px,80vw);color:#ffe3a3;background:#070c14f2;border:1px solid #d8b46bcc;padding:9px 12px;border-radius:9px;box-shadow:0 4px 16px #000a;font:700 12px/1.45 system-ui;pointer-events:none';document.body.appendChild(badge)}
   badge.textContent=message;
  }
  function clearPeers(){

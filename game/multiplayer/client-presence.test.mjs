@@ -7,7 +7,7 @@ import {TextEncoder} from 'node:util';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false}={}){
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false}={}){
  const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses],ticketPayloads:[...ticketPayloads]};
  const authListeners=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],calls=[],timers=[],created=[];
@@ -50,7 +50,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
  }
  const fetch=async(url,options)=>{
   calls.push({url:String(url),options});
-  if(String(url).includes('client-config.json'))return {ok:true,json:async()=>({schema:1,enabled,endpoint:enabled?'https://rooms.climboria.fun/':null})};
+  if(String(url).includes('client-config.json'))return configUnavailable?{ok:false,status:503}:{ok:true,json:async()=>({schema:1,enabled,endpoint:enabled?'https://rooms.climboria.fun/':null})};
   if(String(url)==='https://rooms.climboria.fun/ticket'){
    assert.equal(options.headers.Authorization,'Bearer '+state.session?.access_token);
    if(ticketGate)await ticketGate;
@@ -137,6 +137,20 @@ test('origin-denied game ticket stays offline without fake peers or chat',async(
  assert.ok(h.created.some(node=>node.id==='climboria-room-status'&&node.textContent.includes('ROOM ACCESS DENIED')));
 });
 
+test('multiplayer config failures retry and show visible truthful status, never fake a chat',async()=>{
+ const h=harness(true,{configUnavailable:true});
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'checking');
+ assert.equal(h.runNextTimer(),600);
+ await flush();
+ assert.equal(h.runNextTimer(),600);
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'config-unavailable');
+ assert.equal(h.clients.length,0);
+ assert.equal(h.adds.length,0);
+ assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false);
+ assert.ok(h.created.some(node=>node.id==='climboria-room-status'&&node.textContent.includes('SETTINGS UNAVAILABLE')));
+});
 test('real authenticated WebSocket messages are required before peers appear',async()=>{
  const h=harness(true);await flush();
  await waitFor(()=>h.clients.length===1||h.document.documentElement.dataset.climboriaMultiplayer==='offline');
