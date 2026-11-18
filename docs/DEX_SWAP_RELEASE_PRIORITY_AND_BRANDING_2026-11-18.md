@@ -175,3 +175,30 @@ After every meaningful Swap/DEX change: record date, affected files, commit/PR/h
 
 **Next precise task (Solana S1 before S2):** Reconcile current Jupiter hosted Plugin/API/brand terms and acceptance of dynamically loaded vendor JS/CSS/fonts, plus original matching wallet **minimum received / slippage / fees / mobile / rejection** evidence for the *current* build. Two historical Nov 15 finalized mainnet staging swaps are preserved; don't duplicate them merely to recreate receipts. After explicit authorization for the exact deployment head and rollback, release **Swap-only**, independently verify deployed API `enabled:true`, `no-store`, correct Worker SHA, native order/execute OFF, in-site wallet sign consent and finalized production outcome (or adequate release-specific proof). Then separately review/enable Solana DEX Buy/Sell with its own provider gate, then Base, other verified EVM networks, then Launchpad. No Game, ClimbX bot or Launchpad changes in this workstream.
 
+
+
+## 2026-11-18 follow-up: DEX Market-to-Limit provider closure and real UI browser test
+
+**Status at last observed check:** [draft PR #618](https://github.com/CryptoDilis/Climboria/pull/618), exact latest head [`55a6898142018887c2fc1f79da641f27f6159578`](https://github.com/CryptoDilis/Climboria/commit/55a6898142018887c2fc1f79da641f27f6159578); **NOT merged or deployed**. Customer-funded Solana Swap and DEX remain OFF; native signing/execution and integrator fees OFF. Earlier exact head `3f84d10606d248b05ee3373d4b4b7dd4bd2f79ad` had 11/11 successful Actions runs. This latest branch head includes additional safeguards/tests and **must pass its own CI**; never reuse the prior head's results as proof.
+
+**New security edge case discovered:** DEX initially opens the Jupiter Plugin without an explicit mint pair, so both original and current panel mint attributes may be null. A DEX user switching from Market to Limit changed trade intent even when the two mint values remained null; the previous pair-comparison-only handler would not immediately hide the currently mounted third-party wallet form. This could present an old Jupiter swap widget while the DEX user expected an unavailable Limit-order mode.
+
+**Branch-only code change:**
+- `dex/provider-managed-swap.mjs`: every DEX trade-intent/pair-change notification invalidates a mounted or still-loading Jupiter SDK instance, hides the provider-owned widget best-effort, fences pending requests and disables re-open until refresh, even when the pair attributes are both null. The Swap surface still permits benign same-pair refreshes; Base tab retains its independent close/fence logic. External wallet requests and already-submitted transactions cannot be cancelled by this guard.
+- `.github/scripts/dex-swap-managed-provider-shell.test.mjs`: add a null/null DEX Market→Limit negative regression and preserve the benign same-pair Swap test.
+- `.github/scripts/dex-swap-managed-provider-browser-smoke.mjs`: strengthened from manually setting DOM attributes to exercising Swap's actual `syncSwapJupiterPair()` and the DEX page's actual **Limit button** (which invokes the private `syncDexJupiterMarketPair()`), then verifying that the panel and synthetic vendor root disappear synchronously without reinitializing the plugin. An intermediate browser test failed because DEX's private closure function could not be called globally; the test was corrected to click the actual UI control.
+- `swap/index.html`, `dex/index.html`, plus the shell/browser pinning tests: shared first-party provider-host cache key now `?v=10` (supersedes v9); official Jupiter SDK version 1.0.18 remains a separate pin.
+
+**Exact latest-head CI status at record time — 8/10 SUCCESS, 2 pending (not final acceptance):**
+- [CPI Security #44219355167](https://github.com/CryptoDilis/Climboria/actions/runs/44219355167) SUCCESS.
+- [DEX graduation #44219355143](https://github.com/CryptoDilis/Climboria/actions/runs/44219355143) SUCCESS.
+- [Browser smoke #44219355134](https://github.com/CryptoDilis/Climboria/actions/runs/44219355134) SUCCESS.
+- [CLIMBX preview visibility #44219355110](https://github.com/CryptoDilis/Climboria/actions/runs/44219355110) SUCCESS; no bot changes.
+- [Validate Climboria #44219355103](https://github.com/CryptoDilis/Climboria/actions/runs/44219355103) SUCCESS.
+- [Production quote browser #44219355086](https://github.com/CryptoDilis/Climboria/actions/runs/44219355086) SUCCESS.
+- [API readiness #44219355082](https://github.com/CryptoDilis/Climboria/actions/runs/44219355082) SUCCESS.
+- [Offline vendor asset snapshot #44219355010](https://github.com/CryptoDilis/Climboria/actions/runs/44219355010) SUCCESS.
+- [Read-only Quote/Managed Provider Browser #44219355166](https://github.com/CryptoDilis/Climboria/actions/runs/44219355166) IN PROGRESS, runner was installing Playwright Chromium; not yet evidence the new DEX Limit UI test passed.
+- [Jupiter API Provider Status #44219354976](https://github.com/CryptoDilis/Climboria/actions/runs/44219354976) PENDING in GitHub, no jobs when checked.
+
+**NEXT EXACT TASK:** Check both outstanding GitHub Action conclusions and fetch failing step logs if either fails; repair on this draft PR, rerun and pin new exact head. After all required CI is green, perform the outstanding Jupiter hosted-service/API/branding and dynamic-dependency risk acceptance, reconcile exact current-build wallet pre-sign minimum received/slippage/fees/rejection/device proof (historical November 15 funded staging receipts already done), then seek explicit exact-head Swap-only Cloudflare production approval and verify ON/no-store/deployed SHA, on-site wallet consent/finality/rollback. **Do not enable native transaction pipeline or DEX together with Swap.** After verified Solana Swap, separately ship Solana DEX; then Base, other EVM, and deferred Launchpad.
