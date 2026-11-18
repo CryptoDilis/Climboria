@@ -134,6 +134,59 @@ test('live Game waits for delayed Supabase and renderer instead of permanently l
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
  assert.ok(h.created.some(node=>node.id==='climboria-world-chat-toggle'));
 });
+test('slow Game login and renderer load recover beyond original 30-second terminal timeout',async()=>{
+ const h=harness(true,{delayedClients:true});
+ await flush();
+ for(let i=0;i<60;i++){
+  assert.equal(h.runNextTimer(),500,'initial dependency retry every 500ms');
+  await flush();
+ }
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'slow-start');
+ assert.equal(h.clients.length,0);
+ assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,0,
+  'missing Game auth dependencies must never mint a ticket or fake online');
+ h.releaseGameClients();
+ assert.equal(h.runNextTimer(),3000,'late dependency check must back off but keep trying');
+ await flush();await waitFor(()=>h.clients.length===1);
+ assert.equal(h.clients.length,1,'legitimate late renderer and Game auth recover automatically');
+ const ws=h.clients[0];ws.onopen();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'spawn-pending');
+ assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false);
+ const own='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,
+  position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.ok(h.created.some(node=>node.id==='climboria-world-chat-toggle'));
+});
+
+test('visible room stage status distinguishes ticket, socket and Sanctuary spawn without claiming online',async()=>{
+ let release;
+ const gate=new Promise(resolve=>{release=resolve});
+ const h=harness(true,{ticketGate:gate});
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'ticket-request');
+ const badge=h.created.find(node=>node.id==='climboria-room-status');
+ assert.ok(badge.textContent.includes('VERIFYING ROOM ACCESS'));
+ assert.equal(h.clients.length,0);
+ release();
+ await flush();await waitFor(()=>h.clients.length===1);
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'socket-connecting');
+ assert.ok(badge.textContent.includes('CONNECTING TO WORLD'));
+ const ws=h.clients[0];ws.onopen();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'spawn-pending');
+ assert.ok(badge.textContent.includes('VERIFYING SANCTUARY SPAWN'));
+ assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false);
+ const own='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
+ assert.ok(badge.textContent.includes('JOINING WORLD'));
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,
+  position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.ok(badge.textContent.includes('ONLINE'));
+});
+
 test('expired registered session ticket gives clear sign-in status and no fake chat',async()=>{
  const h=harness(true,{ticketStatuses:[401]});
  await flush();
@@ -625,7 +678,7 @@ test('actual player ticket fetch cannot strand Game connecting when an upstream 
  const gate=new Promise(resolve=>{release=resolve});
  const h=harness(true,{ticketGate:gate});
  await flush();
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'ticket-request');
  assert.equal(h.clients.length,0,'no WebSocket exists without a verified ticket');
  const first=h.calls.find(c=>c.url==='https://rooms.climboria.fun/ticket');
  assert.ok(first?.options?.signal,'Game ticket fetch needs an abort signal');
@@ -750,7 +803,7 @@ test('stalled initial Supabase session lookup times out and retries without ghos
  const gate=new Promise(resolve=>{releaseSession=resolve});
  const h=harness(true,{sessionGate:gate});
  await flush();
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'session-check');
  assert.equal(h.clients.length,0,'no socket before a verified session');
  assert.equal(h.runNextTimer(),8000,'session lookup must have an independent finite deadline');
  await flush();
@@ -773,7 +826,7 @@ test('logout cancels an unresolved initial session deadline and prevents late st
  const gate=new Promise(resolve=>{releaseSession=resolve});
  const h=harness(true,{sessionGate:gate});
  await flush();
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'session-check');
  assert.ok(h.timers.some(timer=>timer.delay===8000&&!timer.cancelled));
  h.authChange(null);
  await flush();
@@ -809,7 +862,7 @@ test('actual WebSocket never-opening handshake times out and retries without gho
  const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
  assert.equal(h.clients.length,1);
  const old=h.clients[0];
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'socket-connecting');
  assert.equal(h.runNextTimer(),12000,'WebSocket opening needs a bounded deadline');
  assert.equal(old.readyState,3,'unopened socket must be explicitly closed');
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline');
