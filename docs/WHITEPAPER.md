@@ -80,11 +80,11 @@ This document describes intended rules and future plans. It does not guarantee t
 
 ## 11. CLIMBX — personal trading bot (planned; not live)
 
-**You Dictate. It Climbs. It Learns.** CLIMBX is a planned, free-to-access personal automated trading assistant exclusively for **Climboria Signature DEX**. Its purpose is to give users explicit control over trading rules while placing capital protection ahead of trade frequency or profit-seeking. It is not an investment adviser, profit guarantee, or loss-prevention guarantee.
+**You Dictate. It Climbs. It Learns.** CLIMBX is a planned, free-to-access personal automated trading assistant exclusively for **Climboria DEX**. Its purpose is to give users explicit control over trading rules while placing capital protection ahead of trade frequency or profit-seeking. It is not an investment adviser, profit guarantee, or loss-prevention guarantee.
 
 ### How CLIMBX is intended to work
 
-1. A wallet owner connects and configures **one personal bot per wallet** with up to **five token assets**. Only trades routed and executed through Climboria Signature DEX are eligible; the bot must not silently route to external DEXs.
+1. A wallet owner connects and configures **one personal bot per wallet** with up to **five token assets**. Only trades routed and executed through Climboria DEX are eligible; the bot must not silently route to external DEXs.
 2. The owner chooses a strategy and risk parameters, including maximum trade size, aggregate spending limits, acceptable slippage, loss limits, and a pause/stop option. Strategy names and speed presets in previews are concepts, not verified live capabilities.
 3. **Initial release: paper trading only.** The bot would simulate orders and display hypothetical performance, fees, slippage assumptions, and risk events without moving real funds. Simulated fills and returns may differ materially from real trading.
 4. Future live trading, **if separately approved and released**, requires explicit wallet authorization and verified, limited on-chain permissions. Each order must pass authorization, token allowlist, spending cap, expiry, route, and risk checks before execution. A wallet owner must be able to revoke authorization and stop new orders; already-submitted transactions may not be reversible.
