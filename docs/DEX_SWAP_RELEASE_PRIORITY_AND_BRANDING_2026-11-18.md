@@ -87,3 +87,31 @@ After every meaningful Swap/DEX change: record date, affected files, commit/PR/h
 4. Only after both Solana Swap and DEX verified live: Base, then verified additional EVMs; Launchpad later in separate scope. Never change Game, ClimbX implementation, Launchpad or custom native CPI gates as part of this continuation.
 
 **Release truth:** Solana Swap third-party activation still pending (PR #618 draft), DEX managed trading OFF and native order/execute OFF; **0 new customer-fund execution authorized**. This dated supplemental record intentionally leaves the 1.28MB original history file intact.
+
+
+## Solana Swap PR #618 refreshed release candidate and independent DEX veto — 2026-11-18
+
+**Code work completed on DRAFT PR [#618](https://github.com/CryptoDilis/Climboria/pull/618), not yet on main or production:** reviewed latest exact PR head [`a09a7a9543e986e8877f5273dccc9ac4b958dace`](https://github.com/CryptoDilis/Climboria/commit/a09a7a9543e986e8877f5273dccc9ac4b958dace).
+
+**Changed paths on the release branch in this continuation:**
+- `docs/DEX_SWAP_JUPITER_RELEASE_EVIDENCE_MATRIX_2026-11-18.md`: corrected stale “manual five-asset drift check has not run” wording. [Live official CDN five-asset digest/length workflow #44208231829](https://github.com/CryptoDilis/Climboria/actions/runs/44208231829) **PASSED** on historical `main` at `af20d27`. This is historical-byte drift evidence, **not** browser-pinned transitive integrity, contract clearance or wallet acceptance.
+- `dex/swap-proxy/test/provider-widget-status.test.mjs`: added Swap-only regression that a *future independent DEX source gate*, if present, must remain exactly literal `false`; public `swap-config.js` must keep `surfaces.dex=false`. It does not change the trading pipeline.
+- `.github/workflows/deploy-climboria-api.yml`: added the corresponding conditional pre-deploy check; it tolerates the DEX source gate being absent until separate draft [PR #624](https://github.com/CryptoDilis/Climboria/pull/624) is merged but rejects a separate DEX source gate being ON in the Swap-only release. The existing single literal Swap ON/OFF release and emergency OFF rollback remain supported.
+
+**Important intermediate incident/fix:** One proposed workflow edit on the draft branch accidentally produced a truncated/duplicated shell block and an invalid workflow registration (`#44214142457`/`#44214332606`, failures on *obsolete* intermediate heads). Rebuilt the workflow from the known intact earlier PR branch file, verified the complete original suffix and 10,772-byte intended text, and reran all CI at final head `a09a7a9`. **The broken intermediate draft was never merged or deployed**; no production Worker was changed. Do not treat obsolete CI failures as unresolved after the green latest head.
+
+**Exact latest PR #618 head: 10/10 workflow SUCCESS**
+1. [Validate Climboria #44214458095](https://github.com/CryptoDilis/Climboria/actions/runs/44214458095) — SUCCESS.
+2. [DEX Swap CPI Security #44214458116](https://github.com/CryptoDilis/Climboria/actions/runs/44214458116) — SUCCESS.
+3. [Climboria API Production Readiness #44214461406](https://github.com/CryptoDilis/Climboria/actions/runs/44214461406) — SUCCESS.
+4. [Jupiter API Provider Status Production Smoke #44214458071](https://github.com/CryptoDilis/Climboria/actions/runs/44214458071) — SUCCESS (PR validation, not a post-ON production wallet test).
+5. [Jupiter Plugin Audited Asset Snapshot #44214458131](https://github.com/CryptoDilis/Climboria/actions/runs/44214458131) — SUCCESS (PR offline self-test; separate historical manual live check above).
+6. [DEX Swap Production Quote Browser Smoke #44214457802](https://github.com/CryptoDilis/Climboria/actions/runs/44214457802) — SUCCESS (does not execute funded swap).
+7. [DEX Swap Read-only Quote State Regression #44214457941](https://github.com/CryptoDilis/Climboria/actions/runs/44214457941) — SUCCESS.
+8. [Climboria Browser Smoke Test #44214458143](https://github.com/CryptoDilis/Climboria/actions/runs/44214458143) — SUCCESS.
+9. [CLIMBX public preview visibility (non-trading) #44214458026](https://github.com/CryptoDilis/Climboria/actions/runs/44214458026) — SUCCESS; no ClimbX bot work.
+10. [DEX Graduation Feed Tests #44214460567](https://github.com/CryptoDilis/Climboria/actions/runs/44214460567) — SUCCESS.
+
+**Release status remains unchanged:** PR #618 **DRAFT / unmerged**, main/public Worker `THIRD_PARTY_JUPITER_WIDGET_APPROVED=false`; Climboria-native signable-order and execution security gates **false**, provider managed DEX surface **false**, integrator fees **OFF**. PR #624 remains a separate default-OFF DEX draft. The production site is not approved or verified for customer-fund Swap/DEX trading from these tests.
+
+**NEXT EXECUTABLE TASKS — only Solana S1, then S2:** (1) reconcile applicable current Jupiter hosted API/Plugin usage, attribution and branding terms against upstream HTML embedding / MIT package provenance; document the accepted residual live app-JS/CSS/font trust rather than invent a complete transitive SRI attestation. (2) Reconcile exact original owner-wallet **pre-sign Jupiter min received, slippage/floor, fee and wallet rejection/device** evidence from existing private work; historical two finalized Nov 15 staging swaps do not need duplication for historical proof. If missing for current build, run narrowly necessary authorized wallet acceptance. (3) Explicitly approve the *exact reviewed PR head*, automatic Cloudflare deploy, monitor and source-OFF rollback responsibility, then controlled **Swap-only** merge and verify public API ON/no-store and exact deployed SHA / real wallet approval and finalized production outcome. (4) Only after verified Solana Swap live, prepare separate Solana DEX Buy/Sell release with independent DEX gate; Base then other EVM later; Launchpad after, per owner's priority. **Do not merge PR #618 or #624 as routine documentation.**
