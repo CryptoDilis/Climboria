@@ -351,7 +351,11 @@ test('local teleport during a pending ticket invalidates old room admission',asy
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'ticket-request');
  h.document.dispatchEvent({type:'climboria:local-teleport'});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'rejoining');
- assert.equal(h.runNextTimer(),0);
+ const originalTicket=h.calls.find(call=>call.url.endsWith('/ticket'));
+ assert.equal(originalTicket.options.signal.aborted,true,
+  'teleport must abort the superseded room ticket instead of waiting 18 seconds');
+ assert.equal(h.runNextTimer(),0,
+  'cancelled ticket deadline must not preempt immediate new admission');
  release();await flush();
  await waitFor(()=>h.clients.length===1);
  assert.equal(h.clients.length,1,'only the new valid ticket request may produce a socket');
