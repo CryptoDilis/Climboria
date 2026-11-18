@@ -403,6 +403,9 @@ test('no Duel invitation UI: authenticated explorers can attack any time as cosm
  ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,position:{x:0,y:9.55,z:-30},peers:[peer]})});
  assert.equal(h.created.some(node=>node.id==='climboria-duel-toggle'),false);
  assert.equal(h.created.some(node=>node.id==='climboria-duel-panel'),false);
+ ws.onmessage({data:JSON.stringify({type:'duel-invitation',fromId:peer.id,combatDamageEnabled:false})});
+ assert.equal(h.created.some(node=>node.id?.startsWith('climboria-duel')),false,
+  'unsolicited or legacy duel packets must never recreate the deleted UI');
  const before=ws.sent.length;
  h.document.dispatchEvent({type:'climboria:visual-punch'});
  assert.equal(ws.sent.length,before+1);
