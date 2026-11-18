@@ -1,5 +1,15 @@
 # Climboria Game Development Record
 
+## GAME MULTIPLAYER + WORLD CHAT BETA MERGED (2026-11-18)
+
+- **Merged:** [Game PR #638](https://github.com/CryptoDilis/Climboria/pull/638) squash merge `af7f50e238784d59ddc7b1f7f937203f098ced97`, enabling `game/multiplayer/client-config.json` for registered account room presence/World Chat via `https://rooms.climboria.fun/`. Public Game URL is `https://climboria.fun/game/play.html`. The query-string pilot bypass was removed from the final Game client; only the approved exact host is accepted. Backend tickets are single-use and require real registered Supabase users, with 32-player room cap; no anonymous access. PvP damage/loot/theft/grab remain disabled.
+- **Premerge CI exact PR head `645486a32dc174be921b42b7d2e0ff506b18a36b`:** [Game Gateway #44241480126](https://github.com/CryptoDilis/Climboria/actions/runs/44241480126) SUCCESS; [Game Readiness/Denials #44241480368](https://github.com/CryptoDilis/Climboria/actions/runs/44241480368) SUCCESS; [Validate #44241480106](https://github.com/CryptoDilis/Climboria/actions/runs/44241480106) SUCCESS. [Jarrell's Peak gameplay smoke #44241480216](https://github.com/CryptoDilis/Climboria/actions/runs/44241480216) was still IN PROGRESS at merge; do not claim it passed. GitHub accepted merge before smoke conclusion; this should be followed closely and remediated if red.
+- **Postmerge deployment pending:** [GitHub Pages run #44242607258](https://github.com/CryptoDilis/Climboria/actions/runs/44242607258), [Validate #44242607349](https://github.com/CryptoDilis/Climboria/actions/runs/44242607349), [Gameplay smoke #44242607358](https://github.com/CryptoDilis/Climboria/actions/runs/44242607358) were not yet complete at this record entry. **NOT YET VERIFIED LIVE** until Pages completes and the deployed website config is independently confirmed enabled and directed to the exact approved room. No owner two-browser acceptance/physical Android FPS evidence yet.
+- **Exact next:** (1) Verify Pages run and live `/game/multiplayer/client-config.json` `schema:1,enabled:true,endpoint:https://rooms.climboria.fun/`; if deployment or game smoke fails, investigate/rollback Game-only. (2) Verify authenticated Game /health and /ready HTTP 200, denied unauthenticated/forged origin tickets (401/403). (3) Owner tests *two distinct registered, non-guest accounts* in separate browsers on Game URL: real GLB peers/roster, movement replication, World Chat and rejoin; never share passwords/tokens. (4) Perform Android real-device test and record observed results. (5) Keep PvP/loot/grab disabled until separately safe. No DEX/Swap/Launchpad/ClimbX edits.
+
+---
+
+
 ## REGISTERED-USER MULTIPLAYER + WORLD CHAT — LIVE ACTIVATION PR / UNVERIFIED IN BROWSERS (2026-11-18)
 
 - **Owner authorization:** Explicitly requested live Game multiplayer and World Chat on climboria.fun without owner-side downloads or DevTools. The existing isolated Game gateway has verified health/ready and unauthenticated denial CI evidence, but actual registered two-user GLB/movement/chat acceptance is not yet recorded.
