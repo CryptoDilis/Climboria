@@ -479,7 +479,7 @@ function startHeroPreview(){
  }catch(e){previewLoading=false;heroStatus.textContent='3D preview unavailable';heroFeedback.textContent='Unable to initialize 3D preview: '+e.message;}
 }
 function openHeroEditor(){
- if(!requireHeroSignIn())return;
+ // Guests may inspect 3D previews, but cannot create/save named heroes.
  const h=savedHero();heroNameInput.value=h?.name||'';heroModelSelect.value=h?.model||'Adventurer';
  heroEditor.classList.add('open');heroEditor.setAttribute('aria-hidden','false');heroFeedback.textContent='';
  editorButtons();startHeroPreview();heroNameInput.focus();
