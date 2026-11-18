@@ -61,9 +61,9 @@ test("production acceptance probe verifies real quote preview but never signs or
 
 test("production acceptance fails closed when independent Swap or DEX status disagrees", async () => {
   for (const [overrides, expected] of [
-    [{ swapStatus: Response.json({ enabled: false }, { headers: { "access-control-allow-origin": ORIGIN, "cache-control": "no-store" } }) }, /swap\\/provider-status source approval differs/],
-    [{ dexStatus: Response.json({ enabled: true }, { headers: { "access-control-allow-origin": ORIGIN, "cache-control": "no-store" } }) }, /dex\\/provider-status source approval differs/],
-    [{ dexStatus: Response.json({ error: "not found" }, { status: 404, headers: { "access-control-allow-origin": ORIGIN } }) }, /dex\\/provider-status must return HTTP 200/]
+    [{ swapStatus: Response.json({ enabled: false }, { headers: { "access-control-allow-origin": ORIGIN, "cache-control": "no-store" } }) }, /swap[/]provider-status source approval differs/],
+    [{ dexStatus: Response.json({ enabled: true }, { headers: { "access-control-allow-origin": ORIGIN, "cache-control": "no-store" } }) }, /dex[/]provider-status source approval differs/],
+    [{ dexStatus: Response.json({ error: "not found" }, { status: 404, headers: { "access-control-allow-origin": ORIGIN } }) }, /dex[/]provider-status must return HTTP 200/]
   ]) {
     const { fakeFetch, calls } = fixture(overrides);
     await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), expected);
@@ -73,10 +73,10 @@ test("production acceptance fails closed when independent Swap or DEX status dis
 
 test("production acceptance requires uncached same-origin provider status responses", async () => {
   for (const [overrides, expected] of [
-    [{ swapStatus: Response.json({ enabled: true }, { headers: { "access-control-allow-origin": ORIGIN } }) }, /swap\\/provider-status must not be cached/],
-    [{ dexStatus: Response.json({ enabled: false }, { headers: { "access-control-allow-origin": ORIGIN, "cache-control": "max-age=3600" } }) }, /dex\\/provider-status must not be cached/],
-    [{ dexStatus: Response.json({ enabled: false }, { headers: { "access-control-allow-origin": "https://evil.example", "cache-control": "no-store" } }) }, /dex\\/provider-status must allow only/],
-    [{ dexStatus: Response.json({ enabled: "false" }, { headers: { "access-control-allow-origin": ORIGIN, "cache-control": "no-store" } }) }, /dex\\/provider-status source approval differs/]
+    [{ swapStatus: Response.json({ enabled: true }, { headers: { "access-control-allow-origin": ORIGIN } }) }, /swap[/]provider-status must not be cached/],
+    [{ dexStatus: Response.json({ enabled: false }, { headers: { "access-control-allow-origin": ORIGIN, "cache-control": "max-age=3600" } }) }, /dex[/]provider-status must not be cached/],
+    [{ dexStatus: Response.json({ enabled: false }, { headers: { "access-control-allow-origin": "https://evil.example", "cache-control": "no-store" } }) }, /dex[/]provider-status must allow only/],
+    [{ dexStatus: Response.json({ enabled: "false" }, { headers: { "access-control-allow-origin": ORIGIN, "cache-control": "no-store" } }) }, /dex[/]provider-status source approval differs/]
   ]) {
     const { fakeFetch } = fixture(overrides);
     await assert.rejects(probeProductionApi({ fetchImpl: fakeFetch }), expected);
