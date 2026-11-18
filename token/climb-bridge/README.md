@@ -75,6 +75,24 @@ Run offline safety fixtures:
 node --test token/climb-bridge/*.test.mjs
 ```
 
+## Fresh finalized RPC verification stage (no funds)
+
+The newer `mint-inspect-cli.mjs` now calls `mint-freshness.mjs`: for **each** of two different HTTPS Solana RPC endpoints it reads `getSlot(finalized)`, `getGenesisHash`, and `getAccountInfo` for the exact CLIMB mint using `finalized` with `minContextSlot`. It checks that the mint response is within 128 slots of the same provider's sampled finalized head, that the two heads are within 256 slots, that both providers report matching genesis, mint/freeze authorities and raw supply, and that neither provider serves malformed data. These are **synthetic-policy thresholds**, not network guarantees. Any mismatch fails closed. It emits a sanitized observation time/slot/authority report, not RPC endpoint URLs.
+
+Usage in a trusted local shell (never commit API keys):
+
+```sh
+# Privately configure these environment variables with different RPC providers:
+# CLIMB_SOLANA_RPC_A_URL=<provider-A HTTPS URL>
+# CLIMB_SOLANA_RPC_B_URL=<provider-B HTTPS URL>
+node token/climb-bridge/mint-inspect-cli.mjs
+node --test token/climb-bridge/*.test.mjs
+```
+
+Different hostnames and matching genesis do **not** establish actual RPC operational independence or canonical Solana mainnet identity. Confirm provider companies, official genesis from trustworthy sources, and compare with an independent explorer. A passing output still includes `bridgeRelease: NO_GO`, and it is not evidence of a live bridge.
+
+Before selecting a provider or deploying a Base contract, complete [PROVIDER_SELECTION.md](./PROVIDER_SELECTION.md). Both Wormhole Token Bridge and NTT remain *unverified alternatives*, not selected live routes. Do not deploy a standalone Base CLIMB or give any mint rights to a non-verified contract.
+
 ## Mainnet go/no-go prerequisites
 
 1. Confirm current `finalized` Solana mint account (program, supply, `mintAuthority`, `freezeAuthority`, token accounts, pump.fun compatibility) from multiple sources. Snapshot file does not establish current authority state.
