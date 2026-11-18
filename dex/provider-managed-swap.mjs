@@ -240,6 +240,23 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
           hideRevoked();
           return;
         }
+        // A mounted third-party widget owns its *original* pair. Initial mints
+        // are hints passed only to Jupiter.init(), not a live reconfiguration.
+        // Never reopen the old wallet interface after the user changes a
+        // Solana token or direction (or clears the pair for Limit/invalid mint).
+        // Check BEFORE revealing either the first-party or vendor-owned UI.
+        if (mounted) {
+          const currentPair = readSelectedProviderPair(panel);
+          const samePair = (currentPair === null && mountedPair === null) ||
+            (currentPair !== null && mountedPair !== null &&
+             currentPair.inputMint === mountedPair.inputMint &&
+             currentPair.outputMint === mountedPair.outputMint);
+          if (!samePair) {
+            hideRevoked();
+            status.textContent = "Selected token or trade direction changed. The previous Jupiter widget was closed to avoid trading an outdated pair. Refresh the page, select the intended mints, and open a new provider session. Existing wallet prompts or submitted transactions cannot be cancelled.";
+            return;
+          }
+        }
         panel.hidden = false;
         expanded(true);
         startActiveApprovalChecks();
@@ -265,15 +282,7 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
               return;
             }
           }
-          const selection = readSelectedProviderPair(panel);
-          // The provider may keep an earlier pair after it was mounted. Never
-          // claim a new token is selected without a verified provider update.
-          status.textContent = selection && (
-            !mountedPair || selection.inputMint !== mountedPair.inputMint ||
-            selection.outputMint !== mountedPair.outputMint
-          )
-            ? "DEX token selection changed. The open Jupiter widget may retain its previous pair; select and verify the intended mints inside Jupiter before signing."
-            : "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
+          status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
           return;
         }
         status.textContent = "Loading verified provider integration. No wallet transaction has been requested by Climboria.";
