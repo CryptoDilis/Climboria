@@ -92,8 +92,8 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
     assert.equal(response.status(),200,path + " must load");
     const button = page.locator("[data-climboria-managed-swap-open]:visible").first();
     await button.waitFor({timeout:15000});
-    assert.deepEqual(hostModuleRequests, [ORIGIN + "/dex/provider-managed-swap.mjs?v=7"],
-      "Swap and DEX must load exactly the reviewed cache-busted v7 host module");
+    assert.deepEqual(hostModuleRequests, [ORIGIN + "/dex/provider-managed-swap.mjs?v=8"],
+      "Swap and DEX must load exactly the reviewed cache-busted v8 host module");
     // Every launcher, including the DEX token-detail action, must point to the
     // actual expandable region, never the embedded third-party SDK mount node.
     const panelId = path === "/swap/" ? "climboriaSwapProviderPanel" : "climboriaDexProviderPanel";
