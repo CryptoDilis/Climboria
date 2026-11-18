@@ -272,7 +272,12 @@ export class JarrellRoom {
     if(await txn.get('ticket:'+data.ticket))
      return {status:409,error:'duplicate-ticket'};
     const last=await txn.get('resume:'+data.userId);
-    const resumePosition=isValidResumeRecord(last)?last.position:null;
+    // New device/tab must receive the freshest validated in-room position,
+    // not an older 6-second DO snapshot, even while another tab is active.
+    const live=this.userSockets.get(data.userId);
+    const liveMember=live&&this.spawned.has(live.id)?this.room.members.get(live.id):null;
+    const resumePosition=validResumePosition(liveMember?.position)?
+     {...liveMember.position}:isValidResumeRecord(last)?last.position:null;
     await txn.put('ticket:'+data.ticket,{...data,expiresAt:now+SESSION_TTL,
      ...(resumePosition?{resumePosition}:{})});
     return {status:201,ok:true,resumePosition};
@@ -330,7 +335,12 @@ export class JarrellRoom {
    if(!force&&now-(this.lastResumeWrite.get(entry.userId)||0)<SERVER_RESUME_WRITE_MS)return;
    this.lastResumeWrite.set(entry.userId,now);
    // Persist only the room's validated coordinates, never browser claims.
-   void this.state.storage.put('resume:'+entry.userId,{position:{...member.position},at:now}).catch(()=>{});
+   const write=this.state.storage.put('resume:'+entry.userId,{
+    position:{...member.position},at:now
+   }).catch(()=>{});
+   // A socket close can be the last request for this Durable Object.
+   // Keep the DO alive until the server-authoritative checkpoint commits.
+   if(typeof this.state.waitUntil==='function')this.state.waitUntil(write);
   };
   const cleanup=()=>{
    if(this.userSockets.get(entry.userId)?.id===id)persistPosition(true);
