@@ -13,6 +13,7 @@ on:
       - "game/multiplayer/worker/START_GAME_QA_WINDOWS.cmd"
       - "game/multiplayer/worker/QA_KIT_README.txt"
       - "game/multiplayer/worker/package.json"
+      - "game/multiplayer/client-config.json"
   pull_request:
     branches: [main]
     paths:
@@ -25,6 +26,7 @@ on:
       - "game/multiplayer/worker/START_GAME_QA_WINDOWS.cmd"
       - "game/multiplayer/worker/QA_KIT_README.txt"
       - "game/multiplayer/worker/package.json"
+      - "game/multiplayer/client-config.json"
   workflow_dispatch:
 
 permissions:
@@ -51,10 +53,10 @@ jobs:
           from pathlib import Path
           import json
           cfg=json.loads(Path('game/multiplayer/client-config.json').read_text())
-          assert cfg['schema']==1 and cfg['enabled'] is False and cfg['endpoint'] is None, 'Game public multiplayer must remain OFF'
+          assert cfg.get('schema') == 1 and cfg.get('enabled') is True and cfg.get('endpoint') == 'https://rooms.climboria.fun/', 'Game registered-only pilot must use exact approved room hostname'
           pkg=json.loads(Path('game/multiplayer/worker/package.json').read_text())
           assert pkg['private'] is True and pkg['dependencies']['playwright']=='1.56.1', 'QA browser must be pinned'
-          print('PASS: source Game config OFF, pinned local-only Playwright')
+          print('PASS: exact approved registered Game pilot endpoint and pinned local-only Playwright; no two-user QA claim')
           PY
       - name: Assemble standalone private Windows QA folder
         run: |
