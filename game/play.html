@@ -2120,7 +2120,7 @@ function renderInventory(){
 }
 function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else if(inventory.length<50)inventory.push({name,qty});else{toast('Backpack full · 50/50 slots');return}saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
 const GAME_LOCAL_POSITION_PREFIX='climboria_jarrell_position_v1:user:';
-let localPositionUserId=null;
+let localPositionUserId=null,localPositionReady=false;
 function restoreExplorerPosition(position){
  const x=Number(position?.x),z=Number(position?.z),yaw=Number(position?.yaw??P.yaw);
  if(![x,z,yaw].every(Number.isFinite)||Math.abs(x)>100000||Math.abs(z)>100000)return false;
@@ -2132,8 +2132,11 @@ function restoreExplorerPosition(position){
  return true;
 }
 window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
+ activatePositionSave(userId){
+  if(userId&&userId===localPositionUserId&&!window.__climboriaGuestMode)localPositionReady=true;
+ },
  saveLocalPosition(){
-  if(!localPositionUserId||window.__climboriaGuestMode||P.mode!=='walk')return false;
+  if(!localPositionReady||!localPositionUserId||window.__climboriaGuestMode||P.mode!=='walk')return false;
   const position={x:P.x,z:P.z,yaw:P.yaw};
   if(![position.x,position.z,position.yaw].every(Number.isFinite)||Math.abs(P.x)>100000||Math.abs(P.z)>100000)return false;
   try{
@@ -2143,7 +2146,8 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
   }catch{return false}
  },
  restoreLocalPosition(userId,cloudSavedAt){
-  if(!userId||userId!==localPositionUserId||window.__climboriaGuestMode)return false;
+  if(!userId||userId!==localPositionUserId||window.__climboriaGuestMode||
+     window.ENDLESS_WILDS?.roomResumeVerified)return false;
   try{
    const saved=JSON.parse(localStorage.getItem(GAME_LOCAL_POSITION_PREFIX+userId)||'null');
    const cloudTime=cloudSavedAt?Date.parse(cloudSavedAt):0;
@@ -2158,6 +2162,7 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
   // local guest backpack may be adopted by the first account with no cloud row.
   setUserScope(userId, migrateUnscopedInventory = false) {
     if(localPositionUserId&&localPositionUserId!==userId)this.saveLocalPosition();
+    if(localPositionUserId!==userId)localPositionReady=false;
     localPositionUserId=userId||null;
     const previousKey = inventoryStorageKey;
     const previousItems = inventory.map(item => ({ name: item.name, qty: item.qty }));
