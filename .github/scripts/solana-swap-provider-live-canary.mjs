@@ -36,13 +36,24 @@ const blockedWrites = [];
 const pageErrors = [];
 const liveStatusResponses = [];
 const failedStatusRequests = [];
+const providerResponses = [];
+const failedProviderRequests = [];
 page.on("pageerror", error => pageErrors.push(String(error?.message || error).slice(0, 200)));
 page.on("response", response => {
   if (response.url() === STATUS) liveStatusResponses.push(response.status());
+  const url = new URL(response.url());
+  if (url.hostname === "jup.ag" || url.hostname.endsWith(".jup.ag")) {
+    providerResponses.push({ host: url.hostname, path: url.pathname.slice(0, 100), http: response.status() });
+  }
 });
 page.on("requestfailed", request => {
   if (request.url() === STATUS) failedStatusRequests.push(
     String(request.failure()?.errorText || "unknown").slice(0, 100));
+  const url = new URL(request.url());
+  if (url.hostname === "jup.ag" || url.hostname.endsWith(".jup.ag")) {
+    failedProviderRequests.push({ host: url.hostname, path: url.pathname.slice(0, 100),
+      failure: String(request.failure()?.errorText || "unknown").slice(0, 100) });
+  }
 });
 page.on("popup", popup => { void popup.close(); });
 
@@ -140,7 +151,20 @@ try {
         rootChildCount: root?.children.length || 0,
         rootDescendants: root?.querySelectorAll("*").length || 0,
         rootTextLength: (root?.innerText || "").length,
-        rootChildTags: [...(root?.children || [])].slice(0, 4).map(el => el.tagName)
+        rootChildTags: [...(root?.children || [])].slice(0, 4).map(el => el.tagName),
+        rootChildSummaries: [...(root?.children || [])].slice(0, 4).map(el => ({
+          tag: el.tagName,
+          id: el.id.slice(0, 80),
+          className: typeof el.className === "string" ? el.className.slice(0, 100) : "",
+          width: Math.round(el.getBoundingClientRect().width),
+          height: Math.round(el.getBoundingClientRect().height)
+        })),
+        vendorTaggedNodes: [...document.querySelectorAll(
+          '[id*="jupiter" i],[class*="jupiter" i],[id*="jup-" i],[class*="jup-" i]'
+        )].slice(0, 10).map(el => ({ tag: el.tagName, id: el.id.slice(0, 65),
+          className: typeof el.className === "string" ? el.className.slice(0, 65) : "" })),
+        hasJupiterInit: typeof window.Jupiter?.init === "function",
+        hasJupiterClose: typeof window.Jupiter?.close === "function"
       };
     }, interactiveSelector);
     console.log("DIAGNOSTIC real Jupiter UI after bounded hydration (no wallet): " +
@@ -150,6 +174,8 @@ try {
         w.method + " " + w.origin + w.path))].slice(0, 12)));
     console.log("DIAGNOSTIC public status checks from page: " +
       JSON.stringify({http:liveStatusResponses.slice(0, 12),failures:failedStatusRequests.slice(0, 5)}));
+    console.log("DIAGNOSTIC Jupiter CDN/host responses (paths only, no keys): " +
+      JSON.stringify({ responses: providerResponses.slice(0, 30), failures: failedProviderRequests.slice(0, 12) }));
     const nativeWrites = blockedWrites.filter(w =>
       w.origin === SITE || w.origin === "https://api.climboria.fun");
     assert.equal(nativeWrites.length, 0,
