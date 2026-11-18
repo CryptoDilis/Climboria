@@ -92,7 +92,7 @@
   &&['Adventurer','Jarrell','Lheiz'].includes(p.model)&&validPosition(p.position);
  // World Chat never appears without a verified room welcome. Messages are
  // plain text, room-scoped, short-lived in the DOM and never stored locally.
- let chatUi=null,chatExpanded=false,pendingWorldChat=null,worldChatSequence=0,chatMode='world-chat';
+ let chatUi=null,chatExpanded=false,pendingWorldChat=null,worldChatSequence=0,chatMode='world-chat',nearbyChatReady=false;
  function clearPendingWorldChat(){
   if(pendingWorldChat?.timeout)clearTimeout(pendingWorldChat.timeout);
   pendingWorldChat=null;
@@ -101,11 +101,17 @@
   if(chatUi){
    chatUi.count.textContent=chatMode==='nearby-chat'?'NEARBY CHAT · 20m RANGE':
     'WORLD CHAT · '+(known.size+(selfId?1:0))+' ONLINE';
-   if(chatUi.channel)chatUi.channel.textContent=chatMode==='nearby-chat'?'WORLD':'NEARBY';
+   if(chatUi.channel){
+    chatUi.channel.disabled=!nearbyChatReady;
+    chatUi.channel.textContent=nearbyChatReady?(chatMode==='nearby-chat'?'WORLD':'NEARBY'):'NEARBY · UPDATING';
+    chatUi.channel.title=nearbyChatReady?'Switch between World Chat and Nearby Chat':
+     'Nearby Chat requires the updated Game room server; World Chat still works';
+    chatUi.channel.style.opacity=nearbyChatReady?'1':'.55';
+   }
   }
  }
  function clearWorldChatUi(){
-  chatExpanded=false;chatMode='world-chat';
+  chatExpanded=false;chatMode='world-chat';nearbyChatReady=false;
   // Clear drafts on sign-out/disconnect to avoid leaking text between
   // authenticated accounts or reviving messages after room reconnection.
   clearPendingWorldChat();
@@ -145,7 +151,7 @@
   }
  }
  function sendWorldChat(){
-  if(!chatUi||!selfId||!spawnConfirmed)return;
+  if(!chatUi||!selfId||!spawnConfirmed||(chatMode==='nearby-chat'&&!nearbyChatReady))return;
   if(pendingWorldChat){
    chatUi.notice.textContent='Waiting for the server to confirm the previous message.';
    return;
@@ -207,6 +213,7 @@
    channelButton.setAttribute('aria-label','Switch between World Chat and Nearby Chat');
    channelButton.style.cssText='padding:8px;border:1px solid #d8b46b88;border-radius:6px;background:#111c29;color:#ffe3a3;font:800 10px system-ui;cursor:pointer';
    channelButton.addEventListener('click',()=>{
+    if(!nearbyChatReady)return;
     if(pendingWorldChat){notice.textContent='Wait for message confirmation before switching channels.';return;}
     chatMode=chatMode==='world-chat'?'nearby-chat':'world-chat';
     renderChatCount();
@@ -453,7 +460,7 @@
     const verifiedIds=new Set(peers.map(p=>p.id));
     for(const id of [...known.keys()])if(!verifiedIds.has(id))leave(id);
     for(const peer of peers)addPlayer(peer);
-    spawnConfirmed=true;
+    spawnConfirmed=true;nearbyChatReady=msg.nearbyChatEnabled===true;
     // Only a verified server spawn-accepted completes room admission.
     clearAdmissionTimer();
     ensureDuelUi();ensureWorldChatUi();
@@ -467,7 +474,9 @@
     renderer.move(msg.id,msg.position);
    }
   }else if(msg.type==='player-left'){if(spawnConfirmed)leave(msg.id)}
-  else if(msg.type==='world-chat'||msg.type==='nearby-chat'){if(spawnConfirmed)appendWorldChat(msg)}
+  else if(msg.type==='world-chat'||msg.type==='nearby-chat'){
+   if(spawnConfirmed&&(msg.type==='world-chat'||nearbyChatReady))appendWorldChat(msg)
+  }
   else if(msg.type==='rejected'&&msg.reason==='invalid-initial-spawn'){
    // A rejected first spawn leaves the socket open on the Game Worker.
    // Close it and retry admission when the real hero returns to Sanctuary.
