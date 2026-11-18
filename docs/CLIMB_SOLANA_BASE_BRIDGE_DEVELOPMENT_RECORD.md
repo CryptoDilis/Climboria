@@ -5,6 +5,16 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 6 MERGED — manual on-chain verification available (2026-11-19)
+
+- [PR #670](https://github.com/CryptoDilis/Climboria/pull/670) **MERGED** by squash into `main` at [`feb87a1a3c2df7d37ba18e78ee551ac9c3067b84`](https://github.com/CryptoDilis/Climboria/commit/feb87a1a3c2df7d37ba18e78ee551ac9c3067b84); exact reviewed/tested PR head `515ce4d64f56fd88f56419a251a43c95999a1988`.
+- On that **exact head**, GitHub Actions confirmed **SUCCESS**: [CLIMB Bridge Read-Only Safety Tests #44383537768](https://github.com/CryptoDilis/Climboria/actions/runs/44383537768) and [Validate Climboria #44383537637](https://github.com/CryptoDilis/Climboria/actions/runs/44383537637). Previous PR checks temporarily did not appear but subsequently completed; this was **not** an onchain mint check.
+- Scope verified: `.github/workflows/climb-mint-mainnet-evidence-manual.yml`, `token/climb-bridge/mint-evidence-cli.test.mjs`, bridge CLI/freshness tests, README, and this record. Manual GitHub Actions can now sample **actual** finalized Solana mint metadata *once two independent private RPC URLs and a trusted canonical public mainnet genesis reference are configured*. It executes on `main` only, no PR secrets, read-only permissions, no wallet signing and no transfers.
+- **Nothing live was automatically run:** No actual onchain mint authority/freeze authority or independent provider identity verified yet; no bridge provider compatibility confirmed; no Solana escrow/Base contract configured. **NO-GO** for customer funds and official Base CA remains **NOT DEPLOYED**. No Game, Swap, DEX, ClimbX or Launchpad production changes.
+- **EXACT NEXT:** Owner/operator checks existing GitHub Actions settings (do not duplicate working secrets). If missing, set **Secrets** `CLIMB_SOLANA_RPC_A_URL`, `CLIMB_SOLANA_RPC_B_URL` from independent Solana mainnet RPC operators and **Variable** `CLIMB_SOLANA_MAINNET_GENESIS_HASH` sourced from separately authenticated network reference. Open [Actions](https://github.com/CryptoDilis/Climboria/actions), choose **CLIMB Mint Authority - Manual Read-only Evidence**, run on `main`. Check run success and the 7-day sanitized artifact. Record the actual run URL, exact finalized head slots, supply, authorities and provider identity provenance here, but never credentials or raw RPC URLs. Then determine exact canonical CLIMB bridge provider compatibility from official supported protocol/deployment/audit artifacts and design live testnet integration; do not create a standalone Base 1B supply.
+
+---
+
 ## Stage 6 — Manual-only finalized mainnet mint evidence (2026-11-19)
 
 **Goal:** get beyond mock tests by preparing a controlled, zero-wallet GitHub Actions path for an **actual** authority/supply RPC read. No current live run is claimed. No deployment, no Base CA, no user CLIMB or bridge funds moved.
