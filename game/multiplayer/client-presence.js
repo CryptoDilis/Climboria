@@ -549,11 +549,11 @@
     // if a stalled Worker or body reader ignores AbortSignal. A timed-out
     // request must never manufacture a peer, open a stale socket, or leave
     // the Game UI stuck on CONNECTING.
-    const work=(async()=>{
+    const requestTicket=async token=>{
      const reply=await fetch(new URL('ticket',base),{
       method:'POST',mode:'cors',cache:'no-store',credentials:'omit',
       signal:ticketAbort.signal,
-      headers:{Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
+      headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
       body:JSON.stringify({name:hero.name,model:hero.model})
      });
      if(reply.status===429)return {busy:true};
@@ -561,6 +561,32 @@
      if(reply.status===403)return {originDenied:true};
      if(!reply.ok)throw Error('Room ticket denied');
      return {ticket:await reply.json()};
+    };
+    const work=(async()=>{
+     let outcome=await requestTicket(session.access_token);
+     // The site's own Supabase client may have an expired access token
+     // even though the registered account still has a valid refresh token.
+     // Allow exactly ONE refresh of the same account and one fresh ticket
+     // request. Never switch identity, bypass Worker verification or loop.
+     if(outcome.loginRequired&&typeof auth.auth.refreshSession==='function'&&
+        !disposed&&epoch===connectEpoch){
+      try{
+       const result=await auth.auth.refreshSession();
+       const next=result?.data?.session;
+       if(!result?.error&&next?.user?.id===session.user.id&&
+          next.user.is_anonymous!==true&&
+          next.user.app_metadata?.provider!=='anonymous'&&
+          typeof next.access_token==='string'&&
+          next.access_token!==session.access_token&&
+          next.access_token.length>0&&!disposed&&epoch===connectEpoch){
+        outcome=await requestTicket(next.access_token);
+       }
+      }catch{
+       // Refresh errors are normal for revoked sessions. Keep the original
+       // login-required state; never expose tokens or provider error text.
+      }
+     }
+     return outcome;
     })();
     const deadline=new Promise((_,reject)=>{
      ticketDeadline=setTimeout(()=>{
