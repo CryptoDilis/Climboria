@@ -1795,6 +1795,55 @@ document.getElementById('expedition-settings-toggle').addEventListener('click',e
 document.getElementById('expedition-settings-close').addEventListener('click',()=>settingsPanel.style.display='none');
 const volumeControl=document.getElementById('climboria-music-volume'),volumeValue=document.getElementById('climboria-volume-value');
 volumeControl.addEventListener('input',()=>{climboriaMusic.volume=Number(volumeControl.value)/100;volumeValue.textContent=volumeControl.value+'%';});
+let gameEffectsVolume=.55,effectsAudioContext=null;
+document.getElementById('climboria-effects-volume').addEventListener('input',event=>{
+ gameEffectsVolume=Number(event.target.value)/100;
+ document.getElementById('climboria-effects-value').textContent=event.target.value+'%';
+});
+function playGameEffect(kind){
+ if(gameEffectsVolume<=0)return;
+ try{
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)return;
+  effectsAudioContext??=new AudioContextClass();
+  if(effectsAudioContext.state==='suspended')void effectsAudioContext.resume();
+  const now=effectsAudioContext.currentTime,osc=effectsAudioContext.createOscillator(),gain=effectsAudioContext.createGain();
+  osc.type=kind==='chest'?'sine':'triangle';
+  osc.frequency.setValueAtTime(kind==='chest'?610:180,now);
+  osc.frequency.exponentialRampToValueAtTime(kind==='chest'?820:95,now+.11);
+  gain.gain.setValueAtTime(Math.max(.0001,gameEffectsVolume*.035),now);
+  gain.gain.exponentialRampToValueAtTime(.0001,now+.12);
+  osc.connect(gain).connect(effectsAudioContext.destination);
+  osc.onended=()=>{osc.disconnect();gain.disconnect()};
+  osc.start(now);osc.stop(now+.13);
+ }catch{}
+}
+document.addEventListener('climboria:chest',()=>playGameEffect('chest'));
+async function showConnectedGameAccount(){
+ const el=document.getElementById('expedition-connected-account');
+ if(window.__climboriaGuestMode){el.textContent='ACCOUNT · GUEST (NOT CONNECTED)';return}
+ const auth=window.__CLIMBORIA_GAME_SAVE_CLIENT?.auth;
+ if(!auth?.getUser){el.textContent='ACCOUNT · NOT CONNECTED';return}
+ try{
+  const {data,error}=await auth.getUser(),user=data?.user;
+  if(error||!user?.id||user.is_anonymous===true||user.app_metadata?.provider==='anonymous'){
+   el.textContent='ACCOUNT · NOT CONNECTED';return;
+  }
+  const provider=String(user.app_metadata?.provider||'registered').toUpperCase().slice(0,20);
+  el.textContent='CONNECTED ACCOUNT · '+provider+' · …'+String(user.id).slice(-6);
+ }catch{el.textContent='ACCOUNT · NOT CONNECTED'}
+}
+document.getElementById('expedition-settings-toggle').addEventListener('click',()=>{void showConnectedGameAccount()});
+document.getElementById('expedition-return-menu').addEventListener('click',async()=>{
+ window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.saveLocalPosition?.();
+ try{
+  await Promise.race([
+   Promise.resolve(window.__CLIMBORIA_GAME_SAVE?.saveNow?.(true)),
+   new Promise(resolve=>setTimeout(resolve,1500))
+  ]);
+ }catch{}
+ location.assign('./index.html');
+});
 function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;P.mode='walk';
@@ -1829,6 +1878,7 @@ function requestVisualPunch(){
  // Start the authored animation at input time, not at the next WebGL tick.
  // A busy software renderer must not silently drop a 650ms ATTACK input.
  if(assetHero&&assetMixer&&assetActions.length)chooseAssetAnimation('punch');
+ playGameEffect('attack');
  document.documentElement.dataset.climboriaPunch='visual-only';
  document.dispatchEvent(new Event('climboria:visual-punch'));
  return true;
@@ -2780,7 +2830,7 @@ function chestDistributionAudit(){
 }
 function interact(){if(P.mode!='walk')return;
  if(recoverDeathLoot())return;
- for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){c.open=true;c.t=chestRespawnDelay(c);c.g.visible=false;const reward=c.reward;addInventoryItem(reward.item,1);toast('Chest opened · '+reward.rarity.toUpperCase()+' · '+reward.item);emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});return}
+ for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){playGameEffect('chest');c.open=true;c.t=chestRespawnDelay(c);c.g.visible=false;const reward=c.reward;addInventoryItem(reward.item,1);toast('Chest opened · '+reward.rarity.toUpperCase()+' · '+reward.item);emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});return}
  for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){if(P.fish>0)return;P.fish=2+Math.random()*4;P.fishSource=f.waterBodyId||'open_sea';toast('Line cast at '+f.label+'…')}else{toast(f.label);emit(f.type,{})}return}}
 P.fish=0;
 /* weather: clear / rain / thunderstorm */
