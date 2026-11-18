@@ -39,3 +39,21 @@ This draft modifies the same Cloudflare Worker whose **Swap source approval is O
 - A mobile Playwright fixture in `.github/scripts/dex-swap-managed-provider-browser-smoke.mjs` now tests missing-token fail-closed behavior, USDC/SOL Sell and Buy mint orientation, disabled native Buy/Sell/order/connect controls, invisible source-OFF DEX Jupiter launchers, no third-party plugin loads or native order requests.
 - **Status when written:** UI/test changes committed on PR #655 draft branch but final-head CI must still be checked; no claim of new successful tests until the exact SHA checks complete. PR still **draft and unmerged**. The DEX provider cannot yet receive customer wallet requests.
 - **Exact next:** verify final-head browser/regression/Worker checks, fix any test or UI mismatch; keep stable release gates `Swap=true`, `DEX=false`, native signing=false. Do not merge without controlled release review and matching exact-main SHA. Owner-funded Swap wallet/settlement evidence is still outstanding. Preserve owner-controlled rollback.
+
+
+## 2026-11-19 checkpoint — refreshed against main after PR #660 / account fix
+
+- Reviewed latest repository commits and [merged PR #660](https://github.com/CryptoDilis/Climboria/pull/660): real no-wallet Jupiter widget mount/viewport canary now covers desktop 1280px and mobile 390px on main. This remains UI-only evidence; **no finalized production wallet-funded Swap receipt** was established by those tests.
+- [PR #655](https://github.com/CryptoDilis/Climboria/pull/655) remains an **open draft**, unmerged, head `3ec7369cbedc592d493d622b2ccf54deaeec6b0d`, based on older main. GitHub combined commit-status API returned **no legacy statuses**, which does **not** prove Actions check success or failure; final-head workflow runs still require explicit inspection before merge.
+- Recent main auth changes separate email/social login from session-only wallet connection; this is not a permanent, signed wallet-to-account identity link, and is not a funded transaction proof.
+- Worker source control required for any eventual DEX-status deployment remains unchanged: exact merged-main SHA approval `CLIMBORIA_SWAP_RELEASE_APPROVED_SHA`, Swap provider enabled, DEX provider disabled and native signable order gates OFF. Do **not** merge draft #655 merely to trigger a Worker deployment before reviewing final-head checks, newer main diff and operator approval.
+
+### Next exact operator/development steps
+
+1. Inspect actual Actions check runs for PR #655 exact head, and compare its 8 changed files with latest main; reconcile any newer Swap/browser/auth contracts on the feature branch, rerun the full DEX/Swap CI matrix.
+2. Keep DEX independent status `false` while verifying on production that source-ON Solana Jupiter Swap mounts at 1280px/390px, and the DEX Buy/Sell preview stays non-signing.
+3. Conduct one **owner-approved**, deliberately small, real production Solana Jupiter wallet swap, verify signature, finalized receipt, correct amount/fees/slippage, and refusal path; record transaction evidence without private wallet information. CI mocks and staging swaps cannot replace this.
+4. Only after review, choose a controlled exact-main-SHA Worker release for the independent DEX status endpoint; verify Swap ON, DEX OFF, fail-closed native execution and rollback after deployment. Enable DEX separately only after real-wallet direction checks.
+5. Keep Base/EVM for after the Solana Swap and DEX acceptance milestones. No Game, ClimbX, or Launchpad edits.
+
+The huge central `docs/DEX_SWAP_LAUNCHPAD_DEVELOPMENT_RECORD.md` returned an empty content payload from the GitHub fetch wrapper during this checkpoint despite a non-empty blob SHA; avoid replacing/truncating it without a verified full read. This scoped record is the additive checkpoint until safe central-record editing is available.
