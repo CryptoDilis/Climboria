@@ -68,6 +68,24 @@ export class PresenceRoom{
   // Explicitly evict failed transports to avoid displaying ghost players.
   for(const id of failed)this.disconnect(id);
  }
+ broadcastNearby(packet,sourceId,maxDistance=20){
+  // This is a COSMETIC text-delivery filter based on movement-gated room
+  // presence, never an authority for combat, loot, reach or gameplay rewards.
+  const source=this.members.get(sourceId);
+  if(!source||source.visible===false||!Number.isFinite(maxDistance)||
+     maxDistance<=0||maxDistance>40)return 0;
+  let delivered=0;
+  const failed=[];
+  for(const [id,member] of this.members){
+   if(member.visible===false)continue;
+   const a=source.position,b=member.position;
+   if(!a||!b||!['x','y','z'].every(k=>Number.isFinite(a[k])&&Number.isFinite(b[k])))continue;
+   if(Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z)>maxDistance)continue;
+   try{member.send(packet);delivered++}catch{failed.push(id)}
+  }
+  for(const id of failed)this.disconnect(id);
+  return delivered;
+ }
  move(trustedSessionId,payload={}){
   const m=this.members.get(trustedSessionId);
   if(!m)return {ok:false,reason:'unknown-or-disconnected-session'};
