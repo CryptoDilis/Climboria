@@ -5,6 +5,15 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 5 MERGED — mint RPC freshness and provider selection gate (2026-11-19)
+
+- [PR #668](https://github.com/CryptoDilis/Climboria/pull/668) **merged** by squash to `main` at [`a5a66e3ceee28a543a2658d529371a6f70a53328`](https://github.com/CryptoDilis/Climboria/commit/a5a66e3ceee28a543a2658d529371a6f70a53328); exact tested PR head `6bdd704eee6f88b56dcf97b8efac4c1f7ff3a836`.
+- Exact-head GitHub Actions **SUCCESS**: [CLIMB Bridge Read-Only Safety Tests #44381270845](https://github.com/CryptoDilis/Climboria/actions/runs/44381270845) and [Validate Climboria #44381270480](https://github.com/CryptoDilis/Climboria/actions/runs/44381270480). Initial Bridge Safety run [#44381082864](https://github.com/CryptoDilis/Climboria/actions/runs/44381082864) **FAILED** (test fixture expected head-divergence error, but mocked mint slot was stale first); corrected isolated fixture at commit `6bdd704eee6f88b56dcf97b8efac4c1f7ff3a836`. This was a mock fixture failure, not a live token security incident.
+- Scoped diff: `token/climb-bridge/mint-freshness.mjs`, `mint-freshness.test.mjs`, `mint-inspect-cli.mjs`, `PROVIDER_SELECTION.md`, `README.md`, and this record. The bridge live config remains `NOT_CONFIGURED_DO_NOT_DEPLOY`; no Game/DEX/Swap/Launchpad/ClimbX/production integrations touched.
+- **Actual next verified blocker:** operator-run two independently operated HTTPS Solana mainnet RPCs using `node token/climb-bridge/mint-inspect-cli.mjs` in a trusted environment, record sanitized UTC evidence and compare to independent explorer and canonical genesis; provider operators must be independently confirmed. There is **no claim of actual live mint authority verification in this session**. After this, corroborate official bridge provider compatibility for exact legacy SPL mint and contract/audit/escrow provenance per `PROVIDER_SELECTION.md`, then build provider-specific devnet/Base Sepolia transfers. No actual bridge or Base CA deployed. **Mainnet NO-GO for customer funds**.
+
+---
+
 ## Stage 5 — Fresh dual-RPC mint evidence and provider selection (2026-11-19)
 
 - **Scope:** bridge-only read-only evidence tooling; nothing deployed, no wallet, no transaction signing or user funds. No changes to Game, DEX, Swap, Launchpad, ClimbX or production infrastructure.
