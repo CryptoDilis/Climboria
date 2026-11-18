@@ -503,6 +503,7 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   // A must be accepted before B can discover A in the initial welcome.
   c1.dispatch('message',JSON.stringify({type:'spawn',position:{x:0,y:9.55,z:-30}}));
   assert.equal(c1.packets.at(-1).type,'spawn-accepted','A sees trusted initial spawn confirmation');
+  assert.equal(c1.packets.at(-1).nearbyChatEnabled,true,'only updated Worker advertises Nearby Chat after confirmed spawn');
   assert.equal(c1.packets.at(-1).id,c1.packets[0].selfId);
   assert.deepEqual(c1.packets.at(-1).peers,[],'first accepted spawn has no other verified peers');
   assert.equal(room.room.snapshot().length,1);
@@ -519,6 +520,7 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   assert.equal(room.room.snapshot().length,1,'invalid B spawn stays invisible');
   c2.dispatch('message',JSON.stringify({type:'spawn',position:{x:0,y:9.55,z:-30}}));
   assert.equal(c2.packets.at(-1).type,'spawn-accepted','B sees trusted initial spawn confirmation');
+  assert.equal(c2.packets.at(-1).nearbyChatEnabled,true);
   assert.equal(c2.packets.at(-1).id,c2.packets[0].selfId);
   assert.deepEqual(c2.packets.at(-1).peers.map(p=>p.id),[c1.packets[0].selfId],
    'spawn confirmation includes authoritative roster of already-validated peers');
