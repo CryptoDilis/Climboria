@@ -302,6 +302,13 @@ export class JarrellRoom {
   // Reconnecting from a second tab/device replaces the prior live socket.
   const prior=this.userSockets.get(entry.userId);
   if(prior){
+   const priorMember=this.room.members.get(prior.id);
+   if(this.spawned.has(prior.id)&&validResumePosition(priorMember?.position)){
+    entry.resumePosition={...priorMember.position};
+    await this.state.storage.put('resume:'+entry.userId,{
+     position:entry.resumePosition,at:Date.now()
+    }).catch(()=>{});
+   }
    this.userSockets.delete(entry.userId);
    this.combat.disconnect(prior.id);
    this.room.disconnect(prior.id);
@@ -317,10 +324,21 @@ export class JarrellRoom {
   });
   if(!connected.ok){socket.close(1013,'room-unavailable');return response(503,{error:connected.reason})}
   this.userSockets.set(entry.userId,{id,socket});
+  const persistPosition=force=>{
+   const member=this.room.members.get(id),now=Date.now();
+   if(!this.spawned.has(id)||!validResumePosition(member?.position))return;
+   if(!force&&now-(this.lastResumeWrite.get(entry.userId)||0)<SERVER_RESUME_WRITE_MS)return;
+   this.lastResumeWrite.set(entry.userId,now);
+   // Persist only the room's validated coordinates, never browser claims.
+   void this.state.storage.put('resume:'+entry.userId,{position:{...member.position},at:now}).catch(()=>{});
+  };
   const cleanup=()=>{
+   if(this.userSockets.get(entry.userId)?.id===id)persistPosition(true);
    this.combat.disconnect(id);
    this.room.disconnect(id);this.lastPunch.delete(id);this.lastChat.delete(id);this.spawned.delete(id);
-   if(this.userSockets.get(entry.userId)?.id===id)this.userSockets.delete(entry.userId);
+   if(this.userSockets.get(entry.userId)?.id===id){
+    this.userSockets.delete(entry.userId);this.lastResumeWrite.delete(entry.userId);
+   }
   };
   let windowStart=Date.now(),messagesThisWindow=0;
   socket.addEventListener('message',event=>{
@@ -339,17 +357,22 @@ export class JarrellRoom {
    if(!message||typeof message!=='object')return;
    if(message.type==='spawn'){
     const p=message.position;
-    // Visual-only initial terrain elevation: player starts at Sanctuary.
-    // Do NOT reuse this client-requested Y as trusted combat or reward physics.
-    if(this.spawned.has(id)||!p||!Number.isFinite(p.x)||!Number.isFinite(p.y)||!Number.isFinite(p.z)
-       ||Math.hypot(p.x,p.z+30)>6||p.y<0||p.y>45){
+    // First admission is Sanctuary-only. Existing registered players may
+    // resume only at a previously server-validated coordinate bound to
+    // their verified Supabase user ID, not arbitrary browser coordinates.
+    const trustedResume=validResumePosition(entry.resumePosition)?entry.resumePosition:null;
+    const initialValid=p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.z)&&
+      (trustedResume?Math.hypot(p.x-trustedResume.x,p.y-trustedResume.y,p.z-trustedResume.z)<=3:
+       Math.hypot(p.x,p.z+30)<=6&&p.y>=0&&p.y<=45);
+    if(this.spawned.has(id)||!initialValid){
       socket.send(JSON.stringify({type:'rejected',reason:'invalid-initial-spawn'}));return;
     }
     const member=this.room.members.get(id);
     if(!member)return;
-    member.position={x:p.x,y:p.y,z:p.z};
+    member.position=trustedResume?{...trustedResume}:{x:p.x,y:p.y,z:p.z};
     member.lastMoveAt=Date.now();
     this.spawned.add(id);
+    persistPosition(true);
     // The validated server-approved initial position is the first moment
     // other explorers may see this peer in 3D, the field map or chat roster.
     this.room.announce(id);
@@ -474,6 +497,7 @@ export class JarrellRoom {
     return;
    }
    const result=this.room.receive(id,message);
+   if(result.ok&&message.type==='move')persistPosition(false);
    if(!result.ok)socket.send(JSON.stringify({type:'rejected',reason:result.reason}));
   });
   socket.addEventListener('close',cleanup);
