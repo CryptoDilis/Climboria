@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createGameQaProgress,sameRegisteredQaAccount} from './qa-stage-report.mjs';
+import {createGameQaProgress,sameRegisteredQaAccount,isApprovedPublishedGameConfig} from './qa-stage-report.mjs';
 
 test('prints only fixed source-controlled stage labels; never session data',()=>{
  const output=[];
@@ -15,7 +15,7 @@ test('prints only fixed source-controlled stage labels; never session data',()=>
   'CHECK: Game Worker HTTPS and room storage readiness',
   'PASS: Game Worker HTTPS and room storage readiness',
   'CHECK: Player A real registered sign-in and room admission',
-  'QA RESULT: NOT VERIFIED — Player A real registered sign-in and room admission did not complete. Public Game multiplayer remains OFF.'
+  'QA RESULT: NOT VERIFIED — Player A real registered sign-in and room admission did not complete. Live two-account acceptance is NOT VERIFIED.'
  ]);
  assert.equal(output.join(' ').includes('Bearer'),false);
  assert.equal(output.join(' ').includes('JWT'),false);
@@ -26,7 +26,7 @@ test('reports setup failure without external error text',()=>{
  const state=qa.fail();
  assert.deepEqual(state,{stage:'setup',passed:[]});
  assert.deepEqual(logs,[
-  'QA RESULT: NOT VERIFIED — Game QA setup did not complete. Public Game multiplayer remains OFF.'
+  'QA RESULT: NOT VERIFIED — Game QA setup did not complete. Live two-account acceptance is NOT VERIFIED.'
  ]);
 });
 test('rejects unknown stage labels and duplicate active or completed stages',()=>{
@@ -54,4 +54,17 @@ test('reconnect must preserve exactly the same non-anonymous registered QA ident
  assert.equal(sameRegisteredQaAccount(first,{id:first}),false);
  // Identity comparison reports only boolean; must never serialize user IDs.
  assert.equal(typeof sameRegisteredQaAccount(first,other),'boolean');
+});
+
+test('public Game config verifier rejects synthetic, disabled and non-approved rooms',()=>{
+ const approved={schema:1,enabled:true,endpoint:'https://rooms.climboria.fun/'};
+ assert.equal(isApprovedPublishedGameConfig(approved),true);
+ for(const candidate of [null,undefined,[],{},
+  {...approved,enabled:false},{...approved,schema:2},
+  {...approved,endpoint:'http://rooms.climboria.fun/'},
+  {...approved,endpoint:'https://fake-rooms.climboria.fun/'},
+  {...approved,endpoint:'https://rooms.climboria.fun.evil.example/'},
+  {...approved,endpoint:'https://rooms.climboria.fun:8443/'}]){
+  assert.equal(isApprovedPublishedGameConfig(candidate),false);
+ }
 });
