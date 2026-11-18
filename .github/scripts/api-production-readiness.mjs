@@ -135,6 +135,23 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
   assert.equal(denied.response.headers.get("access-control-allow-origin"), null, "Unknown origin must not receive CORS permission");
   checks.push("Unauthorized-origin rejection");
 
+  // After a guarded Worker rollout, distinguish the independently approved
+  // third-party Swap from the explicitly disabled DEX. These are GET-only,
+  // no-wallet status observations, not proof of funded settlement.
+  for (const [path, enabled, label] of [
+    ["/api/swap/provider-status", true, "Source-approved third-party Swap provider status"],
+    ["/api/dex/provider-status", false, "Independent Solana DEX provider remains source-disabled"]
+  ]) {
+    const status = await request(path);
+    assert.equal(status.response.status, 200, path + " must return HTTP 200 after deployment");
+    assert.equal(status.response.headers.get("access-control-allow-origin"), ORIGIN,
+      path + " must allow only the reviewed website origin");
+    assert.match(status.response.headers.get("cache-control") ?? "", /(?:^|,)\\s*no-store(?:,|$)/i,
+      path + " must not be cached");
+    assert.deepEqual(status.data, { enabled }, path + " source approval differs from reviewed release");
+    checks.push(label);
+  }
+
   // Probe both independent read-only provider paths even when one fails,
   // so a single guarded deploy can diagnose the actual production blocker.
   // Neither path creates an order or touches wallet signing.
