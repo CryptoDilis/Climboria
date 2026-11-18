@@ -95,6 +95,8 @@ try {
 })();
 `}));
     await page.goto("http://127.0.0.1:4173/",{waitUntil:"domcontentloaded"});
+    await page.evaluate(() => document.querySelector("[data-open-auth]")?.click());
+    await page.locator("#authEmail").waitFor({state:"visible",timeout:10000});
     return {page,errors};
   }
 
