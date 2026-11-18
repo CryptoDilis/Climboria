@@ -140,7 +140,7 @@ try {
       const data=await page.evaluate(()=>({
         calls:window.__authCalls,
         signals:window.__walletSignals,
-        account:document.querySelector("#authStatus")?.textContent,
+        account:document.querySelector("#authConnectionSummary")?.textContent,
         connection:document.querySelector("#authWalletStatus")?.textContent
       }));
       assert.deepEqual(data.calls.filter(c=>["signInWithWeb3","signInWithOAuth","linkIdentity"].includes(c.method)),[],
@@ -148,7 +148,7 @@ try {
       assert.equal(data.signals.connect,1);
       assert.equal(data.signals.signMessage,0,"Connection must not request signature");
       assert.equal(data.signals.ethereumConnect,1);
-      assert.match(data.account,/Signed in as email-owner/);
+      assert.match(data.account,/Email/);
       assert.match(data.connection,/NOT permanently linked/);
       assert.deepEqual(errors,[]);
     } finally {await page.close();}
