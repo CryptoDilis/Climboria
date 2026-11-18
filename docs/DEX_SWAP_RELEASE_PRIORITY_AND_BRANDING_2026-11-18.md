@@ -144,3 +144,34 @@ After every meaningful Swap/DEX change: record date, affected files, commit/PR/h
 **Next executable task:** Complete release-specific hosted Jupiter terms/attribution/runtime risk acceptance and reconcile the prior owner-wallet Jupiter **pre-sign binding minimum received**, slippage, network/platform fees, rejection/expiry and mobile/desktop acceptance. The November 15 two finalized staged mainnet swaps are already accounted for and should not be duplicated just to recreate old receipts. Current-build user-wallet approval and funded-production finality are not established by mocked CI. After *explicit reviewed exact-head deploy acceptance*, deploy **Swap-only** via main (Cloudflare Worker auto-deploys), verify the public `/api/swap/provider-status` ON with `no-store`, deployed Worker SHA and native execution OFF, observe real wallet trade/finality as required, and prove source-OFF rollback. Then separate Solana DEX Buy/Sell release with its own OFF-by-default provider status. Base → verified EVM → Launchpad remains the owner's order.
 
 **Historical file handling:** Do not overwrite `docs/DEX_SWAP_LAUNCHPAD_DEVELOPMENT_RECORD.md` from partial contents; this complete dated supplement is the handoff record, and PR #618 additionally carries review discussion.
+
+
+## Solana Swap/DEX — active Jupiter mint-change concealment and v9 evidence (2026-11-18)
+
+**Status:** Source-only change on draft [PR #618](https://github.com/CryptoDilis/Climboria/pull/618), exact tested SHA `3f84d10606d248b05ee3373d4b4b7dd4bd2f79ad`, 11/11 successful GitHub Actions runs. **NOT merged, NOT deployed; production Swap/DEX trading OFF**. No user funds or real Jupiter wallet signing tested in this CI. Main branch native signing and execute gates remain OFF; Climboria fees OFF; DEX managed surface OFF. Separate draft [PR #624](https://github.com/CryptoDilis/Climboria/pull/624) for independent DEX source OFF status remains unmerged.
+
+**New issue fixed:** Earlier v8 work denied *reopening* a Jupiter plugin for old token mints, but the *already visible* third-party wallet UI could stay open when first-party Swap or DEX selector changed token/direction/Limit mode. The provider's originally mounted mints do not automatically track Climboria UI changes. During asynchronous init, the stale vendor root could also become visible after UI selection had changed.
+
+**Changed files on unmerged PR #618:**
+- `dex/provider-managed-swap.mjs`: listen for `climboria:managed-provider-pair-change`, compare mounted original token pair with latest selected mints, hide first-party panel **and** best-effort Jupiter vendor root immediately for changed or cleared mints, fence outstanding init/status operations, disable further launchers until reload. On BFCache/tab return, pair is rechecked *before* vendor resume. Skip temporary Base network toggle because its pre-existing Close handler already fences Solana pending loads, preserving explicit Solana return/reopen if pair unchanged. Best-effort Close **cannot cancel** a wallet popup or already submitted transaction.
+- `swap/index.html`, `dex/index.html`: notify host after final Solana input/output mint attributes updated (including when cleared due to invalid/Limit selection); dispatch only in real browser where `Event` exists, to keep standalone offline VM tests functional. Both public pages bump host module cache key `?v=8` → `?v=9`.
+- `.github/scripts/dex-swap-managed-provider-shell.test.mjs`: regression for same-pair no-close, changed-pair immediate concealment, async in-flight init plus late completion, DEX static selector; assert v9 host reference.
+- `.github/scripts/dex-swap-managed-provider-browser-smoke.mjs`: synthetic SDK browser proof of old vendor-root concealment, no reinit, Base return and v9 asset pin.
+
+**Intermediate test fix:** Initial branch-head Validate failed because the offline external Jupiter handoff VM lacks the browser `Event` global; the dispatch was guarded to occur only in browser. Latest exact-head CI passed. No production release was performed during the failing intermediate test.
+
+**Latest exact-head successful GitHub Actions runs (11/11; 10 unique workflow types):**
+- Read-only quote state / synthetic widget browser: https://github.com/CryptoDilis/Climboria/actions/runs/44218138137 — SUCCESS.
+- ClimbX public preview (no bot edits): https://github.com/CryptoDilis/Climboria/actions/runs/44218138112 — SUCCESS.
+- Production quote browser smoke (no funded trades): https://github.com/CryptoDilis/Climboria/actions/runs/44218138046 — SUCCESS.
+- DEX graduation feed: https://github.com/CryptoDilis/Climboria/actions/runs/44218137996 — SUCCESS.
+- Browser smoke: https://github.com/CryptoDilis/Climboria/actions/runs/44218137965 — SUCCESS.
+- Jupiter API status PR smoke: https://github.com/CryptoDilis/Climboria/actions/runs/44218137945 — SUCCESS.
+- Jupiter asset manifest offline: https://github.com/CryptoDilis/Climboria/actions/runs/44218137900 — SUCCESS.
+- DEX CPI security: https://github.com/CryptoDilis/Climboria/actions/runs/44218137893 — SUCCESS.
+- API production readiness: https://github.com/CryptoDilis/Climboria/actions/runs/44218137873 — SUCCESS.
+- Validate Climboria: https://github.com/CryptoDilis/Climboria/actions/runs/44218137871 — SUCCESS.
+- Additional preview check: https://github.com/CryptoDilis/Climboria/actions/runs/44218129412 — SUCCESS.
+
+**Next precise task (Solana S1 before S2):** Reconcile current Jupiter hosted Plugin/API/brand terms and acceptance of dynamically loaded vendor JS/CSS/fonts, plus original matching wallet **minimum received / slippage / fees / mobile / rejection** evidence for the *current* build. Two historical Nov 15 finalized mainnet staging swaps are preserved; don't duplicate them merely to recreate receipts. After explicit authorization for the exact deployment head and rollback, release **Swap-only**, independently verify deployed API `enabled:true`, `no-store`, correct Worker SHA, native order/execute OFF, in-site wallet sign consent and finalized production outcome (or adequate release-specific proof). Then separately review/enable Solana DEX Buy/Sell with its own provider gate, then Base, other verified EVM networks, then Launchpad. No Game, ClimbX bot or Launchpad changes in this workstream.
+
