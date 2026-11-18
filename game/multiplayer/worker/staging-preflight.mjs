@@ -5,9 +5,10 @@ const SERVICE='climboria-game-room';
 const MAX_STATUS_BYTES=8192;
 
 export async function verifyGameRoomPreflight(base,kind,{
-  fetchImpl=fetch,deadlineMs=15000
+  fetchImpl=fetch,deadlineMs=15000,requireNearbyChat=false
 }={}){
- if(!['health','ready'].includes(kind)||!Number.isSafeInteger(deadlineMs)||
+ if(!['health','ready'].includes(kind)||typeof requireNearbyChat!=='boolean'||
+    !Number.isSafeInteger(deadlineMs)||
     deadlineMs<1||deadlineMs>30000)
   throw Error('Invalid Game preflight configuration');
  const endpoint=new URL(kind,base);
@@ -34,7 +35,8 @@ export async function verifyGameRoomPreflight(base,kind,{
    let data;
    try{data=JSON.parse(body)}catch{throw error()}
    if(data?.service!==SERVICE||data.gameplayPvP!==false||
-      (kind==='health'&&data.deployedGateway!==true)||
+      (kind==='health'&&(data.deployedGateway!==true||
+                       (requireNearbyChat&&data.nearbyChatEnabled!==true)))||
       (kind==='ready'&&(data.bindingsConfigured!==true||
                         data.durableObjectReady!==true)))
     throw error();
