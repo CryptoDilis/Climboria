@@ -99,8 +99,8 @@
  }
  function renderChatCount(){
   if(chatUi){
-   chatUi.count.textContent=(chatMode==='nearby-chat'?'NEARBY CHAT':'WORLD CHAT')+
-    ' · '+(known.size+(selfId?1:0))+' ONLINE';
+   chatUi.count.textContent=chatMode==='nearby-chat'?'NEARBY CHAT · 20m RANGE':
+    'WORLD CHAT · '+(known.size+(selfId?1:0))+' ONLINE';
    if(chatUi.channel)chatUi.channel.textContent=chatMode==='nearby-chat'?'WORLD':'NEARBY';
   }
  }
