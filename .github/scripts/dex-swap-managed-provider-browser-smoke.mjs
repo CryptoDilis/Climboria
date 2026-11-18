@@ -169,7 +169,31 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
         assert.equal(await panel.getAttribute("data-climboria-managed-swap-input-mint"),
           "So11111111111111111111111111111111111111112");
         assert.equal(scriptLoads,1,"network switch must not reload Jupiter script");
+        // Base closes Jupiter. Reopening on Solana with the unchanged pair
+        // must still be possible after a fresh approval check.
+        await button.click();
+        await panel.waitFor({state:"visible",timeout:10000});
       }
+      // In either public surface, a newly selected mint must synchronously
+      // conceal an active third-party-owned wallet form. No live SDK or funds.
+      const pairChange = await page.evaluate(() => {
+        const host = document.querySelector("[data-climboria-managed-swap-panel]");
+        const from = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+        const to = "So11111111111111111111111111111111111111112";
+        host.setAttribute("data-climboria-managed-swap-input-mint",from);
+        host.setAttribute("data-climboria-managed-swap-output-mint",to);
+        document.dispatchEvent(new Event("climboria:managed-provider-pair-change"));
+        return {
+          panelHidden:host.hidden,
+          vendorHidden:window.__mockProviderRoot?.style.display==="none",
+          launchersHidden:[...document.querySelectorAll("[data-climboria-managed-swap-open]")].every(node=>node.hidden)
+        };
+      });
+      assert.equal(pairChange.panelHidden,true,"mint change must immediately conceal the old wallet panel");
+      assert.equal(pairChange.vendorHidden,true,"mint change must hide Jupiter-owned root, not only Climboria wrapper");
+      assert.equal(pairChange.launchersHidden,true,"old provider pair must not be reopened without refresh");
+      assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length),1,
+        "a pair change may not automatically reinitialize the vendor wallet");
     }
     assert.deepEqual(forbidden,[],"no /order or /execute calls even after mock widget click");
     console.log("PASS "+path+(badHash?" invalid-SRI fail-closed":" simulated in-site managed widget")+" no wallet/transaction");
