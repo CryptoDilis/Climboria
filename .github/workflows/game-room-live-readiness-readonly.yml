@@ -9,6 +9,8 @@ on:
       - "game/multiplayer/worker/qa-readiness-check.test.mjs"
       - "game/multiplayer/worker/qa-access-denial-check.mjs"
       - "game/multiplayer/worker/qa-access-denial-check.test.mjs"
+      - "game/multiplayer/worker/qa-public-config-check.mjs"
+      - "game/multiplayer/worker/qa-public-config-check.test.mjs"
       - "game/multiplayer/worker/staging-preflight.mjs"
       - "game/multiplayer/client-config.json"
   workflow_dispatch:
@@ -35,6 +37,10 @@ jobs:
         run: |
           node --test game/multiplayer/worker/qa-readiness-check.test.mjs
           node game/multiplayer/worker/qa-readiness-check.mjs
+      - name: Confirm deployed public Game multiplayer is really OFF
+        run: |
+          node --test game/multiplayer/worker/qa-public-config-check.test.mjs
+          node game/multiplayer/worker/qa-public-config-check.mjs
       - name: Check deployed Game ticket access-denial policy without credentials
         run: |
           node --test game/multiplayer/worker/qa-access-denial-check.test.mjs
