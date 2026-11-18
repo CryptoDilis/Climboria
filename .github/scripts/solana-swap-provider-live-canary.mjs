@@ -24,8 +24,9 @@ assert.equal(gates.length, 1, "Exactly one source-controlled provider approval g
 const sourceOn = gates[0][1] === "true";
 
 const browser = await chromium.launch({ headless: true });
+async function verifyViewport(viewport) {
 const context = await browser.newContext({
-  viewport: { width: 1280, height: 900 },
+  viewport,
   serviceWorkers: "block",
   acceptDownloads: false,
   permissions: []
@@ -213,7 +214,20 @@ try {
       "Jupiter mounted only an empty/inert shell: no visible interactive controls in its actual target");
     assert.equal(await page.locator("#climboriaSwapProviderPanel").isVisible(), true);
     assert.equal(context.pages().length, 1, "Provider must not navigate to a separate trading tab");
-    console.log("PASS production Solana Jupiter provider loaded into the visible Climboria Swap target. " +
+    // The real vendor app may render into an open Shadow DOM, so inspect its
+    // visible host rectangle rather than trying to pierce private controls.
+    // This catches the wallet UI being pushed offscreen or horizontally
+    // clipped on a phone even though desktop and SDK-init smoke are green.
+    if (viewport.width <= 390) {
+      const hostBounds = await page.locator("#climboriaSwapProviderTarget > *").first().boundingBox();
+      assert.ok(hostBounds && hostBounds.width > 0 && hostBounds.height > 0,
+        "Real Jupiter provider has no visible host rectangle on mobile");
+      assert.ok(hostBounds.x >= -3 && hostBounds.x + hostBounds.width <= viewport.width + 3,
+        "Real Jupiter widget extends outside the phone viewport: " +
+        JSON.stringify({x:hostBounds.x,width:hostBounds.width,viewport:viewport.width}));
+    }
+    console.log("PASS production Solana Jupiter provider at " + viewport.width +
+      "px loaded into the visible Climboria Swap target. " +
       "No wallet, signing, transaction or settlement was tested.");
     if (blockedWrites.length) console.log("INFO read-only browser aborted " + blockedWrites.length +
       " non-idempotent vendor/browser request(s); trade and quote completion are NOT proven.");
@@ -231,5 +245,15 @@ try {
   process.exitCode = 1;
 } finally {
   await context.close();
+}
+}
+try {
+  // Both sizes use the same real, source-approved provider, no wallet, and
+  // abort all non-idempotent network calls. Desktop was already verified;
+  // mobile is newly asserted for visible controls and host fit.
+  for (const viewport of [{width:1280,height:900},{width:390,height:844}]) {
+    await verifyViewport(viewport);
+  }
+} finally {
   await browser.close();
 }
