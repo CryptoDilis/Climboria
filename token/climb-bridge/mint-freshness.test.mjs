@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  inspectFreshIndependentMints, sampleFinalizedMint, validateMintFreshness,compareFreshSamples
+  inspectFreshIndependentMints, sampleFinalizedMint, validateMintFreshness,compareFreshSamples, verifyExpectedGenesis
 } from './mint-freshness.mjs';
 import {CLIMB_SOLANA_MINT,SPL_TOKEN_PROGRAM} from './mint-inspect.mjs';
 
@@ -107,4 +107,16 @@ test('sample uses a context minimum floor and no token signing methods',async()=
   assert.equal(result.head,HEAD_SLOT);
   assert.equal(result.mint.supplyRaw,'1000000000000000');
   assert(calls.every(c=>!['sendTransaction','signTransaction','requestAirdrop'].includes(c.method)));
+});
+
+test('operator-provided mainnet genesis reference comparison is fail-closed',()=>{
+  const matched=verifyExpectedGenesis(GENESIS,GENESIS);
+  assert.equal(matched.referenceMatched,true);
+  assert.equal(matched.referenceProvenance,'OPERATOR_SUPPLIED_NOT_INDEPENDENTLY_VERIFIED');
+  assert.equal(matched.release,'NO_GO');
+  assert.throws(()=>verifyExpectedGenesis(GENESIS,genesisB),/reported genesis does not match/);
+  assert.throws(()=>verifyExpectedGenesis(undefined,GENESIS),/trusted mainnet genesis reference/);
+  assert.throws(()=>verifyExpectedGenesis('',GENESIS),/trusted mainnet genesis reference/);
+  assert.throws(()=>verifyExpectedGenesis('bad genesis with spaces',GENESIS),/trusted mainnet genesis reference/);
+  assert.throws(()=>verifyExpectedGenesis(GENESIS,'not a valid genesis'),/reported genesis does not match/);
 });
