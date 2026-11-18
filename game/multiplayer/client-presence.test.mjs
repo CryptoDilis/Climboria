@@ -173,7 +173,7 @@ test('live Game maps the touch return event to its existing authorized local Dig
   'Game must handle touch request with existing local Sanctuary teleport only');
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261118-mobile-room-return-5/,
+ assert.match(game,/client-presence\.js\?v=20261118-same-account-6/,
   'production Game must request the fresh mobile room client');
 });
 
@@ -207,6 +207,45 @@ test('mobile blocked-room touch button emits only a real player Sanctuary return
  assert.equal(h.events.length,1,'return button must stop acting after joining');
 });
 
+test('server close 4001 shows a truthful same-account warning instead of WebSocket eviction loops',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];ws.onopen();
+ const own='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,
+  position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.ok(h.created.some(node=>node.id==='climboria-world-chat-toggle'));
+ ws.onclose({code:4001,reason:'replaced-by-same-account'});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'same-account-in-use');
+ assert.equal(h.adds.length,0);
+ assert.equal(h.created.find(node=>node.id==='climboria-world-chat-toggle').style.display,'none');
+ assert.ok(h.created.some(node=>node.id==='climboria-room-status'&&node.textContent.includes('SAME ACCOUNT')));
+ assert.equal(h.timers.filter(t=>!t.cancelled&&t.delay===5000).length,0,
+  'duplicate same identity must not automatically fight the newer socket');
+ h.authChange(h.state.session,'TOKEN_REFRESHED');
+ await flush();
+ assert.equal(h.clients.length,1,'same-user token refresh cannot revive an eviction loop');
+ const retry=h.created.find(node=>node.id==='climboria-room-retry-same-account');
+ assert.ok(retry,'player may explicitly retry after closing the other tab');
+ retry.click();
+ assert.equal(h.runNextTimer(),0);
+ await flush();await waitFor(()=>h.clients.length===2);
+ assert.equal(h.clients.length,2,'retry is explicit and obtains another real verified ticket');
+ assert.equal(h.created.find(node=>node.id==='climboria-world-chat-toggle').style.display,'none',
+  'retry alone does not create a fake chat');
+});
+test('different authenticated account can recover after previous same-account replacement',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ h.clients[0].onclose({code:4001,reason:'replaced-by-same-account'});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'same-account-in-use');
+ h.authChange({user:{id:'different-registered-uuid'},access_token:'different-registered-token'});
+ assert.equal(h.runNextTimer(),0,'identity switch clears same-account block');
+ await flush();await waitFor(()=>h.clients.length===2);
+ assert.equal(h.clients.length,2);
+ const tickets=h.calls.filter(c=>c.url.endsWith('/ticket'));
+ assert.equal(tickets.at(-1).options.headers.Authorization,'Bearer different-registered-token');
+});
 test('real authenticated WebSocket messages are required before peers appear',async()=>{
  const h=harness(true);await flush();
  await waitFor(()=>h.clients.length===1||h.document.documentElement.dataset.climboriaMultiplayer==='offline');
