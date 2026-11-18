@@ -733,6 +733,11 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 .external-jupiter-handoff a:hover,.external-jupiter-handoff a:focus-visible{background:#493820;outline:2px solid #f6d594;outline-offset:2px}
 .external-jupiter-handoff[hidden]{display:none}
 @media(max-width:560px){.external-jupiter-handoff a{width:100%}}
+.dex-provider-direction{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 10px}
+.dex-provider-direction button{flex:1 1 125px;min-height:42px;padding:10px 13px;border-radius:9px;border:1px solid #45607b;background:#12243a;color:#cedbeb;font-weight:750;cursor:pointer}
+.dex-provider-direction button[aria-pressed="true"]{background:linear-gradient(145deg,#d6ae5e,#9e7336);color:#0c1a27;border-color:#ecc777}
+.dex-provider-direction button:focus-visible{outline:2px solid #f3d891;outline-offset:2px}
+.dex-provider-direction small{flex-basis:100%;display:block;color:#aab8ca;line-height:1.5;font-size:11px}
 </style>
 <link rel="stylesheet" href="/dex/terminal-premium.css?v=1">
 <link rel="stylesheet" href="/dex/provider-managed-swap.css?v=2">
@@ -831,7 +836,12 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
  <div class="dex-trade-status" id="dexTradeStatus" aria-live="polite" aria-atomic="true">Quote-only mode. No transaction can be created, signed or submitted from this panel.</div>
  <div class="dex-trade-safety">Execution will remain disabled until the API health check, rate limiter, wallet transaction validation and production security review are verified.</div>
 <section class="external-jupiter-handoff" id="dexExternalJupiterHandoff" aria-label="Trade on Jupiter external website"><div><strong>Trade on Jupiter · external website</strong><small>Climboria cannot execute the trade here. On Jupiter, enter and verify the selected mint yourself, then review the current route, slippage and fees in your wallet. No Climboria quote or token selection is transferred and no Climboria trading fee is collected.</small></div><a href="https://jup.ag/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" aria-label="Open Jupiter official website in a separate tab to trade there">Open Jupiter website ↗</a></section>
-<button type="button" class="climboria-managed-swap-launch" data-climboria-managed-swap-open hidden aria-controls="climboriaDexProviderPanel" aria-expanded="false">Swap with Jupiter · In Climboria</button>
+<div class="dex-provider-direction" role="group" aria-label="Read-only Jupiter market quote direction">
+  <button type="button" data-dex-provider-direction="buy" aria-pressed="true">Preview Buy</button>
+  <button type="button" data-dex-provider-direction="sell" aria-pressed="false">Preview Sell</button>
+  <small>Quote-direction preview only. DEX execution stays disabled until separate release approval. Jupiter independently handles any wallet-reviewed trade.</small>
+ </div>
+ <button type="button" class="climboria-managed-swap-launch" data-climboria-managed-swap-open hidden aria-controls="climboriaDexProviderPanel" aria-expanded="false">Swap with Jupiter · In Climboria</button>
  </aside><aside class="token-community">
  
 <section class="community-card"><div class="community-head"><div><span class="community-kicker">CLIMBORIA EXCLUSIVE</span><h3>Summit Chat</h3></div><span class="community-live">TOKEN ROOM</span></div><p class="community-desc">Local-only chat: messages are saved only in this browser. Not a public or synchronized community feed.</p><div class="community-room" id="communityRoom"><div class="community-empty">Loading this token's room…</div></div><form id="communityForm" class="community-form"><textarea id="communityMessage" maxlength="1000" rows="2" placeholder="Share your market thoughts…"></textarea><div class="community-actions"><small id="communityCount">0 / 1000</small><button class="community-send" type="submit">Send message</button></div></form><div class="community-tools"><button type="button" id="exportCommunity">Export history</button><span id="communityStorageNote">Saved locally · per token mint</span></div></section>
@@ -1687,11 +1697,26 @@ async function dexTradeWalletBalance(){
  if(native)return Math.max(0,Number(data.result?.value||0)/1e9-0.01);
  return (data.result?.value||[]).reduce((sum,row)=>sum+Number(row.account?.data?.parsed?.info?.tokenAmount?.uiAmountString||0),0);
 }
-document.querySelectorAll('[data-dex-side]').forEach(button=>button.addEventListener('click',()=>{
- discardDexTradeQuote('Trade direction changed. Old estimate discarded; request a fresh quote.');
- dexTradeSide=button.dataset.dexSide;document.querySelectorAll('[data-dex-side]').forEach(item=>item.classList.toggle('active',item===button));
- dexTradeApplyDirection();$('dexTradeAmount').value='';dexTradeSetStatus((dexTradeSide==='buy'?'Buy':'Sell')+' '+(dexTradeToken?.symbol||'selected token')+' · enter amount or choose a wallet balance percentage.');
-}));
+// The legacy DEX order panel remains disabled. These buttons change only
+// the read-only quote direction and the official Jupiter Plugin's mint hints;
+// native transaction signing stays OFF.
+function selectDexProviderQuoteDirection(direction){
+  if(direction!=='buy'&&direction!=='sell')return;
+  discardDexTradeQuote('Trade direction changed. Old estimate discarded; request a fresh quote.');
+  dexTradeSide=direction;
+  document.querySelectorAll('[data-dex-provider-direction]').forEach(item=>
+    item.setAttribute('aria-pressed',String(item.dataset.dexProviderDirection===direction)));
+  document.querySelectorAll('[data-dex-side]').forEach(item=>
+    item.classList.toggle('active',item.dataset.dexSide===direction));
+  if(dexTradeToken&&Number.isInteger(dexTradeToken.decimals))dexTradeApplyDirection();
+  else syncDexJupiterMarketPair();
+  $('dexTradeAmount').value='';
+  dexTradeSetStatus((direction==='buy'?'Buy':'Sell')+' quote preview · '+(dexTradeToken?.symbol||'select a token')+'. Climboria-native order execution is disabled.');
+}
+document.querySelectorAll('[data-dex-provider-direction]').forEach(button=>
+  button.addEventListener('click',()=>selectDexProviderQuoteDirection(button.dataset.dexProviderDirection)));
+document.querySelectorAll('[data-dex-side]').forEach(button=>
+  button.addEventListener('click',()=>selectDexProviderQuoteDirection(button.dataset.dexSide)));
 document.querySelectorAll('[data-dex-order]').forEach(button=>button.addEventListener('click',()=>{
  discardDexTradeQuote('Order mode changed. Old estimate discarded; request a fresh quote.');
  dexTradeOrderType=button.dataset.dexOrder;document.querySelectorAll('[data-dex-order]').forEach(item=>item.classList.toggle('active',item===button));
