@@ -2124,10 +2124,46 @@ function renderInventory(){
   const note=document.createElement('p');note.textContent=inventory.length+' / 50 backpack slots used';note.style.cssText='color:#aeb4b4;font-size:11px;margin:8px 0';invPanel.append(note);
 }
 function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else if(inventory.length<50)inventory.push({name,qty});else{toast('Backpack full · 50/50 slots');return}saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
+const GAME_LOCAL_POSITION_PREFIX='climboria_jarrell_position_v1:user:';
+let localPositionUserId=null;
+function restoreExplorerPosition(position){
+ const x=Number(position?.x),z=Number(position?.z),yaw=Number(position?.yaw??P.yaw);
+ if(![x,z,yaw].every(Number.isFinite)||Math.abs(x)>100000||Math.abs(z)>100000)return false;
+ P.x=x;P.z=z;P.y=groundAt(x,z)+1.75;P.yaw=yaw;P.vy=0;
+ P.mode='walk';P.moveTarget=null;P.swim=false;P.swimDepth=0;P.waterBodyId=null;
+ cameraYaw=yaw;cameraPitch=-.08;camY=null;free(true);
+ cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.8,P.z+Math.cos(cameraYaw)*targetCameraDistance);
+ cam.lookAt(P.x,P.y+.9,P.z);updateChunks(P.x,P.z,120);
+ return true;
+}
 window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
+ saveLocalPosition(){
+  if(!localPositionUserId||window.__climboriaGuestMode||P.mode!=='walk')return false;
+  const position={x:P.x,z:P.z,yaw:P.yaw};
+  if(![position.x,position.z,position.yaw].every(Number.isFinite)||Math.abs(P.x)>100000||Math.abs(P.z)>100000)return false;
+  try{
+   localStorage.setItem(GAME_LOCAL_POSITION_PREFIX+localPositionUserId,
+    JSON.stringify({version:1,at:Date.now(),position}));
+   return true;
+  }catch{return false}
+ },
+ restoreLocalPosition(userId,cloudSavedAt){
+  if(!userId||userId!==localPositionUserId||window.__climboriaGuestMode)return false;
+  try{
+   const saved=JSON.parse(localStorage.getItem(GAME_LOCAL_POSITION_PREFIX+userId)||'null');
+   const cloudTime=cloudSavedAt?Date.parse(cloudSavedAt):0;
+   if(saved?.version!==1||!Number.isFinite(saved.at)||saved.at>Date.now()+60000||
+      Date.now()-saved.at>30*86400000||
+      (Number.isFinite(cloudTime)&&saved.at<=cloudTime))return false;
+   return restoreExplorerPosition(saved.position);
+  }catch{return false}
+ },
+
   // Backpack snapshots are partitioned by authenticated account. Only an unscoped
   // local guest backpack may be adopted by the first account with no cloud row.
   setUserScope(userId, migrateUnscopedInventory = false) {
+    if(localPositionUserId&&localPositionUserId!==userId)this.saveLocalPosition();
+    localPositionUserId=userId||null;
     const previousKey = inventoryStorageKey;
     const previousItems = inventory.map(item => ({ name: item.name, qty: item.qty }));
     const targetKey = userId ? INVENTORY_KEY + ':user:' + userId : INVENTORY_KEY;
@@ -2166,30 +2202,7 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
   },
   restore(data) {
     if (!data || typeof data !== 'object' || data.version !== 1) return false;
-    const x = Number(data.player?.x), z = Number(data.player?.z), yaw = Number(data.player?.yaw);
-    if ([x, z, yaw].every(Number.isFinite) && Math.abs(x) <= 100000 && Math.abs(z) <= 100000) {
-      P.x = x;
-      P.z = z;
-      P.y = groundAt(P.x, P.z) + 1.75;
-      P.yaw = yaw;
-      P.vy = 0;
-      P.mode = 'walk';
-      P.moveTarget = null;
-      P.swim = false;
-      P.swimDepth = 0;
-      P.waterBodyId = null;
-      cameraYaw = P.yaw;
-      cameraPitch = -0.08;
-      camY = null;
-      free(true);
-      cam.position.set(
-        P.x + Math.sin(cameraYaw) * targetCameraDistance,
-        P.y + 2.8,
-        P.z + Math.cos(cameraYaw) * targetCameraDistance
-      );
-      cam.lookAt(P.x, P.y + 0.9, P.z);
-      updateChunks(P.x, P.z, 120);
-    }
+    restoreExplorerPosition(data.player);
 
     const savedInventory = Array.isArray(data.inventory)
       ? data.inventory
@@ -2204,6 +2217,8 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
     return true;
   }
 };
+setInterval(()=>window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.saveLocalPosition?.(),5000);
+window.addEventListener('pagehide',()=>window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.saveLocalPosition?.());
 function toggleInventory(){renderInventory();const opening=invPanel.style.display==='none';invPanel.style.display=opening?'block':'none';if(opening)mapPanel.classList.remove('map-expanded')}
 document.getElementById('player-card').addEventListener('click',toggleInventory);
 
