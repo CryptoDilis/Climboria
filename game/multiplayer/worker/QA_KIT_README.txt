@@ -20,9 +20,11 @@ GAME ONLY. No Swap, DEX, Launchpad or ClimbX changes.
    showing login, credentials, session cookies or OAuth codes.
 
 This kit is built in GitHub Actions from the reviewed Climboria source. The
-public Game multiplayer configuration REMAINS OFF. Each QA browser receives
-the staging endpoint only in its own memory (the real Game website is
-unchanged). The kit does not inherit your existing logged-in Chrome sessions.
+public Game source now enables a registered-only pilot. Each QA browser can
+still intercept the config in its own memory for isolated staging diagnostics;
+that interception is NOT proof of the public CDN's actual config or a real
+production two-user acceptance result. The QA kit does not edit the website.
+It does not inherit your existing logged-in Chrome sessions.
 Identity providers can decline automated Chrome; never bypass their rules.
 No personal credentials should ever be pasted into ChatGPT, CLI, issues or CI.
 
@@ -35,9 +37,10 @@ The runner checks:
 - Chrome render frames and disconnect/rejoin without a ghost.
 
 It DOES NOT test physical Android device GPU/FPS, and does not authorize
-public multiplayer or PvP damage/theft/grabbing/loot. The owner and
+production two-account multiplayer acceptance or PvP damage,
+theft, grabbing or loot. The owner and
 development team must separately review Android results before release.
-The browser contexts close after the run; production config stays OFF.
+The browser contexts close after the run; the QA runner does not modify production config.
 
 No need to download full game repository or use DevTools Overrides.
 This kit does not contain account passwords, tokens or access privileges.

@@ -3,8 +3,9 @@
  * CLIMBORIA GAME ONLY — opt-in local two-browser, mixed-provider staging QA.
  *
  * Requires installed Chrome, Node 22, Playwright and the owner at the keyboard.
- * Public Game config remains OFF; each temporary Playwright browser alone
- * receives an intercepted config response for the isolated Game room.
+ * Public Game source currently enables the approved registered-only pilot.
+ * This private QA tool still intercepts config in temporary browser contexts;
+ * a passing injected-config QA run does not prove the public CDN release.
  * The owner signs in interactively using existing registered Google/X/email
  * accounts. This tool NEVER asks for passwords, JWTs, cookies or browser data.
  * It never copies local Chrome profiles or writes provider sessions to disk.
@@ -44,7 +45,7 @@ async function newExplorer(name,model){
    localStorage.setItem('climboria-created-hero-v1',JSON.stringify(hero));
  },{name,model,createdAt:'2026-11-18T00:00:00Z'});
  // This is only a response override INSIDE the two owner-controlled QA
- // browser contexts. The production client-config.json stays disabled.
+ // browser contexts. The production client-config.json is NOT modified.
  await context.route('**/game/multiplayer/client-config.json',async route=>{
   if(route.request().method()!=='GET'||
      route.request().url()!==SITE+'/game/multiplayer/client-config.json'){

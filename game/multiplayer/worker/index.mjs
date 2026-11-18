@@ -1,8 +1,11 @@
 /**
- * Climboria GAME ONLY — future authenticated Jarrell's Peak presence gateway.
- * NOT DEPLOYED. Real Supabase user authentication is performed server-side before
- * issuing short-lived, one-use WS tickets. No client-supplied health, damage,
- * accounts, inventory, loot or payment values enter the room state.
+ * Climboria GAME ONLY — authenticated Jarrell's Peak registered-player room gateway.
+ * The owner-approved Game Worker has deployment evidence; public Game source
+ * currently enables a registered-account multiplayer/World Chat pilot. These
+ * facts do not prove real two-account acceptance or physical mobile performance.
+ * Supabase authentication remains server-side before one-use WS tickets.
+ * No browser-supplied health, damage, inventory, loot or payment values
+ * authorize gameplay state. PvP damage and grabbing remain disabled.
  */
 import {PresenceRoom} from '../presence-room.mjs';
 import {ServerCombatState} from '../server-combat-state.mjs';
