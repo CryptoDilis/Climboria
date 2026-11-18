@@ -389,7 +389,16 @@
   }else if(msg.type==='player-left'){if(spawnConfirmed)leave(msg.id)}
   else if(msg.type==='world-chat'){if(spawnConfirmed)appendWorldChat(msg)}
   else if(msg.type==='rejected'&&msg.reason==='invalid-initial-spawn'){
-   showStatus('spawn-rejected','MULTIPLAYER · PRESS 1 TO RETURN TO SANCTUARY');
+   // A rejected first spawn leaves the socket open on the Game Worker.
+   // Close it and retry admission when the real hero returns to Sanctuary.
+   const rejected=socket;
+   clearAdmissionTimer();
+   socket=null;previous=null;
+   if(movement){clearInterval(movement);movement=null}
+   clearPeers();
+   if(rejected){try{rejected.close()}catch{}}
+   showStatus('spawn-rejected','MULTIPLAYER · RETURN TO SANCTUARY · PRESS 1');
+   scheduleConnect(1200);
   }
   else if(msg.type==='rejected'&&['world-chat-rate-limit','world-chat-invalid-text'].includes(msg.reason)){
    // Only the server rejection for THIS request can release its pending
@@ -428,6 +437,12 @@
   return {x:p.x,y:p.y,z:p.z};
  }
  function isReady(){return window.__climboriaGameReady===true&&world.player.mode==='walk'}
+ // Server accepts initial room admission only within 6m of Sanctuary.
+ // Never fake a remote spawn or send an impossible ticket request.
+ function isAtRoomSpawn(){
+  const p=localPosition();
+  return validPosition(p)&&Math.hypot(p.x,p.z+30)<=6&&p.y>=0&&p.y<=45;
+ }
  let previous=null;
  function publishMovement(){
   if(!selfId||!spawnConfirmed||!isReady())return;
@@ -517,6 +532,14 @@
     clientUser=null;showStatus('login-required','MULTIPLAYER · SIGN IN REQUIRED');return;
    }
    clientUser=session.user.id;
+   // A real signed-in explorer who is already away from the protected spawn
+   // must return to Sanctuary before this server can safely admit a new room
+   // session. Avoid consuming short-lived tickets for known-invalid spawns.
+   if(!isAtRoomSpawn()){
+    showStatus('awaiting-sanctuary','MULTIPLAYER · RETURN TO SANCTUARY · PRESS 1');
+    scheduleConnect(1200);
+    return;
+   }
    const hero=window.__climboriaCreatedHero||{};
    const ticketAbort=new AbortController();
    let ticketDeadline;
@@ -578,6 +601,15 @@
    ws.onmessage=e=>{if(!disposed&&socket===ws&&epoch===connectEpoch)onPacket(e.data)};
    ws.onopen=()=>{
     if(disposed||socket!==ws||epoch!==connectEpoch||!isReady()){ws.close();return}
+    // The player may move after the room ticket is issued. Never submit an
+    // untrusted or out-of-Sanctuary first position merely to obtain a peer.
+    if(!isAtRoomSpawn()){
+     clearAdmissionTimer();socket=null;previous=null;
+     try{ws.close()}catch{}
+     showStatus('awaiting-sanctuary','MULTIPLAYER · RETURN TO SANCTUARY · PRESS 1');
+     scheduleConnect(1200);
+     return;
+    }
     previous=null;
     armAdmissionTimer(ws,epoch); // OPEN is not an accepted terrain spawn.
     send({type:'spawn',position:localPosition()});
