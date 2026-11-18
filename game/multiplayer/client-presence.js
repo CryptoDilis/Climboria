@@ -319,11 +319,31 @@
   duelExpanded=false;
   if(duelUi){duelUi.toggle.style.display='none';duelUi.panel.style.display='none';renderDuelUi()}
  }
+ let returnToSanctuaryButton=null;
  function showStatus(value,message){
   doc.dataset.climboriaMultiplayer=value;
   if(!badge){badge=document.createElement('div');badge.id='climboria-room-status';badge.style.cssText=
    'position:fixed;right:8px;bottom:8px;z-index:1600;max-width:min(280px,80vw);color:#ffe3a3;background:#070c14f2;border:1px solid #d8b46bcc;padding:9px 12px;border-radius:9px;box-shadow:0 4px 16px #000a;font:700 12px/1.45 system-ui;pointer-events:none';document.body.appendChild(badge)}
   badge.textContent=message;
+  if(value==='awaiting-sanctuary'||value==='spawn-rejected'){
+   // Mobile explorers have no physical Digit1 key. Reuse the same local
+   // Sanctuary teleport as the keyboard, but ONLY on an explicit click.
+   // This is a local player control, never a forged multiplayer spawn.
+   if(!returnToSanctuaryButton){
+    returnToSanctuaryButton=document.createElement('button');
+    returnToSanctuaryButton.id='climboria-room-return-sanctuary';
+    returnToSanctuaryButton.type='button';
+    returnToSanctuaryButton.textContent='RETURN TO SANCTUARY';
+    returnToSanctuaryButton.style.cssText='display:block;width:100%;margin-top:8px;padding:9px 11px;border:1px solid #d8b46b;border-radius:8px;background:#253448;color:#ffe3a3;font:800 11px/1.35 system-ui;cursor:pointer;pointer-events:auto;touch-action:manipulation';
+    returnToSanctuaryButton.addEventListener('click',event=>{
+     event?.stopPropagation?.();
+     if(doc.dataset.climboriaMultiplayer!=='awaiting-sanctuary'&&
+        doc.dataset.climboriaMultiplayer!=='spawn-rejected')return;
+     document.dispatchEvent(new Event('climboria:room-return-to-sanctuary'));
+    });
+   }
+   badge.appendChild(returnToSanctuaryButton);
+  }
  }
  function clearPeers(){
   for(const id of known.keys())renderer.remove(id);
