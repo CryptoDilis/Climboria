@@ -71,3 +71,22 @@ export async function inspectFreshIndependentMints(urlA,urlB,fetchFn=fetch,now=(
   ]);
   return compareFreshSamples(a,b,now());
 }
+
+/**
+ * Compare a public mainnet genesis reference sourced separately from these RPCs.
+ * This does NOT validate the provenance of the operator-supplied reference.
+ * Never treat agreement between the same two RPCs as canonical network proof.
+ */
+export function verifyExpectedGenesis(reference, reported) {
+  if (typeof reference !== 'string' || !BASE58.test(reference)) {
+    throw new Error('NO_GO: trusted mainnet genesis reference must be configured');
+  }
+  if (typeof reported !== 'string' || !BASE58.test(reported) || reference !== reported) {
+    throw new Error('NO_GO: reported genesis does not match configured mainnet reference');
+  }
+  return {
+    referenceMatched: true,
+    referenceProvenance: 'OPERATOR_SUPPLIED_NOT_INDEPENDENTLY_VERIFIED',
+    release: 'NO_GO'
+  };
+}
