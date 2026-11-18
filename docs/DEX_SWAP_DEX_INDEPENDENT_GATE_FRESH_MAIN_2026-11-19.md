@@ -40,3 +40,19 @@ Record latest exact PR/commit and workflow links once available; do not present 
 5. Conduct owner-controlled very small **production** Jupiter wallet swap and verify finalized Solana signature, correct amounts/fees, reject path and slippage using public on-chain evidence; redact private data. Only afterward evaluate separately approved DEX wallet trading release. Base follows accepted Solana; native execution/integrator fees remain OFF.
 
 **Status at this checkpoint:** merged code + successful Pages/CI; **Cloudflare Worker new DEX endpoint blocked pending explicit exact-commit authorization**. No operator-funded production acceptance evidence was supplied or produced here.
+
+## 2026-11-19 next cycle — add exact post-deploy independent provider acceptance
+
+- Rechecked `main` after merged #665: later token-bridge commits have advanced the current HEAD; do **not** reuse any previously mentioned SHA as automatic release approval. Latest observed before this cycle's PR: `973141785d4d7a46c2a199c3f8682ef168fe701d` (subject to concurrent merges).
+- [Post-merge Solana Swap official Jupiter desktop/mobile mount #44379285092](https://github.com/CryptoDilis/Climboria/actions/runs/44379285092) is now completed **SUCCESS** on `bc43aea0cb2eea538396818803e4ee182937031b`, proving read-only widget interactivity/viewport only. [DEX Swap Production Quote Browser #44379285348](https://github.com/CryptoDilis/Climboria/actions/runs/44379285348) also **SUCCESS**.
+- API Worker #44379285344 remains deliberately **FAILED** at the exact SHA release guard; the old approved SHA is not this main revision. **No replacement Worker deployed** by that run; do not bypass security or misreport live DEX execution.
+- New branch `test/dex-swap-postdeploy-independent-status-20261119` adds **GET-only, read-only production acceptance assertions** inside existing exact-revision API probe: `/api/swap/provider-status` must return HTTP 200, CORS for `https://climboria.fun`, no-store and exact `{enabled:true}`; independent `/api/dex/provider-status` must return the same HTTP/CORS/cache policy but exact `{enabled:false}`. Wrong boolean/type, missing route, wrong origin or cacheable status **must fail the deployment acceptance**. It does not call `/order`, request wallet credentials, enable any signing or change Worker source.
+- Added deterministic fixture tests in `.github/scripts/api-production-readiness.test.mjs`, updated `.github/scripts/api-production-readiness-retry.mjs` to require both independent evidence strings. No Game/ClimbX/Launchpad code touched.
+- At authoring, branch changes have **not** passed Actions CI; await exact-head checks and review before merge. This post-deploy test cannot retroactively validate the existing older Worker and cannot grant release authorization.
+
+### Next exact steps
+
+1. Run PR-head `Climboria API Production Readiness`, `Validate Climboria`, and relevant DEX/Swap checks for the test-only PR. Fix any failing fixture/assertion without loosening the source-OFF DEX gate. Merge only when green.
+2. Record the new final merged SHA and CI links. Confirm latest `main` again before owner approval; an updated, intentional `CLIMBORIA_SWAP_RELEASE_APPROVED_SHA` is still needed for source-ON Worker deployment.
+3. In the operator-approved **manual main-branch Deploy Climboria API**, verify tests, exact SHA guard, Cloudflare Worker deployment, independently sourced provider ON/OFF GET status and exact deployed revision; a new failure must be diagnosed from logs.
+4. After actual Worker acceptance, owner verifies one tiny production Jupiter mainnet wallet swap and finalized signature with slippage/minimum received/fees. Keep DEX trading OFF, native order/execute OFF, Base deferred until Solana production acceptance.
