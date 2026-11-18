@@ -324,11 +324,11 @@
   let msg;try{msg=JSON.parse(data)}catch{return}
   if(!msg||typeof msg!=='object')return;
   if(msg.type==='welcome'){
-   if(!validId(msg.selfId)||!Array.isArray(msg.peers)||msg.peers.length>32)return;
-   selfId=msg.selfId;clearPeers();selfId=msg.selfId;
-   for(const p of msg.peers)addPlayer(p);
-   // Welcome proves a room ticket, not a valid terrain spawn. Keep chat and
-   // duel controls hidden until the server confirms our initial position.
+   if(spawnConfirmed||!validId(msg.selfId)||!Array.isArray(msg.peers)||msg.peers.length>32)return;
+   clearPeers();selfId=msg.selfId;
+   // A ticket and provisional welcome roster do NOT prove our terrain spawn.
+   // Never allocate remote 3D models or show players from this roster.
+   // The later spawn-accepted packet contains the authoritative CURRENT peers.
    showStatus('connecting','MULTIPLAYER · JOINING WORLD');
   }else if(msg.type==='spawn-accepted'){
    if(validId(msg.id)&&msg.id===selfId&&validPosition(msg.position)&&
@@ -347,14 +347,14 @@
     showStatus('connected','ONLINE · '+known.size+' other explorers');
    }
   }else if(msg.type==='player-joined'){
-   addPlayer(msg.player);
+   if(spawnConfirmed)addPlayer(msg.player);
   }else if(msg.type==='player-moved'){
-   if(validId(msg.id)&&known.has(msg.id)&&validPosition(msg.position)){
+   if(spawnConfirmed&&validId(msg.id)&&known.has(msg.id)&&validPosition(msg.position)){
     known.get(msg.id).position={x:msg.position.x,y:msg.position.y,z:msg.position.z};
     renderer.move(msg.id,msg.position);
    }
-  }else if(msg.type==='player-left')leave(msg.id);
-  else if(msg.type==='world-chat')appendWorldChat(msg);
+  }else if(msg.type==='player-left'){if(spawnConfirmed)leave(msg.id)}
+  else if(msg.type==='world-chat'){if(spawnConfirmed)appendWorldChat(msg)}
   else if(msg.type==='rejected'&&msg.reason==='invalid-initial-spawn'){
    showStatus('spawn-rejected','MULTIPLAYER · RETURN TO SANCTUARY');
   }
@@ -368,8 +368,8 @@
      'Message not accepted. Use 1–160 readable characters. Your text is still editable.';
    }
   }
-  else if(msg.type==='player-punched'&&validId(msg.id)&&known.has(msg.id))renderer.punch(msg.id);
-  else if(typeof msg.type==='string'&&msg.type.startsWith('duel-'))onDuelPacket(msg);
+  else if(msg.type==='player-punched'&&spawnConfirmed&&validId(msg.id)&&known.has(msg.id))renderer.punch(msg.id);
+  else if(spawnConfirmed&&typeof msg.type==='string'&&msg.type.startsWith('duel-'))onDuelPacket(msg);
   else if(msg.type==='rejected'&&typeof msg.reason==='string'&&
           (msg.reason.startsWith('duel-')||
            ['sanctuary-pvp-disabled','no-valid-duel-invitation',
