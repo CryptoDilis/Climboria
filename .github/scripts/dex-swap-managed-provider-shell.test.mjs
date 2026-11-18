@@ -197,7 +197,8 @@ test("Jupiter Plugin accepts exactly valid 32-byte mints as unsigned initial pai
 test("DEX token selection hook clears stale intent until mint proof and excludes Limit orders", () => {
   const dex = readFileSync(new URL("../../dex/index.html", import.meta.url), "utf8");
   assert.match(dex, /function syncDexJupiterMarketPair\(\)/);
-  assert.match(dex, /if\(dexTradeOrderType!=='market'\|\|!dexTradeToken/);
+  assert.match(dex, /if\(dexTradeOrderType==='market'&&dexTradeToken/);
+  assert.match(dex, /document\.dispatchEvent\(new Event\('climboria:managed-provider-pair-change'\)\)/);
   assert.match(dex, /dexTradeToken=\{id:token\.address[^;]+;\s*syncDexJupiterMarketPair\(\)/);
   assert.match(dex, /function dexTradeApplyDirection\(\)[\s\S]*?syncDexJupiterMarketPair\(\);[\s\S]*?return true/);
   assert.match(dex, /dexTradeOrderType=button\.dataset\.dexOrder;[^\n]*\n\s*syncDexJupiterMarketPair\(\)/);
@@ -323,6 +324,63 @@ test("clearing a mounted DEX pair fails closed on reopen instead of reviving sta
   assert.equal(events.resume,0,"cleared mints must never revive a wallet interface");
   assert.ok(events.close>=2,"vendor root must be concealed on mismatch");
   assert.match(ui.status.textContent,/Selected token or trade direction changed/);
+});
+
+test("changing the selected pair immediately conceals an actively mounted Jupiter wallet UI", async () => {
+  const ui=createDom({surface:"dex",pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+  const vendor={init:0,close:0,resume:0};
+  initializeManagedSwapHost({doc:ui.doc,scope:withRuntime({Jupiter:{
+    init(){vendor.init++;},close(){vendor.close++;},resume(){vendor.resume++;}
+  }}),config:approved});
+  await ui.btn.click();
+  assert.equal(ui.panel.hidden,false);
+  ui.panel.pair={inputMint:USDC_MINT,outputMint:SOL_MINT};
+  ui.doc.listeners["climboria:managed-provider-pair-change"]();
+  assert.equal(ui.panel.hidden,true,"old provider UI must be concealed synchronously");
+  assert.equal(ui.btn.hidden,true,"no re-open of original vendor pair on the same page");
+  assert.equal(vendor.close,1,"hide provider-owned UI, not just its wrapper");
+  assert.equal(vendor.init,1);
+  assert.equal(vendor.resume,0,"never resume a wrong-mint widget");
+  assert.match(ui.status.textContent,/Selected token or trade direction changed/);
+});
+
+test("a same-pair notification leaves the current reviewed Jupiter session untouched", async () => {
+  const ui=createDom({surface:"dex",pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+  let closed=0;
+  initializeManagedSwapHost({doc:ui.doc,scope:withRuntime({Jupiter:{
+    init(){},close(){closed++;},resume(){}
+  }}),config:approved});
+  await ui.btn.click();
+  ui.doc.listeners["climboria:managed-provider-pair-change"]();
+  assert.equal(closed,0);
+  assert.equal(ui.panel.hidden,false);
+  assert.equal(ui.btn.hidden,false);
+});
+
+test("mint change during async Jupiter init hides partial vendor UI and fences late mount", async () => {
+  const ui=createDom({surface:"dex",pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+  let startedInit,resolveInit;
+  const started=new Promise(resolve=>{startedInit=resolve;});
+  const vendor={close:0,init:0};
+  initializeManagedSwapHost({doc:ui.doc,scope:withRuntime({Jupiter:{
+    init(){
+      vendor.init++;startedInit();
+      return new Promise(resolve=>{resolveInit=resolve;});
+    },
+    close(){vendor.close++;}
+  }}),config:approved});
+  const open=ui.btn.click();
+  await started;
+  ui.panel.pair={inputMint:USDC_MINT,outputMint:SOL_MINT};
+  ui.doc.listeners["climboria:managed-provider-pair-change"]();
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(ui.btn.hidden,true);
+  assert.ok(vendor.close>=1,"close partial provider root during init");
+  resolveInit();
+  await open;
+  assert.ok(vendor.close>=2,"late init resolution also conceals old provider");
+  assert.equal(vendor.init,1);
+  assert.equal(ui.panel.hidden,true);
 });
 
 test("Swap Base-selected network cannot fetch or initialize the Solana Jupiter Plugin", async () => {
