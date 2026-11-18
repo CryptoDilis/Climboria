@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * CLIMBORIA GAME ONLY — manual real WebGL multiplayer/World Chat acceptance.
+ * CLIMBORIA GAME ONLY — manual real WebGL multiplayer, Nearby and last-position acceptance.
  *
  * This is NOT a unit test and never runs in normal CI. It needs an owner-
  * deployed, already approved rooms.climboria.fun Cloudflare Worker, two
  * DIFFERENT throwaway Supabase password-based QA accounts, and real network
- * connectivity. No live Game config change: Playwright intercepts ONLY each
- * temporary browser's client-config.json response in memory.
+ * connectivity. No Game config overrides: the accepted public first-party
+ * client-config.json MUST already point to the approved registered-only room.
  *
  * Read STAGING_READINESS.md before executing. Do not use customer accounts.
  * Never paste passwords/tokens into repo/chat/logs. The browser signs in via
@@ -23,6 +23,7 @@
  */
 import {chromium} from 'playwright';
 import {verifyGameRoomPreflight} from './staging-preflight.mjs';
+import {verifyDeployedGameConfig} from './qa-public-config-check.mjs';
 import {requestBoundedGameQaAuth} from './browser-qa-auth.mjs';
 import {mkdir} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
@@ -46,7 +47,8 @@ check(!env.GAME_ROOM_BASE||env.GAME_ROOM_BASE===ROOM,
 
 // A running Worker is not evidence of functioning authenticated room storage.
 // Both the response AND full body validation are bound by one strict deadline.
-await verifyGameRoomPreflight(ROOM,'health',{deadlineMs:15000});
+await verifyDeployedGameConfig({deadlineMs:15000});
+await verifyGameRoomPreflight(ROOM,'health',{deadlineMs:15000,requireNearbyChat:true});
 await verifyGameRoomPreflight(ROOM,'ready',{deadlineMs:15000});
 const browser=await chromium.launch({
  headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']
@@ -64,16 +66,8 @@ async function openExplorer(account,emulateMobile){
   if(location.origin==='https://climboria.fun')
    localStorage.setItem('climboria-created-hero-v1',JSON.stringify(hero));
  },{name:account.name,model:account.model,createdAt:'2026-11-15T00:00:00Z'});
- // This override exists ONLY inside two isolated owner-controlled QA browsers.
- // Neither production Game files nor the repo client-config are modified.
- await context.route('**/game/multiplayer/client-config.json',async route=>{
-  if(new URL(route.request().url()).origin!==SITE){
-   await route.abort();return;
-  }
-  await route.fulfill({status:200,contentType:'application/json',
-   headers:{'cache-control':'no-store','access-control-allow-origin':SITE},
-   body:JSON.stringify({schema:1,enabled:true,endpoint:ROOM})});
- });
+ // Do not inject a synthetic Game config. This must exercise the REAL
+ // published first-party release switch and approved Cloudflare room host.
  const page=await context.newPage();
  await page.goto(SITE+'/game/play.html',{waitUntil:'domcontentloaded',timeout:90000});
  check(new URL(page.url()).pathname==='/game/play.html',
@@ -111,9 +105,13 @@ async function assertPeer(page,expected){
   expected,{timeout:90000});
  await page.waitForFunction(n=>{
   const legend=document.getElementById('world-map-legend')?.textContent||'';
-  const count=document.querySelector('#climboria-world-chat-panel')?.firstChild?.textContent||'';
+  const badge=document.getElementById('climboria-room-status');
+  const chat=document.getElementById('climboria-world-chat-panel');
   return (n>0?legend.includes('Cyan = explorers ('+n+')'):
-   !legend.includes('Cyan = explorers'))&&count.includes((n+1)+' ONLINE');
+   !legend.includes('Cyan = explorers'))&&
+   badge?.dataset.state==='connected'&&
+   badge.textContent.trim()==='ONLINE: '+(n+1)&&
+   chat?.style.display==='block'&&!!chat.querySelector('[role="log"]');
  },expected,{timeout:30000});
 }
 async function waitForGlb(page){
