@@ -70,3 +70,15 @@ test("only approved web origins may access CORS-status endpoint", async () => {
   assert.equal(good.headers.get("access-control-allow-origin"), "https://www.climboria.fun");
   assert.deepEqual(await good.json(), {enabled:expectedApproved});
 });
+
+test("Swap-only release never authorizes a future independent Solana DEX provider gate", () => {
+  const dexGates = [...workerSource.matchAll(/^const THIRD_PARTY_JUPITER_DEX_APPROVED = (true|false);$/gm)];
+  assert.ok(dexGates.length <= 1, "Only one optional source-controlled DEX approval gate may exist");
+  if (workerSource.includes("THIRD_PARTY_JUPITER_DEX_APPROVED")) {
+    assert.equal(dexGates.length, 1, "An introduced DEX gate must be a canonical boolean literal");
+    assert.equal(dexGates[0][1], "false", "Enabling Swap must never silently enable DEX Buy/Sell");
+  }
+  const cfg = readFileSync(new URL("../../../swap-config.js", import.meta.url), "utf8");
+  assert.match(cfg, /surfaces:\s*Object\.freeze\(\{\s*swap:\s*true,\s*dex:\s*false\s*\}\)/,
+    "The public DEX surface remains explicitly OFF for a Swap-only release");
+});
