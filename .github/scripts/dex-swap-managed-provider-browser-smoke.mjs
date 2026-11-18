@@ -615,12 +615,17 @@ async function runDexReadOnlyQuoteDirections(browser) {
     assert.equal(response.status(),200);
     const buy=page.locator('[data-dex-provider-direction="buy"]');
     const sell=page.locator('[data-dex-provider-direction="sell"]');
-    await buy.waitFor({state:"visible",timeout:15000});
+    // Token detail stays hidden until a market is selected. Exercise the
+    // registered handler directly here; the separate production navigation
+    // smoke covers revealing the detail panel via an actual token click.
+    assert.equal(await buy.count(),1);
+    assert.equal(await sell.count(),1);
+    assert.equal(await buy.isVisible(),false);
     assert.equal(await buy.getAttribute("aria-pressed"),"true");
     assert.equal(await sell.getAttribute("aria-pressed"),"false");
     const panel=page.locator("#climboriaDexProviderPanel");
     // With no selected token even a Sell click may not make mint hints from thin air.
-    await sell.click();
+    await sell.evaluate(button => button.click());
     assert.equal(await sell.getAttribute("aria-pressed"),"true");
     assert.equal(await panel.getAttribute("data-climboria-managed-swap-input-mint"),null);
     assert.equal(await panel.getAttribute("data-climboria-managed-swap-output-mint"),null);
@@ -631,12 +636,12 @@ async function runDexReadOnlyQuoteDirections(browser) {
       syncDexJupiterMarketPair();
     });
     // SELL USDC spends USDC -> receives SOL; BUY USDC reverses pair.
-    await sell.click();
+    await sell.evaluate(button => button.click());
     assert.equal(await panel.getAttribute("data-climboria-managed-swap-input-mint"),
       "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
     assert.equal(await panel.getAttribute("data-climboria-managed-swap-output-mint"),
       "So11111111111111111111111111111111111111112");
-    await buy.click();
+    await buy.evaluate(button => button.click());
     assert.equal(await buy.getAttribute("aria-pressed"),"true");
     assert.equal(await sell.getAttribute("aria-pressed"),"false");
     assert.equal(await panel.getAttribute("data-climboria-managed-swap-input-mint"),
