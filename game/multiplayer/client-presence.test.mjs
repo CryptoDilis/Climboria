@@ -7,7 +7,7 @@ import {TextEncoder} from 'node:util';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,configFailures=0,configGate=null,configBadSchema=false,refreshMode=null}={}){
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,configFailures=0,configGate=null,configBadSchema=false,refreshMode=null,guest=false}={}){
  const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses],ticketPayloads:[...ticketPayloads],configFailures,configCalls:0};
  const authListeners=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],speeches=[],calls=[],timers=[],created=[];
@@ -35,7 +35,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
    for(const fn of documentListeners.get(event.type)||[])fn(event);
    return true;
   }};
- const window={__climboriaGameReady:true,__climboriaCreatedHero:{name:'Explorer A',model:'Jarrell'},
+ const window={__climboriaGameReady:true,__climboriaCreatedHero:{name:'Explorer A',model:'Jarrell'},__climboriaGuestMode:guest,
   __climboriaJarrellsPeak:{player:{x:0,y:9.55,z:-30,mode:'walk'}},
   __CLIMBORIA_GAME_PEERS:{
    add:x=>adds.push(x),move:(id,pos)=>moves.push({id,pos}),
@@ -497,8 +497,12 @@ test('World Chat is room-gated, server-confirmed, safe as text and cleared on di
  const panel=h.created.find(node=>node.id==='climboria-world-chat-panel');
  assert.ok(toggle&&panel,'server-accepted initial spawn creates World Chat');
  assert.ok(panel.children[0].textContent.includes('2 ONLINE'));
+ assert.equal(panel.style.display,'block','compact World Chat starts visible without any click');
+ assert.equal(toggle.textContent,'HIDE CHAT');
  toggle.click();
- assert.equal(panel.style.display,'block');
+ assert.equal(panel.style.display,'none','user can collapse visible chat');
+ toggle.click();
+ assert.equal(panel.style.display,'block','user can reopen compact chat');
  const log=panel.children[1],controls=panel.children[2],notice=panel.children[3];
  const input=controls.children[0],sendButton=controls.children[1];
  assert.equal(log.children.length,0,'no invented messages before server echo');
@@ -1227,4 +1231,14 @@ test('older live Game Worker cannot accidentally advertise a broken Nearby chann
  assert.equal(ws.sent.at(-1).type,'world-chat','compatibility gate cannot break public World Chat');
  ws.onmessage({data:JSON.stringify({type:'nearby-chat',id:peer.id,name:peer.name,text:'not enabled',at:1730000000000})});
  assert.equal(h.speeches.length,0,'legacy Worker cannot generate a fake nearby bubble');
+});
+
+test('Game guest exploration makes no config request, room ticket, socket or fake World Chat',async()=>{
+ const h=harness(true,{guest:true,initialSession:null});
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'guest');
+ assert.equal(h.clients.length,0);
+ assert.equal(h.calls.length,0,'guest mode must not fetch multiplayer configuration or tickets');
+ assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false);
+ assert.equal(h.created.some(el=>el.id==='climboria-world-chat-panel'),false);
 });
