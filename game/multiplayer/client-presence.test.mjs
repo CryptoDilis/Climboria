@@ -167,6 +167,16 @@ test('multiplayer config failures retry and show visible truthful status, never 
  assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false);
  assert.ok(h.created.some(node=>node.id==='climboria-room-status'&&node.textContent.includes('SETTINGS UNAVAILABLE')));
 });
+test('live Game maps the touch return event to its existing authorized local Digit1 teleport',()=>{
+ const game=readFileSync('game/play.html','utf8');
+ assert.match(game,/document\.addEventListener\('climboria:room-return-to-sanctuary',[\s\S]{0,180}TP\[1\]\(\)/,
+  'Game must handle touch request with existing local Sanctuary teleport only');
+ assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
+  'Game must keep Sanctuary at the actual protected server spawn center');
+ assert.match(game,/client-presence\.js\?v=20261118-mobile-room-return-5/,
+  'production Game must request the fresh mobile room client');
+});
+
 test('mobile blocked-room touch button emits only a real player Sanctuary return action',async()=>{
  const h=harness(true);
  h.window.__climboriaJarrellsPeak.player.x=70;
