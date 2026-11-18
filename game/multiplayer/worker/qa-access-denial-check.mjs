@@ -7,6 +7,9 @@
  *
  * This is a NEGATIVE security smoke check, not live two-user QA.
  */
+import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
+
 const ENDPOINT='https://rooms.climboria.fun/ticket';
 const TRUSTED='https://climboria.fun';
 const UNTRUSTED='https://invalid-origin.invalid';
@@ -67,8 +70,7 @@ export async function verifyUnauthenticatedGameRoomDenials({
  return Object.freeze({missingLoginDenied:true,forgedOriginDenied:true});
 }
 
-if(process.argv[1]&&new URL('file://'+process.argv[1]).pathname===
- new URL(import.meta.url).pathname){
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  try{
   await verifyUnauthenticatedGameRoomDenials();
   console.log('PASS: unauthenticated Game /ticket refused (401 login-required).');
