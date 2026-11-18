@@ -1,3 +1,20 @@
+# CURRENT GAME PILOT STATUS — 2026-11-18 PHT
+
+**Authoritative for ongoing Game QA:** source `main` SHA `708196d795b1e03b915088db8b60efeb986d7130` has `game/multiplayer/client-config.json` **`enabled:true`**, endpoint **`https://rooms.climboria.fun/`**, registered Supabase account admission only. The approved Game Worker has documented staging deployment; Game client fixes [#647](https://github.com/CryptoDilis/Climboria/pull/647) and [#649](https://github.com/CryptoDilis/Climboria/pull/649) have source/CI/Pages deployment evidence. Full postmerge Jarrell's Peak smoke [#44335746573](https://github.com/CryptoDilis/Climboria/actions/runs/44335746573) is **COMPLETED SUCCESS**. **A real production two-account ONLINE / remote GLB / bidirectional movement / server-confirmed World Chat session is not yet verified; physical Android FPS is not verified.** No authorized PvP damage, theft or grabbing.
+
+## Current acceptance path (preferred)
+
+1. Use two **different registered identities** in separate real browser profiles directly at [Jarrell's Peak](https://climboria.fun/game/play.html); do **not** install a DevTools Override or launch a QA kit that intercepts config for the primary *public release* acceptance. That would only test the injected staging config.
+2. Both enter walking mode at Sanctuary. Each must show `ONLINE` and `1 other explorer`, see the other's remote 3D representation, move in both directions and exchange World Chat with own-server echo and receipt. Screenshots must redact account details; never copy credentials, JWTs, cookies, tokens or private user IDs.
+3. Test desktop Digit1/mobile RETURN TO SANCTUARY room resync, disconnect/rejoin, same-account eviction, mobile landscape chat/control interaction, and real physical Android FPS/thermals. Report the **on-screen stage only** on failure: `CHECKING GAME LOGIN`, `VERIFYING ROOM ACCESS`, `CONNECTING TO WORLD`, `VERIFYING SANCTUARY SPAWN`, `RETURN TO SANCTUARY`, `SAME ACCOUNT IN ANOTHER TAB`, or `ROOM SETTINGS UNAVAILABLE · RETRYING`.
+4. Keep PvP, trusted-position permissions, loot/theft and any broad release claim CLOSED until separate proof. Do not disable the existing pilot or redeploy secrets merely because a historical pre-pilot checklist below says the client is OFF.
+
+## Historical staging reference (2026-11-17 and earlier)
+
+The instructions after this heading are **archived pre-pilot staging procedures**. They retain useful security controls and private QA methods, but any claims that the public `client-config.json` is OFF, should remain OFF, or that `rooms.climboria.fun` has not been selected are **superseded** by the current source above. Private config injection tests do **not** prove the public CDN currently serves the same switch. Use them only for separate, operator-approved staging diagnostics; do not change `main` based on those old steps.
+
+---
+
 # Climboria Game Room — Owner Staging Checklist
 
 **Status: staging is NOT a public multiplayer launch.** World Chat and real
