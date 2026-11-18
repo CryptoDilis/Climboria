@@ -22,7 +22,7 @@ Let `S` = total original Solana minted units, `L` = original units held at the *
 
 - `node --test token/climb-bridge/supply-audit.test.mjs` (no network or secrets)
 - After independently obtaining official on-chain bridge configuration, set `status` to `READY_FOR_READ_ONLY_AUDIT` and fill verified escrow token account, escrow authority and deployed Base contract; set only after confirming Solana program account and Base contract source matches chosen bridge provider. **Keep `activation.mainnetEnabled` false**; it is a safety stop, not a switch to enable a bridge.
-- Set `CLIMB_SOLANA_RPC_URL` and `CLIMB_BASE_RPC_URL` in local environment (HTTPS read-only RPC). Run `node token/climb-bridge/preflight.mjs`. This makes unsigned, read-only `getAccountInfo`, `eth_chainId`, `eth_getCode`, and `eth_call` requests. No keys are required. The tool rejects unconfigured addresses, wrong chain, wrong mint/decimals, wrong SPL escrow authority, missing Base bytecode and unbacked Base supply.
+- Set `CLIMB_SOLANA_RPC_URL` and `CLIMB_BASE_RPC_URL` in local environment (HTTPS read-only RPC). Run `node token/climb-bridge/preflight.mjs`. This makes unsigned, read-only Solana `getMultipleAccounts` (mint + escrow with one `finalized` context slot) and Base `eth_chainId`, `eth_getBlockByNumber('finalized')`, `eth_getCode`, and `eth_call` pinned to the finalized Base block number. No keys are required. The tool rejects missing Base finality, unconfigured addresses, wrong chain, wrong mint/decimals, wrong SPL escrow authority, unexpected escrow delegate or close authority, missing Base bytecode and unbacked Base supply.
 - **Do not paste or commit secrets, wallet seeds, private keys, raw bearer tokens, RPC API keys, or real funds.** Use a hardware wallet and independent multisig governance for future protocol owner/upgrade authority.
 
 ## Next-stage verification: two finalized Solana RPC providers
@@ -31,15 +31,15 @@ Added source-only mint authority inspector. This is **not** a bridge deployment 
 
 Local commands after obtaining two truly independently operated HTTPS Solana RPC providers (set each variable privately, never in GitHub Issues or CI logs):
 
-\`\`\`sh
+```sh
 # Use a secure private shell to set both environment variables.
 # CLIMB_SOLANA_RPC_A_URL=https://<your-provider-A>
 # CLIMB_SOLANA_RPC_B_URL=https://<your-provider-B>
 node token/climb-bridge/mint-inspect-cli.mjs
 node --test token/climb-bridge/*.test.mjs
-\`\`\`
+```
 
-This inspects the **exact original CLIMB mint** with Solana \`getAccountInfo\` using \`jsonParsed\` and \`finalized\`, enforcing the legacy SPL Token Program, 6 decimals, initialized mint, integer supply, explicit mint/freeze authority states, and agreement between providers with bounded slot skew. No API secrets are printed. Distinct RPC **hostnames** do not prove independent companies or infrastructure; confirm that manually. Conflicts reject, not average.
+This inspects the **exact original CLIMB mint** with Solana `getAccountInfo` using `jsonParsed` and `finalized`, enforcing the legacy SPL Token Program, 6 decimals, initialized mint, integer supply, explicit mint/freeze authority states, and agreement between providers with bounded slot skew. No API secrets are printed. Distinct RPC **hostnames** do not prove independent companies or infrastructure; confirm that manually. Conflicts reject, not average.
 
 A successful read only confirms two reported finalized observations at their slots. Presence of any mint/freeze authority must be documented and assessed; absence does **not** establish bridge readiness or all downstream restrictions. Token liquidity, pump.fun/pumpswap market status, escrow compatibility, manager deployment, protocol code/audits, and approved bridge routes remain separate verification tasks.
 
@@ -60,6 +60,20 @@ solana_escrow - base_wrapped = pending_sol_to_base + pending_base_to_sol
 This equality is a **simplifying assumption** for a fresh, dedicated single bridge escrow with no donations, fees, deficits, multi-escrow positions or other supported chains; *real* bridge accounting must include protocol-specific inventories and unsettled state before applying it. This simulator does not replace actual bridge manager/transceiver verification, cross-chain message finality, contract audits, rate limits, order processing, independent RPC verification, devnet transfers or small-value mainnet round trips. Test green does not mean asset transfer green. Source still has no deployed Base CA.
 
 **Known external blocker:** the official existing CLIMB mint/freeze authorities and actual bridge provider capability cannot be established from historical GitHub supply snapshots alone; read-only dual-provider finalized RPC verification remains required before real bridge configuration.
+
+## Snapshot consistency and limits (2026-11-19)
+
+The read-only accounting preflight now gets Solana's mint and escrow in **one** `getMultipleAccounts` call at `finalized` commitment (one returned slot), plus Base's `finalized` block ID. All Base bytecode and ERC-20 reads use the **same block number**, rather than `latest`. If a provider does not expose `finalized`, it **fails closed**. The escrow check also denies delegated, close-authorized or frozen token accounts until the selected provider's custody model is independently reviewed. The RPC caller rejects redirects and non-HTTPS URLs.
+
+No set of reads across Solana and Base is atomic across **both chains**. An observed difference may be an in-flight message, provider desynchronization, undisclosed escrow flows, an unsafe contract, or a genuine backing shortage. This tool cannot determine which without authenticated bridge event and manager/peer provenance. A result labelled `PASS_ACCOUNTING_ONLY_NOT_RELEASE_AUTHORIZATION` must **never** be used to enable customer deposits, send funds, issue Base CA or bypass external security review.
+
+The `config.json` flags and URLs are only an **operator-supplied data schema**; they cannot independently prove that a bridge manager is secure or that a URL is a genuine provider audit. No Base deployment exists in this project.
+
+Run offline safety fixtures:
+
+```sh
+node --test token/climb-bridge/*.test.mjs
+```
 
 ## Mainnet go/no-go prerequisites
 

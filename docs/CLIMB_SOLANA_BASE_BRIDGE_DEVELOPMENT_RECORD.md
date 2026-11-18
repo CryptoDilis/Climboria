@@ -5,6 +5,27 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 4 — Finalized snapshot accounting hardening (2026-11-19)
+
+**Scope:** bridge-only read-only RPC audit safety; no Base contract or bridge deployment, no signed transaction, no liquidity or live funds.
+
+- Found an actual read-consistency gap in the prior `supply-audit.mjs`: two separate Solana `getAccountInfo` requests, plus Base `eth_getCode` / `eth_call` against volatile `latest` state. These cannot guarantee mint/escrow values from one finalized Solana slot or Base values from one finalized EVM block.
+- Replaced with one `getMultipleAccounts` call for official CLIMB mint + configured escrow at `finalized` with one RPC context slot, and `eth_getBlockByNumber('finalized')` followed by all Base code, `decimals()`, and `totalSupply()` calls pinned to that block number. Missing/invalid finality, wrong chain, wrong token program, mint/freeze authority fields missing, wrong escrow owner or token, delegated/frozen/close-authorized escrow, wrong decimals, absent bytecode or unbacked amount all fail closed.
+- Added mock-injectable RPC path and new `supply-audit-finality.test.mjs` fixtures covering same-slot/read ordering, finalized Base pinning, errors, no network before config validation and wrapped-supply mismatch; updated bridge README. Existing `config.json` remains disabled; no actual trusted Solana escrow or Base CA populated.
+- **Important:** a matching pair of finalized chain readings is NOT an atomic cross-chain observation and cannot prove bridge program/authenticator security. `PASS_ACCOUNTING_ONLY_NOT_RELEASE_AUTHORIZATION` is intentionally limited to bookkeeping and must not unlock funds. Current bridge selection and finalized live mint authority evidence remain unverified.
+- **PR/CI:** pending PR and exact-head CI evidence at the time of this section. Record actual result (do not invent).
+
+**Exact NEXT:**
+
+1. Open focused PR, check only bridge audit/tests/README/record changed, run exact-head CI and merge if green. Log PR, workflow URLs, SHA and any fixes.
+2. Obtain independent finalized Solana mint authority evidence from two privately configured RPCs using existing `mint-inspect-cli.mjs`, plus a trusted independent explorer. Do not use GitHub supply snapshot as proof of mint/freeze authority.
+3. Check the provider-supported **existing SPL mint** lock/mint representation route to Base and pinned official code/audit/deployments, including managers/transceivers and custody. `Wormhole NTT` is still a candidate, not an approved provider. No provider/route is currently verified.
+4. Only after verified protocol selection, create provider-specific devnet/Sepolia manifests and run real wallet-authorized bidirectional tests; do not invent a Base token CA or mint a second unsupported 1B CLIMB.
+
+**Current release:** `NO-GO` for production cross-chain transfers; Base CLIMB CA `NOT DEPLOYED`.
+
+---
+
 ## Stage 3 merged — verified CI and current next action (2026-11-19)
 
 - [PR #666](https://github.com/CryptoDilis/Climboria/pull/666) **MERGED** into `main` by squash at [`1babfd3ecb91ccaa2f302dcaa264805cde9e4d3c`](https://github.com/CryptoDilis/Climboria/commit/1babfd3ecb91ccaa2f302dcaa264805cde9e4d3c), exact tested head `3db688dbc873aed452dced055f03f15bc1679608`.
