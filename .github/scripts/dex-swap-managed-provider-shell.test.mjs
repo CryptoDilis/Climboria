@@ -402,6 +402,56 @@ test("mint change during async Jupiter init hides partial vendor UI and fences l
   assert.equal(ui.panel.hidden,true);
 });
 
+test("silent mounted mint drift is closed before handling a cleared or changed pair", async () => {
+  for (const surface of ["swap","dex"]) for (const pair of [
+    null,{inputMint:SOL_MINT,outputMint:null},{inputMint:USDC_MINT,outputMint:SOL_MINT}
+  ]) {
+    const ui=createDom({surface,pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+    let init=0,close=0,resume=0;
+    initializeManagedSwapHost({doc:ui.doc,config:approved,scope:withRuntime({Jupiter:{
+      init(){init++;},close(){close++;},resume(){resume++;}
+    }})});
+    await ui.btn.click();
+    assert.equal(init,1);
+    ui.panel.pair=pair; // Simulate a missing pair-change event.
+    await ui.btn.click();
+    assert.equal(ui.panel.hidden,true,"stale mounted wallet form must be concealed");
+    assert.equal(ui.btn.hidden,true,"refresh required for changed mints");
+    assert.ok(close>=1,"must close vendor-owned wallet overlay");
+    assert.equal(init,1);
+    assert.equal(resume,0);
+    assert.match(ui.status.textContent,/Selected token or trade direction changed/);
+  }
+});
+
+test("silent pair/network drift while Jupiter init awaits is closed before mount", async () => {
+  for (const surface of ["swap","dex"]) for (const change of ["clear","reverse","base"]) {
+    if (surface==="dex" && change==="base") continue;
+    const ui=createDom({surface,pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+    let resolveInit,startedInit,close=0,init=0;
+    const started=new Promise(resolve=>{startedInit=resolve;});
+    initializeManagedSwapHost({doc:ui.doc,config:approved,scope:withRuntime({Jupiter:{
+      init(){init++;startedInit();return new Promise(resolve=>{resolveInit=resolve;});},
+      close(){close++;}
+    }})});
+    const opening=ui.btn.click();
+    await started;
+    if(change==="clear") ui.panel.pair=null;
+    if(change==="reverse") ui.panel.pair={inputMint:USDC_MINT,outputMint:SOL_MINT};
+    if(change==="base") {
+      const get=ui.panel.getAttribute.bind(ui.panel);
+      ui.panel.getAttribute=key=>key==="data-climboria-managed-swap-network"?"base":get(key);
+    }
+    resolveInit(); // Do not emit the normal selector change event.
+    await opening;
+    assert.equal(ui.panel.hidden,true,"old mint/provider UI must stay hidden");
+    assert.equal(ui.btn.hidden,true,"stale asynchronous init must fence the launchers");
+    assert.ok(close>=1,"must close provider root even when init resolved");
+    assert.equal(init,1);
+    assert.match(ui.status.textContent,/Selected token or trade direction changed/);
+  }
+});
+
 test("Swap refuses missing, partial, duplicate or invalid Solana mint pairs before downloading Jupiter", async () => {
   for (const pair of [null,
     {inputMint:SOL_MINT,outputMint:null},
