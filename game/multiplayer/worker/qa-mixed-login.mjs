@@ -130,11 +130,17 @@ async function sendChat(page,message){
  await panel.locator('input').fill(message);
  await panel.locator('button').click();
 }
-async function expectChat(page,name,message){
+async function sendNearby(page,message){
+ const panel=await openChat(page);
+ await panel.locator('button[aria-label="Switch between World Chat and Nearby Chat"]').click();
+ await panel.locator('input').fill(message);
+ await panel.locator('button').first().click();
+}
+async function expectChat(page,name,message,nearby=false){
  await page.waitForFunction(({name,message})=>
   [...document.querySelectorAll('#climboria-world-chat-panel [role="log"] > div')]
-   .some(e=>e.textContent===name+': '+message),
-  {name,message},{timeout:30000});
+   .some(e=>e.textContent===name+(nearby?' [nearby]':'')+': '+message),
+  {name,message,nearby},{timeout:30000});
 }
 async function fps(page){
  const before=await page.evaluate(()=>window.__climboriaRenderState?.frames||0);
@@ -199,6 +205,16 @@ async function testTwoPlayers(a,b,originalBId){
  await b.waitForFunction(
   ()=>document.querySelector('#climboria-world-chat-panel input')?.value==='',
   undefined,{timeout:15000});
+ qaProgress.pass();
+ qaProgress.start('nearby-chat');
+ await sendNearby(a,'QA actual nearby A');
+ await Promise.all([
+  expectChat(a,'QA Explorer A','QA actual nearby A',true),
+  expectChat(b,'QA Explorer A','QA actual nearby A',true)
+ ]);
+ await b.waitForFunction(()=>
+  window.__CLIMBORIA_GAME_PEERS?.audit?.().nearbyBubbles===1,
+  undefined,{timeout:8000});
  qaProgress.pass();
 
  qaProgress.start('desktop-render');
