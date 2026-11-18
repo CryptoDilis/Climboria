@@ -254,6 +254,19 @@ browser or have the sign-in sessions.
    If a provider blocks automated Chrome sign-in, **stop** rather than try to
    bypass the provider; use the manual owner browser Overrides method below.
 
+**Privacy-safe QA diagnostics (Game runner):** The console now displays a
+fixed sequence of `CHECK:` and `PASS:` labels for HTTPS Worker readiness,
+Player A login and admission, Player A alone, Player B login and admission,
+distinct accounts, both reciprocal GLB avatars, real keyboard movement,
+bidirectional World Chat, Chrome rendering and disconnect/rejoin. If any
+stage fails, the runner prints only its **fixed stage name** and
+`QA RESULT: NOT VERIFIED`; raw errors from Google/X/Supabase, actual account
+IDs, JWTs, tickets, cookie values, chat bodies and HTTP response contents are
+**not** included in these progress lines. Share only this sanitized console
+stage result for troubleshooting. A `CHECK` line is **not** evidence of
+success. The private owner test must still be run to produce genuine PASS
+results; CI verifies reporter behavior but cannot log in as the owner.
+
 **Honest acceptance status:** As of this documented source change, the
 new launcher is only code plus syntax/CI checks; no tool has executed a
 live mixed-provider sign-in, actual WebGL two-user QA or owner hardware

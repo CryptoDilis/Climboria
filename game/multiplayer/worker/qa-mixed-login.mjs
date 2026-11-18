@@ -16,6 +16,7 @@ import {chromium} from 'playwright';
 import {createInterface} from 'node:readline/promises';
 import {stdin,stdout} from 'node:process';
 import {verifyGameRoomPreflight} from './staging-preflight.mjs';
+import {createGameQaProgress} from './qa-stage-report.mjs';
 
 const SITE='https://climboria.fun';
 const GAME=SITE+'/game/play.html';
@@ -31,6 +32,7 @@ const prompts=createInterface({input:stdin,output:stdout});
 const contexts=[];
 let browser;
 function log(message){stdout.write(message+'\n')}
+const qaProgress=createGameQaProgress(log);
 async function prompt(message){await prompts.question(message+'\nPress ENTER to continue... ')}
 async function newExplorer(name,model){
  const context=await browser.newContext({
@@ -137,10 +139,12 @@ async function fps(page){
  return Math.round((after-before)*1000/(Date.now()-t)*10)/10;
 }
 async function testTwoPlayers(a,b){
+ qaProgress.start('peer-avatars');
  await Promise.all([assertPeer(a,1),assertPeer(b,1)]);
  await Promise.all([assertRealAvatar(a),assertRealAvatar(b)]);
- log('PASS: both registered users see exactly one real remote Game avatar.');
+ qaProgress.pass();
 
+ qaProgress.start('movement-sync');
  const local=await a.evaluate(()=>{
   const p=window.__climboriaJarrellsPeak.player;
   return {x:p.x,z:p.z};
@@ -167,8 +171,9 @@ async function testTwoPlayers(a,b){
   return !!p&&Math.hypot(p.x-before.x,p.z-before.z)>.3&&
     Math.hypot(p.x-after.x,p.z-after.z)<7;
  },{before:remote,after},{timeout:30000});
- log('PASS: live Game movement synchronized to the other browser.');
+ qaProgress.pass();
 
+ qaProgress.start('world-chat');
  await sendChat(a,'QA real Game chat A');
  await Promise.all([
   expectChat(a,'QA Explorer A','QA real Game chat A'),
@@ -189,28 +194,31 @@ async function testTwoPlayers(a,b){
  await b.waitForFunction(
   ()=>document.querySelector('#climboria-world-chat-panel input')?.value==='',
   undefined,{timeout:15000});
- log('PASS: both directions of World Chat confirmed by server echoes.');
+ qaProgress.pass();
 
+ qaProgress.start('desktop-render');
  const rates=await Promise.all([fps(a),fps(b)]);
  requireCondition(rates.every(x=>x>0),'Real Game rendered frames required');
  log('Observed Chrome FPS (not physical Android): '+rates.map(x=>x.toFixed(1)).join(' / '));
+ qaProgress.pass();
+ qaProgress.start('disconnect-rejoin');
  // Browser B disconnects without signing out; OAuth/password credentials
  // remain isolated to the transient test context and are never exported.
  await b.goto('about:blank',{waitUntil:'domcontentloaded'});
  await assertPeer(a,0);
- log('PASS: leaving the room removed Player B without a ghost.');
+ log('CHECK: Player B left room; checking authenticated rejoin without ghost.');
  await b.goto(GAME,{waitUntil:'domcontentloaded',timeout:WAIT});
  await requireRegisteredSession(b);
  await Promise.all([assertPeer(a,1),assertPeer(b,1)]);
- log('PASS: Player B rejoined with the same valid registered session.');
+ qaProgress.pass();
 }
 
 try{
  log('CLIMBORIA GAME — PRIVATE TWO-PLAYER QA (no public enablement)');
- log('Checking actual Game staging health and Durable Object readiness...');
+ qaProgress.start('worker-readiness');
  await verifyGameRoomPreflight(ROOM,'health',{deadlineMs:15000});
  await verifyGameRoomPreflight(ROOM,'ready',{deadlineMs:15000});
- log('PASS: /health and /ready are HTTP 200 and fail-closed as required.');
+ qaProgress.pass();
  // Installed Chrome is preferred so interactive OAuth is possible.
  // Some identity providers still disallow browser automation; never bypass.
  browser=await chromium.launch({
@@ -218,13 +226,17 @@ try{
   args:['--enable-unsafe-swiftshader','--ignore-gpu-blocklist']
  });
  const a=await newExplorer('QA Explorer A','Jarrell');
+ qaProgress.start('player-a-session');
  log('PLAYER A: log in using your own Google / X / Email method.');
  log('You may visit the Climboria sign-in page, but RETURN to '+GAME);
  await prompt('Once Player A is logged in and walking in Jarrells Peak:');
  await requireRegisteredSession(a);
+ qaProgress.pass();
+ qaProgress.start('player-a-alone');
  await assertPeer(a,0);
- log('PASS: Player A signed in and is alone in the staging room.');
+ qaProgress.pass();
  const b=await newExplorer('QA Explorer B','Lheiz');
+ qaProgress.start('player-b-session');
  log('PLAYER B: log in with your OTHER registered Climboria account.');
  log('Return to '+GAME+' after any OAuth redirect.');
  await prompt('Once Player B is logged in and walking in Jarrells Peak:');
@@ -238,17 +250,19 @@ try{
    s.user?.app_metadata?.provider!=='anonymous'?s.user?.id:null;
  });
  const bId=await requireRegisteredSession(b);
+ qaProgress.pass();
+ qaProgress.start('distinct-accounts');
  requireCondition(!!aId&&aId!==bId,'Both browsers must use DISTINCT registered users');
+ qaProgress.pass();
  await testTwoPlayers(a,b);
  log('QA RESULT: PASS — real authenticated movement, GLBs, World Chat and reconnect.');
  log('Public Game config is STILL OFF. Physical mobile FPS and release review remain.');
-}catch(error){
+}catch{
  // Never print Supabase responses, browser headers, cookies or secrets.
  // Only this operator's local control-flow error or a generic failure.
- const safe=error instanceof Error&&
-  /^(PASS|Player|Both|This window|Return to|Owner approval|Refusing|Run this|Remote peer|Incoming chat|Real Game|A real|Game room|QA draft|Both browsers|Keyboard)/.test(error.message)
-  ?error.message:'QA stopped before full acceptance; inspect Game and browser login state.';
- log('QA RESULT: NOT VERIFIED — '+safe);
+ // Do not report Playwright exceptions or provider HTTP bodies to stdout.
+ // Fixed stage names make failures actionable without exposing identity data.
+ qaProgress.fail();
  process.exitCode=1;
 }finally{
  for(const ctx of contexts)await ctx.close().catch(()=>{});
