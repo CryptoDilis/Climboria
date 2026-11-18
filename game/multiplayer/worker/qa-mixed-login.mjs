@@ -155,6 +155,20 @@ async function testTwoPlayers(a,b,originalBId){
  await Promise.all([assertRealAvatar(a),assertRealAvatar(b)]);
  qaProgress.pass();
 
+ qaProgress.start('nearby-chat');
+ // Both owners just received the same verified Sanctuary spawn. Check local
+ // communication BEFORE the sprint test moves Player A beyond 20 meters.
+ await sendNearby(a,'QA actual nearby A');
+ await Promise.all([
+  expectChat(a,'QA Explorer A','QA actual nearby A',true),
+  expectChat(b,'QA Explorer A','QA actual nearby A',true)
+ ]);
+ await b.waitForFunction(()=>
+  window.__CLIMBORIA_GAME_PEERS?.audit?.().nearbyBubbles===1,
+  undefined,{timeout:8000});
+ qaProgress.pass();
+ await a.waitForTimeout(2600); // Shared room chat cooldown before World Chat.
+
  qaProgress.start('movement-sync');
  const local=await a.evaluate(()=>{
   const p=window.__climboriaJarrellsPeak.player;
@@ -206,18 +220,6 @@ async function testTwoPlayers(a,b,originalBId){
   ()=>document.querySelector('#climboria-world-chat-panel input')?.value==='',
   undefined,{timeout:15000});
  qaProgress.pass();
- qaProgress.start('nearby-chat');
- await a.waitForTimeout(2600); // Honor shared Game server chat cooldown.
- await sendNearby(a,'QA actual nearby A');
- await Promise.all([
-  expectChat(a,'QA Explorer A','QA actual nearby A',true),
-  expectChat(b,'QA Explorer A','QA actual nearby A',true)
- ]);
- await b.waitForFunction(()=>
-  window.__CLIMBORIA_GAME_PEERS?.audit?.().nearbyBubbles===1,
-  undefined,{timeout:8000});
- qaProgress.pass();
-
  qaProgress.start('desktop-render');
  const rates=await Promise.all([fps(a),fps(b)]);
  requireCondition(rates.every(x=>x>0),'Real Game rendered frames required');
