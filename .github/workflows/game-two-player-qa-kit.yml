@@ -56,7 +56,10 @@ jobs:
           assert cfg.get('schema') == 1 and cfg.get('enabled') is True and cfg.get('endpoint') == 'https://rooms.climboria.fun/', 'Game registered-only pilot must use exact approved room hostname'
           pkg=json.loads(Path('game/multiplayer/worker/package.json').read_text())
           assert pkg['private'] is True and pkg['dependencies']['playwright']=='1.56.1', 'QA browser must be pinned'
-          print('PASS: exact approved registered Game pilot endpoint and pinned local-only Playwright; no two-user QA claim')
+          qa=Path('game/multiplayer/worker/qa-mixed-login.mjs').read_text()
+          assert 'context.route(' not in qa and 'route.fulfill(' not in qa, 'Game QA must never inject a local room config override'
+          assert 'await assertPublishedConfig(a)' in qa and 'await assertPublishedConfig(b)' in qa, 'Both real browser contexts must verify public Game config'
+          print('PASS: approved registered Game pilot, no QA config override, pinned Playwright; no two-user QA claim from CI')
           PY
       - name: Assemble standalone private Windows QA folder
         run: |
