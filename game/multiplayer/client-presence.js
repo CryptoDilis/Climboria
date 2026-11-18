@@ -561,6 +561,16 @@
   if(old){try{old.close()}catch{}}
   clearPeers();
  }
+ // A local waypoint teleport cannot be sent as an ordinary position
+ // update: the room correctly rejects implausibly fast movement. Clear the
+ // old visible peer/chat session and use fresh authenticated Sanctuary
+ // admission, not a client-authorized server teleport or fake position.
+ document.addEventListener('climboria:local-teleport',()=>{
+  if(disposed||(!socket&&!connecting))return;
+  resetConnection();
+  showStatus('rejoining','MULTIPLAYER · REJOINING AFTER TELEPORT');
+  scheduleConnect(0);
+ });
  async function connect(){
   if(disposed||connecting||socket||sameAccountInUse)return;
   if(!isReady()){scheduleConnect(1200);return}
