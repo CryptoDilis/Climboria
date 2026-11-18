@@ -221,6 +221,12 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   // its pair attributes. A mounted or initializing Jupiter instance does not
   // automatically adopt new mints; immediately conceal its old wallet form.
   doc.addEventListener?.("climboria:managed-provider-pair-change", () => {
+    // Swap's Base tab is intentionally not a Jupiter provider session.
+    // The network-switch handler already sends Close and fences pending init;
+    // preserve the previously mounted Solana pair for a later explicit return
+    // to Solana without treating the temporary Base selection as a mint trade.
+    if (surface === "swap" &&
+        panel.getAttribute?.("data-climboria-managed-swap-network") !== "solana") return;
     if (!mounted && !loading && !providerInitInFlight) return;
     if (mounted && sameMountedPair()) return;
     hideRevoked();
