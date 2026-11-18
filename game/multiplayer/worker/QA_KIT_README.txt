@@ -37,7 +37,7 @@ The runner checks:
 It DOES NOT test physical Android device GPU/FPS, and does not authorize
 public multiplayer or PvP damage/theft/grabbing/loot. The owner and
 development team must separately review Android results before release.
-The browser contexts close after the run; production config stays OFF.
+The browser contexts close after the run; the QA runner does not modify production config.
 
 No need to download full game repository or use DevTools Overrides.
 This kit does not contain account passwords, tokens or access privileges.
