@@ -33,11 +33,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Verify no customer-funds or public multiplayer enablement
+      - name: Verify approved Game gateway readiness and no customer-funds execution
         run: |
           node --test game/multiplayer/worker/qa-readiness-check.test.mjs
           node game/multiplayer/worker/qa-readiness-check.mjs
-      - name: Confirm deployed public Game multiplayer is really OFF
+      - name: Check deployed Game gateway configuration (may still be on previous Pages release)
         run: |
           node --test game/multiplayer/worker/qa-public-config-check.test.mjs
           node game/multiplayer/worker/qa-public-config-check.mjs
