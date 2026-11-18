@@ -2,7 +2,7 @@
 /**
  * GAME ONLY — read-only, credential-free staging readiness gate.
  *
- * It proves ONLY: the checked-out production Game config is still disabled,
+ * It proves ONLY: the checked-out Game configuration targets only the approved room,
  * and the isolated owned Game Worker responds to exact /health + /ready
  * assertions over HTTPS with bounded requests. It does NOT claim any real
  * user sign-in, WebSocket peer, World Chat, GLB rendering or mobile FPS.
@@ -26,20 +26,20 @@ export async function verifyReadOnlyGameQaStaging({
   const loaded=await loadConfig();
   config=typeof loaded==='string'?JSON.parse(loaded):loaded;
  }catch{throw Error('Public Game release config could not be validated')}
- if(!config||config.schema!==1||config.enabled!==false||config.endpoint!==null)
-  throw Error('Public Game release config is NOT fail-closed');
+ if(!config||config.schema!==1||config.enabled!==true||config.endpoint!==HOST)
+  throw Error('Public Game gateway configuration is not approved');
  for(const kind of ['health','ready']){
   // verifyGameRoomPreflight checks HTTP status AND all expected fields.
   const ready=await check(HOST,kind,{deadlineMs:15000});
   if(ready!==true)throw Error('Game room '+kind+' readiness verification failed');
  }
- return Object.freeze({publicMultiplayer:'disabled',gameRoomReadiness:'pass'});
+ return Object.freeze({publicMultiplayer:'enabled-registered-only',gameRoomReadiness:'pass'});
 }
 
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  try{
   const result=await verifyReadOnlyGameQaStaging();
-  console.log('PASS: public Game multiplayer remains OFF.');
+  console.log('PASS: registered-user Game multiplayer is configured for the approved gateway.');
   console.log('PASS: isolated Game Worker /health and /ready returned validated HTTP 200.');
   console.log('NOT VERIFIED: real two-user login, WSS, movement, World Chat, GLB, physical Android FPS.');
  }catch{
