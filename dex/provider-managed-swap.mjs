@@ -259,6 +259,13 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
             panel.getAttribute?.("data-climboria-managed-swap-network") !== "solana") {
           throw new Error("Jupiter Plugin is unavailable on Base");
         }
+        // The Swap's selected mint pair is mandatory. A cleared/invalid
+        // first-party selection must not open Jupiter's unrelated default form.
+        // DEX may intentionally start without a market pair; its independent
+        // trade-intent invalidation still closes any stale mounted vendor UI.
+        if (surface === "swap" && selectedPair === null) {
+          throw new Error("Invalid or incomplete Jupiter input/output mint selection");
+        }
         integratedTerminalOptions(target.id, selectedPair);
         // Page-load approval may be revoked while this document stays open.
         const allowedOnOpen = await isManagedSwapRuntimeApproved(scope, runtimeStatusUrl);
@@ -329,6 +336,11 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         if (surface === "swap" &&
             panel.getAttribute?.("data-climboria-managed-swap-network") !== "solana") {
           throw new Error("Jupiter Plugin is unavailable on Base");
+        }
+        // Token selection may be cleared during script/status fetch. Recheck
+        // immediately before vendor init, even if a UI notification was missed.
+        if (surface === "swap" && selection === null) {
+          throw new Error("Invalid or incomplete Jupiter input/output mint selection");
         }
         const options = integratedTerminalOptions(target.id, selection);
         // A close/revoke during the vendor's asynchronous init must hide any
