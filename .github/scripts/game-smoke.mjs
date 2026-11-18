@@ -202,7 +202,10 @@ try {
   if(remotePresenceQA.status!=='disabled'||remotePresenceQA.initial!==0||
      remotePresenceQA.added!==1||remotePresenceQA.removed!==0||
      remotePresenceQA.during?.resident!==0||remotePresenceQA.during?.loading!==0||
+     remotePresenceQA.during?.sceneVisibleResidents!==0||
+     remotePresenceQA.moved?.sceneVisibleResidents!==0||
      remotePresenceQA.after?.resident!==0||remotePresenceQA.after?.loading!==0||
+     remotePresenceQA.after?.sceneVisibleResidents!==0||
      remotePresenceQA.after?.peers!==0||remotePresenceQA.after?.budget!==3||
      remotePresenceQA.during?.positions?.length!==1||
      remotePresenceQA.moved?.positions?.length!==1||
