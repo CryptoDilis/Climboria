@@ -187,7 +187,7 @@ async function runTabReturnApproval(browser, path, width) {
     if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(request.url()))
       forbidden.push(request.url());
   });
-  await page.route("**/swap-runtime-status.json", route => {
+  await page.route(path === "/dex/" ? DEX_API_STATUS_URL : "**/swap-runtime-status.json", route => {
     statuses++;
     return route.fulfill({
       status:200, json:{enabled:approved},
@@ -314,11 +314,15 @@ async function runCloseDuringLoad(browser, path) {
 
 async function runRollbackWithCache(browser) {
   const root = new URL("../../", import.meta.url);
-  const enabledConfig = mockConfig();
+  // The HTTP-only local test fixture substitutes its own distinct DEX status
+  // URL. The production URL allowlist is never changed by this test.
+  const enabledConfig = mockConfig().replace(DEX_API_STATUS_URL, "/dex-runtime-status.json");
   const host = await readFile(new URL("dex/provider-managed-swap.mjs", root), "utf8");
   // Serve the fixture over real HTTP. Playwright request interception disables
   // the browser cache, so it cannot exercise this rollback.
   const fixtureHost = host
+    .replace('const DEX_RUNTIME_STATUS_URL = "https://api.climboria.fun/api/dex/provider-status";',
+      'const DEX_RUNTIME_STATUS_URL = "/dex-runtime-status.json";')
     .replace("script.src = source.url;", 'script.src = "/fixture.js";')
     // Accelerate only the offline browser fixture; production polls every 15s.
     .replace("const ACTIVE_APPROVAL_POLL_MS = 15000;", "const ACTIVE_APPROVAL_POLL_MS = 100;");
@@ -340,7 +344,7 @@ async function runRollbackWithCache(browser) {
   let fixtureRequests = 0;
   const server = createServer((request, response) => {
     const path = new URL(request.url, "http://localhost").pathname;
-    if (path === "/swap-runtime-status.json") {
+    if (path === "/swap-runtime-status.json" || path === "/dex-runtime-status.json") {
       response.writeHead(200, {"Content-Type":"application/json", "Cache-Control":"no-store"});
       response.end(JSON.stringify({enabled}));
       return;
@@ -414,7 +418,8 @@ async function runRollbackWithCache(browser) {
         assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length), 1,
           "active rollback cannot resubmit or reinitialize a provider");
         await page.goto("about:blank");
-        const statusResponse = page.waitForResponse(response => response.url() === origin + "/swap-runtime-status.json");
+        const expectedStatusPath = path === "/dex/" ? "/dex-runtime-status.json" : "/swap-runtime-status.json";
+        const statusResponse = page.waitForResponse(response => response.url() === origin + expectedStatusPath);
         await page.goto(url, {waitUntil:"load"});
         assert.equal((await statusResponse).headers()["cache-control"], "no-store");
         assert.equal(configRequests, beforeConfig, "enabled config should still be cached");
