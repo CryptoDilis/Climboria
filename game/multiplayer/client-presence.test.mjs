@@ -24,8 +24,10 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
   };
   created.push(node);return node;
  };
+ const events=[];
  const document={documentElement:{dataset:{}},body:createElement('body'),
-  createElement,addEventListener(){}};
+  createElement,addEventListener(){},
+  dispatchEvent(event){events.push(event.type);return true}};
  const window={__climboriaGameReady:true,__climboriaCreatedHero:{name:'Explorer A',model:'Jarrell'},
   __climboriaJarrellsPeak:{player:{x:0,y:9.55,z:-30,mode:'walk'}},
   __CLIMBORIA_GAME_PEERS:{
@@ -77,11 +79,12 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
   throw Error('unexpected fetch');
  };
  const context={window,document,fetch,URL,TextEncoder,AbortController,WebSocket:Socket,
+  Event:class{constructor(type){this.type=type}},
   location:{href:'https://climboria.fun/game/play.html'},
   setTimeout:(fn,delay)=>{timers.push({fn,delay,cancelled:false});return timers.length},
   setInterval:()=>1,clearInterval(){},clearTimeout:id=>{if(timers[id-1])timers[id-1].cancelled=true},console};
  vm.runInNewContext(source,context,{filename:'client-presence.js'});
- return {window,document,clients,adds,moves,removes,punches,calls,timers,created,refreshCounts,
+ return {window,document,clients,adds,moves,removes,punches,calls,timers,created,refreshCounts,events,
   releaseGameClients:()=>{
    window.__CLIMBORIA_GAME_SAVE_CLIENT=lateAuth;
    window.__CLIMBORIA_GAME_PEERS=latePeers;
@@ -164,6 +167,46 @@ test('multiplayer config failures retry and show visible truthful status, never 
  assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false);
  assert.ok(h.created.some(node=>node.id==='climboria-room-status'&&node.textContent.includes('SETTINGS UNAVAILABLE')));
 });
+test('live Game maps the touch return event to its existing authorized local Digit1 teleport',()=>{
+ const game=readFileSync('game/play.html','utf8');
+ assert.match(game,/document\.addEventListener\('climboria:room-return-to-sanctuary',[\s\S]{0,180}TP\[1\]\(\)/,
+  'Game must handle touch request with existing local Sanctuary teleport only');
+ assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
+  'Game must keep Sanctuary at the actual protected server spawn center');
+ assert.match(game,/client-presence\.js\?v=20261118-mobile-room-return-5/,
+  'production Game must request the fresh mobile room client');
+});
+
+test('mobile blocked-room touch button emits only a real player Sanctuary return action',async()=>{
+ const h=harness(true);
+ h.window.__climboriaJarrellsPeak.player.x=70;
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'awaiting-sanctuary');
+ const button=h.created.find(node=>node.id==='climboria-room-return-sanctuary');
+ assert.ok(button,'Android users need an accessible touch return control instead of Digit1');
+ assert.equal(button.textContent,'RETURN TO SANCTUARY');
+ assert.equal(h.clients.length,0,'out-of-zone hero is not admitted or fabricated');
+ button.click();
+ assert.equal(h.events.at(-1),'climboria:room-return-to-sanctuary');
+ // The real Game listener executes its existing TP[1] teleport on this event.
+ // Reflect that action in this isolated client harness, not as a forged
+ // server spawn or client-side network admission.
+ h.window.__climboriaJarrellsPeak.player.x=0;
+ assert.equal(h.runNextTimer(),1200);
+ await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];ws.onopen();
+ assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false,
+  'mobile return is a local control, not proof of server room admission');
+ const own='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,
+  position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.ok(h.created.some(node=>node.id==='climboria-world-chat-toggle'));
+ button.click();
+ assert.equal(h.events.length,1,'return button must stop acting after joining');
+});
+
 test('real authenticated WebSocket messages are required before peers appear',async()=>{
  const h=harness(true);await flush();
  await waitFor(()=>h.clients.length===1||h.document.documentElement.dataset.climboriaMultiplayer==='offline');

@@ -1792,6 +1792,13 @@ function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
 function tp(x,z,yaw){P.x=x;P.z=z;P.yaw=yaw;cameraYaw=yaw;cameraPitch=-.05;P.vy=0;P.mode='walk';P.y=groundAt(x,z)+1.75;free(true);updateChunks(x,z,200)}
 const TP={1:()=>tp(0,-30,0),2:()=>tp(POI.summit.px+6,POI.summit.pz+6,Math.PI*.75),3:()=>{const c=POI.cave;tp(c.x+c.dir.x*45,c.z+c.dir.z*45,Math.atan2(c.dir.x,c.dir.z))},
  4:()=>tp(RICE.x-60,RICE.z+40,Math.PI*.6),5:()=>tp(100,1000,Math.PI),6:()=>tp(-960,0,Math.PI/2),7:()=>tp(-170,160,0),8:()=>tp(-150,-120,Math.PI*.6)};
+// The authenticated room client can ask for the same local Sanctuary
+// teleport as Digit1 when a registered player cannot join from elsewhere.
+// An explicit mobile tap is required. No server/player identity is faked.
+document.addEventListener('climboria:room-return-to-sanctuary',()=>{
+ if(!window.__climboriaGameReady||P.mode!=='walk')return;
+ TP[1]();
+});
 let punchEndAt=0,punchLastAt=-100000;
 const PUNCH_COST=5,PUNCH_COOLDOWN_MS=900,PUNCH_DURATION_MS=650;
 // Local punch animation only. Trusted backend required for PvP hit/damage and loot.
@@ -3665,6 +3672,6 @@ initChunks();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
 <script src="/game-save.js"></script>
-<script src="./multiplayer/client-presence.js?v=20261118-remote-adventurer-4"></script>
+<script src="./multiplayer/client-presence.js?v=20261118-mobile-room-return-5"></script>
 </body>
 </html>
