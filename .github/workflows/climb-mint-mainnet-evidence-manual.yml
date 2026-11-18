@@ -1,0 +1,56 @@
+name: CLIMB Mint Authority - Manual Read-only Evidence
+# Manual only. Never expose private RPC secrets to untrusted pull_request code.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: climb-mainnet-mint-evidence
+  cancel-in-progress: false
+jobs:
+  verify:
+    name: Verify existing Solana CLIMB mint (read only, never bridge GO)
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check required read-only RPC inputs
+        shell: bash
+        env:
+          CLIMB_SOLANA_RPC_A_URL: ${{ secrets.CLIMB_SOLANA_RPC_A_URL }}
+          CLIMB_SOLANA_RPC_B_URL: ${{ secrets.CLIMB_SOLANA_RPC_B_URL }}
+          CLIMB_SOLANA_MAINNET_GENESIS_HASH: ${{ vars.CLIMB_SOLANA_MAINNET_GENESIS_HASH }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$CLIMB_SOLANA_RPC_A_URL" || -z "$CLIMB_SOLANA_RPC_B_URL" ]]; then
+            echo 'NO_GO: configure two private read-only Solana RPC URL secrets from independently operated providers'
+            exit 1
+          fi
+          if [[ -z "$CLIMB_SOLANA_MAINNET_GENESIS_HASH" ]]; then
+            echo 'NO_GO: configure CLIMB_SOLANA_MAINNET_GENESIS_HASH as a public repo variable, sourced independently from official network docs'
+            exit 1
+          fi
+      - name: Collect sanitized finalized CLIMB mint evidence
+        shell: bash
+        env:
+          CLIMB_SOLANA_RPC_A_URL: ${{ secrets.CLIMB_SOLANA_RPC_A_URL }}
+          CLIMB_SOLANA_RPC_B_URL: ${{ secrets.CLIMB_SOLANA_RPC_B_URL }}
+          CLIMB_SOLANA_MAINNET_GENESIS_HASH: ${{ vars.CLIMB_SOLANA_MAINNET_GENESIS_HASH }}
+        run: |
+          set -euo pipefail
+          node token/climb-bridge/mint-inspect-cli.mjs > "$RUNNER_TEMP/climb-mint-evidence.txt"
+          # The report contains only public mint fields/slots and contains no RPC URLs.
+          cat "$RUNNER_TEMP/climb-mint-evidence.txt"
+      - name: Archive sanitized mint evidence (public repo readers may access)
+        uses: actions/upload-artifact@v4
+        with:
+          name: climb-mint-finalized-readonly-evidence
+          path: ${{ runner.temp }}/climb-mint-evidence.txt
+          if-no-files-found: error
+          retention-days: 7
