@@ -3450,6 +3450,12 @@ window.__CLIMBORIA_GAME_PEERS={
  },
  count(){return livePeers.size},
  audit(){return {peers:livePeers.size,loading:remoteGLBLoading,resident:remoteGLBResidents,
+  // A loaded GLB alone is NOT proof the model is still attached to the
+  // active world scene and visible. This is read-only owner QA, never a
+  // replacement for visual inspection on a physical Android device.
+  sceneVisibleResidents:[...livePeers.values()].filter(p=>
+    !!p.root&&p.root.parent===p.group&&p.root.visible===true&&
+    p.group.parent===scene&&p.group.visible===true).length,
   budget:MAX_REMOTE_GLB,desktop:!MOB,
   // Read-only transport acceptance diagnostics. These are positions already
   // received via authenticated peer packets, not server-trusted physics.
