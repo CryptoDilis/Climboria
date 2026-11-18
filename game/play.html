@@ -200,6 +200,15 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
 /* Client-side preflight: do not boot the 3D world before a named hero exists. */
 (function(){
  var valid=false,hero=null;
+ // Explicit guest URL uses only an in-memory starter character, never a
+ // writable Hero Creation record or an anonymous Supabase account.
+ var guest=new URLSearchParams(location.search).get('guest')==='1';
+ if(guest){
+  window.__climboriaGuestMode=true;
+  window.__climboriaCreatedHero={name:'Guest Explorer',model:'Adventurer',guest:true};
+  document.documentElement.dataset.climboriaGuest='exploring';
+  return;
+ }
  try{
   hero=JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null');
   valid=!!hero&&['Adventurer','Jarrell','Lheiz'].includes(hero.model)&&typeof hero.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(hero.name)&&/[A-Za-z0-9]/.test(hero.name);
