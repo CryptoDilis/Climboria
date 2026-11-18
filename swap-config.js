@@ -15,6 +15,10 @@ window.CLIMBORIA_SWAP_CONFIG = Object.freeze({
     // Existing quote API Worker status avoids a new Cloudflare zone-route binding.
     // This is a read-only OFF source, NOT a customer trading release.
     runtimeStatusUrl: "https://api.climboria.fun/api/swap/provider-status",
+    // Reserved for a separate future DEX approval. This URL by itself does not
+    // enable DEX: its Worker source gate and surfaces.dex both remain OFF.
+    // Never reuse the Swap approval endpoint for DEX wallet trading.
+    dexRuntimeStatusUrl: "https://api.climboria.fun/api/dex/provider-status",
     // Independent, default-OFF release controls: Swap first, DEX second.
     surfaces: Object.freeze({ swap: true, dex: false }),
     provider: "jupiter-terminal",
