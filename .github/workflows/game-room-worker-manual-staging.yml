@@ -58,4 +58,8 @@ jobs:
           # Do not place the key in code, process argv or workflow logs.
           printf '%s' "$GAME_SUPABASE_PUBLISHABLE_KEY" | npx wrangler secret put SUPABASE_PUBLISHABLE_KEY --config game/multiplayer/worker/wrangler.toml
           echo 'Game staging Worker deployment requested. Game multiplayer is registered-user only; PvP damage/loot OFF.'
-          echo 'NEXT: run authenticated two-Chromium-account E2E and inspect real Game mobile FPS before any public enablement.'
+          echo 'NEXT: verify deployed Nearby Chat capability and then run owner two-account Game QA.'
+      - name: Fail closed if deployed Game Worker lacks Nearby Chat and DO readiness
+        run: |
+          node --test game/multiplayer/worker/qa-readiness-check.test.mjs game/multiplayer/worker/staging-preflight.test.mjs
+          node --input-type=module -e "import {verifyReadOnlyGameQaStaging} from './game/multiplayer/worker/qa-readiness-check.mjs'; await verifyReadOnlyGameQaStaging({requireNearbyChat:true}); console.log('PASS: deployed Game Worker Nearby Chat capability and DO readiness');"
