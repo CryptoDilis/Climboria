@@ -838,6 +838,13 @@ try {
   if(!settingsBox||!mapBox||settingsBox.x+settingsBox.width>mapBox.x+2||settingsBox.x+settingsBox.width<mapBox.x-60) errors.push('Settings gear is not positioned beside the minimap: '+JSON.stringify({settingsBox,mapBox}));
   await settingsButton.click();
   if(await page.locator('#expedition-settings-panel').evaluate(el=>getComputedStyle(el).display)==='none') errors.push('Settings gear did not open its panel');
+  if(await page.locator('#time-cycle-control,#weather-cycle-control').count()!==0)
+   errors.push('Players must not override system time or weather in settings');
+  if(await page.locator('#expedition-connected-account,#expedition-return-menu,#climboria-music-volume,#climboria-effects-volume').count()!==4)
+   errors.push('Settings must have only music, SFX, connected account and return menu');
+  await page.locator('#climboria-effects-volume').evaluate(el=>{el.value='20';el.dispatchEvent(new Event('input',{bubbles:true}))});
+  if(await page.locator('#climboria-effects-value').textContent()!=='20%')
+   errors.push('Effects volume slider did not update its actual audio state label');
   await page.locator('#climboria-music-volume').evaluate(el=>{el.value='24';el.dispatchEvent(new Event('input',{bubbles:true}))});
   if(await page.locator('#climboriaInventoryPanel').evaluate(el=>getComputedStyle(el).display)!=='none') errors.push('Soundtrack volume interaction unexpectedly opened inventory');
   await page.locator('#expedition-settings-close').click();
