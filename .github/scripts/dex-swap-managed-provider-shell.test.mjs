@@ -344,8 +344,8 @@ test("changing the selected pair immediately conceals an actively mounted Jupite
   assert.match(ui.status.textContent,/Selected token or trade direction changed/);
 });
 
-test("a same-pair notification leaves the current reviewed Jupiter session untouched", async () => {
-  const ui=createDom({surface:"dex",pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+test("a same-pair Swap notification leaves the current reviewed Jupiter session untouched", async () => {
+  const ui=createDom({surface:"swap",pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
   let closed=0;
   initializeManagedSwapHost({doc:ui.doc,scope:withRuntime({Jupiter:{
     init(){},close(){closed++;},resume(){}
@@ -355,6 +355,24 @@ test("a same-pair notification leaves the current reviewed Jupiter session untou
   assert.equal(closed,0);
   assert.equal(ui.panel.hidden,false);
   assert.equal(ui.btn.hidden,false);
+});
+
+test("DEX Market-to-Limit intent hides a mounted Jupiter form even when both mint hints are null", async () => {
+  const ui=createDom({surface:"dex"});
+  let closes=0,initializations=0;
+  initializeManagedSwapHost({doc:ui.doc,scope:withRuntime({Jupiter:{
+    init(){initializations++;},close(){closes++;}
+  }}),config:approved});
+  await ui.btn.click();
+  assert.equal(ui.panel.hidden,false);
+  assert.equal(ui.panel.pair,null,"DEX may open without valid token mint hints");
+  // A real DEX Limit button calls syncDexJupiterMarketPair(), which clears
+  // pair hints and dispatches this notification to the shared provider host.
+  ui.doc.listeners["climboria:managed-provider-pair-change"]();
+  assert.equal(ui.panel.hidden,true,"Limit intent must conceal the old default provider form");
+  assert.equal(ui.btn.hidden,true,"stale provider cannot reopen for Limit trading");
+  assert.ok(closes>=1,"vendor-owned wallet UI must be closed");
+  assert.equal(initializations,1);
 });
 
 test("mint change during async Jupiter init hides partial vendor UI and fences late mount", async () => {
