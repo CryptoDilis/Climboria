@@ -635,7 +635,10 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   assert.equal(room.room.members.size,1);
   assert.equal(c1.packets.at(-1).type,'player-left');
   assert.equal(room.userSockets.size,1);
-  assert.equal((await issue(c,'Explorer A new session',uid)).status,201);
+  const freshTicket=await issue(c,'Explorer A new session',uid);
+  assert.equal(freshTicket.status,201);
+  assert.deepEqual((await freshTicket.json()).resumePosition,{x:200,y:10,z:20},
+   'same-user reconnect must use current server-accepted live location rather than stale snapshot');
   const c3=(await connect(c)).webSocket;
   assert.equal(room.room.members.size,1,'a second login for the same account evicts previous avatar');
   assert.equal(room.userSockets.size,1);
