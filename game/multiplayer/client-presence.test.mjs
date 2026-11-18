@@ -581,7 +581,7 @@ test('HTTP 401 and 503 ticket failures never open sockets and retry without fals
  for(const status of [401,503]){
   const h=harness(true,{ticketStatuses:[status]});
   await flush();
-  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline','HTTP '+status);
+  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,status===401?'login-required':'offline','HTTP '+status);
   assert.equal(h.clients.length,0,'HTTP '+status+' cannot open a room socket');
   assert.equal(h.runNextTimer(),10000,'HTTP '+status+' is unavailable, not room capacity');
   await flush();
