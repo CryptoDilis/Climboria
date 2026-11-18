@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createGameQaProgress} from './qa-stage-report.mjs';
+import {createGameQaProgress,sameRegisteredQaAccount} from './qa-stage-report.mjs';
 
 test('prints only fixed source-controlled stage labels; never session data',()=>{
  const output=[];
@@ -41,4 +41,17 @@ test('rejects unknown stage labels and duplicate active or completed stages',()=
 });
 test('does not accept arbitrary progress sinks',()=>{
  assert.throws(()=>createGameQaProgress(null),/writer required/);
+});
+
+test('reconnect must preserve exactly the same non-anonymous registered QA identity',()=>{
+ const first='game-registered-id-A',other='game-registered-id-B';
+ assert.equal(sameRegisteredQaAccount(first,first),true);
+ assert.equal(sameRegisteredQaAccount(first,other),false);
+ assert.equal(sameRegisteredQaAccount(first,''),false);
+ assert.equal(sameRegisteredQaAccount('',first),false);
+ assert.equal(sameRegisteredQaAccount(undefined,first),false);
+ assert.equal(sameRegisteredQaAccount(first,null),false);
+ assert.equal(sameRegisteredQaAccount(first,{id:first}),false);
+ // Identity comparison reports only boolean; must never serialize user IDs.
+ assert.equal(typeof sameRegisteredQaAccount(first,other),'boolean');
 });

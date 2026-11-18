@@ -16,7 +16,7 @@ import {chromium} from 'playwright';
 import {createInterface} from 'node:readline/promises';
 import {stdin,stdout} from 'node:process';
 import {verifyGameRoomPreflight} from './staging-preflight.mjs';
-import {createGameQaProgress} from './qa-stage-report.mjs';
+import {createGameQaProgress,sameRegisteredQaAccount} from './qa-stage-report.mjs';
 
 const SITE='https://climboria.fun';
 const GAME=SITE+'/game/play.html';
@@ -141,7 +141,7 @@ async function fps(page){
  const after=await page.evaluate(()=>window.__climboriaRenderState?.frames||0);
  return Math.round((after-before)*1000/(Date.now()-t)*10)/10;
 }
-async function testTwoPlayers(a,b){
+async function testTwoPlayers(a,b,originalBId){
  qaProgress.start('peer-avatars');
  await Promise.all([assertPeer(a,1),assertPeer(b,1)]);
  await Promise.all([assertRealAvatar(a),assertRealAvatar(b)]);
@@ -211,8 +211,13 @@ async function testTwoPlayers(a,b){
  await assertPeer(a,0);
  log('CHECK: Player B left room; checking authenticated rejoin without ghost.');
  await b.goto(GAME,{waitUntil:'domcontentloaded',timeout:WAIT});
- await requireRegisteredSession(b);
+ const rejoinedBId=await requireRegisteredSession(b);
+ requireCondition(sameRegisteredQaAccount(originalBId,rejoinedBId),
+  'Player B returned with a different registered account');
  await Promise.all([assertPeer(a,1),assertPeer(b,1)]);
+ // A roster/name-marker reconnect is not sufficient: real 3D peers must
+ // return to both active Game scenes after the authenticated second join.
+ await Promise.all([assertRealAvatar(a),assertRealAvatar(b)]);
  qaProgress.pass();
 }
 
@@ -257,7 +262,7 @@ try{
  qaProgress.start('distinct-accounts');
  requireCondition(!!aId&&aId!==bId,'Both browsers must use DISTINCT registered users');
  qaProgress.pass();
- await testTwoPlayers(a,b);
+ await testTwoPlayers(a,b,bId);
  log('QA RESULT: PASS — real authenticated movement, GLBs, World Chat and reconnect.');
  log('Public Game config is STILL OFF. Physical mobile FPS and release review remain.');
 }catch{

@@ -49,3 +49,13 @@ export function createGameQaProgress(emit){
   summary(){return Object.freeze({stage:active||null,passed:Object.freeze([...passed])})}
  });
 }
+
+/**
+ * Owner QA-only identity continuity. Passes only when the same authenticated
+ * non-empty user ID returns after the temporary browser disconnect.
+ * Callers must never log either ID or include IDs in errors/artifacts.
+ */
+export function sameRegisteredQaAccount(originalId,rejoinedId){
+ return typeof originalId==='string'&&originalId.length>0&&
+  typeof rejoinedId==='string'&&rejoinedId===originalId;
+}
