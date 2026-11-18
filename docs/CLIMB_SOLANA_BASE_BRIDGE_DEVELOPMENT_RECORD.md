@@ -5,6 +5,28 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 3 — In-flight bridge transfer accounting simulation (2026-11-19)
+
+**Scope:** isolated `token/climb-bridge` offline-only simulator; explicitly **not** an operational bridge, smart contract, relayer or attestation verifier. No Solana/Base mainnet contract deployed, no user funds or wallet activity.
+
+- `token/climb-bridge/transfer-simulator.mjs`: simulation of lock → mint and burn → release; tracks the original supply, locked SPL tokens, wrapped Base units, outstanding messages and message IDs. Zero-funds, no network, no signer, no deployment interface.
+- `token/climb-bridge/transfer-simulator.test.mjs`: deterministic unit cases for duplicate/replayed messages, forged or missing simulated proof, mint without prior deposit, unlock without prior burn, insufficient escrow/wrapped balances, decimals/supply precision, mixed pending transfers, and out-of-order settlements. Mock proof string **not cryptographic evidence** and may never be considered authority for real mint/unlock.
+- Conservation assumption for **one dedicated escrow with zero other movements**: `escrowBalance - wrappedSupply = pendingMintAmount + pendingUnlockAmount`. Production reconciliation must adapt to actual verified provider messages and vaults, delays, donation, fees, multi-chain supply and escrow rules before relying on this equality.
+- Bridge source `README.md` documents simulation limits. No changes to Game, DEX, Swap, Launchpad, ClimbX, site, wallet integrations or production Workers.
+- **Tests/PR status:** pending CI evidence and PR creation at this checkpoint. Do not claim green or a live transfer before actual evidence.
+
+**Exact NEXT:**
+
+1. Run all bridge unit tests on exact PR head and inspect scoped files; fix failures. Merge only if required CI passes; record exact PR, SHA, CI links.
+2. The actual preceding blocker remains **dual independent Solana finalized RPC authority verification**: run `token/climb-bridge/mint-inspect-cli.mjs` from authorized trusted environment with privately configured RPC URLs and save sanitized evidence (slots, authorities, program, supply, UTC), verifying RPC operator independence. No current mint-authority state is claimed without it.
+3. Independently verify a maintained, audited official bridge provider supports an *existing Pump.fun legacy SPL CLIMB mint* and Solana→Base managed lock/mint and burn/unlock. Pin official capability evidence, program IDs, transceiver/manager versions, audits and governance. No unverified bridge contract deployment.
+4. Once verified, build the provider-specific integration on Solana devnet + Base Sepolia and demonstrate actual bidirectional test transfers, replay/finality/peer checks, and amount reconciliation; the current simulator does not constitute those tests.
+5. Owner must sign mainnet deployment/transaction(s), pay ETH/SOL gas, and authorize bounded initial bridge transfer only after independently reviewed security, admin multisig and isolated test evidence. Never provide private keys or create unbacked Base CLIMB.
+
+**Release: NO-GO for live bridging and customer funds. Base CA: NOT DEPLOYED.**
+
+---
+
 ## Stage 2 merged / exact-head CI verified — 2026-11-19
 
 - [PR #664](https://github.com/CryptoDilis/Climboria/pull/664) **MERGED** to `main` by squash commit [`0d542683385d108d2f7e33030c58dc74be7d27d4`](https://github.com/CryptoDilis/Climboria/commit/0d542683385d108d2f7e33030c58dc74be7d27d4). Tested exact PR head `0577f6c922f232c07c36705aca61f2158c6409ae`.
