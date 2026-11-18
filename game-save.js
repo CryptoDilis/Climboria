@@ -174,12 +174,14 @@
         // A last-position snapshot saved on the same registered device can
         // be newer than the 12s cloud interval, including a sudden logout.
         adapter.restoreLocalPosition?.(user.id,data.saved_at);
+        adapter.activatePositionSave?.(user.id);
         lastSnapshot = JSON.stringify(adapter.capture());
         setStatus('loaded', scope.unclaimedLocalItems > 0
           ? 'Cloud save loaded · separate local guest backpack preserved'
           : 'Cloud save · account progress loaded');
       } else {
         adapter.restoreLocalPosition?.(user.id,null);
+        adapter.activatePositionSave?.(user.id);
         setStatus('ready', 'Cloud save ready · progress will sync when you start playing');
       }
 
@@ -188,6 +190,7 @@
     } catch (error) {
       if (requestGeneration === generation) {
         adapter.restoreLocalPosition?.(user.id,null);
+        adapter.activatePositionSave?.(user.id);
         ready = false;
         retryAfter = Date.now() + 30000;
         setStatus('error', 'Cloud save unavailable · local progress remains on this browser');
