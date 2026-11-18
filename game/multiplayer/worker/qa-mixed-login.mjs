@@ -109,7 +109,10 @@ async function assertPeer(page,count){
 async function assertRealAvatar(page){
  await page.waitForFunction(()=>{
   const audit=window.__CLIMBORIA_GAME_PEERS?.audit?.();
-  return audit?.peers===1&&audit?.resident>=1&&audit.resident<=audit.budget;
+  // Only count a real GLB attached to the active 3D scene; a marker or
+  // a loaded-but-hidden asset cannot satisfy owner two-browser acceptance.
+  return audit?.peers===1&&audit.resident===1&&
+    audit.sceneVisibleResidents===1&&audit.resident<=audit.budget;
  },undefined,{timeout:WAIT});
 }
 async function openChat(page){
