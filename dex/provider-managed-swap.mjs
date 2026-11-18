@@ -194,6 +194,14 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   };
   // Negative status permanently hides launchers until this document reloads.
   // It cannot cancel an already granted wallet prompt or signed transaction.
+  const sameMountedPair = () => {
+    const selected = readSelectedProviderPair(panel);
+    return (selected === null && mountedPair === null) ||
+      (selected !== null && mountedPair !== null &&
+       selected.inputMint === mountedPair.inputMint &&
+       selected.outputMint === mountedPair.outputMint);
+  };
+  const stalePairMessage = "Selected token or trade direction changed. The previous Jupiter widget was closed to avoid trading an outdated pair. Refresh the page, select the intended mints, and open a new provider session. Existing wallet prompts or submitted transactions cannot be cancelled.";
   const hideRevoked = () => {
     stopActiveApprovalChecks();
     ++openRequestId;
@@ -209,6 +217,15 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     }
     status.textContent = "Provider access has been paused. Refresh to check again. Existing wallet requests and submitted transactions are not cancelled.";
   };
+  // The first-party quote/market selector notifies this host after updating
+  // its pair attributes. A mounted or initializing Jupiter instance does not
+  // automatically adopt new mints; immediately conceal its old wallet form.
+  doc.addEventListener?.("climboria:managed-provider-pair-change", () => {
+    if (!mounted && !loading && !providerInitInFlight) return;
+    if (mounted && sameMountedPair()) return;
+    hideRevoked();
+    status.textContent = stalePairMessage;
+  });
   expanded(false);
   buttons.forEach(button => {
     button.hidden = false;
@@ -245,17 +262,10 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         // Never reopen the old wallet interface after the user changes a
         // Solana token or direction (or clears the pair for Limit/invalid mint).
         // Check BEFORE revealing either the first-party or vendor-owned UI.
-        if (mounted) {
-          const currentPair = readSelectedProviderPair(panel);
-          const samePair = (currentPair === null && mountedPair === null) ||
-            (currentPair !== null && mountedPair !== null &&
-             currentPair.inputMint === mountedPair.inputMint &&
-             currentPair.outputMint === mountedPair.outputMint);
-          if (!samePair) {
-            hideRevoked();
-            status.textContent = "Selected token or trade direction changed. The previous Jupiter widget was closed to avoid trading an outdated pair. Refresh the page, select the intended mints, and open a new provider session. Existing wallet prompts or submitted transactions cannot be cancelled.";
-            return;
-          }
+        if (mounted && !sameMountedPair()) {
+          hideRevoked();
+          status.textContent = stalePairMessage;
+          return;
         }
         panel.hidden = false;
         expanded(true);
@@ -419,6 +429,13 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
       if (requestId !== openRequestId) return;
       if (!stillApproved) {
         hideRevoked();
+        return;
+      }
+      // The market can change while this tab was hidden or the status
+      // request was pending. Never resume a mounted form for the old mints.
+      if (!sameMountedPair()) {
+        hideRevoked();
+        status.textContent = stalePairMessage;
         return;
       }
       // Do not expose Jupiter-owned UI unless approval is still current.
