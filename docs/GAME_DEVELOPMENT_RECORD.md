@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME PR #642 FINAL RELEASE CHECKPOINT — BROWSER SMOKE GREEN (2026-11-18)
+
+- [PR #642](https://github.com/CryptoDilis/Climboria/pull/642) merged at `cfed7149cc9f4e91ba5629adaab265ee003f9ced`. [Production GitHub Pages #44252864656](https://github.com/CryptoDilis/Climboria/actions/runs/44252864656) **SUCCESS** on merge SHA; [Pages #44253064769](https://github.com/CryptoDilis/Climboria/actions/runs/44253064769) **SUCCESS** on documentation checkpoint SHA `6cb660cfb2e330e3358a17b9e4f6de30cae330d0`. [Browser Smoke #44252865048](https://github.com/CryptoDilis/Climboria/actions/runs/44252865048), [Validate #44252864964](https://github.com/CryptoDilis/Climboria/actions/runs/44252864964), [Game CDN #44252865026](https://github.com/CryptoDilis/Climboria/actions/runs/44252865026) **SUCCESS**. [Game Gateway #44252722371](https://github.com/CryptoDilis/Climboria/actions/runs/44252722371) **SUCCESS** on exact PR head. [Jarrell's Peak smoke #44252865005](https://github.com/CryptoDilis/Climboria/actions/runs/44252865005) was still IN PROGRESS at last read—check before calling it green.
+- **Remaining release blocker:** Actual two registered live browser users have not yet been observed reciprocally visible or exchanging room-confirmed World Chat since the owner's previous **FAIL** report. Do not equate unit Browser Smoke or Pages SUCCESS with authenticated acceptance. Next: check Game smoke conclusion, observe each in-game room status, target exact failing ticket/WS/spawn step; preserve real user identities and no fake chats/peers. Separately test physical Android. No DEX, Swap, Launchpad or ClimbX changes.
+
+---
+
+
 ## GAME REGISTERED ROOM TOKEN REFRESH — MERGED AND PAGES DEPLOYED (2026-11-18)
 
 - **Merged production Game-only PR:** [#642](https://github.com/CryptoDilis/Climboria/pull/642) squash SHA `cfed7149cc9f4e91ba5629adaab265ee003f9ced`. If the Game Worker rejects an expired Supabase bearer on POST /ticket with HTTP 401, the client may refresh the same real registered account once (never different user, guest, invalid session or unbounded retries), then retries one independently Worker-validated room ticket. This can recover a stale local login session without manually signing in again. World Chat and remote avatars remain gated behind a real, accepted server spawn. No Worker, combat, loot, Game economy or other product changes.
