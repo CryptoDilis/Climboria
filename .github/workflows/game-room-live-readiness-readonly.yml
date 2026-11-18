@@ -37,7 +37,8 @@ jobs:
         run: |
           node --test game/multiplayer/worker/qa-readiness-check.test.mjs
           node game/multiplayer/worker/qa-readiness-check.mjs
-      - name: Check deployed Game gateway configuration (may still be on previous Pages release)
+      - name: Check deployed Game gateway configuration after release
+        if: github.event_name == 'workflow_dispatch'
         run: |
           node --test game/multiplayer/worker/qa-public-config-check.test.mjs
           node game/multiplayer/worker/qa-public-config-check.mjs
