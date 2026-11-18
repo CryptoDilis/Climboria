@@ -176,19 +176,27 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
       }
       // In either public surface, a newly selected mint must synchronously
       // conceal an active third-party-owned wallet form. No live SDK or funds.
-      const pairChange = await page.evaluate(() => {
+      const pairChange = await page.evaluate(pagePath => {
+        // Exercise each real first-party selector's pair synchronizer, not
+        // synthetic direct DOM mutation or a manually forged change event.
+        const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+        const SOL = "So11111111111111111111111111111111111111112";
+        if (pagePath === "/swap/") {
+          quoteTokens.from={...quoteTokens.from,id:USDC,symbol:"USDC",decimals:6};
+          quoteTokens.to={...quoteTokens.to,id:SOL,symbol:"SOL",decimals:9};
+          syncSwapJupiterPair();
+        } else {
+          dexTradeSide="sell";
+          dexTradeToken={id:USDC,symbol:"USDC",decimals:6};
+          syncDexJupiterMarketPair();
+        }
         const host = document.querySelector("[data-climboria-managed-swap-panel]");
-        const from = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-        const to = "So11111111111111111111111111111111111111112";
-        host.setAttribute("data-climboria-managed-swap-input-mint",from);
-        host.setAttribute("data-climboria-managed-swap-output-mint",to);
-        document.dispatchEvent(new Event("climboria:managed-provider-pair-change"));
         return {
           panelHidden:host.hidden,
           vendorHidden:window.__mockProviderRoot?.style.display==="none",
           launchersHidden:[...document.querySelectorAll("[data-climboria-managed-swap-open]")].every(node=>node.hidden)
         };
-      });
+      },path);
       assert.equal(pairChange.panelHidden,true,"mint change must immediately conceal the old wallet panel");
       assert.equal(pairChange.vendorHidden,true,"mint change must hide Jupiter-owned root, not only Climboria wrapper");
       assert.equal(pairChange.launchersHidden,true,"old provider pair must not be reopened without refresh");
