@@ -10,7 +10,17 @@
  try{const res=await fetch('./multiplayer/client-config.json',{cache:'no-store'});
   if(!res.ok)return;config=await res.json();
  }catch{return}
- if(config?.schema!==1||config?.enabled!==true)return;
+ if(config?.schema!==1)return;
+ // Explicit browser-only multiplayer pilot. This does not change the public
+ // release flag: normal Game visitors stay solo. Only real registered Supabase
+ // sessions can obtain a server-verified room ticket.
+ // The query opt-in is NOT an access-control secret; the Game Worker must
+ // continue enforcing authentication, origin, capacity and PvP restrictions.
+ const qaOptIn=/(?:^|[?&])multiplayerQa=1(?:&|$)/.test(window.location?.search||'');
+ if(config.enabled!==true){
+  if(config.enabled!==false||config.endpoint!==null||!qaOptIn)return;
+  config={...config,endpoint:'https://rooms.climboria.fun/'};
+ }
  let base;
  try{
   base=new URL(config.endpoint);
