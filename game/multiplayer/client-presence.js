@@ -497,11 +497,6 @@
  async function connect(){
   if(disposed||connecting||socket)return;
   if(!isReady()){scheduleConnect(1200);return}
-  if(!isAtRoomSpawn()){
-   showStatus('awaiting-sanctuary','MULTIPLAYER · RETURN TO SANCTUARY · PRESS 1');
-   scheduleConnect(1200);
-   return;
-  }
   connecting=true;
   const epoch=++connectEpoch;
   doc.dataset.climboriaMultiplayer='connecting';
@@ -537,6 +532,14 @@
     clientUser=null;showStatus('login-required','MULTIPLAYER · SIGN IN REQUIRED');return;
    }
    clientUser=session.user.id;
+   // A real signed-in explorer who is already away from the protected spawn
+   // must return to Sanctuary before this server can safely admit a new room
+   // session. Avoid consuming short-lived tickets for known-invalid spawns.
+   if(!isAtRoomSpawn()){
+    showStatus('awaiting-sanctuary','MULTIPLAYER · RETURN TO SANCTUARY · PRESS 1');
+    scheduleConnect(1200);
+    return;
+   }
    const hero=window.__climboriaCreatedHero||{};
    const ticketAbort=new AbortController();
    let ticketDeadline;
