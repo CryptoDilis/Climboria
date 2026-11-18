@@ -154,13 +154,18 @@ test('ticket issuance needs verified authenticated Supabase user, never trusts c
   return new Response(JSON.stringify({id:uid,email:'redacted@example.test'}),{status:200});
  };
  try{
-  const stub={fetch:async(url,options)=>{recorded=JSON.parse(options.body);return new Response('{}',{status:201})}};
+  const stub={fetch:async(url,options)=>{
+   recorded=JSON.parse(options.body);
+   return new Response(JSON.stringify({ok:true,resumePosition:{x:70,y:9.55,z:-30}}),{status:201});
+  }};
   const response=await gateway.fetch(mkRequest('/ticket',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
    body:JSON.stringify({name:'Jarrell',model:'Jarrell',userId:'forged-account',damage:999})}),env(stub));
   const data=await response.json();
   assert.equal(response.status,200);assert.equal(data.ticket.length,64);
   assert.equal(recorded.userId,uid);assert.equal(recorded.name,'Jarrell');
   assert.equal(recorded.model,'Jarrell');assert.equal(recorded.ticket,data.ticket);
+  assert.deepEqual(data.resumePosition,{x:70,y:9.55,z:-30},
+   'server-issued ticket may carry ONLY the trusted room resume coordinate');
   assert.equal(JSON.stringify(data).includes(token),false);
  }finally{globalThis.fetch=oldFetch}
 });
@@ -647,5 +652,22 @@ test('realtime ticket is one-time; no spoofed attack damage; two actual connecti
   assert.equal(room.room.members.size,0,'25th immediate message closes the abusive session');
   assert.equal(room.userSockets.size,0,'rate-limit cleanup evicts the verified session');
   assert.equal(room.combat.opponents.size,0,'rate-limit cleanup revokes any duel consent');
+  // A later verified login can resume the DO-owned last accepted location,
+  // never arbitrary off-Sanctuary coordinates from the browser.
+  const backTicket='d'.repeat(64),reply=await issue(backTicket,'Explorer A resumed',uid);
+  assert.equal(reply.status,201);
+  const issued=await reply.json();
+  assert.deepEqual(issued.resumePosition,{x:200,y:10,z:20});
+  const back=(await connect(backTicket)).webSocket;
+  assert.ok(back);
+  const before=room.room.snapshot().length;
+  back.dispatch('message',JSON.stringify({type:'spawn',position:{x:990,y:10,z:20}}));
+  assert.equal(back.packets.at(-1).reason,'invalid-initial-spawn');
+  assert.equal(room.room.snapshot().length,before,'forged resume must not become a visible peer');
+  back.dispatch('message',JSON.stringify({type:'spawn',position:{x:200,y:10,z:20}}));
+  assert.equal(back.packets.at(-1).type,'spawn-accepted');
+  assert.deepEqual(back.packets.at(-1).position,{x:200,y:10,z:20});
+  back.close();
+  assert.ok(memory.get('resume:'+uid)?.position,'logout preserves verified last coordinates');
  }finally{globalThis.Response=oldResponse;globalThis.WebSocketPair=oldPair}
 });
