@@ -171,11 +171,15 @@
         }
         hasRemoteRow = true;
         remoteSavedAt = data.saved_at;
+        // A last-position snapshot saved on the same registered device can
+        // be newer than the 12s cloud interval, including a sudden logout.
+        adapter.restoreLocalPosition?.(user.id,data.saved_at);
         lastSnapshot = JSON.stringify(adapter.capture());
         setStatus('loaded', scope.unclaimedLocalItems > 0
           ? 'Cloud save loaded · separate local guest backpack preserved'
           : 'Cloud save · account progress loaded');
       } else {
+        adapter.restoreLocalPosition?.(user.id,null);
         setStatus('ready', 'Cloud save ready · progress will sync when you start playing');
       }
 
@@ -183,6 +187,7 @@
       if (!hasRemoteRow) await saveNow(true);
     } catch (error) {
       if (requestGeneration === generation) {
+        adapter.restoreLocalPosition?.(user.id,null);
         ready = false;
         retryAfter = Date.now() + 30000;
         setStatus('error', 'Cloud save unavailable · local progress remains on this browser');
@@ -214,7 +219,10 @@
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) void saveNow();
   });
-  window.addEventListener('pagehide', () => { void saveNow(); });
+  window.addEventListener('pagehide', () => {
+    adapter.saveLocalPosition?.();
+    void saveNow();
+  });
 
   window.__CLIMBORIA_GAME_SAVE = {
     saveNow,
