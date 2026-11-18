@@ -51,7 +51,26 @@ body.mobile-device.climboria-portrait #climboria-punch-button{display:none!impor
 #expedition-settings-panel strong{display:block;color:#ffe3a3;letter-spacing:.12em;margin-bottom:12px}
 #expedition-settings-panel button{display:block;width:100%;padding:10px;margin:8px 0;border:1px solid #9b7b4c;background:#18232c;color:#f4ecd8;border-radius:7px;font-weight:800;cursor:pointer}
 #expedition-settings-panel label{display:flex;justify-content:space-between;gap:8px;margin-top:14px;color:#ffe3a3;font-weight:700}
-#climboria-music-volume,#climboria-effects-volume{width:100%;accent-color:#d8b46b;margin:10px 0}#world-map-panel strong{font-size:10px}#world-map{width:100%;height:auto;aspect-ratio:3/2}
+#climboria-music-volume,#climboria-effects-volume{width:100%;accent-color:#d8b46b;margin:10px 0}
+/* Game-only compact multiplayer HUD: real server count, never an invented number. */
+#climboria-room-status[data-state="connected"]{
+ color:#e4fbe9!important;border-color:#297c55!important;
+ background:#081d15ef!important;box-shadow:0 0 0 1px #1c5b37,0 0 18px #21cc7440!important;
+ white-space:nowrap;letter-spacing:.04em;
+}
+#climboria-room-status[data-state="connected"]::first-letter{
+ color:#3bff93;text-shadow:0 0 3px #91ffc0,0 0 9px #2aff88,0 0 15px #00cc68;
+}
+@media(max-width:900px){
+ #climboria-room-status{top:8px!important;right:210px!important;bottom:auto!important;
+  max-width:min(145px,32vw)!important;font-size:9px!important;padding:5px 7px!important;
+  overflow-wrap:anywhere}
+ #climboria-room-status[data-state="connected"]{white-space:nowrap;overflow:visible}
+}
+@media(max-width:700px){
+ #climboria-room-status{right:205px!important;max-width:130px!important}
+}
+#world-map-panel strong{font-size:10px}#world-map{width:100%;height:auto;aspect-ratio:3/2}
 #world-map-panel strong{font:12px system-ui;letter-spacing:.12em;color:#ffe3a3}
 #world-map{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:3/2;background:#17251c;border:1px solid #ffffff25;border-radius:8px;margin-top:9px}
 #world-map-legend{font:10px/1.6 system-ui;color:#c6c0b3;margin-top:7px}
