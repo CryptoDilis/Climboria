@@ -5,6 +5,22 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 5 — Fresh dual-RPC mint evidence and provider selection (2026-11-19)
+
+- **Scope:** bridge-only read-only evidence tooling; nothing deployed, no wallet, no transaction signing or user funds. No changes to Game, DEX, Swap, Launchpad, ClimbX or production infrastructure.
+- Added `token/climb-bridge/mint-freshness.mjs` with per-provider `getSlot(finalized)`, `getGenesisHash`, and `getAccountInfo(finalized, minContextSlot)` for the exact original CLIMB mint; enforces same-provider mint sample within 128 finalized slots, peer head separation <=256 slots, matching genesis, mint program, authorities and exact raw supply. These thresholds are conservative local policy assumptions, not guarantees. The output retains `bridgeRelease: NO_GO` and reports an observation timestamp/slot, not endpoint URLs.
+- Updated `token/climb-bridge/mint-inspect-cli.mjs` to use the fresh reader with fail-closed sanitization of unknown RPC errors (no URL/token leakage). Existing mock-only CLI was weaker because two equally stale RPCs could still agree.
+- Added `token/climb-bridge/mint-freshness.test.mjs` offline fixtures for stale/future slot, divergent provider heads/genesis/supply/authority, malformed responses, no-wallet RPC method list, minContextSlot, URL/credential exposure and fail-closed errors.
+- Added `token/climb-bridge/PROVIDER_SELECTION.md` with security and compatibility evidence gates for a standard wrapped-token bridge (Wormhole Token Bridge as candidate) vs provider-managed NTT. Do **not** assume either currently supports canonical CLIMB; no official provider selection or Base CA.
+- Updated bridge README and retained `config.json` as `NOT_CONFIGURED_DO_NOT_DEPLOY` with no escrow or Base address.
+- **State:** no live dual-RPC read was executed in this tool session; there is no real verified evidence of current CLIMB mint/freeze authority, Base CA or bridge compatibility. GitHub unit tests are synthetic and must never be represented as current onchain attestation.
+
+**EXACT NEXT:** (1) Complete focused PR, check changed file paths, run branch-head bridge/validation CI, fix failures, merge on green and record PR/CI/SHA. (2) Execute `node token/climb-bridge/mint-inspect-cli.mjs` from a trusted environment configured with two independently operated Solana RPC URLs (never include secrets in source, chat or logs), capture redacted UTC report and compare to official explorer/current genesis. (3) Independently verify current official provider support + audits/contract IDs for existing Pump.fun legacy SPL CLIMB lock/bridge/mint Base representation; select provider only after evidence. (4) Then do protocol-based devnet/Base Sepolia actual bidirectional test-token transfers, manual code review, signer setup, and small signed mainnet transfers with verified 1:1 backing. Never create unbacked 1B Base CLIMB.
+
+**Release remains NO-GO. No official Base CA.**
+
+---
+
 ## Stage 4 MERGED — finalized chain snapshot accounting (2026-11-19)
 
 - Focused [PR #667](https://github.com/CryptoDilis/Climboria/pull/667) **merged** via squash to `main` at [`f26ca83598a63ddecc4c5022d373e04b515f88f6`](https://github.com/CryptoDilis/Climboria/commit/f26ca83598a63ddecc4c5022d373e04b515f88f6); tested exact head `c1b7cd73c6cb6afb4ca5c6c17d1caae53a1cb9ef`.
