@@ -1629,7 +1629,9 @@ function syncDexJupiterMarketPair(){
  }
  // During live market changes, hide any mounted provider for the old pair.
  // Notify once after the final pair state, including an intentionally cleared pair.
- document.dispatchEvent(new Event('climboria:managed-provider-pair-change'));
+ if(typeof Event==='function'&&typeof document.dispatchEvent==='function'){
+   document.dispatchEvent(new Event('climboria:managed-provider-pair-change'));
+ }
 }
 const DEX_SOL_TOKEN={id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9,isVerified:true};
 async function dexTradeSyncToken(pair){
