@@ -20,5 +20,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate no-deploy configuration and BigInt supply rules
-        run: node --test token/climb-bridge/supply-audit.test.mjs
+      - name: Validate no-deploy rules, dual-RPC mint fixtures and BigInt accounting
+        run: node --test token/climb-bridge/*.test.mjs

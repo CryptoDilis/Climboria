@@ -5,6 +5,27 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 2 — Dual finalized Solana mint authority verification toolkit (2026-11-19)
+
+**Scope:** bridge-only read-only support. This stage does not deploy a Base CA, create bridge tokens, configure manager peers, move user funds or alter live Climboria trading/game products.
+
+- Added `token/climb-bridge/mint-inspect.mjs`: fixed canonical CLIMB mint, 6-decimal legacy SPL Token Program parser, strict raw supply/authority validation, bounded finalized-slot skew, independent-RPC field comparison and a network-injected fetch routine. Returns **`bridgeRelease: NO_GO`** even on agreement.
+- Added `token/climb-bridge/mint-inspect-cli.mjs`: two HTTPS URLs supplied privately as `CLIMB_SOLANA_RPC_A_URL` / `CLIMB_SOLANA_RPC_B_URL`, no keys or signing, redacted network errors, no request attempted if endpoints missing. Hostname mismatch is a basic check, **not** proof of independent RPC operation.
+- Added `token/climb-bridge/mint-inspect.test.mjs`: deterministic fake finalized RPC fixtures for mint authority present/revoked, freeze authority present/revoked, mismatched supply/program/decimals/authority, stale slots, TLS and provider separation, explicit request semantics, errors and no-network dual reads.
+- Extended isolated `climb-bridge-safety-tests.yml` to run **all** bridge tests with Node 22 and read-only GitHub token permissions.
+- **Status:** no real RPC authority observation or provider security proof was performed here. Do not assert that CLIMB mint/freeze authority is revoked. Mint snapshot `data/climb-supply.json` is only evidence of historic supply, not authorities or existing live Base CA.
+
+**Exact NEXT (do in order):**
+
+1. Finish this bridge-only PR; record PR number, head SHA and actual GitHub test status (no invented green). Merge only once green; update the same record with the verified merge SHA.
+2. Check two distinct *independently operated* finalized mainnet Solana RPCs using the new CLI **without exposing credentials**; retain sanitized slot, program, raw supply, decimals, mint/freeze authority evidence with UTC observation time. Check agreement with explorer/provenance; resolve conflicts before proceeding. No claim of live verification until actually observed.
+3. Verify Wormhole NTT or other audited official bridge's **current** ability to lock original pump.fun SPL mint into managed Solana escrow and mint corresponding Base representation. Pin official docs/code commit, manager/transceiver contracts, supported chain/program versions, security audit scope and governance. Do not deploy a generic standalone ERC-20 token in lieu of bridge.
+4. Implement *reviewed provider's actual bridge deployment configuration* and a testnet roundtrip on Solana devnet and Base Sepolia. Verify replay/peer security, escrow amount versus wrapped supply, mint/burn/lock/unlock and emergency pause. Mainnet remains `NO_GO` until signed approvals and small real transfer validation.
+
+**Release remains NO-GO for any customer funds.**
+
+---
+
 ## MERGED SAFETY PREPARATION — 2026-11-19 (verified)
 
 - [PR #661](https://github.com/CryptoDilis/Climboria/pull/661) **MERGED** by squash to `main` at [`86573df365757eea64d6d3a54d9bd75b1828ffa8`](https://github.com/CryptoDilis/Climboria/commit/86573df365757eea64d6d3a54d9bd75b1828ffa8), exact tested PR head `ab56023e7b022eca3323ece4917adae09718cc20`.
@@ -44,9 +65,7 @@
 - BLOCKED: admin multisig custody / authorized user wallet signatures and costs not yet arranged.
 - **Release: NO-GO.** This is read-only safety tooling/plan, not Base token creation, not a deployed bridge, not end-to-end bridge test or proof of reserve/circulating supply.
 
-## PR / CI evidence
+## Historical PR #661 / CI evidence
 
-- Draft PR [#661](https://github.com/CryptoDilis/Climboria/pull/661); implementation head `c4c0b6fc78b27cc852b0fc706d0877366b69baf1` (before this documentation evidence update), 7 scoped changed files, no Game/DEX/Swap/Launchpad/ClimbX production code changed.
-- Local Node 22 deterministic tests **9/9 PASS**, live preflight **NO_GO as designed** for unconfigured bridge; this does not assert live RPC or bridge safety.
-- Confirmed GitHub Actions **SUCCESS** on that exact implementation head: [CLIMB Bridge Read-Only Safety Tests #44370017560](https://github.com/CryptoDilis/Climboria/actions/runs/44370017560), [Validate Climboria #44370017408](https://github.com/CryptoDilis/Climboria/actions/runs/44370017408).
-- This documentation change adds a later SHA. Run a fresh exact-head CI check before calling that new SHA green. PR remains draft, unmerged and **NOT READY for funds**.
+- Earlier original preparatory PR [#661](https://github.com/CryptoDilis/Climboria/pull/661) merged at `86573df365757eea64d6d3a54d9bd75b1828ffa8`; tests for exact head `ab56023e7b022eca3323ece4917adae09718cc20` passed at [Bridge Safety #44370239445](https://github.com/CryptoDilis/Climboria/actions/runs/44370239445) and [Validate Climboria #44370239529](https://github.com/CryptoDilis/Climboria/actions/runs/44370239529).
+- Stage 2 PR/CI evidence to be appended once verified; previous 'draft pending' references were historical and no longer describe current main.
