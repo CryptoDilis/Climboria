@@ -296,7 +296,33 @@ test("DEX provider init receives a verified Buy or Sell pair but never a Climbor
   ui.panel.pair = { inputMint: USDC_MINT, outputMint: SOL_MINT };
   await ui.btn.click();
   assert.equal(calls.length,1, "mounted provider may not silently restart wallet UI");
-  assert.match(ui.status.textContent,/widget may retain its previous pair.*verify/i);
+  assert.equal(ui.panel.hidden,true,"old Jupiter pair must never be re-exposed");
+  assert.equal(ui.btn.hidden,true,"a new page is required before selecting a different pair");
+  assert.match(ui.status.textContent,/Selected token or trade direction changed.*Refresh the page/i);
+});
+
+test("clearing a mounted DEX pair fails closed on reopen instead of reviving stale wallet UI", async () => {
+  const ui = createDom({surface:"dex",pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+  const events = {init:0,close:0,resume:0};
+  initializeManagedSwapHost({
+    doc:ui.doc,
+    scope:withRuntime({Jupiter:{
+      init(){events.init++;},
+      close(){events.close++;},
+      resume(){events.resume++;}
+    }}),
+    config:approved
+  });
+  await ui.btn.click();
+  ui.close.click();
+  ui.panel.pair = null; // changed to Limit/invalid token; pair hints withdrawn.
+  await ui.btn.click();
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(ui.btn.hidden,true);
+  assert.equal(events.init,1,"stale widget must not be reinitialized");
+  assert.equal(events.resume,0,"cleared mints must never revive a wallet interface");
+  assert.ok(events.close>=2,"vendor root must be concealed on mismatch");
+  assert.match(ui.status.textContent,/Selected token or trade direction changed/);
 });
 
 test("Swap Base-selected network cannot fetch or initialize the Solana Jupiter Plugin", async () => {
