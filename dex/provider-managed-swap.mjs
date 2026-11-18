@@ -178,11 +178,27 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   };
   const recheckActivePanel = async () => {
     if (activeCheckInFlight || panel.hidden) return;
+    // The first-party picker should send a pair-change notification, but an
+    // interrupted or missed event must not leave the previous vendor wallet
+    // form visible until the next user click or tab return.
+    if (mounted && !sameMountedPair()) {
+      hideRevoked();
+      status.textContent = stalePairMessage;
+      return;
+    }
     activeCheckInFlight = true;
     const requestId = openRequestId;
     try {
       const stillApproved = await isManagedSwapRuntimeApproved(scope, runtimeStatusUrl);
-      if (requestId === openRequestId && !panel.hidden && !stillApproved) hideRevoked();
+      if (requestId !== openRequestId || panel.hidden) return;
+      // The selected mints may have changed while the uncached approval fetch
+      // was pending. Revalidate immediately before retaining the mounted UI.
+      if (mounted && !sameMountedPair()) {
+        hideRevoked();
+        status.textContent = stalePairMessage;
+      } else if (!stillApproved) {
+        hideRevoked();
+      }
     } finally {
       activeCheckInFlight = false;
     }
