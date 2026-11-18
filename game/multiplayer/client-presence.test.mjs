@@ -278,34 +278,16 @@ test('live Game maps the touch return event to its existing authorized local Dig
   'production Game must load fresh Nearby Chat and remote size renderer');
 });
 
-test('mobile blocked-room touch button emits only a real player Sanctuary return action',async()=>{
+test('saved location does not show a Sanctuary prompt or fabricate peer admission',async()=>{
  const h=harness(true);
  h.window.__climboriaJarrellsPeak.player.x=70;
  await flush();
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'awaiting-sanctuary');
- const button=h.created.find(node=>node.id==='climboria-room-return-sanctuary');
- assert.ok(button,'Android users need an accessible touch return control instead of Digit1');
- assert.equal(button.textContent,'RETURN TO SANCTUARY');
- assert.equal(h.clients.length,0,'out-of-zone hero is not admitted or fabricated');
- button.click();
- assert.equal(h.events.at(-1),'climboria:room-return-to-sanctuary');
- // The real Game listener executes its existing TP[1] teleport on this event.
- // Reflect that action in this isolated client harness, not as a forged
- // server spawn or client-side network admission.
- h.window.__climboriaJarrellsPeak.player.x=0;
- assert.equal(h.runNextTimer(),1200);
- await flush();await waitFor(()=>h.clients.length===1);
- const ws=h.clients[0];ws.onopen();
- assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false,
-  'mobile return is a local control, not proof of server room admission');
- const own='s_'+'c'.repeat(32);
- ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
- ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,
-  position:{x:0,y:9.55,z:-30},peers:[]})});
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
- assert.ok(h.created.some(node=>node.id==='climboria-world-chat-toggle'));
- button.click();
- assert.equal(h.events.length,1,'return button must stop acting after joining');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'saved-location');
+ assert.equal(h.created.some(n=>n.id==='climboria-room-return-sanctuary'),false);
+ assert.equal(h.clients.length,0,'untrusted ticket without resume cannot spawn a remote hero');
+ assert.equal(h.calls.filter(x=>x.url.includes('/ticket')).length,1,
+  'a single signed-in ticket lookup can check for a server resume anchor');
+ assert.equal(h.created.some(n=>n.id==='climboria-world-chat-panel'),false);
 });
 
 test('a real Game teleport invalidates stale room position and requires fresh Sanctuary admission',async()=>{
@@ -435,51 +417,21 @@ test('real authenticated WebSocket messages are required before peers appear',as
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline');
 });
 
-test('staged duel panel is interactive only after authenticated real peers, never enables damage',async()=>{
- const h=harness(true);await flush();
- await waitFor(()=>h.clients.length===1);
- assert.equal(h.clients.length,1);
- const socket=h.clients[0];socket.onopen();
- socket.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'c'.repeat(32),peers:[peer]})});
- socket.onmessage({data:JSON.stringify({type:'spawn-accepted',id:'s_'+'c'.repeat(32),position:{x:0,y:9.55,z:-30},peers:[peer]})});
- const toggle=h.created.find(node=>node.id==='climboria-duel-toggle');
- const panel=h.created.find(node=>node.id==='climboria-duel-panel');
- assert.ok(toggle&&panel,'DUELS toggle requires server-verified initial spawn');
- const buttons=()=>{const result=[];const visit=node=>{
-  if(node.tag==='button')result.push(node);
-  for(const child of node.children||[])visit(child);
- };visit(panel);return result};
- toggle.click();
- assert.equal(panel.style.display,'block');
- buttons().find(node=>node.textContent==='CHALLENGE').click();
- assert.equal(socket.sent.at(-1).type,'duel-request');
- assert.equal(socket.sent.at(-1).targetId,peer.id);
- // A peer may disconnect after the button click but before server processing:
- // do not leave the UI stuck in a "Waiting..." state after a rejection.
- socket.onmessage({data:JSON.stringify({type:'rejected',reason:'invalid-or-unspawned-peer'})});
- assert.ok(buttons().some(node=>node.textContent==='CHALLENGE'),
-  'server denial must clear optimistic duel request and allow future choices');
- buttons().find(node=>node.textContent==='CHALLENGE').click();
- assert.equal(socket.sent.at(-1).targetId,peer.id);
- socket.onmessage({data:JSON.stringify({type:'duel-request-sent',targetId:peer.id,combatDamageEnabled:false})});
- socket.onmessage({data:JSON.stringify({type:'duel-response-received',fromId:peer.id,accepted:true,combatDamageEnabled:false})});
- buttons().find(node=>node.textContent==='CANCEL DUEL').click();
- assert.equal(socket.sent.at(-1).type,'duel-cancel');
- socket.onmessage({data:JSON.stringify({type:'duel-cancelled',fromId:peer.id,combatDamageEnabled:false})});
- // A forged message claiming live damage must not produce an Accept control.
- socket.onmessage({data:JSON.stringify({type:'duel-invitation',fromId:peer.id,combatDamageEnabled:true})});
- assert.equal(buttons().some(node=>node.textContent==='ACCEPT'),false);
- socket.onmessage({data:JSON.stringify({type:'duel-invitation',fromId:peer.id,combatDamageEnabled:false})});
- buttons().find(node=>node.textContent==='ACCEPT').click();
- assert.equal(socket.sent.at(-1).type,'duel-response');
- assert.equal(socket.sent.at(-1).challengerId,peer.id);
- assert.equal(socket.sent.at(-1).accepted,true);
- socket.onmessage({data:JSON.stringify({type:'duel-response-sent',challengerId:peer.id,accepted:true,combatDamageEnabled:false})});
- assert.ok(panel.children.some(node=>node.textContent.includes('CONSENT ONLY')));
- socket.close();
- assert.equal(toggle.style.display,'none','room disconnect hides invitation UI');
+test('no Duel invitation UI: authenticated explorers can attack any time as cosmetic animation',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];ws.onopen();
+ const own='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[peer]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,position:{x:0,y:9.55,z:-30},peers:[peer]})});
+ assert.equal(h.created.some(node=>node.id==='climboria-duel-toggle'),false);
+ assert.equal(h.created.some(node=>node.id==='climboria-duel-panel'),false);
+ const before=ws.sent.length;
+ h.document.dispatchEvent({type:'climboria:visual-punch'});
+ assert.equal(ws.sent.length,before+1);
+ assert.equal(ws.sent.at(-1).type,'punch','attack animation needs no duel invitation');
+ assert.equal(ws.sent.some(m=>m.type==='duel-request'||m.type==='attack'),false,
+  'client never claims unsafely authorized hit or damage');
 });
-
 
 test('World Chat is room-gated, server-confirmed, safe as text and cleared on disconnect',async()=>{
  const offline=harness(false);await flush();
@@ -1120,7 +1072,8 @@ test('unconfirmed spawn cannot advertise connection, chat, or duel UI',async()=>
  fresh.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
  assert.ok(h.created.some(el=>el.id==='climboria-world-chat-toggle'));
- assert.ok(h.created.some(el=>el.id==='climboria-duel-toggle'));
+ assert.equal(h.created.some(el=>el.id==='climboria-duel-toggle'),false,
+  'requests are no longer part of the Game HUD');
 });
 
 test('welcome and provisional peer events cannot render ghost avatars before spawn admission',async()=>{
