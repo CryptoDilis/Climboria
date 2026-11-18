@@ -18,6 +18,7 @@ const ORIGIN = "http://127.0.0.1:4173";
 // This does NOT validate real transitive vendor JS/CSS or authorize production.
 const SCRIPT_URL = "https://plugin.jup.ag/plugin-1.0.18.js";
 const API_STATUS_URL = "https://api.climboria.fun/api/swap/provider-status";
+const DEX_API_STATUS_URL = "https://api.climboria.fun/api/dex/provider-status";
 const MOCK_SCRIPT = [
   "window.Jupiter = {",
   " init: function(options) {",
@@ -29,7 +30,16 @@ const MOCK_SCRIPT = [
   "  label.dataset.climboriaTestWidget = 'rendered';",
   "  label.textContent = 'Mock provider widget - no transaction';",
   "  container.appendChild(label);",
+  "  window.__mockProviderRoot = label;",
   "  return Promise.resolve();",
+  " },",
+  " close: function() {",
+  "  window.__mockProviderCloseCalls = (window.__mockProviderCloseCalls || 0) + 1;",
+  "  if (window.__mockProviderRoot) window.__mockProviderRoot.style.display = 'none';",
+  " },",
+  " resume: function() {",
+  "  window.__mockProviderResumeCalls = (window.__mockProviderResumeCalls || 0) + 1;",
+  "  if (window.__mockProviderRoot) window.__mockProviderRoot.style.display = 'block';",
   " }",
   "};"
 ].join("\n");
@@ -40,15 +50,20 @@ function mockConfig(integrity = sri, runtimeStatusUrl = null) {
     "proxyEnabled:true,enabled:false,apiBase:'https://api.climboria.fun'," +
     "managedProvider:Object.freeze({enabled:true,runtimeApproved:true," +
     "surfaces:Object.freeze({swap:true,dex:true}),provider:'jupiter-terminal'," +
+    "dexRuntimeStatusUrl:'" + DEX_API_STATUS_URL + "'," +
     "scriptUrl:'" + SCRIPT_URL + "',integrity:'" + integrity + "'" +
     (runtimeStatusUrl ? ",runtimeStatusUrl:'" + runtimeStatusUrl + "'" : "") + "})," +
     "revenue:Object.freeze({integratorFeeTargetBps:50,feeCollectionEnabled:false," +
     "feeRecipient:null,providerFeeIntegrationVerified:false})});";
 }
 
-function approveRuntime(page) {
-  return page.route("**/swap-runtime-status.json", route => route.fulfill({
+async function approveRuntime(page) {
+  await page.route("**/swap-runtime-status.json", route => route.fulfill({
     json: { enabled: true }, headers: { "Cache-Control": "no-store" }
+  }));
+  // Synthetic DEX approval only; the real DEX Worker source gate remains OFF.
+  await page.route(DEX_API_STATUS_URL, route => route.fulfill({
+    json:{enabled:true}, headers:{"Cache-Control":"no-store","Access-Control-Allow-Origin":"*"}
   }));
 }
 
@@ -56,12 +71,20 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
   const page = await browser.newPage({viewport:{width: path === "/dex/" ? 390 : 1280,height:850}});
   let scriptLoads = 0;
   const forbidden = [];
+  const approvalRequests = [];
+  page.on("request", req => {
+    if (req.url() === API_STATUS_URL || req.url() === DEX_API_STATUS_URL ||
+        req.url().endsWith("/swap-runtime-status.json")) approvalRequests.push(req.url());
+  });
   page.on("request", req => {
     if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(req.url())) forbidden.push(req.url());
   });
   page.on("dialog", dialog => { throw Error("Unexpected popup: " + dialog.message()); });
   if (apiStatus) {
     await page.route(API_STATUS_URL, route => route.fulfill({
+      json:{enabled:true}, headers:{"Cache-Control":"no-store","Access-Control-Allow-Origin":"*"}
+    }));
+    await page.route(DEX_API_STATUS_URL, route => route.fulfill({
       json:{enabled:true}, headers:{"Cache-Control":"no-store","Access-Control-Allow-Origin":"*"}
     }));
   } else await approveRuntime(page);
@@ -96,6 +119,11 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
     assert.equal(scriptLoads,0,"widget script must not load before user gesture");
     assert.equal(await page.locator("[data-climboria-managed-swap-panel]").isVisible(),false);
     assert.deepEqual(forbidden,[],"old custom execution endpoints must never be requested");
+    const expectedStatus = path === "/dex/" ? DEX_API_STATUS_URL :
+      (apiStatus ? API_STATUS_URL : ORIGIN + "/swap-runtime-status.json");
+    assert.ok(approvalRequests.length >= 1,"surface must check its independent status");
+    assert.ok(approvalRequests.every(url => url === expectedStatus),
+      "DEX must never inherit Swap status; Swap must not use DEX status");
 
     await button.click();
     const panel = page.locator("[data-climboria-managed-swap-panel]");
@@ -168,11 +196,12 @@ async function runTabReturnApproval(browser, path, width) {
     if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(request.url()))
       forbidden.push(request.url());
   });
-  await page.route("**/swap-runtime-status.json", route => {
+  await page.route(path === "/dex/" ? DEX_API_STATUS_URL : "**/swap-runtime-status.json", route => {
     statuses++;
     return route.fulfill({
       status:200, json:{enabled:approved},
-      headers:{"Cache-Control":"no-store"}
+      // Synthetic cross-origin DEX URL must pass browser CORS validation.
+      headers:{"Cache-Control":"no-store","Access-Control-Allow-Origin":"*"}
     });
   });
   await page.route("**/swap-config.js", route => route.fulfill({
@@ -295,11 +324,15 @@ async function runCloseDuringLoad(browser, path) {
 
 async function runRollbackWithCache(browser) {
   const root = new URL("../../", import.meta.url);
-  const enabledConfig = mockConfig();
+  // The HTTP-only local test fixture substitutes its own distinct DEX status
+  // URL. The production URL allowlist is never changed by this test.
+  const enabledConfig = mockConfig().replace(DEX_API_STATUS_URL, "/dex-runtime-status.json");
   const host = await readFile(new URL("dex/provider-managed-swap.mjs", root), "utf8");
   // Serve the fixture over real HTTP. Playwright request interception disables
   // the browser cache, so it cannot exercise this rollback.
   const fixtureHost = host
+    .replace('const DEX_RUNTIME_STATUS_URL = "https://api.climboria.fun/api/dex/provider-status";',
+      'const DEX_RUNTIME_STATUS_URL = "/dex-runtime-status.json";')
     .replace("script.src = source.url;", 'script.src = "/fixture.js";')
     // Accelerate only the offline browser fixture; production polls every 15s.
     .replace("const ACTIVE_APPROVAL_POLL_MS = 15000;", "const ACTIVE_APPROVAL_POLL_MS = 100;");
@@ -321,7 +354,7 @@ async function runRollbackWithCache(browser) {
   let fixtureRequests = 0;
   const server = createServer((request, response) => {
     const path = new URL(request.url, "http://localhost").pathname;
-    if (path === "/swap-runtime-status.json") {
+    if (path === "/swap-runtime-status.json" || path === "/dex-runtime-status.json") {
       response.writeHead(200, {"Content-Type":"application/json", "Cache-Control":"no-store"});
       response.end(JSON.stringify({enabled}));
       return;
@@ -395,7 +428,8 @@ async function runRollbackWithCache(browser) {
         assert.equal(await page.evaluate(() => window.__mockProviderCalls?.length), 1,
           "active rollback cannot resubmit or reinitialize a provider");
         await page.goto("about:blank");
-        const statusResponse = page.waitForResponse(response => response.url() === origin + "/swap-runtime-status.json");
+        const expectedStatusPath = path === "/dex/" ? "/dex-runtime-status.json" : "/swap-runtime-status.json";
+        const statusResponse = page.waitForResponse(response => response.url() === origin + expectedStatusPath);
         await page.goto(url, {waitUntil:"load"});
         assert.equal((await statusResponse).headers()["cache-control"], "no-store");
         assert.equal(configRequests, beforeConfig, "enabled config should still be cached");
@@ -414,6 +448,58 @@ async function runRollbackWithCache(browser) {
   }
 }
 
+// Explicit browser negative control: even with Swap API ON and synthetic
+// surfaces.dex=true, DEX's independent source OFF/malformed/cacheable status
+// must never expose a launcher, download the SDK, or submit a transaction.
+// This fixture does not enable the real DEX worker or customer funds.
+async function runDexIndependentOff(browser, {statusLabel, payload, cacheControl}) {
+  const page = await browser.newPage({viewport:{width:390,height:850}});
+  const statusRequests = [];
+  let scriptLoads = 0;
+  const forbidden = [];
+  page.on("request", request => {
+    if (request.url() === API_STATUS_URL || request.url() === DEX_API_STATUS_URL)
+      statusRequests.push(request.url());
+    if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(request.url()))
+      forbidden.push(request.url());
+  });
+  await page.route(API_STATUS_URL, route => route.fulfill({
+    json:{enabled:true}, headers:{"Cache-Control":"no-store","Access-Control-Allow-Origin":"*"}
+  }));
+  await page.route(DEX_API_STATUS_URL, route => route.fulfill({
+    json:payload, headers:{"Cache-Control":cacheControl,"Access-Control-Allow-Origin":"*"}
+  }));
+  await page.route("**/swap-config.js", route => route.fulfill({
+    status:200, contentType:"application/javascript", body:mockConfig(sri,API_STATUS_URL)
+  }));
+  await page.route(SCRIPT_URL, route => {
+    scriptLoads++;
+    return route.fulfill({status:200,contentType:"application/javascript",
+      headers:{"Access-Control-Allow-Origin":"*"},body:MOCK_SCRIPT});
+  });
+  try {
+    const checkedStatus = page.waitForResponse(r => r.url() === DEX_API_STATUS_URL);
+    const response = await page.goto(ORIGIN+"/dex/",{waitUntil:"domcontentloaded",timeout:20000});
+    assert.equal(response.status(),200);
+    await checkedStatus;
+    // Allow the async boot path to consume the response and update launchers.
+    await page.waitForTimeout(100);
+    assert.deepEqual(statusRequests,[DEX_API_STATUS_URL],
+      "DEX must never request or reuse the approved Swap status source");
+    const launchers = page.locator("[data-climboria-managed-swap-open]");
+    assert.equal(await launchers.count(),3);
+    assert.deepEqual(await launchers.evaluateAll(nodes=>nodes.map(n=>n.hidden)),
+      [true,true,true],"DEX OFF must hide every trading launcher");
+    assert.equal(await page.locator("[data-climboria-managed-swap-panel]").isVisible(),false);
+    assert.equal(scriptLoads,0,"DEX OFF must not download executable vendor code");
+    assert.equal(await page.evaluate(()=>Boolean(window.Jupiter)),false);
+    assert.deepEqual(forbidden,[],"DEX OFF must not invoke native order or execution");
+    console.log("PASS /dex/ independently OFF despite Swap ON ("+statusLabel+"); no wallet/trade");
+  } finally {
+    await page.close();
+  }
+}
+
 const browser = await chromium.launch({headless:true});
 try {
   await runPage(browser,"/swap/");
@@ -422,6 +508,11 @@ try {
   // with a browser CORS check; the vendor SDK remains synthetic only.
   await runPage(browser,"/swap/",{apiStatus:true});
   await runPage(browser,"/dex/",{apiStatus:true});
+  for (const specimen of [
+    {statusLabel:"source disabled",payload:{enabled:false},cacheControl:"no-store"},
+    {statusLabel:"string response",payload:{enabled:"true"},cacheControl:"no-store"},
+    {statusLabel:"cacheable response",payload:{enabled:true},cacheControl:"public, max-age=60"}
+  ]) await runDexIndependentOff(browser,specimen);
   await runPage(browser,"/swap/",{badHash:true});
   await runCloseDuringLoad(browser,"/swap/");
   await runCloseDuringLoad(browser,"/dex/");

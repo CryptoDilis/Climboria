@@ -77,6 +77,8 @@ jobs:
           grep -Eq '^DEPLOYED_GIT_SHA = "[a-f0-9]{40}"$' wrangler.toml
           grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' src/index.mjs
           grep -Fqx 'const EXECUTION_SECURITY_REVIEW_COMPLETE = false;' src/index.mjs
+          # Future DEX activation is a separate reviewed release; never auto-enable with Swap.
+          grep -Fqx 'const THIRD_PARTY_JUPITER_DEX_APPROVED = false;' src/index.mjs
           grep -Eq '^[[:space:]]*enabled:[[:space:]]*false' ../../swap-config.js
           grep -Fqx 'pattern = "api.climboria.fun"' wrangler.toml
           grep -Fqx 'custom_domain = true' wrangler.toml

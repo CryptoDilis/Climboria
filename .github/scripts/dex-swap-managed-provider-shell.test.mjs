@@ -8,14 +8,17 @@ import {
   integratedTerminalOptions,
   isCanonicalSolanaMint,
   isManagedProviderSurfaceApproved,
+  managedProviderStatusUrl,
   initializeManagedSwapHost
 } from "../../dex/provider-managed-swap.mjs";
 
 const EXISTING_API_STATUS_URL = "https://api.climboria.fun/api/swap/provider-status";
+const DEX_API_STATUS_URL = "https://api.climboria.fun/api/dex/provider-status";
 const approved = Object.freeze({
   enabled: true,
   runtimeApproved: true,
   surfaces: Object.freeze({swap: true, dex: true}),
+  dexRuntimeStatusUrl: DEX_API_STATUS_URL,
   provider: "jupiter-terminal",
   scriptUrl: "https://plugin.jup.ag/plugin-1.0.18.js",
   integrity: "sha384-" + "A".repeat(64)
@@ -26,7 +29,8 @@ function withRuntime(scope, allowed = () => true) {
   return {
     ...scope,
     async fetch(path, options) {
-      assert.equal(path, "/swap-runtime-status.json");
+      assert.ok(path === "/swap-runtime-status.json" || path === DEX_API_STATUS_URL,
+        "no status origin other than exact Swap test URL or DEX API URL");
       assert.equal(options.cache, "no-store");
       assert.equal(options.redirect, "error");
       return {
@@ -91,6 +95,7 @@ test("Swap-only Plugin candidate is gated by source-OFF API status and native tr
   assert.match(cfg, /managedProvider:\s*Object\.freeze\(\{\s*enabled:\s*true/);
   assert.match(cfg, /runtimeApproved:\s*true/);
   assert.match(cfg, /runtimeStatusUrl:\s*"https:\/\/api\.climboria\.fun\/api\/swap\/provider-status"/);
+  assert.match(cfg, /dexRuntimeStatusUrl:\s*"https:\/\/api\.climboria\.fun\/api\/dex\/provider-status"/);
   assert.match(cfg, /surfaces:\s*Object\.freeze\(\{\s*swap:\s*true,\s*dex:\s*false\s*\}\)/);
   assert.match(cfg, /scriptUrl:\s*"https:\/\/plugin\.jup\.ag\/plugin-1\.0\.18\.js"/);
   assert.match(cfg, /integrity:\s*"sha384-aPExK0yy7w5DZjkLRMWvSKhuEz9kvz\/9vESgWrctox51YnSfx6WWIWrsZBHqVJSy"/);
@@ -153,6 +158,47 @@ test("separate provider surfaces prevent Swap activation from authorizing DEX", 
   }
 });
 
+test("DEX requires its own exact provider approval URL, never Swap status", async () => {
+  assert.equal(managedProviderStatusUrl(approved,"dex"),DEX_API_STATUS_URL);
+  assert.equal(managedProviderStatusUrl(approved,"swap"),"/swap-runtime-status.json");
+  assert.equal(managedProviderStatusUrl({...approved,runtimeStatusUrl:EXISTING_API_STATUS_URL},"swap"),
+    EXISTING_API_STATUS_URL);
+  for (const wrong of [null,undefined,"",EXISTING_API_STATUS_URL,
+    "/swap-runtime-status.json",DEX_API_STATUS_URL+"?enabled=true",
+    "https://api.climboria.fun.evil.example/api/dex/provider-status"]) {
+    const invalid={...approved,dexRuntimeStatusUrl:wrong};
+    assert.equal(managedProviderStatusUrl(invalid,"dex"),null);
+    const ui=createDom({surface:"dex"});
+    const state=initializeManagedSwapHost({doc:ui.doc,scope:{},config:invalid});
+    assert.deepEqual(state,{ready:false,reason:"provider-not-approved"});
+    assert.equal(ui.btn.hidden,true);
+    assert.equal(ui.created.length,0);
+  }
+  assert.equal(managedProviderStatusUrl({...approved,runtimeStatusUrl:DEX_API_STATUS_URL},"swap"),null,
+    "DEX ON cannot replace the Swap approval source");
+  assert.equal(managedProviderStatusUrl(approved,"climbx"),null);
+
+  const ui=createDom({surface:"dex"});
+  const queried=[];
+  let vendorInit=0;
+  const scope={Jupiter:{init(){vendorInit++;}},async fetch(url,opts){
+    queried.push(url);
+    assert.equal(opts.cache,"no-store");
+    return {status:200,headers:{get:()=> "no-store"},json:async()=>({
+      enabled:url===EXISTING_API_STATUS_URL // Swap approval TRUE, DEX source FALSE
+    })};
+  }};
+  const outcome=initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  assert.equal(outcome.ready,true);
+  await ui.btn.click();
+  assert.deepEqual(queried,[DEX_API_STATUS_URL],
+    "DEX may not query or infer the Swap approval status");
+  assert.equal(vendorInit,0);
+  assert.equal(ui.created.length,0);
+  assert.equal(ui.btn.hidden,true,"independent DEX OFF status must conceal launcher");
+  assert.equal(ui.panel.hidden,true);
+});
+
 test("integrated widget target accepts only safe existing element IDs", () => {
   assert.deepEqual(integratedTerminalOptions("climboriaSwapProviderTarget"), {
     displayMode: "integrated",
@@ -205,7 +251,7 @@ test("DEX token selection hook clears stale intent until mint proof and excludes
   assert.match(dex, /data-climboria-managed-swap-output-mint/);
 });
 
-function createDom({ failure = false, deferLoad = false, surface = "swap", pair = null, network = "solana" } = {}) {
+function createDom({ failure = false, deferLoad = false, surface = "swap", pair = surface === "swap" ? { inputMint: SOL_MINT, outputMint: USDC_MINT } : null, network = "solana" } = {}) {
   const created = [];
   const btn = { hidden: true, disabled: false, addEventListener(event, callback) { this[event] = callback; } };
   const close = { addEventListener(event, callback) { this[event] = callback; } };
@@ -296,7 +342,9 @@ test("DEX provider init receives a verified Buy or Sell pair but never a Climbor
   ui.panel.pair = { inputMint: USDC_MINT, outputMint: SOL_MINT };
   await ui.btn.click();
   assert.equal(calls.length,1, "mounted provider may not silently restart wallet UI");
-  assert.match(ui.status.textContent,/widget may retain its previous pair.*verify/i);
+  assert.equal(ui.panel.hidden,true, "stale pair must close the vendor-owned panel");
+  assert.equal(ui.btn.hidden,true, "stale mint session must require refresh");
+  assert.match(ui.status.textContent,/Selected token or trade direction changed/);
 });
 
 test("Swap Base-selected network cannot fetch or initialize the Solana Jupiter Plugin", async () => {
@@ -349,7 +397,7 @@ test("disabled integration hides all UI, never injects script or prompts a walle
 test("explicit user click loads only SRI-pinned official-script origin and initializes provider once", async () => {
   const ui = createDom();
   const calls = [];
-  const api = { Jupiter: { init(options) { calls.push(options); } } };
+  const api = { Jupiter: { init(options) { calls.push(options); }, close() {}, resume() {} } };
   assert.deepEqual(initializeManagedSwapHost({ doc: ui.doc, scope: withRuntime(api), config: approved }),
     { ready: true, reason: "approved-script-configured" });
   assert.equal(ui.btn.hidden, false);
@@ -363,7 +411,8 @@ test("explicit user click loads only SRI-pinned official-script origin and initi
   assert.equal(script.crossOrigin, "anonymous");
   assert.equal(script.referrerPolicy, "no-referrer");
   assert.equal(script.dataset.climboriaProviderScript, "jupiter-terminal");
-  assert.deepEqual(calls, [{ displayMode: "integrated", integratedTargetId: ui.target.id }]);
+  assert.deepEqual(calls, [{ displayMode: "integrated", integratedTargetId: ui.target.id,
+    formProps:{initialInputMint:SOL_MINT,initialOutputMint:USDC_MINT} }]);
   assert.match(ui.status.textContent, /Wallet prompts and execution are handled by the provider/);
   await ui.btn.click();
   assert.match(ui.status.textContent, /Provider interface loaded/, "reopening a mounted widget must not leave a checking message");
@@ -431,7 +480,7 @@ test("closing while provider initialization awaits does not overwrite the closed
   const closedStatus = ui.status.textContent;
   resolveProvider();
   await pending;
-  assert.equal(vendorCloseCalls, 1, "late vendor-owned overlay must also be hidden");
+  assert.ok(vendorCloseCalls >= 1, "late vendor-owned overlay must also be hidden");
   assert.equal(ui.panel.hidden, true);
   assert.equal(ui.status.textContent, closedStatus,
     "late provider init success may not claim an open widget after close");
@@ -698,7 +747,7 @@ test("a background tab return immediately hides mounted provider until fresh no-
     json:async () => ({enabled})
   });
   const scope = {
-    Jupiter:{init() {initCalls++;}},
+    Jupiter:{init() {initCalls++;},close() {},resume() {}},
     addEventListener(event, fn) {listeners[event] = fn;},
     setInterval(fn, ms) {assert.equal(ms,15000); timers++; return timers;},
     clearInterval() {stops++;},
@@ -749,7 +798,7 @@ test("approved tab focus or BFCache resume rechecks and restores panel without p
   let timers = 0;
   let stops = 0;
   const scope = withRuntime({
-    Jupiter:{init() {initCalls++;}},
+    Jupiter:{init() {initCalls++;},close() {},resume() {}},
     addEventListener(event, fn) {listeners[event] = fn;},
     setInterval(fn, ms) {assert.equal(ms,15000); timers++; return timers;},
     clearInterval() {stops++;}
@@ -791,7 +840,7 @@ test("a stale successful tab-resume response cannot resurrect a manually closed 
   const listeners = {};
   const yes = {status:200,headers:{get:() => "no-store"},json:async () => ({enabled:true})};
   const scope = {
-    Jupiter:{init() {}},
+    Jupiter:{init() {},close() {},resume() {}},
     addEventListener(event,fn) {listeners[event] = fn;},
     fetch() {
       calls++;
@@ -825,7 +874,7 @@ test("a stale denied tab-resume response cannot revoke a newer approved reopenin
   const yes = {status:200,headers:{get:() => "no-store"},json:async () => ({enabled:true})};
   const no = {status:200,headers:{get:() => "no-store"},json:async () => ({enabled:false})};
   const scope = {
-    Jupiter:{init() {initCalls++;}},
+    Jupiter:{init() {initCalls++;},close() {},resume() {}},
     addEventListener(event,fn) {listeners[event] = fn;},
     fetch() {
       calls++;
@@ -849,6 +898,83 @@ test("a stale denied tab-resume response cannot revoke a newer approved reopenin
   assert.equal(ui.btn.hidden,false);
   assert.equal(initCalls,1);
   ui.close.click();
+});
+
+test("independent DEX widget rejects silently changed pair after vendor init", async () => {
+  const ui=createDom({surface:"dex",pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+  let inits=0,closes=0,resumes=0;
+  const requests=[];
+  const scope=withRuntime({Jupiter:{
+    init(){inits++;},close(){closes++;},resume(){resumes++;}
+  }});
+  const fetch=scope.fetch;
+  scope.fetch=(url,...rest)=>{requests.push(url);return fetch(url,...rest);};
+  initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  await ui.btn.click();
+  assert.deepEqual(requests,[DEX_API_STATUS_URL,DEX_API_STATUS_URL]);
+  assert.equal(inits,1);
+  ui.panel.pair={inputMint:USDC_MINT,outputMint:SOL_MINT}; // Missed selection event.
+  await ui.btn.click();
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(ui.btn.hidden,true);
+  assert.equal(inits,1,"new pair must not revive Jupiter's old wallet");
+  assert.equal(resumes,0);
+  assert.ok(closes>=1,"vendor-owned root must be concealed");
+  assert.match(ui.status.textContent,/Selected token or trade direction changed/);
+  assert.equal(requests.every(url=>url===DEX_API_STATUS_URL),true,
+    "even while rejecting stale wallet UI DEX must not inherit Swap approval");
+});
+
+test("independent DEX refuses vendor init completing after silent mint change", async () => {
+  const ui=createDom({surface:"dex",pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+  let signalStarted,resolveInit,closes=0,inits=0;
+  const started=new Promise(resolve=>{signalStarted=resolve;});
+  initializeManagedSwapHost({doc:ui.doc,config:approved,
+    scope:withRuntime({Jupiter:{
+      init(){inits++;signalStarted();return new Promise(resolve=>{resolveInit=resolve;});},
+      close(){closes++;}
+    }})});
+  const opening=ui.btn.click();
+  await started;
+  ui.panel.pair=null; // DEX token selection reset without dispatching event.
+  resolveInit();
+  await opening;
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(ui.btn.hidden,true);
+  assert.equal(inits,1);
+  assert.ok(closes>=1,"late provider overlay must be actively concealed");
+  assert.match(ui.status.textContent,/Selected token or trade direction changed/);
+});
+
+test("DEX approval poll cannot retain old mint wallet after a late ON response", async () => {
+  const ui=createDom({surface:"dex",pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+  let poll,resolvePending,requests=0,closes=0,stopped=0;
+  const scope=withRuntime({
+    Jupiter:{init(){},close(){closes++;}},
+    setInterval(callback,interval){assert.equal(interval,15000);poll=callback;return 71;},
+    clearInterval(id){assert.equal(id,71);stopped++;}
+  });
+  const original=scope.fetch;
+  scope.fetch=(url,opts)=>{
+    assert.equal(url,DEX_API_STATUS_URL,"DEX polling is never approved by Swap");
+    requests++;
+    if(requests===3)return new Promise(resolve=>{resolvePending=resolve;});
+    return original(url,opts);
+  };
+  initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  await ui.btn.click();
+  assert.equal(requests,2);
+  const pending=poll();
+  assert.equal(typeof resolvePending,"function");
+  ui.panel.pair={inputMint:USDC_MINT,outputMint:SOL_MINT};
+  resolvePending({status:200,headers:{get:()=> "no-store"},json:async()=>({enabled:true})});
+  await pending;
+  assert.equal(ui.panel.hidden,true);
+  assert.equal(ui.btn.hidden,true);
+  assert.equal(requests,3);
+  assert.equal(closes,1);
+  assert.equal(stopped,1);
+  assert.match(ui.status.textContent,/Selected token or trade direction changed/);
 });
 
 test("all provider launch controls reference the actual expanded panel, not the SDK target", () => {

@@ -12,16 +12,30 @@ const REVIEWED_BOOTSTRAP_PATH = "/plugin-1.0.18.js";
 const SHA384_SRI = /^sha384-[A-Za-z0-9+/]{64}$/;
 // Choose exactly one operator-controlled status service per release, never an
 // OR/fallback that could authorize a widget after a failed/revoked status.
-const RUNTIME_STATUS_URLS = new Set([
+const SWAP_RUNTIME_STATUS_URLS = new Set([
   "/swap-runtime-status.json",
   "https://api.climboria.fun/api/swap/provider-status"
 ]);
+const DEX_RUNTIME_STATUS_URL = "https://api.climboria.fun/api/dex/provider-status";
+const RUNTIME_STATUS_URLS = new Set([...SWAP_RUNTIME_STATUS_URLS, DEX_RUNTIME_STATUS_URL]);
+
+/** A Swap approval response never authorizes DEX. Each surface has one independent status source. */
+export function managedProviderStatusUrl(config, surface) {
+  if (surface === "dex") {
+    return config?.dexRuntimeStatusUrl === DEX_RUNTIME_STATUS_URL ? DEX_RUNTIME_STATUS_URL : null;
+  }
+  if (surface === "swap") {
+    const url = config?.runtimeStatusUrl ?? "/swap-runtime-status.json";
+    return SWAP_RUNTIME_STATUS_URLS.has(url) ? url : null;
+  }
+  return null;
+}
 
 export function validateManagedProviderConfig(config) {
   if (!config || config.enabled !== true || config.runtimeApproved !== true || config.provider !== "jupiter-terminal" ||
       typeof config.scriptUrl !== "string" || typeof config.integrity !== "string" ||
       !SHA384_SRI.test(config.integrity) ||
-      !RUNTIME_STATUS_URLS.has(config.runtimeStatusUrl ?? "/swap-runtime-status.json")) return null;
+      !SWAP_RUNTIME_STATUS_URLS.has(config.runtimeStatusUrl ?? "/swap-runtime-status.json")) return null;
   try {
     const url = new URL(config.scriptUrl);
     if (url.protocol !== "https:" || url.hostname !== OFFICIAL_PLUGIN_HOST ||
@@ -141,8 +155,8 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   const surface = panel.getAttribute?.("data-climboria-managed-swap-surface");
   const approved = isManagedProviderSurfaceApproved(config, surface)
     ? validateManagedProviderConfig(config) : null;
-  const runtimeStatusUrl = config?.runtimeStatusUrl ?? "/swap-runtime-status.json";
-  if (!approved || !target || !target.id || !status || !close || !buttons.length) {
+  const runtimeStatusUrl = managedProviderStatusUrl(config, surface);
+  if (!approved || !runtimeStatusUrl || !target || !target.id || !status || !close || !buttons.length) {
     buttons.forEach(button => { button.hidden = true; });
     panel.hidden = true;
     return { ready: false, reason: "provider-not-approved" };
@@ -150,6 +164,12 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   let loading = false;
   let mounted = false;
   let mountedPair = null;
+  // Vendor init can asynchronously create its own root before resolving.
+  // Close/revoke must conceal that partial UI as well as mounted instances.
+  let providerInitInFlight = false;
+  // Jupiter.close() hides the vendor-owned root as well as our panel.
+  // A fresh, explicitly approved reopen must invoke the official resume().
+  let providerConcealedByClose = false;
   let scriptLoaded = false;
   let lastTrigger = null;
   // Closing invalidates any pending script-load result. A late third-party
@@ -172,11 +192,27 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   };
   const recheckActivePanel = async () => {
     if (activeCheckInFlight || panel.hidden) return;
+    // The first-party picker should send a pair-change notification, but an
+    // interrupted or missed event must not leave the previous vendor wallet
+    // form visible until the next user click or tab return.
+    if (mounted && !sameMountedTradeIntent()) {
+      hideRevoked();
+      status.textContent = stalePairMessage;
+      return;
+    }
     activeCheckInFlight = true;
     const requestId = openRequestId;
     try {
       const stillApproved = await isManagedSwapRuntimeApproved(scope, runtimeStatusUrl);
-      if (requestId === openRequestId && !panel.hidden && !stillApproved) hideRevoked();
+      if (requestId !== openRequestId || panel.hidden) return;
+      // The selected mints may have changed while the uncached approval fetch
+      // was pending. Revalidate immediately before retaining the mounted UI.
+      if (mounted && !sameMountedTradeIntent()) {
+        hideRevoked();
+        status.textContent = stalePairMessage;
+      } else if (!stillApproved) {
+        hideRevoked();
+      }
     } finally {
       activeCheckInFlight = false;
     }
@@ -188,6 +224,20 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   };
   // Negative status permanently hides launchers until this document reloads.
   // It cannot cancel an already granted wallet prompt or signed transaction.
+  const sameMountedPair = () => {
+    const selected = readSelectedProviderPair(panel);
+    return (selected === null && mountedPair === null) ||
+      (selected !== null && mountedPair !== null &&
+       selected.inputMint === mountedPair.inputMint &&
+       selected.outputMint === mountedPair.outputMint);
+  };
+  // A missed UI network-change event can leave the Solana mint attributes
+  // unchanged while the active Swap tab has already switched to Base.
+  // Only a still-selected Solana pair is safe to keep in the old vendor UI.
+  const sameMountedTradeIntent = () =>
+    sameMountedPair() && (surface !== "swap" ||
+      panel.getAttribute?.("data-climboria-managed-swap-network") === "solana");
+  const stalePairMessage = "Selected token or trade direction changed. The previous Jupiter widget was closed to avoid trading an outdated pair. Refresh the page, select the intended mints, and open a new provider session. Existing wallet prompts or submitted transactions cannot be cancelled.";
   const hideRevoked = () => {
     stopActiveApprovalChecks();
     ++openRequestId;
@@ -198,11 +248,30 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     // it does not cancel an external wallet popup or any signed transaction.
     // Invoke it best-effort to conceal provider-owned overlays in addition
     // to our enclosing panel, and never let vendor errors reopen the UI.
-    if (mounted && typeof scope.Jupiter?.close === "function") {
-      try { scope.Jupiter.close(); } catch { /* already hidden: fail closed */ }
+    if ((mounted || providerInitInFlight) && typeof scope.Jupiter?.close === "function") {
+      try { scope.Jupiter.close(); } catch { /* first-party panel is already hidden */ }
     }
     status.textContent = "Provider access has been paused. Refresh to check again. Existing wallet requests and submitted transactions are not cancelled.";
   };
+  // The first-party quote/market selector notifies this host after updating
+  // its pair attributes. A mounted or initializing Jupiter instance does not
+  // automatically adopt new mints; immediately conceal its old wallet form.
+  doc.addEventListener?.("climboria:managed-provider-pair-change", () => {
+    // Swap's Base tab is intentionally not a Jupiter provider session.
+    // The network-switch handler already sends Close and fences pending init;
+    // preserve the previously mounted Solana pair for a later explicit return
+    // to Solana without treating the temporary Base selection as a mint trade.
+    if (surface === "swap" &&
+        panel.getAttribute?.("data-climboria-managed-swap-network") !== "solana") return;
+    if (!mounted && !loading && !providerInitInFlight) return;
+    // DEX market/limit selection may change trade intent before a verified
+    // token pair exists; both old/new pair attributes can still be null.
+    // Treat every explicit DEX selection update as session-invalidating.
+    // Swap may retain the same verified pair across unrelated UI updates.
+    if (surface === "swap" && mounted && sameMountedPair()) return;
+    hideRevoked();
+    status.textContent = stalePairMessage;
+  });
   expanded(false);
   buttons.forEach(button => {
     button.hidden = false;
@@ -222,9 +291,26 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         // Reject a forged or half-updated market selection before making any
         // provider request or fetching third-party executable code.
         const selectedPair = readSelectedProviderPair(panel);
+        // A selector may have changed while its normal pair-change event was
+        // missed. Before handling even an invalid/cleared new selection,
+        // conceal the *already mounted* Jupiter wallet form for the old mints.
+        // Otherwise the invalid-selection explanation below could re-expose
+        // a stale third-party widget without invoking any fresh provider init.
+        if (mounted && !sameMountedTradeIntent()) {
+          hideRevoked();
+          status.textContent = stalePairMessage;
+          return;
+        }
         if (surface === "swap" &&
             panel.getAttribute?.("data-climboria-managed-swap-network") !== "solana") {
           throw new Error("Jupiter Plugin is unavailable on Base");
+        }
+        // The Swap's selected mint pair is mandatory. A cleared/invalid
+        // first-party selection must not open Jupiter's unrelated default form.
+        // DEX may intentionally start without a market pair; its independent
+        // trade-intent invalidation still closes any stale mounted vendor UI.
+        if (surface === "swap" && selectedPair === null) {
+          throw new Error("Invalid or incomplete Jupiter input/output mint selection");
         }
         integratedTerminalOptions(target.id, selectedPair);
         // Page-load approval may be revoked while this document stays open.
@@ -234,20 +320,42 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
           hideRevoked();
           return;
         }
+        // A mounted third-party widget owns its *original* pair. Initial mints
+        // are hints passed only to Jupiter.init(), not a live reconfiguration.
+        // Never reopen the old wallet interface after the user changes a
+        // Solana token or direction (or clears the pair for Limit/invalid mint).
+        // Check BEFORE revealing either the first-party or vendor-owned UI.
+        if (mounted && !sameMountedTradeIntent()) {
+          hideRevoked();
+          status.textContent = stalePairMessage;
+          return;
+        }
         panel.hidden = false;
         expanded(true);
         startActiveApprovalChecks();
         panel.scrollIntoView?.({ behavior: "smooth", block: "start" });
         if (mounted) {
-          const selection = readSelectedProviderPair(panel);
-          // The provider may keep an earlier pair after it was mounted. Never
-          // claim a new token is selected without a verified provider update.
-          status.textContent = selection && (
-            !mountedPair || selection.inputMint !== mountedPair.inputMint ||
-            selection.outputMint !== mountedPair.outputMint
-          )
-            ? "DEX token selection changed. The open Jupiter widget may retain its previous pair; select and verify the intended mints inside Jupiter before signing."
-            : "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
+          if (providerConcealedByClose) {
+            // The official Plugin uses display:none on its own root when
+            // close() is called. Reopening the host alone would leave an
+            // invisible wallet widget unless resume() succeeds.
+            try {
+              if (typeof scope.Jupiter?.resume !== "function") {
+                throw new Error("Jupiter.resume is unavailable");
+              }
+              scope.Jupiter.resume();
+              providerConcealedByClose = false;
+            } catch {
+              // Never claim a working wallet UI when vendor resume failed.
+              try { scope.Jupiter?.close?.(); } catch { /* best effort */ }
+              stopActiveApprovalChecks();
+              panel.hidden = true;
+              expanded(false);
+              status.textContent = "Provider could not be reopened safely. Refresh the page to retry; existing wallet requests or transactions are not cancelled.";
+              return;
+            }
+          }
+          status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
           return;
         }
         status.textContent = "Loading verified provider integration. No wallet transaction has been requested by Climboria.";
@@ -275,8 +383,34 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
             panel.getAttribute?.("data-climboria-managed-swap-network") !== "solana") {
           throw new Error("Jupiter Plugin is unavailable on Base");
         }
+        // Token selection may be cleared during script/status fetch. Recheck
+        // immediately before vendor init, even if a UI notification was missed.
+        if (surface === "swap" && selection === null) {
+          throw new Error("Invalid or incomplete Jupiter input/output mint selection");
+        }
         const options = integratedTerminalOptions(target.id, selection);
+        // A close/revoke during the vendor's asynchronous init must hide any
+        // partially mounted provider root immediately, not only on resolution.
+        providerInitInFlight = true;
         await Promise.resolve(scope.Jupiter.init(options));
+        // Even when the first-party selector misses its pair-change event,
+        // a vendor init can resolve after the user changed mints/network.
+        // Do not expose or record a mounted wallet form for the old selection.
+        const nowSelected = readSelectedProviderPair(panel);
+        const sameInitializedPair = selection === null ? nowSelected === null :
+          nowSelected !== null && selection.inputMint === nowSelected.inputMint &&
+          selection.outputMint === nowSelected.outputMint;
+        if (requestId === openRequestId && !panel.hidden &&
+            (!sameInitializedPair || (surface === "swap" &&
+              panel.getAttribute?.("data-climboria-managed-swap-network") !== "solana"))) {
+          // Keep providerInitInFlight true until hideRevoked() has closed the
+          // vendor-owned root, including any UI built by async init().
+          hideRevoked();
+          status.textContent = stalePairMessage;
+          providerInitInFlight = false;
+          return;
+        }
+        providerInitInFlight = false;
         // Late vendor init may finish after close/revoke. Hide its own overlay,
         // not only the first-party panel. This cannot cancel wallet prompts.
         if (requestId !== openRequestId || panel.hidden) {
@@ -285,12 +419,28 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
         }
         mountedPair = selection;
         mounted = true;
+        providerConcealedByClose = false;
         if (requestId === openRequestId && !panel.hidden) {
           status.textContent = "Provider interface loaded. Wallet prompts and execution are handled by the provider. Check every transaction in your wallet.";
         }
       } catch (error) {
+        const failedProviderInit = providerInitInFlight;
+        providerInitInFlight = false;
+        if (failedProviderInit) {
+          // The vendor may have built an overlay before rejecting init.
+          // Keep the first-party surface closed, even if close() throws.
+          try { scope.Jupiter?.close?.(); } catch { /* best effort */ }
+          panel.hidden = true;
+          expanded(false);
+          stopActiveApprovalChecks();
+          // A partially mounted provider instance may be in an unknown state.
+          // Require a new page load instead of retrying the same instance.
+          buttons.forEach(control => { control.hidden = true; });
+        }
         if (requestId === openRequestId) {
-          if (error?.message === "Invalid or incomplete Jupiter input/output mint selection") {
+          if (failedProviderInit) {
+            status.textContent = "Provider initialization failed and its interface was hidden. Refresh before retrying. Existing wallet requests or submitted transactions are not cancelled.";
+          } else if (error?.message === "Invalid or incomplete Jupiter input/output mint selection") {
             // Invalid market hints are rejected before any provider script loads.
             // Reveal only an explanatory first-party panel, never the wallet UI.
             panel.hidden = false;
@@ -316,8 +466,16 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     ++openRequestId;
     panel.hidden = true;
     expanded(false);
+    // Closing the host must also hide the official Plugin-owned widget.
+    // It cannot cancel separate wallet confirmations or submitted swaps.
+    if ((mounted || providerInitInFlight) && typeof scope.Jupiter?.close === "function") {
+      try {
+        scope.Jupiter.close();
+        if (mounted) providerConcealedByClose = true;
+      } catch { /* first-party panel is already hidden */ }
+    }
     lastTrigger?.focus?.();
-    status.textContent = mounted
+    status.textContent = (mounted || providerInitInFlight)
       ? "Provider panel hidden. Closing this page does not cancel wallet prompts or on-chain transactions."
       : "Provider panel closed. No swap was submitted by Climboria.";
   });
@@ -333,12 +491,46 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
     stopActiveApprovalChecks();
     panel.hidden = true;
     expanded(false);
+    // A first-party hidden panel may not conceal a vendor-owned overlay.
+    // Hide Jupiter's *own* root synchronously, before awaiting status.
+    // The official close()/resume() pair only controls the widget display:
+    // neither can cancel an existing wallet prompt or blockchain transaction.
+    try {
+      if (typeof scope.Jupiter?.close !== "function" ||
+          typeof scope.Jupiter?.resume !== "function") {
+        throw new Error("Jupiter close/resume is unavailable");
+      }
+      scope.Jupiter.close();
+      providerConcealedByClose = true;
+    } catch {
+      hideRevoked();
+      status.textContent = "Provider could not be safely concealed. Refresh before retrying. Existing wallet requests and submitted transactions are not cancelled.";
+      resumeCheckInFlight = false;
+      return;
+    }
     status.textContent = "Rechecking provider release approval after returning to this tab. Existing wallet requests and submitted transactions are not cancelled.";
     try {
       const stillApproved = await isManagedSwapRuntimeApproved(scope, runtimeStatusUrl);
       if (requestId !== openRequestId) return;
       if (!stillApproved) {
         hideRevoked();
+        return;
+      }
+      // The market can change while this tab was hidden or the status
+      // request was pending. Never resume a mounted form for the old mints.
+      if (!sameMountedTradeIntent()) {
+        hideRevoked();
+        status.textContent = stalePairMessage;
+        return;
+      }
+      // Do not expose Jupiter-owned UI unless approval is still current.
+      // The call is synchronous in the official Jupiter Plugin library.
+      try {
+        scope.Jupiter.resume();
+        providerConcealedByClose = false;
+      } catch {
+        hideRevoked();
+        status.textContent = "Provider could not be safely resumed. Refresh before retrying. Existing wallet requests and submitted transactions are not cancelled.";
         return;
       }
       panel.hidden = false;
@@ -362,9 +554,10 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
     const config = window.CLIMBORIA_SWAP_CONFIG?.managedProvider;
     const surface = document.querySelector("[data-climboria-managed-swap-panel]")
       ?.getAttribute("data-climboria-managed-swap-surface");
+    const runtimeStatusUrl = managedProviderStatusUrl(config, surface);
     const runtimeEnabled = isManagedProviderSurfaceApproved(config, surface) &&
-      validateManagedProviderConfig(config) &&
-      await isManagedSwapRuntimeApproved(window, config?.runtimeStatusUrl ?? "/swap-runtime-status.json");
+      validateManagedProviderConfig(config) && runtimeStatusUrl &&
+      await isManagedSwapRuntimeApproved(window, runtimeStatusUrl);
     initializeManagedSwapHost({ doc: document, scope: window, config: runtimeEnabled ? config : null });
   };
   if (document.readyState === "loading") {
