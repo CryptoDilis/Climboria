@@ -280,7 +280,7 @@ test('live Game refuses the retired forced-Sanctuary mobile prompt',()=>{
  assert.doesNotMatch(game,/climboria:room-return-to-sanctuary/);
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261119-nearby-speech-10/,
+ assert.match(game,/client-presence\.js\?v=20261119-game-hud-resume-11/,
   'production Game must load fresh Nearby Chat and remote size renderer');
 });
 
