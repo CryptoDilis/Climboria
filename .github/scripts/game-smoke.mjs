@@ -15,12 +15,23 @@ try {
   if(!anonymous.url().includes('hero=required')) errors.push('Missing hero did not redirect to Game hub');
   // Verify anonymous visitors cannot save a named hero. The editor itself
   // remains preview-only so 3D assets can be inspected without login.
-  await creator.locator('#openHeroCreator').click();
-  if(!(await creator.locator('#saveHeroButton').isDisabled()))
+  await anonymous.locator('#openHeroCreator').click();
+  if(!(await anonymous.locator('#saveHeroButton').isDisabled()))
    errors.push('Anonymous visitor gained Hero Save access');
-  if(await creator.evaluate(()=>localStorage.getItem('climboria-created-hero-v1')!==null))
+  if(await anonymous.evaluate(()=>localStorage.getItem('climboria-created-hero-v1')!==null))
    errors.push('Anonymous Hero Creation wrote a local hero');
   await anonymous.close();
+  const guestProbe=await browser.newPage();
+  await guestProbe.goto('http://127.0.0.1:4173/game/play.html?guest=1',{waitUntil:'domcontentloaded'});
+  const guestState=await guestProbe.evaluate(()=>({
+   guest:window.__climboriaGuestMode===true,
+   hero:window.__climboriaCreatedHero,
+   persisted:localStorage.getItem('climboria-created-hero-v1')
+  }));
+  if(!guestState.guest||guestState.hero?.name!=='Guest Explorer'||
+     guestState.hero?.model!=='Adventurer'||guestState.persisted!==null)
+   errors.push('Guest play must launch without creating/persisting hero: '+JSON.stringify(guestState));
+  await guestProbe.close();
   // The rest of this test exercises 3D creator UX against an explicitly
   // mocked registered account, NOT a real Supabase auth acceptance.
   const heroContext=await browser.newContext({viewport:{width:1365,height:900}});
