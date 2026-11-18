@@ -1,5 +1,15 @@
 # Climboria Game Development Record
 
+## GAME REJECTED SPAWN RECONNECT FIX — VERIFIED PAGES DEPLOYMENTS (2026-11-18)
+
+- [Game PR #641](https://github.com/CryptoDilis/Climboria/pull/641) squash `a0f0d8c980e39a2821996f6aed1532d6b7b99624` **merged** and [GitHub Pages #44250723314](https://github.com/CryptoDilis/Climboria/actions/runs/44250723314) **COMPLETED SUCCESS** for that exact merge SHA. [Docs follow-up Pages #44250870945](https://github.com/CryptoDilis/Climboria/actions/runs/44250870945) also **COMPLETED SUCCESS** for `eb330cd1e8bc8834d0988699796053a100010572`. No Cloudflare Game Worker config, DEX/Swap, Launchpad or ClimbX was changed.
+- **Exact premerge validation:** [Game Gateway #44250479702](https://github.com/CryptoDilis/Climboria/actions/runs/44250479702) SUCCESS and [Validate #44250479700](https://github.com/CryptoDilis/Climboria/actions/runs/44250479700) SUCCESS. [Postmerge Validate #44250723598](https://github.com/CryptoDilis/Climboria/actions/runs/44250723598) SUCCESS. [PR-head Jarrell smoke #44250479734](https://github.com/CryptoDilis/Climboria/actions/runs/44250479734) and [postmerge smoke #44250723604](https://github.com/CryptoDilis/Climboria/actions/runs/44250723604) were still **IN PROGRESS** at this record checkpoint; do not claim they passed.
+- **Live status remains unverified:** Successful Pages and offline unit checks demonstrate a deployed reconnect fix, NOT a verified two-registered-account exchange of GLBs and World Chat. Actual owner two-browser/Android acceptance has not been re-recorded since prior user report of failure.
+- **Next:** (1) Inspect those two smoke run final conclusions. (2) With two actual registered Game browsers open at `https://climboria.fun/game/play.html`, use normal Game key **1** if an explorer already moved away from Sanctuary, and check both show `ONLINE` status after server-accepted spawn. Verify both visible hero GLBs, movement sync, room-echoed World Chat and reconnect. (3) If either fails, collect **only** the visible MULTIPLAYER status label; distinguish login/session/ticket/WSS/spawn and repair code without requesting user credentials or downloads. (4) Android performance remains separate. All combat damage, loot/theft/grab disabled until independently safe.
+
+---
+
+
 ## GAME MULTIPLAYER SANCTUARY REJECTION RECOVERY MERGED (2026-11-18)
 
 - **Merged:** [Game PR #641](https://github.com/CryptoDilis/Climboria/pull/641), squash commit `a0f0d8c980e39a2821996f6aed1532d6b7b99624`. Fixed a concrete failed initial-room-spawn reconnect dead-end in `game/multiplayer/client-presence.js` without altering Game Worker auth, account identities, PvP/loot, or other workstreams.
