@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "status": "NOT_CONFIGURED_DO_NOT_DEPLOY",
+  "solana": {
+    "cluster": "mainnet-beta",
+    "mint": "9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump",
+    "decimals": 6,
+    "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "escrowTokenAccount": null,
+    "escrowAuthority": null
+  },
+  "base": {
+    "chainId": 8453,
+    "wrappedTokenContract": null,
+    "decimals": 6
+  },
+  "bridge": {
+    "protocol": null,
+    "network": "mainnet",
+    "securityReviewUrl": null,
+    "configuredManagerAddresses": false
+  },
+  "activation": {
+    "mainnetEnabled": false,
+    "approvedByOwner": false,
+    "firstTransferVerified": false
+  }
+}
