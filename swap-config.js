@@ -17,6 +17,9 @@ window.CLIMBORIA_SWAP_CONFIG = Object.freeze({
     // Source-controlled, no-store release status; the hosted Jupiter wallet
     // experience is separate from Climboria's disabled order/execute API.
     runtimeStatusUrl: "https://api.climboria.fun/api/swap/provider-status",
+    // Reserved for independent DEX approval; API source and UI surface remain OFF.
+    // Never treat the Swap provider status as DEX trading authorization.
+    dexRuntimeStatusUrl: "https://api.climboria.fun/api/dex/provider-status",
     // Independent, default-OFF release controls: Swap first, DEX second.
     surfaces: Object.freeze({ swap: true, dex: false }),
     provider: "jupiter-terminal",

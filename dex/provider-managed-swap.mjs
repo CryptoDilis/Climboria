@@ -12,16 +12,30 @@ const REVIEWED_BOOTSTRAP_PATH = "/plugin-1.0.18.js";
 const SHA384_SRI = /^sha384-[A-Za-z0-9+/]{64}$/;
 // Choose exactly one operator-controlled status service per release, never an
 // OR/fallback that could authorize a widget after a failed/revoked status.
-const RUNTIME_STATUS_URLS = new Set([
+const SWAP_RUNTIME_STATUS_URLS = new Set([
   "/swap-runtime-status.json",
   "https://api.climboria.fun/api/swap/provider-status"
 ]);
+const DEX_RUNTIME_STATUS_URL = "https://api.climboria.fun/api/dex/provider-status";
+const RUNTIME_STATUS_URLS = new Set([...SWAP_RUNTIME_STATUS_URLS, DEX_RUNTIME_STATUS_URL]);
+
+/** A Swap approval response never authorizes DEX. Each surface has one independent status source. */
+export function managedProviderStatusUrl(config, surface) {
+  if (surface === "dex") {
+    return config?.dexRuntimeStatusUrl === DEX_RUNTIME_STATUS_URL ? DEX_RUNTIME_STATUS_URL : null;
+  }
+  if (surface === "swap") {
+    const url = config?.runtimeStatusUrl ?? "/swap-runtime-status.json";
+    return SWAP_RUNTIME_STATUS_URLS.has(url) ? url : null;
+  }
+  return null;
+}
 
 export function validateManagedProviderConfig(config) {
   if (!config || config.enabled !== true || config.runtimeApproved !== true || config.provider !== "jupiter-terminal" ||
       typeof config.scriptUrl !== "string" || typeof config.integrity !== "string" ||
       !SHA384_SRI.test(config.integrity) ||
-      !RUNTIME_STATUS_URLS.has(config.runtimeStatusUrl ?? "/swap-runtime-status.json")) return null;
+      !SWAP_RUNTIME_STATUS_URLS.has(config.runtimeStatusUrl ?? "/swap-runtime-status.json")) return null;
   try {
     const url = new URL(config.scriptUrl);
     if (url.protocol !== "https:" || url.hostname !== OFFICIAL_PLUGIN_HOST ||
@@ -141,8 +155,8 @@ export function initializeManagedSwapHost({ doc, scope, config }) {
   const surface = panel.getAttribute?.("data-climboria-managed-swap-surface");
   const approved = isManagedProviderSurfaceApproved(config, surface)
     ? validateManagedProviderConfig(config) : null;
-  const runtimeStatusUrl = config?.runtimeStatusUrl ?? "/swap-runtime-status.json";
-  if (!approved || !target || !target.id || !status || !close || !buttons.length) {
+  const runtimeStatusUrl = managedProviderStatusUrl(config, surface);
+  if (!approved || !runtimeStatusUrl || !target || !target.id || !status || !close || !buttons.length) {
     buttons.forEach(button => { button.hidden = true; });
     panel.hidden = true;
     return { ready: false, reason: "provider-not-approved" };
@@ -540,9 +554,10 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
     const config = window.CLIMBORIA_SWAP_CONFIG?.managedProvider;
     const surface = document.querySelector("[data-climboria-managed-swap-panel]")
       ?.getAttribute("data-climboria-managed-swap-surface");
+    const runtimeStatusUrl = managedProviderStatusUrl(config, surface);
     const runtimeEnabled = isManagedProviderSurfaceApproved(config, surface) &&
-      validateManagedProviderConfig(config) &&
-      await isManagedSwapRuntimeApproved(window, config?.runtimeStatusUrl ?? "/swap-runtime-status.json");
+      validateManagedProviderConfig(config) && runtimeStatusUrl &&
+      await isManagedSwapRuntimeApproved(window, runtimeStatusUrl);
     initializeManagedSwapHost({ doc: document, scope: window, config: runtimeEnabled ? config : null });
   };
   if (document.readyState === "loading") {
