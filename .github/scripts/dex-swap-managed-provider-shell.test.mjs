@@ -935,6 +935,62 @@ test("open provider panel polls uncached release status and hides on operator ro
   assert.match(ui.status.textContent, /Existing wallet requests and submitted transactions are not cancelled/);
 });
 
+test("active approval poll closes a silently changed mounted mint pair before fetching again", async () => {
+  for (const surface of ["swap","dex"]) {
+    const ui=createDom({surface,pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+    let tick,close=0,fetches=0,stopped=0,init=0;
+    const scope=withRuntime({
+      Jupiter:{init(){init++;},close(){close++;}},
+      setInterval(fn,ms){assert.equal(ms,15000);tick=fn;return 74;},
+      clearInterval(id){assert.equal(id,74);stopped++;}
+    });
+    const fetch=scope.fetch;
+    scope.fetch=async(...args)=>{fetches++;return fetch(...args);};
+    initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+    await ui.btn.click();
+    assert.equal(fetches,2,"click and SDK init must be independently approved");
+    assert.equal(ui.panel.hidden,false);
+    ui.panel.pair={inputMint:USDC_MINT,outputMint:SOL_MINT};
+    // Simulate a pair picker update with no event and no new user click.
+    await tick();
+    assert.equal(ui.panel.hidden,true);
+    assert.equal(ui.btn.hidden,true);
+    assert.equal(close,1,"close Jupiter root when mounted mints drift");
+    assert.equal(stopped,1,"stale-mint revocation must stop active monitoring");
+    assert.equal(fetches,2,"known stale pair must close before another status request");
+    assert.equal(init,1,"must not initialize any new vendor UI");
+    assert.match(ui.status.textContent,/Selected token or trade direction changed/);
+  }
+});
+
+test("active poll rechecks mints after an in-flight status response", async () => {
+  const ui=createDom({surface:"swap",pair:{inputMint:SOL_MINT,outputMint:USDC_MINT}});
+  let tick,releaseStatus,close=0,init=0,requests=0;
+  const scope=withRuntime({
+    Jupiter:{init(){init++;},close(){close++;}},
+    setInterval(fn,ms){assert.equal(ms,15000);tick=fn;return 75;},
+    clearInterval(id){assert.equal(id,75);}
+  });
+  const fetch=scope.fetch;
+  scope.fetch=async(...args)=>{
+    requests++;
+    if(requests===3) return new Promise(resolve=>{releaseStatus=resolve;});
+    return fetch(...args);
+  };
+  initializeManagedSwapHost({doc:ui.doc,scope,config:approved});
+  await ui.btn.click();
+  const pending=tick();
+  assert.equal(typeof releaseStatus,"function");
+  ui.panel.pair=null; // Silent change during the network wait, without an event.
+  releaseStatus(await fetch("/swap-runtime-status.json", {cache:"no-store",redirect:"error"}));
+  await pending;
+  assert.equal(ui.panel.hidden,true,"late ON response must not revive old mints");
+  assert.equal(ui.btn.hidden,true);
+  assert.equal(init,1);
+  assert.equal(close,1,"mounted vendor wallet root must be closed");
+  assert.match(ui.status.textContent,/Selected token or trade direction changed/);
+});
+
 test("a throwing provider.close never defeats runtime revocation of the Climboria UI", async () => {
   const ui = createDom();
   let allowed = true;
