@@ -1,0 +1,51 @@
+/**
+ * CLIMBORIA GAME ONLY — private, redacted owner QA progress reporting.
+ *
+ * Fixed, source-controlled stages. Never accept provider errors, account IDs,
+ * session data, ticket bytes, response bodies or arbitrary user strings into
+ * console diagnostics. A failed test is NOT a verified live multiplayer pass.
+ */
+const STAGES=Object.freeze({
+ 'worker-readiness':'Game Worker HTTPS and room storage readiness',
+ 'player-a-session':'Player A real registered sign-in and room admission',
+ 'player-a-alone':'Player A alone in the accepted staging room',
+ 'player-b-session':'Player B real registered sign-in and room admission',
+ 'distinct-accounts':'Two separate registered account identities',
+ 'peer-avatars':'Two reciprocal 3D GLB remote avatars and map peers',
+ 'movement-sync':'Physical keyboard movement replicated to the other player',
+ 'world-chat':'Bidirectional room-echoed World Chat and safe unsent draft',
+ 'desktop-render':'Rendered Chrome frames (not physical Android FPS)',
+ 'disconnect-rejoin':'No ghost peer after leaving; authenticated room rejoin'
+});
+
+export function createGameQaProgress(emit){
+ if(typeof emit!=='function')throw Error('QA progress writer required');
+ const passed=[];
+ let active=null;
+ function label(id){
+  if(!Object.hasOwn(STAGES,id))throw Error('Unknown Game QA stage');
+  return STAGES[id];
+ }
+ return Object.freeze({
+  start(id){
+   const name=label(id);
+   if(active!==null)throw Error('Previous Game QA stage still active');
+   if(passed.includes(id))throw Error('Game QA stage was already passed');
+   active=id;
+   emit('CHECK: '+name);
+  },
+  pass(){
+   if(active===null)throw Error('No active Game QA stage to pass');
+   emit('PASS: '+label(active));
+   passed.push(active);
+   active=null;
+  },
+  fail(){
+   // Only fixed internal stage label, never an arbitrary upstream error.
+   emit('QA RESULT: NOT VERIFIED — '+(active?label(active):'Game QA setup')+
+    ' did not complete. Public Game multiplayer remains OFF.');
+   return Object.freeze({stage:active||'setup',passed:Object.freeze([...passed])});
+  },
+  summary(){return Object.freeze({stage:active||null,passed:Object.freeze([...passed])})}
+ });
+}
