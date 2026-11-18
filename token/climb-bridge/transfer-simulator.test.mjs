@@ -98,7 +98,7 @@ test('cannot lock more than original supply',()=>{
 test('reject zero, negative, noninteger or out-of-range amounts',()=>{
  const t=fresh();
  for(const value of ['0','-1','1.1','1e4','01',3, null,'18446744073709551616']){
-  assert.throws(()=>t.lock('bad',''+value));
+  assert.throws(()=>t.lock('bad',value));
  }
  assert.equal(t.snapshot().uniqueMessageCount,0);
 });
