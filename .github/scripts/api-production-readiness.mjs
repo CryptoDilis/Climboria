@@ -146,7 +146,7 @@ export async function probeProductionApi({ baseUrl = "https://api.climboria.fun"
     assert.equal(status.response.status, 200, path + " must return HTTP 200 after deployment");
     assert.equal(status.response.headers.get("access-control-allow-origin"), ORIGIN,
       path + " must allow only the reviewed website origin");
-    assert.match(status.response.headers.get("cache-control") ?? "", /(?:^|,)\\s*no-store(?:,|$)/i,
+    assert.ok((status.response.headers.get("cache-control") ?? "").split(",").some(value => value.trim().toLowerCase() === "no-store"),
       path + " must not be cached");
     assert.deepEqual(status.data, { enabled }, path + " source approval differs from reviewed release");
     checks.push(label);
