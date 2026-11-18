@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { installOfflineHeroAuthFixture } from './game-offline-hero-auth-fixture.mjs';
 
 const errors = [];
 const browser = await chromium.launch({
@@ -12,38 +13,63 @@ try {
   await anonymous.goto('http://127.0.0.1:4173/game/play.html?smoke=gate',{waitUntil:'domcontentloaded'});
   await anonymous.waitForURL('**/game/index.html?hero=required',{timeout:10000});
   if(!anonymous.url().includes('hero=required')) errors.push('Missing hero did not redirect to Game hub');
-  // Exercise the real Create Hero UI before any gameplay WebGL context opens.
+  // Verify anonymous visitors cannot save a named hero. The editor itself
+  // remains preview-only so 3D assets can be inspected without login.
   await anonymous.locator('#openHeroCreator').click();
-  if(!(await anonymous.locator('#heroEditor').isVisible())) errors.push('Hero editor did not open from the Expedition card');
-  if(await anonymous.locator('#heroEditor input[type="file"]').count()) errors.push('Hero editor still asks players to upload a GLB');
-  const visibleModels=await anonymous.locator('#heroModelSelect option').evaluateAll(options=>options.map(o=>o.value));
+  if(!(await anonymous.locator('#saveHeroButton').isDisabled()))
+   errors.push('Anonymous visitor gained Hero Save access');
+  if(await anonymous.evaluate(()=>localStorage.getItem('climboria-created-hero-v1')!==null))
+   errors.push('Anonymous Hero Creation wrote a local hero');
+  await anonymous.close();
+  const guestProbe=await browser.newPage();
+  await guestProbe.goto('http://127.0.0.1:4173/game/play.html?guest=1',{waitUntil:'domcontentloaded'});
+  const guestState=await guestProbe.evaluate(()=>({
+   guest:window.__climboriaGuestMode===true,
+   hero:window.__climboriaCreatedHero,
+   persisted:localStorage.getItem('climboria-created-hero-v1')
+  }));
+  if(!guestState.guest||guestState.hero?.name!=='Guest Explorer'||
+     guestState.hero?.model!=='Adventurer'||guestState.persisted!==null)
+   errors.push('Guest play must launch without creating/persisting hero: '+JSON.stringify(guestState));
+  await guestProbe.close();
+  // The rest of this test exercises 3D creator UX against an explicitly
+  // mocked registered account, NOT a real Supabase auth acceptance.
+  const heroContext=await browser.newContext({viewport:{width:1365,height:900}});
+  const creator=await heroContext.newPage();
+  await installOfflineHeroAuthFixture(creator);
+  await creator.goto('http://127.0.0.1:4173/game/index.html',{waitUntil:'domcontentloaded'});
+  await creator.waitForFunction(()=>document.querySelector('#heroGateNotice')?.textContent?.includes('REGISTERED PLAYER'),undefined,{timeout:15000});
+  await creator.locator('#openHeroCreator').click();
+  if(!(await creator.locator('#heroEditor').isVisible())) errors.push('Hero editor did not open from the Expedition card');
+  if(await creator.locator('#heroEditor input[type="file"]').count()) errors.push('Hero editor still asks players to upload a GLB');
+  const visibleModels=await creator.locator('#heroModelSelect option').evaluateAll(options=>options.map(o=>o.value));
   if(JSON.stringify(visibleModels)!==JSON.stringify(['Adventurer','Jarrell','Lheiz']))
     errors.push('Hero selection is not populated with the three verified identities: '+JSON.stringify(visibleModels));
-  if(await anonymous.locator('#heroModelSelect').inputValue()!=='Adventurer')
+  if(await creator.locator('#heroModelSelect').inputValue()!=='Adventurer')
     errors.push('Existing creator must default to the original Adventurer model');
-  await anonymous.locator('#heroNameInput').fill('Smoke Explorer');
-  if(!(await anonymous.locator('#saveHeroButton').isDisabled()) && !(await anonymous.locator('#heroPreviewStatus').textContent()).includes('LIVE 3D PREVIEW')) errors.push('Save Hero enabled before model preview is ready');
-  await anonymous.waitForFunction(() => document.querySelector('#heroPreviewStatus')?.textContent?.includes('LIVE 3D PREVIEW'), undefined, { timeout: 120000 });
-  const creatorVisual=await anonymous.evaluate(()=>{
+  await creator.locator('#heroNameInput').fill('Smoke Explorer');
+  if(!(await creator.locator('#saveHeroButton').isDisabled()) && !(await creator.locator('#heroPreviewStatus').textContent()).includes('LIVE 3D PREVIEW')) errors.push('Save Hero enabled before model preview is ready');
+  await creator.waitForFunction(() => document.querySelector('#heroPreviewStatus')?.textContent?.includes('LIVE 3D PREVIEW'), undefined, { timeout: 120000 });
+  const creatorVisual=await creator.evaluate(()=>{
     const canvas=document.querySelector('#heroPreviewCanvas'),stage=document.querySelector('.hero-editor-stage');
     return {canvasWidth:canvas?.width||0,canvasHeight:canvas?.height||0,stageWidth:stage?.clientWidth||0,stageHeight:stage?.clientHeight||0,
       loaded:!!document.querySelector('#heroPreviewStatus')?.textContent?.includes('LIVE 3D PREVIEW')};
   });
   if(!creatorVisual.loaded||creatorVisual.canvasWidth<200||creatorVisual.canvasHeight<250) errors.push('Full-body 3D Hero preview canvas did not render at playable size: '+JSON.stringify(creatorVisual));
-  await anonymous.screenshot({path:'climboria-hero-creator-desktop.png', timeout: 90000, animations: 'disabled' });
-  await anonymous.locator('#heroPreviewCanvas').hover();
-  await anonymous.mouse.wheel(0,150);
-  await anonymous.locator('#saveHeroButton').click();
-  const created=await anonymous.evaluate(()=>JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null'));
+  await creator.screenshot({path:'climboria-hero-creator-desktop.png', timeout: 90000, animations: 'disabled' });
+  await creator.locator('#heroPreviewCanvas').hover();
+  await creator.mouse.wheel(0,150);
+  await creator.locator('#saveHeroButton').click();
+  const created=await creator.evaluate(()=>JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null'));
   if(created?.name!=='Smoke Explorer'||created?.model!=='Adventurer') errors.push('Create Hero UI did not persist expected hero: '+JSON.stringify(created));
-  await anonymous.locator('#closeHeroEditor').click();
-  await anonymous.locator('#openHeroCreator').click();
-  if(await anonymous.locator('#heroNameInput').inputValue()!=='Smoke Explorer') errors.push('Edit Hero did not restore the saved name');
-  await anonymous.locator('#heroNameInput').fill('Smoke Hero');
-  await anonymous.locator('#saveHeroButton').click();
-  const edited=await anonymous.evaluate(()=>JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null'));
+  await creator.locator('#closeHeroEditor').click();
+  await creator.locator('#openHeroCreator').click();
+  if(await creator.locator('#heroNameInput').inputValue()!=='Smoke Explorer') errors.push('Edit Hero did not restore the saved name');
+  await creator.locator('#heroNameInput').fill('Smoke Hero');
+  await creator.locator('#saveHeroButton').click();
+  const edited=await creator.evaluate(()=>JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null'));
   if(edited?.name!=='Smoke Hero') errors.push('Edit Hero failed to save name: '+JSON.stringify(edited));
-  await anonymous.close();
+  await heroContext.close();
   const desktop = await browser.newContext({ viewport: { width: 1365, height: 900 } });
   await desktop.addInitScript(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Smoke Explorer',model:'Adventurer',createdAt:'2026-11-14T00:00:00Z'})));
   const page = await desktop.newPage();
@@ -812,6 +838,13 @@ try {
   if(!settingsBox||!mapBox||settingsBox.x+settingsBox.width>mapBox.x+2||settingsBox.x+settingsBox.width<mapBox.x-60) errors.push('Settings gear is not positioned beside the minimap: '+JSON.stringify({settingsBox,mapBox}));
   await settingsButton.click();
   if(await page.locator('#expedition-settings-panel').evaluate(el=>getComputedStyle(el).display)==='none') errors.push('Settings gear did not open its panel');
+  if(await page.locator('#time-cycle-control,#weather-cycle-control').count()!==0)
+   errors.push('Players must not override system time or weather in settings');
+  if(await page.locator('#expedition-connected-account,#expedition-return-menu,#climboria-music-volume,#climboria-effects-volume').count()!==4)
+   errors.push('Settings must have only music, SFX, connected account and return menu');
+  await page.locator('#climboria-effects-volume').evaluate(el=>{el.value='20';el.dispatchEvent(new Event('input',{bubbles:true}))});
+  if(await page.locator('#climboria-effects-value').textContent()!=='20%')
+   errors.push('Effects volume slider did not update its actual audio state label');
   await page.locator('#climboria-music-volume').evaluate(el=>{el.value='24';el.dispatchEvent(new Event('input',{bubbles:true}))});
   if(await page.locator('#climboriaInventoryPanel').evaluate(el=>getComputedStyle(el).display)!=='none') errors.push('Soundtrack volume interaction unexpectedly opened inventory');
   await page.locator('#expedition-settings-close').click();
@@ -828,16 +861,14 @@ try {
   // The launch card performs a full document navigation. Playwright's click()
   // already waits for that navigation; a concurrent waitForURL can miss the
   // same-document/fast navigation edge and time out after the target URL loaded.
-  // The menu must gate entry for guests, then unlock for a stored valid hero.
-  await menu.locator('.card[data-level="11"]').click();
-  if(!(await menu.locator('#heroEditor').isVisible())) errors.push('Jarrell launch card did not open Create Hero for a guest');
-  await menu.locator('#closeHeroEditor').click();
-  await menu.evaluate(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Smoke Explorer',model:'Adventurer',createdAt:'2026-11-14T00:00:00Z'})));
-  await menu.reload({waitUntil:'domcontentloaded'});
+  // A logged-out explorer enters the playable world as a no-save guest,
+  // even if a legacy hero record happens to exist in localStorage.
+  await menu.evaluate(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Legacy',model:'Adventurer'})));
   await menu.locator('.card[data-level="11"]').click();
   await menu.waitForLoadState('domcontentloaded');
   const launchUrl=new URL(menu.url());
-  if(!launchUrl.pathname.endsWith('/game/play.html')||launchUrl.searchParams.get('level')!=='11') errors.push('Jarrell’s Peak launch card did not navigate to level 11: '+menu.url());
+  if(!launchUrl.pathname.endsWith('/game/play.html')||launchUrl.searchParams.get('level')!=='11'||launchUrl.searchParams.get('guest')!=='1')
+   errors.push('Logged-out Jarrell launch must be temporary guest exploration: '+menu.url());
   if(launchUrl.searchParams.has('hero')) errors.push('Launch menu still forces a retired character selection query');
   await menu.close();
   await page.locator('#player-card').dispatchEvent('click');

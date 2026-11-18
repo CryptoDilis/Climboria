@@ -7,7 +7,7 @@ import {TextEncoder} from 'node:util';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,configFailures=0,configGate=null,configBadSchema=false,refreshMode=null}={}){
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,configFailures=0,configGate=null,configBadSchema=false,refreshMode=null,guest=false}={}){
  const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses],ticketPayloads:[...ticketPayloads],configFailures,configCalls:0};
  const authListeners=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],speeches=[],calls=[],timers=[],created=[];
@@ -35,8 +35,15 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
    for(const fn of documentListeners.get(event.type)||[])fn(event);
    return true;
   }};
- const window={__climboriaGameReady:true,__climboriaCreatedHero:{name:'Explorer A',model:'Jarrell'},
-  __climboriaJarrellsPeak:{player:{x:0,y:9.55,z:-30,mode:'walk'}},
+ const window={__climboriaGameReady:true,__climboriaCreatedHero:{name:'Explorer A',model:'Jarrell'},__climboriaGuestMode:guest,
+  __climboriaJarrellsPeak:{
+   player:{x:0,y:9.55,z:-30,mode:'walk'},
+   resumeAtRoomPosition(pos){
+    if(!pos||!['x','y','z'].every(k=>Number.isFinite(pos[k])))return false;
+    Object.assign(this.player,{x:pos.x,y:pos.y,z:pos.z});
+    return true;
+   }
+  },
   __CLIMBORIA_GAME_PEERS:{
    add:x=>adds.push(x),move:(id,pos)=>moves.push({id,pos}),
    remove:id=>removes.push(id),punch:id=>punches.push(id),speak:(id,text)=>speeches.push({id,text})
@@ -188,7 +195,7 @@ test('visible room stage status distinguishes ticket, socket and Sanctuary spawn
  assert.ok(badge.textContent.includes('CONNECTING TO WORLD'));
  const ws=h.clients[0];ws.onopen();
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'spawn-pending');
- assert.ok(badge.textContent.includes('VERIFYING SANCTUARY SPAWN'));
+ assert.ok(badge.textContent.includes('VERIFYING SAVED POSITION'));
  assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false);
  const own='s_'+'c'.repeat(32);
  ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
@@ -268,109 +275,62 @@ test('invalid multiplayer settings schema fails closed with no retries or room s
  assert.equal(h.state.configCalls,1);
  assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false);
 });
-test('live Game maps the touch return event to its existing authorized local Digit1 teleport',()=>{
+test('live Game refuses the retired forced-Sanctuary mobile prompt',()=>{
  const game=readFileSync('game/play.html','utf8');
- assert.match(game,/document\.addEventListener\('climboria:room-return-to-sanctuary',[\s\S]{0,180}TP\[1\]\(\)/,
-  'Game must handle touch request with existing local Sanctuary teleport only');
+ assert.doesNotMatch(game,/climboria:room-return-to-sanctuary/);
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261119-nearby-speech-10/,
+ assert.match(game,/client-presence\.js\?v=20261119-game-hud-resume-11/,
   'production Game must load fresh Nearby Chat and remote size renderer');
 });
 
-test('mobile blocked-room touch button emits only a real player Sanctuary return action',async()=>{
+test('saved location does not show a Sanctuary prompt or fabricate peer admission',async()=>{
  const h=harness(true);
  h.window.__climboriaJarrellsPeak.player.x=70;
  await flush();
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'awaiting-sanctuary');
- const button=h.created.find(node=>node.id==='climboria-room-return-sanctuary');
- assert.ok(button,'Android users need an accessible touch return control instead of Digit1');
- assert.equal(button.textContent,'RETURN TO SANCTUARY');
- assert.equal(h.clients.length,0,'out-of-zone hero is not admitted or fabricated');
- button.click();
- assert.equal(h.events.at(-1),'climboria:room-return-to-sanctuary');
- // The real Game listener executes its existing TP[1] teleport on this event.
- // Reflect that action in this isolated client harness, not as a forged
- // server spawn or client-side network admission.
- h.window.__climboriaJarrellsPeak.player.x=0;
- assert.equal(h.runNextTimer(),1200);
- await flush();await waitFor(()=>h.clients.length===1);
- const ws=h.clients[0];ws.onopen();
- assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false,
-  'mobile return is a local control, not proof of server room admission');
- const own='s_'+'c'.repeat(32);
- ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
- ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,
-  position:{x:0,y:9.55,z:-30},peers:[]})});
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
- assert.ok(h.created.some(node=>node.id==='climboria-world-chat-toggle'));
- button.click();
- assert.equal(h.events.length,1,'return button must stop acting after joining');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'saved-location');
+ assert.equal(h.created.some(n=>n.id==='climboria-room-return-sanctuary'),false);
+ assert.equal(h.clients.length,0,'untrusted ticket without resume cannot spawn a remote hero');
+ assert.equal(h.calls.filter(x=>x.url.includes('/ticket')).length,1,
+  'a single signed-in ticket lookup can check for a server resume anchor');
+ assert.equal(h.created.some(n=>n.id==='climboria-world-chat-panel'),false);
 });
 
-test('a real Game teleport invalidates stale room position and requires fresh Sanctuary admission',async()=>{
+test('local waypoint change preserves player location and invalidates old room without forced return',async()=>{
  const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
  const ws=h.clients[0];ws.onopen();
- const own='s_'+'c'.repeat(32);
- ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
- ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,
-  position:{x:0,y:9.55,z:-30},peers:[peer]})});
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ const id='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[peer]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[peer]})});
  assert.equal(h.adds.length,1);
- const chatToggle=h.created.find(node=>node.id==='climboria-world-chat-toggle');
- assert.equal(chatToggle.style.display,'block');
- // A local game waypoint jump must not be forwarded as an impossible 28 m/s
- // room move or preserve ghosts at the previous room location.
+ const chat=h.created.find(el=>el.id==='climboria-world-chat-toggle');
  h.window.__climboriaJarrellsPeak.player.x=500;
  h.document.dispatchEvent({type:'climboria:local-teleport'});
- assert.equal(ws.readyState,3,'old authenticated socket is closed');
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'rejoining');
+ assert.equal(ws.readyState,3);
  assert.deepEqual(h.removes,[peer.id]);
- assert.equal(chatToggle.style.display,'none','old chat is hidden on local teleport');
- assert.equal(h.runNextTimer(),0,'the rejoin starts without waiting for a stale room timer');
- await flush();
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'awaiting-sanctuary');
- assert.equal(h.clients.length,1,'off-Sanctuary teleport cannot open a room socket');
- // Return via the real gameplay TP[1] location before entering a new room.
- h.window.__climboriaJarrellsPeak.player.x=0;
- assert.equal(h.runNextTimer(),1200);
- await flush();await waitFor(()=>h.clients.length===2);
- assert.equal(h.clients.length,2,'room issues a new authenticated session ticket');
- assert.equal(chatToggle.style.display,'none','ticket alone cannot enable World Chat');
- const next=h.clients[1];next.onopen();
- next.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
- next.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,
-  position:{x:0,y:9.55,z:-30},peers:[]})});
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
- assert.equal(chatToggle.style.display,'block','only trusted fresh spawn restores chat');
+ assert.equal(chat.style.display,'none');
+ assert.equal(h.window.__climboriaJarrellsPeak.player.x,500,'local saved position is not overwritten');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'saved-location');
+ assert.equal(h.created.some(el=>el.id==='climboria-room-return-sanctuary'),false);
+ assert.equal(h.clients.length,1,'debug waypoint cannot forge rejoin/remote players');
 });
-test('local teleport during a pending ticket invalidates old room admission',async()=>{
+test('local teleport aborts an unverified pending room ticket, without new fake admission',async()=>{
  let release;
  const gate=new Promise(resolve=>{release=resolve});
  const h=harness(true,{ticketGate:gate});await flush();
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'ticket-request');
  h.document.dispatchEvent({type:'climboria:local-teleport'});
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'rejoining');
- const originalTicket=h.calls.find(call=>call.url.endsWith('/ticket'));
- assert.equal(originalTicket.options.signal.aborted,true,
-  'teleport must abort the superseded room ticket instead of waiting 18 seconds');
- assert.equal(h.runNextTimer(),0,
-  'cancelled ticket deadline must not preempt immediate new admission');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'saved-location');
+ const original=h.calls.find(call=>call.url.endsWith('/ticket'));
+ assert.equal(original.options.signal.aborted,true);
  release();await flush();
- await waitFor(()=>h.clients.length===1);
- assert.equal(h.clients.length,1,'only the new valid ticket request may produce a socket');
- assert.equal(h.adds.length,0,'stale ticket cannot create remote players');
+ assert.equal(h.clients.length,0,'cancelled ticket must never create an old socket');
 });
-test('Game waypoint teleport explicitly emits the room-resync event after moving locally',()=>{
+test('Game waypoint travel publishes network-invalidation without Sanctuary coercion',()=>{
  const game=readFileSync('game/play.html','utf8');
- const start=game.indexOf('function tp(x,z,yaw){');
- assert.ok(start>=0,'waypoint teleport function must exist');
- assert.ok(game.slice(start,start+600).includes("document.dispatchEvent(new Event('climboria:local-teleport'))"),
-  'all waypoint keys and touch Sanctuary return must notify authenticated room resync');
- assert.ok(game.includes('client-presence.js?v=20261119-nearby-speech-10'),
-  'production Game must avoid caching the older room client');
+ assert.ok(game.includes("document.dispatchEvent(new Event('climboria:local-teleport'))"));
+ assert.equal(game.includes('climboria:room-return-to-sanctuary'),false);
 });
-
 test('server close 4001 shows a truthful same-account warning instead of WebSocket eviction loops',async()=>{
  const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
  const ws=h.clients[0];ws.onopen();
@@ -435,51 +395,24 @@ test('real authenticated WebSocket messages are required before peers appear',as
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'offline');
 });
 
-test('staged duel panel is interactive only after authenticated real peers, never enables damage',async()=>{
- const h=harness(true);await flush();
- await waitFor(()=>h.clients.length===1);
- assert.equal(h.clients.length,1);
- const socket=h.clients[0];socket.onopen();
- socket.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'c'.repeat(32),peers:[peer]})});
- socket.onmessage({data:JSON.stringify({type:'spawn-accepted',id:'s_'+'c'.repeat(32),position:{x:0,y:9.55,z:-30},peers:[peer]})});
- const toggle=h.created.find(node=>node.id==='climboria-duel-toggle');
- const panel=h.created.find(node=>node.id==='climboria-duel-panel');
- assert.ok(toggle&&panel,'DUELS toggle requires server-verified initial spawn');
- const buttons=()=>{const result=[];const visit=node=>{
-  if(node.tag==='button')result.push(node);
-  for(const child of node.children||[])visit(child);
- };visit(panel);return result};
- toggle.click();
- assert.equal(panel.style.display,'block');
- buttons().find(node=>node.textContent==='CHALLENGE').click();
- assert.equal(socket.sent.at(-1).type,'duel-request');
- assert.equal(socket.sent.at(-1).targetId,peer.id);
- // A peer may disconnect after the button click but before server processing:
- // do not leave the UI stuck in a "Waiting..." state after a rejection.
- socket.onmessage({data:JSON.stringify({type:'rejected',reason:'invalid-or-unspawned-peer'})});
- assert.ok(buttons().some(node=>node.textContent==='CHALLENGE'),
-  'server denial must clear optimistic duel request and allow future choices');
- buttons().find(node=>node.textContent==='CHALLENGE').click();
- assert.equal(socket.sent.at(-1).targetId,peer.id);
- socket.onmessage({data:JSON.stringify({type:'duel-request-sent',targetId:peer.id,combatDamageEnabled:false})});
- socket.onmessage({data:JSON.stringify({type:'duel-response-received',fromId:peer.id,accepted:true,combatDamageEnabled:false})});
- buttons().find(node=>node.textContent==='CANCEL DUEL').click();
- assert.equal(socket.sent.at(-1).type,'duel-cancel');
- socket.onmessage({data:JSON.stringify({type:'duel-cancelled',fromId:peer.id,combatDamageEnabled:false})});
- // A forged message claiming live damage must not produce an Accept control.
- socket.onmessage({data:JSON.stringify({type:'duel-invitation',fromId:peer.id,combatDamageEnabled:true})});
- assert.equal(buttons().some(node=>node.textContent==='ACCEPT'),false);
- socket.onmessage({data:JSON.stringify({type:'duel-invitation',fromId:peer.id,combatDamageEnabled:false})});
- buttons().find(node=>node.textContent==='ACCEPT').click();
- assert.equal(socket.sent.at(-1).type,'duel-response');
- assert.equal(socket.sent.at(-1).challengerId,peer.id);
- assert.equal(socket.sent.at(-1).accepted,true);
- socket.onmessage({data:JSON.stringify({type:'duel-response-sent',challengerId:peer.id,accepted:true,combatDamageEnabled:false})});
- assert.ok(panel.children.some(node=>node.textContent.includes('CONSENT ONLY')));
- socket.close();
- assert.equal(toggle.style.display,'none','room disconnect hides invitation UI');
+test('no Duel invitation UI: authenticated explorers can attack any time as cosmetic animation',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];ws.onopen();
+ const own='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[peer]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,position:{x:0,y:9.55,z:-30},peers:[peer]})});
+ assert.equal(h.created.some(node=>node.id==='climboria-duel-toggle'),false);
+ assert.equal(h.created.some(node=>node.id==='climboria-duel-panel'),false);
+ ws.onmessage({data:JSON.stringify({type:'duel-invitation',fromId:peer.id,combatDamageEnabled:false})});
+ assert.equal(h.created.some(node=>node.id?.startsWith('climboria-duel')),false,
+  'unsolicited or legacy duel packets must never recreate the deleted UI');
+ const before=ws.sent.length;
+ h.document.dispatchEvent({type:'climboria:visual-punch'});
+ assert.equal(ws.sent.length,before+1);
+ assert.equal(ws.sent.at(-1).type,'punch','attack animation needs no duel invitation');
+ assert.equal(ws.sent.some(m=>m.type==='duel-request'||m.type==='attack'),false,
+  'client never claims unsafely authorized hit or damage');
 });
-
 
 test('World Chat is room-gated, server-confirmed, safe as text and cleared on disconnect',async()=>{
  const offline=harness(false);await flush();
@@ -496,9 +429,13 @@ test('World Chat is room-gated, server-confirmed, safe as text and cleared on di
  const toggle=h.created.find(node=>node.id==='climboria-world-chat-toggle');
  const panel=h.created.find(node=>node.id==='climboria-world-chat-panel');
  assert.ok(toggle&&panel,'server-accepted initial spawn creates World Chat');
- assert.ok(panel.children[0].textContent.includes('2 ONLINE'));
+ assert.equal(panel.children[0].textContent,'WORLD CHAT','online count is in top HUD badge only');
+ assert.equal(panel.style.display,'block','compact World Chat starts visible without any click');
+ assert.equal(toggle.textContent,'HIDE CHAT');
  toggle.click();
- assert.equal(panel.style.display,'block');
+ assert.equal(panel.style.display,'none','user can collapse visible chat');
+ toggle.click();
+ assert.equal(panel.style.display,'block','user can reopen compact chat');
  const log=panel.children[1],controls=panel.children[2],notice=panel.children[3];
  const input=controls.children[0],sendButton=controls.children[1];
  assert.equal(log.children.length,0,'no invented messages before server echo');
@@ -540,7 +477,7 @@ test('World Chat is room-gated, server-confirmed, safe as text and cleared on di
  assert.equal(input.value,'','only a real trusted self echo confirms delivery');
  assert.equal(log.children.length,2,'transcript contains only authenticated server echoes');
  socket.onmessage({data:JSON.stringify({type:'player-left',id:peer.id})});
- assert.ok(panel.children[0].textContent.includes('1 ONLINE'));
+ assert.equal(panel.children[0].textContent,'WORLD CHAT');
  socket.close();
  assert.equal(toggle.style.display,'none');
  assert.equal(panel.style.display,'none');
@@ -1046,79 +983,45 @@ test('logout during pending WebSocket admission cancels timer without reconnect'
  assert.equal(h.adds.length,0,'stale socket must not add ghost peer models');
 });
 
-test('real hero outside Sanctuary must return before issuing a room ticket, then reconnects',async()=>{
- const h=harness(true);
+test('out-of-Sanctuary registered hero only rejoins with authenticated server resume anchor',async()=>{
+ const pos={x:70,y:9.55,z:-30};
+ const h=harness(true,{ticketPayloads:[{ticket:'b'.repeat(64),protocol:'climboria-v1',
+  ttlSeconds:30,resumePosition:pos}]});
  h.window.__climboriaJarrellsPeak.player.x=70;
- await flush();
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'awaiting-sanctuary');
- assert.equal(h.clients.length,0);
- assert.equal(h.calls.filter(c=>c.url.includes('/ticket')).length,0,
-  'out-of-Sanctuary initial position must never consume a room ticket');
- assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false);
- h.window.__climboriaJarrellsPeak.player.x=0;
- assert.equal(h.runNextTimer(),1200);
  await flush();await waitFor(()=>h.clients.length===1);
- assert.equal(h.clients.length,1);
- const socket=h.clients[0];socket.onopen();
- assert.equal(socket.sent.at(-1).type,'spawn');
- const id='s_'+'c'.repeat(32);
- socket.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
- socket.onmessage({data:JSON.stringify({type:'spawn-accepted',id,
-  position:{x:0,y:9.55,z:-30},peers:[]})});
+ const ws=h.clients[0];ws.onopen();
+ assert.equal(ws.sent.at(-1).type,'spawn');
+ assert.equal(ws.sent.at(-1).position.x,70);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:'s_'+'c'.repeat(32),peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:'s_'+'c'.repeat(32),position:pos,peers:[]})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
- assert.ok(h.created.some(el=>el.id==='climboria-world-chat-toggle'));
+ assert.equal(h.created.some(el=>el.id==='climboria-room-return-sanctuary'),false);
 });
-
-test('moving outside Sanctuary while room ticket is pending cannot spoof an initial spawn',async()=>{
+test('moving away while ticket without resume is pending cannot forge initial spawn',async()=>{
  let release;
  const gate=new Promise(resolve=>{release=resolve});
- const h=harness(true,{ticketGate:gate});
- await flush();
- assert.ok(h.calls.some(c=>c.url.endsWith('/ticket')));
+ const h=harness(true,{ticketGate:gate});await flush();
  h.window.__climboriaJarrellsPeak.player.x=100;
- release();
- await flush();await waitFor(()=>h.clients.length===1);
- const old=h.clients[0];old.onopen();
- assert.equal(old.sent.length,0,'invalid first position must not be sent');
- assert.equal(old.readyState,3);
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'awaiting-sanctuary');
- h.window.__climboriaJarrellsPeak.player.x=0;
- assert.equal(h.runNextTimer(),1200);
- await flush();await waitFor(()=>h.clients.length===2);
- assert.equal(h.clients.length,2,'real return to Sanctuary must allow fresh ticket and socket');
+ release();await flush();
+ assert.equal(h.clients.length,0);
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'saved-location');
+ assert.equal(h.created.some(el=>el.id==='climboria-world-chat-panel'),false);
 });
-
-test('unconfirmed spawn cannot advertise connection, chat, or duel UI',async()=>{
- const h=harness(true);await flush();
- await waitFor(()=>h.clients.length===1);
- const socket=h.clients[0];socket.onopen();
+test('unconfirmed or server-rejected spawn cannot advertise online status, World Chat or Duel UI',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];ws.onopen();
  const id='s_'+'c'.repeat(32);
- socket.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connecting');
- assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false,
-  'ticket alone is insufficient for a functional World Chat');
+ assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false);
  assert.equal(h.created.some(el=>el.id==='climboria-duel-toggle'),false);
- socket.onmessage({data:JSON.stringify({type:'rejected',reason:'invalid-initial-spawn'})});
+ ws.onmessage({data:JSON.stringify({type:'rejected',reason:'invalid-initial-spawn'})});
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'spawn-rejected');
- assert.equal(socket.readyState,3,'rejected first spawn must close the unusable socket');
- socket.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
- assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false,
-  'late packets from the rejected socket cannot authorize World Chat');
- assert.equal(h.runNextTimer(),1200,'rejected admission must schedule a safe retry');
- await flush();
- await waitFor(()=>h.clients.length===2);
- const fresh=h.clients[1];fresh.onopen();
- fresh.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
- fresh.onmessage({data:JSON.stringify({type:'spawn-accepted',
-  id:'s_'+'d'.repeat(32),position:{x:0,y:9.55,z:-30},peers:[]})});
- assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false,
-  'wrong second session ID cannot authorize World Chat');
- fresh.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
- assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
- assert.ok(h.created.some(el=>el.id==='climboria-world-chat-toggle'));
- assert.ok(h.created.some(el=>el.id==='climboria-duel-toggle'));
+ assert.equal(ws.readyState,3);
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false);
+ assert.equal(h.clients.length,1,'rejected spawn must not rejoin automatically from untrusted location');
 });
-
 test('welcome and provisional peer events cannot render ghost avatars before spawn admission',async()=>{
  const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
  const ws=h.clients[0];ws.onopen();const own='s_'+'c'.repeat(32);
@@ -1227,4 +1130,14 @@ test('older live Game Worker cannot accidentally advertise a broken Nearby chann
  assert.equal(ws.sent.at(-1).type,'world-chat','compatibility gate cannot break public World Chat');
  ws.onmessage({data:JSON.stringify({type:'nearby-chat',id:peer.id,name:peer.name,text:'not enabled',at:1730000000000})});
  assert.equal(h.speeches.length,0,'legacy Worker cannot generate a fake nearby bubble');
+});
+
+test('Game guest exploration makes no config request, room ticket, socket or fake World Chat',async()=>{
+ const h=harness(true,{guest:true,initialSession:null});
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'guest');
+ assert.equal(h.clients.length,0);
+ assert.equal(h.calls.length,0,'guest mode must not fetch multiplayer configuration or tickets');
+ assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false);
+ assert.equal(h.created.some(el=>el.id==='climboria-world-chat-panel'),false);
 });

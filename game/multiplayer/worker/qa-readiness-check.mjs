@@ -19,7 +19,7 @@ const CONFIG=new URL('../client-config.json',import.meta.url);
 
 export async function verifyReadOnlyGameQaStaging({
  loadConfig=()=>readFile(CONFIG,'utf8'),
- check=verifyGameRoomPreflight
+ check=verifyGameRoomPreflight,requireNearbyChat=false
 }={}){
  let config;
  try{
@@ -30,7 +30,9 @@ export async function verifyReadOnlyGameQaStaging({
   throw Error('Public Game gateway configuration is not approved');
  for(const kind of ['health','ready']){
   // verifyGameRoomPreflight checks HTTP status AND all expected fields.
-  const ready=await check(HOST,kind,{deadlineMs:15000});
+  const opts={deadlineMs:15000};
+  if(kind==='health'&&requireNearbyChat===true)opts.requireNearbyChat=true;
+  const ready=await check(HOST,kind,opts);
   if(ready!==true)throw Error('Game room '+kind+' readiness verification failed');
  }
  return Object.freeze({publicMultiplayer:'enabled-registered-only',gameRoomReadiness:'pass'});

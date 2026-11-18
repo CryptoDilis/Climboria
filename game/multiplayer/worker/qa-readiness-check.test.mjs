@@ -18,6 +18,14 @@ test('checks only the approved Game host, health then DO readiness, with deadlin
   {host:'https://rooms.climboria.fun/',kind:'ready',deadline:15000}
  ]);
 });
+test('strict post-deploy check requires Nearby Chat only on verified health stage',async()=>{
+ const seen=[];
+ await verifyReadOnlyGameQaStaging({loadConfig:async()=>ENABLED,requireNearbyChat:true,
+  check:async(host,kind,opts)=>{seen.push({host,kind,opts});return true}});
+ assert.equal(seen.length,2);
+ assert.equal(seen[0].opts.requireNearbyChat,true);
+ assert.equal(seen[1].opts.requireNearbyChat,undefined);
+});
 test('rejects disabled, unapproved or malformed public Game config without contacting the host',async()=>{
  for(const config of [
   {schema:1,enabled:true,endpoint:'https://unapproved.invalid/'},

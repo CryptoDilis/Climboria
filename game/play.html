@@ -47,11 +47,30 @@ body.mobile-device.climboria-portrait #climboria-punch-button{display:none!impor
 #world-map-toggle{display:none}
 #world-map-panel{position:fixed;pointer-events:auto!important;z-index:1000!important;right:0!important;top:0!important;margin:0!important;width:240px;box-sizing:border-box;padding:9px;border:1px solid #d8b46b99;border-top:0;border-right:0;border-radius:0 0 0 13px;background:#080d14ed;box-shadow:0 12px 40px #000b;display:block;transition:width .2s}#world-map-panel.map-expanded{width:min(340px,calc(100vw - 32px))}
 #expedition-settings-toggle{position:fixed;display:grid;place-items:center;pointer-events:auto;z-index:1205;top:10px;right:250px;width:40px;height:40px;border:1px solid #d8b46b99;border-radius:10px;background:#080d14ed;color:#ffe3a3;font-size:22px;cursor:pointer;box-shadow:0 8px 24px #0008}
-#expedition-settings-panel{position:fixed;pointer-events:auto;z-index:1206;top:58px;right:250px;width:min(270px,calc(100vw - 24px));padding:14px;border:1px solid #d8b46b99;border-radius:12px;background:#080d14f2;color:#f4ecd8;box-shadow:0 12px 40px #000b;font:12px system-ui}
+#expedition-settings-panel{position:fixed;pointer-events:auto;z-index:1700;top:58px;right:250px;width:min(270px,calc(100vw - 24px));padding:14px;border:1px solid #d8b46b99;border-radius:12px;background:#080d14f2;color:#f4ecd8;box-shadow:0 12px 40px #000b;font:12px system-ui}
 #expedition-settings-panel strong{display:block;color:#ffe3a3;letter-spacing:.12em;margin-bottom:12px}
 #expedition-settings-panel button{display:block;width:100%;padding:10px;margin:8px 0;border:1px solid #9b7b4c;background:#18232c;color:#f4ecd8;border-radius:7px;font-weight:800;cursor:pointer}
 #expedition-settings-panel label{display:flex;justify-content:space-between;gap:8px;margin-top:14px;color:#ffe3a3;font-weight:700}
-#climboria-music-volume{width:100%;accent-color:#d8b46b;margin:12px 0}#world-map-panel strong{font-size:10px}#world-map{width:100%;height:auto;aspect-ratio:3/2}
+#climboria-music-volume,#climboria-effects-volume{width:100%;accent-color:#d8b46b;margin:10px 0}
+/* Game-only compact multiplayer HUD: real server count, never an invented number. */
+#climboria-room-status[data-state="connected"]{
+ color:#e4fbe9!important;border-color:#297c55!important;
+ background:#081d15ef!important;box-shadow:0 0 0 1px #1c5b37,0 0 18px #21cc7440!important;
+ white-space:nowrap;letter-spacing:.04em;
+}
+#climboria-room-status[data-state="connected"]::first-letter{
+ color:#3bff93;text-shadow:0 0 3px #91ffc0,0 0 9px #2aff88,0 0 15px #00cc68;
+}
+@media(max-width:900px){
+ #climboria-room-status{top:8px!important;right:210px!important;bottom:auto!important;
+  max-width:min(145px,32vw)!important;font-size:9px!important;padding:5px 7px!important;
+  overflow-wrap:anywhere}
+ #climboria-room-status[data-state="connected"]{white-space:nowrap;overflow:visible}
+}
+@media(max-width:700px){
+ #climboria-room-status{right:205px!important;max-width:130px!important}
+}
+#world-map-panel strong{font-size:10px}#world-map{width:100%;height:auto;aspect-ratio:3/2}
 #world-map-panel strong{font:12px system-ui;letter-spacing:.12em;color:#ffe3a3}
 #world-map{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:3/2;background:#17251c;border:1px solid #ffffff25;border-radius:8px;margin-top:9px}
 #world-map-legend{font:10px/1.6 system-ui;color:#c6c0b3;margin-top:7px}
@@ -192,14 +211,23 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>DAMAGE</span><span id="damage-value">5</span></div><div class="stat-track"><div class="stat-fill" id="damage-fill" style="width:25%;background:#c66b54"></div></div></div>
 <div id="summit-chest-status" role="status" aria-live="polite"><span>JARRELL’S PEAK · SUMMIT CHEST</span><strong id="summit-chest-countdown">READY</strong><small>HIGH-TIER LOOT · 15-MINUTE RESPAWN</small></div>
 <button id="world-map-toggle" type="button">WORLD MAP · M</button><button id="climboria-punch-button" data-mobile-action="punch" type="button" aria-label="Attack animation (PvP damage not enabled)" title="Attack · Q (walking)"><span class="attack-control-label">ATTACK</span></button>
-<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="time-cycle-control" type="button">TIME OF DAY · GOLDEN HOUR</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
+<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><label for="climboria-music-volume">MUSIC <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><label for="climboria-effects-volume">SOUND EFFECTS <span id="climboria-effects-value">55%</span></label><input id="climboria-effects-volume" type="range" min="0" max="100" value="55" step="1"><div id="expedition-connected-account" role="status" style="font:700 11px/1.5 system-ui;color:#d1dbc6;padding:10px 0;border-top:1px solid #ffffff20">ACCOUNT · CHECKING…</div><button id="expedition-return-menu" type="button">RETURN TO MENU</button><button id="expedition-settings-close" type="button">CLOSE</button></section>
 
-<div id="help">WASD move · Shift sprint · Space jump · Q attack · Mouse look (drag if not locked)<br>E interact · T time · Weather changes automatically every 15 min · V return to walk<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
+<div id="help">WASD move · Shift sprint · Space jump · Q attack · Mouse look (drag if not locked)<br>E interact · Weather and daylight cycle automatically · V return to walk<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
 
 <script>
 /* Client-side preflight: do not boot the 3D world before a named hero exists. */
 (function(){
  var valid=false,hero=null;
+ // Explicit guest URL uses only an in-memory starter character, never a
+ // writable Hero Creation record or an anonymous Supabase account.
+ var guest=new URLSearchParams(location.search).get('guest')==='1';
+ if(guest){
+  window.__climboriaGuestMode=true;
+  window.__climboriaCreatedHero={name:'Guest Explorer',model:'Adventurer',guest:true};
+  document.documentElement.dataset.climboriaGuest='exploring';
+  return;
+ }
  try{
   hero=JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null');
   valid=!!hero&&['Adventurer','Jarrell','Lheiz'].includes(hero.model)&&typeof hero.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(hero.name)&&/[A-Za-z0-9]/.test(hero.name);
@@ -450,7 +478,10 @@ const TOD=[
  {n:'Dusk',el:.04,az:4.1,top:'#1f2a5a',hor:'#8a5a78',sun:'#ff8f6a',si:1.3,hi:.42,nt:.2},
  {n:'Moonlit night',el:.5,az:5.2,top:'#050a1c',hor:'#162340',sun:'#8fa9ff',si:.6,hi:.3,nt:1}
 ].map(t=>({...t,top:L(t.top),hor:L(t.hor),sun:L(t.sun)}));
-let todI=0,wx=0,flash=0,thT=5;const weatherNames=['Clear','Rain','Thunderstorm'];
+const TIME_OF_DAY_INTERVAL_MS=900000;
+let todI=Math.floor(Date.now()/TIME_OF_DAY_INTERVAL_MS)%TOD.length,wx=0,flash=0,thT=5;
+const weatherNames=['Clear','Rain','Thunderstorm'];
+function advanceAutomaticDaylight(){todI=Math.floor(Date.now()/TIME_OF_DAY_INTERVAL_MS)%TOD.length;}
 const WEATHER_INTERVAL_MS=900000,WEATHER_STORAGE_KEY='climboria_jarrell_weather_v1';
 let weatherElapsedMs=0,weatherVisual=0,weatherSaveMs=0;
 let weatherLastFrameTime=performance.now();
@@ -509,7 +540,7 @@ function automaticWeatherAudit(){
   notReadyElapsed:visibleWeatherDeltaMs(1500,1000,false,false),
   manualWeatherControlMissing:!document.getElementById('weather-cycle-control'),restoredWeatherIndex:wx,storedElapsedMs:weatherElapsedMs};
 }
-const cur={top:TOD[0].top.clone(),hor:TOD[0].hor.clone(),sun:TOD[0].sun.clone(),si:2.2,hi:.55,nt:0,el:.17,az:2.2};
+const cur={top:TOD[todI].top.clone(),hor:TOD[todI].hor.clone(),sun:TOD[todI].sun.clone(),si:TOD[todI].si,hi:TOD[todI].hi,nt:TOD[todI].nt,el:TOD[todI].el,az:TOD[todI].az};
 const sunDir=new T3.Vector3();
 /* ---------- sky ---------- */
 const skyU={uTop:{value:cur.top},uHor:{value:cur.hor},uSun:{value:sunDir},uSunC:{value:cur.sun},uNight:{value:0},uT:{value:0}};
@@ -1783,6 +1814,55 @@ document.getElementById('expedition-settings-toggle').addEventListener('click',e
 document.getElementById('expedition-settings-close').addEventListener('click',()=>settingsPanel.style.display='none');
 const volumeControl=document.getElementById('climboria-music-volume'),volumeValue=document.getElementById('climboria-volume-value');
 volumeControl.addEventListener('input',()=>{climboriaMusic.volume=Number(volumeControl.value)/100;volumeValue.textContent=volumeControl.value+'%';});
+let gameEffectsVolume=.55,effectsAudioContext=null;
+document.getElementById('climboria-effects-volume').addEventListener('input',event=>{
+ gameEffectsVolume=Number(event.target.value)/100;
+ document.getElementById('climboria-effects-value').textContent=event.target.value+'%';
+});
+function playGameEffect(kind){
+ if(gameEffectsVolume<=0)return;
+ try{
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)return;
+  effectsAudioContext??=new AudioContextClass();
+  if(effectsAudioContext.state==='suspended')void effectsAudioContext.resume();
+  const now=effectsAudioContext.currentTime,osc=effectsAudioContext.createOscillator(),gain=effectsAudioContext.createGain();
+  osc.type=kind==='chest'?'sine':'triangle';
+  osc.frequency.setValueAtTime(kind==='chest'?610:180,now);
+  osc.frequency.exponentialRampToValueAtTime(kind==='chest'?820:95,now+.11);
+  gain.gain.setValueAtTime(Math.max(.0001,gameEffectsVolume*.035),now);
+  gain.gain.exponentialRampToValueAtTime(.0001,now+.12);
+  osc.connect(gain).connect(effectsAudioContext.destination);
+  osc.onended=()=>{osc.disconnect();gain.disconnect()};
+  osc.start(now);osc.stop(now+.13);
+ }catch{}
+}
+document.addEventListener('climboria:chest',()=>playGameEffect('chest'));
+async function showConnectedGameAccount(){
+ const el=document.getElementById('expedition-connected-account');
+ if(window.__climboriaGuestMode){el.textContent='ACCOUNT · GUEST (NOT CONNECTED)';return}
+ const auth=window.__CLIMBORIA_GAME_SAVE_CLIENT?.auth;
+ if(!auth?.getUser){el.textContent='ACCOUNT · NOT CONNECTED';return}
+ try{
+  const {data,error}=await auth.getUser(),user=data?.user;
+  if(error||!user?.id||user.is_anonymous===true||user.app_metadata?.provider==='anonymous'){
+   el.textContent='ACCOUNT · NOT CONNECTED';return;
+  }
+  const provider=String(user.app_metadata?.provider||'registered').toUpperCase().slice(0,20);
+  el.textContent='CONNECTED ACCOUNT · '+provider+' · …'+String(user.id).slice(-6);
+ }catch{el.textContent='ACCOUNT · NOT CONNECTED'}
+}
+document.getElementById('expedition-settings-toggle').addEventListener('click',()=>{void showConnectedGameAccount()});
+document.getElementById('expedition-return-menu').addEventListener('click',async()=>{
+ window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.saveLocalPosition?.();
+ try{
+  await Promise.race([
+   Promise.resolve(window.__CLIMBORIA_GAME_SAVE?.saveNow?.(true)),
+   new Promise(resolve=>setTimeout(resolve,1500))
+  ]);
+ }catch{}
+ location.assign('./index.html');
+});
 function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;P.mode='walk';
@@ -1799,13 +1879,8 @@ function tp(x,z,yaw){
 }
 const TP={1:()=>tp(0,-30,0),2:()=>tp(POI.summit.px+6,POI.summit.pz+6,Math.PI*.75),3:()=>{const c=POI.cave;tp(c.x+c.dir.x*45,c.z+c.dir.z*45,Math.atan2(c.dir.x,c.dir.z))},
  4:()=>tp(RICE.x-60,RICE.z+40,Math.PI*.6),5:()=>tp(100,1000,Math.PI),6:()=>tp(-960,0,Math.PI/2),7:()=>tp(-170,160,0),8:()=>tp(-150,-120,Math.PI*.6)};
-// The authenticated room client can ask for the same local Sanctuary
-// teleport as Digit1 when a registered player cannot join from elsewhere.
-// An explicit mobile tap is required. No server/player identity is faked.
-document.addEventListener('climboria:room-return-to-sanctuary',()=>{
- if(!window.__climboriaGameReady||P.mode!=='walk')return;
- TP[1]();
-});
+// No forced Sanctuary return: saved locations are respected. Initial room
+// admission is validated against the registered user's trusted server anchor.
 let punchEndAt=0,punchLastAt=-100000;
 const PUNCH_COST=5,PUNCH_COOLDOWN_MS=900,PUNCH_DURATION_MS=650;
 // Local punch animation only. Trusted backend required for PvP hit/damage and loot.
@@ -1817,6 +1892,7 @@ function requestVisualPunch(){
  // Start the authored animation at input time, not at the next WebGL tick.
  // A busy software renderer must not silently drop a 650ms ATTACK input.
  if(assetHero&&assetMixer&&assetActions.length)chooseAssetAnimation('punch');
+ playGameEffect('attack');
  document.documentElement.dataset.climboriaPunch='visual-only';
  document.dispatchEvent(new Event('climboria:visual-punch'));
  return true;
@@ -1835,7 +1911,7 @@ addEventListener('keydown',e=>{
  keys[e.code]=true;
  if(['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
  
- if(!e.repeat&&e.code=='KeyT'){todI=(todI+1)%TOD.length;syncEnvironmentControls()}if(!e.repeat&&e.code=='KeyR'&&new URLSearchParams(location.search).has('debug-weather')){wx=(wx+1)%weatherNames.length;weatherElapsedMs=0;persistWeather()}if(e.code=='KeyE'&&!e.repeat)interact();
+ if(e.code==='KeyE'&&!e.repeat)interact();
  if(e.code==='KeyQ'&&!e.repeat)requestVisualPunch();
  if(e.code=='KeyV'){P.mode='walk';camY=null;free(true);document.exitPointerLock&&document.exitPointerLock()}
  const m=e.code.match(/^Digit([1-8])$/);if(m)TP[m[1]]();
@@ -2043,10 +2119,55 @@ function renderInventory(){
   const note=document.createElement('p');note.textContent=inventory.length+' / 50 backpack slots used';note.style.cssText='color:#aeb4b4;font-size:11px;margin:8px 0';invPanel.append(note);
 }
 function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else if(inventory.length<50)inventory.push({name,qty});else{toast('Backpack full · 50/50 slots');return}saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
+const GAME_LOCAL_POSITION_PREFIX='climboria_jarrell_position_v1:user:';
+let localPositionUserId=null,localPositionReady=false;
+function restoreExplorerPosition(position){
+ const x=Number(position?.x),z=Number(position?.z),yaw=Number(position?.yaw??P.yaw);
+ if(![x,z,yaw].every(Number.isFinite)||Math.abs(x)>100000||Math.abs(z)>100000)return false;
+ // Preserve the actual Y level for caves, docks and the beach. Older saves
+ // containing only X/Z still fall back to the current procedural ground.
+ const savedY=position?.y==null?NaN:Number(position.y);
+ P.x=x;P.z=z;P.y=Number.isFinite(savedY)&&savedY>=-200&&savedY<=2000?
+  savedY:groundAt(x,z)+1.75;P.yaw=yaw;P.vy=0;
+ P.mode='walk';P.moveTarget=null;P.swim=false;P.swimDepth=0;P.waterBodyId=null;
+ cameraYaw=yaw;cameraPitch=-.08;camY=null;free(true);
+ cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.8,P.z+Math.cos(cameraYaw)*targetCameraDistance);
+ cam.lookAt(P.x,P.y+.9,P.z);updateChunks(P.x,P.z,120);
+ return true;
+}
 window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
+ activatePositionSave(userId){
+  if(userId&&userId===localPositionUserId&&!window.__climboriaGuestMode)localPositionReady=true;
+ },
+ saveLocalPosition(){
+  if(!localPositionReady||!localPositionUserId||window.__climboriaGuestMode||P.mode!=='walk')return false;
+  const position={x:P.x,y:P.y,z:P.z,yaw:P.yaw};
+  if(![position.x,position.z,position.yaw].every(Number.isFinite)||Math.abs(P.x)>100000||Math.abs(P.z)>100000)return false;
+  try{
+   localStorage.setItem(GAME_LOCAL_POSITION_PREFIX+localPositionUserId,
+    JSON.stringify({version:1,at:Date.now(),position}));
+   return true;
+  }catch{return false}
+ },
+ restoreLocalPosition(userId,cloudSavedAt){
+  if(!userId||userId!==localPositionUserId||window.__climboriaGuestMode||
+     window.ENDLESS_WILDS?.roomResumeVerified)return false;
+  try{
+   const saved=JSON.parse(localStorage.getItem(GAME_LOCAL_POSITION_PREFIX+userId)||'null');
+   const cloudTime=cloudSavedAt?Date.parse(cloudSavedAt):0;
+   if(saved?.version!==1||!Number.isFinite(saved.at)||saved.at>Date.now()+60000||
+      Date.now()-saved.at>30*86400000||
+      (Number.isFinite(cloudTime)&&saved.at<=cloudTime))return false;
+   return restoreExplorerPosition(saved.position);
+  }catch{return false}
+ },
+
   // Backpack snapshots are partitioned by authenticated account. Only an unscoped
   // local guest backpack may be adopted by the first account with no cloud row.
   setUserScope(userId, migrateUnscopedInventory = false) {
+    if(localPositionUserId&&localPositionUserId!==userId)this.saveLocalPosition();
+    if(localPositionUserId!==userId)localPositionReady=false;
+    localPositionUserId=userId||null;
     const previousKey = inventoryStorageKey;
     const previousItems = inventory.map(item => ({ name: item.name, qty: item.qty }));
     const targetKey = userId ? INVENTORY_KEY + ':user:' + userId : INVENTORY_KEY;
@@ -2076,7 +2197,7 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
     if (![x, z, yaw].every(Number.isFinite) || Math.abs(x) > 100000 || Math.abs(z) > 100000) return null;
     return {
       version: 1,
-      player: { x, z, yaw },
+      player: { x, y: Number.isFinite(P.y)?P.y:null, z, yaw },
       inventory: inventory.slice(0, 50).map(item => ({
         name: String(item.name).slice(0, 64),
         qty: Math.max(1, Math.min(9999, Math.floor(Number(item.qty) || 1)))
@@ -2085,30 +2206,7 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
   },
   restore(data) {
     if (!data || typeof data !== 'object' || data.version !== 1) return false;
-    const x = Number(data.player?.x), z = Number(data.player?.z), yaw = Number(data.player?.yaw);
-    if ([x, z, yaw].every(Number.isFinite) && Math.abs(x) <= 100000 && Math.abs(z) <= 100000) {
-      P.x = x;
-      P.z = z;
-      P.y = groundAt(P.x, P.z) + 1.75;
-      P.yaw = yaw;
-      P.vy = 0;
-      P.mode = 'walk';
-      P.moveTarget = null;
-      P.swim = false;
-      P.swimDepth = 0;
-      P.waterBodyId = null;
-      cameraYaw = P.yaw;
-      cameraPitch = -0.08;
-      camY = null;
-      free(true);
-      cam.position.set(
-        P.x + Math.sin(cameraYaw) * targetCameraDistance,
-        P.y + 2.8,
-        P.z + Math.cos(cameraYaw) * targetCameraDistance
-      );
-      cam.lookAt(P.x, P.y + 0.9, P.z);
-      updateChunks(P.x, P.z, 120);
-    }
+    if(!window.ENDLESS_WILDS?.roomResumeVerified)restoreExplorerPosition(data.player);
 
     const savedInventory = Array.isArray(data.inventory)
       ? data.inventory
@@ -2123,6 +2221,8 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
     return true;
   }
 };
+setInterval(()=>window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.saveLocalPosition?.(),5000);
+window.addEventListener('pagehide',()=>window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.saveLocalPosition?.());
 function toggleInventory(){renderInventory();const opening=invPanel.style.display==='none';invPanel.style.display=opening?'block':'none';if(opening)mapPanel.classList.remove('map-expanded')}
 document.getElementById('player-card').addEventListener('click',toggleInventory);
 
@@ -2768,14 +2868,13 @@ function chestDistributionAudit(){
 }
 function interact(){if(P.mode!='walk')return;
  if(recoverDeathLoot())return;
- for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){c.open=true;c.t=chestRespawnDelay(c);c.g.visible=false;const reward=c.reward;addInventoryItem(reward.item,1);toast('Chest opened · '+reward.rarity.toUpperCase()+' · '+reward.item);emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});return}
+ for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){playGameEffect('chest');c.open=true;c.t=chestRespawnDelay(c);c.g.visible=false;const reward=c.reward;addInventoryItem(reward.item,1);toast('Chest opened · '+reward.rarity.toUpperCase()+' · '+reward.item);emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});return}
  for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){if(P.fish>0)return;P.fish=2+Math.random()*4;P.fishSource=f.waterBodyId||'open_sea';toast('Line cast at '+f.label+'…')}else{toast(f.label);emit(f.type,{})}return}}
 P.fish=0;
 /* weather: clear / rain / thunderstorm */
 const RN=MOB?500:1100,rp=new Float32Array(RN*6),rox=new Float32Array(RN),roz=new Float32Array(RN),rdy=new Float32Array(RN);for(let i=0;i<RN;i++){rox[i]=(Math.random()-.5)*90;roz[i]=(Math.random()-.5)*90;rdy[i]=Math.random()*50}
 const rgeo=new T3.BufferGeometry();rgeo.setAttribute('position',new T3.BufferAttribute(rp,3));
 const rain=new T3.LineSegments(rgeo,new T3.LineBasicMaterial({color:0x9fb4d0,transparent:true,opacity:.45,fog:false}));rain.frustumCulled=false;rain.visible=false;scene.add(rain);
-function syncEnvironmentControls(){const t=document.getElementById('time-cycle-control');if(t)t.textContent='TIME OF DAY · '+TOD[todI].n.toUpperCase()}
 function updateSummitChestStatus(){
  const panel=document.getElementById('summit-chest-status'),countdown=document.getElementById('summit-chest-countdown');
  if(!panel||!countdown)return;
@@ -2786,7 +2885,6 @@ function updateSummitChestStatus(){
  if(chest.open){const seconds=Math.max(0,Math.ceil(chest.t));countdown.textContent='RESPAWN IN '+String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0')}
  else countdown.textContent='READY TO CLAIM';
 }
-document.getElementById('time-cycle-control').addEventListener('click',()=>{todI=(todI+1)%TOD.length;syncEnvironmentControls()});syncEnvironmentControls();
 function gameTick(dt,cp){
  updateDeathLootBag();
  const live=P.mode=='walk';P.inv=Math.max(0,P.inv-dt);
@@ -3560,11 +3658,21 @@ window.__CLIMBORIA_GAME_PEERS={
 };
 
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
+// A room may re-anchor a registered player only using coordinates that came
+// from the authenticated ticket's server-validated last position. This local
+// helper never grants WebSocket admission or combat/loot authority.
+window.ENDLESS_WILDS.roomResumeVerified=false;
+window.ENDLESS_WILDS.resumeAtRoomPosition=p=>{
+ if(window.__climboriaGuestMode||!p||!['x','y','z'].every(k=>Number.isFinite(p[k]))||
+   Math.abs(p.x)>10000||Math.abs(p.z)>10000||p.y< -200||p.y>2000)return false;
+ return restoreExplorerPosition({x:p.x,y:p.y,z:p.z,yaw:P.yaw});
+};
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
 let ready=false,Tm=0,hudT=0,last=performance.now(),tmpC=new T3.Color();
 function update(dt){
  Tm+=dt;
+ advanceAutomaticDaylight();
  // time of day easing
  const tg=TOD[todI],k=Math.min(1,dt*1.2);
  cur.top.lerp(tg.top,k);cur.hor.lerp(tg.hor,k);cur.sun.lerp(tg.sun,k);
@@ -3722,7 +3830,7 @@ initChunks();
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
-<script src="/game-save.js"></script>
-<script src="./multiplayer/client-presence.js?v=20261119-nearby-speech-10"></script>
+<script src="/game-save.js?v=20261119-game-resume-2"></script>
+<script src="./multiplayer/client-presence.js?v=20261119-game-hud-resume-11"></script>
 </body>
 </html>

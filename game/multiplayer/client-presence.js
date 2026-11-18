@@ -6,6 +6,12 @@
  'use strict';
  const doc=document.documentElement;
  let badge=null;
+ if(window.__climboriaGuestMode===true){
+  // Guest play is single-player only: no tickets, WSS, authenticated room
+  // presence or global World Chat until a real registered account signs in.
+  showStatus('guest','GUEST EXPLORER · SIGN IN FOR MULTIPLAYER CHAT');
+  return;
+ }
  showStatus('checking','MULTIPLAYER · CHECKING SERVER');
  // Transient CDN/network failures must not strand an otherwise healthy Game.
  // Bound fetch AND JSON parsing; retry slowly until a valid config arrives or
@@ -99,8 +105,7 @@
  }
  function renderChatCount(){
   if(chatUi){
-   chatUi.count.textContent=chatMode==='nearby-chat'?'NEARBY CHAT · 20m RANGE':
-    'WORLD CHAT · '+(known.size+(selfId?1:0))+' ONLINE';
+   chatUi.count.textContent=chatMode==='nearby-chat'?'NEARBY CHAT · 20m':'WORLD CHAT';
    if(chatUi.channel){
     chatUi.channel.disabled=!nearbyChatReady;
     chatUi.channel.textContent=nearbyChatReady?(chatMode==='nearby-chat'?'WORLD':'NEARBY'):'NEARBY · UPDATING';
@@ -194,15 +199,15 @@
    const count=document.createElement('div'),log=document.createElement('div');
    const controls=document.createElement('div'),input=document.createElement('input');
    const sendButton=document.createElement('button'),channelButton=document.createElement('button'),notice=document.createElement('div');
-   toggle.id='climboria-world-chat-toggle';toggle.textContent='WORLD CHAT';
+   toggle.id='climboria-world-chat-toggle';toggle.textContent='HIDE CHAT';
    toggle.setAttribute('aria-label','Toggle World Chat');
    toggle.style.cssText='position:fixed;left:10px;z-index:1300;padding:8px 11px;border:1px solid #d8b46b;border-radius:9px;background:#101925f2;color:#ffe3a3;font:800 11px system-ui;cursor:pointer;touch-action:manipulation;'+
-    (mobile?'top:140px;':'bottom:18px;');
+    (mobile?'top:9px;left:clamp(138px,18vw,172px);padding:5px 9px;':'bottom:18px;');
    panel.id='climboria-world-chat-panel';
-   panel.style.cssText='position:fixed;left:10px;z-index:1300;width:min(320px,calc(100vw - 20px));max-height:52dvh;display:none;padding:10px;border:1px solid #d8b46b99;border-radius:10px;background:#070c14f2;color:#ffe3a3;font:600 12px system-ui;box-shadow:0 8px 28px #000a;touch-action:auto;'+
-    (mobile?'top:178px;width:min(310px,43vw);':'bottom:62px;');
+   panel.style.cssText='position:fixed;left:10px;z-index:1300;width:min(270px,calc(100vw - 20px));max-height:39dvh;display:block;padding:8px;border:1px solid #d8b46b99;border-radius:10px;background:#070c14e9;color:#ffe3a3;font:600 11px system-ui;box-shadow:0 8px 20px #0009;touch-action:auto;'+
+    (mobile?'top:45px;left:clamp(138px,18vw,172px);width:min(236px,calc(100vw - 350px));min-width:145px;max-height:44dvh;':'bottom:54px;');
    count.style.cssText='font-weight:800;letter-spacing:.05em;margin-bottom:6px';
-   log.style.cssText='height:112px;max-height:26dvh;overflow-y:auto;overscroll-behavior:contain;font:12px/1.45 system-ui';
+   log.style.cssText='height:76px;max-height:17dvh;overflow-y:auto;overscroll-behavior:contain;font:11px/1.4 system-ui';
    log.setAttribute('role','log');log.setAttribute('aria-live','polite');
    controls.style.cssText='display:flex;gap:6px;margin-top:9px';
    input.type='text';input.maxLength=160;input.placeholder='Message all explorers';
@@ -226,7 +231,9 @@
    });
    sendButton.addEventListener('click',sendWorldChat);
    toggle.addEventListener('click',()=>{
-    chatExpanded=!chatExpanded;panel.style.display=chatExpanded?'block':'none';
+    chatExpanded=!chatExpanded;
+    panel.style.display=chatExpanded?'block':'none';
+    toggle.textContent=chatExpanded?'HIDE CHAT':'SHOW CHAT';
     renderChatCount();
    });
    // Mobile map/joystick gestures must not also move the player's avatar
@@ -238,159 +245,20 @@
    document.body.appendChild(toggle);document.body.appendChild(panel);
    chatUi={toggle,panel,count,log,input,notice,channel:channelButton};
   }
-  chatUi.toggle.style.display='block';renderChatCount();
+  if(!chatExpanded){chatExpanded=true;chatUi.panel.style.display='block';}
+  chatUi.toggle.style.display='block';
+  chatUi.toggle.textContent='HIDE CHAT';
+  renderChatCount();
  }
- // Game-only, disabled by the outer client-config release gate. Consent is
- // separate from ATTACK damage: the room NEVER accepts client-requested HP.
- let duelUi=null,duelExpanded=false,inviteFrom=null,outgoingTo=null,activeWith=null;
- let duelNotice='',duelExpiry=null;
- function clearDuelExpiry(){if(duelExpiry){clearTimeout(duelExpiry);duelExpiry=null}}
- function expireDuelRequest(kind,id){
-  clearDuelExpiry();
-  duelExpiry=setTimeout(()=>{
-   if(kind==='incoming'&&inviteFrom===id)inviteFrom=null;
-   else if(kind==='outgoing'&&outgoingTo===id)outgoingTo=null;
-   else return;
-   duelNotice='Invitation expired. Request again if needed.';
-   renderDuelUi();
-  },30000);
- }
- function duelButton(label,action){
-  const button=document.createElement('button');
-  button.textContent=label;
-  button.style.cssText='margin:4px 5px 4px 0;padding:7px 10px;border:1px solid #d8b46b99;border-radius:7px;background:#202b38;color:#ffe3a3;font:700 11px system-ui;cursor:pointer;touch-action:manipulation';
-  button.addEventListener('click',action);
-  return button;
- }
- function duelLine(value){
-  const line=document.createElement('div');
-  line.textContent=value;
-  line.style.cssText='margin:4px 0 6px;line-height:1.4';
-  return line;
- }
- function renderDuelUi(){
-  if(!duelUi)return;
-  const panel=duelUi.panel;
-  panel.replaceChildren();
-  panel.appendChild(duelLine('DUEL INVITATIONS'));
-  if(duelNotice)panel.appendChild(duelLine(duelNotice));
-  const displayName=id=>known.get(id)?.name||'Explorer';
-  if(activeWith&&known.has(activeWith)){
-   panel.appendChild(duelLine('Consent recorded with '+displayName(activeWith)+'.'));
-   panel.appendChild(duelButton('CANCEL DUEL',()=>{
-    if(send({type:'duel-cancel'})){duelNotice='Sending revocation…';renderDuelUi()}
-   }));
-  }else if(inviteFrom&&known.has(inviteFrom)){
-   panel.appendChild(duelLine(displayName(inviteFrom)+' has invited you.'));
-   panel.appendChild(duelButton('ACCEPT',()=>{
-    if(send({type:'duel-response',challengerId:inviteFrom,accepted:true})){
-     duelNotice='Waiting for room confirmation…';renderDuelUi();
-    }
-   }));
-   panel.appendChild(duelButton('DECLINE',()=>{
-    if(send({type:'duel-response',challengerId:inviteFrom,accepted:false})){
-     duelNotice='Declining invitation…';renderDuelUi();
-    }
-   }));
-  }else if(outgoingTo&&known.has(outgoingTo)){
-   panel.appendChild(duelLine('Waiting for '+displayName(outgoingTo)+' to respond.'));
-   panel.appendChild(duelButton('CANCEL REQUEST',()=>{
-    if(send({type:'duel-cancel'})){duelNotice='Cancelling request…';renderDuelUi()}
-   }));
-  }else if(known.size===0)panel.appendChild(duelLine('No other explorers connected.'));
-  else{
-   panel.appendChild(duelLine('Choose a real connected explorer:'));
-   for(const [id,peer] of known){
-    const row=document.createElement('div');
-    row.style.cssText='margin:4px 0;border-top:1px solid #d8b46b33;padding-top:5px';
-    row.appendChild(duelLine(peer.name));
-    row.appendChild(duelButton('CHALLENGE',()=>{
-     if(!validId(id)||!known.has(id))return;
-     if(send({type:'duel-request',targetId:id})){
-      outgoingTo=id;duelNotice='Waiting for room confirmation…';
-      expireDuelRequest('outgoing',id);renderDuelUi();
-     }
-    }));
-    panel.appendChild(row);
-   }
-  }
-  panel.appendChild(duelLine('CONSENT ONLY · PLAYER DAMAGE OFF'));
- }
- function ensureDuelUi(){
-  if(!duelUi){
-   const toggle=document.createElement('button'),panel=document.createElement('div');
-   toggle.id='climboria-duel-toggle';
-   toggle.textContent='DUELS';
-   toggle.style.cssText='position:fixed;right:10px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:1300;padding:8px 11px;border:1px solid #d8b46b;border-radius:8px;background:#101925f2;color:#ffe3a3;font:800 11px system-ui;cursor:pointer;touch-action:manipulation';
-   panel.id='climboria-duel-panel';
-   panel.style.cssText='position:fixed;right:10px;bottom:calc(128px + env(safe-area-inset-bottom));width:min(270px,calc(100vw - 20px));max-height:45vh;overflow:auto;z-index:1300;display:none;padding:10px;border:1px solid #d8b46b99;border-radius:9px;background:#070c14f2;color:#ffe3a3;font:700 11px system-ui;box-shadow:0 8px 28px #000a';
-   toggle.addEventListener('click',()=>{
-    duelExpanded=!duelExpanded;
-    panel.style.display=duelExpanded?'block':'none';
-    renderDuelUi();
-   });
-   document.body.appendChild(toggle);document.body.appendChild(panel);
-   duelUi={toggle,panel};
-  }
-  duelUi.toggle.style.display='block';
-  renderDuelUi();
- }
- function onDuelPacket(msg){
-  if(msg.combatDamageEnabled!==false)return false;
-  if(msg.type==='duel-invitation'&&validId(msg.fromId)&&known.has(msg.fromId)){
-   inviteFrom=msg.fromId;duelNotice='Invitation expires after 30 seconds.';
-   expireDuelRequest('incoming',msg.fromId);
-  }else if(msg.type==='duel-request-sent'&&validId(msg.targetId)&&known.has(msg.targetId)){
-   outgoingTo=msg.targetId;duelNotice='Invitation sent.';
-   expireDuelRequest('outgoing',msg.targetId);
-  }else if(msg.type==='duel-response-received'&&validId(msg.fromId)&&
-           outgoingTo===msg.fromId&&typeof msg.accepted==='boolean'){
-   clearDuelExpiry();activeWith=msg.accepted?msg.fromId:null;outgoingTo=null;
-   duelNotice=msg.accepted?'Mutual consent recorded. ATTACK damage remains OFF.':'Invitation declined.';
-  }else if(msg.type==='duel-response-sent'&&validId(msg.challengerId)&&
-           inviteFrom===msg.challengerId&&typeof msg.accepted==='boolean'){
-   clearDuelExpiry();activeWith=msg.accepted?msg.challengerId:null;inviteFrom=null;
-   duelNotice=msg.accepted?'Mutual consent recorded. ATTACK damage remains OFF.':'Invitation declined.';
-  }else if(msg.type==='duel-cancelled'&&
-           (msg.fromId===selfId||(validId(msg.fromId)&&known.has(msg.fromId)))){
-   clearDuelExpiry();inviteFrom=null;outgoingTo=null;activeWith=null;
-   duelNotice='Duel invitation or consent cancelled.';
-  }else return false;
-  duelExpanded=true;
-  ensureDuelUi();
-  duelUi.panel.style.display='block';
-  return true;
- }
- function clearDuelUi(){
-  clearDuelExpiry();inviteFrom=null;outgoingTo=null;activeWith=null;duelNotice='';
-  duelExpanded=false;
-  if(duelUi){duelUi.toggle.style.display='none';duelUi.panel.style.display='none';renderDuelUi()}
- }
- let returnToSanctuaryButton=null,sameAccountRetryButton=null;
+ // Duel-request UI removed. Player ATTACK stays available at any time as
+ // animation only; untrusted clients may not modify HP or loot.
+ let sameAccountRetryButton=null;
  function showStatus(value,message){
   doc.dataset.climboriaMultiplayer=value;
   if(!badge){badge=document.createElement('div');badge.id='climboria-room-status';badge.style.cssText=
-   'position:fixed;right:8px;bottom:8px;z-index:1600;max-width:min(280px,80vw);color:#ffe3a3;background:#070c14f2;border:1px solid #d8b46bcc;padding:9px 12px;border-radius:9px;box-shadow:0 4px 16px #000a;font:700 12px/1.45 system-ui;pointer-events:none';document.body.appendChild(badge)}
-  badge.textContent=message;
-  if(value==='awaiting-sanctuary'||value==='spawn-rejected'){
-   // Mobile explorers have no physical Digit1 key. Reuse the same local
-   // Sanctuary teleport as the keyboard, but ONLY on an explicit click.
-   // This is a local player control, never a forged multiplayer spawn.
-   if(!returnToSanctuaryButton){
-    returnToSanctuaryButton=document.createElement('button');
-    returnToSanctuaryButton.id='climboria-room-return-sanctuary';
-    returnToSanctuaryButton.type='button';
-    returnToSanctuaryButton.textContent='RETURN TO SANCTUARY';
-    returnToSanctuaryButton.style.cssText='display:block;width:100%;margin-top:8px;padding:9px 11px;border:1px solid #d8b46b;border-radius:8px;background:#253448;color:#ffe3a3;font:800 11px/1.35 system-ui;cursor:pointer;pointer-events:auto;touch-action:manipulation';
-    returnToSanctuaryButton.addEventListener('click',event=>{
-     event?.stopPropagation?.();
-     if(doc.dataset.climboriaMultiplayer!=='awaiting-sanctuary'&&
-        doc.dataset.climboriaMultiplayer!=='spawn-rejected')return;
-     document.dispatchEvent(new Event('climboria:room-return-to-sanctuary'));
-    });
-   }
-   badge.appendChild(returnToSanctuaryButton);
-  }
+   'position:fixed;right:303px;top:10px;bottom:auto;z-index:1600;max-width:min(185px,45vw);color:#ffe3a3;background:#070c14e8;border:1px solid #d8b46b99;padding:6px 10px;border-radius:999px;box-shadow:0 4px 12px #0008;font:800 11px/1.2 system-ui;pointer-events:none';document.body.appendChild(badge)}
+  badge.setAttribute('data-state',value);
+  badge.textContent=value==='connected'?'ONLINE: '+(known.size+1):message;
   if(value==='same-account-in-use'){
    // The room enforces one live socket per real Supabase user ID.
    // A second browser using a linked login method replaces the first.
@@ -414,7 +282,7 @@
  }
  function clearPeers(){
   for(const id of known.keys())renderer.remove(id);
-  known.clear();selfId=null;spawnConfirmed=false;clearDuelUi();clearWorldChatUi();
+  known.clear();selfId=null;spawnConfirmed=false;clearWorldChatUi();
  }
  function addPlayer(player){
   if(!validPlayer(player)||player.id===selfId)return;
@@ -426,18 +294,14 @@
   }
   if(known.size>=32)return;
   known.set(player.id,player);renderer.add(player);
-  renderDuelUi();renderChatCount();
-  if(spawnConfirmed)showStatus('connected','ONLINE · '+known.size+' other explorers');
+  renderChatCount();
+  if(spawnConfirmed)showStatus('connected','ONLINE: '+(known.size+1));
  }
  function leave(id){
   if(!known.has(id))return;
   renderer.remove(id);known.delete(id);
-  if([inviteFrom,outgoingTo,activeWith].includes(id)){
-   clearDuelExpiry();inviteFrom=null;outgoingTo=null;activeWith=null;
-   duelNotice='Explorer disconnected; consent cleared.';
-  }
-  renderDuelUi();renderChatCount();
-  if(spawnConfirmed)showStatus('connected','ONLINE · '+known.size+' other explorers');
+  renderChatCount();
+  if(spawnConfirmed)showStatus('connected','ONLINE: '+(known.size+1));
  }
  function onPacket(data){
   if(typeof data!=='string'||data.length>10000)return;
@@ -463,8 +327,9 @@
     spawnConfirmed=true;nearbyChatReady=msg.nearbyChatEnabled===true;
     // Only a verified server spawn-accepted completes room admission.
     clearAdmissionTimer();
-    ensureDuelUi();ensureWorldChatUi();
-    showStatus('connected','ONLINE · '+known.size+' other explorers');
+    ensureWorldChatUi();
+    world.roomResumeVerified=true;
+    showStatus('connected','ONLINE: '+(known.size+1));
    }
   }else if(msg.type==='player-joined'){
    if(spawnConfirmed)addPlayer(msg.player);
@@ -478,16 +343,15 @@
    if(spawnConfirmed&&(msg.type==='world-chat'||nearbyChatReady))appendWorldChat(msg)
   }
   else if(msg.type==='rejected'&&msg.reason==='invalid-initial-spawn'){
-   // A rejected first spawn leaves the socket open on the Game Worker.
-   // Close it and retry admission when the real hero returns to Sanctuary.
+   // Invalid/forged initial spawn must never expose a live avatar. Stop
+   // this socket without relocating the player's actual saved position.
    const rejected=socket;
    clearAdmissionTimer();
    socket=null;previous=null;
    if(movement){clearInterval(movement);movement=null}
    clearPeers();
    if(rejected){try{rejected.close()}catch{}}
-   showStatus('spawn-rejected','MULTIPLAYER · RETURN TO SANCTUARY · PRESS 1');
-   scheduleConnect(1200);
+   showStatus('spawn-rejected','WORLD · SAVED LOCATION · ROOM REJOIN UNAVAILABLE');
   }
   else if(msg.type==='rejected'&&['world-chat-rate-limit','world-chat-invalid-text'].includes(msg.reason)){
    // Only the server rejection for THIS request can release its pending
@@ -500,20 +364,8 @@
    }
   }
   else if(msg.type==='player-punched'&&spawnConfirmed&&validId(msg.id)&&known.has(msg.id))renderer.punch(msg.id);
-  else if(spawnConfirmed&&typeof msg.type==='string'&&msg.type.startsWith('duel-'))onDuelPacket(msg);
-  else if(msg.type==='rejected'&&typeof msg.reason==='string'&&
-          (msg.reason.startsWith('duel-')||
-           ['sanctuary-pvp-disabled','no-valid-duel-invitation',
-            'invalid-or-unspawned-peer','invalid-or-disconnected-peer',
-            'challenger-has-pending-request','challenger-has-incoming-request',
-            'target-has-pending-request','target-has-outgoing-request'].includes(msg.reason))){
-   // A server rejection must clear any optimistic waiting state. This also
-   // covers a target who disconnects after we clicked CHALLENGE but before
-   // the Worker accepts the request.
-   clearDuelExpiry();inviteFrom=null;outgoingTo=null;
-   duelNotice='Duel action unavailable. Check proximity, cooldown or invitation expiry.';
-   renderDuelUi();
-  }
+  // Legacy or malicious Duel packets are intentionally ignored by the new
+  // Game UI. A real, reviewed server-authoritative PvP release is separate.
  }
  function send(packet){
   if(socket?.readyState!==WebSocket.OPEN)return false;
@@ -526,8 +378,8 @@
   return {x:p.x,y:p.y,z:p.z};
  }
  function isReady(){return window.__climboriaGameReady===true&&world.player.mode==='walk'}
- // Server accepts initial room admission only within 6m of Sanctuary.
- // Never fake a remote spawn or send an impossible ticket request.
+ // First-ever room join still requires the protected Sanctuary location.
+ // Subsequent joins may use a verified server-issued resume anchor.
  function isAtRoomSpawn(){
   const p=localPosition();
   return validPosition(p)&&Math.hypot(p.x,p.z+30)<=6&&p.y>=0&&p.y<=45;
@@ -589,15 +441,13 @@
   if(old){try{old.close()}catch{}}
   clearPeers();
  }
- // A local waypoint teleport cannot be sent as an ordinary position
- // update: the room correctly rejects implausibly fast movement. Clear the
- // old visible peer/chat session and use fresh authenticated Sanctuary
- // admission, not a client-authorized server teleport or fake position.
+ // Local debug travel is single-player relocation, not a trusted network
+ // teleport. It never erases the player's chosen position or fabricates a
+ // new remote presence. The next real session uses the DO-owned resume.
  document.addEventListener('climboria:local-teleport',()=>{
   if(disposed||(!socket&&!connecting))return;
   resetConnection();
-  showStatus('rejoining','MULTIPLAYER · REJOINING AFTER TELEPORT');
-  scheduleConnect(0);
+  showStatus('saved-location','EXPLORING · LOCATION KEPT');
  });
  async function connect(){
   if(disposed||connecting||socket||sameAccountInUse)return;
@@ -637,14 +487,9 @@
     clientUser=null;showStatus('login-required','MULTIPLAYER · SIGN IN REQUIRED');return;
    }
    clientUser=session.user.id;
-   // A real signed-in explorer who is already away from the protected spawn
-   // must return to Sanctuary before this server can safely admit a new room
-   // session. Avoid consuming short-lived tickets for known-invalid spawns.
-   if(!isAtRoomSpawn()){
-    showStatus('awaiting-sanctuary','MULTIPLAYER · RETURN TO SANCTUARY · PRESS 1');
-    scheduleConnect(1200);
-    return;
-   }
+   // Ticket will contain a server-owned last-position anchor if this
+   // verified account has previously moved inside the real Game room.
+   // Never require player input to teleport back to Sanctuary.
    const hero=window.__climboriaCreatedHero||{};
    showStatus('ticket-request','MULTIPLAYER · VERIFYING ROOM ACCESS');
    const ticketAbort=new AbortController();
@@ -735,6 +580,14 @@
    if(!/^[a-f0-9]{64}$/.test(ticket?.ticket||'')||
       ticket.protocol!=='climboria-v1'||ticket.ttlSeconds!==30)
     throw Error('Invalid room ticket');
+   const anchor=validPosition(ticket.resumePosition)?ticket.resumePosition:null;
+   const resumed=!!anchor&&world.resumeAtRoomPosition?.(anchor)===true;
+   if(!resumed&&!isAtRoomSpawn()){
+    // A saved location without a server-trusted anchor stays visually
+    // intact and offline. Never issue an arbitrary non-Sanctuary spawn.
+    showStatus('saved-location','EXPLORING · LOCATION KEPT');
+    return;
+   }
    const socketURL=new URL('ws',base);socketURL.protocol='wss:';
    const ws=new WebSocket(socketURL.toString(),['climboria-v1','t-'+ticket.ticket]);
    socket=ws;
@@ -743,17 +596,19 @@
    ws.onmessage=e=>{if(!disposed&&socket===ws&&epoch===connectEpoch)onPacket(e.data)};
    ws.onopen=()=>{
     if(disposed||socket!==ws||epoch!==connectEpoch||!isReady()){ws.close();return}
-    // The player may move after the room ticket is issued. Never submit an
-    // untrusted or out-of-Sanctuary first position merely to obtain a peer.
-    if(!isAtRoomSpawn()){
+    // Any first spawn must still match the trusted ticket location.
+    const nowPosition=localPosition();
+    const validForTicket=resumed?
+     Math.hypot(nowPosition.x-anchor.x,nowPosition.y-anchor.y,nowPosition.z-anchor.z)<=3:
+     isAtRoomSpawn();
+    if(!validForTicket){
      clearAdmissionTimer();socket=null;previous=null;
      try{ws.close()}catch{}
-     showStatus('awaiting-sanctuary','MULTIPLAYER · RETURN TO SANCTUARY · PRESS 1');
-     scheduleConnect(1200);
+     showStatus('saved-location','EXPLORING · LOCATION KEPT');
      return;
     }
     previous=null;
-    showStatus('spawn-pending','MULTIPLAYER · VERIFYING SANCTUARY SPAWN');
+    showStatus('spawn-pending','MULTIPLAYER · VERIFYING SAVED POSITION');
     armAdmissionTimer(ws,epoch); // OPEN is not an accepted terrain spawn.
     send({type:'spawn',position:localPosition()});
     if(movement)clearInterval(movement);
