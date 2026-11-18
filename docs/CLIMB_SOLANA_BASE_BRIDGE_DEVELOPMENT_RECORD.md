@@ -5,6 +5,15 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 3 merged — verified CI and current next action (2026-11-19)
+
+- [PR #666](https://github.com/CryptoDilis/Climboria/pull/666) **MERGED** into `main` by squash at [`1babfd3ecb91ccaa2f302dcaa264805cde9e4d3c`](https://github.com/CryptoDilis/Climboria/commit/1babfd3ecb91ccaa2f302dcaa264805cde9e4d3c), exact tested head `3db688dbc873aed452dced055f03f15bc1679608`.
+- Exact-head GitHub Actions verified **SUCCESS**: [CLIMB Bridge Read-Only Safety Tests #44377757035](https://github.com/CryptoDilis/Climboria/actions/runs/44377757035), [Validate Climboria #44377757207](https://github.com/CryptoDilis/Climboria/actions/runs/44377757207). Test success covers offline code only; no live on-chain transaction or Solana authority observation.
+- Scope verified: two added simulation/test files and edits to bridge README and development record. No game, DEX, Swap, ClimbX, Launchpad, website or deployed Worker changes.
+- **NEXT: actual finalized dual-RPC mint authority check and independently reviewed bridge provider compatibility evidence.** The user can run `node token/climb-bridge/mint-inspect-cli.mjs` in a trusted environment configured with two independently operated Solana RPC endpoints; retain sanitized results but never publish keys/endpoints. No live onchain data or protocol audits verified in this work cycle. Mainnet bridge, Base CA and customer transfers remain **NO-GO**.
+
+---
+
 ## Stage 3 — In-flight bridge transfer accounting simulation (2026-11-19)
 
 **Scope:** isolated `token/climb-bridge` offline-only simulator; explicitly **not** an operational bridge, smart contract, relayer or attestation verifier. No Solana/Base mainnet contract deployed, no user funds or wallet activity.
