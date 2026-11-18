@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "enabled": false,
-  "endpoint": null,
-  "releaseGate": "DO NOT ENABLE until isolated Worker is deployed, Supabase login verified, two independent real browsers exchange real peer updates and mobile FPS/GLB visuals pass."
+  "enabled": true,
+  "endpoint": "https://rooms.climboria.fun/",
+  "releaseGate": "Game registered-account multiplayer and World Chat pilot enabled; server-side login/tickets, origin, room caps and visual-only combat enforced. PvP damage, theft and loot remain disabled. Monitor real browser acceptance and roll back if failures."
 }

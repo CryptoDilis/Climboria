@@ -36,9 +36,9 @@ export async function verifyDeployedGameConfig({fetchImpl=fetch,deadlineMs=12000
    throw Error('Deployed Game config response is too large');
   let config;
   try{config=JSON.parse(raw)}catch{throw Error('Deployed Game config JSON is invalid')}
-  if(config?.schema!==1||config.enabled!==false||config.endpoint!==null)
-   throw Error('Deployed public Game multiplayer is NOT fail-closed');
-  return Object.freeze({deployedGameMultiplayer:'disabled'});
+  if(config?.schema!==1||config.enabled!==true||config.endpoint!=='https://rooms.climboria.fun/')
+   throw Error('Deployed public Game gateway is not the approved registered-only room');
+  return Object.freeze({deployedGameMultiplayer:'enabled-registered-only'});
  })();
  const deadline=new Promise((_,reject)=>{
   timer=setTimeout(()=>{
@@ -53,11 +53,11 @@ export async function verifyDeployedGameConfig({fetchImpl=fetch,deadlineMs=12000
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  try{
   await verifyDeployedGameConfig();
-  console.log('PASS: live climboria.fun Game client-config.json is HTTP 200 and multiplayer remains OFF.');
+  console.log('PASS: live climboria.fun Game client-config.json is HTTP 200 and registered-only multiplayer points to the approved Game gateway.');
   console.log('NOT VERIFIED: real authenticated two-player GLB, movement, World Chat or Android FPS.');
  }catch{
   // No response bodies, identities or operational secrets in public CI logs.
-  console.error('FAIL: deployed public Game release config could not be verified as disabled.');
+  console.error('FAIL: deployed public Game release config could not be verified as the approved Game gateway.');
   process.exitCode=1;
  }
 }

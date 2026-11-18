@@ -10,7 +10,8 @@
  try{const res=await fetch('./multiplayer/client-config.json',{cache:'no-store'});
   if(!res.ok)return;config=await res.json();
  }catch{return}
- if(config?.schema!==1||config?.enabled!==true)return;
+ if(config?.schema!==1)return;
+ if(config?.enabled!==true)return;
  let base;
  try{
   base=new URL(config.endpoint);

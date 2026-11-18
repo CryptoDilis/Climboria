@@ -27,14 +27,14 @@ jobs:
           node --check game/multiplayer/server-authority-rules.mjs
       - name: Test real socket sessions, authenticated one-use tickets and visual-only punch sync
         run: node --test game/multiplayer/*.test.mjs game/multiplayer/worker/*.test.mjs
-      - name: Verify browser client remains disabled until authenticated production two-user QA
+      - name: Verify authenticated browser client and live Game gateway policy
         run: |
           node --check game/multiplayer/client-presence.js
           node --check game/multiplayer/worker/e2e-two-accounts.mjs
           node --check game/multiplayer/worker/e2e-real-game-ui.mjs
           node --check game/multiplayer/worker/qa-mixed-login.mjs
           node --test game/multiplayer/client-presence.test.mjs
-      - name: Reject premature damage enablement and live-client configuration
+      - name: Reject premature damage enablement
         run: |
           python3 - <<'PY'
           from pathlib import Path
