@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import worker from "../src/index.mjs";
 const workerSource = readFileSync(new URL("../src/index.mjs", import.meta.url), "utf8");
+const expectedApproved = /^const THIRD_PARTY_JUPITER_WIDGET_APPROVED = true;$/m.test(workerSource);
 
 const url = "https://api.climboria.fun/api/swap/provider-status";
 const origin = "https://climboria.fun";
