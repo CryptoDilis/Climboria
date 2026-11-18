@@ -5,6 +5,20 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 6 — Manual-only finalized mainnet mint evidence (2026-11-19)
+
+**Goal:** get beyond mock tests by preparing a controlled, zero-wallet GitHub Actions path for an **actual** authority/supply RPC read. No current live run is claimed. No deployment, no Base CA, no user CLIMB or bridge funds moved.
+
+- Added `.github/workflows/climb-mint-mainnet-evidence-manual.yml` with **`workflow_dispatch` on `main` only**, `contents: read` permission, no `pull_request`/push/schedule trigger, private environment variables from two Actions secrets, public independently sourced genesis reference via Actions variable, read-only Node CLI and sanitized 7-day artifact. Exact workflow and artifact are public repo resources (no RPC secret outputs). Never enable secret-bearing execution on PR code.
+- Added `verifyExpectedGenesis` to `token/climb-bridge/mint-freshness.mjs`: rejects missing/malformed/mismatched operator-supplied mainnet genesis. Existing two-RPC agreement alone could be a match on a wrong or spoofed network; source provenance of the operator's expected hash still needs external verification.
+- Updated `mint-inspect-cli.mjs` to require `CLIMB_SOLANA_MAINNET_GENESIS_HASH` and return a sanitized report with `bridgeRelease: NO_GO` even if all fields match; rejects missing input or unknown RPC error without leaking endpoint. Added offline regression fixture in `mint-freshness.test.mjs`; README includes exact setup and run steps.
+- **External blocker:** there is no authorized onchain verification run, no independent provider identity proof, and no verified bridge provider support yet. Code merge and unit tests by themselves DO NOT confirm onchain mint authority state.
+- **PR/CI evidence:** [PR #670](https://github.com/CryptoDilis/Climboria/pull/670) open, not merged. New CLI process safety tests added at commit `9ae46e8c2fa471e6187a03671a0fd8b06ca7f664`. GitHub `fetch_commit_workflow_runs` returned **no PR workflow runs** for that exact head at last check. **Do not infer green or merge** until the CI appears and succeeds. No actual onchain read has been executed.
+
+**Exact NEXT:** (1) Open focused PR, require clean bridge tests and Validate Climboria CI, merge bridge-only workflow + files when green, record SHA. (2) If absent in GitHub Actions Secrets, owner adds `CLIMB_SOLANA_RPC_A_URL` and `CLIMB_SOLANA_RPC_B_URL` from independently operated providers; in Actions Variables add `CLIMB_SOLANA_MAINNET_GENESIS_HASH` sourced independently from official network documentation. **Never paste secrets in chat, source or logs.** (3) Owner runs the **manual** GitHub workflow on `main`; record actual run URL, result, sanitized artifact, UTC time, finalized slots, raw supply, mint/freeze authority and confirmed provider companies; investigate any failure. (4) Independently verify the currently supported audited bridge route for the exact existing CLIMB Solana mint and its official Base representation. (5) Perform authentic testnet roundtrips and audit/admin governance before any mainnet signing or CA publication. **Live bridge remains NO-GO.**
+
+---
+
 ## Stage 5 MERGED — mint RPC freshness and provider selection gate (2026-11-19)
 
 - [PR #668](https://github.com/CryptoDilis/Climboria/pull/668) **merged** by squash to `main` at [`a5a66e3ceee28a543a2658d529371a6f70a53328`](https://github.com/CryptoDilis/Climboria/commit/a5a66e3ceee28a543a2658d529371a6f70a53328); exact tested PR head `6bdd704eee6f88b56dcf97b8efac4c1f7ff3a836`.
