@@ -23,7 +23,7 @@ try {
     'invalid chain genesis identity'
   ];
   const candidate=String(error?.message||'');
-  const message=safeMessages.some(m=>candidate.includes(m))?candidate:'NO_GO: finalized mint verification failed (RPC details redacted)';
+  const message=safeMessages.some(m=>candidate === 'NO_GO: ' + m)?candidate:'NO_GO: finalized mint verification failed (RPC details redacted)';
   console.error(message);
   process.exitCode=1;
 }
