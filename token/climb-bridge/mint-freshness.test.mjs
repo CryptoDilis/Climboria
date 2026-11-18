@@ -67,7 +67,7 @@ test('reject future or inconsistent finalized account context',()=>{
   assert.throws(()=>validateMintFreshness(HEAD_SLOT,mintReply(HEAD_SLOT+129)),/inconsistent/);
 });
 test('reject mismatched finalized chain head heights',async()=>{
-  const {mockFetch}=fixture({headB:HEAD_SLOT+257});
+  const {mockFetch}=fixture({headB:HEAD_SLOT+257,replyB:mintReply(HEAD_SLOT+257)});
   await assert.rejects(inspectFreshIndependentMints(A,B,mockFetch),/heads diverge/);
 });
 test('reject different genesis identities instead of silently assuming mainnet',async()=>{
