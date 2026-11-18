@@ -114,6 +114,10 @@
     const account = signedIn && !guest;
 
     if (signOutButton) signOutButton.hidden = !signedIn;
+    document.querySelectorAll('[data-open-auth]').forEach(button => {
+      button.textContent = account ? 'MY ACCOUNT' :
+        guest ? 'GUEST ACCOUNT' : 'SIGN IN / CREATE ACCOUNT';
+    });
     if (authEmailSection) authEmailSection.hidden = signedIn;
     if (authConnections) authConnections.hidden = !account;
     if (authTitle) authTitle.textContent = account ? 'Your Climboria account' : 'Enter Climboria';
