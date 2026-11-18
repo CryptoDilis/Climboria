@@ -25,6 +25,24 @@ Let `S` = total original Solana minted units, `L` = original units held at the *
 - Set `CLIMB_SOLANA_RPC_URL` and `CLIMB_BASE_RPC_URL` in local environment (HTTPS read-only RPC). Run `node token/climb-bridge/preflight.mjs`. This makes unsigned, read-only `getAccountInfo`, `eth_chainId`, `eth_getCode`, and `eth_call` requests. No keys are required. The tool rejects unconfigured addresses, wrong chain, wrong mint/decimals, wrong SPL escrow authority, missing Base bytecode and unbacked Base supply.
 - **Do not paste or commit secrets, wallet seeds, private keys, raw bearer tokens, RPC API keys, or real funds.** Use a hardware wallet and independent multisig governance for future protocol owner/upgrade authority.
 
+## Next-stage verification: two finalized Solana RPC providers
+
+Added source-only mint authority inspector. This is **not** a bridge deployment or an attestation of third-party bridge support. It will not alter token accounts, freeze/mint authority, token supply, bridge escrow or wallets.
+
+Local commands after obtaining two truly independently operated HTTPS Solana RPC providers (set each variable privately, never in GitHub Issues or CI logs):
+
+\`\`\`sh
+# Use a secure private shell to set both environment variables.
+# CLIMB_SOLANA_RPC_A_URL=https://<your-provider-A>
+# CLIMB_SOLANA_RPC_B_URL=https://<your-provider-B>
+node token/climb-bridge/mint-inspect-cli.mjs
+node --test token/climb-bridge/*.test.mjs
+\`\`\`
+
+This inspects the **exact original CLIMB mint** with Solana \`getAccountInfo\` using \`jsonParsed\` and \`finalized\`, enforcing the legacy SPL Token Program, 6 decimals, initialized mint, integer supply, explicit mint/freeze authority states, and agreement between providers with bounded slot skew. No API secrets are printed. Distinct RPC **hostnames** do not prove independent companies or infrastructure; confirm that manually. Conflicts reject, not average.
+
+A successful read only confirms two reported finalized observations at their slots. Presence of any mint/freeze authority must be documented and assessed; absence does **not** establish bridge readiness or all downstream restrictions. Token liquidity, pump.fun/pumpswap market status, escrow compatibility, manager deployment, protocol code/audits, and approved bridge routes remain separate verification tasks.
+
 ## Mainnet go/no-go prerequisites
 
 1. Confirm current `finalized` Solana mint account (program, supply, `mintAuthority`, `freezeAuthority`, token accounts, pump.fun compatibility) from multiple sources. Snapshot file does not establish current authority state.
