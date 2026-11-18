@@ -7,7 +7,7 @@ import {TextEncoder} from 'node:util';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false}={}){
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,refreshMode=null}={}){
  const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses],ticketPayloads:[...ticketPayloads]};
  const authListeners=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],calls=[],timers=[],created=[];
@@ -36,6 +36,19 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
    getSession:async()=>{const snapshot=state.session;if(sessionGate)await sessionGate;return {data:{session:snapshot}}},
    onAuthStateChange:fn=>{authListeners.push(fn);return {data:{subscription:{unsubscribe(){const i=authListeners.indexOf(fn);if(i>=0)authListeners.splice(i,1)}}}}}
   }},addEventListener(){}};
+ const refreshCounts={calls:0};
+ if(refreshMode){
+  window.__CLIMBORIA_GAME_SAVE_CLIENT.auth.refreshSession=async()=>{
+   refreshCounts.calls++;
+   if(refreshMode==='success'){
+    state.session={...state.session,access_token:'refreshed-token'};
+    return {data:{session:state.session},error:null};
+   }
+   if(refreshMode==='different-user')return {data:{session:{user:{id:'another-user'},access_token:'different-user-token'}},error:null};
+   if(refreshMode==='anonymous')return {data:{session:{user:{id:state.session.user.id,is_anonymous:true},access_token:'anonymous-token'}},error:null};
+   return {data:{session:null},error:new Error('refresh unavailable')};
+  };
+ }
  const lateAuth=window.__CLIMBORIA_GAME_SAVE_CLIENT;
  const latePeers=window.__CLIMBORIA_GAME_PEERS;
  if(delayedClients){
@@ -68,7 +81,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
   setTimeout:(fn,delay)=>{timers.push({fn,delay,cancelled:false});return timers.length},
   setInterval:()=>1,clearInterval(){},clearTimeout:id=>{if(timers[id-1])timers[id-1].cancelled=true},console};
  vm.runInNewContext(source,context,{filename:'client-presence.js'});
- return {window,document,clients,adds,moves,removes,punches,calls,timers,created,
+ return {window,document,clients,adds,moves,removes,punches,calls,timers,created,refreshCounts,
   releaseGameClients:()=>{
    window.__CLIMBORIA_GAME_SAVE_CLIENT=lateAuth;
    window.__CLIMBORIA_GAME_PEERS=latePeers;
@@ -604,6 +617,33 @@ test('HTTP 401 and 503 ticket failures never open sockets and retry without fals
  }
 });
 
+test('expired room ticket refreshes exactly once for the same registered user then joins',async()=>{
+ const h=harness(true,{ticketStatuses:[401],refreshMode:'success'});
+ await flush();await waitFor(()=>h.clients.length===1);
+ assert.equal(h.refreshCounts.calls,1,'one forced refresh only');
+ const tickets=h.calls.filter(c=>c.url.endsWith('/ticket'));
+ assert.equal(tickets.length,2,'initial expired ticket plus one refreshed request');
+ assert.equal(tickets[0].options.headers.Authorization,'Bearer verified-token');
+ assert.equal(tickets[1].options.headers.Authorization,'Bearer refreshed-token');
+ const ws=h.clients[0];ws.onopen();
+ const own='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.ok(h.created.some(node=>node.id==='climboria-world-chat-toggle'));
+});
+test('room ticket refresh never adopts another account or anonymous credentials',async()=>{
+ for(const refreshMode of ['different-user','anonymous','failure']){
+  const h=harness(true,{ticketStatuses:[401],refreshMode});
+  await flush();
+  await waitFor(()=>h.document.documentElement.dataset.climboriaMultiplayer==='login-required');
+  assert.equal(h.refreshCounts.calls,1,refreshMode);
+  assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,1,refreshMode);
+  assert.equal(h.clients.length,0,refreshMode);
+  assert.equal(h.adds.length,0,refreshMode);
+  assert.equal(h.created.some(node=>node.id==='climboria-world-chat-toggle'),false,refreshMode);
+ }
+});
 test('temporary room capacity 429 displays busy without fake peers then retries successfully',async()=>{
  const h=harness(true,{ticketStatuses:[429]});
  await flush();
