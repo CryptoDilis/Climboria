@@ -2124,7 +2124,11 @@ let localPositionUserId=null,localPositionReady=false;
 function restoreExplorerPosition(position){
  const x=Number(position?.x),z=Number(position?.z),yaw=Number(position?.yaw??P.yaw);
  if(![x,z,yaw].every(Number.isFinite)||Math.abs(x)>100000||Math.abs(z)>100000)return false;
- P.x=x;P.z=z;P.y=groundAt(x,z)+1.75;P.yaw=yaw;P.vy=0;
+ // Preserve the actual Y level for caves, docks and the beach. Older saves
+ // containing only X/Z still fall back to the current procedural ground.
+ const savedY=position?.y==null?NaN:Number(position.y);
+ P.x=x;P.z=z;P.y=Number.isFinite(savedY)&&savedY>=-200&&savedY<=2000?
+  savedY:groundAt(x,z)+1.75;P.yaw=yaw;P.vy=0;
  P.mode='walk';P.moveTarget=null;P.swim=false;P.swimDepth=0;P.waterBodyId=null;
  cameraYaw=yaw;cameraPitch=-.08;camY=null;free(true);
  cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.8,P.z+Math.cos(cameraYaw)*targetCameraDistance);
@@ -2137,7 +2141,7 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
  },
  saveLocalPosition(){
   if(!localPositionReady||!localPositionUserId||window.__climboriaGuestMode||P.mode!=='walk')return false;
-  const position={x:P.x,z:P.z,yaw:P.yaw};
+  const position={x:P.x,y:P.y,z:P.z,yaw:P.yaw};
   if(![position.x,position.z,position.yaw].every(Number.isFinite)||Math.abs(P.x)>100000||Math.abs(P.z)>100000)return false;
   try{
    localStorage.setItem(GAME_LOCAL_POSITION_PREFIX+localPositionUserId,
@@ -2193,7 +2197,7 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
     if (![x, z, yaw].every(Number.isFinite) || Math.abs(x) > 100000 || Math.abs(z) > 100000) return null;
     return {
       version: 1,
-      player: { x, z, yaw },
+      player: { x, y: Number.isFinite(P.y)?P.y:null, z, yaw },
       inventory: inventory.slice(0, 50).map(item => ({
         name: String(item.name).slice(0, 64),
         qty: Math.max(1, Math.min(9999, Math.floor(Number(item.qty) || 1)))
@@ -3661,7 +3665,7 @@ window.ENDLESS_WILDS.roomResumeVerified=false;
 window.ENDLESS_WILDS.resumeAtRoomPosition=p=>{
  if(window.__climboriaGuestMode||!p||!['x','y','z'].every(k=>Number.isFinite(p[k]))||
    Math.abs(p.x)>10000||Math.abs(p.z)>10000||p.y< -200||p.y>2000)return false;
- return restoreExplorerPosition({x:p.x,z:p.z,yaw:P.yaw});
+ return restoreExplorerPosition({x:p.x,y:p.y,z:p.z,yaw:P.yaw});
 };
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
