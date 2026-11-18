@@ -247,6 +247,23 @@ try{
  await assertChatDraft(b,'','B server-confirmed local chat was not cleared');
  const fpsA=await frameRate(a),fpsB=await frameRate(b);
  check(fpsA>0&&fpsB>0,'A real rendered Game frame stream is required');
+ // Move B away from protected first-join Sanctuary using actual game input.
+ // A disconnect/re-login at Sanctuary would NOT test the new trusted resume.
+ await b.evaluate(()=>document.activeElement?.blur?.());
+ await b.keyboard.down('Shift');await b.keyboard.down('w');
+ try{await b.waitForTimeout(2200)}
+ finally{await b.keyboard.up('w');await b.keyboard.up('Shift')}
+ const lastVerifiedB=await b.evaluate(()=>{
+  const p=window.__climboriaJarrellsPeak.player;
+  return {x:p.x,y:p.y,z:p.z};
+ });
+ check(Math.hypot(lastVerifiedB.x,lastVerifiedB.z+30)>7,
+  'Last-position QA could not leave the protected Sanctuary with real player movement');
+ await a.waitForFunction(last=>{
+  const peer=window.__CLIMBORIA_GAME_PEERS?.audit?.().positions[0];
+  return peer&&Math.hypot(peer.x-last.x,peer.y-last.y,peer.z-last.z)<6;
+ },lastVerifiedB,{timeout:30000});
+ await b.waitForTimeout(750);
  if(env.GAME_QA_SCREENSHOT_DIR){
   const dir=resolve(env.GAME_QA_SCREENSHOT_DIR);
   await mkdir(dir,{recursive:true});
@@ -273,7 +290,20 @@ try{
   ()=>document.documentElement.dataset.climboriaMultiplayer==='connected',
   undefined,{timeout:90000});
  await Promise.all([assertPeer(a,1),assertPeer(b,1)]);
- console.log('PASS: two REAL authenticated Game browsers exchanged server-confirmed World Chat, kept drafts on remote chat, saw real remote GLB models/cyan map peers; logout/re-login removed/rejoined actual peers.');
+ // Rejoin must restore the identity-bound last SERVER-accepted position,
+ // not silently relocate the same registered player to Sanctuary.
+ await a.waitForFunction(last=>{
+  const peer=window.__CLIMBORIA_GAME_PEERS?.audit?.().positions[0];
+  return peer&&Math.hypot(peer.x-last.x,peer.y-last.y,peer.z-last.z)<6;
+ },lastVerifiedB,{timeout:30000});
+ const rejoinedB=await b.evaluate(()=>{
+  const p=window.__climboriaJarrellsPeak.player;
+  return {x:p.x,y:p.y,z:p.z};
+ });
+ check(Math.hypot(rejoinedB.x-lastVerifiedB.x,rejoinedB.y-lastVerifiedB.y,
+  rejoinedB.z-lastVerifiedB.z)<6,
+  'Rejoined registered hero returned to an incorrect world location');
+ console.log('PASS: two REAL registered browsers exchanged World and Nearby messages, rendered overhead speech and remote GLBs, and resumed a moved player without a Sanctuary reset.');
  console.log('Observed software Chromium FPS A/B:',fpsA,fpsB,'— physical Android/desktop hardware and owner release acceptance are still required.');
 }finally{
  await Promise.all(contexts.map(ctx=>ctx.close().catch(()=>{})));
