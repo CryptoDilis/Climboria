@@ -578,6 +578,91 @@ async function runRollbackWithCache(browser) {
   }
 }
 
+/** DEX quote-direction selectors work without ever authorizing native trades. */
+async function runDexReadOnlyQuoteDirections(browser) {
+  const page = await browser.newPage({viewport:{width:390,height:850}});
+  let vendorLoads=0;
+  const forbidden=[];
+  page.on("request", req => {
+    if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(req.url())) forbidden.push(req.url());
+  });
+  await page.route("**/swap-config.js", route => route.fulfill({
+    status:200,contentType:"application/javascript",body:mockConfig().replace("surfaces:Object.freeze({swap:true,dex:true})", "surfaces:Object.freeze({swap:true,dex:false})")
+  }));
+  // Only this offline HTML fixture exposes market selection through an
+  // injected test hook. The production DEX keeps its private script scope.
+  await page.route("**/dex/", async route => {
+    const response = await route.fetch();
+    const source = await response.text();
+    const marker = "async function dexTradeSyncToken(pair){";
+    assert.equal(source.split(marker).length, 2, "DEX market selection hook must exist exactly once");
+    const fixtureSource = source.replace(marker,
+      `window.__dexSyntheticSelectToken = (mint,symbol,decimals) => {
+        dexTradeToken={id:mint,symbol,name:symbol,decimals,isVerified:true};
+        syncDexJupiterMarketPair();
+      };
+      ` + marker);
+    await route.fulfill({response,body:fixtureSource});
+  });
+  // Production DEX stays source-OFF. This fixture also keeps its DEX
+  // surface OFF even while the production Swap runtime status is ON.
+  await page.route("**/swap-runtime-status.json", route => route.fulfill({
+    status:200,json:{enabled:true},headers:{"Cache-Control":"no-store"}
+  }));
+  await page.route(SCRIPT_URL, route => {
+    vendorLoads++;
+    return route.abort();
+  });
+  try {
+    const response=await page.goto(ORIGIN+"/dex/",{waitUntil:"domcontentloaded",timeout:20000});
+    assert.equal(response.status(),200);
+    const buy=page.locator('[data-dex-provider-direction="buy"]');
+    const sell=page.locator('[data-dex-provider-direction="sell"]');
+    // Token detail stays hidden until a market is selected. Exercise the
+    // registered handler directly here; the separate production navigation
+    // smoke covers revealing the detail panel via an actual token click.
+    assert.equal(await buy.count(),1);
+    assert.equal(await sell.count(),1);
+    assert.equal(await buy.isVisible(),false);
+    assert.equal(await buy.getAttribute("aria-pressed"),"true");
+    assert.equal(await sell.getAttribute("aria-pressed"),"false");
+    const panel=page.locator("#climboriaDexProviderPanel");
+    // With no selected token even a Sell click may not make mint hints from thin air.
+    await sell.evaluate(button => button.click());
+    assert.equal(await sell.getAttribute("aria-pressed"),"true");
+    assert.equal(await panel.getAttribute("data-climboria-managed-swap-input-mint"),null);
+    assert.equal(await panel.getAttribute("data-climboria-managed-swap-output-mint"),null);
+    // Mimic completed mint-decimals lookup. Never query/send a customer wallet.
+    await page.evaluate(() => window.__dexSyntheticSelectToken(
+      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","USDC",6));
+    // SELL USDC spends USDC -> receives SOL; BUY USDC reverses pair.
+    await sell.evaluate(button => button.click());
+    assert.equal(await panel.getAttribute("data-climboria-managed-swap-input-mint"),
+      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+    assert.equal(await panel.getAttribute("data-climboria-managed-swap-output-mint"),
+      "So11111111111111111111111111111111111111112");
+    await buy.evaluate(button => button.click());
+    assert.equal(await buy.getAttribute("aria-pressed"),"true");
+    assert.equal(await sell.getAttribute("aria-pressed"),"false");
+    assert.equal(await panel.getAttribute("data-climboria-managed-swap-input-mint"),
+      "So11111111111111111111111111111111111111112");
+    assert.equal(await panel.getAttribute("data-climboria-managed-swap-output-mint"),
+      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+    for(const selector of [
+      '[data-dex-side="buy"]','[data-dex-side="sell"]',
+      '#dexTradeGetQuote','#dexTradePrepare','#dexTradeConnect'
+    ]) assert.equal(await page.locator(selector).isDisabled(),true,
+      selector+" native trade control must stay disabled");
+    assert.equal(await page.locator('[data-climboria-managed-swap-open]:visible').count(),0,
+      "DEX source-OFF must hide every Jupiter wallet launcher");
+    assert.equal(vendorLoads,0,"previewing either direction must not load wallet-capable Jupiter JS");
+    assert.deepEqual(forbidden,[],"direction preview must not call custom native order/execute");
+    console.log("PASS /dex/ mobile preview Buy/Sell updates verified Solana mint hints; native trade and DEX provider OFF");
+  } finally {
+    await page.close();
+  }
+}
+
 const browser = await chromium.launch({headless:true});
 try {
   await runPage(browser,"/swap/");
@@ -594,6 +679,7 @@ try {
     for (const width of [1280,390]) await runTabReturnApproval(browser,path,width);
   }
   await runRollbackWithCache(browser);
+  await runDexReadOnlyQuoteDirections(browser);
 } finally {
   await browser.close();
 }
