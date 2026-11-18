@@ -31,3 +31,11 @@ This draft modifies the same Cloudflare Worker whose **Swap source approval is O
 5. Separate **future** Solana DEX release may later enable `surfaces.dex` and the DEX Worker literal only after distinct production wallet and order-direction checks, operator approval, and rollback. Base/EVM and Launchpad follow later.
 
 **Permanent scope constraint:** Swap and DEX only. All current live owner-facing Game, ClimbX and Launchpad sources are untouched.
+
+
+## 2026-11-19 follow-on — DEX Buy/Sell quote-direction preview (source-OFF)
+
+- Live Solana Swap remains fully unchanged. New DEX-only `dex/index.html` introduces `Preview Buy` / `Preview Sell` quote-direction controls in the token-detail panel. They update verified Solana market mint hints in the independent Jupiter host, reusing the existing `syncDexJupiterMarketPair()` to clear stale intent. The user can choose quote direction without a wallet, without activating Climboria's disabled native order form or bypassing the DEX source-OFF gate.
+- A mobile Playwright fixture in `.github/scripts/dex-swap-managed-provider-browser-smoke.mjs` now tests missing-token fail-closed behavior, USDC/SOL Sell and Buy mint orientation, disabled native Buy/Sell/order/connect controls, invisible source-OFF DEX Jupiter launchers, no third-party plugin loads or native order requests.
+- **Status when written:** UI/test changes committed on PR #655 draft branch but final-head CI must still be checked; no claim of new successful tests until the exact SHA checks complete. PR still **draft and unmerged**. The DEX provider cannot yet receive customer wallet requests.
+- **Exact next:** verify final-head browser/regression/Worker checks, fix any test or UI mismatch; keep stable release gates `Swap=true`, `DEX=false`, native signing=false. Do not merge without controlled release review and matching exact-main SHA. Owner-funded Swap wallet/settlement evidence is still outstanding. Preserve owner-controlled rollback.
