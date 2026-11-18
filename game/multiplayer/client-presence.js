@@ -457,6 +457,7 @@
     // Only a verified server spawn-accepted completes room admission.
     clearAdmissionTimer();
     ensureWorldChatUi();
+    world.roomResumeVerified=true;
     showStatus('connected','ONLINE: '+(known.size+1));
    }
   }else if(msg.type==='player-joined'){
@@ -471,16 +472,15 @@
    if(spawnConfirmed&&(msg.type==='world-chat'||nearbyChatReady))appendWorldChat(msg)
   }
   else if(msg.type==='rejected'&&msg.reason==='invalid-initial-spawn'){
-   // A rejected first spawn leaves the socket open on the Game Worker.
-   // Close it and retry admission when the real hero returns to Sanctuary.
+   // Invalid/forged initial spawn must never expose a live avatar. Stop
+   // this socket without relocating the player's actual saved position.
    const rejected=socket;
    clearAdmissionTimer();
    socket=null;previous=null;
    if(movement){clearInterval(movement);movement=null}
    clearPeers();
    if(rejected){try{rejected.close()}catch{}}
-   showStatus('spawn-rejected','MULTIPLAYER · RETURN TO SANCTUARY · PRESS 1');
-   scheduleConnect(1200);
+   showStatus('spawn-rejected','WORLD · SAVED LOCATION · ROOM REJOIN UNAVAILABLE');
   }
   else if(msg.type==='rejected'&&['world-chat-rate-limit','world-chat-invalid-text'].includes(msg.reason)){
    // Only the server rejection for THIS request can release its pending
@@ -519,8 +519,8 @@
   return {x:p.x,y:p.y,z:p.z};
  }
  function isReady(){return window.__climboriaGameReady===true&&world.player.mode==='walk'}
- // Server accepts initial room admission only within 6m of Sanctuary.
- // Never fake a remote spawn or send an impossible ticket request.
+ // First-ever room join still requires the protected Sanctuary location.
+ // Subsequent joins may use a verified server-issued resume anchor.
  function isAtRoomSpawn(){
   const p=localPosition();
   return validPosition(p)&&Math.hypot(p.x,p.z+30)<=6&&p.y>=0&&p.y<=45;
@@ -582,15 +582,13 @@
   if(old){try{old.close()}catch{}}
   clearPeers();
  }
- // A local waypoint teleport cannot be sent as an ordinary position
- // update: the room correctly rejects implausibly fast movement. Clear the
- // old visible peer/chat session and use fresh authenticated Sanctuary
- // admission, not a client-authorized server teleport or fake position.
+ // Local debug travel is single-player relocation, not a trusted network
+ // teleport. It never erases the player's chosen position or fabricates a
+ // new remote presence. The next real session uses the DO-owned resume.
  document.addEventListener('climboria:local-teleport',()=>{
   if(disposed||(!socket&&!connecting))return;
   resetConnection();
-  showStatus('rejoining','MULTIPLAYER · REJOINING AFTER TELEPORT');
-  scheduleConnect(0);
+  showStatus('saved-location','EXPLORING · LOCATION KEPT');
  });
  async function connect(){
   if(disposed||connecting||socket||sameAccountInUse)return;
@@ -630,14 +628,9 @@
     clientUser=null;showStatus('login-required','MULTIPLAYER · SIGN IN REQUIRED');return;
    }
    clientUser=session.user.id;
-   // A real signed-in explorer who is already away from the protected spawn
-   // must return to Sanctuary before this server can safely admit a new room
-   // session. Avoid consuming short-lived tickets for known-invalid spawns.
-   if(!isAtRoomSpawn()){
-    showStatus('awaiting-sanctuary','MULTIPLAYER · RETURN TO SANCTUARY · PRESS 1');
-    scheduleConnect(1200);
-    return;
-   }
+   // Ticket will contain a server-owned last-position anchor if this
+   // verified account has previously moved inside the real Game room.
+   // Never require player input to teleport back to Sanctuary.
    const hero=window.__climboriaCreatedHero||{};
    showStatus('ticket-request','MULTIPLAYER · VERIFYING ROOM ACCESS');
    const ticketAbort=new AbortController();
@@ -728,6 +721,14 @@
    if(!/^[a-f0-9]{64}$/.test(ticket?.ticket||'')||
       ticket.protocol!=='climboria-v1'||ticket.ttlSeconds!==30)
     throw Error('Invalid room ticket');
+   const anchor=validPosition(ticket.resumePosition)?ticket.resumePosition:null;
+   const resumed=!!anchor&&world.resumeAtRoomPosition?.(anchor)===true;
+   if(!resumed&&!isAtRoomSpawn()){
+    // A saved location without a server-trusted anchor stays visually
+    // intact and offline. Never issue an arbitrary non-Sanctuary spawn.
+    showStatus('saved-location','EXPLORING · LOCATION KEPT');
+    return;
+   }
    const socketURL=new URL('ws',base);socketURL.protocol='wss:';
    const ws=new WebSocket(socketURL.toString(),['climboria-v1','t-'+ticket.ticket]);
    socket=ws;
@@ -736,17 +737,19 @@
    ws.onmessage=e=>{if(!disposed&&socket===ws&&epoch===connectEpoch)onPacket(e.data)};
    ws.onopen=()=>{
     if(disposed||socket!==ws||epoch!==connectEpoch||!isReady()){ws.close();return}
-    // The player may move after the room ticket is issued. Never submit an
-    // untrusted or out-of-Sanctuary first position merely to obtain a peer.
-    if(!isAtRoomSpawn()){
+    // Any first spawn must still match the trusted ticket location.
+    const nowPosition=localPosition();
+    const validForTicket=resumed?
+     Math.hypot(nowPosition.x-anchor.x,nowPosition.y-anchor.y,nowPosition.z-anchor.z)<=3:
+     isAtRoomSpawn();
+    if(!validForTicket){
      clearAdmissionTimer();socket=null;previous=null;
      try{ws.close()}catch{}
-     showStatus('awaiting-sanctuary','MULTIPLAYER · RETURN TO SANCTUARY · PRESS 1');
-     scheduleConnect(1200);
+     showStatus('saved-location','EXPLORING · LOCATION KEPT');
      return;
     }
     previous=null;
-    showStatus('spawn-pending','MULTIPLAYER · VERIFYING SANCTUARY SPAWN');
+    showStatus('spawn-pending','MULTIPLAYER · VERIFYING SAVED POSITION');
     armAdmissionTimer(ws,epoch); // OPEN is not an accepted terrain spawn.
     send({type:'spawn',position:localPosition()});
     if(movement)clearInterval(movement);
