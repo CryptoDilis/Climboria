@@ -85,7 +85,7 @@
  let connecting=false,connectEpoch=0,authSubscription=null,spawnConfirmed=false;
  let sameAccountInUse=false;
  let admissionTimer=null;
- let sessionLookupCancel=null;
+ let sessionLookupCancel=null,ticketLookupCancel=null;
  const known=new Map(),validId=x=>typeof x==='string'&&/^s_[a-f0-9]{32}$/.test(x);
  const validPosition=p=>p&&['x','y','z'].every(k=>typeof p[k]==='number'&&Number.isFinite(p[k])&&Math.abs(p[k])<50000);
  const validPlayer=p=>p&&validId(p.id)&&typeof p.name==='string'&&/^[A-Za-z0-9 _-]{2,24}$/.test(p.name)
@@ -555,12 +555,27 @@
   if(sessionLookupCancel){
    const cancel=sessionLookupCancel;sessionLookupCancel=null;cancel();
   }
+  // A prior identity/waypoint must not leave an 18s stale ticket in flight.
+  // Abort what can still be aborted; epoch checks also reject late replies.
+  if(ticketLookupCancel){
+   const cancel=ticketLookupCancel;ticketLookupCancel=null;cancel();
+  }
   if(reconnect){clearTimeout(reconnect);reconnect=null}
   if(movement){clearInterval(movement);movement=null}
   const old=socket;socket=null;previous=null;
   if(old){try{old.close()}catch{}}
   clearPeers();
  }
+ // A local waypoint teleport cannot be sent as an ordinary position
+ // update: the room correctly rejects implausibly fast movement. Clear the
+ // old visible peer/chat session and use fresh authenticated Sanctuary
+ // admission, not a client-authorized server teleport or fake position.
+ document.addEventListener('climboria:local-teleport',()=>{
+  if(disposed||(!socket&&!connecting))return;
+  resetConnection();
+  showStatus('rejoining','MULTIPLAYER · REJOINING AFTER TELEPORT');
+  scheduleConnect(0);
+ });
  async function connect(){
   if(disposed||connecting||socket||sameAccountInUse)return;
   if(!isReady()){scheduleConnect(1200);return}
@@ -610,7 +625,7 @@
    const hero=window.__climboriaCreatedHero||{};
    showStatus('ticket-request','MULTIPLAYER · VERIFYING ROOM ACCESS');
    const ticketAbort=new AbortController();
-   let ticketDeadline;
+   let ticketDeadline,cancelTicketWait;
    let issued;
    try{
     // Bound the entire signed-in ticket stage (fetch AND response JSON), even
@@ -657,13 +672,22 @@
      return outcome;
     })();
     const deadline=new Promise((_,reject)=>{
+     cancelTicketWait=()=>{
+      clearTimeout(ticketDeadline);
+      ticketAbort.abort();
+      reject(Error('Room ticket request superseded'));
+     };
      ticketDeadline=setTimeout(()=>{
       ticketAbort.abort();
       reject(Error('Room ticket deadline expired'));
      },18000);
     });
+    ticketLookupCancel=cancelTicketWait;
     issued=await Promise.race([work,deadline]);
-   }finally{clearTimeout(ticketDeadline)}
+   }finally{
+    clearTimeout(ticketDeadline);
+    if(ticketLookupCancel===cancelTicketWait)ticketLookupCancel=null;
+   }
    if(disposed||epoch!==connectEpoch)return;
    if(issued.busy){
     // An authenticated room can be temporarily full or this account may

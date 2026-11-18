@@ -24,10 +24,17 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
   };
   created.push(node);return node;
  };
- const events=[];
+ const events=[],documentListeners=new Map();
  const document={documentElement:{dataset:{}},body:createElement('body'),
-  createElement,addEventListener(){},
-  dispatchEvent(event){events.push(event.type);return true}};
+  createElement,addEventListener(kind,fn){
+   if(!documentListeners.has(kind))documentListeners.set(kind,[]);
+   documentListeners.get(kind).push(fn);
+  },
+  dispatchEvent(event){
+   events.push(event.type);
+   for(const fn of documentListeners.get(event.type)||[])fn(event);
+   return true;
+  }};
  const window={__climboriaGameReady:true,__climboriaCreatedHero:{name:'Explorer A',model:'Jarrell'},
   __climboriaJarrellsPeak:{player:{x:0,y:9.55,z:-30,mode:'walk'}},
   __CLIMBORIA_GAME_PEERS:{
@@ -267,7 +274,7 @@ test('live Game maps the touch return event to its existing authorized local Dig
   'Game must handle touch request with existing local Sanctuary teleport only');
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261118-config-retry-8/,
+ assert.match(game,/client-presence\.js\?v=20261118-teleport-resync-9/,
   'production Game must request the fresh mobile room client');
 });
 
@@ -299,6 +306,69 @@ test('mobile blocked-room touch button emits only a real player Sanctuary return
  assert.ok(h.created.some(node=>node.id==='climboria-world-chat-toggle'));
  button.click();
  assert.equal(h.events.length,1,'return button must stop acting after joining');
+});
+
+test('a real Game teleport invalidates stale room position and requires fresh Sanctuary admission',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];ws.onopen();
+ const own='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,
+  position:{x:0,y:9.55,z:-30},peers:[peer]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.equal(h.adds.length,1);
+ const chatToggle=h.created.find(node=>node.id==='climboria-world-chat-toggle');
+ assert.equal(chatToggle.style.display,'block');
+ // A local game waypoint jump must not be forwarded as an impossible 28 m/s
+ // room move or preserve ghosts at the previous room location.
+ h.window.__climboriaJarrellsPeak.player.x=500;
+ h.document.dispatchEvent({type:'climboria:local-teleport'});
+ assert.equal(ws.readyState,3,'old authenticated socket is closed');
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'rejoining');
+ assert.deepEqual(h.removes,[peer.id]);
+ assert.equal(chatToggle.style.display,'none','old chat is hidden on local teleport');
+ assert.equal(h.runNextTimer(),0,'the rejoin starts without waiting for a stale room timer');
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'awaiting-sanctuary');
+ assert.equal(h.clients.length,1,'off-Sanctuary teleport cannot open a room socket');
+ // Return via the real gameplay TP[1] location before entering a new room.
+ h.window.__climboriaJarrellsPeak.player.x=0;
+ assert.equal(h.runNextTimer(),1200);
+ await flush();await waitFor(()=>h.clients.length===2);
+ assert.equal(h.clients.length,2,'room issues a new authenticated session ticket');
+ assert.equal(chatToggle.style.display,'none','ticket alone cannot enable World Chat');
+ const next=h.clients[1];next.onopen();
+ next.onmessage({data:JSON.stringify({type:'welcome',selfId:own,peers:[]})});
+ next.onmessage({data:JSON.stringify({type:'spawn-accepted',id:own,
+  position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.equal(chatToggle.style.display,'block','only trusted fresh spawn restores chat');
+});
+test('local teleport during a pending ticket invalidates old room admission',async()=>{
+ let release;
+ const gate=new Promise(resolve=>{release=resolve});
+ const h=harness(true,{ticketGate:gate});await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'ticket-request');
+ h.document.dispatchEvent({type:'climboria:local-teleport'});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'rejoining');
+ const originalTicket=h.calls.find(call=>call.url.endsWith('/ticket'));
+ assert.equal(originalTicket.options.signal.aborted,true,
+  'teleport must abort the superseded room ticket instead of waiting 18 seconds');
+ assert.equal(h.runNextTimer(),0,
+  'cancelled ticket deadline must not preempt immediate new admission');
+ release();await flush();
+ await waitFor(()=>h.clients.length===1);
+ assert.equal(h.clients.length,1,'only the new valid ticket request may produce a socket');
+ assert.equal(h.adds.length,0,'stale ticket cannot create remote players');
+});
+test('Game waypoint teleport explicitly emits the room-resync event after moving locally',()=>{
+ const game=readFileSync('game/play.html','utf8');
+ const start=game.indexOf('function tp(x,z,yaw){');
+ assert.ok(start>=0,'waypoint teleport function must exist');
+ assert.ok(game.slice(start,start+600).includes("document.dispatchEvent(new Event('climboria:local-teleport'))"),
+  'all waypoint keys and touch Sanctuary return must notify authenticated room resync');
+ assert.ok(game.includes('client-presence.js?v=20261118-teleport-resync-9'),
+  'production Game must avoid caching the older room client');
 });
 
 test('server close 4001 shows a truthful same-account warning instead of WebSocket eviction loops',async()=>{
