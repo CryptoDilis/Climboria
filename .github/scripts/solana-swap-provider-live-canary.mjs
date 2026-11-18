@@ -125,12 +125,22 @@ try {
     await page.waitForFunction(selector => {
       const root = document.getElementById("climboriaSwapProviderTarget");
       if (!root) return false;
-      return [...root.querySelectorAll(selector)].some(element => {
-        const rect = element.getBoundingClientRect();
-        const style = getComputedStyle(element);
-        return rect.width > 0 && rect.height > 0 &&
-          style.visibility !== "hidden" && style.display !== "none";
-      });
+      // Vendor controls may live in an OPEN Shadow DOM. Native
+      // querySelectorAll() never pierces shadow roots, so a widget can be
+      // fully usable while an ordinary light-DOM scan sees only a container.
+      const nodes = [root];
+      for (let i = 0; i < nodes.length && i < 6000; i++) {
+        const element = nodes[i];
+        if (element.matches?.(selector)) {
+          const rect = element.getBoundingClientRect();
+          const style = getComputedStyle(element);
+          if (rect.width > 0 && rect.height > 0 &&
+              style.visibility !== "hidden" && style.display !== "none") return true;
+        }
+        nodes.push(...element.children);
+        if (element.shadowRoot) nodes.push(...element.shadowRoot.children);
+      }
+      return false;
     }, interactiveSelector, { polling: 500, timeout: 25000 }).catch(() => {});
 
     const widgetUi = await page.evaluate(selector => {
@@ -141,7 +151,17 @@ try {
         return rect.width > 0 && rect.height > 0 &&
           style.visibility !== "hidden" && style.display !== "none";
       };
-      const controls = [...(root?.querySelectorAll(selector) || [])].filter(isVisible);
+      const nodes = root ? [root] : [];
+      let openShadowHosts = 0;
+      for (let i = 0; i < nodes.length && i < 6000; i++) {
+        const element = nodes[i];
+        nodes.push(...element.children);
+        if (element.shadowRoot) {
+          openShadowHosts++;
+          nodes.push(...element.shadowRoot.children);
+        }
+      }
+      const controls = nodes.filter(el => el.matches?.(selector) && isVisible(el));
       return {
         visibleControls: controls.length,
         visibleFrames: controls.filter(el => el.tagName === "IFRAME").length,
@@ -150,12 +170,15 @@ try {
           el.tagName === "BUTTON" || el.getAttribute("role") === "button").length,
         rootChildCount: root?.children.length || 0,
         rootDescendants: root?.querySelectorAll("*").length || 0,
+        rootDeepDescendants: Math.max(0, nodes.length - 1),
+        openShadowHosts,
         rootTextLength: (root?.innerText || "").length,
         rootChildTags: [...(root?.children || [])].slice(0, 4).map(el => el.tagName),
         rootChildSummaries: [...(root?.children || [])].slice(0, 4).map(el => ({
           tag: el.tagName,
           id: el.id.slice(0, 80),
           className: typeof el.className === "string" ? el.className.slice(0, 100) : "",
+          openShadowRoot: !!el.shadowRoot,
           width: Math.round(el.getBoundingClientRect().width),
           height: Math.round(el.getBoundingClientRect().height)
         })),
