@@ -34,7 +34,16 @@ const page = await context.newPage();
 const providerAssetRequests = [];
 const blockedWrites = [];
 const pageErrors = [];
+const liveStatusResponses = [];
+const failedStatusRequests = [];
 page.on("pageerror", error => pageErrors.push(String(error?.message || error).slice(0, 200)));
+page.on("response", response => {
+  if (response.url() === STATUS) liveStatusResponses.push(response.status());
+});
+page.on("requestfailed", request => {
+  if (request.url() === STATUS) failedStatusRequests.push(
+    String(request.failure()?.errorText || "unknown").slice(0, 100));
+});
 page.on("popup", popup => { void popup.close(); });
 
 // A production canary has no customer wallet or authority to submit writes.
@@ -136,6 +145,11 @@ try {
     }, interactiveSelector);
     console.log("DIAGNOSTIC real Jupiter UI after bounded hydration (no wallet): " +
       JSON.stringify(widgetUi));
+    console.log("DIAGNOSTIC blocked vendor write endpoints (paths only, no payloads): " +
+      JSON.stringify([...new Set(blockedWrites.map(w =>
+        w.method + " " + w.origin + w.path))].slice(0, 12)));
+    console.log("DIAGNOSTIC public status checks from page: " +
+      JSON.stringify({http:liveStatusResponses.slice(0, 12),failures:failedStatusRequests.slice(0, 5)}));
     const nativeWrites = blockedWrites.filter(w =>
       w.origin === SITE || w.origin === "https://api.climboria.fun");
     assert.equal(nativeWrites.length, 0,
