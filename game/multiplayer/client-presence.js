@@ -46,14 +46,19 @@
  let readyClients=dependencies();
  if(!readyClients){
   showStatus('starting','MULTIPLAYER · LOADING GAME & LOGIN');
-  for(let attempt=0;attempt<60&&!readyClients;attempt++){
-   await new Promise(resolve=>setTimeout(resolve,500));
+  let cancelled=false;
+  window.addEventListener('pagehide',()=>{cancelled=true},{once:true});
+  // Slow Android/WebGL/CDN starts can exceed 30s. Do not permanently
+  // disable real room and World Chat after a timer if dependencies arrive
+  // later. Back off to one inexpensive read every 3s while this page lives.
+  for(let attempt=0;!readyClients&&!cancelled;attempt++){
+   if(attempt===60)
+    showStatus('slow-start','MULTIPLAYER · STILL LOADING GAME & LOGIN · RETRYING');
+   await new Promise(resolve=>setTimeout(resolve,attempt<60?500:3000));
+   if(cancelled)return;
    readyClients=dependencies();
   }
- }
- if(!readyClients){
-  showStatus('unavailable','MULTIPLAYER · GAME LOGIN NOT READY · RELOAD');
-  return;
+  if(cancelled)return;
  }
  const {auth,renderer,world}=readyClients;
  let socket=null,disposed=false,reconnect=null,movement=null,clientUser=null,selfId=null;
@@ -541,7 +546,7 @@
   if(!isReady()){scheduleConnect(1200);return}
   connecting=true;
   const epoch=++connectEpoch;
-  doc.dataset.climboriaMultiplayer='connecting';
+  showStatus('session-check','MULTIPLAYER · CHECKING GAME LOGIN');
   try{
    // A wedged Supabase getSession must not strand the Game on CONNECTING.
    // Its public API has no AbortSignal; race an independent wall-clock
@@ -583,6 +588,7 @@
     return;
    }
    const hero=window.__climboriaCreatedHero||{};
+   showStatus('ticket-request','MULTIPLAYER · VERIFYING ROOM ACCESS');
    const ticketAbort=new AbortController();
    let ticketDeadline;
    let issued;
@@ -665,6 +671,7 @@
    const socketURL=new URL('ws',base);socketURL.protocol='wss:';
    const ws=new WebSocket(socketURL.toString(),['climboria-v1','t-'+ticket.ticket]);
    socket=ws;
+   showStatus('socket-connecting','MULTIPLAYER · CONNECTING TO WORLD');
    armAdmissionTimer(ws,epoch); // WebSocket CONNECTING cannot stall forever.
    ws.onmessage=e=>{if(!disposed&&socket===ws&&epoch===connectEpoch)onPacket(e.data)};
    ws.onopen=()=>{
@@ -679,6 +686,7 @@
      return;
     }
     previous=null;
+    showStatus('spawn-pending','MULTIPLAYER · VERIFYING SANCTUARY SPAWN');
     armAdmissionTimer(ws,epoch); // OPEN is not an accepted terrain spawn.
     send({type:'spawn',position:localPosition()});
     if(movement)clearInterval(movement);
