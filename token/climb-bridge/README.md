@@ -43,6 +43,24 @@ This inspects the **exact original CLIMB mint** with Solana \`getAccountInfo\` u
 
 A successful read only confirms two reported finalized observations at their slots. Presence of any mint/freeze authority must be documented and assessed; absence does **not** establish bridge readiness or all downstream restrictions. Token liquidity, pump.fun/pumpswap market status, escrow compatibility, manager deployment, protocol code/audits, and approved bridge routes remain separate verification tasks.
 
+## Offline in-flight transfer reconciliation simulation (not a bridge)
+
+For the next phase, the repository includes `transfer-simulator.mjs` and `transfer-simulator.test.mjs`. These are **offline bookkeeping simulation only**; their mock attestation string is intentionally not a cryptographic attestation, does not authenticate any Solana or Base transaction, and **must not** be imported into a production bridge, relayer, mint authority or wallet flow.
+
+```sh
+node --test token/climb-bridge/*.test.mjs
+```
+
+The simulator checks four illustrative lifecycle transitions: `lock` (original CLIMB hypothetically moved to Solana escrow), `mint` (Base representation hypothetically issued), `burn` (Base representation hypothetically destroyed), `release` (original token hypothetically unlocked on Solana). It rejects duplicate/unknown message IDs, replay, mint without prior lock, unlock without prior burn, excess lock/burn, and mock-proof omissions. Pending deposit/burn messages are included explicitly in its invariant:
+
+```text
+solana_escrow - base_wrapped = pending_sol_to_base + pending_base_to_sol
+```
+
+This equality is a **simplifying assumption** for a fresh, dedicated single bridge escrow with no donations, fees, deficits, multi-escrow positions or other supported chains; *real* bridge accounting must include protocol-specific inventories and unsettled state before applying it. This simulator does not replace actual bridge manager/transceiver verification, cross-chain message finality, contract audits, rate limits, order processing, independent RPC verification, devnet transfers or small-value mainnet round trips. Test green does not mean asset transfer green. Source still has no deployed Base CA.
+
+**Known external blocker:** the official existing CLIMB mint/freeze authorities and actual bridge provider capability cannot be established from historical GitHub supply snapshots alone; read-only dual-provider finalized RPC verification remains required before real bridge configuration.
+
 ## Mainnet go/no-go prerequisites
 
 1. Confirm current `finalized` Solana mint account (program, supply, `mintAuthority`, `freezeAuthority`, token accounts, pump.fun compatibility) from multiple sources. Snapshot file does not establish current authority state.
