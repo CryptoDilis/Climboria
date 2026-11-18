@@ -58,6 +58,7 @@
  const {auth,renderer,world}=readyClients;
  let socket=null,disposed=false,reconnect=null,movement=null,clientUser=null,selfId=null;
  let connecting=false,connectEpoch=0,authSubscription=null,spawnConfirmed=false;
+ let sameAccountInUse=false;
  let admissionTimer=null;
  let sessionLookupCancel=null;
  const known=new Map(),validId=x=>typeof x==='string'&&/^s_[a-f0-9]{32}$/.test(x);
@@ -319,7 +320,7 @@
   duelExpanded=false;
   if(duelUi){duelUi.toggle.style.display='none';duelUi.panel.style.display='none';renderDuelUi()}
  }
- let returnToSanctuaryButton=null;
+ let returnToSanctuaryButton=null,sameAccountRetryButton=null;
  function showStatus(value,message){
   doc.dataset.climboriaMultiplayer=value;
   if(!badge){badge=document.createElement('div');badge.id='climboria-room-status';badge.style.cssText=
@@ -343,6 +344,26 @@
     });
    }
    badge.appendChild(returnToSanctuaryButton);
+  }
+  if(value==='same-account-in-use'){
+   // The room enforces one live socket per real Supabase user ID.
+   // A second browser using a linked login method replaces the first.
+   // Never endlessly fight that other tab every five seconds.
+   if(!sameAccountRetryButton){
+    sameAccountRetryButton=document.createElement('button');
+    sameAccountRetryButton.id='climboria-room-retry-same-account';
+    sameAccountRetryButton.type='button';
+    sameAccountRetryButton.textContent='RETRY ROOM CONNECTION';
+    sameAccountRetryButton.style.cssText='display:block;width:100%;margin-top:8px;padding:9px 11px;border:1px solid #d8b46b;border-radius:8px;background:#253448;color:#ffe3a3;font:800 11px/1.35 system-ui;cursor:pointer;pointer-events:auto;touch-action:manipulation';
+    sameAccountRetryButton.addEventListener('click',event=>{
+     event?.stopPropagation?.();
+     if(doc.dataset.climboriaMultiplayer!=='same-account-in-use')return;
+     sameAccountInUse=false;
+     showStatus('checking','MULTIPLAYER · RECHECKING ROOM');
+     scheduleConnect(0);
+    });
+   }
+   badge.appendChild(sameAccountRetryButton);
   }
  }
  function clearPeers(){
@@ -474,7 +495,7 @@
  // Auth transitions must not permanently disable presence. Keep the
  // explicit config.enabled release gate above; this runs only on approved rooms.
  function scheduleConnect(delay){
-  if(disposed||socket)return;
+  if(disposed||socket||sameAccountInUse)return;
   if(reconnect)clearTimeout(reconnect);
   reconnect=setTimeout(()=>{reconnect=null;void connect()},delay);
  }
@@ -499,6 +520,7 @@
  }
  function resetConnection(){
   clearAdmissionTimer();
+  sameAccountInUse=false;
   // Invalidate pending getSession/ticket responses so a signed-out account
   // cannot later create a socket or revive its World Chat after logout.
   connectEpoch++;
@@ -515,7 +537,7 @@
   clearPeers();
  }
  async function connect(){
-  if(disposed||connecting||socket)return;
+  if(disposed||connecting||socket||sameAccountInUse)return;
   if(!isReady()){scheduleConnect(1200);return}
   connecting=true;
   const epoch=++connectEpoch;
@@ -662,11 +684,23 @@
     if(movement)clearInterval(movement);
     movement=setInterval(publishMovement,250);
    };
-   ws.onclose=()=>{
+   ws.onclose=event=>{
     if(socket!==ws||disposed||epoch!==connectEpoch)return;
     clearAdmissionTimer();
     socket=null;clearPeers();previous=null;
     if(movement){clearInterval(movement);movement=null}
+    if(event?.code===4001){
+     // The Game Worker explicitly replaced this socket because another tab
+     // authenticated as the same Supabase UUID. Different login methods
+     // might still be linked to ONE account; do not make up a second peer.
+     // Stop automatic retry so the two tabs do not continually evict each
+     // other. The user may switch identities or explicitly retry after
+     // closing the other tab.
+     sameAccountInUse=true;
+     if(reconnect){clearTimeout(reconnect);reconnect=null}
+     showStatus('same-account-in-use','MULTIPLAYER · SAME ACCOUNT IN ANOTHER TAB · USE TWO DIFFERENT ACCOUNTS');
+     return;
+    }
     showStatus('offline','MULTIPLAYER · RECONNECTING');
     scheduleConnect(5000);
    };
