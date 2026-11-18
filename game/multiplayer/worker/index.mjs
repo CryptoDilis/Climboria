@@ -215,7 +215,7 @@ export class JarrellRoom {
   this.state=state;this.env=env;
   if(!state?.storage)throw Error('Durable Object storage required for one-use session tickets');
   this.room=new PresenceRoom({roomId:ROOM,limit:32});
-  // The client is still disabled. This state handles invitation consent only;
+  // Registered pilot is enabled. This state handles invitation consent only;
   // no ATTACK packet is ever passed to ServerCombatState.attack.
   this.combat=new ServerCombatState({room:this.room});
   this.lastPunch=new Map();
@@ -351,7 +351,7 @@ export class JarrellRoom {
    if(message.type==='move'&&!this.spawned.has(id)){
     socket.send(JSON.stringify({type:'rejected',reason:'spawn-required'}));return;
    }
-   if(message.type==='world-chat'){
+   if(message.type==='world-chat'||message.type==='nearby-chat'){
     const chatSeq=message.chatSeq;
     if(chatSeq!==undefined &&
        (!Number.isSafeInteger(chatSeq)||chatSeq<1||chatSeq>2147483647)){
@@ -384,8 +384,10 @@ export class JarrellRoom {
     this.lastChat.set(id,now);
     // Include the sender for a server-confirmed echo; never accept client IDs,
     // account info, timestamps, player HP, wallet, inventory or payment fields.
-    this.room.broadcast({type:'world-chat',id,name:member.name,text,at:now,
-     ...(chatSeq===undefined?{}:{chatSeq})});
+    const packet={type:message.type,id,name:member.name,text,at:now,
+     ...(chatSeq===undefined?{}:{chatSeq})};
+    if(message.type==='nearby-chat')this.room.broadcastNearby(packet,id,20);
+    else this.room.broadcast(packet);
     return;
    }
    // Authenticated duel invitations are CONSENT SIGNALS, not HP damage.
