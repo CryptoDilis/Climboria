@@ -37,4 +37,7 @@
 
 ## PR / CI evidence
 
-Pending PR creation, local tests and workflows. Populate with verified artifacts; do not invent green runs.
+- Draft PR [#661](https://github.com/CryptoDilis/Climboria/pull/661); implementation head `c4c0b6fc78b27cc852b0fc706d0877366b69baf1` (before this documentation evidence update), 7 scoped changed files, no Game/DEX/Swap/Launchpad/ClimbX production code changed.
+- Local Node 22 deterministic tests **9/9 PASS**, live preflight **NO_GO as designed** for unconfigured bridge; this does not assert live RPC or bridge safety.
+- Confirmed GitHub Actions **SUCCESS** on that exact implementation head: [CLIMB Bridge Read-Only Safety Tests #44370017560](https://github.com/CryptoDilis/Climboria/actions/runs/44370017560), [Validate Climboria #44370017408](https://github.com/CryptoDilis/Climboria/actions/runs/44370017408).
+- This documentation change adds a later SHA. Run a fresh exact-head CI check before calling that new SHA green. PR remains draft, unmerged and **NOT READY for funds**.
