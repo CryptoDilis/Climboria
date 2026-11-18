@@ -193,9 +193,20 @@ try {
     renderer.remove(markerId);
     const removed=renderer.count();
     const after=renderer.audit();
+    // A genuine remotely admitted Adventurer must have a clearly visible
+    // lightweight 3D body near the camera, not only an invisible name ring.
+    // This test-only direct adapter marker is NEVER considered a network peer.
+    const nearId='s_'+('e'.repeat(32));
+    renderer.add({id:nearId,name:'Nearby QA Explorer',model:'Adventurer',
+      position:{x:p.x+8,y:p.y,z:p.z+8}});
+    renderer.update(.016);
+    const nearby=renderer.audit();
+    const nearbyObject=document.querySelector('canvas')?true:false;
+    renderer.remove(nearId);
+    const afterNearby=renderer.audit();
     await new Promise(resolve=>setTimeout(resolve,300));
     const legendAfter=document.querySelector('#world-map-legend')?.textContent||'';
-    return {status,initial,added,removed,during,moved,after,
+    return {status,initial,added,removed,during,moved,after,nearby,afterNearby,nearbyObject,
       fieldMap:{legendDuring,legendAfter,pixel,cyan}};
   });
   console.log('GAME staged presence renderer (unauthenticated) QA:',JSON.stringify(remotePresenceQA));
@@ -203,7 +214,14 @@ try {
      remotePresenceQA.added!==1||remotePresenceQA.removed!==0||
      remotePresenceQA.during?.resident!==0||remotePresenceQA.during?.loading!==0||
      remotePresenceQA.during?.sceneVisibleResidents!==0||
+     remotePresenceQA.during?.fallbackPeers!==1||
      remotePresenceQA.moved?.sceneVisibleResidents!==0||
+     remotePresenceQA.after?.fallbackPeers!==0||
+     remotePresenceQA.nearby?.fallbackPeers!==1||
+     remotePresenceQA.nearby?.visibleFallbacks!==1||
+     remotePresenceQA.nearby?.resident!==0||
+     remotePresenceQA.afterNearby?.fallbackPeers!==0||
+     remotePresenceQA.afterNearby?.visibleFallbacks!==0||
      remotePresenceQA.after?.resident!==0||remotePresenceQA.after?.loading!==0||
      remotePresenceQA.after?.sceneVisibleResidents!==0||
      remotePresenceQA.after?.peers!==0||remotePresenceQA.after?.budget!==3||
@@ -211,6 +229,7 @@ try {
      remotePresenceQA.moved?.positions?.length!==1||
      Math.abs(remotePresenceQA.moved.positions[0].x-remotePresenceQA.during.positions[0].x-2)>.01||
      remotePresenceQA.after?.positions?.length!==0||
+     remotePresenceQA.afterNearby?.positions?.length!==0||
      !remotePresenceQA.fieldMap?.legendDuring?.includes('Cyan = explorers (1)')||
      !remotePresenceQA.fieldMap?.cyan||
      remotePresenceQA.fieldMap?.legendAfter?.includes('Cyan = explorers'))
