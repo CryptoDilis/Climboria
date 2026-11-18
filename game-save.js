@@ -15,6 +15,12 @@
     statusNode.dataset.state = state;
   };
 
+  // Explicit no-login guest exploration is device-local only; never attach
+  // an existing browser account's cloud session to the temporary guest hero.
+  if (window.__climboriaGuestMode === true) {
+    setStatus('guest', 'GUEST MODE · no cloud save · sign in to create a hero');
+    return;
+  }
   if (!window.supabase?.createClient || !adapter ||
       typeof adapter.capture !== 'function' || typeof adapter.restore !== 'function') {
     setStatus('unavailable', 'Cloud save unavailable · local progress remains on this browser');
