@@ -539,7 +539,11 @@ async function assertDexMobileTokenHistory(browser, width) {
       name + " Close must hide token tabs");
     assert.equal(new URL(page.url()).searchParams.has("token"), false,
       name + " Close must clear selected token URL");
-    await page.goBack({ timeout: 20000 });
+    // Same-document pushState navigation does not need a page load. Playwright's
+    // goBack() default waits for load and can time out on unrelated live assets,
+    // even when popstate has correctly restored the token-detail view.
+    // Trigger the native history action and keep the exact URL/UI assertions.
+    await page.evaluate(() => window.history.back());
     await page.waitForFunction(expected =>
       new URLSearchParams(location.search).get("token") === expected &&
       document.body.classList.contains("mobile-token-view"),
@@ -548,7 +552,9 @@ async function assertDexMobileTokenHistory(browser, width) {
       name + " browser Back must restore token details");
     assert.equal(await marketNav.isVisible(), false,
       name + " browser Back must hide market nav");
-    await page.goForward({ timeout: 20000 });
+    // Check the real forward history/UI transition, not completion of a
+    // potentially slow or unrelated full-document load.
+    await page.evaluate(() => window.history.forward());
     await page.waitForFunction(() =>
       !new URLSearchParams(location.search).has("token") &&
       !document.body.classList.contains("mobile-token-view"),
