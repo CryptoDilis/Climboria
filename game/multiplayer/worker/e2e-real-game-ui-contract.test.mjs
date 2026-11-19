@@ -30,3 +30,9 @@ test('real Game QA checks Nearby server speech and identity-bound last-location 
  assert.match(qa,/action:'sign-out'/);
  assert.match(qa,/action:'sign-in'/);
 });
+
+test('real two-account chat sends through SEND only, never the adjacent channel-switch button',()=>{
+ assert.match(qa,/getByRole\('button',\{name:'SEND',exact:true\}\)\.click\(\)/);
+ assert.doesNotMatch(qa,/panel\.locator\('button'\)\.click\(\)/,
+  'an unscoped panel button selector is ambiguous with the Nearby/World switch');
+});
