@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * CLIMBORIA GAME ONLY — manual real WebGL multiplayer/World Chat acceptance.
+ * CLIMBORIA GAME ONLY — manual real WebGL multiplayer, Nearby and last-position acceptance.
  *
  * This is NOT a unit test and never runs in normal CI. It needs an owner-
  * deployed, already approved rooms.climboria.fun Cloudflare Worker, two
  * DIFFERENT throwaway Supabase password-based QA accounts, and real network
- * connectivity. No live Game config change: Playwright intercepts ONLY each
- * temporary browser's client-config.json response in memory.
+ * connectivity. No Game config overrides: the accepted public first-party
+ * client-config.json MUST already point to the approved registered-only room.
  *
  * Read STAGING_READINESS.md before executing. Do not use customer accounts.
  * Never paste passwords/tokens into repo/chat/logs. The browser signs in via
@@ -23,6 +23,7 @@
  */
 import {chromium} from 'playwright';
 import {verifyGameRoomPreflight} from './staging-preflight.mjs';
+import {verifyDeployedGameConfig} from './qa-public-config-check.mjs';
 import {requestBoundedGameQaAuth} from './browser-qa-auth.mjs';
 import {mkdir} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
@@ -46,7 +47,8 @@ check(!env.GAME_ROOM_BASE||env.GAME_ROOM_BASE===ROOM,
 
 // A running Worker is not evidence of functioning authenticated room storage.
 // Both the response AND full body validation are bound by one strict deadline.
-await verifyGameRoomPreflight(ROOM,'health',{deadlineMs:15000});
+await verifyDeployedGameConfig({deadlineMs:15000});
+await verifyGameRoomPreflight(ROOM,'health',{deadlineMs:15000,requireNearbyChat:true});
 await verifyGameRoomPreflight(ROOM,'ready',{deadlineMs:15000});
 const browser=await chromium.launch({
  headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']
@@ -64,16 +66,8 @@ async function openExplorer(account,emulateMobile){
   if(location.origin==='https://climboria.fun')
    localStorage.setItem('climboria-created-hero-v1',JSON.stringify(hero));
  },{name:account.name,model:account.model,createdAt:'2026-11-15T00:00:00Z'});
- // This override exists ONLY inside two isolated owner-controlled QA browsers.
- // Neither production Game files nor the repo client-config are modified.
- await context.route('**/game/multiplayer/client-config.json',async route=>{
-  if(new URL(route.request().url()).origin!==SITE){
-   await route.abort();return;
-  }
-  await route.fulfill({status:200,contentType:'application/json',
-   headers:{'cache-control':'no-store','access-control-allow-origin':SITE},
-   body:JSON.stringify({schema:1,enabled:true,endpoint:ROOM})});
- });
+ // Do not inject a synthetic Game config. This must exercise the REAL
+ // published first-party release switch and approved Cloudflare room host.
  const page=await context.newPage();
  await page.goto(SITE+'/game/play.html',{waitUntil:'domcontentloaded',timeout:90000});
  check(new URL(page.url()).pathname==='/game/play.html',
@@ -111,9 +105,13 @@ async function assertPeer(page,expected){
   expected,{timeout:90000});
  await page.waitForFunction(n=>{
   const legend=document.getElementById('world-map-legend')?.textContent||'';
-  const count=document.querySelector('#climboria-world-chat-panel')?.firstChild?.textContent||'';
+  const badge=document.getElementById('climboria-room-status');
+  const chat=document.getElementById('climboria-world-chat-panel');
   return (n>0?legend.includes('Cyan = explorers ('+n+')'):
-   !legend.includes('Cyan = explorers'))&&count.includes((n+1)+' ONLINE');
+   !legend.includes('Cyan = explorers'))&&
+   badge?.dataset.state==='connected'&&
+   badge.textContent.trim()==='ONLINE: '+(n+1)&&
+   chat?.style.display==='block'&&!!chat.querySelector('[role="log"]');
  },expected,{timeout:30000});
 }
 async function waitForGlb(page){
@@ -162,6 +160,34 @@ try{
  const b=await openExplorer(accounts[1],env.GAME_QA_LANDSCAPE_MOBILE==='1');
  await Promise.all([assertPeer(a,1),assertPeer(b,1)]);
  await Promise.all([waitForGlb(a),waitForGlb(b)]);
+ // The transcript must already be visible on BOTH real accounts; the
+ // tester must not need to click a hidden WORLD CHAT card to see messages.
+ for(const page of [a,b]){
+  check(await page.locator('#climboria-world-chat-panel').isVisible(),
+   'Authenticated World Chat transcript did not auto-open');
+  const channel=page.locator('#climboria-world-chat-panel button[aria-label="Switch between World Chat and Nearby Chat"]');
+  check(await channel.isEnabled(),'Nearby Chat is not enabled by an upgraded authenticated Game Worker');
+  check((await channel.textContent())?.trim()==='NEARBY',
+   'Authenticated nearby-chat capability is missing from live Game UI');
+ }
+ // Test real in-range 20m server delivery AND the remote head speech model.
+ // This runs before the sprint test while both legitimate players are next
+ // to one another; no mocked WebSocket packets or forged peer coordinates.
+ const nearbyButton=a.locator('#climboria-world-chat-panel button[aria-label="Switch between World Chat and Nearby Chat"]');
+ await nearbyButton.click();
+ await a.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='NEARBY CHAT · 20m');
+ await sendChat(a,'QA nearby speech acceptance');
+ await Promise.all([
+  expectChat(a,'QA Explorer A [nearby]','QA nearby speech acceptance'),
+  expectChat(b,'QA Explorer A [nearby]','QA nearby speech acceptance')
+ ]);
+ await b.waitForFunction(()=>window.__CLIMBORIA_GAME_PEERS?.audit?.()?.nearbyBubbles===1,
+  undefined,{timeout:12000});
+ await nearbyButton.click();
+ await a.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='WORLD CHAT');
+ // Nearby and World share one server anti-spam cooldown, independently of
+ // which channel the UI currently has selected.
+ await a.waitForTimeout(2800);
  // Movement QA must observe actual keyboard-driven Game physics, real room
  // validation and updated coordinates in the OTHER browser's remote model.
  // A mere online count or loaded GLB is not sufficient for multiplayer.
@@ -221,6 +247,23 @@ try{
  await assertChatDraft(b,'','B server-confirmed local chat was not cleared');
  const fpsA=await frameRate(a),fpsB=await frameRate(b);
  check(fpsA>0&&fpsB>0,'A real rendered Game frame stream is required');
+ // Move B away from protected first-join Sanctuary using actual game input.
+ // A disconnect/re-login at Sanctuary would NOT test the new trusted resume.
+ await b.evaluate(()=>document.activeElement?.blur?.());
+ await b.keyboard.down('Shift');await b.keyboard.down('w');
+ try{await b.waitForTimeout(2200)}
+ finally{await b.keyboard.up('w');await b.keyboard.up('Shift')}
+ const lastVerifiedB=await b.evaluate(()=>{
+  const p=window.__climboriaJarrellsPeak.player;
+  return {x:p.x,y:p.y,z:p.z};
+ });
+ check(Math.hypot(lastVerifiedB.x,lastVerifiedB.z+30)>7,
+  'Last-position QA could not leave the protected Sanctuary with real player movement');
+ await a.waitForFunction(last=>{
+  const peer=window.__CLIMBORIA_GAME_PEERS?.audit?.().positions[0];
+  return peer&&Math.hypot(peer.x-last.x,peer.y-last.y,peer.z-last.z)<6;
+ },lastVerifiedB,{timeout:30000});
+ await b.waitForTimeout(750);
  if(env.GAME_QA_SCREENSHOT_DIR){
   const dir=resolve(env.GAME_QA_SCREENSHOT_DIR);
   await mkdir(dir,{recursive:true});
@@ -247,7 +290,20 @@ try{
   ()=>document.documentElement.dataset.climboriaMultiplayer==='connected',
   undefined,{timeout:90000});
  await Promise.all([assertPeer(a,1),assertPeer(b,1)]);
- console.log('PASS: two REAL authenticated Game browsers exchanged server-confirmed World Chat, kept drafts on remote chat, saw real remote GLB models/cyan map peers; logout/re-login removed/rejoined actual peers.');
+ // Rejoin must restore the identity-bound last SERVER-accepted position,
+ // not silently relocate the same registered player to Sanctuary.
+ await a.waitForFunction(last=>{
+  const peer=window.__CLIMBORIA_GAME_PEERS?.audit?.().positions[0];
+  return peer&&Math.hypot(peer.x-last.x,peer.y-last.y,peer.z-last.z)<6;
+ },lastVerifiedB,{timeout:30000});
+ const rejoinedB=await b.evaluate(()=>{
+  const p=window.__climboriaJarrellsPeak.player;
+  return {x:p.x,y:p.y,z:p.z};
+ });
+ check(Math.hypot(rejoinedB.x-lastVerifiedB.x,rejoinedB.y-lastVerifiedB.y,
+  rejoinedB.z-lastVerifiedB.z)<6,
+  'Rejoined registered hero returned to an incorrect world location');
+ console.log('PASS: two REAL registered browsers exchanged World and Nearby messages, rendered overhead speech and remote GLBs, and resumed a moved player without a Sanctuary reset.');
  console.log('Observed software Chromium FPS A/B:',fpsA,fpsB,'— physical Android/desktop hardware and owner release acceptance are still required.');
 }finally{
  await Promise.all(contexts.map(ctx=>ctx.close().catch(()=>{})));
