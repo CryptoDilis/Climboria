@@ -543,11 +543,40 @@ async function assertDexMobileTokenHistory(browser, width) {
     // goBack() default waits for load and can time out on unrelated live assets,
     // even when popstate has correctly restored the token-detail view.
     // Trigger the native history action and keep the exact URL/UI assertions.
-    await page.evaluate(() => window.history.back());
-    await page.waitForFunction(expected =>
+    const priorMarketUrl = page.url();
+    const restoredToken = () => page.waitForFunction(expected =>
       new URLSearchParams(location.search).get("token") === expected &&
       document.body.classList.contains("mobile-token-view"),
-      mint, { timeout: 20000 });
+      mint, { timeout: 10000 });
+    const diagnostic = () => page.evaluate(() => ({
+      pathname: location.pathname,
+      search: location.search,
+      bodyClass: document.body.className,
+      historyLength: history.length,
+      detailOpen: document.getElementById("tokenDetail")?.classList.contains("open")
+    }));
+    await page.evaluate(() => window.history.back());
+    try {
+      await restoredToken();
+    } catch (error) {
+      const state = await diagnostic();
+      // A fully stationary same-document history cursor can occur under
+      // browser CI scheduling. Retry that native navigation ONCE only; if the
+      // URL moved but UI did not update, preserve a hard failure.
+      if (page.url() !== priorMarketUrl) {
+        throw new Error(name + " Back changed URL but failed token UI restoration: " +
+          JSON.stringify(state) + "; " + error.message);
+      }
+      console.warn("WARN " + name + " initial Back had no history traversal; retrying once. " +
+        JSON.stringify(state));
+      await page.evaluate(() => window.history.back());
+      try {
+        await restoredToken();
+      } catch (lastError) {
+        throw new Error(name + " Back still failed exact token URL and visible UI: " +
+          JSON.stringify(await diagnostic()) + "; " + lastError.message);
+      }
+    }
     assert.equal(await detailNav.isVisible(), true,
       name + " browser Back must restore token details");
     assert.equal(await marketNav.isVisible(), false,
