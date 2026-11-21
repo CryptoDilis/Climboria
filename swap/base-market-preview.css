@@ -1,0 +1,33 @@
+/* Base EVM market observations are strictly separate from Solana execution. */
+.base-market-panel{margin:0 0 14px;padding:15px;border:1px solid #6f5935;border-radius:13px;background:linear-gradient(150deg,#15263a,#0b1726)}
+.base-market-panel[hidden]{display:none!important}
+.base-market-panel h3{font-size:16px;margin:0 0 5px;color:#f0d18b}
+.base-market-panel .base-market-intro,.base-market-panel .base-market-warning{color:#c2ccd8;font-size:11px;line-height:1.5;margin:5px 0 10px}
+.base-market-panel .base-market-warning{color:#e7c995}
+.base-market-panel form{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin:9px 0}
+.base-market-panel input{min-width:0;flex:1 1 255px;border:1px solid #526278;border-radius:9px;padding:10px;background:#0a1522;color:#f0f3fb;font-family:inherit;font-size:12px}
+.base-market-panel input:focus-visible{outline:2px solid #e7be68;outline-offset:1px}
+.base-market-panel button{border-radius:9px;background:#755b31;color:#fff4d5;border:1px solid #be9952;padding:9px 14px;font-weight:750;cursor:pointer;font-size:11px}
+.base-market-panel button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.base-market-status{font-size:11px;color:#cbd5e1;margin:7px 0;overflow-wrap:anywhere}
+.base-market-results{display:grid;gap:8px;min-width:0}
+.base-market-proof,.base-market-contract{overflow-wrap:anywhere;word-break:break-word}
+.base-market-proof{font-size:10px;font-weight:700;color:#d9c28d;margin:3px 0}
+.base-market-pair{border:1px solid #3e5269;border-radius:10px;background:#111f31;padding:11px;min-width:0}
+.base-market-pair h4{margin:0 0 5px;font-size:13px;color:#fff1cc}
+.base-market-pair p{margin:4px 0;font-size:10px;line-height:1.5;color:#cbd5e1}
+.base-market-pair .base-market-note{color:#e4c792}
+.base-market-panel a{font-size:10px;color:#f0d18b;text-decoration:underline;overflow-wrap:anywhere}
+@media(max-width:760px){.base-market-panel{padding:10px;margin-bottom:9px}.base-market-panel h3{font-size:13px}.base-market-panel input,.base-market-panel button{width:100%;flex:1 0 100%;font-size:11px;min-height:40px}.base-market-pair{padding:9px}}
+
+/* Never present Solana-only major prices or chart as Base market observations. */
+html[data-climboria-swap-network="base"] .premium-trade-layout .market-rail,
+html[data-climboria-swap-network="base"] .premium-trade-layout .selected-panel{display:none!important}
+html[data-climboria-swap-network="base"] .trade-layout.premium-trade-layout{
+  grid-template-columns:minmax(0,1fr) minmax(235px,350px)!important
+}
+@media(max-width:900px){
+  html[data-climboria-swap-network="base"] .trade-layout.premium-trade-layout{
+    grid-template-columns:minmax(0,1fr)!important
+  }
+}
