@@ -1,0 +1,46 @@
+name: Base Swap Read-Only Market Safety
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'swap/index.html'
+      - 'swap/base-market-preview.mjs'
+      - 'swap/base-market-preview.css'
+      - '.github/scripts/base-swap-market-preview.test.mjs'
+      - '.github/workflows/base-swap-market-safety.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'swap/index.html'
+      - 'swap/base-market-preview.mjs'
+      - 'swap/base-market-preview.css'
+      - '.github/scripts/base-swap-market-preview.test.mjs'
+      - '.github/workflows/base-swap-market-safety.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  safety:
+    name: Base discovery without wallet or executable trades
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Strict module/test syntax and offline contract-first negative cases
+        run: |
+          node --check swap/base-market-preview.mjs
+          node --check .github/scripts/base-swap-market-preview.test.mjs
+          node --test .github/scripts/base-swap-market-preview.test.mjs
+      - name: Preserve Solana-only execution and independent provider gates
+        run: |
+          grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
+          grep -Fqx 'const EXECUTION_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
+          grep -Fqx 'const THIRD_PARTY_JUPITER_DEX_APPROVED = false;' dex/swap-proxy/src/index.mjs
+          grep -Fq 'surfaces: Object.freeze({ swap: true, dex: false })' swap-config.js
+          grep -Fq "if(selectedChain!=='solana')" swap/index.html
