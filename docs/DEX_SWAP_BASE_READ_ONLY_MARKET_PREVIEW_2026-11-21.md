@@ -25,3 +25,16 @@
 3. Expand DEX ↔ Swap safe navigation for Base token contract context (not transfer of quotes), optionally add independently grounded Base RPC read-only token metadata/decimals and wallet balance display; keep scope on Base/DEX/Swap.
 4. For real Base Swap/DEX trades, select an **official, production-supported** EVM aggregator/router, verify commercial/api terms and exact provider boundary, get mainnet read-only EVM quote/contract addresses and allowance/gas semantics, then create a separately reviewed owner-approved **non-custodial** transaction flow. Require correct `eth_chainId=0x2105` / 8453, spender/allowance caps, token safety, min output, wallet consent, receipt finality, rollback/monitoring, and only after that set a separate explicit Base trading release gate ON.
 5. Solana Worker pending operator exact-main-SHA approval/dispatch remains parked; do not modify `CLIMBORIA_SWAP_RELEASE_APPROVED_SHA` or disable its source guard as a side effect of Base UI changes. No trading fees enabled.
+
+## 2026-11-21 Phase 2 — Base DEX-to-Swap exact-contract navigation (pending tests)
+
+**Phase 1 merged:** [PR #676](https://github.com/CryptoDilis/Climboria/pull/676), commit `6b86e397a85c8e015625a273382c36f40732f661`, with all five PR-head workflows passing (Base safety, Validate, Browser Smoke, Solana Jupiter widget, DEX/Swap Quote Regression). This is still a read-only Base pool lookup, **not** Base wallet trading. Check the exact post-merge Pages and relevant CI before saying this version is deployed.
+
+**Phase 2 changes (this branch, not yet verified):**
+- Base explorer's *desktop table and mobile market cards* get an optional **Inspect in Climboria Swap** internal link, only when provider `baseToken.address` matches exact `^0x[0-9a-fA-F]{40}$`. The link carries `/swap/?chain=base&contract=<canonical address>`; invalid source addresses never generate a contract deep link.
+- Swap's Base market lookup may **prefill** an exact Base contract from this link; it **does not auto-fetch, quote, connect a wallet or submit a transaction**. A user must press **Find Base pools** to fetch live third-party market observations. Wrong-chain/malformed URL contract values are ignored.
+- Returning to Solana removes the Base `contract` URL parameter and restores the original Solana mint URL semantics. A Base deep link never redirects to Jupiter or activates native order/execute.
+- New `dex/base-market-crosslink.css` styles independent mobile action links **outside** the external DexScreener chart card anchor; no nested links. Expanded offline tests and Base safety CI coverage.
+- Scope: only Base DEX/Swap UX; no Game, ClimbX, Launchpad, CLIMB bridge or EVM execution.
+
+**Next exact:** check all applicable PR-head CI and fix any DOM/mobile rendering or HTML regressions; merge only when green, verify Pages exact merged SHA and public mobile/desktop links. Then proceed to a **read-only Base RPC asset metadata / wallet balance** design before any provider-controlled EVM quote/approval/transaction route. No Base trade-live claim and no new Solana Worker authorization.
