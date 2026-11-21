@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'swap/index.html'
+      - 'dex/index.html'
+      - 'dex/base-market-crosslink.css'
       - 'swap/base-market-preview.mjs'
       - 'swap/base-market-preview.css'
       - '.github/scripts/base-swap-market-preview.test.mjs'
@@ -13,6 +15,8 @@ on:
     branches: [main]
     paths:
       - 'swap/index.html'
+      - 'dex/index.html'
+      - 'dex/base-market-crosslink.css'
       - 'swap/base-market-preview.mjs'
       - 'swap/base-market-preview.css'
       - '.github/scripts/base-swap-market-preview.test.mjs'
