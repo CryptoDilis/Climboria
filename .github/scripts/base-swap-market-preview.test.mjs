@@ -47,7 +47,7 @@ test("Base pools must match exact contract, chain and a valid pool address", () 
   assert.equal(result[0].liquidityUsd,290000);
   assert.equal(result[0].volume24hUsd,12000);
   assert.equal(result[0].change24h,1.2);
-  assert.deepEqual(parseBaseMarketPairs(payload,OTHER).map(x=>x.priceUsd),[null]);
+  assert.deepEqual(parseBaseMarketPairs({pairs:[pair()]},OTHER).map(x=>x.priceUsd),[null]);
   assert.deepEqual(parseBaseMarketPairs({pairs:[]},BASE_TOKEN),[]);
   assert.deepEqual(parseBaseMarketPairs({},BASE_TOKEN),[]);
 });
