@@ -70,7 +70,7 @@ test("Swap Base tab hides offsite Solana-only Jupiter handoff; switching back re
  const syncEnd=swap.indexOf("\n}\nsyncSwapJupiterPair();",syncStart);
  assert.ok(syncStart>0&&syncEnd>syncStart,"Must test the real selected-mint synchronization helper");
  const syncCode=swap.slice(syncStart,syncEnd+2);
- const actual="let selectedChain='solana';let autoQuoteTimer=null;"+
+ const actual="let selectedChain='solana';let connectedWallet=null;let autoQuoteTimer=null;"+
    "let quoteTokens={from:{id:'So11111111111111111111111111111111111111112',decimals:9},"+
    "to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',decimals:6}};\n"+
    syncCode+"\n"+swap.slice(start,end+2)+"\n({setSwapChain,syncSwapJupiterPair})";
@@ -97,6 +97,7 @@ test("Swap Base tab hides offsite Solana-only Jupiter handoff; switching back re
  assert.equal(panel.getAttribute("data-climboria-managed-swap-input-mint"),null,
   "Base selection removes any Solana mint preselection");
  assert.equal(element("getQuote").disabled,true,"Base quote remains unavailable");
+ assert.equal(element("connectWallet").disabled,true,"Base may not open a Solana wallet connection");
  setSwapChain("solana");
  assert.equal(element("swapExternalJupiterHandoff").hidden,false,"Solana restores independent link");
  assert.equal(doc.documentElement.dataset.climboriaSwapNetwork,"solana");
@@ -110,6 +111,7 @@ test("Swap Base tab hides offsite Solana-only Jupiter handoff; switching back re
  assert.match(providerCss,/html\[data-climboria-swap-network="base"\] \.climboria-managed-swap-launch\{display:none!important\}/,
   "Base must hide the Jupiter launcher even if a provider session was approved");
  assert.equal(element("getQuote").disabled,false,"Solana read-only quote remains available");
+ assert.equal(element("connectWallet").disabled,false,"Solana connection returns when Solana is restored");
  assert.match(swap,/\.external-jupiter-handoff\[hidden\]\{display:none\}/,"Author CSS must honor HTML hidden state");
 });
 
