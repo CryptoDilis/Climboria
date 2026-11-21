@@ -19,3 +19,15 @@
 .base-market-pair .base-market-note{color:#e4c792}
 .base-market-panel a{font-size:10px;color:#f0d18b;text-decoration:underline;overflow-wrap:anywhere}
 @media(max-width:760px){.base-market-panel{padding:10px;margin-bottom:9px}.base-market-panel h3{font-size:13px}.base-market-panel input,.base-market-panel button{width:100%;flex:1 0 100%;font-size:11px;min-height:40px}.base-market-pair{padding:9px}}
+
+/* Never present Solana-only major prices or chart as Base market observations. */
+html[data-climboria-swap-network="base"] .premium-trade-layout .market-rail,
+html[data-climboria-swap-network="base"] .premium-trade-layout .selected-panel{display:none!important}
+html[data-climboria-swap-network="base"] .trade-layout.premium-trade-layout{
+  grid-template-columns:minmax(0,1fr) minmax(235px,350px)!important
+}
+@media(max-width:900px){
+  html[data-climboria-swap-network="base"] .trade-layout.premium-trade-layout{
+    grid-template-columns:minmax(0,1fr)!important
+  }
+}
