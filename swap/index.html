@@ -458,7 +458,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 let connectedWallet=null,walletProvider=null,walletEventProvider=null,walletEventHandlers=null,walletConnectionEpoch=0;
 let selectedChain='solana';
 let restoringSwapUrl=false;
-function setSwapUrl(){const u=new URL(location.href);u.searchParams.set('chain',selectedChain);if(selectedChain==='solana'){u.searchParams.set('from',quoteTokens.from.id);u.searchParams.set('to',quoteTokens.to.id);}else{u.searchParams.delete('from');u.searchParams.delete('to');}const next=u.pathname+u.search+u.hash,current=location.pathname+location.search+location.hash;if(next===current)return;if(restoringSwapUrl)history.replaceState({climboriaSwap:true},'',u);else history.pushState({climboriaSwap:true},'',u);}
+function setSwapUrl(){const u=new URL(location.href);u.searchParams.set('chain',selectedChain);if(selectedChain==='solana'){u.searchParams.delete('contract');u.searchParams.set('from',quoteTokens.from.id);u.searchParams.set('to',quoteTokens.to.id);}else{u.searchParams.delete('from');u.searchParams.delete('to');}const next=u.pathname+u.search+u.hash,current=location.pathname+location.search+location.hash;if(next===current)return;if(restoringSwapUrl)history.replaceState({climboriaSwap:true},'',u);else history.pushState({climboriaSwap:true},'',u);}
 function setSwapChain(chain){
  if(chain!==selectedChain){clearTimeout(autoQuoteTimer);invalidateSwapQuote('Network changed. Previous Solana quote discarded.');}
  selectedChain=chain; if(chain==='solana')updateSelectedAsset(quoteTokens.from);
