@@ -81,11 +81,11 @@ class El {
   replaceChildren(...nodes){this.children=nodes;}
   appendChild(node){this.children.push(node);return node;}
 }
-function fixture(fetchImpl) {
+function fixture(fetchImpl, { network = "solana", search = "" } = {}) {
   const ids=Object.fromEntries(["baseMarketPanel","baseMarketForm","baseMarketContract",
     "baseMarketStatus","baseMarketResults","chainBase","chainSolana"].map(k=>[k,new El()]));
-  const doc={ documentElement:{dataset:{climboriaSwapNetwork:"solana"}},getElementById(id){return ids[id]},createElement(){return new El()} };
-  const scope={ fetch:fetchImpl, setTimeout,clearTimeout,addEventListener(){} };
+  const doc={ documentElement:{dataset:{climboriaSwapNetwork:network}},getElementById(id){return ids[id]},createElement(){return new El()} };
+  const scope={ fetch:fetchImpl, setTimeout,clearTimeout,location:{search},addEventListener(){} };
   const controller=initializeBaseMarketPreview({doc,scope,fetchImpl});
   return {ids,doc,controller};
 }
@@ -146,7 +146,7 @@ test("Swap view never represents Base liquidity data as a signable price quote",
   assert.match(html,/src="\/swap\/base-market-preview\.mjs\?v=1"/);
   assert.match(html,/Market data only · Base chain 8453/);
   assert.match(html,/Gas, allowances, wallet signing and Base trading remain unavailable/);
-  assert.match(html,/if\(selectedChain==='solana'\)\{u\.searchParams\.set\('from'/);
+  assert.ok(html.includes("if(selectedChain==='solana'){u.searchParams.delete('contract');u.searchParams.set('from'"));
   assert.match(html,/u\.searchParams\.delete\('from'\);u\.searchParams\.delete\('to'\)/);
   assert.match(html,/walletButton\.disabled=isBase/);
   assert.match(html,/if\(selectedChain!=='solana'\)\{/);
@@ -154,4 +154,38 @@ test("Swap view never represents Base liquidity data as a signable price quote",
   assert.match(html,/\$\('prepareSwap'\)\.disabled=isBase/);
   assert.match(html,/\$\('searchFrom'\)\.disabled=isBase/);
   assert.match(html,/data-climboria-managed-swap-network/);
+});
+
+test("exact Base DEX deep link prefills only a contract and never automatically fetches or trades", () => {
+  let calls=0;
+  const reader=async()=>{calls++;throw Error("No user consent");};
+  const valid=fixture(reader,{network:"base",search:"?chain=base&contract="+BASE_TOKEN});
+  assert.equal(valid.ids.baseMarketPanel.hidden,false);
+  assert.equal(valid.ids.baseMarketContract.value,BASE_TOKEN);
+  assert.match(valid.ids.baseMarketStatus.textContent,/prefilled from the DEX link/);
+  assert.equal(calls,0,"Prefill must not request external data without explicit user click");
+  for(const options of [
+    {network:"base",search:"?chain=solana&contract="+BASE_TOKEN},
+    {network:"solana",search:"?chain=base&contract="+BASE_TOKEN},
+    {network:"base",search:"?chain=base&contract=https%3A%2F%2Fevil.example"},
+    {network:"base",search:"?chain=base&contract=USDC"}
+  ]) {
+    const bad=fixture(reader,options);
+    assert.equal(bad.ids.baseMarketContract.value,"");
+  }
+  assert.equal(calls,0);
+});
+test("DEX Base lists expose only exact-contract in-site inspect navigation", () => {
+  const dex=readFileSync(new URL("../../dex/index.html",import.meta.url),"utf8");
+  const swap=readFileSync(new URL("../../swap/index.html",import.meta.url),"utf8");
+  const css=readFileSync(new URL("../../dex/base-market-crosslink.css",import.meta.url),"utf8");
+  assert.ok(dex.includes("function baseSwapInspectUrl(contract)"));
+  assert.ok(dex.includes("/^0x[0-9a-fA-F]{40}$/.test(contract)"));
+  assert.ok(dex.includes("'/swap/?chain=base&contract='"));
+  assert.ok(dex.includes('class="base-cross-swap-link"'));
+  assert.ok(dex.includes('class="base-market-card-stack"'));
+  assert.ok(dex.includes('href="/dex/base-market-crosslink.css?v=1"'));
+  assert.ok(css.includes(".base-market-card-stack"));
+  assert.ok(swap.includes("u.searchParams.delete('contract')"));
+  assert.ok(swap.includes("$('getQuote').disabled=isBase"));
 });
