@@ -190,6 +190,16 @@ export function initializeBaseMarketPreview({ doc = document, scope = window, fe
   doc.getElementById("chainSolana")?.addEventListener("click", sync);
   scope.addEventListener?.("popstate", () => scope.setTimeout?.(sync, 0));
   sync();
+  // A read-only DEX-to-Swap link can prefill an exact Base contract, never
+  // trigger a wallet prompt, trade, or even a provider GET without user action.
+  const params = new URLSearchParams(scope.location?.search || "");
+  if (baseSelected() && params.get("chain") === "base") {
+    const linkedContract = canonicalBaseAddress(params.get("contract"));
+    if (linkedContract) {
+      input.value = linkedContract;
+      status.textContent = "Base contract prefilled from the DEX link. Select Find Base pools to load current provider data; no swap is prepared.";
+    }
+  }
   return { ready:true, sync };
 }
 if (typeof document !== "undefined" && typeof window !== "undefined") {
