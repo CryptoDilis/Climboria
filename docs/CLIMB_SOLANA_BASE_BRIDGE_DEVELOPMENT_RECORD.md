@@ -5,6 +5,13 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 7 — reuse existing RPC configuration (2026-11-24 UTC)
+
+- Owner screenshots show repository secrets `CLIMBORIA_SOLANA_RPC_URL` and `CLIMBORIA_SOLANA_RPC_URL_SECONDARY` and variable `CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH` already exist. Presence of names is not proof of current endpoint access, operator independence or genesis provenance. No secret values were accessed.
+- The bridge-only manual workflow maps these existing repository settings to its unchanged CLI environment names. No duplicate credentials, no DEX/Swap workflow or settings changes. Manual main-only execution, read-only permissions, missing-input checks, sanitized report, and `NO_GO` remain intact. Added a static workflow wiring regression test.
+- PR and exact-head CI evidence pending. No actual mainnet mint verification has been run in this work cycle; Base CA NOT DEPLOYED, customer funds NO-GO.
+- **EXACT NEXT:** verify scoped PR/CI and merge if green. Confirm existing providers are independently operated and genesis reference independently corroborated. Run [CLIMB Mint Authority - Manual Read-only Evidence](https://github.com/CryptoDilis/Climboria/actions/workflows/climb-mint-mainnet-evidence-manual.yml) on `main`. Record actual run URL and sanitized finalized slots, supply, mint/freeze authorities and provider provenance; then verify official bridge provider compatibility. No duplicate settings, signing or transfers needed for this check.
+
 ## Stage 6 MERGED — manual on-chain verification available (2026-11-19)
 
 - [PR #670](https://github.com/CryptoDilis/Climboria/pull/670) **MERGED** by squash into `main` at [`feb87a1a3c2df7d37ba18e78ee551ac9c3067b84`](https://github.com/CryptoDilis/Climboria/commit/feb87a1a3c2df7d37ba18e78ee551ac9c3067b84); exact reviewed/tested PR head `515ce4d64f56fd88f56419a251a43c95999a1988`.
