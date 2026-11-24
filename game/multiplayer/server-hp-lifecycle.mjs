@@ -1,10 +1,11 @@
 /**
  * Isolated server-only nonfinancial HP lifecycle. NOT a live gateway.
  * All identity parameters MUST be bound to authenticated server sessions.
- * In-memory account state survives session replacement, not process restart.
- * No account persistence, rewards, loot, wallet actions or browser authority.
+ * Private checkpoint export/restore supports a future durable store integration.
+ * No live persistence wiring, rewards, loot, wallet actions or browser authority.
  */
 import {authorizeOpenWorldMelee} from './open-world-melee-policy.mjs';
+import {decodeCombatCheckpoint} from './server-combat-checkpoint.mjs';
 export const HP_RULES=Object.freeze({maxHp:500,damage:5,respawnMs:5000,attemptCooldownMs:150});
 const idOk=id=>typeof id==='string'&&/^[a-zA-Z0-9_-]{16,100}$/.test(id);
 const deny=reason=>({ok:false,reason});
@@ -61,6 +62,26 @@ export class ServerHpLifecycle {
    s.hp=HP_RULES.maxHp;s.downedAt=null;s.lastAttack=now;s.lastAttempt=now;respawned.push(id);
   }
   return {ok:true,respawned};
+ }
+ // Server-only export/import. Never accept a checkpoint from a websocket.
+ // A future gateway must atomically save authoritative transitions and load
+ // this before joining; these helpers alone do not provide durable writes.
+ exportAccountCheckpoint(accountId){
+  const now=this.#now(),s=this.#accounts.get(accountId);
+  if(now===null||!s)return null;
+  const movement=s.sessionId?this.#movement.checkpointForReconnect(s.sessionId):s.checkpoint;
+  return decodeCombatCheckpoint({version:1,accountId,roomId:this.#room,savedAtMs:now,
+   hp:s.hp,downedAt:s.downedAt,lastAttack:s.lastAttack,lastAttempt:s.lastAttempt,movement},
+   {accountId,roomId:this.#room,nowMs:now});
+ }
+ restoreAccountCheckpoint(accountId,raw){
+  const now=this.#now();
+  if(now===null||this.#accounts.has(accountId)||this.#accounts.size>=128)return false;
+  const saved=decodeCombatCheckpoint(raw,{accountId,roomId:this.#room,nowMs:now});
+  if(!saved)return false;
+  this.#accounts.set(accountId,{hp:saved.hp,downedAt:saved.downedAt,
+   lastAttack:saved.lastAttack,lastAttempt:saved.lastAttempt,sessionId:null,checkpoint:saved.movement});
+  return true;
  }
  disconnect(id){
   const s=this.#state(id);if(!s)return false;
