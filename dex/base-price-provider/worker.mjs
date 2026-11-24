@@ -36,7 +36,7 @@ export function createPriceHandler({price=getBaseIndicativePrice}={}){
   const expires=Number(env.BASE_PRICE_STAGING_EXPIRES_AT),now=Date.now();
   if(env.BASE_PRICE_STAGING_ONLY!=="true"||env.BASE_PRICE_DAILY_ATTEMPTS!=="2"||
      typeof env.BASE_PRICE_STAGING_EXPIRES_AT!=="string"||!/^\d{13}$/.test(env.BASE_PRICE_STAGING_EXPIRES_AT)||
-     !Number.isSafeInteger(expires)||expires<=now||expires>now+900000)
+     !Number.isSafeInteger(expires)||expires<=now||expires>now+900000||Math.floor(expires/86400000)!==Math.floor(now/86400000))
    return error(503,"Private price probe unavailable");
   const expected=env.BASE_PRICE_PROBE_TOKEN,provided=request.headers.get("X-Base-Price-Probe");
   if(typeof expected!=="string"||!(/^[a-f0-9]{64}$/.test(expected))||typeof provided!=="string"||!(/^[a-f0-9]{64}$/.test(provided)))return error(403,"Private price probe denied");
