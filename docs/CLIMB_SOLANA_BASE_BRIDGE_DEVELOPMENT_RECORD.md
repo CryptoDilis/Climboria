@@ -5,6 +5,12 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 20 — matching Solana Devnet test mint preparation (2026-11-24 UTC)
+
+- Reviewed official Token-2022 CLI source at `e8ca680ca8aeb12f9598524b003c776c6a4168f2`, `clients/cli/src/command.rs`: enable_metadata sets self metadata pointer; metadata init includes rent transfer; metadata/pointer authority types supported. Created distinct test mint spec: six decimals, 1,000 test units, metadata-only extensions, no freeze authority, issue test supply then revoke mint/metadata/pointer authorities. No actual mint, private keys or transaction submission.
+- Added deterministic byte-layout/rent-size plan, public Devnet-only genesis and finalized rent read workflow (automatic scoped main push), and tests. Rent is account storage funding, not full NTT deployment/transaction fee; no claim of live result yet. PR/CI pending.
+- **EXACT NEXT:** verify focused PR CI and merge; record actual public rent estimate. Prepare isolated test wallet public addresses and faucet-funded wallets with owner; verify exact pinned NTT manager deployment/audit provenance, costs and required roles before signing. Base test token is compiled/tested but neither chain's test asset is deployed. Mainnet NO_GO.
+
 ## Stage 19 — isolated Base Sepolia test asset implementation (2026-11-24 UTC)
 
 - Reviewed NTT EVM v2 `INttToken` and `DummyToken` at `c636cc15b07969e4b44de7e466c999c07e7387a9`. Upstream dummy permits public minting; do NOT deploy that dummy as CLIMB. Added testnet-only ERC20 scaffold, explicitly named CLIMB TEST, six decimals, zero initial supply, small test cap, Base Sepolia constructor chain guard, one-time code-bearing manager binding, no owner mint, manager-only mint and burn of manager's own balance. This is an unaudited test asset, NOT production CLIMB or actual bridge implementation.
