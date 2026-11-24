@@ -5,6 +5,12 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 14 — actual raw Token-2022 mint extension evidence SUCCESS (2026-11-24 UTC)
+
+- [Manual workflow #45341345939](https://github.com/CryptoDilis/Climboria/actions/runs/45341345939) SUCCESS on exact main head `9bccaf1cd4ace8b73230e1d1fc0d29f6e56c4915`; job `138265487829` collection and archive passed, sanitized artifact `14895912993` (7-day retention).
+- Observation 2026-11-24T06:33:43.927Z, parsed finalized slots 473245478/473245479, both raw slots 473245479. Both raw 399-byte mint accounts match SHA256 `93310dee6d4c4975e97d6b8a28db3c691f820f27a42854739a1a2b9e6f67f502`. `rawExtensionLayoutMatched:true`; exact Token-2022 owner, 6 decimals, raw supply 1000000000000000, null mint/freeze authorities, only metadataPointer and tokenMetadata TLVs. Pointer authority null, pointer points at canonical CLIMB, metadata update authority null, additionalMetadataCount=0. No transfer fee, hook or other mint TLV accepted by strict parser at observed slots. Parsed-only `extensionStateVerified:false` remains distinct from raw layout result. No actual transfer or deployed NTT proof; provider independence and genesis provenance still open. `bridgeRelease:NO_GO`.
+- **EXACT NEXT:** verify pinned NTT SDK/CLI release matrix and official Devnet/Base Sepolia core bridge identifiers, audit/deployment provenance, governance and cost. Prepare testnet-only configuration and evidence checklist; use distinct test tokens, no official CLIMB mainnet funds or signing. No Base CA.
+
 ## Stage 13 — published NTT release candidates reviewed (2026-11-24 UTC)
 
 - Official published tag refs resolved: Solana `v3.0.0+solana` at `1a2a92ef7f289972b2d00dd1d58077d139fe68d7`, EVM `v2.0.0+evm` at `c636cc15b07969e4b44de7e466c999c07e7387a9`, CLI `v1.10.0+cli` at `f7f65d3751ffeb6ba65fdbba0f287aa6ed473b31`. Release-pinned source confirms locking source without mint-authority requirement, Token-2022-aware transfers and destination burning-mode mint/burn. CLI source uses actual mint owner to unpack and checks mint authority only for burning mode. No deployment executed.
