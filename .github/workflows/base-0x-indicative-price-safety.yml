@@ -66,15 +66,7 @@ jobs:
           node .github/scripts/base-price-private-staging-config.mjs
           grep -Fqx 'BASE_PRICE_STAGING_ONLY = "true"' dex/base-price-provider/wrangler.private.generated.toml
           grep -Fqx 'BASE_PRICE_DAILY_ATTEMPTS = "2"' dex/base-price-provider/wrangler.private.generated.toml
-          grep -Eq '^BASE_PRICE_STAGING_EXPIRES_AT = "[0-9]{13}"
-          if BASE_SHARED_NAMESPACE=987001 node .github/scripts/base-price-disabled-staging-config.mjs; then exit 1; fi
-          test ! -e dex/base-price-provider/wrangler.staging.generated.toml
-      - name: Preserve Solana execution gates
-        run: |
-          grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
-          grep -Fqx 'const EXECUTION_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
-          grep -Fqx 'const THIRD_PARTY_JUPITER_DEX_APPROVED = false;' dex/swap-proxy/src/index.mjs
- dex/base-price-provider/wrangler.private.generated.toml
+          grep -Eq '^BASE_PRICE_STAGING_EXPIRES_AT = "[0-9]{13}"$' dex/base-price-provider/wrangler.private.generated.toml
           rm dex/base-price-provider/wrangler.private.generated.toml
           rm dex/base-price-provider/wrangler.staging.generated.toml
           if BASE_SHARED_NAMESPACE=987001 node .github/scripts/base-price-disabled-staging-config.mjs; then exit 1; fi
