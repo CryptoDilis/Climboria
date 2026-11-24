@@ -46,6 +46,27 @@ Upstream [Solana transfer tests](https://github.com/wormhole-foundation/native-t
 
 **Next implementation task:** add isolated dual-RPC read-only Token-2022 raw mint/TLV evidence, compare complete extension bytes and authority fields at finalized slots, validate against pinned official layouts; retain fail-closed handling of unknown extensions. Then pin a supported NTT release and verify audited Solana/Base deployment path. No user signing or funds.
 
+## Published release candidates — 2026-11-24
+
+The official repository release listing and tag refs were inspected through GitHub. These are candidate pins, NOT an approved interoperable deployment bundle or a claim of current deployed code.
+
+| Component | Published release | Resolved commit |
+| --- | --- | --- |
+| Solana | [v3.0.0+solana](https://github.com/wormhole-foundation/native-token-transfers/releases/tag/v3.0.0%2Bsolana), 2025-06-12 | `1a2a92ef7f289972b2d00dd1d58077d139fe68d7` |
+| EVM | [v2.0.0+evm](https://github.com/wormhole-foundation/native-token-transfers/releases/tag/v2.0.0%2Bevm), 2026-02-10 | `c636cc15b07969e4b44de7e466c999c07e7387a9` |
+| CLI | [v1.10.0+cli](https://github.com/wormhole-foundation/native-token-transfers/releases/tag/v1.10.0%2Bcli), 2026-05-22 | `f7f65d3751ffeb6ba65fdbba0f287aa6ed473b31` |
+
+Release-pinned source observations:
+- [Solana initialization](https://github.com/wormhole-foundation/native-token-transfers/blob/1a2a92ef7f289972b2d00dd1d58077d139fe68d7/solana/programs/example-native-token-transfers/src/instructions/initialize.rs#L41-L94): locking mode skips mint-authority equality and binds custody to the token program.
+- [Solana lock](https://github.com/wormhole-foundation/native-token-transfers/blob/1a2a92ef7f289972b2d00dd1d58077d139fe68d7/solana/programs/example-native-token-transfers/src/instructions/transfer.rs#L264-L347) and [reverse unlock](https://github.com/wormhole-foundation/native-token-transfers/blob/1a2a92ef7f289972b2d00dd1d58077d139fe68d7/solana/programs/example-native-token-transfers/src/instructions/release_inbound.rs#L206-L250): checked transfers using token interface, exact custody credit requirement in lock mode.
+- [EVM manager](https://github.com/wormhole-foundation/native-token-transfers/blob/c636cc15b07969e4b44de7e466c999c07e7387a9/evm/src/NttManager/NttManager.sol#L416-L429) and [redemption](https://github.com/wormhole-foundation/native-token-transfers/blob/c636cc15b07969e4b44de7e466c999c07e7387a9/evm/src/NttManager/NttManager.sol#L638-L640): version 2.0.0 burning mode burns outbound tokens and mints inbound tokens.
+- [CLI Solana deploy](https://github.com/wormhole-foundation/native-token-transfers/blob/f7f65d3751ffeb6ba65fdbba0f287aa6ed473b31/cli/src/solana/deploy.ts#L343-L387): unpacks mint with account owner as program ID, checks mint authority only in burning mode. [Add-chain](https://github.com/wormhole-foundation/native-token-transfers/blob/f7f65d3751ffeb6ba65fdbba0f287aa6ed473b31/cli/src/commands/add-chain.ts) allows explicit versions and rejects multiple locking chains.
+- [CLI EVM deploy](https://github.com/wormhole-foundation/native-token-transfers/blob/f7f65d3751ffeb6ba65fdbba0f287aa6ed473b31/cli/src/evm/deploy.ts) uses signer and broadcast commands; its optional continuation without successful simulation is NOT acceptable for CLIMB. Do not execute deployment commands to gather read-only evidence.
+
+Solana v3 release notes explicitly link two OtterSec reports: [April 18 2025](https://github.com/wormhole-foundation/wormhole-audits/blob/main/2025-04-18-wormhole-ottersec-ntt-v3.pdf) and [May 5 2025](https://github.com/wormhole-foundation/wormhole-audits/blob/main/2025-05-05-wormhole-ottersec-ntt-v3-solana.pdf). EVM v2 release notes include manager and relayer changes but no verified audit coverage for this exact release was obtained. Reports not read; audit scope and remediation remain open. CLI v1.10.0 release notes mention Executor v2 and their full-changelog link points at v1.9.1+cli; verify actual pinned dependency and version compatibility rather than relying on that link.
+
+**Next:** raw extension evidence on latest main; verify actual SDK/CLI version matrix, Solana Devnet/Base Sepolia network and core bridge identifiers, audited code versions and deployment costs/roles. Testnet-only token and managers must be separately identified and funded by owner before signing; no live mint authority alteration, deployment or approval. Keep mainnet NO_GO.
+
 ## Minimum evidence before selecting a provider
 
 For every candidate, record:
