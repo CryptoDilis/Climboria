@@ -1,0 +1,29 @@
+name: Base DEX Worker Runtime Preflight
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "dex/base-price-provider/**"
+      - ".github/scripts/base-price-budget-runtime-smoke.mjs"
+      - ".github/workflows/base-price-worker-runtime-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install local workerd simulator
+        run: |
+          npm init -y
+          npm install --no-save miniflare@4
+      - name: Test actual local SQLite Durable Object without upstream credentials
+        run: node .github/scripts/base-price-budget-runtime-smoke.mjs
