@@ -9,6 +9,8 @@ on:
       - ".github/scripts/base-price-worker.test.mjs"
       - ".github/scripts/base-price-budget.test.mjs"
       - ".github/scripts/base-price-disabled-staging-*.mjs"
+      - ".github/scripts/base-price-private-*.mjs"
+      - ".github/workflows/base-price-private-cloud-probe.yml"
       - ".github/workflows/base-price-disabled-worker-staging.yml"
       - ".github/workflows/base-0x-indicative-price-safety.yml"
   push:
@@ -19,6 +21,8 @@ on:
       - ".github/scripts/base-price-worker.test.mjs"
       - ".github/scripts/base-price-budget.test.mjs"
       - ".github/scripts/base-price-disabled-staging-*.mjs"
+      - ".github/scripts/base-price-private-*.mjs"
+      - ".github/workflows/base-price-private-cloud-probe.yml"
       - ".github/workflows/base-price-disabled-worker-staging.yml"
       - ".github/workflows/base-0x-indicative-price-safety.yml"
 
@@ -58,6 +62,20 @@ jobs:
           grep -Fqx 'BASE_PRICE_DAILY_ATTEMPTS = "0"' dex/base-price-provider/wrangler.staging.generated.toml
           grep -Fqx 'routes = [{ pattern = "base-price.climboria.fun", custom_domain = true }]' dex/base-price-provider/wrangler.staging.generated.toml
           grep -Fqx 'BASE_PRICE_DEPLOYED_SHA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"' dex/base-price-provider/wrangler.staging.generated.toml
+          node --check .github/scripts/base-price-private-cloud-probe.mjs
+          node .github/scripts/base-price-private-staging-config.mjs
+          grep -Fqx 'BASE_PRICE_STAGING_ONLY = "true"' dex/base-price-provider/wrangler.private.generated.toml
+          grep -Fqx 'BASE_PRICE_DAILY_ATTEMPTS = "2"' dex/base-price-provider/wrangler.private.generated.toml
+          grep -Eq '^BASE_PRICE_STAGING_EXPIRES_AT = "[0-9]{13}"
+          if BASE_SHARED_NAMESPACE=987001 node .github/scripts/base-price-disabled-staging-config.mjs; then exit 1; fi
+          test ! -e dex/base-price-provider/wrangler.staging.generated.toml
+      - name: Preserve Solana execution gates
+        run: |
+          grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
+          grep -Fqx 'const EXECUTION_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
+          grep -Fqx 'const THIRD_PARTY_JUPITER_DEX_APPROVED = false;' dex/swap-proxy/src/index.mjs
+ dex/base-price-provider/wrangler.private.generated.toml
+          rm dex/base-price-provider/wrangler.private.generated.toml
           rm dex/base-price-provider/wrangler.staging.generated.toml
           if BASE_SHARED_NAMESPACE=987001 node .github/scripts/base-price-disabled-staging-config.mjs; then exit 1; fi
           test ! -e dex/base-price-provider/wrangler.staging.generated.toml
