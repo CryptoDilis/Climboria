@@ -1,5 +1,44 @@
 # Climboria Game Development Record
 
+## GAME CAVE WALL SWEEP MERGED — 2026-11-24 PHT
+
+- #704 merged at `181e79cf7825311b8f33afc02570effa4bea32e8`, exact head `e9f990d63b43a2a6e04ad885d81e2d7f5fbf1f8b`: Authority #45348616000, Gateway #45348616107, Validate #45348616055, Gameplay #45348616019 all SUCCESS. #706 reconciled onto latest main `181e79cf7825311b8f33afc02570effa4bea32e8` for exact-head CI. No live combat activation.
+- **EXACT NEXT:** Verify #706 applicable Game CI, fix failures and merge only when green; next authenticated nonproduction gateway and reviewed map, scheduling and public two-account QA.
+
+---
+
+## GAME TRANSACTIONAL ROOM RUNTIME PROTOTYPE — 2026-11-24 PHT (ISOLATED, NOT LIVE)
+
+- #706 now contains `transactional-room-prototype.mjs` (`b45aeea07cddbde0fc04c194ffdccbcebe599f08`): server-only serialized lifecycle, bound authenticated identity caller contract, bounded operation queue, checkpoint restore before join, atomic revision-checked attacker/target storage writes before hit acknowledgement, persisted tick/respawn/disconnect, and whole-instance quarantine (including reads) on failed/ambiguous durable mutation. Input is copied and does not directly move or alter HP. Quarantine requires a fresh runtime restored from durable state; no live retry, rollback assumption or uncommitted success response.
+- Five new synthetic fixture tests `6ebc52b682c2888996ed49af632b1d35f9f7f2f6` cover pending commit visibility, second-account write failure, restart restore, simultaneous cooldown, movement/stamina retention and competing revision conflict. CI filters `bdda15c1897ebd797a8c633c51fce37a56cfd50b`. Tests await actual CI. Explicit `reviewedForProduction:false`; every-tick durable writes are prototype only and require cost/latency, room ownership, scheduling/hibernation and recovery review. No socket routing, live Worker, loot, inventory or wallet effects.
+- **EXACT NEXT:** Verify #704 all checks and merge if green, reconcile #706 onto latest main and run fresh exact-head Game CI; fix failures, merge only if green. Next nonproduction gateway identity/ticket integration, reviewed actual map and bounded durable scheduling; real two-account browser acceptance before enabling live damage. Game only.
+
+---
+
+## GAME BOUNDED DRY REGION MOVEMENT PROTOTYPE — 2026-11-24 PHT (ISOLATED)
+
+- #706 now composes authored fixed/forest/streamed rock circles, dry terrain footprint, room identity and explicit max 200m X/Z bounds in `jarrell-dry-region-prototype.mjs` (`20a2795d2f8ad694305eebec8a83821bbc15d727`). Loads neighbor chunk circles independently of browser streaming, denies unknown or out-of-bounds ground, sweeps obstacle circles continuously and checks padded terrain footprints along subsegments. Movement substep max .25m; feet-based corridor category max 3m. Explicit `reviewedForProduction:false`; this is not full 3D melee visibility or complete map coverage. No cave/swim/jump, no live Worker wiring.
+- Four integration tests `3a1f9685910019d44426bd1ea5c3237e3ab3bac6` exercise actual Sanctuary spawn, entry pillar obstruction, server movement/sprint against post, and unknown wet/cave ground and bounds rejection. CI filters `83fb5fcb1f014ed6f5104d0c2b4bc9a7fb743e1b`. New tests pending exact-head CI.
+- **EXACT NEXT:** Verify #704 Gameplay, merge if all green; reconcile #706 onto latest main and run actual Game CI. Review real bounded region mesh/terrain parity and physical browser acceptance; integrate a transactional room runtime on nonproduction fixture first, then authenticated Worker/client QA. No assertion of live combat or complete map coverage; Game only.
+
+---
+
+## GAME DRY TERRAIN FOOTPRINT AND WATER CLASSIFICATION — 2026-11-24 PHT (ISOLATED)
+
+- #706 adds copied authored water-body classification and conservative exterior dry-ground footprint checking in `jarrell-terrain-reference.mjs` (`d7df262650243883b8c85caa3415fd053bb185af`, `bd7b53eb01b1d27191f7170aa36ebe77652059aa`). Checks every terrain grid cell intersecting the player's bounding footprint, including touching neighbor cells, rejects underwater/near-sea-level triangle vertices, excessive triangle grade, invalid dimensions and the entire cave/coastal envelope. Returns only a terrain height, not authority or complete mesh clearance. Water body query returns detached data and distinguishes invalid coordinates from no water.
+- Three additional source-parity/regression tests `96f10716f3db2c93a612db08de2e48cbd20ca84d`: authored browser water classification (including grotto), dry starting point vs wet/cave exclusions, actual steep terrain and touching neighbor cells. Tests not yet CI-verified. #704 exact head remains 3/4 green, Gameplay #45348616019 in progress at initial check.
+- **EXACT NEXT:** Verify #704 all CI, merge if green, reconcile #706 onto latest main with exact-head Game CI. Compose reviewed bounded terrain and authored obstacle sweeps into a server movement provider; do not declare the whole map or cave/swimming supported. Then transactional gateway orchestration, actual registered two-account gameplay QA. No live Worker/browser changes or non-Game scope.
+
+---
+
+## GAME AUTHORED CAVE CEILING GEOMETRY — 2026-11-24 PHT (ISOLATED)
+
+- Stacked follow-up to #704 head `e9f990d63b43a2a6e04ad885d81e2d7f5fbf1f8b`: five actual authored continuous ceiling plates, including tilted coastal tunnel roof, grotto, geode, main and western ceiling. Conservative swept player body vs oriented-box category check, closed contact, no false claim of complete mesh or walkability coverage. Implementation `63167766035fc0b5f6c8a91a842adec0687a65c6`; five regression tests `27cb3678ee131cc869880b7cc180c28217e636a6`; CI filters `5b31b8d6382c8318cc688ba475c45c12fcaf0b69`. Irregular boulders/stalactites/cladding, full terrain and actual ground support remain separate unresolved categories.
+- #704 initial check: Authority #45348616000, Gateway #45348616107, Validate #45348616055 SUCCESS; Gameplay #45348616019 in progress. Preserve running CI. No production browser or Worker changes.
+- **EXACT NEXT:** verify exact-head #704 all checks and merge if green; reconcile this ceiling follow-up onto latest main, fresh exact-head Game CI, fix failures and merge only if green. Continue actual walkable ground footprint, water and mesh coverage, then transactional live gateway and public two-account QA. No non-Game scope.
+
+---
+
 ## GAME CAVE WALL VERTICAL SWEPT COLLISION — 2026-11-24 PHT (ISOLATED, NOT LIVE COMBAT)
 
 - Pillar fix #698 production Pages deployment [45345322640](https://github.com/CryptoDilis/Climboria/actions/runs/45345322640) SUCCESS at `6c450b5066b3b14b68fea0312355480be894c56a`, verified actual fixed game/play.html blob `78b75acf33cfb4ee6c1531eec41b30f729a1b1da` on that commit; main push [Gameplay #45345229238](https://github.com/CryptoDilis/Climboria/actions/runs/45345229238) SUCCESS. No manual public browser acceptance performed.

@@ -242,3 +242,39 @@ export function authoredJarrellForestColliderCandidates(){
  return [[cc0TreeSpots,2.15,'buttress'],[cc0CanopySpots,2.35,'canopy'],[cc0LogSpots,1.15,'fallenLog']]
   .flatMap(([spots,r,kind])=>spots.map(({x,z})=>({x,z,r,kind})));
 }
+
+
+// Copied water classification for server consumers. The returned body is a
+// detached copy, not mutable state. Invalid coordinates are distinct from dry.
+export function sampleJarrellWaterBody(x,z){
+ if(!valid(x,z))return undefined;
+ const body=waterBodyAt(x,z);
+ return body?{...body}:null;
+}
+/**
+ * Conservative dry terrain footprint check. Only the authored exterior
+ * triangle heightfield is covered; reject the whole cave/coastal envelope
+ * and any cell that might intersect sea-level water. Check all triangles
+ * of every intersected grid cell, including edge contacts. Not proof that
+ * fixed/streamed obstacles or meshes are absent.
+ */
+export function sampleJarrellDryTerrainFootprint(x,z,{radius=.4,maxGrade=1}={}){
+ if(!valid(x,z)||!Number.isFinite(radius)||radius<=0||radius>1||
+    !Number.isFinite(maxGrade)||maxGrade<=0||maxGrade>1)return null;
+ // Conservative radius covers all currently authored cave/local coastal
+ // ground and roof sections, including their terrain blend margins.
+ if(Math.hypot(x-POI.cave.x,z-POI.cave.z)<=420+radius)return null;
+ if(!valid(x-radius,z-radius)||!valid(x+radius,z+radius))return null;
+ const step=TERRAIN_STEP;
+ const minX=Math.ceil((x-radius)/step)-1,maxX=Math.floor((x+radius)/step);
+ const minZ=Math.ceil((z-radius)/step)-1,maxZ=Math.floor((z+radius)/step);
+ for(let ix=minX;ix<=maxX;ix++)for(let iz=minZ;iz<=maxZ;iz++){
+  const a=heightAt(ix*step,iz*step),b=heightAt((ix+1)*step,iz*step);
+  const c=heightAt(ix*step,(iz+1)*step),d=heightAt((ix+1)*step,(iz+1)*step);
+  // All vertices above water; the affine triangles cannot dip below them.
+  if(![a,b,c,d].every(h=>Number.isFinite(h)&&h>.2))return null;
+  if(Math.hypot(b-a,c-a)/step>maxGrade||Math.hypot(d-c,d-b)/step>maxGrade)return null;
+ }
+ const y=groundAt(x,z);
+ return Number.isFinite(y)?y:null;
+}
