@@ -85,3 +85,22 @@ test('downed account reconnect retains position and death timer, not a new life'
  at(death+5000);assert.deepEqual(hp.tick().respawned,[C]);
  assert.equal(hp.snapshot(C).health,500);
 });
+
+
+test('serialized account checkpoint restores HP, position and stamina to a fresh lifecycle',()=>{
+ const old=make();
+ old.hp.attack(A,B);old.hp.input(B,{x:1,z:0,sequence:0,sprint:true});old.at(40100);old.hp.tick();
+ const before=old.movement.snapshot(B,old.roomId);
+ const saved=JSON.parse(JSON.stringify(old.hp.exportAccountCheckpoint(Y)));
+ let now=40200;const clock=()=>now,roomId=old.roomId;
+ const collision=createServerCollisionRegion({roomId,coverage:{min:p(190,0,10),max:p(220,12,40)},solids:[]});
+ const movement=new ServerGroundMovement({roomId,clock,spawn:{x:200,z:20},sampleWalkableGround:()=>0,collision});
+ const hp=new ServerHpLifecycle({roomId,clock,movement,collision});
+ assert.equal(hp.restoreAccountCheckpoint(X,saved),false);
+ assert.equal(hp.restoreAccountCheckpoint(Y,saved),true);
+ assert.equal(hp.restoreAccountCheckpoint(Y,saved),false);
+ assert.equal(hp.join({sessionId:C,accountId:Y}).ok,true);
+ assert.equal(hp.snapshot(C).health,495);
+ assert.deepEqual(movement.snapshot(C,roomId).position,before.position);
+ assert.equal(movement.snapshot(C,roomId).stamina,before.stamina);
+});
