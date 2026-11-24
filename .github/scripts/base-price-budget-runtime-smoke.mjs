@@ -12,13 +12,13 @@ let runtime;
 const config=await readFile("dex/base-price-provider/wrangler.toml","utf8");
 const compatibilityDate=config.match(/^compatibility_date = "(\d{4}-\d{2}-\d{2})"$/m)?.[1];
 assert.ok(compatibilityDate,"Worker compatibility date must be explicit");
-const start=async({cap="3",enabled="true"}={})=>{
+const start=async({cap="3",enabled="true",releaseCap}={})=>{
  runtime=new Miniflare({
   modules:true,scriptPath:resolve("dex/base-price-provider/worker.mjs"),
   compatibilityDate,
   durableObjects:{BASE_PRICE_BUDGET:{className:"BasePriceBudget",useSQLite:true}},
   durableObjectsPersist:dir,
-  bindings:{BASE_INDICATIVE_PRICE_ENABLED:enabled,BASE_PRICE_DAILY_ATTEMPTS:cap}
+  bindings:{BASE_INDICATIVE_PRICE_ENABLED:enabled,BASE_PRICE_DAILY_ATTEMPTS:cap,...(releaseCap===undefined?{}:{BASE_PRICE_RELEASE_TOTAL_ATTEMPTS:releaseCap})}
  });
  const ns=await runtime.getDurableObjectNamespace("BASE_PRICE_BUDGET");
  return ns.get(ns.idFromName(BUDGET_OBJECT_NAME));
@@ -33,6 +33,14 @@ try{
  await stop();
  stub=await start();
  assert.equal(await reserve(stub),429,"persisted cap must survive runtime restart");
+ await stop();
+ stub=await start({cap:"10",releaseCap:"4"});
+ const limited=await Promise.all(Array.from({length:6},()=>reserve(stub)));
+ assert.equal(limited.filter(s=>s===204).length,1);
+ assert.equal(limited.filter(s=>s===429).length,5);
+ await stop();
+ stub=await start({cap:"10",releaseCap:"4"});
+ assert.equal(await reserve(stub),429,"cumulative cap must survive runtime restart");
  await stop();
  stub=await start({enabled:"false"});
  assert.equal(await reserve(stub),503);
