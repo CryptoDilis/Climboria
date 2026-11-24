@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME DRY TERRAIN FOOTPRINT AND WATER CLASSIFICATION — 2026-11-24 PHT (ISOLATED)
+
+- #706 adds copied authored water-body classification and conservative exterior dry-ground footprint checking in `jarrell-terrain-reference.mjs` (`d7df262650243883b8c85caa3415fd053bb185af`, `bd7b53eb01b1d27191f7170aa36ebe77652059aa`). Checks every terrain grid cell intersecting the player's bounding footprint, including touching neighbor cells, rejects underwater/near-sea-level triangle vertices, excessive triangle grade, invalid dimensions and the entire cave/coastal envelope. Returns only a terrain height, not authority or complete mesh clearance. Water body query returns detached data and distinguishes invalid coordinates from no water.
+- Three additional source-parity/regression tests `96f10716f3db2c93a612db08de2e48cbd20ca84d`: authored browser water classification (including grotto), dry starting point vs wet/cave exclusions, actual steep terrain and touching neighbor cells. Tests not yet CI-verified. #704 exact head remains 3/4 green, Gameplay #45348616019 in progress at initial check.
+- **EXACT NEXT:** Verify #704 all CI, merge if green, reconcile #706 onto latest main with exact-head Game CI. Compose reviewed bounded terrain and authored obstacle sweeps into a server movement provider; do not declare the whole map or cave/swimming supported. Then transactional gateway orchestration, actual registered two-account gameplay QA. No live Worker/browser changes or non-Game scope.
+
+---
+
 ## GAME AUTHORED CAVE CEILING GEOMETRY — 2026-11-24 PHT (ISOLATED)
 
 - Stacked follow-up to #704 head `e9f990d63b43a2a6e04ad885d81e2d7f5fbf1f8b`: five actual authored continuous ceiling plates, including tilted coastal tunnel roof, grotto, geode, main and western ceiling. Conservative swept player body vs oriented-box category check, closed contact, no false claim of complete mesh or walkability coverage. Implementation `63167766035fc0b5f6c8a91a842adec0687a65c6`; five regression tests `27cb3678ee131cc869880b7cc180c28217e636a6`; CI filters `5b31b8d6382c8318cc688ba475c45c12fcaf0b69`. Irregular boulders/stalactites/cladding, full terrain and actual ground support remain separate unresolved categories.
