@@ -5,6 +5,13 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 10 — live dual-RPC mint evidence SUCCESS (2026-11-24 UTC)
+
+- [Manual workflow #45340437315](https://github.com/CryptoDilis/Climboria/actions/runs/45340437315) completed SUCCESS on main SHA `b4dc5ffd035a3eea3456b296e8f21a7466659a4a`; all collection and archive steps passed. Sanitized evidence artifact ID `14895009865` (7-day retention).
+- Observation UTC `2026-11-24T06:26:32.075Z`; finalized context slots 473243464 and 473243463, both finalized heads 473243463; configured genesis reference matched `5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d`.
+- Canonical mint `9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump`; both RPCs report Token-2022 program `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`, decimals 6, raw supply `1000000000000000` = 1,000,000,000 CLIMB; mintAuthority=null, freezeAuthority=null; reported extension types `metadataPointer`, `tokenMetadata`. Extension state NOT verified. Provider operational independence and genesis reference provenance still require independent corroboration. No credentials recorded.
+- **EXACT NEXT:** update provider selection requirements for the observed existing non-mintable Token-2022 CLIMB. Verify full extension state and candidate protocol's official pinned source/version, Token-2022 locking-mode support, Solana and Base deployment addresses, destination mint/burn permissions, reverse release and audit/governance coverage. Legacy-only escrow audit must not be configured for this asset without reviewed changes. No mainnet signing, funds, CA or deployment; bridge remains NO_GO. Then implement provider-specific testnet roundtrip once compatibility is established.
+
 ## Stage 9 — token program discovery after repeated live rejection (2026-11-24 UTC)
 
 - [Run #45338148948](https://github.com/CryptoDilis/Climboria/actions/runs/45338148948) and [run #45338173309](https://github.com/CryptoDilis/Climboria/actions/runs/45338173309) on exact main head `14c044f17c227cc51446a7f7edadccbd29044e81` failed with `NO_GO: not an SPL Token Program mint account`. Both passed input checks. The previous legacy-only owner/parser expectation is not established for this mint; actual owner remains unverified (Token-2022 is a plausible explanation, not a confirmed fact).
