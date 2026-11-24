@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME LOCAL RUNTIME MERGED; PRIVATE STAGING PREFLIGHT — 2026-11-24 PHT
+
+- #719 MERGED at `d6e209b5c7e4d80f287d420902847bc1b26a5c7c`, exact head `c14aefd85b949bfdfc4f7ebc9187bcb2a0af0deb`: [Local Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45361429314) and [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45361429558) SUCCESS. Job 138332181522 logs explicitly confirm actual local workerd WebSockets, private SQLite DO tickets, committed HP, reconnect/restart and disabled admission. Local synthetic accounts only; cloud config date differs. npm reported three high-severity advisories.
+- Follow-up branch `game/preview-staging-preflight-20261124`: workflow dependency/advisory reporting `f7011e39d649e48f854c9987977224082ea2eb27`; [private staging preflight](GAME_PREVIEW_STAGING_PREFLIGHT.md) `3037f7b51357bf5a4bccf33e203dd089f0824bfb` quantifies logical read/write estimates and identifies unbounded reconnect, ticket and attack-write exposure. No cloud pricing assertion or deployment. No production changes.
+- **EXACT NEXT:** Check fresh follow-up runtime/Validate CI, identify exact dependencies/advisories and pin reviewed versions. Add persistent absolute preview window and operation budget, bounded ticket attempts, safe terminal handling and tests. Verify private cloud route, actual cost metrics, separate namespace and two registered accounts only after these gates. Production combat stays OFF until actual map and synchronization verified. Game only.
+
+---
+
 ## GAME LOCAL RUNTIME CI STARTUP FIX — 2026-11-24 PHT (NOT MERGED)
 
 - [PR #719](https://github.com/CryptoDilis/Climboria/pull/719) exact initial head `8bab69918086634c312df2a8ae9186eb8b77a0ee`: [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45357484566) SUCCESS; [Local Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45357484617) FAILURE before any WebSocket assertion (job 138318809505). Installed workerd supports compatibility date up to 2026-08-06, but the test requested 2026-11-15. npm also reported three high-severity advisories; affected packages and impact are not yet identified.
