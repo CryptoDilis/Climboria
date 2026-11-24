@@ -26,6 +26,8 @@ on:
       - "game/multiplayer/server-combat-checkpoint.test.mjs"
       - "game/multiplayer/jarrell-cave-wall-sweep.mjs"
       - "game/multiplayer/jarrell-cave-wall-sweep.test.mjs"
+      - "game/multiplayer/jarrell-ceiling-geometry.mjs"
+      - "game/multiplayer/jarrell-ceiling-geometry.test.mjs"
       - "game/play.html"
       - ".github/workflows/game-server-authority-rules.yml"
   workflow_dispatch:
