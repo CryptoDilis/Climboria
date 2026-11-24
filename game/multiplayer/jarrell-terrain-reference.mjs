@@ -136,3 +136,54 @@ const valid=(x,z)=>Number.isFinite(x)&&Number.isFinite(z)&&Math.abs(x)<50000&&Ma
 export function sampleJarrellTerrain(x,z){return valid(x,z)?heightAt(x,z):null}
 export function sampleJarrellGround(x,z){return valid(x,z)?groundAt(x,z):null}
 export function sampleJarrellCaveFloor(x,z){return valid(x,z)?caveFloorHeightAt(x,z):null}
+
+
+// Deterministic browser-authored streamed rock collision inventory.
+// Partial horizontal circles, not a full walkable region or vertical mesh.
+// Browser uses 200m chunks; reject oversized inputs before doing work.
+const CS=200;
+function waterBodyAt(x,z){
+ const sea=ss(-900,-1180,x+(fbm(x*.002,z*.002,3)-.5)*260);
+ // The ocean begins where terrain is below sea level, not on the cliff above it.
+ if(sea>.5&&heightAt(x,z)<-.2)return WATER_BODIES.find(b=>b.id==='open_sea');
+ // Cave-local bounded water volume; query in the same rotated coordinate space as its geometry.
+ if(caveG){
+  const dx=x-caveG.position.x,dz=z-caveG.position.z,ry=caveG.rotation.y,cs=Math.cos(ry),sn=Math.sin(ry);
+  const lx=dx*cs-dz*sn,lz=dx*sn+dz*cs;
+  if(lx>=15&&lx<=25&&lz>=37&&lz<=47)return {id:'cave_grotto',name:'The Hidden Grotto',kind:'freshwater',x:caveG.position.x,z:caveG.position.z,radius:7,surfaceY:caveG.position.y+2.8,depth:2.5};
+ }
+ // Named freshwater basins take precedence where a basin intersects the river channel.
+ for(const body of WATER_BODIES){
+  if(body.kind!=='freshwater')continue;
+  if(Math.hypot(x-body.x,z-body.z)<body.radius&&heightAt(x,z)<-.2)return body;
+ }
+ const rv=Math.abs(x-rx(z)),W=13+7*Math.sin(z*.003);
+ const river=(1-ss(W,W*3.2,rv))*(1-ss(.52,.72,fbm(x*.0005+9,z*.0005-4,3))*ss(300,650,Math.hypot(x,z)))*(1-sea);
+ if(river>.18)return WATER_BODIES.find(b=>b.id==='long_river');
+ return null;
+}
+const nearPOI=(x,z)=>FLAT.some(k=>Math.hypot(x-POI[k].x,z-POI[k].z)<POI[k].r*1.1);
+function shoreClear(x,z,h){
+ const radius=18;
+ // Use the mapped basin footprint as well as the submerged-water query:
+ // the visible bank can be above water while still inside the sandy apron.
+ const nearFreshwater=(px,pz)=>WATER_BODIES.some(b=>b.kind==='freshwater'&&Math.hypot(px-b.x,pz-b.z)<b.radius+radius);
+ if(h<3.2||waterBodyAt(x,z)||nearFreshwater(x,z))return true;
+ for(let i=0;i<24;i++){
+  const a=i*Math.PI/12,sx=x+Math.cos(a)*radius,sz=z+Math.sin(a)*radius;
+  if(waterBodyAt(sx,sz)||nearFreshwater(sx,sz)||heightAt(sx,sz)<.2)return true;
+ }
+ return false;
+}
+export function sampleJarrellStreamedColliders(cx,cz){
+ if(!Number.isSafeInteger(cx)||!Number.isSafeInteger(cz)||Math.abs(cx)>249||Math.abs(cz)>249)return null;
+ const ox=cx*CS,oz=cz*CS,r=rng(cx*7349+cz*911+13),col=[];
+ for(let i=0;i<34;i++){
+  const x=ox+r()*CS,z=oz+r()*CS,h=heightAt(x,z),s=1+r()*r()*5,k=r();
+  if(h<.2||shoreClear(x,z,h)||nearPOI(x,z)||caveCoastalTerrainAt(x,z).mask>.1||k>(h>60?.9:desF(x,z)>.5?.5:.25))continue;
+  col.push({x,z,r:s*.8});
+  // Preserve the browser RNG consumption for accepted visual rocks.
+  r();if(!(desF(x,z)>.5))r();
+ }
+ return col;
+}
