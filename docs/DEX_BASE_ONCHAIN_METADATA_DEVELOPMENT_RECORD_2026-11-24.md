@@ -20,3 +20,7 @@ RPC URL https://mainnet.base.org is a configured public endpoint; actual reachab
 3. Verify post-merge Pages and production desktop/mobile inspector with independently identified Base ERC-20 contract, wrong/empty address, RPC failure and stale responses. Confirm no wallet or execution requests. If public RPC blocks browser, design limited read-only proxy separately.
 4. Then design optional read-only Base wallet balance lookup, and official provider evaluation separately. Base trade release OFF and Solana operator rollout parked. No fee or wallet authorization changes.
 5. Preserve oversized cumulative record (connector returned empty); use existing Base record and this checkpoint rather than overwriting it.
+
+## 2026-11-24 merge checkpoint
+- #679: all six PR workflows passed after the browser smoke retry (attempt 2); merged at 3d83bcb122562c36c78801c59e3b90ec6a5c1349. Prior Forward failure remains documented; retry success does not establish root cause. Exact post-merge [Pages](https://github.com/CryptoDilis/Climboria/actions/runs/45336697692) and [production quote smoke](https://github.com/CryptoDilis/Climboria/actions/runs/45336697417) pending at checkpoint.
+- #682 initial [Base Safety](https://github.com/CryptoDilis/Climboria/actions/runs/45336561081) passed. Combined branch now integrates #679 market improvements without replacing any other main changes. Re-run all applicable CI on combined head; only then merge. Confirm post-merge Pages and browser RPC behavior; no trading claim.
