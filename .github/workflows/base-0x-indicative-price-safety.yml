@@ -8,6 +8,8 @@ on:
       - ".github/scripts/base-0x-indicative-price.test.mjs"
       - ".github/scripts/base-price-worker.test.mjs"
       - ".github/scripts/base-price-budget.test.mjs"
+      - ".github/scripts/base-price-disabled-staging-*.mjs"
+      - ".github/workflows/base-price-disabled-worker-staging.yml"
       - ".github/workflows/base-0x-indicative-price-safety.yml"
   push:
     branches: [main]
@@ -16,6 +18,8 @@ on:
       - ".github/scripts/base-0x-indicative-price.test.mjs"
       - ".github/scripts/base-price-worker.test.mjs"
       - ".github/scripts/base-price-budget.test.mjs"
+      - ".github/scripts/base-price-disabled-staging-*.mjs"
+      - ".github/workflows/base-price-disabled-worker-staging.yml"
       - ".github/workflows/base-0x-indicative-price-safety.yml"
 
 permissions:
@@ -41,6 +45,22 @@ jobs:
           grep -Fqx 'workers_dev = false' dex/base-price-provider/wrangler.toml
           grep -Fqx 'preview_urls = false' dex/base-price-provider/wrangler.toml
           if grep -Eq '^[[:space:]]*(routes?[[:space:]]*=|\[\[routes\]\])' dex/base-price-provider/wrangler.toml; then exit 1; fi
+      - name: Verify generated disabled staging configuration offline
+        env:
+          DEPLOY_SHA: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          BASE_IP_NAMESPACE: "987001"
+          BASE_SHARED_NAMESPACE: "987002"
+          EXISTING_SOLANA_NAMESPACE: "987003"
+        run: |
+          node --check .github/scripts/base-price-disabled-staging-smoke.mjs
+          node .github/scripts/base-price-disabled-staging-config.mjs
+          grep -Fqx 'BASE_INDICATIVE_PRICE_ENABLED = "false"' dex/base-price-provider/wrangler.staging.generated.toml
+          grep -Fqx 'BASE_PRICE_DAILY_ATTEMPTS = "0"' dex/base-price-provider/wrangler.staging.generated.toml
+          grep -Fqx 'routes = [{ pattern = "base-price.climboria.fun", custom_domain = true }]' dex/base-price-provider/wrangler.staging.generated.toml
+          grep -Fqx 'BASE_PRICE_DEPLOYED_SHA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"' dex/base-price-provider/wrangler.staging.generated.toml
+          rm dex/base-price-provider/wrangler.staging.generated.toml
+          if BASE_SHARED_NAMESPACE=987001 node .github/scripts/base-price-disabled-staging-config.mjs; then exit 1; fi
+          test ! -e dex/base-price-provider/wrangler.staging.generated.toml
       - name: Preserve Solana execution gates
         run: |
           grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
