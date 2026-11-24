@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME BOUNDED DRY REGION MOVEMENT PROTOTYPE — 2026-11-24 PHT (ISOLATED)
+
+- #706 now composes authored fixed/forest/streamed rock circles, dry terrain footprint, room identity and explicit max 200m X/Z bounds in `jarrell-dry-region-prototype.mjs` (`20a2795d2f8ad694305eebec8a83821bbc15d727`). Loads neighbor chunk circles independently of browser streaming, denies unknown or out-of-bounds ground, sweeps obstacle circles continuously and checks padded terrain footprints along subsegments. Movement substep max .25m; feet-based corridor category max 3m. Explicit `reviewedForProduction:false`; this is not full 3D melee visibility or complete map coverage. No cave/swim/jump, no live Worker wiring.
+- Four integration tests `3a1f9685910019d44426bd1ea5c3237e3ab3bac6` exercise actual Sanctuary spawn, entry pillar obstruction, server movement/sprint against post, and unknown wet/cave ground and bounds rejection. CI filters `83fb5fcb1f014ed6f5104d0c2b4bc9a7fb743e1b`. New tests pending exact-head CI.
+- **EXACT NEXT:** Verify #704 Gameplay, merge if all green; reconcile #706 onto latest main and run actual Game CI. Review real bounded region mesh/terrain parity and physical browser acceptance; integrate a transactional room runtime on nonproduction fixture first, then authenticated Worker/client QA. No assertion of live combat or complete map coverage; Game only.
+
+---
+
 ## GAME DRY TERRAIN FOOTPRINT AND WATER CLASSIFICATION — 2026-11-24 PHT (ISOLATED)
 
 - #706 adds copied authored water-body classification and conservative exterior dry-ground footprint checking in `jarrell-terrain-reference.mjs` (`d7df262650243883b8c85caa3415fd053bb185af`, `bd7b53eb01b1d27191f7170aa36ebe77652059aa`). Checks every terrain grid cell intersecting the player's bounding footprint, including touching neighbor cells, rejects underwater/near-sea-level triangle vertices, excessive triangle grade, invalid dimensions and the entire cave/coastal envelope. Returns only a terrain height, not authority or complete mesh clearance. Water body query returns detached data and distinguishes invalid coordinates from no water.
