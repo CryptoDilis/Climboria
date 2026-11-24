@@ -6,7 +6,9 @@
 Create fresh test-only wallets for Solana Devnet and Base Sepolia, with no real assets. Keep seed phrases and private keys offline with the owner. Obtain test SOL and Sepolia ETH using reputable faucets listed by the respective networks. Faucet availability and eligibility are not verified here. No purchase of real SOL/ETH is required for the testnet itself. Send only the two public receiving addresses for the balance check.
 
 ## Step 2 — payer evidence
-From the repository root with Node 22, run the following with actual public addresses substituted:
+Preferred: [CLIMB Testnet Payer Preflight](https://github.com/CryptoDilis/Climboria/actions/workflows/climb-testnet-payer-preflight.yml) → Run workflow → main → enter the two **public receiving addresses** → Run workflow. Available after the workflow PR merges. Inputs and logs are repository-visible, so use only dedicated testnet public addresses. No private key, seed phrase, RPC key, signing or transaction. Inspect the job summary for balances; NO_GO remains until the other deployment gates are satisfied.
+
+Alternatively, from the repository root with Node 22, run the following with actual public addresses substituted:
 ```sh
 node token/climb-bridge/testnet-payer-preflight.mjs SOLANA_PUBLIC_ADDRESS BASE_PUBLIC_ADDRESS
 ```
@@ -19,3 +21,6 @@ This reads only public Devnet and Base Sepolia RPCs, verifies network IDs, check
 - Record finalized transaction hashes and test addresses in the development record; then run both transfer directions with small test amounts, reconcile escrow and outstanding supply, negative tests and review. Testnet success does not itself authorize mainnet.
 
 Current stop condition: no known funded testnet payer addresses or authorized deployment signing setup. Do not treat the 0.00415036 Devnet SOL illustrative rent as the full NTT budget.
+
+## Workflow development record
+2026-11-24 UTC: added a main-only, manually dispatched public payer balance workflow using the previously tested verifier, with input passed via environment variables rather than interpolated shell source. CI wiring test verifies no push trigger, secret access or direct shell input interpolation. Next: merge after CI, obtain two public test-only addresses and dispatch; record actual balances and continue deployment preflight. Separate Solana locking PR #707 remains gated by its local SBF test.
