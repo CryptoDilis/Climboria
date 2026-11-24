@@ -32,6 +32,17 @@ export function createPriceHandler({price=getBaseIndicativePrice}={}){
   }
   if(request.method!=="GET")return error(405,"Method not allowed");
   if(env.BASE_INDICATIVE_PRICE_ENABLED!=="true")return error(503,"Base indicative pricing disabled");
+  // No public pricing release in this revision. Temporary private probe only.
+  const expires=Number(env.BASE_PRICE_STAGING_EXPIRES_AT),now=Date.now();
+  if(env.BASE_PRICE_STAGING_ONLY!=="true"||env.BASE_PRICE_DAILY_ATTEMPTS!=="2"||
+     typeof env.BASE_PRICE_STAGING_EXPIRES_AT!=="string"||!/^\d{13}$/.test(env.BASE_PRICE_STAGING_EXPIRES_AT)||
+     !Number.isSafeInteger(expires)||expires<=now||expires>now+900000)
+   return error(503,"Private price probe unavailable");
+  const expected=env.BASE_PRICE_PROBE_TOKEN,provided=request.headers.get("X-Base-Price-Probe");
+  if(typeof expected!=="string"||!(/^[a-f0-9]{64}$/.test(expected))||typeof provided!=="string"||!(/^[a-f0-9]{64}$/.test(provided)))return error(403,"Private price probe denied");
+  let mismatch=0;
+  for(let i=0;i<64;i++)mismatch|=expected.charCodeAt(i)^provided.charCodeAt(i);
+  if(mismatch!==0)return error(403,"Private price probe denied");
   if(typeof env.ZEROEX_API_KEY!=="string"||!env.ZEROEX_API_KEY.trim()||!env.BASE_PRICE_IP_LIMITER?.limit||!env.BASE_PRICE_GLOBAL_LIMITER?.limit||!env.BASE_PRICE_BUDGET?.idFromName||!env.BASE_PRICE_BUDGET?.get||parseDailyCap(env.BASE_PRICE_DAILY_ATTEMPTS)===0)return error(503,"Pricing service unavailable");
   if(url.search.length>512||[...url.searchParams.keys()].length!==FIELDS.length||FIELDS.some(k=>url.searchParams.getAll(k).length!==1))return error(400,"Invalid price request");
   if(url.searchParams.get("chainId")!=="8453")return error(400,"Only Base chain 8453 is supported");
