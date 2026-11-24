@@ -7,6 +7,8 @@ on:
       - 'swap/index.html'
       - 'dex/index.html'
       - 'dex/base-market-crosslink.css'
+      - 'dex/base-token-metadata.mjs'
+      - '.github/scripts/base-token-metadata.test.mjs'
       - 'swap/base-market-preview.mjs'
       - 'swap/base-market-preview.css'
       - '.github/scripts/base-swap-market-preview.test.mjs'
@@ -17,6 +19,8 @@ on:
       - 'swap/index.html'
       - 'dex/index.html'
       - 'dex/base-market-crosslink.css'
+      - 'dex/base-token-metadata.mjs'
+      - '.github/scripts/base-token-metadata.test.mjs'
       - 'swap/base-market-preview.mjs'
       - 'swap/base-market-preview.css'
       - '.github/scripts/base-swap-market-preview.test.mjs'
@@ -40,7 +44,8 @@ jobs:
         run: |
           node --check swap/base-market-preview.mjs
           node --check .github/scripts/base-swap-market-preview.test.mjs
-          node --test .github/scripts/base-swap-market-preview.test.mjs
+          node --check dex/base-token-metadata.mjs
+          node --test .github/scripts/base-swap-market-preview.test.mjs .github/scripts/base-token-metadata.test.mjs
       - name: Preserve Solana-only execution and independent provider gates
         run: |
           grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
