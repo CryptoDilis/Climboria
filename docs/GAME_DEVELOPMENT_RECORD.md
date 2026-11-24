@@ -8,6 +8,14 @@
 
 ---
 
+## GAME SERVER COLLISION FOUNDATION — 2026-11-24 PHT (NOT LIVE)
+
+- [PR #683](https://github.com/CryptoDilis/Climboria/pull/683) opened from main, branch `game/server-collision-geometry-20261124`, exact head `1da6cedcfdcbbb1854c623ae620c74640033c3fc`. New Game-only `server-collision-region.mjs` + five tests and authority CI path filters. Exact closed 3D segment/AABB collision, conservative swept player body, reviewed bounded room coverage, explicit immutable server geometry. Test fixture is a synthetic arena, NOT Jarrell map parity; no live Worker, HP, wallet, or loot changes.
+- [PR #680](https://github.com/CryptoDilis/Climboria/pull/680) exact head `f8c4078af63aecf8313eb5f22117d03bbaac1a5b`: Authority [#45336452688](https://github.com/CryptoDilis/Climboria/actions/runs/45336452688), Gateway [#45336452747](https://github.com/CryptoDilis/Climboria/actions/runs/45336452747), Validate [#45336452677](https://github.com/CryptoDilis/Climboria/actions/runs/45336452677) SUCCESS; Gameplay [#45336452705](https://github.com/CryptoDilis/Climboria/actions/runs/45336452705) IN PROGRESS at check. Neither PR merged yet; #683 workflow results not yet reported.
+- **EXACT NEXT:** Verify exact-head CI and merge #680 then #683 if mergeable and green, resolving any conflicts and retesting updated heads. Next export and independently verify actual map collider coverage (terrain, cave segments, solids, height/vertical bounds); implement server-derived movement with trusted clock and collision, then integrate isolated melee and HP lifecycle tests. Never promote cosmetic PresenceRoom positions to combat authority. Real two-account QA remains separate. No DEX/Swap/Launchpad/ClimbX.
+
+---
+
 ## GAME WORKER DEPLOYED + ACTUAL ROOM READINESS VERIFIED — 2026-11-19 PHT
 
 - **NEW VERIFIED WORKER DEPLOYMENT:** Existing GitHub protected/manual [GAME Room Worker run #44429603814](https://github.com/CryptoDilis/Climboria/actions/runs/44429603814) completed **SUCCESS** on approved `main` source **`457ce42551c6199d6af7746ca2cf29c739674d5b`**, created 2026-11-19 00:30:51 UTC. **Do not rerun the manual deploy or ask the owner to redeploy** unless actual new Game Worker source needs release. The deployment job steps are individually verified successful: Game auth/room security unit tests, Wrangler `climboria-game-room` publish, configured existing secret, and crucially **strict read-only deployed host capability `nearbyChatEnabled:true` at `/health` plus live Durable Object `/ready`**. The exact job printed `PASS: deployed Game Worker Nearby Chat capability and DO readiness` at 00:31:26 UTC. This is **REAL host readiness proof, not a synthetic QA fixture and not proof of two-user application behavior**.
