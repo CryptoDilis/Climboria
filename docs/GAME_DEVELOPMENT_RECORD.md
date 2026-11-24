@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME QA HANDOFF — PR #674 MERGED (2026-11-24 PHT)
+
+- **Verified merge:** [PR #674](https://github.com/CryptoDilis/Climboria/pull/674) squash merged at `16c40483358ab6462034f55b50bb2b890afb0bff`, exact head `3b72e0c1b0e91e07b58ff5fbe61482a581faac10`. All three reported PR workflows completed SUCCESS: [Gameplay #44431113210](https://github.com/CryptoDilis/Climboria/actions/runs/44431113210), [Room Gateway #44431113273](https://github.com/CryptoDilis/Climboria/actions/runs/44431113273), [Validate #44431113342](https://github.com/CryptoDilis/Climboria/actions/runs/44431113342). Four changed paths inspected: this record, worker STAGING_READINESS.md, e2e-real-game-ui.mjs and its contract test. QA selector fix only; no runtime change.
+- **Worker deployment already successful:** rechecked individual job steps in [#44429603814](https://github.com/CryptoDilis/Climboria/actions/runs/44429603814), including strict deployed Nearby capability and DO readiness; all successful. No redeploy needed for #674.
+- **EXACT NEXT:** Perform actual public-site two distinct registered QA accounts using private approved runner or owner browser sessions; check reciprocal avatars/movement, ONLINE: 2, World Chat, Nearby <=20m speech bubble and >20m denial, same-position logout/login, guest save denial, mobile HUD and physical Android FPS. Do not share credentials. Actual two-account run and postmerge CI not verified in this session. If real QA cannot be performed, proceed separately with Game-only regression/authority test coverage; do not enable PvP HP, theft, loot or wallet actions without separately validated server authority. Record outcomes here and issue #657. No DEX/Swap/Launchpad/ClimbX edits.
+
+---
+
 ## GAME WORKER DEPLOYED + ACTUAL ROOM READINESS VERIFIED — 2026-11-19 PHT
 
 - **NEW VERIFIED WORKER DEPLOYMENT:** Existing GitHub protected/manual [GAME Room Worker run #44429603814](https://github.com/CryptoDilis/Climboria/actions/runs/44429603814) completed **SUCCESS** on approved `main` source **`457ce42551c6199d6af7746ca2cf29c739674d5b`**, created 2026-11-19 00:30:51 UTC. **Do not rerun the manual deploy or ask the owner to redeploy** unless actual new Game Worker source needs release. The deployment job steps are individually verified successful: Game auth/room security unit tests, Wrangler `climboria-game-room` publish, configured existing secret, and crucially **strict read-only deployed host capability `nearbyChatEnabled:true` at `/health` plus live Durable Object `/ready`**. The exact job printed `PASS: deployed Game Worker Nearby Chat capability and DO readiness` at 00:31:26 UTC. This is **REAL host readiness proof, not a synthetic QA fixture and not proof of two-user application behavior**.
