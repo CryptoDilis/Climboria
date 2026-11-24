@@ -46,13 +46,27 @@ export class ServerGroundMovement {
  }
  // Only an authenticated server caller may supply the session ID.
  // No packet-selected spawn, time, health or coordinate accepted.
- join(id){
+ join(id,checkpoint=null){
   if(!validId(id)||this.#players.has(id)||this.#players.size>=32)return deny('invalid-session');
   const now=this.#clock();
   if(!time(now)||now<this.#lastTick)return deny('invalid-server-time');
-  const position=this.#point(this.#spawn.x,this.#spawn.z);
-  if(!position||!this.#clear(position,position))return deny('unverified-spawn');
-  const p={position,observedAtMs:now,joinedAt:now,sequence:-1,downed:false,stamina:MAX_STAMINA,exhausted:false,input:{x:0,z:0,sprint:false,at:now}};
+  // Checkpoints are private server state from checkpointForReconnect(),
+  // never packet fields or cosmetic PresenceRoom state. No spawn fallback
+  // if a returning player's saved location is no longer verified.
+  if(checkpoint!==null&&(checkpoint.roomId!==this.#roomId||
+     !coord(checkpoint.position?.x)||!coord(checkpoint.position?.y)||!coord(checkpoint.position?.z)||
+     !Number.isSafeInteger(checkpoint.stamina)||checkpoint.stamina<0||checkpoint.stamina>MAX_STAMINA||
+     typeof checkpoint.exhausted!=='boolean'||typeof checkpoint.downed!=='boolean'||
+     (checkpoint.stamina===0&&!checkpoint.exhausted)||
+     (checkpoint.exhausted&&checkpoint.stamina>=RESTART_STAMINA)))
+   return deny('invalid-reconnect-checkpoint');
+  const origin=checkpoint?.position??this.#spawn;
+  const position=this.#point(origin.x,origin.z);
+  if(!position||(checkpoint!==null&&Math.abs(position.y-origin.y)>1e-6)||!this.#clear(position,position))
+   return deny(checkpoint===null?'unverified-spawn':'unverified-reconnect-position');
+  const p={position,observedAtMs:now,joinedAt:now,sequence:-1,
+   downed:checkpoint?.downed??false,stamina:checkpoint?.stamina??MAX_STAMINA,
+   exhausted:checkpoint?.exhausted??false,input:{x:0,z:0,sprint:false,at:now}};
   this.#players.set(id,p);
   return {ok:true,snapshot:this.#snapshot(id,p)};
  }
@@ -110,6 +124,21 @@ export class ServerGroundMovement {
  snapshot(id,roomId){
   const p=this.#players.get(id);
   return roomId===this.#roomId&&p?this.#snapshot(id,p):null;
+ }
+ // Combat checks must use this revalidated snapshot, not display state.
+ trustedSnapshot(id,roomId){
+  const p=this.#players.get(id),now=this.#clock();
+  if(!p||p.downed||roomId!==this.#roomId||!time(now)||now<this.#lastTick||
+     now<p.observedAtMs||now-p.observedAtMs>1000)return null;
+  const point=this.#point(p.position.x,p.position.z);
+  if(!point||Math.abs(point.y-p.position.y)>1e-6||!this.#clear(point,point))return null;
+  return this.#snapshot(id,p);
+ }
+ // Private account checkpoint; the caller retains it across session IDs.
+ checkpointForReconnect(id){
+  const p=this.#players.get(id);
+  return p?{roomId:this.#roomId,position:{...p.position},stamina:p.stamina,
+   exhausted:p.exhausted,downed:p.downed}:null;
  }
  // Server lifecycle hooks: never route these directly from client packets.
  suspendForDeath(id){
