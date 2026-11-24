@@ -1,0 +1,41 @@
+name: CLIMB Testnet Payer Preflight - Read Only
+on:
+  workflow_dispatch:
+    inputs:
+      solana_address:
+        description: 'Dedicated Solana Devnet public wallet address only'
+        required: true
+        type: string
+      base_address:
+        description: 'Dedicated Base Sepolia public wallet address only'
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  payer:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read public testnet payer balances
+        env:
+          SOLANA_PUBLIC_ADDRESS: ${{ inputs.solana_address }}
+          BASE_PUBLIC_ADDRESS: ${{ inputs.base_address }}
+        run: |
+          set -euo pipefail
+          node token/climb-bridge/testnet-payer-preflight.mjs "$SOLANA_PUBLIC_ADDRESS" "$BASE_PUBLIC_ADDRESS" > "$RUNNER_TEMP/payer-evidence.json"
+          cat "$RUNNER_TEMP/payer-evidence.json"
+          {
+            echo '## Public testnet payer evidence (read only)'
+            echo 'No signing, transfer, deployment or release approval.'
+            echo '~~~json'
+            cat "$RUNNER_TEMP/payer-evidence.json"
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"

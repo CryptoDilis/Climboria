@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## GAME CAVE WALL SWEEP MERGED — 2026-11-24 PHT
+
+- #704 merged at `181e79cf7825311b8f33afc02570effa4bea32e8`, exact head `e9f990d63b43a2a6e04ad885d81e2d7f5fbf1f8b`: Authority #45348616000, Gateway #45348616107, Validate #45348616055, Gameplay #45348616019 all SUCCESS. #706 reconciled onto latest main `181e79cf7825311b8f33afc02570effa4bea32e8` for exact-head CI. No live combat activation.
+- **EXACT NEXT:** Verify #706 applicable Game CI, fix failures and merge only when green; next authenticated nonproduction gateway and reviewed map, scheduling and public two-account QA.
+
+---
+
 ## GAME TRANSACTIONAL ROOM RUNTIME PROTOTYPE — 2026-11-24 PHT (ISOLATED, NOT LIVE)
 
 - #706 now contains `transactional-room-prototype.mjs` (`b45aeea07cddbde0fc04c194ffdccbcebe599f08`): server-only serialized lifecycle, bound authenticated identity caller contract, bounded operation queue, checkpoint restore before join, atomic revision-checked attacker/target storage writes before hit acknowledgement, persisted tick/respawn/disconnect, and whole-instance quarantine (including reads) on failed/ambiguous durable mutation. Input is copied and does not directly move or alter HP. Quarantine requires a fresh runtime restored from durable state; no live retry, rollback assumption or uncommitted success response.

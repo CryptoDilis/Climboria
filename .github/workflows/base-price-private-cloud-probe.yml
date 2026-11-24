@@ -1,0 +1,104 @@
+name: Base DEX Private Cloud Price Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Authorize two read-only 0x requests within free quota: VERIFY_BASE_CLOUD_PRICE"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Share deployment lock with the disabled staging workflow.
+concurrency:
+  group: base-price-disabled-staging
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    if: ${{ github.ref == 'refs/heads/main' && inputs.confirmation == 'VERIFY_BASE_CLOUD_PRICE' }}
+    environment: base-price-provider-staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test exact source and generate disabled baseline using verified staging namespaces
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+          BASE_IP_NAMESPACE: "2026112401"
+          BASE_SHARED_NAMESPACE: "2026112402"
+          EXISTING_SOLANA_NAMESPACE: ${{ vars.CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID }}
+        run: |
+          node --test .github/scripts/base-0x-indicative-price.test.mjs .github/scripts/base-price-worker.test.mjs .github/scripts/base-price-budget.test.mjs .github/scripts/base-price-preview.test.mjs
+          node .github/scripts/base-price-disabled-staging-config.mjs
+          npm init -y
+          npm install --no-save wrangler@4
+      - name: Verify existing disabled service before any deployment
+        run: |
+          node --input-type=module - <<'NODE'
+          const r=await fetch("https://base-price.climboria.fun/health",{redirect:"error",signal:AbortSignal.timeout(10000)});
+          const j=await r.json();
+          if(r.status!==200||j.service!=="climboria-base-price-preview"||j.pricingDisabled!==true||j.bindingsReady!==true||j.execution!=="unsupported")throw Error("Existing isolated disabled service not verified");
+          NODE
+      - name: Deploy updated disabled baseline
+        id: baseline
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler deploy --config dex/base-price-provider/wrangler.staging.generated.toml
+      - name: Verify disabled baseline and install private credentials
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ZEROEX_API_KEY: ${{ secrets.ZEROEX_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node .github/scripts/base-price-disabled-staging-smoke.mjs
+          : "${ZEROEX_API_KEY:?Missing authorized 0x key}"
+          token="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')"
+          echo "::add-mask::$token"
+          printf '%s\n' "BASE_PRICE_PROBE_TOKEN=$token" >> "$GITHUB_ENV"
+          printf '%s' "$ZEROEX_API_KEY" | npx wrangler secret put ZEROEX_API_KEY --config dex/base-price-provider/wrangler.staging.generated.toml
+          printf '%s' "$token" | npx wrangler secret put BASE_PRICE_PROBE_TOKEN --config dex/base-price-provider/wrangler.staging.generated.toml
+      - name: Deploy expiring private probe (never public pricing)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          node .github/scripts/base-price-private-staging-config.mjs
+          npx wrangler deploy --config dex/base-price-provider/wrangler.private.generated.toml
+      - name: Verify private revision propagated without making provider requests
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          node --input-type=module - <<'NODE'
+          for(let i=0;i<12;i++){
+            try{
+              const r=await fetch("https://base-price.climboria.fun/health",{cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10000)});
+              const j=await r.json();
+              if(r.status===503&&j.service==="climboria-base-price-preview"&&j.deployedGitSha===process.env.DEPLOY_SHA&&j.pricingDisabled===false&&j.bindingsReady===true&&j.execution==="unsupported")process.exit(0);
+            }catch{}
+            if(i<11)await new Promise(r=>setTimeout(r,5000));
+          }
+          throw Error("Private revision not verified");
+          NODE
+      - name: Run two authorized price requests and confirm third attempt is denied
+        run: node .github/scripts/base-price-private-cloud-probe.mjs
+      - name: Restore disabled zero-budget config and verify rollback
+        if: ${{ always() && steps.baseline.outcome == 'success' }}
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler deploy --config dex/base-price-provider/wrangler.staging.generated.toml
+          node .github/scripts/base-price-disabled-staging-smoke.mjs
