@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME TERRAIN REFERENCE + CONSOLIDATED COMBAT PR — 2026-11-24 PHT (NOT LIVE)
+
+- Consolidate Game-only [#680](https://github.com/CryptoDilis/Climboria/pull/680) head `c45df4991f47c53343d33d6e9269717efaa26b55` and [#683](https://github.com/CryptoDilis/Climboria/pull/683) head `80d89553a38fb907fec6245122a1531676813c76` on #683 using current main `14c044f17c227cc51446a7f7edadccbd29044e81` as the base tree, retaining all other workstream files. No production runtime or live Worker change.
+- New deterministic `jarrell-terrain-reference.mjs` mirrors current `game/play.html` authored terrain noise, water basin carving, POI flattening, cave coastal route, cave floor overrides and 5m triangle interpolation; four tests check exact source parity, both triangles, authored cave/coast, invalid samples. This supplies height samples only, not complete authoritative movement or collision. Preserve prior 49 authored wall segments, geometry and melee policy with Sanctuary union protection.
+- At prior exact heads #680 and corrected #683, Authority, Gateway and Validate passed; Gameplay still running at check. **Consolidated head requires fresh CI.** Exact next: verify consolidated PR #683 changed filenames and all head checks; merge only if green and mergeable, then close superseded #680 after confirming its code included. Continue reviewed map vertical/solid coverage and authoritative movement + HP lifecycle integration; separate real two-account QA remains pending. No DEX/Swap/Launchpad/ClimbX edits, no live damage or deployment.
+
+---
+
 ## GAME QA HANDOFF — PR #674 MERGED (2026-11-24 PHT)
 
 - **Verified merge:** [PR #674](https://github.com/CryptoDilis/Climboria/pull/674) squash merged at `16c40483358ab6462034f55b50bb2b890afb0bff`, exact head `3b72e0c1b0e91e07b58ff5fbe61482a581faac10`. All three reported PR workflows completed SUCCESS: [Gameplay #44431113210](https://github.com/CryptoDilis/Climboria/actions/runs/44431113210), [Room Gateway #44431113273](https://github.com/CryptoDilis/Climboria/actions/runs/44431113273), [Validate #44431113342](https://github.com/CryptoDilis/Climboria/actions/runs/44431113342). Four changed paths inspected: this record, worker STAGING_READINESS.md, e2e-real-game-ui.mjs and its contract test. QA selector fix only; no runtime change.
