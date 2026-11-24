@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME SERVER HP AND RESPAWN LIFECYCLE — 2026-11-24 PHT (ISOLATED, NOT LIVE)
+
+- Stacked branch `game/server-hp-lifecycle-20261124` from #687 head `398ba8793a78d97cbd16f70eb3b27e94eab5159f`. Adds movement freeze and reviewed spawn reset (`39dd72af490d57e0fe1b6a080f5fe791c3a8cc71`), isolated server HP lifecycle (`250f37aa5bc315046f04394d088f598e33eb7296`), four integration tests (`a7ab59acc8830e50805629fed8b8256f54205db8`) and CI path filters (`2ffd06c976e18a1885eba5fe51080f757ed6d221`).
+- Server-owned HP 500, damage 5, existing 950ms melee cooldown, 150ms attempt throttle; authenticated server identity, live movement snapshots, sanctuary, range and collision checks through existing policy. Zero HP freezes movement and denies attack. Server scheduler respawns after 5s only at verified server-selected spawn; restores HP/stamina. In-memory account HP retained across session replacement; no persistence across process restarts, no actual production spawn/reconnect coverage. Synthetic integration only; no Worker or client wiring, financial state, inventory, or loot. Existing real map coverage, combat reconnect, and real two-account QA remain unresolved.
+- #687 Authority #45340433385 and Gateway #45340433405 SUCCESS; Gameplay #45340433474 and Validate #45340433377 were in progress at first check. **EXACT NEXT:** verify complete exact-head #687 CI, merge if green, then reconcile HP branch to latest main, verify actual Game CI and merge only if green. Continue independently reviewed actual map collision/walkability and server reconnect persistence before runtime activation. Game only.
+
+---
+
 ## GAME SERVER SPRINT + STAMINA — 2026-11-24 PHT (ISOLATED, NOT LIVE)
 
 - [PR #687](https://github.com/CryptoDilis/Climboria/pull/687): added server-controlled walking/sprint (9/22m/s), 200 max stamina, drain 12/s and recovery 8/s, exhaustion lock until 40 stamina, integer milli-stamina accounting and bounded tick/expiry. Same base tuning as current local Game. Sprint intent while moving consumes stamina even if obstructed; ignores packet-supplied speed/stamina. No client HUD, live Worker, HP, loot or wallet changes. Implementation `9dd56fb802cc00ef3ec4775f09ee2c30d97bdb14`, three extra tests `5ac35a0df817182d4d8dbe927a90085ebabe10de`.
