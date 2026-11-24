@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME TRANSACTIONAL ROOM RUNTIME PROTOTYPE — 2026-11-24 PHT (ISOLATED, NOT LIVE)
+
+- #706 now contains `transactional-room-prototype.mjs` (`b45aeea07cddbde0fc04c194ffdccbcebe599f08`): server-only serialized lifecycle, bound authenticated identity caller contract, bounded operation queue, checkpoint restore before join, atomic revision-checked attacker/target storage writes before hit acknowledgement, persisted tick/respawn/disconnect, and whole-instance quarantine (including reads) on failed/ambiguous durable mutation. Input is copied and does not directly move or alter HP. Quarantine requires a fresh runtime restored from durable state; no live retry, rollback assumption or uncommitted success response.
+- Five new synthetic fixture tests `6ebc52b682c2888996ed49af632b1d35f9f7f2f6` cover pending commit visibility, second-account write failure, restart restore, simultaneous cooldown, movement/stamina retention and competing revision conflict. CI filters `bdda15c1897ebd797a8c633c51fce37a56cfd50b`. Tests await actual CI. Explicit `reviewedForProduction:false`; every-tick durable writes are prototype only and require cost/latency, room ownership, scheduling/hibernation and recovery review. No socket routing, live Worker, loot, inventory or wallet effects.
+- **EXACT NEXT:** Verify #704 all checks and merge if green, reconcile #706 onto latest main and run fresh exact-head Game CI; fix failures, merge only if green. Next nonproduction gateway identity/ticket integration, reviewed actual map and bounded durable scheduling; real two-account browser acceptance before enabling live damage. Game only.
+
+---
+
 ## GAME BOUNDED DRY REGION MOVEMENT PROTOTYPE — 2026-11-24 PHT (ISOLATED)
 
 - #706 now composes authored fixed/forest/streamed rock circles, dry terrain footprint, room identity and explicit max 200m X/Z bounds in `jarrell-dry-region-prototype.mjs` (`20a2795d2f8ad694305eebec8a83821bbc15d727`). Loads neighbor chunk circles independently of browser streaming, denies unknown or out-of-bounds ground, sweeps obstacle circles continuously and checks padded terrain footprints along subsegments. Movement substep max .25m; feet-based corridor category max 3m. Explicit `reviewedForProduction:false`; this is not full 3D melee visibility or complete map coverage. No cave/swim/jump, no live Worker wiring.
