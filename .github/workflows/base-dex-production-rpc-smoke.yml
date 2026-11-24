@@ -1,0 +1,31 @@
+name: Base DEX Production RPC Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-dex-production-rpc-smoke.mjs"
+      - ".github/workflows/base-dex-production-rpc-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production:
+    name: Verify deployed Base read-only inspector
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --check .github/scripts/base-dex-production-rpc-smoke.mjs
+      - name: Install Playwright Chromium
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Check deployed desktop and mobile Base RPC lookup (no wallet)
+        run: node .github/scripts/base-dex-production-rpc-smoke.mjs
