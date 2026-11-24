@@ -5,6 +5,12 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 15 — NTT testnet network evidence preparation (2026-11-24 UTC)
+
+- Pinned CLI `f7f65d3751ffeb6ba65fdbba0f287aa6ed473b31` source includes Solana 3.0.0 IDL and EVM 2.0.0 bindings; root package and bun.lock resolve Wormhole SDK 4.20.0. CLI tag v1.10.0 package.json itself says 1.7.0: use commit pin, not loose package version. Source binding presence does not prove runtime interoperability.
+- Official SDK tag `4.20.0` resolves `031b5e315d80acda7bb11b8eb8bdfae209b80258`. Pinned network/core bridge constants distinguish SDK Testnet Solana (public devnet) from SDK Devnet local environment; BaseSepolia native 84532, Wormhole chain ID 10004 (not Base mainnet ID 30). Added isolated public-RPC testnet network evidence script and automatic main-only workflow, offline tests and testnet-only plan. No secrets, wallets, funds, signing or transactions; network/code presence only, not deployment provenance. PR/CI pending.
+- **EXACT NEXT:** verify PR CI and merge if green; inspect automatic public Testnet evidence workflow, record actual chain/contract presence results. Then match audited release binaries, governance and cost, prepare distinct test token and controlled testnet roundtrip with owner approval. Mainnet NO_GO, no Base CA.
+
 ## Stage 14 — actual raw Token-2022 mint extension evidence SUCCESS (2026-11-24 UTC)
 
 - [Manual workflow #45341345939](https://github.com/CryptoDilis/Climboria/actions/runs/45341345939) SUCCESS on exact main head `9bccaf1cd4ace8b73230e1d1fc0d29f6e56c4915`; job `138265487829` collection and archive passed, sanitized artifact `14895912993` (7-day retention).
