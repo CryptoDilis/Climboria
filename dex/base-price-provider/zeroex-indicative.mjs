@@ -86,7 +86,7 @@ export function privatePriceDiagnostic(error){
  if(error.code==="http"&&Number.isInteger(error.status)&&error.status>=100&&error.status<=599)result.upstreamStatus=error.status;
  return result;
 }
-export async function getBaseIndicativePrice(input,{enabled=false,apiKey,fetchImpl=globalThis.fetch,signal}={}){
+export async function getBaseIndicativePrice(input,{enabled=false,apiKey,fetchImpl=(url,options)=>globalThis.fetch(url,options),signal}={}){
  if(enabled!==true)throw Error("Base indicative pricing disabled");
  const intent=normalizePriceIntent(input);
  if(typeof apiKey!=="string"||!apiKey.trim()||/[\r\n]/.test(apiKey))throw new IndicativePriceFailure("credential","Server provider credential unavailable");
@@ -96,7 +96,7 @@ export async function getBaseIndicativePrice(input,{enabled=false,apiKey,fetchIm
  try{const timeout=AbortSignal.timeout(10000);requestSignal=signal?AbortSignal.any([signal,timeout]):timeout;}catch{throw new IndicativePriceFailure("signal","Indicative price signal unavailable");}
  let response;
  try{
-  response=await fetchImpl(url.toString(),{method:"GET",headers:{"0x-api-key":apiKey,"0x-version":"v2",accept:"application/json"},redirect:"error",credentials:"omit",cache:"no-store",signal:requestSignal});
+  response=await fetchImpl(url.toString(),{method:"GET",headers:{"0x-api-key":apiKey,"0x-version":"v2",accept:"application/json"},redirect:"error",cache:"no-store",signal:requestSignal});
  }catch{throw new IndicativePriceFailure("transport","Indicative price provider unavailable");}
  if(!response.ok)throw new IndicativePriceFailure("http","Indicative price provider HTTP "+response.status,response.status);
  let data;try{data=await boundedJson(response);}catch{throw new IndicativePriceFailure("body","Invalid indicative price provider response");}
