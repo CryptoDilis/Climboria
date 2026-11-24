@@ -30,6 +30,8 @@ on:
       - "game/multiplayer/jarrell-ceiling-geometry.test.mjs"
       - "game/multiplayer/jarrell-dry-region-prototype.mjs"
       - "game/multiplayer/jarrell-dry-region-prototype.test.mjs"
+      - "game/multiplayer/transactional-room-prototype.mjs"
+      - "game/multiplayer/transactional-room-prototype.test.mjs"
       - "game/play.html"
       - ".github/workflows/game-server-authority-rules.yml"
   workflow_dispatch:
