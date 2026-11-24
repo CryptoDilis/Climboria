@@ -1,0 +1,49 @@
+name: CLIMB NTT Audit Scope Evidence - Read Only
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/climb-ntt-audit-scope-evidence.yml'
+      - 'token/climb-bridge/NTT_AUDIT_SCOPE.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: wormhole-foundation/wormhole-audits
+          ref: 1cb84c68c14ea1369c568e9cb2541fb685194b3c
+          path: upstream-audits
+          persist-credentials: false
+      - name: Inspect exact public audit report scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream-audits rev-parse HEAD)" = 1cb84c68c14ea1369c568e9cb2541fb685194b3c
+          command -v pdftotext >/dev/null || { sudo apt-get update && sudo apt-get install -y poppler-utils; }
+          mkdir -p "$RUNNER_TEMP/ntt-audit-scope"
+          cd upstream-audits
+          while read -r blob file; do
+            test "$(git hash-object "$file")" = "$blob"
+            sha256sum "$file"
+            pdftotext -layout "$file" "$RUNNER_TEMP/ntt-audit-scope/${file%.pdf}.txt"
+            echo "=== $file : first four pages ==="
+            pdftotext -f 1 -l 4 -layout "$file" -
+            echo "=== Scope and commit references (text search, not full audit review) ==="
+            grep -inE 'commit|scope|revision|remediat|repository|github.com|[a-f0-9]{40}' "$RUNNER_TEMP/ntt-audit-scope/${file%.pdf}.txt" | cut -c1-240 | head -n 70 || true
+          done <<'REPORTS'
+          e2295b16148d73e81180203e7a38da1922797fb7 2025-04-18-wormhole-ottersec-ntt-v3.pdf
+          687a8472b58873bf6516b4e9891c1c01f56b10e5 2025-05-05-wormhole-ottersec-ntt-v3-solana.pdf
+          d01cb289914eea26f18ce697cf942aac5a9328f0 2024-08-02-ottersec-solana-ntt-token-extensions.pdf
+          ca23bcc30f6563862eff6c638ed6cb24d3f833e3 2025-11-20-cyfrin-wormhole-monad-ntt.pdf
+          REPORTS
+          echo 'AUDIT_SCOPE_EXTRACTION_ONLY; exact release coverage and remediation not established; bridgeRelease=NO_GO'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pinned-ntt-audit-text-review
+          path: ${{ runner.temp }}/ntt-audit-scope/
+          retention-days: 7
+          if-no-files-found: error
