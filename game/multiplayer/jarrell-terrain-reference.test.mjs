@@ -65,12 +65,12 @@ test('server streamed collision circles exactly match the authored browser prop 
 test('authored fixed collision inventory covers all current fixed registration paths',()=>{
  const rows=authoredJarrellFixedColliders();
  const count=kind=>rows.filter(r=>r.kind===kind).length;
- assert.equal(rows.length,43);
+ assert.equal(rows.length,47);
  assert.equal(count('park-swing-post'),4);assert.equal(count('park-swing-seat'),2);
  assert.equal(count('park-hammock'),4);assert.equal(count('sanctuary-pillar'),12);
- assert.equal(count('sanctuary-center-crystal'),1);assert.equal(count('cave-solid'),6);
+ assert.equal(count('sanctuary-entry-pillar'),4);assert.equal(count('sanctuary-center-crystal'),1);assert.equal(count('cave-solid'),6);
  assert.equal(count('facility'),2);assert.equal(count('freshwater-pier'),12);
- assert.equal(rows.filter(r=>r.kind==='sanctuary-pillar').every(r=>Math.abs(Math.hypot(r.x,r.z+90)-22)<1e-9&&r.r===1.75),true);
+ assert.equal(rows.filter(r=>r.kind==='sanctuary-pillar').every(r=>Math.abs(Math.hypot(r.x,r.z+90)-22)<1e-9&&r.r===1.9),true);
  assert.ok(rows.some(r=>r.kind==='facility'&&r.x===36&&r.z===-52&&r.r===2.6));
  // Explicit source contract: changed registration paths or parameters require inventory review.
  for(const marker of [
@@ -83,7 +83,10 @@ test('authored fixed collision inventory covers all current fixed registration p
   'parkFixtureSolids.push({x:p.x+hx+px*Math.cos(rot),z:p.z+hz-px*Math.sin(rot),r:.58})',
   'for(let i=0;i<12;i++){const a=(i+.5)/12*6.283,rr=22',
   'pg.position.set(Math.sin(a)*rr,1.5,Math.cos(a)*rr)',
-  "solid(center.x,center.z,1.75,'sanctuary-pillar-'+country)",
+  "solid(center.x,center.z,1.9,'sanctuary-pillar-'+country)",
+  "solid(center.x,center.z,.46,'sanctuary-entry-pillar-'+i)",
+  "for(const z of [44,29])",
+  "const x=side*6.3",
   "solid(POI.sanct.x,POI.sanct.z,2.4,'sanctuary-center-crystal')",
   '[[-22,-20,15],[20,-22,14],[-13,-34,5],[13,-34,5],[-30,-6,7],[30,-6,7]].forEach',
   'const g=at(36,-52,-.6);solid(g.position.x,g.position.z,2.6)',
@@ -92,7 +95,7 @@ test('authored fixed collision inventory covers all current fixed registration p
   'for(const px of [-2.2,2.2])for(const pz of [-1.2,1.2])',
   'solid(pier.position.x+px,pier.position.z+pz,.42)'
  ])assert.ok(browser.includes(marker),'review fixed collider source: '+marker);
- assert.equal([...browser.matchAll(/\bsolid\(/g)].length,8,'review new solid registration');
+ assert.equal([...browser.matchAll(/\bsolid\(/g)].length,9,'review new solid registration');
  assert.equal([...browser.matchAll(/parkFixtureSolids\.push\(/g)].length,3);
 });
 test('forest candidates preserve exact authored search and GLB-dependent radii',()=>{
