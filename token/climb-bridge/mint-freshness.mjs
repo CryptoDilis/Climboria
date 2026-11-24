@@ -61,6 +61,8 @@ export function safeMintEvidenceError(error) {
     'NO_GO: invalid chain genesis identity',
     'NO_GO: missing finalized RPC context slot',
     'NO_GO: not an SPL Token Program mint account',
+    'NO_GO: not a recognized SPL Token or Token-2022 mint account',
+    'NO_GO: unexpected mint extension metadata',
     'NO_GO: unexpected mint state/decimals',
     'NO_GO: mint/freeze authority fields unavailable',
     'NO_GO: invalid mintAuthority',
@@ -69,7 +71,7 @@ export function safeMintEvidenceError(error) {
     'NO_GO: observation timestamp required',
     'Invalid unsigned decimal amount',
     'Amount out of range',
-    ...['program','decimals','supplyRaw','mintAuthority','freezeAuthority'].map(key=>'NO_GO: independent RPCs disagree on '+key)
+    ...['program','extensionTypeSummary','decimals','supplyRaw','mintAuthority','freezeAuthority'].map(key=>'NO_GO: independent RPCs disagree on '+key)
   ]);
   return allowed.has(error?.message) ? error.message : 'NO_GO: finalized mint verification failed (RPC details redacted)';
 }

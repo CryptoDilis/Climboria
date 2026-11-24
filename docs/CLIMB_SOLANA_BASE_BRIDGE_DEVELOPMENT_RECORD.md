@@ -5,6 +5,12 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 9 — token program discovery after repeated live rejection (2026-11-24 UTC)
+
+- [Run #45338148948](https://github.com/CryptoDilis/Climboria/actions/runs/45338148948) and [run #45338173309](https://github.com/CryptoDilis/Climboria/actions/runs/45338173309) on exact main head `14c044f17c227cc51446a7f7edadccbd29044e81` failed with `NO_GO: not an SPL Token Program mint account`. Both passed input checks. The previous legacy-only owner/parser expectation is not established for this mint; actual owner remains unverified (Token-2022 is a plausible explanation, not a confirmed fact).
+- Extend only read-only discovery to exact official legacy or Token-2022 owner/parser pairs; compare reported program and bounded extension-type summary, preserve mint/freeze authority, supply, genesis, slot checks and NO_GO. No raw extension state or upstream strings printed. No changes to escrow audit, production gates, DEX, Swap, Game, Launchpad or ClimbX. New regression tests. PR/CI pending.
+- **EXACT NEXT:** merge after focused CI green, dispatch a new manual workflow on latest main, inspect observed program/authorities/extension types and independent provenance. For Token-2022, independently verify full extension state and provider-specific support before designing custody. No Base CA yet.
+
 ## Stage 8 — first live mint evidence attempt failed (2026-11-24 UTC)
 
 - Actual manual [run #45336892804](https://github.com/CryptoDilis/Climboria/actions/runs/45336892804) FAILED on head `3d83bcb122562c36c78801c59e3b90ec6a5c1349`. Required RPC inputs step passed; collection failed with `NO_GO: finalized mint verification failed (RPC details redacted)`, artifact skipped. Root cause not yet established; no mint authority evidence, no Base CA.
