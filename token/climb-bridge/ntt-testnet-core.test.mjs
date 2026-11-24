@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {decodeKey,deriveProgramData,onEdwards} from './programdata-pda.mjs';
 import {TESTNET,inspectTestnetCorePresence,inspectTestnetImplementations,IMPLEMENTATION_SLOT} from './ntt-testnet-core.mjs';
 function fixture(overrides={}){
  const calls=[];
@@ -27,9 +28,9 @@ test('wrong network, missing code or stale/nonexecutable core fail closed',async
  }
 });
 
-function implementationFixture({badWord=false,badPair=false,badBlock=false,badElf=false}={}){
+function implementationFixture({badWord=false,badPair=false,badBlock=false,badElf=false,badCanonical=false}={}){
  const loader='BPFLoaderUpgradeab1e11111111111111111111111';
- const header=Buffer.alloc(36);header.writeUInt32LE(2);header.fill(7,4);
+ const header=Buffer.alloc(36);header.writeUInt32LE(2);(badCanonical?Buffer.alloc(32,7):decodeKey('7bu9ccL3uu9xNCLE4ZuUX43sg7HUfort8YyLxcq6G9cQ')).copy(header,4);
  const data=Buffer.alloc(53);data.writeUInt32LE(3);data.writeBigUInt64LE(900n,4);data[12]=1;data.fill(8,13,45);Buffer.from([0x7f,0x45,0x4c,0x46]).copy(data,45);if(badElf)data[45]=0;
  const account=(b,executable)=>({owner:loader,executable,data:[b.toString('base64'),'base64']});
  const report={assessment:'PUBLIC_TESTNET_CORE_PRESENCE_ONLY',bridgeRelease:'NO_GO',solana:{slot:1000,accountDataSha256:createHash('sha256').update(header).digest('hex')},base:{finalizedBlock:'0x123',blockHash:'0x'+'a'.repeat(64)}};
@@ -49,14 +50,24 @@ function implementationFixture({badWord=false,badPair=false,badBlock=false,badEl
 test('linked ProgramData and EIP-1967 implementation evidence remains NO_GO',async()=>{
  const f=implementationFixture(),r=await inspectTestnetImplementations(f.report,f.fetchFn);
  assert.equal(r.solana.deploymentSlot,'900');assert.equal(r.solana.allocatedImageBytes,8);
- assert.equal(r.solana.programDataPdaIndependentlyVerified,false);
+ assert.equal(r.solana.programDataPdaIndependentlyVerified,true);
  assert.equal(r.base.reportedImplementation,'0x'+'1'.repeat(40));
  assert.equal(r.sourceBinaryParityVerified,false);assert.equal(r.bridgeRelease,'NO_GO');
  assert.deepEqual(f.calls.find(x=>x.method==='eth_getStorageAt').params,[TESTNET.base.core,IMPLEMENTATION_SLOT,'0x123']);
  assert.equal(f.calls.find(x=>x.method==='getMultipleAccounts').params[1].minContextSlot,1001);
 });
 test('missing implementation, mismatched ProgramData link, changed block and non-ELF payload fail',async()=>{
- for(const options of [{badWord:true},{badPair:true},{badBlock:true},{badElf:true}]){
+ for(const options of [{badWord:true},{badPair:true},{badBlock:true},{badElf:true},{badCanonical:true}]){
   const f=implementationFixture(options);await assert.rejects(inspectTestnetImplementations(f.report,f.fetchFn),/NO_GO/);
  }
+});
+
+test('derive canonical core ProgramData without RPC and reject noncanonical curve bytes',()=>{
+ const p=deriveProgramData(TESTNET.solana.core);
+ assert.equal(p.address,'7bu9ccL3uu9xNCLE4ZuUX43sg7HUfort8YyLxcq6G9cQ');
+ assert.equal(onEdwards(p.bytes),false);
+ assert.equal(onEdwards(Buffer.from('5866666666666666666666666666666666666666666666666666666666666666','hex')),true);
+ assert.equal(onEdwards(Buffer.alloc(32)),true);
+ assert.throws(()=>onEdwards(Buffer.alloc(32,255)),/NO_GO/);
+ assert.throws(()=>deriveProgramData('invalid'),/NO_GO/);
 });
