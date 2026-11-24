@@ -515,7 +515,9 @@ try {
   console.log('Jarrell world-aligned mountain cliff/lichen strata coverage:',JSON.stringify(mountainCliff));
   const sanctuaryPillars=await page.evaluate(()=>window.__climboriaJarrellsPeak?.sanctuaryPillarCollisionAudit?.()??null);
   if(!sanctuaryPillars?.ok||sanctuaryPillars.pillars?.length!==12||
-    sanctuaryPillars.pillars.some(p=>!p.collider||!p.blocked)||sanctuaryPillars.walkwayBlocked?.length)
+    sanctuaryPillars.entryPillars?.length!==4||
+    [...sanctuaryPillars.pillars,...(sanctuaryPillars.entryPillars||[])].some(p=>!p.collider||!p.blocked||!p.escape||p.approaches?.length!==8)||
+    sanctuaryPillars.pillars.some(p=>p.radius<Math.hypot(1.3,1.3))||sanctuaryPillars.walkwayBlocked?.length)
     errors.push('Starting Sanctuary pillar collision or entry corridor failed: '+JSON.stringify(sanctuaryPillars));
   console.log('Sanctuary real-pillar collision:',JSON.stringify(sanctuaryPillars));
   const cavePassage=await page.evaluate(()=>window.__climboriaJarrellsPeak?.cavePassageAudit?.()??null);

@@ -187,3 +187,58 @@ export function sampleJarrellStreamedColliders(cx,cz){
  }
  return col;
 }
+
+
+/**
+ * Authored fixed X/Z collision inventory. The forest list is deliberately
+ * separate by category; browser now registers these before GLB loading.
+ * These circles do not define vertical surfaces or a reviewed combat region.
+ */
+export function authoredJarrellFixedColliders(){
+ const rows=[],add=(x,z,r,kind)=>rows.push({x,z,r,kind});
+ const park=POI.park,sanct=POI.sanct;
+ for(const [sx,sz] of [[-18,-52],[18,-52]]){
+  for(const px of [-1.8,1.8])add(park.x+sx+px,park.z+sz,.55,'park-swing-post');
+  add(park.x+sx,park.z+sz,.9,'park-swing-seat');
+ }
+ for(const [hx,hz,rot] of [[-42,22,-.35],[42,22,.35]])
+  for(const px of [-4,4])add(park.x+hx+px*Math.cos(rot),park.z+hz-px*Math.sin(rot),.58,'park-hammock');
+ for(let i=0;i<12;i++){
+  const a=(i+.5)/12*6.283,rr=22;
+  add(sanct.x+Math.sin(a)*rr,sanct.z+Math.cos(a)*rr,1.9,'sanctuary-pillar');
+ }
+ for(const z of [44,29])for(const side of [-1,1])
+  add(sanct.x+side*6.3,sanct.z+z,.46,'sanctuary-entry-pillar');
+ add(sanct.x,sanct.z,2.4,'sanctuary-center-crystal');
+ const p=POI.cave,ry=caveG.rotation.y,cs=Math.cos(ry),sn=Math.sin(ry);
+ for(const [x,z,r] of [[-22,-20,15],[20,-22,14],[-13,-34,5],[13,-34,5],[-30,-6,7],[30,-6,7]])
+  add(p.x+x*cs+z*sn,p.z-x*sn+z*cs,r,'cave-solid');
+ add(36,-52,2.6,'facility');add(-34,-52,1.8,'facility');
+ for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater'))
+  for(const px of [-2.2,2.2])for(const pz of [-1.2,1.2])
+   add(body.x+body.radius-1.5+px,body.z+pz,.42,'freshwater-pier');
+ return rows;
+}
+function findCC0ForestSpots(count,minSpacing,excluded=[]){
+ const found=[],blockedSpots=excluded.slice();
+ for(let ring=105;ring<=1450&&found.length<count;ring+=38){
+  for(let deg=0;deg<360&&found.length<count;deg+=18){
+   const a=deg*Math.PI/180,x=Math.sin(a)*ring,z=60+Math.cos(a)*ring,h=heightAt(x,z);
+   if(h<2||h>132||waterBodyAt(x,z)||desF(x,z)>.48||fd(x,z)<.5||shoreClear(x,z,h)||nearPOI(x,z)||caveCoastalTerrainAt(x,z).mask>.1)continue;
+   if(Math.abs(heightAt(x+5,z)-h)>2.2||Math.abs(heightAt(x,z+5)-h)>2.2)continue;
+   if(blockedSpots.some(p=>Math.hypot(p.x-x,p.z-z)<minSpacing))continue;
+   const spot={x,z,h};found.push(spot);blockedSpots.push(spot);
+  }
+ }
+ return found;
+}
+/* Broader biome dressing: reuse the three cached CC0 GLBs across more valid forest clearings.
+   Shared cloned geometry/materials keep the GPU asset cost bounded; spacing avoids prop piles. */
+const cc0TreeSpots=findCC0ForestSpots(16,58);
+const cc0CanopySpots=findCC0ForestSpots(16,76,cc0TreeSpots);
+const cc0GroundSpots=findCC0ForestSpots(42,10,cc0TreeSpots);
+const cc0LogSpots=findCC0ForestSpots(14,22,[...cc0TreeSpots,...cc0GroundSpots]);
+export function authoredJarrellForestColliderCandidates(){
+ return [[cc0TreeSpots,2.15,'buttress'],[cc0CanopySpots,2.35,'canopy'],[cc0LogSpots,1.15,'fallenLog']]
+  .flatMap(([spots,r,kind])=>spots.map(({x,z})=>({x,z,r,kind})));
+}

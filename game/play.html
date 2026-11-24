@@ -2380,8 +2380,27 @@ const cc0TreeSpots=findCC0ForestSpots(16,58);
 const cc0CanopySpots=findCC0ForestSpots(16,76,cc0TreeSpots);
 const cc0GroundSpots=findCC0ForestSpots(42,10,cc0TreeSpots);
 const cc0LogSpots=findCC0ForestSpots(14,22,[...cc0TreeSpots,...cc0GroundSpots]);
+// Register collision independently of external asset availability. A visible
+// primitive fallback occupies each solid candidate until the GLB replaces it.
+function registerCC0ForestColliders(key,spots){
+ const def=cc0ForestDefinitions[key];
+ if(def.collider<=0)return [];
+ return spots.map((spot,index)=>{
+  solid(spot.x,spot.z,def.collider);
+  const g=new T3.Group();g.name='Climboria_ForestFallback_'+key+'_'+index;
+  g.position.set(spot.x,spot.h,spot.z);scene.add(g);
+  if(key==='fallenLog'){
+   const log=sc(mk(CYL,M('#5b4732'),0,.55,0,g),.55,def.collider*1.7,.55);
+   log.rotation.z=Math.PI/2;
+  }else{
+   sc(mk(CYL,M('#584532'),0,2,0,g),def.collider*.35,4,def.collider*.35);
+   sc(mk(SPH,M('#40563b'),0,4.7,0,g),def.collider,2.3,def.collider);
+  }
+  return g;
+ });
+}
 function placeCC0ForestModel(key,spot,index){
- const asset=cc0ForestLoaded.get(key);if(!asset||!spot)return;
+ const asset=cc0ForestLoaded.get(key);if(!asset||!spot)return false;
  const root=asset.clone(true),def=cc0ForestDefinitions[key];
  root.name='Climboria_CC0_'+key+'_'+index;
  root.position.set(spot.x,spot.h,spot.z);
@@ -2389,16 +2408,21 @@ function placeCC0ForestModel(key,spot,index){
  root.scale.setScalar(def.scale);
  root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=true}});
  scene.add(root);
- if(def.collider>0)solid(spot.x,spot.z,def.collider);
+ return true;
 }
 function loadCC0ForestModel(key,spots){
- const def=cc0ForestDefinitions[key];
+ const def=cc0ForestDefinitions[key],fallbacks=registerCC0ForestColliders(key,spots);
  new T3.GLTFLoader().load(def.url,gltf=>{
   const base=gltf.scene;
   base.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=true}});
   cc0ForestLoaded.set(key,base);
-  spots.forEach((spot,i)=>placeCC0ForestModel(key,spot,i));
- },undefined,error=>console.warn('[Climboria] CC0 forest asset unavailable; procedural vegetation remains active:',key,error));
+  spots.forEach((spot,i)=>{
+   if(placeCC0ForestModel(key,spot,i)&&fallbacks[i]){
+    // mk/sc share materials and geometries; remove only the instance group.
+    scene.remove(fallbacks[i]);
+   }
+  });
+ },undefined,error=>console.warn('[Climboria] CC0 forest asset unavailable; visible fallback remains active:',key,error));
 }
 loadCC0ForestModel('buttress',cc0TreeSpots);
 loadCC0ForestModel('canopy',cc0CanopySpots);
@@ -2411,7 +2435,14 @@ parkFixtureSolids.forEach(s=>solid(s.x,s.z,s.r));
 sanctuaryGroup.updateMatrixWorld(true);
 sanctuaryFlagMeshes.forEach(({country,pillar})=>{
  const center=pillar.getWorldPosition(new T3.Vector3());
- solid(center.x,center.z,1.75,'sanctuary-pillar-'+country);
+ // 2.6m square crown reaches 1.84m at its corners; cover the full pillar.
+ solid(center.x,center.z,1.9,'sanctuary-pillar-'+country);
+});
+// Entry lanterns are physical posts too, including the four along the
+// starting walkway. Their round base radius is .46m.
+sanctuaryPathLanterns.forEach(({base},i)=>{
+ const center=base.getWorldPosition(new T3.Vector3());
+ solid(center.x,center.z,.46,'sanctuary-entry-pillar-'+i);
 });
 solid(POI.sanct.x,POI.sanct.z,2.4,'sanctuary-center-crystal');
 [[-22,-20,15],[20,-22,14],[-13,-34,5],[13,-34,5],[-30,-6,7],[30,-6,7]].forEach(([x,z,r])=>{const[w,v]=l2w(caveG,x,z);solid(w,v,r)});
@@ -2462,7 +2493,9 @@ function blocked(nx,nz,ox,oz,feet){
   const oldDist=Math.hypot(ox-cx,oz-cz);
   if(oldDist<minDist){
    const awayDot=(ox-cx)*dirX+(oz-cz)*dirZ;
-   if(awayDot>0)return false;
+   // A legacy save exactly at a collider center must be able to exit.
+   // Permit only outward motion, never a sweep deeper into the obstacle.
+   if(awayDot>=0&&Math.hypot(nx-cx,nz-cz)>oldDist)return false;
    return true;
   }
   return true;
@@ -3320,21 +3353,36 @@ function sanctuaryGroundPigmentAudit(){
 }
 function sanctuaryPillarCollisionAudit(){
  sanctuaryGroup.updateMatrixWorld(true);
- const pillars=sanctuaryFlagMeshes.map(({country,pillar})=>{
-  const center=pillar.getWorldPosition(new T3.Vector3()),label='sanctuary-pillar-'+country;
-  const collider=solids.find(o=>o.label===label);
-  const blockedByPillar=blocked(center.x+.1,center.z,center.x+4.5,center.z,groundAt(center.x+4.5,center.z)+.05);
-  const actual=window.__climboriaLastCollision;
-  return {country,x:+center.x.toFixed(2),z:+center.z.toFixed(2),collider:!!collider&&Math.hypot(collider.x-center.x,collider.z-center.z)<.001,
-   blocked:blockedByPillar&&actual?.type==='fixed-solid'&&actual.label===label};
- });
+ function inspect(label,mesh){
+  const center=mesh.getWorldPosition(new T3.Vector3()),collider=solids.find(o=>o.label===label);
+  const reach=(collider?.r??1.9)+PLAYER_RADIUS+.8;
+  const approaches=[];
+  for(let i=0;i<8;i++){
+   const angle=i*Math.PI/4,dx=Math.cos(angle)*reach,dz=Math.sin(angle)*reach;
+   const ox=center.x+dx,oz=center.z+dz,feet=groundAt(ox,oz)+.05;
+   const hits=[feet,feet+2.5].map(y=>{
+    const hit=blocked(center.x-dx,center.z-dz,ox,oz,y);
+    return hit&&window.__climboriaLastCollision?.type==='fixed-solid'&&window.__climboriaLastCollision.label===label;
+   });
+   approaches.push(hits.every(Boolean));
+  }
+  // Exact-center overlap can occur in an old saved position. Allow escape,
+  // but the inward sweep from outside must still be blocked.
+  const escape=!blocked(center.x+.15,center.z,center.x,center.z,groundAt(center.x,center.z)+.05);
+  return {x:+center.x.toFixed(2),z:+center.z.toFixed(2),radius:collider?.r??0,
+   collider:!!collider&&Math.hypot(collider.x-center.x,collider.z-center.z)<.001,
+   blocked:approaches.every(Boolean),approaches,escape};
+ }
+ const pillars=sanctuaryFlagMeshes.map(({country,pillar})=>({country,...inspect('sanctuary-pillar-'+country,pillar)}));
+ const entryPillars=sanctuaryPathLanterns.map(({base},i)=>inspect('sanctuary-entry-pillar-'+i,base));
  const route=[];
- for(let z=-38;z>=-78;z-=.5){
+ for(let z=-30;z>=-78;z-=.5){
   const bad=blocked(0,z-.5,0,z,groundAt(0,z)+.05);
   if(bad){route.push({z,collision:window.__climboriaLastCollision});break;}
  }
- return {ok:pillars.length===12&&pillars.every(x=>x.collider&&x.blocked)&&route.length===0,
-  pillars,walkwayBlocked:route};
+ const all=[...pillars,...entryPillars];
+ return {ok:pillars.length===12&&entryPillars.length===4&&all.every(x=>x.collider&&x.blocked&&x.escape)&&route.length===0,
+  pillars,entryPillars,walkwayBlocked:route};
 }
 function caveInteriorSkyOcclusionAudit(){
  const seal=caveG?.getObjectByName('JarrellCaveNorthSkyBackstop');

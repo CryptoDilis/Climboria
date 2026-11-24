@@ -1,5 +1,36 @@
 # Climboria Game Development Record
 
+## GAME STARTING SANCTUARY PILLAR COLLISION FIX — 2026-11-24 PHT (NOT DEPLOYED)
+
+- Owner explicitly requested starting pillar collision check. [PR #698](https://github.com/CryptoDilis/Climboria/pull/698) now expands the twelve flag pillar horizontal radii from 1.75m to 1.9m to cover the 2.6m square crown corners (~1.84m). Adds four physical entry lantern/post base colliders (radius .46m) previously absent. Uses actual mesh world positions. Swept-circle collision permits strictly outward escape from legacy saved overlap, including exact center, without allowing an inward crossing. Browser implementation `1b2439e347c5ba55836401f79c3216de9a16c06d`.
+- Synchronized server fixed-circle reference to 47 authored fixed objects, including four entry posts (`9cbe484b1f1880178dfa65956e9fa58b8e5fcf56`), source-contract checks (`2123ccd7896b06e4bc7f9acf3055166dc1d7be4d`) and gameplay smoke assertions (`79562137a909f9235dc5004b027a315f1be7371e`). The actual browser collision audit now tests all 16 posts/pillars from eight directions, both normal and elevated feet, exact-center escape and unobstructed center approach from the actual spawn (0,-30) to z=-78. New tests not yet verified. Prior #698 head `bf49749a744e6e28b64a8d29178b9e312077b1d7` Authority/Gateway/Validate/Browser Smoke green; other jobs running at check; prior-head results do not authorize new head.
+- **EXACT NEXT:** Verify all applicable latest #698 CI (especially real browser pillar audit and desktop/mobile Gameplay Smoke); fix any failing test, merge if green, verify postmerge Pages deployment and live pillar collision if real browser access is available. Continue reviewed vertical/walkability and transactional multiplayer integration afterward. No live Worker/HP change or non-Game edits. No assertion that user's live pillar bug is already resolved.
+
+---
+
+## GAME FOREST COLLISION REGISTRATION CONSISTENCY — 2026-11-24 PHT (NOT DEPLOYED)
+
+- [PR #698](https://github.com/CryptoDilis/Climboria/pull/698) reconciled onto main `9f31344fd4ee6928037baee0f39f9c9a16220f7f` (reconcile commit `c883706ad617a9f0bf5b6e1f557c711eba6c8ab7`). Browser now registers the authored forest solid circles before asynchronous GLB loading and displays lightweight primitive fallback meshes until each asset successfully replaces its fallback. Failed downloads keep a visible obstacle with the same collider; no duplicate collider registration on success, zero-radius undergrowth remains visual only. Implementation `bf2b7305ea5d5449651c096c58457431b268ac47`; source parity and mocked loader success/failure regression test `5577c440f77472ca44af7b752121b391c62ea157`.
+- Previous consolidated #692 merged at `76244ffe7a5ffe3e7e73a73efcfcd4ee89f78411`, all four exact-head Game checks green; superseded #687 closed after verified code inclusion. Fresh #698 CI required because browser runtime changes now included. No live Worker deployment or PvP activation.
+- **EXACT NEXT:** Verify actual latest-head Game Authority, Gateway, Validate and desktop/mobile Gameplay CI; inspect and correct failures, confirm no visual regression, then merge only if green. Next independently verify cave wall vertical/swept coverage and ground walkability, integrate a reviewed map provider with durable transactional gateway, and perform public two-account QA. Do not treat horizontal inventory as complete authority. Game only.
+
+---
+
+## GAME CONSOLIDATED COMBAT FOUNDATION MERGED — 2026-11-24 PHT
+
+- [PR #692](https://github.com/CryptoDilis/Climboria/pull/692) MERGED at `76244ffe7a5ffe3e7e73a73efcfcd4ee89f78411`, exact tested head `945ee8d1ba2175e40a177bbd000119af084d0ed6`. CI SUCCESS: [Authority #45341651260](https://github.com/CryptoDilis/Climboria/actions/runs/45341651260), [Gateway #45341651098](https://github.com/CryptoDilis/Climboria/actions/runs/45341651098), [Validate #45341651103](https://github.com/CryptoDilis/Climboria/actions/runs/45341651103), [Gameplay #45341651118](https://github.com/CryptoDilis/Climboria/actions/runs/45341651118). Verified merged movement, test, HP and storage blobs equal tested head. Superseded #687 closed after checking inclusion.
+- Reconcile #698 fixed collider follow-up to current main `9f31344fd4ee6928037baee0f39f9c9a16220f7f`; run fresh exact-head Game CI before merge. No live Worker change. Next: forest collision registration consistency and reviewed vertical/ground coverage, transactional live orchestration, real two-account QA. Game only.
+
+---
+
+## GAME FIXED OBSTACLE COLLISION INVENTORY — 2026-11-24 PHT (NOT LIVE)
+
+- Stacked branch `game/jarrell-fixed-collider-coverage-20261124` from consolidated #692 head `945ee8d1ba2175e40a177bbd000119af084d0ed6`: adds 43 authored fixed X/Z circles (10 park fixtures, 12 Sanctuary pillars, center crystal, six cave solids, two facilities, twelve freshwater pier posts) and deterministic forest GLB collider candidates from actual `game/play.html` placement algorithm. Implementation `4606c533323a56b9f412dfc96df9e0baedd21986`; two regression tests `b3458a1b1d4290d870df9b2240394c0d4b62228d` verify fixed source registration contracts and independently execute browser forest placement. Forest candidates remain separate because runtime browser registration is conditional on successful asynchronous GLB loading. These horizontal inventories do not establish vertical or full walkability coverage.
+- #687 exact head `398ba8793a78d97cbd16f70eb3b27e94eab5159f` all four CI SUCCESS, including Gameplay #45340433474. Consolidated #692 exact head `945ee8d1ba2175e40a177bbd000119af084d0ed6` Authority #45341651260, Gateway #45341651098 and Validate #45341651103 SUCCESS; Gameplay #45341651118 running at initial check. Prefer one consolidated merge and close #687 only after verified inclusion.
+- **EXACT NEXT:** Finish #692 Gameplay and merge if green/mergeable. Verify movement/stamina code inclusion, close superseded #687. Reconcile fixed obstacle branch onto latest main and run exact-head Game CI. Next resolve conditional forest collider agreement, reviewed vertical cave/terrain coverage, and build actual reviewed map provider plus transactional gateway orchestration. No live Worker, client damage, financial changes or non-Game scope. Real two-account QA remains pending.
+
+---
+
 ## GAME REAL STREAMED ROCK COLLIDER PARITY + CHECKPOINT ROLLBACK — 2026-11-24 PHT (NOT LIVE)
 
 - [PR #692](https://github.com/CryptoDilis/Climboria/pull/692) adds deterministic authored streamed rock X/Z collision circles to `jarrell-terrain-reference.mjs`, matching actual browser 200m chunks, RNG consumption, shore/water and POI exclusions (`53987598a1d51117d23db2095f2638e0e298e93e`). New parity test executes checked-in browser prop generator with rendering stubs and compares ten representative chunks directly (`e03a5d70d5e6c45b6f6fc12f7793892249c52538`). This is actual map geometry inventory, not complete vertical collision/authority or live integration. Fixed park fixtures, Sanctuary pillars, cave solids, dock/pier and asynchronous forest asset collision coverage still need review; browser `blocked()` uses fixed and nearby streamed circles plus cave walls and terrain.
