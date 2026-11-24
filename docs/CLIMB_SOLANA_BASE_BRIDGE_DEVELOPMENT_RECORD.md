@@ -5,6 +5,12 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 24 — pinned Solana NTT metadata-only locking test preparation (2026-11-24 UTC)
+
+- Reviewed pinned upstream Solana v3.0.0 `1a2a92ef7f289972b2d00dd1d58077d139fe68d7` transfer tests, setup, SDK custody derivation and Token-2022 transfer path. Added a local ProgramTest fixture with a six-decimal Token-2022 mint, self-referencing metadata pointer, metadata TLV, null freeze/metadata authorities. Fixture starts with mint authority for local test issuance; actual Token-2022 mint-to and set-authority instructions issue the test units then revoke mint authority BEFORE NTT initialize. Test exercises real upstream locking path and checks exact user/custody deltas, unchanged mint supply, unchanged mint bytes, six-decimal outbox amount. Genesis-injected metadata fixture is not proof of production metadata creation or guardian authentication. Upstream peer fixture uses a distinct mock peer, not Base Sepolia deployment.
+- Added scoped CI compiling the pinned upstream SBF workspace and running one local bank test with upstream checked-in core fixture (mainnet feature selects fixture address, NOT live network). Pinned Rust nightly and Solana CLI release from upstream manifest; official release archive lacks published digest in GitHub API, toolchain provenance remains unverified for deployment. No live RPC, keys, broadcast or fund movement. PR/CI pending.
+- **EXACT NEXT:** verify exact-head Solana local locking CI, fix build/test issues without weakening checks, merge if green. Then prepare reverse unlock/peer-decimal fixture and actual deployment artifact review; funded disposable testnet payer public addresses still required for live testnet. No official Base CA, mainnet NO_GO.
+
 ## Stage 23 — actual pinned NTT EVM manager local integration preparation (2026-11-24 UTC)
 
 - While awaiting disposable funded testnet payers, reviewed upstream EVM v2 manager, proxy, rate limits, peer validation, attestation and DummyTransceiver at `c636cc15b07969e4b44de7e466c999c07e7387a9`. Added an isolated Foundry integration harness for the real pinned `NttManager` (not Climboria's previous mock manager) and CLIMBTEST token, with a local mock transceiver. Tests exercise inbound mint from mock attestation, replay, unauthorized/wrong peer rejection, actual manager outbound burn, and pause guard. No fork, network transaction or genuine Wormhole guardian/message proof.
