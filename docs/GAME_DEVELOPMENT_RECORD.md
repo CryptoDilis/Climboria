@@ -1,5 +1,54 @@
 # Climboria Game Development Record
 
+## GAME REAL STREAMED ROCK COLLIDER PARITY + CHECKPOINT ROLLBACK — 2026-11-24 PHT (NOT LIVE)
+
+- [PR #692](https://github.com/CryptoDilis/Climboria/pull/692) adds deterministic authored streamed rock X/Z collision circles to `jarrell-terrain-reference.mjs`, matching actual browser 200m chunks, RNG consumption, shore/water and POI exclusions (`53987598a1d51117d23db2095f2638e0e298e93e`). New parity test executes checked-in browser prop generator with rendering stubs and compares ten representative chunks directly (`e03a5d70d5e6c45b6f6fc12f7793892249c52538`). This is actual map geometry inventory, not complete vertical collision/authority or live integration. Fixed park fixtures, Sanctuary pillars, cave solids, dock/pier and asynchronous forest asset collision coverage still need review; browser `blocked()` uses fixed and nearby streamed circles plus cave walls and terrain.
+- Added simulated second-write failure test to verify atomic checkpoint batch rollback (`49dd1c3c3f709e58780a75f31421dff52646bb8f`). No live storage or Worker changes.
+- Prior retargeted #692 head `1563df580041afc512313e2e32cecaa169e8bd74` only triggered unrelated bridge workflow, not Game CI. #687 remained 3/4 green, Gameplay #45340433474 still executing. New synchronized #692 commits are intended to trigger actual Game checks; **verify exact latest head before merging**.
+- **EXACT NEXT:** Verify #692 actual Game workflows, fix any red jobs and merge only if green; after merge verify combined movement inclusion and close superseded #687. Then export/verify remaining fixed and asynchronous collider coverage, integrate reviewed actual map with server simulation and transactional storage (commit before acknowledging damage, restore before join, fail closed). No public live PvP or real two-account QA claim, no other workstream edits.
+
+---
+
+## GAME CHECKPOINT STORAGE FOUNDATION + CONSOLIDATED COMBAT CI — 2026-11-24 PHT (ISOLATED, NOT LIVE)
+
+- [PR #692](https://github.com/CryptoDilis/Climboria/pull/692) adds validated versioned private checkpoint codec, server-only lifecycle export/restore, and a Durable Object transactional adapter for atomic revision-checked account batches. Commits `0ff698841130f4d3da85ab73032ec09eacac1e3a`, `8fb93e45928dc8da65f647de7c6f5b77b60fc58a`, `f5f982fb44f691a615ece999bd02732a5b2a7eb9`, tests `2d4b50de5331272a02b6608aa1881e72a9e31070`, `39f3b205f4c55fa182c2c7819c94a4ec09f5df47`, CI `01d0ea073ac4c797f08893e0b3a53a3e89dd968d`. Six extra tests for codec, storage CAS, concurrent updates, rollback, corruption and fresh-server restoration. No actual production write/load orchestration: adapter is not integrated with live Worker, and actual durable storage is not yet verified.
+- Consolidate movement #687 and HP/checkpoint #692 into #692 based on latest main `bde05240b7161e730097d24efb9ce8a3e23ed7fd`; preserve all non-Game workstream files. #687 prior exact head remains 3/4 green, Gameplay #45340433474 executing at last check. Retarget #692 to main so the whole combined branch receives Game CI, rather than leave HP/checkpoint tests untriggered on stacked base. Do not merge both PRs independently; prefer verified #692 and close #687 only after combined code inclusion is proven.
+- **EXACT NEXT:** Verify #692 exact-head Game Authority/Gateway/Validate/Gameplay checks and fix any failures; merge if green and mergeable. Then confirm actual reviewed map collision/walkability coverage and transactional live gateway orchestration (atomic save before acknowledging damage, fail closed on storage failure, restore before authenticated join). Actual public two-account QA still pending. No live damage or non-Game workstream changes.
+
+---
+
+## GAME COMBAT RECONNECT HARDENING — 2026-11-24 PHT (ISOLATED, NOT LIVE)
+
+- [PR #692](https://github.com/CryptoDilis/Climboria/pull/692) now includes private server movement checkpoint restoration on authenticated account reconnect (position, stamina, exhausted/downed), revalidates the saved location against reviewed terrain/collision with no spawn fallback, and denies melee when current ground verification fails even within snapshot freshness window. Changes `3e646c30691b9108f80a94e2bb3a5029d860eb99`, `68ed7e8d191abbc4cddd4aa14ced8af2bdda6279`; three new integration tests `9ed1d0290df72e983e25ceeb1a10fd9e90cc1aee`. HP and death timer retained across session changes in same process only; persistent account state and live wiring remain unimplemented.
+- #687 exact head `398ba8793a78d97cbd16f70eb3b27e94eab5159f` [Authority #45340433385](https://github.com/CryptoDilis/Climboria/actions/runs/45340433385), [Gateway #45340433405](https://github.com/CryptoDilis/Climboria/actions/runs/45340433405), [Validate #45340433377](https://github.com/CryptoDilis/Climboria/actions/runs/45340433377) SUCCESS. [Gameplay #45340433474](https://github.com/CryptoDilis/Climboria/actions/runs/45340433474) still executing desktop/mobile smoke at last check; merge not attempted.
+- **EXACT NEXT:** Finish #687 checks and verify changed files against latest main; merge only when green, then reconcile #692 to latest main, run all Game CI, fix any failures and merge if green. Next implement reviewed real-map solid/vertical coverage and persistent authenticated reconnect before enabling PvP. No live damage, loot, wallet, or non-Game changes. Actual two-account public QA remains pending.
+
+---
+
+## GAME SERVER HP AND RESPAWN LIFECYCLE — 2026-11-24 PHT (ISOLATED, NOT LIVE)
+
+- Stacked branch `game/server-hp-lifecycle-20261124` from #687 head `398ba8793a78d97cbd16f70eb3b27e94eab5159f`. Adds movement freeze and reviewed spawn reset (`39dd72af490d57e0fe1b6a080f5fe791c3a8cc71`), isolated server HP lifecycle (`250f37aa5bc315046f04394d088f598e33eb7296`), four integration tests (`a7ab59acc8830e50805629fed8b8256f54205db8`) and CI path filters (`2ffd06c976e18a1885eba5fe51080f757ed6d221`).
+- Server-owned HP 500, damage 5, existing 950ms melee cooldown, 150ms attempt throttle; authenticated server identity, live movement snapshots, sanctuary, range and collision checks through existing policy. Zero HP freezes movement and denies attack. Server scheduler respawns after 5s only at verified server-selected spawn; restores HP/stamina. In-memory account HP retained across session replacement; no persistence across process restarts, no actual production spawn/reconnect coverage. Synthetic integration only; no Worker or client wiring, financial state, inventory, or loot. Existing real map coverage, combat reconnect, and real two-account QA remain unresolved.
+- #687 Authority #45340433385 and Gateway #45340433405 SUCCESS; Gameplay #45340433474 and Validate #45340433377 were in progress at first check. **EXACT NEXT:** verify complete exact-head #687 CI, merge if green, then reconcile HP branch to latest main, verify actual Game CI and merge only if green. Continue independently reviewed actual map collision/walkability and server reconnect persistence before runtime activation. Game only.
+
+---
+
+## GAME SERVER SPRINT + STAMINA — 2026-11-24 PHT (ISOLATED, NOT LIVE)
+
+- [PR #687](https://github.com/CryptoDilis/Climboria/pull/687): added server-controlled walking/sprint (9/22m/s), 200 max stamina, drain 12/s and recovery 8/s, exhaustion lock until 40 stamina, integer milli-stamina accounting and bounded tick/expiry. Same base tuning as current local Game. Sprint intent while moving consumes stamina even if obstructed; ignores packet-supplied speed/stamina. No client HUD, live Worker, HP, loot or wallet changes. Implementation `9dd56fb802cc00ef3ec4775f09ee2c30d97bdb14`, three extra tests `5ac35a0df817182d4d8dbe927a90085ebabe10de`.
+- Prior retargeted head `ce7c2027178abf103357186d623e792a2e6fc975` triggered only unrelated preview checks, not the required Game workflows. New synchronized PR commits should trigger actual Game CI; do not count preview CI as Game evidence.
+- **EXACT NEXT:** Verify all applicable latest #687 head Game CI, inspect actual failed logs and fix before merge. Continue isolated authoritative HP lifecycle and respawn after movement is green; reviewed real terrain collision/walkability and movement modes beyond grounded walk/sprint still pending, as is actual two-account public QA. No live damage or changes outside Game.
+
+---
+
+## GAME MOVEMENT PR RECONCILED AFTER COMBAT FOUNDATION MERGE — 2026-11-24 PHT
+
+- [PR #683](https://github.com/CryptoDilis/Climboria/pull/683) **MERGED** at `f2dd7dde5348c0d6202725b47faafcb9b2b45bed`, exact head `ffe8957b04fdc3f2188b5e6de25c8b42aa7c0c68`; all four CI SUCCESS: [Authority #45337454905](https://github.com/CryptoDilis/Climboria/actions/runs/45337454905), [Gateway #45337455026](https://github.com/CryptoDilis/Climboria/actions/runs/45337455026), [Validate #45337454982](https://github.com/CryptoDilis/Climboria/actions/runs/45337454982), [Gameplay #45337455083](https://github.com/CryptoDilis/Climboria/actions/runs/45337455083). Superseded #680 closed after identical melee module and test blobs verified on main.
+- [PR #687](https://github.com/CryptoDilis/Climboria/pull/687) reconciles server-owned grounded walking and seven tests from stacked head `847c09fbb944d6328d91b036134dab853cfc829a` onto merged main, retaining all other workstream changes. Server-selected spawn; directional input, sequence replay defense, bounded server ticks, expiry, reviewed ground and swept collision; identity-bound snapshots. Synthetic integration only, not complete Jarrell walkability, sprint/jump/swim, HP, or live Worker.
+- **EXACT NEXT:** Retarget #687 to main and check exact-head Authority/Gateway/Validate/Gameplay CI; merge only if all applicable checks pass. Then isolated server-owned stamina and HP lifecycle, verified actual map coverage, and separate real two-account public QA. No live combat activation or other workstream changes.
+
+---
+
 ## GAME TERRAIN REFERENCE + CONSOLIDATED COMBAT PR — 2026-11-24 PHT (NOT LIVE)
 
 - Consolidate Game-only [#680](https://github.com/CryptoDilis/Climboria/pull/680) head `c45df4991f47c53343d33d6e9269717efaa26b55` and [#683](https://github.com/CryptoDilis/Climboria/pull/683) head `80d89553a38fb907fec6245122a1531676813c76` on #683 using current main `14c044f17c227cc51446a7f7edadccbd29044e81` as the base tree, retaining all other workstream files. No production runtime or live Worker change.

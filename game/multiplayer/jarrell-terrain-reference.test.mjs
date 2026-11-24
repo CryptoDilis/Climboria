@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+import {sampleJarrellStreamedColliders} from './jarrell-terrain-reference.mjs';
 import {sampleJarrellTerrain as terrain,sampleJarrellGround as ground,sampleJarrellCaveFloor as caveFloor} from './jarrell-terrain-reference.mjs';
 const browser=readFileSync(new URL('../play.html',import.meta.url),'utf8');
 const server=readFileSync(new URL('./jarrell-terrain-reference.mjs',import.meta.url),'utf8');
@@ -38,4 +40,23 @@ test('invalid coordinates are rejected and representative map heights are finite
  for(const [x,z] of [[0,-90],[-170,90],[-760,-520],[640,-620],[-1200,-800],[390,-260]]){
   assert.ok(Number.isFinite(terrain(x,z)));assert.ok(Number.isFinite(ground(x,z)));
  }
+});
+
+
+test('server streamed collision circles exactly match the authored browser prop generator',()=>{
+ // Run checked-in browser source with rendering stubs only; not user input.
+ const parts=[
+  section(browser,'const hash=(x,y)=>','function waterBodyAt(x,z){'),
+  'POI.cave.h=heightAt(POI.cave.x,POI.cave.z);caveG={position:{x:POI.cave.x,y:POI.cave.h,z:POI.cave.z},rotation:{y:Math.atan2(-POI.cave.x,-POI.cave.z)}};',
+  section(browser,'function waterBodyAt(x,z){','function maxSwimDepth'),
+  section(browser,'const nearPOI=(x,z)=>','function biome'),
+  'const CS=200,T3={Group:class{add(){}}},scene={add(){}},ROCK=null,mRock=null,inst=()=>null,L=()=>null,hsl=()=>null;',
+  section(browser,'function shoreClear(x,z,h){','function buildChunk(cx,cz){'),
+  'JSON.stringify(chunks.map(([x,z])=>props(x,z,[])))'
+ ];
+ const chunks=[[0,0],[1,1],[-1,-1],[-4,-3],[-5,-4],[3,-3],[4,4],[-6,0],[0,5],[7,-7]];
+ const expected=JSON.parse(runInNewContext(parts.join('\n'),{chunks},{timeout:10000}));
+ assert.ok(expected.flat().length>0,'fixtures include actual colliders');
+ assert.deepEqual(chunks.map(([x,z])=>sampleJarrellStreamedColliders(x,z)),expected);
+ for(const [x,z] of [[NaN,0],[1.2,0],[250,0],[0,-250]])assert.equal(sampleJarrellStreamedColliders(x,z),null);
 });
