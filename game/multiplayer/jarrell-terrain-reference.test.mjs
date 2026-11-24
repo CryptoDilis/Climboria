@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
-import {sampleJarrellStreamedColliders,authoredJarrellFixedColliders,authoredJarrellForestColliderCandidates} from './jarrell-terrain-reference.mjs';
+import {sampleJarrellStreamedColliders,authoredJarrellFixedColliders,authoredJarrellForestColliderCandidates,sampleJarrellWaterBody,sampleJarrellDryTerrainFootprint} from './jarrell-terrain-reference.mjs';
 import {sampleJarrellTerrain as terrain,sampleJarrellGround as ground,sampleJarrellCaveFloor as caveFloor} from './jarrell-terrain-reference.mjs';
 const browser=readFileSync(new URL('../play.html',import.meta.url),'utf8');
 const server=readFileSync(new URL('./jarrell-terrain-reference.mjs',import.meta.url),'utf8');
@@ -150,4 +150,40 @@ test('browser forest colliders register once before loading and visible fallback
  assert.equal(result.before,result.after);assert.equal(result.beforeFallback,2);
  assert.equal(result.afterFallback,0);assert.equal(result.glbs,2);
  assert.equal(result.failedFallback,2);assert.equal(result.circleCount,4);assert.equal(result.warnings,1);
+});
+
+
+test('water classification matches authored browser and invalid coordinates stay distinct',()=>{
+ const locations=[[0,-30],[-360,230],[390,-260],[190,80],[-1250,0],[160,0],[640,-620],[-760,-520]];
+ const yaw=Math.atan2(760,520);locations.push([-760+20*Math.cos(yaw)+42*Math.sin(yaw),-520-20*Math.sin(yaw)+42*Math.cos(yaw)]);
+ const parts=[
+  section(browser,'const hash=(x,y)=>','function waterBodyAt(x,z){'),
+  'POI.cave.h=heightAt(POI.cave.x,POI.cave.z);caveG={position:{x:POI.cave.x,y:POI.cave.h,z:POI.cave.z},rotation:{y:Math.atan2(-POI.cave.x,-POI.cave.z)}};',
+  section(browser,'function waterBodyAt(x,z){','function maxSwimDepth'),
+  'JSON.stringify(locations.map(([x,z])=>waterBodyAt(x,z)??null))'
+ ];
+ const expected=JSON.parse(runInNewContext(parts.join('\n'),{locations},{timeout:10000}));
+ assert.deepEqual(locations.map(([x,z])=>sampleJarrellWaterBody(x,z)),expected);
+ assert.equal(sampleJarrellWaterBody(NaN,0),undefined);
+ assert.equal(sampleJarrellWaterBody(...locations.at(-1)).id,'cave_grotto');
+ const pond=sampleJarrellWaterBody(-360,230);assert.equal(pond.id,'woodland_pond');
+ pond.depth=999;assert.equal(sampleJarrellWaterBody(-360,230).depth,3.2);
+});
+test('dry footprint admits actual spawn and excludes underwater, cave, or invalid terrain',()=>{
+ assert.equal(sampleJarrellDryTerrainFootprint(0,-30),ground(0,-30));
+ for(const [x,z] of [[-360,230],[390,-260],[190,80],[-1250,0],[-760,-520],[NaN,0],[50000,0]])
+  assert.equal(sampleJarrellDryTerrainFootprint(x,z),null);
+ for(const options of [{radius:0},{radius:1.1},{maxGrade:0},{maxGrade:1.1},{radius:NaN}])
+  assert.equal(sampleJarrellDryTerrainFootprint(0,-30,options),null);
+});
+test('dry footprint rejects actual steep terrain and includes touching neighbor cells',()=>{
+ let steep=null;
+ for(let x=500;x<780&&!steep;x+=5)for(let z=-760;z< -490&&!steep;z+=5){
+  const a=terrain(x,z),b=terrain(x+5,z),c=terrain(x,z+5);
+  if(Math.min(a,b,c)>1&&Math.hypot(b-a,c-a)>5.1)steep=[x,z];
+ }
+ assert.ok(steep,'summit fixture includes steep triangle');
+ // Center lies in adjacent cell, but radius touches the steep cell.
+ assert.equal(sampleJarrellDryTerrainFootprint(steep[0]-.5,steep[1]+2.5,{radius:.5}),null);
+ assert.equal(sampleJarrellDryTerrainFootprint(steep[0]+2,steep[1]+2),null);
 });
