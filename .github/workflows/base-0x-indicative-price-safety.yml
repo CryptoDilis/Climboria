@@ -6,12 +6,14 @@ on:
     paths:
       - "dex/base-price-provider/**"
       - ".github/scripts/base-0x-indicative-price.test.mjs"
+      - ".github/scripts/base-price-worker.test.mjs"
       - ".github/workflows/base-0x-indicative-price-safety.yml"
   push:
     branches: [main]
     paths:
       - "dex/base-price-provider/**"
       - ".github/scripts/base-0x-indicative-price.test.mjs"
+      - ".github/scripts/base-price-worker.test.mjs"
       - ".github/workflows/base-0x-indicative-price-safety.yml"
 
 permissions:
@@ -29,7 +31,8 @@ jobs:
       - name: Check default-off indicative pricing adapter without credentials or live calls
         run: |
           node --check dex/base-price-provider/zeroex-indicative.mjs
-          node --test .github/scripts/base-0x-indicative-price.test.mjs
+          node --check dex/base-price-provider/worker.mjs
+          node --test .github/scripts/base-0x-indicative-price.test.mjs .github/scripts/base-price-worker.test.mjs
       - name: Preserve Solana execution gates
         run: |
           grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
