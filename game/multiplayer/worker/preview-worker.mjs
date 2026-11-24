@@ -66,7 +66,7 @@ export const previewWorker={
 export default previewWorker;
 export class PreviewCombatRoom{
  constructor(state,env){
-  this.state=state;this.env=env;this.sockets=new Map();this.pending=0;this.timer=null;this.running=false;
+  this.state=state;this.env=env;this.sockets=new Map();this.pending=0;this.timer=null;this.running=false;this.quarantined=false;
   const collision=createServerCollisionRegion({roomId:ROOM,coverage:{min:{x:190,y:0,z:10},max:{x:220,y:12,z:40}},solids:[]});
   this.tickets=createPreviewTicketStore({storage:state.storage,roomId:ROOM});
   this.runtime=createTransactionalRoomPrototype({roomId:ROOM,storage:state.storage,collision,
@@ -74,29 +74,48 @@ export class PreviewCombatRoom{
   this.gateway=createTransactionalGatewayPreview({runtime:this.runtime,consumeTicket:this.tickets.consumeTicket});
  }
  schedule(){
-  if(this.timer!==null||this.running||!this.sockets.size)return;
+  if(this.quarantined||this.timer!==null||this.running||!this.sockets.size)return;
   this.timer=setTimeout(async()=>{
    this.timer=null;this.running=true;
    try{
     for(const [id,entry] of this.sockets)if(Date.now()>=entry.expiresAt)await this.close(id,1000,'preview-session-expired');
     if(this.sockets.size){
      const result=await this.runtime.tick();
-     if(!result.ok)for(const id of [...this.sockets.keys()])await this.close(id,1011,'preview-room-unavailable');
+     if(!result.ok)await this.quarantine();
     }
    }catch{
-    for(const id of [...this.sockets.keys()])await this.close(id,1011,'preview-room-unavailable');
+    await this.quarantine();
    }finally{this.running=false;this.schedule()}
   },100);
+ }
+ announcePeers(){
+  const packet=JSON.stringify({type:'preview-peers',ids:[...this.sockets.keys()]});
+  for(const [id,entry] of this.sockets){
+   try{entry.socket.send(packet)}catch{
+    const work=this.close(id,1011,'preview-send-failed');
+    this.state.waitUntil?.(work);
+   }
+  }
+ }
+ async quarantine(){
+  this.quarantined=true;
+  if(this.timer!==null){clearTimeout(this.timer);this.timer=null}
+  await Promise.all([...this.sockets.keys()].map(id=>this.close(id,1011,'preview-room-unavailable')));
  }
  async close(id,code=1000,reason='preview-session-closed'){
   const entry=this.sockets.get(id);if(!entry)return;
   this.sockets.delete(id);
   try{entry.socket.close(code,reason)}catch{}
-  try{await entry.session.close()}catch{}
   if(!this.sockets.size&&this.timer!==null){clearTimeout(this.timer);this.timer=null}
+  try{
+   const result=await entry.session.close();
+   if(!result?.ok&&result?.reason!=='unknown-session'){if(!this.quarantined)await this.quarantine();return}
+  }catch{if(!this.quarantined)await this.quarantine();return}
+  if(!this.quarantined)this.announcePeers();
  }
  async fetch(req){
   if(!enabled(this.env))return response(503,{error:'preview-disabled'});
+  if(this.quarantined)return response(503,{error:'preview-room-unavailable'});
   const url=new URL(req.url);
   if(url.pathname==='/_ticket'&&req.method==='POST'){
    // Only the outer Worker may invoke this private DO route. Bound the
@@ -119,7 +138,11 @@ export class PreviewCombatRoom{
   let session;
   try{
    session=await this.gateway.connect(ticket);
-   if(!session.ok)return response(401,{error:'preview-admission-denied'});
+   if(!session.ok){
+    if(session.reason==='room-quarantined'){await this.quarantine();return response(503,{error:'preview-room-unavailable'})}
+    return response(401,{error:'preview-admission-denied'});
+   }
+   if(this.quarantined){await session.close();return response(503,{error:'preview-room-unavailable'})}
    const pair=new WebSocketPair(),client=pair[0],socket=pair[1];
    socket.accept();
    this.sockets.set(session.id,{socket,session,expiresAt:Date.now()+SESSION_MS});
@@ -131,7 +154,8 @@ export class PreviewCombatRoom{
       const result=await session.receive(event.data);
       if(!this.sockets.has(session.id))return;
       socket.send(JSON.stringify({type:'result',...result}));
-      if(['room-quarantined','message-rate-limit','message-too-large','session-closed','invalid-server-time'].includes(result.reason))
+      if(result.reason==='room-quarantined'){await this.quarantine();return}
+      if(['message-rate-limit','message-too-large','session-closed','invalid-server-time'].includes(result.reason))
        await this.close(session.id,1008,'preview-session-ended');
      }catch{await this.close(session.id,1011,'preview-session-error')}
     })();
@@ -139,7 +163,7 @@ export class PreviewCombatRoom{
    });
    socket.send(JSON.stringify({type:'preview-joined',id:session.id,snapshot:session.snapshot,fixture:'synthetic-combat',expiresInMs:SESSION_MS}));
    // Explicit synthetic room roster. No account UUIDs or public presence.
-   for(const entry of this.sockets.values())entry.socket.send(JSON.stringify({type:'preview-peers',ids:[...this.sockets.keys()]}));
+   this.announcePeers();
    this.schedule();
    return new Response(null,{status:101,webSocket:client,headers:{'Sec-WebSocket-Protocol':PROTOCOL,'cache-control':'no-store'}});
   }catch{
