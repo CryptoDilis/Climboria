@@ -50,3 +50,38 @@ test('disconnect and replacement cannot reset HP or account cooldown in same pro
  assert.equal(hp.snapshot(C).health,495);assert.equal(hp.attack(A,C).ok,false);
  at(41000);hp.tick();assert.ok(hp.attack(A,C).ok);assert.equal(hp.snapshot(C).health,490);
 });
+
+
+test('reconnect retains position and stamina and denies unknown saved terrain',()=>{
+ const {hp,movement,roomId,at,cover}=make();
+ assert.ok(hp.input(B,{x:1,z:0,sequence:0,sprint:true}).ok);
+ at(40100);hp.tick();
+ const before=movement.snapshot(B,roomId);
+ assert.ok(before.position.x>200);assert.equal(before.stamina,198.8);
+ assert.ok(hp.disconnect(B));
+ cover(false);assert.equal(hp.join({sessionId:C,accountId:Y}).reason,'unverified-reconnect-position');
+ cover(true);assert.ok(hp.join({sessionId:C,accountId:Y,position:p(219,0,20),stamina:200}).ok);
+ const after=movement.snapshot(C,roomId);
+ assert.deepEqual(after.position,before.position);assert.equal(after.stamina,before.stamina);
+});
+test('current terrain outage denies damage even while prior snapshot is fresh',()=>{
+ const {hp,at,cover}=make();
+ cover(false);at(40001);
+ assert.equal(hp.attack(A,B).reason,'untrusted-terrain-position');
+ assert.equal(hp.snapshot(B).health,500);
+ cover(true);at(40200);hp.tick();
+ assert.ok(hp.attack(A,B).ok);assert.equal(hp.snapshot(B).health,495);
+});
+test('downed account reconnect retains position and death timer, not a new life',()=>{
+ const {hp,movement,roomId,at}=make();
+ hp.input(B,{x:1,z:0,sequence:0});at(40100);hp.tick();
+ for(let i=0;i<100;i++){at(41000+i*950);hp.tick();assert.ok(hp.attack(A,B).ok)}
+ const death=41000+99*950,position=movement.snapshot(B,roomId).position;
+ assert.ok(hp.disconnect(B));at(death+1000);
+ assert.ok(hp.join({sessionId:C,accountId:Y}).ok);
+ assert.equal(hp.snapshot(C).health,0);assert.equal(hp.snapshot(C).respawnAtMs,death+5000);
+ assert.deepEqual(movement.snapshot(C,roomId).position,position);
+ assert.equal(hp.input(C,{x:1,z:0,sequence:0}).ok,false);
+ at(death+5000);assert.deepEqual(hp.tick().respawned,[C]);
+ assert.equal(hp.snapshot(C).health,500);
+});
