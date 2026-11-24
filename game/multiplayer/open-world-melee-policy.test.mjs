@@ -58,3 +58,11 @@ test('wall obstruction, unknown or async terrain check and verifier exception de
  for(const verifier of [()=>false,()=>null,()=>1,()=>Promise.resolve(true),()=>{throw Error('unavailable')}])
   assert.equal(run({hasClearMeleePath:verifier}).reason,'blocked-or-unverified-melee-path');
 });
+
+
+test('authored Sanctuary southern edge and legacy spawn boundary are both protected',()=>{
+ for(const [id,position] of [[A,{x:0,y:10,z:-150}],[B,{x:0,y:10,z:-150}],[A,{x:0,y:10,z:44}],[B,{x:0,y:10,z:44}]]){
+  const {points,run}=fixture();points.get(id).position=position;
+  assert.equal(run().reason,'sanctuary-pvp-disabled');
+ }
+});
