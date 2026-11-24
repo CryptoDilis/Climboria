@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME PREVIEW WEBSOCKET LIFECYCLE AND FAILURE CLEANUP — 2026-11-24 PHT (NOT DEPLOYED)
+
+- #714 merged at `27433f03174eadd335af183edf1d6a724b6322d0`, exact head `d50357bede68e56a1f61849b8da86eaa76476ac7`: [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45354564855), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45354564921), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45354564870), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45354564792) all SUCCESS. Preview remains disabled and not deployed; production Worker unchanged.
+- Follow-up branch `game/preview-websocket-lifecycle-20261124` hardens preview Worker cleanup (`2ed513a52e13c8fd42abed217ea0ea45d0024d66`): durable mutation failure quarantines entire preview room, closes all sockets, clears scheduler and denies new tickets/admission; normal disconnect refreshes peer roster. Two integration tests (`d34465a61667950fc62529a3609228949f172ebc`) exercise actual preview Worker socket handlers using simulated transport, deterministic clock, transactional memory storage: two accounts, ticket replay, bound combat/HP, movement/stamina, reconnect, expiry, scheduler cleanup and second-account write failure/restart. CI filter/invocation `808510b3c7a2009dff317d9b4751c28b592522d0`. No actual Cloudflare network or real account test yet.
+- **EXACT NEXT:** Verify fresh exact-head CI, correct failures and merge only if green; then add/verify actual isolated Cloudflare runtime test with separate staging namespace, bounded persistence budget, private access configuration and real two-account QA. Do not enable production combat until actual map and server/client movement synchronization verified. Game only.
+
+---
+
 ## GAME ISOLATED SYNTHETIC COMBAT PREVIEW WORKER — 2026-11-24 PHT (NOT DEPLOYED)
 
 - #706 merged at `33f1825f472c37a83f995f4cbc6ccbc26a36ad87` after four CI successes. #714 reconciled to main at `28765a3a01a07934656b379d4eb326718b8d6f96`.
