@@ -52,7 +52,7 @@ export class ServerGroundMovement {
   if(!time(now)||now<this.#lastTick)return deny('invalid-server-time');
   const position=this.#point(this.#spawn.x,this.#spawn.z);
   if(!position||!this.#clear(position,position))return deny('unverified-spawn');
-  const p={position,observedAtMs:now,joinedAt:now,sequence:-1,stamina:MAX_STAMINA,exhausted:false,input:{x:0,z:0,sprint:false,at:now}};
+  const p={position,observedAtMs:now,joinedAt:now,sequence:-1,downed:false,stamina:MAX_STAMINA,exhausted:false,input:{x:0,z:0,sprint:false,at:now}};
   this.#players.set(id,p);
   return {ok:true,snapshot:this.#snapshot(id,p)};
  }
@@ -61,6 +61,7 @@ export class ServerGroundMovement {
  input(id,packet){
   const p=this.#players.get(id),now=this.#clock();
   if(!p)return deny('unknown-session');
+  if(p.downed)return deny('fighter-downed');
   if(!time(now)||now<this.#lastTick||now<p.input.at)return deny('invalid-server-time');
   const {x,z,sequence,sprint=false}=packet??{};
   if(!Number.isFinite(x)||!Number.isFinite(z)||Math.abs(x)>1||Math.abs(z)>1||
@@ -76,7 +77,7 @@ export class ServerGroundMovement {
   this.#lastTick=now;
   let updated=0;
   for(const p of this.#players.values()){
-   if(now<p.observedAtMs||now<p.input.at)continue;
+   if(p.downed||now<p.observedAtMs||now<p.input.at)continue;
    const start=this.#point(p.position.x,p.position.z);
    if(!start||Math.abs(start.y-p.position.y)>1e-6||!this.#clear(start,start))continue;
    const elapsed=Math.max(0,Math.min(now, p.input.at+INPUT_TTL_MS)-Math.max(prior,now-MAX_TICK_MS,p.input.at,p.joinedAt));
@@ -109,6 +110,21 @@ export class ServerGroundMovement {
  snapshot(id,roomId){
   const p=this.#players.get(id);
   return roomId===this.#roomId&&p?this.#snapshot(id,p):null;
+ }
+ // Server lifecycle hooks: never route these directly from client packets.
+ suspendForDeath(id){
+  const p=this.#players.get(id);if(!p)return false;
+  p.downed=true;p.input={x:0,z:0,sprint:false,at:p.observedAtMs};return true;
+ }
+ respawnAtServerSpawn(id){
+  const p=this.#players.get(id),now=this.#clock();
+  if(!p||!p.downed||!time(now)||now<this.#lastTick||now<p.observedAtMs)return false;
+  const position=this.#point(this.#spawn.x,this.#spawn.z);
+  if(!position||!this.#clear(position,position))return false;
+  p.position=position;p.observedAtMs=now;p.joinedAt=now;p.downed=false;
+  p.stamina=MAX_STAMINA;p.exhausted=false;
+  p.input={x:0,z:0,sprint:false,at:now}; // Keep input sequence across death.
+  return true;
  }
  disconnect(id){return this.#players.delete(id)}
 }
