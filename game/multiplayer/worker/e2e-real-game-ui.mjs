@@ -133,7 +133,9 @@ async function openChat(page){
 async function sendChat(page,text){
  const panel=await openChat(page);
  await panel.locator('input').fill(text);
- await panel.locator('button').click();
+ // The panel has SEND and the channel switch; an unscoped button locator
+ // fails Playwright strict mode and can accidentally switch chat channels.
+ await panel.getByRole('button',{name:'SEND',exact:true}).click();
 }
 async function assertChatDraft(page,expected,label){
  const panel=await openChat(page);
