@@ -26,7 +26,7 @@ test("only fixed indicative GET, no wallet, recipient, allowance or execution da
  let calls=0;const r=await getBaseIndicativePrice(intent,{enabled:true,apiKey:"synthetic-secret",fetchImpl:async(raw,opts)=>{
   calls++;const url=new URL(raw);assert.equal(url.origin+url.pathname,PRICE_ENDPOINT);
   assert.deepEqual(Object.fromEntries(url.searchParams),{chainId:"8453",sellToken,buyToken,sellAmount:"100000"});
-  assert.equal(opts.method,"GET");assert.equal(opts.redirect,"error");assert.equal(opts.credentials,"omit");assert.equal(opts.headers["0x-api-key"],"synthetic-secret");assert.equal(opts.headers["0x-version"],"v2");
+  assert.equal(opts.method,"GET");assert.equal(opts.redirect,"manual");assert.equal(opts.credentials,undefined);assert.equal(opts.cache,"no-store");assert.equal(Object.keys(opts.headers).sort().join(","),"0x-api-key,0x-version,accept");assert.equal(opts.headers["0x-api-key"],"synthetic-secret");assert.equal(opts.headers["0x-version"],"v2");
   return new Response(JSON.stringify({...sample,transaction:{data:"0xdead"}}));
  }});
  assert.equal(calls,1);assert.equal(r.executable,false);assert.ok(!JSON.stringify(r).includes("synthetic-secret"));assert.ok(!JSON.stringify(r).includes("0xdead"));
@@ -36,4 +36,15 @@ test("provider errors and oversized responses fail closed",async()=>{
  await assert.rejects(getBaseIndicativePrice(intent,{...options,fetchImpl:async()=>new Response("secret error",{status:429})}),/HTTP 429/);
  await assert.rejects(getBaseIndicativePrice(intent,{...options,fetchImpl:async()=>new Response("x".repeat(262145))}),/Invalid indicative/);
  await assert.rejects(getBaseIndicativePrice(intent,{...options,fetchImpl:async()=>{throw Error("synthetic-secret")}}),/provider unavailable/);
+});
+
+test("manual redirect never follows another host or sends credentials twice",async()=>{
+ let calls=0;
+ for(const status of [301,302,303,307,308]){
+  await assert.rejects(getBaseIndicativePrice(intent,{enabled:true,apiKey:"synthetic-secret",fetchImpl:async(url,opts)=>{
+   calls++;assert.equal(url.split("?")[0],PRICE_ENDPOINT);assert.equal(opts.redirect,"manual");
+   return new Response(null,{status,headers:{location:"https://invalid.example/credential-trap"}});
+  }}),/redirect refused/);
+ }
+ assert.equal(calls,5);
 });

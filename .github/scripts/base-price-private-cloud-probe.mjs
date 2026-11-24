@@ -12,6 +12,14 @@ assert.equal(unauth.status,403,"Public requests must be denied before provider u
 assert.deepEqual(await unauth.json(),{error:"Private price probe denied"});
 for(const [direction,intent] of [["buy",buy],["sell",sell]]){
  const r=await request(intent,true);
+ if(r.status===502){
+  const failure=await r.json().catch(()=>null),d=failure?.diagnostic;
+  const allowed=["credential","signal","transport","http","body","schema","internal"];
+  const safe={stage:allowed.includes(d?.stage)?d.stage:"unknown"};
+  if(safe.stage==="http"&&Number.isInteger(d.upstreamStatus)&&d.upstreamStatus>=100&&d.upstreamStatus<=599)safe.upstreamStatus=d.upstreamStatus;
+  console.error("Private price failure "+direction+": "+JSON.stringify(safe));
+  throw Error("Authorized "+direction+" price unavailable; sanitized stage recorded");
+ }
  assert.equal(r.status,200,"Authorized "+direction+" price unavailable");
  assert.equal(r.headers.get("access-control-allow-origin"),"https://climboria.fun");
  const j=await r.json();

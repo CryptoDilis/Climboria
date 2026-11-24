@@ -74,19 +74,33 @@ async function boundedJson(response){
  for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
  return JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(bytes));
 }
-export async function getBaseIndicativePrice(input,{enabled=false,apiKey,fetchImpl=globalThis.fetch,signal}={}){
+// Only fixed diagnostic codes and numeric HTTP status may cross the private probe boundary.
+export class IndicativePriceFailure extends Error {
+ constructor(code,message,status=null){super(message);this.name="IndicativePriceFailure";this.code=code;this.status=status;}
+}
+export function privatePriceDiagnostic(error){
+ if(!(error instanceof IndicativePriceFailure))return {stage:"internal"};
+ const allowed=["credential","signal","transport","http","body","schema"];
+ if(!allowed.includes(error.code))return {stage:"internal"};
+ const result={stage:error.code};
+ if(error.code==="http"&&Number.isInteger(error.status)&&error.status>=100&&error.status<=599)result.upstreamStatus=error.status;
+ return result;
+}
+export async function getBaseIndicativePrice(input,{enabled=false,apiKey,fetchImpl=(url,options)=>globalThis.fetch(url,options),signal}={}){
  if(enabled!==true)throw Error("Base indicative pricing disabled");
  const intent=normalizePriceIntent(input);
- if(typeof apiKey!=="string"||!apiKey.trim()||/[\r\n]/.test(apiKey))throw Error("Server provider credential unavailable");
+ if(typeof apiKey!=="string"||!apiKey.trim()||/[\r\n]/.test(apiKey))throw new IndicativePriceFailure("credential","Server provider credential unavailable");
  const url=new URL(PRICE_ENDPOINT);
  for(const [key,value] of Object.entries(intent))url.searchParams.set(key,String(value));
- const timeout=AbortSignal.timeout(10000);
- const requestSignal=signal?AbortSignal.any([signal,timeout]):timeout;
+ let requestSignal;
+ try{const timeout=AbortSignal.timeout(10000);requestSignal=signal?AbortSignal.any([signal,timeout]):timeout;}catch{throw new IndicativePriceFailure("signal","Indicative price signal unavailable");}
  let response;
  try{
-  response=await fetchImpl(url.toString(),{method:"GET",headers:{"0x-api-key":apiKey,"0x-version":"v2",accept:"application/json"},redirect:"error",credentials:"omit",cache:"no-store",signal:requestSignal});
- }catch{throw Error("Indicative price provider unavailable");}
- if(!response.ok)throw Error("Indicative price provider HTTP "+response.status);
- let data;try{data=await boundedJson(response);}catch{throw Error("Invalid indicative price provider response");}
- return normalizePriceResponse(intent,data);
+  response=await fetchImpl(url.toString(),{method:"GET",headers:{"0x-api-key":apiKey,"0x-version":"v2",accept:"application/json"},redirect:"manual",cache:"no-store",signal:requestSignal});
+ }catch{throw new IndicativePriceFailure("transport","Indicative price provider unavailable");}
+ // Workers supports manual redirect mode, not error mode. Never follow an upstream redirect with the server credential.
+ if(response.status>=300&&response.status<400){try{await response.body?.cancel();}catch{}throw new IndicativePriceFailure("http","Indicative price provider redirect refused",response.status);}
+ if(!response.ok)throw new IndicativePriceFailure("http","Indicative price provider HTTP "+response.status,response.status);
+ let data;try{data=await boundedJson(response);}catch{throw new IndicativePriceFailure("body","Invalid indicative price provider response");}
+ try{return normalizePriceResponse(intent,data);}catch{throw new IndicativePriceFailure("schema","Invalid indicative price provider schema");}
 }
