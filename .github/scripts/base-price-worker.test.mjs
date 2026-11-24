@@ -1,15 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createPriceHandler} from "../../dex/base-price-provider/worker.mjs";
-const origin="https://climboria.fun";
+const origin="https://climboria.fun",token="a".repeat(64);
 const path="https://unused.example/v1/base/indicative-price";
 const q="?chainId=8453&sellToken=0x833589fcd6edb6e08f4c7c32d4f71b54bda02913&buyToken=0x4200000000000000000000000000000000000006&sellAmount=100000";
 function req(suffix=q,{method="GET",headers={}}={}){
- return new Request(path+suffix,{method,headers:{origin,"CF-Connecting-IP":"192.0.2.1",...headers}});
+ return new Request(path+suffix,{method,headers:{origin,"CF-Connecting-IP":"192.0.2.1","X-Base-Price-Probe":token,...headers}});
 }
 function fixture(){
  const seen=[];
- const env={BASE_INDICATIVE_PRICE_ENABLED:"true",ZEROEX_API_KEY:"fake-key",BASE_PRICE_DAILY_ATTEMPTS:"10",
+ const env={BASE_INDICATIVE_PRICE_ENABLED:"true",ZEROEX_API_KEY:"fake-key",BASE_PRICE_DAILY_ATTEMPTS:"2",BASE_PRICE_STAGING_ONLY:"true",BASE_PRICE_STAGING_EXPIRES_AT:String(Date.now()+600000),BASE_PRICE_PROBE_TOKEN:token,
  BASE_PRICE_BUDGET:{idFromName:name=>name,get:id=>({fetch:async(url,opts)=>{seen.push(["budget",id,opts.method]);return new Response(null,{status:204})}})},
  BASE_PRICE_IP_LIMITER:{limit:async a=>{seen.push(["ip",a]);return {success:true}}},
  BASE_PRICE_GLOBAL_LIMITER:{limit:async a=>{seen.push(["global",a]);return {success:true}}}};
@@ -75,5 +75,13 @@ test("staging health attests disabled config, exact SHA and bindings without exp
  assert.equal(r.status,200);
  assert.deepEqual(await r.json(),{service:"climboria-base-price-preview",deployedGitSha:sha,pricingDisabled:true,bindingsReady:true,execution:"unsupported"});
  for(const bad of [{BASE_INDICATIVE_PRICE_ENABLED:"true"},{BASE_PRICE_DAILY_ATTEMPTS:"1"},{BASE_PRICE_DEPLOYED_SHA:"unpublished"},{BASE_PRICE_BUDGET:undefined}])assert.equal((await handler(health,{...disabled,...bad})).status,503);
+ assert.deepEqual(seen,[]);
+});
+
+test("public, expired and malformed staging requests never reach rate limits or provider",async()=>{
+ const {handler,env,seen}=fixture();
+ for(const bad of [{BASE_PRICE_STAGING_ONLY:"false"},{BASE_PRICE_DAILY_ATTEMPTS:"3"},{BASE_PRICE_STAGING_EXPIRES_AT:String(Date.now()-1)},{BASE_PRICE_STAGING_EXPIRES_AT:String(Date.now()+1800000)}])assert.equal((await handler(req(),{...env,...bad})).status,503);
+ for(const provided of ["","b".repeat(64),"a".repeat(63)])assert.equal((await handler(req(q,{headers:{"X-Base-Price-Probe":provided}}),env)).status,403);
+ assert.equal((await handler(req(),{...env,BASE_PRICE_PROBE_TOKEN:undefined})).status,403);
  assert.deepEqual(seen,[]);
 });
