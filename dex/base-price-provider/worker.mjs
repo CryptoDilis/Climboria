@@ -1,5 +1,9 @@
 import {getBaseIndicativePrice,normalizePriceIntent} from "./zeroex-indicative.mjs";
 
+import {BUDGET_OBJECT_NAME,parseDailyCap} from "./budget.mjs";
+export {BasePriceBudget} from "./budget.mjs";
+const USDC="0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
+const WETH="0x4200000000000000000000000000000000000006";
 const PATH="/v1/base/indicative-price";
 const ORIGINS=new Set(["https://climboria.fun","https://www.climboria.fun"]);
 const FIELDS=["chainId","sellToken","buyToken","sellAmount"];
@@ -21,12 +25,13 @@ export function createPriceHandler({price=getBaseIndicativePrice}={}){
   }
   if(request.method!=="GET")return error(405,"Method not allowed");
   if(env.BASE_INDICATIVE_PRICE_ENABLED!=="true")return error(503,"Base indicative pricing disabled");
-  if(typeof env.ZEROEX_API_KEY!=="string"||!env.ZEROEX_API_KEY.trim()||!env.BASE_PRICE_IP_LIMITER?.limit||!env.BASE_PRICE_GLOBAL_LIMITER?.limit)return error(503,"Pricing service unavailable");
+  if(typeof env.ZEROEX_API_KEY!=="string"||!env.ZEROEX_API_KEY.trim()||!env.BASE_PRICE_IP_LIMITER?.limit||!env.BASE_PRICE_GLOBAL_LIMITER?.limit||!env.BASE_PRICE_BUDGET?.idFromName||!env.BASE_PRICE_BUDGET?.get||parseDailyCap(env.BASE_PRICE_DAILY_ATTEMPTS)===0)return error(503,"Pricing service unavailable");
   if(url.search.length>512||[...url.searchParams.keys()].length!==FIELDS.length||FIELDS.some(k=>url.searchParams.getAll(k).length!==1))return error(400,"Invalid price request");
   if(url.searchParams.get("chainId")!=="8453")return error(400,"Only Base chain 8453 is supported");
   let intent;
   try{intent=normalizePriceIntent({chainId:8453,sellToken:url.searchParams.get("sellToken"),buyToken:url.searchParams.get("buyToken"),sellAmount:url.searchParams.get("sellAmount")});}
   catch{return error(400,"Invalid Base token pair or amount");}
+  if(!((intent.sellToken===USDC&&intent.buyToken===WETH)||(intent.sellToken===WETH&&intent.buyToken===USDC)))return error(400,"Unsupported Base preview pair");
   // CF-Connecting-IP must be set by the trusted Cloudflare ingress. Do not
   // trust arbitrary forwarded headers or deploy this handler on untrusted ingress.
   const ip=request.headers.get("CF-Connecting-IP");
@@ -36,6 +41,10 @@ export function createPriceHandler({price=getBaseIndicativePrice}={}){
    if(perIp?.success!==true)return error(429,"Price request limit reached");
    const global=await env.BASE_PRICE_GLOBAL_LIMITER.limit({key:"base-indicative-v1"});
    if(global?.success!==true)return error(429,"Price request limit reached");
+   const budget=env.BASE_PRICE_BUDGET.get(env.BASE_PRICE_BUDGET.idFromName(BUDGET_OBJECT_NAME));
+   const reserved=await budget.fetch("https://internal.invalid/reserve",{method:"POST"});
+   if(reserved.status===429)return error(429,"Daily price request budget reached");
+   if(reserved.status!==204)return error(503,"Pricing service unavailable");
   }catch{return error(503,"Pricing service unavailable");}
   try{
    const observation=await price(intent,{enabled:true,apiKey:env.ZEROEX_API_KEY,signal:request.signal});

@@ -7,6 +7,7 @@ on:
       - "dex/base-price-provider/**"
       - ".github/scripts/base-0x-indicative-price.test.mjs"
       - ".github/scripts/base-price-worker.test.mjs"
+      - ".github/scripts/base-price-budget.test.mjs"
       - ".github/workflows/base-0x-indicative-price-safety.yml"
   push:
     branches: [main]
@@ -14,6 +15,7 @@ on:
       - "dex/base-price-provider/**"
       - ".github/scripts/base-0x-indicative-price.test.mjs"
       - ".github/scripts/base-price-worker.test.mjs"
+      - ".github/scripts/base-price-budget.test.mjs"
       - ".github/workflows/base-0x-indicative-price-safety.yml"
 
 permissions:
@@ -32,7 +34,13 @@ jobs:
         run: |
           node --check dex/base-price-provider/zeroex-indicative.mjs
           node --check dex/base-price-provider/worker.mjs
-          node --test .github/scripts/base-0x-indicative-price.test.mjs .github/scripts/base-price-worker.test.mjs
+          node --check dex/base-price-provider/budget.mjs
+          node --test .github/scripts/base-0x-indicative-price.test.mjs .github/scripts/base-price-worker.test.mjs .github/scripts/base-price-budget.test.mjs
+          grep -Fqx 'BASE_INDICATIVE_PRICE_ENABLED = "false"' dex/base-price-provider/wrangler.toml
+          grep -Fqx 'BASE_PRICE_DAILY_ATTEMPTS = "0"' dex/base-price-provider/wrangler.toml
+          grep -Fqx 'workers_dev = false' dex/base-price-provider/wrangler.toml
+          grep -Fqx 'preview_urls = false' dex/base-price-provider/wrangler.toml
+          if grep -Eq '^[[:space:]]*(routes?[[:space:]]*=|\[\[routes\]\])' dex/base-price-provider/wrangler.toml; then exit 1; fi
       - name: Preserve Solana execution gates
         run: |
           grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs

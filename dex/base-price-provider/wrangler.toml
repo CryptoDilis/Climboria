@@ -1,0 +1,33 @@
+# Inactive staging configuration. No public route, no automatic deployment.
+name = "climboria-base-price-preview"
+main = "worker.mjs"
+compatibility_date = "2026-11-08"
+workers_dev = false
+preview_urls = false
+
+[vars]
+BASE_INDICATIVE_PRICE_ENABLED = "false"
+BASE_PRICE_DAILY_ATTEMPTS = "0"
+
+# Proposed namespace IDs; verify account-wide uniqueness before provisioning.
+[[ratelimits]]
+name = "BASE_PRICE_IP_LIMITER"
+namespace_id = "2026112401"
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
+[[ratelimits]]
+name = "BASE_PRICE_GLOBAL_LIMITER"
+namespace_id = "2026112402"
+  [ratelimits.simple]
+  limit = 30
+  period = 60
+
+[[durable_objects.bindings]]
+name = "BASE_PRICE_BUDGET"
+class_name = "BasePriceBudget"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["BasePriceBudget"]
