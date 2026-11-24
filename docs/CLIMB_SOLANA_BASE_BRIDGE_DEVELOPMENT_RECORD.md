@@ -8,8 +8,8 @@
 ## Stage 8 — first live mint evidence attempt failed (2026-11-24 UTC)
 
 - Actual manual [run #45336892804](https://github.com/CryptoDilis/Climboria/actions/runs/45336892804) FAILED on head `3d83bcb122562c36c78801c59e3b90ec6a5c1349`. Required RPC inputs step passed; collection failed with `NO_GO: finalized mint verification failed (RPC details redacted)`, artifact skipped. Root cause not yet established; no mint authority evidence, no Base CA.
-- Bridge-only diagnostic improvement: fixed safe provider A/B and RPC method labels plus bounded transport/HTTP/JSON-RPC failure categories, allowlisted mint validation errors, regression tests for credential redaction. No checks relaxed, no secrets changed, no transaction methods added. Pending PR and exact-head CI.
-- **EXACT NEXT:** merge only after CI green, dispatch a NEW manual run on latest `main` (not rerun old SHA), inspect safe diagnostic and fix actual cause; record verified results. Bridge remains NO_GO and no Base token is deployed.
+- Bridge-only diagnostic improvement: fixed safe provider A/B and RPC method labels plus bounded transport/HTTP/JSON-RPC failure categories, allowlisted mint validation errors, regression tests for credential redaction. No checks relaxed, no secrets changed, no transaction methods added. [PR #684](https://github.com/CryptoDilis/Climboria/pull/684) MERGED via squash [`d814a64718f3e104fb256a5130cf98234b6cbc06`](https://github.com/CryptoDilis/Climboria/commit/d814a64718f3e104fb256a5130cf98234b6cbc06). Exact tested head `d098532a4afc130fc67f15312ebc4e354a4b7160`: [Bridge Safety #45337069469](https://github.com/CryptoDilis/Climboria/actions/runs/45337069469) SUCCESS; [Validate Climboria #45337069473](https://github.com/CryptoDilis/Climboria/actions/runs/45337069473) SUCCESS.
+- **EXACT NEXT:** owner/operator dispatch a NEW manual run on latest `main` (not rerun old SHA), inspect safe diagnostic and fix actual cause; record verified results. Bridge remains NO_GO and no Base token is deployed.
 
 ## Stage 7 — reuse existing RPC configuration (2026-11-24 UTC)
 
