@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME STARTING SANCTUARY PILLAR COLLISION FIX — 2026-11-24 PHT (NOT DEPLOYED)
+
+- Owner explicitly requested starting pillar collision check. [PR #698](https://github.com/CryptoDilis/Climboria/pull/698) now expands the twelve flag pillar horizontal radii from 1.75m to 1.9m to cover the 2.6m square crown corners (~1.84m). Adds four physical entry lantern/post base colliders (radius .46m) previously absent. Uses actual mesh world positions. Swept-circle collision permits strictly outward escape from legacy saved overlap, including exact center, without allowing an inward crossing. Browser implementation `1b2439e347c5ba55836401f79c3216de9a16c06d`.
+- Synchronized server fixed-circle reference to 47 authored fixed objects, including four entry posts (`9cbe484b1f1880178dfa65956e9fa58b8e5fcf56`), source-contract checks (`2123ccd7896b06e4bc7f9acf3055166dc1d7be4d`) and gameplay smoke assertions (`79562137a909f9235dc5004b027a315f1be7371e`). The actual browser collision audit now tests all 16 posts/pillars from eight directions, both normal and elevated feet, exact-center escape and unobstructed center approach from the actual spawn (0,-30) to z=-78. New tests not yet verified. Prior #698 head `bf49749a744e6e28b64a8d29178b9e312077b1d7` Authority/Gateway/Validate/Browser Smoke green; other jobs running at check; prior-head results do not authorize new head.
+- **EXACT NEXT:** Verify all applicable latest #698 CI (especially real browser pillar audit and desktop/mobile Gameplay Smoke); fix any failing test, merge if green, verify postmerge Pages deployment and live pillar collision if real browser access is available. Continue reviewed vertical/walkability and transactional multiplayer integration afterward. No live Worker/HP change or non-Game edits. No assertion that user's live pillar bug is already resolved.
+
+---
+
 ## GAME FOREST COLLISION REGISTRATION CONSISTENCY — 2026-11-24 PHT (NOT DEPLOYED)
 
 - [PR #698](https://github.com/CryptoDilis/Climboria/pull/698) reconciled onto main `9f31344fd4ee6928037baee0f39f9c9a16220f7f` (reconcile commit `c883706ad617a9f0bf5b6e1f557c711eba6c8ab7`). Browser now registers the authored forest solid circles before asynchronous GLB loading and displays lightweight primitive fallback meshes until each asset successfully replaces its fallback. Failed downloads keep a visible obstacle with the same collider; no duplicate collider registration on success, zero-radius undergrowth remains visual only. Implementation `bf2b7305ea5d5449651c096c58457431b268ac47`; source parity and mocked loader success/failure regression test `5577c440f77472ca44af7b752121b391c62ea157`.
