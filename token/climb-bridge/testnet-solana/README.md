@@ -12,3 +12,7 @@ Pinned [official CLI source](https://github.com/solana-program/token-2022/blob/e
 5. Deploy distinct Base Sepolia test scaffold, verify zero supply, bind only verified NTT manager. Verify both peers before first 1-unit round trip.
 
 The rent script is automatically run on its own scoped main merge, using only public Devnet RPC; no keys and no broadcast. It calculates initial/final mint storage and illustrative immutable-owner ATA rent. It does not include the NTT program image, manager/transceiver accounts, transaction fees or Base gas. Do not claim deployment funding from this estimate alone.
+
+## Pinned Solana local NTT locking integration
+
+A separate CI appends `integration/climb_locking_fixture.rs` to the pinned upstream v3.0.0 transfer test, builds local SBF programs and runs the local bank test. The fixture injects metadata-only mint state, performs actual local Token-2022 issuance and authority revocation before NTT initialization, and checks exact six-decimal locking and unchanged mint bytes. No live network, no real token, no VAA/guardian or reverse-unlock proof. The mainnet feature is solely for the upstream checked-in core fixture; it never authorizes mainnet. Compilation/test success must be observed in CI, and no deployment artifact trust is inferred.

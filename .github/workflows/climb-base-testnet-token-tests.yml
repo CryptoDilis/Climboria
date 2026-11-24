@@ -1,5 +1,11 @@
 name: CLIMB Base Sepolia Test Asset - Unit Tests
 on:
+  workflow_dispatch:
+    inputs:
+      base_address:
+        description: 'Dedicated Base Sepolia public payer address only'
+        required: true
+        type: string
   pull_request:
     paths:
       - 'token/climb-bridge/testnet-base/**'
@@ -13,6 +19,7 @@ permissions:
   contents: read
 jobs:
   solidity:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     defaults:
@@ -49,3 +56,17 @@ jobs:
           path: ${{ runner.temp }}/climb-testnet-unsigned.json
           retention-days: 7
           if-no-files-found: error
+      - name: Simulate exact creation and estimate execution gas (read only)
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        env:
+          BASE_PUBLIC_ADDRESS: ${{ inputs.base_address }}
+        run: |
+          set -euo pipefail
+          node estimate-creation.mjs "$RUNNER_TEMP/climb-testnet-unsigned.json" "$BASE_PUBLIC_ADDRESS" > "$RUNNER_TEMP/climb-testnet-estimate.json"
+          cat "$RUNNER_TEMP/climb-testnet-estimate.json"
+          {
+            echo '## Base Sepolia creation estimate (read only)'
+            echo '~~~json'
+            cat "$RUNNER_TEMP/climb-testnet-estimate.json"
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"

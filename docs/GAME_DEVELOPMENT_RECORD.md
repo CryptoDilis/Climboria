@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## GAME CONSOLIDATED MAP AND TRANSACTIONAL RUNTIME MERGED — 2026-11-24 PHT
+
+- #706 merged at `33f1825f472c37a83f995f4cbc6ccbc26a36ad87`, exact head `a8f0b7cfc5d2172ae8d37007515fe5ae94be844a`: [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45350284305), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45350284392), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45350284301), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45350284297) all SUCCESS. #714 reconciled onto main `33f1825f472c37a83f995f4cbc6ccbc26a36ad87`. No live damage activation.
+- **EXACT NEXT:** Isolated access-controlled preview Worker, separate DO namespace and bounded scheduler; verify fresh #714 Game CI and actual staging readiness before real account QA. No production Worker change.
+
+---
+
 ## GAME PRIVATE PREVIEW TICKET STORAGE — 2026-11-24 PHT (ISOLATED)
 
 - #714 adds `game/multiplayer/worker/preview-ticket-store.mjs` (`fa4110aa3ae9b43f8b5a9b1ec0e4a019a04feb20`): random 256-bit single-use credentials stored only as SHA-256 keys, separate preview-room namespace, 30-second expiry, atomic consume/delete, atomic 32-room/2-account pending caps, bounded listing and storage failure handling. Issuance is server-only and requires caller-authenticated UUID; no production ticket compatibility, endpoint, or real authentication service integration.
