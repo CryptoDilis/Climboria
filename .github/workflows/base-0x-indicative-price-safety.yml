@@ -1,0 +1,37 @@
+name: Base DEX Indicative Price Safety
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "dex/base-price-provider/**"
+      - ".github/scripts/base-0x-indicative-price.test.mjs"
+      - ".github/workflows/base-0x-indicative-price-safety.yml"
+  push:
+    branches: [main]
+    paths:
+      - "dex/base-price-provider/**"
+      - ".github/scripts/base-0x-indicative-price.test.mjs"
+      - ".github/workflows/base-0x-indicative-price-safety.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check default-off indicative pricing adapter without credentials or live calls
+        run: |
+          node --check dex/base-price-provider/zeroex-indicative.mjs
+          node --test .github/scripts/base-0x-indicative-price.test.mjs
+      - name: Preserve Solana execution gates
+        run: |
+          grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
+          grep -Fqx 'const EXECUTION_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
+          grep -Fqx 'const THIRD_PARTY_JUPITER_DEX_APPROVED = false;' dex/swap-proxy/src/index.mjs
