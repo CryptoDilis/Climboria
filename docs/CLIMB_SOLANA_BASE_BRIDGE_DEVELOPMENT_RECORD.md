@@ -8,8 +8,8 @@
 ## Stage 12 — raw Token-2022 extension evidence implementation (2026-11-24 UTC)
 
 - Reviewed official Token-2022 layout at `solana-program/token-2022@e8ca680ca8aeb12f9598524b003c776c6a4168f2` and metadata state at `solana-program/token-metadata@4b4226514a0360ce933a66c9e638e909ecd66068`. New isolated raw mint parser checks program/owner, base layout, initialized mint, exact authority/supply agreement, TLV metadata-only allowlist, self pointer/embedded mint, bounded Borsh decoding, duplicate/unknown extensions and full raw digest agreement. No arbitrary metadata strings logged.
-- Existing manual CLI adds dual finalized base64 reads with freshness checks and preserves NO_GO. Offline regression tests included. No live extension result, PR/CI pending; no changes to production or escrow.
-- **EXACT NEXT:** verify scoped PR/CI and merge if green. Owner dispatch a NEW CLIMB Mint Authority workflow on latest main to collect raw extension evidence; record actual result, then select supported NTT release and verify audit/deployment provenance. No Base CA, funds or signing.
+- Existing manual CLI adds dual finalized base64 reads with freshness checks and preserves NO_GO. Offline regression tests included. No live extension result; [PR #694](https://github.com/CryptoDilis/Climboria/pull/694) MERGED via squash [`3aa523e5cd6d7fcff239385739d5b4f13657d71e`](https://github.com/CryptoDilis/Climboria/commit/3aa523e5cd6d7fcff239385739d5b4f13657d71e). Exact tested head `d9d27b047197124b1bf80f28a893eb76ec7bb056`: [Bridge Safety #45341045575](https://github.com/CryptoDilis/Climboria/actions/runs/45341045575) SUCCESS and [Validate Climboria #45341045591](https://github.com/CryptoDilis/Climboria/actions/runs/45341045591) SUCCESS. Six changed paths verified bridge-only; no changes to production or escrow.
+- **EXACT NEXT:** Owner dispatch a NEW CLIMB Mint Authority workflow on latest main to collect raw extension evidence; record actual result, then select supported NTT release and verify audit/deployment provenance. No Base CA, funds or signing.
 
 ## Stage 11 — NTT candidate source feasibility reviewed (2026-11-24 UTC)
 
