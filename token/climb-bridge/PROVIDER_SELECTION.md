@@ -27,6 +27,25 @@
 - Base representation must only mint from authenticated lock messages and burn for return, with verified peer, replay and rate-limit controls, audited code and documented admin permissions. Initial supply must not duplicate the original 1B.
 - The existing legacy-only escrow monitor is NOT compatible with this observation without a separately reviewed Token-2022 implementation. Keep config disabled; provider selection remains OPEN. No deployment required to investigate these constraints.
 
+## NTT preliminary source review — 2026-11-24
+
+**Candidate status: SOURCE FEASIBILITY SUPPORTED; deployment compatibility, audit scope and production selection remain UNVERIFIED.** Reviewed official Wormhole Foundation repository at immutable revision [5e56c0a0bfce0b3705cc2c1beaffca83dfec5341](https://github.com/wormhole-foundation/native-token-transfers/blob/5e56c0a0bfce0b3705cc2c1beaffca83dfec5341/README.md). This is source from main, not a claim about a released binary, live program, or the audit coverage of this revision.
+
+| Evidence | Source finding |
+| --- | --- |
+| [Solana initialize](https://github.com/wormhole-foundation/native-token-transfers/blob/5e56c0a0bfce0b3705cc2c1beaffca83dfec5341/solana/programs/example-native-token-transfers/src/instructions/initialize.rs#L41-L94) | `Mode::Locking` bypasses the mint-authority equality requirement. Mint/custody use token interfaces, and custody ATA binds the chosen token program. This is the appropriate candidate mode for revoked mint authority. |
+| [Solana transfer lock](https://github.com/wormhole-foundation/native-token-transfers/blob/5e56c0a0bfce0b3705cc2c1beaffca83dfec5341/solana/programs/example-native-token-transfers/src/instructions/transfer.rs#L262-L352) | Lock mode calls `spl_token_2022::onchain::invoke_transfer_checked` using the passed token program. Checks custody credit equals requested amount; transfer-fee tokens are explicitly unsupported in this path. |
+| [Solana reverse unlock](https://github.com/wormhole-foundation/native-token-transfers/blob/5e56c0a0bfce0b3705cc2c1beaffca83dfec5341/solana/programs/example-native-token-transfers/src/instructions/release_inbound.rs#L206-L251) | Locking-mode reverse release transfers from custody to recipient using the configured token interface rather than minting new original CLIMB. |
+| [EVM NTT manager, send](https://github.com/wormhole-foundation/native-token-transfers/blob/5e56c0a0bfce0b3705cc2c1beaffca83dfec5341/evm/src/NttManager/NttManager.sol#L428-L444) and [redeem](https://github.com/wormhole-foundation/native-token-transfers/blob/5e56c0a0bfce0b3705cc2c1beaffca83dfec5341/evm/src/NttManager/NttManager.sol#L647-L655) | BURNING mode burns outgoing tokens and calls token mint on redemption; matches proposed Base spoke. |
+| [EVM token interface](https://github.com/wormhole-foundation/native-token-transfers/blob/5e56c0a0bfce0b3705cc2c1beaffca83dfec5341/evm/src/interfaces/INttToken.sol#L26-L48) | Spoke token needs restricted mint and burn methods; plain ERC-20 alone is insufficient. |
+| [Upstream README](https://github.com/wormhole-foundation/native-token-transfers/blob/5e56c0a0bfce0b3705cc2c1beaffca83dfec5341/README.md#L55-L57) | Explicit warning that locking source must pair with burning destination, otherwise funds may be lost. |
+
+Upstream [Solana transfer tests](https://github.com/wormhole-foundation/native-token-transfers/blob/5e56c0a0bfce0b3705cc2c1beaffca83dfec5341/solana/programs/example-native-token-transfers/tests/transfer.rs) include locking and transfer-fee cases; tests were inspected as source, not executed by Climboria. Repository lists [Solana token-extension audit](https://github.com/wormhole-foundation/native-token-transfers/blob/5e56c0a0bfce0b3705cc2c1beaffca83dfec5341/audits/solana/2024-08-02-ottersec-solana-ntt-token-extensions.pdf) and [2025 Solana NTT audit](https://github.com/wormhole-foundation/native-token-transfers/blob/5e56c0a0bfce0b3705cc2c1beaffca83dfec5341/audits/solana/2025-05-05-wormhole-ottersec-ntt-v3-solana.pdf). Audit files were identified, **not read or matched to release/deployed binaries**.
+
+**Candidate design:** original Solana CLIMB is the locking hub; Base is a burning-mode spoke with initially zero issued supply and reviewed mint authority restricted to the NTT manager. Solana 6 decimals and a 6-decimal Base representation are a proposed configuration, not deployed. Do not choose a manager or token contract from main-branch source alone. Need released version, source/binary provenance, deployment costs, Solana/Base testnet chain and peer configuration, governance, audits and actual CLIMB raw extension-state evidence before proceeding. No production addresses or CA are asserted.
+
+**Next implementation task:** add isolated dual-RPC read-only Token-2022 raw mint/TLV evidence, compare complete extension bytes and authority fields at finalized slots, validate against pinned official layouts; retain fail-closed handling of unknown extensions. Then pin a supported NTT release and verify audited Solana/Base deployment path. No user signing or funds.
+
 ## Minimum evidence before selecting a provider
 
 For every candidate, record:
