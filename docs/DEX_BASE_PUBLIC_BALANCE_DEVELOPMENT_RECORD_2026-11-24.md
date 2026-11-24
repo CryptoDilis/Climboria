@@ -8,3 +8,6 @@ Parent feature branch: dex/base-onchain-metadata-20261124 at 32551f668b43726f4ab
 - f7cda07baf96da7c7058adac2dea0b63348e231d: regression tests for balance ABI, invalid addresses, zero, large values, missing decimals and reverted calls; not yet CI verified.
 
 Next exact: finish #682 checks and merge first. Port this child branch onto exact merged main, preserving other workstreams; run existing Base Safety suite and all applicable CI, then merge only after green. Verify production browser RPC behavior on independently identified Base ERC-20 and public holder; compare observed block balance with independent source where available. Public RPC availability/CORS and live reads are not yet confirmed. No native ETH balance, connected wallet identity, price quote, allowance, transaction or trading permissions. Base execution remains disabled. No changes to Game, Swap, ClimbX, Launchpad or bridge.
+
+## Parent merge checkpoint
+#682 all applicable exact-head CI passed, including https://github.com/CryptoDilis/Climboria/actions/runs/45336775874. Merged at ec53172d5cb6feaaed16553e0da453ef2baff5de; production deployment and live RPC still unverified. Balance branch now combines exact merged main with only three DEX/test changes and this record. Next: PR CI, parent and child production checks, no trade enablement.
