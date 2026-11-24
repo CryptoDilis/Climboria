@@ -17,6 +17,7 @@ const runtime=new Miniflare({
   assert.equal(request.headers.get("0x-api-key"),"synthetic-test-key");
   assert.equal(request.headers.get("0x-version"),"v2");
   assert.deepEqual(Object.fromEntries(url.searchParams),{chainId:"8453",sellToken,buyToken,sellAmount:"100000"});
+  if(mode==="redirect")return new Response(null,{status:302,headers:{location:"https://invalid.example/credential-trap"}});
   if(mode==="http")return new Response("synthetic private upstream error",{status:429});
   if(mode==="body")return new Response("not JSON");
   if(mode==="schema")return Response.json({liquidityAvailable:false});
@@ -27,9 +28,9 @@ try{
  const ok=await runtime.dispatchFetch("https://local.invalid/test");
  const data=await ok.json();
  assert.equal(ok.status,200,JSON.stringify({data,outboundCalls:calls}));assert.equal(data.executable,false);assert.equal(data.estimatedBuyAmount,"58733120001805");
- for(const [next,expected] of [["http",{stage:"http",upstreamStatus:429}],["body",{stage:"body"}],["schema",{stage:"schema"}]]){
+ for(const [next,expected] of [["redirect",{stage:"http",upstreamStatus:302}],["http",{stage:"http",upstreamStatus:429}],["body",{stage:"body"}],["schema",{stage:"schema"}]]){
   mode=next;const r=await runtime.dispatchFetch("https://local.invalid/test");assert.equal(r.status,502);assert.deepEqual(await r.json(),expected);
  }
- assert.equal(calls,4);
+ assert.equal(calls,5);
  console.log("PASS: local workerd adapter transport, signal, HTTP/body/schema classification with intercepted synthetic upstream.");
 }finally{await runtime.dispose();}
