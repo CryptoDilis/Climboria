@@ -24,6 +24,8 @@ on:
       - "game/multiplayer/server-hp-lifecycle.test.mjs"
       - "game/multiplayer/server-combat-checkpoint.mjs"
       - "game/multiplayer/server-combat-checkpoint.test.mjs"
+      - "game/multiplayer/jarrell-cave-wall-sweep.mjs"
+      - "game/multiplayer/jarrell-cave-wall-sweep.test.mjs"
       - "game/play.html"
       - ".github/workflows/game-server-authority-rules.yml"
   workflow_dispatch:
