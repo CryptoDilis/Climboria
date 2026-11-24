@@ -14,6 +14,8 @@ on:
       - "game/multiplayer/server-collision-region.test.mjs"
       - "game/multiplayer/jarrell-cave-wall-inventory.mjs"
       - "game/multiplayer/jarrell-cave-wall-inventory.test.mjs"
+      - "game/multiplayer/jarrell-terrain-reference.mjs"
+      - "game/multiplayer/jarrell-terrain-reference.test.mjs"
       - "game/play.html"
       - ".github/workflows/game-server-authority-rules.yml"
   workflow_dispatch:
