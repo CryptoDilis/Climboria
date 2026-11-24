@@ -5,6 +5,12 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 11 — NTT candidate source feasibility reviewed (2026-11-24 UTC)
+
+- Reviewed official `wormhole-foundation/native-token-transfers` at immutable source revision [`5e56c0a0bfce0b3705cc2c1beaffca83dfec5341`](https://github.com/wormhole-foundation/native-token-transfers/tree/5e56c0a0bfce0b3705cc2c1beaffca83dfec5341). Solana initialization permits locking mode without mint-authority equality; lock/unlock paths use the token interface and Token-2022 checked transfers. Source rejects lock transfers where custody receives less than intended. EVM burning mode burns outgoing amounts and mints on redemption; target requires a dedicated restricted mint/burn token. This supports the proposed Solana-lock/Base-mint design at source level only.
+- Detailed pinned source references, caveats, listed audit files and proposed zero-initial-supply Base spoke in [`PROVIDER_SELECTION.md`](../token/climb-bridge/PROVIDER_SELECTION.md), committed [`150d48c5a30cce07d26cf0b6fd0df1193bdad8a7`](https://github.com/CryptoDilis/Climboria/commit/150d48c5a30cce07d26cf0b6fd0df1193bdad8a7). No provider release version/deployment address/audit coverage, actual compatibility or testnet transfer established; upstream tests not run. Documentation only, no execution CI claim or production change.
+- **EXACT NEXT:** implement isolated dual-RPC finalized raw Token-2022 mint/TLV inspection with strict owner, canonical mint and amount/authority binding, reviewed official layout, complete extension byte comparison, and rejection of unknown extensions. Add deterministic regression tests and record PR/head/CI; obtain sanitized live evidence. Then pin supported NTT release and verify deployment/audit provenance for Solana locking hub and Base burning spoke, governance and costs, before actual testnet round trip. No Base CA, no signing or funds, mainnet NO_GO.
+
 ## Stage 10 — live dual-RPC mint evidence SUCCESS (2026-11-24 UTC)
 
 - [Manual workflow #45340437315](https://github.com/CryptoDilis/Climboria/actions/runs/45340437315) completed SUCCESS on main SHA `b4dc5ffd035a3eea3456b296e8f21a7466659a4a`; all collection and archive steps passed. Sanitized evidence artifact ID `14895009865` (7-day retention).
