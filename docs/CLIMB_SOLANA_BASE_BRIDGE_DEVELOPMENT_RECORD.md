@@ -8,8 +8,8 @@
 ## Stage 17 — core implementation observation preparation (2026-11-24 UTC)
 
 - Extend existing automatic public testnet core workflow: resolve Solana upgradeable program header's linked ProgramData and reread both in one finalized getMultipleAccounts context, validate loader state/ELF prefix/deploy slot, record upgrade authority and SHA256 of every allocated image byte. Compare prior program header digest; ProgramData PDA is not independently derived. For Base Sepolia, read EIP-1967 implementation storage and implementation code at pinned finalized block, recheck block hash. Observations only, not independently authenticated implementation semantics, source/binary parity or audit evidence.
-- Bridge-only regression tests added, no signing or transaction methods. No live result yet. PR/CI pending.
-- **EXACT NEXT:** verify exact head CI and merge if green; inspect automatic implementation report. Then authenticate canonical PDA/proxy implementation and compare audited artifacts, governance and deployment costs. Testnet assets/managers not deployed; mainnet NO_GO.
+- Bridge-only regression tests added, no signing or transaction methods. No live result yet. [PR #699](https://github.com/CryptoDilis/Climboria/pull/699) MERGED via squash `c526d28fd4e40d84fa5f85b950e9706508cb3d8b`. Exact tested head `a178d992011beea5594cdce418abd950c43f6b18`: [Bridge Safety #45341991062](https://github.com/CryptoDilis/Climboria/actions/runs/45341991062) SUCCESS; [Validate #45341990975](https://github.com/CryptoDilis/Climboria/actions/runs/45341990975) SUCCESS. Four bridge-only paths verified.
+- **EXACT NEXT:** inspect automatic implementation report. Then authenticate canonical PDA/proxy implementation and compare audited artifacts, governance and deployment costs. Testnet assets/managers not deployed; mainnet NO_GO.
 
 ## Stage 16 — public NTT testnet core presence SUCCESS (2026-11-24 UTC)
 
