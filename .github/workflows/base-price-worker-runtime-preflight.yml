@@ -6,6 +6,7 @@ on:
     paths:
       - "dex/base-price-provider/**"
       - ".github/scripts/base-price-budget-runtime-smoke.mjs"
+      - ".github/scripts/base-price-adapter-runtime-*.mjs"
       - ".github/workflows/base-price-worker-runtime-preflight.yml"
   workflow_dispatch:
 
@@ -26,4 +27,6 @@ jobs:
           npm init -y
           npm install --no-save miniflare@4
       - name: Test actual local SQLite Durable Object without upstream credentials
-        run: node .github/scripts/base-price-budget-runtime-smoke.mjs
+        run: |
+          node .github/scripts/base-price-budget-runtime-smoke.mjs
+          node .github/scripts/base-price-adapter-runtime-smoke.mjs
