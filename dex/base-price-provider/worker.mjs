@@ -1,4 +1,4 @@
-import {getBaseIndicativePrice,normalizePriceIntent} from "./zeroex-indicative.mjs";
+import {getBaseIndicativePrice,normalizePriceIntent,privatePriceDiagnostic} from "./zeroex-indicative.mjs";
 
 import {BUDGET_OBJECT_NAME,parseDailyCap} from "./budget.mjs";
 export {BasePriceBudget} from "./budget.mjs";
@@ -67,7 +67,7 @@ export function createPriceHandler({price=getBaseIndicativePrice}={}){
   try{
    const observation=await price(intent,{enabled:true,apiKey:env.ZEROEX_API_KEY,signal:request.signal});
    return reply(200,observation,origin);
-  }catch{return error(502,"Indicative pricing unavailable");}
+  }catch(failure){return reply(502,{error:"Indicative pricing unavailable",diagnostic:privatePriceDiagnostic(failure)},origin);}
  };
 }
 export default {fetch:createPriceHandler()};
