@@ -1,0 +1,24 @@
+name: CLIMB NTT Testnet Core Presence - Read Only
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'token/climb-bridge/ntt-testnet-core.mjs'
+      - '.github/workflows/climb-ntt-testnet-core-evidence.yml'
+permissions:
+  contents: read
+jobs:
+  evidence:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check public testnet identities and core presence only
+        run: node token/climb-bridge/ntt-testnet-core.mjs
