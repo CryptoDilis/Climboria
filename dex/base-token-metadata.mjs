@@ -51,9 +51,18 @@ async function boundedJSON(response) {
   if(new TextEncoder().encode(text).byteLength>MAX_RESPONSE) throw Error("RPC response too large");
   return JSON.parse(text);
 }
-export async function readBaseTokenMetadata(contract,{fetchImpl=globalThis.fetch,signal}={}) {
+export function formatTokenUnits(raw,decimals) {
+  if(typeof raw!=="bigint"||raw<0n||!Number.isInteger(decimals)||decimals<0||decimals>255) return null;
+  const digits=raw.toString().padStart(decimals+1,"0");
+  if(!decimals) return digits;
+  const fraction=digits.slice(-decimals).replace(/0+$/,"");
+  return digits.slice(0,-decimals)+(fraction?"."+fraction:"");
+}
+export async function readBaseTokenMetadata(contract,{fetchImpl=globalThis.fetch,signal,holder}={}) {
   const address=normalizeContract(contract);
   if(!address) throw Error("Enter a valid nonzero Base contract address.");
+  const owner=holder===undefined?null:normalizeContract(holder);
+  if(holder!==undefined&&!owner) throw Error("Enter a valid nonzero public Base wallet address.");
   let id=0;
   const deadline=AbortSignal.timeout(12000);
   const requestSignal=signal?AbortSignal.any([signal,deadline]):deadline;
@@ -83,28 +92,44 @@ export async function readBaseTokenMetadata(contract,{fetchImpl=globalThis.fetch
   if(code==="0x") return {address,block,hasCode:false,name:null,symbol:null,decimals:null};
   const result=await Promise.all(Object.entries(SELECTORS).map(async ([key,data])=>[key,await rpc("eth_call",[{to:address,data},block],{optional:true})]));
   const values=Object.fromEntries(result);
-  return {address,block,hasCode:true,name:decodeTokenText(values.name),symbol:decodeTokenText(values.symbol),decimals:decodeDecimals(values.decimals)};
+  const metadata={address,block,hasCode:true,name:decodeTokenText(values.name),symbol:decodeTokenText(values.symbol),decimals:decodeDecimals(values.decimals)};
+  if(owner){
+    const value=await rpc("eth_call",[{to:address,data:"0x70a08231"+owner.slice(2).padStart(64,"0")},block],{optional:true});
+    const raw=hexBytes(value)&&value.length===66?word(value.slice(2),0):null;
+    metadata.balance={holder:owner,raw:raw===null?null:raw.toString(),formatted:raw===null?null:formatTokenUnits(raw,metadata.decimals)};
+  }
+  return metadata;
 }
 export function initBaseMetadataInspector(doc=globalThis.document,read=readBaseTokenMetadata) {
   const form=doc.getElementById("baseMetadataForm"), input=doc.getElementById("baseMetadataContract"),
     status=doc.getElementById("baseMetadataStatus"), result=doc.getElementById("baseMetadataResult");
   if(!form||!input||!status||!result) return;
+  const holderInput=doc.getElementById("baseMetadataHolder");
   let current;
   function clear(){current?.abort();current=null;result.replaceChildren();status.textContent="Enter an exact Base contract. No wallet required.";}
   input.addEventListener("input",clear);
+  holderInput?.addEventListener("input",clear);
   form.addEventListener("submit",async event=>{
     event.preventDefault();clear();
     const address=normalizeContract(input.value);
     if(!address){status.textContent="Enter a valid nonzero 0x-prefixed, 40-hex-digit address.";return;}
+    const holderText=holderInput?.value?.trim()||"";
+    const holder=holderText?normalizeContract(holderText):undefined;
+    if(holderText&&!holder){status.textContent="Enter a valid nonzero public Base wallet address or leave it blank.";return;}
     const controller=new AbortController();current=controller;
     status.textContent="Reading Base RPC…";
     try{
-      const info=await read(address,{signal:controller.signal});
+      const info=await read(address,{signal:controller.signal,holder});
       if(current!==controller||controller.signal.aborted) return;
       const add=(label,value)=>{const row=doc.createElement("p");row.textContent=label+": "+value;result.append(row);};
       add("Contract",info.address);add("Observed block",BigInt(info.block).toString());
       add("Contract bytecode",info.hasCode?"Present":"Not present");
       if(info.hasCode){add("Name",info.name??"Unavailable");add("Symbol",info.symbol??"Unavailable");add("Decimals",info.decimals??"Unavailable");}
+      if(info.balance){
+        add("Public wallet",info.balance.holder);
+        add("Token balance (reported)",info.balance.formatted??"Unavailable");
+        if(info.balance.raw!==null) add("Raw units",info.balance.raw);
+      }
       const link=doc.createElement("a");link.href="https://basescan.org/address/"+address;
       link.target="_blank";link.rel="noopener noreferrer";link.textContent="Inspect address on BaseScan";result.append(link);
       status.textContent="Read-only RPC observation. Bytecode and metadata do not prove token legitimacy or safety.";
