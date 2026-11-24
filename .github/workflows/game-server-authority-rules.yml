@@ -12,6 +12,9 @@ on:
       - "game/multiplayer/presence-room.test.mjs"
       - "game/multiplayer/server-collision-region.mjs"
       - "game/multiplayer/server-collision-region.test.mjs"
+      - "game/multiplayer/jarrell-cave-wall-inventory.mjs"
+      - "game/multiplayer/jarrell-cave-wall-inventory.test.mjs"
+      - "game/play.html"
       - ".github/workflows/game-server-authority-rules.yml"
   workflow_dispatch:
 
