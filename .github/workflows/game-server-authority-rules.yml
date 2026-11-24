@@ -28,6 +28,8 @@ on:
       - "game/multiplayer/jarrell-cave-wall-sweep.test.mjs"
       - "game/multiplayer/jarrell-ceiling-geometry.mjs"
       - "game/multiplayer/jarrell-ceiling-geometry.test.mjs"
+      - "game/multiplayer/jarrell-dry-region-prototype.mjs"
+      - "game/multiplayer/jarrell-dry-region-prototype.test.mjs"
       - "game/play.html"
       - ".github/workflows/game-server-authority-rules.yml"
   workflow_dispatch:
