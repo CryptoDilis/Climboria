@@ -10,6 +10,15 @@ on:
       - "game/multiplayer/server-combat-state.test.mjs"
       - "game/multiplayer/presence-room.mjs"
       - "game/multiplayer/presence-room.test.mjs"
+      - "game/multiplayer/open-world-melee-policy.mjs"
+      - "game/multiplayer/open-world-melee-policy.test.mjs"
+      - "game/multiplayer/server-collision-region.mjs"
+      - "game/multiplayer/server-collision-region.test.mjs"
+      - "game/multiplayer/jarrell-cave-wall-inventory.mjs"
+      - "game/multiplayer/jarrell-cave-wall-inventory.test.mjs"
+      - "game/multiplayer/jarrell-terrain-reference.mjs"
+      - "game/multiplayer/jarrell-terrain-reference.test.mjs"
+      - "game/play.html"
       - ".github/workflows/game-server-authority-rules.yml"
   workflow_dispatch:
 

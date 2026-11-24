@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   inspectMintReply, compareFinalizedMintReplies, assertDistinctRpcEndpoints,
-  fetchFinalizedMint, inspectIndependentMints, CLIMB_SOLANA_MINT, SPL_TOKEN_PROGRAM
+  fetchFinalizedMint, inspectIndependentMints, CLIMB_SOLANA_MINT, SPL_TOKEN_PROGRAM, TOKEN_2022_PROGRAM
 } from './mint-inspect.mjs';
 
 const ADMIN = '11111111111111111111111111111111';
@@ -36,7 +36,7 @@ test('present mint and freeze authorities remain visible instead of being assume
   assert.equal(out.bothReportFreezeAuthorityRevoked,false);
   assert.equal(out.mintAuthority,ADMIN);
 });
-test('reject unexpected Token-2022 or non-token owner',()=>{
+test('reject mismatched parser and non-token owner',()=>{
   assert.throws(()=>inspectMintReply(mockReply({value:{...mockReply().value,owner:ADMIN}})),/NO_GO/);
   const r=mockReply();r.value.data.program='spl-token-2022';
   assert.throws(()=>inspectMintReply(r),/NO_GO/);
@@ -97,4 +97,34 @@ test('dual RPC performs both read-only inspections without network access in tes
 test('HTTP/RPC errors fail closed',async()=>{
   await assert.rejects(fetchFinalizedMint('https://first.example',async()=>({ok:false})),/NO_GO/);
   await assert.rejects(fetchFinalizedMint('https://first.example',async()=>({ok:true,json:async()=>({error:{code:429,message:'rate limit'}})})),/NO_GO/);
+});
+
+function token2022Reply(extensions) {
+  const r=mockReply();
+  r.value.owner=TOKEN_2022_PROGRAM;
+  r.value.data.program='spl-token-2022';
+  if(extensions!==undefined) r.value.data.parsed.info.extensions=extensions;
+  return r;
+}
+test('Token-2022 recognized only with matching exact program and parser; no bridge authorization',()=>{
+  const r=token2022Reply([{extension:'metadataPointer',state:{ignored:'private-string'}},{extension:'tokenMetadata',state:{}}]);
+  const out=compareFinalizedMintReplies(r,r);
+  assert.equal(out.program,TOKEN_2022_PROGRAM);
+  assert.equal(out.extensionTypeSummary,'TOKEN_2022_REPORTED_TYPES:["metadataPointer","tokenMetadata"]');
+  assert.equal(out.extensionStateVerified,false);
+  assert.equal(out.bridgeCompatibility,'UNVERIFIED');
+  assert.equal(out.bridgeRelease,'NO_GO');
+  assert(!JSON.stringify(out).includes('private-string'));
+  assert.throws(()=>compareFinalizedMintReplies(mockReply(),r),/disagree on program/);
+  r.value.data.program='spl-token';
+  assert.throws(()=>inspectMintReply(r),/NO_GO/);
+});
+test('extension observations cannot be interpreted as absent or bridge compatible',()=>{
+  const missing=token2022Reply();
+  assert.equal(inspectMintReply(missing).extensionTypeSummary,'TOKEN_2022_EXTENSIONS_NOT_REPORTED');
+  assert.throws(()=>compareFinalizedMintReplies(missing,token2022Reply([])),/disagree on extensionTypeSummary/);
+  const out=compareFinalizedMintReplies(token2022Reply([{extension:'private-url-or-unknown'}]),token2022Reply([{extension:'private-url-or-unknown'}]));
+  assert.match(out.extensionTypeSummary,/UNKNOWN_EXTENSION/);
+  assert(!JSON.stringify(out).includes('private-url-or-unknown'));
+  assert.throws(()=>inspectMintReply(token2022Reply([null])),/unexpected mint extension/);
 });
