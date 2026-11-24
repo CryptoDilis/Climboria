@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME STARTING PILLAR FIX MERGED — 2026-11-24 PHT
+
+- [PR #698](https://github.com/CryptoDilis/Climboria/pull/698) MERGED at `a6b792ace047359b5ad23ec69c525e5b580db4a7`, exact head `8b5e7f1f69bfb03b95fd352aefb4aa9fede4f477`, all seven CI SUCCESS: [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45343480713), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45343480697), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45343480605), [Browser Smoke](https://github.com/CryptoDilis/Climboria/actions/runs/45343480567), [Hero Smoke](https://github.com/CryptoDilis/Climboria/actions/runs/45343480665), [Chest GLB](https://github.com/CryptoDilis/Climboria/actions/runs/45343480566), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45343480716). Inspected Gameplay job 138272404419 logs: 12 flag pillars + 4 entry pillars, all eight-direction normal/elevated collision and overlap escape probes passed, walkwayBlocked=[], audit ok=true. Verified merged game/play.html blob `78b75acf33cfb4ee6c1531eec41b30f729a1b1da` identical to tested code and retained on main `368e18041ab9e7312a80f37f500be439ee66a044`.
+- Exact merge Pages run [45345228801](https://github.com/CryptoDilis/Climboria/actions/runs/45345228801) cancelled; newer main containing same fixed game blob has Pages [45345251409](https://github.com/CryptoDilis/Climboria/actions/runs/45345251409) in progress at check. Main push Gameplay [45345229238](https://github.com/CryptoDilis/Climboria/actions/runs/45345229238) in progress. Do not claim public site verified until a successful deployment containing the fix and actual browser acceptance.
+- **EXACT NEXT:** Verify newest successful Pages deployment includes fixed game blob and check public pillar collision when browser access is available. Then reviewed cave vertical/swept geometry and walkability, actual server movement/combat and transactional gateway integration, real two-account QA. Game only; no live HP enablement.
+
+---
+
 ## GAME STARTING SANCTUARY PILLAR COLLISION FIX — 2026-11-24 PHT (NOT DEPLOYED)
 
 - Owner explicitly requested starting pillar collision check. [PR #698](https://github.com/CryptoDilis/Climboria/pull/698) now expands the twelve flag pillar horizontal radii from 1.75m to 1.9m to cover the 2.6m square crown corners (~1.84m). Adds four physical entry lantern/post base colliders (radius .46m) previously absent. Uses actual mesh world positions. Swept-circle collision permits strictly outward escape from legacy saved overlap, including exact center, without allowing an inward crossing. Browser implementation `1b2439e347c5ba55836401f79c3216de9a16c06d`.
