@@ -5,6 +5,12 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 13 — published NTT release candidates reviewed (2026-11-24 UTC)
+
+- Official published tag refs resolved: Solana `v3.0.0+solana` at `1a2a92ef7f289972b2d00dd1d58077d139fe68d7`, EVM `v2.0.0+evm` at `c636cc15b07969e4b44de7e466c999c07e7387a9`, CLI `v1.10.0+cli` at `f7f65d3751ffeb6ba65fdbba0f287aa6ed473b31`. Release-pinned source confirms locking source without mint-authority requirement, Token-2022-aware transfers and destination burning-mode mint/burn. CLI source uses actual mint owner to unpack and checks mint authority only for burning mode. No deployment executed.
+- Pinned links, audit references and deployment caveats recorded in [`PROVIDER_SELECTION.md`](../token/climb-bridge/PROVIDER_SELECTION.md), commit [`bde05240b7161e730097d24efb9ce8a3e23ed7fd`](https://github.com/CryptoDilis/Climboria/commit/bde05240b7161e730097d24efb9ce8a3e23ed7fd). Candidate release set is not approved; exact SDK interoperability, full audit coverage, deployment identities and costs remain open. Documentation only; no new CI claim.
+- **EXACT NEXT:** owner/operator dispatch [CLIMB Mint Authority - Manual Read-only Evidence](https://github.com/CryptoDilis/Climboria/actions/workflows/climb-mint-mainnet-evidence-manual.yml) on latest `main` to gather raw extension evidence added by merged PR #694. At last check no post-merge manual run existed; prior successful #45340437315 lacks raw evidence. Then verify SDK version matrix, Solana Devnet/Base Sepolia official network/core bridge identifiers, audit provenance, deployment cost and governance before testnet configuration. Do not deploy or bypass failed simulation; no signing, funds or Base CA. Mainnet NO_GO.
+
 ## Stage 12 — raw Token-2022 extension evidence implementation (2026-11-24 UTC)
 
 - Reviewed official Token-2022 layout at `solana-program/token-2022@e8ca680ca8aeb12f9598524b003c776c6a4168f2` and metadata state at `solana-program/token-metadata@4b4226514a0360ce933a66c9e638e909ecd66068`. New isolated raw mint parser checks program/owner, base layout, initialized mint, exact authority/supply agreement, TLV metadata-only allowlist, self pointer/embedded mint, bounded Borsh decoding, duplicate/unknown extensions and full raw digest agreement. No arbitrary metadata strings logged.
