@@ -8,6 +8,14 @@
 
 ---
 
+## GAME AUTHORED MAP COLLISION INVENTORY + SANCTUARY FIX — 2026-11-24 PHT (NOT LIVE)
+
+- [PR #683](https://github.com/CryptoDilis/Climboria/pull/683) advanced to head `f85dad39c29e353cb280ecbaa153cb1f0e6c61dc`: extracted all 47 literal authored cave wall segments and two generated coastal tunnel segments from current `game/play.html` (49 total). Added `jarrell-cave-wall-inventory.mjs` and three source-parity/rigid-transform tests; CI runs on map changes. Actual map X/Z endpoints, wall thicknesses, labels and coastal metadata retained. This is partial geometry only; no vertical extent, full terrain, dynamic props, player simulation, or live authority claimed.
+- [PR #680](https://github.com/CryptoDilis/Climboria/pull/680) advanced to head `c45df4991f47c53343d33d6e9269717efaa26b55`: discovered actual Sanctuary map POI (0,-90), radius 60, differs from legacy combat spawn zone (0,-30), radius 74. New isolated open-world policy conservatively protects union of both including boundaries; added ninth regression test. No runtime or legacy duel changes. Old head CI not applicable to new heads.
+- **EXACT NEXT:** Check all applicable workflows on both new exact heads, repair red checks, resolve branch conflicts/retest if necessary, merge green #680 then #683. Next implement reviewed vertical collision data and heightfield/terrain coverage from actual map, independently server-integrated movement, then isolated HP lifecycle. Do not treat cave inventory alone as full collision authority. Two real registered account QA remains pending. Game only.
+
+---
+
 ## GAME SERVER COLLISION FOUNDATION — 2026-11-24 PHT (NOT LIVE)
 
 - [PR #683](https://github.com/CryptoDilis/Climboria/pull/683) opened from main, branch `game/server-collision-geometry-20261124`, exact head `1da6cedcfdcbbb1854c623ae620c74640033c3fc`. New Game-only `server-collision-region.mjs` + five tests and authority CI path filters. Exact closed 3D segment/AABB collision, conservative swept player body, reviewed bounded room coverage, explicit immutable server geometry. Test fixture is a synthetic arena, NOT Jarrell map parity; no live Worker, HP, wallet, or loot changes.
