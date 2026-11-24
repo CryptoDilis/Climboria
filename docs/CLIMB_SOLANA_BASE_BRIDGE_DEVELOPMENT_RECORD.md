@@ -5,6 +5,11 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 25 — Solana local reverse unlock and replay integration (2026-11-24 UTC)
+
+- Extended the already successful pinned Solana v3 local bank fixture to configure a six-decimal mock peer and exercise upstream local core fixture `post_vaa`, `receive_message`, `redeem`, and actual `release_inbound_unlock`. Require exact return to original user ATA, empty custody, unchanged mint bytes/supply, Released inbox state; distinct retry transaction must fail with exact `TransferAlreadyRedeemed` and unchanged user/custody bytes. Uses upstream simulated guardian only, mock peer chain, not a real Base message or live cross-chain round trip. No RPC, wallet, secret, customer funds or mainnet deployment. PR/CI pending.
+- **EXACT NEXT:** verify PR CI including real local bank test; fix errors without weakening assertions, merge only when green. Audit remediation and testnet deployment provenance review remain necessary. Dedicated funded public testnet payer addresses still required. Mainnet NO_GO, no official Base CA.
+
 ## Stage 24 — pinned Solana NTT metadata-only locking test preparation (2026-11-24 UTC)
 
 - Reviewed pinned upstream Solana v3.0.0 `1a2a92ef7f289972b2d00dd1d58077d139fe68d7` transfer tests, setup, SDK custody derivation and Token-2022 transfer path. Added a local ProgramTest fixture with a six-decimal Token-2022 mint, self-referencing metadata pointer, metadata TLV, null freeze/metadata authorities. Fixture starts with mint authority for local test issuance; actual Token-2022 mint-to and set-authority instructions issue the test units then revoke mint authority BEFORE NTT initialize. Test exercises real upstream locking path and checks exact user/custody deltas, unchanged mint supply, unchanged mint bytes, six-decimal outbox amount. Genesis-injected metadata fixture is not proof of production metadata creation or guardian authentication. Upstream peer fixture uses a distinct mock peer, not Base Sepolia deployment.
