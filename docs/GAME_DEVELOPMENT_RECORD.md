@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME FIXED OBSTACLE COLLISION INVENTORY — 2026-11-24 PHT (NOT LIVE)
+
+- Stacked branch `game/jarrell-fixed-collider-coverage-20261124` from consolidated #692 head `945ee8d1ba2175e40a177bbd000119af084d0ed6`: adds 43 authored fixed X/Z circles (10 park fixtures, 12 Sanctuary pillars, center crystal, six cave solids, two facilities, twelve freshwater pier posts) and deterministic forest GLB collider candidates from actual `game/play.html` placement algorithm. Implementation `4606c533323a56b9f412dfc96df9e0baedd21986`; two regression tests `b3458a1b1d4290d870df9b2240394c0d4b62228d` verify fixed source registration contracts and independently execute browser forest placement. Forest candidates remain separate because runtime browser registration is conditional on successful asynchronous GLB loading. These horizontal inventories do not establish vertical or full walkability coverage.
+- #687 exact head `398ba8793a78d97cbd16f70eb3b27e94eab5159f` all four CI SUCCESS, including Gameplay #45340433474. Consolidated #692 exact head `945ee8d1ba2175e40a177bbd000119af084d0ed6` Authority #45341651260, Gateway #45341651098 and Validate #45341651103 SUCCESS; Gameplay #45341651118 running at initial check. Prefer one consolidated merge and close #687 only after verified inclusion.
+- **EXACT NEXT:** Finish #692 Gameplay and merge if green/mergeable. Verify movement/stamina code inclusion, close superseded #687. Reconcile fixed obstacle branch onto latest main and run exact-head Game CI. Next resolve conditional forest collider agreement, reviewed vertical cave/terrain coverage, and build actual reviewed map provider plus transactional gateway orchestration. No live Worker, client damage, financial changes or non-Game scope. Real two-account QA remains pending.
+
+---
+
 ## GAME REAL STREAMED ROCK COLLIDER PARITY + CHECKPOINT ROLLBACK — 2026-11-24 PHT (NOT LIVE)
 
 - [PR #692](https://github.com/CryptoDilis/Climboria/pull/692) adds deterministic authored streamed rock X/Z collision circles to `jarrell-terrain-reference.mjs`, matching actual browser 200m chunks, RNG consumption, shore/water and POI exclusions (`53987598a1d51117d23db2095f2638e0e298e93e`). New parity test executes checked-in browser prop generator with rendering stubs and compares ten representative chunks directly (`e03a5d70d5e6c45b6f6fc12f7793892249c52538`). This is actual map geometry inventory, not complete vertical collision/authority or live integration. Fixed park fixtures, Sanctuary pillars, cave solids, dock/pier and asynchronous forest asset collision coverage still need review; browser `blocked()` uses fixed and nearby streamed circles plus cave walls and terrain.
