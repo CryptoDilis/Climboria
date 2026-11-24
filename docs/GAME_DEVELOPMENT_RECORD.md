@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## GAME REAL STREAMED ROCK COLLIDER PARITY + CHECKPOINT ROLLBACK — 2026-11-24 PHT (NOT LIVE)
+
+- [PR #692](https://github.com/CryptoDilis/Climboria/pull/692) adds deterministic authored streamed rock X/Z collision circles to `jarrell-terrain-reference.mjs`, matching actual browser 200m chunks, RNG consumption, shore/water and POI exclusions (`53987598a1d51117d23db2095f2638e0e298e93e`). New parity test executes checked-in browser prop generator with rendering stubs and compares ten representative chunks directly (`e03a5d70d5e6c45b6f6fc12f7793892249c52538`). This is actual map geometry inventory, not complete vertical collision/authority or live integration. Fixed park fixtures, Sanctuary pillars, cave solids, dock/pier and asynchronous forest asset collision coverage still need review; browser `blocked()` uses fixed and nearby streamed circles plus cave walls and terrain.
+- Added simulated second-write failure test to verify atomic checkpoint batch rollback (`49dd1c3c3f709e58780a75f31421dff52646bb8f`). No live storage or Worker changes.
+- Prior retargeted #692 head `1563df580041afc512313e2e32cecaa169e8bd74` only triggered unrelated bridge workflow, not Game CI. #687 remained 3/4 green, Gameplay #45340433474 still executing. New synchronized #692 commits are intended to trigger actual Game checks; **verify exact latest head before merging**.
+- **EXACT NEXT:** Verify #692 actual Game workflows, fix any red jobs and merge only if green; after merge verify combined movement inclusion and close superseded #687. Then export/verify remaining fixed and asynchronous collider coverage, integrate reviewed actual map with server simulation and transactional storage (commit before acknowledging damage, restore before join, fail closed). No public live PvP or real two-account QA claim, no other workstream edits.
+
+---
+
 ## GAME CHECKPOINT STORAGE FOUNDATION + CONSOLIDATED COMBAT CI — 2026-11-24 PHT (ISOLATED, NOT LIVE)
 
 - [PR #692](https://github.com/CryptoDilis/Climboria/pull/692) adds validated versioned private checkpoint codec, server-only lifecycle export/restore, and a Durable Object transactional adapter for atomic revision-checked account batches. Commits `0ff698841130f4d3da85ab73032ec09eacac1e3a`, `8fb93e45928dc8da65f647de7c6f5b77b60fc58a`, `f5f982fb44f691a615ece999bd02732a5b2a7eb9`, tests `2d4b50de5331272a02b6608aa1881e72a9e31070`, `39f3b205f4c55fa182c2c7819c94a4ec09f5df47`, CI `01d0ea073ac4c797f08893e0b3a53a3e89dd968d`. Six extra tests for codec, storage CAS, concurrent updates, rollback, corruption and fresh-server restoration. No actual production write/load orchestration: adapter is not integrated with live Worker, and actual durable storage is not yet verified.
