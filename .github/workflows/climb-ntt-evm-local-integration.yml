@@ -1,0 +1,41 @@
+name: CLIMB NTT EVM Local Manager Integration
+on:
+  pull_request:
+    paths:
+      - 'token/climb-bridge/testnet-base/**'
+      - '.github/workflows/climb-ntt-evm-local-integration.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'token/climb-bridge/testnet-base/**'
+      - '.github/workflows/climb-ntt-evm-local-integration.yml'
+permissions:
+  contents: read
+jobs:
+  local-manager:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: wormhole-foundation/native-token-transfers
+          ref: c636cc15b07969e4b44de7e466c999c07e7387a9
+          path: ntt-upstream
+          submodules: recursive
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Verify source pin and copy only isolated test files
+        run: |
+          set -euo pipefail
+          test "$(git -C ntt-upstream rev-parse HEAD)" = c636cc15b07969e4b44de7e466c999c07e7387a9
+          cp token/climb-bridge/testnet-base/src/ClimbTestnetToken.sol ntt-upstream/evm/src/
+          cp token/climb-bridge/testnet-base/integration/ClimbNttManagerLocalIntegration.t.sol ntt-upstream/evm/test/
+      - name: Compile and run pinned manager locally (no fork or broadcast)
+        working-directory: ntt-upstream/evm
+        run: forge test --match-path test/ClimbNttManagerLocalIntegration.t.sol --match-contract ClimbNttManagerLocalIntegrationTest -vvv

@@ -5,6 +5,12 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 23 — actual pinned NTT EVM manager local integration preparation (2026-11-24 UTC)
+
+- While awaiting disposable funded testnet payers, reviewed upstream EVM v2 manager, proxy, rate limits, peer validation, attestation and DummyTransceiver at `c636cc15b07969e4b44de7e466c999c07e7387a9`. Added an isolated Foundry integration harness for the real pinned `NttManager` (not Climboria's previous mock manager) and CLIMBTEST token, with a local mock transceiver. Tests exercise inbound mint from mock attestation, replay, unauthorized/wrong peer rejection, actual manager outbound burn, and pause guard. No fork, network transaction or genuine Wormhole guardian/message proof.
+- Scoped CI checks out exact upstream commit and pinned recursive submodules, copies only test token/harness, compiles and runs the named test suite locally using Foundry v1.5.0 and upstream compiler config. No signing, secrets, wallet, broadcast or deployment. CI/PR pending; no audited parity or successful test claim yet.
+- **EXACT NEXT:** check exact PR head integration/bridge/Validate CI; fix failures and merge if green. Record results. Obtain separate public testnet payer addresses and faucet balances, then review actual NTT deployment artifacts, governance/costs and owner-controlled signing. No official Base CLIMB CA, mainnet NO_GO.
+
 ## Stage 22 — operator testnet payer preflight (2026-11-24 UTC)
 
 - Added isolated public-address-only testnet payer checker and operator handoff, with strict Solana/Base Sepolia network identities and finalized public balances. No signer or seed required; rejects invalid addresses, known canonical CLIMB mint as payer, and zero EVM address. Reports only balances and observed mint+one-ATA rent floor, not deployment readiness or full bridge costs. Offline tests added. [PR #703](https://github.com/CryptoDilis/Climboria/pull/703) MERGED via squash `963011af8a2f3efa9f8d4c2db6de4a12c14c916e`. Exact tested head `e4cf9194bb3a2cd912ae98367c955f30150a1195`: [Bridge Safety #45345429127](https://github.com/CryptoDilis/Climboria/actions/runs/45345429127) SUCCESS; [Validate #45345429115](https://github.com/CryptoDilis/Climboria/actions/runs/45345429115) SUCCESS. Four scoped paths verified.
