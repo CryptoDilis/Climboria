@@ -191,7 +191,7 @@ export function sampleJarrellStreamedColliders(cx,cz){
 
 /**
  * Authored fixed X/Z collision inventory. The forest list is deliberately
- * separate: browser registration depends on asynchronous GLB load success.
+ * separate by category; browser now registers these before GLB loading.
  * These circles do not define vertical surfaces or a reviewed combat region.
  */
 export function authoredJarrellFixedColliders(){
@@ -205,8 +205,10 @@ export function authoredJarrellFixedColliders(){
   for(const px of [-4,4])add(park.x+hx+px*Math.cos(rot),park.z+hz-px*Math.sin(rot),.58,'park-hammock');
  for(let i=0;i<12;i++){
   const a=(i+.5)/12*6.283,rr=22;
-  add(sanct.x+Math.sin(a)*rr,sanct.z+Math.cos(a)*rr,1.75,'sanctuary-pillar');
+  add(sanct.x+Math.sin(a)*rr,sanct.z+Math.cos(a)*rr,1.9,'sanctuary-pillar');
  }
+ for(const z of [44,29])for(const side of [-1,1])
+  add(sanct.x+side*6.3,sanct.z+z,.46,'sanctuary-entry-pillar');
  add(sanct.x,sanct.z,2.4,'sanctuary-center-crystal');
  const p=POI.cave,ry=caveG.rotation.y,cs=Math.cos(ry),sn=Math.sin(ry);
  for(const [x,z,r] of [[-22,-20,15],[20,-22,14],[-13,-34,5],[13,-34,5],[-30,-6,7],[30,-6,7]])
