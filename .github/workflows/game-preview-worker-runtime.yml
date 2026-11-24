@@ -1,0 +1,29 @@
+name: Game Preview Worker Local Runtime
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "game/multiplayer/**"
+      - ".github/scripts/game-preview-workerd-smoke.mjs"
+      - ".github/workflows/game-preview-worker-runtime.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install local workerd runtime
+        run: |
+          npm init -y
+          npm install --no-save miniflare@4
+      - name: Verify isolated preview with real local WebSockets and SQLite DO
+        run: node .github/scripts/game-preview-workerd-smoke.mjs

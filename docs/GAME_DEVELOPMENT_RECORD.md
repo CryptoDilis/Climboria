@@ -1,5 +1,21 @@
 # Climboria Game Development Record
 
+## GAME LOCAL RUNTIME CI STARTUP FIX — 2026-11-24 PHT (NOT MERGED)
+
+- [PR #719](https://github.com/CryptoDilis/Climboria/pull/719) exact initial head `8bab69918086634c312df2a8ae9186eb8b77a0ee`: [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45357484566) SUCCESS; [Local Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45357484617) FAILURE before any WebSocket assertion (job 138318809505). Installed workerd supports compatibility date up to 2026-08-06, but the test requested 2026-11-15. npm also reported three high-severity advisories; affected packages and impact are not yet identified.
+- Fixed only `.github/scripts/game-preview-workerd-smoke.mjs` at `75ef48272c9de5468fd2db58e2d7fa3e77e1f314` to use the supported local compatibility date 2026-08-06. Cloud preview and production configuration unchanged. Local test is not proof of exact cloud compatibility.
+- **EXACT NEXT:** Verify fresh exact-head local runtime and Validate CI; investigate any subsequent assertion failures, review and pin the local test dependency after inspecting advisory details, merge only when green and mergeable. Then bounded durable write budget and private cloud staging with actual registered accounts; keep production combat disabled. Game only.
+
+---
+
+## GAME LOCAL WORKERD WEBSOCKET AND SQLITE RUNTIME ACCEPTANCE — 2026-11-24 PHT (NOT DEPLOYED)
+
+- #716 merged at `93a49232402fc82a19c1d3a7810dc391096211d6`, exact head `ef52494ba22afa60c15b771c8c8f6cb48e4aa7ae`: [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45356257567), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45356257536), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45356257614), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45356257711) all SUCCESS. No preview deployment or production PvP activation.
+- Branch `game/preview-workerd-runtime-20261124` adds `.github/scripts/game-preview-workerd-smoke.mjs` (`e3032169881d21263e286aaf9e9de02809572590`): actual local Miniflare/workerd WebSocket upgrade and persistent SQLite Durable Object fixture, synthetic accounts via private DO ticket endpoint (NOT real Supabase authentication), replay rejection, strict packet allowlist, committed HP and cooldown, peer roster, reconnect, runtime restart persistence and disabled-state checks. Disposable temp storage; no credentials or upstream requests. New Game-only workflow `.github/workflows/game-preview-worker-runtime.yml` (`050c9164f8f92d58f5542edfb346e8124f6e1ec8`). Fresh CI not yet verified.
+- **EXACT NEXT:** Inspect actual local-runtime workflow logs; fix any runtime incompatibility and merge only after all relevant checks pass. Review durable-write budget, prepare access-controlled staging route and real two-account authentication test. Production room unchanged; no live combat claim. Game only.
+
+---
+
 ## GAME PREVIEW WEBSOCKET LIFECYCLE AND FAILURE CLEANUP — 2026-11-24 PHT (NOT DEPLOYED)
 
 - #714 merged at `27433f03174eadd335af183edf1d6a724b6322d0`, exact head `d50357bede68e56a1f61849b8da86eaa76476ac7`: [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45354564855), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45354564921), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45354564870), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45354564792) all SUCCESS. Preview remains disabled and not deployed; production Worker unchanged.
