@@ -26,7 +26,7 @@ test("only fixed indicative GET, no wallet, recipient, allowance or execution da
  let calls=0;const r=await getBaseIndicativePrice(intent,{enabled:true,apiKey:"synthetic-secret",fetchImpl:async(raw,opts)=>{
   calls++;const url=new URL(raw);assert.equal(url.origin+url.pathname,PRICE_ENDPOINT);
   assert.deepEqual(Object.fromEntries(url.searchParams),{chainId:"8453",sellToken,buyToken,sellAmount:"100000"});
-  assert.equal(opts.method,"GET");assert.equal(opts.redirect,"error");assert.equal(opts.credentials,"omit");assert.equal(opts.headers["0x-api-key"],"synthetic-secret");assert.equal(opts.headers["0x-version"],"v2");
+  assert.equal(opts.method,"GET");assert.equal(opts.redirect,"error");assert.equal(opts.credentials,undefined);assert.equal(opts.cache,"no-store");assert.equal(Object.keys(opts.headers).sort().join(","),"0x-api-key,0x-version,accept");assert.equal(opts.headers["0x-api-key"],"synthetic-secret");assert.equal(opts.headers["0x-version"],"v2");
   return new Response(JSON.stringify({...sample,transaction:{data:"0xdead"}}));
  }});
  assert.equal(calls,1);assert.equal(r.executable,false);assert.ok(!JSON.stringify(r).includes("synthetic-secret"));assert.ok(!JSON.stringify(r).includes("0xdead"));
