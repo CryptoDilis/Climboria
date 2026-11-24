@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## GAME CAVE WALL VERTICAL SWEPT COLLISION — 2026-11-24 PHT (ISOLATED, NOT LIVE COMBAT)
+
+- Pillar fix #698 production Pages deployment [45345322640](https://github.com/CryptoDilis/Climboria/actions/runs/45345322640) SUCCESS at `6c450b5066b3b14b68fea0312355480be894c56a`, verified actual fixed game/play.html blob `78b75acf33cfb4ee6c1531eec41b30f729a1b1da` on that commit; main push [Gameplay #45345229238](https://github.com/CryptoDilis/Climboria/actions/runs/45345229238) SUCCESS. No manual public browser acceptance performed.
+- Branch `game/jarrell-cave-height-sweep-20261124` adds `game/multiplayer/jarrell-cave-wall-sweep.mjs` (`60e7e2720d2c4b1af825627e8aef9eadb5a22dc1`) using all 49 authored wall segments and actual cave terrain elevation. Ordinary walls retain browser conservative all-height barriers; coastal walls clip a continuous 3D feet/body sweep to the sloped floor-relative [-2,+8.8] collision band, including closed radius contacts. Unlike endpoint-only gating, a path crossing the band between two outside endpoints cannot bypass the wall. Category check only, not complete walkability or authorization.
+- Six regression tests (`3b8bb231b63b7ff245aa50d6387368ca4a694b8b`), CI path filters (`8e88f1538d771890e2c0eb20ea235dca524390ed`); fresh tests pending. No browser movement changes, Worker integration, roof/mesh/full ground coverage, or live damage.
+- **EXACT NEXT:** Verify latest-head Game CI, inspect failures and merge if green. Continue complete reviewed ground/body coverage, including actual cave roof geometry and fixed/streamed circles, then transactional live gateway orchestration and real two-account public QA. No non-Game changes.
+
+---
+
 ## GAME STARTING PILLAR FIX MERGED — 2026-11-24 PHT
 
 - [PR #698](https://github.com/CryptoDilis/Climboria/pull/698) MERGED at `a6b792ace047359b5ad23ec69c525e5b580db4a7`, exact head `8b5e7f1f69bfb03b95fd352aefb4aa9fede4f477`, all seven CI SUCCESS: [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45343480713), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45343480697), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45343480605), [Browser Smoke](https://github.com/CryptoDilis/Climboria/actions/runs/45343480567), [Hero Smoke](https://github.com/CryptoDilis/Climboria/actions/runs/45343480665), [Chest GLB](https://github.com/CryptoDilis/Climboria/actions/runs/45343480566), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45343480716). Inspected Gameplay job 138272404419 logs: 12 flag pillars + 4 entry pillars, all eight-direction normal/elevated collision and overlap escape probes passed, walkwayBlocked=[], audit ok=true. Verified merged game/play.html blob `78b75acf33cfb4ee6c1531eec41b30f729a1b1da` identical to tested code and retained on main `368e18041ab9e7312a80f37f500be439ee66a044`.
