@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME LOCAL WORKERD WEBSOCKET AND SQLITE RUNTIME ACCEPTANCE — 2026-11-24 PHT (NOT DEPLOYED)
+
+- #716 merged at `93a49232402fc82a19c1d3a7810dc391096211d6`, exact head `ef52494ba22afa60c15b771c8c8f6cb48e4aa7ae`: [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45356257567), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45356257536), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45356257614), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45356257711) all SUCCESS. No preview deployment or production PvP activation.
+- Branch `game/preview-workerd-runtime-20261124` adds `.github/scripts/game-preview-workerd-smoke.mjs` (`e3032169881d21263e286aaf9e9de02809572590`): actual local Miniflare/workerd WebSocket upgrade and persistent SQLite Durable Object fixture, synthetic accounts via private DO ticket endpoint (NOT real Supabase authentication), replay rejection, strict packet allowlist, committed HP and cooldown, peer roster, reconnect, runtime restart persistence and disabled-state checks. Disposable temp storage; no credentials or upstream requests. New Game-only workflow `.github/workflows/game-preview-worker-runtime.yml` (`050c9164f8f92d58f5542edfb346e8124f6e1ec8`). Fresh CI not yet verified.
+- **EXACT NEXT:** Inspect actual local-runtime workflow logs; fix any runtime incompatibility and merge only after all relevant checks pass. Review durable-write budget, prepare access-controlled staging route and real two-account authentication test. Production room unchanged; no live combat claim. Game only.
+
+---
+
 ## GAME PREVIEW WEBSOCKET LIFECYCLE AND FAILURE CLEANUP — 2026-11-24 PHT (NOT DEPLOYED)
 
 - #714 merged at `27433f03174eadd335af183edf1d6a724b6322d0`, exact head `d50357bede68e56a1f61849b8da86eaa76476ac7`: [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45354564855), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45354564921), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45354564870), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45354564792) all SUCCESS. Preview remains disabled and not deployed; production Worker unchanged.
