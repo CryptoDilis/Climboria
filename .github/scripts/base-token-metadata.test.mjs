@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {BASE_RPC_URL,normalizeContract,decodeDecimals,decodeTokenText,readBaseTokenMetadata,initBaseMetadataInspector} from "../../dex/base-token-metadata.mjs";
+import {BASE_RPC_URL,normalizeContract,decodeDecimals,decodeTokenText,formatTokenUnits,readBaseTokenMetadata,initBaseMetadataInspector} from "../../dex/base-token-metadata.mjs";
 const address="0x"+"a".repeat(40);
 const w=n=>BigInt(n).toString(16).padStart(64,"0");
 const str=s=>{const hex=Buffer.from(s).toString("hex");return "0x"+w(32)+w(hex.length/2)+hex.padEnd(Math.ceil(hex.length/64)*64,"0");};
@@ -60,5 +60,20 @@ test("UI only queries on submit, cancels stale lookup and renders text",async()=
  assert.ok(ids.baseMetadataResult.children.some(x=>x.textContent==="Name: <img>"));
  assert.ok(ids.baseMetadataResult.children.some(x=>x.textContent==="Decimals: 0"));
  const html=readFileSync(new URL("../../dex/index.html",import.meta.url),"utf8");
- assert.ok(html.includes('id="baseMetadataForm"'));assert.ok(html.includes('/dex/base-token-metadata.mjs?v=1'));
+ assert.ok(html.includes('id="baseMetadataForm"'));assert.ok(html.includes('/dex/base-token-metadata.mjs?v=2'));
+});
+
+test("optional public holder balance uses exact ABI and integer arithmetic at same block",async()=>{
+ const holder="0x"+"b".repeat(40),raw=123456789012345678901234567890n;
+ const provider=mock({mutate:(r,req)=>req.method==="eth_call"&&req.params[0].data.startsWith("0x70a08231")?{...r,result:"0x"+w(raw)}:r});
+ const info=await readBaseTokenMetadata(address,{...provider,holder});
+ assert.deepEqual(info.balance,{holder,raw:raw.toString(),formatted:"123456789012.34567890123456789"});
+ const call=provider.calls.at(-1);
+ assert.equal(call.method,"eth_call");assert.deepEqual(call.params,[{to:address,data:"0x70a08231"+holder.slice(2).padStart(64,"0")},"0xabc"]);
+ assert.equal(formatTokenUnits(0n,18),"0");assert.equal(formatTokenUnits(1n,18),"0.000000000000000001");assert.equal(formatTokenUnits(10n,0),"10");assert.equal(formatTokenUnits(10n,null),null);
+ const bad=mock();await assert.rejects(readBaseTokenMetadata(address,{...bad,holder:"USDC"}),/public Base wallet/);assert.equal(bad.calls.length,0);
+ const missing=mock({mutate:(r,req)=>req.method==="eth_call"&&req.params[0].data.startsWith("0x70a08231")?{jsonrpc:"2.0",id:req.id,error:{code:3}}:r});
+ assert.deepEqual((await readBaseTokenMetadata(address,{...missing,holder})).balance,{holder,raw:null,formatted:null});
+ const noDecimals=mock({mutate:(r,req)=>req.method==="eth_call"&&req.params[0].data==="0x313ce567"?{...r,result:"0x"}:req.method==="eth_call"&&req.params[0].data.startsWith("0x70a08231")?{...r,result:"0x"+w(1)}:r});
+ assert.deepEqual((await readBaseTokenMetadata(address,{...noDecimals,holder})).balance,{holder,raw:"1",formatted:null});
 });
