@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {mkdtemp,rm} from "node:fs/promises";
+import {mkdtemp,rm,readFile} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join,resolve} from "node:path";
 import {Miniflare} from "miniflare";
@@ -9,10 +9,13 @@ import {BUDGET_OBJECT_NAME} from "../../dex/base-price-provider/budget.mjs";
 // No provider credential, upstream request, deployed Worker or public route.
 const dir=await mkdtemp(join(tmpdir(),"climboria-base-budget-"));
 let runtime;
+const config=await readFile("dex/base-price-provider/wrangler.toml","utf8");
+const compatibilityDate=config.match(/^compatibility_date = "(\d{4}-\d{2}-\d{2})"$/m)?.[1];
+assert.ok(compatibilityDate,"Worker compatibility date must be explicit");
 const start=async({cap="3",enabled="true"}={})=>{
  runtime=new Miniflare({
   modules:true,scriptPath:resolve("dex/base-price-provider/worker.mjs"),
-  compatibilityDate:"2026-11-08",
+  compatibilityDate,
   durableObjects:{BASE_PRICE_BUDGET:{className:"BasePriceBudget",useSQLite:true}},
   durableObjectsPersist:dir,
   bindings:{BASE_INDICATIVE_PRICE_ENABLED:enabled,BASE_PRICE_DAILY_ATTEMPTS:cap}
