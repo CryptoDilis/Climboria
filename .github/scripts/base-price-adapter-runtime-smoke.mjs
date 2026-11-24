@@ -26,7 +26,7 @@ const runtime=new Miniflare({
 try{
  const ok=await runtime.dispatchFetch("https://local.invalid/test");
  const data=await ok.json();
- assert.equal(ok.status,200,JSON.stringify(data));assert.equal(data.executable,false);assert.equal(data.estimatedBuyAmount,"58733120001805");
+ assert.equal(ok.status,200,JSON.stringify({data,outboundCalls:calls}));assert.equal(data.executable,false);assert.equal(data.estimatedBuyAmount,"58733120001805");
  for(const [next,expected] of [["http",{stage:"http",upstreamStatus:429}],["body",{stage:"body"}],["schema",{stage:"schema"}]]){
   mode=next;const r=await runtime.dispatchFetch("https://local.invalid/test");assert.equal(r.status,502);assert.deepEqual(await r.json(),expected);
  }
