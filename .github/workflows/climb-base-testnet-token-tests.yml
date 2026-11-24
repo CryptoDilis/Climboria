@@ -1,0 +1,38 @@
+name: CLIMB Base Sepolia Test Asset - Unit Tests
+on:
+  pull_request:
+    paths:
+      - 'token/climb-bridge/testnet-base/**'
+      - '.github/workflows/climb-base-testnet-token-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'token/climb-bridge/testnet-base/**'
+      - '.github/workflows/climb-base-testnet-token-tests.yml'
+permissions:
+  contents: read
+jobs:
+  solidity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: token/climb-bridge/testnet-base
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Fetch exact OpenZeppelin source
+        run: |
+          set -euo pipefail
+          mkdir -p lib/openzeppelin-contracts
+          git -C lib/openzeppelin-contracts init
+          git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+      - name: Compile and run offline Solidity unit tests
+        run: forge test -vv
