@@ -4,6 +4,20 @@ import {rawAmount} from './supply-audit.mjs';
 
 export const CLIMB_SOLANA_MINT = '9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump';
 export const SPL_TOKEN_PROGRAM = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+// Official Token-2022 program ID; support here is observation-only.
+export const TOKEN_2022_PROGRAM = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
+const KNOWN_EXTENSION_TYPES = new Set(['transferFeeConfig','mintCloseAuthority','confidentialTransferMint','defaultAccountState','nonTransferable','interestBearingConfig','permanentDelegate','transferHook','confidentialTransferFeeConfig','metadataPointer','tokenMetadata','groupPointer','tokenGroup','groupMemberPointer','tokenGroupMember','scaledUiAmount','pausableConfig']);
+function extensionSummary(info, program) {
+  if(program===SPL_TOKEN_PROGRAM) {
+    if(info.extensions!==undefined && (!Array.isArray(info.extensions)||info.extensions.length!==0)) throw new Error('NO_GO: unexpected mint extension metadata');
+    return 'LEGACY_NO_EXTENSIONS';
+  }
+  if(info.extensions===undefined) return 'TOKEN_2022_EXTENSIONS_NOT_REPORTED';
+  if(!Array.isArray(info.extensions)||info.extensions.length>128||info.extensions.some(x=>!x||typeof x.extension!=='string')) throw new Error('NO_GO: unexpected mint extension metadata');
+  // Do not print provider-controlled values or claim full extension-state verification.
+  const types=info.extensions.map(x=>KNOWN_EXTENSION_TYPES.has(x.extension)?x.extension:'UNKNOWN_EXTENSION').sort();
+  return 'TOKEN_2022_REPORTED_TYPES:'+JSON.stringify(types);
+}
 const SOLANA_ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const MAX_SLOT_SKEW = 4096;
 
@@ -18,8 +32,10 @@ export function inspectMintReply(reply) {
     throw new Error('NO_GO: missing finalized RPC context slot');
   }
   const value = reply?.value;
-  if (value?.owner !== SPL_TOKEN_PROGRAM || value?.data?.parsed?.type !== 'mint' || value?.data?.program !== 'spl-token') {
-    throw new Error('NO_GO: not an SPL Token Program mint account');
+  const program=value?.owner;
+  const validProgram=(program===SPL_TOKEN_PROGRAM && value?.data?.program==='spl-token') || (program===TOKEN_2022_PROGRAM && value?.data?.program==='spl-token-2022');
+  if (!validProgram || value?.data?.parsed?.type !== 'mint' || value.executable===true) {
+    throw new Error('NO_GO: not a recognized SPL Token or Token-2022 mint account');
   }
   const info = value.data.parsed.info;
   if (info?.isInitialized !== true || info?.decimals !== 6) {
@@ -32,7 +48,8 @@ export function inspectMintReply(reply) {
   return {
     slot: reply.context.slot,
     mint: CLIMB_SOLANA_MINT,
-    program: SPL_TOKEN_PROGRAM,
+    program,
+    extensionTypeSummary: extensionSummary(info,program),
     decimals: 6,
     supplyRaw,
     mintAuthority: validAuthority(info.mintAuthority, 'mintAuthority'),
@@ -44,13 +61,17 @@ export function compareFinalizedMintReplies(first, second) {
   const a = inspectMintReply(first);
   const b = inspectMintReply(second);
   if (Math.abs(a.slot - b.slot) > MAX_SLOT_SKEW) throw new Error('NO_GO: RPCs disagree on finalized slot freshness');
-  for (const key of ['program','decimals','supplyRaw','mintAuthority','freezeAuthority']) {
+  for (const key of ['program','extensionTypeSummary','decimals','supplyRaw','mintAuthority','freezeAuthority']) {
     if (a[key] !== b[key]) throw new Error('NO_GO: independent RPCs disagree on ' + key);
   }
   return {
     assessment: 'DUAL_RPC_FIELDS_MATCH_READ_ONLY',
     bridgeRelease: 'NO_GO',
     mint: CLIMB_SOLANA_MINT,
+    program: a.program,
+    extensionTypeSummary: a.extensionTypeSummary,
+    extensionStateVerified: false,
+    bridgeCompatibility: 'UNVERIFIED',
     decimals: a.decimals,
     supplyRaw: a.supplyRaw,
     supplyUi: (BigInt(a.supplyRaw) / 1000000n).toString() + '.' + (BigInt(a.supplyRaw) % 1000000n).toString().padStart(6,'0'),
