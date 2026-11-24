@@ -1,0 +1,37 @@
+name: CLIMB Devnet Created Test Mint Verification - Read Only
+on:
+  workflow_dispatch:
+    inputs:
+      mint:
+        description: 'New Devnet test mint PUBLIC address'
+        type: string
+        required: true
+      holder:
+        description: 'Dedicated Devnet holder PUBLIC address'
+        type: string
+        required: true
+      phase:
+        description: 'Authority verification stage'
+        type: choice
+        options: [issued, revoked]
+        required: true
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify finalized public mint and ATA
+        env:
+          TEST_MINT: ${{ inputs.mint }}
+          TEST_HOLDER: ${{ inputs.holder }}
+          TEST_PHASE: ${{ inputs.phase }}
+        run: node token/climb-bridge/testnet-solana/verify-created-mint.mjs "$TEST_MINT" "$TEST_HOLDER" "$TEST_PHASE"
