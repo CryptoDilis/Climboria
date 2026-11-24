@@ -90,3 +90,17 @@ test('competing runtime with stale durable revisions cannot acknowledge hit',asy
  assert.equal((await first.readSnapshot(A)).ok,false);
  assert.equal((await second.attack(A,B)).health,495);
 });
+
+
+test('queued movement intent uses copied primitives and ignores unknown session',async()=>{
+ const {create,storage,at}=fixture(),room=create();await joinTwo(room);
+ const gate=storage.holdWrite();
+ const pendingHit=room.attack(A,B);await gate.entered;
+ const packet={x:1,z:0,sequence:0,sprint:false};
+ const input=room.input(B,packet);packet.x=-1;packet.sprint=true;
+ gate.release();assert.ok((await pendingHit).ok);assert.ok((await input).ok);
+ assert.equal((await room.input(C,{x:1,z:0,sequence:0})).reason,'unknown-session');
+ at(40100);assert.ok((await room.tick()).ok);
+ const snapshot=(await room.readSnapshot(B)).snapshot;
+ assert.ok(snapshot.position.x>200);assert.equal(snapshot.stamina,200);
+});
