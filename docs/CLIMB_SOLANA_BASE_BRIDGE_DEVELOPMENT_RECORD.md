@@ -5,6 +5,12 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 17 — core implementation observation preparation (2026-11-24 UTC)
+
+- Extend existing automatic public testnet core workflow: resolve Solana upgradeable program header's linked ProgramData and reread both in one finalized getMultipleAccounts context, validate loader state/ELF prefix/deploy slot, record upgrade authority and SHA256 of every allocated image byte. Compare prior program header digest; ProgramData PDA is not independently derived. For Base Sepolia, read EIP-1967 implementation storage and implementation code at pinned finalized block, recheck block hash. Observations only, not independently authenticated implementation semantics, source/binary parity or audit evidence.
+- Bridge-only regression tests added, no signing or transaction methods. No live result yet. PR/CI pending.
+- **EXACT NEXT:** verify exact head CI and merge if green; inspect automatic implementation report. Then authenticate canonical PDA/proxy implementation and compare audited artifacts, governance and deployment costs. Testnet assets/managers not deployed; mainnet NO_GO.
+
 ## Stage 16 — public NTT testnet core presence SUCCESS (2026-11-24 UTC)
 
 - Automatic [run #45341807340](https://github.com/CryptoDilis/Climboria/actions/runs/45341807340) SUCCESS on merged SHA `85b1a5f4c92a1a65f3526a42e6a5082264878b96`, job `138266975186`. At 06:37:23 UTC Solana public devnet genesis matched pinned SDK; core `3u8hJUVTA4jH1wYAyUur7FFZVQ8H635K3tSHHF4ssjQ5` executable under upgradeable BPF loader at finalized slot 525702512, program account SHA256 `605d2076ca5a27b96400e470c5fb6f3fe35ec78f1dbb5fab030b1bb625b35297`. Base Sepolia chain ID 84532 and core `0x79A1027a6A159502049F10906D333EC57E95F083` bytecode present at finalized block `0x3bfb855`, block hash `0x7081d1684c11b152ddd435897a80cc1634b7f88c6e4960c1d94540e32b44b316`, code SHA256 `0a412346ad046a87cdf6fe417f26f3185579a1b1ce3af5251048ba0232c56168`.
