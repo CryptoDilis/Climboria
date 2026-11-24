@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME CHECKPOINT STORAGE FOUNDATION + CONSOLIDATED COMBAT CI — 2026-11-24 PHT (ISOLATED, NOT LIVE)
+
+- [PR #692](https://github.com/CryptoDilis/Climboria/pull/692) adds validated versioned private checkpoint codec, server-only lifecycle export/restore, and a Durable Object transactional adapter for atomic revision-checked account batches. Commits `0ff698841130f4d3da85ab73032ec09eacac1e3a`, `8fb93e45928dc8da65f647de7c6f5b77b60fc58a`, `f5f982fb44f691a615ece999bd02732a5b2a7eb9`, tests `2d4b50de5331272a02b6608aa1881e72a9e31070`, `39f3b205f4c55fa182c2c7819c94a4ec09f5df47`, CI `01d0ea073ac4c797f08893e0b3a53a3e89dd968d`. Six extra tests for codec, storage CAS, concurrent updates, rollback, corruption and fresh-server restoration. No actual production write/load orchestration: adapter is not integrated with live Worker, and actual durable storage is not yet verified.
+- Consolidate movement #687 and HP/checkpoint #692 into #692 based on latest main `bde05240b7161e730097d24efb9ce8a3e23ed7fd`; preserve all non-Game workstream files. #687 prior exact head remains 3/4 green, Gameplay #45340433474 executing at last check. Retarget #692 to main so the whole combined branch receives Game CI, rather than leave HP/checkpoint tests untriggered on stacked base. Do not merge both PRs independently; prefer verified #692 and close #687 only after combined code inclusion is proven.
+- **EXACT NEXT:** Verify #692 exact-head Game Authority/Gateway/Validate/Gameplay checks and fix any failures; merge if green and mergeable. Then confirm actual reviewed map collision/walkability coverage and transactional live gateway orchestration (atomic save before acknowledging damage, fail closed on storage failure, restore before authenticated join). Actual public two-account QA still pending. No live damage or non-Game workstream changes.
+
+---
+
 ## GAME COMBAT RECONNECT HARDENING — 2026-11-24 PHT (ISOLATED, NOT LIVE)
 
 - [PR #692](https://github.com/CryptoDilis/Climboria/pull/692) now includes private server movement checkpoint restoration on authenticated account reconnect (position, stamina, exhausted/downed), revalidates the saved location against reviewed terrain/collision with no spawn fallback, and denies melee when current ground verification fails even within snapshot freshness window. Changes `3e646c30691b9108f80a94e2bb3a5029d860eb99`, `68ed7e8d191abbc4cddd4aa14ced8af2bdda6279`; three new integration tests `9ed1d0290df72e983e25ceeb1a10fd9e90cc1aee`. HP and death timer retained across session changes in same process only; persistent account state and live wiring remain unimplemented.

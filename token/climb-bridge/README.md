@@ -39,7 +39,7 @@ node token/climb-bridge/mint-inspect-cli.mjs
 node --test token/climb-bridge/*.test.mjs
 ```
 
-This inspects the **exact original CLIMB mint** with Solana `getAccountInfo` using `jsonParsed` and `finalized`, enforcing the legacy SPL Token Program, 6 decimals, initialized mint, integer supply, explicit mint/freeze authority states, and agreement between providers with bounded slot skew. No API secrets are printed. Distinct RPC **hostnames** do not prove independent companies or infrastructure; confirm that manually. Conflicts reject, not average.
+This inspects the **exact original CLIMB mint** with Solana `getAccountInfo` using `jsonParsed` and `finalized`, enforcing the exact recognized legacy SPL Token or Token-2022 owner/parser pairing, 6 decimals, initialized mint, integer supply, explicit mint/freeze authority states, and agreement between providers with bounded slot skew. No API secrets are printed. Distinct RPC **hostnames** do not prove independent companies or infrastructure; confirm that manually. Conflicts reject, not average.
 
 A successful read only confirms two reported finalized observations at their slots. Presence of any mint/freeze authority must be documented and assessed; absence does **not** establish bridge readiness or all downstream restrictions. Token liquidity, pump.fun/pumpswap market status, escrow compatibility, manager deployment, protocol code/audits, and approved bridge routes remain separate verification tasks.
 
@@ -112,3 +112,10 @@ Then open `Actions → CLIMB Mint Authority - Manual Read-only Evidence → Run 
 5. Approve deployment gas and signer authorization; perform a tiny production bridge roundtrip; verify transaction receipts, onchain contract addresses and escrow proof, check zero unbacked minting. Only then publish official Base CA and enable website/DEX support. Liquidity is an independent funded and opt-in step.
 
 **Not allowed in this change:** touching existing DEX/Swap, Game, ClimbX, Launchpad, production Cloudflare config, deploying contracts, overriding token authorities or using a fabricated Base CA.
+
+## Token program discovery (2026-11-24)
+
+The legacy-only read-only mint inspector rejected two live attempts. The inspector now accepts only matching official legacy SPL Token and Token-2022 owner/parser pairs for the exact CLIMB mint, reports the observed program and a bounded summary of reported extension types, and compares these across RPCs. It does not verify extension state, unknown extension semantics or bridge compatibility. Missing extension metadata is explicitly not reported, not proof of absence. The legacy-only escrow/supply audit configuration is deliberately unchanged; do not configure it or deploy a bridge until the actual token program and extensions are verified and a compatible provider is reviewed. No Base CA or bridge authorization.
+
+## Raw Token-2022 mint extension evidence (2026-11-24)
+The manual CLI now also collects finalized base64 mint bytes from both configured RPCs, validates the strict metadata-only layout against pinned official Token-2022 and token-metadata source, requires the pointer and embedded mint to match the original CLIMB mint, checks parsed supply/authorities, and compares full raw account SHA-256 digests. Only bounded public authority/slot/digest fields are logged; name, symbol, URI, additional metadata and raw bytes are not printed. Unknown/duplicate extensions, malformed layouts, external pointers or changed bytes fail closed. This conservative evidence is not a provider audit or proof of bridge transferability; legacy escrow monitor stays disabled. Run the same manual workflow on latest main after merge.
