@@ -266,8 +266,8 @@ export function sampleJarrellDryTerrainFootprint(x,z,{radius=.4,maxGrade=1}={}){
  if(Math.hypot(x-POI.cave.x,z-POI.cave.z)<=420+radius)return null;
  if(!valid(x-radius,z-radius)||!valid(x+radius,z+radius))return null;
  const step=TERRAIN_STEP;
- const minX=Math.floor((x-radius)/step),maxX=Math.floor((x+radius)/step);
- const minZ=Math.floor((z-radius)/step),maxZ=Math.floor((z+radius)/step);
+ const minX=Math.ceil((x-radius)/step)-1,maxX=Math.floor((x+radius)/step);
+ const minZ=Math.ceil((z-radius)/step)-1,maxZ=Math.floor((z+radius)/step);
  for(let ix=minX;ix<=maxX;ix++)for(let iz=minZ;iz<=maxZ;iz++){
   const a=heightAt(ix*step,iz*step),b=heightAt((ix+1)*step,iz*step);
   const c=heightAt(ix*step,(iz+1)*step),d=heightAt((ix+1)*step,(iz+1)*step);
