@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME PRIVATE PREVIEW TICKET STORAGE — 2026-11-24 PHT (ISOLATED)
+
+- #714 adds `game/multiplayer/worker/preview-ticket-store.mjs` (`fa4110aa3ae9b43f8b5a9b1ec0e4a019a04feb20`): random 256-bit single-use credentials stored only as SHA-256 keys, separate preview-room namespace, 30-second expiry, atomic consume/delete, atomic 32-room/2-account pending caps, bounded listing and storage failure handling. Issuance is server-only and requires caller-authenticated UUID; no production ticket compatibility, endpoint, or real authentication service integration.
+- Five added storage/admission regression tests `306dd5130c6d0b88d1b01ec56ae3b19f6d03fdd3`, covering replay concurrency, hashed storage, expiry, account/room caps, namespace, storage outage and gateway identity binding. CI filter/test invocation `1c26685f8b959aacaad3c4ad60643304eddacd5d`. Mock transactional storage, not a deployed Durable Object acceptance test.
+- **EXACT NEXT:** Verify #706 exact-head Game CI and merge if all green; reconcile #714 onto latest main and verify fresh CI. Next isolated preview Worker with separate DO binding and access-controlled server auth, bounded scheduler and persistence budget, actual map and two-account testing. Production gateway unchanged; no live damage or other workstreams.
+
+---
+
 ## GAME TRANSACTIONAL AUTHENTICATED GATEWAY PREVIEW — 2026-11-24 PHT (ISOLATED)
 
 - Stacked follow-up on #706 head `a8f0b7cfc5d2172ae8d37007515fe5ae94be844a`: server-only gateway preview bridge `game/multiplayer/worker/transactional-gateway-preview.mjs` (`b04a398a96e60f731299332c252c0b95bc7448cc`). Requires injected atomic verified one-use ticket consumer from separate preview namespace; binds admitted Supabase UUID and generated session capability, exact packet field allowlists, UTF-8 byte and rate limits, close/reconnect isolation. Browser cannot set actor/account identity, position, HP, damage, room, or checkpoint. Existing production Worker untouched, no actual ticket service/deployment, no live damage. Four integration tests use mock ticket consumer and real transactional runtime (`9c51a6db8363ed5fea60cbbcf61f9ed4db55708c`); CI filters and test invocation (`88bb5e1d0ee42094aa370c6aff82a97297a4f560`).
