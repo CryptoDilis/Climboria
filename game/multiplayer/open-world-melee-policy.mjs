@@ -11,6 +11,12 @@ const finite=Number.isFinite;
 const idOk=id=>typeof id==='string'&&/^[a-zA-Z0-9_-]{16,100}$/.test(id);
 const pointOk=p=>p&&['x','y','z'].every(k=>finite(p[k])&&Math.abs(p[k])<50000);
 const deny=reason=>({ok:false,reason});
+// Legacy room spawn protection is centered at (0,-30), but the authored
+// Sanctuary POI is (0,-90), radius 60. Preserve both until a single reviewed
+// map-derived combat boundary is available; conservatively include edges.
+const protectedSanctuary=p=>inSanctuarySafeZone(p)||
+ Math.hypot(p.x-ROOM_RULES.safeZone.x,p.z-ROOM_RULES.safeZone.z)<=ROOM_RULES.safeZone.radius||
+ Math.hypot(p.x,p.z+90)<=60;
 export function authorizeOpenWorldMelee({
  actor,target,nowMs,lastAttackAtMs=null,
  resolveTrustedPosition=()=>null,hasClearMeleePath=()=>false
@@ -35,7 +41,7 @@ export function authorizeOpenWorldMelee({
   pointOk(s.position)&&finite(s.observedAtMs)&&s.observedAtMs>=0&&
   s.observedAtMs<=nowMs&&nowMs-s.observedAtMs<=ROOM_RULES.maxAcceptedMoveAgeMs;
  if(!verified(a,actor)||!verified(b,target))return deny('untrusted-terrain-position');
- if(inSanctuarySafeZone(a.position)||inSanctuarySafeZone(b.position))
+ if(protectedSanctuary(a.position)||protectedSanctuary(b.position))
   return deny('sanctuary-pvp-disabled');
  const distance=Math.hypot(a.position.x-b.position.x,a.position.y-b.position.y,a.position.z-b.position.z);
  if(distance>ROOM_RULES.meleeRangeMeters)return deny('target-out-of-range');
