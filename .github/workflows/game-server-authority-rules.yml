@@ -18,6 +18,8 @@ on:
       - "game/multiplayer/jarrell-cave-wall-inventory.test.mjs"
       - "game/multiplayer/jarrell-terrain-reference.mjs"
       - "game/multiplayer/jarrell-terrain-reference.test.mjs"
+      - "game/multiplayer/server-ground-movement.mjs"
+      - "game/multiplayer/server-ground-movement.test.mjs"
       - "game/play.html"
       - ".github/workflows/game-server-authority-rules.yml"
   workflow_dispatch:
