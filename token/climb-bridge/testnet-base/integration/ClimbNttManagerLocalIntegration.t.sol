@@ -8,6 +8,7 @@ import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC19
 import {NttManager} from "../src/NttManager/NttManager.sol";
 import {IManagerBase} from "../src/interfaces/IManagerBase.sol";
 import {TransceiverStructs} from "../src/libraries/TransceiverStructs.sol";
+import {PausableUpgradeable} from "../src/libraries/PausableUpgradeable.sol";
 import {TrimmedAmountLib} from "../src/libraries/TrimmedAmount.sol";
 import {DummyTransceiver} from "./mocks/DummyTransceiver.sol";
 import {ClimbTestnetToken} from "../src/ClimbTestnetToken.sol";
@@ -93,12 +94,15 @@ contract ClimbNttManagerLocalIntegrationTest is Test {
     function testPausedManagerCannotMintOrBurnThroughTransfer() public {
         mockAttest(message(3, 1e6));
         manager.pause();
-        vm.expectRevert();
+        assertTrue(manager.isPaused());
+        // Build the payload before arming prank/expectRevert: encoding calls a linked library.
+        TransceiverStructs.NttManagerMessage memory pausedMessage = message(4, 1e6);
+        vm.expectRevert(PausableUpgradeable.RequireContractIsNotPaused.selector);
         vm.prank(address(transceiver));
-        manager.attestationReceived(SOLANA, MOCK_SOLANA_MANAGER, message(4, 1e6));
+        manager.attestationReceived(SOLANA, MOCK_SOLANA_MANAGER, pausedMessage);
         vm.startPrank(USER);
         token.approve(address(manager), 1e6);
-        vm.expectRevert();
+        vm.expectRevert(PausableUpgradeable.RequireContractIsNotPaused.selector);
         manager.transfer(1e6, SOLANA, bytes32(uint256(0xABCD)));
         vm.stopPrank();
         assertEq(token.balanceOf(USER), 1e6);
