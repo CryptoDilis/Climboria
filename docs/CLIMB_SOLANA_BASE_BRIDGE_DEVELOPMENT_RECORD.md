@@ -5,6 +5,11 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 21 — actual Solana Devnet mint storage rent SUCCESS (2026-11-24 UTC)
+
+- Automatic [workflow #45345180913](https://github.com/CryptoDilis/Climboria/actions/runs/45345180913) SUCCESS on merged SHA `0b87fdbb429d20fe3f1417849453f91f285c9384`, job `138277912342`; 07:04:40 UTC. Pinned public Devnet genesis matched. Initial 234-byte mint rent 1,838,960 lamports; final 391-byte mint 2,636,520 lamports; metadata top-up 797,560; illustrative 170-byte ATA 1,513,840; final mint + one ATA 4,150,360 lamports (0.00415036 Devnet SOL). This is storage funding only, not transaction fees, NTT manager/program deployment costs or mainnet budget. No token created.
+- **EXACT NEXT:** prepare a concrete operator-run testnet asset creation procedure with separate faucet-funded wallets and verified CLI/contract tooling. Validate exact NTT candidate deployment artifacts and governance before manager deployment; estimate real deployment fees separately. No private keys in repo or chat, no mainnet spending, no real CLIMB transfer.
+
 ## Stage 20 — matching Solana Devnet test mint preparation (2026-11-24 UTC)
 
 - Reviewed official Token-2022 CLI source at `e8ca680ca8aeb12f9598524b003c776c6a4168f2`, `clients/cli/src/command.rs`: enable_metadata sets self metadata pointer; metadata init includes rent transfer; metadata/pointer authority types supported. Created distinct test mint spec: six decimals, 1,000 test units, metadata-only extensions, no freeze authority, issue test supply then revoke mint/metadata/pointer authorities. No actual mint, private keys or transaction submission.
