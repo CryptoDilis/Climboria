@@ -96,7 +96,7 @@ test('authored fixed collision inventory covers all current fixed registration p
  assert.equal([...browser.matchAll(/parkFixtureSolids\.push\(/g)].length,3);
 });
 test('forest candidates preserve exact authored search and GLB-dependent radii',()=>{
- assert.equal(section(server,'function findCC0ForestSpots(','export function authoredJarrellForestColliderCandidates'),section(browser,'function findCC0ForestSpots(','function placeCC0ForestModel('));
+ assert.equal(section(server,'function findCC0ForestSpots(','export function authoredJarrellForestColliderCandidates'),section(browser,'function findCC0ForestSpots(','// Register collision independently'));
  const parts=[
   section(browser,'const hash=(x,y)=>','function waterBodyAt(x,z){'),
   'POI.cave.h=heightAt(POI.cave.x,POI.cave.z);caveG={position:{x:POI.cave.x,y:POI.cave.h,z:POI.cave.z},rotation:{y:Math.atan2(-POI.cave.x,-POI.cave.z)}};',
@@ -104,11 +104,47 @@ test('forest candidates preserve exact authored search and GLB-dependent radii',
   section(browser,'const nearPOI=(x,z)=>','function biome'),
   section(browser,'function shoreClear(x,z,h){','function props(cx,cz,out){'),
   section(browser,'const cc0ForestDefinitions=','const cc0ForestLoaded='),
-  section(browser,'function findCC0ForestSpots(','function placeCC0ForestModel('),
+  section(browser,'function findCC0ForestSpots(','// Register collision independently'),
   "JSON.stringify([[cc0TreeSpots,'buttress'],[cc0CanopySpots,'canopy'],[cc0LogSpots,'fallenLog']].flatMap(([spots,kind])=>spots.map(({x,z})=>({x,z,r:cc0ForestDefinitions[kind].collider,kind}))))"
  ];
  const expected=JSON.parse(runInNewContext(parts.join('\n'),{},{timeout:10000}));
  assert.ok(expected.length>0);
  assert.deepEqual(authoredJarrellForestColliderCandidates(),expected);
- assert.ok(browser.includes('if(def.collider>0)solid(spot.x,spot.z,def.collider)'));
+ assert.ok(browser.includes('if(def.collider<=0)return []'));
+ assert.ok(browser.includes('solid(spot.x,spot.z,def.collider)'));
+});
+
+
+test('browser forest colliders register once before loading and visible fallback survives failure',()=>{
+ const source=section(browser,'function registerCC0ForestColliders(','loadCC0ForestModel(\'buttress\',cc0TreeSpots);');
+ const harness=`
+ const circles=[],objects=[],pending=[],warnings=[];
+ class Group {
+  position={set(){}};rotation={};scale={setScalar(){}};
+  traverse(){};clone(){return new Group()}
+ }
+ const T3={Group,GLTFLoader:class{load(url,ok,progress,fail){pending.push({ok,fail})}}};
+ const scene={add(g){objects.push(g)},remove(g){objects.splice(objects.indexOf(g),1)}};
+ const cc0ForestDefinitions={buttress:{url:'a',collider:2.15,scale:.92},undergrowth:{url:'b',collider:0,scale:1},fallenLog:{url:'c',collider:1.15,scale:.9}};
+ const cc0ForestLoaded=new Map(),solid=(x,z,r)=>circles.push({x,z,r});
+ const CYL={},SPH={},M=()=>null,mk=()=>new Group(),sc=x=>x;
+ const console={warn(...args){warnings.push(args.length)}};
+ `;
+ const assertions=`
+ const spots=[{x:10,z:20,h:5},{x:30,z:40,h:8}];
+ loadCC0ForestModel('buttress',spots);
+ const before=JSON.stringify(circles);
+ const beforeFallback=objects.filter(o=>o.name.startsWith('Climboria_ForestFallback_')).length;
+ pending[0].ok({scene:new Group()});
+ const after=JSON.stringify(circles);
+ const afterFallback=objects.filter(o=>o.name.startsWith('Climboria_ForestFallback_')).length;
+ const glbs=objects.filter(o=>o.name.startsWith('Climboria_CC0_')).length;
+ loadCC0ForestModel('fallenLog',spots);pending[1].fail(new Error('offline'));
+ loadCC0ForestModel('undergrowth',spots);
+ JSON.stringify({before,after,beforeFallback,afterFallback,glbs,failedFallback:objects.filter(o=>o.name.startsWith('Climboria_ForestFallback_')).length,circleCount:circles.length,warnings:warnings.length});
+ `;
+ const result=JSON.parse(runInNewContext([harness,source,assertions].join('\n'),{},{timeout:1000}));
+ assert.equal(result.before,result.after);assert.equal(result.beforeFallback,2);
+ assert.equal(result.afterFallback,0);assert.equal(result.glbs,2);
+ assert.equal(result.failedFallback,2);assert.equal(result.circleCount,4);assert.equal(result.warnings,1);
 });
