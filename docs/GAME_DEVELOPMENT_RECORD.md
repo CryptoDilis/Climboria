@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME FOREST COLLISION REGISTRATION CONSISTENCY — 2026-11-24 PHT (NOT DEPLOYED)
+
+- [PR #698](https://github.com/CryptoDilis/Climboria/pull/698) reconciled onto main `9f31344fd4ee6928037baee0f39f9c9a16220f7f` (reconcile commit `c883706ad617a9f0bf5b6e1f557c711eba6c8ab7`). Browser now registers the authored forest solid circles before asynchronous GLB loading and displays lightweight primitive fallback meshes until each asset successfully replaces its fallback. Failed downloads keep a visible obstacle with the same collider; no duplicate collider registration on success, zero-radius undergrowth remains visual only. Implementation `bf2b7305ea5d5449651c096c58457431b268ac47`; source parity and mocked loader success/failure regression test `5577c440f77472ca44af7b752121b391c62ea157`.
+- Previous consolidated #692 merged at `76244ffe7a5ffe3e7e73a73efcfcd4ee89f78411`, all four exact-head Game checks green; superseded #687 closed after verified code inclusion. Fresh #698 CI required because browser runtime changes now included. No live Worker deployment or PvP activation.
+- **EXACT NEXT:** Verify actual latest-head Game Authority, Gateway, Validate and desktop/mobile Gameplay CI; inspect and correct failures, confirm no visual regression, then merge only if green. Next independently verify cave wall vertical/swept coverage and ground walkability, integrate a reviewed map provider with durable transactional gateway, and perform public two-account QA. Do not treat horizontal inventory as complete authority. Game only.
+
+---
+
 ## GAME CONSOLIDATED COMBAT FOUNDATION MERGED — 2026-11-24 PHT
 
 - [PR #692](https://github.com/CryptoDilis/Climboria/pull/692) MERGED at `76244ffe7a5ffe3e7e73a73efcfcd4ee89f78411`, exact tested head `945ee8d1ba2175e40a177bbd000119af084d0ed6`. CI SUCCESS: [Authority #45341651260](https://github.com/CryptoDilis/Climboria/actions/runs/45341651260), [Gateway #45341651098](https://github.com/CryptoDilis/Climboria/actions/runs/45341651098), [Validate #45341651103](https://github.com/CryptoDilis/Climboria/actions/runs/45341651103), [Gameplay #45341651118](https://github.com/CryptoDilis/Climboria/actions/runs/45341651118). Verified merged movement, test, HP and storage blobs equal tested head. Superseded #687 closed after checking inclusion.
