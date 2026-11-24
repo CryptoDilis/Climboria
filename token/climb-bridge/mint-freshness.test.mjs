@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  inspectFreshIndependentMints, sampleFinalizedMint, validateMintFreshness,compareFreshSamples, verifyExpectedGenesis
+  inspectFreshIndependentMints, sampleFinalizedMint, validateMintFreshness,compareFreshSamples, verifyExpectedGenesis, safeMintEvidenceError
 } from './mint-freshness.mjs';
 import {CLIMB_SOLANA_MINT,SPL_TOKEN_PROGRAM} from './mint-inspect.mjs';
 
@@ -119,4 +119,30 @@ test('operator-provided mainnet genesis reference comparison is fail-closed',()=
   assert.throws(()=>verifyExpectedGenesis('',GENESIS),/trusted mainnet genesis reference/);
   assert.throws(()=>verifyExpectedGenesis('bad genesis with spaces',GENESIS),/trusted mainnet genesis reference/);
   assert.throws(()=>verifyExpectedGenesis(GENESIS,'not a valid genesis'),/reported genesis does not match/);
+});
+
+
+test('RPC diagnostics identify provider and method without echoing upstream credentials',async()=>{
+  const secret='https://private.invalid/secret-api-key';
+  for(const [reason, response] of [
+    ['transport failure',()=>{throw new Error(secret)}],
+    ['HTTP authentication denied',()=>({ok:false,status:403})],
+    ['HTTP rate limited',()=>({ok:false,status:429})],
+    ['HTTP unavailable',()=>({ok:false,status:503})],
+    ['invalid JSON response',()=>({ok:true,json:async()=>{throw new Error(secret)}})],
+    ['JSON-RPC error or missing result',()=>({ok:true,json:async()=>({error:{message:secret}})})],
+  ]) {
+    const {mockFetch}=fixture();
+    await assert.rejects(inspectFreshIndependentMints(A,B,async(url,opts)=>{
+      if(url===B && JSON.parse(opts.body).method==='getAccountInfo') return response();
+      return mockFetch(url,opts);
+    }),error=>{
+      const diagnostic=safeMintEvidenceError(error);
+      assert.equal(diagnostic,'NO_GO: RPC B getAccountInfo — '+reason);
+      assert(!diagnostic.includes(secret));
+      return true;
+    });
+  }
+  assert.equal(safeMintEvidenceError(new Error(secret)),'NO_GO: finalized mint verification failed (RPC details redacted)');
+  assert.equal(safeMintEvidenceError(new Error('NO_GO: not an SPL Token Program mint account')),'NO_GO: not an SPL Token Program mint account');
 });

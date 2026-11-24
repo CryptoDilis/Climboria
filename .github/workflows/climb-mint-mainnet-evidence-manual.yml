@@ -23,25 +23,25 @@ jobs:
       - name: Check required read-only RPC inputs
         shell: bash
         env:
-          CLIMB_SOLANA_RPC_A_URL: ${{ secrets.CLIMB_SOLANA_RPC_A_URL }}
-          CLIMB_SOLANA_RPC_B_URL: ${{ secrets.CLIMB_SOLANA_RPC_B_URL }}
-          CLIMB_SOLANA_MAINNET_GENESIS_HASH: ${{ vars.CLIMB_SOLANA_MAINNET_GENESIS_HASH }}
+          CLIMB_SOLANA_RPC_A_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL }}
+          CLIMB_SOLANA_RPC_B_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL_SECONDARY }}
+          CLIMB_SOLANA_MAINNET_GENESIS_HASH: ${{ vars.CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH }}
         run: |
           set -euo pipefail
           if [[ -z "$CLIMB_SOLANA_RPC_A_URL" || -z "$CLIMB_SOLANA_RPC_B_URL" ]]; then
-            echo 'NO_GO: configure two private read-only Solana RPC URL secrets from independently operated providers'
+            echo 'NO_GO: configure existing CLIMBORIA_SOLANA_RPC_URL and CLIMBORIA_SOLANA_RPC_URL_SECONDARY secrets from independent providers'
             exit 1
           fi
           if [[ -z "$CLIMB_SOLANA_MAINNET_GENESIS_HASH" ]]; then
-            echo 'NO_GO: configure CLIMB_SOLANA_MAINNET_GENESIS_HASH as a public repo variable, sourced independently from official network docs'
+            echo 'NO_GO: configure CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH as a public repo variable, sourced independently from official network docs'
             exit 1
           fi
       - name: Collect sanitized finalized CLIMB mint evidence
         shell: bash
         env:
-          CLIMB_SOLANA_RPC_A_URL: ${{ secrets.CLIMB_SOLANA_RPC_A_URL }}
-          CLIMB_SOLANA_RPC_B_URL: ${{ secrets.CLIMB_SOLANA_RPC_B_URL }}
-          CLIMB_SOLANA_MAINNET_GENESIS_HASH: ${{ vars.CLIMB_SOLANA_MAINNET_GENESIS_HASH }}
+          CLIMB_SOLANA_RPC_A_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL }}
+          CLIMB_SOLANA_RPC_B_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL_SECONDARY }}
+          CLIMB_SOLANA_MAINNET_GENESIS_HASH: ${{ vars.CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH }}
         run: |
           set -euo pipefail
           node token/climb-bridge/mint-inspect-cli.mjs > "$RUNNER_TEMP/climb-mint-evidence.txt"

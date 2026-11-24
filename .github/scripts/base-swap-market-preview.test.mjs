@@ -189,3 +189,48 @@ test("DEX Base lists expose only exact-contract in-site inspect navigation", () 
   assert.ok(swap.includes("u.searchParams.delete('contract')"));
   assert.ok(swap.includes("$('getQuote').disabled=isBase"));
 });
+
+test("Base DEX rejects malformed pool identities and renders unavailable metrics without fake zero", async () => {
+  const { runInNewContext } = await import("node:vm");
+  const html=readFileSync(new URL("../../dex/index.html",import.meta.url),"utf8");
+  const numberSource=html.slice(html.indexOf("const reportedPoolNumber="),html.indexOf("const esc=s=>"));
+  const baseSource=html.slice(html.indexOf("function validBaseMarketPair("),html.indexOf("async function load(){"));
+  const nodes=Object.fromEntries(["baseSearch","baseSort","baseCoverage","baseRows","baseMobileCards","mobileBaseMore"].map(id=>[id,{value:"",innerHTML:"",textContent:""}]));
+  const valid=pair({priceUsd:" ",volume:{h24:false},liquidity:{usd:-1},priceChange:{h24:" "}});
+  const second=pair({pairAddress:POOL_B,priceChange:{h24:0},volume:{h24:0}});
+  let fail=false;
+  const ctx={nodes,window:{matchMedia:()=>({matches:false})},get:async()=>{
+    if(fail)throw Error("offline");
+    return {pairs:[valid,{...valid,pairAddress:"0x"+ "C".repeat(40)},second,pair({chainId:"ethereum"}),pair({pairAddress:"bad"}),pair({quoteToken:{address:"USDC"}}),pair({baseToken:{address:"invalid"}})]};
+  }};
+  runInNewContext(`
+    let basePairs=[],baseBusy=false,baseLoadError=null,basePartialFailures=0,baseMode="trending",baseMarketLimit=12;
+    const $=id=>nodes[id];
+    const esc=s=>String(s??"");
+    const price=n=>Number.isFinite(n)?"$"+n:"—";
+    const fmt=price;
+    const pairAge=n=>String(n);
+    `+numberSource+baseSource+`
+    globalThis.api={loadBaseMarkets,renderBaseMarkets,validBaseMarketPair,baseMetric,compareBaseMetric,count:()=>basePairs.length};
+  `,ctx);
+  const api=ctx.api;
+  assert.equal(api.validBaseMarketPair(valid),true);
+  assert.equal(api.validBaseMarketPair(pair({pairAddress:"bad"})),false);
+  assert.equal(api.validBaseMarketPair(pair({chainId:"ethereum"})),false);
+  for(const k of ["price","change","volume","liquidity","age"]) assert.ok(Number.isNaN(api.baseMetric(valid,k)),k);
+  assert.equal(api.baseMetric(second,"change"),0);
+  assert.equal(api.baseMetric(second,"volume"),0);
+  assert.equal(api.compareBaseMetric("volume",-1)(valid,valid),0);
+  assert.equal(api.compareBaseMetric("volume",1)(valid,second),1);
+  await api.loadBaseMarkets();
+  assert.equal(api.count(),2,"reject invalid addresses and deduplicate casing");
+  assert.ok(nodes.baseRows.innerHTML.includes("https://dexscreener.com/base/"+POOL_A));
+  assert.ok(nodes.baseMobileCards.innerHTML.includes("https://dexscreener.com/base/"+POOL_A));
+  assert.ok(nodes.baseRows.innerHTML.includes("N/A"));
+  assert.ok(nodes.baseMobileCards.innerHTML.includes("24h Vol — · Liq —"));
+  assert.ok(nodes.baseRows.innerHTML.includes("0.00%"));
+  fail=true;
+  await api.loadBaseMarkets();
+  api.renderBaseMarkets();
+  assert.match(nodes.baseCoverage.textContent,/Refresh failed/);
+});

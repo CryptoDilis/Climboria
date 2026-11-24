@@ -1,10 +1,36 @@
 # Climboria Game Development Record
 
+## GAME TERRAIN REFERENCE + CONSOLIDATED COMBAT PR — 2026-11-24 PHT (NOT LIVE)
+
+- Consolidate Game-only [#680](https://github.com/CryptoDilis/Climboria/pull/680) head `c45df4991f47c53343d33d6e9269717efaa26b55` and [#683](https://github.com/CryptoDilis/Climboria/pull/683) head `80d89553a38fb907fec6245122a1531676813c76` on #683 using current main `14c044f17c227cc51446a7f7edadccbd29044e81` as the base tree, retaining all other workstream files. No production runtime or live Worker change.
+- New deterministic `jarrell-terrain-reference.mjs` mirrors current `game/play.html` authored terrain noise, water basin carving, POI flattening, cave coastal route, cave floor overrides and 5m triangle interpolation; four tests check exact source parity, both triangles, authored cave/coast, invalid samples. This supplies height samples only, not complete authoritative movement or collision. Preserve prior 49 authored wall segments, geometry and melee policy with Sanctuary union protection.
+- At prior exact heads #680 and corrected #683, Authority, Gateway and Validate passed; Gameplay still running at check. **Consolidated head requires fresh CI.** Exact next: verify consolidated PR #683 changed filenames and all head checks; merge only if green and mergeable, then close superseded #680 after confirming its code included. Continue reviewed map vertical/solid coverage and authoritative movement + HP lifecycle integration; separate real two-account QA remains pending. No DEX/Swap/Launchpad/ClimbX edits, no live damage or deployment.
+
+---
+
 ## GAME QA HANDOFF — PR #674 MERGED (2026-11-24 PHT)
 
 - **Verified merge:** [PR #674](https://github.com/CryptoDilis/Climboria/pull/674) squash merged at `16c40483358ab6462034f55b50bb2b890afb0bff`, exact head `3b72e0c1b0e91e07b58ff5fbe61482a581faac10`. All three reported PR workflows completed SUCCESS: [Gameplay #44431113210](https://github.com/CryptoDilis/Climboria/actions/runs/44431113210), [Room Gateway #44431113273](https://github.com/CryptoDilis/Climboria/actions/runs/44431113273), [Validate #44431113342](https://github.com/CryptoDilis/Climboria/actions/runs/44431113342). Four changed paths inspected: this record, worker STAGING_READINESS.md, e2e-real-game-ui.mjs and its contract test. QA selector fix only; no runtime change.
 - **Worker deployment already successful:** rechecked individual job steps in [#44429603814](https://github.com/CryptoDilis/Climboria/actions/runs/44429603814), including strict deployed Nearby capability and DO readiness; all successful. No redeploy needed for #674.
 - **EXACT NEXT:** Perform actual public-site two distinct registered QA accounts using private approved runner or owner browser sessions; check reciprocal avatars/movement, ONLINE: 2, World Chat, Nearby <=20m speech bubble and >20m denial, same-position logout/login, guest save denial, mobile HUD and physical Android FPS. Do not share credentials. Actual two-account run and postmerge CI not verified in this session. If real QA cannot be performed, proceed separately with Game-only regression/authority test coverage; do not enable PvP HP, theft, loot or wallet actions without separately validated server authority. Record outcomes here and issue #657. No DEX/Swap/Launchpad/ClimbX edits.
+
+---
+
+## GAME AUTHORED MAP COLLISION INVENTORY + SANCTUARY FIX — 2026-11-24 PHT (NOT LIVE)
+
+- **CI follow-up:** #683 first inventory-head Authority #45336982727 and Gateway #45336982752 failed; Authority job log identified test expected coastal collider length 269m rather than actual 257m (start -50, end -313+6=-307). Fixed only the incorrect test expectation in new #683 head `946081c577c20582352875cae4b65aec0cfab7e5`; fresh CI required. #680 latest head Authority #45337008427 and Gateway #45337008397 succeeded; remaining workflows not yet complete. Do not merge on old-head results.
+
+- [PR #683](https://github.com/CryptoDilis/Climboria/pull/683) advanced to head `f85dad39c29e353cb280ecbaa153cb1f0e6c61dc`: extracted all 47 literal authored cave wall segments and two generated coastal tunnel segments from current `game/play.html` (49 total). Added `jarrell-cave-wall-inventory.mjs` and three source-parity/rigid-transform tests; CI runs on map changes. Actual map X/Z endpoints, wall thicknesses, labels and coastal metadata retained. This is partial geometry only; no vertical extent, full terrain, dynamic props, player simulation, or live authority claimed.
+- [PR #680](https://github.com/CryptoDilis/Climboria/pull/680) advanced to head `c45df4991f47c53343d33d6e9269717efaa26b55`: discovered actual Sanctuary map POI (0,-90), radius 60, differs from legacy combat spawn zone (0,-30), radius 74. New isolated open-world policy conservatively protects union of both including boundaries; added ninth regression test. No runtime or legacy duel changes. Old head CI not applicable to new heads.
+- **EXACT NEXT:** Check all applicable workflows on both new exact heads, repair red checks, resolve branch conflicts/retest if necessary, merge green #680 then #683. Next implement reviewed vertical collision data and heightfield/terrain coverage from actual map, independently server-integrated movement, then isolated HP lifecycle. Do not treat cave inventory alone as full collision authority. Two real registered account QA remains pending. Game only.
+
+---
+
+## GAME SERVER COLLISION FOUNDATION — 2026-11-24 PHT (NOT LIVE)
+
+- [PR #683](https://github.com/CryptoDilis/Climboria/pull/683) opened from main, branch `game/server-collision-geometry-20261124`, exact head `1da6cedcfdcbbb1854c623ae620c74640033c3fc`. New Game-only `server-collision-region.mjs` + five tests and authority CI path filters. Exact closed 3D segment/AABB collision, conservative swept player body, reviewed bounded room coverage, explicit immutable server geometry. Test fixture is a synthetic arena, NOT Jarrell map parity; no live Worker, HP, wallet, or loot changes.
+- [PR #680](https://github.com/CryptoDilis/Climboria/pull/680) exact head `f8c4078af63aecf8313eb5f22117d03bbaac1a5b`: Authority [#45336452688](https://github.com/CryptoDilis/Climboria/actions/runs/45336452688), Gateway [#45336452747](https://github.com/CryptoDilis/Climboria/actions/runs/45336452747), Validate [#45336452677](https://github.com/CryptoDilis/Climboria/actions/runs/45336452677) SUCCESS; Gameplay [#45336452705](https://github.com/CryptoDilis/Climboria/actions/runs/45336452705) IN PROGRESS at check. Neither PR merged yet; #683 workflow results not yet reported.
+- **EXACT NEXT:** Verify exact-head CI and merge #680 then #683 if mergeable and green, resolving any conflicts and retesting updated heads. Next export and independently verify actual map collider coverage (terrain, cave segments, solids, height/vertical bounds); implement server-derived movement with trusted clock and collision, then integrate isolated melee and HP lifecycle tests. Never promote cosmetic PresenceRoom positions to combat authority. Real two-account QA remains separate. No DEX/Swap/Launchpad/ClimbX.
 
 ---
 
