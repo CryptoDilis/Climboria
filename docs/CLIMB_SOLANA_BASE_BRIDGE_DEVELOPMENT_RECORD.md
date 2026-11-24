@@ -5,6 +5,14 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 18 — testnet core implementation observations SUCCESS (2026-11-24 UTC)
+
+- [Automatic workflow #45342851492](https://github.com/CryptoDilis/Climboria/actions/runs/45342851492) SUCCESS on merged head `c526d28fd4e40d84fa5f85b950e9706508cb3d8b`; job `138270342729`, 06:45:49 UTC. Post-merge bridge safety [#45342851439](https://github.com/CryptoDilis/Climboria/actions/runs/45342851439) SUCCESS; post-merge general Validate #45342851328 cancelled, not claimed passed (exact PR head Validate passed).
+- Solana core linked ProgramData `7bu9ccL3uu9xNCLE4ZuUX43sg7HUfort8YyLxcq6G9cQ`; finalized slot 525704611; deployment slot 455714609; upgrade authority `J8am6SkUHRTtLPJpnfUd6Uy38U7Yh17fa7ZtiqaLoJcV`; allocated ELF bytes 904976, SHA256 `dc269ff28697ef331426f512e784c3193df05f9c1671d5ee16f2a09c38aee224`, full ProgramData SHA256 `85d7593025648de36eb9437357af326fa5edb60b3beca9bcc7130f028a706936`. PDA not independently derived in this run.
+- Base Sepolia EIP-1967 slot reported implementation `0x6b9c8671cddc8deab9c719bb87cbd3e782ba6a35`, code SHA256 `8931ce0a294cafceb774ae4247c4f0aa4ddabd9d31f25d652702f9d73bfea3a8` at finalized block `0x3bfc714`, hash `0x021fa1aa18f95fd7f5aefae85b0a255e92a23b1860d9954010930adf2ac1febe`.
+- These are core messaging infrastructure observations, not NTT manager deployment, trusted binary parity, audit or transfer proof. Single provider per chain. No signing, transactions or funds. NO_GO.
+- **EXACT NEXT:** prepare isolated testnet asset and manager setup using pinned upstream code, testnet-only safeguards and a realistic cost/preflight plan. Independently verify core and NTT governance/audited artifacts before signing. Do not confuse observed core implementation with project-specific NTT managers; no Base CA or mainnet deployment.
+
 ## Stage 17 — core implementation observation preparation (2026-11-24 UTC)
 
 - Extend existing automatic public testnet core workflow: resolve Solana upgradeable program header's linked ProgramData and reread both in one finalized getMultipleAccounts context, validate loader state/ELF prefix/deploy slot, record upgrade authority and SHA256 of every allocated image byte. Compare prior program header digest; ProgramData PDA is not independently derived. For Base Sepolia, read EIP-1967 implementation storage and implementation code at pinned finalized block, recheck block hash. Observations only, not independently authenticated implementation semantics, source/binary parity or audit evidence.
