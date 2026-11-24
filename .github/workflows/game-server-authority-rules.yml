@@ -10,6 +10,8 @@ on:
       - "game/multiplayer/server-combat-state.test.mjs"
       - "game/multiplayer/presence-room.mjs"
       - "game/multiplayer/presence-room.test.mjs"
+      - "game/multiplayer/server-collision-region.mjs"
+      - "game/multiplayer/server-collision-region.test.mjs"
       - ".github/workflows/game-server-authority-rules.yml"
   workflow_dispatch:
 
