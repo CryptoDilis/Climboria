@@ -2380,8 +2380,27 @@ const cc0TreeSpots=findCC0ForestSpots(16,58);
 const cc0CanopySpots=findCC0ForestSpots(16,76,cc0TreeSpots);
 const cc0GroundSpots=findCC0ForestSpots(42,10,cc0TreeSpots);
 const cc0LogSpots=findCC0ForestSpots(14,22,[...cc0TreeSpots,...cc0GroundSpots]);
+// Register collision independently of external asset availability. A visible
+// primitive fallback occupies each solid candidate until the GLB replaces it.
+function registerCC0ForestColliders(key,spots){
+ const def=cc0ForestDefinitions[key];
+ if(def.collider<=0)return [];
+ return spots.map((spot,index)=>{
+  solid(spot.x,spot.z,def.collider);
+  const g=new T3.Group();g.name='Climboria_ForestFallback_'+key+'_'+index;
+  g.position.set(spot.x,spot.h,spot.z);scene.add(g);
+  if(key==='fallenLog'){
+   const log=sc(mk(CYL,M('#5b4732'),0,.55,0,g),.55,def.collider*1.7,.55);
+   log.rotation.z=Math.PI/2;
+  }else{
+   sc(mk(CYL,M('#584532'),0,2,0,g),def.collider*.35,4,def.collider*.35);
+   sc(mk(SPH,M('#40563b'),0,4.7,0,g),def.collider,2.3,def.collider);
+  }
+  return g;
+ });
+}
 function placeCC0ForestModel(key,spot,index){
- const asset=cc0ForestLoaded.get(key);if(!asset||!spot)return;
+ const asset=cc0ForestLoaded.get(key);if(!asset||!spot)return false;
  const root=asset.clone(true),def=cc0ForestDefinitions[key];
  root.name='Climboria_CC0_'+key+'_'+index;
  root.position.set(spot.x,spot.h,spot.z);
@@ -2389,16 +2408,21 @@ function placeCC0ForestModel(key,spot,index){
  root.scale.setScalar(def.scale);
  root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=true}});
  scene.add(root);
- if(def.collider>0)solid(spot.x,spot.z,def.collider);
+ return true;
 }
 function loadCC0ForestModel(key,spots){
- const def=cc0ForestDefinitions[key];
+ const def=cc0ForestDefinitions[key],fallbacks=registerCC0ForestColliders(key,spots);
  new T3.GLTFLoader().load(def.url,gltf=>{
   const base=gltf.scene;
   base.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=true}});
   cc0ForestLoaded.set(key,base);
-  spots.forEach((spot,i)=>placeCC0ForestModel(key,spot,i));
- },undefined,error=>console.warn('[Climboria] CC0 forest asset unavailable; procedural vegetation remains active:',key,error));
+  spots.forEach((spot,i)=>{
+   if(placeCC0ForestModel(key,spot,i)&&fallbacks[i]){
+    // mk/sc share materials and geometries; remove only the instance group.
+    scene.remove(fallbacks[i]);
+   }
+  });
+ },undefined,error=>console.warn('[Climboria] CC0 forest asset unavailable; visible fallback remains active:',key,error));
 }
 loadCC0ForestModel('buttress',cc0TreeSpots);
 loadCC0ForestModel('canopy',cc0CanopySpots);
