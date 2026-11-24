@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## GAME CONSOLIDATED COMBAT FOUNDATION MERGED — 2026-11-24 PHT
+
+- [PR #692](https://github.com/CryptoDilis/Climboria/pull/692) MERGED at `76244ffe7a5ffe3e7e73a73efcfcd4ee89f78411`, exact tested head `945ee8d1ba2175e40a177bbd000119af084d0ed6`. CI SUCCESS: [Authority #45341651260](https://github.com/CryptoDilis/Climboria/actions/runs/45341651260), [Gateway #45341651098](https://github.com/CryptoDilis/Climboria/actions/runs/45341651098), [Validate #45341651103](https://github.com/CryptoDilis/Climboria/actions/runs/45341651103), [Gameplay #45341651118](https://github.com/CryptoDilis/Climboria/actions/runs/45341651118). Verified merged movement, test, HP and storage blobs equal tested head. Superseded #687 closed after checking inclusion.
+- Reconcile #698 fixed collider follow-up to current main `9f31344fd4ee6928037baee0f39f9c9a16220f7f`; run fresh exact-head Game CI before merge. No live Worker change. Next: forest collision registration consistency and reviewed vertical/ground coverage, transactional live orchestration, real two-account QA. Game only.
+
+---
+
 ## GAME FIXED OBSTACLE COLLISION INVENTORY — 2026-11-24 PHT (NOT LIVE)
 
 - Stacked branch `game/jarrell-fixed-collider-coverage-20261124` from consolidated #692 head `945ee8d1ba2175e40a177bbd000119af084d0ed6`: adds 43 authored fixed X/Z circles (10 park fixtures, 12 Sanctuary pillars, center crystal, six cave solids, two facilities, twelve freshwater pier posts) and deterministic forest GLB collider candidates from actual `game/play.html` placement algorithm. Implementation `4606c533323a56b9f412dfc96df9e0baedd21986`; two regression tests `b3458a1b1d4290d870df9b2240394c0d4b62228d` verify fixed source registration contracts and independently execute browser forest placement. Forest candidates remain separate because runtime browser registration is conditional on successful asynchronous GLB loading. These horizontal inventories do not establish vertical or full walkability coverage.
