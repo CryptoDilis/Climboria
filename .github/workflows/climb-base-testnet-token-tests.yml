@@ -36,3 +36,16 @@ jobs:
           test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
       - name: Compile and run offline Solidity unit tests
         run: forge test -vv
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare unsigned test-only deployment artifact
+        run: |
+          set -euo pipefail
+          node prepare-unsigned.mjs out/ClimbTestnetToken.sol/ClimbTestnetToken.json src/ClimbTestnetToken.sol "$GITHUB_SHA" "$RUNNER_TEMP/climb-testnet-unsigned.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-base-sepolia-unsigned-${{ github.sha }}
+          path: ${{ runner.temp }}/climb-testnet-unsigned.json
+          retention-days: 7
+          if-no-files-found: error
