@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## GAME ISOLATED SYNTHETIC COMBAT PREVIEW WORKER — 2026-11-24 PHT (NOT DEPLOYED)
+
+- #706 merged at `33f1825f472c37a83f995f4cbc6ccbc26a36ad87` after four CI successes. #714 reconciled to main at `28765a3a01a07934656b379d4eb326718b8d6f96`.
+- #714 adds isolated `game/multiplayer/worker/preview-worker.mjs` (`1ece961723505e5f8222e687dd14d88e0c3503d2`), separate `wrangler.preview.toml` (`4bf5eb136d172cb60cf1d6785c800d423b5ecd74`): disabled by default, no public route, no workers.dev/preview URLs, distinct DO class and storage namespace, exactly two allowlisted registered Supabase UUIDs, private hashed one-use tickets, synthetic test combat arena (NOT Jarrell's reviewed map), max two sockets, 60-second session and non-overlapping 100ms tick while sockets exist. No production Worker changes. Test-only fixture writes each tick; actual Cloudflare scheduling, latency and cost require staging verification. No deployment or real socket acceptance claimed.
+- Four new authorization/configuration/internal ticket tests `f603fc7b0396b3f7f075ad2a4c8fb34eed26d3d6` and CI filters `556e67dc3a6af11701b0b074693807e1d883918d`. Mock auth and storage only; fresh exact-head CI required.
+- **EXACT NEXT:** Verify #714 exact-head Game CI, fix failures and merge only when green. Add isolated Worker WebSocket integration test (including timer expiry, two accounts and failure cleanup), review staging write budget/secret/route configuration, then private staging deployment when prerequisites are verified. No production PvP enablement until reviewed actual map, server/client synchronization and real account QA. Game only.
+
+---
+
 ## GAME CONSOLIDATED MAP AND TRANSACTIONAL RUNTIME MERGED — 2026-11-24 PHT
 
 - #706 merged at `33f1825f472c37a83f995f4cbc6ccbc26a36ad87`, exact head `a8f0b7cfc5d2172ae8d37007515fe5ae94be844a`: [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45350284305), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45350284392), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45350284301), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45350284297) all SUCCESS. #714 reconciled onto main `33f1825f472c37a83f995f4cbc6ccbc26a36ad87`. No live damage activation.
