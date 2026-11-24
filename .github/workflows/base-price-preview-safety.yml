@@ -1,0 +1,37 @@
+name: Base DEX Price Preview Safety
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "dex/index.html"
+      - "dex/base-price-preview.mjs"
+      - ".github/scripts/base-price-preview.test.mjs"
+      - ".github/workflows/base-price-preview-safety.yml"
+  push:
+    branches: [main]
+    paths:
+      - "dex/index.html"
+      - "dex/base-price-preview.mjs"
+      - ".github/scripts/base-price-preview.test.mjs"
+      - ".github/workflows/base-price-preview-safety.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          node --check dex/base-price-preview.mjs
+          node --test .github/scripts/base-price-preview.test.mjs
+          grep -Fq 'id="basePriceSubmit" class="tab" type="submit" disabled' dex/index.html
+          grep -Fqx 'export const BASE_PRICE_PREVIEW_ENABLED=false;' dex/base-price-preview.mjs
+          grep -Fqx 'export const BASE_PRICE_PREVIEW_ENDPOINT=null;' dex/base-price-preview.mjs
+          grep -Fqx 'const THIRD_PARTY_JUPITER_DEX_APPROVED = false;' dex/swap-proxy/src/index.mjs
