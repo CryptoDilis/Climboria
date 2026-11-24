@@ -5,6 +5,12 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 19 — isolated Base Sepolia test asset implementation (2026-11-24 UTC)
+
+- Reviewed NTT EVM v2 `INttToken` and `DummyToken` at `c636cc15b07969e4b44de7e466c999c07e7387a9`. Upstream dummy permits public minting; do NOT deploy that dummy as CLIMB. Added testnet-only ERC20 scaffold, explicitly named CLIMB TEST, six decimals, zero initial supply, small test cap, Base Sepolia constructor chain guard, one-time code-bearing manager binding, no owner mint, manager-only mint and burn of manager's own balance. This is an unaudited test asset, NOT production CLIMB or actual bridge implementation.
+- Isolated Foundry unit tests and read-only CI; OpenZeppelin 4.9.6 pinned to `dc44c9f1a4c3b10af99492eed84f83ed244203f6`, Solidity 0.8.19, London target, Foundry v1.5.0. No signing, broadcast, keys or deployed addresses. PR/CI pending.
+- **EXACT NEXT:** verify new Solidity CI and existing scoped checks; merge only if green. Then prepare distinct metadata-only Solana devnet test mint and testnet manager preflight, estimate rent/gas from actual compiled artifacts and verify audit/governance before owner-authorized deployment. Mainnet remains NO_GO.
+
 ## Stage 18 — testnet core implementation observations SUCCESS (2026-11-24 UTC)
 
 - [Automatic workflow #45342851492](https://github.com/CryptoDilis/Climboria/actions/runs/45342851492) SUCCESS on merged head `c526d28fd4e40d84fa5f85b950e9706508cb3d8b`; job `138270342729`, 06:45:49 UTC. Post-merge bridge safety [#45342851439](https://github.com/CryptoDilis/Climboria/actions/runs/45342851439) SUCCESS; post-merge general Validate #45342851328 cancelled, not claimed passed (exact PR head Validate passed).
