@@ -1,0 +1,34 @@
+name: Base DEX Authorized 0x Read-only Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type VERIFY_BASE_0X_PRICE after confirming provider terms and quota for two API requests"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: base-0x-authorized-live-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    if: ${{ github.ref == 'refs/heads/main' && inputs.confirmation == 'VERIFY_BASE_0X_PRICE' }}
+    environment: base-price-provider-staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check adapter safety before external request
+        run: node --test .github/scripts/base-0x-indicative-price.test.mjs
+      - name: Controlled Base price-only provider probe
+        env:
+          ZEROEX_API_KEY: ${{ secrets.ZEROEX_API_KEY }}
+        run: node .github/scripts/base-0x-authorized-live-probe.mjs
