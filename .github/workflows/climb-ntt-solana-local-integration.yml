@@ -1,0 +1,54 @@
+name: CLIMB NTT Solana Local Locking Integration
+on:
+  pull_request:
+    paths:
+      - 'token/climb-bridge/testnet-solana/integration/**'
+      - '.github/workflows/climb-ntt-solana-local-integration.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'token/climb-bridge/testnet-solana/integration/**'
+      - '.github/workflows/climb-ntt-solana-local-integration.yml'
+permissions:
+  contents: read
+jobs:
+  local-lock:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: wormhole-foundation/native-token-transfers
+          ref: 1a2a92ef7f289972b2d00dd1d58077d139fe68d7
+          path: ntt-upstream
+          persist-credentials: false
+      - name: Install upstream toolchain versions
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libudev-dev libssl-dev clang llvm
+          rustup toolchain install nightly-2023-10-29 --profile minimal
+          curl --fail --silent --show-error --location --retry 3 https://github.com/solana-labs/solana/releases/download/v1.18.26/solana-release-x86_64-unknown-linux-gnu.tar.bz2 -o "$RUNNER_TEMP/solana.tar.bz2"
+          tar -xjf "$RUNNER_TEMP/solana.tar.bz2" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/solana-release/bin" >> "$GITHUB_PATH"
+      - name: Verify pin and append local test only
+        run: |
+          set -euo pipefail
+          test "$(git -C ntt-upstream rev-parse HEAD)" = 1a2a92ef7f289972b2d00dd1d58077d139fe68d7
+          solana --version
+          printf '\n' >> ntt-upstream/solana/programs/example-native-token-transfers/tests/transfer.rs
+          cat token/climb-bridge/testnet-solana/integration/climb_locking_fixture.rs >> ntt-upstream/solana/programs/example-native-token-transfers/tests/transfer.rs
+      - name: Compile local SBF programs
+        working-directory: ntt-upstream/solana
+        run: |
+          set -euo pipefail
+          cargo build-sbf --features mainnet
+      - name: Run local bank test only (no RPC or deployment)
+        working-directory: ntt-upstream/solana
+        run: |
+          set -euo pipefail
+          export BPF_OUT_DIR="$PWD/target/deploy"
+          cargo test --locked -p example-native-token-transfers --features mainnet,test-sbf --test transfer test_climb_metadata_only_revoked_mint_locking -- --exact --nocapture
