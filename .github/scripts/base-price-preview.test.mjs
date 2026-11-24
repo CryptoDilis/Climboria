@@ -16,16 +16,44 @@ class El{constructor(){this.handlers={};this.value="";this.children=[];this.text
 function fixture(options){const nodes=Object.fromEntries(["Form","Direction","Amount","Status","Result","Submit"].map(x=>["basePrice"+x,new El()]));const doc={getElementById:id=>nodes[id],createElement:()=>new El()};nodes.basePriceDirection.value="buy";initBasePricePreview(doc,options);return nodes;}
 test("source defaults off and rejects unsafe endpoints",async()=>{
  assert.equal(BASE_PRICE_PREVIEW_ENABLED,false);assert.equal(BASE_PRICE_PREVIEW_ENDPOINT,null);
- let calls=0;for(const options of [{},{enabled:true,endpoint:"https://evil.example/v1/base/indicative-price"},{enabled:true,endpoint:"https://fakeclimboria.fun/v1/base/indicative-price"}]){
+ let calls=0;for(const options of [{},{enabled:true,endpoint:"https://evil.example/v1/base/indicative-price"},{enabled:true,endpoint:"https://fakeclimboria.fun/v1/base/indicative-price"},{enabled:true,endpoint:"https://candidate.climboria.fun/v1/base/indicative-price"}]){
  const n=fixture({...options,fetchImpl:async()=>{calls++;throw Error("unexpected")}});n.basePriceAmount.value="0.1";await n.basePriceForm.handlers.submit({preventDefault(){}});assert.equal(n.basePriceSubmit.disabled,true);assert.equal(n.basePriceResult.children.length,0);}
  assert.equal(calls,0);
 });
 test("mocked approved endpoint uses only GET and ignores stale results",async()=>{
  let resume;const urls=[];
- const n=fixture({enabled:true,endpoint:"https://candidate.climboria.fun/v1/base/indicative-price",fetchImpl:async(url,opts)=>{urls.push(url);assert.equal(opts.method,"GET");assert.equal(opts.credentials,"omit");return new Promise(r=>resume=r);}});
+ const n=fixture({enabled:true,endpoint:"https://base-price.climboria.fun/v1/base/indicative-price",fetchImpl:async(url,opts)=>{urls.push(url);assert.equal(opts.method,"GET");assert.equal(opts.credentials,"omit");return new Promise(r=>resume=r);}});
  n.basePriceAmount.value="0.1";const pending=n.basePriceForm.handlers.submit({preventDefault(){}});n.basePriceAmount.handlers.input();resume(new Response(JSON.stringify(response)));await pending;assert.equal(n.basePriceResult.children.length,0);
  const next=n.basePriceForm.handlers.submit({preventDefault(){}});resume(new Response(JSON.stringify(response)));await next;
  assert.ok(n.basePriceResult.children.some(x=>x.textContent==="Provider fee: 0.00015 USDC"));
  assert.deepEqual(Object.fromEntries(new URL(urls[0]).searchParams),{chainId:"8453",sellToken:intent.sellToken,buyToken:intent.buyToken,sellAmount:"100000"});
  n.basePriceDirection.handlers.change();assert.equal(n.basePriceAmount.value,"");assert.equal(n.basePriceResult.children.length,0);
+});
+
+test("historical observed 0x mainnet prices render both directions with exact fee decimals",()=>{
+ // Sanitized observations from authorized GitHub run 45343281347, 2026-11-24.
+ // Fixtures only, never current prices and never displayed without a new response.
+ const buy={...response,reportedSellAmount:"100000",estimatedBuyAmount:"58733120001805",providerMinBuyAmount:"58145788801787",reportedNetworkFee:"2469512719809"};
+ const buyRows=Object.fromEntries(previewLabels(intent,buy));
+ assert.equal(buyRows["Estimated output"],"0.000058733120001805 WETH");
+ assert.equal(buyRows["Provider fee"],"0.00015 USDC");
+ const sellIntent=previewIntent("sell","0.0001");
+ const sell={...response,sellToken:sellIntent.sellToken,buyToken:sellIntent.buyToken,requestedSellAmount:"100000000000000",reportedSellAmount:"100000000000000",estimatedBuyAmount:"169696",providerMinBuyAmount:"167999",fees:{zeroExFee:{amount:"255",token:sellIntent.buyToken},integratorFee:null,gasFee:null},reportedNetworkFee:"2278262247394"};
+ const rows=Object.fromEntries(previewLabels(sellIntent,sell));
+ assert.equal(rows["Estimated output"],"0.169696 USDC");
+ assert.equal(rows["Provider fee"],"0.000255 USDC");
+ assert.equal(rows["Reported network fee"],"0.000002278262247394 ETH (estimate)");
+});
+test("duplicate submit is ignored; quota and disabled response never trigger retry or expose raw errors",async()=>{
+ let calls=0,resume;
+ const n=fixture({enabled:true,endpoint:"https://base-price.climboria.fun/v1/base/indicative-price",fetchImpl:async()=>{calls++;return new Promise(r=>resume=r);}});
+ n.basePriceAmount.value="0.1";
+ const submit=()=>n.basePriceForm.handlers.submit({preventDefault(){}});
+ const first=submit();await submit();assert.equal(calls,1);
+ resume(new Response("private provider message",{status:429}));await first;
+ assert.equal(n.basePriceStatus.textContent,"Pricing request limit reached. Try again later.");
+ assert.equal(n.basePriceResult.children.length,0);assert.equal(n.basePriceSubmit.disabled,false);
+ const second=submit();resume(new Response("private provider message",{status:503}));await second;
+ assert.equal(n.basePriceStatus.textContent,"Base pricing is temporarily unavailable. No transaction prepared.");
+ assert.equal(calls,2);assert.equal(n.basePriceResult.children.length,0);
 });
