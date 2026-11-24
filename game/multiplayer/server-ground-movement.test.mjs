@@ -66,3 +66,42 @@ test('isolated integration: trusted movement supplies fresh melee coordinates, n
  m.disconnect(B);assert.equal(authorizeOpenWorldMelee(opts).ok,false);
  assert.equal(target.health,500);
 });
+
+
+test('server sprint speed, stamina and recovery ignore client-supplied values',()=>{
+ const {m,at,snapshot}=make();m.join(A);m.join(B);
+ assert.equal(m.input(A,{x:1,z:0,sequence:0,sprint:'true'}).ok,false);
+ assert.ok(m.input(A,{x:1,z:0,sequence:0,sprint:true,stamina:9999,speed:999}).ok);
+ at(40100);m.tick();
+ assert.ok(Math.abs(snapshot(A).position.x-202.2)<1e-9);
+ assert.equal(snapshot(A).stamina,198.8);
+ assert.equal(snapshot(B).stamina,200);
+ // Multiple requests do not move or restore stamina without a server tick.
+ for(let i=1;i<20;i++)assert.ok(m.input(A,{x:0,z:0,sequence:i,sprint:false,stamina:200}).ok);
+ assert.equal(snapshot(A).stamina,198.8);
+ at(40200);m.tick();assert.equal(snapshot(A).stamina,199.6);
+ at(40300);m.tick();assert.equal(snapshot(A).stamina,200);
+});
+test('sprint exhaustion requires 40 stamina to restart, even if a player holds sprint',()=>{
+ const {m,at,snapshot}=make();m.join(A);
+ let clock=40000,seq=0;
+ const step=()=>{assert.ok(m.input(A,{x:1,z:0,sequence:seq++,sprint:true}).ok);clock+=100;at(clock);m.tick()};
+ for(let i=0;i<167;i++)step();
+ assert.equal(snapshot(A).sprintExhausted,true);
+ assert.ok(snapshot(A).stamina<1);
+ for(let i=0;i<49;i++)step();
+ assert.equal(snapshot(A).sprintExhausted,true);
+ assert.ok(snapshot(A).stamina<40);
+ step();assert.equal(snapshot(A).sprintExhausted,false);
+ assert.ok(snapshot(A).stamina>=40);
+ const before=snapshot(A).stamina;step();assert.ok(snapshot(A).stamina<before);
+});
+test('idle, stale and delayed sprint inputs do not create movement or unbounded recovery',()=>{
+ const {m,at,snapshot}=make();m.join(A);m.input(A,{x:1,z:0,sequence:0,sprint:true});
+ at(40100);m.tick();const q=snapshot(A);
+ at(90000);m.tick();assert.deepEqual(snapshot(A).position,q.position);
+ assert.equal(snapshot(A).stamina,199.6);
+ assert.ok(m.input(A,{x:0,z:0,sequence:1,sprint:true}).ok);
+ at(90100);m.tick();assert.equal(snapshot(A).stamina,200);
+ assert.deepEqual(snapshot(A).position,q.position);
+});
