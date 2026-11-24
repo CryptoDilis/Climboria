@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME TRANSACTIONAL AUTHENTICATED GATEWAY PREVIEW — 2026-11-24 PHT (ISOLATED)
+
+- Stacked follow-up on #706 head `a8f0b7cfc5d2172ae8d37007515fe5ae94be844a`: server-only gateway preview bridge `game/multiplayer/worker/transactional-gateway-preview.mjs` (`b04a398a96e60f731299332c252c0b95bc7448cc`). Requires injected atomic verified one-use ticket consumer from separate preview namespace; binds admitted Supabase UUID and generated session capability, exact packet field allowlists, UTF-8 byte and rate limits, close/reconnect isolation. Browser cannot set actor/account identity, position, HP, damage, room, or checkpoint. Existing production Worker untouched, no actual ticket service/deployment, no live damage. Four integration tests use mock ticket consumer and real transactional runtime (`9c51a6db8363ed5fea60cbbcf61f9ed4db55708c`); CI filters and test invocation (`88bb5e1d0ee42094aa370c6aff82a97297a4f560`).
+- #706 Authority #45350284305, Gateway #45350284392, Validate #45350284301 SUCCESS at first check; Gameplay #45350284297 executing. Preserve ongoing CI; latest preview test suite not yet verified.
+- **EXACT NEXT:** Verify #706 full CI and merge if green, reconcile preview branch to latest main and run exact-head CI. Then wire separate nonproduction ticket storage and isolated gateway endpoint, bounded scheduler and cost/latency review; verify actual authenticated two-account QA with reviewed map coverage before live PvP. No non-Game scope.
+
+---
+
 ## GAME CAVE WALL SWEEP MERGED — 2026-11-24 PHT
 
 - #704 merged at `181e79cf7825311b8f33afc02570effa4bea32e8`, exact head `e9f990d63b43a2a6e04ad885d81e2d7f5fbf1f8b`: Authority #45348616000, Gateway #45348616107, Validate #45348616055, Gameplay #45348616019 all SUCCESS. #706 reconciled onto latest main `181e79cf7825311b8f33afc02570effa4bea32e8` for exact-head CI. No live combat activation.
