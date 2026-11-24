@@ -2,6 +2,7 @@
 // A separate verified deployment must explicitly enable this preview.
 export const BASE_PRICE_PREVIEW_ENABLED=false;
 export const BASE_PRICE_PREVIEW_ENDPOINT=null;
+export const VERIFIED_BASE_PRICE_ENDPOINT="https://base-price.climboria.fun/v1/base/indicative-price";
 const USDC="0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
 const WETH="0x4200000000000000000000000000000000000006";
 const MAX_UINT=(1n<<256n)-1n;
@@ -59,20 +60,27 @@ export function initBasePricePreview(doc=globalThis.document,{enabled=BASE_PRICE
  let url=null;
  // No URL comes from user input, storage, or query parameters.
  if(enabled===true&&typeof endpoint==="string"){
-  try{const candidate=new URL(endpoint);if(candidate.protocol==="https:"&&candidate.hostname.endsWith(".climboria.fun")&&!candidate.username&&!candidate.password&&!candidate.port&&!candidate.search&&!candidate.hash&&candidate.pathname==="/v1/base/indicative-price")url=candidate;}catch{}
+  try{const candidate=new URL(endpoint);if(candidate.protocol==="https:"&&candidate.hostname==="base-price.climboria.fun"&&!candidate.username&&!candidate.password&&!candidate.port&&!candidate.search&&!candidate.hash&&candidate.pathname==="/v1/base/indicative-price")url=candidate;}catch{}
  }
  let current;
  const clear=()=>{current?.abort();current=null;result.replaceChildren();button.disabled=!url;status.textContent=url?"Indicative estimates only. No wallet required.":"Pricing preview is not active. Live provider configuration is pending.";};
  direction.addEventListener("change",()=>{amount.value="";clear();});
  amount.addEventListener("input",clear);clear();
  form.addEventListener("submit",async event=>{
-  event.preventDefault();clear();if(!url)return;
+  event.preventDefault();if(current||!url)return;clear();
   let intent;try{intent=previewIntent(direction.value,amount.value.trim());}catch(error){status.textContent=error.message;return;}
   const controller=new AbortController();current=controller;button.disabled=true;status.textContent="Requesting indicative estimate…";
   try{
    const target=new URL(url);for(const k of ["chainId","sellToken","buyToken","sellAmount"])target.searchParams.set(k,String(intent[k]));
    const response=await fetchImpl(target.toString(),{method:"GET",credentials:"omit",redirect:"error",cache:"no-store",signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])});
-   if(!response.ok)throw Error("Price unavailable");
+   if(!response.ok){
+    // Never display arbitrary upstream error text or retry automatically.
+    if(current===controller&&!controller.signal.aborted){
+     status.textContent=response.status===429?"Pricing request limit reached. Try again later.":response.status===503?"Base pricing is temporarily unavailable. No transaction prepared.":"Indicative pricing unavailable. No transaction prepared.";
+    }
+    try{await response.body?.cancel();}catch{}
+    return;
+   }
    const length=response.headers?.get("content-length");if(length&&Number(length)>32768)throw Error("Price response too large");
    const reader=response.body?.getReader();if(!reader)throw Error("Price response unavailable");
    const chunks=[];let size=0;
