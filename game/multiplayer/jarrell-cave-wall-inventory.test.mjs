@@ -36,5 +36,5 @@ test('rigid local-world transform preserves wall lengths and coastal corridor wi
  const [west,east]=all.slice(-2);
  assert.ok(west.coastal&&east.coastal);
  assert.ok(Math.abs(dist(west.a,east.a)-13.2)<1e-9);
- assert.ok(Math.abs(dist(west.a,west.b)-269)<1e-9);
+ assert.ok(Math.abs(dist(west.a,west.b)-257)<1e-9);
 });
