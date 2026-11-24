@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME SERVER SPRINT + STAMINA — 2026-11-24 PHT (ISOLATED, NOT LIVE)
+
+- [PR #687](https://github.com/CryptoDilis/Climboria/pull/687): added server-controlled walking/sprint (9/22m/s), 200 max stamina, drain 12/s and recovery 8/s, exhaustion lock until 40 stamina, integer milli-stamina accounting and bounded tick/expiry. Same base tuning as current local Game. Sprint intent while moving consumes stamina even if obstructed; ignores packet-supplied speed/stamina. No client HUD, live Worker, HP, loot or wallet changes. Implementation `9dd56fb802cc00ef3ec4775f09ee2c30d97bdb14`, three extra tests `5ac35a0df817182d4d8dbe927a90085ebabe10de`.
+- Prior retargeted head `ce7c2027178abf103357186d623e792a2e6fc975` triggered only unrelated preview checks, not the required Game workflows. New synchronized PR commits should trigger actual Game CI; do not count preview CI as Game evidence.
+- **EXACT NEXT:** Verify all applicable latest #687 head Game CI, inspect actual failed logs and fix before merge. Continue isolated authoritative HP lifecycle and respawn after movement is green; reviewed real terrain collision/walkability and movement modes beyond grounded walk/sprint still pending, as is actual two-account public QA. No live damage or changes outside Game.
+
+---
+
 ## GAME MOVEMENT PR RECONCILED AFTER COMBAT FOUNDATION MERGE — 2026-11-24 PHT
 
 - [PR #683](https://github.com/CryptoDilis/Climboria/pull/683) **MERGED** at `f2dd7dde5348c0d6202725b47faafcb9b2b45bed`, exact head `ffe8957b04fdc3f2188b5e6de25c8b42aa7c0c68`; all four CI SUCCESS: [Authority #45337454905](https://github.com/CryptoDilis/Climboria/actions/runs/45337454905), [Gateway #45337455026](https://github.com/CryptoDilis/Climboria/actions/runs/45337455026), [Validate #45337454982](https://github.com/CryptoDilis/Climboria/actions/runs/45337454982), [Gameplay #45337455083](https://github.com/CryptoDilis/Climboria/actions/runs/45337455083). Superseded #680 closed after identical melee module and test blobs verified on main.
