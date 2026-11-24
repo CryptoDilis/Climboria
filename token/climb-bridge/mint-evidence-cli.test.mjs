@@ -24,3 +24,20 @@ test('CLI fails before requests when trusted public genesis reference is missing
   assert(!p.stderr.includes(sentinel));
   assert(!p.stdout.includes(sentinel));
 });
+
+// Verify the manual bridge action uses the existing repository configuration without exposing it to PR jobs.
+import {readFileSync} from 'node:fs';
+test('manual evidence workflow reuses existing RPC settings and remains main-only',()=>{
+  const source=readFileSync(new URL('../../.github/workflows/climb-mint-mainnet-evidence-manual.yml',import.meta.url),'utf8');
+  assert.match(source,/^on:\n  workflow_dispatch:\npermissions:\n  contents: read$/m);
+  assert.match(source,/if: github\.ref == 'refs\/heads\/main'/);
+  for (const [env,scope,name] of [
+    ['CLIMB_SOLANA_RPC_A_URL','secrets','CLIMBORIA_SOLANA_RPC_URL'],
+    ['CLIMB_SOLANA_RPC_B_URL','secrets','CLIMBORIA_SOLANA_RPC_URL_SECONDARY'],
+    ['CLIMB_SOLANA_MAINNET_GENESIS_HASH','vars','CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH'],
+  ]) {
+    const mapping=env+': $'+'{{ '+scope+'.'+name+' }}';
+    assert.equal(source.split(mapping).length-1,2);
+  }
+  assert.match(source,/node token\/climb-bridge\/mint-inspect-cli\.mjs/);
+});
