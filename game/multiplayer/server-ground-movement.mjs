@@ -1,12 +1,14 @@
 /**
- * Pre-release, isolated server-owned GROUNDED walking only.
+ * Pre-release, isolated server-owned GROUNDED walking and sprint.
  * Caller must authenticate socket identity and supply independently reviewed
  * walkable ground + complete collision coverage for the selected room.
  * A terrain height sample alone is NOT a reviewed walkability provider.
- * No live Worker integration, jump, swimming, sprint, dynamic collision,
+ * No live Worker integration, jump, swimming, dynamic collision,
  * combat, inventory or financial state. Coordinates are feet-space.
  */
-const WALK_SPEED=9,MAX_TICK_MS=100,INPUT_TTL_MS=250,STEP=.2,MAX_GRADE=1;
+const WALK_SPEED=9,SPRINT_SPEED=22,MAX_TICK_MS=100,INPUT_TTL_MS=250,STEP=.2,MAX_GRADE=1;
+// Integer milli-stamina; same base tuning as game/play.html.
+const MAX_STAMINA=200000,RESTART_STAMINA=40000,DRAIN_PER_MS=12,RECOVERY_PER_MS=8;
 const validId=id=>typeof id==='string'&&/^[a-zA-Z0-9_-]{16,100}$/.test(id);
 const coord=n=>Number.isFinite(n)&&Math.abs(n)<50000;
 const time=n=>Number.isSafeInteger(n)&&n>=0;
@@ -40,7 +42,7 @@ export class ServerGroundMovement {
   try{return this.#collision.clearMovement(a,b,this.#roomId)===true}catch{return false}
  }
  #snapshot(id,p){
-  return {serverId:id,roomId:this.#roomId,position:{...p.position},observedAtMs:p.observedAtMs};
+  return {serverId:id,roomId:this.#roomId,position:{...p.position},observedAtMs:p.observedAtMs,stamina:p.stamina/1000,sprintExhausted:p.exhausted};
  }
  // Only an authenticated server caller may supply the session ID.
  // No packet-selected spawn, time, health or coordinate accepted.
@@ -50,7 +52,7 @@ export class ServerGroundMovement {
   if(!time(now)||now<this.#lastTick)return deny('invalid-server-time');
   const position=this.#point(this.#spawn.x,this.#spawn.z);
   if(!position||!this.#clear(position,position))return deny('unverified-spawn');
-  const p={position,observedAtMs:now,joinedAt:now,sequence:-1,input:{x:0,z:0,at:now}};
+  const p={position,observedAtMs:now,joinedAt:now,sequence:-1,stamina:MAX_STAMINA,exhausted:false,input:{x:0,z:0,sprint:false,at:now}};
   this.#players.set(id,p);
   return {ok:true,snapshot:this.#snapshot(id,p)};
  }
@@ -60,11 +62,11 @@ export class ServerGroundMovement {
   const p=this.#players.get(id),now=this.#clock();
   if(!p)return deny('unknown-session');
   if(!time(now)||now<this.#lastTick||now<p.input.at)return deny('invalid-server-time');
-  const {x,z,sequence}=packet??{};
+  const {x,z,sequence,sprint=false}=packet??{};
   if(!Number.isFinite(x)||!Number.isFinite(z)||Math.abs(x)>1||Math.abs(z)>1||
-     !time(sequence)||sequence<=p.sequence)return deny('invalid-or-replayed-input');
+     typeof sprint!=='boolean'||!time(sequence)||sequence<=p.sequence)return deny('invalid-or-replayed-input');
   const divisor=Math.max(1,Math.hypot(x,z));
-  p.sequence=sequence;p.input={x:x/divisor,z:z/divisor,at:now};
+  p.sequence=sequence;p.input={x:x/divisor,z:z/divisor,sprint,at:now};
   return {ok:true};
  }
  tick(){
@@ -78,7 +80,18 @@ export class ServerGroundMovement {
    const start=this.#point(p.position.x,p.position.z);
    if(!start||Math.abs(start.y-p.position.y)>1e-6||!this.#clear(start,start))continue;
    const elapsed=Math.max(0,Math.min(now, p.input.at+INPUT_TTL_MS)-Math.max(prior,now-MAX_TICK_MS,p.input.at,p.joinedAt));
-   const dx=p.input.x*WALK_SPEED*elapsed/1000,dz=p.input.z*WALK_SPEED*elapsed/1000;
+   const tickMs=Math.max(0,now-Math.max(prior,now-MAX_TICK_MS,p.joinedAt));
+   const wantsSprint=p.input.sprint&&Math.hypot(p.input.x,p.input.z)>0;
+   // Charge sprint intent even if blocked; packets cannot mint movement or
+   // stamina. Exhausted players recover to the restart threshold before
+   // sprinting again. Delayed scheduler ticks grant no catch-up credit.
+   const sprintMs=wantsSprint&&!p.exhausted?Math.min(elapsed,Math.ceil(p.stamina/DRAIN_PER_MS)):0;
+   p.stamina=Math.max(0,p.stamina-sprintMs*DRAIN_PER_MS);
+   if(p.stamina===0)p.exhausted=true;
+   p.stamina=Math.min(MAX_STAMINA,p.stamina+(tickMs-sprintMs)*RECOVERY_PER_MS);
+   if(p.exhausted&&p.stamina>=RESTART_STAMINA)p.exhausted=false;
+   const travel=(sprintMs*SPRINT_SPEED+(elapsed-sprintMs)*WALK_SPEED)/1000;
+   const dx=p.input.x*travel,dz=p.input.z*travel;
    const distance=Math.hypot(dx,dz),steps=Math.ceil(distance/STEP);
    let next=start;
    // Reviewed providers must cover the body footprint as well as the center.
