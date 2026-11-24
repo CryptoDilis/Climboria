@@ -1,0 +1,36 @@
+name: Base DEX Wallet Session Safety
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "dex/base-wallet-session.mjs"
+      - "dex/index.html"
+      - ".github/scripts/base-wallet-session.test.mjs"
+      - ".github/workflows/base-wallet-session-safety.yml"
+  push:
+    branches: [main]
+    paths:
+      - "dex/base-wallet-session.mjs"
+      - "dex/index.html"
+      - ".github/scripts/base-wallet-session.test.mjs"
+      - ".github/workflows/base-wallet-session-safety.yml"
+permissions:
+  contents: read
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          node --check dex/base-wallet-session.mjs
+          node --test .github/scripts/base-wallet-session.test.mjs
+          grep -Fq 'id="baseWalletConnect"' dex/index.html
+          grep -Fq 'id="baseWalletDisconnect"' dex/index.html
+          grep -Fq '/dex/base-wallet-session.mjs?v=1' dex/index.html
+          grep -Fqx 'export const BASE_PRICE_PREVIEW_ENABLED=false;' dex/base-price-preview.mjs
+          grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
+          grep -Fqx 'const EXECUTION_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
