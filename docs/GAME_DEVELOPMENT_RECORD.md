@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME OPEN-WORLD COMBAT FOUNDATION — 2026-11-24 PHT (NOT LIVE)
+
+- Game-only branch `game/open-world-melee-policy-20261124` adds `game/multiplayer/open-world-melee-policy.mjs` and eight regression tests, with existing Game Server Authority CI path filters updated (implementation `1968880613dce6991819fb34b68023edf4b57b52`, tests `a1b33926df080341b9fdca63c3ea187b0451590a`, CI `f1f89538a9bc690c15bd2cffc24b940ffe3defbf`).
+- New isolated authorization policy requires distinct active authenticated same-room fighters, living server-owned HP, monotonic cooldown, independently verified identity-bound fresh terrain coordinates, Sanctuary protection on both sides, full 3D melee range and explicitly clear authoritative collision path. No duel invitation required. Missing, stale or obstructed evidence denies; client-reported presence coordinates are NOT trusted physics. No HP mutation, no runtime wiring, no wallet/loot or deployment change. Existing duel-based legacy policy remains unchanged.
+- **EXACT NEXT:** Open Game-only PR, verify exact-head authority test workflow and all applicable CI, repair failures and merge only if green. Next implement independent server-side map/collision and movement authority with trustworthy coordinates and hit path, then server-owned HP lifecycle and rate limits in isolated integration tests; never substitute presence movement for physics or expose HP before release QA. Actual two-registered-account QA remains pending separately. No DEX/Swap/Launchpad/ClimbX changes.
+
+---
+
 ## GAME QA HANDOFF — PR #674 MERGED (2026-11-24 PHT)
 
 - **Verified merge:** [PR #674](https://github.com/CryptoDilis/Climboria/pull/674) squash merged at `16c40483358ab6462034f55b50bb2b890afb0bff`, exact head `3b72e0c1b0e91e07b58ff5fbe61482a581faac10`. All three reported PR workflows completed SUCCESS: [Gameplay #44431113210](https://github.com/CryptoDilis/Climboria/actions/runs/44431113210), [Room Gateway #44431113273](https://github.com/CryptoDilis/Climboria/actions/runs/44431113273), [Validate #44431113342](https://github.com/CryptoDilis/Climboria/actions/runs/44431113342). Four changed paths inspected: this record, worker STAGING_READINESS.md, e2e-real-game-ui.mjs and its contract test. QA selector fix only; no runtime change.
