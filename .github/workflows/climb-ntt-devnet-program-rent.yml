@@ -1,0 +1,50 @@
+name: CLIMB NTT Devnet Sample Program Rent - Read Only
+on:
+  pull_request:
+    paths:
+      - 'token/climb-bridge/ntt-devnet-program-rent*'
+      - '.github/workflows/climb-ntt-devnet-program-rent.yml'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'token/climb-bridge/ntt-devnet-program-rent*'
+      - '.github/workflows/climb-ntt-devnet-program-rent.yml'
+permissions:
+  contents: read
+jobs:
+  estimate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: wormhole-foundation/native-token-transfers
+          ref: 1a2a92ef7f289972b2d00dd1d58077d139fe68d7
+          path: ntt-upstream
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned upstream toolchain versions
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libudev-dev libssl-dev clang llvm
+          rustup toolchain install nightly-2023-10-29 --profile minimal
+          curl --fail --silent --show-error --location --retry 3 https://github.com/solana-labs/solana/releases/download/v1.18.26/solana-release-x86_64-unknown-linux-gnu.tar.bz2 -o "$RUNNER_TEMP/solana.tar.bz2"
+          tar -xjf "$RUNNER_TEMP/solana.tar.bz2" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/solana-release/bin" >> "$GITHUB_PATH"
+      - name: Compile upstream sample for Devnet only (no deployment)
+        working-directory: ntt-upstream/solana
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 1a2a92ef7f289972b2d00dd1d58077d139fe68d7
+          cargo build-sbf --manifest-path programs/example-native-token-transfers/Cargo.toml --no-default-features --features solana-devnet
+      - name: Public Devnet storage estimate only
+        run: |
+          set -euo pipefail
+          node token/climb-bridge/ntt-devnet-program-rent.mjs ntt-upstream/solana/target/deploy/example_native_token_transfers.so "$(git -C ntt-upstream rev-parse HEAD)"
