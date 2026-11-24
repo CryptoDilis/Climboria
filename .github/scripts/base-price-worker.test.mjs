@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {IndicativePriceFailure} from "../../dex/base-price-provider/zeroex-indicative.mjs";
 import {createPriceHandler} from "../../dex/base-price-provider/worker.mjs";
 const origin="https://climboria.fun",token="a".repeat(64);
 const path="https://unused.example/v1/base/indicative-price";
@@ -84,4 +85,19 @@ test("public, expired and malformed staging requests never reach rate limits or 
  for(const provided of ["","b".repeat(64),"a".repeat(63)])assert.equal((await handler(req(q,{headers:{"X-Base-Price-Probe":provided}}),env)).status,403);
  assert.equal((await handler(req(),{...env,BASE_PRICE_PROBE_TOKEN:undefined})).status,403);
  assert.deepEqual(seen,[]);
+});
+
+test("only authenticated staging receives sanitized fixed diagnostic values",async()=>{
+ const {env}=fixture();
+ for(const [failure,diagnostic] of [
+  [new Error("private credential or raw body"),{stage:"internal"}],
+  [new IndicativePriceFailure("http","private credential or raw body",429),{stage:"http",upstreamStatus:429}],
+  [new IndicativePriceFailure("schema","private credential or raw body"),{stage:"schema"}]
+ ]){
+  const handle=createPriceHandler({price:async()=>{throw failure;}});
+  const denied=await handle(req(q,{headers:{"X-Base-Price-Probe":""}}),env);
+  assert.equal(denied.status,403);assert.ok(!Object.hasOwn(await denied.json(),"diagnostic"));
+  const r=await handle(req(),env);assert.equal(r.status,502);
+  assert.deepEqual(await r.json(),{error:"Indicative pricing unavailable",diagnostic});
+ }
 });
