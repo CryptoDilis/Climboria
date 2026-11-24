@@ -8,12 +8,12 @@ function checkpoint(accountId=A){
   movement:{roomId,position:{x:200,y:0,z:20},stamina:198800,exhausted:false,downed:false}};
 }
 const decode=raw=>decodeCombatCheckpoint(raw,{accountId:A,roomId,nowMs});
-function fakeStorage(){
+function fakeStorage({failPut=()=>false}={}){
  let rows=new Map(),queue=Promise.resolve();
  return {transaction(fn){
   const result=queue.then(async()=>{
    const draft=new Map(structuredClone([...rows]));
-   const value=await fn({get:async key=>draft.get(key),put:async(key,value)=>{draft.set(key,structuredClone(value))}});
+   const value=await fn({get:async key=>draft.get(key),put:async(key,value)=>{if(failPut(key,value))throw Error('injected write failure');draft.set(key,structuredClone(value))}});
    rows=draft;return value;
   });
   queue=result.catch(()=>{});return result;
@@ -68,4 +68,22 @@ test('store fails closed for malformed, duplicate, rollback and unavailable stor
  const broken=createCombatCheckpointStore({storage:{transaction:async()=>{throw Error('offline')}},roomId,clock:()=>nowMs});
  assert.equal((await broken.load(A)).reason,'checkpoint-storage-unavailable');
  assert.equal((await broken.saveBatch([entry])).ok,false);
+});
+
+
+test('second write failure aborts the entire hit checkpoint transaction',async()=>{
+ let fail=false;
+ const storage=fakeStorage({failPut:key=>fail&&key.endsWith(':'+B)});
+ const store=createCombatCheckpointStore({storage,roomId,clock:()=>nowMs});
+ const initial=[A,B].map(accountId=>({accountId,expectedRevision:0,checkpoint:checkpoint(accountId)}));
+ assert.equal((await store.saveBatch(initial)).ok,true);
+ const changed=initial.map(row=>({...row,expectedRevision:1,checkpoint:{...row.checkpoint,hp:490}}));
+ fail=true;
+ assert.equal((await store.saveBatch(changed)).reason,'checkpoint-storage-unavailable');
+ for(const accountId of [A,B]){
+  const row=await store.load(accountId);assert.equal(row.revision,1);assert.equal(row.checkpoint.hp,495);
+ }
+ fail=false;
+ assert.equal((await store.saveBatch(changed)).ok,true);
+ for(const accountId of [A,B])assert.equal((await store.load(accountId)).checkpoint.hp,490);
 });
