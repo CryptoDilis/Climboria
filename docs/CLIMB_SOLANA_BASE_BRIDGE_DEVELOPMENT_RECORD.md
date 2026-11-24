@@ -5,6 +5,12 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 12 — raw Token-2022 extension evidence implementation (2026-11-24 UTC)
+
+- Reviewed official Token-2022 layout at `solana-program/token-2022@e8ca680ca8aeb12f9598524b003c776c6a4168f2` and metadata state at `solana-program/token-metadata@4b4226514a0360ce933a66c9e638e909ecd66068`. New isolated raw mint parser checks program/owner, base layout, initialized mint, exact authority/supply agreement, TLV metadata-only allowlist, self pointer/embedded mint, bounded Borsh decoding, duplicate/unknown extensions and full raw digest agreement. No arbitrary metadata strings logged.
+- Existing manual CLI adds dual finalized base64 reads with freshness checks and preserves NO_GO. Offline regression tests included. No live extension result, PR/CI pending; no changes to production or escrow.
+- **EXACT NEXT:** verify scoped PR/CI and merge if green. Owner dispatch a NEW CLIMB Mint Authority workflow on latest main to collect raw extension evidence; record actual result, then select supported NTT release and verify audit/deployment provenance. No Base CA, funds or signing.
+
 ## Stage 11 — NTT candidate source feasibility reviewed (2026-11-24 UTC)
 
 - Reviewed official `wormhole-foundation/native-token-transfers` at immutable source revision [`5e56c0a0bfce0b3705cc2c1beaffca83dfec5341`](https://github.com/wormhole-foundation/native-token-transfers/tree/5e56c0a0bfce0b3705cc2c1beaffca83dfec5341). Solana initialization permits locking mode without mint-authority equality; lock/unlock paths use the token interface and Token-2022 checked transfers. Source rejects lock transfers where custody receives less than intended. EVM burning mode burns outgoing amounts and mints on redemption; target requires a dedicated restricted mint/burn token. This supports the proposed Solana-lock/Base-mint design at source level only.

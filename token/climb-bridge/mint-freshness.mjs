@@ -1,5 +1,6 @@
 // Read-only dual-provider Solana mint freshness/cross-check, no wallet or bridge permissions.
 // An identical response from two URLs does not prove that the operators are independent.
+import {inspectRawMint,compareRawMints} from './mint-raw-evidence.mjs';
 import {inspectMintReply, compareFinalizedMintReplies, assertDistinctRpcEndpoints, CLIMB_SOLANA_MINT} from './mint-inspect.mjs';
 
 const MAX_HEAD_GAP = 256;
@@ -52,6 +53,11 @@ export function safeMintEvidenceError(error) {
     'NO_GO: use two different RPC hostname providers',
     'NO_GO: RPC endpoints must use HTTPS without embedded user credentials',
     'NO_GO: invalid RPC URLs',
+    'NO_GO: raw Token-2022 mint layout or metadata invalid',
+    'NO_GO: raw mint context outside finalized freshness bound',
+    'NO_GO: raw and parsed mint fields disagree',
+    'NO_GO: unsupported raw Token-2022 mint extension',
+    'NO_GO: raw Token-2022 mint bytes disagree',
     'NO_GO: independent RPC finalized heads diverge',
     'NO_GO: RPC providers report different chain genesis identities',
     'NO_GO: stale mint context relative to finalized RPC head',
@@ -147,4 +153,19 @@ export function verifyExpectedGenesis(reference, reported) {
     referenceProvenance: 'OPERATOR_SUPPLIED_NOT_INDEPENDENTLY_VERIFIED',
     release: 'NO_GO'
   };
+}
+
+// Explicit second-stage evidence; retain the initial discovery API and its fixtures.
+export async function inspectRawClimbExtensions(urlA,urlB,report,fetchFn=fetch){
+  assertDistinctRpcEndpoints(urlA,urlB);
+  const sample=async(url,provider,index)=>{
+    const head=await jsonRpc(url,'getSlot',[{commitment:'finalized'}],fetchFn,provider);
+    if(!Number.isSafeInteger(head)||head<=0||head<report.finalizedHeads[index]||Math.abs(head-report.finalizedHeads[index])>128)throw new Error('NO_GO: raw mint context outside finalized freshness bound');
+    const reply=await jsonRpc(url,'getAccountInfo',[CLIMB_SOLANA_MINT,{encoding:'base64',commitment:'finalized',minContextSlot:head}],fetchFn,provider);
+    if(reply?.context?.slot<head)throw new Error('NO_GO: raw mint context outside finalized freshness bound');
+    return inspectRawMint(reply,report,head);
+  };
+  const [a,b]=await Promise.all([sample(urlA,'A',0),sample(urlB,'B',1)]);
+  if(Math.abs(a.slot-b.slot)>256)throw new Error('NO_GO: raw mint context outside finalized freshness bound');
+  return compareRawMints(a,b);
 }
