@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME LOCAL RUNTIME CI STARTUP FIX — 2026-11-24 PHT (NOT MERGED)
+
+- [PR #719](https://github.com/CryptoDilis/Climboria/pull/719) exact initial head `8bab69918086634c312df2a8ae9186eb8b77a0ee`: [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45357484566) SUCCESS; [Local Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45357484617) FAILURE before any WebSocket assertion (job 138318809505). Installed workerd supports compatibility date up to 2026-08-06, but the test requested 2026-11-15. npm also reported three high-severity advisories; affected packages and impact are not yet identified.
+- Fixed only `.github/scripts/game-preview-workerd-smoke.mjs` at `75ef48272c9de5468fd2db58e2d7fa3e77e1f314` to use the supported local compatibility date 2026-08-06. Cloud preview and production configuration unchanged. Local test is not proof of exact cloud compatibility.
+- **EXACT NEXT:** Verify fresh exact-head local runtime and Validate CI; investigate any subsequent assertion failures, review and pin the local test dependency after inspecting advisory details, merge only when green and mergeable. Then bounded durable write budget and private cloud staging with actual registered accounts; keep production combat disabled. Game only.
+
+---
+
 ## GAME LOCAL WORKERD WEBSOCKET AND SQLITE RUNTIME ACCEPTANCE — 2026-11-24 PHT (NOT DEPLOYED)
 
 - #716 merged at `93a49232402fc82a19c1d3a7810dc391096211d6`, exact head `ef52494ba22afa60c15b771c8c8f6cb48e4aa7ae`: [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45356257567), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45356257536), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45356257614), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45356257711) all SUCCESS. No preview deployment or production PvP activation.
