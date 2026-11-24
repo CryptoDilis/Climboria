@@ -22,6 +22,8 @@ on:
       - "game/multiplayer/server-ground-movement.test.mjs"
       - "game/multiplayer/server-hp-lifecycle.mjs"
       - "game/multiplayer/server-hp-lifecycle.test.mjs"
+      - "game/multiplayer/server-combat-checkpoint.mjs"
+      - "game/multiplayer/server-combat-checkpoint.test.mjs"
       - "game/play.html"
       - ".github/workflows/game-server-authority-rules.yml"
   workflow_dispatch:
