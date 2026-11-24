@@ -16,6 +16,13 @@ export function createPriceHandler({price=getBaseIndicativePrice}={}){
  return async function handle(request,env={}){
   const url=new URL(request.url),origin=request.headers.get("origin");
   const error=(status,message)=>reply(status,{error:message},origin);
+  if(url.pathname==="/health"){
+   if(request.method!=="GET"||url.search)return error(405,"Method not allowed");
+   const disabled=env.BASE_INDICATIVE_PRICE_ENABLED==="false"&&env.BASE_PRICE_DAILY_ATTEMPTS==="0";
+   const sha=typeof env.BASE_PRICE_DEPLOYED_SHA==="string"&&/^[0-9a-f]{40}$/.test(env.BASE_PRICE_DEPLOYED_SHA)?env.BASE_PRICE_DEPLOYED_SHA:null;
+   const bindings=Boolean(env.BASE_PRICE_IP_LIMITER?.limit&&env.BASE_PRICE_GLOBAL_LIMITER?.limit&&env.BASE_PRICE_BUDGET?.idFromName&&env.BASE_PRICE_BUDGET?.get);
+   return reply(disabled&&sha&&bindings?200:503,{service:"climboria-base-price-preview",deployedGitSha:sha,pricingDisabled:disabled,bindingsReady:bindings,execution:"unsupported"},origin);
+  }
   if(url.pathname!==PATH)return error(404,"Not found");
   // This is a browser-origin policy, NOT authentication against direct clients.
   if(!ORIGINS.has(origin))return error(403,"Origin not allowed");

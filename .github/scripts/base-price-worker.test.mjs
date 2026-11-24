@@ -66,3 +66,14 @@ test("durable budget refusal prevents provider calls, even after regional limits
  }
  assert.ok(!seen.some(x=>x[0]==="price"));
 });
+
+test("staging health attests disabled config, exact SHA and bindings without exposing secrets",async()=>{
+ const {handler,env,seen}=fixture(),sha="a".repeat(40);
+ const health=new Request("https://unused.example/health");
+ const disabled={...env,BASE_INDICATIVE_PRICE_ENABLED:"false",BASE_PRICE_DAILY_ATTEMPTS:"0",BASE_PRICE_DEPLOYED_SHA:sha};
+ const r=await handler(health,disabled);
+ assert.equal(r.status,200);
+ assert.deepEqual(await r.json(),{service:"climboria-base-price-preview",deployedGitSha:sha,pricingDisabled:true,bindingsReady:true,execution:"unsupported"});
+ for(const bad of [{BASE_INDICATIVE_PRICE_ENABLED:"true"},{BASE_PRICE_DAILY_ATTEMPTS:"1"},{BASE_PRICE_DEPLOYED_SHA:"unpublished"},{BASE_PRICE_BUDGET:undefined}])assert.equal((await handler(health,{...disabled,...bad})).status,503);
+ assert.deepEqual(seen,[]);
+});
