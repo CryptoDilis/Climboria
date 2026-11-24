@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME COMBAT RECONNECT HARDENING — 2026-11-24 PHT (ISOLATED, NOT LIVE)
+
+- [PR #692](https://github.com/CryptoDilis/Climboria/pull/692) now includes private server movement checkpoint restoration on authenticated account reconnect (position, stamina, exhausted/downed), revalidates the saved location against reviewed terrain/collision with no spawn fallback, and denies melee when current ground verification fails even within snapshot freshness window. Changes `3e646c30691b9108f80a94e2bb3a5029d860eb99`, `68ed7e8d191abbc4cddd4aa14ced8af2bdda6279`; three new integration tests `9ed1d0290df72e983e25ceeb1a10fd9e90cc1aee`. HP and death timer retained across session changes in same process only; persistent account state and live wiring remain unimplemented.
+- #687 exact head `398ba8793a78d97cbd16f70eb3b27e94eab5159f` [Authority #45340433385](https://github.com/CryptoDilis/Climboria/actions/runs/45340433385), [Gateway #45340433405](https://github.com/CryptoDilis/Climboria/actions/runs/45340433405), [Validate #45340433377](https://github.com/CryptoDilis/Climboria/actions/runs/45340433377) SUCCESS. [Gameplay #45340433474](https://github.com/CryptoDilis/Climboria/actions/runs/45340433474) still executing desktop/mobile smoke at last check; merge not attempted.
+- **EXACT NEXT:** Finish #687 checks and verify changed files against latest main; merge only when green, then reconcile #692 to latest main, run all Game CI, fix any failures and merge if green. Next implement reviewed real-map solid/vertical coverage and persistent authenticated reconnect before enabling PvP. No live damage, loot, wallet, or non-Game changes. Actual two-account public QA remains pending.
+
+---
+
 ## GAME SERVER HP AND RESPAWN LIFECYCLE — 2026-11-24 PHT (ISOLATED, NOT LIVE)
 
 - Stacked branch `game/server-hp-lifecycle-20261124` from #687 head `398ba8793a78d97cbd16f70eb3b27e94eab5159f`. Adds movement freeze and reviewed spawn reset (`39dd72af490d57e0fe1b6a080f5fe791c3a8cc71`), isolated server HP lifecycle (`250f37aa5bc315046f04394d088f598e33eb7296`), four integration tests (`a7ab59acc8830e50805629fed8b8256f54205db8`) and CI path filters (`2ffd06c976e18a1885eba5fe51080f757ed6d221`).
