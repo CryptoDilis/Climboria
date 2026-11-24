@@ -1,0 +1,19 @@
+# Isolated synthetic combat staging only. No production route or auto-deploy.
+name = "climboria-game-combat-preview"
+main = "./preview-worker.mjs"
+compatibility_date = "2026-11-15"
+workers_dev = false
+preview_urls = false
+
+[vars]
+PREVIEW_ENABLED = "false"
+
+# Operator-provided secrets (never commit values):
+# SUPABASE_PUBLISHABLE_KEY, PREVIEW_ACCOUNT_ALLOWLIST (two verified UUIDs).
+[[durable_objects.bindings]]
+name = "PREVIEW_ROOMS"
+class_name = "PreviewCombatRoom"
+
+[[migrations]]
+tag = "preview-v1"
+new_sqlite_classes = ["PreviewCombatRoom"]

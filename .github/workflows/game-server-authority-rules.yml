@@ -32,6 +32,13 @@ on:
       - "game/multiplayer/jarrell-dry-region-prototype.test.mjs"
       - "game/multiplayer/transactional-room-prototype.mjs"
       - "game/multiplayer/transactional-room-prototype.test.mjs"
+      - "game/multiplayer/worker/transactional-gateway-preview.mjs"
+      - "game/multiplayer/worker/transactional-gateway-preview.test.mjs"
+      - "game/multiplayer/worker/preview-ticket-store.mjs"
+      - "game/multiplayer/worker/preview-ticket-store.test.mjs"
+      - "game/multiplayer/worker/preview-worker.mjs"
+      - "game/multiplayer/worker/preview-worker.test.mjs"
+      - "game/multiplayer/worker/wrangler.preview.toml"
       - "game/play.html"
       - ".github/workflows/game-server-authority-rules.yml"
   workflow_dispatch:
@@ -49,4 +56,4 @@ jobs:
         with:
           node-version: "22"
       - name: Assert no client-authoritative combat/loot or unsafe spawn PvP
-        run: node --test game/multiplayer/*.test.mjs
+        run: node --test game/multiplayer/*.test.mjs game/multiplayer/worker/transactional-gateway-preview.test.mjs game/multiplayer/worker/preview-ticket-store.test.mjs game/multiplayer/worker/preview-worker.test.mjs

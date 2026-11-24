@@ -1,5 +1,37 @@
 # Climboria Game Development Record
 
+## GAME ISOLATED SYNTHETIC COMBAT PREVIEW WORKER — 2026-11-24 PHT (NOT DEPLOYED)
+
+- #706 merged at `33f1825f472c37a83f995f4cbc6ccbc26a36ad87` after four CI successes. #714 reconciled to main at `28765a3a01a07934656b379d4eb326718b8d6f96`.
+- #714 adds isolated `game/multiplayer/worker/preview-worker.mjs` (`1ece961723505e5f8222e687dd14d88e0c3503d2`), separate `wrangler.preview.toml` (`4bf5eb136d172cb60cf1d6785c800d423b5ecd74`): disabled by default, no public route, no workers.dev/preview URLs, distinct DO class and storage namespace, exactly two allowlisted registered Supabase UUIDs, private hashed one-use tickets, synthetic test combat arena (NOT Jarrell's reviewed map), max two sockets, 60-second session and non-overlapping 100ms tick while sockets exist. No production Worker changes. Test-only fixture writes each tick; actual Cloudflare scheduling, latency and cost require staging verification. No deployment or real socket acceptance claimed.
+- Four new authorization/configuration/internal ticket tests `f603fc7b0396b3f7f075ad2a4c8fb34eed26d3d6` and CI filters `556e67dc3a6af11701b0b074693807e1d883918d`. Mock auth and storage only; fresh exact-head CI required.
+- **EXACT NEXT:** Verify #714 exact-head Game CI, fix failures and merge only when green. Add isolated Worker WebSocket integration test (including timer expiry, two accounts and failure cleanup), review staging write budget/secret/route configuration, then private staging deployment when prerequisites are verified. No production PvP enablement until reviewed actual map, server/client synchronization and real account QA. Game only.
+
+---
+
+## GAME CONSOLIDATED MAP AND TRANSACTIONAL RUNTIME MERGED — 2026-11-24 PHT
+
+- #706 merged at `33f1825f472c37a83f995f4cbc6ccbc26a36ad87`, exact head `a8f0b7cfc5d2172ae8d37007515fe5ae94be844a`: [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45350284305), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45350284392), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45350284301), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45350284297) all SUCCESS. #714 reconciled onto main `33f1825f472c37a83f995f4cbc6ccbc26a36ad87`. No live damage activation.
+- **EXACT NEXT:** Isolated access-controlled preview Worker, separate DO namespace and bounded scheduler; verify fresh #714 Game CI and actual staging readiness before real account QA. No production Worker change.
+
+---
+
+## GAME PRIVATE PREVIEW TICKET STORAGE — 2026-11-24 PHT (ISOLATED)
+
+- #714 adds `game/multiplayer/worker/preview-ticket-store.mjs` (`fa4110aa3ae9b43f8b5a9b1ec0e4a019a04feb20`): random 256-bit single-use credentials stored only as SHA-256 keys, separate preview-room namespace, 30-second expiry, atomic consume/delete, atomic 32-room/2-account pending caps, bounded listing and storage failure handling. Issuance is server-only and requires caller-authenticated UUID; no production ticket compatibility, endpoint, or real authentication service integration.
+- Five added storage/admission regression tests `306dd5130c6d0b88d1b01ec56ae3b19f6d03fdd3`, covering replay concurrency, hashed storage, expiry, account/room caps, namespace, storage outage and gateway identity binding. CI filter/test invocation `1c26685f8b959aacaad3c4ad60643304eddacd5d`. Mock transactional storage, not a deployed Durable Object acceptance test.
+- **EXACT NEXT:** Verify #706 exact-head Game CI and merge if all green; reconcile #714 onto latest main and verify fresh CI. Next isolated preview Worker with separate DO binding and access-controlled server auth, bounded scheduler and persistence budget, actual map and two-account testing. Production gateway unchanged; no live damage or other workstreams.
+
+---
+
+## GAME TRANSACTIONAL AUTHENTICATED GATEWAY PREVIEW — 2026-11-24 PHT (ISOLATED)
+
+- Stacked follow-up on #706 head `a8f0b7cfc5d2172ae8d37007515fe5ae94be844a`: server-only gateway preview bridge `game/multiplayer/worker/transactional-gateway-preview.mjs` (`b04a398a96e60f731299332c252c0b95bc7448cc`). Requires injected atomic verified one-use ticket consumer from separate preview namespace; binds admitted Supabase UUID and generated session capability, exact packet field allowlists, UTF-8 byte and rate limits, close/reconnect isolation. Browser cannot set actor/account identity, position, HP, damage, room, or checkpoint. Existing production Worker untouched, no actual ticket service/deployment, no live damage. Four integration tests use mock ticket consumer and real transactional runtime (`9c51a6db8363ed5fea60cbbcf61f9ed4db55708c`); CI filters and test invocation (`88bb5e1d0ee42094aa370c6aff82a97297a4f560`).
+- #706 Authority #45350284305, Gateway #45350284392, Validate #45350284301 SUCCESS at first check; Gameplay #45350284297 executing. Preserve ongoing CI; latest preview test suite not yet verified.
+- **EXACT NEXT:** Verify #706 full CI and merge if green, reconcile preview branch to latest main and run exact-head CI. Then wire separate nonproduction ticket storage and isolated gateway endpoint, bounded scheduler and cost/latency review; verify actual authenticated two-account QA with reviewed map coverage before live PvP. No non-Game scope.
+
+---
+
 ## GAME CAVE WALL SWEEP MERGED — 2026-11-24 PHT
 
 - #704 merged at `181e79cf7825311b8f33afc02570effa4bea32e8`, exact head `e9f990d63b43a2a6e04ad885d81e2d7f5fbf1f8b`: Authority #45348616000, Gateway #45348616107, Validate #45348616055, Gameplay #45348616019 all SUCCESS. #706 reconciled onto latest main `181e79cf7825311b8f33afc02570effa4bea32e8` for exact-head CI. No live combat activation.
