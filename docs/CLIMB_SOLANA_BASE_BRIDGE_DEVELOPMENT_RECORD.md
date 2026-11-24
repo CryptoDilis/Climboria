@@ -5,6 +5,12 @@
 **Scope:** bridge preparation only, isolated from live DEX/Swap, Game, ClimbX and Launchpad. No customer-fund movement.
 
 
+## Stage 8 — first live mint evidence attempt failed (2026-11-24 UTC)
+
+- Actual manual [run #45336892804](https://github.com/CryptoDilis/Climboria/actions/runs/45336892804) FAILED on head `3d83bcb122562c36c78801c59e3b90ec6a5c1349`. Required RPC inputs step passed; collection failed with `NO_GO: finalized mint verification failed (RPC details redacted)`, artifact skipped. Root cause not yet established; no mint authority evidence, no Base CA.
+- Bridge-only diagnostic improvement: fixed safe provider A/B and RPC method labels plus bounded transport/HTTP/JSON-RPC failure categories, allowlisted mint validation errors, regression tests for credential redaction. No checks relaxed, no secrets changed, no transaction methods added. Pending PR and exact-head CI.
+- **EXACT NEXT:** merge only after CI green, dispatch a NEW manual run on latest `main` (not rerun old SHA), inspect safe diagnostic and fix actual cause; record verified results. Bridge remains NO_GO and no Base token is deployed.
+
 ## Stage 7 — reuse existing RPC configuration (2026-11-24 UTC)
 
 - Owner screenshots show repository secrets `CLIMBORIA_SOLANA_RPC_URL` and `CLIMBORIA_SOLANA_RPC_URL_SECONDARY` and variable `CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH` already exist. Presence of names is not proof of current endpoint access, operator independence or genesis provenance. No secret values were accessed.
