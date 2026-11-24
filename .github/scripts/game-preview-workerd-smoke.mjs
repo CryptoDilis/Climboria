@@ -17,7 +17,8 @@ const timeout=(promise,ms=10000)=>new Promise((resolve,reject)=>{
 async function start(enabled='true'){
  mf=new Miniflare({
   modules:true,scriptPath:resolve('game/multiplayer/worker/preview-worker.mjs'),
-  compatibilityDate:'2026-11-15',
+  // Local workerd binary supports this date; cloud preview config remains unchanged.
+  compatibilityDate:'2026-08-06',
   durableObjects:{PREVIEW_ROOMS:{className:'PreviewCombatRoom',useSQLite:true}},
   durableObjectsPersist:dir,
   bindings:{PREVIEW_ENABLED:enabled,PREVIEW_ACCOUNT_ALLOWLIST:A+','+B}
