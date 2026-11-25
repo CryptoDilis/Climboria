@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME DEPLOYED REJOIN VERIFIED AND PRIVATE QA ROSTER FIX MERGED — 2026-11-26 PHT
+
+- #753 MERGED at `5baf0f29384a1a8c5885077b52b6cabe6e93fbd8`, exact tested head `d21cc0701a493a1be53b431de88cc5bbd644fc57`: [Deployed readiness](https://github.com/CryptoDilis/Climboria/actions/runs/45582765441), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45582765378), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45582765522), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45582765430), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45582765332) ALL SUCCESS. Readiness job 139096670151 confirms 16/16 tests and real published Game client version `20261125-game-voluntary-rejoin-1`, SHA256 `9eb00d4ba7015a77c3fe3e52c1a37af23a1ad4999f868384c11d106a3256f1d7`, actual deployed configuration/health/ready/Nearby capability at 09:09:58 UTC November 25. The reconnect code is published; real-account reconnect behavior is not yet independently accepted.
+- #755 MERGED at `3fa4ca20d3d924e87b5c3016c722401245d34196`, exact head `6d9b347f44769dfd30efa3d24c79023767de5dfc`: [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45583822371), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45583822364), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45583822296), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45583822406) ALL SUCCESS. Gateway job 139100209786 passed 230/230 and separate 53/53 client tests, including both stale-roster negative controls. Merge initially refused because concurrent main update; refreshed mergeability and succeeded with exact head. No unrelated scope modified. Private browser QA script still unexecuted against a deployed private preview.
+- **EXACT NEXT / BLOCKER:** real registered two-account acceptance remains mandatory. Use two independent registered QA browser profiles or configure the already merged protected manual hosted QA workflow with disposable accounts. No account credentials/dispatch/Cloudflare access exposed here. Private synthetic combat preview remains separately undeployed and disabled; require protected route, rate/billing controls, scoped access and actual cloud test before any broader combat activation. Do not repeat merged #750/#753/#755 tasks or claim live PvP. Game only.
+
+---
+
 ## GAME DEPLOYED CLIENT ASSET PARITY — 2026-11-25 PHT (NOT MERGED)
 
 - #750 merged and eight CI checks passed as recorded below. The available commit-workflow listing filters PR-triggered runs only, so it cannot establish the Pages push deployment result. Direct live asset evidence is needed instead of claiming deployment from merge.
