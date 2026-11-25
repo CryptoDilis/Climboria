@@ -4,6 +4,7 @@ on:
     paths:
       - '.github/workflows/climb-ntt-audit-scope-evidence.yml'
       - 'token/climb-bridge/NTT_AUDIT_SCOPE.md'
+      - 'token/climb-bridge/NTT_EVM_AUDIT_HISTORY.md'
   workflow_dispatch:
 permissions:
   contents: read
@@ -39,6 +40,9 @@ jobs:
           687a8472b58873bf6516b4e9891c1c01f56b10e5 2025-05-05-wormhole-ottersec-ntt-v3-solana.pdf
           d01cb289914eea26f18ce697cf942aac5a9328f0 2024-08-02-ottersec-solana-ntt-token-extensions.pdf
           ca23bcc30f6563862eff6c638ed6cb24d3f833e3 2025-11-20-cyfrin-wormhole-monad-ntt.pdf
+          34ebd7c8ca572c5154aa039f1b2672a23889c0ac 2024-04-11-cyfrin-wormhole-evm-ntt.pdf
+          fe11c5b46223c6e0934938132a2ebe9dcf24d11b 2024-04-cantina-wormhole-evm-ntt.pdf
+          2823f9a5b08d2e292d788238dae32d5ff3203123 2024-07-23-cyfrin-wormhole-evm-ntt-diff-v1.1.0.pdf
           REPORTS
           echo 'AUDIT_SCOPE_EXTRACTION_ONLY; exact release coverage and remediation not established; bridgeRelease=NO_GO'
       - uses: actions/upload-artifact@v4
