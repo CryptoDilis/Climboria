@@ -67,3 +67,39 @@ jobs:
           forge test --match-path test/TrimmedAmount.t.sol -vv | tee "$RUNNER_TEMP/ntt-trimming-regressions.log"
           grep -Eq '22 tests passed, 0 failed, 0 skipped \(22 total tests\)' "$RUNNER_TEMP/ntt-trimming-regressions.log"
           run_exact_suite test/RateLimit.t.sol "$RUNNER_TEMP/ntt-queue-regressions.log" "${queue_tests[@]}"
+      - name: Test proposed quote fix in disposable checkout only (not a release)
+        working-directory: ntt-upstream/evm
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/NttManager/ManagerBase.sol')
+          s = p.read_text()
+          old = 'transceiverInstructions, enabledTransceivers.length'
+          new = 'transceiverInstructions, _getRegisteredTransceiversStorage().length'
+          assert s.count(old) == 1
+          p.write_text(s.replace(old, new))
+          t = Path('test/ClimbNttManagerLocalIntegration.t.sol')
+          s = t.read_text()
+          old = '''        vm.expectRevert(abi.encodeWithSignature("Panic(uint256)", uint256(0x32)));
+                  manager.quoteDeliveryPrice(SOLANA, hex"00");'''
+          # Preserve exact source indentation independent of YAML stripping.
+          old = '\n'.join(line.lstrip() for line in old.splitlines())
+          source = '        ' + old.replace('\n', '\n        ')
+          assert s.count(source) == 1
+          new = '''        (uint256[] memory sparseQuotes, uint256 sparseTotal) =
+                          manager.quoteDeliveryPrice(SOLANA, hex"00");
+                      assertEq(sparseQuotes.length, 1);
+                      assertEq(sparseTotal, 0);'''
+          new = '\n'.join('        ' + line.lstrip() for line in new.splitlines())
+          s = s.replace(source, new)
+          s = s.replace('testKnownSparseTransceiverQuoteFailure', 'testProposedSparseTransceiverQuoteFix')
+          s = s.replace('CLIMB_KNOWN_SPARSE_TRANSCEIVER_QUOTE_FAILURE_REPRODUCED_NO_GO', 'CLIMB_PROPOSED_SPARSE_QUOTE_FIX_LOCAL_PASS_NO_GO')
+          t.write_text(s)
+          PY
+          forge test --match-path test/ClimbNttManagerLocalIntegration.t.sol --match-contract ClimbNttManagerLocalIntegrationTest -vv | tee "$RUNNER_TEMP/climb-ntt-proposed-fix.log"
+          grep -Eq '4 tests passed, 0 failed, 0 skipped \(4 total tests\)' "$RUNNER_TEMP/climb-ntt-proposed-fix.log"
+          grep -Fq '[PASS] testProposedSparseTransceiverQuoteFix()' "$RUNNER_TEMP/climb-ntt-proposed-fix.log"
+          grep -Fq 'CLIMB_PROPOSED_SPARSE_QUOTE_FIX_LOCAL_PASS_NO_GO' "$RUNNER_TEMP/climb-ntt-proposed-fix.log"
+          git restore -- src/NttManager/ManagerBase.sol
+          test "$(git diff -- src/NttManager/ManagerBase.sol)" = ""
