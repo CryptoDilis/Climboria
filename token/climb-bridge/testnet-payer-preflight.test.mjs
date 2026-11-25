@@ -15,7 +15,7 @@ function mock(overrides={}){
 }
 test('public testnet balances, illustrative rent floor and no release approval',async()=>{
  const f=mock(),r=await inspectTestnetPayers(sol,base,f.fetchFn);
- assert.equal(r.solana.coversIllustrativeRent,true);assert.equal(r.base.balanceWei,'1');assert.equal(r.bridgeRelease,'NO_GO');
+ assert.equal(r.solana.coversIllustrativeRent,true);assert.equal(r.solana.illustrativeCombinedStorageLamports,4000);assert.equal(r.solana.coversIllustrativeCombinedStorage,false);assert.equal(r.solana.illustrativeCombinedShortfallLamports,1000);assert.deepEqual(f.calls.filter(x=>x.method==='getMinimumBalanceForRentExemption').map(x=>x.params[0]).sort((a,b)=>a-b),[36,170,234,391,926605]);assert.equal(r.base.balanceWei,'1');assert.equal(r.bridgeRelease,'NO_GO');
  assert.deepEqual(f.calls.find(x=>x.method==='getBalance').params,[sol,{commitment:'finalized'}]);
  assert.deepEqual(f.calls.find(x=>x.method==='eth_getBalance').params,[base,'finalized']);
 });
@@ -23,5 +23,7 @@ test('reject malformed addresses, real mint, wrong network and contract payer',a
  const f=mock();for(const a of ['secret',CLIMB_SOLANA_MINT,'1'.repeat(32)])await assert.rejects(inspectTestnetPayers(a,base,f.fetchFn),/NO_GO/);
  await assert.rejects(inspectTestnetPayers(sol,'0x'+'0'.repeat(40),f.fetchFn),/NO_GO/);
  assert.equal(f.calls.length,0);
- for(const override of [{eth_chainId:'0x2105'},{getGenesisHash:'wrong'},{eth_getCode:'0x6001'},{eth_getBalance:'-1'}])await assert.rejects(inspectTestnetPayers(sol,base,mock(override).fetchFn),/NO_GO/);
+ for(const override of [{eth_chainId:'0x2105'},{getGenesisHash:'wrong'},{eth_getCode:'0x6001'},{eth_getBalance:'-1'},{getMinimumBalanceForRentExemption:-1}])await assert.rejects(inspectTestnetPayers(sol,base,mock(override).fetchFn),/NO_GO/);
 });
+
+test('sample program plus mint storage coverage never enables release',async()=>{const f=mock({getBalance:{context:{slot:123},value:4000}});const r=await inspectTestnetPayers(sol,base,f.fetchFn);assert.equal(r.solana.coversIllustrativeCombinedStorage,true);assert.equal(r.solana.illustrativeCombinedShortfallLamports,0);assert.equal(r.bridgeRelease,'NO_GO');});
