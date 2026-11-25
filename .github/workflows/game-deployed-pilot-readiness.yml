@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/game-deployed-pilot-readiness.yml"
+      - "game/multiplayer/worker/qa-deployed-client-parity*.mjs"
   workflow_dispatch:
 
 permissions:
@@ -27,12 +28,13 @@ jobs:
           node-version: '22'
       - name: Verify offline readiness policy
         run: |
-          node --test game/multiplayer/worker/qa-readiness-check.test.mjs game/multiplayer/worker/staging-preflight.test.mjs
+          node --test game/multiplayer/worker/qa-readiness-check.test.mjs game/multiplayer/worker/staging-preflight.test.mjs game/multiplayer/worker/qa-deployed-client-parity.test.mjs
       - name: Check deployed Game configuration and approved room
         run: |
           node --input-type=module - <<'NODE'
           import {verifyDeployedGameConfig} from './game/multiplayer/worker/qa-public-config-check.mjs';
           import {verifyReadOnlyGameQaStaging} from './game/multiplayer/worker/qa-readiness-check.mjs';
+          import {verifyDeployedClientParity} from './game/multiplayer/worker/qa-deployed-client-parity.mjs';
           let stage='deployed-config';
           try{
             await verifyDeployedGameConfig({deadlineMs:15000});
@@ -40,6 +42,9 @@ jobs:
             stage='room-health-and-ready';
             await verifyReadOnlyGameQaStaging({requireNearbyChat:true});
             console.log('PASS: room health, Nearby Chat capability and DO readiness');
+            stage='deployed-client-parity';
+            const asset=await verifyDeployedClientParity();
+            console.log('PASS: published Game presence version '+asset.version+' SHA256 '+asset.sha256);
             console.log('NOT VERIFIED: real login, WebSocket, movement, chat delivery, remote GLBs or physical devices.');
           }catch{
             console.error('FAIL: read-only Game readiness at '+stage);
