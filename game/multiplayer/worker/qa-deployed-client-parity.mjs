@@ -16,7 +16,7 @@ async function boundedFetch(url,max,fetchImpl,deadlineMs){
   const response=await fetchImpl(url,{method:'GET',redirect:'error',cache:'no-store',credentials:'omit',signal:controller.signal});
   if(response.status!==200||response.redirected||(response.url&&response.url!==url))throw Error('Published Game asset is unavailable');
   const type=response.headers.get('content-type')||'';
-  if(url.endsWith('play.html')?!/^text\/html(?:;|$)/i.test(type):! /^(?:text|application)\/(?:javascript|ecmascript)(?:;|$)/i.test(type))throw Error('Unexpected published Game content type');
+  if(url.endsWith('.html')?!/^text\/html(?:;|$)/i.test(type):! /^(?:text|application)\/(?:javascript|ecmascript)(?:;|$)/i.test(type))throw Error('Unexpected published Game content type');
   const reader=response.body?.getReader();
   if(!reader)throw Error('No published Game body');
   const chunks=[];let size=0;
@@ -36,6 +36,7 @@ export async function verifyDeployedClientParity({
  fetchImpl=fetch,
  loadHtml=()=>readFile(new URL('../../play.html',import.meta.url)),
  loadScript=()=>readFile(new URL('../client-presence.js',import.meta.url)),
+ loadMenu=()=>readFile(new URL('../../index.html',import.meta.url)),
  deadlineMs=15000
 }={}){
  if(!Number.isSafeInteger(deadlineMs)||deadlineMs<1||deadlineMs>30000)throw Error('Invalid asset deadline');
@@ -49,5 +50,8 @@ export async function verifyDeployedClientParity({
  const url=SITE+'multiplayer/client-presence.js?v='+expected;
  const deployed=await boundedFetch(url,512*1024,fetchImpl,deadlineMs);
  if(sha(deployed)!==expectedHash)throw Error('Published Game presence bytes differ from checked-out release');
- return {version:expected,sha256:expectedHash,htmlSha256};
+ const menuSha256=sha(await loadMenu());
+ const menu=await boundedFetch(SITE+'index.html',1024*1024,fetchImpl,deadlineMs);
+ if(sha(menu)!==menuSha256)throw Error('Published Game menu bytes differ from checked-out release');
+ return {version:expected,sha256:expectedHash,htmlSha256,menuSha256};
 }
