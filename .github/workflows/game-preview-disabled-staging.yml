@@ -1,0 +1,72 @@
+name: Game Combat Preview - Disabled Staging Only
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type DEPLOY_DISABLED_GAME_COMBAT_PREVIEW"
+        required: true
+        type: string
+      wrangler_version:
+        description: "Exact reviewed Wrangler 4.x.y version (no floating tag)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: game-combat-preview-disabled-staging
+  cancel-in-progress: false
+
+jobs:
+  disabled-staging:
+    if: ${{ github.ref == 'refs/heads/main' && inputs.confirmation == 'DEPLOY_DISABLED_GAME_COMBAT_PREVIEW' }}
+    runs-on: ubuntu-latest
+    environment: game-combat-preview-staging
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify disabled isolated preview configuration
+        run: |
+          python3 - <<'PY'
+          import tomllib
+          from pathlib import Path
+          c=tomllib.loads(Path("game/multiplayer/worker/wrangler.preview.toml").read_text())
+          assert set(c)=={"name","main","compatibility_date","workers_dev","preview_urls","vars","durable_objects","migrations"}
+          assert c["name"]=="climboria-game-combat-preview"
+          assert c["main"]=="./preview-worker.mjs"
+          assert c["workers_dev"] is False and c["preview_urls"] is False
+          assert c["vars"]=={"PREVIEW_ENABLED":"false"}
+          assert c["durable_objects"]=={"bindings":[{"name":"PREVIEW_ROOMS","class_name":"PreviewCombatRoom"}]}
+          assert c["migrations"]==[{"tag":"preview-v1","new_sqlite_classes":["PreviewCombatRoom"]}]
+          print("PASS: disabled preview only, no routes, no production bindings")
+          PY
+          node --test .github/scripts/game-preview-operation-budget.test.mjs
+          node --check game/multiplayer/worker/preview-staging-qa.mjs
+      - name: Install reviewed Wrangler and validate dry-run bundle
+        env:
+          WRANGLER_VERSION: ${{ inputs.wrangler_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$WRANGLER_VERSION" =~ ^4\.[0-9]+\.[0-9]+$ ]]
+          npm init -y
+          npm install --save-dev --save-exact --package-lock "wrangler@$WRANGLER_VERSION"
+          npm audit --audit-level=high
+          npx --no-install wrangler deploy --dry-run --config game/multiplayer/worker/wrangler.preview.toml --outdir "$RUNNER_TEMP/game-preview-bundle"
+      - name: Deploy disabled preview with scoped credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${CLOUDFLARE_API_TOKEN:?Missing separate preview deployment token}"
+          : "${CLOUDFLARE_ACCOUNT_ID:?Missing preview account ID}"
+          npx --no-install wrangler deploy --config game/multiplayer/worker/wrangler.preview.toml
+          echo "Requested deployment of disabled preview only. No routes, credentials for testers, or enablement were configured."
+          echo "Operator must verify deployed settings and private access before any further action."

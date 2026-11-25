@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## GAME AUTH QUOTA MERGED AND STAGING LOCK VERIFIED — 2026-11-25 PHT
+
+- #731 MERGED at `bd629c401c4dcd40d598faee853f97602d05f571`, exact head `bda3e53afd786a471465b227217fdbdfd4992fc8`: [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45560088606), [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45560088562), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45560088580), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45560088644), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45560088732) ALL SUCCESS. Runtime job 139021446423 confirmed six tests, zero reported npm vulnerabilities and actual local SQLite auth/admission persistence. No live combat enablement.
+- #735 exact head `1f270aa2f6845f4ad6559118ab6ac82ab6df92fe`: [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45561008170), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45561008162), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45561008079) SUCCESS, Gameplay 45561008172 pending. Runtime job 139024461197 confirms original canonical lock digest, npm ci, zero reported vulnerabilities and actual local WebSocket/SQLite admission/restart smoke. Recheck combined six-test auth budget with the committed lock on latest base. Manual disabled deployment and private two-account QA script unrun. See `docs/GAME_PRIVATE_COMBAT_STAGING_RUNBOOK.md`.
+- #741 adds protected manual hosted QA of the existing registered multiplayer pilot (not synthetic combat). No real credentials or dispatch available here; see `docs/GAME_REGISTERED_PILOT_MANUAL_QA_2026-11-25.md` on that branch. No production changes.
+- **EXACT NEXT:** verify #735 and #741 exact-head checks, reconcile to current main, merge only green. Set up separately protected QA environment with disposable accounts and run registered-pilot acceptance; prepare disabled-only Cloudflare preview environment and verify private host/access/edge budget before enabling synthetic fixture. Actual production gameplay remains unverified; do not enable combat damage. Game only.
+
+---
+
 ## GAME LOCAL RUNTIME SECURITY AUDIT CLEAN — 2026-11-25 PHT
 
 - #732 MERGED at `f6b44d78890c1754106424be7ece46114e9a4aaa`, exact tested head `eb13ad039b3016eac0d79a21a790b18ee3710cce`: [Local Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45559073615) and [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45559073575) SUCCESS. Runtime job 139018126375 checked Miniflare 4.20260730.0, workerd 1.20260730.1, overrides sharp 0.35.5 and undici 7.30.1; npm install and mandatory audit both reported zero vulnerabilities; four budget tests and actual local SQLite admission/restart smoke passed. This is test-only evidence, not a production security audit. See [dependency review](GAME_PREVIEW_RUNTIME_DEPENDENCY_REVIEW.md).
