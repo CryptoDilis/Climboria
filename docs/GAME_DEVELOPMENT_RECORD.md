@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME MOBILE INPUT INTERRUPTION FIX — 2026-11-26 PHT (NOT MERGED)
+
+- Reviewed main `8e8d1683a4323b1121a1ecbdf62c607a83e92ce9`. Found missing touchcancel listeners on held RUN, JUMP/SURFACE and DIVE controls; browser blur previously cleared keys but left joystick/camera gesture state active. Text input focus could also leave prior movement held. These are source-level defects, not claimed as reproduced on an actual phone.
+- Fix `e81b468865f0dd61132475714da509963a79242a` releases held mobile actions on touchcancel, clears keyboard/joystick/camera drag/pinch and queued movement on window blur, hidden document and editable focus, without modifying position, HP/stamina, or room admission. Added tests `18b9ee37a689ddc501d45aad8bdcccf8ca1c1b63` exercising actual inline listener registrations with VM DOM stubs. No production Worker or non-Game edits.
+- **EXACT NEXT:** verify fresh exact-head Game CI, fix any failures and merge only green; verify published Game HTML and physical Android input interruption. Actual registered two-account acceptance and private combat staging remain blocked by real test identities and scoped Cloudflare access. Do not repeat #750/#753/#755. Game only.
+
+---
+
 ## GAME DEPLOYED REJOIN VERIFIED AND PRIVATE QA ROSTER FIX MERGED — 2026-11-26 PHT
 
 - #753 MERGED at `5baf0f29384a1a8c5885077b52b6cabe6e93fbd8`, exact tested head `d21cc0701a493a1be53b431de88cc5bbd644fc57`: [Deployed readiness](https://github.com/CryptoDilis/Climboria/actions/runs/45582765441), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45582765378), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45582765522), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45582765430), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45582765332) ALL SUCCESS. Readiness job 139096670151 confirms 16/16 tests and real published Game client version `20261125-game-voluntary-rejoin-1`, SHA256 `9eb00d4ba7015a77c3fe3e52c1a37af23a1ad4999f868384c11d106a3256f1d7`, actual deployed configuration/health/ready/Nearby capability at 09:09:58 UTC November 25. The reconnect code is published; real-account reconnect behavior is not yet independently accepted.
