@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {projectActionEvidence} from "../../dex/base-execution/action-evidence-projection.mjs";
-import {observeFirmQuote} from "../../dex/base-execution/firm-quote-observation.mjs";
+import {observeFirmQuote,observeFirmQuoteWithFundedSimulation} from "../../dex/base-execution/firm-quote-observation.mjs";
 const taker="0x"+"1".repeat(40),apiKey="synthetic-secret";
 const usdc="0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",weth="0x4200000000000000000000000000000000000006",holder="0x0000000000001ff3684f28c67538d4d072c22734";
 const word=v=>v.replace(/^0x/,"").padStart(64,"0"),uint=n=>word(BigInt(n).toString(16));
@@ -49,4 +49,34 @@ test("authorized quote integrates fixed field projection without leaking raw act
  const result=await observeFirmQuote({authorized:true,taker,apiKey,fetchImpl:async()=>{calls++;return new Response(JSON.stringify({...fixture,blockNumber:"123456",transaction:{to:holder,value:"0",data:tx}}));}});
  assert.equal(calls,1);assert.equal(result.decoded.actions[0].parameterEvidence.recipient,"taker");assert.equal(result.reportedProviderBlock,"123456");assert.equal(result.reportedFees.zeroExFee.amount,"150");assert.equal(result.executable,false);
  const serialized=JSON.stringify(result);for(const a of [tx,action,taker,apiKey])assert.ok(!serialized.includes(a));
+});
+
+test("single-quote funded handoff requires both explicit authorizations and reviewer before traffic",async()=>{
+ let calls=0;const fetchImpl=async()=>{calls++;throw Error("Unexpected request");};
+ const reviewCandidate=async()=>{throw Error("Unexpected review");};
+ for(const patch of [{authorized:false},{simulationAuthorized:false},{reviewCandidate:undefined},{taker:"bad"}])await assert.rejects(observeFirmQuoteWithFundedSimulation({authorized:true,simulationAuthorized:true,taker,apiKey,fetchImpl,reviewCandidate,...patch}),/authorization/);
+ assert.equal(calls,0);
+});
+test("ineligible quote never reaches reviewer or RPC and is not retried",async()=>{
+ let calls=0,reviewCalls=0,rpcCalls=0;
+ await assert.rejects(observeFirmQuoteWithFundedSimulation({authorized:true,simulationAuthorized:true,taker,apiKey,
+ fetchImpl:async()=>{calls++;return new Response(JSON.stringify({...fixture,blockNumber:"123456"}));},
+ reviewCandidate:async()=>{reviewCalls++;},rpcFetchImpl:async()=>{rpcCalls++;}}),/not eligible/);
+ assert.deepEqual([calls,reviewCalls,rpcCalls],[1,0,0]);
+});
+test("reviewer sees only sanitized evidence; review failures do not leak provider or reviewer input",async()=>{
+ let calls=0,reviewCalls=0,rpcCalls=0;
+ const options={authorized:true,simulationAuthorized:true,taker,apiKey,
+ fetchImpl:async()=>{calls++;return new Response(JSON.stringify({...fixture,blockNumber:"123456",issues:{...fixture.issues,allowance:null}}));},
+ rpcFetchImpl:async()=>{rpcCalls++;},
+ reviewCandidate:async observation=>{
+  reviewCalls++;const serialized=JSON.stringify(observation);
+  for(const secret of [calldata,taker,apiKey,"never log me"])assert.ok(!serialized.includes(secret));
+  assert.equal(observation.reportedProviderBlock,"123456");
+  throw Error(calldata+apiKey);
+ }};
+ await assert.rejects(observeFirmQuoteWithFundedSimulation(options),{message:"Independent funded review unavailable"});
+ assert.deepEqual([calls,reviewCalls,rpcCalls],[1,1,0]);
+ await assert.rejects(observeFirmQuoteWithFundedSimulation({...options,reviewCandidate:async()=>({raw:calldata})}),{message:"Reviewed funded simulation rejected"});
+ assert.equal(calls,2);assert.equal(rpcCalls,0);
 });
