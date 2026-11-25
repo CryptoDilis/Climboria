@@ -5,17 +5,18 @@ import {verifyDeployedClientParity} from './qa-deployed-client-parity.mjs';
 const root='https://climboria.fun/game/';
 const html='<script src="./multiplayer/client-presence.js?v=test-1"></script>';
 const script=Buffer.from('/* exact published test bytes */');
+const menu=Buffer.from('<main>Exact published Game menu</main>');
 const response=(body,type)=>new Response(body,{headers:{'content-type':type}});
-function opts(fetchImpl){return {loadHtml:async()=>html,loadScript:async()=>script,fetchImpl}}
+function opts(fetchImpl){return {loadHtml:async()=>html,loadScript:async()=>script,loadMenu:async()=>menu,fetchImpl}}
 test('checks only exact published HTML version and script bytes with no credentials',async()=>{
  const calls=[];
  const result=await verifyDeployedClientParity(opts(async(url,init)=>{
   calls.push(url);assert.equal(init.method,'GET');assert.equal(init.redirect,'error');
   assert.equal(init.credentials,'omit');assert.equal(init.cache,'no-store');
-  return url.endsWith('play.html')?response(html,'text/html; charset=utf-8'):response(script,'application/javascript');
+  return url.endsWith('play.html')?response(html,'text/html; charset=utf-8'):url.endsWith('index.html')?response(menu,'text/html'):response(script,'application/javascript');
  }));
- assert.deepEqual(calls,[root+'play.html',root+'multiplayer/client-presence.js?v=test-1']);
- assert.deepEqual(result,{version:'test-1',sha256:createHash('sha256').update(script).digest('hex'),htmlSha256:createHash('sha256').update(html).digest('hex')});
+ assert.deepEqual(calls,[root+'play.html',root+'multiplayer/client-presence.js?v=test-1',root+'index.html']);
+ assert.deepEqual(result,{version:'test-1',sha256:createHash('sha256').update(script).digest('hex'),htmlSha256:createHash('sha256').update(html).digest('hex'),menuSha256:createHash('sha256').update(menu).digest('hex')});
 });
 test('rejects stale version before requesting script',async()=>{
  let calls=0;
@@ -41,4 +42,17 @@ test('rejects outdated inline mobile controls despite matching presence script v
   calls++;return response(html+'<!-- stale inline gameplay -->','text/html');
  })),/HTML bytes differ/);
  assert.equal(calls,1,'reject stale HTML before requesting presence script');
+});
+
+test('rejects stale hero menu even when published gameplay HTML and presence are exact',async()=>{
+ const calls=[];
+ await assert.rejects(verifyDeployedClientParity(opts(async url=>{
+  calls.push(url);return url.endsWith('play.html')?response(html,'text/html'):url.endsWith('index.html')?response('stale hero menu','text/html'):response(script,'application/javascript');
+ })),/menu bytes differ/);
+ assert.equal(calls.at(-1),root+'index.html');
+});
+test('rejects invalid MIME, redirects and oversized menu rather than accepting a fallback',async()=>{
+ for(const bad of [()=>response(menu,'application/json'),()=>Response.redirect(root+'play.html',302),()=>response(Buffer.alloc(1024*1024+1),'text/html')]){
+  await assert.rejects(verifyDeployedClientParity(opts(async url=>url.endsWith('play.html')?response(html,'text/html'):url.endsWith('index.html')?bad():response(script,'application/javascript'))));
+ }
 });

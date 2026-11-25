@@ -45,6 +45,7 @@ jobs:
             stage='deployed-client-parity';
             const asset=await verifyDeployedClientParity();
             console.log('PASS: published Game HTML SHA256 '+asset.htmlSha256);
+            console.log('PASS: published Game menu HTML SHA256 '+asset.menuSha256);
             console.log('PASS: published Game presence version '+asset.version+' SHA256 '+asset.sha256);
             console.log('NOT VERIFIED: real login, WebSocket, movement, chat delivery, remote GLBs or physical devices.');
           }catch{

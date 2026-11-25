@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME PUBLISHED MENU PARITY PREPARATION — 2026-11-26 PHT (NOT MERGED)
+
+- #780 merged `7dc4458ceece725cc74d72d80526e5c278d65c54`; eight checks passed as recorded on #781 branch. #781 reconciled head `f00b87defd12d5d07c73fff0c50e3a557ffebf10`: Gateway 45684112680 job 139452055637 confirmed 253/253 and 56/56 tests, zero failures including all eight hero lifecycle cases. Validate 45684112610, Runtime 45684112778, Original Hero 45684112606, Browser 45684112641 and Heroes 45684112903 passed; Gameplay 45684112651 still running at review.
+- Added exact public Game menu SHA256 parity to existing bounded read-only verifier, preserving gameplay HTML and presence checks. Two new negative controls cover stale menu and invalid MIME/redirect/oversized menu. No login or production mutation. This branch is based on merged chat fix, not pending hero change; proof on this branch does not establish publication of future #781.
+- **EXACT NEXT:** finish #781 checks and merge only green, reconcile this verifier on latest main and check actual public gameplay HTML, presence and hero menu digests after Pages deployment; do not weaken parity if release is stale. Real registered two-account, physical Android and private combat staging still separate blockers. Game only.
+
+---
+
 ## GAME HUD MERGED AND CHAT BRANCH RECONCILED — 2026-11-26 PHT
 
 - #778 MERGED at `108a680e0f1281adab41f29334c6b01479e080e0`, exact head `8f95c0ba9cc5e59396f895d93d2dd93dc37310e8`: Gateway 45678993172, Authority 45678993170, Runtime 45678993148, Validate 45678993164, Browser 45678993268, Chests 45678993221, Heroes 45678993060 and Gameplay 45678993351 ALL SUCCESS. Published #778 HTML and physical Android acceptance still pending.
