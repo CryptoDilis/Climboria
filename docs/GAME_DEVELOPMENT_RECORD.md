@@ -1,10 +1,25 @@
 # Climboria Game Development Record
 
+## GAME PUBLISHED MOBILE HTML VERIFIED — 2026-11-26 PHT
+
+- #777 MERGED at `8dcb1684902534216f38d2fc7d6192144c7d76f6`, exact tested head `c683b348148bdb1b280e88372001dac5a7f96a4a`. All five checks passed: [Readiness](https://github.com/CryptoDilis/Climboria/actions/runs/45663592082), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45663592123), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45663591913), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45663592161), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45663592014). Actual published HTML SHA256 `6a406d0d83e0e9796841b1e213b4e05e842a9dbc3629a3b242571d692cbf117a`, presence SHA256 `9eb00d4ba7015a77c3fe3e52c1a37af23a1ad4999f868384c11d106a3256f1d7`, 17/17 readiness tests, verified 17:20:07 UTC Nov 25.
+- #778 exact head `2fa2b4a03d0f786e47238bd9e34e12fc011beb2b` all eight workflows passed: Gateway 45665045578, Authority 45665045575, Runtime 45665044991, Validate 45665045115, Browser 45665045286, Heroes 45665045344, Chests 45665045102, Gameplay 45665045288; Gateway 241/241 plus 53/53. Shared record conflict arose after #777 merged. Reconcile preserving both records and unchanged tested gameplay blobs; require fresh exact-head CI before merging #778. Actual Android, two-account and private staging remain pending.
+
+---
+
 ## GAME MOBILE HUD TOUCH ISOLATION — 2026-11-26 PHT (NOT MERGED)
 
 - Checked main `ea020d6d276b21ce9e082eb4a5c9cda2c646fd32`; #777 readiness 45663592082 job 139379656897 verified #770 is published, 17/17 tests and live HTML SHA256 `6a406d0d83e0e9796841b1e213b4e05e842a9dbc3629a3b242571d692cbf117a`. #777 still awaiting terminal Gameplay check at review.
 - Identified a related source-level issue: touches on world map, inventory, expedition settings and player card were not excluded by the global world gesture filter. Fix `f8828828ab63c4fb162120c5fec9f7c56d52cb8e` excludes those HUD surfaces and releases stale movement when opening map/inventory/settings. Regression `c98f8ff0bfe99bb3c0b198a402bce16b9d88200e` checks HUD-only and simultaneous HUD/world touches cannot trigger unintended steering or zoom. No server or unrelated changes; no actual phone reproduction claimed.
 - **EXACT NEXT:** merge #777 only after remaining Gameplay succeeds; check fresh exact-head HUD fix CI, merge only green, then verify published HTML again. Physical Android and real two-account acceptance remain pending; private combat staging requires separate authorized access. Game only.
+
+---
+
+## GAME PUBLISHED MOBILE HTML VERIFICATION — 2026-11-26 PHT (NOT MERGED)
+
+- Checked main `29098afff0e7d7921e9ae141a3c732717831d1f3` after merged #770 and #775. Existing deployed-client readiness proof verifies the version reference in play.html and exact presence script bytes, but did not establish exact HTML bytes containing #770 inline mobile gesture controls. No live #770 claim yet.
+- Extended existing bounded credential-free verifier `60093496ef591a9cb64dc461b49742684743135b` to require SHA256 parity of complete published play.html against checked-out release, retaining version and script integrity checks. Negative control `8ee44aae76ea03cfe3db5595f354a73dcc590d4f` rejects stale inline code despite matching presence version; workflow `4fb923b52f796e635a3dda4997c8cee0fef0ca64` logs both digests. This is verification-only; no Game behavior, production deployment or non-Game changes.
+- **EXACT NEXT:** inspect fresh exact-head deployed readiness and other required CI; if HTML mismatch, diagnose Pages release versus legitimate hosting transformation rather than silently weakening parity. Merge only green and record actual live digest. Real Android multitouch, two registered browsers and protected Cloudflare staging remain separate acceptance blockers. Game only.
 
 ---
 
