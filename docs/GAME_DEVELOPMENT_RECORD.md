@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## GAME OWNER HANDOFF CI CORRECTION — 2026-11-26 PHT (NOT MERGED)
+
+- #796 exact initial head `3def78a174861e19d25665bd2d2c8878d73f011a` Authority 45690220376 job 139473388083 and Gateway 45690220398 job 139473383911 failed the same existing hard-coded presence cache-version assertion (old chat guard version). Both logs identify `live Game refuses the retired forced-Sanctuary mobile prompt`; updated exact expected version to match new owner guard, retaining all other assertions and production behavior. Fresh CI required. Runtime 45690221049, Validate 45690220410, Browser 45690220416 and Heroes 45690220491 passed; Gameplay 45690220396 and Chests 45690220466 running at review.
+- #792 still pending final Gameplay 45689667304; merge only green, reconcile this branch on latest main, then verify all fresh checks. No deployment or real account acceptance claimed. Game only.
+
+---
+
 ## GAME OWNER-BOUND ROOM HANDOFF GUARD — 2026-11-26 PHT (NOT MERGED)
 
 - #792 exact reconciled head `11b6dc64d603eec534a1db460502092e78b0e1be`: Gateway 45689667257 job 139471464538 verified 257/257 + 56/56 tests, zero failures and both real-creator QA regressions; Runtime 45689667211 and Validate 45689667209 passed; Gameplay 45689667304 pending at review.
