@@ -50,10 +50,18 @@ jobs:
           git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
           test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
       - name: Compile and run offline Solidity unit tests
-        run: forge test -vv
+        run: |
+          set -euo pipefail
+          forge test -vv | tee "$RUNNER_TEMP/climb-token-unit.log"
+          grep -Eq '7 tests passed, 0 failed, 0 skipped \(7 total tests\)' "$RUNNER_TEMP/climb-token-unit.log"
+          grep -Fq '[PASS] testExportLocalRuntimeForVerifier()' "$RUNNER_TEMP/climb-token-unit.log"
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Cross-check verifier against actual local constructor runtime
+        run: |
+          set -euo pipefail
+          node check-local-runtime.mjs out/ClimbTestnetToken.sol/ClimbTestnetToken.json out/climb-local-runtime.hex out/climb-local-binder.txt "$GITHUB_SHA"
       - name: Prepare unsigned test-only deployment artifact
         run: |
           set -euo pipefail
