@@ -11,7 +11,7 @@ const fingerprint=code=>createHash("sha256").update(Buffer.from(code.slice(2),"h
 let id=0,lastRequest=0,rateLimitRetryUsed=false;
 const deadline=AbortSignal.timeout(180000);
 async function rpc(method,params){
- assert.ok(["eth_chainId","eth_blockNumber","eth_getCode","eth_call","eth_getLogs","eth_getBlockByNumber"].includes(method));
+ assert.ok(["eth_chainId","eth_blockNumber","eth_getCode","eth_call","eth_getBlockReceipts","eth_getBlockByNumber"].includes(method));
  // Public RPC is rate limited; serialize and space requests. At most one
  // bounded HTTP 429 retry for the entire run, respecting Retry-After.
  let r,requestId;
@@ -76,10 +76,31 @@ for(let i=0;upper-lower>1n&&i<28;i++){
 assert.equal(upper-lower,1n);
 const deploymentBlock=quantity(upper),deploymentHash=await blockHash(deploymentBlock);
 assert.equal(await codeAt(lower),"0x");assert.equal(await codeAt(upper),current);
+// Query receipts for exactly the located deployment block instead of eth_getLogs.
+// Do not fall back to another endpoint or method on throttling.
+console.log(JSON.stringify({checkpoint:"historical-code-boundary",target,deploymentBlock,deploymentHash,runtimeSha256}));
+const receipts=await rpc("eth_getBlockReceipts",[deploymentBlock]);
+assert.ok(Array.isArray(receipts)&&receipts.length>0&&receipts.length<=10000,"Invalid block receipts");
+const matching=[];
+for(const receipt of receipts){
+ assert.equal(receipt.blockNumber,deploymentBlock);
+ assert.equal(receipt.blockHash.toLowerCase(),deploymentHash);
+ assert.match(receipt.transactionHash,hash);
+ assert.ok(Array.isArray(receipt.logs));
+ for(const log of receipt.logs){
+  if(typeof log.address!=="string"||!Array.isArray(log.topics))throw Error("Invalid receipt log");
+  const address=log.address.toLowerCase(),topic=log.topics[0]?.toLowerCase();
+  if((address===REGISTRY&&topic===DEPLOYED)||(address===target&&topic===GIT_COMMIT)){
+   assert.equal(receipt.status,"0x1");
+   assert.equal(log.transactionHash.toLowerCase(),receipt.transactionHash.toLowerCase());
+   matching.push(log);
+  }
+ }
+}
 async function oneLog(address,topics){
- const logs=await rpc("eth_getLogs",[{address,fromBlock:deploymentBlock,toBlock:deploymentBlock,topics}]);
- assert.ok(Array.isArray(logs));assert.equal(logs.length,1,"Expected exactly one matching deployment event");
- const log=logs[0];assert.equal(log.address.toLowerCase(),address);assert.equal(log.blockNumber,deploymentBlock);assert.equal(log.blockHash.toLowerCase(),deploymentHash);assert.equal(log.removed,false);assert.equal(log.data,"0x");assert.match(log.transactionHash,hash);
+ const logs=matching.filter(log=>log.address.toLowerCase()===address&&topics.every((topic,i)=>log.topics[i]?.toLowerCase()===topic));
+ assert.equal(logs.length,1,"Expected exactly one matching deployment event");
+ const log=logs[0];assert.equal(log.blockNumber,deploymentBlock);assert.equal(log.blockHash.toLowerCase(),deploymentHash);assert.notEqual(log.removed,true);assert.equal(log.data,"0x");assert.match(log.transactionHash,hash);
  return log;
 }
 const deployedTopics=[DEPLOYED,"0x"+word(2n),"0x"+word(nonce),"0x"+target.slice(2).padStart(64,"0")];
