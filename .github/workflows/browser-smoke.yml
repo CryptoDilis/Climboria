@@ -18,6 +18,7 @@ on:
       - "game/play.html"
       - "game/index.html"
       - ".github/scripts/game-smoke.mjs"
+      - ".github/scripts/base-swap-browser-safety-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
   pull_request:
     branches: [main]
@@ -32,6 +33,7 @@ on:
       - "game/assets/music/TRACK_01.mp3"
       - "game/play.html"
       - ".github/scripts/game-smoke.mjs"
+      - ".github/scripts/base-swap-browser-safety-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
 
   workflow_dispatch:
@@ -79,6 +81,11 @@ jobs:
           done
           cat /tmp/climboria-http.log
           exit 1
+
+      - name: Verify Base Swap read-only wallet and price gate in actual Chromium
+        run: |
+          node --check .github/scripts/base-swap-browser-safety-smoke.mjs
+          node .github/scripts/base-swap-browser-safety-smoke.mjs
 
       - name: Verify permanent $CLIMB tokenomics on desktop and mobile
         run: node .github/scripts/climb-token-record-smoke.mjs
