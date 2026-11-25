@@ -32,6 +32,9 @@ jobs:
           node-version: 22
       - run: |
           node --check dex/base-execution/firm-quote-observation.mjs
+          node --check dex/base-execution/firm-quote-simulation.mjs
+          node --check .github/scripts/base-firm-quote-simulation.test.mjs
+          node --test .github/scripts/base-firm-quote-simulation.test.mjs
           node --check .github/scripts/base-firm-quote-authorized-probe.mjs
           node --test .github/scripts/base-firm-quote-observation.test.mjs
   observe:
