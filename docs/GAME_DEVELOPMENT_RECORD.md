@@ -1,5 +1,29 @@
 # Climboria Game Development Record
 
+## GAME MULTITOUCH CI TEST FIX — 2026-11-26 PHT (NOT MERGED)
+
+- #770 head `f0fd16bf1364beca7a8bbc6238e5878251bf5494`: Gateway 45660130443 job 139367438649 and Authority 45660130426 job 139367428465 failed on the same new regression assertion, after genuine pinch and replacement checks succeeded. Both logs confirm joystick id null and dx/dy zero, but the fixture's whole-object comparison incorrectly excluded inert x0/y0 origin fields assigned during actual touchstart. Runtime 45660130457, Validate 45660130999 and Browser 45660130549 passed; Gameplay 45660130680, Heroes 45660130455 and Chests 45660130369 were still running at review.
+- Test-only correction `92969f82ba4c0bfa298a849bd6899b147ab18240` compares active joystick state explicitly (id/dx/dy); retains checks for camera, pinch, key state, hidden controls, position, HP and stamina. No gameplay implementation or security gate weakened.
+- **EXACT NEXT:** check fresh exact-head CI, including all eight workflows, before merge; verify public deployment and physical Android interaction; real registered two-account and private combat staging remain blocked by account/access setup. Game only.
+
+---
+
+## GAME MOBILE MULTITOUCH ISOLATION — 2026-11-26 PHT (NOT MERGED)
+
+- #770 previous head `27370230704e4065a151005f2e8d23a4ef67e37f`: Gateway 45659238955 (238/238 and separate 53/53 client tests), Browser 45659239117, Validate 45659239187, Runtime 45659239069, Authority 45659239138, Heroes 45659239128, Chests 45659239054 SUCCESS; Gameplay 45659239127 still running at review. These are previous-head results, not new-head results.
+- Extended the same open Game-only PR to resolve related multitouch defect: global touch list includes held action-button fingers even if their touchstart stopped propagation. Fix `b43286d35c4863ba30e08ee475fa37c2a574494d` filters UI-origin touches, keeps joystick movement independent of RUN/JUMP/DIVE, tracks a stable pair of two world fingers for camera pinch, resets pinch baseline when pair changes, and clears state on interruption. Tests `04cbb49d19829a33895aa6068f84afcd2696bf33` cover simultaneous RUN/joystick, UI-only movement, genuine two-finger zoom and pair replacement. No physical phone reproduction claimed.
+- **EXACT NEXT:** verify fresh #770 exact-head CI, including new regression tests and desktop/mobile gameplay; merge only green, verify published HTML, and obtain real Android and two-account acceptance. Separate private combat deployment remains blocked by scoped Cloudflare access. Game only.
+
+---
+
+## GAME MOBILE INPUT INTERRUPTION FIX — 2026-11-26 PHT (NOT MERGED)
+
+- Reviewed main `8e8d1683a4323b1121a1ecbdf62c607a83e92ce9`. Found missing touchcancel listeners on held RUN, JUMP/SURFACE and DIVE controls; browser blur previously cleared keys but left joystick/camera gesture state active. Text input focus could also leave prior movement held. These are source-level defects, not claimed as reproduced on an actual phone.
+- Fix `e81b468865f0dd61132475714da509963a79242a` releases held mobile actions on touchcancel, clears keyboard/joystick/camera drag/pinch and queued movement on window blur, hidden document and editable focus, without modifying position, HP/stamina, or room admission. Added tests `18b9ee37a689ddc501d45aad8bdcccf8ca1c1b63` exercising actual inline listener registrations with VM DOM stubs. No production Worker or non-Game edits.
+- **EXACT NEXT:** verify fresh exact-head Game CI, fix any failures and merge only green; verify published Game HTML and physical Android input interruption. Actual registered two-account acceptance and private combat staging remain blocked by real test identities and scoped Cloudflare access. Do not repeat #750/#753/#755. Game only.
+
+---
+
 ## GAME DEPLOYED REJOIN VERIFIED AND PRIVATE QA ROSTER FIX MERGED — 2026-11-26 PHT
 
 - #753 MERGED at `5baf0f29384a1a8c5885077b52b6cabe6e93fbd8`, exact tested head `d21cc0701a493a1be53b431de88cc5bbd644fc57`: [Deployed readiness](https://github.com/CryptoDilis/Climboria/actions/runs/45582765441), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45582765378), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45582765522), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45582765430), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45582765332) ALL SUCCESS. Readiness job 139096670151 confirms 16/16 tests and real published Game client version `20261125-game-voluntary-rejoin-1`, SHA256 `9eb00d4ba7015a77c3fe3e52c1a37af23a1ad4999f868384c11d106a3256f1d7`, actual deployed configuration/health/ready/Nearby capability at 09:09:58 UTC November 25. The reconnect code is published; real-account reconnect behavior is not yet independently accepted.
