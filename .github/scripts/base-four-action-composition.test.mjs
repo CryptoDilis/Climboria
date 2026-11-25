@@ -130,3 +130,32 @@ test("USDC participant observation refuses unapproved, changed code or wrong cha
  await assert.rejects(observeUsdcQuoteParticipants(intent,q,contractPolicy,review,state,{authorized:true,referenceBlock:anchor,fetchImpl}),/runtime changed/);
  assert.deepEqual(calls.map(x=>x.method),["eth_chainId","eth_getBlockByNumber","eth_getCode"]);
 });
+
+import {observeFirmQuoteWithFundedSimulation} from "../../dex/base-execution/firm-quote-observation.mjs";
+test("single private quote reaches funded preflight without exposing raw data to reviewer or repeating provider request",async()=>{
+ const q={...quote(),blockNumber:BigInt(blockNumber).toString()};
+ let providerCalls=0,reviewCalls=0;const rpcMethods=[];
+ await assert.rejects(observeFirmQuoteWithFundedSimulation({
+  authorized:true,simulationAuthorized:true,taker,apiKey:"synthetic-secret",
+  fetchImpl:async()=>{providerCalls++;return new Response(JSON.stringify(q));},
+  reviewCandidate:async observation=>{
+   reviewCalls++;assert.equal(observation.reportedProviderBlock,q.blockNumber);
+   assert.ok(!JSON.stringify(observation).includes(q.transaction.data));
+   // Mutating the reviewer's copy cannot change the original provider response.
+   observation.reportedProviderBlock="1";
+   return {minimumBuyAmount:intent.minimumBuyAmount,contractPolicy,review:fundedReview,state,referenceBlock:anchor};
+  },
+  rpcFetchImpl:async(url,opts)=>{
+   const req=JSON.parse(opts.body);rpcMethods.push(req.method);
+   let result;
+   if(req.method==="eth_chainId")result="0x2105";
+   else if(req.method==="eth_blockNumber")result=blockNumber;
+   else if(req.method==="eth_getBlockByNumber")result={number:blockNumber,hash:blockHash};
+   else if(req.method==="eth_getCode")result="0x";
+   else throw Error("Unexpected simulation");
+   return new Response(JSON.stringify({jsonrpc:"2.0",id:req.id,result}));
+  }
+ }),{message:"Reviewed funded simulation rejected"});
+ assert.equal(providerCalls,1);assert.equal(reviewCalls,1);
+ assert.deepEqual(rpcMethods,["eth_chainId","eth_blockNumber","eth_getBlockByNumber","eth_getCode"]);
+});
