@@ -39,3 +39,10 @@ jobs:
       - name: Compile and run pinned manager locally (no fork or broadcast)
         working-directory: ntt-upstream/evm
         run: forge test --match-path test/ClimbNttManagerLocalIntegration.t.sol --match-contract ClimbNttManagerLocalIntegrationTest -vvv
+      - name: Run pinned upstream manager and arithmetic regression tests
+        working-directory: ntt-upstream/evm
+        run: |
+          set -euo pipefail
+          forge test --match-path test/NttManager.t.sol --match-test 'test_(pauseUnpause|pausePauserUnpauseOnlyOwner|disableReenableTransceiver|maxOutTransceivers|cancellingOutboundQueuedTransfers|cantSetThresholdTooHigh|cantSetThresholdToZero|transferWithAmountAndDecimalsThatCouldOverflow|transfersOnForkedChains)$' -vv
+          forge test --match-path test/TrimmedAmount.t.sol -vv
+          forge test --match-path test/RateLimit.t.sol --match-test 'test_(outboundRateLimit_queue|inboundRateLimit_queue)$' -vv
