@@ -5,7 +5,7 @@
 export const EXEC_SELECTOR="2213bc0b"; // keccak256("exec(address,address,uint256,address,bytes)")[:4]
 const MAX_BYTES=32768;
 import {inspectSettlerExecute} from "./settler-calldata.mjs";
-export function inspectAllowanceHolderExec(calldata){
+export function inspectAllowanceHolderExec(calldata,options){
  if(typeof calldata!=="string"||calldata.length>2+MAX_BYTES*2||!/^0x(?:[0-9a-fA-F]{2})+$/.test(calldata))throw Error("Invalid calldata");
  const hex=calldata.slice(2).toLowerCase();
  if(hex.slice(0,8)!==EXEC_SELECTOR||hex.length<8+64*6)throw Error("Unsupported AllowanceHolder selector or truncated ABI");
@@ -21,5 +21,5 @@ export function inspectAllowanceHolderExec(calldata){
  if(length<4n||length>BigInt(MAX_BYTES-196))throw Error("Invalid nested calldata length");
  const n=Number(length),start=8+64*6,end=start+n*2,padded=start+Math.ceil(n/32)*64;
  if(hex.length!==padded||!/^[0]*$/.test(hex.slice(end)))throw Error("Noncanonical ABI padding or trailing bytes");
- return Object.freeze({operator,token,amount:amount.toString(),target,nestedSelector:"0x"+hex.slice(start,start+8),nestedByteLength:n,settler:inspectSettlerExecute("0x"+hex.slice(start,end))});
+ return Object.freeze({operator,token,amount:amount.toString(),target,nestedSelector:"0x"+hex.slice(start,start+8),nestedByteLength:n,settler:inspectSettlerExecute("0x"+hex.slice(start,end),options)});
 }
