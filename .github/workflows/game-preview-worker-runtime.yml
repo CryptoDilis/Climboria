@@ -50,3 +50,13 @@ jobs:
         run: node .github/scripts/game-preview-workerd-smoke.mjs
       - name: Require no high or critical local dependency advisories
         run: npm audit --audit-level=high
+      - name: Capture verified dependency lock and audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-preview-runtime-dependency-evidence
+          path: |
+            package.json
+            package-lock.json
+            ${{ runner.temp }}/game-preview-npm-audit.json
+          if-no-files-found: error
+          retention-days: 7
