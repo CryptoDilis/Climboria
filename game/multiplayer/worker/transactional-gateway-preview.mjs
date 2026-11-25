@@ -16,7 +16,7 @@ export function createTransactionalGatewayPreview({runtime,consumeTicket,clock=(
     typeof clock!=='function'||typeof sessionId!=='function'||
     !['join','input','attack','readSnapshot','disconnect'].every(k=>typeof runtime[k]==='function'))
   throw Error('Explicit nonproduction runtime and private ticket consumer required');
- async function connect(ticket){
+ async function connect(ticket,reservedSessionId){
   if(typeof ticket!=='string'||!ticketPattern.test(ticket))return deny('invalid-ticket');
   let verified;
   try{verified=await consumeTicket(ticket)}catch{return deny('ticket-unavailable')}
@@ -25,7 +25,8 @@ export function createTransactionalGatewayPreview({runtime,consumeTicket,clock=(
      !Number.isSafeInteger(now)||!Number.isSafeInteger(verified.expiresAt)||
      verified.expiresAt<=now||verified.expiresAt-now>MAX_TICKET_AGE)
    return deny('expired-or-used-ticket');
-  const id=sessionId();
+  // Optional ID is supplied exclusively by the private Worker, never a packet.
+  const id=reservedSessionId??sessionId();
   if(typeof id!=='string'||!sidPattern.test(id))return deny('invalid-server-session');
   const joined=await runtime.join({sessionId:id,accountId:verified.userId.toLowerCase()});
   if(!joined.ok)return deny(joined.reason);
