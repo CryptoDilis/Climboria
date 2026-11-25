@@ -3,6 +3,10 @@
 export const BASE_PRICE_PREVIEW_ENABLED=false;
 export const BASE_PRICE_PREVIEW_ENDPOINT=null;
 export const VERIFIED_BASE_PRICE_ENDPOINT="https://base-price.climboria.fun/v1/base/indicative-price";
+export const BASE_PRICE_HEALTH_ENDPOINT="https://base-price.climboria.fun/health";
+export function isPublicPricingReady(data){
+ return Boolean(data&&data.service==="climboria-base-price-preview"&&typeof data.deployedGitSha==="string"&&/^[a-f0-9]{40}$/.test(data.deployedGitSha)&&data.pricingDisabled===false&&data.publicPricingReady===true&&data.bindingsReady===true&&data.execution==="unsupported");
+}
 const USDC="0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
 const WETH="0x4200000000000000000000000000000000000006";
 const MAX_UINT=(1n<<256n)-1n;
@@ -54,7 +58,7 @@ export function previewLabels(intent,data){
  rows.push(["Reported network fee",data.reportedNetworkFee==null?"Unavailable":formatBasePreviewAmount(data.reportedNetworkFee,18)+" ETH (estimate)"]);
  return rows;
 }
-export function initBasePricePreview(doc=globalThis.document,{enabled=BASE_PRICE_PREVIEW_ENABLED,endpoint=BASE_PRICE_PREVIEW_ENDPOINT,fetchImpl=globalThis.fetch}={}){
+export function initBasePricePreview(doc=globalThis.document,{enabled=BASE_PRICE_PREVIEW_ENABLED,endpoint=BASE_PRICE_PREVIEW_ENDPOINT,fetchImpl=(url,options)=>globalThis.fetch(url,options),healthGated=false}={}){
  const form=doc.getElementById("basePriceForm"),direction=doc.getElementById("basePriceDirection"),amount=doc.getElementById("basePriceAmount"),status=doc.getElementById("basePriceStatus"),result=doc.getElementById("basePriceResult"),button=doc.getElementById("basePriceSubmit");
  if(!form||!direction||!amount||!status||!result||!button)return;
  let url=null;
@@ -62,15 +66,43 @@ export function initBasePricePreview(doc=globalThis.document,{enabled=BASE_PRICE
  if(enabled===true&&typeof endpoint==="string"){
   try{const candidate=new URL(endpoint);if(candidate.protocol==="https:"&&candidate.hostname==="base-price.climboria.fun"&&!candidate.username&&!candidate.password&&!candidate.port&&!candidate.search&&!candidate.hash&&candidate.pathname==="/v1/base/indicative-price")url=candidate;}catch{}
  }
- let current;
- const clear=()=>{current?.abort();current=null;result.replaceChildren();button.disabled=!url;status.textContent=url?"Indicative estimates only. No wallet required.":"Pricing preview is not active. Live provider configuration is pending.";};
+ const check=doc.getElementById("basePriceAvailability");
+ const healthMode=healthGated===true&&Boolean(check);
+ let healthReady=false,healthChecking=false,current;
+ const available=()=>Boolean(url)&&(!healthMode||healthReady);
+ const health=async signal=>{
+  const response=await fetchImpl(BASE_PRICE_HEALTH_ENDPOINT,{method:"GET",credentials:"omit",redirect:"error",cache:"no-store",signal:AbortSignal.any([signal,AbortSignal.timeout(5000)])});
+  if(!response.ok){try{await response.body?.cancel();}catch{}return false;}
+  const reader=response.body?.getReader();if(!reader)return false;
+  const chunks=[];let size=0;
+  try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>4096){await reader.cancel();return false;}chunks.push(value);}}finally{reader.releaseLock();}
+  const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+  return isPublicPricingReady(JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(bytes)));
+ };
+ if(healthMode)url=new URL(VERIFIED_BASE_PRICE_ENDPOINT);
+ const clear=()=>{current?.abort();current=null;result.replaceChildren();button.disabled=!available()||healthChecking;status.textContent=available()?"Indicative estimates only. No wallet required.":"Pricing preview is not active. Live provider configuration is pending.";};
  direction.addEventListener("change",()=>{amount.value="";clear();});
  amount.addEventListener("input",clear);clear();
+ if(healthMode){
+  status.textContent="Check availability to see whether public pricing is active.";
+  check.addEventListener("click",async()=>{
+   if(healthChecking||current)return;
+   healthChecking=true;healthReady=false;clear();check.disabled=true;status.textContent="Checking public pricing availability…";
+   try{healthReady=await health(new AbortController().signal);}catch{healthReady=false;}
+   finally{healthChecking=false;check.disabled=false;button.disabled=!available();status.textContent=healthReady?"Public indicative estimates available. No wallet required.":"Public pricing is not currently available. No price request was sent.";}
+  });
+ }
  form.addEventListener("submit",async event=>{
-  event.preventDefault();if(current||!url)return;clear();
+  event.preventDefault();if(current||healthChecking||!available())return;clear();
   let intent;try{intent=previewIntent(direction.value,amount.value.trim());}catch(error){status.textContent=error.message;return;}
   const controller=new AbortController();current=controller;button.disabled=true;status.textContent="Requesting indicative estimate…";
   try{
+   if(healthMode){
+    let ready=false;try{ready=await health(controller.signal);}catch{}
+    if(current!==controller||controller.signal.aborted)return;
+    healthReady=ready;
+    if(!ready){status.textContent="Public pricing is not currently available. No price request was sent.";return;}
+   }
    const target=new URL(url);for(const k of ["chainId","sellToken","buyToken","sellAmount"])target.searchParams.set(k,String(intent[k]));
    const response=await fetchImpl(target.toString(),{method:"GET",credentials:"omit",redirect:"error",cache:"no-store",signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])});
    if(!response.ok){
@@ -78,6 +110,7 @@ export function initBasePricePreview(doc=globalThis.document,{enabled=BASE_PRICE
     if(current===controller&&!controller.signal.aborted){
      status.textContent=response.status===429?"Pricing request limit reached. Try again later.":response.status===503?"Base pricing is temporarily unavailable. No transaction prepared.":"Indicative pricing unavailable. No transaction prepared.";
     }
+    if(healthMode&&response.status===503&&current===controller&&!controller.signal.aborted)healthReady=false;
     try{await response.body?.cancel();}catch{}
     return;
    }
@@ -91,7 +124,7 @@ export function initBasePricePreview(doc=globalThis.document,{enabled=BASE_PRICE
    for(const [label,value] of rows){const row=doc.createElement("p");row.textContent=label+": "+value;result.append(row);}
    status.textContent="Indicative provider estimate only. Not a firm quote, approval or trade.";
   }catch{if(current===controller&&!controller.signal.aborted)status.textContent="Indicative pricing unavailable. No transaction prepared.";}
-  finally{if(current===controller){current=null;button.disabled=false;}}
+  finally{if(current===controller){current=null;button.disabled=!available();}}
  });
 }
-if(typeof document!=="undefined")initBasePricePreview(document);
+if(typeof document!=="undefined")initBasePricePreview(document,{healthGated:true});

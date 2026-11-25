@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {BASE_PRICE_PREVIEW_ENABLED,BASE_PRICE_PREVIEW_ENDPOINT,previewIntent,parseBasePreviewAmount,previewLabels,initBasePricePreview} from "../../dex/base-price-preview.mjs";
+import {BASE_PRICE_PREVIEW_ENABLED,BASE_PRICE_PREVIEW_ENDPOINT,previewIntent,parseBasePreviewAmount,previewLabels,initBasePricePreview,isPublicPricingReady,BASE_PRICE_HEALTH_ENDPOINT} from "../../dex/base-price-preview.mjs";
 const intent=previewIntent("buy","0.1");
 const response={provider:"0x",chainId:8453,indicativeOnly:true,executable:false,sellToken:intent.sellToken,buyToken:intent.buyToken,requestedSellAmount:"100000",reportedSellAmount:"99850",estimatedBuyAmount:"29247834891471",providerMinBuyAmount:"28955356542556",fees:{zeroExFee:{amount:"150",token:intent.sellToken},integratorFee:null,gasFee:null},reportedNetworkFee:"1301007038488"};
 test("exact decimal amounts and both directions",()=>{
@@ -13,7 +13,7 @@ test("indicative response identifies exact tokens, raw input, fees, output and n
  for(const bad of [{chainId:1},{executable:true},{buyToken:intent.sellToken},{requestedSellAmount:"1"},{reportedSellAmount:"99849"},{providerMinBuyAmount:"9999999999999999"},{fees:{zeroExFee:null,integratorFee:null,gasFee:null}},{fees:{...response.fees,integratorFee:{amount:"1",token:intent.sellToken}}}])assert.throws(()=>previewLabels(intent,{...response,...bad}));
 });
 class El{constructor(){this.handlers={};this.value="";this.children=[];this.textContent="";this.disabled=false;}addEventListener(k,f){this.handlers[k]=f;}replaceChildren(){this.children=[];}append(n){this.children.push(n);}}
-function fixture(options){const nodes=Object.fromEntries(["Form","Direction","Amount","Status","Result","Submit"].map(x=>["basePrice"+x,new El()]));const doc={getElementById:id=>nodes[id],createElement:()=>new El()};nodes.basePriceDirection.value="buy";initBasePricePreview(doc,options);return nodes;}
+function fixture(options){const nodes=Object.fromEntries(["Form","Direction","Amount","Status","Result","Submit","Availability"].map(x=>["basePrice"+x,new El()]));const doc={getElementById:id=>nodes[id],createElement:()=>new El()};nodes.basePriceDirection.value="buy";initBasePricePreview(doc,options);return nodes;}
 test("source defaults off and rejects unsafe endpoints",async()=>{
  assert.equal(BASE_PRICE_PREVIEW_ENABLED,false);assert.equal(BASE_PRICE_PREVIEW_ENDPOINT,null);
  let calls=0;for(const options of [{},{enabled:true,endpoint:"https://evil.example/v1/base/indicative-price"},{enabled:true,endpoint:"https://fakeclimboria.fun/v1/base/indicative-price"},{enabled:true,endpoint:"https://candidate.climboria.fun/v1/base/indicative-price"}]){
@@ -56,4 +56,30 @@ test("duplicate submit is ignored; quota and disabled response never trigger ret
  const second=submit();resume(new Response("private provider message",{status:503}));await second;
  assert.equal(n.basePriceStatus.textContent,"Base pricing is temporarily unavailable. No transaction prepared.");
  assert.equal(calls,2);assert.equal(n.basePriceResult.children.length,0);
+});
+
+const readyHealth={service:"climboria-base-price-preview",deployedGitSha:"a".repeat(40),pricingDisabled:false,publicPricingReady:true,bindingsReady:true,execution:"unsupported"};
+test("health only accepts explicitly ready public pricing with exact service identity",()=>{
+ assert.equal(isPublicPricingReady(readyHealth),true);
+ for(const bad of [{publicPricingReady:undefined},{publicPricingReady:false},{pricingDisabled:true},{bindingsReady:false},{execution:"enabled"},{service:"unknown"},{deployedGitSha:"bad"}])assert.equal(isPublicPricingReady({...readyHealth,...bad}),false);
+});
+test("browser health gate never spends provider quota until explicit availability and submit",async()=>{
+ const calls=[];let ready=false;
+ const n=fixture({healthGated:true,fetchImpl:async(url,options)=>{
+  calls.push(url);assert.equal(options.method,"GET");assert.equal(options.credentials,"omit");
+  if(url===BASE_PRICE_HEALTH_ENDPOINT)return new Response(JSON.stringify(ready?readyHealth:{...readyHealth,publicPricingReady:false}),{status:ready?200:503});
+  return new Response(JSON.stringify(response));
+ }});
+ n.basePriceAmount.value="0.1";const submit=()=>n.basePriceForm.handlers.submit({preventDefault(){}});
+ assert.deepEqual(calls,[]);assert.equal(n.basePriceSubmit.disabled,true);await submit();assert.deepEqual(calls,[]);
+ await n.basePriceAvailability.handlers.click();assert.deepEqual(calls,[BASE_PRICE_HEALTH_ENDPOINT]);assert.equal(n.basePriceSubmit.disabled,true);
+ ready=true;await n.basePriceAvailability.handlers.click();assert.equal(n.basePriceSubmit.disabled,false);
+ await submit();assert.equal(calls.length,4);assert.equal(calls[2],BASE_PRICE_HEALTH_ENDPOINT);assert.ok(calls[3].startsWith("https://base-price.climboria.fun/v1/base/indicative-price?"));assert.ok(n.basePriceResult.children.length>0);
+ ready=false;await submit();assert.equal(calls.length,5);assert.equal(n.basePriceSubmit.disabled,true);assert.equal(n.basePriceResult.children.length,0);
+});
+test("health transport failure or malformed response never activates pricing",async()=>{
+ for(const fetchImpl of [async()=>{throw Error("network")},async()=>new Response("invalid json"),async()=>new Response("x".repeat(4097))]){
+  const n=fixture({healthGated:true,fetchImpl});
+  await n.basePriceAvailability.handlers.click();assert.equal(n.basePriceSubmit.disabled,true);assert.equal(n.basePriceResult.children.length,0);
+ }
 });
