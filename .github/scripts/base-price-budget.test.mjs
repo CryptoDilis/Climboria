@@ -59,3 +59,15 @@ test("concurrent cumulative reservations preserve the legacy count and cannot ex
  const corrupt=fixture("10",{day,count:3,total:2},"true","10");
  assert.equal((await corrupt.budget.fetch(request())).status,503);
 });
+
+test("public mode independently requires cumulative cap at durable reservation boundary",async()=>{
+ for(const env of [
+  {BASE_PRICE_DAILY_ATTEMPTS:"10"},
+  {BASE_PRICE_DAILY_ATTEMPTS:"10",BASE_PRICE_RELEASE_TOTAL_ATTEMPTS:"9"},
+  {BASE_PRICE_DAILY_ATTEMPTS:"101",BASE_PRICE_RELEASE_TOTAL_ATTEMPTS:"1000"},
+  {BASE_PRICE_DAILY_ATTEMPTS:"10",BASE_PRICE_RELEASE_TOTAL_ATTEMPTS:"1001"}
+ ]){
+  const budget=new BasePriceBudget({storage:{transaction:async()=>{assert.fail("Invalid public allocation accessed storage");}}},{BASE_INDICATIVE_PRICE_ENABLED:"true",BASE_PRICE_PUBLIC_RELEASE:"true",...env});
+  assert.equal((await budget.fetch(request())).status,503);
+ }
+});
