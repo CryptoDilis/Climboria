@@ -34,17 +34,20 @@ async function boundedFetch(url,max,fetchImpl,deadlineMs){
 }
 export async function verifyDeployedClientParity({
  fetchImpl=fetch,
- loadHtml=()=>readFile(new URL('../../play.html',import.meta.url),'utf8'),
+ loadHtml=()=>readFile(new URL('../../play.html',import.meta.url)),
  loadScript=()=>readFile(new URL('../client-presence.js',import.meta.url)),
  deadlineMs=15000
 }={}){
  if(!Number.isSafeInteger(deadlineMs)||deadlineMs<1||deadlineMs>30000)throw Error('Invalid asset deadline');
- const expected=version(await loadHtml());
+ const expectedHtml=Buffer.from(await loadHtml());
+ const expected=version(expectedHtml.toString('utf8'));
+ const htmlSha256=sha(expectedHtml);
  const expectedHash=sha(await loadScript());
  const html=await boundedFetch(SITE+'play.html',8*1024*1024,fetchImpl,deadlineMs);
  if(version(html.toString('utf8'))!==expected)throw Error('Published Game presence version differs from checked-out release');
+ if(sha(html)!==htmlSha256)throw Error('Published Game HTML bytes differ from checked-out release');
  const url=SITE+'multiplayer/client-presence.js?v='+expected;
  const deployed=await boundedFetch(url,512*1024,fetchImpl,deadlineMs);
  if(sha(deployed)!==expectedHash)throw Error('Published Game presence bytes differ from checked-out release');
- return {version:expected,sha256:expectedHash};
+ return {version:expected,sha256:expectedHash,htmlSha256};
 }
