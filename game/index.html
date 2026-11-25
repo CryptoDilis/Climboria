@@ -230,18 +230,32 @@ function requireHeroSignIn(){
  document.getElementById('heroGateNotice').textContent='Sign in with a registered Climboria account at the homepage to create/save a hero. Guest exploration is available below.';
  return false;
 }
+async function boundedHeroUser(){
+ let timer;
+ try{return await Promise.race([
+  Promise.resolve().then(()=>heroAuth?.auth?.getUser?.()),
+  new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Hero login lookup timed out')),10000)})
+ ])}finally{clearTimeout(timer)}
+}
 async function checkHeroLogin(){
  const epoch=++heroAuthEpoch;
  let user=null;
  try{
-  const result=await heroAuth?.auth?.getUser?.();
+  const result=await boundedHeroUser();
   if(!result?.error&&registeredHeroUser(result?.data?.user))user=result.data.user;
  }catch{} // Auth network failure must never grant hero creation.
  if(epoch!==heroAuthEpoch)return;
  heroAuthUser=user;heroAuthChecked=true;
  updateHeroCard();editorButtons();
 }
-heroAuth?.auth?.onAuthStateChange?.(()=>{void checkHeroLogin()});
+// Subscribe after the editor has initialized. Never invoke an auth API
+// directly inside Supabase's auth-state callback (it may hold an auth lock).
+function queueHeroLoginCheck(){
+ const epoch=++heroAuthEpoch;
+ heroAuthUser=null;heroAuthChecked=false;
+ updateHeroCard();editorButtons();
+ setTimeout(()=>{if(epoch===heroAuthEpoch)void checkHeroLogin()},0);
+}
 
 const heroEditor=document.getElementById('heroEditor');
 const heroNameInput=document.getElementById('heroNameInput');
@@ -499,17 +513,18 @@ heroModelSelect.addEventListener('change',()=>{
 });
 heroNameInput.addEventListener('input',()=>{heroFeedback.textContent=validHeroName(heroNameInput.value.trim())?'':'Enter 2–24 allowed characters and at least one letter or number.';editorButtons()});
 saveHeroButton.addEventListener('click',async()=>{
- const name=heroNameInput.value.trim(),epoch=heroAuthEpoch,userId=heroAuthUser?.id;
+ const name=heroNameInput.value.trim(),model=heroModelSelect.value,epoch=heroAuthEpoch,userId=heroAuthUser?.id;
  if(!userId){heroFeedback.textContent='Sign in to create or save a hero.';return}
  if(!previewLoaded||!validHeroName(name)){heroFeedback.textContent='Load the hero and enter a valid name first.';return}
  saveHeroButton.disabled=true;
  // A cached browser user ID or legacy localStorage record must never be
  // sufficient to create heroes; revalidate the current provider identity.
  try{
-  const result=await heroAuth.auth.getUser();
+  const result=await boundedHeroUser();
   if(epoch!==heroAuthEpoch||result?.error||!registeredHeroUser(result?.data?.user)||
      result.data.user.id!==userId){heroFeedback.textContent='Session expired · sign in again before saving.';void checkHeroLogin();return}
-  const record={name,model:heroModelSelect.value,ownerId:userId,createdAt:new Date().toISOString()};
+  if(!previewLoaded||heroNameInput.value.trim()!==name||heroModelSelect.value!==model){heroFeedback.textContent='Hero selection changed · review and save again.';return}
+  const record={name,model,ownerId:userId,createdAt:new Date().toISOString()};
   localStorage.setItem(userHeroKey(),JSON.stringify(record));
   // Game play still reads the active local hero; owner binding is preserved.
   localStorage.setItem(HERO_RECORD_KEY,JSON.stringify(record));
@@ -539,6 +554,7 @@ document.getElementById('playGuestButton').addEventListener('click',()=>{
  location.href='./play.html?guest=1&level=11';
 });
 updateHeroCard();
+heroAuth?.auth?.onAuthStateChange?.(queueHeroLoginCheck);
 void checkHeroLogin();
 
 const shopProducts=[["⛏","Climber's Pick","250 Demo Coins"],["🪖","Ridgeguard Armor","500 Demo Coins"],["🎭","Wilderness Skin","750 Demo Coins"],["📿","Grip Charm","300 Demo Coins"],["🥾","Trail Boots","400 Demo Coins"],["🧤","Grip Gloves","350 Demo Coins"]];
