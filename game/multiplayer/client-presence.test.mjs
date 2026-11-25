@@ -280,7 +280,7 @@ test('live Game refuses the retired forced-Sanctuary mobile prompt',()=>{
  assert.doesNotMatch(game,/climboria:room-return-to-sanctuary/);
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261125-game-voluntary-rejoin-1/,
+ assert.match(game,/client-presence\.js\?v=20261126-game-chat-guard-1/,
   'production Game must load fresh Nearby Chat and remote size renderer');
 });
 
@@ -1173,4 +1173,50 @@ test('voluntary spawn wait is cancelled by sign-out and cannot issue another tic
  assert.equal(h.timers.filter(t=>!t.cancelled).length,0);
  assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,1);
  assert.equal(h.clients.length,0);
+});
+
+test('IME candidate confirmation cannot send World Chat before composition finishes',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];ws.onopen();
+ const id='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[],nearbyChatEnabled:true})});
+ const panel=h.created.find(n=>n.id==='climboria-world-chat-panel');
+ const input=panel.children[2].children[0];
+ input.value='こんにちは';
+ const before=ws.sent.length;
+ let stopped=0,prevented=0;
+ const enter=extra=>{for(const fn of input.listeners.get('keydown')||[])fn({key:'Enter',stopPropagation(){stopped++},preventDefault(){prevented++},...extra})};
+ enter({isComposing:true});enter({keyCode:229});
+ assert.equal(ws.sent.length,before);assert.equal(prevented,0);assert.equal(stopped,2);
+ assert.equal(input.value,'こんにちは');
+ enter({isComposing:false,keyCode:13});
+ assert.equal(prevented,1);assert.equal(ws.sent.length,before+1);assert.equal(ws.sent.at(-1).text,'こんにちは');
+});
+test('send exceptions do not erase chat draft or create a pending phantom send',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];ws.onopen();
+ const id='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
+ const panel=h.created.find(n=>n.id==='climboria-world-chat-panel');
+ const [input,button]=panel.children[2].children;
+ const send=ws.send.bind(ws);ws.send=()=>{throw Error('socket not writable')};
+ input.value='Keep this draft';const before=ws.sent.length;
+ assert.doesNotThrow(()=>button.click());assert.equal(input.value,'Keep this draft');
+ assert.match(panel.children[3].textContent,/Not connected/);assert.equal(ws.sent.length,before);
+ ws.send=send;button.click();assert.equal(ws.sent.length,before+1);
+ assert.equal(ws.sent.at(-1).text,'Keep this draft');
+});
+test('local attack cannot send a room packet before authoritative spawn acceptance',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0];ws.onopen();
+ const id='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
+ const before=ws.sent.length;
+ h.document.dispatchEvent({type:'climboria:visual-punch'});
+ assert.equal(ws.sent.length,before);
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
+ h.document.dispatchEvent({type:'climboria:visual-punch'});
+ assert.equal(ws.sent.at(-1).type,'punch');
 });

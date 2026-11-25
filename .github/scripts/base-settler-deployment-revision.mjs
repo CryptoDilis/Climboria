@@ -42,7 +42,23 @@ const observedNumber=BigInt(observed);
 async function blockHash(block){const b=await rpc("eth_getBlockByNumber",[block,false]);assert.equal(b?.number,block);assert.match(b?.hash,hash);return b.hash.toLowerCase();}
 const observedHash=await blockHash(observed);
 const owner=await rpc("eth_call",[{to:REGISTRY,data:"0x6352211e"+word(2n)},observed]);assert.match(owner,/^0x0{24}[0-9a-fA-F]{40}$/);
-const target="0x"+owner.slice(-40).toLowerCase();assert.notEqual(target,"0x"+"0".repeat(40));assert.notEqual(target,REGISTRY);
+const currentTarget="0x"+owner.slice(-40).toLowerCase();
+assert.notEqual(currentTarget,"0x"+"0".repeat(40));assert.notEqual(currentTarget,REGISTRY);
+const args=process.argv.slice(2);
+assert.ok(args.length===0||(args.length===1&&args[0]==="--observed-quote-target"),"Unsupported evidence mode");
+// Historical observation 45680322564. Never use this as an execution allowlist.
+const quotedTarget="0x103502909141f7025a94b7b99a276dcd128e21a8";
+const target=args.length===1?quotedTarget:currentTarget;
+let registryRelation=target===currentTarget?"current":"not-current";
+if(registryRelation==="not-current"){
+ // prev(uint128) is evidence only; previous deployment dwell/eligibility is not inferred.
+ const prev=await rpc("eth_call",[{to:REGISTRY,data:"0xe2603dc2"+word(2n)},observed]);
+ assert.match(prev,/^0x0{24}[0-9a-fA-F]{40}$/);
+ const previousTarget="0x"+prev.slice(-40).toLowerCase();
+ registryRelation=target===previousTarget?"previous":"neither";
+ console.log(JSON.stringify({checkpoint:"registry-relation",target,currentTarget,previousTarget,registryRelation}));
+}
+assert.notEqual(target,REGISTRY);
 const info=await rpc("eth_call",[{to:REGISTRY,data:"0x72ba306f"+target.slice(2).padStart(64,"0")},observed]);
 assert.match(info,/^0x[0-9a-fA-F]{128}$/);
 assert.equal(BigInt("0x"+info.slice(2,66)),2n);
@@ -111,5 +127,5 @@ assert.match(commitLog.topics[1],/^0x[0-9a-fA-F]{40}0{24}$/);
 const sourceRevision=commitLog.topics[1].slice(2,42).toLowerCase();assert.notEqual(sourceRevision,"0".repeat(40));
 assert.equal(commitLog.transactionHash.toLowerCase(),deployed.transactionHash.toLowerCase());
 assert.equal(await blockHash(deploymentBlock),deploymentHash);assert.equal(await blockHash(observed),observedHash);assert.equal(await rpc("eth_chainId",[]),"0x2105");
-console.log(JSON.stringify({chainId:8453,feature:2,nonce:nonce.toString(),target,observedBlock:observed,observedHash,deploymentBlock,deploymentHash,deploymentTx:deployed.transactionHash,sourceRevision,runtimeBytes:(current.length-2)/2,runtimeSha256,observationOnly:true,executionApproved:false}));
+console.log(JSON.stringify({chainId:8453,feature:2,nonce:nonce.toString(),target,currentTarget,registryRelation,observedBlock:observed,observedHash,deploymentBlock,deploymentHash,deploymentTx:deployed.transactionHash,sourceRevision,runtimeBytes:(current.length-2)/2,runtimeSha256,observationOnly:true,executionApproved:false}));
 console.log("PASS: registry deployment event and Settler GitCommit event matched in the same historical transaction. Source correspondence still requires reproducible build.");

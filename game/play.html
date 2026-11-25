@@ -1810,7 +1810,7 @@ document.addEventListener('pointerdown',resumeClimboriaMusicFromGesture,true);
 document.addEventListener('keydown',resumeClimboriaMusicFromGesture,true);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&climboriaMusicRequested&&climboriaMusic.paused)startClimboriaMusic()});
 const settingsPanel=document.getElementById('expedition-settings-panel');
-document.getElementById('expedition-settings-toggle').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();settingsPanel.style.display=settingsPanel.style.display==='block'?'none':'block'});settingsPanel.addEventListener('pointerdown',e=>e.stopPropagation());settingsPanel.addEventListener('click',e=>e.stopPropagation());
+document.getElementById('expedition-settings-toggle').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();settingsPanel.style.display=settingsPanel.style.display==='block'?'none':'block';if(settingsPanel.style.display==='block')releaseGameplayInput()});settingsPanel.addEventListener('pointerdown',e=>e.stopPropagation());settingsPanel.addEventListener('click',e=>e.stopPropagation());
 document.getElementById('expedition-settings-close').addEventListener('click',()=>settingsPanel.style.display='none');
 const volumeControl=document.getElementById('climboria-music-volume'),volumeValue=document.getElementById('climboria-volume-value');
 volumeControl.addEventListener('input',()=>{climboriaMusic.volume=Number(volumeControl.value)/100;volumeValue.textContent=volumeControl.value+'%';});
@@ -2223,11 +2223,11 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
 };
 setInterval(()=>window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.saveLocalPosition?.(),5000);
 window.addEventListener('pagehide',()=>window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.saveLocalPosition?.());
-function toggleInventory(){renderInventory();const opening=invPanel.style.display==='none';invPanel.style.display=opening?'block':'none';if(opening)mapPanel.classList.remove('map-expanded')}
+function toggleInventory(){renderInventory();const opening=invPanel.style.display==='none';invPanel.style.display=opening?'block':'none';if(opening){releaseGameplayInput();mapPanel.classList.remove('map-expanded')}}
 document.getElementById('player-card').addEventListener('click',toggleInventory);
 
 const mapToggle=document.getElementById('world-map-toggle'),mapPanel=document.getElementById('world-map-panel'),mapCanvas=document.getElementById('world-map'),mapCtx=mapCanvas.getContext('2d');
-function toggleWorldMap(){mapPanel.classList.toggle('map-expanded');drawWorldMap();drawWorldMapPlayer()}
+function toggleWorldMap(){const opening=mapPanel.classList.toggle('map-expanded');if(opening)releaseGameplayInput();drawWorldMap();drawWorldMapPlayer()}
 mapPanel.style.display='block';
 function drawWorldMap(){
  const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.clearRect(0,0,w,h);
@@ -2344,7 +2344,7 @@ let landscapeLockRequested=false;
 // TouchList contains ALL active fingers, including fingers held on controls
 // whose own touchstart stopped propagation. Only world-origin touches may
 // move the hero or form a camera pinch.
-const worldTouch=t=>!t?.target?.closest?.('[data-mobile-action],button,a,input,select,textarea,[role="button"],[contenteditable],#climboria-world-chat-panel,#climboria-world-chat-toggle');
+const worldTouch=t=>!t?.target?.closest?.('[data-mobile-action],button,a,input,select,textarea,[role="button"],[contenteditable],#climboria-world-chat-panel,#climboria-world-chat-toggle,#world-map-panel,#climboriaInventoryPanel,#expedition-settings-panel,#player-card');
 const worldTouches=list=>Array.from(list||[]).filter(worldTouch);
 function updatePinch(touches,zoom){
  if(touches.length!==2){pinchDistance=0;pinchPair='';return false}
@@ -3927,6 +3927,6 @@ initChunks();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
 <script src="/game-save.js?v=20261119-game-resume-2"></script>
-<script src="./multiplayer/client-presence.js?v=20261125-game-voluntary-rejoin-1"></script>
+<script src="./multiplayer/client-presence.js?v=20261126-game-chat-guard-1"></script>
 </body>
 </html>

@@ -1,0 +1,47 @@
+name: Base DEX Quoted Settler Reproducible Source Match
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-settler-source-match.mjs"
+      - ".github/workflows/base-quoted-settler-source-match.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  match:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/checkout@v4
+        with:
+          repository: 0xProject/0x-settler
+          ref: edd3dd4cdd4018d8461c6e5c8f3a9d271cba3806
+          path: official-zeroex-quoted-settler
+          persist-credentials: false
+          submodules: recursive
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.5.1
+      - name: Reproduce official flattened Base taker build without running deploy scripts
+        working-directory: official-zeroex-quoted-settler
+        env:
+          FOUNDRY_SOLC_VERSION: 0.8.34
+          FOUNDRY_FFI: "false"
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "edd3dd4cdd4018d8461c6e5c8f3a9d271cba3806"
+          git submodule status --recursive
+          if git submodule status --recursive | grep -E '^[-+U]'; then exit 1; fi
+          forge --version
+          mkdir -p src/flat
+          forge flatten -o src/flat/BaseTakerSubmittedFlat.sol src/chains/Base/TakerSubmitted.sol
+          forge build --ast src/flat/BaseTakerSubmittedFlat.sol
+      - name: Exact compiled and historical runtime comparison
+        run: node .github/scripts/base-settler-source-match.mjs --observed-quote-target
