@@ -227,6 +227,9 @@
    notice.style.cssText='min-height:14px;margin-top:5px;font:10px system-ui;color:#e5c98c';
    input.addEventListener('keydown',e=>{
     e.stopPropagation();
+    // Enter during an IME composition selects a candidate, not a chat send.
+    // keyCode 229 covers browsers reporting composition without isComposing.
+    if(e.isComposing||e.keyCode===229)return;
     if(e.key==='Enter'){e.preventDefault();sendWorldChat()}
    });
    sendButton.addEventListener('click',sendWorldChat);
@@ -373,7 +376,7 @@
   if(socket?.readyState!==WebSocket.OPEN)return false;
   const message=JSON.stringify(packet);
   if(message.length>512)return false;
-  socket.send(message);return true;
+  try{socket.send(message);return true}catch{return false}
  }
  function localPosition(){
   const p=world.player;
@@ -666,7 +669,7 @@
   authSubscription?.unsubscribe?.();
  }
  window.addEventListener('beforeunload',stop,{once:true});
- document.addEventListener('climboria:visual-punch',()=>{if(selfId)send({type:'punch'});});
+ document.addEventListener('climboria:visual-punch',()=>{if(selfId&&spawnConfirmed)send({type:'punch'});});
  authSubscription=auth.auth.onAuthStateChange((_event,session)=>{
   if(disposed)return;
   // Guest JWTs must behave like signed-out state even when Supabase returns
