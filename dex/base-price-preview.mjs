@@ -110,7 +110,7 @@ export function initBasePricePreview(doc=globalThis.document,{enabled=BASE_PRICE
     if(current===controller&&!controller.signal.aborted){
      status.textContent=response.status===429?"Pricing request limit reached. Try again later.":response.status===503?"Base pricing is temporarily unavailable. No transaction prepared.":"Indicative pricing unavailable. No transaction prepared.";
     }
-    if(healthMode&&response.status===503)healthReady=false;
+    if(healthMode&&response.status===503&&current===controller&&!controller.signal.aborted)healthReady=false;
     try{await response.body?.cancel();}catch{}
     return;
    }
