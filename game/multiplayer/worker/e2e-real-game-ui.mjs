@@ -198,7 +198,7 @@ console.log('GAME QA STAGE: nearby-chat');
  // Movement QA must observe actual keyboard-driven Game physics, real room
  // validation and updated coordinates in the OTHER browser's remote model.
  // A mere online count or loaded GLB is not sufficient for multiplayer.
-console.log('GAME QA STAGE: bidirectional-movement');
+console.log('GAME QA STAGE: movement-A-to-B');
  const initialLocal=await a.evaluate(()=>{
   const p=window.__climboriaJarrellsPeak.player;
   return {x:p.x,z:p.z};
@@ -258,6 +258,18 @@ console.log('GAME QA STAGE: world-chat');
  check(fpsA>0&&fpsB>0,'A real rendered Game frame stream is required');
  // Move B away from protected first-join Sanctuary using actual game input.
  // A disconnect/re-login at Sanctuary would NOT test the new trusted resume.
+ console.log('GAME QA STAGE: movement-B-to-A');
+ const initialB=await b.evaluate(()=>{
+  const p=window.__climboriaJarrellsPeak.player;
+  return {x:p.x,y:p.y,z:p.z};
+ });
+ const initialRemoteB=await a.evaluate(()=>{
+  const peer=window.__CLIMBORIA_GAME_PEERS?.audit?.().positions[0];
+  if(!peer)throw Error('Verified B peer position missing in A');
+  return {x:peer.x,y:peer.y,z:peer.z};
+ });
+ check(Math.hypot(initialB.x-initialRemoteB.x,initialB.y-initialRemoteB.y,initialB.z-initialRemoteB.z)<6,
+  'B local position and A remote baseline must agree before movement');
  await b.evaluate(()=>document.activeElement?.blur?.());
  await b.keyboard.down('Shift');await b.keyboard.down('w');
  try{await b.waitForTimeout(2200)}
@@ -266,12 +278,15 @@ console.log('GAME QA STAGE: world-chat');
   const p=window.__climboriaJarrellsPeak.player;
   return {x:p.x,y:p.y,z:p.z};
  });
+ check(Math.hypot(lastVerifiedB.x-initialB.x,lastVerifiedB.z-initialB.z)>.3,
+  'B must actually move before A remote synchronization can pass');
  check(Math.hypot(lastVerifiedB.x,lastVerifiedB.z+30)>7,
   'Last-position QA could not leave the protected Sanctuary with real player movement');
- await a.waitForFunction(last=>{
+ await a.waitForFunction(({before,last})=>{
   const peer=window.__CLIMBORIA_GAME_PEERS?.audit?.().positions[0];
-  return peer&&Math.hypot(peer.x-last.x,peer.y-last.y,peer.z-last.z)<6;
- },lastVerifiedB,{timeout:30000});
+  return peer&&Math.hypot(peer.x-before.x,peer.z-before.z)>.3&&
+   Math.hypot(peer.x-last.x,peer.y-last.y,peer.z-last.z)<6;
+ },{before:initialRemoteB,last:lastVerifiedB},{timeout:30000});
  await b.waitForTimeout(750);
  if(env.GAME_QA_SCREENSHOT_DIR){
   const dir=resolve(env.GAME_QA_SCREENSHOT_DIR);
