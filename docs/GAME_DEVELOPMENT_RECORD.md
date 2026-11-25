@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME DEPLOYED CLIENT ASSET PARITY — 2026-11-25 PHT (NOT MERGED)
+
+- #750 merged and eight CI checks passed as recorded below. The available commit-workflow listing filters PR-triggered runs only, so it cannot establish the Pages push deployment result. Direct live asset evidence is needed instead of claiming deployment from merge.
+- Added bounded credential-free verification of exact published Game script version and SHA-256 bytes against checked-out source (`6cca94bec37107aa826394c7dade60c5d78c1a97`), negative controls for stale version/bytes, invalid response, duplicate script references, oversized and stalled response (`595e98d0de409d79b0d5ffbff67b4d24d8e31722`), and wired into existing deployed readiness workflow (`91b82515626440dc3b10431cb0cf674ca894d3ce`). Checks use only approved first-party public Game GET endpoints; no account credentials, no production mutation. No actual live parity result yet.
+- **EXACT NEXT:** inspect fresh Game CI including live asset parity; if a stale asset is reported, verify actual Pages deployment rather than weakening the check. Merge only green. Then real registered two-account browser acceptance using existing protected workflow or independent owner browsers, and separate private Cloudflare staging prerequisites. Game only.
+
+---
+
 ## GAME VOLUNTARY ROOM REJOIN MERGED — 2026-11-25 PHT
 
 - #750 MERGED at `c2838ac19cd403d81d68062ef763732dd07221e3`, exact tested head `e450b75e22b738ce0f1c64280af87124505bbab1`. All eight workflows SUCCESS: [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45574538448), [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45574538524), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45574538552), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45574538441), [Browser](https://github.com/CryptoDilis/Climboria/actions/runs/45574538459), [Heroes](https://github.com/CryptoDilis/Climboria/actions/runs/45574538527), [Chests](https://github.com/CryptoDilis/Climboria/actions/runs/45574538428), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45574538570). Gateway job 139069084271 confirmed 228/228 tests and 53/53 separate client tests, zero failures, including voluntary return and logout cancellation. Exact merge base matched current main before merge. No server change or forced relocation.
