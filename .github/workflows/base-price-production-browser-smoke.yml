@@ -1,0 +1,27 @@
+name: Base DEX Production Price UI Smoke
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-price-production-browser-smoke.mjs"
+      - ".github/workflows/base-price-production-browser-smoke.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --check .github/scripts/base-price-production-browser-smoke.mjs
+      - name: Install Playwright Chromium
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Test deployed desktop and mobile pricing interface with intercepted responses
+        run: node .github/scripts/base-price-production-browser-smoke.mjs
