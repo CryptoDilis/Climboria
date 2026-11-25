@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME MOBILE HUD TOUCH ISOLATION — 2026-11-26 PHT (NOT MERGED)
+
+- Checked main `ea020d6d276b21ce9e082eb4a5c9cda2c646fd32`; #777 readiness 45663592082 job 139379656897 verified #770 is published, 17/17 tests and live HTML SHA256 `6a406d0d83e0e9796841b1e213b4e05e842a9dbc3629a3b242571d692cbf117a`. #777 still awaiting terminal Gameplay check at review.
+- Identified a related source-level issue: touches on world map, inventory, expedition settings and player card were not excluded by the global world gesture filter. Fix `f8828828ab63c4fb162120c5fec9f7c56d52cb8e` excludes those HUD surfaces and releases stale movement when opening map/inventory/settings. Regression `c98f8ff0bfe99bb3c0b198a402bce16b9d88200e` checks HUD-only and simultaneous HUD/world touches cannot trigger unintended steering or zoom. No server or unrelated changes; no actual phone reproduction claimed.
+- **EXACT NEXT:** merge #777 only after remaining Gameplay succeeds; check fresh exact-head HUD fix CI, merge only green, then verify published HTML again. Physical Android and real two-account acceptance remain pending; private combat staging requires separate authorized access. Game only.
+
+---
+
 ## GAME MOBILE CONTROLS AND BIDIRECTIONAL QA MERGED — 2026-11-26 PHT
 
 - #770 MERGED at `944c0e6b5030bf5964754beebe87cdad7ae4c754`, exact tested head `74bef29dae67d81fd8f330dc015d2febd14e1de7`: [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45660527628), [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45660528119), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45660527645), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45660528043), [Browser](https://github.com/CryptoDilis/Climboria/actions/runs/45660527633), [Heroes](https://github.com/CryptoDilis/Climboria/actions/runs/45660528008), [Chests](https://github.com/CryptoDilis/Climboria/actions/runs/45660527651), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45660527956) ALL SUCCESS. Gateway job 139368833371 confirmed 240/240 plus separate 53/53 tests; both multitouch regressions passed. Main drift from tested base was unrelated token audit documentation. Published HTML verification and physical Android acceptance remain pending.
