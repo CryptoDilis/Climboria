@@ -1,19 +1,35 @@
 // Read-only deployment provenance evidence. No transaction construction or authorization.
 import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
+import {setTimeout as sleep} from "node:timers/promises";
 const REGISTRY="0x00000000000004533fe15556b1e086bb1a72ceae";
 const GIT_COMMIT="0x16fbd3a71aa6d159973eb9ff1e1199f9fe242767e6f30ac662a492f92ac70411";
 const DEPLOYED="0xaa94c583a45742b26ac5274d230aea34ab334ed5722264aa5673010e612bc0b2";
 const quantity=n=>"0x"+n.toString(16),word=n=>n.toString(16).padStart(64,"0");
 const hash=/^0x[0-9a-fA-F]{64}$/;
 const fingerprint=code=>createHash("sha256").update(Buffer.from(code.slice(2),"hex")).digest("hex");
-let id=0;
+let id=0,lastRequest=0,rateLimitRetryUsed=false;
 const deadline=AbortSignal.timeout(180000);
 async function rpc(method,params){
  assert.ok(["eth_chainId","eth_blockNumber","eth_getCode","eth_call","eth_getLogs","eth_getBlockByNumber"].includes(method));
- const requestId=++id;
- const r=await fetch("https://mainnet.base.org",{method:"POST",redirect:"error",cache:"no-store",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:requestId,method,params}),signal:AbortSignal.any([deadline,AbortSignal.timeout(12000)])});
- assert.equal(r.status,200,"RPC HTTP failure");
+ // Public RPC is rate limited; serialize and space requests. At most one
+ // bounded HTTP 429 retry for the entire run, respecting Retry-After.
+ let r,requestId;
+ for(;;){
+  const delay=Math.max(0,1500-(Date.now()-lastRequest));
+  if(delay)await sleep(delay,undefined,{signal:deadline});
+  deadline.throwIfAborted();lastRequest=Date.now();requestId=++id;
+  r=await fetch("https://mainnet.base.org",{method:"POST",redirect:"error",cache:"no-store",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:requestId,method,params}),signal:AbortSignal.any([deadline,AbortSignal.timeout(12000)])});
+  if(r.status!==429||rateLimitRetryUsed)break;
+  rateLimitRetryUsed=true;
+  const header=r.headers.get("retry-after");
+  const wait=header===null?5000:/^[0-9]+$/.test(header)?Number(header)*1000:Date.parse(header)-Date.now();
+  await r.body?.cancel();
+  assert.ok(Number.isFinite(wait)&&wait<=15000,"RPC requested longer backoff; stop");
+  console.log("Public RPC throttled "+method+"; one bounded retry");
+  await sleep(Math.max(5000,wait),undefined,{signal:deadline});
+ }
+ if(r.status!==200){await r.body?.cancel();throw Error("RPC HTTP "+r.status+" at "+method+" request "+requestId);}
  const reader=r.body?.getReader();assert.ok(reader);
  const chunks=[];let size=0;
  try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>4194304){await reader.cancel();throw Error("Oversized RPC response");}chunks.push(value);}}finally{reader.releaseLock();}
