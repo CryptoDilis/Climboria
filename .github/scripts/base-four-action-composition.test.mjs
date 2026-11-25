@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {inspectFundedSimulationEvidence,observeFundedComposedSimulation} from "../../dex/base-execution/funded-composed-simulation.mjs";
 import {observeComposedBaseQuoteSimulation} from "../../dex/base-execution/composed-quote-simulation.mjs";
 import {inspectFourActionQuote} from "../../dex/base-execution/four-action-composition-policy.mjs";
 import {BASE_UNIV3_FACTORY} from "../../dex/base-execution/univ3-action-policy.mjs";
@@ -70,4 +71,35 @@ test("reject mismatched quote or state block, missing funds/allowance and compos
 });
 test("disagreeing simulation results reject composed observation",async()=>{
  const f=simulationFixture({disagree:true});await assert.rejects(observeComposedBaseQuoteSimulation(intent,f.q,contractPolicy,review,state,f.opts));assert.equal(f.calls.filter(x=>x.method==="eth_call").length,2);
+});
+
+const fundedReview={...review,reviewedSellTokenCodeSha256:"f".repeat(64)};
+const funds={chainId:8453,readOnly:true,observationOnly:true,executable:false,matchedAcrossDistinctRpcHosts:true,providerIndependenceVerified:false,observedBlock:blockNumber,observedBlockHash:blockHash,sellToken:sell,spender:holder,requestedSellAmount:"100000",observedSellTokenCodeSha256:"f".repeat(64),observedBalance:"100001",observedAllowance:"100000",next:"exact-allowance-observed",proposedApprovalAmount:null};
+test("exact funded state at reviewed block is observation only",()=>{
+ const r=inspectFundedSimulationEvidence(intent,fundedReview,anchor,funds);
+ assert.equal(r.observedAllowance,"100000");assert.equal(r.executable,false);assert.equal(r.stateAuthenticated,false);
+});
+test("reject incorrect balance, excessive allowance, token code, spender or anchor",()=>{
+ for(const patch of [{observedBalance:"99999"},{observedAllowance:"99999"},{observedAllowance:"100001"},{observedAllowance:((1n<<256n)-1n).toString()},{observedSellTokenCodeSha256:"e".repeat(64)},{spender:target},{observedBlock:"0x1"},{observedBlockHash:"0x"+"b".repeat(64)},{matchedAcrossDistinctRpcHosts:false},{next:"exact-approval-review-required"},{proposedApprovalAmount:"100000"}])assert.throws(()=>inspectFundedSimulationEvidence(intent,fundedReview,anchor,{...funds,...patch}));
+});
+test("funded wrapper rejects unreviewed inputs before any RPC",async()=>{
+ const f=simulationFixture();
+ for(const [q,r,opts] of [[f.q,review,f.opts],[{...f.q,blockNumber:"1"},fundedReview,f.opts],[f.q,fundedReview,{...f.opts,authorized:false}],[{...f.q,transaction:quote([funding,swap,fee,surplus]).transaction},fundedReview,f.opts]]){
+  await assert.rejects(observeFundedComposedSimulation(intent,q,contractPolicy,r,state,opts));assert.equal(f.calls.length,0);
+ }
+});
+test("funded wrapper never reaches simulation when holder runtime evidence fails",async()=>{
+ const f=simulationFixture(),calls=[];
+ const fetchImpl=async(url,opts)=>{
+  const req=JSON.parse(opts.body);calls.push(req.method);
+  let result;
+  if(req.method==="eth_chainId")result="0x2105";
+  else if(req.method==="eth_blockNumber")result=blockNumber;
+  else if(req.method==="eth_getBlockByNumber")result={number:blockNumber,hash:blockHash};
+  else if(req.method==="eth_getCode")result="0x";
+  else throw Error("Unexpected simulation");
+  return new Response(JSON.stringify({jsonrpc:"2.0",id:req.id,result}));
+ };
+ await assert.rejects(observeFundedComposedSimulation(intent,f.q,contractPolicy,fundedReview,state,{...f.opts,fetchImpl}),/holder runtime/);
+ assert.deepEqual(calls,["eth_chainId","eth_blockNumber","eth_getBlockByNumber","eth_getCode"]);
 });

@@ -32,5 +32,7 @@ jobs:
           node --check dex/base-execution/univ3-pool-price-policy.mjs
           node --check dex/base-execution/four-action-composition-policy.mjs
           node --check dex/base-execution/composed-quote-simulation.mjs
+          node --check dex/base-execution/funded-composed-simulation.mjs
+          node --test .github/scripts/base-dual-rpc-observation.test.mjs
           node --test .github/scripts/base-univ3-action-policy.test.mjs .github/scripts/base-univ3-pool-price-policy.test.mjs .github/scripts/base-four-action-composition.test.mjs
           grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs

@@ -137,3 +137,16 @@ test("caller abort prevents both RPCs before starting the first read",async()=>{
  }));
  assert.equal(calls.length,0);
 });
+
+test("explicit reviewed reference is pinned on both RPCs, including primary",async()=>{
+ const calls=[],referenceBlock={number:observation.observedBlock,hash};
+ const result=await corroborateBaseAllowanceObservation(input,{secondaryRpcUrl:second,referenceBlock,readImpl:async(_,opts)=>{calls.push(opts.referenceBlock);return observation;}});
+ assert.deepEqual(calls,[referenceBlock,referenceBlock]);assert.equal(result.observedBlockHash,hash);
+});
+test("invalid pinned anchor or primary mismatch fails closed",async()=>{
+ for(const referenceBlock of [{number:"latest",hash},{number:observation.observedBlock,hash:"0x"+"b".repeat(64)}]){
+  let calls=0;
+  await assert.rejects(corroborateBaseAllowanceObservation(input,{secondaryRpcUrl:second,referenceBlock,readImpl:async()=>{calls++;return observation;}}));
+  assert.equal(calls,referenceBlock.number==="latest"?0:1);
+ }
+});

@@ -16,7 +16,7 @@ const COMPARE_FIELDS=Object.freeze([
 ]);
 export async function corroborateBaseAllowanceObservation(input,{
  primaryRpcUrl=BASE_OBSERVATION_PRIMARY_RPC,secondaryRpcUrl,
- fetchImpl=(url,init)=>globalThis.fetch(url,init),signal,readImpl=readAllowanceObservation
+ fetchImpl=(url,init)=>globalThis.fetch(url,init),signal,referenceBlock=null,readImpl=readAllowanceObservation
 }={}){
  // All validation must finish BEFORE the first fetch; otherwise a malformed
  // alternate endpoint might leave a misleading single-RPC result.
@@ -25,13 +25,16 @@ export async function corroborateBaseAllowanceObservation(input,{
  if(new URL(primary).hostname===new URL(secondary).hostname)
   throw Error("Independent Base RPC hostname must differ");
  signal?.throwIfAborted?.();
- const first=await readImpl(input,{rpcUrl:primary,fetchImpl,signal});
+ const anchor=referenceBlock===null?null:structuredClone(referenceBlock);
+ if(anchor!==null&&(!anchor||typeof anchor.number!=="string"||!/^0x[1-9a-f][0-9a-f]{0,15}$/.test(anchor.number)||typeof anchor.hash!=="string"||!/^0x[0-9a-f]{64}$/.test(anchor.hash)||/^0x0{64}$/.test(anchor.hash)))throw Error("Invalid pinned Base reference");
+ const first=await readImpl(input,{rpcUrl:primary,fetchImpl,signal,...(anchor===null?{}:{referenceBlock:anchor})});
  if(first?.chainId!==8453||first.executable!==false||first.observationOnly!==true||
    typeof first.observedBlock!=="string"||!/^0x[1-9a-f][0-9a-f]{0,15}$/.test(first.observedBlock)||
    typeof first.observedBlockHash!=="string"||!/^0x[0-9a-f]{64}$/.test(first.observedBlockHash)||
    /^0x0{64}$/.test(first.observedBlockHash)||
    typeof first.observedSellTokenCodeSha256!=="string"||!/^[0-9a-f]{64}$/.test(first.observedSellTokenCodeSha256))
   throw Error("Invalid primary Base observation identity");
+ if(anchor!==null&&(first.observedBlock!==anchor.number||first.observedBlockHash!==anchor.hash))throw Error("Primary Base observation differs from pinned reference");
  const second=await readImpl(input,{
   rpcUrl:secondary,fetchImpl,signal,
   referenceBlock:{number:first.observedBlock,hash:first.observedBlockHash}
