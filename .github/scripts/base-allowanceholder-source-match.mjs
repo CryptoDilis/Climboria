@@ -17,7 +17,12 @@ function readSource(path){
  return readFileSync(actual,"utf8");
 }
 assert.match(solc.version(),/^0\.8\.25\+commit\.b61c2a91/);
-const remappings=readFileSync(resolve(root,"remappings.txt"),"utf8").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+const remappings=readFileSync(resolve(root,"remappings.txt"),"utf8").split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map(mapping=>{
+ // Foundry normalizes directory remapping targets; standard JSON solc
+ // concatenates the target literally. Preserve paths with the required slash.
+ const eq=mapping.indexOf("="),prefix=mapping.slice(0,eq),target=mapping.slice(eq+1);
+ return prefix.endsWith("/")&&!target.endsWith("/")?prefix+"="+target+"/":mapping;
+});
 const input={language:"Solidity",sources:{[entry]:{content:readSource(entry)}},settings:{remappings,optimizer:{enabled:true,runs:1000000,details:{constantOptimizer:true,yul:true}},viaIR:true,evmVersion:"cancun",metadata:{bytecodeHash:"none",appendCBOR:false},outputSelection:{[entry]:{"AllowanceHolder":["evm.bytecode.object","evm.deployedBytecode.object","evm.deployedBytecode.immutableReferences"]}}}};
 const output=JSON.parse(solc.compile(JSON.stringify(input),{import:path=>{try{return {contents:readSource(path)}}catch{return {error:"Pinned Solidity import unavailable"}}}}));
 const errors=(output.errors||[]).filter(e=>e.severity==="error");
