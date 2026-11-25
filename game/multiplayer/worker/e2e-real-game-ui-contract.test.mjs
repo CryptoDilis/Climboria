@@ -36,3 +36,14 @@ test('real two-account chat sends through SEND only, never the adjacent channel-
  assert.doesNotMatch(qa,/panel\.locator\('button'\)\.click\(\)/,
   'an unscoped panel button selector is ambiguous with the Nearby/World switch');
 });
+
+test('real acceptance uses published hero creator without seeding storage or hiding session handoff failure',()=>{
+ assert.doesNotMatch(qa,/addInitScript\(|localStorage\.setItem\(/);
+ assert.match(qa,/surface:'menu'/);
+ assert.match(qa,/locator\('#saveHeroButton'\)\.isDisabled\(\)/);
+ assert.match(qa,/locator\('#heroModelSelect'\)\.selectOption\(account\.model\)/);
+ assert.match(qa,/locator\('#saveHeroButton'\)\.click/);
+ assert.match(qa,/stored\?\.ownerId===heroAuthUser\.id/);
+ assert.match(qa,/locator\('#heroEnterButton'\)\.click/);
+ assert.match(qa,/same real registered session must survive normal menu navigation/);
+});

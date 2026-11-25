@@ -62,17 +62,36 @@ async function openExplorer(account,emulateMobile){
  }:{viewport:{width:1365,height:768},deviceScaleFactor:1};
  const context=await browser.newContext({...options,serviceWorkers:'block'});
  contexts.push(context);
- // Supply a named hero before the Game's normal early hero gate executes.
- await context.addInitScript(hero=>{
-  if(location.origin==='https://climboria.fun')
-   localStorage.setItem('climboria-created-hero-v1',JSON.stringify(hero));
- },{name:account.name,model:account.model,createdAt:'2026-11-15T00:00:00Z'});
- // Do not inject a synthetic Game config. This must exercise the REAL
- // published first-party release switch and approved Cloudflare room host.
+ // No seeded hero, identity, or config. Start with the published creator.
  const page=await context.newPage();
- await page.goto(SITE+'/game/play.html',{waitUntil:'domcontentloaded',timeout:90000});
- check(new URL(page.url()).pathname==='/game/play.html',
-  'Game hero gate unexpectedly redirected this approved throwaway hero');
+ console.log('GAME QA STAGE: real-hero-creator');
+ await page.goto(SITE+'/game/index.html',{waitUntil:'domcontentloaded',timeout:90000});
+ await page.waitForFunction(()=>document.getElementById('heroGateNotice')?.textContent?.includes('GUEST MODE'),undefined,{timeout:30000});
+ await page.locator('#openHeroCreator').click();
+ await page.locator('#heroNameInput').fill(account.name);
+ check(await page.locator('#saveHeroButton').isDisabled(),'Signed-out hero save must stay disabled');
+ await page.locator('#closeHeroEditor').click();
+ const signedIn=await page.evaluate(requestBoundedGameQaAuth,{
+  action:'sign-in',surface:'menu',email:account.email,password:account.password,timeoutMs:20000
+ });
+ check(signedIn,'Real Supabase QA account sign-in failed (credentials not printed)');
+ await page.waitForFunction(()=>document.getElementById('heroGateNotice')?.textContent?.includes('REGISTERED PLAYER'),undefined,{timeout:30000});
+ await page.locator('#openHeroCreator').click();
+ await page.locator('#heroModelSelect').selectOption(account.model);
+ await page.locator('#heroNameInput').fill(account.name);
+ await page.locator('#saveHeroButton').click({timeout:MAX_WAIT});
+ await page.waitForFunction(()=>document.getElementById('heroCreateFeedback')?.textContent?.includes('Hero saved for your signed-in account'),undefined,{timeout:30000});
+ const owned=await page.evaluate(({name,model})=>{
+  try{
+   const active=JSON.parse(localStorage.getItem('climboria-created-hero-v1')||'null');
+   const stored=JSON.parse(localStorage.getItem('climboria-created-hero-v1:user:'+heroAuthUser?.id)||'null');
+   return !!heroAuthUser?.id&&active?.ownerId===heroAuthUser.id&&stored?.ownerId===heroAuthUser.id&&
+    active.name===name&&active.model===model&&stored.name===name&&stored.model===model;
+  }catch{return false}
+ },{name:account.name,model:account.model});
+ check(owned,'Real Hero Creator did not persist an account-bound hero');
+ await page.locator('#heroEnterButton').click({timeout:30000});
+ await page.waitForURL(url=>url.origin===SITE&&url.pathname==='/game/play.html'&&!url.searchParams.has('guest'),{timeout:90000});
  await page.waitForFunction(
   ()=>window.__climboriaGameReady===true&&
    !!window.__CLIMBORIA_GAME_SAVE_CLIENT?.auth?.signInWithPassword&&
@@ -88,13 +107,8 @@ async function openExplorer(account,emulateMobile){
    Number.isFinite(window.__climboriaJarrellsPeak?.player?.y),
   undefined,{timeout:30000}
  );
- // Use the real Supabase Auth client instead of constructing fake user IDs.
- // A stalled provider response may ignore page/Playwright timeouts; bound the
- // entire browser-side Supabase sign-in even when its promise never resolves.
- const signedIn=await page.evaluate(requestBoundedGameQaAuth,{
-  action:'sign-in',email:account.email,password:account.password,timeoutMs:20000
- });
- check(signedIn,'Real Supabase QA account sign-in failed (credentials not printed)');
+ // The same real registered session must survive normal menu navigation.
+ // Never sign in again here to conceal a broken menu-to-play handoff.
  await page.waitForFunction(
   ()=>document.documentElement.dataset.climboriaMultiplayer==='connected',
   undefined,{timeout:90000}

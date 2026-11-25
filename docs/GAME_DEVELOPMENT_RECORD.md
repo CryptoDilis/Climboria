@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME REAL HERO CREATOR ACCEPTANCE PREPARATION — 2026-11-26 PHT (NOT MERGED)
+
+- #781 merged `09af58d863f8ca88f03c9412807875e11ff96b1a` after all seven checks passed. #786 exact reconciled head `636508c144cae529a9d40fc6672f3a3f7d27f4e2` readiness 45686093865 job 139458970638 confirmed 19/19 tests and actual new menu SHA256 `fe9b35bd77cc47fed16ddab0a813e71e3f3b54c598212893f194569f72d8e475`, gameplay/presence parity and room readiness Nov 25 19:32:04 UTC. Gameplay 45686093844 pending at review.
+- Real two-account QA previously seeded a hero in localStorage before entering play.html, so could not prove creator or account handoff. Updated manual script to start from published menu, check logged-out save disabled, sign in via bounded actual menu auth, choose real GLB/name, click Save and Enter, verify owner-bound storage without returning IDs and require normal session handoff (no redundant sign-in to hide a failure). Added offline auth and source-contract tests. No runtime changes or credentials. Real manual QA not run; owner protected QA environment and workflow dispatch required.
+- **EXACT NEXT:** finish #786 green and merge, reconcile this QA-only branch, verify CI, then protected two-account acceptance on main; physical Android and private combat staging separate. Game only.
+
+---
+
 ## GAME CHAT GUARD MERGED AND HERO LIFECYCLE RECONCILED — 2026-11-26 PHT
 
 - #780 MERGED at `7dc4458ceece725cc74d72d80526e5c278d65c54`, exact tested head `e571a7991bcb6500ae1dec6daf6807d7d9d336ea`: [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45681810345), [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45681810719), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45681810403), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45681810386), [Browser](https://github.com/CryptoDilis/Climboria/actions/runs/45681810383), [Heroes](https://github.com/CryptoDilis/Climboria/actions/runs/45681810234), [Chests](https://github.com/CryptoDilis/Climboria/actions/runs/45681810464), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45681810411) ALL SUCCESS. Gateway job 139444015993 confirmed 245/245 plus separate 56/56, zero failures. Main drift only unrelated Base DEX files; exact head lease used. No actual chat delivery or damage activation claimed.
