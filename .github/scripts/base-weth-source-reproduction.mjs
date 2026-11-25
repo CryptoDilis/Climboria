@@ -38,8 +38,8 @@ if(record.chainId!==undefined)assert.equal(String(record.chainId),"8453");
 const metadata=typeof record.metadata==="string"?JSON.parse(record.metadata):record.metadata;
 const target=Object.entries(metadata?.settings?.compilationTarget??{});
 console.log(JSON.stringify({address,block,observedRuntimeSha256:expected,observedBytes:first.length/2,recordCompiler:metadata?.compiler?.version,compilationTarget:target}));
-assert.equal(metadata.language,"Solidity");assert.equal(metadata.compiler.version,"0.8.15+commit.e14f2714","Unexpected compiler: pin actual record version before replay");assert.match(solc.version(),/^0\.8\.15\+commit\.e14f2714\./);
-assert.equal(target.length,1);assert.equal(target[0][1],"WETH9");
+assert.equal(metadata.language,"Solidity");assert.equal(metadata.compiler.version,"0.5.17+commit.d19bba13","Unexpected compiler: pin actual record version before replay");assert.match(solc.version(),/^0\.5\.17\+commit\.d19bba13\./);
+assert.deepEqual(target,[["WETH9.sol","WETH9"]]);
 const names=Object.keys(metadata.sources);assert.ok(names.length>0&&names.length<=256);assert.ok(names.includes(target[0][0]));
 let total=0;
 const sources=Object.fromEntries(names.map(name=>{
