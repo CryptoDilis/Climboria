@@ -7,3 +7,6 @@
 
 ## CI correction
 - Initial run 45660002972 failed HTTP 429 from public Base RPC; no deployment provenance claim. Validate 45660002894 passed. Added 1.5-second serialized request pacing and at most one bounded 429 retry for entire run, respecting Retry-After up to 15 seconds; longer backoff or repeated 429 stops. No historical evidence checks relaxed. Corrected CI pending.
+
+## Second CI correction
+- Corrected run 45660325193 reached eth_getLogs but both original request and bounded retry were throttled (HTTP 429 at request 39); Validate 45660325380 passed. Replace both eth_getLogs queries with a single eth_getBlockReceipts request for the exact historical deployment block, checking receipt status, matching block/hash, log/receipt transaction identity and exact event topics. Print historical code boundary checkpoint before receipt retrieval. Existing request pacing, bounded retry and response-size limits remain; unsupported receipt method or persistent throttling fails closed without endpoint fallback. No actual source revision claim yet. Corrected CI pending.
