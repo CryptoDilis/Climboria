@@ -12,3 +12,6 @@
 1. Verify CI and record actual compiler/creation/runtime values. Merge only green.
 2. Obtain approved bounded real firm-quote observation using an explicit public taker and remaining API allocation; no signing. Verify actual nested route and individual action arguments and deployed Settler target, exact approval and fresh simulation. Keep execution disabled.
 3. Initial public indicative pricing lease expired at 07:24:52 UTC on November 25; no automatic renewal. Reauthorize only after confirming remaining free quota and restoring disabled baseline. No provider requests or paid work in this development cycle. DEX only.
+
+## CI correction
+- Initial run 45570036491 failed at Solidity import resolution: raw remapping `@forge-std/=lib/forge-std/src` was interpreted by standard JSON solc as `lib/forge-std/srcinterfaces/IERC20.sol`. Commit e7e9fff1dbf2d91b541ea425f4f302bba1b31c39 normalizes directory targets to trailing slash, matching Foundry path handling. All exact hash and runtime checks unchanged. Corrected CI pending.
