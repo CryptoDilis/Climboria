@@ -1,0 +1,22 @@
+name: Base DEX AllowanceHolder Chain Evidence
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-allowanceholder-chain-evidence.mjs"
+      - ".github/workflows/base-allowanceholder-chain-evidence.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --check .github/scripts/base-allowanceholder-chain-evidence.mjs
+      - name: Observe exact Base contract at a single block (read-only, no credentials)
+        run: node .github/scripts/base-allowanceholder-chain-evidence.mjs
