@@ -518,7 +518,7 @@ function setSwapChain(chain){
  // Base discovery is read-only; prevent accidental Solana wallet prompts on Base.
  const walletButton=$('connectWallet');
  walletButton.disabled=isBase;
- walletButton.textContent=isBase?'Base wallet · coming soon':(connectedWallet?'Disconnect wallet':'Connect wallet');
+ walletButton.textContent=isBase?'Solana wallet · unavailable on Base':(connectedWallet?'Disconnect wallet':'Connect wallet');
  $('quoteFromSearch').placeholder=isBase?'Base ERC-20 support pending':'Search Solana token';
  $('quoteToSearch').placeholder=isBase?'Base ERC-20 support pending':'Search Solana token';
  $('quoteResults').innerHTML=isBase?'<div class="notice" style="grid-column:1/-1">Base quote provider not configured. No indicative price or route is fabricated.</div>':'<div class="quote-result"><small>Estimated receive</small><b>—</b></div><div class="quote-result"><small>Routing provider</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div>';
