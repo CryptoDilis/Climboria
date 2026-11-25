@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME LOCAL RUNTIME SECURITY AUDIT CLEAN — 2026-11-25 PHT
+
+- #732 MERGED at `f6b44d78890c1754106424be7ece46114e9a4aaa`, exact tested head `eb13ad039b3016eac0d79a21a790b18ee3710cce`: [Local Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45559073615) and [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45559073575) SUCCESS. Runtime job 139018126375 checked Miniflare 4.20260730.0, workerd 1.20260730.1, overrides sharp 0.35.5 and undici 7.30.1; npm install and mandatory audit both reported zero vulnerabilities; four budget tests and actual local SQLite admission/restart smoke passed. This is test-only evidence, not a production security audit. See [dependency review](GAME_PREVIEW_RUNTIME_DEPENDENCY_REVIEW.md).
+- #731 original exact head `df17465a0f262c0576b21455684d975cf01db342`: [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45558900963), [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45558901023), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45558901041), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45558900962) SUCCESS; Gameplay [45558901106](https://github.com/CryptoDilis/Climboria/actions/runs/45558901106) in progress at checkpoint. Runtime confirmed six tests and persistent auth cap, but used old dependencies. Reconciled workflow to exact merged patched workflow at `a87235db212ebae07f46445b71f755d98dc7c4f5` to require fresh combined checks. #731 not merged yet.
+- **EXACT NEXT:** verify all fresh #731 checks, including six budget tests with zero advisories and actual SQLite auth/admission restart checks; merge only green and mergeable. Capture reproducible dependency lock, verify private staging route/access and edge rate limits, exact cloud runtime compatibility and cost metrics; perform real two-account QA before production map/combat approval. No live deployment or other workstream changes.
+
+---
+
 ## GAME PRIVATE PREVIEW AUTH REQUEST BUDGET — 2026-11-25 PHT (NOT DEPLOYED)
 
 - #728 MERGED at `b0d1ed039076acbd4140405c491ee9ba5d1c23b6`, exact tested head `71d1157467c1e268c7430f2361b611e383e09c6d`: [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45550927980), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45550928121), [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45550928073), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45550928075), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45550928031) all SUCCESS. Runtime job 138991641417 confirms four budget tests and actual local SQLite persistent admission cap. Intervening main changes were non-Game and were not modified by this work.
