@@ -1,0 +1,22 @@
+name: Base DEX Settler Registry Observation
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-settler-registry-observation.mjs"
+      - ".github/workflows/base-settler-registry-observation.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --check .github/scripts/base-settler-registry-observation.mjs
+      - name: Read current official Base Settler (feature 2) and runtime evidence
+        run: node .github/scripts/base-settler-registry-observation.mjs
