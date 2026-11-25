@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME CHAT COMPOSITION AND SOCKET SEND GUARD — 2026-11-26 PHT (NOT MERGED)
+
+- Reviewed main `8f4e34a03ebc5ddc0431d7a2e8f729b1328a7e07`. Fixed three source-level issues: Enter during IME composition could submit an unfinished chat message; an exceptional WebSocket.send could escape the handler; a local attack after provisional welcome could send before authoritative spawn acceptance. Fix `69628783963f2de43691b4620a4d123896e1b707` guards composition, returns false on send exceptions without inventing delivery, and requires confirmed spawn for room attack packet. No changes to local animation, server damage gates or identity checks. Tests `a3a719e68a037febf1118c969c4fc2f5ad49e367` and version bump `9c858131f5b93285034a4f5ad6b2f1d91e8c2197`. CI pending; no live claim.
+- #778 reconciled head `8f95c0ba9cc5e59396f895d93d2dd93dc37310e8`: Gateway 45678993172 job 139434145937 passed 242/242 and separate 53/53; Authority 45678993170, Runtime 45678993148, Validate 45678993164, Browser 45678993268, Heroes 45678993060 passed. Chests 45678993221 and Gameplay 45678993351 running at review. No reset of #778 head.
+- **EXACT NEXT:** finish #778 fresh CI and merge first; then reconcile this independent chat branch with latest main preserving both records and mobile controls, verify fresh exact-head CI and merge only green. Actual registered multiplayer and physical Android acceptance still require test accounts/devices. Private combat staging remains separately gated. Game only.
+
+---
+
 ## GAME PUBLISHED MOBILE HTML VERIFICATION — 2026-11-26 PHT (NOT MERGED)
 
 - Checked main `29098afff0e7d7921e9ae141a3c732717831d1f3` after merged #770 and #775. Existing deployed-client readiness proof verifies the version reference in play.html and exact presence script bytes, but did not establish exact HTML bytes containing #770 inline mobile gesture controls. No live #770 claim yet.
