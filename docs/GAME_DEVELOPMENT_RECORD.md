@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME WALK/RUN JUMP SMOKE TIMING FIX — 2026-11-25 PHT (NOT MERGED)
+
+- #722 exact head `c8b189ceef5f6f96889223acfeca3e651996688d`: [Local Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45517653914), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45517653956), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45517654023) SUCCESS; [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45517653951) FAILURE. Job 138881169077 showed both keyboard jumps recorded ordered takeoff/airborne/descent/land phases, distinct poses, >1.7m peak rise, exactly one landing each and correct grounded walk/run resumption; early separate 8s polling deadlines failed on slow software WebGL despite completed traces.
+- `.github/scripts/game-smoke.mjs` fix `2fcc2c07f73fc3e47db3849850357ca9bfe278d6` waits up to 30s for the complete persisted physics trace, retains ordered phase/distinct pose/height checks and strengthens exact one-jump/one-land counters and grounded locomotion check. No gameplay physics or production configuration changed. Fresh CI needed; not a claim of public browser acceptance.
+- Audit evidence [45517554446](https://github.com/CryptoDilis/Climboria/actions/runs/45517554446) identifies Miniflare affected through sharp and undici; see #722 discussion for advisory IDs. Local test-only dependencies, still not clean; review compatible patched versions before cloud staging.
+- **EXACT NEXT:** verify new exact-head all applicable Game CI and merge only when green; integrate durable budget into preview Worker with session-bound terminal reservations and local SQLite tests; measure private staging costs and validate real registered accounts. No production PvP activation or other workstreams.
+
+---
 ## GAME PREVIEW BUDGET PROTOTYPE AND CI AUDIT FIX — 2026-11-25 PHT (NOT MERGED)
 
 - [PR #722](https://github.com/CryptoDilis/Climboria/pull/722) original head `7100f1606d491821583aecaccfeef067a6494ac0`: [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45362798396) SUCCESS; [Local Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45362798610) FAILURE at advisory reporting before runtime test, job 138336806795: npm ENOLOCK after --no-save installation. Logs identify Miniflare 4.20260730.0 and workerd 1.20260730.1, three high advisories still unidentified. CI fix `5a3d7127261153c4008d7b4a182a937ac632912c` saves exact Miniflare version and generates ephemeral npm lockfile for audit. Full transitive lock and advisory review pending.
