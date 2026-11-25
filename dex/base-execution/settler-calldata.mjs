@@ -3,7 +3,8 @@
 import {projectActionEvidence} from "./action-evidence-projection.mjs";
 export const SETTLER_EXECUTE_SELECTOR="1fff991f";
 const MAX_BYTES=32768,MAX_ACTIONS=32;
-export function inspectSettlerExecute(data,{observationTaker}={}){
+export function inspectSettlerExecute(data,{observationTaker,inspectAction}={}){
+ if(inspectAction!==undefined&&(typeof inspectAction!=="function"||observationTaker!==undefined))throw Error("Invalid action inspection mode");
  if(typeof data!=="string"||data.length>2+MAX_BYTES*2||!/^0x(?:[0-9a-fA-F]{2})+$/.test(data))throw Error("Invalid nested calldata");
  const hex=data.slice(2).toLowerCase(),args=hex.slice(8);
  if(hex.slice(0,8)!==SETTLER_EXECUTE_SELECTOR||args.length<64*6)throw Error("Unsupported Settler execute ABI");
@@ -16,16 +17,18 @@ export function inspectSettlerExecute(data,{observationTaker}={}){
  if(count<1n||count>BigInt(MAX_ACTIONS))throw Error("Invalid action count");
  const n=Number(count),arrayHead=192;
  let expected=n*32;
- const actions=[];
+ const actions=[],privateActions=[];
  for(let i=0;i<n;i++){
   if(uint(arrayHead+i*32)!==BigInt(expected))throw Error("Noncanonical action offset");
   const lengthOffset=arrayHead+expected,length=uint(lengthOffset);
   if(length<4n||length>BigInt(MAX_BYTES))throw Error("Invalid action length");
   const bytes=Number(length),start=lengthOffset+32,end=start+bytes,padded=start+Math.ceil(bytes/32)*32;
   if(padded*2>args.length||!/^[0]*$/.test(args.slice(end*2,padded*2)))throw Error("Truncated action or nonzero padding");
+  if(inspectAction!==undefined)privateActions.push("0x"+args.slice(start*2,end*2));
   actions.push(observationTaker===undefined?Object.freeze({selector:"0x"+args.slice(start*2,start*2+8),byteLength:bytes}):projectActionEvidence("0x"+args.slice(start*2,end*2),observationTaker));
   expected=padded-arrayHead;
  }
  if((arrayHead+expected)*2!==args.length)throw Error("Unexpected trailing Settler calldata");
+ if(inspectAction!==undefined)privateActions.forEach((action,index)=>inspectAction(action,index,n));
  return Object.freeze({recipient,buyToken,minAmountOut:minAmountOut.toString(),actions:Object.freeze(actions)});
 }
