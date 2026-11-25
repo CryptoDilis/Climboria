@@ -1,0 +1,27 @@
+name: Base DEX Legacy Token Proxy Observation
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-legacy-token-proxy-observation.mjs"
+      - ".github/workflows/base-legacy-token-proxy-observation.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          node --check .github/scripts/base-legacy-token-proxy-observation.mjs
+          node --test .github/scripts/base-eip1967-proxy-observation.test.mjs
+          grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs
+      - name: Compare legacy and EIP-1967 slots at one canonical block
+        run: node .github/scripts/base-legacy-token-proxy-observation.mjs
