@@ -41,7 +41,9 @@ jobs:
         run: |
           set -euo pipefail
           forge test --match-path test/ClimbNttManagerLocalIntegration.t.sol --match-contract ClimbNttManagerLocalIntegrationTest -vvv | tee "$RUNNER_TEMP/climb-ntt-local.log"
-          grep -Eq '3 tests passed, 0 failed, 0 skipped \(3 total tests\)' "$RUNNER_TEMP/climb-ntt-local.log"
+          grep -Eq '4 tests passed, 0 failed, 0 skipped \(4 total tests\)' "$RUNNER_TEMP/climb-ntt-local.log"
+          grep -Fq '[PASS] testKnownSparseTransceiverQuoteFailure()' "$RUNNER_TEMP/climb-ntt-local.log"
+          grep -Fq 'CLIMB_KNOWN_SPARSE_TRANSCEIVER_QUOTE_FAILURE_REPRODUCED_NO_GO' "$RUNNER_TEMP/climb-ntt-local.log"
       - name: Run pinned upstream manager and arithmetic regression tests
         working-directory: ntt-upstream/evm
         run: |
