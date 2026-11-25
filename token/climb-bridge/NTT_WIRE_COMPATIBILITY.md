@@ -1,0 +1,9 @@
+# Stage 36 — pinned cross-runtime message fixture compatibility (2026-11-25 UTC)
+
+Solana v3.0.0 `1a2a92ef7f289972b2d00dd1d58077d139fe68d7` and EVM v2.0.0 `c636cc15b07969e4b44de7e466c999c07e7387a9` remain candidate releases, mainnet NO_GO. No real cross-chain transfer has occurred.
+
+Reviewed pinned Solana `solana/modules/ntt-messages/src/transceiver.rs` tests at lines 229–284, 327–389 and 436–498 and pinned EVM `evm/test/TransceiverStructs.t.sol` tests at lines 78–212. Three fixtures are present on both releases. Upstream expected destination chain is 17 on the Rust side and 2 on Solidity side, not our actual testnet peer IDs. Both expect 1,234,567 raw amount at seven decimals; not a CLIMB six-decimal transfer fixture. The original fixture omits optional payload length; the other two encode explicit empty and 32-byte optional payloads. No test fixture is a signed VAA or live transfer.
+
+Added a separate read-only workflow comparing the actual pinned fixture bytes, requiring exact equality outside the two destination-chain bytes, and running three upstream Rust and three upstream Solidity codec tests on their original fixtures, with explicit names and nonzero exact test counts. No modification to upstream sources, no fork, signer, deployment, keys or funds. This checks sample serialization agreement only; does not prove live compatibility, actual CLIMB amounts, manager peer settings, VAA authentication or audit clearance.
+
+**PR/CI pending.** Next: inspect real workflow logs, merge only when all three comparisons and six codec tests pass, record actual results. Then exercise project-specific six-decimal fixtures and actual testnet once owner supplies dedicated funded public payer addresses. Remaining exact EVM audit coverage and executable provenance are unresolved. Mainnet NO_GO.
