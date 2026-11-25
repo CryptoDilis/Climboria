@@ -19,3 +19,9 @@
 ## Exact next work
 
 Verify new QA script syntax and CI; complete #731 merge and dependency lock. Confirm host/Access/rate controls and actual cloud configuration with scoped operator access before enabling. The proposed hostname is a design decision, not a deployed endpoint. Production PvP remains off until real map collision, server/client synchronization and two-account actual gameplay QA are verified.
+
+## Disabled-only deployment workflow and lock evidence
+
+- Added runtime CI artifact `game-preview-runtime-dependency-evidence` (commit e9fbd6d2b0a0be54196d43d8353e8dbcadca136b) with generated package manifest, lockfile and audit report after successful checks. This is capture, not a committed reproducible lock; inspect and commit the isolated lock in the next cycle.
+- Added manual-only `.github/workflows/game-preview-disabled-staging.yml` (efbead68f67756cddbe838d73d50cd0a813dbc5f). Main-only confirmation, separate `game-combat-preview-staging` environment, exact reviewed Wrangler 4.x version input, zero high/critical audit gate, configuration assertions, dry-run bundle before credentialed deploy. It cannot add routes, enable the fixture or upload tester credentials. It is unrun and does not prove actual Cloudflare deployment or access controls. Require a narrowly scoped Cloudflare token and account ID; do not reuse the production gateway environment without review.
+- Next: verify #731 and #735 CI, merge/reconcile, retrieve the successful dependency evidence, review exact Wrangler version and establish separate deployment environment. GitHub connector does not expose workflow dispatch or Cloudflare configuration; operator action is required unless a suitable scoped connector becomes available. No deployment attempted.
