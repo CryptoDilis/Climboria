@@ -15,7 +15,7 @@ test('checks only exact published HTML version and script bytes with no credenti
   return url.endsWith('play.html')?response(html,'text/html; charset=utf-8'):response(script,'application/javascript');
  }));
  assert.deepEqual(calls,[root+'play.html',root+'multiplayer/client-presence.js?v=test-1']);
- assert.deepEqual(result,{version:'test-1',sha256:createHash('sha256').update(script).digest('hex')});
+ assert.deepEqual(result,{version:'test-1',sha256:createHash('sha256').update(script).digest('hex'),htmlSha256:createHash('sha256').update(html).digest('hex')});
 });
 test('rejects stale version before requesting script',async()=>{
  let calls=0;
@@ -33,4 +33,12 @@ test('rejects duplicate script tags, invalid MIME and failed HTTP',async()=>{
 test('rejects streamed oversized asset and stalled request',async()=>{
  await assert.rejects(verifyDeployedClientParity(opts(async url=>url.endsWith('play.html')?response(html,'text/html'):response(Buffer.alloc(512*1024+1),'application/javascript'))),/exceeds limit/);
  await assert.rejects(verifyDeployedClientParity({...opts(()=>new Promise(()=>{})),deadlineMs:10}),/deadline exceeded/);
+});
+
+test('rejects outdated inline mobile controls despite matching presence script version',async()=>{
+ let calls=0;
+ await assert.rejects(verifyDeployedClientParity(opts(async()=>{
+  calls++;return response(html+'<!-- stale inline gameplay -->','text/html');
+ })),/HTML bytes differ/);
+ assert.equal(calls,1,'reject stale HTML before requesting presence script');
 });
