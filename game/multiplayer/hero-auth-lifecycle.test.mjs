@@ -50,3 +50,34 @@ test('anonymous provider identity cannot unlock hero creation',async()=>{
  h.run('void checkHeroLogin()');await flush();
  assert.equal(h.run('heroAuthUser'),null);assert.equal(h.run('heroAuthChecked'),true);
 });
+
+function saveHarness(){
+ const slice=(a,b)=>{const i=html.indexOf(a),j=html.indexOf(b,i);assert.ok(i>=0&&j>i);return html.slice(i,j)};
+ const handlers={};const writes=[];let finish,calls=0;
+ const context=vm.createContext({
+  heroAuthUser:{id:'owner'},heroAuthEpoch:1,heroSavePending:false,heroEditorRevision:1,
+  heroEditor:{classList:{contains:()=>true}},heroNameInput:{value:'Hero One'},heroModelSelect:{value:'Jarrell'},
+  previewLoaded:true,validHeroName:()=>true,savedHero:()=>({name:'Hero One',model:'Jarrell'}),
+  saveHeroButton:{addEventListener:(event,fn)=>{handlers.save=fn}},heroEnterButton:{},
+  heroFeedback:{},registeredHeroUser:u=>!!u?.id,userHeroKey:()=> 'owned',HERO_RECORD_KEY:'active',
+  localStorage:{setItem:(key,value)=>writes.push([key,value])},updateHeroCard(){},checkHeroLogin(){},
+  boundedHeroUser:()=>{calls++;return new Promise(r=>{finish=r})}
+ });
+ vm.runInContext(slice('function editorButtons(){','function previewRender(){')+slice("saveHeroButton.addEventListener('click'","heroEnterButton.addEventListener('click'"),context);
+ return {context,writes,save:()=>handlers.save(),calls:()=>calls,finish:()=>finish(user('owner')),
+  refresh:()=>vm.runInContext('editorButtons()',context)};
+}
+test('pending save cannot be reenabled by field or preview updates or duplicated',async()=>{
+ const h=saveHarness(),first=h.save();
+ h.refresh();assert.equal(h.context.saveHeroButton.disabled,true);assert.equal(h.context.heroEnterButton.disabled,true);
+ await h.save();assert.equal(h.calls(),1);
+ h.finish();await first;assert.equal(h.writes.length,3);assert.equal(h.context.saveHeroButton.disabled,false);
+});
+test('closing or reopening editor invalidates pending save even when selection is unchanged',async()=>{
+ const h=saveHarness(),first=h.save();h.context.heroEditorRevision++;
+ h.finish();await first;assert.equal(h.writes.length,0);assert.equal(h.context.heroSavePending,false);
+});
+test('selection changes while save is pending cannot write an old hero',async()=>{
+ const h=saveHarness(),first=h.save();h.context.heroNameInput.value='Different Hero';
+ h.finish();await first;assert.equal(h.writes.length,0);assert.match(h.context.heroFeedback.textContent,/selection changed/);
+});

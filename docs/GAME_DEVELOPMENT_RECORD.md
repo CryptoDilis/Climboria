@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME HERO SAVE SINGLE-FLIGHT AND EDITOR LIFECYCLE — 2026-11-26 PHT (NOT MERGED)
+
+- #781 previous head `b29b4a7a09717f03680bb594ece31509d78daaff` all six checks SUCCESS: Gateway 45680072970, Validate 45680072858, Runtime 45680072888, Original Hero 45680072882, Gameplay 45680072963, Heroes 45680072863. Source review identified a separate pending-save race: editorButtons could re-enable Save while provider verification was pending; closing/reopening the editor could still allow an earlier save to write. Added single-flight guard, editor revision invalidation, disabled Enter during pending save and three actual inline-handler regressions for duplicate save, stale editor and changed selection. No guest or ownership bypass. New head CI pending.
+- #780 reconciled head `e571a7991bcb6500ae1dec6daf6807d7d9d336ea`: Validate 45681810386, Runtime 45681810403, Authority 45681810719, Gateway 45681810345 SUCCESS; Gameplay 45681810411, Chests 45681810464, Heroes 45681810234 and Browser 45681810383 running at review. #778 already merged `108a680e0f1281adab41f29334c6b01479e080e0`.
+- **EXACT NEXT:** finish #780 checks and merge only green; reconcile #781 on latest main preserving shared history, verify fresh CI including save regressions and merge only green. Published parity, physical Android and actual registered two-account acceptance remain pending; private combat staging separately blocked. Game only.
+
+---
+
 ## GAME HERO AUTH LIFECYCLE — 2026-11-26 PHT (NOT MERGED)
 
 - Main reviewed `e8a0c363351550a5493152b2e5d20ca79fec79cd`. Identified a source-level risk in Game menu: Supabase auth-state callback calls getUser while auth lock may still be held, and an unbounded getUser can strand hero creation. Previous account remained active during revalidation. Hero selection could change while save awaits verification.

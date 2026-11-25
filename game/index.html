@@ -271,6 +271,7 @@ const heroFeedback=document.getElementById('heroCreateFeedback');
 const heroStatus=document.getElementById('heroPreviewStatus');
 const heroCanvas=document.getElementById('heroPreviewCanvas');
 let previewLoaded=false,previewLoading=false,previewScene=null,previewRenderer=null,previewCamera=null,previewModel=null,previewMixer=null,previewClock=null,previewFrame=0,previewAngle=0,previewDistance=3.4,previewTouchX=null,previewTouchDistance=null,previewRequest=0,previewActiveModel='',previewNeutralSpine=null,previewNeutralTime=0;
+let heroSavePending=false,heroEditorRevision=0;
 const validHeroName=name=>/^[A-Za-z0-9 _-]{2,24}$/.test(name)&&/[A-Za-z0-9]/.test(name);
 function savedHero(){
  if(!heroAuthUser)return null;
@@ -300,8 +301,8 @@ function updateHeroCard(){
  if(launch)launch.textContent=h?'▶ ENTER JARRELL’S PEAK':heroAuthUser?'CREATE HERO TO UNLOCK':'PLAY AS GUEST · NO LOGIN';
 }
 function editorButtons(){
- saveHeroButton.disabled=!heroAuthUser||!previewLoaded||!validHeroName(heroNameInput.value.trim());
- const h=savedHero();heroEnterButton.disabled=!heroAuthUser||!previewLoaded||!h||h.name!==heroNameInput.value.trim()||h.model!==heroModelSelect.value;
+ saveHeroButton.disabled=heroSavePending||!heroAuthUser||!previewLoaded||!validHeroName(heroNameInput.value.trim());
+ const h=savedHero();heroEnterButton.disabled=heroSavePending||!heroAuthUser||!previewLoaded||!h||h.name!==heroNameInput.value.trim()||h.model!==heroModelSelect.value;
 }
 function previewRender(){
  if(!heroEditor.classList.contains('open')||!previewRenderer)return;
@@ -493,12 +494,14 @@ function startHeroPreview(){
  }catch(e){previewLoading=false;heroStatus.textContent='3D preview unavailable';heroFeedback.textContent='Unable to initialize 3D preview: '+e.message;}
 }
 function openHeroEditor(){
+ heroEditorRevision++;
  // Guests may inspect 3D previews, but cannot create/save named heroes.
  const h=savedHero();heroNameInput.value=h?.name||'';heroModelSelect.value=h?.model||'Adventurer';
  heroEditor.classList.add('open');heroEditor.setAttribute('aria-hidden','false');heroFeedback.textContent='';
  editorButtons();startHeroPreview();heroNameInput.focus();
 }
 function closeHeroEditor(){
+ heroEditorRevision++;
  heroEditor.classList.remove('open');heroEditor.setAttribute('aria-hidden','true');
  if(previewFrame)cancelAnimationFrame(previewFrame);previewFrame=0;
  document.getElementById('openHeroCreator').focus();
@@ -513,14 +516,17 @@ heroModelSelect.addEventListener('change',()=>{
 });
 heroNameInput.addEventListener('input',()=>{heroFeedback.textContent=validHeroName(heroNameInput.value.trim())?'':'Enter 2–24 allowed characters and at least one letter or number.';editorButtons()});
 saveHeroButton.addEventListener('click',async()=>{
- const name=heroNameInput.value.trim(),model=heroModelSelect.value,epoch=heroAuthEpoch,userId=heroAuthUser?.id;
+ if(heroSavePending||!heroEditor.classList.contains('open'))return;
+ const name=heroNameInput.value.trim(),model=heroModelSelect.value,epoch=heroAuthEpoch,userId=heroAuthUser?.id,revision=heroEditorRevision;
  if(!userId){heroFeedback.textContent='Sign in to create or save a hero.';return}
  if(!previewLoaded||!validHeroName(name)){heroFeedback.textContent='Load the hero and enter a valid name first.';return}
- saveHeroButton.disabled=true;
+ heroSavePending=true;editorButtons();
+ heroFeedback.textContent='Verifying account…';
  // A cached browser user ID or legacy localStorage record must never be
  // sufficient to create heroes; revalidate the current provider identity.
  try{
   const result=await boundedHeroUser();
+  if(revision!==heroEditorRevision||!heroEditor.classList.contains('open'))return;
   if(epoch!==heroAuthEpoch||result?.error||!registeredHeroUser(result?.data?.user)||
      result.data.user.id!==userId){heroFeedback.textContent='Session expired · sign in again before saving.';void checkHeroLogin();return}
   if(!previewLoaded||heroNameInput.value.trim()!==name||heroModelSelect.value!==model){heroFeedback.textContent='Hero selection changed · review and save again.';return}
@@ -531,11 +537,11 @@ saveHeroButton.addEventListener('click',async()=>{
   localStorage.setItem('climboria-selected-hero',record.model);
   heroFeedback.textContent='Hero saved for your signed-in account on this device!';
   updateHeroCard();
- }catch{heroFeedback.textContent='Hero could not be saved. Verify login and browser storage.'}
- finally{editorButtons()}
+ }catch{if(revision===heroEditorRevision&&heroEditor.classList.contains('open'))heroFeedback.textContent='Hero could not be saved. Verify login and browser storage.'}
+ finally{heroSavePending=false;editorButtons()}
 });
 heroEnterButton.addEventListener('click',()=>{
- if(!requireHeroSignIn())return;
+ if(heroSavePending||!requireHeroSignIn())return;
  const h=savedHero();
  if(previewLoaded&&h?.name===heroNameInput.value.trim()&&h?.model===heroModelSelect.value){
   try{localStorage.setItem(HERO_RECORD_KEY,JSON.stringify({...h,ownerId:heroAuthUser.id}))}catch{return}
