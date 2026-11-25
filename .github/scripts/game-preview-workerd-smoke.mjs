@@ -95,10 +95,19 @@ try{
  const b3=await connect(stub,await ticket(stub,B));
  assert.equal(b3.joined.snapshot.health,495,'SQLite durable state survives local runtime restart');
  b3.close();await stop();
+ // Five admission attempts were spent above, including the replay.
+ // Seven further attempts consume the remaining durable admission budget.
+ stub=await start();
+ for(let i=0;i<7;i++)assert.equal((await upgrade(stub,'0'.repeat(64))).status,401);
+ assert.equal((await upgrade(stub,'0'.repeat(64))).status,429,'thirteenth attempt denied');
+ await stop();
+ stub=await start();
+ assert.equal((await upgrade(stub,'0'.repeat(64))).status,429,'admission cap survives SQLite runtime restart');
+ await stop();
  stub=await start('false');
  const denied=await stub.fetch('https://preview.internal/_ticket',{method:'POST',body:JSON.stringify({userId:A})});
  assert.equal(denied.status,503);
  const outer=await mf.dispatchFetch('https://preview.invalid/ticket',{method:'POST'});
  assert.equal(outer.status,503);
- console.log('PASS: actual local workerd WebSockets, private SQLite DO tickets, committed HP, reconnect/restart and disabled-by-default admission');
+ console.log('PASS: actual local workerd WebSockets, private SQLite DO tickets, committed HP, reconnect/restart, persistent admission cap and disabled-by-default admission');
 }finally{await stop();await rm(dir,{recursive:true,force:true})}
