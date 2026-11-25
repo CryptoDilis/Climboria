@@ -91,6 +91,38 @@ contract ClimbNttManagerLocalIntegrationTest is Test {
         assertEq(token.totalSupply(), 0);
     }
 
+    // Diagnostic: a passing test here means the upstream quote defect was reproduced,
+    // NOT that the issue was fixed or that deployment is approved.
+    function testKnownSparseTransceiverQuoteFailure() public {
+        (uint256[] memory initialQuotes, uint256 initialTotal) =
+            manager.quoteDeliveryPrice(SOLANA, hex"00");
+        assertEq(initialQuotes.length, 1);
+        assertEq(initialTotal, 0);
+        mockAttest(message(5, 2e6));
+
+        DummyTransceiver second = new DummyTransceiver(address(manager));
+        manager.setTransceiver(address(second));
+        manager.removeTransceiver(address(transceiver));
+
+        // quoteDeliveryPrice allocates by enabled count, then indexes by registered index.
+        // Exact Solidity array-bounds panic (not an arbitrary revert).
+        vm.expectRevert(abi.encodeWithSignature("Panic(uint256)", uint256(0x32)));
+        manager.quoteDeliveryPrice(SOLANA, hex"00");
+        assertEq(token.balanceOf(USER), 2e6);
+        assertEq(token.totalSupply(), 2e6);
+
+        // The actual transfer path allocates by registered count instead.
+        // Local mock transceiver only; this does NOT authorize bypassing quotes live.
+        vm.startPrank(USER);
+        token.approve(address(manager), 1e6);
+        manager.transfer(1e6, SOLANA, bytes32(uint256(0xABCD)));
+        vm.stopPrank();
+        assertEq(token.balanceOf(USER), 1e6);
+        assertEq(token.totalSupply(), 1e6);
+        assertEq(token.balanceOf(address(manager)), 0);
+        emit log_string("CLIMB_KNOWN_SPARSE_TRANSCEIVER_QUOTE_FAILURE_REPRODUCED_NO_GO");
+    }
+
     function testPausedManagerCannotMintOrBurnThroughTransfer() public {
         mockAttest(message(3, 1e6));
         manager.pause();
