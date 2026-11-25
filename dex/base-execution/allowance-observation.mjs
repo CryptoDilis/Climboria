@@ -39,18 +39,22 @@ export async function readAllowanceObservation(input,{fetchImpl=(url,options)=>g
  const block=await rpc("eth_blockNumber",[]);
  if(typeof block!=="string"||!/^0x[1-9a-f][0-9a-f]{0,15}$/.test(block))throw Error("Invalid block");
  const initialBlockHash=assertBaseBlockIdentity(await rpc("eth_getBlockByNumber",[block,false]),block);
- const holderCode=await rpc("eth_getCode",[BASE_ALLOWANCE_HOLDER,block]);
+ // EIP-1898: pin state reads to the block HASH, not merely the numerical
+ // height. If the RPC does not support hash-pinned state or the block is no
+ // longer canonical, fail closed rather than silently falling back to height.
+ const pinnedBlock=Object.freeze({blockHash:initialBlockHash,requireCanonical:true});
+ const holderCode=await rpc("eth_getCode",[BASE_ALLOWANCE_HOLDER,pinnedBlock]);
  if(typeof holderCode!=="string"||!/^0x[0-9a-fA-F]{2018}$/.test(holderCode))throw Error("Unexpected holder runtime");
  const code=Uint8Array.from(holderCode.slice(2).match(/../g),x=>parseInt(x,16));
  const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",code)),x=>x.toString(16).padStart(2,"0")).join("");
  if(hash!==RUNTIME_SHA)throw Error("Holder runtime fingerprint mismatch");
- const tokenCode=await rpc("eth_getCode",[intent.sellToken,block]);
+ const tokenCode=await rpc("eth_getCode",[intent.sellToken,pinnedBlock]);
  if(typeof tokenCode!=="string"||!/^0x(?:[0-9a-fA-F]{2}){1,24576}$/.test(tokenCode))throw Error("No sell token runtime");
- const balance=decode(await rpc("eth_call",[{to:intent.sellToken,data:"0x70a08231"+word(intent.taker)},block]));
- const allowance=decode(await rpc("eth_call",[{to:intent.sellToken,data:"0xdd62ed3e"+word(intent.taker)+word(BASE_ALLOWANCE_HOLDER)},block]));
+ const balance=decode(await rpc("eth_call",[{to:intent.sellToken,data:"0x70a08231"+word(intent.taker)},pinnedBlock]));
+ const allowance=decode(await rpc("eth_call",[{to:intent.sellToken,data:"0xdd62ed3e"+word(intent.taker)+word(BASE_ALLOWANCE_HOLDER)},pinnedBlock]));
  if(await rpc("eth_chainId",[])!=="0x2105")throw Error("RPC chain changed");
- // A block-number-only pin can silently mix pre/post-reorg data. Refuse even a
- // correctly formatted allowance observation if its block identity changed.
+ // End fence also detects reorganizations between discovery and final check.
+ // A hash-pinned read must NEVER degrade to a height-based read on RPC errors.
  assertBaseBlockIdentity(await rpc("eth_getBlockByNumber",[block,false]),block,initialBlockHash);
  requestSignal.throwIfAborted();
  return Object.freeze({...inspectAllowanceState(intent,{chainId:8453,owner:intent.taker,token:intent.sellToken,spender:BASE_ALLOWANCE_HOLDER,block,balance,allowance}),observedBlockHash:initialBlockHash});
