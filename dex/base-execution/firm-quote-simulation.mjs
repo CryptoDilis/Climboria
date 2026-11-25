@@ -91,6 +91,10 @@ export async function observeBaseFirmQuoteSimulation(input,quote,policy,{
  },pinned]);
  if(typeof result!=="string"||!/^0x(?:[0-9a-fA-F]{2})*$/.test(result)||result.length>8194)
   throw Error("Invalid EVM simulation output");
+ const outputBytes=Uint8Array.from((result.slice(2).match(/../g)||[]),pair=>parseInt(pair,16));
+ const simulationResultSha256=Array.from(new Uint8Array(
+  await crypto.subtle.digest("SHA-256",outputBytes)
+ ),byte=>byte.toString(16).padStart(2,"0")).join("");
  if(await rpc("eth_chainId",[])!=="0x2105")throw Error("Simulation RPC chain changed");
  assertBaseBlockIdentity(await rpc("eth_getBlockByNumber",[anchor.block,false]),anchor.block,anchor.hash);
  requestSignal.throwIfAborted();
@@ -102,6 +106,7 @@ export async function observeBaseFirmQuoteSimulation(input,quote,policy,{
   nestedActionArgumentsVerified:false,independentRpcVerified:false,
   walletAuthorizationVerified:false,receiptFinalityVerified:false,
   simulationGasCap:simulationGasLimit,
+  simulationResultSha256,
   requestedSellAmount:candidate.requestedSellAmount,
   providerMinBuyAmount:candidate.providerMinBuyAmount,
   // Never expose calldata, transaction to/value, provider API credentials or
