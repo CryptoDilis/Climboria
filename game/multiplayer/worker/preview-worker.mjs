@@ -4,6 +4,7 @@
  * An explicitly enabled deployment requires a registered-account allowlist.
  * No production data, rewards, wallet, chat or gameplay admission.
  */
+import {createPreviewOperationBudget} from './preview-operation-budget.mjs';
 import {createPreviewTicketStore} from './preview-ticket-store.mjs';
 import {createTransactionalGatewayPreview} from './transactional-gateway-preview.mjs';
 import {createTransactionalRoomPrototype} from '../transactional-room-prototype.mjs';
@@ -71,7 +72,18 @@ export class PreviewCombatRoom{
   this.tickets=createPreviewTicketStore({storage:state.storage,roomId:ROOM});
   this.runtime=createTransactionalRoomPrototype({roomId:ROOM,storage:state.storage,collision,
    spawn:{x:200,z:20},sampleWalkableGround:(x,z,id)=>id===ROOM&&x>=190&&x<=220&&z>=10&&z<=40?0:null});
-  this.gateway=createTransactionalGatewayPreview({runtime:this.runtime,consumeTicket:this.tickets.consumeTicket});
+  this.budget=createPreviewOperationBudget({storage:state.storage});
+  const budgetedRuntime={...this.runtime,
+   attack:async(id,target)=>{
+    const reserved=await this.budget.reserve('attack');
+    return reserved.ok?this.runtime.attack(id,target):{ok:false,reason:'preview-budget-denied'};
+   },
+   disconnect:async id=>{
+    const reserved=await this.budget.reserve('disconnect',id);
+    return reserved.ok?this.runtime.disconnect(id):{ok:false,reason:'preview-budget-denied'};
+   }
+  };
+  this.gateway=createTransactionalGatewayPreview({runtime:budgetedRuntime,consumeTicket:this.tickets.consumeTicket});
  }
  schedule(){
   if(this.quarantined||this.timer!==null||this.running||!this.sockets.size)return;
@@ -80,6 +92,8 @@ export class PreviewCombatRoom{
    try{
     for(const [id,entry] of this.sockets)if(Date.now()>=entry.expiresAt)await this.close(id,1000,'preview-session-expired');
     if(this.sockets.size){
+     const reservation=await this.budget.reserve('tick');
+     if(!reservation.ok){await this.quarantine();return;}
      const result=await this.runtime.tick();
      if(!result.ok)await this.quarantine();
     }
@@ -125,6 +139,8 @@ export class PreviewCombatRoom{
    catch{return response(400,{error:'invalid-request'})}
    if(!data||Object.keys(data).length!==1||typeof data.userId!=='string'||!accounts(this.env).has(data.userId))
     return response(403,{error:'preview-account-not-allowed'});
+   const reserved=await this.budget.reserve('ticket');
+   if(!reserved.ok){await this.quarantine();return response(429,{error:'preview-budget-denied'});}
    const result=await this.tickets.issueVerifiedAccount(data.userId);
    return result.ok?response(200,{ticket:result.ticket,protocol:PROTOCOL,ttlSeconds:30,fixture:'synthetic-combat'}):
     response(result.reason.includes('limit')||result.reason.includes('capacity')?429:503,{error:'preview-ticket-unavailable'});
@@ -137,7 +153,10 @@ export class PreviewCombatRoom{
   this.pending++;
   let session;
   try{
-   session=await this.gateway.connect(ticket);
+   const id='s_'+crypto.randomUUID().replace(/-/g,'');
+   const reserved=await this.budget.reserve('admission',id);
+   if(!reserved.ok){await this.quarantine();return response(429,{error:'preview-budget-denied'});}
+   session=await this.gateway.connect(ticket,id);
    if(!session.ok){
     if(session.reason==='room-quarantined'){await this.quarantine();return response(503,{error:'preview-room-unavailable'})}
     return response(401,{error:'preview-admission-denied'});
@@ -145,23 +164,28 @@ export class PreviewCombatRoom{
    if(this.quarantined){await session.close();return response(503,{error:'preview-room-unavailable'})}
    const pair=new WebSocketPair(),client=pair[0],socket=pair[1];
    socket.accept();
-   this.sockets.set(session.id,{socket,session,expiresAt:Date.now()+SESSION_MS});
+   const expiresAt=Math.min(Date.now()+SESSION_MS,reserved.expiresAt);
+   if(Date.now()>=expiresAt){await session.close();socket.close(1000,'preview-window-ended');return response(429,{error:'preview-budget-denied'});}
+   this.sockets.set(session.id,{socket,session,expiresAt});
    const finish=()=>{const work=this.close(session.id);this.state.waitUntil?.(work)};
    socket.addEventListener('close',finish);socket.addEventListener('error',finish);
    socket.addEventListener('message',event=>{
     const work=(async()=>{
      try{
+      const entry=this.sockets.get(session.id);
+      if(!entry)return;
+      if(Date.now()>=entry.expiresAt){await this.close(session.id,1000,'preview-session-expired');return;}
       const result=await session.receive(event.data);
       if(!this.sockets.has(session.id))return;
       socket.send(JSON.stringify({type:'result',...result}));
-      if(result.reason==='room-quarantined'){await this.quarantine();return}
+      if(['room-quarantined','preview-budget-denied'].includes(result.reason)){await this.quarantine();return}
       if(['message-rate-limit','message-too-large','session-closed','invalid-server-time'].includes(result.reason))
        await this.close(session.id,1008,'preview-session-ended');
      }catch{await this.close(session.id,1011,'preview-session-error')}
     })();
     this.state.waitUntil?.(work);
    });
-   socket.send(JSON.stringify({type:'preview-joined',id:session.id,snapshot:session.snapshot,fixture:'synthetic-combat',expiresInMs:SESSION_MS}));
+   socket.send(JSON.stringify({type:'preview-joined',id:session.id,snapshot:session.snapshot,fixture:'synthetic-combat',expiresInMs:Math.max(0,expiresAt-Date.now())}));
    // Explicit synthetic room roster. No account UUIDs or public presence.
    this.announcePeers();
    this.schedule();
