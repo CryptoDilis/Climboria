@@ -42,6 +42,6 @@ jobs:
           forge --version
           mkdir -p src/flat
           forge flatten -o src/flat/BaseTakerSubmittedFlat.sol src/chains/Base/TakerSubmitted.sol
-          forge build src/flat/BaseTakerSubmittedFlat.sol
+          forge build --ast src/flat/BaseTakerSubmittedFlat.sol
       - name: Exact compiled and historical runtime comparison
         run: node .github/scripts/base-settler-source-match.mjs
