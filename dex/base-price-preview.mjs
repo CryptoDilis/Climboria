@@ -58,7 +58,7 @@ export function previewLabels(intent,data){
  rows.push(["Reported network fee",data.reportedNetworkFee==null?"Unavailable":formatBasePreviewAmount(data.reportedNetworkFee,18)+" ETH (estimate)"]);
  return rows;
 }
-export function initBasePricePreview(doc=globalThis.document,{enabled=BASE_PRICE_PREVIEW_ENABLED,endpoint=BASE_PRICE_PREVIEW_ENDPOINT,fetchImpl=globalThis.fetch,healthGated=false}={}){
+export function initBasePricePreview(doc=globalThis.document,{enabled=BASE_PRICE_PREVIEW_ENABLED,endpoint=BASE_PRICE_PREVIEW_ENDPOINT,fetchImpl=(url,options)=>globalThis.fetch(url,options),healthGated=false}={}){
  const form=doc.getElementById("basePriceForm"),direction=doc.getElementById("basePriceDirection"),amount=doc.getElementById("basePriceAmount"),status=doc.getElementById("basePriceStatus"),result=doc.getElementById("basePriceResult"),button=doc.getElementById("basePriceSubmit");
  if(!form||!direction||!amount||!status||!result||!button)return;
  let url=null;
@@ -98,7 +98,7 @@ export function initBasePricePreview(doc=globalThis.document,{enabled=BASE_PRICE
   const controller=new AbortController();current=controller;button.disabled=true;status.textContent="Requesting indicative estimate…";
   try{
    if(healthMode){
-    const ready=await health(controller.signal);
+    let ready=false;try{ready=await health(controller.signal);}catch{}
     if(current!==controller||controller.signal.aborted)return;
     healthReady=ready;
     if(!ready){status.textContent="Public pricing is not currently available. No price request was sent.";return;}
