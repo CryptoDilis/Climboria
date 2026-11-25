@@ -52,3 +52,44 @@ test('storage failure quarantines instance and corrupt state is rejected',async(
  assert.equal((await f.make().reserve('attack')).ok,true);
  f.corrupt();assert.equal((await f.make().reserve('ticket')).reason,'invalid-preview-budget');
 });
+
+test('auth attempt cap starts the absolute window and survives recreation',async()=>{
+ const f=fixture(),a=f.make();
+ const results=await Promise.all(Array.from({length:PREVIEW_BUDGET.auth+3},()=>a.reserve('auth')));
+ assert.equal(results.filter(r=>r.ok).length,PREVIEW_BUDGET.auth);
+ assert.equal((await f.make().reserve('auth')).reason,'preview-operation-limit');
+ assert.equal((await a.reserve('ticket')).ok,true);
+ f.setTime(1000+PREVIEW_BUDGET.windowMs);
+ assert.equal((await f.make().reserve('auth')).reason,'preview-window-ended');
+});
+test('outer Worker reserves before upstream fetch and never exposes private auth route',async()=>{
+ const {previewWorker}=await import('../../game/multiplayer/worker/preview-worker.mjs');
+ const A='f3ead054-abb4-47ba-b311-5aa7fe483f10',B='2790d4fe-1a26-4f5c-96d2-9a0fbcfb3021';
+ const calls=[];let permit=429,upstream=0;
+ const stub={fetch:async req=>{
+  calls.push(new URL(req.url).pathname);
+  if(new URL(req.url).pathname==='/_auth'){
+   assert.equal(req.headers.has('Authorization'),false);
+   return new Response(null,{status:permit});
+  }
+  return new Response(null,{status:200});
+ }};
+ const env={PREVIEW_ENABLED:'true',PREVIEW_ACCOUNT_ALLOWLIST:A+','+B,SUPABASE_PUBLISHABLE_KEY:'synthetic-test-key',PREVIEW_ROOMS:{idFromName:x=>x,get:()=>stub}};
+ const request=(path,auth)=>new Request('https://preview.invalid'+path,{method:'POST',headers:auth?{Authorization:'Bearer synthetic'}:{}});
+ const original=globalThis.fetch;
+ try{
+  globalThis.fetch=async(url,options)=>{upstream++;assert.equal(options.redirect,'error');return Response.json({id:A})};
+  assert.equal((await previewWorker.fetch(request('/_auth',true),env)).status,404);
+  assert.equal((await previewWorker.fetch(request('/ticket',false),env)).status,401);
+  assert.equal(calls.length,0);
+  assert.equal((await previewWorker.fetch(request('/ticket',true),env)).status,429);
+  assert.equal(upstream,0);
+  permit=503;
+  assert.equal((await previewWorker.fetch(request('/ticket',true),env)).status,503);
+  assert.equal(upstream,0);
+  permit=204;
+  assert.equal((await previewWorker.fetch(request('/ticket',true),env)).status,200);
+  assert.equal(upstream,1);
+  assert.deepEqual(calls, ['/_auth','/_auth','/_auth','/_ticket']);
+ }finally{globalThis.fetch=original}
+});
