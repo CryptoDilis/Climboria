@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME OWNER-BOUND ROOM HANDOFF GUARD — 2026-11-26 PHT (NOT MERGED)
+
+- #792 exact reconciled head `11b6dc64d603eec534a1db460502092e78b0e1be`: Gateway 45689667257 job 139471464538 verified 257/257 + 56/56 tests, zero failures and both real-creator QA regressions; Runtime 45689667211 and Validate 45689667209 passed; Gameplay 45689667304 pending at review.
+- Source audit found that a menu-created hero with ownerId could be submitted to the room ticket endpoint under a different subsequently authenticated account on an open play tab. Added client-side mismatch denial before ticket request and clear return-to-menu status, preserving prior socket teardown and same-owner recovery. Unbound legacy heroes remain compatible; this does not constitute server-side proof of hero ownership or prohibit local offline exploration. Added two regression tests and bumped presence cache version. No Worker mutation or new deployment authorization.
+- **EXACT NEXT:** finish #792 checks and merge only green; reconcile this branch on latest main, verify fresh Gateway and Gameplay including mismatch tests; merge and verify actual published parity. Protected real two-account QA and physical Android still required; private combat staging separately blocked. Game only.
+
+---
+
 ## GAME HERO LIFECYCLE MERGED AND PUBLISHED MENU VERIFIER RECONCILED — 2026-11-26 PHT
 
 - #781 MERGED at `09af58d863f8ca88f03c9412807875e11ff96b1a`, exact tested head `f00b87defd12d5d07c73fff0c50e3a557ffebf10`: [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45684112680), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45684112610), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45684112778), [Original Hero](https://github.com/CryptoDilis/Climboria/actions/runs/45684112606), [Browser](https://github.com/CryptoDilis/Climboria/actions/runs/45684112641), [Heroes](https://github.com/CryptoDilis/Climboria/actions/runs/45684112903), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45684112651) ALL SUCCESS. Gateway job 139452055637 confirmed 253/253 and separate 56/56 tests, including all eight hero lifecycle regressions. Main drift only unrelated Base DEX paths; expected head lease used. Publication of #781 not yet verified.
