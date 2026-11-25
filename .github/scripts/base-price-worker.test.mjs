@@ -101,3 +101,44 @@ test("only authenticated staging receives sanitized fixed diagnostic values",asy
   assert.deepEqual(await r.json(),{error:"Indicative pricing unavailable",diagnostic});
  }
 });
+
+function publicFixture(){
+ const {env,handler,seen}=fixture();
+ delete env.BASE_PRICE_STAGING_EXPIRES_AT;
+ Object.assign(env,{BASE_PRICE_STAGING_ONLY:"false",BASE_PRICE_PUBLIC_RELEASE:"true",BASE_PRICE_PUBLIC_EXPIRES_AT:String(Date.now()+600000),BASE_PRICE_DAILY_ATTEMPTS:"10",BASE_PRICE_RELEASE_TOTAL_ATTEMPTS:"100"});
+ const publicRequest=(suffix=q,headers={})=>new Request(path+suffix,{headers:{origin,"CF-Connecting-IP":"192.0.2.1",...headers}});
+ return {env,handler,seen,publicRequest};
+}
+test("public release requires explicit mutually exclusive mode, bounded caps and expiry",async()=>{
+ const {env,handler,seen,publicRequest}=publicFixture();
+ for(const bad of [
+  {BASE_PRICE_PUBLIC_RELEASE:undefined},{BASE_PRICE_PUBLIC_RELEASE:"false"},{BASE_PRICE_STAGING_ONLY:"true"},
+  {BASE_PRICE_PUBLIC_EXPIRES_AT:undefined},{BASE_PRICE_PUBLIC_EXPIRES_AT:String(Date.now()-1)},{BASE_PRICE_PUBLIC_EXPIRES_AT:String(Date.now()+86401000)},
+  {BASE_PRICE_DAILY_ATTEMPTS:"101"},{BASE_PRICE_DAILY_ATTEMPTS:"0"},{BASE_PRICE_RELEASE_TOTAL_ATTEMPTS:undefined},
+  {BASE_PRICE_RELEASE_TOTAL_ATTEMPTS:"0"},{BASE_PRICE_RELEASE_TOTAL_ATTEMPTS:"9"},{BASE_PRICE_RELEASE_TOTAL_ATTEMPTS:"1001"},
+  {BASE_PRICE_STAGING_EXPIRES_AT:String(Date.now()+10000)}
+ ])assert.equal((await handler(publicRequest(),{...env,...bad})).status,503);
+ assert.equal((await handler(publicRequest(q,{"X-Base-Price-Probe":token}),env)).status,403);
+ assert.deepEqual(seen,[]);
+});
+test("public release uses same limits and rejects unexpected fields and origins",async()=>{
+ const {env,handler,seen,publicRequest}=publicFixture();
+ assert.equal((await handler(publicRequest(q+"&taker=0x123"),env)).status,400);
+ assert.equal((await handler(publicRequest(q,{origin:"https://evil.example"}),env)).status,403);
+ const r=await handler(publicRequest(),env);
+ assert.equal(r.status,200);
+ assert.deepEqual(await r.json(),{provider:"0x",indicativeOnly:true,executable:false});
+ assert.deepEqual(seen.map(x=>x[0]),["ip","global","budget","price"]);
+});
+test("public release cumulative denial prevents provider call; diagnostics stay private",async()=>{
+ const {env,handler,seen,publicRequest}=publicFixture();
+ const blocked={idFromName:x=>x,get:()=>({fetch:async()=>new Response(null,{status:429,headers:{"X-Base-Budget-Limit":"release"}})})};
+ const denied=await handler(publicRequest(),{...env,BASE_PRICE_BUDGET:blocked});
+ assert.equal(denied.status,429);
+ assert.deepEqual(await denied.json(),{error:"Release price request budget reached"});
+ assert.ok(!seen.some(x=>x[0]==="price"));
+ const failing=createPriceHandler({price:async()=>{throw new IndicativePriceFailure("http","private secret",429);}});
+ const result=await failing(publicRequest(),env);
+ assert.equal(result.status,502);
+ assert.deepEqual(await result.json(),{error:"Indicative pricing unavailable"});
+});
