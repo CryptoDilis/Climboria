@@ -12,6 +12,11 @@ function reply(status,body,origin){
  if(ORIGINS.has(origin))headers["access-control-allow-origin"]=origin;
  return new Response(JSON.stringify(body),{status,headers});
 }
+export function publicReleaseReady(env,now=Date.now()){
+ const expires=Number(env.BASE_PRICE_PUBLIC_EXPIRES_AT),daily=parseDailyCap(env.BASE_PRICE_DAILY_ATTEMPTS),total=parseReleaseCap(env.BASE_PRICE_RELEASE_TOTAL_ATTEMPTS);
+ return env.BASE_INDICATIVE_PRICE_ENABLED==="true"&&env.BASE_PRICE_PUBLIC_RELEASE==="true"&&env.BASE_PRICE_STAGING_ONLY==="false"&&
+  typeof env.BASE_PRICE_PUBLIC_EXPIRES_AT==="string"&&/^\d{13}$/.test(env.BASE_PRICE_PUBLIC_EXPIRES_AT)&&Number.isSafeInteger(expires)&&expires>now&&expires<=now+86400000&&daily>=1&&daily<=100&&total>=daily&&total<=1000&&env.BASE_PRICE_STAGING_EXPIRES_AT===undefined;
+}
 export function createPriceHandler({price=getBaseIndicativePrice}={}){
  return async function handle(request,env={}){
   const url=new URL(request.url),origin=request.headers.get("origin");
@@ -21,6 +26,10 @@ export function createPriceHandler({price=getBaseIndicativePrice}={}){
    const disabled=env.BASE_INDICATIVE_PRICE_ENABLED==="false"&&env.BASE_PRICE_DAILY_ATTEMPTS==="0";
    const sha=typeof env.BASE_PRICE_DEPLOYED_SHA==="string"&&/^[0-9a-f]{40}$/.test(env.BASE_PRICE_DEPLOYED_SHA)?env.BASE_PRICE_DEPLOYED_SHA:null;
    const bindings=Boolean(env.BASE_PRICE_IP_LIMITER?.limit&&env.BASE_PRICE_GLOBAL_LIMITER?.limit&&env.BASE_PRICE_BUDGET?.idFromName&&env.BASE_PRICE_BUDGET?.get);
+   if(env.BASE_PRICE_PUBLIC_RELEASE==="true"){
+    const ready=publicReleaseReady(env)&&Boolean(sha&&bindings&&typeof env.ZEROEX_API_KEY==="string"&&env.ZEROEX_API_KEY.trim());
+    return reply(ready?200:503,{service:"climboria-base-price-preview",deployedGitSha:sha,pricingDisabled:!ready,bindingsReady:bindings,execution:"unsupported",publicPricingReady:ready},origin);
+   }
    return reply(disabled&&sha&&bindings?200:503,{service:"climboria-base-price-preview",deployedGitSha:sha,pricingDisabled:disabled,bindingsReady:bindings,execution:"unsupported"},origin);
   }
   if(url.pathname!==PATH)return error(404,"Not found");
@@ -36,13 +45,7 @@ export function createPriceHandler({price=getBaseIndicativePrice}={}){
   const publicMode=env.BASE_PRICE_PUBLIC_RELEASE==="true"&&env.BASE_PRICE_STAGING_ONLY==="false";
   const now=Date.now();
   if(publicMode){
-   const expires=Number(env.BASE_PRICE_PUBLIC_EXPIRES_AT),daily=parseDailyCap(env.BASE_PRICE_DAILY_ATTEMPTS),total=parseReleaseCap(env.BASE_PRICE_RELEASE_TOTAL_ATTEMPTS);
-   // Initial release policy: explicit small allocation, maximum 24-hour lease.
-   // These are engineering bounds, not a representation of the provider plan.
-   if(typeof env.BASE_PRICE_PUBLIC_EXPIRES_AT!=="string"||!/^\d{13}$/.test(env.BASE_PRICE_PUBLIC_EXPIRES_AT)||
-      !Number.isSafeInteger(expires)||expires<=now||expires>now+86400000||daily<1||daily>100||total<daily||total>1000||
-      env.BASE_PRICE_STAGING_EXPIRES_AT!==undefined)
-    return error(503,"Public price release unavailable");
+   if(!publicReleaseReady(env,now))return error(503,"Public price release unavailable");
    if(request.headers.has("X-Base-Price-Probe"))return error(403,"Private price probe not available");
   }else{
    if(env.BASE_PRICE_PUBLIC_RELEASE!==undefined&&env.BASE_PRICE_PUBLIC_RELEASE!=="false")return error(503,"Pricing service unavailable");
