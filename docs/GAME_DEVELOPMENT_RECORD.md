@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME PUBLISHED MOBILE HTML VERIFICATION — 2026-11-26 PHT (NOT MERGED)
+
+- Checked main `29098afff0e7d7921e9ae141a3c732717831d1f3` after merged #770 and #775. Existing deployed-client readiness proof verifies the version reference in play.html and exact presence script bytes, but did not establish exact HTML bytes containing #770 inline mobile gesture controls. No live #770 claim yet.
+- Extended existing bounded credential-free verifier `60093496ef591a9cb64dc461b49742684743135b` to require SHA256 parity of complete published play.html against checked-out release, retaining version and script integrity checks. Negative control `8ee44aae76ea03cfe3db5595f354a73dcc590d4f` rejects stale inline code despite matching presence version; workflow `4fb923b52f796e635a3dda4997c8cee0fef0ca64` logs both digests. This is verification-only; no Game behavior, production deployment or non-Game changes.
+- **EXACT NEXT:** inspect fresh exact-head deployed readiness and other required CI; if HTML mismatch, diagnose Pages release versus legitimate hosting transformation rather than silently weakening parity. Merge only green and record actual live digest. Real Android multitouch, two registered browsers and protected Cloudflare staging remain separate acceptance blockers. Game only.
+
+---
+
 ## GAME MOBILE CONTROLS AND BIDIRECTIONAL QA MERGED — 2026-11-26 PHT
 
 - #770 MERGED at `944c0e6b5030bf5964754beebe87cdad7ae4c754`, exact tested head `74bef29dae67d81fd8f330dc015d2febd14e1de7`: [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45660527628), [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45660528119), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45660527645), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45660528043), [Browser](https://github.com/CryptoDilis/Climboria/actions/runs/45660527633), [Heroes](https://github.com/CryptoDilis/Climboria/actions/runs/45660528008), [Chests](https://github.com/CryptoDilis/Climboria/actions/runs/45660527651), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45660527956) ALL SUCCESS. Gateway job 139368833371 confirmed 240/240 plus separate 53/53 tests; both multitouch regressions passed. Main drift from tested base was unrelated token audit documentation. Published HTML verification and physical Android acceptance remain pending.
