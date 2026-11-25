@@ -88,3 +88,20 @@ test('two world fingers still zoom; UI fingers and changed pinch pair cannot cau
  h.dispatch(h.handlers,'blur');h.assertReleased();
  assert.equal(vm.runInContext('pinchPair',h.context),'');
 });
+
+test('map, inventory, settings and player-card touches do not enter world movement or pinch',()=>{
+ for(const selector of ['#world-map-panel','#climboriaInventoryPanel','#expedition-settings-panel','#player-card']){
+  const h=harness();h.dispatch(h.handlers,'blur');
+  const hud={closest:query=>query.split(',').includes(selector)?hud:null};
+  const t=finger(1,100,100,hud);
+  h.dispatch(h.handlers,'touchstart',{changedTouches:[t],touches:[t]});
+  h.dispatch(h.handlers,'touchmove',{changedTouches:[finger(1,150,100,hud)],touches:[t]});
+  assert.equal(h.joy.id,null,selector);assert.equal(h.lk.id,null,selector);
+  assert.equal(h.joy.dx,0,selector);
+  const start=finger(2,150,150);
+  h.dispatch(h.handlers,'touchstart',{changedTouches:[start],touches:[t,start]});
+  const moved=finger(2,195,150);
+  h.dispatch(h.handlers,'touchmove',{changedTouches:[moved],touches:[t,moved]});
+  assert.equal(h.joy.dx,1,selector);assert.equal(h.context.targetCameraDistance,6,selector);
+ }
+});
