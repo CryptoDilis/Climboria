@@ -1,5 +1,21 @@
 # Climboria Game Development Record
 
+## GAME HUD MERGED AND CHAT BRANCH RECONCILED — 2026-11-26 PHT
+
+- #778 MERGED at `108a680e0f1281adab41f29334c6b01479e080e0`, exact head `8f95c0ba9cc5e59396f895d93d2dd93dc37310e8`: Gateway 45678993172, Authority 45678993170, Runtime 45678993148, Validate 45678993164, Browser 45678993268, Chests 45678993221, Heroes 45678993060 and Gameplay 45678993351 ALL SUCCESS. Published #778 HTML and physical Android acceptance still pending.
+- #780 prior head `260295b342ebf1659ac980c49302952ace6575a7` all eight workflows SUCCESS: Gateway 45679530482, Heroes 45679530470, Chests 45679530524, Runtime 45679530327, Authority 45679530353, Validate 45679530339, Browser 45679530372, Gameplay 45679530430. Reconciled on main `9092d3d76b6fdeff06115583c03967255b7fde01` retaining merged HUD source and full development history; prior CI does not cover combined head.
+- **EXACT NEXT:** verify fresh #780 checks before merge, then reconcile #781 and verify actual public HTML/script parity. Real registered two-account and physical Android acceptance and private combat staging remain separate blockers. Game only.
+
+---
+
+## GAME CHAT COMPOSITION AND SOCKET SEND GUARD — 2026-11-26 PHT (NOT MERGED)
+
+- Reviewed main `8f4e34a03ebc5ddc0431d7a2e8f729b1328a7e07`. Fixed three source-level issues: Enter during IME composition could submit an unfinished chat message; an exceptional WebSocket.send could escape the handler; a local attack after provisional welcome could send before authoritative spawn acceptance. Fix `69628783963f2de43691b4620a4d123896e1b707` guards composition, returns false on send exceptions without inventing delivery, and requires confirmed spawn for room attack packet. No changes to local animation, server damage gates or identity checks. Tests `a3a719e68a037febf1118c969c4fc2f5ad49e367` and version bump `9c858131f5b93285034a4f5ad6b2f1d91e8c2197`. CI pending; no live claim.
+- #778 reconciled head `8f95c0ba9cc5e59396f895d93d2dd93dc37310e8`: Gateway 45678993172 job 139434145937 passed 242/242 and separate 53/53; Authority 45678993170, Runtime 45678993148, Validate 45678993164, Browser 45678993268, Heroes 45678993060 passed. Chests 45678993221 and Gameplay 45678993351 running at review. No reset of #778 head.
+- **EXACT NEXT:** finish #778 fresh CI and merge first; then reconcile this independent chat branch with latest main preserving both records and mobile controls, verify fresh exact-head CI and merge only green. Actual registered multiplayer and physical Android acceptance still require test accounts/devices. Private combat staging remains separately gated. Game only.
+
+---
+
 ## GAME PUBLISHED MOBILE HTML VERIFIED — 2026-11-26 PHT
 
 - #777 MERGED at `8dcb1684902534216f38d2fc7d6192144c7d76f6`, exact tested head `c683b348148bdb1b280e88372001dac5a7f96a4a`. All five checks passed: [Readiness](https://github.com/CryptoDilis/Climboria/actions/runs/45663592082), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45663592123), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45663591913), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45663592161), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45663592014). Actual published HTML SHA256 `6a406d0d83e0e9796841b1e213b4e05e842a9dbc3629a3b242571d692cbf117a`, presence SHA256 `9eb00d4ba7015a77c3fe3e52c1a37af23a1ad4999f868384c11d106a3256f1d7`, 17/17 readiness tests, verified 17:20:07 UTC Nov 25.
