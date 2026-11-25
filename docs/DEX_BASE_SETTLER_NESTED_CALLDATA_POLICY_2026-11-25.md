@@ -1,0 +1,14 @@
+# Base DEX nested Settler calldata review — 2026-11-25
+
+## Verified predecessor
+- #742 exact head d30d07e696cbc193f0732b325129edc5b6e0b63b passed browser 45561572514, Validate 45561572499, execution safety 45561572743; merged ad3594483fac052946327d06430b0b8acc657f1d.
+
+## Implementation
+- Reviewed pinned official 0x source [ISettlerTakerSubmitted.sol](https://github.com/0xProject/0x-settler/blob/f7340e6237146b2dfd40a40b3efeea527e4eb689/src/interfaces/ISettlerTakerSubmitted.sol), [ISettlerBase.sol](https://github.com/0xProject/0x-settler/blob/f7340e6237146b2dfd40a40b3efeea527e4eb689/src/interfaces/ISettlerBase.sol), [Settler.sol](https://github.com/0xProject/0x-settler/blob/f7340e6237146b2dfd40a40b3efeea527e4eb689/src/Settler.sol) and [SettlerBase.sol](https://github.com/0xProject/0x-settler/blob/f7340e6237146b2dfd40a40b3efeea527e4eb689/src/SettlerBase.sol). The official execute ABI includes AllowedSlippage recipient/buyToken/minAmountOut, bytes[] actions and bytes32 zid/affiliate. Keccak selector 1fff991f independently computed; implementation supports canonical ABI subset only. Provider decoder permits noncanonical offsets; such payloads deliberately fail closed.
+- 220480bdb16a7cb752c2cf28c1f49e749e76853b adds bounded nested ABI decoder (1–32 actions), canonical contiguous offsets, lengths/padding and no trailing bytes; returns action selector/length only. 8850d1807fdc6433c3e211b1428caf7637c54297 connects to outer AllowanceHolder decoder. a82ef06b65843c602e4a87b0c528992b330f102a requires independent positive minimumBuyAmount in offline intent, nested recipient equal taker, exact buy token, nested minimum equal provider minimum and not below independent floor, and reviewed route-specific action selector list. No raw executable payload returned. 9986d98b2291d771c88a77cdd63eff0ed06520a4 adds synthetic adversarial tests; fb274cbecf33e66830bf3ddf71f18a35dcc9cbe0 adds syntax check.
+- Limitations: no actual firm quote observation, no production route policy, no per-action argument semantic proof or exact deployed runtime match. Selector checks alone cannot prevent malicious action arguments or bypassed slippage via early action; full interpretation and simulation remain mandatory before enabling execution. Independent minimum must eventually come from user-approved fresh quote review, not provider response alone. This is an offline non-executable candidate policy. No provider calls, approval or signing. Public pricing release 45560338224 expires 07:24:52 UTC; no automatic renewal.
+
+## Exact next
+1. CI green before merge. Record exact SHA/results.
+2. Independently corroborate on-chain deployed runtime and obtain authorized bounded real firm quote evidence (no signing). Determine actual action patterns and implement narrow argument policy; reject unknown action/route.
+3. Validate exact approval amount and fresh state, simulation and receipt/finality. Keep execution disabled until all gates pass. DEX only.
