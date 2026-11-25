@@ -508,6 +508,12 @@
    // verified account has previously moved inside the real Game room.
    // Never require player input to teleport back to Sanctuary.
    const hero=window.__climboriaCreatedHero||{};
+   // A menu-created hero belongs to its verified account. An open tab
+   // must not silently submit that hero's identity for a different login.
+   // Legacy unbound local heroes retain existing compatibility.
+   if(hero.ownerId!=null&&hero.ownerId!==session.user.id){
+    showStatus('hero-account-mismatch','MULTIPLAYER · RETURN TO MENU AND SELECT YOUR HERO');return;
+   }
    showStatus('ticket-request','MULTIPLAYER · VERIFYING ROOM ACCESS');
    const ticketAbort=new AbortController();
    let ticketDeadline,cancelTicketWait;

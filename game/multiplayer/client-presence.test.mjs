@@ -7,7 +7,7 @@ import {TextEncoder} from 'node:util';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,configFailures=0,configGate=null,configBadSchema=false,refreshMode=null,guest=false}={}){
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,configFailures=0,configGate=null,configBadSchema=false,refreshMode=null,guest=false,heroOwner=null}={}){
  const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses],ticketPayloads:[...ticketPayloads],configFailures,configCalls:0};
  const authListeners=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],speeches=[],calls=[],timers=[],created=[];
@@ -35,7 +35,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
    for(const fn of documentListeners.get(event.type)||[])fn(event);
    return true;
   }};
- const window={__climboriaGameReady:true,__climboriaCreatedHero:{name:'Explorer A',model:'Jarrell'},__climboriaGuestMode:guest,
+ const window={__climboriaGameReady:true,__climboriaCreatedHero:{name:'Explorer A',model:'Jarrell',...(heroOwner===null?{}:{ownerId:heroOwner})},__climboriaGuestMode:guest,
   __climboriaJarrellsPeak:{
    player:{x:0,y:9.55,z:-30,mode:'walk'},
    resumeAtRoomPosition(pos){
@@ -280,7 +280,7 @@ test('live Game refuses the retired forced-Sanctuary mobile prompt',()=>{
  assert.doesNotMatch(game,/climboria:room-return-to-sanctuary/);
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261126-game-chat-guard-1/,
+ assert.match(game,/client-presence\.js\?v=20261126-game-hero-owner-1/,
   'production Game must load fresh Nearby Chat and remote size renderer');
 });
 
@@ -1219,4 +1219,27 @@ test('local attack cannot send a room packet before authoritative spawn acceptan
  ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
  h.document.dispatchEvent({type:'climboria:visual-punch'});
  assert.equal(ws.sent.at(-1).type,'punch');
+});
+
+test('owner-bound hero from another account cannot request a room ticket',async()=>{
+ const h=harness(true,{heroOwner:'previous-owner'});
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'hero-account-mismatch');
+ assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,0);
+ assert.equal(h.clients.length,0);
+});
+test('switching accounts closes owner-bound hero socket and prevents cross-account ticket; original login recovers',async()=>{
+ const h=harness(true,{heroOwner:'verified-uuid'});
+ await flush();assert.equal(h.clients.length,1);
+ const old=h.clients[0];old.onopen();
+ h.authChange({user:{id:'different-account'},access_token:'account-b-token'});
+ assert.equal(old.readyState,3);
+ h.runNextTimer();await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'hero-account-mismatch');
+ assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,1);
+ assert.equal(h.clients.length,1);
+ h.authChange({user:{id:'verified-uuid'},access_token:'new-owner-token'});
+ h.runNextTimer();await flush();
+ assert.equal(h.clients.length,2);
+ assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,2);
 });

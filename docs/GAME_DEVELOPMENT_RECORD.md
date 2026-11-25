@@ -1,5 +1,28 @@
 # Climboria Game Development Record
 
+## GAME REAL CREATOR QA MERGED; OWNER HANDOFF RECONCILED — 2026-11-26 PHT
+
+- #792 MERGED at `cfb091aec3f161da95594c2bd8a638088f310733`, exact tested head `11b6dc64d603eec534a1db460502092e78b0e1be`: [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45689667257), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45689667211), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45689667209), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45689667304) ALL SUCCESS. Gateway job 139471464538 logs verify 257/257 + 56/56 tests, zero failures; real menu-auth and creator source-contract regressions passed. No live two-account execution yet. Main drift before exact-head merge only unrelated DEX/bridge paths.
+- #796 corrected prior head `4e845d74b722838949c322e7f4c361d1182160d3`: [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45690735912) job 139475188586 logs confirm 257/257 + 58/58, zero failures, both owner-handoff regressions and cache assertion passed. [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45690736109), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45690735965), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45690736002), [Browser](https://github.com/CryptoDilis/Climboria/actions/runs/45690735948), [Heroes](https://github.com/CryptoDilis/Climboria/actions/runs/45690736205), [Chests](https://github.com/CryptoDilis/Climboria/actions/runs/45690736131) SUCCESS. [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45690735927) pending at review. Reconciled with main `cfb091aec3f161da95594c2bd8a638088f310733` preserving all prior Game records; fresh combined CI required.
+- **EXACT NEXT:** verify fresh #796 checks, then exact-head merge and read-only published parity; actual registered two-account manual QA with protected disposable accounts, physical Android testing, separate private combat staging. No server-side hero ownership proof or live damage/loot claim. Game only.
+
+---
+
+## GAME OWNER HANDOFF CI CORRECTION — 2026-11-26 PHT (NOT MERGED)
+
+- #796 exact initial head `3def78a174861e19d25665bd2d2c8878d73f011a` Authority 45690220376 job 139473388083 and Gateway 45690220398 job 139473383911 failed the same existing hard-coded presence cache-version assertion (old chat guard version). Both logs identify `live Game refuses the retired forced-Sanctuary mobile prompt`; updated exact expected version to match new owner guard, retaining all other assertions and production behavior. Fresh CI required. Runtime 45690221049, Validate 45690220410, Browser 45690220416 and Heroes 45690220491 passed; Gameplay 45690220396 and Chests 45690220466 running at review.
+- #792 still pending final Gameplay 45689667304; merge only green, reconcile this branch on latest main, then verify all fresh checks. No deployment or real account acceptance claimed. Game only.
+
+---
+
+## GAME OWNER-BOUND ROOM HANDOFF GUARD — 2026-11-26 PHT (NOT MERGED)
+
+- #792 exact reconciled head `11b6dc64d603eec534a1db460502092e78b0e1be`: Gateway 45689667257 job 139471464538 verified 257/257 + 56/56 tests, zero failures and both real-creator QA regressions; Runtime 45689667211 and Validate 45689667209 passed; Gameplay 45689667304 pending at review.
+- Source audit found that a menu-created hero with ownerId could be submitted to the room ticket endpoint under a different subsequently authenticated account on an open play tab. Added client-side mismatch denial before ticket request and clear return-to-menu status, preserving prior socket teardown and same-owner recovery. Unbound legacy heroes remain compatible; this does not constitute server-side proof of hero ownership or prohibit local offline exploration. Added two regression tests and bumped presence cache version. No Worker mutation or new deployment authorization.
+- **EXACT NEXT:** finish #792 checks and merge only green; reconcile this branch on latest main, verify fresh Gateway and Gameplay including mismatch tests; merge and verify actual published parity. Protected real two-account QA and physical Android still required; private combat staging separately blocked. Game only.
+
+---
+
 ## GAME DEPLOYED MENU PARITY MERGED; REAL CREATOR QA RECONCILED — 2026-11-26 PHT
 
 - #786 MERGED at `e4c35b0c179301472eae15cc62ab9cc002dc15fa`, exact tested head `636508c144cae529a9d40fc6672f3a3f7d27f4e2`: [Readiness](https://github.com/CryptoDilis/Climboria/actions/runs/45686093865), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45686094009), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45686093905), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45686093899), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45686093844) ALL SUCCESS. Readiness job 139458970638 verified 19/19 offline tests, approved room config, Nearby Chat capability and DO readiness; actual public assets at Nov 25 19:32:04 UTC: menu SHA256 `fe9b35bd77cc47fed16ddab0a813e71e3f3b54c598212893f194569f72d8e475`, gameplay SHA256 `1a4569c572babcae3a7268f9b7bd56593be9fcd9a96e48272fb0ac2cdad50252`, presence version `20261126-game-chat-guard-1` SHA256 `f13f6a3ce99ba4eead0bdbc5d3a4f95f651caea0b23ead5855478601c826bd43`. This confirms published #781 hero menu, not actual registered session acceptance. Main drift only unrelated DEX paths before exact-head squash merge.
