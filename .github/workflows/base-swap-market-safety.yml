@@ -12,6 +12,7 @@ on:
       - 'swap/base-market-preview.mjs'
       - 'swap/base-market-preview.css'
       - '.github/scripts/base-swap-market-preview.test.mjs'
+      - '.github/scripts/base-external-uniswap-handoff.test.mjs'
       - '.github/workflows/base-swap-market-safety.yml'
   push:
     branches: [main]
@@ -24,6 +25,7 @@ on:
       - 'swap/base-market-preview.mjs'
       - 'swap/base-market-preview.css'
       - '.github/scripts/base-swap-market-preview.test.mjs'
+      - '.github/scripts/base-external-uniswap-handoff.test.mjs'
       - '.github/workflows/base-swap-market-safety.yml'
   workflow_dispatch:
 
@@ -45,7 +47,8 @@ jobs:
           node --check swap/base-market-preview.mjs
           node --check .github/scripts/base-swap-market-preview.test.mjs
           node --check dex/base-token-metadata.mjs
-          node --test .github/scripts/base-swap-market-preview.test.mjs .github/scripts/base-token-metadata.test.mjs
+          node --check .github/scripts/base-external-uniswap-handoff.test.mjs
+          node --test .github/scripts/base-swap-market-preview.test.mjs .github/scripts/base-token-metadata.test.mjs .github/scripts/base-external-uniswap-handoff.test.mjs
       - name: Preserve Solana-only execution and independent provider gates
         run: |
           grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
