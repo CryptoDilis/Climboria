@@ -19,6 +19,7 @@ export class BasePriceBudget{
   // This ceiling NEVER resets at UTC midnight or month rollover.
   const configured=this.env.BASE_PRICE_RELEASE_TOTAL_ATTEMPTS!==undefined;
   const releaseCap=configured?parseReleaseCap(this.env.BASE_PRICE_RELEASE_TOTAL_ATTEMPTS):null;
+  if(this.env.BASE_PRICE_PUBLIC_RELEASE==="true"&&(!configured||releaseCap<cap||releaseCap>1000||cap>100))return new Response(null,{status:503});
   if(this.env.BASE_INDICATIVE_PRICE_ENABLED!=="true"||cap===0||(configured&&releaseCap===0))return new Response(null,{status:503});
   const day=new Date().toISOString().slice(0,10);
   try{

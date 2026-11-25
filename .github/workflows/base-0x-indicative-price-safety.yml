@@ -10,6 +10,8 @@ on:
       - ".github/scripts/base-price-budget.test.mjs"
       - ".github/scripts/base-price-disabled-staging-*.mjs"
       - ".github/scripts/base-price-private-*.mjs"
+      - ".github/scripts/base-price-public-*.mjs"
+      - ".github/workflows/base-price-public-release.yml"
       - ".github/workflows/base-price-private-cloud-probe.yml"
       - ".github/workflows/base-price-disabled-worker-staging.yml"
       - ".github/workflows/base-0x-indicative-price-safety.yml"
@@ -22,6 +24,8 @@ on:
       - ".github/scripts/base-price-budget.test.mjs"
       - ".github/scripts/base-price-disabled-staging-*.mjs"
       - ".github/scripts/base-price-private-*.mjs"
+      - ".github/scripts/base-price-public-*.mjs"
+      - ".github/workflows/base-price-public-release.yml"
       - ".github/workflows/base-price-private-cloud-probe.yml"
       - ".github/workflows/base-price-disabled-worker-staging.yml"
       - ".github/workflows/base-0x-indicative-price-safety.yml"
@@ -68,6 +72,15 @@ jobs:
           grep -Fqx 'BASE_PRICE_DAILY_ATTEMPTS = "2"' dex/base-price-provider/wrangler.private.generated.toml
           grep -Eq '^BASE_PRICE_STAGING_EXPIRES_AT = "[0-9]{13}"$' dex/base-price-provider/wrangler.private.generated.toml
           rm dex/base-price-provider/wrangler.private.generated.toml
+          node --check .github/scripts/base-price-public-release-smoke.mjs
+          if PUBLIC_DAILY_CAP=101 PUBLIC_TOTAL_CAP=1000 PUBLIC_RELEASE_HOURS=24 node .github/scripts/base-price-public-release-config.mjs; then exit 1; fi
+          if PUBLIC_DAILY_CAP=10 PUBLIC_TOTAL_CAP=9 PUBLIC_RELEASE_HOURS=24 node .github/scripts/base-price-public-release-config.mjs; then exit 1; fi
+          if PUBLIC_DAILY_CAP=10 PUBLIC_TOTAL_CAP=100 PUBLIC_RELEASE_HOURS=25 node .github/scripts/base-price-public-release-config.mjs; then exit 1; fi
+          PUBLIC_DAILY_CAP=10 PUBLIC_TOTAL_CAP=100 PUBLIC_RELEASE_HOURS=1 node .github/scripts/base-price-public-release-config.mjs
+          grep -Fqx 'BASE_PRICE_PUBLIC_RELEASE = "true"' dex/base-price-provider/wrangler.public.generated.toml
+          grep -Fqx 'BASE_PRICE_DAILY_ATTEMPTS = "10"' dex/base-price-provider/wrangler.public.generated.toml
+          grep -Fqx 'BASE_PRICE_RELEASE_TOTAL_ATTEMPTS = "100"' dex/base-price-provider/wrangler.public.generated.toml
+          rm dex/base-price-provider/wrangler.public.generated.toml
           rm dex/base-price-provider/wrangler.staging.generated.toml
           if BASE_SHARED_NAMESPACE=987001 node .github/scripts/base-price-disabled-staging-config.mjs; then exit 1; fi
           test ! -e dex/base-price-provider/wrangler.staging.generated.toml
