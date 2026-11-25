@@ -5,9 +5,9 @@
  * Session-bound schema rejects legacy counter-only rows; never reset in place.
  */
 export const PREVIEW_BUDGET=Object.freeze({
- windowMs:300000,ticket:24,admission:12,tick:3000,attack:600,disconnect:12
+ windowMs:300000,auth:24,ticket:24,admission:12,tick:3000,attack:600,disconnect:12
 });
-const kinds=Object.freeze(['ticket','admission','tick','attack','disconnect']);
+const kinds=Object.freeze(['auth','ticket','admission','tick','attack','disconnect']);
 const key='game:preview:operation-budget:v1';
 const sid=id=>typeof id==='string'&&/^s_[a-f0-9]{32}$/.test(id);
 const deny=reason=>({ok:false,reason});
@@ -26,7 +26,8 @@ export function createPreviewOperationBudget({storage,clock=()=>Date.now()}={}){
  if(typeof storage?.transaction!=='function'||typeof clock!=='function')
   throw Error('Durable preview budget storage required');
  let unavailable=false;
- // Only a ticket reservation may initialize a new disposable namespace.
+ // First outer auth reservation starts the window; direct private ticket
+ // initialization remains available for isolated local runtime fixtures.
  // Admission attempts reserve their own terminal disconnect allowance.
  async function reserve(kind,sessionId){
   if(!kinds.includes(kind)||(['admission','disconnect'].includes(kind)&&!sid(sessionId)))return deny('invalid-preview-operation');
@@ -36,7 +37,7 @@ export function createPreviewOperationBudget({storage,clock=()=>Date.now()}={}){
     const now=clock();if(!time(now))return deny('invalid-preview-time');
     let row=await tx.get(key);
     if(row===undefined){
-     if(kind!=='ticket')return deny('preview-budget-not-started');
+     if(kind!=='auth'&&kind!=='ticket')return deny('preview-budget-not-started');
      row={version:1,startedAt:now,lastAt:now,counts:Object.fromEntries(kinds.map(k=>[k,0])),admissions:[]};
     }
     if(!valid(row)||now<row.lastAt)return deny('invalid-preview-budget');
