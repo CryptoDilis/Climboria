@@ -10,9 +10,12 @@ const worker=readFileSync(new URL("../../dex/swap-proxy/src/index.mjs",import.me
 
 function externalHandoff(html,id){
  const blocks=[...html.matchAll(/<section class="external-jupiter-handoff"[^>]*>[\s\S]*?<\/section>/g)];
- assert.equal(blocks.length,1,"Exactly one independent off-site handoff per page");
- const content=blocks[0][0];
- assert.ok(content.includes('id="'+id+'"'),"Handoff is placed in expected trading panel");
+ assert.equal(blocks.length,2,"Exactly one Solana Jupiter and one Base Uniswap handoff per page");
+ const matches=blocks.filter(block=>block[0].includes('id="'+id+'"'));
+ assert.equal(matches.length,1,"Exactly one expected Jupiter handoff, isolated from Base");
+ const content=matches[0][0];
+ assert.ok(blocks.some(block=>block[0].includes('id="'+(id==='dexExternalJupiterHandoff'?'dexExternalBaseHandoff':'swapExternalBaseHandoff')+'"')),
+   "An independent Base-specific handoff must also be available");
  const anchors=content.match(/<a\b[^>]*>/g)||[];
  assert.equal(anchors.length,1,"External link must be a plain user-initiated anchor");
  const anchor=anchors[0];
