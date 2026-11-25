@@ -4,6 +4,7 @@ import {BASE_ALLOWANCE_HOLDER} from "./allowance-policy.mjs";
 import {corroborateBaseAllowanceObservation} from "./dual-rpc-observation.mjs";
 import {inspectFourActionQuote} from "./four-action-composition-policy.mjs";
 import {observeComposedBaseQuoteSimulation} from "./composed-quote-simulation.mjs";
+import {observeUsdcQuoteParticipants} from "./usdc-quote-participant-observation.mjs";
 const primary="https://mainnet.base.org",secondary="https://base-rpc.publicnode.com";
 const hash=v=>typeof v==="string"&&/^[0-9a-f]{64}$/.test(v)&&!/^0{64}$/.test(v);
 function raw(v){if(typeof v!=="string"||!/^(0|[1-9][0-9]{0,77})$/.test(v)||BigInt(v)>=(1n<<256n))throw Error("Invalid observed amount");return BigInt(v);}
@@ -25,6 +26,8 @@ export async function observeFundedComposedSimulation(input,quote,contractPolicy
  inspectFourActionQuote(s.input,s.quote,s.contractPolicy,s.review,s.state);
  const evidence=await corroborateBaseAllowanceObservation(s.input,{primaryRpcUrl:primary,secondaryRpcUrl:secondary,referenceBlock:{number:a.block,hash:a.hash},fetchImpl,signal});
  inspectFundedSimulationEvidence(s.input,s.review,a,evidence);
+ const restrictions=await observeUsdcQuoteParticipants(s.input,s.quote,s.contractPolicy,s.review,s.state,{authorized:true,referenceBlock:a,fetchImpl,signal});
+ if(restrictions.block!==a.block||restrictions.blockHash!==a.hash||restrictions.executable!==false||restrictions.quoteParticipantsNotBlacklistedObserved!==true)throw Error("USDC participant evidence mismatch");
  const sim=await observeComposedBaseQuoteSimulation(s.input,s.quote,s.contractPolicy,s.review,s.state,{authorized:true,referenceBlock:a,primaryRpcUrl:primary,secondaryRpcUrl:secondary,simulationGasLimit,fetchImpl,signal});
- return Object.freeze({...sim,exactAllowanceAndBalanceObserved:true,sellTokenRuntimeFingerprintMatched:true,providerIndependenceVerified:false,stateAuthenticated:false,tokenTransferSemanticsVerified:false,balanceDeltasVerified:false,executionReady:false,executable:false});
+ return Object.freeze({...sim,exactAllowanceAndBalanceObserved:true,sellTokenRuntimeFingerprintMatched:true,usdcQuoteParticipantRestrictionsObserved:true,providerIndependenceVerified:false,stateAuthenticated:false,tokenTransferSemanticsVerified:false,balanceDeltasVerified:false,executionReady:false,executable:false});
 }
