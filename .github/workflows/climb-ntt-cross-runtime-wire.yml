@@ -4,6 +4,7 @@ on:
     paths:
       - '.github/workflows/climb-ntt-cross-runtime-wire.yml'
       - 'token/climb-bridge/NTT_WIRE_COMPATIBILITY.md'
+      - 'token/climb-bridge/wire-fixtures/**'
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,6 +13,10 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 25
     steps:
+      - uses: actions/checkout@v4
+        with:
+          path: climboria-source
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: wormhole-foundation/native-token-transfers
@@ -75,3 +80,40 @@ jobs:
             grep -Fq "[PASS] ${name}()" "$RUNNER_TEMP/ntt-evm-wire.log"
           done
           grep -Eq '3 tests passed, 0 failed, 0 skipped \(3 total tests\)' "$RUNNER_TEMP/ntt-evm-wire.log"
+      - name: Insert isolated CLIMB six-decimal test fixtures
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          for target, fixture in [
+              ('solana-upstream/solana/modules/ntt-messages/src/transceiver.rs', 'climb_wire.rs'),
+              ('evm-upstream/evm/test/TransceiverStructs.t.sol', 'climb_wire.sol')
+          ]:
+              p = Path(target)
+              source = p.read_text().rstrip()
+              assert source.endswith('}') and 'test_climb_wire_' not in source
+              extra = Path('climboria-source/token/climb-bridge/wire-fixtures', fixture).read_text()
+              p.write_text(source[:-1] + '\n' + extra + '\n}\n')
+          PY
+      - name: Execute six CLIMB-specific Rust wire tests
+        working-directory: solana-upstream/solana
+        run: |
+          set -euo pipefail
+          cargo +nightly-2023-10-29 test --locked -p ntt-messages --features anchor,hash --lib test_climb_wire_ -- --nocapture | tee "$RUNNER_TEMP/climb-wire-rust.log"
+          grep -Eq 'test result: ok\. 6 passed; 0 failed; 0 ignored;' "$RUNNER_TEMP/climb-wire-rust.log"
+          for direction in to_base to_solana; do
+            for amount in 1 1050 1000000000; do
+              grep -Fq "test transceiver::test::test_climb_wire_${direction}_${amount} ... ok" "$RUNNER_TEMP/climb-wire-rust.log"
+            done
+          done
+      - name: Execute six CLIMB-specific Solidity wire tests
+        working-directory: evm-upstream/evm
+        run: |
+          set -euo pipefail
+          forge test --match-path test/TransceiverStructs.t.sol --match-test '^test_climb_wire_' -vv | tee "$RUNNER_TEMP/climb-wire-evm.log"
+          grep -Eq '6 tests passed, 0 failed, 0 skipped \(6 total tests\)' "$RUNNER_TEMP/climb-wire-evm.log"
+          for direction in to_base to_solana; do
+            for amount in 1 1050 1000000000; do
+              grep -Fq "[PASS] test_climb_wire_${direction}_${amount}()" "$RUNNER_TEMP/climb-wire-evm.log"
+            done
+          done
