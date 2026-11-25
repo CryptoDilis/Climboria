@@ -1,0 +1,61 @@
+name: Base DEX Two-RPC Read-Only Allowance Evidence
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "dex/base-execution/allowance-observation.mjs"
+      - "dex/base-execution/dual-rpc-observation.mjs"
+      - ".github/scripts/base-dual-rpc-observation.test.mjs"
+      - ".github/scripts/base-dual-rpc-observation-smoke.mjs"
+      - ".github/workflows/base-dual-rpc-allowance-evidence.yml"
+  push:
+    branches: [main]
+    paths:
+      - "dex/base-execution/allowance-observation.mjs"
+      - "dex/base-execution/dual-rpc-observation.mjs"
+      - ".github/scripts/base-dual-rpc-observation.test.mjs"
+      - ".github/scripts/base-dual-rpc-observation-smoke.mjs"
+      - ".github/workflows/base-dual-rpc-allowance-evidence.yml"
+  workflow_dispatch:
+    inputs:
+      secondary_rpc_url:
+        description: "Optional alternate PUBLIC keyless HTTPS Base RPC root URL (no secrets)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    name: Reject wrong RPC, stale block, mismatched code and allowances
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax, adversarial cases and release-gate regression
+        run: |
+          node --check dex/base-execution/allowance-observation.mjs
+          node --check dex/base-execution/dual-rpc-observation.mjs
+          node --check .github/scripts/base-dual-rpc-observation.test.mjs
+          node --check .github/scripts/base-dual-rpc-observation-smoke.mjs
+          node --test .github/scripts/base-dual-rpc-observation.test.mjs .github/scripts/base-allowance-observation.test.mjs
+          grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs
+  live-read-only:
+    name: Base two public RPC observations (no signing)
+    runs-on: ubuntu-latest
+    needs: [offline]
+    timeout-minutes: 5
+    env:
+      BASE_SECONDARY_RPC_URL: ${{ inputs.secondary_rpc_url || 'https://base-rpc.publicnode.com' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Cross-check same block hash, runtime, balance and allowance
+        run: node .github/scripts/base-dual-rpc-observation-smoke.mjs
