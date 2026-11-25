@@ -1,0 +1,77 @@
+name: CLIMB NTT Cross-Runtime Wire Compatibility
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/climb-ntt-cross-runtime-wire.yml'
+      - 'token/climb-bridge/NTT_WIRE_COMPATIBILITY.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  wire:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: wormhole-foundation/native-token-transfers
+          ref: 1a2a92ef7f289972b2d00dd1d58077d139fe68d7
+          path: solana-upstream
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: wormhole-foundation/native-token-transfers
+          ref: c636cc15b07969e4b44de7e466c999c07e7387a9
+          path: evm-upstream
+          submodules: recursive
+          persist-credentials: false
+      - name: Verify pinned sample message bytes across releases
+        run: |
+          set -euo pipefail
+          test "$(git -C solana-upstream rev-parse HEAD)" = 1a2a92ef7f289972b2d00dd1d58077d139fe68d7
+          test "$(git -C evm-upstream rev-parse HEAD)" = c636cc15b07969e4b44de7e466c999c07e7387a9
+          python3 - <<'PY'
+          from pathlib import Path
+          from hashlib import sha256
+          names = ['transceiver_message_1.txt', 'transceiver_message_with_empty_payload.txt', 'transceiver_message_with_32byte_payload.txt']
+          for name in names:
+              a, b = [bytes.fromhex((Path(root) / 'evm/test/payloads' / name).read_text().strip()) for root in ('solana-upstream', 'evm-upstream')]
+              assert len(a) == len(b)
+              assert a[:4] == b[:4] == bytes.fromhex('9945ff10')
+              # 4-byte prefix, two 32-byte managers, uint16 length,
+              # manager id/sender (32 each), uint16 length, NTT payload:
+              # 4-byte prefix, uint8 decimals, uint64 amount, 32-byte token,
+              # 32-byte recipient, uint16 destination chain.
+              assert a[136:140] == b[136:140] == bytes.fromhex('994e5454')
+              assert a[140] == b[140] == 7
+              assert int.from_bytes(a[141:149], 'big') == int.from_bytes(b[141:149], 'big') == 1234567
+              assert a[213:215] == bytes.fromhex('0011')
+              assert b[213:215] == bytes.fromhex('0002')
+              assert a[:213] == b[:213] and a[215:] == b[215:], name
+              print(name, 'MATCH except sample destination chain 17 vs 2', 'bytes', len(a), 'Solana SHA256', sha256(a).hexdigest(), 'EVM SHA256', sha256(b).hexdigest())
+          print('3 pinned fixture comparisons passed; not authenticated bridge traffic')
+          PY
+      - name: Install pinned Rust host test toolchain
+        run: rustup toolchain install nightly-2023-10-29 --profile minimal
+      - name: Execute pinned Solana message encode/decode tests
+        working-directory: solana-upstream/solana
+        run: |
+          set -euo pipefail
+          cargo +nightly-2023-10-29 test --locked -p ntt-messages --features anchor,hash --lib test_deserialize_transceiver_message -- --nocapture | tee "$RUNNER_TEMP/ntt-solana-wire.log"
+          grep -Eq 'test result: ok\. 3 passed; 0 failed; 0 ignored;' "$RUNNER_TEMP/ntt-solana-wire.log"
+          for suffix in '' _with_empty_payload _with_32byte_payload; do
+            grep -Eq "test .*test_deserialize_transceiver_message${suffix} \.\.\. ok" "$RUNNER_TEMP/ntt-solana-wire.log"
+          done
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Execute pinned EVM message codec tests locally
+        working-directory: evm-upstream/evm
+        run: |
+          set -euo pipefail
+          forge test --match-path test/TransceiverStructs.t.sol --match-test '^test_(serialize_TransceiverMessage|parse_TransceiverMessageWithEmptyPayload)' -vv | tee "$RUNNER_TEMP/ntt-evm-wire.log"
+          for name in test_serialize_TransceiverMessage test_parse_TransceiverMessageWithEmptyPayload test_serialize_TransceiverMessageWithAdditionalPayload; do
+            grep -Fq "[PASS] ${name}()" "$RUNNER_TEMP/ntt-evm-wire.log"
+          done
+          grep -Eq '3 tests passed, 0 failed, 0 skipped \(3 total tests\)' "$RUNNER_TEMP/ntt-evm-wire.log"
