@@ -7,7 +7,7 @@
 .base-swap-card p{margin:5px 0 10px;font-size:11px;line-height:1.5;color:#b9c8d9;overflow-wrap:anywhere}
 .base-swap-card .base-swap-notice{color:#f1d39c}
 .base-swap-controls{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:9px 0}
-.base-swap-card input,.base-swap-card select{flex:1 1 145px;min-width:0;padding:10px;border:1px solid #53647b;border-radius:8px;background:#091626;color:#f0f4fb;font:12px inherit}
+.base-swap-card input,.base-swap-card select{flex:1 1 145px;min-width:0;padding:10px;border:1px solid #53647b;border-radius:8px;background:#091626;color:#f0f4fb;font-family:inherit;font-size:12px}
 .base-swap-card button{min-height:40px;padding:9px 12px;border:1px solid #c4a16e;background:#544021;color:#f8e5c2;border-radius:8px;font-weight:750;font-size:11px;cursor:pointer}
 .base-swap-card button:disabled{opacity:.55;cursor:not-allowed}
 .base-swap-card button:focus-visible,.base-swap-card input:focus-visible,.base-swap-card select:focus-visible{outline:2px solid #f2ce87;outline-offset:2px}
