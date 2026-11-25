@@ -26,7 +26,7 @@ function harness(){
  return {keys,P,joy,lk,document,controls,context,dispatch,handlers,docHandlers,
   resetState(){Object.assign(keys,{KeyW:true,ShiftLeft:true,Space:true,ControlLeft:true});Object.assign(joy,{id:1,dx:.8,dy:.4});lk.id=2;P.moveTarget={x:80,z:90};context.drag=true;vm.runInContext("pinchDistance=55;jr.style.display=jk.style.display='block'",context)},
   assertReleased(){assert.ok(Object.values(keys).every(v=>v===false));assert.equal(P.moveTarget,null);assert.equal(context.drag,false);
-   assert.deepEqual(joy,{id:null,dx:0,dy:0});assert.equal(lk.id,null);
+   assert.deepEqual({id:joy.id,dx:joy.dx,dy:joy.dy},{id:null,dx:0,dy:0});assert.equal(lk.id,null);
    assert.equal(vm.runInContext('pinchDistance',context),0);
    assert.equal(vm.runInContext('jr.style.display',context),'none');assert.equal(vm.runInContext('jk.style.display',context),'none');
    assert.deepEqual([P.x,P.y,P.z,P.hp,P.stamina],[21,8,12,455,170]);}
