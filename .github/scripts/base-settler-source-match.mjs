@@ -33,7 +33,7 @@ assert.equal(declaration.typeDescriptions?.typeString,"bytes32");
 // Never copy bytes from observed chain runtime or ignore immutable positions.
 const cast=(...args)=>execFileSync("cast",args,{encoding:"utf8",timeout:10000}).trim();
 const typeHash=cast("keccak","EIP712Domain(string name,uint256 chainId,address verifyingContract)");
-const nameHash=cast("keccak","0xSettler");
+const nameHash=cast("keccak","0x"+Buffer.from("0xSettler","utf8").toString("hex"));
 const encoded=cast("abi-encode","f(bytes32,bytes32,uint256,address)",typeHash,nameHash,"8453",target);
 assert.match(encoded,/^0x[0-9a-fA-F]{256}$/);
 const domain=cast("keccak",encoded);
