@@ -8,6 +8,7 @@ on:
       - ".github/scripts/base-allowance-policy.test.mjs"
       - ".github/scripts/base-allowance-observation.test.mjs"
       - ".github/scripts/base-funding-action-policy.test.mjs"
+      - ".github/scripts/base-fee-action-policy.test.mjs"
       - ".github/workflows/base-execution-intent-policy.yml"
   push:
     branches: [main]
@@ -17,6 +18,7 @@ on:
       - ".github/scripts/base-allowance-policy.test.mjs"
       - ".github/scripts/base-allowance-observation.test.mjs"
       - ".github/scripts/base-funding-action-policy.test.mjs"
+      - ".github/scripts/base-fee-action-policy.test.mjs"
       - ".github/workflows/base-execution-intent-policy.yml"
 permissions:
   contents: read
@@ -36,5 +38,6 @@ jobs:
           node --check dex/base-execution/allowance-policy.mjs
           node --check dex/base-execution/allowance-observation.mjs
           node --check dex/base-execution/funding-action-policy.mjs
-          node --test .github/scripts/base-execution-intent-policy.test.mjs .github/scripts/base-allowance-policy.test.mjs .github/scripts/base-allowance-observation.test.mjs .github/scripts/base-funding-action-policy.test.mjs
+          node --check dex/base-execution/fee-action-policy.mjs
+          node --test .github/scripts/base-execution-intent-policy.test.mjs .github/scripts/base-allowance-policy.test.mjs .github/scripts/base-allowance-observation.test.mjs .github/scripts/base-funding-action-policy.test.mjs .github/scripts/base-fee-action-policy.test.mjs
           grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs
