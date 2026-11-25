@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {requestBoundedGameQaAuth} from './browser-qa-auth.mjs';
 
-function browser(auth){
+function browser(auth,menuAuth){
  const timers=[];
  const context={
-  window:{__CLIMBORIA_GAME_SAVE_CLIENT:{auth}},
+  window:{__CLIMBORIA_GAME_SAVE_CLIENT:{auth}},heroAuth:menuAuth?{auth:menuAuth}:undefined,
   setTimeout(fn,delay){timers.push({fn,delay,cancelled:false});return timers.length},
   clearTimeout(id){if(timers[id-1])timers[id-1].cancelled=true}
  };
@@ -98,4 +98,15 @@ test('invalid actions/timeouts and throwing provider fail safely, no credentials
  const noAuth=browser(null);
  assert.equal(await noAuth.run({action:'sign-out'}),false);
  assert.equal(h.timers.filter(x=>!x.cancelled).length,0);
+});
+
+test('menu QA signs in only through real menu auth, never falls back to gameplay client',async()=>{
+ let menuCalls=0,playCalls=0;
+ const h=browser({signInWithPassword:async()=>{playCalls++;return registered}},{signInWithPassword:async()=>{menuCalls++;return registered}});
+ assert.equal(await h.run({action:'sign-in',surface:'menu',email:'qa',password:'private'}),true);
+ assert.equal(menuCalls,1);assert.equal(playCalls,0);
+ const missing=browser({signInWithPassword:async()=>{playCalls++;return registered}});
+ assert.equal(await missing.run({action:'sign-in',surface:'menu',email:'qa',password:'private'}),false);
+ assert.equal(playCalls,0);
+ await assert.rejects(h.run({action:'sign-out',surface:'unknown'}),/Invalid Game QA auth request/);
 });

@@ -6,13 +6,13 @@
  * Supabase auth has no AbortSignal here. Timeout cancels the local wait only;
  * the operator script closes its private browser contexts on any failure.
  */
-export async function requestBoundedGameQaAuth({action,email,password,timeoutMs=20000}={}){
- if(!['sign-in','sign-out'].includes(action)||
+export async function requestBoundedGameQaAuth({action,email,password,timeoutMs=20000,surface='play'}={}){
+ if(!['sign-in','sign-out'].includes(action)||!['play','menu'].includes(surface)||
     !Number.isInteger(timeoutMs)||timeoutMs<1000||timeoutMs>30000||
     (action==='sign-in'&&(!email||!password||
       typeof email!=='string'||typeof password!=='string')))
   throw Error('Invalid Game QA auth request');
- const auth=window.__CLIMBORIA_GAME_SAVE_CLIENT?.auth;
+ const auth=surface==='menu'?(typeof heroAuth==='undefined'?null:heroAuth?.auth):window.__CLIMBORIA_GAME_SAVE_CLIENT?.auth;
  if(!auth)return false;
  let timer;
  const timeout=new Promise((_,reject)=>{
