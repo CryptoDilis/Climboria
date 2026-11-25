@@ -866,6 +866,7 @@ try {
   // A logged-out explorer enters the playable world as a no-save guest,
   // even if a legacy hero record happens to exist in localStorage.
   await menu.evaluate(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'Legacy',model:'Adventurer'})));
+  await menu.waitForFunction(()=>document.querySelector('#heroGateNotice')?.textContent?.includes('GUEST MODE'),undefined,{timeout:15000});
   await menu.locator('.card[data-level="11"]').click();
   await menu.waitForLoadState('domcontentloaded');
   const launchUrl=new URL(menu.url());
