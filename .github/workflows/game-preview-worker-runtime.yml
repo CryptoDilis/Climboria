@@ -8,6 +8,7 @@ on:
       - ".github/scripts/game-preview-workerd-smoke.mjs"
       - ".github/scripts/game-preview-operation-budget.test.mjs"
       - ".github/workflows/game-preview-worker-runtime.yml"
+      - ".github/game-preview-runtime/**"
   workflow_dispatch:
 
 permissions:
@@ -28,15 +29,20 @@ jobs:
         run: node --test .github/scripts/game-preview-operation-budget.test.mjs
       - name: Install local workerd runtime
         run: |
-          npm init -y
-          # Candidate transitive fixes from observed audit ranges; CI proves
-          # availability and compatibility, not an upstream support claim.
-          npm pkg set 'overrides.sharp=0.35.5' 'overrides.undici=7.30.1'
-          npm install --save-dev --save-exact --package-lock miniflare@4.20260730.0
+          node --input-type=module - <<'NODE'
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const canonical=o=>Array.isArray(o)?o.map(canonical):o&&typeof o==='object'?Object.fromEntries(Object.keys(o).sort().map(k=>[k,canonical(o[k])])):o;
+          const lock=JSON.parse(readFileSync('.github/game-preview-runtime/package-lock.json','utf8'));
+          const hash=createHash('sha256').update(JSON.stringify(canonical(lock))).digest('hex');
+          if(hash!=='e3ce35ff8518b75b6279ccf4cbecdac56f409f4e8f6372acd1965c60d42e4784')throw Error('Lock differs from reviewed CI artifact');
+          NODE
+          npm ci --prefix .github/game-preview-runtime
+          ln -s game-preview-runtime/node_modules .github/node_modules
       - name: Record local runtime dependency and advisory evidence
         run: |
-          npm ls miniflare workerd sharp undici --all
-          npm audit --json > "${RUNNER_TEMP}/game-preview-npm-audit.json" || audit_status=$?
+          npm --prefix .github/game-preview-runtime ls miniflare workerd sharp undici --all
+          npm --prefix .github/game-preview-runtime audit --json > "${RUNNER_TEMP}/game-preview-npm-audit.json" || audit_status=$?
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
             const audit=JSON.parse(readFileSync(process.argv[1],"utf8"));
@@ -49,14 +55,14 @@ jobs:
       - name: Verify isolated preview with real local WebSockets and SQLite DO
         run: node .github/scripts/game-preview-workerd-smoke.mjs
       - name: Require no high or critical local dependency advisories
-        run: npm audit --audit-level=high
+        run: npm --prefix .github/game-preview-runtime audit --audit-level=high
       - name: Capture verified dependency lock and audit
         uses: actions/upload-artifact@v4
         with:
           name: game-preview-runtime-dependency-evidence
           path: |
-            package.json
-            package-lock.json
+            .github/game-preview-runtime/package.json
+            .github/game-preview-runtime/package-lock.json
             ${{ runner.temp }}/game-preview-npm-audit.json
           if-no-files-found: error
           retention-days: 7
