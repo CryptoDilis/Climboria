@@ -280,7 +280,7 @@ test('live Game refuses the retired forced-Sanctuary mobile prompt',()=>{
  assert.doesNotMatch(game,/climboria:room-return-to-sanctuary/);
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261119-game-hud-resume-11/,
+ assert.match(game,/client-presence\.js\?v=20261125-game-voluntary-rejoin-1/,
   'production Game must load fresh Nearby Chat and remote size renderer');
 });
 
@@ -1140,4 +1140,37 @@ test('Game guest exploration makes no config request, room ticket, socket or fak
  assert.equal(h.calls.length,0,'guest mode must not fetch multiplayer configuration or tickets');
  assert.equal(h.created.some(el=>el.id==='climboria-world-chat-toggle'),false);
  assert.equal(h.created.some(el=>el.id==='climboria-world-chat-panel'),false);
+});
+
+test('voluntary walking to trusted spawn reopens room admission without ticket polling elsewhere',async()=>{
+ const h=harness(true);
+ h.window.__climboriaJarrellsPeak.player.x=70;
+ await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'saved-location');
+ const tickets=()=>h.calls.filter(c=>c.url.endsWith('/ticket')).length;
+ assert.equal(tickets(),1);
+ for(let i=0;i<3;i++){
+  assert.equal(h.runNextTimer(),1200);await flush();
+  assert.equal(tickets(),1);assert.equal(h.clients.length,0);
+  assert.equal(h.window.__climboriaJarrellsPeak.player.x,70);
+ }
+ h.window.__climboriaJarrellsPeak.player.x=0;
+ assert.equal(h.runNextTimer(),1200);await flush();
+ assert.equal(tickets(),2);assert.equal(h.clients.length,1);
+ const ws=h.clients[0],id='s_'+'c'.repeat(32);ws.onopen();
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
+ assert.notEqual(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+});
+test('voluntary spawn wait is cancelled by sign-out and cannot issue another ticket',async()=>{
+ const h=harness(true);
+ h.window.__climboriaJarrellsPeak.player.x=70;await flush();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'saved-location');
+ h.authChange(null);await flush();
+ h.window.__climboriaJarrellsPeak.player.x=0;
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'login-required');
+ assert.equal(h.timers.filter(t=>!t.cancelled).length,0);
+ assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,1);
+ assert.equal(h.clients.length,0);
 });
