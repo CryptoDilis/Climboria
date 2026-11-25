@@ -7,6 +7,9 @@ interface Vm {
     function chainId(uint256) external;
     function prank(address) external;
     function expectRevert(bytes4) external;
+    function writeFile(string calldata, string calldata) external;
+    function toString(bytes calldata) external pure returns (string memory);
+    function toString(address) external pure returns (string memory);
 }
 contract MockManager {
     function credit(ClimbTestnetToken t, address account, uint256 amount) external { t.mint(account, amount); }
@@ -25,6 +28,12 @@ contract ClimbTestnetTokenTest {
     }
     function testInitialZeroAndSixDecimals() public view {
         require(token.totalSupply() == 0 && token.decimals() == 6 && token.manager() == address(0));
+    }
+    function testExportLocalRuntimeForVerifier() public {
+        require(token.binder() == address(this));
+        require(token.totalSupply() == 0 && token.manager() == address(0));
+        vm.writeFile("out/climb-local-runtime.hex", vm.toString(address(token).code));
+        vm.writeFile("out/climb-local-binder.txt", vm.toString(token.binder()));
     }
     function testRejectMainnetConstructor() public {
         vm.chainId(8453);
