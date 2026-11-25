@@ -1,0 +1,28 @@
+name: Base DEX USDC Privileged State Observation
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-usdc-privileged-state-observation.mjs"
+      - ".github/workflows/base-usdc-privileged-state-observation.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned direct dependency without lifecycle scripts
+        run: npm install --prefix .github/scripts --no-save --package-lock=false --ignore-scripts --no-audit --no-fund ethers@6.11.1
+      - name: Observe exact USDC runtime, privileged roles and public historical route restrictions
+        run: |
+          node --check .github/scripts/base-usdc-privileged-state-observation.mjs
+          node .github/scripts/base-usdc-privileged-state-observation.mjs
+          grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs
