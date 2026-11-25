@@ -1,0 +1,35 @@
+name: CLIMB Provided Testnet Payer Evidence - Read Only
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/climb-payer-evidence-one-shot.yml'
+permissions:
+  contents: read
+jobs:
+  payer:
+    if: github.head_ref == 'climb-bridge/payer-evidence-20261125'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Observe provided public testnet payer addresses only
+        env:
+          SOLANA_PUBLIC_ADDRESS: 'G8CYYBwU9GzvaEVwdAwZMEbyn9K7JceztSHXW4DzNuJQ'
+          BASE_PUBLIC_ADDRESS: '0x9bA615a67d6365849293521F6F9Ce0dFd00D6012'
+        run: |
+          set -euo pipefail
+          node token/climb-bridge/testnet-payer-preflight.mjs "$SOLANA_PUBLIC_ADDRESS" "$BASE_PUBLIC_ADDRESS" > "$RUNNER_TEMP/payer-evidence.json"
+          cat "$RUNNER_TEMP/payer-evidence.json"
+          {
+            echo '## Read-only payer observations'
+            echo 'No signing, transfers or deployment. Release NO_GO.'
+            echo '~~~json'
+            cat "$RUNNER_TEMP/payer-evidence.json"
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
