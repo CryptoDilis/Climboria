@@ -2,13 +2,13 @@
  * NONPRODUCTION one-shot preview budget. No automatic reset or renewal.
  * Uses durable transaction counters, not a billing meter. Integration must
  * reserve before mutation and close sockets when denied. Not production wiring.
- * v2 is for a fresh disposable namespace only; v1 must never be reset in place.
+ * Session-bound schema rejects legacy counter-only rows; never reset in place.
  */
 export const PREVIEW_BUDGET=Object.freeze({
  windowMs:300000,ticket:24,admission:12,tick:3000,attack:600,disconnect:12
 });
 const kinds=Object.freeze(['ticket','admission','tick','attack','disconnect']);
-const key='game:preview:operation-budget:v2';
+const key='game:preview:operation-budget:v1';
 const sid=id=>typeof id==='string'&&/^s_[a-f0-9]{32}$/.test(id);
 const deny=reason=>({ok:false,reason});
 const time=n=>Number.isSafeInteger(n)&&n>=0&&n<=Number.MAX_SAFE_INTEGER-PREVIEW_BUDGET.windowMs;
