@@ -108,12 +108,12 @@ console.log(JSON.stringify({revision,compiler:solc.version(),optimizerRuns:10000
 // Actual deployment records instead of further speculative compiler settings.
 const targets=[
  {address:expected[0].address,contractName:expected[0].name,observed:chain[0][0]},
- {address:expected[1].address,contractName:expected[1].name,observed:chain[0][1]},
- {address:libraryAddress,contractName:"SignatureChecker",observed:libCodes[0]}
+ {address:libraryAddress,contractName:"SignatureChecker",observed:libCodes[0]},
+ {address:expected[1].address,contractName:expected[1].name,observed:chain[0][1]}
 ];
 const verified=[];
 for(const target of targets){
- try{await reproduceDeploymentRecord({...target,libraryAddress});verified.push(target.contractName);}
+ try{await reproduceDeploymentRecord({...target,libraryAddress,verifiedLibrary:verified.includes("SignatureChecker")});verified.push(target.contractName);}
  catch(error){console.error(JSON.stringify({contract:target.contractName,recordReproductionFailed:true,reason:String(error.message).slice(0,500)}));}
 }
 console.log(JSON.stringify({exactMatchedContracts:verified,sourceBinaryParityVerified:verified.length===targets.length,transferSemanticsVerified:false,executionApproved:false}));
