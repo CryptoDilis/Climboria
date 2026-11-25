@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME MOBILE MULTITOUCH ISOLATION — 2026-11-26 PHT (NOT MERGED)
+
+- #770 previous head `27370230704e4065a151005f2e8d23a4ef67e37f`: Gateway 45659238955 (238/238 and separate 53/53 client tests), Browser 45659239117, Validate 45659239187, Runtime 45659239069, Authority 45659239138, Heroes 45659239128, Chests 45659239054 SUCCESS; Gameplay 45659239127 still running at review. These are previous-head results, not new-head results.
+- Extended the same open Game-only PR to resolve related multitouch defect: global touch list includes held action-button fingers even if their touchstart stopped propagation. Fix `b43286d35c4863ba30e08ee475fa37c2a574494d` filters UI-origin touches, keeps joystick movement independent of RUN/JUMP/DIVE, tracks a stable pair of two world fingers for camera pinch, resets pinch baseline when pair changes, and clears state on interruption. Tests `04cbb49d19829a33895aa6068f84afcd2696bf33` cover simultaneous RUN/joystick, UI-only movement, genuine two-finger zoom and pair replacement. No physical phone reproduction claimed.
+- **EXACT NEXT:** verify fresh #770 exact-head CI, including new regression tests and desktop/mobile gameplay; merge only green, verify published HTML, and obtain real Android and two-account acceptance. Separate private combat deployment remains blocked by scoped Cloudflare access. Game only.
+
+---
+
 ## GAME MOBILE INPUT INTERRUPTION FIX — 2026-11-26 PHT (NOT MERGED)
 
 - Reviewed main `8e8d1683a4323b1121a1ecbdf62c607a83e92ce9`. Found missing touchcancel listeners on held RUN, JUMP/SURFACE and DIVE controls; browser blur previously cleared keys but left joystick/camera gesture state active. Text input focus could also leave prior movement held. These are source-level defects, not claimed as reproduced on an actual phone.
