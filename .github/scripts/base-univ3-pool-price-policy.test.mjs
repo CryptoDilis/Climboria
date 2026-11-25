@@ -29,3 +29,32 @@ test("reject unreviewed state, mismatched block, identity and inactive pool",()=
  for(const patch of [{chainId:1},{pool:"0x"+"3".repeat(40)},{factory:token0},{token0:token1},{fee:"3000"},{poolRuntimeSha256:"0".repeat(64)},{factoryRuntimeSha256:"0".repeat(64)},{blockHash:"0x"+"4".repeat(64)},{blockNumber:"0x1"},{unlocked:false},{liquidity:"0"},{liquidity:"-1"},{sqrtPriceX96:"0"}])assert.throws(()=>check({patch}));
  assert.throws(()=>check({pool:3000}));assert.throws(()=>check({policyPatch:{reviewedBlockHash:undefined}}));
 });
+
+import {decodeCandidateSlot0,observeQuoteBlockPool,assertReviewedPoolObservation} from "../../dex/base-execution/quote-block-pool-observation.mjs";
+test("slot0 canonical widths, signed tick and unlocked flag",()=>{
+ const slot=(tick=-1n,unlocked=1n)=>"0x"+[price,BigInt.asUintN(256,tick),0n,1n,1n,0n,unlocked].map(word).join("");
+ assert.deepEqual(decodeCandidateSlot0(slot()),{sqrtPriceX96:price.toString(),unlocked:true,tick:-1});
+ for(const invalid of [slot(887273n),slot(0n,0n),slot(0n,2n),slot().slice(0,-2),slot(0n).slice(0,66)+word(16777215n)+slot(0n).slice(130)])assert.throws(()=>decodeCandidateSlot0(invalid));
+});
+test("reviewed state must equal every observed field",()=>{
+ const a={block:blockNumber,hash:blockHash},reviewed={...state,timestamp:1800000000},observed={...reviewed,twoHostsAgreed:true,executable:false,stateAuthenticated:false};
+ assert.doesNotThrow(()=>assertReviewedPoolObservation(reviewed,observed,a));
+ for(const patch of [{timestamp:1800000001},{sqrtPriceX96:"1"},{liquidity:"1"},{unlocked:false},{poolRuntimeSha256:"0".repeat(64)}])assert.throws(()=>assertReviewedPoolObservation({...reviewed,...patch},observed,a));
+ assert.throws(()=>assertReviewedPoolObservation(reviewed,{...observed,twoHostsAgreed:false},a));
+});
+test("pool probe rejects unauthorized, wrong block and changed runtime before contract calls",async()=>{
+ const calls=[],a={block:blockNumber,hash:blockHash};
+ let wrong=false;
+ const fetchImpl=async(url,opts)=>{
+  const req=JSON.parse(opts.body);calls.push(req.method);
+  let result;
+  if(req.method==="eth_chainId")result="0x2105";
+  else if(req.method==="eth_getBlockByNumber")result={number:blockNumber,hash:wrong?"0x"+"b".repeat(64):blockHash,timestamp:"0x6b49d200"};
+  else if(req.method==="eth_getCode"){assert.deepEqual(req.params[1],{blockHash,requireCanonical:true});result="0x6000";}
+  else throw Error("Unexpected contract call");
+  return new Response(JSON.stringify({jsonrpc:"2.0",id:req.id,result}));
+ };
+ await assert.rejects(observeQuoteBlockPool({referenceBlock:a,fetchImpl}),/authorization/);assert.deepEqual(calls,[]);
+ wrong=true;await assert.rejects(observeQuoteBlockPool({authorized:true,referenceBlock:a,fetchImpl}),/block changed/);assert.deepEqual(calls,["eth_chainId","eth_getBlockByNumber"]);
+ calls.length=0;wrong=false;await assert.rejects(observeQuoteBlockPool({authorized:true,referenceBlock:a,fetchImpl}),/runtime changed/);assert.deepEqual(calls,["eth_chainId","eth_getBlockByNumber","eth_getCode"]);
+});
