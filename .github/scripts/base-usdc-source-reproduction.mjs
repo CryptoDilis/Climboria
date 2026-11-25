@@ -104,4 +104,50 @@ const libMatch=reconstructed===libCodes[0];
 console.log(JSON.stringify({contract:"SignatureChecker",exactMatch:libMatch,compiledSha256:sha(Buffer.from(reconstructed,"hex")),observedSha256:sha(Buffer.from(libCodes[0],"hex")),metadata:metadata(reconstructed)}));
 const allMatch=libMatch&&results.every(r=>r.exactMatch);
 console.log(JSON.stringify({revision,compiler:solc.version(),optimizerRuns:10000000,observedBlockHash:anchor.hash,sourceBinaryParityVerified:allMatch,transferSemanticsVerified:false,executionApproved:false}));
-assert.ok(allMatch,"Exact source/runtime match not established; investigate deployment revision and compiler metadata/settings.");
+// A historical tagged release and its Truffle compiler source namespace are
+// independently plausible candidates. Search only this finite, logged matrix.
+// No metadata replacement: compare every byte of every contract.
+const historicalRoot=resolve("official-circle-stablecoin-v220"),historicalRevision="405efc100c016ed1a437063b6274b4e24ea7b8b1";
+assert.equal(execFileSync("git",["-C",historicalRoot,"rev-parse","HEAD"],{encoding:"utf8",timeout:10000}).trim(),historicalRevision);
+const candidates=[
+ {name:expected[0].name,path:expected[0].path,observed:chain[0][0]},
+ {name:expected[1].name,path:expected[1].path,observed:chain[0][1]},
+ {name:"SignatureChecker",path:libraryPath,observed:libCodes[0]}
+];
+const matches=new Map();
+if(results[0].exactMatch)matches.set(expected[0].name,{revision,optimizerRuns:10000000});
+if(results[1].exactMatch)matches.set(expected[1].name,{revision,optimizerRuns:10000000});
+if(libMatch)matches.set("SignatureChecker",{revision,optimizerRuns:10000000});
+for(const candidate of candidates){
+ if(matches.has(candidate.name))continue;
+ for(const prefix of ["","project:/"]){
+  for(const runs of candidate.name==="FiatTokenProxy"?[10000000,200]:[10000000]){
+   if(matches.has(candidate.name))break;
+   const key=prefix+candidate.path,libKey=prefix+libraryPath;
+   function historicalSource(p){
+    const normalized=p.startsWith("project:/")?p.slice(9):p;
+    const base=normalized.startsWith("@openzeppelin/contracts/")?deps:historicalRoot;
+    if(!(normalized.startsWith("contracts/")||normalized.startsWith("@openzeppelin/contracts/"))||!normalized.endsWith(".sol"))throw Error("Unsupported import");
+    const target=resolve(base,normalized),rel=relative(base,target);
+    if(rel.startsWith("..")||isAbsolute(rel))throw Error("Import escape");
+    return readFileSync(target,"utf8");
+   }
+   const settings={optimizer:{enabled:true,runs},outputSelection:{[key]:{[candidate.name]:["evm.deployedBytecode"]}}};
+   if(candidate.name==="FiatTokenV2_2")settings.libraries={[libKey]:{SignatureChecker:libraryAddress}};
+   const build=JSON.parse(solc.compile(JSON.stringify({language:"Solidity",sources:{[key]:{content:historicalSource(key)}},settings}),{import:p=>{try{return {contents:historicalSource(p)};}catch{return {error:"Unresolved historical import: "+p};}}}));
+   const errors=(build.errors??[]).filter(e=>e.severity==="error");
+   if(errors.length){console.log(JSON.stringify({contract:candidate.name,revision:historicalRevision,prefix,runs,compileErrors:errors.map(e=>e.formattedMessage)}));continue;}
+   const runtime=build.contracts?.[key]?.[candidate.name]?.evm?.deployedBytecode;
+   assert.ok(runtime);assert.deepEqual(runtime.linkReferences??{},{});assert.deepEqual(runtime.immutableReferences??{},{});
+   assert.match(runtime.object,/^(?:[0-9a-f]{2})+$/);
+   let hex=runtime.object;
+   if(candidate.name==="SignatureChecker"){assert.match(hex,/^73(?:00){20}[0-9a-f]+$/);hex="73"+libraryAddress.slice(2)+hex.slice(42);}
+   const exactMatch=hex===candidate.observed;
+   const result={contract:candidate.name,revision:historicalRevision,prefix,runs,bytes:hex.length/2,actualSha256:sha(Buffer.from(hex,"hex")),metadata:metadata(hex),exactMatch};
+   console.log(JSON.stringify(result));if(exactMatch)matches.set(candidate.name,result);
+  }
+ }
+}
+const fullMatch=matches.size===candidates.length;
+console.log(JSON.stringify({historicalRevision,exactMatchedContracts:[...matches.keys()],sourceBinaryParityVerified:fullMatch,transferSemanticsVerified:false,executionApproved:false}));
+assert.ok(fullMatch,"Exact source/runtime match not established; independently obtain deployed build metadata and revision.");
