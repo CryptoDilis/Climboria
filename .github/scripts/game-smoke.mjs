@@ -149,18 +149,18 @@ try {
       await page.waitForTimeout(100);
       const before=await page.evaluate(()=>({y:window.__climboriaJarrellsPeak.player.y,jumps:window.__climboriaJarrellsPeak.player.jumpCount||0,lands:window.__climboriaJarrellsPeak.player.landCount||0}));
       await page.keyboard.down('Space');
-      // Physics owns this trace, so it records each real frame even when a
-      // short phase falls between Playwright polling cycles.
-      const reachedDescent=await page.waitForFunction(jumps=>{const p=window.__climboriaJarrellsPeak?.player,t=p?.jumpTrace;return !!t&&t.jumpCount>jumps&&t.phases.includes('descent');},before.jumps,{timeout:8000}).then(()=>true).catch(()=>false);
+      // Software WebGL can take more than eight wall-clock seconds to
+      // simulate a subsecond jump. Wait for the complete persisted physics
+      // trace rather than requiring two separate polling deadlines.
+      const landedForJump=await page.waitForFunction(({jumps,lands})=>{
+        const p=window.__climboriaJarrellsPeak?.player,t=p?.jumpTrace;
+        return !!t&&t.jumpCount===jumps+1&&t.phases.includes('land')&&(p.landCount||0)===lands+1;
+      },before,{timeout:30000}).then(()=>true).catch(()=>false);
       await page.keyboard.up('Space');
-      // The software-rendered CI world can spend most of the first bounded
-      // window reaching descent. Landing gets its own observed window rather
-      // than treating two independently verified stages as one timeout.
-      const landedForJump=await page.waitForFunction(({jumps,lands})=>{const p=window.__climboriaJarrellsPeak?.player,t=p?.jumpTrace;return !!t&&t.jumpCount>jumps&&t.phases.includes('land')&&(p.landCount||0)>lands;},before,{timeout:8000}).then(()=>true).catch(()=>false);
       const landed=await page.evaluate(()=>{const p=window.__climboriaJarrellsPeak.player;return {state:p.jumpState,lands:p.landCount||0,jumps:p.jumpCount||0,trace:p.jumpTrace?JSON.parse(JSON.stringify(p.jumpTrace)):null};});
       const expectedLocomotion=running?'run':'walk';
       const resumed=await page.waitForFunction(expected=>{const p=window.__climboriaJarrellsPeak?.player;return !!p&&p.jumpState==='grounded'&&document.documentElement.dataset.climboriaHeroAnimation===expected;},expectedLocomotion,{timeout:8000}).then(()=>page.evaluate(()=>({state:window.__climboriaJarrellsPeak.player.jumpState,animation:document.documentElement.dataset.climboriaHeroAnimation||''}))).catch(()=>page.evaluate(()=>({state:window.__climboriaJarrellsPeak.player.jumpState,animation:document.documentElement.dataset.climboriaHeroAnimation||''})));
-      liveJumps.push({running,reachedDescent,completed:reachedDescent&&landedForJump,baseline:before.y,jumpCount:landed.jumps,landState:landed.state,landCount:landed.lands,trace:landed.trace,resumed,priorJumpCount:before.jumps,priorLandCount:before.lands});
+      liveJumps.push({running,reachedDescent:landed.trace?.phases?.includes('descent')===true,completed:landedForJump,baseline:before.y,jumpCount:landed.jumps,landState:landed.state,landCount:landed.lands,trace:landed.trace,resumed,priorJumpCount:before.jumps,priorLandCount:before.lands});
       await page.keyboard.up('w');
       if(running) await page.keyboard.up('Shift');
       await page.evaluate(()=>{const p=window.__climboriaJarrellsPeak.player,w=window.__climboriaJarrellsPeak;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.jumpState='grounded';p.jumpHeld=false;p.jumpStateTimer=0;p.jumpTrace=null;});
@@ -171,8 +171,8 @@ try {
     },liveJumpStart.saved);
     const requiredJumpPhases=['takeoff','airborne','descent','land'];
     const hasOrderedPhases=trace=>{const order=requiredJumpPhases.map(phase=>trace?.phases?.indexOf(phase)??-1);return order.every((frame,index)=>frame>=0&&(index===0||frame>order[index-1]));};
-    if(liveJumps.some(x=>!x.completed||!x.trace||x.trace.peakY<=x.baseline+.2||x.jumpCount<=x.priorJumpCount||x.landCount<=x.priorLandCount)) errors.push('Spacebar jump failed while walking or running: '+JSON.stringify(liveJumps));
-    if(liveJumps.some(x=>{const poses=x.trace?.poses||{},takeoff=poses.takeoff,ascent=poses.airborne,descent=poses.descent;return !hasOrderedPhases(x.trace)||takeoff?.animation!=='jump-takeoff'||ascent?.animation!=='jump-airborne'||descent?.animation!=='jump-descent'||![takeoff?.limbSignature,ascent?.limbSignature,descent?.limbSignature].every(Number.isFinite)||Math.abs(takeoff.limbSignature-ascent.limbSignature)<.05||Math.abs(ascent.limbSignature-descent.limbSignature)<.05||x.resumed.animation!==(x.running?'run':'walk');})) errors.push('Running jump did not progress through distinct takeoff/ascent/descent poses and back to locomotion: '+JSON.stringify(liveJumps));
+    if(liveJumps.some(x=>!x.completed||!x.trace||x.trace.peakY<=x.baseline+.2||x.jumpCount!==x.priorJumpCount+1||x.landCount!==x.priorLandCount+1)) errors.push('Spacebar jump failed while walking or running: '+JSON.stringify(liveJumps));
+    if(liveJumps.some(x=>{const poses=x.trace?.poses||{},takeoff=poses.takeoff,ascent=poses.airborne,descent=poses.descent;return !hasOrderedPhases(x.trace)||takeoff?.animation!=='jump-takeoff'||ascent?.animation!=='jump-airborne'||descent?.animation!=='jump-descent'||![takeoff?.limbSignature,ascent?.limbSignature,descent?.limbSignature].every(Number.isFinite)||Math.abs(takeoff.limbSignature-ascent.limbSignature)<.05||Math.abs(ascent.limbSignature-descent.limbSignature)<.05||x.resumed.state!=='grounded'||x.resumed.animation!==(x.running?'run':'walk');})) errors.push('Running jump did not progress through distinct takeoff/ascent/descent poses and back to locomotion: '+JSON.stringify(liveJumps));
     console.log('Live walking/running jump diagnostics:',JSON.stringify(liveJumps));
   }
 
