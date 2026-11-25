@@ -1,0 +1,35 @@
+name: Base DEX USDC Source Reproduction
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-usdc-source-reproduction.mjs"
+      - ".github/workflows/base-usdc-source-reproduction.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/checkout@v4
+        with:
+          repository: circlefin/stablecoin-evm
+          ref: fc85788bc7c23cefe3df1a757133048bfddadeaa
+          path: official-circle-stablecoin
+          persist-credentials: false
+      - name: Compile candidate upstream source and require full runtime hash equality
+        run: |
+          npm install --prefix .github/scripts --no-save --package-lock=false --ignore-scripts --no-audit --no-fund solc@0.6.12 @openzeppelin/contracts@3.4.2 ethers@6.11.1
+          node --check .github/scripts/base-usdc-source-reproduction.mjs
+          node --check .github/scripts/base-usdc-deployment-build.mjs
+          node --test .github/scripts/base-usdc-deployment-build.test.mjs
+          node .github/scripts/base-usdc-source-reproduction.mjs
+          grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs
