@@ -4,9 +4,10 @@
 async fn test_climb_metadata_only_revoked_mint_locking() {
     use solana_sdk::{account::Account, rent::Rent};
     use spl_token_2022::{extension::{BaseStateWithExtensions, StateWithExtensions}, state::{Mint as Mint2022, Account as Account2022}};
-    use crate::common::setup::{setup_programs, setup_ntt_with_token_program_id, MINT_AMOUNT};
+    use crate::common::setup::{setup_programs, setup_ntt_with_token_program_id};
     use crate::sdk::accounts::{NTT, Governance, Wormhole};
 
+    const CLIMB_TEST_SUPPLY: u64 = 1_000_000_000;
     let program_owner = Keypair::new();
     let mint = Keypair::new();
     let mint_authority = Keypair::new();
@@ -27,7 +28,7 @@ async fn test_climb_metadata_only_revoked_mint_locking() {
     raw.extend_from_slice(mint.pubkey().as_ref());
     let mut meta = vec![0u8; 32];
     meta.extend_from_slice(mint.pubkey().as_ref());
-    for value in ["CLIMB Local Test", "CLIMBTEST", "https://example.invalid/local.json"] {
+    for value in ["CLIMB Devnet Test Only", "CLIMBTEST", "https://example.invalid/climb-testnet.json"] {
         meta.extend_from_slice(&u32::try_from(value.len()).unwrap().to_le_bytes());
         meta.extend_from_slice(value.as_bytes());
     }
@@ -49,7 +50,7 @@ async fn test_climb_metadata_only_revoked_mint_locking() {
         &payer, &user.pubkey(), &mint.pubkey(), &program
     ).submit(&mut ctx).await.unwrap();
     spl_token_2022::instruction::mint_to(
-        &program, &mint.pubkey(), &user_token_account, &mint_authority.pubkey(), &[], MINT_AMOUNT
+        &program, &mint.pubkey(), &user_token_account, &mint_authority.pubkey(), &[], CLIMB_TEST_SUPPLY
     ).unwrap().submit_with_signers(&[&mint_authority], &mut ctx).await.unwrap();
     spl_token_2022::instruction::set_authority(
         &program, &mint.pubkey(), None, spl_token_2022::instruction::AuthorityType::MintTokens,
@@ -58,7 +59,7 @@ async fn test_climb_metadata_only_revoked_mint_locking() {
     let mint_before = ctx.banks_client.get_account(mint.pubkey()).await.unwrap().unwrap();
     let mint_state = StateWithExtensions::<Mint2022>::unpack(&mint_before.data).unwrap();
     assert_eq!(mint_state.base.decimals, 6);
-    assert_eq!(mint_state.base.supply, MINT_AMOUNT);
+    assert_eq!(mint_state.base.supply, CLIMB_TEST_SUPPLY);
     assert!(mint_state.base.mint_authority.is_none());
     assert!(mint_state.base.freeze_authority.is_none());
     assert_eq!(mint_state.get_extension_types().unwrap(), vec![
@@ -79,8 +80,15 @@ async fn test_climb_metadata_only_revoked_mint_locking() {
     let actual_ata = ctx.banks_client.get_account(user_token_account).await.unwrap().unwrap();
     assert_eq!(actual_ata.owner, program);
     assert_eq!(actual_ata.data.len(), 170);
-    assert_eq!(StateWithExtensions::<Account2022>::unpack(&actual_ata.data).unwrap().base.amount, MINT_AMOUNT);
+    assert_eq!(StateWithExtensions::<Account2022>::unpack(&actual_ata.data).unwrap().base.amount, CLIMB_TEST_SUPPLY);
     println!("CLIMB_ATA_VECTOR {} {} {}", mint.pubkey(), user.pubkey(), user_token_account);
+    // Export public local account bytes only, never keypairs.
+    assert_eq!(mint_before.owner, program);
+    assert!(!mint_before.executable && !actual_ata.executable);
+    assert_eq!(mint_before.data.len(), 391);
+    let hex_bytes = |data: &[u8]| data.iter().map(|b| format!("{b:02x}")).collect::<Vec<_>>().join("");
+    println!("CLIMB_LOCAL_REVOKED_PAIR {} {} {} {} {}", mint.pubkey(), user.pubkey(),
+        user_token_account, hex_bytes(&mint_before.data), hex_bytes(&actual_ata.data));
 
     let data = TestData {
         ntt: NTT {
@@ -115,7 +123,7 @@ async fn test_climb_metadata_only_revoked_mint_locking() {
     let user_after = ctx.banks_client.get_account(user_token_account).await.unwrap().unwrap();
     let custody_after = ctx.banks_client.get_account(custody).await.unwrap().unwrap();
     let mint_after = ctx.banks_client.get_account(data.mint).await.unwrap().unwrap();
-    assert_eq!(StateWithExtensions::<Account2022>::unpack(&user_after.data).unwrap().base.amount, MINT_AMOUNT - amount);
+    assert_eq!(StateWithExtensions::<Account2022>::unpack(&user_after.data).unwrap().base.amount, CLIMB_TEST_SUPPLY - amount);
     assert_eq!(StateWithExtensions::<Account2022>::unpack(&custody_after.data).unwrap().base.amount, amount);
     assert_eq!(mint_after.data, mint_before.data);
     let outbox_state: OutboxItem = ctx.get_account_data_anchor(outbox.pubkey()).await;
@@ -185,7 +193,7 @@ async fn test_climb_metadata_only_revoked_mint_locking() {
     let returned = ctx.banks_client.get_account(user_token_account).await.unwrap().unwrap();
     let empty = ctx.banks_client.get_account(custody).await.unwrap().unwrap();
     let mint_final = ctx.banks_client.get_account(data.mint).await.unwrap().unwrap();
-    assert_eq!(StateWithExtensions::<Account2022>::unpack(&returned.data).unwrap().base.amount, MINT_AMOUNT);
+    assert_eq!(StateWithExtensions::<Account2022>::unpack(&returned.data).unwrap().base.amount, CLIMB_TEST_SUPPLY);
     assert_eq!(StateWithExtensions::<Account2022>::unpack(&empty.data).unwrap().base.amount, 0);
     assert_eq!(mint_final.data, mint_before.data);
     let released: InboxItem = ctx.get_account_data_anchor(inbox).await;
