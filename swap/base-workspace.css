@@ -1,0 +1,17 @@
+/* Base workspace uses existing DEX read-only providers, never Solana signing. */
+.base-swap-workspace{margin:10px 0 14px;display:grid;gap:12px}
+.base-swap-workspace[hidden]{display:none!important}
+.base-swap-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0}
+.base-swap-card{min-width:0;padding:14px;border:1px solid #765c36;border-radius:12px;background:linear-gradient(135deg,#18283c,#0d1929);color:#dce5ee}
+.base-swap-card h3{margin:0 0 6px;font:700 15px Georgia,serif;color:#f6d69b}
+.base-swap-card p{margin:5px 0 10px;font-size:11px;line-height:1.5;color:#b9c8d9;overflow-wrap:anywhere}
+.base-swap-card .base-swap-notice{color:#f1d39c}
+.base-swap-controls{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:9px 0}
+.base-swap-card input,.base-swap-card select{flex:1 1 145px;min-width:0;padding:10px;border:1px solid #53647b;border-radius:8px;background:#091626;color:#f0f4fb;font-family:inherit;font-size:12px}
+.base-swap-card button{min-height:40px;padding:9px 12px;border:1px solid #c4a16e;background:#544021;color:#f8e5c2;border-radius:8px;font-weight:750;font-size:11px;cursor:pointer}
+.base-swap-card button:disabled{opacity:.55;cursor:not-allowed}
+.base-swap-card button:focus-visible,.base-swap-card input:focus-visible,.base-swap-card select:focus-visible{outline:2px solid #f2ce87;outline-offset:2px}
+.base-swap-result{overflow-wrap:anywhere;word-break:break-word;font-size:11px;line-height:1.5}
+.base-swap-result p{margin:5px 0;color:#e2e9f2}
+@media(max-width:850px){.base-swap-grid{grid-template-columns:1fr}.base-swap-card{padding:12px}}
+@media(max-width:420px){.base-swap-controls>*{flex:1 0 100%;width:100%}}

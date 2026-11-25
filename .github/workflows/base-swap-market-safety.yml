@@ -13,6 +13,11 @@ on:
       - 'swap/base-market-preview.css'
       - '.github/scripts/base-swap-market-preview.test.mjs'
       - '.github/scripts/base-external-uniswap-handoff.test.mjs'
+      - 'swap/base-workspace.mjs'
+      - 'swap/base-workspace.css'
+      - '.github/scripts/base-swap-workspace.test.mjs'
+      - 'dex/base-wallet-session.mjs'
+      - 'dex/base-price-preview.mjs'
       - '.github/workflows/base-swap-market-safety.yml'
   push:
     branches: [main]
@@ -26,6 +31,11 @@ on:
       - 'swap/base-market-preview.css'
       - '.github/scripts/base-swap-market-preview.test.mjs'
       - '.github/scripts/base-external-uniswap-handoff.test.mjs'
+      - 'swap/base-workspace.mjs'
+      - 'swap/base-workspace.css'
+      - '.github/scripts/base-swap-workspace.test.mjs'
+      - 'dex/base-wallet-session.mjs'
+      - 'dex/base-price-preview.mjs'
       - '.github/workflows/base-swap-market-safety.yml'
   workflow_dispatch:
 
@@ -48,7 +58,9 @@ jobs:
           node --check .github/scripts/base-swap-market-preview.test.mjs
           node --check dex/base-token-metadata.mjs
           node --check .github/scripts/base-external-uniswap-handoff.test.mjs
-          node --test .github/scripts/base-swap-market-preview.test.mjs .github/scripts/base-token-metadata.test.mjs .github/scripts/base-external-uniswap-handoff.test.mjs
+          node --check swap/base-workspace.mjs
+          node --check .github/scripts/base-swap-workspace.test.mjs
+          node --test .github/scripts/base-swap-market-preview.test.mjs .github/scripts/base-token-metadata.test.mjs .github/scripts/base-external-uniswap-handoff.test.mjs .github/scripts/base-swap-workspace.test.mjs .github/scripts/base-wallet-session.test.mjs .github/scripts/base-price-preview.test.mjs
       - name: Preserve Solana-only execution and independent provider gates
         run: |
           grep -Fqx 'const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;' dex/swap-proxy/src/index.mjs
