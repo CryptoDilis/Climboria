@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## GAME VOLUNTARY ROOM REJOIN MERGED — 2026-11-25 PHT
+
+- #750 MERGED at `c2838ac19cd403d81d68062ef763732dd07221e3`, exact tested head `e450b75e22b738ce0f1c64280af87124505bbab1`. All eight workflows SUCCESS: [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45574538448), [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45574538524), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45574538552), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45574538441), [Browser](https://github.com/CryptoDilis/Climboria/actions/runs/45574538459), [Heroes](https://github.com/CryptoDilis/Climboria/actions/runs/45574538527), [Chests](https://github.com/CryptoDilis/Climboria/actions/runs/45574538428), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45574538570). Gateway job 139069084271 confirmed 228/228 tests and 53/53 separate client tests, zero failures, including voluntary return and logout cancellation. Exact merge base matched current main before merge. No server change or forced relocation.
+- **EXACT NEXT:** verify Pages deployment of merged client asset `20261125-game-voluntary-rejoin-1`; real two-account browser acceptance is still required (protected manual QA workflow or owner browsers). Check actual public peer visibility, world/nearby chat and reconnect/last-position. Private combat deployment remains blocked by separate Cloudflare access/configuration. No production PvP damage or unrelated workstream changes. Do not repeat #750 implementation.
+
+---
+
 ## GAME VOLUNTARY ROOM REJOIN FIX — 2026-11-25 PHT (NOT MERGED)
 
 - Reviewed latest main `134a63c163202b5d5a40ce3836daa3d7565569e3` after deployed gateway readiness #745. Identified a concrete client lifecycle bug: after local waypoint exit or saved location with no server resume anchor, the client stops reconnecting even if player voluntarily walks back to approved spawn. No forced Sanctuary relocation or prompt is desired.
