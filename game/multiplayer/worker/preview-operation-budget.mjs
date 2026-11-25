@@ -37,7 +37,11 @@ export function createPreviewOperationBudget({storage,clock=()=>Date.now()}={}){
     if(!valid(row)||now<row.lastAt)return deny('invalid-preview-budget');
     const expiresAt=row.startedAt+PREVIEW_BUDGET.windowMs;
     // Terminal cleanup can still spend its reserved allowance after expiry.
-    if(kind!=='disconnect'&&now>=expiresAt)return deny('preview-window-ended');
+    if(kind!=='disconnect'&&now>=expiresAt){
+     // Latch observed expiry once so a later clock rollback cannot reopen it.
+     if(row.lastAt<expiresAt)await tx.put(key,{...row,lastAt:expiresAt});
+     return deny('preview-window-ended');
+    }
     if(row.counts[kind]>=PREVIEW_BUDGET[kind]||
        (kind==='disconnect'&&row.counts.disconnect>=row.counts.admission))
      return deny('preview-operation-limit');
