@@ -1917,7 +1917,7 @@ addEventListener('keydown',e=>{
  const m=e.code.match(/^Digit([1-8])$/);if(m)TP[m[1]]();
 });
 addEventListener('keyup',e=>keys[e.code]=false);
-addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false;P.moveTarget=null;drag=false;});
+// Input lifecycle cleanup is registered with the touch controls below.
 const cv=renderer.domElement;
 // Mouse-wheel camera zoom is deliberately limited to gameplay so the cinematic intro stays composed.
 cv.addEventListener('wheel',e=>{if(P.mode!=='walk')return;e.preventDefault();targetCameraDistance=Math.max(3.4,Math.min(14,targetCameraDistance+Math.sign(e.deltaY)*.9));},{passive:false});
@@ -2333,7 +2333,10 @@ addEventListener('keydown',e=>{if(!isEditingText(e)&&e.code==='KeyM'&&!e.repeat)
 addEventListener('keydown',e=>{if(!isEditingText(e)&&e.code==='KeyI'&&!e.repeat){e.preventDefault();toggleInventory()}});
 if(MOB){document.body.style.touchAction='none';
  [['JUMP / SURFACE','Space',16,120],['RUN','ShiftLeft',16,40],['USE',null,96,80],['DIVE','ControlLeft',96,160]].forEach(([t,k,r,b])=>{const e=css(document.createElement('div'),`position:fixed;right:${r}px;bottom:calc(${b}px + env(safe-area-inset-bottom));z-index:9;width:62px;height:62px;border-radius:50%;background:#0008;border:2px solid #ffe3a3aa;color:#ffe3a3;font:11px system-ui;display:grid;place-content:center;touch-action:none`);e.textContent=t;e.dataset.mobileAction=t.toLowerCase().replace(/[^a-z]+/g,'-').replace(/^-|-$/g,'');
-  e.addEventListener('touchstart',ev=>{ev.stopPropagation();ev.preventDefault();k?keys[k]=true:interact()},{passive:false});e.addEventListener('touchend',ev=>{ev.stopPropagation();k&&(keys[k]=false)});document.body.appendChild(e)});}
+  e.addEventListener('touchstart',ev=>{ev.stopPropagation();ev.preventDefault();k?keys[k]=true:interact()},{passive:false});
+  const release=ev=>{ev.stopPropagation();if(k)keys[k]=false;};
+  e.addEventListener('touchend',release);e.addEventListener('touchcancel',release);
+  document.body.appendChild(e)});}
 const jr=css(document.createElement('div'),'position:fixed;width:100px;height:100px;border-radius:50%;border:2px solid #ffe3a366;display:none;z-index:9;pointer-events:none'),jk=css(document.createElement('div'),'position:fixed;width:44px;height:44px;border-radius:50%;background:#ffe3a355;display:none;z-index:9;pointer-events:none');document.body.append(jr,jk);
 let pinchDistance=0;
 let landscapeLockRequested=false;
@@ -2344,6 +2347,18 @@ addEventListener('touchmove',e=>{if(e.touches.length>=2){const a=e.touches[0],b=
  else if(t.identifier==lk.id&&P.mode!='cine'){cameraYaw-=(t.clientX-lk.x)*.005;cameraPitch=Math.max(-1.25,Math.min(1.15,cameraPitch-(t.clientY-lk.y)*.005));lk.x=t.clientX;lk.y=t.clientY}}},{passive:true});
 const tend=e=>{for(const t of e.changedTouches){if(t.identifier==joy.id){joy.id=null;joy.dx=joy.dy=0;jr.style.display=jk.style.display='none'}if(t.identifier==lk.id)lk.id=null}};
 addEventListener('touchend',tend);addEventListener('touchcancel',tend);
+// OS gestures, keyboard focus, tab switches and fullscreen interruptions can
+// remove the matching release event. Stop stale movement without relocating
+// the hero or changing health, stamina, or the authenticated room state.
+function releaseGameplayInput(){
+ for(const k of Object.keys(keys))keys[k]=false;
+ P.moveTarget=null;drag=false;
+ joy.id=null;joy.dx=joy.dy=0;lk.id=null;pinchDistance=0;
+ jr.style.display=jk.style.display='none';
+}
+addEventListener('blur',releaseGameplayInput);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseGameplayInput()});
+document.addEventListener('focusin',e=>{if(isEditingText(e))releaseGameplayInput()});
 /* collision: allow steep mountain approaches while blocking near-vertical faces, abrupt ledges, and tree/rock/structure circles (chunk colliders unload with their chunk) */
 const solids=[],SLOPE=3.8,PLAYER_RADIUS=.34,MAX_STEP_UP=3.0;
 
