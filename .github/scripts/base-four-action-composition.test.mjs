@@ -103,3 +103,30 @@ test("funded wrapper never reaches simulation when holder runtime evidence fails
  await assert.rejects(observeFundedComposedSimulation(intent,f.q,contractPolicy,fundedReview,state,{...f.opts,fetchImpl}),/holder runtime/);
  assert.deepEqual(calls,["eth_chainId","eth_blockNumber","eth_getBlockByNumber","eth_getCode"]);
 });
+
+import {inspectUsdcQuoteParticipants,decodeUsdcBool,observeUsdcQuoteParticipants} from "../../dex/base-execution/usdc-quote-participant-observation.mjs";
+test("USDC participant set binds taker, holder, reviewed Settler, pool and both reviewed fee recipients",()=>{
+ const q={...quote(),blockNumber:BigInt(blockNumber).toString()};
+ assert.deepEqual(inspectUsdcQuoteParticipants(intent,q,contractPolicy,review,state,anchor),[taker,holder,target,state.pool,feeRecipient,surplusRecipient]);
+ for(const [badQuote,badReview,badAnchor] of [[{...q,blockNumber:"1"},review,anchor],[q,{...review,sellFeeRecipient:taker},anchor],[q,review,{...anchor,hash:"0x"+"b".repeat(64)}]])assert.throws(()=>inspectUsdcQuoteParticipants(intent,badQuote,contractPolicy,badReview,state,badAnchor));
+});
+test("USDC canonical bool rejects malformed or noncanonical response",()=>{
+ assert.equal(decodeUsdcBool("0x"+word(0)),false);assert.equal(decodeUsdcBool("0x"+word(1)),true);
+ for(const invalid of ["0x01","0x"+word(2),"0x"+word(256),null,1])assert.throws(()=>decodeUsdcBool(invalid));
+});
+test("USDC participant observation refuses unapproved, changed code or wrong chain before participant queries",async()=>{
+ const q={...quote(),blockNumber:BigInt(blockNumber).toString()},calls=[];
+ const fetchImpl=async(url,opts)=>{
+  const req=JSON.parse(opts.body);calls.push(req);
+  let result;
+  if(req.method==="eth_chainId")result="0x2105";
+  else if(req.method==="eth_getBlockByNumber")result={number:blockNumber,hash:blockHash};
+  else if(req.method==="eth_getCode"){assert.deepEqual(req.params[1],{blockHash,requireCanonical:true});result="0x6000";}
+  else throw Error("Unexpected participant query");
+  return new Response(JSON.stringify({jsonrpc:"2.0",id:req.id,result}));
+ };
+ await assert.rejects(observeUsdcQuoteParticipants(intent,q,contractPolicy,review,state,{referenceBlock:anchor,fetchImpl}),/authorization/);
+ assert.equal(calls.length,0);
+ await assert.rejects(observeUsdcQuoteParticipants(intent,q,contractPolicy,review,state,{authorized:true,referenceBlock:anchor,fetchImpl}),/runtime changed/);
+ assert.deepEqual(calls.map(x=>x.method),["eth_chainId","eth_getBlockByNumber","eth_getCode"]);
+});
