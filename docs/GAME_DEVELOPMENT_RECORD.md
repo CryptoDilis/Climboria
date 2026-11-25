@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME HERO AUTH LIFECYCLE — 2026-11-26 PHT (NOT MERGED)
+
+- Main reviewed `e8a0c363351550a5493152b2e5d20ca79fec79cd`. Identified a source-level risk in Game menu: Supabase auth-state callback calls getUser while auth lock may still be held, and an unbounded getUser can strand hero creation. Previous account remained active during revalidation. Hero selection could change while save awaits verification.
+- Fix `825107ece22b75ff80e6d1e47d8f11c9cea7d72c` invalidates stale identity immediately, defers provider lookup until callback returns, bounds lookup/save verification at 10 seconds, rejects stale epochs and changed hero selection before saving. No guest permanent hero permission or account ownership gate weakened. Tests `eef46f9e3084ace129098b6be00aa6365f1405e3` exercise real inline auth lifecycle with deferred/stalled/stale/anonymous provider cases. Actual provider reproduction and fresh CI not yet verified.
+- **EXACT NEXT:** finish #778 and #780 exact-head checks and merge in that order, then reconcile shared records and verify this independent menu fix CI before merge. Actual two-account and physical Android acceptance remain pending. Game only.
+
+---
+
 ## GAME PUBLISHED MOBILE HTML VERIFICATION — 2026-11-26 PHT (NOT MERGED)
 
 - Checked main `29098afff0e7d7921e9ae141a3c732717831d1f3` after merged #770 and #775. Existing deployed-client readiness proof verifies the version reference in play.html and exact presence script bytes, but did not establish exact HTML bytes containing #770 inline mobile gesture controls. No live #770 claim yet.
