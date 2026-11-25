@@ -112,6 +112,9 @@ async fn test_climb_metadata_only_revoked_mint_locking() {
     let custody_before = ctx.banks_client.get_account(custody).await.unwrap().unwrap();
     assert_eq!(custody_before.owner, program);
     assert_eq!(StateWithExtensions::<Account2022>::unpack(&custody_before.data).unwrap().base.amount, 0);
+    assert_eq!(custody_before.data.len(), 170);
+    println!("CLIMB_CUSTODY_VECTOR before {} {} {} {} {}", data.mint, data.ntt.program,
+        data.ntt.token_authority(), custody, hex_bytes(&custody_before.data));
     let outbox = Keypair::new();
     let amount = 1050;
     let (accs, args) = init_accs_args(&mut ctx, &data, outbox.pubkey(), amount, false);
@@ -126,6 +129,9 @@ async fn test_climb_metadata_only_revoked_mint_locking() {
     assert_eq!(StateWithExtensions::<Account2022>::unpack(&user_after.data).unwrap().base.amount, CLIMB_TEST_SUPPLY - amount);
     assert_eq!(StateWithExtensions::<Account2022>::unpack(&custody_after.data).unwrap().base.amount, amount);
     assert_eq!(mint_after.data, mint_before.data);
+    assert_eq!(custody_after.owner, program);
+    println!("CLIMB_CUSTODY_VECTOR locked {} {} {} {} {}", data.mint, data.ntt.program,
+        data.ntt.token_authority(), custody, hex_bytes(&custody_after.data));
     let outbox_state: OutboxItem = ctx.get_account_data_anchor(outbox.pubkey()).await;
     assert_eq!(outbox_state.amount, TrimmedAmount { amount, decimals: 6 });
 
@@ -196,6 +202,9 @@ async fn test_climb_metadata_only_revoked_mint_locking() {
     assert_eq!(StateWithExtensions::<Account2022>::unpack(&returned.data).unwrap().base.amount, CLIMB_TEST_SUPPLY);
     assert_eq!(StateWithExtensions::<Account2022>::unpack(&empty.data).unwrap().base.amount, 0);
     assert_eq!(mint_final.data, mint_before.data);
+    assert_eq!(empty.owner, program);
+    println!("CLIMB_CUSTODY_VECTOR returned {} {} {} {} {}", data.mint, data.ntt.program,
+        data.ntt.token_authority(), custody, hex_bytes(&empty.data));
     let released: InboxItem = ctx.get_account_data_anchor(inbox).await;
     assert_eq!(released.release_status, ReleaseStatus::Released);
 
