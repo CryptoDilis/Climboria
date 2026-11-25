@@ -38,4 +38,30 @@ jobs:
           cp token/climb-bridge/testnet-base/integration/ClimbNttManagerLocalIntegration.t.sol ntt-upstream/evm/test/
       - name: Compile and run pinned manager locally (no fork or broadcast)
         working-directory: ntt-upstream/evm
-        run: forge test --match-path test/ClimbNttManagerLocalIntegration.t.sol --match-contract ClimbNttManagerLocalIntegrationTest -vvv
+        run: |
+          set -euo pipefail
+          forge test --match-path test/ClimbNttManagerLocalIntegration.t.sol --match-contract ClimbNttManagerLocalIntegrationTest -vvv | tee "$RUNNER_TEMP/climb-ntt-local.log"
+          grep -Eq '3 tests passed, 0 failed, 0 skipped \(3 total tests\)' "$RUNNER_TEMP/climb-ntt-local.log"
+      - name: Run pinned upstream manager and arithmetic regression tests
+        working-directory: ntt-upstream/evm
+        run: |
+          set -euo pipefail
+          # Forge matches signatures (including parentheses), not bare function names.
+          # Also assert every intended test actually passed; zero-match is not success.
+          manager_tests=(pauseUnpause pausePauserUnpauseOnlyOwner disableReenableTransceiver maxOutTransceivers cancellingOutboundQueuedTransfers cantSetThresholdTooHigh cantSetThresholdToZero transferWithAmountAndDecimalsThatCouldOverflow transfersOnForkedChains)
+          queue_tests=(outboundRateLimit_queue inboundRateLimit_queue)
+          run_exact_suite() {
+            local path="$1" log="$2"
+            shift 2
+            local pattern
+            pattern=$(IFS='|'; echo "$*")
+            forge test --match-path "$path" --match-test "^test_($pattern)" -vv | tee "$log"
+            for name in "$@"; do
+              grep -Fq "[PASS] test_${name}()" "$log"
+            done
+            grep -Eq "$# tests passed, 0 failed, 0 skipped \($# total tests\)" "$log"
+          }
+          run_exact_suite test/NttManager.t.sol "$RUNNER_TEMP/ntt-manager-regressions.log" "${manager_tests[@]}"
+          forge test --match-path test/TrimmedAmount.t.sol -vv | tee "$RUNNER_TEMP/ntt-trimming-regressions.log"
+          grep -Eq '22 tests passed, 0 failed, 0 skipped \(22 total tests\)' "$RUNNER_TEMP/ntt-trimming-regressions.log"
+          run_exact_suite test/RateLimit.t.sol "$RUNNER_TEMP/ntt-queue-regressions.log" "${queue_tests[@]}"

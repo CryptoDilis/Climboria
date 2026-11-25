@@ -95,6 +95,14 @@ try{
  const b3=await connect(stub,await ticket(stub,B));
  assert.equal(b3.joined.snapshot.health,495,'SQLite durable state survives local runtime restart');
  b3.close();await stop();
+ // Private auth reservations consume the same absolute preview window.
+ stub=await start();
+ for(let i=0;i<24;i++)assert.equal((await stub.fetch('https://preview.internal/_auth',{method:'POST'})).status,204);
+ assert.equal((await stub.fetch('https://preview.internal/_auth',{method:'POST'})).status,429);
+ await stop();
+ stub=await start();
+ assert.equal((await stub.fetch('https://preview.internal/_auth',{method:'POST'})).status,429,'auth cap survives SQLite restart');
+ await stop();
  // Five admission attempts were spent above, including the replay.
  // Seven further attempts consume the remaining durable admission budget.
  stub=await start();
@@ -109,5 +117,5 @@ try{
  assert.equal(denied.status,503);
  const outer=await mf.dispatchFetch('https://preview.invalid/ticket',{method:'POST'});
  assert.equal(outer.status,503);
- console.log('PASS: actual local workerd WebSockets, private SQLite DO tickets, committed HP, reconnect/restart, persistent admission cap and disabled-by-default admission');
+ console.log('PASS: actual local workerd WebSockets, private SQLite DO tickets, committed HP, reconnect/restart, persistent auth/admission caps and disabled-by-default admission');
 }finally{await stop();await rm(dir,{recursive:true,force:true})}

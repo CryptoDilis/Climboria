@@ -46,8 +46,14 @@ export const previewWorker={
    if(url.pathname==='/ticket'&&req.method==='POST'){
     const auth=req.headers.get('Authorization')||'';
     if(!/^Bearer [A-Za-z0-9._-]{1,4096}$/.test(auth))return response(401,{error:'login-required'});
+    // Reserve before every upstream request, including rejected credentials.
+    // No browser identity or token is sent to the private budget endpoint.
+    const permit=await deadline(signal=>stub.fetch(new Request('https://preview.internal/_auth',{
+     method:'POST',signal
+    })),3500);
+    if(permit.status!==204)return response(permit.status===429?429:503,{error:'preview-auth-budget-denied'});
     const user=await deadline(async signal=>{
-     const r=await fetch(AUTH_URL,{headers:{Authorization:auth,apikey:env.SUPABASE_PUBLISHABLE_KEY,Accept:'application/json'},signal});
+     const r=await fetch(AUTH_URL,{headers:{Authorization:auth,apikey:env.SUPABASE_PUBLISHABLE_KEY,Accept:'application/json'},signal,redirect:'error'});
      return r.ok?await r.json():null;
     },6500);
     if(!user||typeof user.id!=='string'||user.is_anonymous===true||user.app_metadata?.provider==='anonymous'||
@@ -131,6 +137,12 @@ export class PreviewCombatRoom{
   if(!enabled(this.env))return response(503,{error:'preview-disabled'});
   if(this.quarantined)return response(503,{error:'preview-room-unavailable'});
   const url=new URL(req.url);
+  if(url.pathname==='/_auth'&&req.method==='POST'){
+   // Private DO route, never forwarded directly from the public Worker.
+   const reserved=await this.budget.reserve('auth');
+   return reserved.ok?new Response(null,{status:204,headers:{'cache-control':'no-store'}}):
+    response(reserved.reason==='preview-operation-limit'||reserved.reason==='preview-window-ended'?429:503,{error:'preview-auth-budget-denied'});
+  }
   if(url.pathname==='/_ticket'&&req.method==='POST'){
    // Only the outer Worker may invoke this private DO route. Bound the
    // internal JSON payload again; no user-selected room, spawn or ticket.

@@ -1,0 +1,68 @@
+name: Game Registered Pilot - Manual Two-Account QA
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type RUN_REGISTERED_GAME_PILOT_QA"
+        required: true
+        type: string
+      landscape_mobile:
+        description: "Emulate landscape mobile for player B"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: game-real-pilot-qa
+  cancel-in-progress: false
+
+jobs:
+  qa:
+    if: ${{ github.ref == 'refs/heads/main' && inputs.confirmation == 'RUN_REGISTERED_GAME_PILOT_QA' }}
+    runs-on: ubuntu-latest
+    environment: game-registered-pilot-qa
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser tooling before account credentials are provided
+        run: |
+          npm init -y
+          npm install --save-dev --save-exact --package-lock playwright@1.56.1
+          npm audit --audit-level=high
+          npx --no-install playwright install --with-deps chromium
+          node --check game/multiplayer/worker/e2e-real-game-ui.mjs
+      - name: Run actual registered pilot acceptance (no deployment)
+        env:
+          GAME_QA_APPROVAL: I_APPROVE_GAME_STAGING_QA
+          GAME_QA_A_EMAIL: ${{ secrets.GAME_QA_A_EMAIL }}
+          GAME_QA_A_PASSWORD: ${{ secrets.GAME_QA_A_PASSWORD }}
+          GAME_QA_B_EMAIL: ${{ secrets.GAME_QA_B_EMAIL }}
+          GAME_QA_B_PASSWORD: ${{ secrets.GAME_QA_B_PASSWORD }}
+          GAME_QA_LANDSCAPE_MOBILE: ${{ inputs.landscape_mobile && '1' || '0' }}
+        run: |
+          node --input-type=module - <<'NODE'
+          const e=process.env;
+          if(!e.GAME_QA_A_EMAIL||!e.GAME_QA_B_EMAIL||!e.GAME_QA_A_PASSWORD||!e.GAME_QA_B_PASSWORD||
+             e.GAME_QA_A_EMAIL.trim().toLowerCase()===e.GAME_QA_B_EMAIL.trim().toLowerCase()){
+            console.error('FAIL: two different disposable registered QA accounts are required in the protected environment.');
+            process.exit(1);
+          }
+          delete e.GAME_QA_SCREENSHOT_DIR;
+          delete e.DEBUG;
+          delete e.PWDEBUG;
+          try{
+            await import('./game/multiplayer/worker/e2e-real-game-ui.mjs');
+          }catch{
+            console.error('FAIL: registered pilot browser acceptance. Inspect only redacted stage markers; do not expose credentials.');
+            process.exitCode=1;
+          }
+          NODE
