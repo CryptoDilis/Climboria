@@ -25,6 +25,12 @@ jobs:
           ref: fc85788bc7c23cefe3df1a757133048bfddadeaa
           path: official-circle-stablecoin
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: circlefin/stablecoin-evm
+          ref: 405efc100c016ed1a437063b6274b4e24ea7b8b1
+          path: official-circle-stablecoin-v220
+          persist-credentials: false
       - name: Compile candidate upstream source and require full runtime hash equality
         run: |
           npm install --prefix .github/scripts --no-save --package-lock=false --ignore-scripts --no-audit --no-fund solc@0.6.12 @openzeppelin/contracts@3.4.2
