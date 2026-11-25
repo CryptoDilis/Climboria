@@ -1,0 +1,22 @@
+name: Base DEX Settler Deployment Revision
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-settler-deployment-revision.mjs"
+      - ".github/workflows/base-settler-deployment-revision.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --check .github/scripts/base-settler-deployment-revision.mjs
+      - name: Locate historical deployment and corroborate GitCommit event (read-only)
+        run: node .github/scripts/base-settler-deployment-revision.mjs
