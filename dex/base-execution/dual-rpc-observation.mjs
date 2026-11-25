@@ -16,7 +16,7 @@ const COMPARE_FIELDS=Object.freeze([
 ]);
 export async function corroborateBaseAllowanceObservation(input,{
  primaryRpcUrl=BASE_OBSERVATION_PRIMARY_RPC,secondaryRpcUrl,
- fetchImpl=(url,init)=>globalThis.fetch(url,init),signal
+ fetchImpl=(url,init)=>globalThis.fetch(url,init),signal,readImpl=readAllowanceObservation
 }={}){
  // All validation must finish BEFORE the first fetch; otherwise a malformed
  // alternate endpoint might leave a misleading single-RPC result.
@@ -25,9 +25,14 @@ export async function corroborateBaseAllowanceObservation(input,{
  if(new URL(primary).hostname===new URL(secondary).hostname)
   throw Error("Independent Base RPC hostname must differ");
  signal?.throwIfAborted?.();
- const first=await readAllowanceObservation(input,{rpcUrl:primary,fetchImpl,signal});
- if(first.executable!==false||first.observationOnly!==true)throw Error("Unexpected executable Base observation");
- const second=await readAllowanceObservation(input,{
+ const first=await readImpl(input,{rpcUrl:primary,fetchImpl,signal});
+ if(first?.chainId!==8453||first.executable!==false||first.observationOnly!==true||
+   typeof first.observedBlock!=="string"||!/^0x[1-9a-f][0-9a-f]{0,15}$/.test(first.observedBlock)||
+   typeof first.observedBlockHash!=="string"||!/^0x[0-9a-f]{64}$/.test(first.observedBlockHash)||
+   /^0x0{64}$/.test(first.observedBlockHash)||
+   typeof first.observedSellTokenCodeSha256!=="string"||!/^[0-9a-f]{64}$/.test(first.observedSellTokenCodeSha256))
+  throw Error("Invalid primary Base observation identity");
+ const second=await readImpl(input,{
   rpcUrl:secondary,fetchImpl,signal,
   referenceBlock:{number:first.observedBlock,hash:first.observedBlockHash}
  });
