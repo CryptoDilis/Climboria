@@ -1,0 +1,29 @@
+name: Base DEX Uniswap V3 Action Safety
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "dex/base-execution/**"
+      - ".github/scripts/base-univ3-action-policy.test.mjs"
+      - ".github/workflows/base-univ3-action-policy.yml"
+  push:
+    branches: [main]
+    paths:
+      - "dex/base-execution/**"
+      - ".github/scripts/base-univ3-action-policy.test.mjs"
+      - ".github/workflows/base-univ3-action-policy.yml"
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          node --check dex/base-execution/univ3-action-policy.mjs
+          node --test .github/scripts/base-univ3-action-policy.test.mjs
+          grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs

@@ -1,0 +1,38 @@
+name: Base DEX Candidate Uniswap V3 Runtime Match
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-univ3-runtime-match.mjs"
+      - ".github/workflows/base-univ3-runtime-match.yml"
+      - "dex/base-execution/univ3-action-policy.mjs"
+      - "dex/base-execution/intent-policy.mjs"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  match:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/checkout@v4
+        with:
+          repository: Uniswap/v3-core
+          ref: e3589b192d0be27e100cd0daaf6c97204fdb1899
+          path: official-uniswap-v3-core
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.5.1
+      - name: Compile pinned upstream sources and compare prior observed runtime fingerprints
+        run: |
+          npm install --prefix .github/scripts --no-save --package-lock=false --ignore-scripts --no-audit --no-fund solc@0.7.6
+          node --check .github/scripts/base-univ3-runtime-match.mjs
+          node .github/scripts/base-univ3-runtime-match.mjs
+          grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs

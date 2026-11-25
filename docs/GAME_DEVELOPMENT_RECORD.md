@@ -1,10 +1,51 @@
 # Climboria Game Development Record
 
+## GAME HERO LIFECYCLE MERGED AND PUBLISHED MENU VERIFIER RECONCILED — 2026-11-26 PHT
+
+- #781 MERGED at `09af58d863f8ca88f03c9412807875e11ff96b1a`, exact tested head `f00b87defd12d5d07c73fff0c50e3a557ffebf10`: [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45684112680), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45684112610), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45684112778), [Original Hero](https://github.com/CryptoDilis/Climboria/actions/runs/45684112606), [Browser](https://github.com/CryptoDilis/Climboria/actions/runs/45684112641), [Heroes](https://github.com/CryptoDilis/Climboria/actions/runs/45684112903), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45684112651) ALL SUCCESS. Gateway job 139452055637 confirmed 253/253 and separate 56/56 tests, including all eight hero lifecycle regressions. Main drift only unrelated Base DEX paths; expected head lease used. Publication of #781 not yet verified.
+- #786 previous head `adb75e3c82833f92363dbe94a3d6c3c902795cf6` public readiness [45684746971](https://github.com/CryptoDilis/Climboria/actions/runs/45684746971) job 139454251330 proved 19/19 offline tests, approved room configuration, Nearby Chat and DO readiness at Nov 25 19:23:48 UTC. Actual published play.html SHA256 `1a4569c572babcae3a7268f9b7bd56593be9fcd9a96e48272fb0ac2cdad50252`; index.html SHA256 `01c7c0ed2a87080d197f8eb66e59e931e2b1028bb73a68c6fe341823cfee8fed`; presence version `20261126-game-chat-guard-1` SHA256 `f13f6a3ce99ba4eead0bdbc5d3a4f95f651caea0b23ead5855478601c826bd43`. This was pre-#781 menu; not evidence of new hero changes. Runtime 45684746853, Gateway 45684746747 and Validate 45684746768 passed; old gameplay run 45684746972 pending at prior review.
+- Reconciled verifier on main `09af58d863f8ca88f03c9412807875e11ff96b1a`, preserving all hero and multiplayer fixes; fresh exact-head CI including real published menu parity required. If Pages publication is still pending, rerun readiness after deployment; do not relax byte parity.
+- **EXACT NEXT:** verify all #786 fresh checks, inspect actual published menu digest and merge only green; then actual two registered accounts for bidirectional movement, World/Nearby chat and reconnect; separate physical Android and private combat staging acceptance. No production damage or loot activation. Game only.
+
+---
+
 ## GAME PUBLISHED MENU PARITY PREPARATION — 2026-11-26 PHT (NOT MERGED)
 
 - #780 merged `7dc4458ceece725cc74d72d80526e5c278d65c54`; eight checks passed as recorded on #781 branch. #781 reconciled head `f00b87defd12d5d07c73fff0c50e3a557ffebf10`: Gateway 45684112680 job 139452055637 confirmed 253/253 and 56/56 tests, zero failures including all eight hero lifecycle cases. Validate 45684112610, Runtime 45684112778, Original Hero 45684112606, Browser 45684112641 and Heroes 45684112903 passed; Gameplay 45684112651 still running at review.
 - Added exact public Game menu SHA256 parity to existing bounded read-only verifier, preserving gameplay HTML and presence checks. Two new negative controls cover stale menu and invalid MIME/redirect/oversized menu. No login or production mutation. This branch is based on merged chat fix, not pending hero change; proof on this branch does not establish publication of future #781.
 - **EXACT NEXT:** finish #781 checks and merge only green, reconcile this verifier on latest main and check actual public gameplay HTML, presence and hero menu digests after Pages deployment; do not weaken parity if release is stale. Real registered two-account, physical Android and private combat staging still separate blockers. Game only.
+
+---
+
+## GAME CHAT GUARD MERGED AND HERO LIFECYCLE RECONCILED — 2026-11-26 PHT
+
+- #780 MERGED at `7dc4458ceece725cc74d72d80526e5c278d65c54`, exact tested head `e571a7991bcb6500ae1dec6daf6807d7d9d336ea`: [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45681810345), [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45681810719), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45681810403), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45681810386), [Browser](https://github.com/CryptoDilis/Climboria/actions/runs/45681810383), [Heroes](https://github.com/CryptoDilis/Climboria/actions/runs/45681810234), [Chests](https://github.com/CryptoDilis/Climboria/actions/runs/45681810464), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45681810411) ALL SUCCESS. Gateway job 139444015993 confirmed 245/245 plus separate 56/56, zero failures. Main drift only unrelated Base DEX files; exact head lease used. No actual chat delivery or damage activation claimed.
+- #781 reconciled from `341345234c89ddff153c41f8967554d5f37cd1d8` against main `7dc4458ceece725cc74d72d80526e5c278d65c54`, preserving all merged HUD/chat source and records. Fresh CI required for hero login, save and launch changes and eight lifecycle cases.
+- **EXACT NEXT:** inspect new #781 exact-head CI and merge only green; verify latest published HTML/presence parity and hero menu publication. Real registered two-account, physical Android and private combat staging still separate acceptance blockers. Game only.
+
+---
+
+## GAME MENU AUTH-RESOLUTION LAUNCH GUARD — 2026-11-26 PHT (NOT MERGED)
+
+- #780 exact reconciled head `e571a7991bcb6500ae1dec6daf6807d7d9d336ea`: Gateway 45681810345 (job 139444015993: 245/245 plus separate 56/56 tests, all three new chat regressions passed), Runtime 45681810403, Authority 45681810719, Validate 45681810386, Browser 45681810383, Heroes 45681810234 and Chests 45681810464 SUCCESS; full Gameplay 45681810411 still running at review. Latest main drift `9092d3d..caa3517` only unrelated paths.
+- #781 source review found launch card could silently choose guest while registered identity is still being resolved; also allowed leaving during pending hero save. Guard now waits for resolution, preserves explicit Play as Guest, prevents launch while pending save, and shows checking state. Added inline-handler regression and adjusted browser smoke to wait for actual signed-out state before checking guest launch. No login bypass or new auth provider. New head CI not yet available due shared record conflict.
+- **EXACT NEXT:** merge #780 after final Gameplay check passes; reconcile #781 with current main preserving all history, verify fresh checks including eight hero lifecycle cases and merge only green. Published parity and actual registered two-account/Android acceptance remain pending; private combat staging separately blocked. Game only.
+
+---
+
+## GAME HERO SAVE SINGLE-FLIGHT AND EDITOR LIFECYCLE — 2026-11-26 PHT (NOT MERGED)
+
+- #781 previous head `b29b4a7a09717f03680bb594ece31509d78daaff` all six checks SUCCESS: Gateway 45680072970, Validate 45680072858, Runtime 45680072888, Original Hero 45680072882, Gameplay 45680072963, Heroes 45680072863. Source review identified a separate pending-save race: editorButtons could re-enable Save while provider verification was pending; closing/reopening the editor could still allow an earlier save to write. Added single-flight guard, editor revision invalidation, disabled Enter during pending save and three actual inline-handler regressions for duplicate save, stale editor and changed selection. No guest or ownership bypass. New head CI pending.
+- #780 reconciled head `e571a7991bcb6500ae1dec6daf6807d7d9d336ea`: Validate 45681810386, Runtime 45681810403, Authority 45681810719, Gateway 45681810345 SUCCESS; Gameplay 45681810411, Chests 45681810464, Heroes 45681810234 and Browser 45681810383 running at review. #778 already merged `108a680e0f1281adab41f29334c6b01479e080e0`.
+- **EXACT NEXT:** finish #780 checks and merge only green; reconcile #781 on latest main preserving shared history, verify fresh CI including save regressions and merge only green. Published parity, physical Android and actual registered two-account acceptance remain pending; private combat staging separately blocked. Game only.
+
+---
+
+## GAME HERO AUTH LIFECYCLE — 2026-11-26 PHT (NOT MERGED)
+
+- Main reviewed `e8a0c363351550a5493152b2e5d20ca79fec79cd`. Identified a source-level risk in Game menu: Supabase auth-state callback calls getUser while auth lock may still be held, and an unbounded getUser can strand hero creation. Previous account remained active during revalidation. Hero selection could change while save awaits verification.
+- Fix `825107ece22b75ff80e6d1e47d8f11c9cea7d72c` invalidates stale identity immediately, defers provider lookup until callback returns, bounds lookup/save verification at 10 seconds, rejects stale epochs and changed hero selection before saving. No guest permanent hero permission or account ownership gate weakened. Tests `eef46f9e3084ace129098b6be00aa6365f1405e3` exercise real inline auth lifecycle with deferred/stalled/stale/anonymous provider cases. Actual provider reproduction and fresh CI not yet verified.
+- **EXACT NEXT:** finish #778 and #780 exact-head checks and merge in that order, then reconcile shared records and verify this independent menu fix CI before merge. Actual two-account and physical Android acceptance remain pending. Game only.
 
 ---
 
