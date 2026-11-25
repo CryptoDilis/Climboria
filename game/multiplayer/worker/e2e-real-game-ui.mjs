@@ -47,6 +47,7 @@ check(!env.GAME_ROOM_BASE||env.GAME_ROOM_BASE===ROOM,
 
 // A running Worker is not evidence of functioning authenticated room storage.
 // Both the response AND full body validation are bound by one strict deadline.
+console.log('GAME QA STAGE: deployed-config-preflight');
 await verifyDeployedGameConfig({deadlineMs:15000});
 await verifyGameRoomPreflight(ROOM,'health',{deadlineMs:15000,requireNearbyChat:true});
 await verifyGameRoomPreflight(ROOM,'ready',{deadlineMs:15000});
@@ -156,11 +157,14 @@ async function frameRate(page){
  return Math.round(((end-start)*1000/(Date.now()-beginning))*10)/10;
 }
 try{
+console.log('GAME QA STAGE: first-account');
  const a=await openExplorer(accounts[0],false);
  check((await a.evaluate(()=>window.__CLIMBORIA_GAME_PEERS.audit())).peers===0,
   'First QA account must enter a clean room with no ghost players');
+console.log('GAME QA STAGE: second-account');
  const b=await openExplorer(accounts[1],env.GAME_QA_LANDSCAPE_MOBILE==='1');
  await Promise.all([assertPeer(a,1),assertPeer(b,1)]);
+console.log('GAME QA STAGE: remote-models');
  await Promise.all([waitForGlb(a),waitForGlb(b)]);
  // The transcript must already be visible on BOTH real accounts; the
  // tester must not need to click a hidden WORLD CHAT card to see messages.
@@ -175,6 +179,7 @@ try{
  // Test real in-range 20m server delivery AND the remote head speech model.
  // This runs before the sprint test while both legitimate players are next
  // to one another; no mocked WebSocket packets or forged peer coordinates.
+console.log('GAME QA STAGE: nearby-chat');
  const nearbyButton=a.locator('#climboria-world-chat-panel button[aria-label="Switch between World Chat and Nearby Chat"]');
  await nearbyButton.click();
  await a.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='NEARBY CHAT · 20m');
@@ -193,6 +198,7 @@ try{
  // Movement QA must observe actual keyboard-driven Game physics, real room
  // validation and updated coordinates in the OTHER browser's remote model.
  // A mere online count or loaded GLB is not sufficient for multiplayer.
+console.log('GAME QA STAGE: bidirectional-movement');
  const initialLocal=await a.evaluate(()=>{
   const p=window.__climboriaJarrellsPeak.player;
   return {x:p.x,z:p.z};
@@ -220,6 +226,7 @@ try{
   return peer&&Math.hypot(peer.x-initial.x,peer.z-initial.z)>.3&&
    Math.hypot(peer.x-after.x,peer.z-after.z)<7;
  },{initial:initialRemote,after:movedLocal},{timeout:30000});
+console.log('GAME QA STAGE: world-chat');
  await sendChat(a,'QA real game world chat A');
  await Promise.all([
   expectChat(a,'QA Explorer A','QA real game world chat A'),
@@ -274,6 +281,7 @@ try{
  }
  // A real Supabase logout must promptly clear the room and allow
  // reauthentication without reloading or duplicating peers.
+console.log('GAME QA STAGE: logout-reconnect');
  const loggedOut=await b.evaluate(requestBoundedGameQaAuth,{
   action:'sign-out',timeoutMs:20000
  });
