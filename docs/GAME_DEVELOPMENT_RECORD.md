@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## GAME DEPLOYED REGISTERED PILOT READINESS VERIFIED — 2026-11-25 PHT
+
+- #745 MERGED at `190ae6ec96699d7a3468b6fd8d79a64bdd9d1f66`, exact head `13b72f00dd762ea7f7981595fbdf5b8e6427769b`: [Deployed readiness](https://github.com/CryptoDilis/Climboria/actions/runs/45569973528) and [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45569973299) SUCCESS. Job 139053937293 checked 11/11 offline policy tests and verified real deployed climboria.fun client-config plus rooms.climboria.fun /health and /ready, including Nearby Chat capability. Checked 07:40:41 UTC (15:40:41 PHT). No real account login, WebSocket or chat delivery was tested.
+- **EXACT NEXT / OWNER ACTION:** existing public registered pilot is ready for actual two-account browser acceptance; no repeat Worker deploy needed. Two different registered QA accounts open https://climboria.fun/game/play.html in independent browser profiles, enter the same location, confirm each other's avatar and ONLINE count, two-way movement, World Chat and Nearby speech; disconnect/rejoin and confirm last position. Alternatively configure the protected `game-registered-pilot-qa` GitHub environment and dispatch the already merged manual QA workflow. Never share credentials in chat or source. Record sanitized evidence. The connector cannot dispatch manual workflows or operate Cloudflare/private accounts; private synthetic combat deployment remains separately blocked by scoped credentials, private access and edge/billing controls. Production PvP stays OFF. No other workstream changes.
+
+---
+
 ## GAME PRIVATE STAGING PREPARATION MERGED — 2026-11-25 PHT
 
 - #741 MERGED at `7b06668b1e832cdf93951b23ab10ae09cd9e6615`, exact head `f18663fbc27c2707b17c06466339c2627d508289`: [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45561272257), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45561272389), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45561272115), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45561272141) ALL SUCCESS. Manual real pilot QA workflow now on main, not yet executed with real accounts.
