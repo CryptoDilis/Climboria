@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME VOLUNTARY ROOM REJOIN FIX — 2026-11-25 PHT (NOT MERGED)
+
+- Reviewed latest main `134a63c163202b5d5a40ce3836daa3d7565569e3` after deployed gateway readiness #745. Identified a concrete client lifecycle bug: after local waypoint exit or saved location with no server resume anchor, the client stops reconnecting even if player voluntarily walks back to approved spawn. No forced Sanctuary relocation or prompt is desired.
+- Fix `f3f14111996451449f54bbb50b97d3a386a4fc78` observes local readiness/position at 1.2s intervals after saved-location/waypoint exit. No ticket requests outside approved spawn while waiting. On voluntary return, normal registered auth, one-use ticket, server spawn acknowledgement still required; logout cancels waiting. No server gate or production PvP change. Tests `4a776e1b6b2222e6836cb176a96316306b315702` cover wait without new ticket or relocation, normal admission after voluntary movement, logout cancellation. Cache version bumped `ee6d0439ae74ad50a482b578a9279014a05b7394`.
+- **EXACT NEXT:** inspect fresh exact-head Game CI, fix failures and merge only green; verify Pages deployment and repeat actual two-account acceptance when disposable accounts available. Existing real deployed readiness 45569973528 remains verified; live actual peer movement/chat and private combat cloud staging remain blocked by account and Cloudflare access. Game only.
+
+---
+
 ## GAME DEPLOYED REGISTERED PILOT READINESS VERIFIED — 2026-11-25 PHT
 
 - #745 MERGED at `190ae6ec96699d7a3468b6fd8d79a64bdd9d1f66`, exact head `13b72f00dd762ea7f7981595fbdf5b8e6427769b`: [Deployed readiness](https://github.com/CryptoDilis/Climboria/actions/runs/45569973528) and [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45569973299) SUCCESS. Job 139053937293 checked 11/11 offline policy tests and verified real deployed climboria.fun client-config plus rooms.climboria.fun /health and /ready, including Nearby Chat capability. Checked 07:40:41 UTC (15:40:41 PHT). No real account login, WebSocket or chat delivery was tested.

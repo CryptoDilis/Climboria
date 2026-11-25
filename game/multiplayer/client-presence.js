@@ -89,7 +89,7 @@
  const {auth,renderer,world}=readyClients;
  let socket=null,disposed=false,reconnect=null,movement=null,clientUser=null,selfId=null;
  let connecting=false,connectEpoch=0,authSubscription=null,spawnConfirmed=false;
- let sameAccountInUse=false;
+ let sameAccountInUse=false,waitForVoluntarySpawn=false;
  let admissionTimer=null;
  let sessionLookupCancel=null,ticketLookupCancel=null;
  const known=new Map(),validId=x=>typeof x==='string'&&/^s_[a-f0-9]{32}$/.test(x);
@@ -352,6 +352,8 @@
    clearPeers();
    if(rejected){try{rejected.close()}catch{}}
    showStatus('spawn-rejected','WORLD · SAVED LOCATION · ROOM REJOIN UNAVAILABLE');
+   // Do not retry a rejected spawn at the same location automatically.
+   if(!isAtRoomSpawn())waitForRoomSpawn();
   }
   else if(msg.type==='rejected'&&['world-chat-rate-limit','world-chat-invalid-text'].includes(msg.reason)){
    // Only the server rejection for THIS request can release its pending
@@ -394,6 +396,12 @@
  }
  // Auth transitions must not permanently disable presence. Keep the
  // explicit config.enabled release gate above; this runs only on approved rooms.
+ // Preserve the actual location and observe local movement only. Do not
+ // repeatedly issue tickets while the player is outside trusted spawn.
+ function waitForRoomSpawn(){
+  waitForVoluntarySpawn=true;
+  scheduleConnect(1200);
+ }
  function scheduleConnect(delay){
   if(disposed||socket||sameAccountInUse)return;
   if(reconnect)clearTimeout(reconnect);
@@ -420,6 +428,7 @@
  }
  function resetConnection(){
   clearAdmissionTimer();
+  waitForVoluntarySpawn=false;
   sameAccountInUse=false;
   // Invalidate pending getSession/ticket responses so a signed-out account
   // cannot later create a socket or revive its World Chat after logout.
@@ -448,9 +457,14 @@
   if(disposed||(!socket&&!connecting))return;
   resetConnection();
   showStatus('saved-location','EXPLORING · LOCATION KEPT');
+  waitForRoomSpawn();
  });
  async function connect(){
   if(disposed||connecting||socket||sameAccountInUse)return;
+  if(waitForVoluntarySpawn){
+   if(!isReady()||!isAtRoomSpawn()){scheduleConnect(1200);return}
+   waitForVoluntarySpawn=false;
+  }
   if(!isReady()){scheduleConnect(1200);return}
   connecting=true;
   const epoch=++connectEpoch;
@@ -586,6 +600,7 @@
     // A saved location without a server-trusted anchor stays visually
     // intact and offline. Never issue an arbitrary non-Sanctuary spawn.
     showStatus('saved-location','EXPLORING · LOCATION KEPT');
+    waitForRoomSpawn();
     return;
    }
    const socketURL=new URL('ws',base);socketURL.protocol='wss:';
@@ -605,6 +620,7 @@
      clearAdmissionTimer();socket=null;previous=null;
      try{ws.close()}catch{}
      showStatus('saved-location','EXPLORING · LOCATION KEPT');
+     waitForRoomSpawn();
      return;
     }
     previous=null;
