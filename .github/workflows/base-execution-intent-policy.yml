@@ -6,6 +6,7 @@ on:
       - "dex/base-execution/**"
       - ".github/scripts/base-execution-intent-policy.test.mjs"
       - ".github/scripts/base-allowance-policy.test.mjs"
+      - ".github/scripts/base-allowance-observation.test.mjs"
       - ".github/workflows/base-execution-intent-policy.yml"
   push:
     branches: [main]
@@ -13,6 +14,7 @@ on:
       - "dex/base-execution/**"
       - ".github/scripts/base-execution-intent-policy.test.mjs"
       - ".github/scripts/base-allowance-policy.test.mjs"
+      - ".github/scripts/base-allowance-observation.test.mjs"
       - ".github/workflows/base-execution-intent-policy.yml"
 permissions:
   contents: read
@@ -30,5 +32,6 @@ jobs:
           node --check dex/base-execution/settler-calldata.mjs
           node --check dex/base-execution/intent-policy.mjs
           node --check dex/base-execution/allowance-policy.mjs
-          node --test .github/scripts/base-execution-intent-policy.test.mjs .github/scripts/base-allowance-policy.test.mjs
+          node --check dex/base-execution/allowance-observation.mjs
+          node --test .github/scripts/base-execution-intent-policy.test.mjs .github/scripts/base-allowance-policy.test.mjs .github/scripts/base-allowance-observation.test.mjs
           grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs
