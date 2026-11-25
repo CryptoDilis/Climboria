@@ -1,4 +1,4 @@
-// Reproducibility candidate only, no masked bytes, no network calls or deployment.
+// Reproducibility candidate only; fixed public read-only RPC evidence, no deployment.
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {resolve,relative,isAbsolute} from "node:path";
@@ -23,18 +23,85 @@ function source(p){
  if(rel.startsWith("..")||isAbsolute(rel))throw Error("Import escapes source directory");
  return readFileSync(target,"utf8");
 }
-const sources=Object.fromEntries(expected.map(e=>[e.path,{content:source(e.path)}]));
+const libraryPath="contracts/util/SignatureChecker.sol";
+const sources=Object.fromEntries([...expected.map(e=>e.path),libraryPath].map(p=>[p,{content:source(p)}]));
 const input={language:"Solidity",sources,settings:{optimizer:{enabled:true,runs:10000000},outputSelection:{"*":{"*":["evm.deployedBytecode"]}}}};
-const out=JSON.parse(solc.compile(JSON.stringify(input),{import:p=>{try{return {contents:source(p)};}catch{return {error:"Unresolved reviewed source import: "+p};}}}));
-assert.deepEqual((out.errors??[]).filter(e=>e.severity==="error").map(e=>e.formattedMessage),[]);
+function compile(settings=input.settings){
+ const out=JSON.parse(solc.compile(JSON.stringify({...input,settings}),{import:p=>{try{return {contents:source(p)};}catch{return {error:"Unresolved reviewed source import: "+p};}}}));
+ assert.deepEqual((out.errors??[]).filter(e=>e.severity==="error").map(e=>e.formattedMessage),[]);
+ return out;
+}
+const out=compile();
+const sha=bytes=>createHash("sha256").update(bytes).digest("hex");
+const anchor={number:"0x3b57ffe",hash:"0x7d3452bfd771332b5457603dd86211815de35dd1f3e0bf73938adfae62396a74"};
+const tag={blockHash:anchor.hash,requireCanonical:true};
+const hosts=["https://mainnet.base.org","https://base-rpc.publicnode.com"];
+let seq=0;
+async function rpc(host,method,params){
+ assert.ok(hosts.includes(host));assert.ok(["eth_chainId","eth_getBlockByNumber","eth_getCode"].includes(method));
+ const id=++seq;
+ const r=await fetch(host,{method:"POST",redirect:"error",credentials:"omit",cache:"no-store",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id,method,params}),signal:AbortSignal.timeout(12000)});
+ assert.ok(r.ok,"RPC unavailable");const reader=r.body.getReader();let size=0;const parts=[];
+ try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>262144){await reader.cancel();throw Error("Oversized RPC response");}parts.push(value);}}finally{reader.releaseLock();}
+ const j=JSON.parse(Buffer.concat(parts).toString("utf8"));assert.equal(j.jsonrpc,"2.0");assert.equal(j.id,id);assert.ok(!Object.hasOwn(j,"error"));assert.ok(Object.hasOwn(j,"result"));return j.result;
+}
+async function fence(host){
+ assert.equal(await rpc(host,"eth_chainId",[]),"0x2105");
+ const b=await rpc(host,"eth_getBlockByNumber",[anchor.number,false]);assert.equal(b?.number,anchor.number);assert.equal(b?.hash,anchor.hash);
+}
+async function code(host,address){
+ const v=await rpc(host,"eth_getCode",[address,tag]);assert.match(v,/^0x(?:[0-9a-f]{2}){1,24576}$/);return v.slice(2);
+}
+function metadata(hex){
+ const size=parseInt(hex.slice(-4),16),length=size*2+4;
+ if(!Number.isInteger(size)||size<1||size>256||length>=hex.length)return null;
+ const cbor=hex.slice(-length,-4);
+ // This is a bounded raw trailer diagnostic, not authenticated metadata.
+ if(!/^a[1-9a-f]/.test(cbor))return null;
+ return {length:size,hex:cbor,bodySha256:sha(Buffer.from(hex.slice(0,-length),"hex"))};
+}
+const chain=[];
+for(const host of hosts){
+ await fence(host);const observed=[];
+ for(const e of expected){const hex=await code(host,e.address);assert.equal(sha(Buffer.from(hex,"hex")),e.sha256,"Historical runtime fingerprint changed");observed.push(hex);}
+ await fence(host);chain.push(observed);
+}
+assert.deepEqual(chain[0],chain[1],"RPC runtimes disagree");
+for(let i=0;i<expected.length;i++)console.log(JSON.stringify({contract:expected[i].name,onchainBytes:chain[0][i].length/2,metadata:metadata(chain[0][i]),fullHash:expected[i].sha256}));
+const cached=readFileSync(resolve(root,"cached_artifacts/opMainnetFiatTokenProxyRuntimeBytecode.bin"),"utf8").trim();
+assert.match(cached,/^(?:[0-9a-f]{2})+$/);
+console.log(JSON.stringify({candidate:"Circle cached OPMainnet proxy",exactArtifactMatch:cached===chain[0][0],sha256:sha(Buffer.from(cached,"hex")),metadata:metadata(cached),sourceBinaryParityVerified:false}));
+const impl=out.contracts[expected[1].path][expected[1].name].evm.deployedBytecode;
+const refs=impl.linkReferences?.[libraryPath]?.SignatureChecker;
+assert.deepEqual(Object.keys(impl.linkReferences??{}),[libraryPath]);assert.deepEqual(Object.keys(impl.linkReferences[libraryPath]),["SignatureChecker"]);assert.ok(refs?.length>0);
+const candidateAddresses=refs.map(({start,length})=>{
+ assert.equal(length,20);assert.ok(Number.isInteger(start)&&start>0&&start*2+40<=chain[0][1].length);
+ // Candidate offsets are not trusted deployment metadata; require PUSH20
+ // in both compiled template and deployed code before reading address.
+ assert.equal(impl.object.slice(start*2-2,start*2),"73");
+ const raw=chain[0][1];assert.equal(raw.slice(start*2-2,start*2),"73","Candidate library offset differs from deployment");
+ const a="0x"+raw.slice(start*2,start*2+40);assert.match(a,/^0x[0-9a-f]{40}$/);assert.notEqual(a,"0x"+"0".repeat(40));return a;
+});
+assert.ok(candidateAddresses.every(a=>a===candidateAddresses[0]),"Candidate linked addresses disagree");
+const libraryAddress=candidateAddresses[0];assert.ok(!expected.some(e=>e.address===libraryAddress));
+const libCodes=[];
+for(const host of hosts){await fence(host);libCodes.push(await code(host,libraryAddress));await fence(host);}
+assert.equal(libCodes[0],libCodes[1],"Library runtime differs between RPCs");
+console.log(JSON.stringify({candidateLibraryAddress:libraryAddress,offsets:refs.map(r=>r.start),runtimeSha256:sha(Buffer.from(libCodes[0],"hex")),metadata:metadata(libCodes[0]),candidateOffsetsOnly:true}));
+const linked=compile({...input.settings,libraries:{[libraryPath]:{SignatureChecker:libraryAddress}}});
 const results=[];
-for(const e of expected){
- const runtime=out.contracts?.[e.path]?.[e.name]?.evm?.deployedBytecode;
- assert.ok(runtime);assert.deepEqual(runtime.linkReferences??{},{});assert.deepEqual(runtime.immutableReferences??{},{});
- assert.match(runtime.object,/^(?:[0-9a-f]{2})+$/);
- const bytes=Buffer.from(runtime.object,"hex"),actual=createHash("sha256").update(bytes).digest("hex");
- const result={contract:e.name,address:e.address,bytes:bytes.length,actualSha256:actual,expectedSha256:e.sha256,exactMatch:actual===e.sha256};
+for(let i=0;i<expected.length;i++){
+ const e=expected[i],runtime=linked.contracts[e.path][e.name].evm.deployedBytecode;
+ assert.deepEqual(runtime.linkReferences??{},{});assert.deepEqual(runtime.immutableReferences??{},{});assert.match(runtime.object,/^(?:[0-9a-f]{2})+$/);
+ const actual=sha(Buffer.from(runtime.object,"hex"));
+ const result={contract:e.name,address:e.address,bytes:runtime.object.length/2,actualSha256:actual,expectedSha256:e.sha256,exactMatch:actual===e.sha256,metadata:metadata(runtime.object)};
  results.push(result);console.log(JSON.stringify(result));
 }
-console.log(JSON.stringify({revision,compiler:solc.version(),optimizerRuns:10000000,observedBlockHash:"0x7d3452bfd771332b5457603dd86211815de35dd1f3e0bf73938adfae62396a74",sourceBinaryParityVerified:results.every(r=>r.exactMatch),transferSemanticsVerified:false,executionApproved:false}));
-assert.ok(results.every(r=>r.exactMatch),"Exact source/runtime match not established; investigate deployment revision and compiler metadata/settings.");
+const lib=linked.contracts[libraryPath].SignatureChecker.evm.deployedBytecode;
+assert.deepEqual(lib.linkReferences??{},{});assert.deepEqual(lib.immutableReferences??{},{});assert.match(lib.object,/^73(?:00){20}[0-9a-f]+$/);
+const reconstructed="73"+libraryAddress.slice(2)+lib.object.slice(42);
+const libMatch=reconstructed===libCodes[0];
+console.log(JSON.stringify({contract:"SignatureChecker",exactMatch:libMatch,compiledSha256:sha(Buffer.from(reconstructed,"hex")),observedSha256:sha(Buffer.from(libCodes[0],"hex")),metadata:metadata(reconstructed)}));
+const allMatch=libMatch&&results.every(r=>r.exactMatch);
+console.log(JSON.stringify({revision,compiler:solc.version(),optimizerRuns:10000000,observedBlockHash:anchor.hash,sourceBinaryParityVerified:allMatch,transferSemanticsVerified:false,executionApproved:false}));
+assert.ok(allMatch,"Exact source/runtime match not established; investigate deployment revision and compiler metadata/settings.");
