@@ -6,6 +6,14 @@ on:
         description: 'Dedicated Base Sepolia public payer address only'
         required: true
         type: string
+      created_token:
+        description: 'Optional newly deployed test token public address (verification only)'
+        required: false
+        type: string
+      creation_tx:
+        description: 'Optional finalized creation transaction hash (required with created_token)'
+        required: false
+        type: string
   pull_request:
     paths:
       - 'token/climb-bridge/testnet-base/**'
@@ -57,7 +65,7 @@ jobs:
           retention-days: 7
           if-no-files-found: error
       - name: Simulate exact creation and estimate execution gas (read only)
-        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.created_token == '' && inputs.creation_tx == ''
         env:
           BASE_PUBLIC_ADDRESS: ${{ inputs.base_address }}
         run: |
@@ -70,3 +78,12 @@ jobs:
             cat "$RUNNER_TEMP/climb-testnet-estimate.json"
             echo '~~~'
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify finalized creation and exact runtime (read only)
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && (inputs.created_token != '' || inputs.creation_tx != '')
+        env:
+          BASE_PUBLIC_ADDRESS: ${{ inputs.base_address }}
+          TEST_TOKEN: ${{ inputs.created_token }}
+          CREATION_TX: ${{ inputs.creation_tx }}
+        run: |
+          set -euo pipefail
+          node verify-created-token.mjs out/ClimbTestnetToken.sol/ClimbTestnetToken.json "$GITHUB_SHA" "$TEST_TOKEN" "$BASE_PUBLIC_ADDRESS" "$CREATION_TX"
