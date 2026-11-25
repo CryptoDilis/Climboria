@@ -3,6 +3,9 @@ import {pathToFileURL} from 'node:url';
 import {TESTNET} from './ntt-testnet-core.mjs';
 import {CLIMB_SOLANA_MINT} from './mint-inspect.mjs';
 import {estimateTestMintRent} from './testnet-solana/mint-plan.mjs';
+// Measured sample ELF: run 45361395823, upstream v3.0.0, not owner-specific binary.
+const SAMPLE_PROGRAM_BYTES=36;
+const SAMPLE_PROGRAMDATA_BYTES=926605;
 const ALPHABET='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const fail=()=>{throw new Error('NO_GO: invalid or unavailable testnet payer evidence');};
 function solanaAddress(value){
@@ -25,13 +28,18 @@ export async function inspectTestnetPayers(solAddress,baseAddress,fetchFn=fetch)
  const sol=solanaAddress(solAddress),base=evmAddress(baseAddress),s=TESTNET.solana,b=TESTNET.base;
  const [rent,chain]=await Promise.all([estimateTestMintRent(fetchFn),rpc(b.rpc,'eth_chainId',[],fetchFn)]);
  if(chain!==b.chainId)fail();
- const [balance,wei,code]=await Promise.all([
+ const [balance,wei,code,programRent,dataRent]=await Promise.all([
   rpc(s.rpc,'getBalance',[sol,{commitment:'finalized'}],fetchFn),
   rpc(b.rpc,'eth_getBalance',[base,'finalized'],fetchFn),
-  rpc(b.rpc,'eth_getCode',[base,'finalized'],fetchFn)
+  rpc(b.rpc,'eth_getCode',[base,'finalized'],fetchFn),
+  rpc(s.rpc,'getMinimumBalanceForRentExemption',[SAMPLE_PROGRAM_BYTES,{commitment:'finalized'}],fetchFn),
+  rpc(s.rpc,'getMinimumBalanceForRentExemption',[SAMPLE_PROGRAMDATA_BYTES,{commitment:'finalized'}],fetchFn)
  ]);
  if(!Number.isSafeInteger(balance?.context?.slot)||balance.context.slot<=0||!Number.isSafeInteger(balance.value)||balance.value<0||typeof wei!=='string'||!/^0x(?:0|[1-9a-f][0-9a-f]*)$/.test(wei)||wei.length>66||code!=='0x')fail();
- return {assessment:'TESTNET_PAYER_BALANCES_ONLY',solana:{address:sol,network:'devnet',finalizedSlot:balance.context.slot,balanceLamports:balance.value,mintPlusOneAtaRentLamports:rent.illustrativeMintPlusOneAtaLamports,coversIllustrativeRent:balance.value>=rent.illustrativeMintPlusOneAtaLamports},base:{address:base,chainId:84532,balanceWei:BigInt(wei).toString(),hasNonzeroBalance:BigInt(wei)>0n},caveat:'No ownership or spending authorization proved. Solana rent floor excludes fees and program deployment; nonzero Base balance does not prove gas sufficiency. No mainnet RPC or transaction.',bridgeRelease:'NO_GO'};
+ if([programRent,dataRent].some(n=>!Number.isSafeInteger(n)||n<=0)||dataRent<programRent)fail();
+ const sampleStorage=programRent+dataRent,total=sampleStorage+rent.illustrativeMintPlusOneAtaLamports;
+ if(!Number.isSafeInteger(total))fail();
+ return {assessment:'TESTNET_PAYER_BALANCES_ONLY',solana:{address:sol,network:'devnet',finalizedSlot:balance.context.slot,balanceLamports:balance.value,mintPlusOneAtaRentLamports:rent.illustrativeMintPlusOneAtaLamports,coversIllustrativeRent:balance.value>=rent.illustrativeMintPlusOneAtaLamports,sampleProgramStorageRentLamports:sampleStorage,sampleProgramDataBytes:SAMPLE_PROGRAMDATA_BYTES,sampleBuildRunId:45361395823,illustrativeCombinedStorageLamports:total,coversIllustrativeCombinedStorage:balance.value>=total,illustrativeCombinedShortfallLamports:Math.max(0,total-balance.value)},base:{address:base,chainId:84532,balanceWei:BigInt(wei).toString(),hasNonzeroBalance:BigInt(wei)>0n},caveat:'No ownership or spending authorization proved. Solana combined estimate includes observed sample program storage plus mint and one ATA; excludes owner-specific binary changes, manager accounts, LUT, fees and other deployment costs; temporary buffer not double-counted; nonzero Base balance does not prove gas sufficiency. No mainnet RPC or transaction.',bridgeRelease:'NO_GO'};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  try{if(process.argv.length!==4)fail();console.log(JSON.stringify(await inspectTestnetPayers(process.argv[2],process.argv[3]),null,2));}
