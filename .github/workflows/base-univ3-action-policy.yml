@@ -5,12 +5,14 @@ on:
     paths:
       - "dex/base-execution/**"
       - ".github/scripts/base-univ3-action-policy.test.mjs"
+      - ".github/scripts/base-univ3-pool-price-policy.test.mjs"
       - ".github/workflows/base-univ3-action-policy.yml"
   push:
     branches: [main]
     paths:
       - "dex/base-execution/**"
       - ".github/scripts/base-univ3-action-policy.test.mjs"
+      - ".github/scripts/base-univ3-pool-price-policy.test.mjs"
       - ".github/workflows/base-univ3-action-policy.yml"
 permissions:
   contents: read
@@ -25,5 +27,6 @@ jobs:
           node-version: 22
       - run: |
           node --check dex/base-execution/univ3-action-policy.mjs
-          node --test .github/scripts/base-univ3-action-policy.test.mjs
+          node --check dex/base-execution/univ3-pool-price-policy.mjs
+          node --test .github/scripts/base-univ3-action-policy.test.mjs .github/scripts/base-univ3-pool-price-policy.test.mjs
           grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs
