@@ -18,7 +18,7 @@ function harness(){
  const document={hidden:false,body:{style:{},appendChild(){},append(){}},
   createElement(){const events=new Map();return {style:{},dataset:{},events,addEventListener(type,fn){bind(events,type,fn)}}},
   addEventListener(type,fn){bind(docHandlers,type,fn)}};
- const context=vm.createContext({MOB:true,document,keys,P,joy,lk,drag:true,
+ const context=vm.createContext({MOB:true,document,keys,P,joy,lk,drag:true,screen:{},innerWidth:900,targetCameraDistance:6,cameraYaw:0,cameraPitch:0,
   css(el){controls.push(el);return el},interact(){},isEditingText:e=>e.editing===true,
   addEventListener:(type,fn)=>bind(handlers,type,fn)});
  vm.runInContext(source,context);
@@ -52,4 +52,39 @@ test('visible tab and non-text focus do not interrupt held controls',()=>{
  const h=harness();h.resetState();
  h.dispatch(h.docHandlers,'visibilitychange');h.dispatch(h.docHandlers,'focusin',{editing:false});
  assert.equal(h.keys.KeyW,true);assert.equal(h.joy.id,1);assert.equal(h.P.moveTarget.x,80);
+});
+
+const world={closest:()=>null},action={closest:()=>true};
+const finger=(identifier,clientX,clientY,target=world)=>({identifier,clientX,clientY,target});
+test('holding RUN while moving joystick does not trigger camera pinch or stop walking',()=>{
+ const h=harness();h.dispatch(h.handlers,'blur');
+ const start=finger(1,100,150),run=finger(2,850,300,action);
+ h.dispatch(h.handlers,'touchstart',{changedTouches:[start],touches:[start,run]});
+ const button=h.controls.find(x=>x.dataset.mobileAction==='run');
+ h.dispatch(button.events,'touchstart',{stopPropagation(){},preventDefault(){}});
+ const moved=finger(1,145,150);
+ h.dispatch(h.handlers,'touchmove',{changedTouches:[moved],touches:[moved,run]});
+ assert.equal(h.keys.ShiftLeft,true);assert.equal(h.joy.dx,1);
+ assert.equal(h.context.targetCameraDistance,6);
+ assert.equal(vm.runInContext('pinchDistance',h.context),0);
+ h.dispatch(h.handlers,'touchmove',{changedTouches:[finger(2,800,300,action)],touches:[moved,run]});
+ assert.equal(h.joy.dx,1);assert.equal(h.context.targetCameraDistance,6);
+});
+test('two world fingers still zoom; UI fingers and changed pinch pair cannot cause zoom jumps',()=>{
+ const h=harness();h.dispatch(h.handlers,'blur');
+ const a=finger(1,100,100),b=finger(2,200,100),ui=finger(3,800,300,action);
+ h.dispatch(h.handlers,'touchstart',{changedTouches:[a,b],touches:[a,b,ui]});
+ const wide=finger(2,240,100);
+ h.dispatch(h.handlers,'touchmove',{changedTouches:[wide],touches:[a,wide,ui]});
+ assert.ok(h.context.targetCameraDistance<6);
+ const zoom=h.context.targetCameraDistance;
+ h.dispatch(h.handlers,'touchend',{changedTouches:[wide],touches:[a,ui]});
+ const next=finger(4,350,100);
+ h.dispatch(h.handlers,'touchstart',{changedTouches:[next],touches:[a,next,ui]});
+ assert.equal(h.context.targetCameraDistance,zoom);
+ const narrower=finger(4,320,100);
+ h.dispatch(h.handlers,'touchmove',{changedTouches:[narrower],touches:[a,narrower,ui]});
+ assert.ok(h.context.targetCameraDistance>zoom);
+ h.dispatch(h.handlers,'blur');h.assertReleased();
+ assert.equal(vm.runInContext('pinchPair',h.context),'');
 });
