@@ -51,10 +51,34 @@ const sources=Object.fromEntries(names.map(name=>{
 const {compilationTarget,...settings}=structuredClone(metadata.settings);
 for(const key of Object.keys(settings))assert.ok(["optimizer","evmVersion","remappings","metadata","debug","libraries","viaIR"].includes(key),"Unsupported compiler setting");
 assert.ok(Number.isInteger(settings.optimizer?.runs)&&settings.optimizer.runs>=0&&settings.optimizer.runs<=10000000);
-assert.deepEqual(settings.libraries??{},{});settings.outputSelection={[target[0][0]]:{WETH9:["evm.deployedBytecode"]}};
+assert.deepEqual(settings.libraries??{},{});settings.outputSelection={[target[0][0]]:{WETH9:["evm.deployedBytecode","metadata"]}};
 const output=JSON.parse(solc.compile(JSON.stringify({language:"Solidity",sources,settings})));
 assert.deepEqual((output.errors??[]).filter(x=>x.severity==="error").map(x=>x.formattedMessage),[]);
 const runtime=output.contracts?.[target[0][0]]?.WETH9?.evm?.deployedBytecode;assert.ok(runtime);assert.deepEqual(runtime.linkReferences??{},{});assert.deepEqual(runtime.immutableReferences??{},{});assert.match(runtime.object,/^(?:[0-9a-f]{2})+$/);
+// Diagnose metadata separately, but never strip it to accept a runtime.
+function trailer(hex){
+ const size=parseInt(hex.slice(-4),16),length=size*2+4;
+ if(!Number.isInteger(size)||size<1||size>256||length>=hex.length)return null;
+ const cbor=hex.slice(-length,-4);
+ if(!/^a[1-9a-f]/.test(cbor))return null;
+ return {bytes:size,hex:cbor,bodySha256:sha(hex.slice(0,-length)),bodyBytes:(hex.length-length)/2};
+}
+const actualTrailer=trailer(first),compiledTrailer=trailer(runtime.object);
+const artifact=output.contracts[target[0][0]].WETH9;
+const compilerMetadata=JSON.parse(artifact.metadata);
+const diffFields=(a,b)=>[...new Set([...Object.keys(a??{}),...Object.keys(b??{})])].filter(k=>JSON.stringify(a?.[k])!==JSON.stringify(b?.[k]));
+let firstDifference=null;
+for(let i=0;i<Math.min(first.length,runtime.object.length);i+=2)if(first.slice(i,i+2)!==runtime.object.slice(i,i+2)){firstDifference=i/2;break;}
+console.log(JSON.stringify({
+ diagnosticOnly:true,observedBytes:first.length/2,compiledBytes:runtime.object.length/2,
+ observedTrailer:actualTrailer,compiledTrailer,firstDifferentByte:firstDifference,
+ executableBodyFingerprintMatched:Boolean(actualTrailer&&compiledTrailer&&actualTrailer.bodySha256===compiledTrailer.bodySha256),
+ compilerMetadataDifferentFields:diffFields(metadata,compilerMetadata),
+ compilerMetadataDifferentSettings:diffFields(metadata.settings,compilerMetadata.settings),
+ compilerMetadataDifferentSources:diffFields(metadata.sources,compilerMetadata.sources),
+ recordSettings:metadata.settings,recordMatch:record.match??null,recordRuntimeMatch:record.runtimeMatch??null,
+ sourceBinaryParityVerified:false,executionApproved:false
+}));
 const exactMatch=runtime.object===first;
 console.log(JSON.stringify({address,block,compiler:solc.version(),sourceCount:names.length,optimizerRuns:settings.optimizer.runs,compiledSha256:sha(runtime.object),observedSha256:expected,sourceBinaryParityVerified:exactMatch,providerIndependenceVerified:false,transferSemanticsVerified:false,executionApproved:false}));
 assert.ok(exactMatch,"Full WETH runtime reproduction failed");
