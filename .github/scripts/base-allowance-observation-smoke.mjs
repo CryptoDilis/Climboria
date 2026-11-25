@@ -14,13 +14,14 @@ for(const [sellToken,buyToken,sellAmount] of [[usdc,weth,"100000"],[weth,usdc,"1
  assert.deepEqual(calls.map(x=>x.method),["eth_chainId","eth_blockNumber","eth_getBlockByNumber","eth_getCode","eth_getCode","eth_call","eth_call","eth_chainId","eth_getBlockByNumber"]);
  const block=result.observedBlock;
  assert.match(result.observedBlockHash,/^0x[0-9a-f]{64}$/);
+ const pinned={blockHash:result.observedBlockHash,requireCanonical:true};
  assert.deepEqual(calls[2].params,[block,false]);
  assert.deepEqual(calls[8].params,[block,false]);
- assert.deepEqual(calls[3].params,[BASE_ALLOWANCE_HOLDER,block]);assert.deepEqual(calls[4].params,[sellToken,block]);
+ assert.deepEqual(calls[3].params,[BASE_ALLOWANCE_HOLDER,pinned]);assert.deepEqual(calls[4].params,[sellToken,pinned]);
  const word=v=>v.slice(2).padStart(64,"0");
- assert.deepEqual(calls[5].params,[{to:sellToken,data:"0x70a08231"+word(usdc)},block]);
- assert.deepEqual(calls[6].params,[{to:sellToken,data:"0xdd62ed3e"+word(usdc)+word(BASE_ALLOWANCE_HOLDER)},block]);
+ assert.deepEqual(calls[5].params,[{to:sellToken,data:"0x70a08231"+word(usdc)},pinned]);
+ assert.deepEqual(calls[6].params,[{to:sellToken,data:"0xdd62ed3e"+word(usdc)+word(BASE_ALLOWANCE_HOLDER)},pinned]);
  assert.equal(result.executable,false);assert.equal(result.observationOnly,true);
  console.log(JSON.stringify({chainId:result.chainId,token:sellToken,block,blockHash:result.observedBlockHash,observedBalance:result.observedBalance,observedAllowance:result.observedAllowance,next:result.next,executable:false}));
 }
-console.log("PASS: both Base directions observed at unchanged block hashes, verified holder runtime and read-only balance/allowance; no signing or approval. Block identity is not independent RPC proof or finality.");
+console.log("PASS: both Base directions read at canonical EIP-1898 block hashes, matched final block identity and verified holder runtime; no signing or approval. A single RPC is not independent chain proof or finality.");
