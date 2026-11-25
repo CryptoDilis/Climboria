@@ -1,0 +1,42 @@
+name: Base DEX AllowanceHolder Source Match
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-allowanceholder-source-match.mjs"
+      - ".github/workflows/base-allowanceholder-source-match.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/checkout@v4
+        with:
+          repository: 0xProject/0x-settler
+          ref: f7340e6237146b2dfd40a40b3efeea527e4eb689
+          path: official-zeroex-settler
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: foundry-rs/forge-std
+          ref: 26048ab55c64519ce21e032fdb49df1d5a2a7eb4
+          path: official-zeroex-settler/lib/forge-std
+          persist-credentials: false
+      - name: Verify pinned revisions and install exact compiler
+        run: |
+          test "$(git -C official-zeroex-settler rev-parse HEAD)" = f7340e6237146b2dfd40a40b3efeea527e4eb689
+          test "$(git -C official-zeroex-settler/lib/forge-std rev-parse HEAD)" = 26048ab55c64519ce21e032fdb49df1d5a2a7eb4
+          npm init -y
+          npm install --ignore-scripts --no-save solc@0.8.25 ethers@6.13.5
+          node --check .github/scripts/base-allowanceholder-source-match.mjs
+      - name: Compile and compare official creation commitment and exact Base runtime (read-only)
+        run: node .github/scripts/base-allowanceholder-source-match.mjs
