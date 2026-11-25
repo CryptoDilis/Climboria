@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME MULTITOUCH CI TEST FIX — 2026-11-26 PHT (NOT MERGED)
+
+- #770 head `f0fd16bf1364beca7a8bbc6238e5878251bf5494`: Gateway 45660130443 job 139367438649 and Authority 45660130426 job 139367428465 failed on the same new regression assertion, after genuine pinch and replacement checks succeeded. Both logs confirm joystick id null and dx/dy zero, but the fixture's whole-object comparison incorrectly excluded inert x0/y0 origin fields assigned during actual touchstart. Runtime 45660130457, Validate 45660130999 and Browser 45660130549 passed; Gameplay 45660130680, Heroes 45660130455 and Chests 45660130369 were still running at review.
+- Test-only correction `92969f82ba4c0bfa298a849bd6899b147ab18240` compares active joystick state explicitly (id/dx/dy); retains checks for camera, pinch, key state, hidden controls, position, HP and stamina. No gameplay implementation or security gate weakened.
+- **EXACT NEXT:** check fresh exact-head CI, including all eight workflows, before merge; verify public deployment and physical Android interaction; real registered two-account and private combat staging remain blocked by account/access setup. Game only.
+
+---
+
 ## GAME MOBILE MULTITOUCH ISOLATION — 2026-11-26 PHT (NOT MERGED)
 
 - #770 previous head `27370230704e4065a151005f2e8d23a4ef67e37f`: Gateway 45659238955 (238/238 and separate 53/53 client tests), Browser 45659239117, Validate 45659239187, Runtime 45659239069, Authority 45659239138, Heroes 45659239128, Chests 45659239054 SUCCESS; Gameplay 45659239127 still running at review. These are previous-head results, not new-head results.
