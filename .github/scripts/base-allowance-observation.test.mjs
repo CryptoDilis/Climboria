@@ -25,7 +25,7 @@ test("wrong chain, invalid block and incorrect holder runtime fail closed",async
   assert.ok(f.calls.every(x=>["eth_chainId","eth_blockNumber","eth_getBlockByNumber","eth_getCode"].includes(x.method)));
   if(count===4){
    assert.deepEqual(f.calls[2].params,["0x3b24e40",false]);
-   assert.deepEqual(f.calls[3].params,[BASE_ALLOWANCE_HOLDER,"0x3b24e40"]);
+   assert.deepEqual(f.calls[3].params,[BASE_ALLOWANCE_HOLDER,{blockHash:identity.hash,requireCanonical:true}]);
   }
  }
 });
@@ -48,4 +48,21 @@ test("RPC errors and mismatched IDs are rejected without retries",async()=>{
  for(const body of [{jsonrpc:"2.0",id:999,result:"0x2105"},{jsonrpc:"2.0",id:1,error:{code:-32000}},{jsonrpc:"2.0",id:1}]){
   let calls=0;await assert.rejects(readAllowanceObservation(intent,{fetchImpl:async()=>{calls++;return new Response(JSON.stringify(body));}}));assert.equal(calls,1);
  }
+});
+
+test("hash-based state rejects unsupported EIP-1898 RPCs; never retries by block number",async()=>{
+ const height="0x3b24e40",hash="0x"+"a".repeat(64),calls=[];
+ await assert.rejects(readAllowanceObservation(intent,{fetchImpl:async(url,options)=>{
+   assert.equal(url,"https://mainnet.base.org");
+   const req=JSON.parse(options.body);
+   calls.push(req);
+   const initial=["0x2105",height,{number:height,hash}];
+   if(calls.length===4){
+     assert.equal(req.method,"eth_getCode");
+     assert.deepEqual(req.params,[BASE_ALLOWANCE_HOLDER,{blockHash:hash,requireCanonical:true}]);
+     return new Response(JSON.stringify({jsonrpc:"2.0",id:req.id,error:{code:-32602,message:"unsupported block reference"}}));
+   }
+   return new Response(JSON.stringify({jsonrpc:"2.0",id:req.id,result:initial[calls.length-1]}));
+ }}),/Invalid RPC result/);
+ assert.deepEqual(calls.map(x=>x.method),["eth_chainId","eth_blockNumber","eth_getBlockByNumber","eth_getCode"]);
 });
