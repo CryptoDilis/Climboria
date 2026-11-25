@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME OWNER HANDOFF MERGED; AUTOMATIC RELEASE PARITY PREPARED — 2026-11-26 PHT
+
+- #796 MERGED `76f0847e4a6dfcda3c6f39cf5a91a5f600d284fa`, exact tested head `51e4174a760df13fee79562dce362d49bc556003`. All eight workflows SUCCESS: [Chests](https://github.com/CryptoDilis/Climboria/actions/runs/45691453634), [Heroes](https://github.com/CryptoDilis/Climboria/actions/runs/45691453665), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45691453912), [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45691453791), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45691453636), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45691453743), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45691453645), [Browser](https://github.com/CryptoDilis/Climboria/actions/runs/45691453631). Gateway job 139477683031 actual logs 259/259 + 58/58, zero failures, both new owner regressions passed. No main drift before merge. Public owner-guard parity still pending.
+- Proposed workflow change: automatic main push read-only readiness on Game HTML/presence/verifier changes. Push-only max six exact parity attempts, 30s interval, nine-minute job cap; no credential use, no deployment, no relaxed hashes. PR/manual immediate checks retained. Updated staging instructions to remove outdated operational guidance while preserving history. Fresh CI required, including actual published #796 parity on PR.
+- **EXACT NEXT:** verify PR readiness actual published #796 version `20261126-game-hero-owner-1` and all checks; merge only green. Then protected real two-account manual acceptance and physical Android, separate private combat staging. Tools cannot supply protected credentials or dispatch manual workflow. No live damage/loot activation. Game only.
+
+---
+
 ## GAME REAL CREATOR QA MERGED; OWNER HANDOFF RECONCILED — 2026-11-26 PHT
 
 - #792 MERGED at `cfb091aec3f161da95594c2bd8a638088f310733`, exact tested head `11b6dc64d603eec534a1db460502092e78b0e1be`: [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45689667257), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45689667211), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45689667209), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45689667304) ALL SUCCESS. Gateway job 139471464538 logs verify 257/257 + 56/56 tests, zero failures; real menu-auth and creator source-contract regressions passed. No live two-account execution yet. Main drift before exact-head merge only unrelated DEX/bridge paths.
