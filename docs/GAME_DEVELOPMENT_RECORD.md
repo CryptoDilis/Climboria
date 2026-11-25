@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## GAME MENU AUTH-RESOLUTION LAUNCH GUARD — 2026-11-26 PHT (NOT MERGED)
+
+- #780 exact reconciled head `e571a7991bcb6500ae1dec6daf6807d7d9d336ea`: Gateway 45681810345 (job 139444015993: 245/245 plus separate 56/56 tests, all three new chat regressions passed), Runtime 45681810403, Authority 45681810719, Validate 45681810386, Browser 45681810383, Heroes 45681810234 and Chests 45681810464 SUCCESS; full Gameplay 45681810411 still running at review. Latest main drift `9092d3d..caa3517` only unrelated paths.
+- #781 source review found launch card could silently choose guest while registered identity is still being resolved; also allowed leaving during pending hero save. Guard now waits for resolution, preserves explicit Play as Guest, prevents launch while pending save, and shows checking state. Added inline-handler regression and adjusted browser smoke to wait for actual signed-out state before checking guest launch. No login bypass or new auth provider. New head CI not yet available due shared record conflict.
+- **EXACT NEXT:** merge #780 after final Gameplay check passes; reconcile #781 with current main preserving all history, verify fresh checks including eight hero lifecycle cases and merge only green. Published parity and actual registered two-account/Android acceptance remain pending; private combat staging separately blocked. Game only.
+
+---
+
 ## GAME HERO SAVE SINGLE-FLIGHT AND EDITOR LIFECYCLE — 2026-11-26 PHT (NOT MERGED)
 
 - #781 previous head `b29b4a7a09717f03680bb594ece31509d78daaff` all six checks SUCCESS: Gateway 45680072970, Validate 45680072858, Runtime 45680072888, Original Hero 45680072882, Gameplay 45680072963, Heroes 45680072863. Source review identified a separate pending-save race: editorButtons could re-enable Save while provider verification was pending; closing/reopening the editor could still allow an earlier save to write. Added single-flight guard, editor revision invalidation, disabled Enter during pending save and three actual inline-handler regressions for duplicate save, stale editor and changed selection. No guest or ownership bypass. New head CI pending.

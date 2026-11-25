@@ -288,7 +288,7 @@ function savedHero(){
 }
 function updateHeroCard(){
  const h=savedHero();
- document.getElementById('heroCardTitle').textContent=h?'YOUR HERO · '+h.name:heroAuthUser?'CREATE YOUR HERO':'SIGN IN TO CREATE A HERO';
+ document.getElementById('heroCardTitle').textContent=h?'YOUR HERO · '+h.name:heroAuthUser?'CREATE YOUR HERO':heroAuthChecked?'SIGN IN TO CREATE A HERO':'CHECKING ACCOUNT SESSION…';
  document.getElementById('heroCardDescription').textContent=h?'Hero: '+h.model+' · Saved for this account on this browser.':
   heroAuthUser?'Choose a character and save your hero. Or explore in guest mode.':
   'Sign in to create or edit a named hero. Explore Jarrell’s Peak immediately in Guest mode without saving a hero.';
@@ -298,7 +298,7 @@ function updateHeroCard(){
  document.getElementById('openHeroCreator').textContent=h?'EDIT / PREVIEW HERO':'CREATE HERO';
  document.getElementById('menuCreateHero').textContent=h?'EDIT HERO':'CREATE HERO';
  const launch=document.querySelector('.card.jarrell .status');
- if(launch)launch.textContent=h?'▶ ENTER JARRELL’S PEAK':heroAuthUser?'CREATE HERO TO UNLOCK':'PLAY AS GUEST · NO LOGIN';
+ if(launch)launch.textContent=h?'▶ ENTER JARRELL’S PEAK':heroAuthUser?'CREATE HERO TO UNLOCK':heroAuthChecked?'PLAY AS GUEST · NO LOGIN':'CHECKING ACCOUNT…';
 }
 function editorButtons(){
  saveHeroButton.disabled=heroSavePending||!heroAuthUser||!previewLoaded||!validHeroName(heroNameInput.value.trim());
@@ -574,13 +574,22 @@ document.getElementById("menuInventory").addEventListener("click",()=>openModal(
 document.getElementById("menuArena").addEventListener("click",()=>openModal("arenaStatusModal"));
 document.querySelectorAll("[data-close]").forEach(button=>button.addEventListener("click",()=>document.getElementById(button.dataset.close)?.classList.remove("open")));
 document.querySelectorAll(".menu-modal").forEach(modal=>{modal.addEventListener("click",event=>{if(event.target===modal)modal.classList.remove("open")});modal.addEventListener("keydown",event=>{if(event.key==="Escape")modal.classList.remove("open")})});
-document.querySelectorAll(".card[data-level]").forEach(card=>card.addEventListener("click",()=>{
- if(!heroAuthUser){location.href='./play.html?guest=1&level='+encodeURIComponent(card.dataset.level);return}
+function launchGameLevel(level){
+ if(!heroAuthChecked){
+  document.getElementById('heroGateNotice').textContent='Checking account session… Use Play as Guest for immediate guest exploration.';
+  return;
+ }
+ if(heroSavePending){
+  heroFeedback.textContent='Finish verifying your hero save before entering.';
+  return;
+ }
+ if(!heroAuthUser){location.href='./play.html?guest=1&level='+encodeURIComponent(level);return}
  const h=savedHero();
  if(!h){openHeroEditor();heroFeedback.textContent='Create and save a hero before entering Jarrell’s Peak.';return}
  try{localStorage.setItem(HERO_RECORD_KEY,JSON.stringify({...h,ownerId:heroAuthUser.id}))}catch{return}
- location.href='./play.html?level='+encodeURIComponent(card.dataset.level);
-}));
+ location.href='./play.html?level='+encodeURIComponent(level);
+}
+document.querySelectorAll(".card[data-level]").forEach(card=>card.addEventListener("click",()=>launchGameLevel(card.dataset.level)));
 
 const climboriaPanelBackdrop=document.getElementById("climboriaPanelBackdrop");document.querySelectorAll("[data-panel]").forEach(button=>button.addEventListener("click",()=>{const type=button.dataset.panel;document.getElementById("climboriaPanelTitle").textContent=type==="announcements"?"Announcements":"Notifications";document.getElementById("climboriaPanelContent").innerHTML=type==="announcements"?'<p>Official Climboria expedition and ecosystem updates will appear here. Follow <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">@ClimboriaHQ</a> for verified announcements.</p>':'<p>You are all caught up. Expedition, event and account alerts will appear here when notification services are enabled.</p>';climboriaPanelBackdrop.hidden=false}));document.getElementById("climboriaPanelClose").addEventListener("click",()=>climboriaPanelBackdrop.hidden=true);climboriaPanelBackdrop.addEventListener("click",e=>{if(e.target===climboriaPanelBackdrop)climboriaPanelBackdrop.hidden=true});
 </script><svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg></body></html>

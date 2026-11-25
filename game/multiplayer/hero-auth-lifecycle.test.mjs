@@ -81,3 +81,21 @@ test('selection changes while save is pending cannot write an old hero',async()=
  const h=saveHarness(),first=h.save();h.context.heroNameInput.value='Different Hero';
  h.finish();await first;assert.equal(h.writes.length,0);assert.match(h.context.heroFeedback.textContent,/selection changed/);
 });
+
+test('launch card waits for account resolution; explicit guest stays independent',()=>{
+ const a=html.indexOf('function launchGameLevel('),b=html.indexOf('document.querySelectorAll(".card[data-level]")',a);
+ assert.ok(a>=0&&b>a);
+ const notice={},location={href:''},writes=[];
+ const context=vm.createContext({heroAuthChecked:false,heroAuthUser:null,heroSavePending:false,
+  document:{getElementById:()=>notice},heroFeedback:{},location,localStorage:{setItem:(...x)=>writes.push(x)},
+  HERO_RECORD_KEY:'active',savedHero:()=>({name:'Hero One',model:'Jarrell'})});
+ vm.runInContext(html.slice(a,b)+'\nlaunchGameLevel(11)',context);
+ assert.equal(location.href,'');assert.match(notice.textContent,/Checking account/);
+ context.heroAuthChecked=true;context.heroAuthUser={id:'owner'};context.heroSavePending=true;
+ vm.runInContext('launchGameLevel(11)',context);assert.equal(location.href,'');assert.equal(writes.length,0);
+ context.heroSavePending=false;vm.runInContext('launchGameLevel(11)',context);
+ assert.equal(location.href,'./play.html?level=11');assert.equal(writes.length,1);
+ context.heroAuthUser=null;vm.runInContext('launchGameLevel(11)',context);
+ assert.equal(location.href,'./play.html?guest=1&level=11');assert.equal(writes.length,1);
+ assert.match(html,/playGuestButton'\)\.addEventListener\('click',\(\)=>\{\s*location\.href='\.\/play\.html\?guest=1&level=11'/);
+});
