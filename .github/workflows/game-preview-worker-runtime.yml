@@ -6,6 +6,7 @@ on:
     paths:
       - "game/multiplayer/**"
       - ".github/scripts/game-preview-workerd-smoke.mjs"
+      - ".github/scripts/game-preview-operation-budget.test.mjs"
       - ".github/workflows/game-preview-worker-runtime.yml"
   workflow_dispatch:
 
@@ -21,6 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Test durable preview budget prototype
+        run: node --test .github/scripts/game-preview-operation-budget.test.mjs
       - name: Install local workerd runtime
         run: |
           npm init -y
