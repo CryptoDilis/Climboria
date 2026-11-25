@@ -1,0 +1,110 @@
+name: Base DEX Public Indicative Pricing Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Confirm remaining free allocation and authorize public requests: RELEASE_BASE_PUBLIC_PRICES"
+        required: true
+        type: string
+      daily_cap:
+        description: "Approved total attempts per UTC day, including earlier tests and smoke (5–100)"
+        required: true
+        type: string
+      cumulative_cap:
+        description: "Approved absolute cumulative counter ceiling (daily cap–1000; no automatic reset)"
+        required: true
+        type: string
+      hours:
+        description: "Approved release lease in hours (1–24)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: base-price-disabled-staging
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: ${{ github.ref == 'refs/heads/main' && inputs.confirmation == 'RELEASE_BASE_PUBLIC_PRICES' }}
+    environment: base-price-provider-staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify successful private cloud probe evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/CryptoDilis/Climboria/actions/runs/45517313548 --jq '.conclusion == "success" and .head_sha == "864849abf8758efa959d027b95ea3fc120d3a691" and .event == "workflow_dispatch"' | grep -Fx true
+      - name: Validate source, allocation and generate disabled baseline
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+          BASE_IP_NAMESPACE: "2026112401"
+          BASE_SHARED_NAMESPACE: "2026112402"
+          EXISTING_SOLANA_NAMESPACE: ${{ vars.CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID }}
+          PUBLIC_DAILY_CAP: ${{ inputs.daily_cap }}
+          PUBLIC_TOTAL_CAP: ${{ inputs.cumulative_cap }}
+          PUBLIC_RELEASE_HOURS: ${{ inputs.hours }}
+        run: |
+          node --test .github/scripts/base-0x-indicative-price.test.mjs .github/scripts/base-price-worker.test.mjs .github/scripts/base-price-budget.test.mjs .github/scripts/base-price-preview.test.mjs
+          node .github/scripts/base-price-disabled-staging-config.mjs
+          node .github/scripts/base-price-public-release-config.mjs
+          rm dex/base-price-provider/wrangler.public.generated.toml
+          npm init -y
+          npm install --no-save wrangler@4
+      - name: Verify existing disabled service before initial release
+        run: |
+          node --input-type=module - <<'NODE'
+          const r=await fetch("https://base-price.climboria.fun/health",{redirect:"error",signal:AbortSignal.timeout(10000)});
+          const j=await r.json();
+          if(r.status!==200||j.service!=="climboria-base-price-preview"||j.pricingDisabled!==true||j.bindingsReady!==true||j.execution!=="unsupported")throw Error("Existing disabled service not verified; restore disabled staging first");
+          NODE
+      - name: Deploy disabled baseline
+        id: baseline
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config dex/base-price-provider/wrangler.staging.generated.toml
+      - name: Verify disabled baseline and provision existing provider credential
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ZEROEX_API_KEY: ${{ secrets.ZEROEX_API_KEY }}
+        run: |
+          set -euo pipefail
+          node .github/scripts/base-price-disabled-staging-smoke.mjs
+          : "${ZEROEX_API_KEY:?Missing authorized provider credential}"
+          printf '%s' "$ZEROEX_API_KEY" | npx wrangler secret put ZEROEX_API_KEY --config dex/base-price-provider/wrangler.staging.generated.toml
+      - name: Deploy approved expiring public pricing allocation
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PUBLIC_DAILY_CAP: ${{ inputs.daily_cap }}
+          PUBLIC_TOTAL_CAP: ${{ inputs.cumulative_cap }}
+          PUBLIC_RELEASE_HOURS: ${{ inputs.hours }}
+        run: |
+          node .github/scripts/base-price-public-release-config.mjs
+          npx wrangler deploy --config dex/base-price-provider/wrangler.public.generated.toml
+      - name: Verify exact public release and two live indicative prices
+        id: smoke
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: node .github/scripts/base-price-public-release-smoke.mjs
+      - name: Roll back to disabled baseline on unsuccessful release
+        if: ${{ always() && steps.baseline.outcome == 'success' && steps.smoke.outcome != 'success' }}
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler deploy --config dex/base-price-provider/wrangler.staging.generated.toml
+          node .github/scripts/base-price-disabled-staging-smoke.mjs
