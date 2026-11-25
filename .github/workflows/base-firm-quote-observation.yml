@@ -33,6 +33,9 @@ jobs:
       - run: |
           node --check dex/base-execution/firm-quote-observation.mjs
           node --check dex/base-execution/firm-quote-simulation.mjs
+          node --check dex/base-execution/firm-quote-cross-rpc-simulation.mjs
+          node --check .github/scripts/base-firm-quote-cross-rpc-simulation.test.mjs
+          node --test .github/scripts/base-firm-quote-cross-rpc-simulation.test.mjs
           node --check .github/scripts/base-firm-quote-simulation.test.mjs
           node --test .github/scripts/base-firm-quote-simulation.test.mjs
           node --check .github/scripts/base-firm-quote-authorized-probe.mjs
