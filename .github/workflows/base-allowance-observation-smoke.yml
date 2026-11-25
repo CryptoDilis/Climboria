@@ -1,0 +1,22 @@
+name: Base DEX Read-only Allowance RPC Smoke
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "dex/base-execution/allowance-observation.mjs"
+      - "dex/base-execution/allowance-policy.mjs"
+      - ".github/scripts/base-allowance-observation-smoke.mjs"
+      - ".github/workflows/base-allowance-observation-smoke.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node .github/scripts/base-allowance-observation-smoke.mjs
