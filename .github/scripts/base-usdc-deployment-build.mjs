@@ -45,29 +45,57 @@ export function makeDeploymentCompilerInput(metadata,sourceRecords,contractName,
   assert.ok(names.includes(file));assert.equal(name,"SignatureChecker");assert.equal(address.toLowerCase(),libraryAddress);
   libEntries.push([file,{[name]:address}]);
  }
- if(contractName==="FiatTokenV2_2")assert.equal(libEntries.length,1,"Explicit deployment library link required");
+ if(contractName==="FiatTokenV2_2")assert.ok(libEntries.length<=1,"Unexpected deployment library count");
  else assert.equal(libEntries.length,0);
  const key=target[0][0];
- return {key,input:{language:"Solidity",sources:Object.fromEntries(sourceEntries),settings:{...settings,libraries:Object.fromEntries(libEntries),outputSelection:{[key]:{[contractName]:["evm.deployedBytecode","metadata"]}}}}};
+ return {key,postLinkRequired:contractName==="FiatTokenV2_2"&&libEntries.length===0,input:{language:"Solidity",sources:Object.fromEntries(sourceEntries),settings:{...settings,libraries:Object.fromEntries(libEntries),outputSelection:{[key]:{[contractName]:["evm.deployedBytecode","metadata"]}}}}};
 }
-export async function reproduceDeploymentRecord({address,contractName,observed,libraryAddress}){
+// solc 0.6.12 supports linking after compilation. Preserve metadata generated
+// with an empty libraries map; substitute ONLY compiler-declared placeholders.
+export function linkDeploymentSignatureChecker(runtime,observed,libraryAddress,sourceNames){
+ assert.match(libraryAddress,/^0x[0-9a-f]{40}$/);
+ assert.equal(libraryAddress,"0x2d943e25e1859ed786afe4afb2b42e14efac691e");
+ const files=Object.keys(runtime.linkReferences??{});assert.equal(files.length,1);
+ const file=files[0];assert.ok(sourceNames.includes(file));assert.match(file,/(?:^|\/)SignatureChecker\.sol$/);
+ const libraries=runtime.linkReferences[file];assert.deepEqual(Object.keys(libraries),["SignatureChecker"]);
+ const refs=libraries.SignatureChecker;assert.equal(refs.length,2);
+ const placeholder="__$"+keccak256(toUtf8Bytes(file+":SignatureChecker")).slice(2,36)+"$__";
+ let hex=runtime.object;
+ assert.equal(hex.length,observed.length);
+ const trailer=parseInt(hex.slice(-4),16);assert.ok(Number.isInteger(trailer)&&trailer>0&&trailer<=256);
+ const end=hex.length-(trailer*2+4);assert.ok(end>0);
+ let last=0;
+ for(const {start,length} of [...refs].sort((a,b)=>a.start-b.start)){
+  assert.equal(length,20);assert.ok(Number.isInteger(start)&&start>0&&start*2>=last&&start*2+40<=end);
+  const offset=start*2;
+  assert.equal(hex.slice(offset-2,offset),"73");assert.equal(observed.slice(offset-2,offset),"73");
+  assert.equal(hex.slice(offset,offset+40),placeholder);
+  assert.equal(observed.slice(offset,offset+40),libraryAddress.slice(2),"Observed library address mismatch");
+  hex=hex.slice(0,offset)+libraryAddress.slice(2)+hex.slice(offset+40);last=offset+40;
+ }
+ assert.match(hex,/^(?:[0-9a-f]{2})+$/);
+ return hex;
+}
+export async function reproduceDeploymentRecord({address,contractName,observed,libraryAddress,verifiedLibrary=false}){
  assert.match(observed,/^(?:[0-9a-f]{2})+$/);
  const data=await record(address);
  if(data.address!==undefined)assert.equal(data.address.toLowerCase(),address);
  if(data.chainId!==undefined)assert.equal(String(data.chainId),"8453");
  const metadata=typeof data.metadata==="string"?JSON.parse(data.metadata):data.metadata;
- const {key,input}=makeDeploymentCompilerInput(metadata,data.sources,contractName,libraryAddress);
+ const {key,input,postLinkRequired}=makeDeploymentCompilerInput(metadata,data.sources,contractName,libraryAddress);
  // No import callback, filesystem access, external source URL fetches or lifecycle scripts.
  const out=JSON.parse(solc.compile(JSON.stringify(input)));
  assert.deepEqual((out.errors??[]).filter(e=>e.severity==="error").map(e=>e.formattedMessage),[]);
  const artifact=out.contracts?.[key]?.[contractName],runtime=artifact?.evm?.deployedBytecode;
- assert.ok(runtime);assert.deepEqual(runtime.linkReferences??{},{});assert.deepEqual(runtime.immutableReferences??{},{});
- assert.match(runtime.object,/^(?:[0-9a-f]{2})+$/);
- let compiled=runtime.object;
+ assert.ok(runtime);assert.deepEqual(runtime.immutableReferences??{},{});
+ let compiled;
+ if(contractName==="FiatTokenV2_2")assert.equal(verifiedLibrary,true,"Verify exact library runtime before implementation");
+ if(postLinkRequired)compiled=linkDeploymentSignatureChecker(runtime,observed,libraryAddress,Object.keys(input.sources));
+ else{assert.deepEqual(runtime.linkReferences??{},{});assert.match(runtime.object,/^(?:[0-9a-f]{2})+$/);compiled=runtime.object;}
  if(contractName==="SignatureChecker"){assert.equal(address,libraryAddress);assert.match(compiled,/^73(?:00){20}[0-9a-f]+$/);compiled="73"+address.slice(2)+compiled.slice(42);}
  // Exact full equality includes original metadata commitment. Never splice its trailer.
  const exactMatch=compiled===observed;
- const result={contractName,address,sourceCount:Object.keys(input.sources).length,compiler:metadata.compiler.version,optimizerRuns:input.settings.optimizer.runs,exactMatch};
+ const result={contractName,address,sourceCount:Object.keys(input.sources).length,compiler:metadata.compiler.version,optimizerRuns:input.settings.optimizer.runs,postLinkRequired,exactMatch};
  console.log(JSON.stringify(result));
  assert.ok(exactMatch,"Deployment record failed full runtime reproduction");
  return Object.freeze(result);
