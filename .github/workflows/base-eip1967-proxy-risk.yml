@@ -1,0 +1,50 @@
+name: Base DEX Two-RPC EIP-1967 Proxy Risk Evidence
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "dex/base-execution/eip1967-proxy-observation.mjs"
+      - ".github/scripts/base-eip1967-proxy-observation.test.mjs"
+      - ".github/scripts/base-eip1967-proxy-observation-smoke.mjs"
+      - ".github/workflows/base-eip1967-proxy-risk.yml"
+  push:
+    branches: [main]
+    paths:
+      - "dex/base-execution/eip1967-proxy-observation.mjs"
+      - ".github/scripts/base-eip1967-proxy-observation.test.mjs"
+      - ".github/scripts/base-eip1967-proxy-observation-smoke.mjs"
+      - ".github/workflows/base-eip1967-proxy-risk.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    name: EIP-1967 negative cases and release gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run adversarial offline proxy/allowance test suite
+        run: |
+          node --check dex/base-execution/eip1967-proxy-observation.mjs
+          node --check .github/scripts/base-eip1967-proxy-observation.test.mjs
+          node --check .github/scripts/base-eip1967-proxy-observation-smoke.mjs
+          node --test .github/scripts/base-eip1967-proxy-observation.test.mjs .github/scripts/base-dual-rpc-observation.test.mjs
+          grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs
+  live-read-only:
+    name: Two public Base RPC proxy-slot evidence (no wallet)
+    needs: [offline]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      BASE_SECONDARY_RPC_URL: https://base-rpc.publicnode.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Compare exact-block EIP-1967 implementation/admin/beacon slots
+        run: node .github/scripts/base-eip1967-proxy-observation-smoke.mjs
