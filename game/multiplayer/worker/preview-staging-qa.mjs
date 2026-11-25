@@ -8,15 +8,16 @@
  */
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
+import {consumePreviewRoster} from './preview-qa-roster.mjs';
 const env=process.env;
 const HOST='game-combat-preview.climboria.fun';
 const origin='https://'+HOST;
-const timeout=10000;
+const timeout=10000,ticketTimeout=18000;
 const tokenPattern=/^[A-Za-z0-9._-]{1,4096}$/;
 const aToken=env.GAME_PREVIEW_A_JWT,bToken=env.GAME_PREVIEW_B_JWT;
 const aAccess=env.GAME_PREVIEW_A_ACCESS_COOKIE,bAccess=env.GAME_PREVIEW_B_ACCESS_COOKIE;
 if(env.GAME_PREVIEW_APPROVED_HOST!==HOST||!tokenPattern.test(aToken||'')||!tokenPattern.test(bToken||'')||aToken===bToken||
- !tokenPattern.test(aAccess||'')||!tokenPattern.test(bAccess||'')){
+ !tokenPattern.test(aAccess||'')||!tokenPattern.test(bAccess||'')||aAccess===bAccess){
  console.error('Refusing QA: explicit private host approval, two distinct account tokens and Access cookies required.');
  process.exit(1);
 }
@@ -35,11 +36,19 @@ async function join(token,access){
   return route.abort();
  });
  await page.goto(local,{waitUntil:'domcontentloaded',timeout});
- await page.evaluate(async ({token,timeout})=>{
-  const r=await fetch('/ticket',{method:'POST',headers:{Authorization:'Bearer '+token},redirect:'error',cache:'no-store',signal:AbortSignal.timeout(timeout)});
+ await page.evaluate(async ({token,timeout,ticketTimeout})=>{
+  const r=await fetch('/ticket',{method:'POST',headers:{Authorization:'Bearer '+token},redirect:'error',cache:'no-store',signal:AbortSignal.timeout(ticketTimeout)});
   if(r.status!==200)throw Error('Private ticket request denied: '+r.status);
-  const data=await r.json();
-  if(data.fixture!=='synthetic-combat'||data.protocol!=='climboria-preview-v1'||!/^[a-f0-9]{64}$/.test(data.ticket))throw Error('Wrong preview contract');
+  const reader=r.body?.getReader();if(!reader)throw Error('Missing ticket response');
+  const chunks=[];let bytes=0;
+  try{while(true){const {done,value}=await reader.read();if(done)break;
+   bytes+=value.byteLength;if(bytes>4096){await reader.cancel();throw Error('Oversized ticket response')}
+   chunks.push(value);
+  }}finally{reader.releaseLock()}
+  const body=new Uint8Array(bytes);let offset=0;
+  for(const chunk of chunks){body.set(chunk,offset);offset+=chunk.byteLength}
+  const data=JSON.parse(new TextDecoder().decode(body));
+  if(data.fixture!=='synthetic-combat'||data.protocol!=='climboria-preview-v1'||data.ttlSeconds!==30||!/^[a-f0-9]{64}$/.test(data.ticket))throw Error('Wrong preview contract');
   const ws=new WebSocket('wss://'+location.host+'/ws',[data.protocol,'t-'+data.ticket]);
   const state=window.__privateQa={ws,inbox:[]};
   ws.addEventListener('message',e=>{try{state.inbox.push(JSON.parse(e.data))}catch{}});
@@ -48,7 +57,7 @@ async function join(token,access){
    ws.addEventListener('open',()=>{clearTimeout(t);resolve()},{once:true});
    ws.addEventListener('error',()=>{clearTimeout(t);reject(Error('Socket refused'))},{once:true});
   });
- },{token,timeout});
+ },{token,timeout,ticketTimeout});
  return page;
 }
 async function packet(page,type){
@@ -56,6 +65,9 @@ async function packet(page,type){
  return page.evaluate(type=>{
   const q=window.__privateQa.inbox;return q.splice(q.findIndex(m=>m.type===type),1)[0];
  },type);
+}
+async function roster(page,ids){
+ await page.waitForFunction(consumePreviewRoster,{ids},{timeout});
 }
 async function send(page,data){
  await page.evaluate(data=>window.__privateQa.ws.send(JSON.stringify(data)),data);
@@ -68,6 +80,8 @@ try{
  const b=await join(bToken,bAccess),jb=await packet(b,'preview-joined');
  assert.equal(ja.fixture,'synthetic-combat');assert.equal(jb.fixture,'synthetic-combat');
  assert.notEqual(ja.id,jb.id);
+ assert.equal(ja.snapshot.health,500,'fresh disposable namespace required');
+ await Promise.all([roster(a,[ja.id,jb.id]),roster(b,[ja.id,jb.id])]);
  assert.equal(jb.snapshot.health,500,'fresh disposable namespace required');
  stage='forged-damage';
  assert.equal((await send(a,{type:'attack',targetId:jb.id,damage:999})).ok,false);
@@ -77,9 +91,10 @@ try{
  assert.equal((await send(b,{type:'snapshot'})).snapshot.health,495);
  stage='reconnect';
  await b.evaluate(()=>window.__privateQa.ws.close(1000,'qa-reconnect'));
- await a.waitForFunction(id=>window.__privateQa.inbox.some(m=>m.type==='preview-peers'&&m.ids.length===1&&m.ids[0]===id),ja.id,{timeout});
+ await roster(a,[ja.id]);
  const b2=await join(bToken,bAccess),j2=await packet(b2,'preview-joined');
  assert.notEqual(j2.id,jb.id);assert.equal(j2.snapshot.health,495);
+ await Promise.all([roster(a,[ja.id,j2.id]),roster(b2,[ja.id,j2.id])]);
  console.log('PASS: two registered accounts, synthetic combat, rejected forged damage, committed HP and reconnect persistence.');
  console.log('Not production map acceptance. Operator must disable preview and inspect cloud cost metrics.');
 }catch{
