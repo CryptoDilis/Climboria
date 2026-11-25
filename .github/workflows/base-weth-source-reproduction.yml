@@ -1,0 +1,28 @@
+name: Base DEX WETH Source Reproduction
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-weth-source-reproduction.mjs"
+      - ".github/workflows/base-weth-source-reproduction.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install observed deployment compiler and hashing dependency
+        run: npm install --prefix .github/scripts --no-save --package-lock=false --ignore-scripts --no-audit --no-fund solc@0.5.17 ethers@6.11.1
+      - name: Require full WETH runtime equality from deployment source record
+        run: |
+          node --check .github/scripts/base-weth-source-reproduction.mjs
+          node .github/scripts/base-weth-source-reproduction.mjs
+          grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs
