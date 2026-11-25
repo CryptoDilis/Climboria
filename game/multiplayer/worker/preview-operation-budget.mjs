@@ -2,12 +2,14 @@
  * NONPRODUCTION one-shot preview budget. No automatic reset or renewal.
  * Uses durable transaction counters, not a billing meter. Integration must
  * reserve before mutation and close sockets when denied. Not production wiring.
+ * v2 is for a fresh disposable namespace only; v1 must never be reset in place.
  */
 export const PREVIEW_BUDGET=Object.freeze({
  windowMs:300000,ticket:24,admission:12,tick:3000,attack:600,disconnect:12
 });
 const kinds=Object.freeze(['ticket','admission','tick','attack','disconnect']);
-const key='game:preview:operation-budget:v1';
+const key='game:preview:operation-budget:v2';
+const sid=id=>typeof id==='string'&&/^s_[a-f0-9]{32}$/.test(id);
 const deny=reason=>({ok:false,reason});
 const time=n=>Number.isSafeInteger(n)&&n>=0&&n<=Number.MAX_SAFE_INTEGER-PREVIEW_BUDGET.windowMs;
 function valid(row){
@@ -15,7 +17,10 @@ function valid(row){
   row.lastAt>=row.startedAt&&row.lastAt-row.startedAt<=PREVIEW_BUDGET.windowMs&&
   row.counts&&kinds.every(k=>Number.isSafeInteger(row.counts[k])&&
    row.counts[k]>=0&&row.counts[k]<=PREVIEW_BUDGET[k])&&
-  row.counts.disconnect<=row.counts.admission;
+  Array.isArray(row.admissions)&&row.admissions.length===row.counts.admission&&
+  row.admissions.every(a=>a&&sid(a.id)&&typeof a.closed==='boolean')&&
+  new Set(row.admissions.map(a=>a.id)).size===row.admissions.length&&
+  row.admissions.filter(a=>a.closed).length===row.counts.disconnect;
 }
 export function createPreviewOperationBudget({storage,clock=()=>Date.now()}={}){
  if(typeof storage?.transaction!=='function'||typeof clock!=='function')
@@ -23,8 +28,8 @@ export function createPreviewOperationBudget({storage,clock=()=>Date.now()}={}){
  let unavailable=false;
  // Only a ticket reservation may initialize a new disposable namespace.
  // Admission attempts reserve their own terminal disconnect allowance.
- async function reserve(kind){
-  if(!kinds.includes(kind))return deny('invalid-preview-operation');
+ async function reserve(kind,sessionId){
+  if(!kinds.includes(kind)||(['admission','disconnect'].includes(kind)&&!sid(sessionId)))return deny('invalid-preview-operation');
   if(unavailable)return deny('preview-budget-unavailable');
   try{
    return await storage.transaction(async tx=>{
@@ -32,7 +37,7 @@ export function createPreviewOperationBudget({storage,clock=()=>Date.now()}={}){
     let row=await tx.get(key);
     if(row===undefined){
      if(kind!=='ticket')return deny('preview-budget-not-started');
-     row={version:1,startedAt:now,lastAt:now,counts:Object.fromEntries(kinds.map(k=>[k,0]))};
+     row={version:1,startedAt:now,lastAt:now,counts:Object.fromEntries(kinds.map(k=>[k,0])),admissions:[]};
     }
     if(!valid(row)||now<row.lastAt)return deny('invalid-preview-budget');
     const expiresAt=row.startedAt+PREVIEW_BUDGET.windowMs;
@@ -45,8 +50,16 @@ export function createPreviewOperationBudget({storage,clock=()=>Date.now()}={}){
     if(row.counts[kind]>=PREVIEW_BUDGET[kind]||
        (kind==='disconnect'&&row.counts.disconnect>=row.counts.admission))
      return deny('preview-operation-limit');
+    let admissions=row.admissions;
+    if(kind==='admission'){
+     if(admissions.some(a=>a.id===sessionId))return deny('preview-admission-duplicate');
+     admissions=[...admissions,{id:sessionId,closed:false}];
+    }else if(kind==='disconnect'){
+     if(!admissions.some(a=>a.id===sessionId&&!a.closed))return deny('preview-disconnect-not-reserved');
+     admissions=admissions.map(a=>a.id===sessionId?{...a,closed:true}:a);
+    }
     const counts={...row.counts,[kind]:row.counts[kind]+1};
-    await tx.put(key,{version:1,startedAt:row.startedAt,lastAt:Math.min(now,expiresAt),counts});
+    await tx.put(key,{version:1,startedAt:row.startedAt,lastAt:Math.min(now,expiresAt),counts,admissions});
     return {ok:true,expiresAt,remaining:PREVIEW_BUDGET[kind]-counts[kind]};
    });
   }catch{
