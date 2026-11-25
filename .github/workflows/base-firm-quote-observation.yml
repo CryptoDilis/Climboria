@@ -32,6 +32,8 @@ jobs:
           node-version: 22
       - run: |
           node --check dex/base-execution/firm-quote-observation.mjs
+          node --check dex/base-execution/receipt-evidence.mjs
+          node --test .github/scripts/base-firm-quote-receipt-evidence.test.mjs
           node --check dex/base-execution/firm-quote-simulation.mjs
           node --check dex/base-execution/firm-quote-cross-rpc-simulation.mjs
           node --check .github/scripts/base-firm-quote-cross-rpc-simulation.test.mjs
