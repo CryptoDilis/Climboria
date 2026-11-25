@@ -1,0 +1,53 @@
+name: Base DEX Authorized Firm Quote Observation
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "dex/base-execution/**"
+      - ".github/scripts/base-firm-quote-*.mjs"
+      - ".github/workflows/base-firm-quote-observation.yml"
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type VERIFY_ONE_BASE_FIRM_QUOTE after confirming quota for one request"
+        required: true
+        type: string
+      public_test_taker:
+        description: "Public test wallet address only (visible in workflow inputs); never a private key"
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: base-price-disabled-staging
+  cancel-in-progress: false
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          node --check dex/base-execution/firm-quote-observation.mjs
+          node --check .github/scripts/base-firm-quote-authorized-probe.mjs
+          node --test .github/scripts/base-firm-quote-observation.test.mjs
+  observe:
+    needs: offline
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.confirmation == 'VERIFY_ONE_BASE_FIRM_QUOTE' }}
+    environment: base-price-provider-staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: One authorized provider observation (no signing or retries)
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          PUBLIC_TEST_TAKER: ${{ inputs.public_test_taker }}
+          ZEROEX_API_KEY: ${{ secrets.ZEROEX_API_KEY }}
+        run: node .github/scripts/base-firm-quote-authorized-probe.mjs
