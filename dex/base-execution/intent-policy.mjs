@@ -11,10 +11,11 @@ function address(v){
 }
 function amount(v){if(typeof v!=="string"||!/^(0|[1-9][0-9]{0,77})$/.test(v)||BigInt(v)>MAX)throw Error("Invalid amount");return BigInt(v);}
 export function normalizeExecutionIntent(input){
- if(!input||typeof input!=="object"||Array.isArray(input)||Object.keys(input).sort().join(",")!=="buyToken,chainId,sellAmount,sellToken,taker")throw Error("Unexpected execution intent fields");
- const {taker,...price}=input,normalized=normalizePriceIntent(price);
+ if(!input||typeof input!=="object"||Array.isArray(input)||Object.keys(input).sort().join(",")!=="buyToken,chainId,minimumBuyAmount,sellAmount,sellToken,taker")throw Error("Unexpected execution intent fields");
+ const {taker,minimumBuyAmount,...price}=input,normalized=normalizePriceIntent(price);
+ if(amount(minimumBuyAmount)===0n)throw Error("Independent minimum output required");
  if(!((normalized.sellToken===USDC&&normalized.buyToken===WETH)||(normalized.sellToken===WETH&&normalized.buyToken===USDC)))throw Error("Unsupported execution pair");
- return Object.freeze({...normalized,taker:address(taker)});
+ return Object.freeze({...normalized,taker:address(taker),minimumBuyAmount});
 }
 // Addresses must come from a reviewed, independently verified deployment policy,
 // never from the quote itself. Until such a policy exists, this rejects every quote.
@@ -22,7 +23,7 @@ export function inspectFirmQuoteCandidate(input,data,policy){
  const intent=normalizeExecutionIntent(input);
  if(!policy||policy.chainId!==8453||!Array.isArray(policy.allowanceHolders)||!policy.allowanceHolders.length||!Array.isArray(policy.transactionTargets)||!policy.transactionTargets.length||!Array.isArray(policy.nestedRoutes)||!policy.nestedRoutes.length)throw Error("Reviewed contract policy required");
  const holders=new Set(policy.allowanceHolders.map(address)),targets=new Set(policy.transactionTargets.map(address));
- const {taker,...price}=intent;
+ const {taker,minimumBuyAmount,...price}=intent;
  const observation=normalizePriceResponse(price,data);
  if(Object.hasOwn(data,"taker")&&address(data.taker)!==taker)throw Error("Quote taker mismatch");
  if(data.permit2!=null||data.issues?.simulationIncomplete!==false||data.issues?.balance!==null||!Object.hasOwn(data.issues??{},"allowance"))throw Error("Quote preflight incomplete");
@@ -33,14 +34,18 @@ export function inspectFirmQuoteCandidate(input,data,policy){
  const outer=inspectAllowanceHolderExec(tx.data);
  if(outer.token!==intent.sellToken||outer.amount!==intent.sellAmount)throw Error("Outer calldata does not match sell intent");
  // A specific operator/target/selector tuple must be independently reviewed.
- if(!policy.nestedRoutes.some(route=>route&&address(route.operator)===outer.operator&&address(route.target)===outer.target&&route.selector===outer.nestedSelector))throw Error("Unreviewed nested route");
+ const route=policy.nestedRoutes.find(route=>route&&address(route.operator)===outer.operator&&address(route.target)===outer.target&&route.selector===outer.nestedSelector);
+ if(!route||!Array.isArray(route.actionSelectors)||!route.actionSelectors.length)throw Error("Unreviewed nested route");
+ const nested=outer.settler;
+ if(nested.recipient!==taker||nested.buyToken!==intent.buyToken||nested.minAmountOut!==observation.providerMinBuyAmount||amount(nested.minAmountOut)<amount(minimumBuyAmount))throw Error("Nested recipient, token or slippage mismatch");
+ if(!nested.actions.every(action=>route.actionSelectors.includes(action.selector)))throw Error("Unreviewed nested action selector");
  const allowance=data.issues.allowance;
  if(allowance!==null){
   if(!holders.has(address(allowance.spender))||address(allowance.spender)!==address(tx.to)||amount(allowance.actual)>=amount(intent.sellAmount))throw Error("Unexpected allowance issue");
  }
  if(data.allowanceTarget!=null&&(!holders.has(address(data.allowanceTarget))||address(data.allowanceTarget)!==address(tx.to)))throw Error("Unreviewed allowance target");
  if(allowance!==null&&data.allowanceTarget!=null&&address(allowance.spender)!==address(data.allowanceTarget))throw Error("Allowance target mismatch");
- // Outer ABI and route tuple inspection only. No nested calldata semantics, simulation proof,
+ // Outer and nested ABI framing only. No complete action argument semantics, simulation proof,
  // transaction or approval is provided to callers. No execution authorization.
  return Object.freeze({chainId:8453,provider:"0x",candidateOnly:true,executable:false,requestedSellAmount:observation.requestedSellAmount,estimatedBuyAmount:observation.estimatedBuyAmount,providerMinBuyAmount:observation.providerMinBuyAmount,allowanceRequired:allowance!==null});
 }
