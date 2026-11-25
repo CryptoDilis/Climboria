@@ -57,7 +57,7 @@ jobs:
         working-directory: solana-upstream/solana
         run: |
           set -euo pipefail
-          cargo +nightly-2023-10-29 test --locked -p ntt-messages --lib test_deserialize_transceiver_message -- --nocapture | tee "$RUNNER_TEMP/ntt-solana-wire.log"
+          cargo +nightly-2023-10-29 test --locked -p ntt-messages --features anchor,hash --lib test_deserialize_transceiver_message -- --nocapture | tee "$RUNNER_TEMP/ntt-solana-wire.log"
           grep -Eq 'test result: ok\. 3 passed; 0 failed; 0 ignored;' "$RUNNER_TEMP/ntt-solana-wire.log"
           for suffix in '' _with_empty_payload _with_32byte_payload; do
             grep -Eq "test .*test_deserialize_transceiver_message${suffix} \.\.\. ok" "$RUNNER_TEMP/ntt-solana-wire.log"
