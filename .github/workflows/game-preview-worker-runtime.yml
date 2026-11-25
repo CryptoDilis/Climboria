@@ -24,7 +24,7 @@ jobs:
       - name: Install local workerd runtime
         run: |
           npm init -y
-          npm install --no-save miniflare@4
+          npm install --save-dev --save-exact --package-lock miniflare@4.20260730.0
       - name: Record local runtime dependency and advisory evidence
         run: |
           npm ls miniflare workerd --all
