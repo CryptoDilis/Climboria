@@ -2,12 +2,12 @@ name: CLIMB NTT Solana Local Locking Integration
 on:
   pull_request:
     paths:
-      - 'token/climb-bridge/testnet-solana/integration/**'
+      - 'token/climb-bridge/testnet-solana/**'
       - '.github/workflows/climb-ntt-solana-local-integration.yml'
   push:
     branches: [main]
     paths:
-      - 'token/climb-bridge/testnet-solana/integration/**'
+      - 'token/climb-bridge/testnet-solana/**'
       - '.github/workflows/climb-ntt-solana-local-integration.yml'
 permissions:
   contents: read
@@ -51,10 +51,17 @@ jobs:
         run: |
           set -euo pipefail
           export BPF_OUT_DIR="$PWD/target/deploy"
-          cargo test --locked -p example-native-token-transfers --features mainnet,test-sbf --test transfer test_climb_metadata_only_revoked_mint_locking -- --exact --nocapture
+          cargo test --locked -p example-native-token-transfers --features mainnet,test-sbf --test transfer test_climb_metadata_only_revoked_mint_locking -- --exact --nocapture | tee "$RUNNER_TEMP/climb-solana-local.log"
+          grep -Eq 'test result: ok\. 1 passed; 0 failed; 0 ignored;' "$RUNNER_TEMP/climb-solana-local.log"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Cross-check SDK-derived Token-2022 ATA addresses
+        run: node token/climb-bridge/testnet-solana/integration/check-ata-vectors.mjs "$RUNNER_TEMP/climb-solana-local.log"
       - name: Run pinned upstream governance regression suite (local only)
         working-directory: ntt-upstream/solana
         run: |
           set -euo pipefail
           export BPF_OUT_DIR="$PWD/target/deploy"
-          cargo test --locked -p example-native-token-transfers --features mainnet,test-sbf --test governance -- --nocapture
+          cargo test --locked -p example-native-token-transfers --features mainnet,test-sbf --test governance -- --nocapture | tee "$RUNNER_TEMP/climb-governance.log"
+          grep -Eq 'test result: ok\. 5 passed; 0 failed; 0 ignored;' "$RUNNER_TEMP/climb-governance.log"

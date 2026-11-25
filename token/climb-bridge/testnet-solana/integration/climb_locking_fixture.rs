@@ -66,6 +66,22 @@ async fn test_climb_metadata_only_revoked_mint_locking() {
         spl_token_2022::extension::ExtensionType::TokenMetadata
     ]);
 
+    // Independently compare the verifier's ATA derivation to the pinned SPL SDK.
+    // These are public synthetic/local test addresses, never signer key material.
+    for (m, h) in [(3u8, 4u8), (7u8, 8u8), (9u8, 10u8)] {
+        let vector_mint = solana_sdk::pubkey::Pubkey::new_from_array([m; 32]);
+        let vector_holder = solana_sdk::pubkey::Pubkey::new_from_array([h; 32]);
+        let vector_ata = spl_associated_token_account::get_associated_token_address_with_program_id(
+            &vector_holder, &vector_mint, &program
+        );
+        println!("CLIMB_ATA_VECTOR {} {} {}", vector_mint, vector_holder, vector_ata);
+    }
+    let actual_ata = ctx.banks_client.get_account(user_token_account).await.unwrap().unwrap();
+    assert_eq!(actual_ata.owner, program);
+    assert_eq!(actual_ata.data.len(), 170);
+    assert_eq!(StateWithExtensions::<Account2022>::unpack(&actual_ata.data).unwrap().base.amount, MINT_AMOUNT);
+    println!("CLIMB_ATA_VECTOR {} {} {}", mint.pubkey(), user.pubkey(), user_token_account);
+
     let data = TestData {
         ntt: NTT {
             program: example_native_token_transfers::ID,
