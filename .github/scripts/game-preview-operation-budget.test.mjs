@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPreviewOperationBudget,PREVIEW_BUDGET} from '../../game/multiplayer/worker/preview-operation-budget.mjs';
+const sid=n=>'s_'+n.toString(16).padStart(32,'0');
 function fixture(){
  let now=1000, data=new Map(),tail=Promise.resolve(),failure=false;
  const storage={transaction(fn){
@@ -20,23 +21,25 @@ test('one-shot window and atomic ticket cap survive concurrent reservations and 
  assert.equal(results.filter(r=>r.ok).length,PREVIEW_BUDGET.ticket);
  assert.equal((await f.make().reserve('ticket')).reason,'preview-operation-limit');
  f.setTime(1000+PREVIEW_BUDGET.windowMs);
- assert.equal((await b.reserve('admission')).reason,'preview-window-ended');
+ assert.equal((await b.reserve('admission',sid(1))).reason,'preview-window-ended');
  f.setTime(2000);
- assert.equal((await f.make().reserve('admission')).reason,'invalid-preview-budget');
+ assert.equal((await f.make().reserve('admission',sid(1))).reason,'invalid-preview-budget');
 });
 test('disconnect allowance bounded by admissions and remains available after expiry',async()=>{
  const f=fixture(),a=f.make();await a.reserve('ticket');
- assert.equal((await a.reserve('disconnect')).ok,false);
- assert.equal((await a.reserve('admission')).ok,true);
+ assert.equal((await a.reserve('disconnect',sid(1))).ok,false);
+ assert.equal((await a.reserve('admission',sid(1))).ok,true);
+ assert.equal((await a.reserve('admission',sid(1))).ok,false);
  f.setTime(1000+PREVIEW_BUDGET.windowMs+50);
- assert.equal((await f.make().reserve('disconnect')).ok,true);
- assert.equal((await a.reserve('disconnect')).ok,false);
+ assert.equal((await f.make().reserve('disconnect',sid(2))).ok,false);
+ assert.equal((await f.make().reserve('disconnect',sid(1))).ok,true);
+ assert.equal((await a.reserve('disconnect',sid(1))).ok,false);
  assert.equal((await a.reserve('attack')).ok,false);
 });
 test('operation caps are independent and persistent',async()=>{
  const f=fixture(),a=f.make();await a.reserve('ticket');
- for(let i=0;i<PREVIEW_BUDGET.admission;i++)assert.equal((await a.reserve('admission')).ok,true);
- assert.equal((await f.make().reserve('admission')).ok,false);
+ for(let i=0;i<PREVIEW_BUDGET.admission;i++)assert.equal((await a.reserve('admission',sid(i+1))).ok,true);
+ assert.equal((await f.make().reserve('admission',sid(1))).ok,false);
  for(let i=0;i<PREVIEW_BUDGET.attack;i++)assert.equal((await a.reserve('attack')).ok,true);
  assert.equal((await f.make().reserve('attack')).ok,false);
  assert.equal((await a.reserve('tick')).ok,true);
