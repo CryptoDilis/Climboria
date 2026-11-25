@@ -27,10 +27,13 @@ jobs:
       - name: Install local workerd runtime
         run: |
           npm init -y
+          # Candidate transitive fixes from observed audit ranges; CI proves
+          # availability and compatibility, not an upstream support claim.
+          npm pkg set 'overrides.sharp=0.35.5' 'overrides.undici=7.30.1'
           npm install --save-dev --save-exact --package-lock miniflare@4.20260730.0
       - name: Record local runtime dependency and advisory evidence
         run: |
-          npm ls miniflare workerd --all
+          npm ls miniflare workerd sharp undici --all
           npm audit --json > "${RUNNER_TEMP}/game-preview-npm-audit.json" || audit_status=$?
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -43,3 +46,5 @@ jobs:
           fi
       - name: Verify isolated preview with real local WebSockets and SQLite DO
         run: node .github/scripts/game-preview-workerd-smoke.mjs
+      - name: Require no high or critical local dependency advisories
+        run: npm audit --audit-level=high
