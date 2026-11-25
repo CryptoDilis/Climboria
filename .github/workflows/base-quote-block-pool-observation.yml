@@ -1,0 +1,32 @@
+name: Base DEX Quote Block Pool Observation
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "dex/base-execution/quote-block-pool-observation.mjs"
+      - ".github/workflows/base-quote-block-pool-observation.yml"
+permissions:
+  contents: read
+jobs:
+  historical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Read-only historical pool observation (no provider quote)
+        run: |
+          node --input-type=module <<'JS'
+          import assert from "node:assert/strict";
+          import {observeQuoteBlockPool} from "./dex/base-execution/quote-block-pool-observation.mjs";
+          const result=await observeQuoteBlockPool({authorized:true,referenceBlock:{block:"0x3b55a4c",hash:"0xac6a3fc3509fb628d87b7d61e21b9fdcd9c8d466022cab50ce40d53227f8d64d"}});
+          assert.equal(result.liquidity,"705020726429923728");
+          assert.equal(result.twoHostsAgreed,true);
+          assert.equal(result.executable,false);
+          console.log(JSON.stringify(result));
+          JS
+          grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs
