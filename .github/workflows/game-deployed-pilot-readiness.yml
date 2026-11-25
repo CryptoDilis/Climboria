@@ -6,6 +6,14 @@ on:
     paths:
       - ".github/workflows/game-deployed-pilot-readiness.yml"
       - "game/multiplayer/worker/qa-deployed-client-parity*.mjs"
+  push:
+    branches: [main]
+    paths:
+      - 'game/play.html'
+      - 'game/index.html'
+      - 'game/multiplayer/client-presence.js'
+      - '.github/workflows/game-deployed-pilot-readiness.yml'
+      - 'game/multiplayer/worker/qa-deployed-client-parity*.mjs'
   workflow_dispatch:
 
 permissions:
@@ -18,7 +26,7 @@ concurrency:
 jobs:
   readiness:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 9
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,6 +38,8 @@ jobs:
         run: |
           node --test game/multiplayer/worker/qa-readiness-check.test.mjs game/multiplayer/worker/staging-preflight.test.mjs game/multiplayer/worker/qa-deployed-client-parity.test.mjs
       - name: Check deployed Game configuration and approved room
+        env:
+          GAME_PARITY_WAIT_FOR_PAGES: ${{ github.event_name == 'push' && '1' || '0' }}
         run: |
           node --input-type=module - <<'NODE'
           import {verifyDeployedGameConfig} from './game/multiplayer/worker/qa-public-config-check.mjs';
@@ -43,7 +53,19 @@ jobs:
             await verifyReadOnlyGameQaStaging({requireNearbyChat:true});
             console.log('PASS: room health, Nearby Chat capability and DO readiness');
             stage='deployed-client-parity';
-            const asset=await verifyDeployedClientParity();
+            // Pages can publish after the source push. Only push runs wait;
+            // PR and manual checks stay immediate. Every retry requires exact
+            // checked-out bytes; a newer or stale release never counts as PASS.
+            const attempts=process.env.GAME_PARITY_WAIT_FOR_PAGES==='1'?6:1;
+            let asset;
+            for(let attempt=1;attempt<=attempts;attempt++){
+              try{asset=await verifyDeployedClientParity();break}
+              catch{
+                if(attempt===attempts)throw Error('Published Game parity not established');
+                console.log('WAIT: published Game parity not established ('+attempt+'/'+attempts+')');
+                await new Promise(resolve=>setTimeout(resolve,30000));
+              }
+            }
             console.log('PASS: published Game HTML SHA256 '+asset.htmlSha256);
             console.log('PASS: published Game menu HTML SHA256 '+asset.menuSha256);
             console.log('PASS: published Game presence version '+asset.version+' SHA256 '+asset.sha256);
