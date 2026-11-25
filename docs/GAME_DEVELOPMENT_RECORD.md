@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## GAME PREVIEW BUDGET PROTOTYPE AND CI AUDIT FIX — 2026-11-25 PHT (NOT MERGED)
+
+- [PR #722](https://github.com/CryptoDilis/Climboria/pull/722) original head `7100f1606d491821583aecaccfeef067a6494ac0`: [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45362798396) SUCCESS; [Local Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45362798610) FAILURE at advisory reporting before runtime test, job 138336806795: npm ENOLOCK after --no-save installation. Logs identify Miniflare 4.20260730.0 and workerd 1.20260730.1, three high advisories still unidentified. CI fix `5a3d7127261153c4008d7b4a182a937ac632912c` saves exact Miniflare version and generates ephemeral npm lockfile for audit. Full transitive lock and advisory review pending.
+- New isolated `game/multiplayer/worker/preview-operation-budget.mjs` (`24afae91c181de22e12e79d84f90b9e5e8f21607`, expiry latch `5e8ee1eab4d69bbaa31268a1e4bbcf67a6f0cc81`): durable transactional counters, one-shot 300s window from first ticket, 24 ticket/12 admission/3000 tick/600 attack reservations, at most one terminal disconnect reservation per admission in aggregate, no automatic reset, expiry latch, corrupted state rejection and instance quarantine on storage failure. Provisional nonproduction limits, NOT wired to Worker or a hard cloud billing cap. Denied operations still require reads; reservation accounting itself adds writes. Terminal allowances not yet bound to session identifiers.
+- Four mock transactional regression tests `.github/scripts/game-preview-operation-budget.test.mjs` (`99ea9ad9c363097089201d89f11267c00f5b4f6b`), CI invocation/filter `9713c6dd617ae866770b1ba68336850a17eb149d`. Fresh exact-head CI pending.
+- **EXACT NEXT:** verify #722 exact-head CI, inspect audit advisory details, fix failures and reconcile with latest main if required. Wire budget reservations before actual private DO ticket/admission/tick/attack mutations, bind terminal allowance to admitted session, close on budget denial and verify real local SQLite restart/expiry and bounded accounting. Outer authentication/request rate limits, exact cloud runtime compatibility, private staging route, measured costs and registered two-account QA remain open. No production changes or deployment. Game only.
+
+---
+
 ## GAME LOCAL RUNTIME MERGED; PRIVATE STAGING PREFLIGHT — 2026-11-24 PHT
 
 - #719 MERGED at `d6e209b5c7e4d80f287d420902847bc1b26a5c7c`, exact head `c14aefd85b949bfdfc4f7ebc9187bcb2a0af0deb`: [Local Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45361429314) and [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45361429558) SUCCESS. Job 138332181522 logs explicitly confirm actual local workerd WebSockets, private SQLite DO tickets, committed HP, reconnect/restart and disabled admission. Local synthetic accounts only; cloud config date differs. npm reported three high-severity advisories.
