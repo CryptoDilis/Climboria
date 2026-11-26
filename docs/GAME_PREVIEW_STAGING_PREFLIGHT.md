@@ -24,3 +24,7 @@ Current sources: `game/multiplayer/worker/preview-worker.mjs`, `transactional-ga
 5. Disable preview and remove its route after the test; verify disabled responses. Review actual map geometry and server/client synchronization separately. Never infer production readiness from synthetic fixture.
 
 No live PvP, wallet, rewards, loot or non-Game changes.
+
+## Exact private-host guard — 2026-11-26 PHT (proposed)
+
+The enabled outer preview Worker now requires exact HTTPS origin `https://game-combat-preview.climboria.fun` before any DO lookup, auth-budget reservation or upstream auth. Existing same-origin validation stays in place. Regression covers production host, alternate host, lookalike suffix, HTTP and nondefault port for ticket and WS paths, with zero storage lookups. Disabled mode remains 503; private internal DO fixture routes unchanged. This is defense in depth only, not evidence of Access protection or private cloud deployment. Fresh CI pending. #837 combat QA is separate. Exact next: green CI, merge, confirm separately scoped disabled deployment and private Access/rate/cost gates. No live combat or loot changes.

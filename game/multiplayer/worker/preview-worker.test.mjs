@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import worker,{PreviewCombatRoom} from './preview-worker.mjs';
 const A='f3ead054-abb4-47ba-b311-5aa7fe483f10',B='2790d4fe-1a26-4f5c-96d2-9a0fbcfb3021';
-const request=(path,opts)=>new Request('https://private-preview.example'+path,opts);
+const request=(path,opts)=>new Request('https://game-combat-preview.climboria.fun'+path,opts);
 function fixture(){
  let rows=new Map(),tail=Promise.resolve();
  const storage={transaction(fn){
@@ -63,4 +63,19 @@ test('private DO refuses nonallowlisted and unexpected identity payloads, withou
  assert.equal((await issue({userId:'00000000-0000-4000-8000-000000000001'})).status,403);
  assert.equal((await issue({userId:A})).status,200);
  assert.equal(room.timer,null);assert.equal(room.sockets.size,0);
+});
+
+
+test('enabled preview refuses any nonapproved origin before storage or upstream auth',async()=>{
+ const {env}=fixture();
+ let touches=0;
+ const trap={...env,PREVIEW_ROOMS:{idFromName(){touches++;throw Error('must not touch storage')}}};
+ for(const origin of ['https://rooms.climboria.fun','https://climboria.fun','https://game-combat-preview.climboria.fun.evil.example','http://game-combat-preview.climboria.fun','https://game-combat-preview.climboria.fun:8443']){
+  const headers={Origin:origin,Authorization:'Bearer mock.token.value'};
+  const ticket=await worker.fetch(new Request(origin+'/ticket',{method:'POST',headers}),trap);
+  assert.equal(ticket.status,403);assert.equal((await ticket.json()).error,'preview-host-not-allowed');
+  const ws=await worker.fetch(new Request(origin+'/ws',{headers:{Origin:origin,Upgrade:'websocket','Sec-WebSocket-Protocol':'climboria-preview-v1,t-'+'a'.repeat(64)}}),trap);
+  assert.equal(ws.status,403);assert.equal((await ws.json()).error,'preview-host-not-allowed');
+ }
+ assert.equal(touches,0);
 });
