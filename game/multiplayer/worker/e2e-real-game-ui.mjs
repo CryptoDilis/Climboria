@@ -302,6 +302,58 @@ console.log('GAME QA STAGE: world-chat');
    Math.hypot(peer.x-last.x,peer.y-last.y,peer.z-last.z)<6;
  },{before:initialRemoteB,last:lastVerifiedB},{timeout:30000});
  await b.waitForTimeout(750);
+ // Prove live Nearby isolation with a positive World control on the SAME
+ // sender and recipient, rather than treating a broken socket as privacy.
+ // Both rendered peer views must agree that separation exceeds the 20m
+ // server radius with a generous margin. Never set coordinates directly.
+ console.log('GAME QA STAGE: nearby-out-of-range');
+ const separated=async()=>{
+  const distances=await Promise.all([a,b].map(page=>page.evaluate(()=>{
+   const p=window.__climboriaJarrellsPeak?.player;
+   const audit=window.__CLIMBORIA_GAME_PEERS?.audit?.();
+   const peer=audit?.positions?.[0];
+   if(document.documentElement.dataset.climboriaMultiplayer!=='connected'||
+      audit?.peers!==1||!p||!peer)return null;
+   const d=Math.hypot(p.x-peer.x,p.z-peer.z);
+   return Number.isFinite(d)?d:null;
+  })));
+  return distances.every(d=>d!==null&&d>30);
+ };
+ // Keep B stationary so its verified reconnect anchor remains valid.
+ // Use bounded normal movement on A if the two earlier sprints did not
+ // create enough separation. A blocked path fails safely, never fakes it.
+ for(const key of ['w','w','d','d','s','a']){
+  if(await separated())break;
+  await a.evaluate(()=>document.activeElement?.blur?.());
+  await a.keyboard.down('Shift');
+  try{
+   await a.keyboard.down(key);
+   try{await a.waitForTimeout(2200)}finally{await a.keyboard.up(key)}
+  }finally{await a.keyboard.up('Shift')}
+  await a.waitForTimeout(1200);
+ }
+ check(await separated(),'Could not establish actual greater-than-30m peer separation');
+ await assertPeer(a,1);await assertPeer(b,1);
+ // The exact per-run messages avoid matching old transcript entries.
+ const nonce=Date.now().toString(36);
+ const privateText='QA range isolation '+nonce;
+ const controlText='QA range world control '+nonce;
+ await nearbyButton.click();
+ await a.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='NEARBY CHAT · 20m');
+ await sendChat(a,privateText);
+ await expectChat(a,'QA Explorer A [nearby]',privateText);
+ check(await separated(),'Peer separation changed during Nearby send');
+ await nearbyButton.click();
+ await a.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='WORLD CHAT');
+ await a.waitForTimeout(2800);
+ await sendChat(a,controlText);
+ await Promise.all([expectChat(a,'QA Explorer A',controlText),expectChat(b,'QA Explorer A',controlText)]);
+ const leaked=await b.evaluate(message=>[...document.querySelectorAll('#climboria-world-chat-panel [role="log"] > div')]
+  .some(e=>e.textContent==='QA Explorer A [nearby]: '+message),privateText);
+ check(!leaked,'Out-of-range Nearby message leaked into the remote transcript');
+ check(await separated(),'Peer separation changed during World delivery control');
+ await assertPeer(a,1);await assertPeer(b,1);
+ console.log('PASS: out-of-range Nearby transcript isolation with positive World delivery control');
  if(env.GAME_QA_SCREENSHOT_DIR){
   const dir=resolve(env.GAME_QA_SCREENSHOT_DIR);
   await mkdir(dir,{recursive:true});
@@ -342,7 +394,7 @@ console.log('GAME QA STAGE: logout-reconnect');
  check(Math.hypot(rejoinedB.x-lastVerifiedB.x,rejoinedB.y-lastVerifiedB.y,
   rejoinedB.z-lastVerifiedB.z)<6,
   'Rejoined registered hero returned to an incorrect world location');
- console.log('PASS: two REAL registered browsers exchanged World and Nearby messages, rendered overhead speech and remote GLBs, and resumed a moved player without a Sanctuary reset.');
+ console.log('PASS: two REAL registered browsers exchanged World and Nearby messages, verified out-of-range transcript isolation, rendered overhead speech and remote GLBs, and resumed a moved player without a Sanctuary reset.');
  console.log('Observed software Chromium FPS A/B:',fpsA,fpsB,'— physical Android/desktop hardware and owner release acceptance are still required.');
 }finally{
  await Promise.all(contexts.map(ctx=>ctx.close().catch(()=>{})));

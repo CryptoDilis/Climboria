@@ -47,3 +47,13 @@ test('real acceptance uses published hero creator without seeding storage or hid
  assert.match(qa,/locator\('#heroEnterButton'\)\.click/);
  assert.match(qa,/same real registered session must survive normal menu navigation/);
 });
+
+test('real Nearby range acceptance requires actual separation, sender echo and positive World delivery control',()=>{
+ assert.match(qa,/d>30/);
+ assert.match(qa,/await a\.keyboard\.down\(key\)/);
+ assert.match(qa,/await expectChat\(a,'QA Explorer A \[nearby\]',privateText\)/);
+ assert.match(qa,/expectChat\(b,'QA Explorer A',controlText\)/);
+ assert.match(qa,/check\(!leaked,'Out-of-range Nearby message leaked/);
+ assert.match(qa,/check\(await separated\(\),'Peer separation changed during World delivery control'\)/);
+ assert.doesNotMatch(qa,/\.position\s*=|\.player\.(?:x|y|z)\s*=/);
+});
