@@ -14,6 +14,10 @@ on:
         description: 'Optional finalized creation transaction hash (verification only)'
         required: false
         type: string
+      burn_tx:
+        description: 'Optional finalized first 10-test-token burn transaction hash'
+        required: false
+        type: string
   pull_request:
     paths:
       - 'base/token-testnet/**'
@@ -78,6 +82,16 @@ jobs:
         run: node --test verify-creation.test.mjs
       - name: Test unsigned handoff binding
         run: node --test unsigned-handoff.test.mjs
+      - name: Test finalized first burn verifier
+        run: node --test verify-burn.test.mjs
+      - name: Validate manual burn inputs
+        if: github.event_name == 'workflow_dispatch' && inputs.burn_tx != ''
+        env:
+          TEST_TOKEN: ${{ inputs.token }}
+          TEST_CREATION_TX: ${{ inputs.creation_tx }}
+        run: |
+          set -euo pipefail
+          test -n "$TEST_TOKEN" && test -n "$TEST_CREATION_TX"
       - name: Simulate exact compiled test-only creation
         if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.token == '' && inputs.creation_tx == ''
         env:
@@ -122,5 +136,23 @@ jobs:
         with:
           name: climb-burn-creation-evidence-${{ github.sha }}
           path: ${{ runner.temp }}/climb-burn-creation-evidence.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Verify finalized first 10-test-token burn
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.burn_tx != ''
+        env:
+          TEST_PAYER: ${{ inputs.payer }}
+          TEST_TOKEN: ${{ inputs.token }}
+          TEST_CREATION_TX: ${{ inputs.creation_tx }}
+          TEST_BURN_TX: ${{ inputs.burn_tx }}
+        run: |
+          set -euo pipefail
+          node verify-burn.mjs out/ClimbBurnPrototype.sol/ClimbBurnPrototype.json src/ClimbBurnPrototype.sol "$GITHUB_SHA" "$TEST_PAYER" "$TEST_TOKEN" "$TEST_CREATION_TX" "$TEST_BURN_TX" > "$RUNNER_TEMP/climb-burn-first-burn-evidence.json"
+          cat "$RUNNER_TEMP/climb-burn-first-burn-evidence.json"
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.burn_tx != ''
+        with:
+          name: climb-burn-first-burn-evidence-${{ github.sha }}
+          path: ${{ runner.temp }}/climb-burn-first-burn-evidence.json
           retention-days: 7
           if-no-files-found: error
