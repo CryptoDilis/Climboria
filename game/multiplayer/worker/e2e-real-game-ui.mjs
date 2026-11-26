@@ -224,17 +224,39 @@ console.log('GAME QA STAGE: nearby-chat');
  const nearbyButton=a.locator('#climboria-world-chat-panel button[aria-label="Switch between World Chat and Nearby Chat"]');
  await nearbyButton.click();
  await a.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='NEARBY CHAT · 20m');
- await sendChat(a,'QA nearby speech acceptance');
+ const nearbyNonce=Date.now().toString(36);
+ const nearbyA='QA nearby speech acceptance A '+nearbyNonce;
+ const nearbyB='QA nearby speech acceptance B '+nearbyNonce;
+ await sendChat(a,nearbyA);
  await Promise.all([
-  expectChat(a,'QA Explorer A [nearby]','QA nearby speech acceptance'),
-  expectChat(b,'QA Explorer A [nearby]','QA nearby speech acceptance')
+  expectChat(a,'QA Explorer A [nearby]',nearbyA),
+  expectChat(b,'QA Explorer A [nearby]',nearbyA)
  ]);
  await b.waitForFunction(()=>window.__CLIMBORIA_GAME_PEERS?.audit?.()?.nearbyBubbles===1,
   undefined,{timeout:12000});
  await nearbyButton.click();
  await a.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='WORLD CHAT');
+ // Exercise the reverse direction through B's actual composer (landscape
+ // emulation when enabled). A must not already have an overhead bubble.
+ console.log('GAME QA STAGE: nearby-chat-B-to-A');
+ check(await a.evaluate(()=>window.__CLIMBORIA_GAME_PEERS?.audit?.()?.nearbyBubbles===0),
+  'Unexpected pre-existing remote speech bubble on A');
+ const nearbyButtonB=b.locator('#climboria-world-chat-panel button[aria-label="Switch between World Chat and Nearby Chat"]');
+ await nearbyButtonB.click();
+ await b.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='NEARBY CHAT · 20m');
+ await sendChat(b,nearbyB);
+ await Promise.all([
+  expectChat(b,'QA Explorer B [nearby]',nearbyB),
+  expectChat(a,'QA Explorer B [nearby]',nearbyB)
+ ]);
+ await a.waitForFunction(()=>window.__CLIMBORIA_GAME_PEERS?.audit?.()?.nearbyBubbles===1,
+  undefined,{timeout:12000});
+ await b.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel input')?.value==='',
+  undefined,{timeout:15000});
+ await nearbyButtonB.click();
+ await b.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='WORLD CHAT');
  // Nearby and World share one server anti-spam cooldown, independently of
- // which channel the UI currently has selected.
+ // which channel the UI currently has selected. Both senders can now proceed.
  await a.waitForTimeout(2800);
  // Movement QA must observe actual keyboard-driven Game physics, real room
  // validation and updated coordinates in the OTHER browser's remote model.
