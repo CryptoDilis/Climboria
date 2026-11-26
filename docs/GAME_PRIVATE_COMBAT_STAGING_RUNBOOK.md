@@ -1,6 +1,6 @@
 # Private synthetic combat staging runbook
 
-2026-11-25 PHT. **Not deployed; not approved for public gameplay.** The proposed host `game-combat-preview.climboria.fun` is not verified to exist. This must be a separate Access-protected origin and disposable SQLite namespace, never the existing registered-user room at rooms.climboria.fun.
+2026-11-26 PHT. **Disabled Worker uploaded; no targets deployed; not approved for public gameplay.** The proposed host `game-combat-preview.climboria.fun` is not verified to exist. This must be a separate Access-protected origin and disposable SQLite namespace, never the existing registered-user room at rooms.climboria.fun.
 
 ## Verified baseline and remaining gates
 
@@ -40,3 +40,12 @@ Verify new QA script syntax and CI; complete #731 merge and dependency lock. Con
 ## Retired session and reciprocal private attack acceptance — 2026-11-26 PHT
 
 The protected manual browser QA now additionally checks the disconnected target session cannot be attacked after rejoin (`unknown-or-same-session`), that both accounts retain their exact prior HP, and the rejoined account can counterattack with server-owned five HP damage against the current peer. Both independent snapshots must report 495 HP. These are bounded synthetic fixture assertions, not live map or loot authorization; run only in the approved private window and disposable namespace. CI source tests do not prove actual cloud execution.
+
+
+## DISABLED PRIVATE COMBAT WORKER UPLOADED — 2026-11-26 PHT
+
+- #844 merged 5c46a3d4f97f19c9d45d3423cfbcbe34a18dae37, exact head 063560b5681c305e30681ebcd07056034904b38e, five SUCCESS Gateway 45836380119 (job 139966222180: 283/283 + 64/64, including concurrency and second-write rollback), Authority 45836379978, Validate 45836379995, Runtime 45836379887, Gameplay 45836379889. Synthetic receipt/slot only; no real inventory grant.
+- Owner manually ran [disabled staging workflow 45846688060](https://github.com/CryptoDilis/Climboria/actions/runs/45846688060), SUCCESS on 2dd3200f7e919fcfb36df1d96fa3f4ea2b74fbf4; job 140002089490. Wrangler 4.165.0, six budget tests passed, npm audit zero findings, dry-run passed, upload at 15:12:39 UTC of climboria-game-combat-preview, version 2f3f3b34-1744-4fee-9b0b-337db2a7e4b1. Bindings PREVIEW_ROOMS (PreviewCombatRoom) and PREVIEW_ENABLED=false; log explicitly states No targets deployed. No route, tester secrets or enablement configured by workflow. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7195977809).
+- EXACT NEXT: do not repeat upload unless source/config changes require it. Operator verify separate Worker and namespace, no public workers.dev/preview URL, create Cloudflare Access application for exact private host and two authorized testers, configure edge rate controls and approved cost cap; only then attach exact private hostname, test unauthorized HTTP/WS rejection and authorized disabled response. Configure scoped tester allowlist/auth key without revealing secrets, verify rollback and explicitly approve bounded private QA window before enabling. No live production PvP or loot. No private route/access enforcement or cloud socket QA verified yet. Game only.
+
+---
