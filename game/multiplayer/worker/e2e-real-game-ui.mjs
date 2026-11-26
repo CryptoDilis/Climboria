@@ -450,6 +450,15 @@ console.log('GAME QA STAGE: logout-reconnect');
    window.__CLIMBORIA_GAME_PEERS?.audit?.().peers===0,
   undefined,{timeout:25000});
  await assertPeer(a,0);
+ // Both real browsers must remove all detached/ghost visual records, not
+ // merely decrement the ONLINE counter. Pending GLB downloads may finish
+ // asynchronously but must never create a resident for a departed peer.
+ await Promise.all([a,b].map(page=>page.waitForFunction(()=>{
+  const audit=window.__CLIMBORIA_GAME_PEERS?.audit?.();
+  return audit?.peers===0&&audit.resident===0&&audit.sceneVisibleResidents===0&&
+   audit.fallbackPeers===0&&audit.nearbyBubbles===0&&
+   audit.positions?.length===0&&audit.renderedPositions?.length===0;
+ },undefined,{timeout:25000})));
  const signedBackIn=await b.evaluate(requestBoundedGameQaAuth,{
   action:'sign-in',email:accounts[1].email,password:accounts[1].password,
   timeoutMs:20000
@@ -472,6 +481,25 @@ console.log('GAME QA STAGE: logout-reconnect');
  check(Math.hypot(rejoinedB.x-lastVerifiedB.x,rejoinedB.y-lastVerifiedB.y,
   rejoinedB.z-lastVerifiedB.z)<6,
   'Rejoined registered hero returned to an incorrect world location');
+ // The restored remote group must actually render at the resumed position,
+ // not retain the old location or simply show a correct network packet.
+ await a.waitForFunction(last=>{
+  const audit=window.__CLIMBORIA_GAME_PEERS?.audit?.();
+  const p=audit?.renderedPositions?.[0],packet=audit?.positions?.[0];
+  return audit?.peers===1&&p?.attached&&p.visible&&packet?.id===p.id&&
+   [p.x,p.y,p.z,p.targetX,p.targetY,p.targetZ,packet.x,packet.z].every(Number.isFinite)&&
+   Math.hypot(p.x-last.x,p.z-last.z)<6&&
+   Math.hypot(p.targetX-packet.x,p.targetZ-packet.z)<.01&&
+   Math.hypot(p.x-p.targetX,p.y-p.targetY,p.z-p.targetZ)<.75;
+ },lastVerifiedB,{timeout:30000});
+ // Prove the rejoined account can still exchange server-confirmed messages.
+ const reconnectText='QA post-reconnect World '+Date.now().toString(36);
+ await sendChat(b,reconnectText);
+ await Promise.all([
+  expectChat(a,'QA Explorer B',reconnectText),
+  expectChat(b,'QA Explorer B',reconnectText)
+ ]);
+ await assertPeer(a,1);await assertPeer(b,1);
  console.log('PASS: two REAL registered browsers exchanged World and Nearby messages, verified out-of-range transcript isolation, rendered overhead speech and remote GLBs, and resumed a moved player without a Sanctuary reset.');
  console.log('Observed software Chromium FPS A/B:',fpsA,fpsB,'— physical Android/desktop hardware and owner release acceptance are still required.');
 }finally{
