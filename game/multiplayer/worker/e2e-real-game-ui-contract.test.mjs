@@ -102,3 +102,17 @@ test('real movement requires the same visible attached remote model to move and 
  assert.match(qa,/renderedBeforeB=await readRenderedPeer\(a\)/);
  assert.match(qa,/await waitForRenderedMotion\(a,renderedBeforeB\)/);
 });
+
+test('real reconnect clears ghost visuals and restores rendered motion and chat',()=>{
+ const reconnect=qa.slice(qa.indexOf("console.log('GAME QA STAGE: logout-reconnect')"));
+ assert.match(reconnect,/Promise\.all\(\[a,b\]\.map\(page=>page\.waitForFunction/);
+ assert.match(reconnect,/audit\?\.peers===0&&audit\.resident===0&&audit\.sceneVisibleResidents===0/);
+ assert.match(reconnect,/audit\.fallbackPeers===0&&audit\.nearbyBubbles===0/);
+ assert.match(reconnect,/audit\.positions\?\.length===0&&audit\.renderedPositions\?\.length===0/);
+ assert.ok(reconnect.indexOf('audit.renderedPositions?.length===0')<reconnect.indexOf("action:'sign-in'"));
+ assert.match(reconnect,/Math\.hypot\(p\.x-last\.x,p\.z-last\.z\)<6/);
+ assert.match(reconnect,/Math\.hypot\(p\.x-p\.targetX,p\.y-p\.targetY,p\.z-p\.targetZ\)<\.75/);
+ assert.match(reconnect,/await sendChat\(b,reconnectText\)/);
+ assert.match(reconnect,/expectChat\(a,'QA Explorer B',reconnectText\)/);
+ assert.match(reconnect,/expectChat\(b,'QA Explorer B',reconnectText\)/);
+});
