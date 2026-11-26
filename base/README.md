@@ -307,3 +307,6 @@
 
 ## V3 unsigned review workflow cancellation / retry
 - [Manual run #45862638495](https://github.com/CryptoDilis/Climboria/actions/runs/45862638495) attempt 1 cancelled by operator during integrated tests; job 140057340050, source `43a2b8d277b7dd293f3e5ad35a6ddd2660cadf4b`. At operator request, GitHub rerun of cancelled job accepted successfully; latest run attempt 2, status in_progress, conclusion pending. Exact next: inspect retried job logs for funded payer balance, exact roles and unsigned review artifact (if prepare_review selected); no signing, transaction or deployment. MAINNET_NO_GO.
+
+## V3 retry completed without prepare_review selection
+- [Run #45862638495](https://github.com/CryptoDilis/Climboria/actions/runs/45862638495) attempt 2 SUCCESS, job 140057793858; estimator passed, unsigned review generation SKIPPED (operator confirms prepare_review unchecked). Build artifact 15138209068 and estimate artifact 15138214067 listed; no unsigned review artifact. Observed payer balance 1000000000000000 wei; covers illustrative L2 fee true. No signing or deployment. Exact next: NEW main workflow_dispatch with same payer and seven role addresses, prepare_review true; re-run cannot change inputs. Review artifact and explicit test-only approval still pending. MAINNET_NO_GO.
