@@ -63,7 +63,7 @@ The published [Solana mainnet finalized RPC supply snapshot](../data/climb-suppl
 
 **Verification:** [Official homepage token record](https://climboria.fun/#climb-token-record) · [Mint on Solscan](https://solscan.io/token/9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump) · [Pump.fun token page](https://pump.fun/coin/9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump). Always compare the exact mint with owner announcements and current on-chain records before interacting.
 
-Solana remains the initial chain focus; Base is a later possibility. The official CLIMB mint announcement and finalized supply snapshot do not mean that its planned ecosystem utilities are live. Launchpad, DEX, swap, marketplace, NFTs, Chatworld, Arena, wagers, sponsorship operations, and on-chain rewards must each be independently implemented, tested, and explicitly released before being described as operational.
+**Base-first direction (2026-11-26):** Base is the planned primary CLIMB and onchain game-economy network, while DEX and Swap remain multichain. The original Solana mint and historical supply remain documented for existing holders. No Base mainnet CA or migration is live; holder eligibility, supply reconciliation and secure migration terms must be published before activation. Ordinary gameplay remains off-chain. The official CLIMB mint announcement and finalized supply snapshot do not mean that its planned ecosystem utilities are live. Launchpad, DEX, swap, marketplace, NFTs, Chatworld, Arena, wagers, sponsorship operations, and on-chain rewards must each be independently implemented, tested, and explicitly released before being described as operational.
 
 ## 10. Roadmap principles
 
