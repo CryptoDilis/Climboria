@@ -75,7 +75,7 @@ test('outer Worker reserves before upstream fetch and never exposes private auth
   return new Response(null,{status:200});
  }};
  const env={PREVIEW_ENABLED:'true',PREVIEW_ACCOUNT_ALLOWLIST:A+','+B,SUPABASE_PUBLISHABLE_KEY:'synthetic-test-key',PREVIEW_ROOMS:{idFromName:x=>x,get:()=>stub}};
- const request=(path,auth)=>new Request('https://preview.invalid'+path,{method:'POST',headers:auth?{Authorization:'Bearer synthetic'}:{}});
+ const request=(path,auth)=>new Request('https://game-combat-preview.climboria.fun'+path,{method:'POST',headers:auth?{Authorization:'Bearer synthetic'}:{}});
  const original=globalThis.fetch;
  try{
   globalThis.fetch=async(url,options)=>{upstream++;assert.equal(options.redirect,'error');return Response.json({id:A})};
