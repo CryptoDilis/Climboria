@@ -414,9 +414,13 @@
   const p=localPosition();
   return validPosition(p)&&Math.hypot(p.x,p.z+30)<=6&&p.y>=0&&p.y<=45;
  }
+ // 5 Hz moving-only pilot: bounded below the room's 24-message/s cap.
+ // Do not queue obsolete positions on a congested socket; sample again
+ // on the next tick. Chat and spawn retain their own existing send path.
+ const MOVE_PUBLISH_MS=200;
  let previous=null;
  function publishMovement(){
-  if(!selfId||!spawnConfirmed||!isReady())return;
+  if(!selfId||!spawnConfirmed||!isReady()||!socket||socket.bufferedAmount>0)return;
   const p=localPosition();
   if(!validPosition(p))return;
   if(previous&&Math.hypot(p.x-previous.x,p.y-previous.y,p.z-previous.z)<.035)return;
@@ -665,7 +669,7 @@
     armAdmissionTimer(ws,epoch); // OPEN is not an accepted terrain spawn.
     send({type:'spawn',position:localPosition()});
     if(movement)clearInterval(movement);
-    movement=setInterval(publishMovement,250);
+    movement=setInterval(publishMovement,MOVE_PUBLISH_MS);
    };
    ws.onclose=event=>{
     if(socket!==ws||disposed||epoch!==connectEpoch)return;
