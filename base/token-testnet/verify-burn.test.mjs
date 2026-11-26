@@ -6,19 +6,27 @@ const artifact=()=>({abi:[{type:'constructor',inputs:[],stateMutability:'nonpaya
 const payer='0x'+'1'.repeat(40),token='0x'+'2'.repeat(40),creation='0x'+'3'.repeat(64),burn='0x'+'4'.repeat(64);
 const word=n=>'0x'+n.toString(16).padStart(64,'0'),topic='0x'+'0'.repeat(24)+payer.slice(2),transfer='0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const block=(number,hex,parentHash)=>({number,hash:'0x'+hex.repeat(64),parentHash});
-function mock(change=()=>{}){
- const a=artifact(),created=block('0x10','5'),pre=block('0x11','6'),post=block('0x12','7',pre.hash),final=block('0x20','8');
+function mock(change=()=>{},cfg={}){
+ const payer=cfg.payer??'0x'+'1'.repeat(40),token=cfg.token??'0x'+'2'.repeat(40),creation=cfg.creation??'0x'+'3'.repeat(64),burn=cfg.burn??'0x'+'4'.repeat(64),topic='0x'+'0'.repeat(24)+payer.slice(2);
+ const a=artifact(),created=block(cfg.creationBlock??'0x10','5'),pre=block(cfg.preBlock??'0x11','6'),post=block(cfg.burnBlock??'0x12','7',pre.hash),final=block(cfg.finalBlock??'0x20','8');
  const receipt=(tx,b,from,to,ca,topics,amount)=>({status:'0x1',transactionHash:tx,contractAddress:ca,from,to,blockNumber:b.number,blockHash:b.hash,logs:[{address:token,removed:false,transactionHash:tx,blockHash:b.hash,blockNumber:b.number,topics,data:word(amount)}]});
  const c=receipt(creation,created,payer,null,token,[transfer,word(0n),topic],1000000000n),r=receipt(burn,post,payer,token,null,[transfer,topic,word(0n)],10000000n);
  const t={hash:burn,from:payer,to:token,blockNumber:post.number,blockHash:post.hash,value:'0x0',input:'0x42966c68'+word(10000000n).slice(2)};
  const values={eth_chainId:'0x14a34',eth_getTransactionReceipt:p=>p[0]===creation?c:r,eth_getTransactionByHash:p=>p[0]===creation?{hash:creation,from:payer,to:null,blockNumber:created.number,blockHash:created.hash,value:'0x0',input:'0x6000'}:t,eth_getBlockByNumber:p=>p[0]==='finalized'?final:[created,pre,post,final].find(x=>x.number===p[0]),eth_getCode:'0x6001',eth_call:p=>{const sig=sigs.find(s=>a.methodIdentifiers[s]===p[0].data.slice(2,10)),after=p[1]===post.number;return word(sig==='decimals()'?6n:sig==='INITIAL_TEST_SUPPLY()'?1000000000n:sig==='totalBurned()'?(after?10000000n:0n):(after?990000000n:1000000000n));}};
  change(values,r,t,post);
- return {a,fetch:async(url,opts)=>{assert.equal(url,'https://sepolia.base.org');const q=JSON.parse(opts.body);assert.ok(Object.hasOwn(values,q.method));const v=values[q.method];return {ok:true,json:async()=>({jsonrpc:'2.0',id:1,result:typeof v==='function'?v(q.params):v})};}};
+ return {a,payer,token,creation,burn,fetch:async(url,opts)=>{assert.equal(url,'https://sepolia.base.org');const q=JSON.parse(opts.body);assert.ok(Object.hasOwn(values,q.method));const v=values[q.method];return {ok:true,json:async()=>({jsonrpc:'2.0',id:1,result:typeof v==='function'?v(q.params):v})};}};
 }
-const run=m=>verifyBurn(m.a,'fixture','a'.repeat(40),payer,token,creation,burn,m.fetch);
+const run=m=>verifyBurn(m.a,'fixture','a'.repeat(40),m.payer,m.token,m.creation,m.burn,m.fetch);
 test('finalized burn event and supply delta match',async()=>{const r=await run(mock());assert.equal(r.beforeSupplyRaw,'1000000000');assert.equal(r.afterSupplyRaw,'990000000');assert.equal(r.afterBurnedRaw,'10000000');});
 test('reject different calldata or event amount',async()=>{for(const f of [(v,r,t)=>t.input='0x42966c68'+word(1n).slice(2),(v,r)=>r.logs[0].data=word(1n)])await assert.rejects(run(mock(f)),/NO_GO: BURN_/);});
 test('reject unfinalized receipt and wrong parent',async()=>{await assert.rejects(run(mock((v,r)=>r.blockNumber='0x21')),e=>safeBurnError(e)==='NO_GO: BURN_NOT_FINALIZED');await assert.rejects(run(mock((v,r,t,p)=>p.parentHash='0x'+'9'.repeat(64))),/BURN_BLOCK_MISMATCH/);});
 test('reject supply not reduced and changed runtime',async()=>{await assert.rejects(run(mock(v=>{const old=v.eth_call;v.eth_call=p=>p[1]==='0x12'?word(1000000000n):old(p);})),/BURN_STATE_MISMATCH/);await assert.rejects(run(mock(v=>v.eth_getCode=p=>p[1]==='0x12'?'0x6002':'0x6001')),/BURN_RUNTIME_MISMATCH/);});
 
 test('burn receipt rejection isolates status, sender, target and hash',async()=>{for(const [mutate,code] of [[r=>r.status='0x0','BURN_RECEIPT_STATUS_FAILED'],[r=>r.from=token,'BURN_RECEIPT_SENDER_MISMATCH'],[r=>r.to=payer,'BURN_RECEIPT_TARGET_MISMATCH'],[r=>r.transactionHash=creation,'BURN_RECEIPT_HASH_MISMATCH'],[r=>r.blockHash='0x0','BURN_RECEIPT_BLOCK_HASH_INVALID'],[r=>r.contractAddress=token,'BURN_RECEIPT_CONTRACT_ADDRESS_UNEXPECTED'],[r=>delete r.contractAddress,'BURN_RECEIPT_CONTRACT_ADDRESS_UNEXPECTED']])await assert.rejects(run(mock((v,r)=>mutate(r))),e=>safeBurnError(e)==='NO_GO: '+code);});
+
+const pinned={payer:'0x9ba615a67d6365849293521f6f9ce0dfd00d6012',token:'0xebcfcd744117aa74e7489ece72db93871dbe67ab',creation:'0x105e638bed20059c3d6280948df682d96db5231f18cba96d07b21fb27d07b3f4',burn:'0x25b1d3df6321c559cd75bd89177f0a9a1537b85d103dbc6af7eafef4456dda89',creationBlock:'0x3ce90f1',preBlock:'0x'+(63879394).toString(16),burnBlock:'0x'+(63879395).toString(16),finalBlock:'0x'+(63879400).toString(16)};
+function delegatedFixture(change=()=>{},cfg=pinned){return mock((v,r,t,p)=>{
+ r.from=t.from='0xc066ac5d385419b1a8c43a0e146fa439837a8b8c';r.to=t.to='0xdb9b1e94b5b69df7e401ddbede43491141047db3';r.type=t.type='0x4';t.authorizationList=[{chainId:'0x14a34'}];t.input='0x12345678';r.logs.push({address:r.to});change(v,r,t,p);
+},cfg);}
+test('pinned delegated historical observation proves only exact event and state',async()=>{const x=await run(delegatedFixture());assert.equal(x.observationMode,'HISTORICAL_DELEGATED_EVENT_AND_STATE_ONLY');assert.equal(x.directCalldataVerified,false);assert.equal(x.afterSupplyRaw,'990000000');});
+test('delegated mode rejects wrong outer identity, type, event or anchor',async()=>{for(const f of [(v,r)=>r.from=pinned.payer,(v,r,t)=>t.type='0x2',(v,r,t)=>t.authorizationList=[],(v,r)=>r.logs[0].data=word(1n),(v,r)=>r.logs.push({...r.logs[0]})])await assert.rejects(run(delegatedFixture(f)),/NO_GO/);await assert.rejects(run(delegatedFixture(()=>{},{...pinned,payer:'0x'+'a'.repeat(40)})),/DELEGATED_BURN_ANCHOR_MISMATCH/);await assert.rejects(run(delegatedFixture(()=>{},{...pinned,burn:'0x'+'9'.repeat(64)})),/BURN_RECEIPT_SENDER_MISMATCH/);});
