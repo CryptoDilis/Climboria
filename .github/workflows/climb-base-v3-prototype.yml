@@ -44,3 +44,8 @@ jobs:
           set -euo pipefail
           forge test --match-contract V3RestrictedSpendTest -vv | tee "$RUNNER_TEMP/climb-v3-spend-tests.log"
           grep -Eq '10 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-spend-tests.log"
+      - name: Run integrated V3 reserve tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract ClimbV3IntegratedTestTokenTest -vv | tee "$RUNNER_TEMP/climb-v3-integrated-tests.log"
+          grep -Eq '6 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-integrated-tests.log"
