@@ -38,6 +38,8 @@
 
 **Funding recheck (2026-11-26 04:49:25 UTC):** [CI #45757603416](https://github.com/CryptoDilis/Climboria/actions/runs/45757603416), job 139699798301, finalized Solana slot 526394299: 10 Devnet SOL; Base Sepolia 0 wei. No change. Ethereum Sepolia receipt was not verified by this checker. PR #798 closed unmerged. No funds moved.
 
+**Funding recheck (2026-11-26 04:51:21 UTC):** [CI #45757812302](https://github.com/CryptoDilis/Climboria/actions/runs/45757812302), job 139700475601, finalized Solana slot 526394785: 10 Devnet SOL; Base Sepolia 0 wei. No change; no receipt verification on Ethereum Sepolia. PR #798 closed unmerged.
+
 **Exact next task (operator dependency):** Fund the existing Base Sepolia wallet via testnet faucet; Solana Devnet payer covers sample storage, but actual deployment fees still require review. No need to supply new addresses. Solana initial mint+ATA storage alone requires 0.00415036 Devnet SOL plus fees; sample combined storage 4.71278712 Devnet SOL plus other deployment costs. Base needs Sepolia ETH; estimate actual contract creation gas after funding, do not invent a full budget. Use [payer preflight](https://github.com/CryptoDilis/Climboria/actions/workflows/climb-testnet-payer-preflight.yml) again with the same public addresses. Owner-controlled signing required for reviewed distinct test assets only; no private keys in chat/repo/CI. Before manager deployment, review exact audit gaps, provider quotation defect, build provenance, program ID, governance, fees and peers. No mainnet approval. See [operator handoff](../token/climb-bridge/TESTNET_OPERATOR_HANDOFF.md).
 
 ## Stage 25 — Solana local reverse unlock and replay integration (2026-11-24 UTC)
