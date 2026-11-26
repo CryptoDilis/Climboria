@@ -198,9 +198,13 @@ test("Base DEX rejects malformed pool identities and renders unavailable metrics
   const nodes=Object.fromEntries(["baseSearch","baseSort","baseCoverage","baseRows","baseMobileCards","mobileBaseMore"].map(id=>[id,{value:"",innerHTML:"",textContent:""}]));
   const valid=pair({priceUsd:" ",volume:{h24:false},liquidity:{usd:-1},priceChange:{h24:" "}});
   const second=pair({pairAddress:POOL_B,priceChange:{h24:0},volume:{h24:0}});
-  let fail=false;
+  second.baseToken={...second.baseToken,symbol:42,name:{unexpected:true}};
+  second.quoteToken={...second.quoteToken,symbol:["FAKE"]};
+  second.dexId={unexpected:true};
+  let fail=false,malformedResponse=false;
   const ctx={nodes,window:{matchMedia:()=>({matches:false})},get:async()=>{
     if(fail)throw Error("offline");
+    if(malformedResponse)return {pairs:{unexpected:true}};
     return {pairs:[valid,{...valid,pairAddress:"0x"+ "C".repeat(40)},second,pair({chainId:"ethereum"}),pair({pairAddress:"bad"}),pair({quoteToken:{address:"USDC"}}),pair({baseToken:{address:"invalid"}})]};
   }};
   runInNewContext(`
@@ -229,6 +233,15 @@ test("Base DEX rejects malformed pool identities and renders unavailable metrics
   assert.ok(nodes.baseRows.innerHTML.includes("N/A"));
   assert.ok(nodes.baseMobileCards.innerHTML.includes("24h Vol — · Liq —"));
   assert.ok(nodes.baseRows.innerHTML.includes("0.00%"));
+  assert.ok(nodes.baseRows.innerHTML.includes("TOKEN / —"));
+  assert.ok(nodes.baseMobileCards.innerHTML.includes("TOKEN / —"));
+  assert.ok(nodes.baseMobileCards.innerHTML.includes("Unknown token"));
+  assert.ok(!nodes.baseMobileCards.innerHTML.includes("[object Object]"));
+  malformedResponse=true;
+  await api.loadBaseMarkets();
+  assert.equal(api.count(),2,"malformed response must not wipe last successful data");
+  assert.match(nodes.baseCoverage.textContent,/Refresh failed/);
+  malformedResponse=false;
   fail=true;
   await api.loadBaseMarkets();
   api.renderBaseMarkets();
