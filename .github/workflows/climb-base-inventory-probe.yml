@@ -1,0 +1,53 @@
+name: CLIMB Base Inventory Candidate Probe
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'base/inventory-probe/**'
+      - '.github/workflows/climb-base-inventory-probe.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'base/inventory-probe/**'
+      - '.github/workflows/climb-base-inventory-probe.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test base/inventory-probe/probe.test.mjs
+  observe:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Collect public candidate evidence (read only)
+        env:
+          CLIMB_SOLANA_RPC_A_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL }}
+          CLIMB_SOLANA_RPC_B_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL_SECONDARY }}
+          CLIMB_SOLANA_MAINNET_GENESIS_HASH: ${{ vars.CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH }}
+        run: |
+          set -euo pipefail
+          node base/inventory-probe/cli.mjs > "$RUNNER_TEMP/climb-inventory-candidates.json"
+          cat "$RUNNER_TEMP/climb-inventory-candidates.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-inventory-candidates-readonly
+          path: ${{ runner.temp }}/climb-inventory-candidates.json
+          retention-days: 7
+          if-no-files-found: error
