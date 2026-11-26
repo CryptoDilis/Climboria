@@ -1,0 +1,42 @@
+name: Base DEX Sushi V3 Historical Runtime Match
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-sushi-runtime-match.mjs"
+      - ".github/workflows/base-sushi-runtime-match.yml"
+      - "dex/base-execution/univ3-action-policy.mjs"
+      - "dex/base-execution/intent-policy.mjs"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  match:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/checkout@v4
+        with:
+          repository: sushiswap/v3-core
+          ref: 21dfbed6b5e343559a14a7825e3d2f3be2611d8a
+          path: official-sushi-v3-core
+          persist-credentials: false
+          sparse-checkout: |
+            deployments/base/UniswapV3Factory.json
+            deployments/base/solcInputs/2e84228bb9aeab570a80cb63b27f21da.json
+          sparse-checkout-cone-mode: false
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.5.1
+      - name: Compile pinned upstream sources and compare prior observed runtime fingerprints
+        run: |
+          npm install --prefix .github/scripts --no-save --package-lock=false --ignore-scripts --no-audit --no-fund solc@0.7.6
+          node --check .github/scripts/base-sushi-runtime-match.mjs
+          node .github/scripts/base-sushi-runtime-match.mjs
+          grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs

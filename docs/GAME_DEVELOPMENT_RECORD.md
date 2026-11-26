@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## REMOTE VISIBILITY QA MERGED; MULTIPLAYER ACCEPTANCE RECONCILED — 2026-11-26 PHT
+
+- #819 merged `e8d0f284c7312b15fb9b01fd5916ad7ba35b3209`, exact tested head `cf648096f1a42c351a0e8b368687a6d41088a548`, all four checks SUCCESS: Runtime 45810601958, Gateway 45810601911 (270/270 + 63/63), Validate 45810601933, Gameplay 45810601908. Main drift unrelated Base/DEX only. #817 public exact-byte readiness already verified below.
+- #822 reconciled onto this merged main, preserving all four Game source/test files and both histories, then retargeted to main for fresh CI. Actual protected two-account QA not yet executed.
+- **EXACT NEXT:** review exact Game-only diff; verify fresh #822 CI, merge only green, verify main push public parity, then real two-account registered desktop/landscape and physical acceptance. No Worker deploy, no live combat/loot. Game only.
+
+---
+
 ## PUBLIC REMOTE HERO FIT VERIFIED — 2026-11-26 PHT
 
 - Main push readiness [45810203419](https://github.com/CryptoDilis/Climboria/actions/runs/45810203419) on #817 merge `145b6ca7df147c25cbe51ae80c7bd1a17eb31f93`, job 139875749024 SUCCESS. Exact public parity verified at 11:25:00 UTC after two bounded retries: 22/22 readiness tests, registered configuration, room health, Nearby and DO readiness. Gameplay HTML SHA256 `6b508d5f467a2738c7de7eccafaaa2758ebc9e61dee90d183faa99848f7edaff`, menu `fe9b35bd77cc47fed16ddab0a813e71e3f3b54c598212893f194569f72d8e475`, presence `20261126-game-mobile-chat-2` SHA256 `367c9804cd8000d81e43b3bf672f27ec94a98c48336b8a3eba8176a34f5a40a0`. Main push runs accessible via approved GitHub Actions GET collection filtered by exact head_sha and event=push; no need for redundant parity PR. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190835751). Actual remote alignment and real account acceptance still unverified.
