@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {reconcileInventories} from './migration-inventory.mjs';
+import {CLIMB_SOLANA_MINT,TOKEN_2022_PROGRAM} from './mint-inspect.mjs';
+import {pubkey} from './mint-raw-evidence.mjs';
+const k=n=>pubkey(Buffer.alloc(32,n));
+const row=(n,owner,amountRaw,state='initialized')=>({address:k(n),owner:k(owner),amountRaw,state,mint:CLIMB_SOLANA_MINT,program:TOKEN_2022_PROGRAM});
+const fixture=()=>({mint:CLIMB_SOLANA_MINT,program:TOKEN_2022_PROGRAM,decimals:6,commitment:'finalized',slot:123,genesis:k(1),blockhash:k(2),complete:true,supplyRaw:'1000',accounts:[row(3,8,'250'),row(4,8,'250'),row(5,9,'500','frozen')]});
+const run=(a,b)=>reconcileInventories(a,b,{expectedGenesis:k(1)});
+test('exact same slot, order-independent, multiple accounts per owner, no release',()=>{const a=fixture(),b=fixture();b.accounts.reverse();const r=run(a,b);assert.equal(r.positiveOwnerAddresses,2);assert.equal(r.positiveTokenAccounts,3);assert.equal(r.frozenRaw,'500');assert.equal(r.bridgeRelease,'NO_GO');assert.equal(r.holderEligibility,'NOT_DETERMINED');});
+test('reject duplicates, missing balances and incomplete input',()=>{for(const mutate of [s=>s.accounts.push(s.accounts[0]),s=>s.accounts.pop(),s=>s.complete=false]){const a=fixture();mutate(a);assert.throws(()=>run(a,fixture()),/NO_GO/);}});
+test('reject differing owners even with equal total supply',()=>{const a=fixture();a.accounts[0].owner=k(7);assert.throws(()=>run(a,fixture()),/disagree/);});
+test('reject differing slot, block or genesis',()=>{for(const mutate of [s=>s.slot++,s=>s.blockhash=k(7),s=>s.genesis=k(7)]){const a=fixture();mutate(a);assert.throws(()=>run(a,fixture()),/NO_GO/);}});
+test('reject invalid raw values, mint, state and program',()=>{for(const mutate of [s=>s.accounts[0].amountRaw='01',s=>s.accounts[0].amountRaw='18446744073709551616',s=>s.accounts[0].mint=k(7),s=>s.accounts[0].state='unknown',s=>s.accounts[0].program=k(7),s=>s.accounts[0].owner='bad']){const a=fixture();mutate(a);assert.throws(()=>run(a,fixture()),/NO_GO/);}});
+test('zero accounts do not inflate positive holder totals',()=>{const a=fixture();a.accounts.push(row(6,7,'0'));assert.equal(run(a,fixture()).positiveOwnerAddresses,2);});
