@@ -57,7 +57,7 @@ contract V3SharedExpenseTest {
         vm.expectRevert(V3SharedExpenseRegistry.ExpenseAlreadyConsumed.selector);e.execute(b);
         require(e.totalSpent()==10&&token.balanceOf(PAYEE)==10);
     }
-    function testFailedTransferRollsBackConsumptionAndAccounting() public {
+    function testTransferRevertRollsBackConsumptionAndAccounting() public {
         bytes32 a=proposal(t,"E","A",10);
         vm.warp(start+2 days);
         vm.expectRevert();t.execute(a);
