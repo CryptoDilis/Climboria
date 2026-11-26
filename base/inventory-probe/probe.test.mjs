@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {candidateKeys,inspectBatch,probe} from './probe.mjs';
+import {CLIMB_SOLANA_MINT as M,TOKEN_2022_PROGRAM as P} from '../../token/climb-bridge/mint-inspect.mjs';
+import {pubkey} from '../../token/climb-bridge/mint-raw-evidence.mjs';
+const k=n=>pubkey(Buffer.alloc(32,n));
+const mint=()=>({owner:P,executable:false,data:{program:'spl-token-2022',parsed:{type:'mint',info:{isInitialized:true,decimals:6,supply:'100',mintAuthority:null,freezeAuthority:null,extensions:[{extension:'metadataPointer'},{extension:'tokenMetadata'}]}}}});
+const acc=(amount='100')=>({owner:P,executable:false,data:{program:'spl-token-2022',parsed:{type:'account',info:{mint:M,owner:k(8),state:'initialized',isNative:false,tokenAmount:{amount,decimals:6},extensions:[{extension:'immutableOwner'}]}}}});
+const batch=(a=acc())=>({context:{slot:123},value:[mint(),a]});
+test('candidate discovery rejects duplicates and excessive results',()=>{assert.deepEqual(candidateKeys({context:{slot:123},value:[{address:k(3)}]}),[k(3)]);assert.throws(()=>candidateKeys({context:{slot:123},value:[{address:k(3)},{address:k(3)}]}));assert.throws(()=>candidateKeys({context:{slot:123},value:Array.from({length:21},(_,i)=>({address:k(i+3)}))}));});
+test('same batch reports authority and exact raw sum',()=>{const r=inspectBatch(batch(),[k(3)],120);assert.equal(r.unaccountedRaw,'0');assert.equal(r.rows[0].authority,k(8));assert.equal(r.slot,123);});
+test('partial candidate set is visible, not invented balance',()=>{assert.equal(inspectBatch(batch(acc('60')),[k(3)],120).unaccountedRaw,'40');assert.equal(inspectBatch(batch(null),[k(3)],120).unaccountedRaw,'100');});
+test('reject stale, oversupply, wrong program, wrong mint and unsupported extensions',()=>{assert.throws(()=>inspectBatch(batch(),[k(3)],124));assert.throws(()=>inspectBatch(batch(acc('101')),[k(3)],120));for(const mutate of [a=>a.owner=k(4),a=>a.data.parsed.info.mint=k(4),a=>a.data.parsed.info.extensions=[{extension:'transferFeeAmount'}]]){const a=acc();mutate(a);assert.throws(()=>inspectBatch(batch(a),[k(3)],120));}});
+test('dual candidate probe stays NO_GO even if same slot and full sum',async()=>{const f=async(url,opts)=>{const q=JSON.parse(opts.body);const values={getGenesisHash:k(1),getSlot:123,getTokenLargestAccounts:{context:{slot:123},value:[{address:k(3)}]},getMultipleAccounts:batch()};assert.ok(Object.hasOwn(values,q.method));return {ok:true,text:async()=>JSON.stringify({jsonrpc:'2.0',id:1,result:values[q.method]})};};const r=await probe('https://a.example','https://b.example',k(1),f);assert.equal(r.status,'READ_ONLY_CANDIDATES_NO_GO');assert.equal(r.sameReportedSlot,true);assert.equal(r.parsedCandidateDigestMatched,true);assert.equal(r.inventoryCompleteness,'NOT_CERTIFIED');});
