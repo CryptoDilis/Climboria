@@ -1,0 +1,44 @@
+name: CLIMB Base Fixed Burn Prototype - Offline Tests
+on:
+  pull_request:
+    paths:
+      - 'base/token-testnet/**'
+      - '.github/workflows/climb-base-burn-prototype.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'base/token-testnet/**'
+      - '.github/workflows/climb-base-burn-prototype.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: base/token-testnet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Fetch pinned OpenZeppelin source
+        run: |
+          set -euo pipefail
+          mkdir -p lib/openzeppelin-contracts
+          git -C lib/openzeppelin-contracts init
+          git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+      - name: Run exact offline prototype tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract ClimbBurnPrototypeTest -vv | tee "$RUNNER_TEMP/climb-burn-tests.log"
+          grep -Eq '8 tests passed, 0 failed, 0 skipped \(8 total tests\)' "$RUNNER_TEMP/climb-burn-tests.log"
+          for t in testFixedInitialSupply testRejectMainnet testTransferNoTax testHolderBurnAndEvent testRejectBurnBeyondOwnBalance testNoMintOrForcedBurnSelector testAllowanceTransferNoTaxAndNoImplicitBurn testRepeatedAndFullBurnNoReissue; do
+            grep -Fq "[PASS] ${t}()" "$RUNNER_TEMP/climb-burn-tests.log"
+          done
