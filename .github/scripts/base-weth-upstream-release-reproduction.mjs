@@ -24,29 +24,38 @@ assert.equal(sha(upstream),expected,"Pinned release artifact differs from previo
 console.log(JSON.stringify({revision,artifactPath,artifactBytes:upstream.length/2,upstreamArtifactSha256:sha(upstream),historicalObservedSha256:expected,upstreamArtifactFullRuntimeMatched:true,sourceBinaryParityVerified:false,executionApproved:false}));
 const source=read(sourcePath,"7bb4ab4dde57692531f82c4597dc2668a215891d");
 assert.match(solc.version(),/^0\.5\.17\+commit\.d19bba13\./);
-// Release binding storage layout identifies this exact source-unit path.
-// Compiler and optimization from release Hardhat config and verified deployment metadata.
-// Remappings and EVM version from prior deployment record. No metadata masking.
-// Bounded replay of documented upstream build configuration choices.
-// The exact upstream Hardhat and Foundry files are checked before use.
-const hardhat=read("packages/contracts-bedrock/hardhat.config.ts","d325df72f51fe7da67e088ea5680952f8a2e3ea3");
-const foundry=read("packages/contracts-bedrock/foundry.toml","9161d0d8770a07461c6cf3f3d3b6c81222503d2d");
-assert.match(hardhat,/version: '0\.5\.17', \/\/ Required for WETH9/);
-assert.match(hardhat,/optimizer: \{ enabled: true, runs: 10_000 \}/);
-assert.match(foundry,/^optimizer_runs = 999999$/m);
-const remappingText=foundry.match(/^remappings = \[([\s\S]*?)^\]/m)?.[1];assert.ok(remappingText);
-const foundryRemappings=[...remappingText.matchAll(/['"]([^'"]+)['"]/g)].map(x=>x[1]);assert.equal(foundryRemappings.length,6);
-const attempts=[];
-for(const optimizerRuns of [10000,999999])for(const remappings of [[],foundryRemappings])for(const useLiteralContent of [false,true]){
- const settings={optimizer:{enabled:true,runs:optimizerRuns},evmVersion:"istanbul",remappings,libraries:{},metadata:{useLiteralContent},outputSelection:{[sourceName]:{WETH9:["evm.deployedBytecode","metadata"]}}};
- const result=JSON.parse(solc.compile(JSON.stringify({language:"Solidity",sources:{[sourceName]:{content:source}},settings})));
- assert.deepEqual((result.errors??[]).filter(x=>x.severity==="error").map(x=>x.formattedMessage),[]);
- const runtime=result.contracts?.[sourceName]?.WETH9?.evm?.deployedBytecode;
- assert.ok(runtime);assert.deepEqual(runtime.linkReferences??{},{});assert.deepEqual(runtime.immutableReferences??{},{});assert.match(runtime.object,/^(?:[0-9a-f]{2})+$/);
- const exactMatch=runtime.object===upstream;
- const diagnostic={optimizerRuns,remappings,useLiteralContent,compiledBytes:runtime.object.length/2,compiledSha256:sha(runtime.object),trailer:runtime.object.slice(-104),preTrailerFingerprintMatched:runtime.object.length===upstream.length&&runtime.object.slice(0,-104)===upstream.slice(0,-104),sourceBinaryParityVerified:exactMatch};
- attempts.push(diagnostic);console.log(JSON.stringify(diagnostic));
-}
-const exactMatches=attempts.filter(a=>a.sourceBinaryParityVerified);
-console.log(JSON.stringify({revision,sourcePath,sourceBlob:"7bb4ab4dde57692531f82c4597dc2668a215891d",compiler:solc.version(),sourceUnit:sourceName,upstreamArtifactSha256:expected,attemptCount:attempts.length,exactMatches,sourceBinaryParityVerified:exactMatches.length>0,transferSemanticsVerified:false,executionApproved:false}));
-assert.ok(exactMatches.length>0,"Pinned upstream source did not reproduce full runtime");
+// The eight documented configuration replays in 45755821612 matched the
+// executable body but not metadata. Seek published compiler metadata instead.
+const manifest=JSON.parse(read("packages/contracts-bedrock/package.json","b5aa56fe08b1a35f26ad6d7143558f6ad2940331"));
+assert.equal(manifest.name,"@eth-optimism/contracts-bedrock");assert.equal(manifest.version,"0.14.0");
+const artifactFile=process.argv[2];
+assert.ok(artifactFile,"Published package artifact path required");
+const artifactText=readFileSync(artifactFile,"utf8");
+assert.ok(Buffer.byteLength(artifactText)<=4194304,"Published artifact too large");
+const artifact=JSON.parse(artifactText);
+const deployed=typeof artifact.deployedBytecode==="string"?artifact.deployedBytecode:artifact.deployedBytecode?.object;
+assert.equal(typeof deployed,"string","No deployed bytecode in published artifact");
+const packageRuntime=deployed.replace(/^0x/,"");
+assert.match(packageRuntime,/^(?:[0-9a-f]{2})+$/);
+const packageRuntimeMatched=packageRuntime===upstream;
+const metadata=artifact.metadata??artifact.rawMetadata??null;
+console.log(JSON.stringify({publishedPackage:manifest.name,version:manifest.version,artifactKeys:Object.keys(artifact).sort(),packageRuntimeSha256:sha(packageRuntime),packageRuntimeMatched,metadataAvailable:metadata!==null,sourceBinaryParityVerified:false,executionApproved:false}));
+assert.ok(packageRuntimeMatched,"Published package runtime differs from pinned release binding");
+assert.ok(metadata!==null,"Published package lacks original compiler metadata; obtain original build-info");
+const m=typeof metadata==="string"?JSON.parse(metadata):metadata;
+assert.equal(m.compiler?.version,"0.5.17+commit.d19bba13");
+assert.equal(m.language,"Solidity");assert.deepEqual(Object.keys(m.sources??{}),[sourceName]);
+assert.deepEqual(m.settings?.compilationTarget,{[sourceName]:"WETH9"});
+assert.match(m.sources[sourceName].keccak256,/^0x[0-9a-f]{64}$/);
+if(Object.hasOwn(m.sources[sourceName],"content"))assert.equal(m.sources[sourceName].content,source);
+const settings=structuredClone(m.settings);delete settings.compilationTarget;
+settings.outputSelection={[sourceName]:{WETH9:["evm.deployedBytecode","metadata"]}};
+const result=JSON.parse(solc.compile(JSON.stringify({language:"Solidity",sources:{[sourceName]:{content:source}},settings})));
+assert.deepEqual((result.errors??[]).filter(x=>x.severity==="error").map(x=>x.formattedMessage),[]);
+const compiled=result.contracts?.[sourceName]?.WETH9,runtime=compiled?.evm?.deployedBytecode;
+assert.ok(runtime);assert.deepEqual(runtime.linkReferences??{},{});assert.deepEqual(runtime.immutableReferences??{},{});
+assert.equal(JSON.parse(compiled.metadata).sources[sourceName].keccak256,m.sources[sourceName].keccak256,"Pinned source differs from published metadata");
+assert.match(runtime.object,/^(?:[0-9a-f]{2})+$/);
+const exactMatch=runtime.object===upstream;
+console.log(JSON.stringify({revision,sourcePath,sourceBlob:"7bb4ab4dde57692531f82c4597dc2668a215891d",compiler:solc.version(),sourceUnit:sourceName,compiledSha256:sha(runtime.object),upstreamArtifactSha256:expected,sourceBinaryParityVerified:exactMatch,transferSemanticsVerified:false,executionApproved:false}));
+assert.ok(exactMatch,"Published compiler metadata did not reproduce full runtime");
