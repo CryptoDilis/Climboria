@@ -12,6 +12,7 @@ import {createServerCollisionRegion} from '../server-collision-region.mjs';
 const ROOM='preview-combat-fixture',AUTH_URL='https://unadepiwbovblkfjlksk.supabase.co/auth/v1/user';
 const UID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PROTOCOL='climboria-preview-v1',MAX_SOCKETS=2,SESSION_MS=60000;
+const PREVIEW_ORIGIN='https://game-combat-preview.climboria.fun';
 const response=(status,data)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
 function accounts(env){
  const raw=env?.PREVIEW_ACCOUNT_ALLOWLIST;
@@ -37,7 +38,10 @@ export const previewWorker={
   if(!enabled(env))return response(503,{error:'preview-disabled'});
   // No browser CORS; staging client must be served from the same private origin.
   const url=new URL(req.url),origin=req.headers.get('Origin');
-  if(origin&&origin!==url.origin)return response(403,{error:'origin-not-allowed'});
+  // Fail closed if a deployment is accidentally routed to another host.
+  // This is defense in depth, not a substitute for Cloudflare Access.
+  if(url.origin!==PREVIEW_ORIGIN)return response(403,{error:'preview-host-not-allowed'});
+  if(origin&&origin!==PREVIEW_ORIGIN)return response(403,{error:'origin-not-allowed'});
   if(!env.PREVIEW_ROOMS||typeof env.SUPABASE_PUBLISHABLE_KEY!=='string'||
      env.SUPABASE_PUBLISHABLE_KEY.length<16||env.SUPABASE_PUBLISHABLE_KEY.length>512)
    return response(503,{error:'preview-unconfigured'});
