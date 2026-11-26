@@ -87,6 +87,16 @@ jobs:
         run: node --test verify-creation.test.mjs
       - name: Test historical pre-start verifier
         run: node --test check-prestart.test.mjs
+      - name: Test exact monthly unlock disclosure
+        run: node --test unlock-schedule.test.mjs
+      - name: Generate test fixture unlock schedule
+        run: node unlock-schedule.mjs > "$RUNNER_TEMP/v3-unlock-schedule.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-v3-test-fixture-unlock-schedule
+          path: ${{ runner.temp }}/v3-unlock-schedule.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Estimate V3 creation (read-only, never deploy)
         if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
         env:
