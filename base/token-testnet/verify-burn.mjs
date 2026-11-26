@@ -55,7 +55,9 @@ export async function verifyBurn(artifact,source,commit,payer,token,creationTx,b
  if(delegated){
   if(t.type!=='0x4'||r.type!=='0x4'||!Array.isArray(t.authorizationList)||t.authorizationList.length===0)fail('DELEGATED_BURN_TYPE_MISMATCH');
  }else if(t.input?.toLowerCase()!=='0x42966c68'+word(AMOUNT).slice(2))fail('BURN_TRANSACTION_MISMATCH');
- const l=r.logs?.[0];if(!Array.isArray(r.logs)||r.logs.length!==1||l?.address?.toLowerCase()!==token||l.removed!==false||l.transactionHash!==burnTx||l.blockHash!==r.blockHash||l.blockNumber!==r.blockNumber||JSON.stringify(l.topics)!==JSON.stringify([TRANSFER,topic(payer),word(0n)])||l.data!==word(AMOUNT))fail('BURN_EVENT_MISMATCH');
+ if(!Array.isArray(r.logs))fail('BURN_EVENT_MISMATCH');
+ const relevant=delegated?r.logs.filter(l=>l?.address?.toLowerCase()===token):r.logs;
+ const l=relevant[0];if(relevant.length!==1||l?.address?.toLowerCase()!==token||l.removed!==false||l.transactionHash!==burnTx||l.blockHash!==r.blockHash||l.blockNumber!==r.blockNumber||JSON.stringify(l.topics)!==JSON.stringify([TRANSFER,topic(payer),word(0n)])||l.data!==word(AMOUNT))fail('BURN_EVENT_MISMATCH');
  const before='0x'+(n-1n).toString(16),after=r.blockNumber;
  const [pre,post]=await Promise.all([rpc('eth_getBlockByNumber',[before,false]),rpc('eth_getBlockByNumber',[after,false])]);
  if(pre?.number!==before||!hash(pre.hash)||post?.number!==after||post.hash!==r.blockHash||post.parentHash!==pre.hash)fail('BURN_BLOCK_MISMATCH');
