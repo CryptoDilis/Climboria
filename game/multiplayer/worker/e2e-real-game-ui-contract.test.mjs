@@ -66,3 +66,10 @@ test('landscape authenticated QA checks actual chat geometry and collapse withou
  assert.match(qa,/Mobile chat did not collapse/);
  assert.match(qa,/Mobile chat did not reopen/);
 });
+
+test('real remote GLB acceptance requires attached visible residents and no fallback',()=>{
+ const wait=qa.slice(qa.indexOf('async function waitForGlb('),qa.indexOf('async function openChat('));
+ assert.match(wait,/a\?\.peers===1&&a\.resident===1&&a\.resident<=a\.budget/);
+ assert.match(wait,/a\.sceneVisibleResidents===1&&a\.visibleFallbacks===0/);
+ assert.match(qa,/Promise\.all\(\[waitForGlb\(a\),waitForGlb\(b\)\]\)/);
+});
