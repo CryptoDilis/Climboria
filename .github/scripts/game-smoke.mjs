@@ -191,6 +191,12 @@ try {
   // Gated room integration: never display invented connected players on boot.
   // Verify that only the 3D rendering adapter (not a networking connection)
   // can create/remove a strictly temporary QA marker, then clear it.
+  const remoteHeroFit=await page.evaluate(()=>window.ENDLESS_WILDS?.remoteHeroFitAudit?.());
+  if(!remoteHeroFit||!remoteHeroFit.transformPreserved||!remoteHeroFit.authoredRootAttached||
+     ![remoteHeroFit.height,remoteHeroFit.feet,remoteHeroFit.centerX,remoteHeroFit.centerZ].every(Number.isFinite)||
+     Math.abs(remoteHeroFit.height-1.9)>.001||Math.abs(remoteHeroFit.feet)>.001||
+     Math.abs(remoteHeroFit.centerX)>.001||Math.abs(remoteHeroFit.centerZ)>.001)
+    errors.push('Remote hero fit must preserve authored transform, center and ground model: '+JSON.stringify(remoteHeroFit));
   const remotePresenceQA=await page.evaluate(async()=>{
     const renderer=window.__CLIMBORIA_GAME_PEERS;
     const status=document.documentElement.dataset.climboriaMultiplayer;
