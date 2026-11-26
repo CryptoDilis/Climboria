@@ -65,6 +65,11 @@ jobs:
           set -euo pipefail
           forge test --match-contract ClimbV3IntegratedTestTokenTest -vv | tee "$RUNNER_TEMP/climb-v3-integrated-tests.log"
           grep -Eq '6 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-integrated-tests.log"
+      - name: Run shared expense successor fixture tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3SharedExpenseTest -vv | tee "$RUNNER_TEMP/climb-v3-shared-expense-tests.log"
+          grep -Eq '7 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-shared-expense-tests.log"
       - name: Fingerprint integrated test build (no deployment)
         env:
           V3_SOURCE_SHA: ${{ github.sha }}
