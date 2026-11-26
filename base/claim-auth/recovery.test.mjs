@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {assessRecovery as assess} from './recovery.mjs';
+const h=(n,len=32)=>n.toString(16).padStart(2,'0').repeat(len);
+const expected={chainId:84532,contract:h(1,20),token:h(2,20),manifest:h(3),entitlement:h(4),recipient:h(5,20),amountRaw:'60000000',deadline:2000};
+const observation={chainId:84532,contract:expected.contract,token:expected.token,manifest:expected.manifest,entitlement:expected.entitlement,recipient:expected.recipient,amountRaw:expected.amountRaw,finalized:true,blockHash:h(6),blockTime:1500,claimed:false,closed:false,transaction:null};
+const tx={hash:h(7),status:'success',finalized:true,exactClaimAndTransfer:true,sameCanonicalHistory:true};
+function check(o,state){const r=assess(expected,o);assert.equal(r.state,state);assert.equal(r.automaticResubmit,false);assert.equal(r.productionAuthorized,false);}
+test('missing evidence is not a failure or retry permission',()=>check(null,'EVIDENCE_UNAVAILABLE'));
+test('bind exact campaign contract token recipient and amount',()=>{for(const [k,v] of Object.entries({chainId:8453,contract:h(8,20),token:h(8,20),manifest:h(8),entitlement:h(8),recipient:h(8,20),amountRaw:'1'}))check({...observation,[k]:v},'CONTEXT_MISMATCH');});
+test('unfinalized evidence cannot authorize completion',()=>check({...observation,finalized:false,claimed:true,transaction:tx},'FINALITY_PENDING'));
+test('unclaimed finalized view cannot rule out pending transaction',()=>check(observation,'UNCLAIMED_PENDING_TRANSACTION_CHECK'));
+test('pending or unknown transaction remains unresolved',()=>{for(const status of ['pending','unknown'])check({...observation,transaction:{...tx,status,finalized:false,exactClaimAndTransfer:false}},'TRANSACTION_UNRESOLVED');});
+test('exact finalized success and claimed flag agree',()=>check({...observation,claimed:true,transaction:tx},'PAYOUT_OBSERVED'));
+test('claimed flag without receipt requires reconciliation, not another payout',()=>check({...observation,claimed:true},'CLAIMED_RECONCILIATION_REQUIRED'));
+test('success without matching transfer or claim flag fails closed',()=>{check({...observation,transaction:tx},'EVIDENCE_CONFLICT');check({...observation,claimed:true,transaction:{...tx,exactClaimAndTransfer:false}},'EVIDENCE_CONFLICT');});
+test('reorg or incompatible canonical history fails closed',()=>check({...observation,claimed:true,transaction:{...tx,sameCanonicalHistory:false}},'EVIDENCE_CONFLICT'));
+test('finalized revert is manual review only, not automatic resubmission',()=>check({...observation,transaction:{...tx,status:'reverted',exactClaimAndTransfer:false}},'FINALIZED_REVERT_MANUAL_REVIEW'));
+test('closed or expired claim window cannot be reopened automatically',()=>{check({...observation,closed:true},'WINDOW_CLOSED_REVIEW');check({...observation,blockTime:2000},'WINDOW_CLOSED_REVIEW');});
+test('strict evidence shape and mainnet rejection',()=>{assert.throws(()=>assess({...expected,chainId:8453},observation),/INVALID_EXPECTED/);assert.throws(()=>assess(expected,{...observation,extra:true}),/INVALID_SHAPE/);check({...observation,claimed:'true'},'EVIDENCE_INVALID');});
