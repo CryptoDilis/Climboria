@@ -76,6 +76,8 @@ jobs:
         run: node --test simulate-creation.test.mjs
       - name: Test read-only finalized creation verifier
         run: node --test verify-creation.test.mjs
+      - name: Test unsigned handoff binding
+        run: node --test unsigned-handoff.test.mjs
       - name: Simulate exact compiled test-only creation
         if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.token == '' && inputs.creation_tx == ''
         env:
@@ -89,6 +91,20 @@ jobs:
         with:
           name: climb-burn-creation-estimate-${{ github.sha }}
           path: ${{ runner.temp }}/climb-burn-creation-estimate.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Prepare unsigned creation handoff for review
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.token == '' && inputs.creation_tx == ''
+        env:
+          TEST_PAYER: ${{ inputs.payer }}
+        run: |
+          set -euo pipefail
+          node unsigned-handoff.mjs out/ClimbBurnPrototype.sol/ClimbBurnPrototype.json src/ClimbBurnPrototype.sol "$GITHUB_SHA" "$RUNNER_TEMP/climb-burn-creation-estimate.json" "$TEST_PAYER" "$RUNNER_TEMP/climb-burn-unsigned-handoff.json"
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.token == '' && inputs.creation_tx == ''
+        with:
+          name: climb-burn-unsigned-handoff-${{ github.sha }}
+          path: ${{ runner.temp }}/climb-burn-unsigned-handoff.json
           retention-days: 7
           if-no-files-found: error
       - name: Verify finalized test-only creation
