@@ -1,5 +1,11 @@
 name: CLIMB Base V3 Allocation Prototype
 on:
+  workflow_dispatch:
+    inputs:
+      payer:
+        description: 'Public Base Sepolia payer (synthetic role estimate only; no deployment)'
+        required: true
+        type: string
   pull_request:
     paths:
       - 'base/v3-testnet/**'
@@ -13,6 +19,7 @@ permissions:
   contents: read
 jobs:
   offline:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -63,3 +70,20 @@ jobs:
           path: ${{ runner.temp }}/v3-build-manifest.json
           if-no-files-found: error
           retention-days: 14
+      - name: Test V3 read-only estimator
+        run: node --test estimate-creation.test.mjs
+      - name: Estimate V3 creation with synthetic roles (never deploy)
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        env:
+          TEST_PAYER: ${{ inputs.payer }}
+        run: |
+          set -euo pipefail
+          node estimate-creation.mjs "$RUNNER_TEMP/v3-build-manifest.json" "$GITHUB_SHA" "$TEST_PAYER" > "$RUNNER_TEMP/v3-creation-estimate.json"
+          cat "$RUNNER_TEMP/v3-creation-estimate.json"
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        with:
+          name: climb-v3-creation-estimate
+          path: ${{ runner.temp }}/v3-creation-estimate.json
+          if-no-files-found: error
+          retention-days: 7
