@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## REAL REMOTE HERO VISIBILITY ACCEPTANCE — 2026-11-26 PHT (PROPOSED)
+
+- #813 merged `f2dcc44eb9fe1e97b9500aa9d62785821742a615`, public version `20261126-game-mobile-chat-2` verified, owner UI confirmation recorded in issue #657. #817 remote import transform fit remains separate; its exact reconciled head `4584c6dafde62c309c4c4bbcb3e0526951d48e0c` had Validate, Authority and Browser success with Gameplay, Heroes and Chests still running at review.
+- Real registered QA previously accepted a resident counter alone. Now both browsers must observe exactly one real remote GLB resident within budget, one attached scene-visible resident, and zero visible fallbacks. Uses existing read-only audit; no production changes or fake peers. Added offline contract regression. Code commits `96ac7d95a34ac65b714c59fa618dbd3ad4de1e55` and `29d7a5a17b555ccf0b48e342883133fc99aa864a`. CI pending; actual physical geometry and chat/reconnect acceptance remain unverified.
+- **EXACT NEXT:** verify #817 all checks then merge if green; reconcile this QA branch with the merged record preserving both entries, verify fresh CI and published parity, run protected two-account QA and physical device checks. Game only; no Worker deployment or combat/loot activation.
+
+---
+
 ## PC RIGHT-CLICK AND MOBILE CHAT RELEASE QA — 2026-11-26 PHT
 
 - #810 merged `a58c7cf468d66ffb42355c9db2dd45627a1676bb`, exact head `60214838a04d0a3684cde86f611acf5f8c7afdd0`. All eight workflows SUCCESS: Gameplay 45770106790, Validate 45770106769, Runtime 45770106808, Authority 45770106711, Gateway 45770106812 (job 139740430200: 267/267 + 63/63), Browser 45770106872, Heroes 45770106849, Chests 45770106765. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190067149). Main push log unavailable through connector. Public version `20261126-game-mobile-chat-2` remains unverified at proposal.
