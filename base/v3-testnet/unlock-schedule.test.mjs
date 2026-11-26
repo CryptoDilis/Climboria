@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {INITIAL,ALLOCATION,MONTH,founderVested,period,schedule} from './unlock-schedule.mjs';
+const sum=(from,to,key)=>Array.from({length:to-from},(_,i)=>period(i+from)[key]).reduce((a,b)=>a+b,0n);
+test('allocation equals initial supply',()=>assert.equal(Object.values(ALLOCATION).reduce((a,b)=>a+b,0n),INITIAL));
+test('gaming annual caps reconcile exactly to five-year allocation',()=>{for(let y=0;y<5;y++)assert.equal(sum(y*12,y*12+12,'gaming'),ALLOCATION.gaming*BigInt(30-y*5)/100n);assert.equal(sum(0,60,'gaming'),ALLOCATION.gaming);});
+test('restricted spend monthly floor deltas sum to each allocation',()=>{for(const k of ['ecosystem','community','treasury'])assert.equal(sum(0,60,k),ALLOCATION[k]);});
+test('founder cliff and final remainder match vesting formula',()=>{assert.equal(founderVested(12),0n);assert.equal(period(13).founderNewlyVested,ALLOCATION.founder/36n);assert.equal(founderVested(48),ALLOCATION.founder);assert.equal(sum(0,60,'founderNewlyVested'),ALLOCATION.founder);assert.equal(period(49).founderNewlyVested,0n);});
+test('inert reserves stay zero in every period',()=>{assert.equal(sum(0,60,'liquidity'),0n);assert.equal(sum(0,60,'legacy'),0n);});
+test('all 60 periods reconcile to eligibility ceiling and inert reserve',()=>{const s=schedule();assert.equal(s.periods.length,60);assert.equal(BigInt(s.maximumScheduledEligibilityRaw)+BigInt(s.inertReserveRaw),INITIAL);assert.equal(s.maximumScheduledEligibilityRaw,'657777777120000');assert.equal(s.periods[59].endOffsetSecondsExclusive,String(60n*MONTH));assert.equal(s.periods[59].cumulativeNewlyEligible,s.maximumScheduledEligibilityRaw);});
+test('invalid periods fail closed',()=>{for(const m of [-1,60,1.5,NaN])assert.throws(()=>period(m));});
