@@ -140,6 +140,31 @@ async function waitForGlb(page){
    a.sceneVisibleResidents===1&&a.visibleFallbacks===0;
  },undefined,{timeout:MAX_WAIT});
 }
+async function readRenderedPeer(page){
+ const peer=await page.evaluate(()=>{
+  const audit=window.__CLIMBORIA_GAME_PEERS?.audit?.();
+  const p=audit?.renderedPositions?.[0];
+  if(audit?.peers!==1||audit?.sceneVisibleResidents!==1||!p?.attached||!p.visible||
+     ![p.x,p.y,p.z,p.targetX,p.targetY,p.targetZ].every(Number.isFinite))return null;
+  return p;
+ });
+ check(peer,'Remote scene transform missing before real player movement');
+ return peer;
+}
+async function waitForRenderedMotion(page,before){
+ // No writes to the scene or transport. Require the actual interpolated
+ // remote scene transform to move and converge on its received target.
+ await page.waitForFunction(initial=>{
+  const audit=window.__CLIMBORIA_GAME_PEERS?.audit?.();
+  const p=audit?.renderedPositions?.[0],packet=audit?.positions?.[0];
+  return audit?.peers===1&&audit.sceneVisibleResidents===1&&
+   p?.id===initial.id&&packet?.id===p.id&&p.attached&&p.visible&&
+   [p.x,p.y,p.z,p.targetX,p.targetY,p.targetZ,packet.x,packet.z].every(Number.isFinite)&&
+   Math.hypot(p.x-initial.x,p.z-initial.z)>.3&&
+   Math.hypot(p.targetX-packet.x,p.targetZ-packet.z)<.01&&
+   Math.hypot(p.x-p.targetX,p.y-p.targetY,p.z-p.targetZ)<.75;
+ },before,{timeout:30000});
+}
 async function openChat(page){
  const panel=page.locator('#climboria-world-chat-panel');
  if(!(await panel.isVisible())){
@@ -224,17 +249,39 @@ console.log('GAME QA STAGE: nearby-chat');
  const nearbyButton=a.locator('#climboria-world-chat-panel button[aria-label="Switch between World Chat and Nearby Chat"]');
  await nearbyButton.click();
  await a.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='NEARBY CHAT · 20m');
- await sendChat(a,'QA nearby speech acceptance');
+ const nearbyNonce=Date.now().toString(36);
+ const nearbyA='QA nearby speech acceptance A '+nearbyNonce;
+ const nearbyB='QA nearby speech acceptance B '+nearbyNonce;
+ await sendChat(a,nearbyA);
  await Promise.all([
-  expectChat(a,'QA Explorer A [nearby]','QA nearby speech acceptance'),
-  expectChat(b,'QA Explorer A [nearby]','QA nearby speech acceptance')
+  expectChat(a,'QA Explorer A [nearby]',nearbyA),
+  expectChat(b,'QA Explorer A [nearby]',nearbyA)
  ]);
  await b.waitForFunction(()=>window.__CLIMBORIA_GAME_PEERS?.audit?.()?.nearbyBubbles===1,
   undefined,{timeout:12000});
  await nearbyButton.click();
  await a.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='WORLD CHAT');
+ // Exercise the reverse direction through B's actual composer (landscape
+ // emulation when enabled). A must not already have an overhead bubble.
+ console.log('GAME QA STAGE: nearby-chat-B-to-A');
+ check(await a.evaluate(()=>window.__CLIMBORIA_GAME_PEERS?.audit?.()?.nearbyBubbles===0),
+  'Unexpected pre-existing remote speech bubble on A');
+ const nearbyButtonB=b.locator('#climboria-world-chat-panel button[aria-label="Switch between World Chat and Nearby Chat"]');
+ await nearbyButtonB.click();
+ await b.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='NEARBY CHAT · 20m');
+ await sendChat(b,nearbyB);
+ await Promise.all([
+  expectChat(b,'QA Explorer B [nearby]',nearbyB),
+  expectChat(a,'QA Explorer B [nearby]',nearbyB)
+ ]);
+ await a.waitForFunction(()=>window.__CLIMBORIA_GAME_PEERS?.audit?.()?.nearbyBubbles===1,
+  undefined,{timeout:12000});
+ await b.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel input')?.value==='',
+  undefined,{timeout:15000});
+ await nearbyButtonB.click();
+ await b.waitForFunction(()=>document.querySelector('#climboria-world-chat-panel')?.firstElementChild?.textContent==='WORLD CHAT');
  // Nearby and World share one server anti-spam cooldown, independently of
- // which channel the UI currently has selected.
+ // which channel the UI currently has selected. Both senders can now proceed.
  await a.waitForTimeout(2800);
  // Movement QA must observe actual keyboard-driven Game physics, real room
  // validation and updated coordinates in the OTHER browser's remote model.
@@ -249,6 +296,7 @@ console.log('GAME QA STAGE: movement-A-to-B');
   if(!peer)throw Error('Verified remote peer position missing');
   return {x:peer.x,z:peer.z};
  });
+ const renderedBeforeA=await readRenderedPeer(b);
  // Make sure the previously focused World Chat field cannot swallow W/Shift.
  await a.evaluate(()=>document.activeElement?.blur?.());
  await a.keyboard.down('Shift');
@@ -267,11 +315,15 @@ console.log('GAME QA STAGE: movement-A-to-B');
   return peer&&Math.hypot(peer.x-initial.x,peer.z-initial.z)>.3&&
    Math.hypot(peer.x-after.x,peer.z-after.z)<7;
  },{initial:initialRemote,after:movedLocal},{timeout:30000});
+ await waitForRenderedMotion(b,renderedBeforeA);
 console.log('GAME QA STAGE: world-chat');
- await sendChat(a,'QA real game world chat A');
+ const worldNonce=Date.now().toString(36);
+ const worldA='QA real game world chat A '+worldNonce;
+ const worldB='QA real game world chat B '+worldNonce;
+ await sendChat(a,worldA);
  await Promise.all([
-  expectChat(a,'QA Explorer A','QA real game world chat A'),
-  expectChat(b,'QA Explorer A','QA real game world chat A')
+  expectChat(a,'QA Explorer A',worldA),
+  expectChat(b,'QA Explorer A',worldA)
  ]);
  // A real self-echo, not WebSocket.send(), must clear the matching draft.
  // Wait for the acknowledgement to be processed before editing. This is
@@ -284,10 +336,10 @@ console.log('GAME QA STAGE: world-chat');
  // chat reply and must never be mistaken for an acknowledgement to A.
  const unsent='QA preserve my unsent draft';
  await (await openChat(a)).locator('input').fill(unsent);
- await sendChat(b,'QA real game world chat B');
+ await sendChat(b,worldB);
  await Promise.all([
-  expectChat(a,'QA Explorer B','QA real game world chat B'),
-  expectChat(b,'QA Explorer B','QA real game world chat B')
+  expectChat(a,'QA Explorer B',worldB),
+  expectChat(b,'QA Explorer B',worldB)
  ]);
  await assertChatDraft(a,unsent,
   'Incoming World Chat from another real player erased A unsent draft');
@@ -311,6 +363,7 @@ console.log('GAME QA STAGE: world-chat');
  });
  check(Math.hypot(initialB.x-initialRemoteB.x,initialB.y-initialRemoteB.y,initialB.z-initialRemoteB.z)<6,
   'B local position and A remote baseline must agree before movement');
+ const renderedBeforeB=await readRenderedPeer(a);
  await b.evaluate(()=>document.activeElement?.blur?.());
  await b.keyboard.down('Shift');await b.keyboard.down('w');
  try{await b.waitForTimeout(2200)}
@@ -328,6 +381,7 @@ console.log('GAME QA STAGE: world-chat');
   return peer&&Math.hypot(peer.x-before.x,peer.z-before.z)>.3&&
    Math.hypot(peer.x-last.x,peer.y-last.y,peer.z-last.z)<6;
  },{before:initialRemoteB,last:lastVerifiedB},{timeout:30000});
+ await waitForRenderedMotion(a,renderedBeforeB);
  await b.waitForTimeout(750);
  // Prove live Nearby isolation with a positive World control on the SAME
  // sender and recipient, rather than treating a broken socket as privacy.
@@ -399,6 +453,15 @@ console.log('GAME QA STAGE: logout-reconnect');
    window.__CLIMBORIA_GAME_PEERS?.audit?.().peers===0,
   undefined,{timeout:25000});
  await assertPeer(a,0);
+ // Both real browsers must remove all detached/ghost visual records, not
+ // merely decrement the ONLINE counter. Pending GLB downloads may finish
+ // asynchronously but must never create a resident for a departed peer.
+ await Promise.all([a,b].map(page=>page.waitForFunction(()=>{
+  const audit=window.__CLIMBORIA_GAME_PEERS?.audit?.();
+  return audit?.peers===0&&audit.resident===0&&audit.sceneVisibleResidents===0&&
+   audit.fallbackPeers===0&&audit.nearbyBubbles===0&&
+   audit.positions?.length===0&&audit.renderedPositions?.length===0;
+ },undefined,{timeout:25000})));
  const signedBackIn=await b.evaluate(requestBoundedGameQaAuth,{
   action:'sign-in',email:accounts[1].email,password:accounts[1].password,
   timeoutMs:20000
@@ -421,6 +484,25 @@ console.log('GAME QA STAGE: logout-reconnect');
  check(Math.hypot(rejoinedB.x-lastVerifiedB.x,rejoinedB.y-lastVerifiedB.y,
   rejoinedB.z-lastVerifiedB.z)<6,
   'Rejoined registered hero returned to an incorrect world location');
+ // The restored remote group must actually render at the resumed position,
+ // not retain the old location or simply show a correct network packet.
+ await a.waitForFunction(last=>{
+  const audit=window.__CLIMBORIA_GAME_PEERS?.audit?.();
+  const p=audit?.renderedPositions?.[0],packet=audit?.positions?.[0];
+  return audit?.peers===1&&p?.attached&&p.visible&&packet?.id===p.id&&
+   [p.x,p.y,p.z,p.targetX,p.targetY,p.targetZ,packet.x,packet.z].every(Number.isFinite)&&
+   Math.hypot(p.x-last.x,p.z-last.z)<6&&
+   Math.hypot(p.targetX-packet.x,p.targetZ-packet.z)<.01&&
+   Math.hypot(p.x-p.targetX,p.y-p.targetY,p.z-p.targetZ)<.75;
+ },lastVerifiedB,{timeout:30000});
+ // Prove the rejoined account can still exchange server-confirmed messages.
+ const reconnectText='QA post-reconnect World '+Date.now().toString(36);
+ await sendChat(b,reconnectText);
+ await Promise.all([
+  expectChat(a,'QA Explorer B',reconnectText),
+  expectChat(b,'QA Explorer B',reconnectText)
+ ]);
+ await assertPeer(a,1);await assertPeer(b,1);
  console.log('PASS: two REAL registered browsers exchanged World and Nearby messages, verified out-of-range transcript isolation, rendered overhead speech and remote GLBs, and resumed a moved player without a Sanctuary reset.');
  console.log('Observed software Chromium FPS A/B:',fpsA,fpsB,'— physical Android/desktop hardware and owner release acceptance are still required.');
 }finally{

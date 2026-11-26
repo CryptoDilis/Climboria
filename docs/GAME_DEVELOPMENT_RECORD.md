@@ -1,5 +1,58 @@
 # Climboria Game Development Record
 
+## MULTIPLAYER QA MAIN-TARGET CI RETRIGGER — 2026-11-26 PHT
+
+- #822 exact retargeted head `f987465e8cd61ab08e42226c8e8e8c62aab8d070` unexpectedly exposed only unrelated Base workflow 45812831025; no Game CI evidence. Do not merge based on that. Fresh Game-only commit also makes both ordinary World Chat assertions use distinct per-run messages (Nearby, range and reconnect already use fresh text), preventing old transcript false positives; added offline contract. Protected workflow is manual dispatch only; connector has no dispatch action, no QA credentials or bypass used. Main drift since #819 merge was unrelated Base/DEX only.
+- **EXACT NEXT:** confirm new main-target head has actual Game Gateway, Runtime, Authority, Browser, Heroes/Chests, Gameplay and Validate checks as applicable; merge only after expected tests pass; verify main push public parity, run protected registered QA and physical test. Game only; no live PvP/loot or Worker redeploy.
+
+---
+
+## REMOTE VISIBILITY QA MERGED; MULTIPLAYER ACCEPTANCE RECONCILED — 2026-11-26 PHT
+
+- #819 merged `e8d0f284c7312b15fb9b01fd5916ad7ba35b3209`, exact tested head `cf648096f1a42c351a0e8b368687a6d41088a548`, all four checks SUCCESS: Runtime 45810601958, Gateway 45810601911 (270/270 + 63/63), Validate 45810601933, Gameplay 45810601908. Main drift unrelated Base/DEX only. #817 public exact-byte readiness already verified below.
+- #822 reconciled onto this merged main, preserving all four Game source/test files and both histories, then retargeted to main for fresh CI. Actual protected two-account QA not yet executed.
+- **EXACT NEXT:** review exact Game-only diff; verify fresh #822 CI, merge only green, verify main push public parity, then real two-account registered desktop/landscape and physical acceptance. No Worker deploy, no live combat/loot. Game only.
+
+---
+
+## PUBLIC REMOTE HERO FIT VERIFIED — 2026-11-26 PHT
+
+- Main push readiness [45810203419](https://github.com/CryptoDilis/Climboria/actions/runs/45810203419) on #817 merge `145b6ca7df147c25cbe51ae80c7bd1a17eb31f93`, job 139875749024 SUCCESS. Exact public parity verified at 11:25:00 UTC after two bounded retries: 22/22 readiness tests, registered configuration, room health, Nearby and DO readiness. Gameplay HTML SHA256 `6b508d5f467a2738c7de7eccafaaa2758ebc9e61dee90d183faa99848f7edaff`, menu `fe9b35bd77cc47fed16ddab0a813e71e3f3b54c598212893f194569f72d8e475`, presence `20261126-game-mobile-chat-2` SHA256 `367c9804cd8000d81e43b3bf672f27ec94a98c48336b8a3eba8176a34f5a40a0`. Main push runs accessible via approved GitHub Actions GET collection filtered by exact head_sha and event=push; no need for redundant parity PR. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190835751). Actual remote alignment and real account acceptance still unverified.
+- #819 exact reconciled head `cf648096f1a42c351a0e8b368687a6d41088a548` Gateway 45810601911 job 139877114750 confirmed new visibility regression, 270/270 + 63/63 tests, zero failures; Validate 45810601933 and Runtime 45810601958 passed; Gameplay 45810601908 pending at review.
+- **EXACT NEXT:** merge #819 only green, reconcile/retarget #822 main and verify fresh CI and postmerge exact public bytes via push readiness, then actual protected two-account browser run and physical acceptance. No Worker deploy or PvP/loot activation. Game only.
+
+---
+
+## STACKED MULTIPLAYER QA RECONCILED — 2026-11-26 PHT
+
+- #822 reconciled onto #819 head `cf648096f1a42c351a0e8b368687a6d41088a548` while Gameplay 45810601908 runs; other three #819 checks green. Combined the merged #817 GLB normalization + synthetic fit smoke with #822 read-only rendered positions + movement smoke, and preserved all #819 and #822 QA and historical records. #822 remains draft; no live deployment or actual registered QA claimed.
+- **EXACT NEXT:** finish #819 gameplay CI, merge only green; then retarget #822 to resulting main (preserve records and verify exact Game-only diff), fresh CI/public parity, then actual protected two-account and physical acceptance. No Worker deploy or PvP/loot activation. Game only.
+
+---
+
+## RECONNECT GHOST CLEANUP AND LIVE CHAT ACCEPTANCE — 2026-11-26 PHT (PROPOSED)
+
+- Extended existing stacked draft #822. After real B logout both browsers must report zero remote peers, resident GLBs, visible scene residents, fallback models, speech bubbles, packet records and rendered records before B reauthenticates. After restored last-location checks, A must observe B's visible attached scene transform at the resumed location and converged to the packet target; fresh World Chat from B must be echoed to B and received by A, with both still ONLINE: 2. No production movement/authority changes or forced storage edits. Source-contract regression added. Code commits `148be4c4d68b3020b8a6ea234a28ff03744f1f14` and `c1afdeddff08e162856742091c9b8a99119e01cc`.
+- #817 and #819 gameplay jobs still running at review; main drift since #813 was unrelated Base/DEX paths only. **EXACT NEXT:** verify both exact-head gameplay outcomes; merge/reconcile #817 then #819, reconcile and retarget #822, verify fresh CI and public parity, execute actual protected two-account acceptance. No real reconnect test executed yet; no PvP/loot activation. Game only.
+
+---
+
+## ACTUAL REMOTE SCENE MOTION ACCEPTANCE — 2026-11-26 PHT (PROPOSED)
+
+- Extended stacked draft #822 without resetting #817 or #819 checks. Added read-only renderedPositions snapshot of actual remote group transform, interpolation target, scene attachment and visibility; existing packet positions unchanged. Real two-browser QA now requires same attached, visible remote GLB to move >0.3m horizontally and converge within 0.75m of its 3D target, with target X/Z matching the corresponding packet, in both directions. Added renderer-only smoke interpolation/cleanup assertions and offline source-contract regression. Code commits `eb977e1e41d5f140246d01c2bb4301998e730545`, `0c7d0cd912132dd30d307a9ed804119603de52a3`, `f4746d4724f4e35b1417860d55886d7bb6708dc7`, `8241fcc8f3f1dd12c57aedb3603871e8a3404021`. No new authority, movement algorithm, assets or combat changes. Scene visibility does not establish pixel visibility/occlusion or physical performance.
+- **EXACT NEXT:** finish #817 gameplay 45808258002 and #819 gameplay 45808659702; merge/reconcile in order. #822 is stacked on #819, so no normal main-target CI yet. Reconcile #822 onto main retaining both independent changes to play.html, game-smoke.mjs and record; retarget, review exact diff, run fresh CI, verify published parity before protected actual two-account QA. No live acceptance claimed. Game only.
+
+---
+
+## REAL BIDIRECTIONAL NEARBY SPEECH ACCEPTANCE — 2026-11-26 PHT (PROPOSED)
+
+- #817 remote fit exact head `4584c6dafde62c309c4c4bbcb3e0526951d48e0c` 5/6 SUCCESS; gameplay 45808258002 pending. #819 visibility QA exact head `f521453147af46e70f7d405e84598cab90e2c2a6` 3/4 SUCCESS; actual Gateway job 139870453701 passed 270/270 + 63/63, zero failures; gameplay 45808659702 pending. [CI evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190531905).
+- Stacked QA-only follow-up on #819 (not independent main release): both registered players send distinct fresh per-run Nearby messages through actual composer, assert sender echo and other transcript, observe overhead speech on each receiving browser, verify no pre-existing bubble on A and B's acknowledged input clears, restore World channel and cooldown. No production code changes, synthetic peers or fake packet admission. Source-contract regression added. Code commits `e76786ca1a190bf03a9d93846d3d522c43c79bb8` and `7db5c4c302838c03ecbb8dea487761760aba1692`. Actual protected browser execution and physical devices remain pending.
+- **EXACT NEXT:** complete #817 exact-head CI, merge only green; reconcile #819 with main preserving records, validate and merge; reconcile this stacked branch onto the resulting main and retarget PR, fresh CI, published parity, actual protected two-account QA. Follow with read-only rendered movement convergence audit (current position audit reflects received packets). No Worker deploy or PvP/loot activation. Game only.
+
+---
+
+
 ## REMOTE HERO FIT MERGED; VISIBILITY QA RECONCILIATION — 2026-11-26 PHT
 
 - #817 MERGED `145b6ca7df147c25cbe51ae80c7bd1a17eb31f93`, exact head `4584c6dafde62c309c4c4bbcb3e0526951d48e0c`, all six workflows SUCCESS: Validate 45808258106, Authority 45808257927, Browser 45808258062, Heroes 45808257992, Chests 45808257998, Gameplay 45808258002. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190674129). Public parity still pending.

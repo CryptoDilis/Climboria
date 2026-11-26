@@ -73,3 +73,57 @@ test('real remote GLB acceptance requires attached visible residents and no fall
  assert.match(wait,/a\.sceneVisibleResidents===1&&a\.visibleFallbacks===0/);
  assert.match(qa,/Promise\.all\(\[waitForGlb\(a\),waitForGlb\(b\)\]\)/);
 });
+
+test('real Nearby speech must be accepted in both directions with fresh messages',()=>{
+ const nearby=qa.slice(qa.indexOf("console.log('GAME QA STAGE: nearby-chat')"),qa.indexOf("console.log('GAME QA STAGE: movement-A-to-B')"));
+ assert.match(nearby,/const nearbyNonce=Date\.now\(\)\.toString\(36\)/);
+ assert.match(nearby,/await sendChat\(a,nearbyA\)/);
+ assert.match(nearby,/expectChat\(a,'QA Explorer A \[nearby\]',nearbyA\)/);
+ assert.match(nearby,/expectChat\(b,'QA Explorer A \[nearby\]',nearbyA\)/);
+ assert.match(nearby,/await b\.waitForFunction\(\(\)=>window\.__CLIMBORIA_GAME_PEERS\?\.audit\?\.\(\)\?\.nearbyBubbles===1/);
+ assert.match(nearby,/await sendChat\(b,nearbyB\)/);
+ assert.match(nearby,/expectChat\(b,'QA Explorer B \[nearby\]',nearbyB\)/);
+ assert.match(nearby,/expectChat\(a,'QA Explorer B \[nearby\]',nearbyB\)/);
+ assert.match(nearby,/nearbyBubbles===0/);
+ assert.match(nearby,/await a\.waitForFunction\(\(\)=>window\.__CLIMBORIA_GAME_PEERS\?\.audit\?\.\(\)\?\.nearbyBubbles===1/);
+ assert.match(nearby,/await nearbyButtonB\.click\(\)/);
+ assert.match(nearby,/await b\.waitForFunction\(\(\)=>document\.querySelector\('#climboria-world-chat-panel input'\)\?\.value===''[,]/);
+});
+
+test('real movement requires the same visible attached remote model to move and converge',()=>{
+ const motion=qa.slice(qa.indexOf('async function waitForRenderedMotion('),qa.indexOf('async function openChat('));
+ assert.match(motion,/audit\?\.renderedPositions\?\.\[0\]/);
+ assert.match(motion,/p\?\.id===initial\.id&&packet\?\.id===p\.id&&p\.attached&&p\.visible/);
+ assert.match(motion,/Math\.hypot\(p\.x-initial\.x,p\.z-initial\.z\)>\.3/);
+ assert.match(motion,/Math\.hypot\(p\.targetX-packet\.x,p\.targetZ-packet\.z\)<\.01/);
+ assert.match(motion,/Math\.hypot\(p\.x-p\.targetX,p\.y-p\.targetY,p\.z-p\.targetZ\)<\.75/);
+ assert.match(qa,/renderedBeforeA=await readRenderedPeer\(b\)/);
+ assert.match(qa,/await waitForRenderedMotion\(b,renderedBeforeA\)/);
+ assert.match(qa,/renderedBeforeB=await readRenderedPeer\(a\)/);
+ assert.match(qa,/await waitForRenderedMotion\(a,renderedBeforeB\)/);
+});
+
+test('real reconnect clears ghost visuals and restores rendered motion and chat',()=>{
+ const reconnect=qa.slice(qa.indexOf("console.log('GAME QA STAGE: logout-reconnect')"));
+ assert.match(reconnect,/Promise\.all\(\[a,b\]\.map\(page=>page\.waitForFunction/);
+ assert.match(reconnect,/audit\?\.peers===0&&audit\.resident===0&&audit\.sceneVisibleResidents===0/);
+ assert.match(reconnect,/audit\.fallbackPeers===0&&audit\.nearbyBubbles===0/);
+ assert.match(reconnect,/audit\.positions\?\.length===0&&audit\.renderedPositions\?\.length===0/);
+ assert.ok(reconnect.indexOf('audit.renderedPositions?.length===0')<reconnect.indexOf("action:'sign-in'"));
+ assert.match(reconnect,/Math\.hypot\(p\.x-last\.x,p\.z-last\.z\)<6/);
+ assert.match(reconnect,/Math\.hypot\(p\.x-p\.targetX,p\.y-p\.targetY,p\.z-p\.targetZ\)<\.75/);
+ assert.match(reconnect,/await sendChat\(b,reconnectText\)/);
+ assert.match(reconnect,/expectChat\(a,'QA Explorer B',reconnectText\)/);
+ assert.match(reconnect,/expectChat\(b,'QA Explorer B',reconnectText\)/);
+});
+
+test('real World Chat acceptance cannot match a previous run transcript',()=>{
+ assert.match(qa,/const worldNonce=Date\.now\(\)\.toString\(36\)/);
+ assert.match(qa,/const worldA='QA real game world chat A '\+worldNonce/);
+ assert.match(qa,/const worldB='QA real game world chat B '\+worldNonce/);
+ for(const [sender,message] of [['A','worldA'],['B','worldB']]){
+  for(const receiver of ['a','b']){
+   assert.ok(qa.includes("expectChat("+receiver+",'QA Explorer "+sender+"',"+message+")"));
+  }
+ }
+});

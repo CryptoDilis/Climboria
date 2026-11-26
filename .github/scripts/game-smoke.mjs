@@ -214,6 +214,9 @@ try {
     // used later by real owner-operated two-browser movement acceptance.
     renderer.move(markerId,{x:pos.x+2,y:pos.y,z:pos.z});
     const moved=renderer.audit();
+    // Deterministic renderer-only interpolation step; not network acceptance.
+    renderer.update(.2);
+    const renderedMoved=renderer.audit();
     const farSpeech=renderer.speak(markerId,'Should not show at long range');
     // Cached terrain map refreshes every 120 ms. Exercise the real render
     // loop rather than faking canvas pixels or direct marker mutations.
@@ -242,7 +245,7 @@ try {
     const afterNearby=renderer.audit();
     await new Promise(resolve=>setTimeout(resolve,300));
     const legendAfter=document.querySelector('#world-map-legend')?.textContent||'';
-    return {status,initial,added,removed,during,moved,after,nearby,afterNearby,nearbyObject,farSpeech,nearbySpeech,nearbyWithSpeech,
+    return {status,initial,added,removed,during,moved,renderedMoved,after,nearby,afterNearby,nearbyObject,farSpeech,nearbySpeech,nearbyWithSpeech,
       fieldMap:{legendDuring,legendAfter,pixel,cyan}};
   });
   console.log('GAME staged presence renderer (unauthenticated) QA:',JSON.stringify(remotePresenceQA));
@@ -270,6 +273,17 @@ try {
      remotePresenceQA.during?.positions?.length!==1||
      remotePresenceQA.moved?.positions?.length!==1||
      Math.abs(remotePresenceQA.moved.positions[0].x-remotePresenceQA.during.positions[0].x-2)>.01||
+     remotePresenceQA.during?.renderedPositions?.length!==1||
+     remotePresenceQA.moved?.renderedPositions?.length!==1||
+     remotePresenceQA.renderedMoved?.renderedPositions?.length!==1||
+     !remotePresenceQA.renderedMoved?.renderedPositions?.[0]?.attached||
+     !remotePresenceQA.nearby?.renderedPositions?.[0]?.visible||
+     !Number.isFinite(remotePresenceQA.renderedMoved?.renderedPositions?.[0]?.x)||
+     Math.abs(remotePresenceQA.moved.renderedPositions[0].x-remotePresenceQA.during.renderedPositions[0].x)>.01||
+     Math.abs(remotePresenceQA.renderedMoved.renderedPositions[0].x-remotePresenceQA.moved.positions[0].x)>.01||
+     Math.abs(remotePresenceQA.renderedMoved.renderedPositions[0].x-remotePresenceQA.renderedMoved.renderedPositions[0].targetX)>.01||
+     remotePresenceQA.after?.renderedPositions?.length!==0||
+     remotePresenceQA.afterNearby?.renderedPositions?.length!==0||
      remotePresenceQA.after?.positions?.length!==0||
      remotePresenceQA.afterNearby?.positions?.length!==0||
      !remotePresenceQA.fieldMap?.legendDuring?.includes('Cyan = explorers (1)')||
