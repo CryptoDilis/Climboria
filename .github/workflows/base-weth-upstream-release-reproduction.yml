@@ -24,6 +24,8 @@ jobs:
           sparse-checkout: |
             op-bindings/bindings/weth9_more.go
             packages/contracts-bedrock/contracts/vendor/WETH9.sol
+            packages/contracts-bedrock/hardhat.config.ts
+            packages/contracts-bedrock/foundry.toml
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
