@@ -132,9 +132,12 @@ async function assertPeer(page,expected){
 async function waitForGlb(page){
  // A real nearby remote Jarrell/Lheiz GLB must load. A name-only sprite
  // means visuals are not ready even if the WebSocket and World Chat work.
+ // A resident counter alone is insufficient: the model must be attached
+ // to the visible world scene, with no visible fallback silhouette.
  await page.waitForFunction(()=>{
   const a=window.__CLIMBORIA_GAME_PEERS?.audit?.();
-  return a?.peers===1&&a?.resident>=1&&a.resident<=a.budget;
+  return a?.peers===1&&a.resident===1&&a.resident<=a.budget&&
+   a.sceneVisibleResidents===1&&a.visibleFallbacks===0;
  },undefined,{timeout:MAX_WAIT});
 }
 async function openChat(page){
