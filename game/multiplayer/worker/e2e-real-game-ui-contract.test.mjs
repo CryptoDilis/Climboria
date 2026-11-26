@@ -89,3 +89,16 @@ test('real Nearby speech must be accepted in both directions with fresh messages
  assert.match(nearby,/await nearbyButtonB\.click\(\)/);
  assert.match(nearby,/await b\.waitForFunction\(\(\)=>document\.querySelector\('#climboria-world-chat-panel input'\)\?\.value===''[,]/);
 });
+
+test('real movement requires the same visible attached remote model to move and converge',()=>{
+ const motion=qa.slice(qa.indexOf('async function waitForRenderedMotion('),qa.indexOf('async function openChat('));
+ assert.match(motion,/audit\?\.renderedPositions\?\.\[0\]/);
+ assert.match(motion,/p\?\.id===initial\.id&&packet\?\.id===p\.id&&p\.attached&&p\.visible/);
+ assert.match(motion,/Math\.hypot\(p\.x-initial\.x,p\.z-initial\.z\)>\.3/);
+ assert.match(motion,/Math\.hypot\(p\.targetX-packet\.x,p\.targetZ-packet\.z\)<\.01/);
+ assert.match(motion,/Math\.hypot\(p\.x-p\.targetX,p\.y-p\.targetY,p\.z-p\.targetZ\)<\.75/);
+ assert.match(qa,/renderedBeforeA=await readRenderedPeer\(b\)/);
+ assert.match(qa,/await waitForRenderedMotion\(b,renderedBeforeA\)/);
+ assert.match(qa,/renderedBeforeB=await readRenderedPeer\(a\)/);
+ assert.match(qa,/await waitForRenderedMotion\(a,renderedBeforeB\)/);
+});
