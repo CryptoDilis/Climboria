@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## ACTUAL REMOTE SCENE MOTION ACCEPTANCE — 2026-11-26 PHT (PROPOSED)
+
+- Extended stacked draft #822 without resetting #817 or #819 checks. Added read-only renderedPositions snapshot of actual remote group transform, interpolation target, scene attachment and visibility; existing packet positions unchanged. Real two-browser QA now requires same attached, visible remote GLB to move >0.3m horizontally and converge within 0.75m of its 3D target, with target X/Z matching the corresponding packet, in both directions. Added renderer-only smoke interpolation/cleanup assertions and offline source-contract regression. Code commits `eb977e1e41d5f140246d01c2bb4301998e730545`, `0c7d0cd912132dd30d307a9ed804119603de52a3`, `f4746d4724f4e35b1417860d55886d7bb6708dc7`, `8241fcc8f3f1dd12c57aedb3603871e8a3404021`. No new authority, movement algorithm, assets or combat changes. Scene visibility does not establish pixel visibility/occlusion or physical performance.
+- **EXACT NEXT:** finish #817 gameplay 45808258002 and #819 gameplay 45808659702; merge/reconcile in order. #822 is stacked on #819, so no normal main-target CI yet. Reconcile #822 onto main retaining both independent changes to play.html, game-smoke.mjs and record; retarget, review exact diff, run fresh CI, verify published parity before protected actual two-account QA. No live acceptance claimed. Game only.
+
+---
+
 ## REAL BIDIRECTIONAL NEARBY SPEECH ACCEPTANCE — 2026-11-26 PHT (PROPOSED)
 
 - #817 remote fit exact head `4584c6dafde62c309c4c4bbcb3e0526951d48e0c` 5/6 SUCCESS; gameplay 45808258002 pending. #819 visibility QA exact head `f521453147af46e70f7d405e84598cab90e2c2a6` 3/4 SUCCESS; actual Gateway job 139870453701 passed 270/270 + 63/63, zero failures; gameplay 45808659702 pending. [CI evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190531905).
