@@ -1,5 +1,11 @@
 name: CLIMB Base Fixed Burn Prototype - Offline Tests
 on:
+  workflow_dispatch:
+    inputs:
+      payer:
+        description: 'Dedicated Base Sepolia public EOA address (read-only simulation)'
+        required: true
+        type: string
   pull_request:
     paths:
       - 'base/token-testnet/**'
@@ -13,6 +19,7 @@ permissions:
   contents: read
 jobs:
   offline:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -55,5 +62,22 @@ jobs:
         with:
           name: climb-burn-build-manifest-${{ github.sha }}
           path: ${{ runner.temp }}/climb-burn-build-manifest.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Test read-only creation simulator
+        run: node --test simulate-creation.test.mjs
+      - name: Simulate exact compiled test-only creation
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        env:
+          TEST_PAYER: ${{ inputs.payer }}
+        run: |
+          set -euo pipefail
+          node simulate-creation.mjs out/ClimbBurnPrototype.sol/ClimbBurnPrototype.json src/ClimbBurnPrototype.sol "$GITHUB_SHA" "$TEST_PAYER" > "$RUNNER_TEMP/climb-burn-creation-estimate.json"
+          cat "$RUNNER_TEMP/climb-burn-creation-estimate.json"
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        with:
+          name: climb-burn-creation-estimate-${{ github.sha }}
+          path: ${{ runner.temp }}/climb-burn-creation-estimate.json
           retention-days: 7
           if-no-files-found: error
