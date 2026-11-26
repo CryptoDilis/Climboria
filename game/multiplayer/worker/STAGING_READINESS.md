@@ -1,3 +1,9 @@
+# PC RIGHT-CLICK AND MOBILE CHAT RETEST — 2026-11-26 PHT
+
+- #810 merged canvas-only browser context menu suppression and bottom-left mobile chat (`20261126-game-mobile-chat-2`). Public exact byte parity must be verified before owner retest. PC: refresh, right-click and drag on 3D world; native browser menu should not appear, camera should orbit, text input context menu should remain normal. Android: refresh in landscape, check chat is bottom-left, collapse/reopen and send a message. Real two-account QA now checks rendered chat bounds, avoids vitals/map/combat controls and exercises collapse/reopen on landscape-emulated registered client. Physical Android visual and real delivery remain separate; no new Worker deploy needed.
+
+---
+
 # PHYSICAL ANDROID RETEST CHECKPOINT — 2026-11-26 PHT
 
 - Owner observed one registered Android player ONLINE: 1 with World Chat and the other EXPLORING · LOCATION KEPT without chat, even after moving to the same apparent place. #807 merged an explicit JOIN WORLD recovery without forced relocation or changes to Worker admission. Once public parity of `20261126-game-join-world-1` is confirmed, refresh both Game tabs through the normal menu, and on the affected device tap JOIN WORLD · ENTRY IF NEEDED if shown. A valid server resume anchor takes precedence; no anchor permits ordinary protected entry only after a deliberate tap. No need to change Wi-Fi, clear game storage, redeploy the Worker or paste credentials.

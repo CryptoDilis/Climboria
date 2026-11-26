@@ -178,6 +178,30 @@ console.log('GAME QA STAGE: first-account');
 console.log('GAME QA STAGE: second-account');
  const b=await openExplorer(accounts[1],env.GAME_QA_LANDSCAPE_MOBILE==='1');
  await Promise.all([assertPeer(a,1),assertPeer(b,1)]);
+console.log('GAME QA STAGE: mobile-chat-layout');
+ if(env.GAME_QA_LANDSCAPE_MOBILE==='1'){
+  // Inspect actual rendered geometry of the published authenticated UI.
+  // Never move controls or manufacture a DOM panel for this assertion.
+  const audit=await b.evaluate(()=>{
+   const rect=id=>document.getElementById(id)?.getBoundingClientRect();
+   const panel=rect('climboria-world-chat-panel'),toggle=rect('climboria-world-chat-toggle');
+   const vitals=rect('status-card'),map=rect('world-map-panel');
+   const overlaps=(a,c)=>a.left<c.right&&a.right>c.left&&a.top<c.bottom&&a.bottom>c.top;
+   if(!panel||!toggle||!vitals||!map)return {ok:false,reason:'missing HUD'};
+   const actions=[...document.querySelectorAll('[data-mobile-action]')].filter(e=>getComputedStyle(e).display!=='none').map(e=>e.getBoundingClientRect());
+   const inside=r=>r.width>0&&r.height>0&&r.left>=0&&r.top>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1;
+   return {ok:inside(panel)&&inside(toggle)&&panel.left<=32&&toggle.left<=32&&
+    innerHeight-toggle.bottom<=32&&panel.bottom<=toggle.top+1&&
+    !overlaps(panel,vitals)&&!overlaps(panel,map)&&actions.length===5&&
+    !actions.some(r=>overlaps(panel,r)||overlaps(toggle,r)),panel:{left:panel.left,top:panel.top,bottom:panel.bottom},viewport:{width:innerWidth,height:innerHeight}};
+  });
+  check(audit.ok,'Published mobile chat bottom-left layout failed: '+JSON.stringify(audit));
+  const toggle=b.locator('#climboria-world-chat-toggle'),panel=b.locator('#climboria-world-chat-panel');
+  await toggle.click();
+  check(!(await panel.isVisible()),'Mobile chat did not collapse');
+  await toggle.click();
+  check(await panel.isVisible(),'Mobile chat did not reopen');
+ }
 console.log('GAME QA STAGE: remote-models');
  await Promise.all([waitForGlb(a),waitForGlb(b)]);
  // The transcript must already be visible on BOTH real accounts; the

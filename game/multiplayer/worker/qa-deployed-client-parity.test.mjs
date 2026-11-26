@@ -78,3 +78,15 @@ test('a stalled published presence body cannot hang release verification',async(
  }),deadlineMs:100}),/deadline exceeded/);
  assert.equal(signal?.aborted,true);
 });
+
+test('matching published presence bytes at a different response URL are rejected before menu lookup',async()=>{
+ const calls=[];
+ await assert.rejects(verifyDeployedClientParity(opts(async url=>{
+  calls.push(url);
+  if(url.endsWith('play.html'))return response(html,'text/html');
+  const res=response(script,'application/javascript');
+  Object.defineProperty(res,'url',{value:root+'multiplayer/client-presence.js?v=stale'});
+  return res;
+ })),/unavailable/);
+ assert.equal(calls.length,2);
+});

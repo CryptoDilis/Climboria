@@ -1,10 +1,24 @@
 # Climboria Game Development Record
 
+## #813 MERGED; REMOTE HERO FIT BRANCH RECONCILED — 2026-11-26 PHT
+
+- #813 merged `f2dcc44eb9fe1e97b9500aa9d62785821742a615`, exact tested head `8829a91a6771b02c55e17c98fdc82f82eb93f982`, all five CI SUCCESS: Readiness 45806439616, Gateway 45806439593, Runtime 45806439532, Validate 45806439592, Gameplay 45806439568. [Final evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190375247). Owner confirmed UI fixes okay. #817 reconciles main record without removing prior history or altering Base changes. Exact next: fresh CI on reconciled #817, merge if green, verify public parity and real model alignment; actual two-account movement/chat/reconnect pending.
+
+---
+
 ## REMOTE HERO IMPORT TRANSFORM FIT — 2026-11-26 PHT
 
 - Owner reported PC context menu and mobile chat placement okay after published #810. [Owner confirmation](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190277547). #813 public readiness 45806439616 job 139862865281 verified exact published version `20261126-game-mobile-chat-2`; 22/22 tests, approved room and Nearby readiness. #813 final gameplay still pending when this independent task started. Do not reopen resolved UI requests.
 - Earlier desktop image suggested possible remote model alignment issue. Source review confirms old remote loader measured authored world bounds then overwrote root scale and Y position; a non-identity imported root transform makes that math incorrect. Changed fit to a separate normalization parent preserving imported transform and animation mixer target, centering horizontal bounds and grounding feet at model-local zero. Existing server positions, terrain rules, nameplates, model budget and disposal policy unchanged. Regression uses local synthetic geometry with non-identity scale/position/rotation and exact 1.9m fitted height; not a simulated network acceptance. Physical screenshot-specific cause not yet proven.
 - **EXACT NEXT:** complete #813 CI/merge, reconcile any concurrent record changes without overwriting them; verify this PR CI, merge and public parity; actual registered movement/chat/reconnect and remote Jarrell/Lheiz visual alignment remain to test. Game only.
+
+---
+
+## PC RIGHT-CLICK AND MOBILE CHAT RELEASE QA — 2026-11-26 PHT
+
+- #810 merged `a58c7cf468d66ffb42355c9db2dd45627a1676bb`, exact head `60214838a04d0a3684cde86f611acf5f8c7afdd0`. All eight workflows SUCCESS: Gameplay 45770106790, Validate 45770106769, Runtime 45770106808, Authority 45770106711, Gateway 45770106812 (job 139740430200: 267/267 + 63/63), Browser 45770106872, Heroes 45770106849, Chests 45770106765. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190067149). Main push log unavailable through connector. Public version `20261126-game-mobile-chat-2` remains unverified at proposal.
+- Added real registered landscape browser QA assertions for actual rendered bottom-left chat geometry, viewport bounds, no overlap with stats/map/action controls and collapse/reopen; no DOM mutation or synthetic admission. Added source contract and public parity response URL negative control; existing read-only workflow will check released bytes. No production changes.
+- **EXACT NEXT:** verify public parity and CI, merge QA; owner refresh PC/Android, confirm right-click orbit without context menu and bottom-left chat. Record physical feedback and test bidirectional chat/reconnect. Actual registered automated run still requires protected QA accounts. Game only.
 
 ---
 
