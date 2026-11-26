@@ -95,7 +95,18 @@ try{
  const b2=await join(bToken,bAccess),j2=await packet(b2,'preview-joined');
  assert.notEqual(j2.id,jb.id);assert.equal(j2.snapshot.health,495);
  await Promise.all([roster(a,[ja.id,j2.id]),roster(b2,[ja.id,j2.id])]);
- console.log('PASS: two registered accounts, synthetic combat, rejected forged damage, committed HP and reconnect persistence.');
+ stage='retired-session-denial';
+ const retired=await send(a,{type:'attack',targetId:jb.id});
+ assert.equal(retired.ok,false);assert.equal(retired.reason,'unknown-or-same-session');
+ assert.equal((await send(a,{type:'snapshot'})).snapshot.health,500);
+ assert.equal((await send(b2,{type:'snapshot'})).snapshot.health,495);
+ stage='rejoined-account-counterattack';
+ const counter=await send(b2,{type:'attack',targetId:ja.id});
+ assert.equal(counter.ok,true);assert.equal(counter.targetId,ja.id);
+ assert.equal(counter.health,495);assert.equal(counter.damage,5);
+ assert.equal((await send(a,{type:'snapshot'})).snapshot.health,495);
+ assert.equal((await send(b2,{type:'snapshot'})).snapshot.health,495);
+ console.log('PASS: two registered accounts, synthetic combat, rejected forged damage and retired session, committed HP, reconnect and reciprocal attack.');
  console.log('Not production map acceptance. Operator must disable preview and inspect cloud cost metrics.');
 }catch{
  // Never print exception objects from browser/network APIs: they may contain credentials.

@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## PRIVATE COMBAT RECIPROCAL ATTACK AND RETIRED SESSION ACCEPTANCE — 2026-11-26 PHT (PROPOSED)
+
+- #835 lag pilot merged `35c0552ea59f98d8010ba24c3c6cfe85039cb582`, exact head `44adae88c49c91546aafecdf445d2c8fedd08bad` all eight PR checks passed; Gateway 45829898224 job 139943617838 275/275 + 64/64. Public readiness 45830792251 pending at review; actual latency improvement unmeasured. [Merge evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7193589826).
+- Reviewed existing isolated synthetic combat QA; it proved a one-way attack and HP persistence but did not exercise retired-target rejection or valid reciprocal attack after rejoin. Extend manual protected staging script to require old session target denial with exact reason and unchanged HP, followed by newly joined B's authorized counterattack on A and independent snapshots (both 495 HP). Added offline source regression. No Worker/gameplay rules or production configuration changed. Actual private cloud staging not executed, no live damage/loot.
+- EXACT NEXT: verify #835 public parity, owner retest lag; verify fresh combat QA PR CI and merge only green; provision separate Access-protected disposable combat host/namespace with scoped credentials, rate/cost limits, disabled-only deployment and approved bounded test window, then execute manual staging. No suitable Cloudflare connector or workflow dispatch currently available. Do not infer production map acceptance from fixture. Game only.
+
+---
+
 ## PHYSICAL MULTIPLAYER BASELINE AND MOVEMENT LATENCY PILOT — 2026-11-26 PHT
 
 - Owner physical test: visible remote hero, Android-to-PC World Chat and Nearby delivery, overhead speech and last-position restoration confirmed; remote movement works with slight lag. Evidence [World](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7193010178), [Nearby](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7193340248), [reconnect](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7193364261), [movement](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7193389659). Not measured RTT/FPS or full automated acceptance.
