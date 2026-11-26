@@ -49,3 +49,17 @@ jobs:
           set -euo pipefail
           forge test --match-contract ClimbV3IntegratedTestTokenTest -vv | tee "$RUNNER_TEMP/climb-v3-integrated-tests.log"
           grep -Eq '6 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-integrated-tests.log"
+      - name: Fingerprint integrated test build (no deployment)
+        env:
+          V3_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          forge build
+          node build-manifest.mjs "$RUNNER_TEMP/v3-build-manifest.json"
+      - name: Archive test-only build evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: climb-v3-build-manifest
+          path: ${{ runner.temp }}/v3-build-manifest.json
+          if-no-files-found: error
+          retention-days: 14
