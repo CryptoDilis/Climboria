@@ -16,6 +16,11 @@ on:
         description: "Public test wallet address only (visible in workflow inputs); never a private key"
         required: true
         type: string
+      observe_public_pool:
+        description: "Also read public pool state at the quote-reported block (no wallet address sent to RPC)"
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -32,6 +37,7 @@ jobs:
           node-version: 22
       - run: |
           node --check dex/base-execution/firm-quote-observation.mjs
+          node --check dex/base-execution/firm-quote-pool-observation.mjs
           node --check dex/base-execution/receipt-evidence.mjs
           node --test .github/scripts/base-firm-quote-receipt-evidence.test.mjs
           node --check dex/base-execution/receipt-cross-rpc-observation.mjs
@@ -61,5 +67,6 @@ jobs:
         env:
           CONFIRMATION: ${{ inputs.confirmation }}
           PUBLIC_TEST_TAKER: ${{ inputs.public_test_taker }}
+          OBSERVE_PUBLIC_POOL: ${{ inputs.observe_public_pool }}
           ZEROEX_API_KEY: ${{ secrets.ZEROEX_API_KEY }}
         run: node .github/scripts/base-firm-quote-authorized-probe.mjs

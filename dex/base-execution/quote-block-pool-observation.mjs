@@ -33,9 +33,12 @@ export function assertReviewedPoolObservation(state,observed,referenceBlock){
  if(observed?.twoHostsAgreed!==true||observed.executable!==false||observed.stateAuthenticated!==false||observed.blockNumber!==a.block||observed.blockHash!==a.hash)throw Error("Invalid corroborated pool evidence");
  for(const key of stateFields)if(state?.[key]!==observed[key])throw Error("Reviewed pool state mismatch: "+key);
 }
-export async function observeQuoteBlockPool({authorized=false,referenceBlock,fetchImpl=(url,opts)=>globalThis.fetch(url,opts),signal}={}){
+export async function observeQuoteBlockPool({authorized=false,referenceBlock,reportedBlockNumber,fetchImpl=(url,opts)=>globalThis.fetch(url,opts),signal}={}){
  if(BASE_EXECUTION_ENABLED!==false||authorized!==true)throw Error("Explicit read-only pool authorization required");
- const a=anchorOf(referenceBlock),tag={blockHash:a.hash,requireCanonical:true};
+ if((referenceBlock===undefined)===(reportedBlockNumber===undefined))throw Error("Exactly one pool block input required");
+ let a;
+ if(referenceBlock!==undefined)a=anchorOf(referenceBlock);
+ else if(typeof reportedBlockNumber!=="string"||!/^[1-9][0-9]{0,13}$/.test(reportedBlockNumber)||BigInt(reportedBlockNumber)>0xfffffffffffn)throw Error("Invalid reported quote block");
  const deadline=AbortSignal.timeout(90000),combined=signal?AbortSignal.any([deadline,signal]):deadline;
  let seq=0;
  async function rpc(host,method,params){
@@ -50,6 +53,20 @@ export async function observeQuoteBlockPool({authorized=false,referenceBlock,fet
   if(!j||j.jsonrpc!=="2.0"||j.id!==id||Object.hasOwn(j,"error")||!Object.hasOwn(j,"result"))throw Error("Invalid pool RPC result");
   return j.result;
  }
+ // Provider reports a height, not a hash. Resolve it independently on both
+ // fixed hosts before any state reads; later fences still require that hash.
+ if(a===undefined){
+  const block="0x"+BigInt(reportedBlockNumber).toString(16);
+  let hash;
+  for(const host of hosts){
+   if(await rpc(host,"eth_chainId",[])!=="0x2105")throw Error("Wrong Base chain");
+   const b=await rpc(host,"eth_getBlockByNumber",[block,false]);
+   const candidate=assertBaseBlockIdentity(b,block,hash??null);
+   hash=candidate;
+  }
+  a=anchorOf({block,hash});
+ }
+ const tag={blockHash:a.hash,requireCanonical:true};
  async function observe(host){
   async function fence(){
    if(await rpc(host,"eth_chainId",[])!=="0x2105")throw Error("Wrong Base chain");
