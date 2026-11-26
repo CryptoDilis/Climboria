@@ -112,3 +112,14 @@ jobs:
             cat "$RUNNER_TEMP/climb-testnet-estimate.json"
             echo '~~~'
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Observe Base Sepolia fee oracle for bounded creation transaction (read only)
+        run: |
+          set -euo pipefail
+          RPC=https://sepolia.base.org
+          test "$(cast chain-id --rpc-url "$RPC")" = 84532
+          ORACLE=0x420000000000000000000000000000000000000F
+          # 3911 creation bytes plus conservative envelope allowance for ordinary type-2 creation, no access list.
+          L1=$(cast call "$ORACLE" 'getL1FeeUpperBound(uint256)(uint256)' 4300 --rpc-url "$RPC")
+          OP=$(cast call "$ORACLE" 'getOperatorFee(uint256)(uint256)' 1100000 --rpc-url "$RPC")
+          PRICE=$(cast gas-price --rpc-url "$RPC")
+          node -e 'const q=x=>BigInt(x.trim().split(/\s+/)[0]);const l1=q(process.argv[1]),op=q(process.argv[2]),price=q(process.argv[3]);const l2=1100000n*price*2n;console.log("CLIMB_FEE_BUDGET "+JSON.stringify({chainId:84532,assumedUnsignedTxBytesUpperBound:4300,gasLimitIllustrative:1100000,l1UpperBoundWei:l1.toString(),operatorFeeWei:op.toString(),observedGasPriceWei:price.toString(),illustrativeL2WithPriceMarginWei:l2.toString(),illustrativeTotalWei:(l1+op+l2).toString(),bridgeRelease:"NO_GO"}))' "$L1" "$OP" "$PRICE"
