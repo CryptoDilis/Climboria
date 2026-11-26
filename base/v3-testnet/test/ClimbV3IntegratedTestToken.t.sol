@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 import {ClimbV3IntegratedTestToken} from "../src/ClimbV3IntegratedTestToken.sol";
+import {V3GamingVault} from "../src/ClimbV3TestToken.sol";
 import {V3RestrictedSpend} from "../src/V3RestrictedSpend.sol";
 interface VmIntegrated {
     function chainId(uint256) external;
@@ -45,7 +46,8 @@ contract ClimbV3IntegratedTestTokenTest {
         uint256 amount=v.monthlyCap(0);
         bytes32 id=propose(v,amount);
         vm.warp(start+2 days);
-        vm.expectRevert(V3RestrictedSpend.NotReady.selector);t.treasuryReserve().execute(id);
+        V3RestrictedSpend other=t.treasuryReserve();
+        vm.expectRevert(V3RestrictedSpend.NotReady.selector);other.execute(id);
         v.execute(id);
         require(t.balanceOf(PAYEE)==amount&&v.totalSpent()==amount);
         require(t.balanceOf(address(v))==v.budget()-amount);
@@ -60,7 +62,8 @@ contract ClimbV3IntegratedTestTokenTest {
         vm.warp(start+2 days);
         t.ecosystemReserve().execute(a);
         t.communityReserve().execute(b);
-        vm.prank(DISTRIBUTOR);t.gamingVault().release(amount);
+        V3GamingVault game=t.gamingVault();
+        vm.prank(DISTRIBUTOR);game.release(amount);
         vm.prank(PAYEE);t.burn(amount);
         require(t.totalSupply()==SUPPLY-amount);
         require(t.balanceOf(PAYEE)==amount&&t.balanceOf(DISTRIBUTOR)==amount);
