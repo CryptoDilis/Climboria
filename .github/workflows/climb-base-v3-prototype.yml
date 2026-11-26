@@ -10,6 +10,11 @@ on:
         description: 'Optional JSON with public founder, distributor and five signers; NEVER private keys'
         required: false
         type: string
+      prepare_review:
+        description: 'Prepare unsigned review artifact only (requires public roles and funded test payer)'
+        required: false
+        type: boolean
+        default: false
   pull_request:
     paths:
       - 'base/v3-testnet/**'
@@ -76,6 +81,8 @@ jobs:
           retention-days: 14
       - name: Test V3 read-only estimator
         run: node --test estimate-creation.test.mjs
+      - name: Test unsigned review binding
+        run: node --test unsigned-review.test.mjs
       - name: Estimate V3 creation (read-only, never deploy)
         if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
         env:
@@ -92,3 +99,18 @@ jobs:
           path: ${{ runner.temp }}/v3-creation-estimate.json
           if-no-files-found: error
           retention-days: 7
+      - name: Prepare unsigned review artifact (no signing)
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.prepare_review
+        env:
+          TEST_PAYER: ${{ inputs.payer }}
+          TEST_ROLE_CONFIG: ${{ inputs.role_config }}
+        run: |
+          set -euo pipefail
+          node unsigned-review.mjs "$RUNNER_TEMP/v3-build-manifest.json" "$GITHUB_SHA" "$TEST_PAYER" "$RUNNER_TEMP/v3-creation-estimate.json" "$RUNNER_TEMP/v3-unsigned-review.json"
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.prepare_review
+        with:
+          name: climb-v3-unsigned-review
+          path: ${{ runner.temp }}/v3-unsigned-review.json
+          if-no-files-found: error
+          retention-days: 3
