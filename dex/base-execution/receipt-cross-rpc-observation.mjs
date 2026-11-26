@@ -17,6 +17,27 @@ async function readJson(response){
  for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
  return JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(bytes));
 }
+// Compare canonical ordered logs and Base L1 fee in addition to receipt inclusion.
+// This checks agreement only; it does not authenticate logs or fee completeness.
+const quantity=/^0x(?:0|[1-9a-f][0-9a-f]{0,63})$/;
+function receiptDetails(receipt){
+ if(typeof receipt.l1Fee!=="string"||!quantity.test(receipt.l1Fee))throw Error("Missing or malformed Base L1 fee");
+ if(!Array.isArray(receipt.logs)||receipt.logs.length>512)throw Error("Missing or oversized receipt logs");
+ let last=-1n;
+ const logs=receipt.logs.map(log=>{
+  if(!log||typeof log!=="object"||Array.isArray(log)||log.removed!==false||
+   log.transactionHash!==receipt.transactionHash||log.blockHash!==receipt.blockHash||
+   log.blockNumber!==receipt.blockNumber||log.transactionIndex!==receipt.transactionIndex||
+   typeof log.address!=="string"||!address.test(log.address)||
+   typeof log.logIndex!=="string"||!quantity.test(log.logIndex)||
+   !Array.isArray(log.topics)||log.topics.length>4||log.topics.some(t=>typeof t!=="string"||!hash.test(t))||
+   typeof log.data!=="string"||!/^0x(?:[0-9a-f]{2}){0,32768}$/.test(log.data))throw Error("Malformed or unrelated receipt log");
+  const index=BigInt(log.logIndex);
+  if(index<=last)throw Error("Duplicate or unordered receipt log index");last=index;
+  return [log.logIndex,log.address,log.topics,log.data];
+ });
+ return [receipt.l1Fee,logs];
+}
 async function observe(expected,endpoint,fetchImpl,signal){
  let id=0;
  async function rpc(method,params){
@@ -41,7 +62,7 @@ async function observe(expected,endpoint,fetchImpl,signal){
  const finalReceipt=await rpc("eth_getTransactionReceipt",[expected.transactionHash]);
  const finalTransaction=await rpc("eth_getTransactionByHash",[expected.transactionHash]);
  const fenced=inspectBaseReceiptCandidate(expected,{chainId,transaction:finalTransaction,receipt:finalReceipt,canonicalBlock:finalCanonical,finalizedBlock});
- const evidenceKey=(candidate,tx,rc)=>JSON.stringify([candidate.blockHash,candidate.blockNumber,rc.transactionIndex,tx.gas,rc.gasUsed,rc.effectiveGasPrice]);
+ const evidenceKey=(candidate,tx,rc)=>JSON.stringify([candidate.blockHash,candidate.blockNumber,rc.transactionIndex,tx.gas,rc.gasUsed,rc.effectiveGasPrice,receiptDetails(rc)]);
  const key=evidenceKey(candidate,transaction,receipt);
  if(key!==evidenceKey(fenced,finalTransaction,finalReceipt))throw Error("Receipt changed during observation");
  return {candidate:fenced,key};
@@ -61,8 +82,8 @@ export async function corroborateBaseReceipt(expected,{authorized=false,fetchImp
   if(first.key!==second.key)throw Error("Public RPC receipt mismatch");
   requestSignal.throwIfAborted();
   return Object.freeze({chainId:8453,transactionHash:snapshot.transactionHash,blockHash:first.candidate.blockHash,blockNumber:first.candidate.blockNumber,
-   rpcHostsCompared:2,reportedReceiptEvidenceMatched:true,reportedFinalizedHeightsCoverReceipt:true,
+   rpcHostsCompared:2,reportedReceiptEvidenceMatched:true,reportedLogsAndL1FeeMatched:true,reportedFinalizedHeightsCoverReceipt:true,
    observationOnly:true,executable:false,executionReady:false,receiptFinalityVerified:false,tokenSettlementVerified:false,
-   walletAuthorizationVerified:false,providerIndependenceVerified:false});
+   walletAuthorizationVerified:false,providerIndependenceVerified:false,allInFeeVerified:false,operatorFeeVerified:false});
  }finally{controller.abort();}
 }
