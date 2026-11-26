@@ -1,3 +1,10 @@
+# PHYSICAL ANDROID RETEST CHECKPOINT — 2026-11-26 PHT
+
+- Owner observed one registered Android player ONLINE: 1 with World Chat and the other EXPLORING · LOCATION KEPT without chat, even after moving to the same apparent place. #807 merged an explicit JOIN WORLD recovery without forced relocation or changes to Worker admission. Once public parity of `20261126-game-join-world-1` is confirmed, refresh both Game tabs through the normal menu, and on the affected device tap JOIN WORLD · ENTRY IF NEEDED if shown. A valid server resume anchor takes precedence; no anchor permits ordinary protected entry only after a deliberate tap. No need to change Wi-Fi, clear game storage, redeploy the Worker or paste credentials.
+- Actual acceptance requires both phones ONLINE: 2, mutual visible heroes, movement and bidirectional World Chat, then Nearby and reconnect. If still blocked record each exact status and whether the button appeared; do not bypass server verification. Physical performance and live combat remain separate.
+
+---
+
 # CURRENT GAME ACCEPTANCE CHECKPOINT — 2026-11-26 PHT
 
 - Room Worker already deployed; no redeploy needed for UI or QA changes. #786 verified actual published menu, gameplay and presence SHA256 plus approved room config, Nearby Chat capability and DO readiness. #792 merged the real creator QA: starts from the published menu, verifies signed-out save denial, real registered auth, GLB selection, owner-bound save and normal play handoff without synthetic hero storage. #796 merged a client-only mismatch guard for owner-bound heroes; public parity for that new version was verified in #799 readiness run 45696134110 (job 139493882892).
