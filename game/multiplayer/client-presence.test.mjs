@@ -38,6 +38,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
  const window={__climboriaGameReady:true,__climboriaCreatedHero:{name:'Explorer A',model:'Jarrell',...(heroOwner===null?{}:{ownerId:heroOwner})},__climboriaGuestMode:guest,
   __climboriaJarrellsPeak:{
    player:{x:0,y:9.55,z:-30,mode:'walk'},
+   enterRoomEntry(){Object.assign(this.player,{x:0,y:9.55,z:-30});return true},
    resumeAtRoomPosition(pos){
     if(!pos||!['x','y','z'].every(k=>Number.isFinite(pos[k])))return false;
     Object.assign(this.player,{x:pos.x,y:pos.y,z:pos.z});
@@ -280,7 +281,7 @@ test('live Game refuses the retired forced-Sanctuary mobile prompt',()=>{
  assert.doesNotMatch(game,/climboria:room-return-to-sanctuary/);
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261126-game-hero-owner-1/,
+ assert.match(game,/client-presence\.js\?v=20261126-game-join-world-1/,
   'production Game must load fresh Nearby Chat and remote size renderer');
 });
 
@@ -1242,4 +1243,49 @@ test('switching accounts closes owner-bound hero socket and prevents cross-accou
  h.runNextTimer();await flush();
  assert.equal(h.clients.length,2);
  assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,2);
+});
+
+test('Android saved location remains untouched until explicit JOIN WORLD, then obtains a fresh registered ticket',async()=>{
+ const h=harness(true);
+ h.window.__climboriaJarrellsPeak.player.x=70;
+ await flush();
+ const join=h.created.find(n=>n.id==='climboria-room-join-world');
+ assert.ok(join);assert.equal(h.window.__climboriaJarrellsPeak.player.x,70);
+ assert.equal(h.clients.length,0);
+ join.click();await flush();
+ assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,2);
+ assert.equal(h.window.__climboriaJarrellsPeak.player.x,0);
+ assert.equal(h.window.__climboriaJarrellsPeak.player.z,-30);
+ assert.equal(h.clients.length,1);
+ const ws=h.clients[0];ws.onopen();
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'spawn-pending');
+ assert.equal(h.created.some(n=>n.id==='climboria-world-chat-panel'),false);
+ const id='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+});
+test('explicit JOIN WORLD prefers newly issued server resume anchor over entry',async()=>{
+ const anchor={x:80,y:10,z:-85};
+ const h=harness(true,{ticketPayloads:[
+  {ticket:'b'.repeat(64),protocol:'climboria-v1',ttlSeconds:30},
+  {ticket:'c'.repeat(64),protocol:'climboria-v1',ttlSeconds:30,resumePosition:anchor}
+ ]});
+ h.window.__climboriaJarrellsPeak.player.x=70;
+ await flush();
+ h.created.find(n=>n.id==='climboria-room-join-world').click();await flush();
+ assert.equal(h.window.__climboriaJarrellsPeak.player.x,anchor.x);
+ assert.equal(h.window.__climboriaJarrellsPeak.player.z,anchor.z);
+ assert.equal(h.clients.length,1);
+});
+test('explicit JOIN WORLD cannot move or admit a logged-out player',async()=>{
+ const h=harness(true);
+ h.window.__climboriaJarrellsPeak.player.x=70;
+ await flush();
+ const join=h.created.find(n=>n.id==='climboria-room-join-world');
+ h.authChange(null);
+ join.click();await flush();
+ assert.equal(h.window.__climboriaJarrellsPeak.player.x,70);
+ assert.equal(h.clients.length,0);
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'login-required');
 });

@@ -255,7 +255,7 @@
  }
  // Duel-request UI removed. Player ATTACK stays available at any time as
  // animation only; untrusted clients may not modify HP or loot.
- let sameAccountRetryButton=null;
+ let sameAccountRetryButton=null,joinWorldButton=null;
  function showStatus(value,message){
   doc.dataset.climboriaMultiplayer=value;
   if(!badge){badge=document.createElement('div');badge.id='climboria-room-status';badge.style.cssText=
@@ -281,6 +281,22 @@
     });
    }
    badge.appendChild(sameAccountRetryButton);
+  }
+  if(value==='saved-location'&&typeof world.enterRoomEntry==='function'){
+   if(!joinWorldButton){
+    joinWorldButton=document.createElement('button');
+    joinWorldButton.id='climboria-room-join-world';joinWorldButton.type='button';
+    joinWorldButton.textContent='JOIN WORLD · ENTRY IF NEEDED';
+    joinWorldButton.title='Resume your verified room location, or move to the room entry if you have no verified room position.';
+    joinWorldButton.style.cssText='display:block;width:100%;margin-top:6px;padding:8px 5px;border:1px solid #d8b46b;border-radius:8px;background:#253448;color:#ffe3a3;font:800 11px/1.3 system-ui;cursor:pointer;pointer-events:auto;touch-action:manipulation';
+    joinWorldButton.addEventListener('click',event=>{
+     event?.stopPropagation?.();
+     if(doc.dataset.climboriaMultiplayer!=='saved-location'||disposed||!isReady())return;
+     resetConnection();
+     void connect(true);
+    });
+   }
+   badge.appendChild(joinWorldButton);
   }
  }
  function clearPeers(){
@@ -462,7 +478,7 @@
   showStatus('saved-location','EXPLORING · LOCATION KEPT');
   waitForRoomSpawn();
  });
- async function connect(){
+ async function connect(explicitJoin=false){
   if(disposed||connecting||socket||sameAccountInUse)return;
   if(waitForVoluntarySpawn){
    if(!isReady()||!isAtRoomSpawn()){scheduleConnect(1200);return}
@@ -605,6 +621,9 @@
     throw Error('Invalid room ticket');
    const anchor=validPosition(ticket.resumePosition)?ticket.resumePosition:null;
    const resumed=!!anchor&&world.resumeAtRoomPosition?.(anchor)===true;
+   // Only a deliberate player action, after registered ticket verification,
+   // can choose the normal entry when no server resume anchor exists.
+   if(explicitJoin&&!anchor&&!isAtRoomSpawn())world.enterRoomEntry?.();
    if(!resumed&&!isAtRoomSpawn()){
     // A saved location without a server-trusted anchor stays visually
     // intact and offline. Never issue an arbitrary non-Sanctuary spawn.

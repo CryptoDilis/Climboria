@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## PHYSICAL ANDROID ROOM ADMISSION FAILURE; EXPLICIT JOIN RECOVERY — 2026-11-26 PHT
+
+- #801 MERGED `bbfe066226f5e26f8561955f80075b22c52eb393`, exact head `de57e5244cb0c8e777d6dd36cf75f002c9fc9a87`, all four CI SUCCESS: Gateway 45698787999 job 139503104895 260/260 + 58/58, Runtime 45698788388, Validate 45698788381, Gameplay 45698788426. Manual range test not executed.
+- Owner actual two Android devices: first ONLINE: 1 and World Chat visible, second EXPLORING · LOCATION KEPT and chat absent, both cloud save synced, both visually near Sanctuary. Owner tried same spot and still failed. [Tracking issue #657](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7182339227). Actual acceptance FAILED at room admission. Source confirms saved-location branches when no usable trusted anchor or position changes before socket opens; exact failing branch not observable from screenshots. Same IP is not an account uniqueness check in Worker.
+- Proposed optional touch JOIN WORLD button only in saved-location state. Preserves saved position without click; deliberate action obtains fresh registered ticket, prefers server resume anchor, falls back to protected entry only if no valid anchor and not already inside spawn. No auto teleport, no guest/identity bypass, no fake online/chat before spawn acknowledgement. Added three regression tests, cache bump. Existing Worker policy unchanged.
+- **EXACT NEXT:** CI green, merge, verify public parity and ask owner to refresh second Android and tap JOIN WORLD if saved-location appears; verify both ONLINE: 2, movement/chat and reconnect. If still blocked record exact badge stage, investigate server admission/anchor and do not bypass checks. Game only.
+
+---
+
 ## GAME AUTO RELEASE PARITY MERGED; LIVE NEARBY RANGE QA PREPARED — 2026-11-26 PHT
 
 - #799 MERGED `c1ae15d27de16f9b1d32d44523eaf308e192611a`, exact tested head `5cb95da8756f46e29fb246edd87aeeb803dbaba2` all five workflows SUCCESS: [Readiness](https://github.com/CryptoDilis/Climboria/actions/runs/45696134110), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45696133932), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45696133986), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45696134064), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45696133776). Readiness job 139493882892 confirmed 19/19, room config/health/DO/Nearby and public #796 parity Nov 25 20:33:53 UTC: play SHA256 `193b6a1e37fd2f78440955de50215958d218cbbb6cbf431ebf9e1cbc0a9e38b1`, menu `fe9b35bd77cc47fed16ddab0a813e71e3f3b54c598212893f194569f72d8e475`, presence version `20261126-game-hero-owner-1` SHA256 `922d943a92c9b55ff0bfbbf51e2ffcaf415d1ba981beac4e8b171881f69d81af`. First push-only workflow execution not visible through PR-filtered connector. No Worker redeploy needed.
