@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## ANDROID ROOM JOIN RECOVERY MERGED; PUBLIC RELEASE RETEST — 2026-11-26 PHT
+
+- #807 MERGED `486af7979f20a4090629a1bd60b4fb0ccace43c1`, exact head `234f54502105d9aacbf46af2c1ed94a01e2cbaa0`. All eight workflows SUCCESS: Authority 45754020076, Gateway 45754020243 (job 139688270673: 263/263 + 61/61, all three join recovery tests), Runtime 45754020063, Validate 45754020077, Browser 45754020168, Heroes 45754020051, Chests 45754020105, Gameplay 45754020073. [Tracking issue](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7182666909). Main push readiness is not visible through PR-filtered connector; publication of `20261126-game-join-world-1` remains unverified at review.
+- Added two negative controls for exact-byte public readiness: redirected-success gameplay/presence and a stalled streamed presence body. No production code or credentials changed. Updated Android retest instructions; this PR also runs existing live read-only parity against the merged join recovery.
+- **EXACT NEXT:** inspect actual readiness logs for public version and hashes; after publication ask owner to refresh affected Android and tap JOIN WORLD if shown, then check both ONLINE: 2, visible heroes, movement and chat. Record actual result, not offline inference. Merge verifier PR only green. No Worker deploy, no live damage. Game only.
+
+---
+
 ## PHYSICAL ANDROID ROOM ADMISSION FAILURE; EXPLICIT JOIN RECOVERY — 2026-11-26 PHT
 
 - #801 MERGED `bbfe066226f5e26f8561955f80075b22c52eb393`, exact head `de57e5244cb0c8e777d6dd36cf75f002c9fc9a87`, all four CI SUCCESS: Gateway 45698787999 job 139503104895 260/260 + 58/58, Runtime 45698788388, Validate 45698788381, Gameplay 45698788426. Manual range test not executed.

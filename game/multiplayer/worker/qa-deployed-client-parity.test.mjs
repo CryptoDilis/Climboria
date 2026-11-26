@@ -56,3 +56,25 @@ test('rejects invalid MIME, redirects and oversized menu rather than accepting a
   await assert.rejects(verifyDeployedClientParity(opts(async url=>url.endsWith('play.html')?response(html,'text/html'):url.endsWith('index.html')?bad():response(script,'application/javascript'))));
  }
 });
+
+test('published gameplay and presence reject a redirected success even when returned bytes match',async()=>{
+ for(const target of ['play.html','client-presence.js?v=test-1']){
+  await assert.rejects(verifyDeployedClientParity(opts(async url=>{
+   const body=url.endsWith('play.html')?html:url.endsWith('index.html')?menu:script;
+   const type=url.endsWith('.html')?'text/html':'application/javascript';
+   const res=response(body,type);
+   if(url.endsWith(target))Object.defineProperty(res,'redirected',{value:true});
+   return res;
+  })),/unavailable/);
+ }
+});
+test('a stalled published presence body cannot hang release verification',async()=>{
+ let signal;
+ const hanging=new ReadableStream({pull(){return new Promise(()=>{})}});
+ await assert.rejects(verifyDeployedClientParity({...opts(async(url,init)=>{
+  if(url.endsWith('play.html'))return response(html,'text/html');
+  signal=init.signal;
+  return new Response(hanging,{headers:{'content-type':'application/javascript'}});
+ }),deadlineMs:100}),/deadline exceeded/);
+ assert.equal(signal?.aborted,true);
+});
