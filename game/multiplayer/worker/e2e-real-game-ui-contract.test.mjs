@@ -73,3 +73,19 @@ test('real remote GLB acceptance requires attached visible residents and no fall
  assert.match(wait,/a\.sceneVisibleResidents===1&&a\.visibleFallbacks===0/);
  assert.match(qa,/Promise\.all\(\[waitForGlb\(a\),waitForGlb\(b\)\]\)/);
 });
+
+test('real Nearby speech must be accepted in both directions with fresh messages',()=>{
+ const nearby=qa.slice(qa.indexOf("console.log('GAME QA STAGE: nearby-chat')"),qa.indexOf("console.log('GAME QA STAGE: movement-A-to-B')"));
+ assert.match(nearby,/const nearbyNonce=Date\.now\(\)\.toString\(36\)/);
+ assert.match(nearby,/await sendChat\(a,nearbyA\)/);
+ assert.match(nearby,/expectChat\(a,'QA Explorer A \[nearby\]',nearbyA\)/);
+ assert.match(nearby,/expectChat\(b,'QA Explorer A \[nearby\]',nearbyA\)/);
+ assert.match(nearby,/await b\.waitForFunction\(\(\)=>window\.__CLIMBORIA_GAME_PEERS\?\.audit\?\.\(\)\?\.nearbyBubbles===1/);
+ assert.match(nearby,/await sendChat\(b,nearbyB\)/);
+ assert.match(nearby,/expectChat\(b,'QA Explorer B \[nearby\]',nearbyB\)/);
+ assert.match(nearby,/expectChat\(a,'QA Explorer B \[nearby\]',nearbyB\)/);
+ assert.match(nearby,/nearbyBubbles===0/);
+ assert.match(nearby,/await a\.waitForFunction\(\(\)=>window\.__CLIMBORIA_GAME_PEERS\?\.audit\?\.\(\)\?\.nearbyBubbles===1/);
+ assert.match(nearby,/await nearbyButtonB\.click\(\)/);
+ assert.match(nearby,/await b\.waitForFunction\(\(\)=>document\.querySelector\('#climboria-world-chat-panel input'\)\?\.value===''[,]/);
+});
