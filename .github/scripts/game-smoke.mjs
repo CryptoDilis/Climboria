@@ -761,6 +761,17 @@ try {
   console.log('Original Climboria GLB movement states:',JSON.stringify({idle:'idle',walk:'walk',run:'run',swim:'swim'}));
   const spawnCheck = await page.evaluate(() => ({gameplayActive: document.body.classList.contains('free'), mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
   if(spawnCheck.heroAsset!=='adventurer')errors.push('Original Climboria GLB did not remain active during gameplay: '+JSON.stringify(spawnCheck));
+  const contextMenuAudit=await page.evaluate(()=>{
+    const canvas=document.querySelector('canvas');
+    const input=document.createElement('input');input.type='text';document.body.appendChild(input);
+    const event=()=>new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2});
+    try{
+      const world=event(),editing=event();
+      canvas.dispatchEvent(world);input.dispatchEvent(editing);
+      return {worldPrevented:world.defaultPrevented,editingPreserved:!editing.defaultPrevented};
+    }finally{input.remove()}
+  });
+  if(!contextMenuAudit.worldPrevented||!contextMenuAudit.editingPreserved)errors.push('Desktop right-click must suppress only world canvas menu: '+JSON.stringify(contextMenuAudit));
   const desktopOrbit = await page.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw,hero:api?.heroYaw,glb:api?.heroUsesGlb};
     document.querySelector('canvas')?.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:2,clientX:200,clientY:200}));

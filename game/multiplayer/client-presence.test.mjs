@@ -282,7 +282,7 @@ test('live Game refuses the retired forced-Sanctuary mobile prompt',()=>{
  assert.doesNotMatch(game,/climboria:room-return-to-sanctuary/);
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261126-game-mobile-chat-1/,
+ assert.match(game,/client-presence\.js\?v=20261126-game-mobile-chat-2/,
   'production Game must load fresh Nearby Chat and remote size renderer');
 });
 
@@ -1314,7 +1314,9 @@ test('mobile chat starts visible, uses compact labels and keeps draft while coll
 test('mobile World Chat CSS is device scoped, bounded and keeps compose controls separate',()=>{
  const game=readFileSync('game/play.html','utf8');
  assert.match(game,/body\.mobile-device #climboria-world-chat-panel\{/);
- assert.match(game,/--mobile-chat-top:116px/);
+ assert.match(game,/--mobile-chat-bottom:max\(8px,env\(safe-area-inset-bottom\)\)/);
+ assert.match(game,/bottom:calc\(var\(--mobile-chat-bottom\) \+ 35px\)!important/);
+ assert.doesNotMatch(game,/--mobile-chat-top/);
  assert.match(game,/--mobile-chat-width:min\(252px,43vw\)/);
  assert.match(game,/grid-template-columns:minmax\(0,1fr\) auto auto/);
  assert.match(game,/body\.mobile-device #climboria-world-chat-notice:empty\{display:none\}/);
