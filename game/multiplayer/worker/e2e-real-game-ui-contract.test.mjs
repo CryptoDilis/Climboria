@@ -57,3 +57,12 @@ test('real Nearby range acceptance requires actual separation, sender echo and p
  assert.match(qa,/check\(await separated\(\),'Peer separation changed during World delivery control'\)/);
  assert.doesNotMatch(qa,/\.position\s*=|\.player\.(?:x|y|z)\s*=/);
 });
+
+test('landscape authenticated QA checks actual chat geometry and collapse without altering HUD',()=>{
+ assert.match(qa,/Published mobile chat bottom-left layout failed/);
+ assert.match(qa,/innerHeight-toggle\.bottom<=32/);
+ assert.match(qa,/!overlaps\(panel,vitals\)/);
+ assert.match(qa,/!actions\.some\(r=>overlaps\(panel,r\)\|\|overlaps\(toggle,r\)\)/);
+ assert.match(qa,/Mobile chat did not collapse/);
+ assert.match(qa,/Mobile chat did not reopen/);
+});

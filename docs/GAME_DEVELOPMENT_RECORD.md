@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## PC RIGHT-CLICK AND MOBILE CHAT RELEASE QA — 2026-11-26 PHT
+
+- #810 merged `a58c7cf468d66ffb42355c9db2dd45627a1676bb`, exact head `60214838a04d0a3684cde86f611acf5f8c7afdd0`. All eight workflows SUCCESS: Gameplay 45770106790, Validate 45770106769, Runtime 45770106808, Authority 45770106711, Gateway 45770106812 (job 139740430200: 267/267 + 63/63), Browser 45770106872, Heroes 45770106849, Chests 45770106765. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190067149). Main push log unavailable through connector. Public version `20261126-game-mobile-chat-2` remains unverified at proposal.
+- Added real registered landscape browser QA assertions for actual rendered bottom-left chat geometry, viewport bounds, no overlap with stats/map/action controls and collapse/reopen; no DOM mutation or synthetic admission. Added source contract and public parity response URL negative control; existing read-only workflow will check released bytes. No production changes.
+- **EXACT NEXT:** verify public parity and CI, merge QA; owner refresh PC/Android, confirm right-click orbit without context menu and bottom-left chat. Record physical feedback and test bidirectional chat/reconnect. Actual registered automated run still requires protected QA accounts. Game only.
+
+---
+
 ## OWNER FOLLOW-UP: PC CONTEXT MENU AND BOTTOM-LEFT MOBILE CHAT — 2026-11-26 PHT
 
 - Owner screenshot shows Chrome native image context menu on right-click in 3D world. Added canvas-scoped contextmenu preventDefault only; existing mouse orbit, click movement, zoom and native text editing unchanged. Added browser gameplay regression for world menu suppression and normal input menu, alongside existing orbit test.
