@@ -140,6 +140,31 @@ async function waitForGlb(page){
    a.sceneVisibleResidents===1&&a.visibleFallbacks===0;
  },undefined,{timeout:MAX_WAIT});
 }
+async function readRenderedPeer(page){
+ const peer=await page.evaluate(()=>{
+  const audit=window.__CLIMBORIA_GAME_PEERS?.audit?.();
+  const p=audit?.renderedPositions?.[0];
+  if(audit?.peers!==1||audit?.sceneVisibleResidents!==1||!p?.attached||!p.visible||
+     ![p.x,p.y,p.z,p.targetX,p.targetY,p.targetZ].every(Number.isFinite))return null;
+  return p;
+ });
+ check(peer,'Remote scene transform missing before real player movement');
+ return peer;
+}
+async function waitForRenderedMotion(page,before){
+ // No writes to the scene or transport. Require the actual interpolated
+ // remote scene transform to move and converge on its received target.
+ await page.waitForFunction(initial=>{
+  const audit=window.__CLIMBORIA_GAME_PEERS?.audit?.();
+  const p=audit?.renderedPositions?.[0],packet=audit?.positions?.[0];
+  return audit?.peers===1&&audit.sceneVisibleResidents===1&&
+   p?.id===initial.id&&packet?.id===p.id&&p.attached&&p.visible&&
+   [p.x,p.y,p.z,p.targetX,p.targetY,p.targetZ,packet.x,packet.z].every(Number.isFinite)&&
+   Math.hypot(p.x-initial.x,p.z-initial.z)>.3&&
+   Math.hypot(p.targetX-packet.x,p.targetZ-packet.z)<.01&&
+   Math.hypot(p.x-p.targetX,p.y-p.targetY,p.z-p.targetZ)<.75;
+ },before,{timeout:30000});
+}
 async function openChat(page){
  const panel=page.locator('#climboria-world-chat-panel');
  if(!(await panel.isVisible())){
@@ -271,6 +296,7 @@ console.log('GAME QA STAGE: movement-A-to-B');
   if(!peer)throw Error('Verified remote peer position missing');
   return {x:peer.x,z:peer.z};
  });
+ const renderedBeforeA=await readRenderedPeer(b);
  // Make sure the previously focused World Chat field cannot swallow W/Shift.
  await a.evaluate(()=>document.activeElement?.blur?.());
  await a.keyboard.down('Shift');
@@ -289,6 +315,7 @@ console.log('GAME QA STAGE: movement-A-to-B');
   return peer&&Math.hypot(peer.x-initial.x,peer.z-initial.z)>.3&&
    Math.hypot(peer.x-after.x,peer.z-after.z)<7;
  },{initial:initialRemote,after:movedLocal},{timeout:30000});
+ await waitForRenderedMotion(b,renderedBeforeA);
 console.log('GAME QA STAGE: world-chat');
  await sendChat(a,'QA real game world chat A');
  await Promise.all([
@@ -333,6 +360,7 @@ console.log('GAME QA STAGE: world-chat');
  });
  check(Math.hypot(initialB.x-initialRemoteB.x,initialB.y-initialRemoteB.y,initialB.z-initialRemoteB.z)<6,
   'B local position and A remote baseline must agree before movement');
+ const renderedBeforeB=await readRenderedPeer(a);
  await b.evaluate(()=>document.activeElement?.blur?.());
  await b.keyboard.down('Shift');await b.keyboard.down('w');
  try{await b.waitForTimeout(2200)}
@@ -350,6 +378,7 @@ console.log('GAME QA STAGE: world-chat');
   return peer&&Math.hypot(peer.x-before.x,peer.z-before.z)>.3&&
    Math.hypot(peer.x-last.x,peer.y-last.y,peer.z-last.z)<6;
  },{before:initialRemoteB,last:lastVerifiedB},{timeout:30000});
+ await waitForRenderedMotion(a,renderedBeforeB);
  await b.waitForTimeout(750);
  // Prove live Nearby isolation with a positive World control on the SAME
  // sender and recipient, rather than treating a broken socket as privacy.
