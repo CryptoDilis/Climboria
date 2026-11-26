@@ -27,7 +27,7 @@ contract V3FounderVesting {
     uint256 public released;
     constructor(IERC20 asset,address receiver,uint256 begin){
         if(block.chainid!=84532) revert WrongChain();
-        if(address(asset)==address(0)||receiver==address(0)||receiver==address(this)||begin<block.timestamp||begin>block.timestamp+365 days) revert InvalidConfig();
+        if(address(asset)==address(0)||receiver==address(0)||receiver==address(this)||begin<=block.timestamp||begin>block.timestamp+365 days) revert InvalidConfig();
         token=asset;beneficiary=receiver;start=begin;
     }
     function vested() public view returns(uint256){
@@ -62,7 +62,7 @@ contract V3GamingVault {
     uint256 public released;
     constructor(IERC20 asset,address receiver,uint256 begin){
         if(block.chainid!=84532) revert WrongChain();
-        if(address(asset)==address(0)||receiver==address(0)||receiver==address(this)||begin<block.timestamp||begin>block.timestamp+365 days) revert InvalidConfig();
+        if(address(asset)==address(0)||receiver==address(0)||receiver==address(this)||begin<=block.timestamp||begin>block.timestamp+365 days) revert InvalidConfig();
         token=asset;distributor=receiver;start=begin;
     }
     function monthlyCap(uint256 m) public pure returns(uint256){
