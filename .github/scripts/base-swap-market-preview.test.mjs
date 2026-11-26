@@ -240,7 +240,7 @@ test("Base DEX rejects malformed pool identities and renders unavailable metrics
   malformedResponse=true;
   await api.loadBaseMarkets();
   assert.equal(api.count(),2,"malformed response must not wipe last successful data");
-  assert.match(nodes.baseCoverage.textContent,/Refresh failed/);
+  assert.match(nodes.baseCoverage.textContent,/Base refresh failed; showing last successful provider data/);
   malformedResponse=false;
   fail=true;
   await api.loadBaseMarkets();
