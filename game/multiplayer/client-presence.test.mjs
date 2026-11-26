@@ -9,7 +9,7 @@ const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
 function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,configFailures=0,configGate=null,configBadSchema=false,refreshMode=null,guest=false,heroOwner=null,mobile=false}={}){
  const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses],ticketPayloads:[...ticketPayloads],configFailures,configCalls:0};
- const authListeners=[];
+ const authListeners=[],intervals=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],speeches=[],calls=[],timers=[],created=[];
  const createElement=tag=>{
   const node={tag,style:{},children:[],textContent:'',id:'',listeners:new Map(),
@@ -75,7 +75,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
  }
  class Socket{
   static OPEN=1;static CLOSED=3;
-  constructor(url,protocols){this.url=url;this.protocols=protocols;this.readyState=1;this.sent=[];clients.push(this)}
+  constructor(url,protocols){this.url=url;this.protocols=protocols;this.readyState=1;this.bufferedAmount=0;this.sent=[];clients.push(this)}
   send(data){this.sent.push(JSON.parse(data))}
   close(){this.readyState=3;this.onclose?.({})}
  }
@@ -104,9 +104,9 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
   Event:class{constructor(type){this.type=type}},
   location:{href:'https://climboria.fun/game/play.html'},
   setTimeout:(fn,delay)=>{timers.push({fn,delay,cancelled:false});return timers.length},
-  setInterval:()=>1,clearInterval(){},clearTimeout:id=>{if(timers[id-1])timers[id-1].cancelled=true},console};
+  setInterval:(fn,delay)=>{intervals.push({fn,delay,cancelled:false});return intervals.length},clearInterval:id=>{if(intervals[id-1])intervals[id-1].cancelled=true},clearTimeout:id=>{if(timers[id-1])timers[id-1].cancelled=true},console};
  vm.runInNewContext(source,context,{filename:'client-presence.js'});
- return {window,document,clients,adds,moves,removes,punches,speeches,calls,timers,created,refreshCounts,events,
+ return {window,document,clients,adds,moves,removes,punches,speeches,calls,timers,intervals,created,refreshCounts,events,
   releaseGameClients:()=>{
    window.__CLIMBORIA_GAME_SAVE_CLIENT=lateAuth;
    window.__CLIMBORIA_GAME_PEERS=latePeers;
@@ -282,7 +282,7 @@ test('live Game refuses the retired forced-Sanctuary mobile prompt',()=>{
  assert.doesNotMatch(game,/climboria:room-return-to-sanctuary/);
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261126-game-mobile-chat-2/,
+ assert.match(game,/client-presence\.js\?v=20261126-game-movement-1/,
   'production Game must load fresh Nearby Chat and remote size renderer');
 });
 
@@ -1322,4 +1322,30 @@ test('mobile World Chat CSS is device scoped, bounded and keeps compose controls
  assert.match(game,/body\.mobile-device #climboria-world-chat-notice:empty\{display:none\}/);
  assert.match(game,/body\.mobile-device #climboria-world-chat-toggle\[aria-expanded="true"\]/);
  assert.match(game,/body\.mobile-device #climboria-world-chat-controls input\{[\s\S]*?font-size:16px/);
+});
+
+
+test('movement pilot publishes at 5 Hz only after spawn and drops stale samples under backpressure',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const ws=h.clients[0],id='s_'+'c'.repeat(32);
+ ws.onopen();
+ const tick=h.intervals.find(i=>!i.cancelled);
+ assert.equal(tick?.delay,200);
+ const p=h.window.__climboriaJarrellsPeak.player;
+ tick.fn();
+ assert.equal(ws.sent.filter(m=>m.type==='move').length,0,'no movement before accepted spawn');
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[]})});
+ tick.fn();
+ const count=()=>ws.sent.filter(m=>m.type==='move').length;
+ assert.equal(count(),1);
+ tick.fn();assert.equal(count(),1,'stationary tick sends nothing');
+ p.x=1;ws.bufferedAmount=128;tick.fn();
+ p.x=2;tick.fn();assert.equal(count(),1,'do not accumulate stale movement');
+ ws.bufferedAmount=0;tick.fn();
+ assert.equal(count(),2);
+ assert.equal(ws.sent.at(-1).position.x,2,'only latest local sample after drain');
+ tick.fn();assert.equal(count(),2);
+ ws.close();assert.equal(tick.cancelled,true);
+ tick.fn();assert.equal(count(),2,'closed room cannot publish');
 });

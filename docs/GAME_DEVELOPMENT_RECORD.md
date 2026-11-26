@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## PHYSICAL MULTIPLAYER BASELINE AND MOVEMENT LATENCY PILOT — 2026-11-26 PHT
+
+- Owner physical test: visible remote hero, Android-to-PC World Chat and Nearby delivery, overhead speech and last-position restoration confirmed; remote movement works with slight lag. Evidence [World](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7193010178), [Nearby](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7193340248), [reconnect](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7193364261), [movement](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7193389659). Not measured RTT/FPS or full automated acceptance.
+- Proposed moving-only client cadence 250→200ms (4→5 Hz; nominal +25% moving packet frequency, actual traffic/cost not measured). Reviewed deployed-policy source: 50ms minimum accepted move spacing and 24 messages/s socket limit. Skip new movement samples if WebSocket bufferedAmount>0, retry next tick using latest position; unchanged stationary threshold, chat/spawn, server validation and renderer smoothing. Cache version `20261126-game-movement-1`. Added deterministic client regression for pre-spawn, cadence, idle, congested socket, drain and disconnect. No Worker change or rate-limit relaxation. Prolonged congestion may still need reconnect; no claim to fix network or FPS lag.
+- EXACT NEXT: review Game-only diff, verify fresh CI then merge only green, verify actual public parity, owner refresh both devices and compare movement feel. If lag remains, collect frame and network observations before tuning interpolation. Reverse chat/range isolation and protected QA still unverified; private combat/loot remains disabled and separate. Game only.
+
+---
+
 ## #822 PUBLIC RELEASE COMPLETE; ACTUAL MULTIPLAYER ACCEPTANCE REQUIRED — 2026-11-26 PHT
 
 - #822 MERGED `a93b24ef5ecde35564e28b40e80dc0d34ccc245c`, exact tested head `1d53b20b3058515b94680f5b96088d67459a16cc`, 8/8 SUCCESS: Runtime 45813248571, Validate 45813248367, Authority 45813248417, Gateway 45813248545 (job 139886277370: 274/274 + 63/63, zero failures), Browser 45813248628, Heroes 45813248855, Chests 45813248558, Gameplay 45813248294. [Merge evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7191694737).
