@@ -33,3 +33,22 @@ jobs:
             cat "$RUNNER_TEMP/payer-evidence.json"
             echo '~~~'
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Compare latest safe and finalized Base Sepolia public balance
+        env:
+          BASE_PUBLIC_ADDRESS: '0x9bA615a67d6365849293521F6F9Ce0dFd00D6012'
+        run: |
+          node --input-type=module <<'NODE'
+          const rpc = async (method, params) => {
+            const r = await fetch('https://sepolia.base.org', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({jsonrpc:'2.0',id:1,method,params}),signal:AbortSignal.timeout(15000)});
+            if (!r.ok) throw Error('RPC HTTP failure');
+            const d = await r.json();
+            if (d.error || d.id!==1 || d.result==null) throw Error('RPC result unavailable');
+            return d.result;
+          };
+          if(await rpc('eth_chainId',[])!=='0x14a34') throw Error('Wrong chain');
+          for(const tag of ['latest','safe','finalized']) {
+            const block=await rpc('eth_getBlockByNumber',[tag,false]);
+            const balance=await rpc('eth_getBalance',[process.env.BASE_PUBLIC_ADDRESS,block.number]);
+            console.log('BASE_BALANCE_OBSERVATION '+JSON.stringify({tag,block:BigInt(block.number).toString(),balanceWei:BigInt(balance).toString()}));
+          }
+          NODE
