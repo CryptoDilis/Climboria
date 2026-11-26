@@ -1,0 +1,32 @@
+name: CLIMB Base Token Accounting - Offline Tests
+on:
+  pull_request:
+    paths:
+      - 'base/token-accounting/**'
+      - '.github/workflows/climb-base-token-accounting.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'base/token-accounting/**'
+      - '.github/workflows/climb-base-token-accounting.yml'
+permissions:
+  contents: read
+jobs:
+  accounting:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify eight offline accounting cases
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap base/token-accounting/accounting.test.mjs | tee "$RUNNER_TEMP/base-accounting.log"
+          grep -Fx '# tests 8' "$RUNNER_TEMP/base-accounting.log"
+          grep -Fx '# pass 8' "$RUNNER_TEMP/base-accounting.log"
+          grep -Fx '# fail 0' "$RUNNER_TEMP/base-accounting.log"
+          grep -Fx '# skipped 0' "$RUNNER_TEMP/base-accounting.log"
