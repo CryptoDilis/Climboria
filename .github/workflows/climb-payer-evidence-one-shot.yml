@@ -52,3 +52,63 @@ jobs:
             console.log('BASE_BALANCE_OBSERVATION '+JSON.stringify({tag,block:BigInt(block.number).toString(),balanceWei:BigInt(balance).toString()}));
           }
           NODE
+  estimate:
+    if: github.head_ref == 'climb-bridge/payer-evidence-20261125'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: token/climb-bridge/testnet-base
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Fetch exact OpenZeppelin source
+        run: |
+          set -euo pipefail
+          mkdir -p lib/openzeppelin-contracts
+          git -C lib/openzeppelin-contracts init
+          git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+      - name: Compile and run offline Solidity unit tests
+        run: |
+          set -euo pipefail
+          forge test -vv | tee "$RUNNER_TEMP/climb-token-unit.log"
+          grep -Eq '7 tests passed, 0 failed, 0 skipped \(7 total tests\)' "$RUNNER_TEMP/climb-token-unit.log"
+          grep -Fq '[PASS] testExportLocalRuntimeForVerifier()' "$RUNNER_TEMP/climb-token-unit.log"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Cross-check verifier against actual local constructor runtime
+        run: |
+          set -euo pipefail
+          node check-local-runtime.mjs out/ClimbTestnetToken.sol/ClimbTestnetToken.json out/climb-local-runtime.hex out/climb-local-binder.txt "$GITHUB_SHA"
+      - name: Prepare unsigned test-only deployment artifact
+        run: |
+          set -euo pipefail
+          node prepare-unsigned.mjs out/ClimbTestnetToken.sol/ClimbTestnetToken.json src/ClimbTestnetToken.sol "$GITHUB_SHA" "$RUNNER_TEMP/climb-testnet-unsigned.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-base-sepolia-unsigned-${{ github.sha }}
+          path: ${{ runner.temp }}/climb-testnet-unsigned.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Simulate exact creation and estimate execution gas (read only)
+        env:
+          BASE_PUBLIC_ADDRESS: '0x9bA615a67d6365849293521F6F9Ce0dFd00D6012'
+        run: |
+          set -euo pipefail
+          node estimate-creation.mjs "$RUNNER_TEMP/climb-testnet-unsigned.json" "$BASE_PUBLIC_ADDRESS" > "$RUNNER_TEMP/climb-testnet-estimate.json"
+          node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1]));if(r.creationSha256!=="f0796fdc9475e5b9dac21f774ba9ec947ac629ac40ea02b9ae75e4aff34895b5")throw Error("Creation digest changed")' "$RUNNER_TEMP/climb-testnet-estimate.json"
+          cat "$RUNNER_TEMP/climb-testnet-estimate.json"
+          {
+            echo '## Base Sepolia creation estimate (read only)'
+            echo '~~~json'
+            cat "$RUNNER_TEMP/climb-testnet-estimate.json"
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
