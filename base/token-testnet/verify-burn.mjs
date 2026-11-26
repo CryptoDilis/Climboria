@@ -8,7 +8,7 @@ const TRANSFER='0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3
 const word=n=>'0x'+n.toString(16).padStart(64,'0');
 const topic=a=>'0x'+'0'.repeat(24)+a.slice(2);
 const hash=x=>typeof x==='string'&&/^0x[0-9a-f]{64}$/.test(x);
-const reasons=new Set(['INVALID_BURN_INPUT','BURN_RPC_UNAVAILABLE','BURN_RPC_RESPONSE','BURN_WRONG_CHAIN','BURN_RECEIPT_MISMATCH','BURN_NOT_FINALIZED','BURN_TRANSACTION_MISMATCH','BURN_EVENT_MISMATCH','BURN_BLOCK_MISMATCH','BURN_STATE_MISMATCH','BURN_RUNTIME_MISMATCH','BURN_SELECTOR_MISMATCH']);
+const reasons=new Set(['INVALID_BURN_INPUT','BURN_RPC_UNAVAILABLE','BURN_RPC_RESPONSE','BURN_WRONG_CHAIN','BURN_FINALIZED_HASH_INVALID','BURN_RECEIPT_BLOCK_HASH_INVALID','BURN_RECEIPT_STATUS_FAILED','BURN_RECEIPT_HASH_MISMATCH','BURN_RECEIPT_SENDER_MISMATCH','BURN_RECEIPT_TARGET_MISMATCH','BURN_RECEIPT_CONTRACT_ADDRESS_UNEXPECTED','BURN_NOT_FINALIZED','BURN_TRANSACTION_MISMATCH','BURN_EVENT_MISMATCH','BURN_BLOCK_MISMATCH','BURN_STATE_MISMATCH','BURN_RUNTIME_MISMATCH','BURN_SELECTOR_MISMATCH']);
 class BurnError extends Error {constructor(code){super('NO_GO: '+code);this.code=code;}}
 const fail=code=>{throw new BurnError(code);};
 export const safeBurnError=e=>e instanceof BurnError&&reasons.has(e.code)?e.message:safeCreationError(e);
@@ -27,7 +27,13 @@ export async function verifyBurn(artifact,source,commit,payer,token,creationTx,b
  }
  if(await rpc('eth_chainId',[])!=='0x14a34')fail('BURN_WRONG_CHAIN');
  const [final,r,t]=await Promise.all([rpc('eth_getBlockByNumber',['finalized',false]),rpc('eth_getTransactionReceipt',[burnTx]),rpc('eth_getTransactionByHash',[burnTx])]);
- if(!hash(final?.hash)||!hash(r?.blockHash)||r.status!=='0x1'||r.transactionHash!==burnTx||r.from?.toLowerCase()!==payer||r.to?.toLowerCase()!==token||r.contractAddress!==null)fail('BURN_RECEIPT_MISMATCH');
+ if(!hash(final?.hash))fail('BURN_FINALIZED_HASH_INVALID');
+ if(!hash(r?.blockHash))fail('BURN_RECEIPT_BLOCK_HASH_INVALID');
+ if(r.status!=='0x1')fail('BURN_RECEIPT_STATUS_FAILED');
+ if(r.transactionHash!==burnTx)fail('BURN_RECEIPT_HASH_MISMATCH');
+ if(r.from?.toLowerCase()!==payer)fail('BURN_RECEIPT_SENDER_MISMATCH');
+ if(r.to?.toLowerCase()!==token)fail('BURN_RECEIPT_TARGET_MISMATCH');
+ if(r.contractAddress!==null)fail('BURN_RECEIPT_CONTRACT_ADDRESS_UNEXPECTED');
  const n=qty(r.blockNumber);if(n<=qty(created.deploymentBlock))fail('BURN_BLOCK_MISMATCH');
  if(n>qty(final.number))fail('BURN_NOT_FINALIZED');
  if(t?.hash!==burnTx||t.from?.toLowerCase()!==payer||t.to?.toLowerCase()!==token||t.blockNumber!==r.blockNumber||t.blockHash!==r.blockHash||t.value!=='0x0'||t.input?.toLowerCase()!=='0x42966c68'+word(AMOUNT).slice(2))fail('BURN_TRANSACTION_MISMATCH');
