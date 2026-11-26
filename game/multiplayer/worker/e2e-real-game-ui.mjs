@@ -317,10 +317,13 @@ console.log('GAME QA STAGE: movement-A-to-B');
  },{initial:initialRemote,after:movedLocal},{timeout:30000});
  await waitForRenderedMotion(b,renderedBeforeA);
 console.log('GAME QA STAGE: world-chat');
- await sendChat(a,'QA real game world chat A');
+ const worldNonce=Date.now().toString(36);
+ const worldA='QA real game world chat A '+worldNonce;
+ const worldB='QA real game world chat B '+worldNonce;
+ await sendChat(a,worldA);
  await Promise.all([
-  expectChat(a,'QA Explorer A','QA real game world chat A'),
-  expectChat(b,'QA Explorer A','QA real game world chat A')
+  expectChat(a,'QA Explorer A',worldA),
+  expectChat(b,'QA Explorer A',worldA)
  ]);
  // A real self-echo, not WebSocket.send(), must clear the matching draft.
  // Wait for the acknowledgement to be processed before editing. This is
@@ -333,10 +336,10 @@ console.log('GAME QA STAGE: world-chat');
  // chat reply and must never be mistaken for an acknowledgement to A.
  const unsent='QA preserve my unsent draft';
  await (await openChat(a)).locator('input').fill(unsent);
- await sendChat(b,'QA real game world chat B');
+ await sendChat(b,worldB);
  await Promise.all([
-  expectChat(a,'QA Explorer B','QA real game world chat B'),
-  expectChat(b,'QA Explorer B','QA real game world chat B')
+  expectChat(a,'QA Explorer B',worldB),
+  expectChat(b,'QA Explorer B',worldB)
  ]);
  await assertChatDraft(a,unsent,
   'Incoming World Chat from another real player erased A unsent draft');

@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## MULTIPLAYER QA MAIN-TARGET CI RETRIGGER — 2026-11-26 PHT
+
+- #822 exact retargeted head `f987465e8cd61ab08e42226c8e8e8c62aab8d070` unexpectedly exposed only unrelated Base workflow 45812831025; no Game CI evidence. Do not merge based on that. Fresh Game-only commit also makes both ordinary World Chat assertions use distinct per-run messages (Nearby, range and reconnect already use fresh text), preventing old transcript false positives; added offline contract. Protected workflow is manual dispatch only; connector has no dispatch action, no QA credentials or bypass used. Main drift since #819 merge was unrelated Base/DEX only.
+- **EXACT NEXT:** confirm new main-target head has actual Game Gateway, Runtime, Authority, Browser, Heroes/Chests, Gameplay and Validate checks as applicable; merge only after expected tests pass; verify main push public parity, run protected registered QA and physical test. Game only; no live PvP/loot or Worker redeploy.
+
+---
+
 ## REMOTE VISIBILITY QA MERGED; MULTIPLAYER ACCEPTANCE RECONCILED — 2026-11-26 PHT
 
 - #819 merged `e8d0f284c7312b15fb9b01fd5916ad7ba35b3209`, exact tested head `cf648096f1a42c351a0e8b368687a6d41088a548`, all four checks SUCCESS: Runtime 45810601958, Gateway 45810601911 (270/270 + 63/63), Validate 45810601933, Gameplay 45810601908. Main drift unrelated Base/DEX only. #817 public exact-byte readiness already verified below.

@@ -116,3 +116,14 @@ test('real reconnect clears ghost visuals and restores rendered motion and chat'
  assert.match(reconnect,/expectChat\(a,'QA Explorer B',reconnectText\)/);
  assert.match(reconnect,/expectChat\(b,'QA Explorer B',reconnectText\)/);
 });
+
+test('real World Chat acceptance cannot match a previous run transcript',()=>{
+ assert.match(qa,/const worldNonce=Date\.now\(\)\.toString\(36\)/);
+ assert.match(qa,/const worldA='QA real game world chat A '\+worldNonce/);
+ assert.match(qa,/const worldB='QA real game world chat B '\+worldNonce/);
+ for(const [sender,message] of [['A','worldA'],['B','worldB']]){
+  for(const receiver of ['a','b']){
+   assert.ok(qa.includes("expectChat("+receiver+",'QA Explorer "+sender+"',"+message+")"));
+  }
+ }
+});
