@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## RECONNECT GHOST CLEANUP AND LIVE CHAT ACCEPTANCE — 2026-11-26 PHT (PROPOSED)
+
+- Extended existing stacked draft #822. After real B logout both browsers must report zero remote peers, resident GLBs, visible scene residents, fallback models, speech bubbles, packet records and rendered records before B reauthenticates. After restored last-location checks, A must observe B's visible attached scene transform at the resumed location and converged to the packet target; fresh World Chat from B must be echoed to B and received by A, with both still ONLINE: 2. No production movement/authority changes or forced storage edits. Source-contract regression added. Code commits `148be4c4d68b3020b8a6ea234a28ff03744f1f14` and `c1afdeddff08e162856742091c9b8a99119e01cc`.
+- #817 and #819 gameplay jobs still running at review; main drift since #813 was unrelated Base/DEX paths only. **EXACT NEXT:** verify both exact-head gameplay outcomes; merge/reconcile #817 then #819, reconcile and retarget #822, verify fresh CI and public parity, execute actual protected two-account acceptance. No real reconnect test executed yet; no PvP/loot activation. Game only.
+
+---
+
 ## ACTUAL REMOTE SCENE MOTION ACCEPTANCE — 2026-11-26 PHT (PROPOSED)
 
 - Extended stacked draft #822 without resetting #817 or #819 checks. Added read-only renderedPositions snapshot of actual remote group transform, interpolation target, scene attachment and visibility; existing packet positions unchanged. Real two-browser QA now requires same attached, visible remote GLB to move >0.3m horizontally and converge within 0.75m of its 3D target, with target X/Z matching the corresponding packet, in both directions. Added renderer-only smoke interpolation/cleanup assertions and offline source-contract regression. Code commits `eb977e1e41d5f140246d01c2bb4301998e730545`, `0c7d0cd912132dd30d307a9ed804119603de52a3`, `f4746d4724f4e35b1417860d55886d7bb6708dc7`, `8241fcc8f3f1dd12c57aedb3603871e8a3404021`. No new authority, movement algorithm, assets or combat changes. Scene visibility does not establish pixel visibility/occlusion or physical performance.
