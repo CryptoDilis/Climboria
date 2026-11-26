@@ -83,6 +83,8 @@ jobs:
         run: node --test estimate-creation.test.mjs
       - name: Test unsigned review binding
         run: node --test unsigned-review.test.mjs
+      - name: Test finalized V3 creation verifier
+        run: node --test verify-creation.test.mjs
       - name: Estimate V3 creation (read-only, never deploy)
         if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
         env:
@@ -114,3 +116,16 @@ jobs:
           path: ${{ runner.temp }}/v3-unsigned-review.json
           if-no-files-found: error
           retention-days: 3
+      - name: Verify submitted V3 creation (read-only, finalized)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          node verify-creation.mjs > "$RUNNER_TEMP/v3-finalized-creation.json"
+          cat "$RUNNER_TEMP/v3-finalized-creation.json"
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          name: climb-v3-finalized-creation
+          path: ${{ runner.temp }}/v3-finalized-creation.json
+          if-no-files-found: error
+          retention-days: 14
