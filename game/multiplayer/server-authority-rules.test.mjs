@@ -83,3 +83,20 @@ test('policy constants are bounded and source code cannot create a fake multipla
  assert.ok(ROOM_RULES.safeZone.radius>=60);
  assert.equal(typeof authorizeWorldGrab,'function');
 });
+
+
+test('world grab fails closed for incomplete or malformed eligibility metadata and inactive actors',()=>{
+ const nowMs=2000;
+ for(const key of ['claimed','paid','onChain']){
+  const missing=drop();delete missing[key];
+  assert.equal(authorizeWorldGrab({actor:actor(),drop:missing,nowMs}).reason,'object-not-grabbable');
+  for(const value of [null,0,'false']){
+   assert.equal(authorizeWorldGrab({actor:actor(),drop:drop({[key]:value}),nowMs}).reason,'object-not-grabbable');
+  }
+ }
+ for(const health of [undefined,0,-1,NaN,Infinity,'100']){
+  assert.equal(authorizeWorldGrab({actor:actor({health}),drop:drop(),nowMs}).reason,'invalid-actor');
+ }
+ assert.equal(authorizeWorldGrab({actor:actor(),drop:drop({protectedUntilMs:-1}),nowMs}).reason,'drop-protected-or-invalid');
+ assert.equal(authorizeWorldGrab({actor:actor(),drop:drop(),nowMs}).ok,true);
+});
