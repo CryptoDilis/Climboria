@@ -34,8 +34,14 @@ contract V3RestrictedSpend {
     }
     mapping(bytes32=>Proposal) public proposals;
     mapping(bytes32=>mapping(address=>bool)) public approved;
+    mapping(bytes32=>mapping(address=>bool)) public cancelVoted;
+    mapping(bytes32=>uint8) public cancelVotes;
+    mapping(bytes32=>bool) public cancelled;
     event Proposed(bytes32 indexed id,address indexed recipient,uint256 amount,bytes32 evidence,uint256 month);
     event Approved(bytes32 indexed id,address indexed signer);
+    event ApprovalRevoked(bytes32 indexed id,address indexed signer);
+    event CancellationVoted(bytes32 indexed id,address indexed signer);
+    event Cancelled(bytes32 indexed id);
     event Executed(bytes32 indexed id,address indexed recipient,uint256 amount);
     constructor(IERC20 asset,address[5] memory signers,address founder,uint256 begin,uint256 cap,bytes32 label){
         if(block.chainid!=84532) revert WrongChain();
@@ -64,16 +70,41 @@ contract V3RestrictedSpend {
     function approve(bytes32 id) external {
         if(!signer[msg.sender]) revert Unauthorized();
         Proposal storage p=proposals[id];
-        if(p.recipient==address(0)||p.executed||block.timestamp>=start+(p.month+1)*MONTH) revert InvalidProposal();
+        if(p.recipient==address(0)||p.executed||cancelled[id]||block.timestamp>=start+(p.month+1)*MONTH) revert InvalidProposal();
         if(approved[id][msg.sender]) revert AlreadyApproved();
         approved[id][msg.sender]=true;
         p.approvals++;
         if(p.approvals==3) p.readyAt=block.timestamp+DELAY;
         emit Approved(id,msg.sender);
     }
+    /// @notice A signer can withdraw its own approval before execution.
+    /// Falling below threshold resets the delay; a fresh quorum starts it again.
+    function revokeApproval(bytes32 id) external {
+        if(!signer[msg.sender]) revert Unauthorized();
+        Proposal storage p=proposals[id];
+        if(p.recipient==address(0)||p.executed||cancelled[id]||!approved[id][msg.sender]||block.timestamp>=start+(p.month+1)*MONTH) revert InvalidProposal();
+        approved[id][msg.sender]=false;
+        p.approvals--;
+        if(p.approvals<3) p.readyAt=0;
+        emit ApprovalRevoked(id,msg.sender);
+    }
+    /// @notice Three distinct cancellation votes permanently invalidate this ID.
+    /// Votes are irreversible. Until quorum, execution can still win the race.
+    function voteCancel(bytes32 id) external {
+        if(!signer[msg.sender]) revert Unauthorized();
+        Proposal storage p=proposals[id];
+        if(p.recipient==address(0)||p.executed||cancelled[id]||cancelVoted[id][msg.sender]||block.timestamp>=start+(p.month+1)*MONTH) revert InvalidProposal();
+        cancelVoted[id][msg.sender]=true;
+        cancelVotes[id]++;
+        emit CancellationVoted(id,msg.sender);
+        if(cancelVotes[id]==3){
+            cancelled[id]=true;
+            emit Cancelled(id);
+        }
+    }
     function execute(bytes32 id) external {
         Proposal storage p=proposals[id];
-        if(p.executed||p.approvals<3||block.timestamp<p.readyAt||block.timestamp<start+p.month*MONTH||block.timestamp>=start+(p.month+1)*MONTH) revert NotReady();
+        if(p.executed||cancelled[id]||p.approvals<3||block.timestamp<p.readyAt||block.timestamp<start+p.month*MONTH||block.timestamp>=start+(p.month+1)*MONTH) revert NotReady();
         if(p.amount>monthlyCap(p.month)-spent[p.month]||p.amount>budget-totalSpent) revert CapExceeded();
         p.executed=true;
         spent[p.month]+=p.amount;

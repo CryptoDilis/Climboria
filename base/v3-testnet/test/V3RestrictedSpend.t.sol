@@ -92,4 +92,54 @@ contract V3RestrictedSpendTest {
         vm.chainId(8453);
         vm.expectRevert(V3RestrictedSpend.WrongChain.selector);new V3RestrictedSpend(token,signers,FOUNDER,start,1,"T");
     }
+
+    function testRevocationResetsDelayAtLostQuorum() public {
+        bytes32 id=propose(10000,0,"A");approve3(id);
+        vm.warp(start+2 days);
+        vm.prank(signers[1]);v.revokeApproval(id);
+        vm.expectRevert(V3RestrictedSpend.NotReady.selector);v.execute(id);
+        vm.prank(signers[3]);v.approve(id);
+        vm.expectRevert(V3RestrictedSpend.NotReady.selector);v.execute(id);
+        vm.warp(start+4 days);v.execute(id);
+        require(token.balanceOf(PAYEE)==10000);
+    }
+    function testRevocationWithRemainingQuorumKeepsDelay() public {
+        bytes32 id=propose(1,0,"A");approve3(id);
+        vm.prank(signers[3]);v.approve(id);
+        vm.prank(signers[0]);v.revokeApproval(id);
+        vm.warp(start+2 days);v.execute(id);
+        require(token.balanceOf(PAYEE)==1);
+    }
+    function testCancellationQuorumPermanentAndNoSpend() public {
+        bytes32 id=propose(10000,0,"A");approve3(id);
+        for(uint256 i=0;i<3;i++){vm.prank(signers[i]);v.voteCancel(id);}
+        require(v.cancelled(id)&&v.cancelVotes(id)==3);
+        vm.warp(start+2 days);
+        vm.expectRevert(V3RestrictedSpend.NotReady.selector);v.execute(id);
+        vm.prank(signers[3]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.approve(id);
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.revokeApproval(id);
+        require(v.totalSpent()==0&&token.balanceOf(PAYEE)==0);
+        bytes32 next=propose(10000,0,"B");approve3(next);
+        vm.warp(start+4 days);v.execute(next);
+        require(token.balanceOf(PAYEE)==10000);
+    }
+    function testMinorityCancelCannotVetoOrDoubleVote() public {
+        bytes32 id=propose(1,0,"A");approve3(id);
+        vm.prank(signers[0]);v.voteCancel(id);
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.voteCancel(id);
+        vm.prank(signers[1]);v.voteCancel(id);
+        require(!v.cancelled(id));
+        vm.warp(start+2 days);v.execute(id);
+        vm.prank(signers[2]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.voteCancel(id);
+    }
+    function testUnauthorizedUnknownAndExpiredActions() public {
+        bytes32 id=propose(1,0,"A");approve3(id);
+        vm.prank(FOUNDER);vm.expectRevert(V3RestrictedSpend.Unauthorized.selector);v.voteCancel(id);
+        vm.prank(FOUNDER);vm.expectRevert(V3RestrictedSpend.Unauthorized.selector);v.revokeApproval(id);
+        vm.prank(signers[4]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.revokeApproval(id);
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.voteCancel(bytes32(uint256(999)));
+        vm.warp(start+30 days);
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.revokeApproval(id);
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.voteCancel(id);
+    }
 }
