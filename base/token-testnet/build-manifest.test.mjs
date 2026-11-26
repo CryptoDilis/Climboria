@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {buildManifest} from './build-manifest.mjs';
+const signatures=['INITIAL_TEST_SUPPLY()','allowance(address,address)','approve(address,uint256)','balanceOf(address)','burn(uint256)','decimals()','decreaseAllowance(address,uint256)','increaseAllowance(address,uint256)','name()','symbol()','totalBurned()','totalSupply()','transfer(address,uint256)','transferFrom(address,address,uint256)'];
+const fixture=()=>({abi:[{type:'constructor',inputs:[],stateMutability:'nonpayable'},...signatures.map(s=>{const [name,args]=s.slice(0,-1).split('(');return {type:'function',name,inputs:args?args.split(',').map(type=>({type})):[]};})],bytecode:{object:'0x6000'},deployedBytecode:{object:'0x6001'}});
+const make=a=>buildManifest(a,'synthetic fixture','a'.repeat(40));
+test('manifest labels test chain, hashes and no transaction payload',()=>{const r=make(fixture());assert.equal(r.chainId,84532);assert.equal(r.initialTestSupplyRaw,'1000000000');assert.equal(r.creationBytes,2);assert.match(r.runtimeSha256,/^[0-9a-f]{64}$/);assert.notEqual(r.creationSha256,r.runtimeSha256);assert.equal(r.status,'TEST_ONLY_BUILD_EVIDENCE_NO_GO');assert.equal(r.unsigned,undefined);});
+test('reject additional mint, removed burn or duplicate function',()=>{for(const change of [a=>a.abi.push({type:'function',name:'mint',inputs:[]}),a=>a.abi=a.abi.filter(x=>x.name!=='burn'),a=>a.abi.push(a.abi[1])]){const a=fixture();change(a);assert.throws(()=>make(a),/NO_GO/);}});
+test('reject fallback and constructor arguments',()=>{const a=fixture();a.abi.push({type:'fallback'});assert.throws(()=>make(a),/NO_GO/);const b=fixture();b.abi[0].inputs=[{type:'address'}];assert.throws(()=>make(b),/NO_GO/);});
+test('reject malformed bytes, linked libraries and immutable references',()=>{for(const change of [a=>a.bytecode.object='0xabc',a=>a.bytecode.linkReferences={lib:{}},a=>a.deployedBytecode.immutableReferences={id:[{start:1,length:1}]},a=>a.deployedBytecode.object='0x']){const a=fixture();change(a);assert.throws(()=>make(a),/NO_GO/);}});
