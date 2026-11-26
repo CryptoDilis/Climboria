@@ -3802,10 +3802,15 @@ window.__CLIMBORIA_GAME_PEERS={
   nearbyBubbles:[...livePeers.values()].filter(p=>!!p.bubble&&p.bubble.parent===p.group).length,
   fallbackPeers:[...livePeers.values()].filter(p=>!!p.fallback&&p.fallback.parent===p.group).length,
   visibleFallbacks:[...livePeers.values()].filter(p=>!p.root&&!!p.fallback&&p.fallback.visible&&p.group.visible&&p.group.parent===scene).length,
-  // Read-only transport acceptance diagnostics. These are positions already
-  // received via authenticated peer packets, not server-trusted physics.
-  // Allows actual two-browser QA to prove remote avatars MOVE, not just join.
-  positions:[...livePeers.values()].map(p=>({id:p.id,x:p.position.x,y:p.position.y,z:p.position.z}))}}
+  // Read-only packet coordinates are not proof of rendered motion.
+  positions:[...livePeers.values()].map(p=>({id:p.id,x:p.position.x,y:p.position.y,z:p.position.z})),
+  // Report copies of the actual scene transform and interpolation target,
+  // not references to mutable Three.js objects or new admission authority.
+  renderedPositions:[...livePeers.values()].map(p=>({
+    id:p.id,x:p.group.position.x,y:p.group.position.y,z:p.group.position.z,
+    targetX:p.target.x,targetY:p.target.y,targetZ:p.target.z,
+    attached:p.group.parent===scene,visible:p.group.visible===true
+  }))}}
 };
 
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
