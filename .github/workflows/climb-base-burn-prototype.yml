@@ -1,5 +1,19 @@
 name: CLIMB Base Fixed Burn Prototype - Offline Tests
 on:
+  workflow_dispatch:
+    inputs:
+      payer:
+        description: 'Dedicated Base Sepolia public EOA address (read-only simulation)'
+        required: true
+        type: string
+      token:
+        description: 'Optional deployed test-only token address (verification only)'
+        required: false
+        type: string
+      creation_tx:
+        description: 'Optional finalized creation transaction hash (verification only)'
+        required: false
+        type: string
   pull_request:
     paths:
       - 'base/token-testnet/**'
@@ -13,6 +27,7 @@ permissions:
   contents: read
 jobs:
   offline:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -42,3 +57,54 @@ jobs:
           for t in testFixedInitialSupply testRejectMainnet testTransferNoTax testHolderBurnAndEvent testRejectBurnBeyondOwnBalance testNoMintOrForcedBurnSelector testAllowanceTransferNoTaxAndNoImplicitBurn testRepeatedAndFullBurnNoReissue; do
             grep -Fq "[PASS] ${t}()" "$RUNNER_TEMP/climb-burn-tests.log"
           done
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test strict build manifest validator
+        run: node --test build-manifest.test.mjs
+      - name: Fingerprint actual compiled test prototype
+        run: |
+          set -euo pipefail
+          node build-manifest.mjs out/ClimbBurnPrototype.sol/ClimbBurnPrototype.json src/ClimbBurnPrototype.sol "$GITHUB_SHA" "$RUNNER_TEMP/climb-burn-build-manifest.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-burn-build-manifest-${{ github.sha }}
+          path: ${{ runner.temp }}/climb-burn-build-manifest.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Test read-only creation simulator
+        run: node --test simulate-creation.test.mjs
+      - name: Test read-only finalized creation verifier
+        run: node --test verify-creation.test.mjs
+      - name: Simulate exact compiled test-only creation
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.token == '' && inputs.creation_tx == ''
+        env:
+          TEST_PAYER: ${{ inputs.payer }}
+        run: |
+          set -euo pipefail
+          node simulate-creation.mjs out/ClimbBurnPrototype.sol/ClimbBurnPrototype.json src/ClimbBurnPrototype.sol "$GITHUB_SHA" "$TEST_PAYER" > "$RUNNER_TEMP/climb-burn-creation-estimate.json"
+          cat "$RUNNER_TEMP/climb-burn-creation-estimate.json"
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.token == '' && inputs.creation_tx == ''
+        with:
+          name: climb-burn-creation-estimate-${{ github.sha }}
+          path: ${{ runner.temp }}/climb-burn-creation-estimate.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Verify finalized test-only creation
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && (inputs.token != '' || inputs.creation_tx != '')
+        env:
+          TEST_PAYER: ${{ inputs.payer }}
+          TEST_TOKEN: ${{ inputs.token }}
+          TEST_CREATION_TX: ${{ inputs.creation_tx }}
+        run: |
+          set -euo pipefail
+          node verify-creation.mjs out/ClimbBurnPrototype.sol/ClimbBurnPrototype.json src/ClimbBurnPrototype.sol "$GITHUB_SHA" "$TEST_PAYER" "$TEST_TOKEN" "$TEST_CREATION_TX" > "$RUNNER_TEMP/climb-burn-creation-evidence.json"
+          cat "$RUNNER_TEMP/climb-burn-creation-evidence.json"
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && (inputs.token != '' || inputs.creation_tx != '')
+        with:
+          name: climb-burn-creation-evidence-${{ github.sha }}
+          path: ${{ runner.temp }}/climb-burn-creation-evidence.json
+          retention-days: 7
+          if-no-files-found: error
