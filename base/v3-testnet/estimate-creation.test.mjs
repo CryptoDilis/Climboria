@@ -31,3 +31,23 @@ test('reject mismatched source and artifact digest without network',async()=>{co
 test('reject contract or delegated payer',async()=>{const m=mock({eth_getCode:'0xef0100'});await assert.rejects(estimateV3(artifact,manifest,source,payer,m.fetchFn));assert.ok(!m.calls.some(x=>x.method==='eth_estimateGas'));});
 test('reject changing block hash',async()=>{const m=mock({eth_getBlockByNumber:p=>p[0]==='latest'?block:{...block,hash:'0x'+'d'.repeat(64)}});await assert.rejects(estimateV3(artifact,manifest,source,payer,m.fetchFn));});
 test('flag insufficient balance without declaring authorization',async()=>{const m=mock({eth_getBalance:'0x0'});const v=await estimateV3(artifact,manifest,source,payer,m.fetchFn);assert.equal(v.coversIllustrativeL2Fee,false);});
+
+test('diagnose EIP-7702 delegation without relaxing payer restriction',async()=>{
+ const m=mock({eth_getCode:'0xef0100'+'a'.repeat(40)});
+ await assert.rejects(estimateV3(artifact,manifest,source,payer,m.fetchFn),{code:'PAYER_DELEGATED_EIP7702'});
+ assert.ok(!m.calls.some(x=>x.method==='eth_estimateGas'));
+});
+test('diagnose ordinary contract code separately',async()=>{
+ const m=mock({eth_getCode:'0x6000'});
+ await assert.rejects(estimateV3(artifact,manifest,source,payer,m.fetchFn),{code:'PAYER_CODE_NOT_EMPTY'});
+});
+test('diagnose RPC response failure without exposing provider details',async()=>{
+ const m=mock();const fetchFn=async(url,opts)=>{
+  if(JSON.parse(opts.body).method==='eth_estimateGas')return {ok:true,json:async()=>({jsonrpc:'2.0',id:1,error:{code:-32000,message:'private upstream details'}})};
+  return m.fetchFn(url,opts);
+ };
+ await assert.rejects(estimateV3(artifact,manifest,source,payer,fetchFn),{code:'RPC_RESPONSE_eth_estimateGas'});
+});
+test('diagnose RPC transport failure with fixed label',async()=>{
+ await assert.rejects(estimateV3(artifact,manifest,source,payer,async()=>{throw new Error('private upstream details');}),{code:'RPC_TRANSPORT_eth_chainId'});
+});
