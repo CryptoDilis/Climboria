@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## REAL BIDIRECTIONAL NEARBY SPEECH ACCEPTANCE — 2026-11-26 PHT (PROPOSED)
+
+- #817 remote fit exact head `4584c6dafde62c309c4c4bbcb3e0526951d48e0c` 5/6 SUCCESS; gameplay 45808258002 pending. #819 visibility QA exact head `f521453147af46e70f7d405e84598cab90e2c2a6` 3/4 SUCCESS; actual Gateway job 139870453701 passed 270/270 + 63/63, zero failures; gameplay 45808659702 pending. [CI evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190531905).
+- Stacked QA-only follow-up on #819 (not independent main release): both registered players send distinct fresh per-run Nearby messages through actual composer, assert sender echo and other transcript, observe overhead speech on each receiving browser, verify no pre-existing bubble on A and B's acknowledged input clears, restore World channel and cooldown. No production code changes, synthetic peers or fake packet admission. Source-contract regression added. Code commits `e76786ca1a190bf03a9d93846d3d522c43c79bb8` and `7db5c4c302838c03ecbb8dea487761760aba1692`. Actual protected browser execution and physical devices remain pending.
+- **EXACT NEXT:** complete #817 exact-head CI, merge only green; reconcile #819 with main preserving records, validate and merge; reconcile this stacked branch onto the resulting main and retarget PR, fresh CI, published parity, actual protected two-account QA. Follow with read-only rendered movement convergence audit (current position audit reflects received packets). No Worker deploy or PvP/loot activation. Game only.
+
+---
+
 ## REAL REMOTE HERO VISIBILITY ACCEPTANCE — 2026-11-26 PHT (PROPOSED)
 
 - #813 merged `f2dcc44eb9fe1e97b9500aa9d62785821742a615`, public version `20261126-game-mobile-chat-2` verified, owner UI confirmation recorded in issue #657. #817 remote import transform fit remains separate; its exact reconciled head `4584c6dafde62c309c4c4bbcb3e0526951d48e0c` had Validate, Authority and Browser success with Gameplay, Heroes and Chests still running at review.
