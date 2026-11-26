@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## REMOTE HERO IMPORT TRANSFORM FIT — 2026-11-26 PHT
+
+- Owner reported PC context menu and mobile chat placement okay after published #810. [Owner confirmation](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190277547). #813 public readiness 45806439616 job 139862865281 verified exact published version `20261126-game-mobile-chat-2`; 22/22 tests, approved room and Nearby readiness. #813 final gameplay still pending when this independent task started. Do not reopen resolved UI requests.
+- Earlier desktop image suggested possible remote model alignment issue. Source review confirms old remote loader measured authored world bounds then overwrote root scale and Y position; a non-identity imported root transform makes that math incorrect. Changed fit to a separate normalization parent preserving imported transform and animation mixer target, centering horizontal bounds and grounding feet at model-local zero. Existing server positions, terrain rules, nameplates, model budget and disposal policy unchanged. Regression uses local synthetic geometry with non-identity scale/position/rotation and exact 1.9m fitted height; not a simulated network acceptance. Physical screenshot-specific cause not yet proven.
+- **EXACT NEXT:** complete #813 CI/merge, reconcile any concurrent record changes without overwriting them; verify this PR CI, merge and public parity; actual registered movement/chat/reconnect and remote Jarrell/Lheiz visual alignment remain to test. Game only.
+
+---
+
 ## OWNER FOLLOW-UP: PC CONTEXT MENU AND BOTTOM-LEFT MOBILE CHAT — 2026-11-26 PHT
 
 - Owner screenshot shows Chrome native image context menu on right-click in 3D world. Added canvas-scoped contextmenu preventDefault only; existing mouse orbit, click movement, zoom and native text editing unchanged. Added browser gameplay regression for world menu suppression and normal input menu, alongside existing orbit test.

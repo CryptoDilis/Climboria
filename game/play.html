@@ -3662,6 +3662,38 @@ function disposeRemoteHero(root){
   }
  });
 }
+// Fit the imported scene with a separate parent. Replacing the authored
+// root transform can shrink or sink GLBs whose root is already transformed;
+// the animation mixer must still target the original glTF scene.
+function fitRemoteHero(root){
+ const box=new T3.Box3().setFromObject(root),size=box.getSize(new T3.Vector3());
+ if(!Number.isFinite(size.y)||size.y<.01||size.y>20000||
+    ![box.min.x,box.min.y,box.min.z,box.max.x,box.max.z].every(Number.isFinite))return null;
+ const factor=Math.min(100,REMOTE_HERO_HEIGHT/size.y);
+ const center=box.getCenter(new T3.Vector3());
+ const fit=new T3.Group();fit.name='RemoteHeroFit';
+ fit.scale.setScalar(factor);
+ fit.position.set(-center.x*factor,-box.min.y*factor,-center.z*factor);
+ fit.add(root);
+ return fit;
+}
+if(new URLSearchParams(location.search).has('smoke')){
+ window.ENDLESS_WILDS.remoteHeroFitAudit=()=>{
+  // Local synthetic geometry ONLY, never a network peer. Exercise a root
+  // with non-identity transform to catch accidental scale/offset replacement.
+  const root=new T3.Group(),geometry=new T3.BoxGeometry(1,2,1);
+  const material=new T3.MeshBasicMaterial(),mesh=new T3.Mesh(geometry,material);
+  root.add(mesh);root.position.set(3,-4,5);root.scale.set(2,3,1.5);root.rotation.y=.35;
+  const fit=fitRemoteHero(root);
+  const box=fit?new T3.Box3().setFromObject(fit):null;
+  const size=box?.getSize(new T3.Vector3()),center=box?.getCenter(new T3.Vector3());
+  const result={height:size?.y,feet:box?.min.y,centerX:center?.x,centerZ:center?.z,
+   transformPreserved:root.position.equals(new T3.Vector3(3,-4,5))&&
+    root.scale.equals(new T3.Vector3(2,3,1.5))&&root.rotation.y===.35,
+   authoredRootAttached:root.parent===fit};
+  geometry.dispose();material.dispose();return result;
+ };
+}
 function loadPeerHero(peer){
  if(!peer||peer.loading||peer.root||peer.retryAt>Date.now()||
     remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB||!T3.GLTFLoader)return;
@@ -3674,15 +3706,12 @@ function loadPeerHero(peer){
      Math.hypot(peer.group.position.x-cam.position.x,peer.group.position.z-cam.position.z)>180){
    disposeRemoteHero(gltf.scene);return;
   }
-  const root=gltf.scene,box=new T3.Box3().setFromObject(root),size=new T3.Vector3();
-  box.getSize(size);
-  if(!Number.isFinite(size.y)||size.y<.01||size.y>20000){
+  const root=gltf.scene,fit=fitRemoteHero(root);
+  if(!fit){
    disposeRemoteHero(root);peer.retryAt=Date.now()+60000;return;
   }
-  const factor=Math.min(100,REMOTE_HERO_HEIGHT/size.y);
-  root.scale.setScalar(factor);root.position.y=-box.min.y*factor;
   root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false}});
-  peer.group.add(root);peer.root=root;
+  peer.group.add(fit);peer.root=fit;
   if(peer.fallback)peer.fallback.visible=false;
   remoteGLBResidents++;peer.mixer=gltf.animations?.length?new T3.AnimationMixer(root):null;
   peer.clips=gltf.animations||[];peer.action=null;peer.actionName='';
