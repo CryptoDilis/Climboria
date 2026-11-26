@@ -38,3 +38,7 @@
 5. Continue Base DEX and Swap independent release prerequisites; grant prep can proceed in parallel without false live claims.
 
 **Release status: NO_GO for mainnet CLIMB migration and native Base execution.** This record is not a deployment approval.
+
+## Owner-provided Solscan holder screen — 2026-11-26
+- Screenshot shows Holders tab, page 1 of 1, top 4 holders own 100% (1B tokens): Pump.fun (Climb) Bonding Curve, Token Owner, `6ooVBX...TuhyBd`, `34FKjA...mgxjgm` (truncated display). No amounts, percentages, complete addresses or finalized slot visible. Explorer screenshot only, not an independently verified finalized inventory or proof of beneficial ownership.
+- Exact next owner step: horizontally scroll holders table to amount/percentage and provide screenshot; identify which non-curve accounts are owner-controlled (public addresses only). Do not assume no outside holders, burn, migrate or deploy replacement yet. Existing PR #812 remains subject to CI and independent inventory verification.
