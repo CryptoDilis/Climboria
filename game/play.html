@@ -3758,6 +3758,12 @@ window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 // from the authenticated ticket's server-validated last position. This local
 // helper never grants WebSocket admission or combat/loot authority.
 window.ENDLESS_WILDS.roomResumeVerified=false;
+// Explicit JOIN WORLD uses the ordinary protected entry, never a fabricated
+// admission or automatic reset of a saved offline location.
+window.ENDLESS_WILDS.enterRoomEntry=()=>{
+ if(window.__climboriaGuestMode||P.mode!=='walk')return false;
+ return restoreExplorerPosition({x:0,z:-30,y:groundAt(0,-30)+1.75,yaw:0});
+};
 window.ENDLESS_WILDS.resumeAtRoomPosition=p=>{
  if(window.__climboriaGuestMode||!p||!['x','y','z'].every(k=>Number.isFinite(p[k]))||
    Math.abs(p.x)>10000||Math.abs(p.z)>10000||p.y< -200||p.y>2000)return false;
@@ -3927,6 +3933,6 @@ initChunks();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
 <script src="/game-save.js?v=20261119-game-resume-2"></script>
-<script src="./multiplayer/client-presence.js?v=20261126-game-hero-owner-1"></script>
+<script src="./multiplayer/client-presence.js?v=20261126-game-join-world-1"></script>
 </body>
 </html>
