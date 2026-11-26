@@ -159,3 +159,32 @@ test("single private quote reaches funded preflight without exposing raw data to
  assert.equal(providerCalls,1);assert.equal(reviewCalls,1);
  assert.deepEqual(rpcMethods,["eth_chainId","eth_blockNumber","eth_getBlockByNumber","eth_getCode"]);
 });
+
+import {observeFirmQuoteAndPool} from "../../dex/base-execution/firm-quote-pool-observation.mjs";
+test("optional public pool diagnostics use one quote and reject disagreeing block hashes before state reads",async()=>{
+ const q={...quote(),blockNumber:BigInt(blockNumber).toString()};
+ let providerCalls=0;const rpcMethods=[];
+ const options={authorized:true,poolAuthorized:true,taker,apiKey:"synthetic-secret",
+ fetchImpl:async()=>{providerCalls++;return new Response(JSON.stringify(q));},
+ rpcFetchImpl:async(url,opts)=>{
+  const req=JSON.parse(opts.body);rpcMethods.push(req.method);
+  assert.ok(!opts.body.includes(taker));assert.ok(!opts.body.includes(q.transaction.data));assert.ok(!JSON.stringify(opts.headers).includes("synthetic-secret"));
+  let result;
+  if(req.method==="eth_chainId")result="0x2105";
+  else if(req.method==="eth_getBlockByNumber"){assert.deepEqual(req.params,[blockNumber,false]);result={number:blockNumber,hash:url.includes("publicnode")?"0x"+"b".repeat(64):blockHash};}
+  else throw Error("Unexpected state query");
+  return new Response(JSON.stringify({jsonrpc:"2.0",id:req.id,result}));
+ }};
+ await assert.rejects(observeFirmQuoteAndPool({...options,poolAuthorized:false}),/authorization/);
+ assert.equal(providerCalls,0);
+ const result=await observeFirmQuoteAndPool(options);
+ assert.equal(providerCalls,1);assert.deepEqual(rpcMethods,["eth_chainId","eth_getBlockByNumber","eth_chainId","eth_getBlockByNumber"]);
+ assert.equal(result.poolObservationStatus,"rpc-verification-failed");assert.equal(result.executable,false);assert.equal(result.pool,null);
+ assert.ok(!JSON.stringify(result).includes(q.transaction.data));
+});
+test("unsupported projected quote route avoids pool RPC calls",async()=>{
+ const q={...quote([funding,fee,surplus]),blockNumber:BigInt(blockNumber).toString()};
+ let providerCalls=0,rpcCalls=0;
+ const result=await observeFirmQuoteAndPool({authorized:true,poolAuthorized:true,taker,apiKey:"synthetic-secret",fetchImpl:async()=>{providerCalls++;return new Response(JSON.stringify(q));},rpcFetchImpl:async()=>{rpcCalls++;throw Error("Unexpected RPC");}});
+ assert.equal(providerCalls,1);assert.equal(rpcCalls,0);assert.equal(result.poolObservationStatus,"unsupported-or-incomplete-route");assert.equal(result.actualQuotePoolVerified,false);
+});
