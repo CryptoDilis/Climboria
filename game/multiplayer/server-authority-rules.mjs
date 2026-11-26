@@ -65,14 +65,16 @@ export function authorizeMelee({attacker,target,nowMs,lastAttackAtMs,duelConsent
  * function does not perform a transfer or grant a reward.
  */
 export function authorizeWorldGrab({actor,drop,nowMs}={}){
- if(!identity(actor?.serverId)||!validPoint(actor.position)||typeof actor.roomId!=='string'||!actor.roomId)
+ if(!identity(actor?.serverId)||!validPoint(actor.position)||typeof actor.roomId!=='string'||!actor.roomId||
+    !finite(actor.health)||actor.health<=0)
   return {ok:false,reason:'invalid-actor'};
  if(!drop||drop.type!=='world_drop'||drop.binding!=='unbound'
-   ||drop.authoritative!==true||drop.claimed===true||drop.paid===true||drop.onChain===true
+   // Missing or nonboolean ownership/payment markers are not proof of safety.
+   ||drop.authoritative!==true||drop.claimed!==false||drop.paid!==false||drop.onChain!==false
    ||typeof drop.roomId!=='string'||drop.roomId!==actor.roomId)
   return {ok:false,reason:'object-not-grabbable'};
  if(!validPoint(drop.position)||!finite(nowMs)||nowMs<0
-   ||!finite(drop.protectedUntilMs)||nowMs<drop.protectedUntilMs)
+   ||!finite(drop.protectedUntilMs)||drop.protectedUntilMs<0||nowMs<drop.protectedUntilMs)
   return {ok:false,reason:'drop-protected-or-invalid'};
  if(planeDist(actor.position,drop.position)>ROOM_RULES.grabRangeMeters
    ||Math.abs(actor.position.y-drop.position.y)>2.3)
