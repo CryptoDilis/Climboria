@@ -51,3 +51,38 @@ test('diagnose RPC response failure without exposing provider details',async()=>
 test('diagnose RPC transport failure with fixed label',async()=>{
  await assert.rejects(estimateV3(artifact,manifest,source,payer,async()=>{throw new Error('private upstream details');}),{code:'RPC_TRANSPORT_eth_chainId'});
 });
+
+const roleAddresses=Array.from({length:7},(_,i)=>'0x'+(100000+i).toString(16).padStart(40,'0'));
+const roleConfig={founder:roleAddresses[0],distributor:roleAddresses[1],signers:roleAddresses.slice(2)};
+test('bind public roles, check all eight accounts at the same block',async()=>{
+ const m=mock(),v=await estimateV3(artifact,manifest,source,payer,m.fetchFn,roleConfig);
+ assert.equal(v.status,'PUBLIC_ROLE_ESTIMATE_ONLY_NO_DEPLOYMENT');
+ assert.deepEqual(v.publicRoles,{...roleConfig,start:'605056'});
+ assert.equal(Object.hasOwn(v,'syntheticRoles'),false);
+ const codes=m.calls.filter(x=>x.method==='eth_getCode');
+ assert.equal(codes.length,8);
+ assert.deepEqual(codes.map(x=>x.params[0]),[payer,...roleAddresses]);
+ assert.ok(codes.every(x=>x.params[1]===block.number));
+ const data=m.calls.find(x=>x.method==='eth_estimateGas').params[0].data;
+ assert.equal(data,'0x6000'+[roleAddresses[0],roleAddresses[1],'0x'+(605056).toString(16),...roleAddresses.slice(2)].map(a=>BigInt(a).toString(16).padStart(64,'0')).join(''));
+ assert.match(v.caveat,/control and independence are NOT verified/);
+});
+test('reject public role duplicates, payer collisions and synthetic addresses before RPC',async()=>{
+ const m=mock();
+ for(const config of [{...roleConfig,founder:roleConfig.distributor},{...roleConfig,founder:payer},{...roleConfig,founder:'0x'+'0'.repeat(36)+'2711'}]){
+  await assert.rejects(estimateV3(artifact,manifest,source,payer,m.fetchFn,config));
+ }
+ assert.equal(m.calls.length,0);
+});
+test('reject malformed role configuration or unexpected properties',async()=>{
+ const m=mock();
+ for(const config of [{...roleConfig,signers:[]},{...roleConfig,extra:true},{...roleConfig,founder:'invalid'}]){
+  await assert.rejects(estimateV3(artifact,manifest,source,payer,m.fetchFn,config));
+ }
+ assert.equal(m.calls.length,0);
+});
+test('reject nonempty code on a public role account before estimate',async()=>{
+ const m=mock({eth_getCode:p=>p[0]===roleAddresses[6]?'0xef0100'+'a'.repeat(40):'0x'});
+ await assert.rejects(estimateV3(artifact,manifest,source,payer,m.fetchFn,roleConfig),{code:'ROLE_CODE_NOT_EMPTY'});
+ assert.ok(!m.calls.some(x=>x.method==='eth_estimateGas'));
+});
