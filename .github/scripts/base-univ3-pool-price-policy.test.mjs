@@ -58,3 +58,37 @@ test("pool probe rejects unauthorized, wrong block and changed runtime before co
  wrong=true;await assert.rejects(observeQuoteBlockPool({authorized:true,referenceBlock:a,fetchImpl}),/block changed/);assert.deepEqual(calls,["eth_chainId","eth_getBlockByNumber"]);
  calls.length=0;wrong=false;await assert.rejects(observeQuoteBlockPool({authorized:true,referenceBlock:a,fetchImpl}),/runtime changed/);assert.deepEqual(calls,["eth_chainId","eth_getBlockByNumber","eth_getCode"]);
 });
+
+import {inspectSushiCandidatePoolPriceDirection,SUSHI_CANDIDATE_POOL} from "../../dex/base-execution/univ3-pool-price-policy.mjs";
+import {inspectSingleHopSushiV3,BASE_SUSHI_V3_FACTORY} from "../../dex/base-execution/univ3-action-policy.mjs";
+const sushiPrice=3259918696429559733537033n;
+const sushiBlock="0x3b9bee5",sushiHash="0xd6dae468d071ef8b582d18b98c9432bca4edcda06e00ff4e078a515bb1d4ec5c";
+const sushiState={chainId:8453,pool:SUSHI_CANDIDATE_POOL,factory:BASE_SUSHI_V3_FACTORY,token0,token1,fee:"500",poolRuntimeSha256:"247e5d81491db358150b965130444ab294ab0b0fd9496bc348d6442f4c0e5bab",factoryRuntimeSha256:"fa9b8c432ace122dba87eeb8e1d85f47027bde5a2be5202280ca07260f02e849",blockHash:sushiHash,blockNumber:sushiBlock,sqrtPriceX96:sushiPrice.toString(),liquidity:"4878839741817040",unlocked:true};
+function sushiFixture({zeroForOne=false,limit=zeroForOne?sushiPrice*999n/1000n:sushiPrice*1001n/1000n,fork=2,minimum=110n,patch={},policyPatch={}}={}){
+ const sell=zeroForOne?token0:token1,buy=zeroForOne?token1:token0;
+ const intent={chainId:8453,sellToken:sell,buyToken:buy,sellAmount:"100000",minimumBuyAmount:"100",taker};
+ const policy={reviewedSettler:settler,reviewedMinimumBuyAmount:"110",reviewedSqrtPriceLimitX96:limit.toString(),reviewedPoolId:500,reviewedBlockHash:sushiHash,reviewedBlockNumber:sushiBlock,reviewedMaxSpotPriceMovementBps:30,...policyPatch};
+ const action=UNIV3_ACTION_SELECTOR+[settler,1000000n,128n,minimum,64n].map(word).join("")+sell.slice(2)+fork.toString(16).padStart(2,"0")+"0001f4"+limit.toString(16).padStart(40,"0")+buy.slice(2);
+ return [intent,action,policy,{...sushiState,...patch}];
+}
+test("separate Sushi review accepts only narrow synthetic limits on the exact reviewed pool",()=>{
+ for(const zeroForOne of [false,true]){
+  const f=sushiFixture({zeroForOne});
+  const route=inspectSingleHopSushiV3(...f.slice(0,3));
+  assert.equal(route.forkId,2);assert.equal(route.factory,BASE_SUSHI_V3_FACTORY);assert.equal(route.executable,false);
+  const r=inspectSushiCandidatePoolPriceDirection(...f);
+  assert.equal(r.pool,SUSHI_CANDIDATE_POOL);assert.equal(r.zeroForOne,zeroForOne);assert.equal(r.executable,false);assert.equal(r.actualQuotePoolVerified,false);assert.equal(r.stateAuthenticated,false);
+  assert.throws(()=>inspectCandidatePoolPriceDirection(...f),/Unreviewed route/);
+ }
+ for(const fork of [0,1,3,255])assert.throws(()=>inspectSushiCandidatePoolPriceDirection(...sushiFixture({fork})),/Unreviewed route/);
+});
+test("actual quote #28 parameter shape rejected: zero action minimum and extreme price limit independently",()=>{
+ const limit=1461446703485210103287273052203988822378723970341n;
+ assert.throws(()=>inspectSushiCandidatePoolPriceDirection(...sushiFixture({limit,minimum:0n})),/Unreviewed swap envelope/);
+ assert.throws(()=>inspectSushiCandidatePoolPriceDirection(...sushiFixture({limit})),/Price limit exceeds independent spot movement bound/);
+});
+test("Sushi review rejects wrong block, wrong pool hashes and inactive state",()=>{
+ for(const patch of [{pool:CANDIDATE_POOL},{factory:BASE_UNIV3_FACTORY},{poolRuntimeSha256:state.poolRuntimeSha256},{factoryRuntimeSha256:state.factoryRuntimeSha256},{blockHash},{blockNumber},{liquidity:"0"},{unlocked:false},{fee:"3000"}])assert.throws(()=>inspectSushiCandidatePoolPriceDirection(...sushiFixture({patch})));
+ for(const limit of [sushiPrice,sushiPrice-1n,sushiPrice*11n/10n])assert.throws(()=>inspectSushiCandidatePoolPriceDirection(...sushiFixture({limit})));
+ assert.throws(()=>inspectSushiCandidatePoolPriceDirection(...sushiFixture({policyPatch:{reviewedMaxSpotPriceMovementBps:1001}})));
+});

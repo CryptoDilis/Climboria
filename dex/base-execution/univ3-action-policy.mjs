@@ -5,6 +5,7 @@ import {normalizeExecutionIntent} from "./intent-policy.mjs";
 export const UNIV3_ACTION_SELECTOR="0x8d68a156";
 export const BASE_UNIV3_FACTORY="0x33128a8fc17869897dce68ed026d694621f6fdfd";
 export const BASE_UNIV3_INIT_HASH="0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54";
+export const BASE_SUSHI_V3_FACTORY="0xc35dadb65012ec5796536bd9864ed8773abc74c4";
 const MAX_UINT256=(1n<<256n)-1n;
 const MIN_SQRT_RATIO=4295128739n,MAX_SQRT_RATIO=1461446703485210103287273052203988822378723970342n;
 function address(v){
@@ -12,7 +13,7 @@ function address(v){
  return v.toLowerCase();
 }
 function raw(v){if(typeof v!=="string"||!/^(0|[1-9][0-9]{0,77})$/.test(v)||BigInt(v)>MAX_UINT256)throw Error("Invalid reviewed raw amount");return BigInt(v);}
-export function inspectSingleHopUniswapV3(input,action,policy={}){
+function inspectSingleHopV3(input,action,policy,expectedFork,factory){
  const intent=normalizeExecutionIntent(input);
  const recipient=address(policy.reviewedSettler),reviewedFloor=raw(policy.reviewedMinimumBuyAmount),reviewedLimit=raw(policy.reviewedSqrtPriceLimitX96);
  if(reviewedFloor<BigInt(intent.minimumBuyAmount)||!Number.isInteger(policy.reviewedPoolId)||policy.reviewedPoolId<=0||policy.reviewedPoolId>=1000000||reviewedLimit<=MIN_SQRT_RATIO||reviewedLimit>=MAX_SQRT_RATIO)throw Error("Independent path policy required");
@@ -22,6 +23,14 @@ export function inspectSingleHopUniswapV3(input,action,policy={}){
  const path=hex.slice(5*64);
  if(path.length!==128)throw Error("Noncanonical single-hop path");
  const sellToken=address("0x"+path.slice(0,40)),forkId=parseInt(path.slice(40,42),16),poolId=parseInt(path.slice(42,48),16),sqrtPriceLimitX96=BigInt("0x"+path.slice(48,88)),buyToken=address("0x"+path.slice(88,128));
- if(sellToken!==intent.sellToken||buyToken!==intent.buyToken||forkId!==0||poolId!==policy.reviewedPoolId||sqrtPriceLimitX96!==reviewedLimit)throw Error("Unreviewed route, fork, pool ID or price limit");
- return Object.freeze({action:"UNISWAPV3",recipient,sellToken,buyToken,forkId,poolId,sqrtPriceLimitX96:sqrtPriceLimitX96.toString(),minimumBuyAmount:uint(3).toString(),factory:BASE_UNIV3_FACTORY,initHash:BASE_UNIV3_INIT_HASH,requiresIndependentPoolAndSimulationEvidence:true,observationOnly:true,executable:false});
+ if(sellToken!==intent.sellToken||buyToken!==intent.buyToken||forkId!==expectedFork||poolId!==policy.reviewedPoolId||sqrtPriceLimitX96!==reviewedLimit)throw Error("Unreviewed route, fork, pool ID or price limit");
+ return Object.freeze({action:"UNISWAPV3",recipient,sellToken,buyToken,forkId,poolId,sqrtPriceLimitX96:sqrtPriceLimitX96.toString(),minimumBuyAmount:uint(3).toString(),factory,initHash:BASE_UNIV3_INIT_HASH,requiresIndependentPoolAndSimulationEvidence:true,observationOnly:true,executable:false});
+}
+
+// Existing callers remain restricted to fork 0. Sushi review is a separate offline entry point.
+export function inspectSingleHopUniswapV3(input,action,policy={}){
+ return inspectSingleHopV3(input,action,policy,0,BASE_UNIV3_FACTORY);
+}
+export function inspectSingleHopSushiV3(input,action,policy={}){
+ return inspectSingleHopV3(input,action,policy,2,BASE_SUSHI_V3_FACTORY);
 }
