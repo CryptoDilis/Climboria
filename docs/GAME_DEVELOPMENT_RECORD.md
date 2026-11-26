@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## MOBILE WORLD CHAT HUD REFINEMENT — 2026-11-26 PHT
+
+- #809 merged `283cef84c06bb1ba571351a2690a16cd36736123`, exact head `785675a299e421284e56b1661542affd363f1b19`, all five CI SUCCESS (Runtime 45755879643, Gateway 45755879656, Readiness 45755879671 job 139694252407, Validate 45755879614, Gameplay 45755879582). Public release `20261126-game-join-world-1` exact parity verified at 04:32:49 UTC; 21/21 readiness tests. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7182938650).
+- Owner desktop screenshot shows ONLINE: 2 and visible remote hero near Sanctuary; actual one-viewpoint admission/rendering evidence. Android image may be prior photo, fresh Android acceptance not established. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7184552436).
+- Owner requested improved mobile World Chat. Compact landscape-only device-scoped HUD below vitals, small hide/show control with aria-expanded, bounded scrollable transcript and empty state, three-column composer, larger mobile input font, no empty notice space. Preserves visible-by-default behavior, message drafts on collapse, server echo/identity/nearby rules and desktop styles. Bumped presence version to `20261126-game-mobile-chat-1`; two regression tests added. CI and physical Android visual confirmation pending.
+- **EXACT NEXT:** verify CI, merge, verify public parity, get fresh landscape Android chat screenshot and bidirectional delivery. Then inspect reproducible remote nameplate/grounding issue separately. Game only.
+
+---
+
 ## ANDROID ROOM JOIN RECOVERY MERGED; PUBLIC RELEASE RETEST — 2026-11-26 PHT
 
 - #807 MERGED `486af7979f20a4090629a1bd60b4fb0ccace43c1`, exact head `234f54502105d9aacbf46af2c1ed94a01e2cbaa0`. All eight workflows SUCCESS: Authority 45754020076, Gateway 45754020243 (job 139688270673: 263/263 + 61/61, all three join recovery tests), Runtime 45754020063, Validate 45754020077, Browser 45754020168, Heroes 45754020051, Chests 45754020105, Gameplay 45754020073. [Tracking issue](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7182666909). Main push readiness is not visible through PR-filtered connector; publication of `20261126-game-join-world-1` remains unverified at review.
