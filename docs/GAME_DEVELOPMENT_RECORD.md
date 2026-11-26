@@ -1,5 +1,15 @@
 # Climboria Game Development Record
 
+## COMBAT AND LOOT SECURITY MERGED; ATOMIC SYNTHETIC LOOT RECONCILED — 2026-11-26 PHT
+
+- #835 public version 20261126-game-movement-1 verified by readiness 45830792251 job 139946705793, all five main-push checks passed. Owner physical movement retest pending; no measured improvement claimed. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7193659527).
+- #837 merged b853bda9c36174eda8e6a722dfe02ed38f876867, 4/4 green; #839 merged 50c1a90e27fbf2f8b7e9a6d63057067cc9744364, 5/5 green on fc82337b028c694aa96ebb475aed616f9859c42b. Exact private HTTPS guard and local workerd/SQLite verified; no cloud combat deployment. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7194073697).
+- #843 merged 8a5c5ee064c3d7d7288be3d12372615635692094, exact head 6921c14f23972a017e962f87af3c07a7447aeae6, 5/5 SUCCESS Gateway 45833142911, Authority 45833142833, Validate 45833142773, Gameplay 45833142778, Runtime 45833142824. Loot eligibility requires explicit safe metadata and living actor. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7194372926).
+- #844 prior head 2eef7e477a4dae8bd620847853a208a62851b1e5 passed Gateway 45834091509, Authority 45834091214, Runtime 45834091500, Validate 45834091211, Gameplay 45834091497. Reconcile with #843 changed imported policy and latest main; require new exact-head CI. One fixed synthetic drop, atomic receipt and inventory slot, concurrent claim rejection, rollback and inconsistent state checks. No production inventory or public loot grant.
+- EXACT NEXT: verify reconciled #844 CI and merge only green. Then private Access-protected combat staging (scoped operator credentials, separate disposable namespace, edge rate and cost limits, disabled-only deployment, approved test window). Review authoritative room movement and bounded loot operation integration before any actual player inventory grant. Public PvP and loot remain disabled. Game only.
+
+---
+
 ## PRIVATE COMBAT RECIPROCAL ATTACK AND RETIRED SESSION ACCEPTANCE — 2026-11-26 PHT (PROPOSED)
 
 - #835 lag pilot merged `35c0552ea59f98d8010ba24c3c6cfe85039cb582`, exact head `44adae88c49c91546aafecdf445d2c8fedd08bad` all eight PR checks passed; Gateway 45829898224 job 139943617838 275/275 + 64/64. Public readiness 45830792251 pending at review; actual latency improvement unmeasured. [Merge evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7193589826).

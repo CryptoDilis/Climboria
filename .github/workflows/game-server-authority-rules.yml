@@ -6,6 +6,8 @@ on:
     paths:
       - "game/multiplayer/server-authority-rules.mjs"
       - "game/multiplayer/server-authority-rules.test.mjs"
+      - "game/multiplayer/world-drop-claim-preview.mjs"
+      - "game/multiplayer/world-drop-claim-preview.test.mjs"
       - "game/multiplayer/server-combat-state.mjs"
       - "game/multiplayer/server-combat-state.test.mjs"
       - "game/multiplayer/presence-room.mjs"
