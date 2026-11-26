@@ -1,10 +1,33 @@
 # Climboria Game Development Record
 
+## REMOTE HERO FIT MERGED; VISIBILITY QA RECONCILIATION — 2026-11-26 PHT
+
+- #817 MERGED `145b6ca7df147c25cbe51ae80c7bd1a17eb31f93`, exact head `4584c6dafde62c309c4c4bbcb3e0526951d48e0c`, all six workflows SUCCESS: Validate 45808258106, Authority 45808257927, Browser 45808258062, Heroes 45808257992, Chests 45808257998, Gameplay 45808258002. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190674129). Public parity still pending.
+- #819 previous exact head `f521453147af46e70f7d405e84598cab90e2c2a6` all four SUCCESS: Validate 45808659655, Gateway 45808659626, Runtime 45808659707, Gameplay 45808659702. Gateway job 139870453701: 270/270 + 63/63, zero failures. Reconciled onto main `2d35a66a9cd8a0c2d81a12d40bca55ba71ffaf46` preserving both Game records and unrelated work. Fresh combined CI required. #822 remains stacked and requires later reconciliation.
+- **EXACT NEXT:** verify fresh #819 CI, merge only green; reconcile #822 onto resulting main, retain both changes to play/smoke and all records, retarget and verify fresh checks/public parity; run protected actual two-account and physical acceptance. Game only.
+
+---
+
 ## REAL REMOTE HERO VISIBILITY ACCEPTANCE — 2026-11-26 PHT (PROPOSED)
 
 - #813 merged `f2dcc44eb9fe1e97b9500aa9d62785821742a615`, public version `20261126-game-mobile-chat-2` verified, owner UI confirmation recorded in issue #657. #817 remote import transform fit remains separate; its exact reconciled head `4584c6dafde62c309c4c4bbcb3e0526951d48e0c` had Validate, Authority and Browser success with Gameplay, Heroes and Chests still running at review.
 - Real registered QA previously accepted a resident counter alone. Now both browsers must observe exactly one real remote GLB resident within budget, one attached scene-visible resident, and zero visible fallbacks. Uses existing read-only audit; no production changes or fake peers. Added offline contract regression. Code commits `96ac7d95a34ac65b714c59fa618dbd3ad4de1e55` and `29d7a5a17b555ccf0b48e342883133fc99aa864a`. CI pending; actual physical geometry and chat/reconnect acceptance remain unverified.
 - **EXACT NEXT:** verify #817 all checks then merge if green; reconcile this QA branch with the merged record preserving both entries, verify fresh CI and published parity, run protected two-account QA and physical device checks. Game only; no Worker deployment or combat/loot activation.
+
+---
+
+
+## #813 MERGED; REMOTE HERO FIT BRANCH RECONCILED — 2026-11-26 PHT
+
+- #813 merged `f2dcc44eb9fe1e97b9500aa9d62785821742a615`, exact tested head `8829a91a6771b02c55e17c98fdc82f82eb93f982`, all five CI SUCCESS: Readiness 45806439616, Gateway 45806439593, Runtime 45806439532, Validate 45806439592, Gameplay 45806439568. [Final evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190375247). Owner confirmed UI fixes okay. #817 reconciles main record without removing prior history or altering Base changes. Exact next: fresh CI on reconciled #817, merge if green, verify public parity and real model alignment; actual two-account movement/chat/reconnect pending.
+
+---
+
+## REMOTE HERO IMPORT TRANSFORM FIT — 2026-11-26 PHT
+
+- Owner reported PC context menu and mobile chat placement okay after published #810. [Owner confirmation](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7190277547). #813 public readiness 45806439616 job 139862865281 verified exact published version `20261126-game-mobile-chat-2`; 22/22 tests, approved room and Nearby readiness. #813 final gameplay still pending when this independent task started. Do not reopen resolved UI requests.
+- Earlier desktop image suggested possible remote model alignment issue. Source review confirms old remote loader measured authored world bounds then overwrote root scale and Y position; a non-identity imported root transform makes that math incorrect. Changed fit to a separate normalization parent preserving imported transform and animation mixer target, centering horizontal bounds and grounding feet at model-local zero. Existing server positions, terrain rules, nameplates, model budget and disposal policy unchanged. Regression uses local synthetic geometry with non-identity scale/position/rotation and exact 1.9m fitted height; not a simulated network acceptance. Physical screenshot-specific cause not yet proven.
+- **EXACT NEXT:** complete #813 CI/merge, reconcile any concurrent record changes without overwriting them; verify this PR CI, merge and public parity; actual registered movement/chat/reconnect and remote Jarrell/Lheiz visual alignment remain to test. Game only.
 
 ---
 

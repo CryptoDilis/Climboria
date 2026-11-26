@@ -1,0 +1,22 @@
+name: Base DEX Historical Sushi V3 Quote Block Evidence
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/scripts/base-sushi-quote-block-observation.mjs'
+      - '.github/workflows/base-sushi-quote-block-observation.yml'
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fixed public historical pool observation (no quote or wallet)
+        run: |
+          node --check .github/scripts/base-sushi-quote-block-observation.mjs
+          node .github/scripts/base-sushi-quote-block-observation.mjs
