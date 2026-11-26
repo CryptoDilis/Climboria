@@ -7,7 +7,7 @@ import {TextEncoder} from 'node:util';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,configFailures=0,configGate=null,configBadSchema=false,refreshMode=null,guest=false,heroOwner=null}={}){
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,configFailures=0,configGate=null,configBadSchema=false,refreshMode=null,guest=false,heroOwner=null,mobile=false}={}){
  const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses],ticketPayloads:[...ticketPayloads],configFailures,configCalls:0};
  const authListeners=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],speeches=[],calls=[],timers=[],created=[];
@@ -35,6 +35,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
    for(const fn of documentListeners.get(event.type)||[])fn(event);
    return true;
   }};
+ document.body.classList={contains:name=>mobile&&name==='mobile-device'};
  const window={__climboriaGameReady:true,__climboriaCreatedHero:{name:'Explorer A',model:'Jarrell',...(heroOwner===null?{}:{ownerId:heroOwner})},__climboriaGuestMode:guest,
   __climboriaJarrellsPeak:{
    player:{x:0,y:9.55,z:-30,mode:'walk'},
@@ -281,7 +282,7 @@ test('live Game refuses the retired forced-Sanctuary mobile prompt',()=>{
  assert.doesNotMatch(game,/climboria:room-return-to-sanctuary/);
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261126-game-join-world-1/,
+ assert.match(game,/client-presence\.js\?v=20261126-game-mobile-chat-2/,
   'production Game must load fresh Nearby Chat and remote size renderer');
 });
 
@@ -1288,4 +1289,37 @@ test('explicit JOIN WORLD cannot move or admit a logged-out player',async()=>{
  assert.equal(h.window.__climboriaJarrellsPeak.player.x,70);
  assert.equal(h.clients.length,0);
  assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'login-required');
+});
+
+test('mobile chat starts visible, uses compact labels and keeps draft while collapsed',async()=>{
+ const h=harness(true,{mobile:true});await flush();
+ const ws=h.clients[0];ws.onopen();
+ const id='s_'+'c'.repeat(32);
+ ws.onmessage({data:JSON.stringify({type:'welcome',selfId:id,peers:[peer]})});
+ ws.onmessage({data:JSON.stringify({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[peer]})});
+ const panel=h.created.find(n=>n.id==='climboria-world-chat-panel');
+ const toggle=h.created.find(n=>n.id==='climboria-world-chat-toggle');
+ const input=panel.children[2].children[0];
+ assert.equal(panel.style.display,'block');
+ assert.equal(toggle.textContent,'HIDE');assert.equal(toggle['aria-expanded'],'true');
+ assert.equal(input.placeholder,'Message…');assert.equal(input.enterkeyhint,'send');
+ assert.equal(panel.children[0].id,'climboria-world-chat-title');
+ input.value='draft on Android';toggle.click();
+ assert.equal(panel.style.display,'none');assert.equal(toggle.textContent,'CHAT');
+ assert.equal(toggle['aria-expanded'],'false');
+ toggle.click();assert.equal(panel.style.display,'block');assert.equal(input.value,'draft on Android');
+ h.authChange(null);await flush();
+ assert.equal(panel.style.display,'none');assert.equal(toggle['aria-expanded'],'false');assert.equal(input.value,'');
+});
+test('mobile World Chat CSS is device scoped, bounded and keeps compose controls separate',()=>{
+ const game=readFileSync('game/play.html','utf8');
+ assert.match(game,/body\.mobile-device #climboria-world-chat-panel\{/);
+ assert.match(game,/--mobile-chat-bottom:max\(8px,env\(safe-area-inset-bottom\)\)/);
+ assert.match(game,/bottom:calc\(var\(--mobile-chat-bottom\) \+ 35px\)!important/);
+ assert.doesNotMatch(game,/--mobile-chat-top/);
+ assert.match(game,/--mobile-chat-width:min\(252px,43vw\)/);
+ assert.match(game,/grid-template-columns:minmax\(0,1fr\) auto auto/);
+ assert.match(game,/body\.mobile-device #climboria-world-chat-notice:empty\{display:none\}/);
+ assert.match(game,/body\.mobile-device #climboria-world-chat-toggle\[aria-expanded="true"\]/);
+ assert.match(game,/body\.mobile-device #climboria-world-chat-controls input\{[\s\S]*?font-size:16px/);
 });

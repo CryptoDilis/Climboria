@@ -1,5 +1,22 @@
 # Climboria Game Development Record
 
+## OWNER FOLLOW-UP: PC CONTEXT MENU AND BOTTOM-LEFT MOBILE CHAT — 2026-11-26 PHT
+
+- Owner screenshot shows Chrome native image context menu on right-click in 3D world. Added canvas-scoped contextmenu preventDefault only; existing mouse orbit, click movement, zoom and native text editing unchanged. Added browser gameplay regression for world menu suppression and normal input menu, alongside existing orbit test.
+- Owner reports mobile chat still at top. #810 was not yet merged/published at report; revised the pending PR instead of falsely attributing live behavior to that change. Explicitly positioned mobile chat bottom-left above small bottom toggle, safe-area-aware, bounded scroll, away from upper HUD and right-side actions. Kept visible-by-default behavior and desktop layout. Updated cache version to `20261126-game-mobile-chat-2` and source regression.
+- Supersedes earlier below-vitals top-offset layout. Prior #810 head `1c43ce658a0548c2a12a4e3b5074bd1c164e3b35` had 7/8 workflows green, Gateway job 139737688872 267/267 + 63/63; gameplay still running before follow-up. New head must pass fresh CI. **EXACT NEXT:** merge only exact green head, verify public parity, physically test Android bottom-left layout and PC right-click camera behavior; retain real chat delivery acceptance as pending. Game only.
+
+---
+
+## MOBILE WORLD CHAT HUD REFINEMENT — 2026-11-26 PHT
+
+- #809 merged `283cef84c06bb1ba571351a2690a16cd36736123`, exact head `785675a299e421284e56b1661542affd363f1b19`, all five CI SUCCESS (Runtime 45755879643, Gateway 45755879656, Readiness 45755879671 job 139694252407, Validate 45755879614, Gameplay 45755879582). Public release `20261126-game-join-world-1` exact parity verified at 04:32:49 UTC; 21/21 readiness tests. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7182938650).
+- Owner desktop screenshot shows ONLINE: 2 and visible remote hero near Sanctuary; actual one-viewpoint admission/rendering evidence. Android image may be prior photo, fresh Android acceptance not established. [Evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7184552436).
+- Owner requested improved mobile World Chat. Compact landscape-only device-scoped HUD below vitals, small hide/show control with aria-expanded, bounded scrollable transcript and empty state, three-column composer, larger mobile input font, no empty notice space. Preserves visible-by-default behavior, message drafts on collapse, server echo/identity/nearby rules and desktop styles. Bumped presence version to `20261126-game-mobile-chat-1`; two regression tests added. CI and physical Android visual confirmation pending.
+- **EXACT NEXT:** verify CI, merge, verify public parity, get fresh landscape Android chat screenshot and bidirectional delivery. Then inspect reproducible remote nameplate/grounding issue separately. Game only.
+
+---
+
 ## ANDROID ROOM JOIN RECOVERY MERGED; PUBLIC RELEASE RETEST — 2026-11-26 PHT
 
 - #807 MERGED `486af7979f20a4090629a1bd60b4fb0ccace43c1`, exact head `234f54502105d9aacbf46af2c1ed94a01e2cbaa0`. All eight workflows SUCCESS: Authority 45754020076, Gateway 45754020243 (job 139688270673: 263/263 + 61/61, all three join recovery tests), Runtime 45754020063, Validate 45754020077, Browser 45754020168, Heroes 45754020051, Chests 45754020105, Gameplay 45754020073. [Tracking issue](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7182666909). Main push readiness is not visible through PR-filtered connector; publication of `20261126-game-join-world-1` remains unverified at review.

@@ -52,6 +52,58 @@ body.mobile-device.climboria-portrait #climboria-punch-button{display:none!impor
 #expedition-settings-panel button{display:block;width:100%;padding:10px;margin:8px 0;border:1px solid #9b7b4c;background:#18232c;color:#f4ecd8;border-radius:7px;font-weight:800;cursor:pointer}
 #expedition-settings-panel label{display:flex;justify-content:space-between;gap:8px;margin-top:14px;color:#ffe3a3;font-weight:700}
 #climboria-music-volume,#climboria-effects-volume{width:100%;accent-color:#d8b46b;margin:10px 0}
+
+/* Mobile-only World Chat: bottom-left, away from vitals and right-side
+   combat controls. Keep the compact transcript visible by default. */
+@media (orientation:landscape){
+ body.mobile-device{
+  --mobile-chat-left:max(8px,env(safe-area-inset-left));
+  --mobile-chat-width:min(252px,43vw);
+  --mobile-chat-bottom:max(8px,env(safe-area-inset-bottom));
+ }
+ body.mobile-device #climboria-world-chat-panel{
+  top:auto!important;left:var(--mobile-chat-left)!important;bottom:calc(var(--mobile-chat-bottom) + 35px)!important;
+  width:var(--mobile-chat-width)!important;min-width:0!important;box-sizing:border-box;
+  max-height:max(96px,calc(100dvh - var(--mobile-chat-bottom) - 150px))!important;
+  padding:7px!important;border-radius:10px!important;overflow-y:auto;overscroll-behavior:contain;
+  background:linear-gradient(155deg,#14202bf2,#070c14e8)!important;
+  border-color:#d8b46b66!important;box-shadow:0 4px 14px #0007!important;
+ }
+ body.mobile-device #climboria-world-chat-toggle{
+  top:auto!important;left:var(--mobile-chat-left)!important;bottom:var(--mobile-chat-bottom)!important;
+  z-index:1301!important;box-sizing:border-box;min-height:30px;padding:5px 9px!important;
+  font-size:10px!important;border-radius:7px!important;letter-spacing:.06em;
+ }
+ body.mobile-device #climboria-world-chat-toggle[aria-expanded="true"]{
+  min-width:60px;
+  background:#253448!important;border-color:#d8b46b77!important;
+ }
+ body.mobile-device #climboria-world-chat-title{
+  min-height:16px;margin:0 0 3px 0!important;display:flex;align-items:center;font-size:10px;
+ }
+ body.mobile-device #climboria-world-chat-log{
+  height:clamp(27px,11dvh,58px)!important;max-height:none!important;
+  padding:0 3px;font-size:11px!important;color:#f4ecd8;
+ }
+ body.mobile-device #climboria-world-chat-log:empty::before{
+  content:'No messages yet';color:#a7b3bc;font-size:10px;font-weight:400;
+ }
+ body.mobile-device #climboria-world-chat-controls{
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto auto;gap:4px!important;margin-top:5px!important;
+ }
+ body.mobile-device #climboria-world-chat-controls input{
+  box-sizing:border-box;width:100%;height:36px;padding:5px 6px!important;font-size:16px!important;
+ }
+ body.mobile-device #climboria-world-chat-controls button{
+  min-height:36px;padding:5px 7px!important;font-size:10px!important;border-radius:7px!important;
+ }
+ body.mobile-device #climboria-world-chat-notice{min-height:0!important;margin-top:4px!important;overflow-wrap:anywhere}
+ body.mobile-device #climboria-world-chat-notice:empty{display:none}
+}
+@media (orientation:landscape) and (max-height:340px){
+ body.mobile-device #climboria-world-chat-log{height:27px!important}
+}
+
 /* Game-only compact multiplayer HUD: real server count, never an invented number. */
 #climboria-room-status[data-state="connected"]{
  color:#e4fbe9!important;border-color:#297c55!important;
@@ -1919,6 +1971,9 @@ addEventListener('keydown',e=>{
 addEventListener('keyup',e=>keys[e.code]=false);
 // Input lifecycle cleanup is registered with the touch controls below.
 const cv=renderer.domElement;
+// Preserve native menus in chat, forms and browser UI; only the 3D world
+// canvas consumes right-click for camera orbit.
+cv.addEventListener('contextmenu',e=>e.preventDefault());
 // Mouse-wheel camera zoom is deliberately limited to gameplay so the cinematic intro stays composed.
 cv.addEventListener('wheel',e=>{if(P.mode!=='walk')return;e.preventDefault();targetCameraDistance=Math.max(3.4,Math.min(14,targetCameraDistance+Math.sign(e.deltaY)*.9));},{passive:false});
 function requestLandscapeMode(){
@@ -3933,6 +3988,6 @@ initChunks();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
 <script src="/game-save.js?v=20261119-game-resume-2"></script>
-<script src="./multiplayer/client-presence.js?v=20261126-game-join-world-1"></script>
+<script src="./multiplayer/client-presence.js?v=20261126-game-mobile-chat-2"></script>
 </body>
 </html>
