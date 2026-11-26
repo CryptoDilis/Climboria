@@ -42,3 +42,18 @@ jobs:
           for t in testFixedInitialSupply testRejectMainnet testTransferNoTax testHolderBurnAndEvent testRejectBurnBeyondOwnBalance testNoMintOrForcedBurnSelector testAllowanceTransferNoTaxAndNoImplicitBurn testRepeatedAndFullBurnNoReissue; do
             grep -Fq "[PASS] ${t}()" "$RUNNER_TEMP/climb-burn-tests.log"
           done
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test strict build manifest validator
+        run: node --test build-manifest.test.mjs
+      - name: Fingerprint actual compiled test prototype
+        run: |
+          set -euo pipefail
+          node build-manifest.mjs out/ClimbBurnPrototype.sol/ClimbBurnPrototype.json src/ClimbBurnPrototype.sol "$GITHUB_SHA" "$RUNNER_TEMP/climb-burn-build-manifest.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-burn-build-manifest-${{ github.sha }}
+          path: ${{ runner.temp }}/climb-burn-build-manifest.json
+          retention-days: 7
+          if-no-files-found: error
