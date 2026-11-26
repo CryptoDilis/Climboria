@@ -15,6 +15,12 @@ Owner requested moving official CLIMB and future onchain game economy to Base, u
 - **Exact next task:** finish website PR validation and verify live Pages only after merge; inventory current finalized Solana holders and pool/curve/treasury balances read-only, using independently verified sources and canonical mint. Compare migration architecture before committing to production deployment. Existing test-only signing handoff may be used for relevant testnet work only after reviewing applicability to the chosen migration; do not deploy a production replacement from the Sepolia-only scaffold. If the owner already signed a test transaction, obtain its public hash and verify finalized receipt, chain, bytecode and initial state. Never request private keys.
 - Public communication: announce preparation only; no official Base CA or migration open, no token transfers requested. Ordinary gameplay stays off-chain, Base onchain actions are planned; gas sponsorship not guaranteed. Base grant eligibility still unverified.
 
+## Base-first migration inventory checkpoint — 2026-11-26 UTC
+
+- Website PR #811 merged `0be449f16b4cde12573d40a9dbc87113a5d80141`; [Validate #45797850143](https://github.com/CryptoDilis/Climboria/actions/runs/45797850143) and [Browser Smoke #45797850125](https://github.com/CryptoDilis/Climboria/actions/runs/45797850125) passed. Production Pages verification pending.
+- Offline inventory reconciliation and synthetic tests prepared on `feat/climb-migration-inventory-reconciliation`, source commit `37ff197f9af0ddc29bc646a60f40af6ed67ba263`, test commit `f9ebf20c5e42510e4b3eec93add6da9f5c1377a2`; see [inventory checkpoint](CLIMB_BASE_MIGRATION_INVENTORY.md). CI pending. No actual snapshot, eligibility or balance claims.
+- Exact next: verify CI, then obtain two independent complete same-finalized-slot account inventories and mint supply with provenance; classify curve/pool and treasury balances before selecting a supply-conserving mechanism. No signing or funds; mainnet NO_GO.
+
 ## Current checkpoint — 2026-11-25 UTC
 
 **Release: NO_GO; test assets and managers not deployed.** Local lock/unlock and mint/burn passed with simulated attestations; no real cross-chain transfer proven. All recent preparation work merged and source records updated.
