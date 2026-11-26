@@ -85,6 +85,8 @@ jobs:
         run: node --test unsigned-review.test.mjs
       - name: Test finalized V3 creation verifier
         run: node --test verify-creation.test.mjs
+      - name: Test historical pre-start verifier
+        run: node --test check-prestart.test.mjs
       - name: Estimate V3 creation (read-only, never deploy)
         if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
         env:
@@ -127,5 +129,18 @@ jobs:
         with:
           name: climb-v3-finalized-creation
           path: ${{ runner.temp }}/v3-finalized-creation.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Observe historical pre-start restrictions (read-only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          node check-prestart.mjs "$RUNNER_TEMP/v3-finalized-creation.json" > "$RUNNER_TEMP/v3-prestart.json"
+          cat "$RUNNER_TEMP/v3-prestart.json"
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          name: climb-v3-historical-prestart
+          path: ${{ runner.temp }}/v3-prestart.json
           if-no-files-found: error
           retention-days: 14
