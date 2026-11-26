@@ -15,3 +15,15 @@ The new migration-inventory.mjs accepts two normalized snapshots with fields min
 4. Compare permanent one-way migration vs backed representation. Establish proof of extinguished or locked original units before issuing corresponding Base units, with replay protection and supply invariant. Review exact contracts and complete testnet acceptance; no production activation yet.
 
 No live RPC access or complete holder inventory was available in this work cycle. Do not publish a holder count, exchange ratio or new Base CA before evidence and review.
+
+## Live candidate evidence — 2026-11-26 13:30 UTC
+[Manual run #45829747550](https://github.com/CryptoDilis/Climboria/actions/runs/45829747550) succeeded on `bc6a00fa06f66fed0d1e0d1fd63dffff87046de8`. Both RPC parsed observations are identical at finalized reported slot 474165548, 12 sampled accounts, four positive balances totaling 1,000,000,000 CLIMB (six decimals), zero unmatched raw units. Candidate digest `564b771d53c5f4dcc1657a68a43164d13ba9ab550dff8379d63e706dfb82b897`; artifact 15122855162, logs and listing inspected, ZIP not independently inspected. This supersedes the earlier statement of no live candidate data, but does not establish complete historical inventory, raw layout, canonical blockhash, independent infrastructure or beneficial custody.
+
+| Candidate classification (unverified) | CLIMB |
+| --- | ---: |
+| Bonding-curve reserve candidate | 995,283,518.333260 |
+| Owner-reported balance | 3,656,142.893717 |
+| Two external candidate balances combined | 1,060,338.773023 |
+| Total outside curve candidate | 4,716,481.666740 |
+
+The largest token account is `FZZbYE8uchTGd3Q6kXvWNmK4Qdq9t5eyghvhHoEk6oMd`; reported token authority `EZfyVaAzfDcFuDCEv1T7SzQ8Ly7waJJfXfeaxmT8GR23`; initialized, no reported delegate or close authority. This is not proof of a Pump.fun PDA or authority to retire reserve. Next verify raw token-account/mint bytes and finalized canonical block evidence; check authority account owner, program derivation and official protocol constraints. A program-controlled reserve cannot be assumed withdrawable or burnable. No actual holder retirement, entitlement, production supply or claim approved. Testnet burn proof is separate: [run #45826121263 attempt 3](https://github.com/CryptoDilis/Climboria/actions/runs/45826121263/attempts/3) demonstrated 1,000 to 990 test units. Mainnet NO_GO.
