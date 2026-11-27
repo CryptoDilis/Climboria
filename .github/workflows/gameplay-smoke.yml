@@ -12,6 +12,8 @@ on:
       - ".github/scripts/game-authored-browser-runtime-smoke.mjs"
       - ".github/scripts/game-authored-browser-native-glb-worker.mjs"
       - ".github/scripts/game-authored-browser-native-glb-smoke.mjs"
+      - ".github/scripts/game-authored-pilot-browser-worker.mjs"
+      - ".github/scripts/game-authored-pilot-browser-smoke.mjs"
       - ".github/workflows/gameplay-smoke.yml"
   pull_request:
     branches: [main]
@@ -24,6 +26,8 @@ on:
       - ".github/scripts/game-authored-browser-runtime-smoke.mjs"
       - ".github/scripts/game-authored-browser-native-glb-worker.mjs"
       - ".github/scripts/game-authored-browser-native-glb-smoke.mjs"
+      - ".github/scripts/game-authored-pilot-browser-worker.mjs"
+      - ".github/scripts/game-authored-pilot-browser-smoke.mjs"
       - ".github/workflows/gameplay-smoke.yml"
   workflow_dispatch:
 
@@ -37,7 +41,7 @@ concurrency:
 jobs:
   gameplay-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     steps:
       - name: Check out game
         uses: actions/checkout@v4
@@ -97,6 +101,9 @@ jobs:
       - name: Verify native browser GLB combat projection
         timeout-minutes: 5
         run: node .github/scripts/game-authored-browser-native-glb-smoke.mjs
+      - name: Verify actual private pilot browser GLB session
+        timeout-minutes: 4
+        run: node .github/scripts/game-authored-pilot-browser-smoke.mjs
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
         run: |
