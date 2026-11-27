@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A CONTEXTUAL NPC DIALOGUE FOUNDATION — 2026-11-27
+
+- #990 foundation 46011575420 and mobile visual profile passed; desktop pending. #991 foundation 46012752331 passed; browser 46012752264 pending. Separate child branch preserves both active runs.
+- Add isolated trusted-scheduler dialogue engine: exact registry identities, nearby NPCs within 12m, actual stationary activity context, authored safe lines and personality replies, 4s reply delay, 12s conversation gap, 30s per-speaker cooldown, bounded state, duplicate/spoof rejection and cancellation on separation/expiry. Stable session-scoped message IDs with reply linkage and explicit NPC sender. No transport or public world chat publication; trusted server integration required, never accept client-submitted NPC snapshots. Unit tests pending.
+- NEXT: verify current candidates, merge consolidated game changes when green, integrate engine with actual autonomous actors and authoritative room scheduler, verify same world-chat events on two clients with mute/moderation, reconnect/dedupe and abuse checks. No public activation or human ONLINE count inflation. Physical mobile performance still pending.
+
+---
+
 ## R5A NPC PERSONALITY UTILITY CANDIDATE — 2026-11-27
 
 - #990 consolidated head 1a42ae23ebd3133b70e62bd56e81bd578ea9fb4d: foundation 46011575420 passed; mobile job 140548139495 passed same-actor GLB projection and sampled swim/fish/gather/transit draws (4 mesh, 4 nameplate), 477.786m, 2441 steps, stable identity, cleanup, unchanged player/inventory/peers. Desktop job 140548139793 pending at inspection. No physical device or real-time full-route performance evidence. Preserve active parent CI.
