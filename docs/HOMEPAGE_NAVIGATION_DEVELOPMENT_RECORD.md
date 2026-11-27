@@ -24,3 +24,8 @@ Next: verify actual main-branch CI and live homepage on desktop and mobile. Conf
 
 - `3c02b2f2ef9684116c40b43a4d530232a6e6d18d`: replaced desktop/mobile notification shield crest with recognizable gold bell SVG. Preserved X brand-shaped SVG path; matched desktop icon dimensions at 22px and existing card dimensions at 42px, with consistent navy background, gold border, hover/focus finish and no inner decorative frames. Mobile X mark styling matched without changing its container dimensions.
 - Seven source readback checks passed: two bell marks, no notification crest, retained X path, matched icon sizes, compact grid, prior readability and panel behavior code. Browser and deployment not verified. Next: visual desktop/mobile check of icon legibility, spacing and prior notification interactions; no new layers or unrelated scope changes.
+
+## 2026-11-27 UTC — cinematic gold navigation finish
+
+- `27b3b83966c567ddfdc6402670f5dd869d916a60`: CSS-only forged-gold border highlights, deep midnight-blue gradient, brighter warm-gold labels/icons and restrained gold hover/focus glow across homepage desktop navigation cards and mobile notification/X controls. Removed decorative inner frames on text cards; preserved layout, dimensions, typography, notification behavior, and existing hero. No new elements, overlays or z-index changes.
+- Seven static source checks passed on exact commit readback. Actual rendering, CI and deployment remain unverified. Next: inspect desktop and mobile visual contrast, text fit and notification behavior in browser; avoid scope expansion.
