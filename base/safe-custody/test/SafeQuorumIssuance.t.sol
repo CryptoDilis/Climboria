@@ -153,8 +153,8 @@ contract SafeQuorumIssuanceTest {
     function testExpiredIssuanceCannotExecute() public {
         bytes memory data=_data();bytes memory sigs=_sign(data,3);
         vm.warp(block.timestamp+1 hours);
-        vm.expectRevert(SafeQuorumReserveGuardFixture.InvalidIssuanceDeadline.selector);
-        _exec(data,sigs);_empty();
+        // Safe wraps target execution failure as GS013 (zero safeTxGas/gasPrice).
+        vm.expectRevert();_exec(data,sigs);_empty();
         _issue();require(guard.bound());
     }
     function testQuorumCanInvalidateSignedIssuanceWithoutMinting() public {
@@ -166,7 +166,8 @@ contract SafeQuorumIssuanceTest {
         vm.expectRevert();_exec(data,sigs);
         require(wallet.nonce()==1&&!successor.used()&&!guard.bound());
         _issue();require(wallet.nonce()==2&&guard.bound());
-        vm.expectRevert();_exec(invalidation,_sign(invalidation,3));
+        bytes memory postBindSigs=_sign(invalidation,3);
+        vm.expectRevert();_exec(invalidation,postBindSigs);
         require(wallet.nonce()==2);
     }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
