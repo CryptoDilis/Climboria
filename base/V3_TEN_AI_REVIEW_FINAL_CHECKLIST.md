@@ -1,0 +1,45 @@
+# CLIMB Base V3 — Ten-AI review final consolidation
+Date: 2026-11-27 UTC
+Status: REVIEW_COLLECTION_COMPLETE / REMEDIATION_PENDING / TESTNET_NO_GO / MAINNET_NO_GO
+Scope: Base token workstream only.
+
+## Review baseline and evidence
+All ten reports supplied by the project owner concern the original frozen test-only commit cb1d7c05a439009893ac2e0cf0d80868555d3d14. They do not review the subsequent #885 code. Collection is complete, not remediation or release approval. No reviewer demonstrated a newly executed full build/test suite or public successor deployment. Microsoft Copilot supplied a brief summary rather than detailed reproducible evidence. Model diversity is not proof of independent professional assurance. Owner chose multi-AI review instead of commissioning a paid audit; independent professional audit remains not performed. Do not describe contracts as professionally audited.
+| Reviewer | Controlled Sepolia verdict | Mainnet |
+|---|---|---|
+| Claude | Conditional GO | NO-GO |
+| Gemini | GO for controlled fixture | NO-GO |
+| DeepSeek | Conditional GO | NO-GO |
+| Grok | NO-GO | NO-GO |
+| Microsoft Copilot | Conditional GO | NO-GO |
+| Meta AI | Conditional GO | NO-GO |
+| GitHub Copilot | Conditional GO | NO-GO |
+| Mistral | Conditional GO | NO-GO |
+| Qwen | Conditional GO | NO-GO |
+| Kimi | Conditional GO | NO-GO |
+
+## Kimi intake and source triage
+15 reported findings: 2 critical (CLB001–002), 7 high (003–009), 5 medium (010–014), 1 low (015). Static source reading; no tests, compilation, blockchain reads or complete dependency graph. 001 older non-quorum issuance identity, 002 absent cross-chain conservation, 003 build evidence, 004 signer independence/delegation, 005 below-quorum recovery, 006 immutable game authority, 007 older fixed reserve signer sets, 008 synthetic liquidity economics, 009 missed bounded-legacy activation, 010 founder recovery, 011 LP role separation, 012 duplicate expense evidence in integrated fixture, 013 accidental/expired/donated asset lockups, 014 test coverage, 015 persistent Safe approved hashes.
+CLB011: source confirms plain SafeReserveGuardFixture._bind lacks explicit LP role checks, quorum bindBeforeIssuance checks LP conflicts at binding, and rotation policy explicitly excludes founder and distributor but not LP custody or all vaults. However V3DeferredLiquidityFixture requires LP destination code at construction and _eligibleReplacement requires codeless incoming owner at schedule and execution. Ordinary code-bearing LP custody cannot become an owner under existing code. A change to code can also break pinned liquidity/locker custody codehash. Treat as defense-in-depth and role-policy/liveness gap, not demonstrated direct rotation bypass; check constructor and existing role exclusions before new tests. Do not use a generic owner blacklist that bricks the valid quorum. CLB012 confirms Mistral's older fixture duplicate-evidence issue across independent reserves; intended successor uses shared registry, no demonstrated successor double-pay. CLB001 and 007 apply to older/sibling paths, not a demonstrated unauthorized mint or fixed signer bug in authenticated quorum successor. CLB009 pertains to bounded legacy fixture, not the deferred successor's activation schedule; deferred legacy still has inactivity/closure liveness concerns. CLB004 contract owners with code already rejected at initial setup; later delegation remains distinct. Source assertions about LP share reconciliation do not prove economic backing. CLB015 nonce consumption prevents replay after successful execution; unexecuted approvals can persist.
+
+## Deduplicated remediation checklist
+Items are pending unless stated; P0 is release-critical work, not a severity rating or a claim of an exploitable defect. Preserve supply cap, seven allocations, intentional 30-day months, no-rollover policy unless explicitly revised, exact quorum restrictions and fail-closed behavior. Do not blindly implement proposed recovery, pause, veto, signer or sweep privileges.
+| ID | Work package | Scope / acceptance evidence |
+|---|---|---|
+| T01 | Signature-mode policy | Reconcile #885; actual signer restrictions, EIP-1271/7702 adversarial tests, assess permanent v1 approvals including delegation then code clearing; healthy quorum must be able to replace a non-signing delegated owner. |
+| T02 | Authorization expiry and cancellation | Reconcile #885 issuance deadline and nonce invalidation; distinguish remaining validity from signature age; review post-bind policy payload deadlines, nonce consumption, rotation reschedule and execution/cancellation ordering. |
+| T03 | Authentic factory and dependency identity | Verify actual reviewed factory, singleton/bootstrap, guard and immutable-specific runtime provenance; canonical Safe vs custom compile; never treat caller-selected codehash as independent authentication. Verify creation and runtime size limits. |
+| T04 | Correct issuance and permanent role separation | One designated quorum path in release manifest; reject sibling direct issuers, enforce explicit LP/vault/successor exclusions at binding/rotation as applicable; test healthy rotations and all role constraints; keep old fixtures isolated. |
+| T05 | Safe governance and custody | Document test keys and actual production independent custody, no shared seed, key backups, succession, related-party disclosure, 3+ owner loss, no minority veto; separately threat-model any recovery, veto or pause. No unilateral module/escape hatch. |
+| T06 | Gaming authority | Production governed rotatable reward signer, revocation and incident response, on-chain caps and authentic game event ledger; preserve monthly/aggregate/per-wallet limits and event replay protection. |
+| T07 | Legacy eligibility and scalability | Authenticate source eligibility, independently validate manifest and appeals, address 32-entry cap, duplicate identity, closure and nonactivation policy; maintain total cap and replay protection. |
+| T08 | Expense accounting | Preserve global evidence uniqueness in successor, test duplicate proposal race and authentic invoice commitments; isolate older integrated paths or repair if retained; enforce recipient policy with authentic adapter. |
+| T09 | Liquidity and LP economic safety | Test-only dependencies authenticated for rehearsal; no real funding of synthetic pools. Production separately reviewed adapter/pool/quote/locker, price and slippage bounds, exact conservation, malicious pool and dilution regressions, post-unlock custody. |
+| T10 | Recovery and economic policy | Decide founder beneficiary loss, expired allocations, accidental funds, legacy closure and liveness; no automatic changes to vesting, reserve or no-rollover economics; narrowly scoped recovery only after independent threat modeling. |
+| T11 | Cross-chain production supply | Explicitly decide canonical bridge versus replacement/migration; authenticated source backing/burn or lock proof, replay protections, total supply reconciliation and monitoring before Solana/Base representation. |
+| T12 | Reproducible artifacts and adversarial verification | Full exact dependency graph, compiler and EVM settings, independent clean build and artifact hashes, actual unit/fuzz/invariant/regression tests, real delegation tests where possible, fork/integration tests for production, deployment manifest and verified publication. |
+| T13 | Re-review and release authorization | Return exact corrected source and reproducible evidence to reviewers; no unresolved applicable critical/high findings; retain residual risk and disagreements. Repin only exact reviewed test candidate, explicit test-only roles/fees and per-stage authorization; publish finalized public successor receipts and post-state. Mainnet separate reviewed production build and decision. |
+
+## Existing work and next action
+PR #885 already merged (253f3f29a4d0f609847caeb40de87088158140e6). Signature mode restrictions and issuance expiry/nonce invalidation partially address T01/T02. Main merge CI Safe 45927190427, Validate 45927190379 and read-only acceptance 45927190331 passed, Pages 45927190689 cancelled. No new tests run for this intake. The old candidate remains retired; do not repin or deploy before applicable fixes and evidence. No extra code countermeasure in this documentation cycle.
+Proposed implementation order: T01/T02 exact current-state review and focused regressions, T03/T04 authenticated fixture and role constraints, T05–T10 design and applicable test fixture hardening, T11 production supply model, T12/T13 verification and release gates. Production workstreams do not get falsely marked complete from synthetic tests. No signing, real value, mainnet deployment, migration, burn, or liquidity approval follows from completion of report collection. The next implementation cycle begins from this checklist and records exact PR, SHA, test results, residual blockers and next action.
