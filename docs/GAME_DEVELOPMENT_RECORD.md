@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A TERRACE CROP LIFECYCLE REGRESSION — 2026-11-27 UTC
+
+- #1002 exact head a4c5600afbcd579402bde37934241d5c516c9eac: foundation 46021239324 and NPC chat 46021239312 passed; focused browser 46021239419 pending at inspection. #1000 still 9/11 green, remaining gameplay/focused browser running. Separate branch preserves both CI runs.
+- Existing terrace route, crop plot, activity visual and browser smoke already present; do not duplicate. Fix closed NPC wrapper still advancing its synthetic crop clock, add regression that closes during growing state and verifies unchanged actor/crop snapshots after 100 ticks. Fresh CI required. No public spawning, map changes or real resources.
+- NEXT: verify focused browser evidence for actual terrace and connected map, then integrate tested candidate and #1003 private host after exact-head CI. Actual vertical wall climbing, simultaneous visible NPCs and physical-device performance remain distinct acceptance gates.
+
+---
+
 ## R5A ACTIVITY VALIDITY AND CLIMB/FARM FIXTURES — 2026-11-27 UTC
 
 - Parent #1000 exact head 4f33795c680347bb3fcca2d2b6b6488d0164cdbc: 9/11 CI passed, focused browser 46020396061 and full gameplay 46020395784 running at inspection; general browser 46020395877 and native chat acceptance 46020395893 green. Preserve parent CI.
