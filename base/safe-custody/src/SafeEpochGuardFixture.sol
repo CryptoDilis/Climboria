@@ -14,6 +14,8 @@ contract SafeEpochGuardFixture is BaseGuard {
     error Unauthorized();
     error Forbidden();
     error NotReady();
+    error UnsupportedSignatureMode();
+    error TransactionInProgress();
     uint256 public constant DELAY=2 days;
     uint256 public constant WINDOW=7 days;
     uint256 private constant GUARD_SLOT=0x4a204f620c8c5ccdca3fd54d003badd85ba500436a431f0cbda4f558c93c34c8;
@@ -75,11 +77,32 @@ contract SafeEpochGuardFixture is BaseGuard {
     }
     function checkTransaction(address to,uint256 value,bytes memory data,Enum.Operation operation,
         uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address payable refundReceiver,
-        bytes memory,address) external override onlyWallet {
-        if(transactionActive||value!=0||operation!=Enum.Operation.Call||safeTxGas!=0||baseGas!=0||gasPrice!=0||
+        bytes memory signatures,address) external override onlyWallet {
+        if(transactionActive)revert TransactionInProgress();
+        if(value!=0||operation!=Enum.Operation.Call||safeTxGas!=0||baseGas!=0||gasPrice!=0||
            gasToken!=address(0)||refundReceiver!=address(0))revert Forbidden();
+        _checkSignerModes(signatures);
         transactionActive=true;
         _checkCall(to,data);
+    }
+    // Safe has already validated three sorted owners. Restrict their signature modes,
+    // not the entire owner set: a non-signing delegated owner must remain replaceable.
+    // ECDSA proves possession of the signing key even when its address has code.
+    // Approved-hash/sender mode is retained only for code-less owners.
+    function _checkSignerModes(bytes memory signatures) private view {
+        if(signatures.length!=195)revert UnsupportedSignatureMode();
+        for(uint256 i=0;i<3;i++){
+            bytes32 r;
+            uint8 v;
+            assembly {
+                let p := add(add(signatures,32),mul(i,65))
+                r := mload(p)
+                v := byte(0,mload(add(p,64)))
+            }
+            if(v==1){
+                if(uint256(r)>type(uint160).max||address(uint160(uint256(r))).code.length!=0)revert UnsupportedSignatureMode();
+            }else if(v!=27&&v!=28&&v!=31&&v!=32)revert UnsupportedSignatureMode();
+        }
     }
     function _rotationOwnerAllowed(address) internal view virtual returns(bool){return true;}
     function _policyCallAllowed(bytes4,uint256) internal view virtual returns(bool){return false;}
