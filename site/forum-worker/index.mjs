@@ -1,4 +1,4 @@
-import { verifyMessage } from 'ethers';
+import { verifyMessage, getAddress } from 'ethers';
 
 const CHAIN=8453, CHALLENGE_MS=5*60_000, SESSION_MS=60*60_000;
 const CATEGORIES=new Set(['general','governance','launchpad','game','treasury','feedback']);
@@ -23,7 +23,7 @@ async function body(req){
  if(!v||typeof v!=='object'||Array.isArray(v))reject(400,'invalid_json');return v;
 }
 function challengeMessage(origin,address,nonce,now){
- const u=new URL(origin);
+ const u=new URL(origin);address=getAddress(address);
  return u.host+' wants you to sign in with your Ethereum account:\n'+address+'\n\nSign in to Climboria Governance Forum. No transaction or token approval.\n\nURI: '+origin+'/governance/\nVersion: 1\nChain ID: '+CHAIN+'\nNonce: '+nonce+'\nIssued At: '+new Date(now).toISOString()+'\nExpiration Time: '+new Date(now+CHALLENGE_MS).toISOString();
 }
 async function rate(db,bucket,now,cap,ms=60_000){
@@ -54,7 +54,7 @@ export default {
     return new Response(null,{status:204,headers:{'access-control-allow-origin':cors,'access-control-allow-methods':'GET, POST, OPTIONS','access-control-allow-headers':'Authorization, Content-Type','access-control-max-age':'600','vary':'Origin','cache-control':'no-store'}});
    }
    const u=new URL(req.url),p=u.pathname;
-   if(req.method==='GET'&&p==='/v1/health')return send({enabled:env.FORUM_ENABLED==='true',chainId:CHAIN,governanceVoting:false});
+   if(req.method==='GET'&&p==='/v1/health')return send({enabled:env.FORUM_ENABLED==='true'&&!!env.DB,chainId:CHAIN,governanceVoting:false});
    if(env.FORUM_ENABLED!=='true'||!env.DB)reject(503,'forum_unavailable');
    const db=env.DB,now=Date.now();
    if(req.method==='POST'&&!cors)reject(403,'origin_required');
@@ -90,7 +90,7 @@ export default {
     const before=u.searchParams.has('before')?id(u.searchParams.get('before')):Number.MAX_SAFE_INTEGER;
     const category=u.searchParams.get('category');
     if(category!==null&&!CATEGORIES.has(category))reject(400,'invalid_category');
-    const result=await db.prepare('SELECT id,wallet,category,title,body,created_at FROM topics WHERE hidden=0 AND id<? AND (? IS NULL OR category=?) ORDER BY id DESC LIMIT 21').bind(before,category,category).all();
+    const result=await db.prepare('SELECT id,wallet,category,title,body,created_at,(SELECT COUNT(*) FROM reactions WHERE topic_id=topics.id) AS likes FROM topics WHERE hidden=0 AND id<? AND (? IS NULL OR category=?) ORDER BY id DESC LIMIT 21').bind(before,category,category).all();
     const rows=result.results;return send({topics:rows.slice(0,20),nextBefore:rows.length>20?String(rows[19].id):null});
    }
    if(req.method==='POST'&&p==='/v1/topics'){
@@ -121,7 +121,37 @@ export default {
      if(!row)reject(409,'write_not_available');return send({id:row.id},201);
     }
    }
-   // Proposals, votes, reactions, edits and moderation remain unavailable. A
+   if(req.method==='POST'&&p==='/v1/reactions'){
+    const s=await session(req,db,now),v=await body(req),topic=id(String(v.topicId));
+    if(v.action!=='like'&&v.action!=='unlike')reject(400,'invalid_action');
+    await rate(db,'reaction:'+s.wallet,now,20);
+    const at=Date.now();
+    const row=v.action==='like'
+     ?await db.prepare('INSERT INTO reactions(topic_id,wallet,created_at) SELECT ?,?,? WHERE EXISTS(SELECT 1 FROM topics WHERE id=? AND hidden=0) AND '+sessionCheck+' ON CONFLICT(topic_id,wallet) DO UPDATE SET created_at=reactions.created_at RETURNING topic_id').bind(topic,s.wallet,at,topic,s.digest,s.wallet,at).first()
+     :await db.prepare('DELETE FROM reactions WHERE topic_id=? AND wallet=? AND EXISTS(SELECT 1 FROM topics WHERE id=? AND hidden=0) AND '+sessionCheck+' RETURNING topic_id').bind(topic,s.wallet,topic,s.digest,s.wallet,at).first();
+    if(!row)reject(409,'write_not_available');return send({liked:v.action==='like'});
+   }
+   if(req.method==='GET'&&p==='/v1/moderation/reports'){
+    if(!cors)reject(403,'origin_required');
+    const s=await session(req,db,now);
+    const before=u.searchParams.has('before')?id(u.searchParams.get('before')):Number.MAX_SAFE_INTEGER;
+    const actor=await db.prepare('SELECT wallet FROM moderators WHERE wallet=? AND active=1 AND '+sessionCheck).bind(s.wallet,s.digest,s.wallet,Date.now()).first();
+    if(!actor)reject(403,'moderator_required');
+    const result=await db.prepare('SELECT id,topic_id,wallet,reason,created_at FROM reports WHERE id<? AND EXISTS(SELECT 1 FROM moderators WHERE wallet=? AND active=1) AND '+sessionCheck+' ORDER BY id DESC LIMIT 51').bind(before,s.wallet,s.digest,s.wallet,Date.now()).all();
+    return send({reports:result.results.slice(0,50),nextBefore:result.results.length>50?String(result.results[49].id):null});
+   }
+   if(req.method==='POST'&&p==='/v1/moderation/actions'){
+    const s=await session(req,db,now),v=await body(req);
+    if((v.targetType!=='topic'&&v.targetType!=='reply')||(v.action!=='hide'&&v.action!=='restore'))reject(400,'invalid_action');
+    const target=id(String(v.targetId)),hidden=v.action==='hide'?1:0,reason=textField(v.reason,500);
+    const actor=await db.prepare('SELECT wallet FROM moderators WHERE wallet=? AND active=1').bind(s.wallet).first();
+    if(!actor)reject(403,'moderator_required');
+    await rate(db,'moderation:'+s.wallet,now,20);
+    const at=Date.now(),table=v.targetType==='topic'?'topics':'replies';
+    const row=await db.prepare('INSERT INTO moderation_actions(actor,target_type,target_id,hidden,reason,created_at) SELECT ?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM '+table+' WHERE id=? AND hidden<>?) AND EXISTS(SELECT 1 FROM moderators WHERE wallet=? AND active=1) AND '+sessionCheck+' RETURNING id').bind(s.wallet,v.targetType,target,hidden,reason,at,target,hidden,s.wallet,s.digest,s.wallet,at).first();
+    if(!row)reject(409,'write_not_available');return send({id:row.id},201);
+   }
+   // Formal proposals, votes and author edits remain unavailable. A
    // normal discussion topic is never a formal proposal or treasury command.
    if(req.method==='POST'&&/^\/v1\/(proposals|votes|reactions|moderation)(\/|$)/.test(p)){
     await session(req,db,now);reject(503,'feature_not_enabled');
