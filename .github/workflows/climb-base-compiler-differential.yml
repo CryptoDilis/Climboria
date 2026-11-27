@@ -1,0 +1,105 @@
+name: CLIMB Base Compiler Differential
+on:
+  pull_request:
+    paths:
+      - 'base/safe-custody/**'
+      - 'base/v3-testnet/**'
+      - '.github/workflows/climb-base-compiler-differential.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    name: ${{ matrix.project }} / solc ${{ matrix.compiler }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [safe-custody, v3-testnet]
+        compiler: ['0.8.19', '0.8.39']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Fetch exact dependencies
+        working-directory: base/${{ matrix.project }}
+        run: |
+          set -euo pipefail
+          mkdir -p lib/openzeppelin-contracts
+          git -C lib/openzeppelin-contracts init
+          git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          if [ "${{ matrix.project }}" = safe-custody ]; then
+            mkdir -p lib/safe-contracts
+            git -C lib/safe-contracts init
+            git -C lib/safe-contracts fetch --depth=1 https://github.com/safe-fndn/safe-smart-account.git bf943f80fec5ac647159d26161446ac5d716a294
+            git -C lib/safe-contracts checkout --detach FETCH_HEAD
+            test "$(git -C lib/safe-contracts rev-parse HEAD)" = bf943f80fec5ac647159d26161446ac5d716a294
+          fi
+      - name: Prepare isolated compiler experiment
+        env:
+          COMPILER: ${{ matrix.compiler }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/climb-differential"
+          git rev-parse HEAD > "$RUNNER_TEMP/climb-differential/source.txt"
+          forge --version > "$RUNNER_TEMP/climb-differential/foundry.txt"
+          if [ "$COMPILER" = 0.8.39 ]; then
+            curl --fail --show-error --silent --location --retry 2 https://github.com/argotorg/solidity/releases/download/v0.8.39/solc-static-linux -o "$RUNNER_TEMP/solc-candidate"
+            echo "b8b0642d46838575d3177628b685564b52f51f2aee546cb4dce781951d23c666  $RUNNER_TEMP/solc-candidate" | sha256sum -c -
+            chmod 700 "$RUNNER_TEMP/solc-candidate"
+            "$RUNNER_TEMP/solc-candidate" --version | tee "$RUNNER_TEMP/climb-differential/solc.txt"
+            python - <<'PY'
+          from pathlib import Path
+          count = 0
+          for project in ("safe-custody", "v3-testnet"):
+              for folder in ("src", "test"):
+                  for p in Path("base", project, folder).rglob("*.sol"):
+                      original = p.read_bytes()
+                      changed = original.replace(b"pragma solidity 0.8.19;", b"pragma solidity 0.8.39;")
+                      if changed != original:
+                          assert changed.replace(b"pragma solidity 0.8.39;", b"pragma solidity 0.8.19;") == original
+                          p.write_bytes(changed)
+                          count += 1
+          assert count >= 17, count
+          print("Temporary pragma-only files:", count)
+          PY
+          fi
+          git diff -- base/safe-custody/src base/safe-custody/test base/v3-testnet/src base/v3-testnet/test > "$RUNNER_TEMP/climb-differential/pragma-only.patch"
+          git diff --exit-code -- base/safe-custody/foundry.toml base/v3-testnet/foundry.toml
+      - name: Run identical seeded offline properties
+        working-directory: base/${{ matrix.project }}
+        env:
+          COMPILER: ${{ matrix.compiler }}
+          FOUNDRY_FUZZ_SEED: '0x000000000000000000000000000000000000000000000000000000000000c11b'
+          FOUNDRY_FUZZ_RUNS: '256'
+          FOUNDRY_INVARIANT_RUNS: '32'
+          FOUNDRY_INVARIANT_DEPTH: '24'
+          FOUNDRY_INVARIANT_FAIL_ON_REVERT: 'true'
+        run: |
+          set -euo pipefail
+          target=london
+          if [ "${{ matrix.project }}" = safe-custody ]; then target=paris; fi
+          compiler="$COMPILER"
+          if [ "$COMPILER" = 0.8.39 ]; then compiler="$RUNNER_TEMP/solc-candidate"; fi
+          forge clean
+          forge config --json --use "$compiler" --evm-version "$target" > "$RUNNER_TEMP/climb-differential/config.json"
+          forge test --use "$compiler" --evm-version "$target" -vv | tee "$RUNNER_TEMP/climb-differential/tests.log"
+          grep -Eq '[1-9][0-9]* tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-differential/tests.log"
+          forge build --use "$compiler" --evm-version "$target" --build-info --force 2>&1 | tee "$RUNNER_TEMP/climb-differential/build.log"
+          if [ "${{ matrix.project }}" = safe-custody ]; then
+            node size-manifest.mjs "$RUNNER_TEMP/climb-differential/size.json" | tee "$RUNNER_TEMP/climb-differential/size.log"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compiler-differential-${{ matrix.project }}-${{ matrix.compiler }}
+          path: ${{ runner.temp }}/climb-differential/
+          if-no-files-found: error
+          retention-days: 14
