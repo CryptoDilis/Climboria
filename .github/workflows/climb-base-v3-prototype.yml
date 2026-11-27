@@ -100,6 +100,16 @@ jobs:
       - name: Verify original deployed creation template remains unchanged
         run: |
           node --input-type=module -e 'import {readFileSync} from "node:fs"; import assert from "node:assert/strict"; const m=JSON.parse(readFileSync(process.env.RUNNER_TEMP+"/v3-build-manifest.json","utf8")); const t=m.contracts.find(x=>x.name==="ClimbV3IntegratedTestToken"); assert.equal(t.creationSha256,"75a53139963cbbf3b62e8769f22064f3a7c4056d1b772be7f64ac15c8aa383cd"); assert.equal(t.runtimeTemplateSha256,"10908e061fc8bb75381a1c17bf221657a3ee802145237472b8df63b173511c30");'
+      - name: Verify successor contract size limits
+        env:
+          V3_SOURCE_SHA: ${{ github.sha }}
+        run: node successor-size-manifest.mjs "$RUNNER_TEMP/v3-successor-size.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-v3-successor-size
+          path: ${{ runner.temp }}/v3-successor-size.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Archive test-only build evidence
         uses: actions/upload-artifact@v4
         with:
