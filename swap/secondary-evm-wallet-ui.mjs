@@ -27,6 +27,10 @@ export function initSecondaryEvmWalletUi({doc=globalThis.document,scope=globalTh
  }});
  disconnect.addEventListener("click",reset);
  chain.addEventListener("change",reset);
+ // Clear immediately on a user-initiated close, before the browser's
+ // asynchronous/coalesced toggle event. A quick reopen must not retain a session.
+ const summary=panel.querySelector("summary");
+ summary?.addEventListener("click",()=>{if(panel.open)reset();});
  panel.addEventListener("toggle",sync);
  get("mobileWorkspaceTabs")?.addEventListener("click",sync);
  mobile?.addEventListener?.("change",sync);
