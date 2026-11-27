@@ -26,7 +26,7 @@ function uint(value,max){
 }
 function evm(value){requireCondition(typeof value==='string'&&/^0x[0-9a-f]{40}$/.test(value)&&!/^0x0+$/.test(value),'invalid canonical destination');return value;}
 const U64=(1n<<64n)-1n;
-export function buildLegacyEvidence(input){
+export function normalizeLegacyEvidence(input){
  fields(input,['mode','sourceGenesis','sourceMint','snapshotSlot','snapshotHash','policyHash','targetChainId','targetToken','targetVault','campaign','cap','entries']);
  requireCondition(input.mode==='SYNTHETIC_ONLY'&&input.targetChainId===84532,'test-only chain and mode required');
  const sourceGenesis=pubkey(input.sourceGenesis),sourceMint=pubkey(input.sourceMint);
@@ -46,6 +46,10 @@ export function buildLegacyEvidence(input){
   return [sourceAccount,sourceOwner,recipient,row.sourceAmount,row.award,row.evidenceHash];
  }).sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
  const context=[DOMAIN,sourceGenesis,sourceMint,input.snapshotSlot,input.snapshotHash,input.policyHash,84532,targetToken,targetVault,input.campaign,input.cap];
+ return {context,entries,total,cap};
+}
+export function buildLegacyEvidence(input){
+ const {context,entries,total,cap}=normalizeLegacyEvidence(input);
  const digest=sha([context,entries]);
  return {status:'SYNTHETIC_COMMITMENT_ONLY',digest,entryCount:entries.length,allocated:total.toString(),cap:input.cap,unallocated:(cap-total).toString(),sourceAuthenticated:false,authorization:false};
 }
