@@ -59,6 +59,11 @@ jobs:
           set -euo pipefail
           forge test --match-contract SafeReserveGuardTest -vv | tee "$RUNNER_TEMP/safe-reserve-guard.log"
           grep -Eq '6 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-reserve-guard.log"
+      - name: Exercise atomic quorum issuance and binding
+        run: |
+          set -euo pipefail
+          forge test --match-contract SafeQuorumIssuanceTest -vv | tee "$RUNNER_TEMP/safe-quorum-issuance.log"
+          grep -Eq '7 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-quorum-issuance.log"
       - name: Verify Safe custody bytecode size limits
         run: |
           set -euo pipefail
