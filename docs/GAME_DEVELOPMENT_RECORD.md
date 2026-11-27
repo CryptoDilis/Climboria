@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## PRIVATE PILOT BROWSER GREEN STEP; REAL SERVER EXPIRY REGRESSION — 2026-11-27 PHT
+
+- #940 prior exact head 26026e764234321f0b9dd1b2b74d6a465b5f334f Authority 45953476648, Gateway 45953476682, Runtime 45953476476, Validate 45953476755 SUCCESS; Gameplay 45953476634 job 140354546400 explicitly reports actual private pilot browser GLB session step SUCCESS, full gameplay pending at check. Local desktop/touch Chromium only, no visual/physical device or real-account/Access proof.
+- Server expiry smoke 7d205429a6bc3277c4715a8080ddd58b644712ef and workflow 34a8f8d669c1bce4f524933527295c200871a760 test real unmodified 60-second server lifetime with no client messages/timeout or mocked clock, expected close code/reason, then fresh admission. Source unexecuted; no change to server policy. Fresh CI required.
+- EXACT NEXT: #938 refreshed full Gameplay 45953113010 then verified merge; reconcile #940 records/README/backlog with latest main and fresh exact-head CI including server expiry. External authorized edge and real-account acceptance still unverified; keep public PvP and cloud disabled. Owner-directed R5A next after current task verified, no NPC implementation yet.
+
+---
+
 ## ACTUAL PRIVATE PILOT GLB ACCEPTANCE AND R5A PRIORITY — 2026-11-27 PHT
 
 - Owner explicitly orders current private combat task completed/verified first, then immediately prioritize R5A.1–R5A.9 within Game. Reviewed current README, detailed backlog and development record; updated backlog 25c71ba3e9cb6e7641329771b40acd31cd6a62e9 and README e049a9da9e61c4a31071cc19b64d34a5f94451c8. Preserve all existing game/release/security gates and other workstreams. R5A not implemented yet.
