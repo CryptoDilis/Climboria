@@ -1,5 +1,15 @@
 # Climboria Game Development Record
 
+## COMBAT: LETHAL HIT / DOWNED REJOIN / RESPAWN ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
+
+- Parent #901 MERGED at 5ba6fba900449c34a2e77364a8e8a79c5a4064f7, exact head c23401fb76c6b1320950204414d30cb45f0f5396; all five CI SUCCESS: Validate 45938075227, Runtime 45938075126, Gateway 45938075127, Authority 45938075200, Gameplay 45938075149.
+- Test commits b4c95718dfe3fd69a7f8d14db77e8b4ce231467c and 9dc1261b7061e88ad9e8eb4768e302d0d5bd343f exercise real preview runtime through mocked WebSockets/storage/clock: 100 legal 5 HP hits, both clients rejoin midway to honor 60-second expiry, lethal push, movement/attack denial, fresh target session retains death timer, no early respawn, exact five-second respawn notification once, 500 HP and stamina restoration, fresh runtime recovery. No production or budget changes. Not yet executed/verified on exact head.
+- Added durable respawn rollback regression efcf5730dbfe8884efdf385e40d3b58feb15e82c: 100 legal hits, failed second-account checkpoint write at exact respawn deadline, quarantined reads/attacks, fresh runtime restores 0 HP and original deadline, successful recovery tick respawns once and subsequent restart retains 500 HP. Source test added; execution pending.
+- Private browser QA update 69f6318a05eeb97f49faf09f4932df5af23e5b29: require target-only preview-hit payload and independent snapshot after initial hit and reciprocal attack after rejoin. The script now requires a reviewed disabled preview deployment containing #894 before any approved cloud test; earlier disabled upload cannot establish this. Actual cloud test not run; Access/cost/allowlist/rollback gates unchanged.
+- EXACT NEXT: verify reconciled #903 fresh exact-head CI, fix failures before merge. Then review private preview-client respawn and snapshot reconciliation; keep cloud disabled. Private cloud remains disabled; no public combat, loot/inventory or other workstreams changed.
+
+---
+
 ## COMBAT: COMMITTED RESPAWN NOTIFICATION — 2026-11-27 PHT (PROPOSED)
 
 - Prior damage push #894 merged at 7b59a82b82efdf37e2499b1599b611efc0d200db. This follow-up sends preview-respawn to the exact active session after successful durable runtime tick; duplicate IDs deduplicated, retired/expired sessions ignored, failed tick quarantines without notification. Event is advisory; snapshot remains authoritative. No additional storage write or public enablement.

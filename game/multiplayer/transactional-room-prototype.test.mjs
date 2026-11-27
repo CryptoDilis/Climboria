@@ -104,3 +104,33 @@ test('queued movement intent uses copied primitives and ignores unknown session'
  const snapshot=(await room.readSnapshot(B)).snapshot;
  assert.ok(snapshot.position.x>200);assert.equal(snapshot.stamina,200);
 });
+
+test('failed respawn commit quarantines reads and restart recovers the last durable downed state',async()=>{
+ const {create,storage,at}=fixture(),room=create();await joinTwo(room);
+ for(let i=0;i<100;i++){
+  at(40000+i*950);assert.ok((await room.tick()).ok);
+  const hit=await room.attack(A,B);assert.equal(hit.health,500-5*(i+1));
+ }
+ const death=40000+99*950,deadline=death+5000;
+ const down=(await room.readSnapshot(B)).snapshot;
+ assert.equal(down.health,0);assert.equal(down.downed,true);
+ assert.equal(down.respawnAtMs,deadline);
+ at(deadline-1);assert.deepEqual((await room.tick()).respawned,[]);
+ storage.failWrites(true);at(deadline);
+ const failed=await room.tick();
+ assert.deepEqual(failed,{ok:false,reason:'room-quarantined'});
+ assert.deepEqual(await room.readSnapshot(B),failed);
+ assert.deepEqual(await room.attack(A,B),failed);
+ storage.failWrites(false);
+ const fresh=create();await joinTwo(fresh);
+ const restored=(await fresh.readSnapshot(B)).snapshot;
+ assert.equal(restored.health,0);assert.equal(restored.downed,true);
+ assert.equal(restored.respawnAtMs,deadline);
+ assert.deepEqual((await fresh.tick()).respawned,[B]);
+ assert.deepEqual((await fresh.tick()).respawned,[]);
+ assert.equal((await fresh.readSnapshot(B)).snapshot.health,500);
+ const restarted=create();await joinTwo(restarted);
+ const final=(await restarted.readSnapshot(B)).snapshot;
+ assert.equal(final.health,500);assert.equal(final.downed,false);
+ assert.equal(final.respawnAtMs,null);
+});
