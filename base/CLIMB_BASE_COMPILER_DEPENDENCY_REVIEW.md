@@ -28,3 +28,30 @@ GitHub-reported exact blobs inspected; full dependency trees and bytecode not in
 
 ## Decisions / next
 Preserve 0.8.19 and all 17 review-baseline source files while Kimi pending. Do not remove testnet restriction or replace Safe. For production, compare reviewed patched compiler candidates in isolated branches (release existence and provenance must be verified; exact pragmas require explicit change in candidate), pin EVM target and optimizer settings, verify actual standard JSON compiler input and storage layout, run all existing tests/fuzz/invariants, independently reproduce artifacts, examine runtime and initcode size margins, verify Safe singleton/proxy identity and obtain renewed review before any repin. Prefer differential tests for Yul optimizer concern, not naive bytecode equality across versions or turning optimizer off in production. No new build or test executed in this screening. Lower-severity Slither individual triage remains open. No gas, signing, funds, repin or deployment. TESTNET_NO_GO / MAINNET_NO_GO.
+
+
+## Executed isolated compiler differential — 2026-11-27 UTC
+PR #1022 head 6ad7dc97192e7d8ba19efd37d2af91f32a4c907f, actual CI checkout 4d75d3e76fa37957cb92b243f253df7c94477f1a. Differential run 46035083152 and Validate 46035082707 SUCCESS. Four jobs:
+| Project | Compiler | Job | Tests passed |
+|---|---|---:|---:|
+| Safe | 0.8.19 |140628328860|78|
+| Safe | 0.8.39 |140628328713|78|
+| V3 | 0.8.19 |140628328319|161|
+| V3 | 0.8.39 |140628328826|161|
+All zero failures/skips; test-name lists independently compared from downloaded logs and identical between compiler versions within each project. 239 passing test entries per compiler, 478 across both (includes inherited tests and fuzz/invariant entries, not unique properties). Per compiler 9 fuzz properties x256 =2304 runs and two invariants x768 handler calls =1536 calls, zero invariant reverts; same seed/config, but bytecode-dependent dictionaries can yield different randomized inputs, so not proof of identical traces. Both candidate jobs verify official binary SHA256 b8b0642d46838575d3177628b685564b52f51f2aee546cb4dce781951d23c666, report 0.8.39+commit.ce47f2c8.Linux.g++. Baseline uses Foundry-resolved 0.8.19, binary not independently hash-pinned.
+Downloaded all four original ZIPs and independently computed matching SHA256:
+- Safe baseline 15216795501: 1d4731f61c33fc4611095ca384a41d5761b43c7b94a788690ebbef9feaaa051b
+- Safe candidate 15216426702: e750bed99451236358dca4d44087b8f61c0c8be80d01b38e81f1a6bdc7d8c82d
+- V3 candidate 15215752655: c1b6166c62ad76bea23026bcc879fef339dd144dbbcebfda35651b45a82c1adb
+- V3 baseline 15215349401: 8e26bb00bf9616f0255e7fe8f139a17cb41258f8a71af40b33571245a814d758
+Resolved config.json in all four: optimizer enabled/200 runs, via_ir=false, Safe Paris and V3 London, fuzz seed 0xc11b, runs256, invariant32/depth24/fail_on_revert=true. Both candidate patches contain 39 files and only minus pragma solidity 0.8.19; / plus pragma solidity 0.8.39; lines; baseline patch empty. Both size manifests include 16 Safe/custody templates; all existing size assertions passed. Selected runtime sizes:
+| Template | 0.8.19 bytes | 0.8.39 bytes | Candidate EIP170 headroom |
+|---|---:|---:|---:|
+| V3SuccessorCoreDeployer |23035|22816|1760|
+| SafeQuorumGuardDeployerFixture |22929|22862|1714|
+| V3SuccessorConditionalDeployer |14614|14201|10375|
+| SafeQuorumReserveGuardFixture |21216|21181|3395|
+| SafeProxy |123|131|24445|
+Largest observed candidate initcode in manifest SafeQuorumReserveFactoryFixture 39167 (baseline39298), headroom9985. Some smaller contracts grow; no universal optimization claim. All actual compiler bytecode identities differ or require re-verification; no existing deployment pin transfers to candidate.
+
+Disposition: 0.8.39 is a viable experimental compiler candidate for further review; no observed test/size incompatibility within this suite. Not an independent build, not proof SOL-2026-7 cannot affect untested paths. Foundry resolved config verified but actual standard JSON build-info, ABI/storage layout equivalence and per-artifact metadata are not in retained ZIPs; add explicit evidence and compare before any canonical compiler switch. Experimental PR remains open, no canonical compiler/contract changes. No funding/signatures/deployment/repin; Kimi pending. TESTNET_NO_GO / MAINNET_NO_GO.
