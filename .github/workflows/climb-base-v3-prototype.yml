@@ -75,6 +75,11 @@ jobs:
           set -euo pipefail
           forge test --match-contract V3BoundedLegacyTest -vv | tee "$RUNNER_TEMP/climb-v3-bounded-legacy-tests.log"
           grep -Eq '10 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-bounded-legacy-tests.log"
+      - name: Run synthetic liquidity successor fixture tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3LiquidityPolicyTest -vv | tee "$RUNNER_TEMP/climb-v3-liquidity-tests.log"
+          grep -Eq '7 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-liquidity-tests.log"
       - name: Fingerprint integrated test build (no deployment)
         env:
           V3_SOURCE_SHA: ${{ github.sha }}
