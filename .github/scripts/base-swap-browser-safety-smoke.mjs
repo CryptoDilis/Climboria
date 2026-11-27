@@ -110,6 +110,30 @@ try{
      const rect=await item.boundingBox();
      assert.ok(rect&&rect.width>=29&&rect.x>=-1&&rect.x+rect.width<=width+1,context+" control outside viewport: "+JSON.stringify(rect));
     }
+    if(path==="/dex/"){
+     assert.match(await page.title(),/Base Markets/);
+     assert.equal(await page.locator('.hero #heroMarket').count(),0);
+     assert.ok(await page.locator('.base-primary-hero').isVisible());
+     if(width<=760){
+      assert.equal(await page.locator('.base-secondary-tools').isVisible(),false);
+      await page.locator('#dexMobileNav [data-dex-mobile-view="solana"]').click();
+      assert.ok(await page.locator('.base-secondary-tools').isVisible());
+      await page.locator('#dexMobileNav [data-dex-mobile-view="base"]').click();
+     }else{
+      const base=await page.locator('#evmMarkets').boundingBox(),secondary=await page.locator('#secondaryNetwork').boundingBox();
+      assert.ok(base&&secondary&&base.y+base.height<=secondary.y+1,context+" Base must precede all Solana highlights");
+     }
+    }else{
+     assert.equal(await page.locator('html').getAttribute('data-climboria-swap-network'),'base');
+     assert.ok(await page.locator('.card .base-swap-identity').isVisible());
+     assert.equal(await page.locator('.card > .quote-controls').isVisible(),false);
+     assert.equal(await page.locator('#getQuote').isDisabled(),true);
+     if(width<=760){
+      await page.locator('#mobileWorkspaceTabs [data-workspace-tab="market"]').click();
+      assert.ok(await page.locator('#baseMarketPanel').isVisible(),context+" Base Markets tab must display actual Base explorer");
+      await page.locator('#mobileWorkspaceTabs [data-workspace-tab="swap"]').click();
+     }
+    }
     assert.equal(await panel.isVisible(),false,context);
     await bell.click();
     assert.ok(await panel.isVisible(),context);
