@@ -12,18 +12,19 @@ const hash=s=>createHash('sha256').update(s).digest('hex');
 function fixture(){
  const inventory=h(4),sourceGenesis=fixed(1),sourceMint=fixed(2);
  const input={mode:'SYNTHETIC_ONLY',sourceGenesis:b58(sourceGenesis),sourceMint:b58(sourceMint),snapshotSlot:'123',snapshotHash:h(3),policyHash:h(5),targetChainId:84532,targetToken:addr(1),targetVault:addr(2),campaign:h(6),cap:'1000',entries:[]};
- const proofs=[],pairs=[];
+ const proofs=[],pairs=[],challenges=[];
  for(let i=0;i<2;i++){
   const pair=generateKeyPairSync('ed25519');pairs.push(pair);
   const sourceOwner=pair.publicKey.export({format:'der',type:'spki'}).subarray(-32).toString('hex'),sourceAccount=fixed(10+i);
   const row={sourceAccount:b58(sourceAccount),sourceOwner:b58(sourceOwner),recipient:addr(3+i),sourceAmount:'100',award:'50'};
   const p={sourceAccount:row.sourceAccount,nonce:h(20+i),issuedAt:1000,expiresAt:1900};
   const c={mode:input.mode,sourceGenesis,sourceMint,snapshotSlot:input.snapshotSlot,snapshotHash:input.snapshotHash,inventoryDigest:inventory,policyHash:input.policyHash,cap:input.cap,campaign:input.campaign,sourceAccount,sourceOwner,sourceAmount:row.sourceAmount,targetChainId:input.targetChainId,targetToken:input.targetToken,targetVault:input.targetVault,recipient:row.recipient,award:row.award,nonce:p.nonce,issuedAt:p.issuedAt,expiresAt:p.expiresAt};
+  challenges.push(c);
   const msg=syntheticOwnerMessage(c);p.signature=sign(null,msg,pair.privateKey).toString('hex');
   row.evidenceHash=hash(JSON.stringify(['CLIMB_SYNTHETIC_OWNER_EVIDENCE_V2',hash(msg),p.signature]));
   input.entries.push(row);proofs.push(p);
  }
- return {input,inventory,proofs,pairs};
+ return {input,inventory,proofs,pairs,challenges};
 }
 test('canonical rows match signatures independent of order; repeat batch rejected',()=>{
  const {input,inventory,proofs}=fixture(),ledger=createSyntheticOwnerLedger();
@@ -68,19 +69,20 @@ function withDatabase(t){
  initializeSyntheticReplayFile(path);
  return {dir,path};
 }
+function registerAll(db,challenges){for(const c of challenges)db.registerChallenge(c,c.issuedAt);}
 test('local replay state persists after close and reopen; initialization cannot reset it',t=>{
- const {path}=withDatabase(t),{input,inventory,proofs}=fixture();
+ const {path}=withDatabase(t),{input,inventory,proofs,challenges}=fixture();
  let db=openSyntheticReplayLedger(path);
- try{assert.equal(db.consume(input,inventory,proofs,1001).replayConsumption,'LOCAL_SQLITE_TRANSACTION');}finally{db.close();}
+ try{registerAll(db,challenges);assert.equal(db.consume(input,inventory,proofs,1001).replayConsumption,'LOCAL_SQLITE_TRANSACTION');}finally{db.close();}
  assert.throws(()=>initializeSyntheticReplayFile(path),/EEXIST/);
  db=openSyntheticReplayLedger(path);
  try{assert.throws(()=>db.consume(input,inventory,proofs,1001),/source already consumed/);}finally{db.close();}
 });
 test('local transaction rolls back failed batch, including after restart',t=>{
- const {path}=withDatabase(t),{input,inventory,proofs}=fixture(),bad=structuredClone(input);
+ const {path}=withDatabase(t),{input,inventory,proofs,challenges}=fixture(),bad=structuredClone(input);
  bad.entries[1].evidenceHash=h(99);
  let db=openSyntheticReplayLedger(path);
- try{assert.throws(()=>db.consume(bad,inventory,proofs,1001),/manifest evidence hash mismatch/);}finally{db.close();}
+ try{registerAll(db,challenges);assert.throws(()=>db.consume(bad,inventory,proofs,1001),/manifest evidence hash mismatch/);}finally{db.close();}
  db=openSyntheticReplayLedger(path);
  try{assert.equal(db.consume(input,inventory,proofs,1001).count,2);}finally{db.close();}
 });
@@ -91,7 +93,8 @@ test('missing and malformed database do not silently initialize',t=>{
  assert.throws(()=>openSyntheticReplayLedger(bad));
 });
 test('two independent processes racing the same batch yield one commit',async t=>{
- const {dir,path}=withDatabase(t),{input,inventory,proofs}=fixture();
+ const {dir,path}=withDatabase(t),{input,inventory,proofs,challenges}=fixture();
+ const registry=openSyntheticReplayLedger(path);try{registerAll(registry,challenges);}finally{registry.close();}
  const payload=join(dir,'batch.json');writeFileSync(payload,JSON.stringify({input,inventory,proofs}));
  const moduleUrl=new URL('./legacy-owner-durable-ledger.mjs',import.meta.url).href;
  const code=`import {readFileSync} from 'node:fs'; import {openSyntheticReplayLedger} from ${JSON.stringify(moduleUrl)};
@@ -106,4 +109,40 @@ test('two independent processes racing the same batch yield one commit',async t=
   p.on('error',reject);p.on('close',c=>c===0?resolve(out.trim()):reject(Error(err)));
  });
  assert.deepEqual((await Promise.all([worker(),worker()])).sort(),['COMMITTED','REPLAY']);
+});
+
+test('valid proof cannot consume an unregistered challenge; registration survives restart',t=>{
+ const {path}=withDatabase(t),{input,inventory,proofs,challenges}=fixture();
+ let db=openSyntheticReplayLedger(path);
+ try{
+  assert.throws(()=>db.consume(input,inventory,proofs,1001),/unregistered/);
+  db.registerChallenge(challenges[0],1000);
+  assert.throws(()=>db.consume(input,inventory,proofs,1001),/unregistered/);
+  db.registerChallenge(challenges[1],1000);
+ }finally{db.close();}
+ db=openSyntheticReplayLedger(path);
+ try{assert.equal(db.consume(input,inventory,proofs,1001).count,2);}finally{db.close();}
+});
+test('issued digest cannot be substituted by another correctly signed challenge',t=>{
+ const {path}=withDatabase(t),{input,inventory,proofs,challenges}=fixture();
+ const db=openSyntheticReplayLedger(path);
+ try{
+  db.registerChallenge(challenges[0],1000);
+  db.registerChallenge({...challenges[1],recipient:addr(99)},1000);
+  assert.throws(()=>db.consume(input,inventory,proofs,1001),/mismatched challenge/);
+  // First row must not have been consumed on partial batch failure.
+  const first={...input,entries:[input.entries[0]]};
+  assert.equal(db.consume(first,inventory,[proofs[0]],1001).count,1);
+ }finally{db.close();}
+});
+test('registration rejects wrong issue time and duplicate nonce before and after consumption',t=>{
+ const {path}=withDatabase(t),{input,inventory,proofs,challenges}=fixture();
+ const db=openSyntheticReplayLedger(path);
+ try{
+  assert.throws(()=>db.registerChallenge(challenges[0],1001),/time mismatch/);
+  registerAll(db,challenges);
+  assert.throws(()=>db.registerChallenge(challenges[0],1000),/already registered/);
+  assert.equal(db.consume(input,inventory,proofs,1001).count,2);
+  assert.throws(()=>db.registerChallenge(challenges[0],1000),/already registered or consumed/);
+ }finally{db.close();}
 });
