@@ -60,3 +60,39 @@ test('personality is opt-in, seeded by registry by default, and still honors col
  for(let i=0;i<100;i++){const s=c.tick(.1);assert.equal(s.x,0);assert.equal(s.z,0)}c.close();
  assert.throws(()=>createAutonomousAdventurer({nodes,edges,spawn:'camp',world:world(),personalityEnabled:true}),/registered identity/);
 });
+
+
+test('dry slope climbing follows bounded terrain elevation and respects a blocked route',()=>{
+ const nodes=[{id:'base',x:0,z:0,action:'rest'},{id:'ridge',x:3,z:0,action:'explore'}];
+ let blocked=true;
+ const npc=createAutonomousAdventurer({nodes,edges:[['base','ridge'],['ridge','base']],spawn:'base',seed:17,world:{
+  sample:x=>({ground:x*.5,water:null}),
+  isClimb:(a,b)=>Math.abs(b.y-a.y)>0,
+  canTraverse:(a,b,mode)=>mode==='climb'&&Math.abs(b.y-a.y)<=.151&&(!blocked||b.x<=1),
+  canAct:()=>true
+ }});
+ let prev=npc.snapshot(),climbed=false;
+ for(let i=0;i<200;i++){const s=npc.tick(.1);assert.ok(s.x<=1);assert.ok(Math.hypot(s.x-prev.x,s.z-prev.z)<=.300001);assert.equal(s.y,s.x*.5);climbed||=s.mode==='climb';prev=s}
+ assert.ok(climbed);blocked=false;
+ let reached=false;
+ for(let i=0;i<600;i++){const s=npc.tick(.1);assert.ok(Math.hypot(s.x-prev.x,s.z-prev.z)<=.300001);assert.equal(s.y,s.x*.5);prev=s;if(s.x===3&&s.mode==='explore'){reached=true;break}}
+ assert.ok(reached);npc.close();
+});
+test('interrupted synthetic farming cancels stale work and only a new valid attempt completes',()=>{
+ const nodes=[{id:'camp',x:0,z:0,action:'rest'},{id:'plot',x:1,z:0,action:'farm'}];
+ let available=true;const completed=[];
+ const npc=createAutonomousAdventurer({nodes,edges:[['camp','plot'],['plot','camp']],spawn:'camp',seed:17,world:{
+  sample:()=>({ground:0,water:null}),canTraverse:()=>true,
+  canAct:n=>n.id!=='plot'||available,
+  onActivityComplete:(n,action)=>{if(action==='farm')completed.push(n.id)}
+ }});
+ let arrived=false;
+ for(let i=0;i<100;i++){if(npc.tick(.1).mode==='farm'){arrived=true;break}}
+ assert.ok(arrived);available=false;assert.equal(npc.tick(.1).mode,'idle');available=true;
+ assert.deepEqual(completed,[]);
+ let returned=false;
+ for(let i=0;i<200;i++){const s=npc.tick(.1);if(s.mode==='rest'){returned=true;break}}
+ assert.ok(returned);assert.deepEqual(completed,[]);
+ for(let i=0;i<300&&!completed.length;i++)npc.tick(.1);
+ assert.deepEqual(completed,['plot']);npc.close();npc.tick(.1);assert.deepEqual(completed,['plot']);
+});

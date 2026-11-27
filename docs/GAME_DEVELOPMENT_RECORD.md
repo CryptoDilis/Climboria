@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A ACTIVITY VALIDITY AND CLIMB/FARM FIXTURES — 2026-11-27 UTC
+
+- Parent #1000 exact head 4f33795c680347bb3fcca2d2b6b6488d0164cdbc: 9/11 CI passed, focused browser 46020396061 and full gameplay 46020395784 running at inspection; general browser 46020395877 and native chat acceptance 46020395893 green. Preserve parent CI.
+- Isolated candidate revalidates active NPC activities each tick, cancelling invalidated work rather than allowing stale farming/gathering completion after availability returns. Added synthetic bounded dry-slope climb/collision and interrupted farming completion unit tests. Fresh CI required. No authored farm plot, vertical wall route, real resource grant or animation evidence claimed.
+- NEXT: verify parent and candidate CI, integrate only after green; locate reviewed actual loaded climb/farm geometry and activity clips, then prove visible traversal and work in browser. Public NPC, financial and production multiplayer gates remain closed.
+
+---
+
 ## R5A NATIVE WEBSOCKET VERIFIED; MAIN CONSOLIDATION — 2026-11-27 UTC
 
 - #1000 prior exact head 9681e4eefaf1b05e5609d6ecb11f242b591b1381: [NPC Chat Acceptance 46019460113](https://github.com/CryptoDilis/Climboria/actions/runs/46019460113), job 140575013105 SUCCESS. 103/103 unit contracts; two distinct Chromium DOM clients 1280/390px received identical three NPC events, linked reply, mute, duplicate rejection, preserved drafts and real human count=2. Actual native loopback sockets: 2 clients, 3 events, linked reply, forged packet rejected, room empty at cleanup, scheduler closed with 387 ticks and no pending timer. Synthetic terrain/tickets and controlled clock; not real account or public WSS evidence.
