@@ -19,6 +19,7 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     bool public bound;
     address public founder;
     address public distributor;
+    address public lpCustody;
     V3SuccessorTestToken public asset;
     address[7] public destinations;
     bytes32[7] public destinationHashes;
@@ -61,6 +62,10 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
             if(address(v.token())!=address(t)||address(v.custody())!=address(this)||
                address(v.registry())!=address(successor.expenses().registry())||v.excludedFounder()!=founder)revert InvalidConfig();
         }
+        address lp=l.lpCustody();
+        if(lp.code.length==0||lp==founder||lp==distributor||lp==address(this)||lp==address(wallet)||lp==address(successor)||wallet.isOwner(lp))revert InvalidConfig();
+        for(uint256 i=0;i<7;i++)if(lp==destinations[i])revert InvalidConfig();
+        lpCustody=lp;
         asset=t;bound=true;emit Bound(address(t),destinations);
     }
     function _target(uint256 i,uint256 expected) private view returns(address v){
@@ -87,7 +92,9 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     function cancelLegacy(uint256 expected) external onlyWallet {V3DeferredLegacyFixture(_target(6,expected)).cancel();}
     function _rotationOwnerAllowed(address a) internal view virtual override returns(bool){
         // Prevent changes before binding and known role conflicts afterwards.
-        return bound&&a!=founder&&a!=distributor;
+        if(!bound||a==founder||a==distributor||a==lpCustody||a==address(successor)||a==address(asset)||a==singleton)return false;
+        for(uint256 i=0;i<7;i++)if(a==destinations[i])return false;
+        return true;
     }
     function _policyCallAllowed(bytes4 selector,uint256 len) internal view virtual override returns(bool){
         if(!bound)return selector==this.bindSuccessor.selector&&len==36;
