@@ -59,7 +59,7 @@ contract V3ExpenseFuzz is V3EpochPolicyTest {
         uint256 month=raw%59;
         vm.warp(start+(month+1)*30 days);
         vm.expectRevert(V3EpochSpendFixture.InvalidProposal.selector);
-        control.propose(e,PAYEE,1,"PAST","N",month);
+        control.propose(e,PAYEE,1,"PAST",month,"N");
         require(e.totalSpent()==0&&factory.registry().consumedBy("PAST")==address(0));
     }
 }
