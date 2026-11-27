@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'swap/secondary-evm-wallet-readiness.mjs'
+      - 'swap/secondary-evm-wallet-ui.mjs'
       - '.github/scripts/secondary-evm-wallet-readiness.test.mjs'
       - '.github/workflows/secondary-evm-wallet-readiness.yml'
   workflow_dispatch:
@@ -21,4 +22,6 @@ jobs:
         with:
           node-version: 22
       - name: Verify isolated read-only wallet lifecycle
-        run: node --test .github/scripts/secondary-evm-wallet-readiness.test.mjs
+        run: |
+          node --check swap/secondary-evm-wallet-ui.mjs
+          node --test .github/scripts/secondary-evm-wallet-readiness.test.mjs
