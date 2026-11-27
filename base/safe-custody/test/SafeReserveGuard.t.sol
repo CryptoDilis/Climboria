@@ -12,6 +12,7 @@ import {V3DeferredLegacyFixture} from "v3-src/V3DeferredLegacyFixture.sol";
 import {IV3SyntheticPool} from "v3-src/V3LiquidityPolicyFixture.sol";
 interface VmReserveGuard {
     function chainId(uint256) external;
+    function etch(address,bytes calldata) external;
     function addr(uint256) external returns(address);
     function sign(uint256,bytes32) external returns(uint8,bytes32,bytes32);
     function warp(uint256) external;
@@ -154,6 +155,34 @@ contract SafeReserveGuardTest {
         _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,3,address(wallet),10,"E",0,"N")),3);
         _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,FOUNDER)),3);
         vm.expectRevert();guard.proposeExpense(1,3,PAYEE,10,"E",0,"N");
+    }
+    function testRoleSeparationPersistsWhenDestinationCodeDisappears() public {
+        _bind();
+        address lp=V3DeferredLiquidityFixture(successor.vaults(2)).lpCustody();
+        require(guard.lpCustody()==lp);
+        vm.etch(lp,"");
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,lp)),3);
+        address v=successor.vaults(0);vm.etch(v,"");
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,v)),3);
+        // The healthy quorum must still be able to replace an unrelated owner.
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,F)));
+        vm.warp(block.timestamp+2 days);
+        bytes memory swap=abi.encodePacked(abi.encodeWithSignature("swapOwner(address,address,address)",D,E,F),guard.rotationSerial());
+        require(_exec(address(wallet),swap,_signed(address(wallet),swap,3)));
+        require(guard.epoch()==2&&guard.isMember(F)&&!guard.isMember(E));
+    }
+    function testPlainBindingRejectsSuccessorAsLPCustody() public {
+        // Fresh sibling flow with an otherwise structurally valid, conflicting LP role.
+        successor=new V3AtomicSuccessorFixture();
+        SafeReserveFactoryFixture factory=new SafeReserveFactoryFixture();
+        address[] memory owners=new address[](5);
+        owners[0]=A;owners[1]=B;owners[2]=C;owners[3]=D;owners[4]=E;
+        (wallet,guard)=factory.create(owners,successor);
+        V3SuccessorConfig memory cfg=V3SuccessorConfig(FOUNDER,DISTRIBUTOR,IV3CustodyEpochFixture(address(guard)),start,1000,
+            V3SuccessorLiquidityConfig(quote,new ReservePoolBuilder(),address(successor),1000));
+        token=successor.create(cfg);
+        _reject(address(guard),abi.encodeCall(guard.bindSuccessor,(1)),3);
+        require(!guard.bound()&&guard.lpCustody()==address(0)&&wallet.nonce()==0&&!guard.transactionActive());
     }
     function testLiquidityAndLegacySchedulingThroughActualSafe() public {
         _bind();
