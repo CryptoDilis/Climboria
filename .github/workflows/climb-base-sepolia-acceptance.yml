@@ -1,0 +1,51 @@
+name: CLIMB Base Sepolia Read-only Acceptance
+on:
+  pull_request:
+    paths:
+      - 'base/safe-custody/observe-testnet*.mjs'
+      - 'base/safe-custody/frozen-testnet-candidate.json'
+      - '.github/workflows/climb-base-sepolia-acceptance.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'base/safe-custody/observe-testnet*.mjs'
+      - 'base/safe-custody/frozen-testnet-candidate.json'
+      - '.github/workflows/climb-base-sepolia-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test base/safe-custody/observe-testnet.test.mjs
+  public-read-only:
+    if: github.ref == 'refs/heads/main'
+    needs: offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Observe historical fixture and common finalized chain only
+        run: |
+          set -euo pipefail
+          node base/safe-custody/observe-testnet.mjs > "$RUNNER_TEMP/base-sepolia-acceptance.json"
+          cat "$RUNNER_TEMP/base-sepolia-acceptance.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: base-sepolia-read-only-acceptance
+          path: ${{ runner.temp }}/base-sepolia-acceptance.json
+          if-no-files-found: error
+          retention-days: 14
