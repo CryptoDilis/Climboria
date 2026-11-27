@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## COMBINED NATIVE SOCKET AND JARRELL GLB ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
+
+- Stacked on #928 head 30472aaa7c2b5877224ad0665c35b8509ebb8b6e. Independent CI-only workerd entry 387dcb112ed0f725311884733605ea2caf92d34f uses loopback port 4175, explicit same-origin upgrade and one-use ticket checks, no exposed ticket/tick routes. Native browser smoke 779555d2524e7644ec692cd52bdb7206f77837f3 combines real local DO WebSockets and actual checked-in Jarrell GLB on desktop/touch Chromium; checks rendered geometry, ground fit, committed HP, input without speculative movement, committed server position and stamina, range denial and closed scene. Only three exact asset subresources are fulfilled locally; actual navigation and socket handshake are not intercepted. Synthetic account IDs and local deterministic clock only. CI workflow 2f6ac562233d838bb8543ea04ef80eb43ed95372 adds pinned Three.js r128 install and bounded independent smoke, no browser security bypass or public route. Source only, NOT executed, no physical Android FPS or pixel visual acceptance.
+- EXACT NEXT: finish and merge #922, #925, #928 in dependency order with fresh CI per head. Reconcile this child workflow with #922 retaining the separate native socket check, safe dependency install/symlink and both path filters; retarget to main and run fresh CI. Inspect actual combined native GLB outcome and repair without weakening acceptance. No public game/PvP, deployment, inventory or loot changes.
+
+---
+
 ## ACTUAL JARRELL GLB BROWSER PROJECTION — 2026-11-27 PHT (PROPOSED)
 
 - Stacked on independent render adapter #925 head 90caf5a5f8b1ff8e66e15a8761006955ed2234a6. Test commit 25e5dcc7b446b7504713b89d6249d4fc673a61b8 extends the existing isolated socket-double browser harness to load the checked-in Jarrell GLB using the same Three.js r128 scripts as public gameplay. Dedicated scene/root, measured 1.9m height and foot offset, software WebGL render triangle count, exact server position/ground/HP/stamina, stale hidden mesh, downed control lock, respawn and close on desktop/touch. No public renderer, save, presence or live Worker changed. This is a proposed test, NOT executed; no native socket-to-GLB combined claim, pixel QA or physical Android FPS evidence.
