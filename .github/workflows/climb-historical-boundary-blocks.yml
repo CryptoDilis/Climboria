@@ -1,0 +1,50 @@
+name: CLIMB Historical Boundary Block Evidence
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'base/inventory-probe/boundary-blocks*.mjs'
+      - '.github/workflows/climb-historical-boundary-blocks.yml'
+permissions:
+  contents: read
+concurrency:
+  group: climb-historical-boundary-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test base/inventory-probe/boundary-blocks.test.mjs
+  observe:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compare pinned boundary blocks (read only)
+        env:
+          CLIMB_SOLANA_RPC_A_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL }}
+          CLIMB_SOLANA_RPC_B_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL_SECONDARY }}
+        run: |
+          set -euo pipefail
+          node base/inventory-probe/boundary-blocks-cli.mjs > "$RUNNER_TEMP/climb-boundary-blocks.json"
+          cat "$RUNNER_TEMP/climb-boundary-blocks.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-historical-boundary-blocks
+          path: ${{ runner.temp }}/climb-boundary-blocks.json
+          retention-days: 7
+          if-no-files-found: error
