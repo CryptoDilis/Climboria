@@ -18,7 +18,7 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 
 ### Multiplayer checkpoint — 2026-11-28 PHT
 
-[R0.2 and R0.8 private socket recovery candidate](https://github.com/CryptoDilis/Climboria/pull/1046) passed locally with 10, 25, 50 and 100 synthetic loopback clients, 20 movement ticks per size and 148 total reconnects. Fresh fixture sessions recovered the current peer snapshot and retired sessions were removed. Verify exact CI, then exercise authenticated ticket refresh, saved-position recovery and browser projection under churn before production acceptance.
+[R0.2 and R0.8 private socket recovery](https://github.com/CryptoDilis/Climboria/pull/1046) merged after CI passed at 10, 25, 50 and 100 synthetic loopback clients. The follow-up also passed locally at 128, with 104 reconnects and capacity rejection. [Native browser batch transport](https://github.com/CryptoDilis/Climboria/pull/1050) passed locally in desktop and mobile emulation with synthetic admissions. Exact follow-up CI, hosted ticket and durable resume acceptance, production-equivalent capacity and physical-device measures remain open.
 
 
 ## Non-negotiable product direction
