@@ -150,6 +150,8 @@ jobs:
           path: ${{ runner.temp }}/v3-build-manifest.json
           if-no-files-found: error
           retention-days: 14
+      - name: Test local durable game reward reservations
+        run: node --test game-reward-reservation.test.mjs
       - name: Test synthetic canonical legacy manifest evidence
         run: node --test legacy-canonical-evidence.test.mjs
       - name: Test synthetic indexed legacy allocation-sum proofs

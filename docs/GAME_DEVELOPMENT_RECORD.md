@@ -1,5 +1,29 @@
 # Climboria Game Development Record
 
+## R5A VERIFIED PERSONALITY AND DIALOGUE CONSOLIDATION — 2026-11-27
+
+- #990 foundation 46011575420 passed; focused browser 46011575438 cancelled after mobile success. #991 foundation 46012752331 and desktop/mobile browser 46012752264 passed; #993 foundation 46013225215 and desktop/mobile browser 46013225116 passed, including inherited same-actor visuals. Personality and dialogue unit acceptance green; no server chat or actual paired NPC dialogue yet.
+- Consolidate exact #993 verified code onto checked main 8326380affc99b5e6a6a23c65723a95012c26cb9 via existing #990, preserving all unrelated main changes. Eleven game-scoped files only. Fresh main-targeted CI and mergeability required. No public spawn or economic changes.
+- NEXT: verify consolidated CI, merge if green; build actual paired autonomous NPC dialogue fixture, then trusted server room transport, two-client acceptance and physical mobile tests. Keep NPC activation gated.
+
+---
+
+## R5A CONTEXTUAL NPC DIALOGUE FOUNDATION — 2026-11-27
+
+- #990 foundation 46011575420 and mobile visual profile passed; desktop pending. #991 foundation 46012752331 passed; browser 46012752264 pending. Separate child branch preserves both active runs.
+- Add isolated trusted-scheduler dialogue engine: exact registry identities, nearby NPCs within 12m, actual stationary activity context, authored safe lines and personality replies, 4s reply delay, 12s conversation gap, 30s per-speaker cooldown, bounded state, duplicate/spoof rejection and cancellation on separation/expiry. Stable session-scoped message IDs with reply linkage and explicit NPC sender. No transport or public world chat publication; trusted server integration required, never accept client-submitted NPC snapshots. Unit tests pending.
+- NEXT: verify current candidates, merge consolidated game changes when green, integrate engine with actual autonomous actors and authoritative room scheduler, verify same world-chat events on two clients with mute/moderation, reconnect/dedupe and abuse checks. No public activation or human ONLINE count inflation. Physical mobile performance still pending.
+
+---
+
+## R5A NPC PERSONALITY UTILITY CANDIDATE — 2026-11-27
+
+- #990 consolidated head 1a42ae23ebd3133b70e62bd56e81bd578ea9fb4d: foundation 46011575420 passed; mobile job 140548139495 passed same-actor GLB projection and sampled swim/fish/gather/transit draws (4 mesh, 4 nameplate), 477.786m, 2441 steps, stable identity, cleanup, unchanged player/inventory/peers. Desktop job 140548139793 pending at inspection. No physical device or real-time full-route performance evidence. Preserve active parent CI.
+- Add opt-in personality goal scoring to the autonomous controller and connected adapter: exact registry preferences, bounded 2.4 utility bonus (0.6 under low stamina), no repeat bonus, stable registry seed unless explicit seed supplied. Existing defaults unchanged; preference cannot authorize unavailable activities or override collision. Tests cover all five registered NPCs, unavailable preferred goals, deterministic replay, collision and connected diverse activity completion. No public spawn, multi-actor admission, chat or real economy changes. Fresh CI pending.
+- NEXT: verify #990 full CI and mergeability, verify personality tests, integrate opt-in named behavior into actual map smoke; then authored contextual NPC dialogue and server-authoritative world chat with two-client tests, shared state and physical mobile performance. Keep public activation locked.
+
+---
+
 ## R5A CONNECTED MAP VERIFIED; SAME-ACTOR VISUAL CANDIDATE — 2026-11-27
 
 - #988 foundation 46009216068 and focused browser 46009216013 passed; #990 foundation 46010066229 and focused browser 46010066104 passed. Both actual map profiles: 477.786m travel, 2441 steps, max step 0.3m, direct validated connector with 1381 probes, swim/fish/gather completion and water exit, one synthetic wood, stable identity, unchanged player/inventory/peers/diagnostics. No actual continuous visual rendering proven by those runs.

@@ -4,9 +4,10 @@ import {getNpcIdentity} from './npc-roster.mjs';
 const ACTIONS=new Set(['explore','fish','gather','farm','rest','swim']);
 const finite=Number.isFinite, dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const key=(a,b)=>a+'>'+b;
-export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1,identityId=null}={}){
+export function createAutonomousAdventurer({nodes,edges,spawn,world,seed,identityId=null,personalityEnabled=false}={}){
  const identity=identityId===null?null:getNpcIdentity(identityId);
  if(identityId!==null&&!identity)throw Error('Unknown NPC identity');
+ if(typeof personalityEnabled!=='boolean'||personalityEnabled&&!identity)throw Error('NPC personality requires a registered identity');
  if(!Array.isArray(nodes)||nodes.length<2||nodes.length>64||!Array.isArray(edges)||edges.length>256||
     typeof world?.sample!=='function'||typeof world?.canTraverse!=='function'||typeof world?.canAct!=='function')
   throw Error('Bounded NPC navigation and world adapters required');
@@ -20,7 +21,7 @@ export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1,ident
      dist(graph.get(e[0]),graph.get(e[1]))<.01)throw Error('Invalid NPC edge');
   if(!links.get(e[0]).includes(e[1]))links.get(e[0]).push(e[1]);
  }
- let rng=seed>>>0||1;
+ let rng=(seed??(personalityEnabled?identity.seed:1))>>>0||1;
  function random(){rng^=rng<<13;rng^=rng>>>17;rng^=rng<<5;return (rng>>>0)/4294967296}
  function sample(p){
   const s=world.sample(p.x,p.z);
@@ -48,7 +49,10 @@ export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1,ident
    if(n.id===at||world.canAct(n,n.action)!==true)continue;
    const p=pathTo(n.id);if(!p?.length)continue;
    const bias=world.goalBias?.(n, {stamina,last})??0;
-   const value=random()*3+(n.action!==last?3:0)+(n.action==='rest'?(100-stamina)/8:0)-p.length*.15+(finite(bias)?Math.max(-12,Math.min(12,bias)):0);
+   // A preference is a bounded utility bonus, never permission to bypass availability,
+   // navigation, collision, or fatigue. Do not reward repeating the last activity.
+   const preference=personalityEnabled&&n.action!==last&&identity.preferredActivities.includes(n.action)?(stamina<25?.6:2.4):0;
+   const value=random()*3+(n.action!==last?3:0)+(n.action==='rest'?(100-stamina)/8:0)-p.length*.15+(finite(bias)?Math.max(-12,Math.min(12,bias)):0)+preference;
    if(value>score){score=value;best={id:n.id,path:p}}
   }
   if(!best){mode='idle';wait=.5;return}

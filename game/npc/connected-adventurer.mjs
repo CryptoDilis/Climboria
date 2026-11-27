@@ -4,7 +4,7 @@ import {createAutonomousAdventurer} from './autonomous-adventurer.mjs';
 import {createJarrellLakeAdventurer} from './jarrell-lake-adventurer.mjs';
 import {createForestGatherer} from './forest-gatherer.mjs';
 import {findConnectedNpcRoute} from './connected-route.mjs';
-export function createConnectedAdventurer({groundAt,waterBodyAt,actorBlocked,loaded,fishingSpots,lake,logSpots,forestCenter,identityId=null,seed=17,routeOptions={}}={}){
+export function createConnectedAdventurer({groundAt,waterBodyAt,actorBlocked,loaded,fishingSpots,lake,logSpots,forestCenter,identityId=null,seed,personalityEnabled=false,routeOptions={}}={}){
  const adapters={groundAt,waterBodyAt,actorBlocked,loaded};
  let l,f;
  try{
@@ -39,7 +39,7 @@ export function createConnectedAdventurer({groundAt,waterBodyAt,actorBlocked,loa
    o.world.onActivityComplete?.(o.n,action);seen.add(action);
   }
  };
- const npc=createAutonomousAdventurer({nodes,edges,spawn:'lake:rest',world,seed,identityId});
+ const npc=createAutonomousAdventurer({nodes,edges,spawn:'lake:rest',world,seed:seed??(personalityEnabled?undefined:17),identityId,personalityEnabled});
  return Object.freeze({npc,route,source:f.source,nodes:Object.freeze(nodes.map(n=>Object.freeze({...n}))),
   audit:()=>Object.freeze({completed:Object.freeze([...seen]),resources:f.audit(),connectorProbes:route.probes})});
 }
