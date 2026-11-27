@@ -51,11 +51,11 @@ async function source(url,fetchFn){
  }
  const readBlock=async(s,t)=>{
   const x=await rpc('getBlock',[s,{commitment:'finalized',transactionDetails:'none',rewards:false,maxSupportedTransactionVersion:0}]);
-  if(x?.blockTime!==t||typeof x.blockhash!=='string'||!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(x.blockhash)||!slotOk(x.parentSlot)||x.parentSlot>=s)fail();
-  return {slot:s,blockTime:t,blockhash:x.blockhash,parentSlot:x.parentSlot};
+  if(x?.blockTime!==t||typeof x.previousBlockhash!=='string'||!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(x.previousBlockhash)||typeof x.blockhash!=='string'||!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(x.blockhash)||!slotOk(x.parentSlot)||x.parentSlot>=s)fail();
+  return {slot:s,blockTime:t,blockhash:x.blockhash,previousBlockhash:x.previousBlockhash,parentSlot:x.parentSlot};
  };
  const before=await readBlock(rows[a],lt),after=await readBlock(rows[b],ht);
- if(after.parentSlot!==before.slot||before.blockTime>target||after.blockTime<=target)fail();
+ if(after.parentSlot!==before.slot||after.previousBlockhash!==before.blockhash||before.blockTime>target||after.blockTime<=target)fail();
  return {before,after};
 }
 export async function observeHistoricalBracket(a,b,{fetchFn=fetch}={}){
