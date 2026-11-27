@@ -163,3 +163,32 @@ test('authored dry terrain integration permits only verified combat outside Sanc
  assert.equal((await camp.readSnapshot(B)).snapshot.health,495);
  assert.equal(camp.reviewedForProduction,false);
 });
+
+test('authored park swing obstructs melee between close server-controlled players',async()=>{
+ const roomId='jarrell-park-obstruction-test',map=createJarrellDryRegionPrototype({
+  roomId,bounds:{minX:-200,maxX:-175,minZ:30,maxZ:50}
+ });
+ let now=40000;
+ const room=createTransactionalRoomPrototype({roomId,clock:()=>now,storage:fakeStorage(),
+  spawn:{x:-188,z:36.65},collision:map.collision,sampleWalkableGround:map.sampleWalkableGround});
+ await joinTwo(room);
+ let sequence=0;
+ async function walk(x,z,count){
+  for(let i=0;i<count;i++){
+   assert.ok((await room.input(B,{x,z,sequence:sequence++,sprint:false})).ok);
+   now+=100;assert.ok((await room.tick()).ok);
+  }
+ }
+ // Walk around the swing and its supporting post using server movement.
+ await walk(1,0,4);await walk(0,1,3);await walk(-1,0,4);
+ const a=(await room.readSnapshot(A)).snapshot,b=(await room.readSnapshot(B)).snapshot;
+ assert.ok(Math.abs(b.position.x+188)<1e-6);
+ assert.ok(Math.abs(b.position.z-39.35)<1e-6);
+ assert.ok(Math.hypot(a.position.x-b.position.x,a.position.y-b.position.y,a.position.z-b.position.z)<2.8);
+ assert.equal(map.collision.clearPath(a.position,b.position,roomId),false);
+ assert.equal((await room.attack(A,B)).reason,'blocked-or-unverified-melee-path');
+ assert.equal((await room.readSnapshot(B)).snapshot.health,500);
+ // Returning around the same obstacle restores a legitimate melee path.
+ await walk(1,0,4);await walk(0,-1,3);await walk(-1,0,4);
+ assert.equal((await room.attack(A,B)).health,495);
+});
