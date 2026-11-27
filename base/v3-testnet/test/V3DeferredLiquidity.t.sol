@@ -94,6 +94,20 @@ contract V3DeferredLiquidityTest {
         require(vault.spent()==0&&asset.balanceOf(address(vault))==RESERVE&&quote.balanceOf(address(vault))==500);
         pool.setMode(0);vault.execute(id);require(vault.spent()==1000);
     }
+    function testRejectExtraSharesAndRedirectedInputs() public {
+        bytes32 id=schedule(1000,"DILUTION");quote.transfer(address(vault),500);
+        vm.warp(block.timestamp+2 days);
+        for(uint256 m=5;m<=6;m++){
+            pool.setMode(m);
+            vm.expectRevert(V3DeferredLiquidityFixture.BalanceMismatch.selector);vault.execute(id);
+            require(vault.spent()==0&&asset.balanceOf(address(vault))==RESERVE&&quote.balanceOf(address(vault))==500);
+            require(pool.totalSupply()==0&&asset.balanceOf(address(pool))==0&&quote.balanceOf(address(pool))==0&&asset.balanceOf(address(0x777))==0);
+            require(asset.allowance(address(vault),address(pool))==0&&quote.allowance(address(vault),address(pool))==0);
+            (,,,,,,bool executed,,address locker)=vault.actions(id);require(!executed&&locker==address(0));
+        }
+        pool.setMode(0);vault.execute(id);
+        require(vault.spent()==1000&&pool.totalSupply()==100&&asset.balanceOf(address(pool))==1000&&quote.balanceOf(address(pool))==500);
+    }
     function testMainnetRejected() public {
         vm.chainId(8453);vm.expectRevert(V3DeferredLiquidityFixture.InvalidConfig.selector);
         new V3DeferredLiquidityFixture(asset,quote,IV3SyntheticPool(address(pool)),control,address(destination),1000);

@@ -19,10 +19,11 @@ contract LPFixturePool is ERC20 {
     constructor(address a,address q) ERC20("Synthetic LP","SYNLP"){asset=a;quote=q;}
     function setMode(uint256 m) external {mode=m;}
     function addLiquidity(uint256 a,uint256 q,uint256,address recipient) external returns(uint256){
-        require(IERC20(asset).transferFrom(msg.sender,address(this),mode==1?a-1:a));
+        require(IERC20(asset).transferFrom(msg.sender,mode==6?address(0x777):address(this),mode==1?a-1:a));
         require(IERC20(quote).transferFrom(msg.sender,address(this),q));
         uint256 shares=mode==2?1:100;
         _mint(mode==3?msg.sender:recipient,shares);
+        if(mode==5)_mint(address(0x777),shares);
         return mode==4?101:shares;
     }
 }
