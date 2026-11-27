@@ -1,0 +1,11 @@
+PRAGMA foreign_keys = ON;
+CREATE TABLE IF NOT EXISTS challenges (nonce TEXT PRIMARY KEY, wallet TEXT NOT NULL, message TEXT NOT NULL, expires_at INTEGER NOT NULL, used_at INTEGER);
+CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, wallet TEXT NOT NULL, expires_at INTEGER NOT NULL, revoked_at INTEGER);
+CREATE TABLE IF NOT EXISTS limits (bucket TEXT NOT NULL, window INTEGER NOT NULL, count INTEGER NOT NULL CHECK(count > 0), PRIMARY KEY(bucket,window));
+CREATE TABLE IF NOT EXISTS topics (id INTEGER PRIMARY KEY AUTOINCREMENT, wallet TEXT NOT NULL, category TEXT NOT NULL CHECK(category IN ('general','governance','launchpad','game','treasury','feedback')), title TEXT NOT NULL CHECK(length(title) BETWEEN 1 AND 120), body TEXT NOT NULL CHECK(length(body) BETWEEN 1 AND 8000), created_at INTEGER NOT NULL, hidden INTEGER NOT NULL DEFAULT 0 CHECK(hidden IN (0,1)));
+CREATE TABLE IF NOT EXISTS replies (id INTEGER PRIMARY KEY AUTOINCREMENT, topic_id INTEGER NOT NULL REFERENCES topics(id), wallet TEXT NOT NULL, body TEXT NOT NULL CHECK(length(body) BETWEEN 1 AND 8000), created_at INTEGER NOT NULL, hidden INTEGER NOT NULL DEFAULT 0 CHECK(hidden IN (0,1)));
+CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY AUTOINCREMENT, topic_id INTEGER NOT NULL REFERENCES topics(id), wallet TEXT NOT NULL, reason TEXT NOT NULL CHECK(length(reason) BETWEEN 1 AND 500), created_at INTEGER NOT NULL, UNIQUE(topic_id,wallet));
+CREATE INDEX IF NOT EXISTS challenges_expiry ON challenges(expires_at);
+CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at);
+CREATE INDEX IF NOT EXISTS replies_topic ON replies(topic_id,id);
+CREATE INDEX IF NOT EXISTS topics_category ON topics(category,id);
