@@ -1,5 +1,26 @@
 # Climboria Game Development Record
 
+## AUTHORITATIVE CHARACTER PROJECTION MERGED — 2026-11-27 PHT
+
+- #925 merged 300972e5a49dea4423ad9b519fb620784851a4cc after exact head 1c19cf97595e27407bd3e2d65dca6db7248e436e all five SUCCESS: Gameplay 45947412023, Runtime 45947412045, Gateway 45947412093, Authority 45947411967, Validate 45947411962. Main drift only unrelated Base ledger work. Adapter is not public gameplay integration.
+- Reconcile #928 with squash merge preserving actual GLB harness, pinned Three.js, existing native WebSocket smoke and all historical records. Retarget to main and require fresh Validate and Gameplay CI. #930 remains stacked until #928 green and merged. No public PvP, deployment or loot.
+
+---
+
+## GLB BROWSER BRANCH RECONCILIATION — 2026-11-27 PHT
+
+- #928 incorporates reconciled #925 head 1c19cf97595e27407bd3e2d65dca6db7248e436e (4/5 fresh CI passed; Gameplay 45947412023 running when checked), including merged native browser #922. Preserve both native socket and isolated GLB smoke, pinned Three.js and all historical records. Parent CI unchanged; GLB test unexecuted.
+- EXACT NEXT: after #925 fresh CI green and squash merge, reconcile child onto main, retarget and verify fresh Validate/Gameplay before merge. Then reconcile #930. No public PvP or deployment.
+
+---
+
+## ACTUAL JARRELL GLB BROWSER PROJECTION — 2026-11-27 PHT (PROPOSED)
+
+- Stacked on independent render adapter #925 head 90caf5a5f8b1ff8e66e15a8761006955ed2234a6. Test commit 25e5dcc7b446b7504713b89d6249d4fc673a61b8 extends the existing isolated socket-double browser harness to load the checked-in Jarrell GLB using the same Three.js r128 scripts as public gameplay. Dedicated scene/root, measured 1.9m height and foot offset, software WebGL render triangle count, exact server position/ground/HP/stamina, stale hidden mesh, downed control lock, respawn and close on desktop/touch. No public renderer, save, presence or live Worker changed. This is a proposed test, NOT executed; no native socket-to-GLB combined claim, pixel QA or physical Android FPS evidence.
+- EXACT NEXT: #922 fresh CI 45946606206/45946606208 on f10611b3945666f5f2f72e54e110de67efe86f5e; merge only green. #925 prior 4/5 green, Gameplay 45946244195 pending; reconcile both records after #922, verify fresh 5/5 before merging. Then reconcile this stacked branch to merged main, retarget and run fresh gameplay smoke; fix any GLB load/render/timeout failures without weakening assertions. Follow with real local native socket-to-GLB combined acceptance. No public combat or loot enablement.
+
+---
+
 ## NATIVE COMBAT BROWSER MERGED; 3D ADAPTER RECONCILED — 2026-11-27 PHT
 
 - #922 merged at `ee52bf50460324dd3d00163701750bb13ce9fa1d`, exact head `f10611b3945666f5f2f72e54e110de67efe86f5e`: [Validate 45946606206](https://github.com/CryptoDilis/Climboria/actions/runs/45946606206) and [Gameplay 45946606208](https://github.com/CryptoDilis/Climboria/actions/runs/45946606208) SUCCESS; native browser socket step and full desktop/mobile gameplay passed. Main drift was unrelated; no production PvP or 3D integration.
