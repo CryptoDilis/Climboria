@@ -116,3 +116,24 @@ test('combat storage failure closes every socket, denies new admission and resta
   rb.webSocket.close(1000,'test');await h.flush();assert.equal(h.timers.size,0);
  }finally{h.restore()}
 });
+
+test('committed respawn push is scoped to active target and denied ticks never notify',async()=>{
+ const h=harness();
+ try{
+  const room=h.create(),a=(await h.connect(room,await h.ticket(room,A))).webSocket;
+  const b=(await h.connect(room,await h.ticket(room,B))).webSocket;
+  const bid=joined(b).id;
+  // Exercise scheduler routing with controlled runtime results; the actual
+  // HP lifecycle and durable commit are covered by transactional runtime tests.
+  const original=room.runtime;
+  room.runtime={...original,tick:async()=>({ok:true,respawned:[bid,bid,'retired-session']})};
+  await h.advance(100);
+  assert.deepEqual(b.inbox.filter(p=>p.type==='preview-respawn'),[{type:'preview-respawn',targetId:bid}]);
+  assert.equal(a.inbox.some(p=>p.type==='preview-respawn'),false);
+  room.runtime={...original,tick:async()=>({ok:false,respawned:[bid]})};
+  await h.advance(100);
+  assert.equal(b.inbox.filter(p=>p.type==='preview-respawn').length,1);
+  assert.equal(room.quarantined,true);
+  assert.equal(a.closed,true);assert.equal(b.closed,true);
+ }finally{h.restore()}
+});
