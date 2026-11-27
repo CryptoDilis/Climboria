@@ -28,15 +28,18 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
         if(address(fixedSuccessor).code.length==0||fixedSuccessor.used())revert InvalidConfig();
         successor=fixedSuccessor;successorHash=address(fixedSuccessor).codehash;
     }
-    function _current(uint256 expected) private view {
+    function _current(uint256 expected) internal view {
         validateConfig();
         if(expected!=epoch)revert Forbidden();
     }
     function bindSuccessor(uint256 expected) external onlyWallet {
         _current(expected);
+        _bind(true);
+    }
+    function _bind(bool alreadyIssued) internal {
         if(bound||address(successor).codehash!=successorHash||!successor.used())revert InvalidConfig();
         V3SuccessorTestToken t=successor.token();
-        if(address(t).code.length==0||!t.issued()||t.issuer()!=address(successor)||t.totalSupply()!=t.INITIAL_SUPPLY())revert InvalidConfig();
+        if(address(t).code.length==0||t.issued()!=alreadyIssued||t.issuer()!=address(successor)||t.totalSupply()!=(alreadyIssued?t.INITIAL_SUPPLY():0))revert InvalidConfig();
         for(uint256 i=0;i<7;i++){
             address v=successor.vaults(i);
             if(v.code.length==0||v==address(this)||v==address(wallet))revert InvalidConfig();
@@ -82,11 +85,11 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     function cancelLiquidity(uint256 expected,bytes32 id) external onlyWallet {V3DeferredLiquidityFixture(_target(2,expected)).cancel(id);}
     function scheduleLegacy(uint256 expected,bytes32 digest,uint256 expiresAt) external onlyWallet {V3DeferredLegacyFixture(_target(6,expected)).schedule(digest,expiresAt);}
     function cancelLegacy(uint256 expected) external onlyWallet {V3DeferredLegacyFixture(_target(6,expected)).cancel();}
-    function _rotationOwnerAllowed(address a) internal view override returns(bool){
+    function _rotationOwnerAllowed(address a) internal view virtual override returns(bool){
         // Prevent changes before binding and known role conflicts afterwards.
         return bound&&a!=founder&&a!=distributor;
     }
-    function _policyCallAllowed(bytes4 selector,uint256 len) internal view override returns(bool){
+    function _policyCallAllowed(bytes4 selector,uint256 len) internal view virtual override returns(bool){
         if(!bound)return selector==this.bindSuccessor.selector&&len==36;
         return (selector==this.proposeExpense.selector&&len==228)||
                (selector==this.cancelExpense.selector&&len==100)||
