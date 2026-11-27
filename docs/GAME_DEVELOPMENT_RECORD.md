@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A STABLE NPC IDENTITY REGISTRY CANDIDATE — 2026-11-27
+
+- PR #966 now includes isolated `game/npc/npc-roster.mjs` (e8cfdeb7dea4959cf42c199a67b88c4890f8a93e) and unit tests (fff5588d92346fa1dabfe03186d2ccc3169dc69a). Exact owner-approved names, stable NPC-only IDs, immutable labels/preferences and unique deterministic seeds; default roster selection one, explicit bounded cap up to five. Preferences are initial metadata, not implemented behavioral rules. Registry does not create actors, human presence, chat or economic activity. Runtime integration and tests pending.
+- Verified foundation runs #963 45967765549, #967 45968097821, #969 45968343291 passed; #963 and #967 mobile browser jobs passed; desktop and #969 browser verification pending at inspection. No existing runtime candidate branch changed.
+- NEXT: inspect terminal browser evidence, resolve failures, verify actual forest map and connected lake/forest travel before wiring identity registry into NPC snapshots/render/nameplates and implementing contextual chat. No public spawn or deployment.
+
+---
+
 ## NAMED NPC ROSTER AND WORLD CHAT HANDOFF — 2026-11-27
 
 - Owner approved Aurelion, KaelVex, Thornevale, VengeancePeak, ZevranSol and requested contextual NPC dialogue visible in actual world chat. Requirements R5A.10–R5A.11 added in 909a78e78ae538b48727206b207ca8b6fedb0555. Explicit NPC identity, no inflated human presence, shared authoritative delivery, bounded chat, no real inventory/rewards. Documentation only; implementation pending.
