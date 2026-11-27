@@ -9,7 +9,7 @@ permissions:
   contents: read
 jobs:
   symbolic:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -57,7 +57,7 @@ jobs:
       - name: Install exact upstream Halmos source
         run: |
           set -euo pipefail
-          python3 -m venv "$RUNNER_TEMP/halmos-venv"
+          python3.12 -m venv "$RUNNER_TEMP/halmos-venv"
           "$RUNNER_TEMP/halmos-venv/bin/python" -m pip install "git+https://github.com/a16z/halmos.git@079bb4241d1b460baf986257d56ea86977d73451"
           "$RUNNER_TEMP/halmos-venv/bin/python" -m pip freeze > "$RUNNER_TEMP/halmos-evidence/python-dependencies.txt"
           "$RUNNER_TEMP/halmos-venv/bin/halmos" --version
