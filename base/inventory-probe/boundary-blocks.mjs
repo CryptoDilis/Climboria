@@ -55,7 +55,7 @@ function summarize(block,pin,p){
   const mintBalance=all.some(x=>x.mint===CLIMB_SOLANA_MINT);
   if(explicitMint||mintBalance)hits.push({index,explicitMint,mintBalance,outcome:meta==null?'UNKNOWN':meta.err===null?'SUCCESS':'FAILED'});
  }
- // Canonical JSON hash of the full returned transaction array, not a consensus proof.
+ // Canonical parsed JS JSON hash, not raw bytes or consensus proof.\n // JSON number parsing can lose precision; do not use for exact u64 accounting.
  return {slot:pin.slot,blockhash:pin.blockhash,transactionCount:block.transactions.length,failed,missingMeta,missingTokenBalanceFields,transactionsSha256:digest(block.transactions),mintMentionCandidates:hits};
 }
 async function source(url,p,fetchFn){
@@ -72,6 +72,6 @@ export async function observeBoundaryBlocks(a,b,{fetchFn=fetch}={}){
   try{assertDistinctRpcEndpoints(a,b);}catch{fail('CONFIG_INVALID');}
   const first=await source(a,'A',fetchFn),second=await source(b,'B',fetchFn);
   if(canonical(first)!==canonical(second))fail('SOURCE_DISAGREEMENT');
-  return {status:'REPORTED_BOUNDARY_BLOCKS_ONLY',candidateUtc:'2026-11-27T07:52:22.702Z',blocks:first,providerIndependence:'NOT_VERIFIED',mintMentionCoverage:'NOT_CERTIFIED',eligibility:'NOT_CERTIFIED',authorization:false};
+  return {status:'REPORTED_BOUNDARY_BLOCKS_ONLY',candidateUtc:'2026-11-27T07:52:22.702Z',blocks:first,providerIndependence:'NOT_VERIFIED',digestScope:'CANONICAL_PARSED_JS_JSON_NOT_RAW_BYTES',mintMentionCoverage:'NOT_CERTIFIED',eligibility:'NOT_CERTIFIED',authorization:false};
  }catch(e){fail(boundaryFailureCode(e));}
 }
