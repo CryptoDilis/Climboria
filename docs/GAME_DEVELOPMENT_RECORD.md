@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## R5A MOBILE BROWSER PAIR EVIDENCE — 2026-11-28 PHT
+
+- #1013 exact bdc45d87f517b8d927c34eb0e7cc35066de48ce1 mobile job 140620013148 (run 46032633058) SUCCESS: actual lake 1800 ticks, Aurelion 242.6m/ZevranSol 311.58m, minimum spacing 0.8000000000002956m, maximum step 0.30000000000001137m, eight spacing blocks, swim observed, identities stable, actors closed and no player/inventory/peer/diagnostic mutation.
+- #1015 exact 04c0aee9b090c643efb80788c6665ddb99a993f0 mobile job 140621630701 (run 46033108161) SUCCESS: five same-camera simultaneous mesh and nameplate submissions, 18m/19.1m travel, one exact-motion GLB and one non-skeletal silhouette; peak one of two remote GLB slots, clean detach, unchanged peers/player/inventory/diagnostic. #1017 mobile job 140622391933 SUCCESS.
+- #1018 exact ffea332f22d361d98a4292dc1ff080d7b56ab890 mobile job 140623228910 (run 46033578725) SUCCESS: normal update loop 15 frames, both moved 2.4m, both groups attached/visible, one GLB resident, no human count change. Aurelion submitted 15 draws; ZevranSol submitted ZERO normal-camera draws in this sample. Do not claim simultaneous normal-camera visibility from attachment; separate explicit camera test above verified both draws. Distance cleanup at frame 16: both detached/hidden, resident/loading zero, no cleanup errors. Browser emulation, not physical Android performance.
+- All five paired desktop focused jobs still running at inspection; #1020 foundation 46033866649 and chat 46033866749 SUCCESS, mobile focused still running. No feature or source change in this checkpoint. NEXT: verify terminal desktop/mobile results, consolidate exact verified stack on current main; then explicitly test normal-camera paired draw/visibility and physical-device performance. No public spawn or production authority enabled.
+
+---
+
 ## R5A TWO-NPC SPACING FOUNDATION MERGED — 2026-11-28 PHT
 
 - #1010 exact 11f124a71fb2b74f19047002252d784ba9cd45db: all five source workflows SUCCESS (foundation 46032106652, chat 46032106500, Validate 46032106502, focused browser 46032106676, gameplay 46032106531). Compared intervening main files against three candidate paths; zero overlap, no non-Game edits. GitHub confirmed merge 79a3bd9efd94c565d67b3b593f3b4527b21e3369. Post-merge checks not yet verified.
