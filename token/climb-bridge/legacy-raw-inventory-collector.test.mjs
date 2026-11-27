@@ -73,7 +73,22 @@ test('reject RPC errors, mismatched ids and redact transport failures',async()=>
 import {inventoryFailureCode} from './legacy-raw-inventory-diagnostics.mjs';
 test('diagnostic codes distinguish exact context and RPC failures without exposing payloads',async()=>{
  await assert.rejects(run(mock((r,q)=>{if(q.id===3)r.result.context.slot++}).fetchFn),e=>inventoryFailureCode(e)==='SAME_SLOT_UNAVAILABLE');
- await assert.rejects(run(mock((r,q)=>{if(q.id===5)r.error={message:'secret URL'}}).fetchFn),e=>inventoryFailureCode(e)==='RPC_METHOD_FAILED_getProgramAccounts');
+ await assert.rejects(run(mock((r,q,url)=>{if(q.id===5&&url===B)r.error={message:'secret URL'}}).fetchFn),e=>inventoryFailureCode(e)==='RPC_B_getProgramAccounts_RPC_ERROR_OTHER');
  await assert.rejects(collectRawInventoryCandidate(A,B,{expectedGenesis:key(1),fetchFn:mock().fetchFn}),e=>inventoryFailureCode(e)==='GENESIS_CONFIG_MISMATCH');
  for(const e of [Error('https://private.invalid/SECRET'),Error('NO_GO: wrong source genesis SECRET'),{message:'NO_GO: wrong source genesis'},null])assert.equal(inventoryFailureCode(e),'UNCLASSIFIED_FAILURE');
+});
+
+test('provider-specific fixed diagnostics distinguish HTTP rate limits and RPC index exclusion',async()=>{
+ for(const [target,status,expected] of [[A,429,'RPC_A_getProgramAccounts_HTTP_429'],[B,403,'RPC_B_getProgramAccounts_HTTP_403']]){
+  const {fetchFn}=mock();
+  await assert.rejects(run(async(url,options)=>{
+   if(url===target&&JSON.parse(options.body).id===5)return new Response('secret URL',{status});
+   return fetchFn(url,options);
+  }),e=>inventoryFailureCode(e)===expected&&!e.message.includes('secret'));
+ }
+ await assert.rejects(run(mock((r,q,url)=>{if(q.id===5&&url===B)r.error={code:-32010,message:'secret URL',data:{secret:'private'}}}).fetchFn),e=>inventoryFailureCode(e)==='RPC_B_getProgramAccounts_RPC_INDEX_EXCLUDED'&&!e.message.includes('secret'));
+});
+test('unknown provider error codes and malformed envelopes never become diagnostic text',async()=>{
+ await assert.rejects(run(mock((r,q,url)=>{if(q.id===5&&url===A)r.error={code:'SECRET',message:'private'}}).fetchFn),e=>inventoryFailureCode(e)==='RPC_A_getProgramAccounts_RPC_ERROR_OTHER'&&!e.message.includes('SECRET'));
+ await assert.rejects(run(mock((r,q,url)=>{if(q.id===5&&url===B)r.id='SECRET'}).fetchFn),e=>inventoryFailureCode(e)==='RPC_B_getProgramAccounts_INVALID_ENVELOPE');
 });
