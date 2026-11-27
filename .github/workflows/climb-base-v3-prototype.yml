@@ -89,7 +89,7 @@ jobs:
         run: |
           set -euo pipefail
           forge test --match-contract V3AtomicSuccessorTest -vv | tee "$RUNNER_TEMP/climb-v3-atomic-successor-tests.log"
-          grep -Eq '7 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-atomic-successor-tests.log"
+          grep -Eq '8 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-atomic-successor-tests.log"
       - name: Run signed game reward fixture tests
         run: |
           set -euo pipefail
