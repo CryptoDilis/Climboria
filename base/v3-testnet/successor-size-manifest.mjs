@@ -16,7 +16,8 @@ const specs=[
  ['V3DeferredLiquidityFixture.sol','V3DeferredLiquidityFixture',6],
  ['V3LiquidityPolicyFixture.sol','V3SyntheticLPLock',3],
  ['V3DeferredLegacyFixture.sol','V3DeferredLegacyFixture',2],
- ['V3LegacyProofVerifierFixture.sol','V3LegacyProofVerifierFixture',0]
+ ['V3LegacyProofVerifierFixture.sol','V3LegacyProofVerifierFixture',0],
+ ['V3LegacyProofClaimFixture.sol','V3LegacyProofClaimFixture',2]
 ];
 const digest=x=>createHash('sha256').update(x).digest('hex');
 const bytes=x=>{assert.match(x,/^0x(?:[0-9a-fA-F]{2})+$/);return Buffer.from(x.slice(2),'hex');};
