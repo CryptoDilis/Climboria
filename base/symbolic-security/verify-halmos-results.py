@@ -7,7 +7,8 @@ from pathlib import Path
 EXPECTED = {
     "ClimbSymbolicTokenTest": {
         "check_unauthorizedIssue(address)", "check_exactAllocation()",
-        "check_burnCannotReopenIssuance(uint256)", "check_duplicateReserveRejected(uint8)",
+        "check_burnCannotReopenIssuance(uint256)", "check_duplicateReserveRejected(uint8,uint8)",
+        "check_fullSupplyBurnStillCannotIssue()", "check_unfundedCallerCannotBurn(address,uint256)",
     },
     "ClimbSymbolicRewardTest": {
         "check_unauthorizedRevoke(address)", "check_retiredSignerCannotSchedule(uint32)",
@@ -38,6 +39,8 @@ def verify(positive, negative):
             paths = t["num_paths"]
             require(isinstance(paths, list) and len(paths) == 3 and all(type(v) is int and v >= 0 for v in paths)
                     and paths[0] > 0 and paths[1] > 0 and paths[2] == 0, "no successful path or blocked path")
+            if t["name"] == "check_duplicateReserveRejected(uint8,uint8)":
+                require(paths[1] == 21, "all 21 duplicate reserve pairs must complete")
             count += 1
     require(seen == set(EXPECTED), "missing contract")
     require(negative["exitcode"] == 1, "negative campaign did not fail")
@@ -49,6 +52,8 @@ def verify(positive, negative):
     require(t["name"] == "check_detectCounterexample(uint256)" and t["exitcode"] == 1
             and type(t["num_models"]) is int and t["num_models"] > 0 and t["num_bounded_loops"] == 0,
             "negative control did not find counterexample")
+    models = t.get("models", [])
+    require(any(model.get("is_valid") is True and any(v.get("variable_name") == "x" and v.get("value") == 42 for v in model.get("model", {}).values()) for model in models), "negative control missing concrete valid x=42 model")
     return {"status":"BOUNDED_SYMBOLIC_PROPERTIES_PASS_NO_GO","properties":count,"negative_control":"COUNTEREXAMPLE_FOUND",
             "testnet":"NO_GO","mainnet":"NO_GO","limitations":"Selected symbolic properties on test-only contracts and modeled custody adapter; not complete protocol proof or deployment authorization."}
 
