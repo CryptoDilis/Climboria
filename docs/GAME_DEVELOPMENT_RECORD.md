@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## OWNER-APPROVED PLAYER EXPERIENCE AND BROWSER-FIRST EXPANSION — 2026-11-27 PHT
+
+- New [Game player experience master backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit [6f1fb20](https://github.com/CryptoDilis/Climboria/commit/6f1fb205629a6b402e81d8f8ef33dd60d4f72892), linked in canonical root README P4 master checklist commit [886a84d](https://github.com/CryptoDilis/Climboria/commit/886a84d127b3a11ccaa87f637eaa9a57bdc79038). Owner approved new player engagement features and browser-first constraints. R0–R7 records existing verified milestones and open gates, first 10-minute adventure, optional quests/hidden discoveries, dynamic events, skill/equipment/crafting progression, wildlife/enemies/bosses, social/co-op/guild/camp systems, non-punitive return activities, gated Base economy, asset optimization and physical-device budgets. All new items pending, no gameplay implementation in this documentation cycle. Existing master A–G, historical bugs and world expansion retained; no global priority change.
+- Verified #930 merged cb7257ffd5e2e4d0f4a1d4428ed7a7265717082e, exact head e0177f25205b21d98d8f9123a8f0fd5a39d426ab, Validate 45949794874 and Gameplay 45949794998 terminal SUCCESS. Combined native socket + actual GLB acceptance is isolated CI, not public combat. Existing public registered pilot readiness verified, real two-account/physical device acceptance still open.
+- EXACT NEXT: R0.1 authored private pilot room/renderer integration after #930; preserve fixed synthetic preview, explicit account/origin/room restrictions and authorized edge QA; actual two-account and device acceptance in parallel where authorized. Prepare R1 lightweight nonfinancial first adventure/discovery separately when foundations permit; no public PvP, persistent loot, token payouts or deployment authorization. No other workstream changes.
+
+---
+
 ## ACTUAL GLB ACCEPTANCE MERGED; COMBINED NATIVE GLB STEP PASSED — 2026-11-27 PHT
 
 - #928 merged 7fa859e9462c9934e6ce0f6bd7b05654afceccc2 after exact head d431a8abbb54f1a9116004584130b66c942277c2: Validate 45948604926 and Gameplay 45948604924 SUCCESS. Main drift unrelated Base/homepage work.
