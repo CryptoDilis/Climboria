@@ -2,9 +2,9 @@
 
 ## AUTHORED MAP MELEE OBSTRUCTION — 2026-11-27 PHT (PROPOSED)
 
-- Parent #909 reconciled head 4446f042f6d991f2ab5e16265cd73fba990cf01a: Authority 45940909732, Validate 45940909777, Gateway 45940909765 and Runtime 45940909755 SUCCESS; Gameplay 45940909768 running at checkpoint.
+- Parent #909 merged acbb1db07aca9e14af08d48f4a7fc4e23d587335; exact head 4446f042f6d991f2ab5e16265cd73fba990cf01a all five SUCCESS: Authority 45940909732, Validate 45940909777, Gateway 45940909765, Runtime 45940909755, Gameplay 45940909768.
 - New regression 14bba5a81372682a9aaa8b03d449b3ea4d426e63: two server-controlled players on opposite sides of an authored park swing seat, directional movement around the posts, within 2.8m but blocked melee, no HP change, then return along a clear route and successful hit. Source committed; fresh CI not yet executed. No production coverage assertion.
-- Fixed authored camp fixture a0437f615daf308fc2041be41492f3d58ae14fe8 now supplies a dedicated room/checkpoint identity, 40m x 40m authored dry region, fixed verified spawn and no caller override of terrain, bounds or identity. Regression 13ee62477c6f35b170cf79a7aa5e0dcb675f2b21 checks synthetic checkpoint separation, movement boundary and reconnect position; CI filter 720e987c5524f5c4c6c9e2808860613fb7ac135f. Not yet run. EXACT NEXT: merge #909 only after all checks green, reconcile #910 with main, verify fresh CI, then exercise this fixed fixture through an isolated local gateway without changing public admission. Keep cloud preview disabled and public presence unchanged.
+- Fixed authored camp fixture a0437f615daf308fc2041be41492f3d58ae14fe8 now supplies a dedicated room/checkpoint identity, 40m x 40m authored dry region, fixed verified spawn and no caller override of terrain, bounds or identity. Regression 13ee62477c6f35b170cf79a7aa5e0dcb675f2b21 checks synthetic checkpoint separation, movement boundary and reconnect position; CI filter 720e987c5524f5c4c6c9e2808860613fb7ac135f. Not yet run. EXACT NEXT: verify reconciled #910 fresh CI, then exercise this fixed fixture through an isolated local gateway without changing public admission. Keep cloud preview disabled and public presence unchanged.
 
 ---
 

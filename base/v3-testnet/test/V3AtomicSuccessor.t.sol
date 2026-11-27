@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {V3FounderVesting} from "../src/ClimbV3TestToken.sol";
-import {V3GameRewardFixture} from "../src/V3GameRewardFixture.sol";
+import {V3GovernedGameRewardFixture} from "../src/V3GovernedGameRewardFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "../src/V3EpochSpendFixture.sol";
 import {V3DeferredLegacyFixture} from "../src/V3DeferredLegacyFixture.sol";
 import {IV3SyntheticPool} from "../src/V3LiquidityPolicyFixture.sol";
@@ -28,6 +28,7 @@ contract SuccessorMockCustody is IV3CustodyEpochFixture {
     uint256 public constant override threshold=3;
     uint256 public constant override memberCount=5;
     function isMember(address) external pure override returns(bool){return false;}
+    function rewardSignerAllowed(address) external pure returns(bool){return true;}
     function propose(V3EpochSpendFixture v,address recipient,bytes32 evidence,bytes32 nonce,uint256 amount) external returns(bytes32){
         return v.propose(recipient,amount,evidence,0,nonce);
     }
@@ -96,7 +97,7 @@ contract V3AtomicSuccessorTest {
         }
         require(token.balanceOf(address(this))==0&&token.balanceOf(address(factory))==0&&token.balanceOf(FOUNDER)==0&&token.balanceOf(DISTRIBUTOR)==0);
         require(address(V3FounderVesting(factory.vaults(0)).token())==address(token));
-        require(address(V3GameRewardFixture(factory.vaults(1)).token())==address(token));
+        require(address(V3GovernedGameRewardFixture(factory.vaults(1)).token())==address(token));
         require(address(V3DeferredLiquidityFixture(factory.vaults(2)).asset())==address(token));
         require(address(V3EpochSpendFixture(factory.vaults(3)).token())==address(token));
         require(address(V3EpochSpendFixture(factory.vaults(4)).token())==address(token));
@@ -180,8 +181,8 @@ contract V3AtomicSuccessorTest {
         require(liquidity.pool().balanceOf(lock)==100&&token.balanceOf(address(liquidity.pool()))==1000);
     }
     function _claimGameReward() private {
-        V3GameRewardFixture gaming=V3GameRewardFixture(factory.vaults(1));
-        V3GameRewardFixture.Reward memory x=V3GameRewardFixture.Reward("GAME_EVENT",PAYEE,200,0,cfg.start+30 days);
+        V3GovernedGameRewardFixture gaming=V3GovernedGameRewardFixture(factory.vaults(1));
+        V3GovernedGameRewardFixture.Reward memory x=V3GovernedGameRewardFixture.Reward("GAME_EVENT",PAYEE,200,0,cfg.start+30 days,1);
         (uint8 v,bytes32 r,bytes32 s)=vm.sign(REWARD_KEY,gaming.digest(x));
         gaming.claim(x,abi.encodePacked(r,s,v));
     }
