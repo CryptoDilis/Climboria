@@ -11,6 +11,8 @@ test('actual local D1 wallet-only forum lifecycle',async()=>{
  const db=platform.env.DB;
  const sql=await readFile(new URL('../migrations/0001_forum.sql',import.meta.url),'utf8');
  for(const s of sql.split(';').map(x=>x.trim()).filter(Boolean))await db.prepare(s).run();
+ const second=await readFile(new URL('../migrations/0002_moderation.sql',import.meta.url),'utf8');
+ for(const s of second.split('\n').map(x=>x.trim()).filter(Boolean))await db.prepare(s).run();
  const env={DB:db,FORUM_ORIGIN:ORIGIN,FORUM_ENABLED:'true'};
  const call=async(path,data,token,origin=ORIGIN,extra={})=>{
   const headers={...(origin?{origin}:{}),...(data===undefined?{}:{'content-type':'application/json'}),...(token?{authorization:'Bearer '+token}:{}),...extra};
@@ -45,6 +47,27 @@ test('actual local D1 wallet-only forum lifecycle',async()=>{
  const replies=(await call('/v1/topics/'+topic+'/replies')).data.replies;assert.equal(replies[0].wallet,b.address.toLowerCase());
  assert.equal((await call('/v1/topics/'+topic+'/reports',{reason:'spam'},other)).status,201);
  assert.equal((await call('/v1/topics/'+topic+'/reports',{reason:'duplicate'},other)).status,409);
+ assert.equal((await call('/v1/reactions',{topicId:topic,action:'like'},other)).status,200);
+ assert.equal((await call('/v1/reactions',{topicId:topic,action:'like'},other)).status,200);
+ assert.equal((await call('/v1/topics')).data.topics[0].likes,1);
+ assert.equal((await call('/v1/reactions',{topicId:topic,action:'unlike'},other)).status,200);
+ assert.equal((await call('/v1/topics')).data.topics[0].likes,0);
+ const mod={targetType:'topic',targetId:topic,action:'hide',reason:'review',role:'admin'};
+ assert.equal((await call('/v1/moderation/actions',mod,other)).status,403);
+ assert.equal((await call('/v1/moderation/reports',undefined,other)).status,403);
+ await db.prepare('INSERT INTO moderators(wallet,active) VALUES(?,1)').bind(a.address.toLowerCase()).run();
+ assert.equal((await call('/v1/moderation/reports',undefined,token)).data.reports.length,1);
+ assert.equal((await call('/v1/moderation/actions',mod,token)).status,201);
+ assert.equal((await call('/v1/topics')).data.topics.length,0);
+ assert.equal((await call('/v1/topics/'+topic+'/replies')).status,404);
+ assert.equal((await call('/v1/topics/'+topic+'/replies',{body:'hidden'},other)).status,409);
+ assert.equal((await call('/v1/moderation/actions',{...mod,action:'restore'},token)).status,201);
+ assert.equal((await call('/v1/topics')).data.topics.length,1);
+ assert.equal((await call('/v1/moderation/actions',{...mod,targetType:'reply',targetId:replies[0].id},token)).status,201);
+ assert.equal((await call('/v1/topics/'+topic+'/replies')).data.replies.length,0);
+ assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM moderation_actions').first()).n,3);
+ await db.prepare('UPDATE moderators SET active=0 WHERE wallet=?').bind(a.address.toLowerCase()).run();
+ assert.equal((await call('/v1/moderation/actions',mod,token)).status,403);
  assert.equal((await call('/v1/proposals',{},token)).status,503);
  assert.equal((await call('/v1/votes',{},token)).status,503);
  assert.equal((await call('/v1/topics',input,token,'https://evil.example')).status,403);
