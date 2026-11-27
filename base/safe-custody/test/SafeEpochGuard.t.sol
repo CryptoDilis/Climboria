@@ -104,7 +104,7 @@ contract SafeEpochGuardTest {
     }
     function testCancelledAndExpiredRotationsRequireFreshDelay() public {
         _schedule(1,E,F);
-        _quorum(address(guard),abi.encodeCall(guard.cancelRotation,(1)));
+        _quorum(address(guard),abi.encodeCall(guard.cancelRotation,(1,guard.rotationSerial())));
         vm.warp(block.timestamp+2 days);
         _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
         _schedule(1,E,F);vm.warp(block.timestamp+9 days);
@@ -121,7 +121,7 @@ contract SafeEpochGuardTest {
         // Cancel and reschedule each consume one nonce. Sign the old payload at
         // the future nonce so the Safe nonce alone cannot explain its rejection.
         bytes memory sigs=_signedAt(address(wallet),stale,Enum.Operation.Call,3,wallet.nonce()+2);
-        _quorum(address(guard),abi.encodeCall(guard.cancelRotation,(1)));
+        _quorum(address(guard),abi.encodeCall(guard.cancelRotation,(1,guard.rotationSerial())));
         _schedule(1,E,F);
         require(guard.rotationSerial()==first+1&&wallet.nonce()==3);
         vm.warp(block.timestamp+2 days);
@@ -131,6 +131,18 @@ contract SafeEpochGuardTest {
         _reject(address(wallet),abi.encodeWithSignature("swapOwner(address,address,address)",D,E,F),Enum.Operation.Call,3);
         _quorum(address(wallet),_swap(E,F));
         require(wallet.nonce()==4&&guard.epoch()==2&&guard.isMember(F)&&!guard.isMember(E));
+    }
+    function testStaleCancellationCannotCancelNewSchedule() public {
+        _schedule(1,E,F);
+        bytes memory stale=abi.encodeCall(guard.cancelRotation,(1,guard.rotationSerial()));
+        bytes memory sigs=_signedAt(address(guard),stale,Enum.Operation.Call,3,wallet.nonce()+2);
+        _quorum(address(guard),stale);
+        _schedule(1,E,F);
+        vm.expectRevert();_exec(address(guard),stale,Enum.Operation.Call,sigs);
+        require(wallet.nonce()==3&&guard.rotationSerial()==2&&!guard.transactionActive());
+        (bytes32 digest,,,,)=guard.pending();require(digest!=0);
+        _quorum(address(guard),abi.encodeCall(guard.cancelRotation,(1,guard.rotationSerial())));
+        (digest,,,,)=guard.pending();require(digest==0&&wallet.nonce()==4);
     }
     function testInvalidRotationDoesNotChangeEpoch() public {
         _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,C,E,F)),Enum.Operation.Call,3);
@@ -145,7 +157,7 @@ contract SafeEpochGuardTest {
         _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
         require(wallet.nonce()==nonce&&guard.epoch()==1&&guard.isMember(E)&&!guard.isMember(F)&&!guard.transactionActive());
         (bytes32 digest,,,,)=guard.pending();require(digest!=0);
-        _quorum(address(guard),abi.encodeCall(guard.cancelRotation,(1)));
+        _quorum(address(guard),abi.encodeCall(guard.cancelRotation,(1,guard.rotationSerial())));
         (digest,,,,)=guard.pending();require(digest==0);
         _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,F)),Enum.Operation.Call,3);
         vm.etch(F,"");

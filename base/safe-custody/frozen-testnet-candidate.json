@@ -46,5 +46,5 @@
       ]
     }
   ],
-  "retirementReason": "Claude F1/N1: Safe signature-mode restrictions and issuance deadline/nonce invalidation change bytecode and issuance ABI; exact new build required.; T02 rotation schedule serial changes guard bytecode and signed swapOwner calldata.; T01 requires cryptographic signatures only and a seven-transaction ECDSA rehearsal.; T04 shared bind and permanent role separation change guard bytecode."
+  "retirementReason": "Claude F1/N1: Safe signature-mode restrictions and issuance deadline/nonce invalidation change bytecode and issuance ABI; exact new build required.; T02 rotation schedule serial changes guard bytecode and signed swapOwner calldata.; T01 requires cryptographic signatures only and a seven-transaction ECDSA rehearsal.; T04 shared bind and permanent role separation change guard bytecode.; T02 schedule-bound cancellation and quorum nonce invalidation change guard ABI."
 }
