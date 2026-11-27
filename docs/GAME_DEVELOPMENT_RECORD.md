@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## R5A VERIFIED ACTIVITY CONSOLIDATION CANDIDATE — 2026-11-27
+
+- Main-based integration from 0a7436407f36833f5cb114e7c4168c703492425c. #960 focused browser 45964759337 passed; #962 foundation 45965565093 and browser 45965565109 passed; #963 foundation 45967765549 and browser 45967765504 passed; #967 foundation 45968097821 and browser 45968097776 passed. #963 actual continuous desktop/mobile 17 frames, 17 draws, 2.72m, correct distance cleanup. Physical device performance still pending. #960 retarget to main conflicts because prior #958 changes already landed independently; preserve main record and unchanged game files, copy only verified activity and synthetic gathering candidate files. #969 actual forest map and #966 roster browser runs pending; not included. No public spawning or financial activity.
+- NEXT: run fresh main-based integration CI, then integrate verified actual forest and roster once their tests finish. Continuous lake-to-forest navigation, named nameplates/chat and shared authority remain pending. Do not enable public NPCs.
+
+---
+
 ## PLAYER-DRIVEN PROFESSIONS, EXPEDITION DEPTH AND IMMERSION APPROVED — 2026-11-27 PHT
 
 - Owner approved all ten proposed additions. R10.1–R10.11 in [Game player experience backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 1c5322fc7403216aaad8e736b24f08dd93ff151f; root P4 checklist update 19166c3b30a1b014a6628b5cc0223fcebba1977d. Scope: Player Job Board, merchant caravans, backpack weight/capacity, equipment inspection, environmental tracking, player shops/market stalls, combat training ground, expedition records, treasure recovery expeditions and environmental audio. All implementation items unchecked. Reuse existing R1–R9 systems and preserve original soundtrack, gameplay, privacy, no magic/no global character level, browser-first/mobile performance.

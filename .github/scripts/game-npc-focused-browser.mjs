@@ -1,0 +1,54 @@
+import assert from 'node:assert/strict';
+import {chromium} from 'playwright';
+import {resolve} from 'node:path';
+const mobile=process.env.NPC_QA_DEVICE==='mobile';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox','--enable-webgl','--use-gl=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
+try{
+ const context=await browser.newContext(mobile?{viewport:{width:390,height:844},isMobile:true,hasTouch:true}:{viewport:{width:1280,height:800}});
+ // Local fixture only. No actual account, token, public room admission or save.
+ await context.addInitScript(()=>localStorage.setItem('climboria-created-hero-v1',JSON.stringify({name:'NPC QA Explorer',model:'Jarrell',createdAt:'2026-11-14T00:00:00Z'})));
+ await context.route('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',r=>r.fulfill({path:resolve('node_modules/three/build/three.min.js'),contentType:'text/javascript'}));
+ await context.route('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js',r=>r.fulfill({path:resolve('node_modules/three/examples/js/loaders/GLTFLoader.js'),contentType:'text/javascript'}));
+ const page=await context.newPage(),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ const start=Date.now();
+ await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1',{waitUntil:'domcontentloaded',timeout:90000});
+ await page.waitForFunction(()=>window.__climboriaGameReady===true&&!!window.__climboriaJarrellsPeak?.npcContinuousStart,undefined,{timeout:120000});
+ const route=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcLakeRouteAudit());
+ assert.ok(route.wet&&route.exited&&route.playerUnchanged&&route.diagnosticsUnchanged&&route.closed);
+ assert.ok(route.distance>10&&route.maxStep<=.300001);
+ const glb=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcGlbRouteAudit());
+ assert.ok(glb.attached&&glb.visible&&glb.label&&glb.withinBudget&&glb.peersUnchanged&&glb.playerUnchanged&&glb.hidden&&glb.detached);
+ assert.ok(['walk','run','swim','fish','rest','swimIdle'].every(m=>glb.drawnModes.includes(m)));
+ assert.equal(glb.generatedClips.length,5);assert.ok(glb.generatedClips.every(c=>c.tracks>0));
+ const terrace=await page.evaluate(async()=>{const w=window.__climboriaJarrellsPeak;w.npcSmokePositionAtTerrace();return w.npcTerraceAudit()});
+ console.log('NPC actual terrace activity audit',JSON.stringify(terrace));
+ assert.ok(terrace.rise>.75&&terrace.crop.harvested>0&&terrace.maxStep<=.300001&&terrace.inventoryUnchanged&&terrace.diagnosticsUnchanged&&terrace.peersUnchanged&&terrace.cleaned);
+ assert.ok(['farm','climb'].every(m=>terrace.drawn.includes(m)));
+ assert.ok(['growing','ripe'].every(m=>terrace.cropDrawn.includes(m)));
+ const count=await page.evaluate(()=>window.__CLIMBORIA_GAME_PEERS.count());
+ const started=await page.evaluate(async()=>{const w=window.__climboriaJarrellsPeak;
+  if(!w.npcSmokePositionAtLake())return false;
+  return w.npcContinuousStart();
+ });
+ assert.equal(started,true);
+ // Software-rendered desktop CI can deliver very few normal frames per wall-clock second.
+ // Keep the same movement/draw/frame assertions; physical-device performance is a separate gate.
+ try{
+ await page.waitForFunction(()=>{const a=window.__climboriaJarrellsPeak.npcContinuousAudit();return a.session?.frames>=15&&a.session.distance>.5&&a.draws>0;},undefined,{timeout:mobile?45000:90000,polling:1000});
+ }catch(error){
+  const audit=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
+  console.error('NPC continuous acceptance failed',JSON.stringify({mobile,audit,errors}));
+  throw error;
+ }
+ const active=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
+ assert.ok(active.attached&&active.visible&&!active.session.closed&&active.draws>0);
+ assert.equal(active.peers,count);assert.ok(active.loading+active.resident<=active.budget);
+ await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak;w.resumeAtRoomPosition({x:0,z:-30,y:w.groundAt(0,-30)+1.75})});
+ await page.waitForFunction(()=>window.__climboriaJarrellsPeak.npcContinuousAudit().session?.closed,undefined,{timeout:15000});
+ const ended=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
+ assert.equal(ended.session.reason,'distance');assert.ok(!ended.attached&&!ended.visible);assert.equal(ended.peers,count);
+ assert.deepEqual(errors,[]);
+ console.log('NPC focused browser PASS',JSON.stringify({mobile,elapsedMs:Date.now()-start,route,glb,active,ended}));
+ await context.close();
+}finally{await browser.close()}
