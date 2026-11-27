@@ -1,0 +1,30 @@
+name: Secondary EVM Market Production Browser Canary
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/scripts/secondary-evm-production-canary.mjs'
+      - '.github/workflows/secondary-evm-production-canary.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install isolated Chromium
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Verify actual public research UI and browser provider access
+        run: |
+          node --check .github/scripts/secondary-evm-production-canary.mjs
+          node .github/scripts/secondary-evm-production-canary.mjs
