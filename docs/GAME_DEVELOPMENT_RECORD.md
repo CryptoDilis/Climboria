@@ -1,40 +1,10 @@
 # Climboria Game Development Record
 
-## AUTHORED PILOT FIVE CHECKS GREEN; CONCURRENT RECORD RECONCILIATION — 2026-11-27 PHT
+## SURVIVAL DEPTH AND PLAYER-FUNDED KOS BOUNTY BOARD — 2026-11-27 PHT
 
-- #938 exact head 85c15b3c4916867f0ba31cf18a7b0e220d41e4d1 all five SUCCESS: Authority 45952119285, Runtime 45952119349, Gateway 45952119334, Validate 45952119296, Gameplay 45952119308. Actual local pilot Worker/SQLite step passed. Main added concurrent Game NPC/backlog records; preserve both histories and all other main paths. No production change. Reconcile and require fresh CI.
-- #940 stacked character session lifecycle head 9a45b913b7673e46f591edb118d2af03934e8638 still unexecuted. Next reconcile #940 and verify CI after #938 merge. Actual private pilot GLB browser, server expiry and authorized edge/account QA remain pending. No deployment or public PvP.
-
----
-
-## AUTHORED PILOT LOCAL WORKER/SQLITE LIFECYCLE — 2026-11-27 PHT
-
-- #938 prior exact head b3d54116304b5b0291e71c98716cb31f0fed7895 had four green: Validate 45951411607, Authority 45951411584, Gateway 45951411492 and Runtime 45951411508; Gameplay 45951411513 running. New isolated workerd smoke 7781b09c176b1b09e2c98ad88c1caf7b528ce52c and CI wiring fc052d5679f393b763d5f0ed3d0f7b327b51982b exercise actual authored pilot Worker upgrade and SQLite DO, two synthetic accounts, one-use tickets, rejected public/internal paths, authoritative damage and timer-driven movement, reconnect and durable restart, recheck removed allowlist account at ticket consumption, disabled Worker/DO. Private ticket issuance stands in for verified identity; outer upstream auth is mocked separately in unit tests, not integrated end-to-end. No external credentials, no deployment. Source unexecuted at authoring; expiry and full real-account/edge acceptance remain pending.
-- EXACT NEXT: inspect fresh #938 CI including new runtime step, fix evidence-based failures without weakening assertions. Add expiry coverage and private renderer binding, verify authorized edge/account requirements before any cloud activation. Keep public game unchanged.
-
----
-
-## AUTHORED PILOT CLIENT AND TRUSTED AUTH ACCEPTANCE — 2026-11-27 PHT
-
-- #938 reconciled onto merged #930 at 797fd855a3852e157e5dd95e3e1c987338e96904, preserving all records. New explicit pilot client state 3cbede7b6b82e081a80b07e145a0aedcf4747a88 and transport 966f8e33a381dcf7d96168e037ae27a6f4a31fcb require the exact authored-camp-pilot tag, fixed authored snapshot and bounded positive session duration. Synthetic and CI-local admission paths remain distinct. Server expiry remains authoritative; no public socket dialer or UI integration.
-- Regression 9762c254132a5e7def58b5469b42f37d59e1769a covers cross-fixture rejection, invalid snapshot/expiry, authoritative hit reconciliation and fatal budget denial. Mocked upstream authentication regression 9012c0c2d391fb0d6b5aa710d68308da1bbb22f9 verifies allowlisted nonanonymous identity, rejects anonymous/unknown accounts and ignores forged body identity; budget precedes upstream auth. Source committed, new tests not executed at authoring. No actual user tokens, upstream requests or real-account claims.
-- EXACT NEXT: fresh CI on this branch; exercise actual isolated Worker/SQLite DO ticket and WebSocket lifecycle using mocked trusted auth, session expiry/reconnect and committed position/HP; then private pilot renderer mount, edge Access/account checks. Cloud remains disabled; no deployment, public PvP, inventory or production saves.
-
----
-
-## COMBINED NATIVE GLB COMBAT MERGED — 2026-11-27 PHT
-
-- #930 merged cb7257ffd5e2e4d0f4a1d4428ed7a7265717082e after exact head e0177f25205b21d98d8f9123a8f0fd5a39d426ab Validate 45949794874 and Gameplay 45949794998 terminal SUCCESS. No overlapping Game drift. Tests are local, not deployed PvP or physical-device acceptance.
-- #938 previous head 58699bc42a84c99de767ac4ab06367bef107ed05 Gateway 45950564640, Runtime 45950564665 and Validate 45950564652 SUCCESS; Gameplay 45950564774 running. Reconcile on #930 merge; preserve all historical documentation. Fresh exact-head CI needed. Next add explicit pilot client admission and authenticated mocked runtime regression, separate from existing synthetic and local authored fixture tags. No public activation/deployment.
-
----
-
-## AUTHORED PRIVATE COMBAT PILOT WORKER CANDIDATE — 2026-11-27 PHT
-
-- Independent branch based on main afb6c4c07e258ad65265880b18e60f351b655787, after #928 merge. #930 fresh Validate 45949794874 SUCCESS, Gameplay 45949794998 running; do not merge #930 until terminal green.
-- Proposed separate Worker c344024a2d93169e594b50f22dcd8d74f65a23b4 adapts audited synthetic preview lifecycle to the fixed authored Jarrell camp fixture. Separate DO class/binding, proposed dedicated hostname (not provisioned), explicit AUTHORED_PILOT_ENABLED flag and two-account allowlist, exact same-origin, authenticated nonanonymous user required, allowlist rechecked on ticket consumption, room-specific single-use tickets and bounded preview operation budget. Existing synthetic/public Workers untouched. Source only, no Wrangler config/DNS/route/credentials or deployment. External Access policy must be verified before any deployment; no claim of reviewed production security.
-- Admission gate unit tests 2eebcdab88344bbfdf3379f25b51681638730f98 run under existing gateway workflow wildcard. Test disabled/wrong origin/wrong host, fixed room, internal routes denied, malformed admission and upstream auth budget denial. Not yet executed; successful auth/admission, expiry, reconnect and actual Worker/DO integration need further regression coverage. Pilot fixture tag intentionally differs from local/synthetic client tags; separate explicit client adapter required.
-- EXACT NEXT: finish #930 exact-head CI and merge; verify pilot CI, add local Worker/DO tests with mocked trusted auth (not actual accounts), review fail-closed lifecycle and pilot client binding, then independently verify edge Access and account ownership. Keep cloud disabled and no public PvP, loot or production save mutation.
+- Owner approved eight additional gameplay ideas: revenge/rivalry, hidden treasure clues, grounded survival and cooking, natural events, reputation, equipment provenance, professions, rescue/carry. Added R8.1–R8.9 and R9.1–R9.9 in [Game player experience backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 62c3774a9291bb81ca1e86e266d42aef05b9ba92; root P4 checklist update 14c7e5630f357548539fedb5f27ab710892822a0. Preserve prior tasks, no magic and no traditional global level.
+- Owner requested an in-game KOS listing with issuer-funded reward between 0.1 and 999 CLIMB per verified kill (example 1), automatic kill detection, automatic hunter payout and notifications to issuer/hunter. Proposed finite prefunded escrow, quota/expiry/refunds, real-character identity and unique authoritative kill ID, opt-in bounty PvP, anti-collusion and anti-harassment safeguards, reviewed automatic settlement and onchain confirmation; no bots or fake kills, no real-world targeting. Policy/balance details and legal/security review remain open. Real-token settlement not authorized by this planning record; no Base mainnet token or deployment implied.
+- NEXT: finish and verify the current Game task, then prioritize R5A autonomous adventurers under existing stability gates, as directed by owner. R8 incremental work later; R9 nonfinancial fixture/private tests first, independently reviewed Base testnet and separate production release gates. No gameplay, funds, UI, token contracts, deployment or other workstream changes in this documentation cycle.
 
 ---
 
@@ -3125,3 +3095,51 @@ World: Common 65%, Uncommon 25%, Rare 8%, Epic 1.8%, Legendary 0.2%. Cave/geode:
 
 ## Base-first ecosystem direction — 2026-11-27 UTC
 See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_DIRECTION.md). Future blockchain-linked game assets and reward settlement prioritize Base; preserve real-time off-chain gameplay, chat, cloud saves and existing auth/guest paths. No new wallet requirement for gameplay, token payout or public chain transaction authorized. Continue current Game acceptance work; plan wallet linking and authenticated reward events separately.
+
+
+---
+
+## AUTHORED PILOT VERIFIED MILESTONE — 2026-11-27 PHT
+
+- #938 exact head 71d02f0107caac8244c43305187c17b1f5bdb50f all five SUCCESS: Authority 45953113014, Gateway 45953113072, Runtime 45953113123, Validate 45953113109, Gameplay 45953113010. Main's concurrent survival/bounty backlog documentation conflicted with the prepended record only. Preserve all records; append pilot history to avoid repeated collision with concurrent prepends. No code or gate changes in reconciliation. Fresh exact-head CI required.
+- NEXT #940 actual pilot GLB previously passed, server expiry verification pending; finish current task then R5A as directed. No public PvP or deployment.
+
+---
+
+## AUTHORED PILOT FIVE CHECKS GREEN; CONCURRENT RECORD RECONCILIATION — 2026-11-27 PHT
+
+- #938 exact head 85c15b3c4916867f0ba31cf18a7b0e220d41e4d1 all five SUCCESS: Authority 45952119285, Runtime 45952119349, Gateway 45952119334, Validate 45952119296, Gameplay 45952119308. Actual local pilot Worker/SQLite step passed. Main added concurrent Game NPC/backlog records; preserve both histories and all other main paths. No production change. Reconcile and require fresh CI.
+- #940 stacked character session lifecycle head 9a45b913b7673e46f591edb118d2af03934e8638 still unexecuted. Next reconcile #940 and verify CI after #938 merge. Actual private pilot GLB browser, server expiry and authorized edge/account QA remain pending. No deployment or public PvP.
+
+---
+
+## AUTHORED PILOT LOCAL WORKER/SQLITE LIFECYCLE — 2026-11-27 PHT
+
+- #938 prior exact head b3d54116304b5b0291e71c98716cb31f0fed7895 had four green: Validate 45951411607, Authority 45951411584, Gateway 45951411492 and Runtime 45951411508; Gameplay 45951411513 running. New isolated workerd smoke 7781b09c176b1b09e2c98ad88c1caf7b528ce52c and CI wiring fc052d5679f393b763d5f0ed3d0f7b327b51982b exercise actual authored pilot Worker upgrade and SQLite DO, two synthetic accounts, one-use tickets, rejected public/internal paths, authoritative damage and timer-driven movement, reconnect and durable restart, recheck removed allowlist account at ticket consumption, disabled Worker/DO. Private ticket issuance stands in for verified identity; outer upstream auth is mocked separately in unit tests, not integrated end-to-end. No external credentials, no deployment. Source unexecuted at authoring; expiry and full real-account/edge acceptance remain pending.
+- EXACT NEXT: inspect fresh #938 CI including new runtime step, fix evidence-based failures without weakening assertions. Add expiry coverage and private renderer binding, verify authorized edge/account requirements before any cloud activation. Keep public game unchanged.
+
+---
+
+## AUTHORED PILOT CLIENT AND TRUSTED AUTH ACCEPTANCE — 2026-11-27 PHT
+
+- #938 reconciled onto merged #930 at 797fd855a3852e157e5dd95e3e1c987338e96904, preserving all records. New explicit pilot client state 3cbede7b6b82e081a80b07e145a0aedcf4747a88 and transport 966f8e33a381dcf7d96168e037ae27a6f4a31fcb require the exact authored-camp-pilot tag, fixed authored snapshot and bounded positive session duration. Synthetic and CI-local admission paths remain distinct. Server expiry remains authoritative; no public socket dialer or UI integration.
+- Regression 9762c254132a5e7def58b5469b42f37d59e1769a covers cross-fixture rejection, invalid snapshot/expiry, authoritative hit reconciliation and fatal budget denial. Mocked upstream authentication regression 9012c0c2d391fb0d6b5aa710d68308da1bbb22f9 verifies allowlisted nonanonymous identity, rejects anonymous/unknown accounts and ignores forged body identity; budget precedes upstream auth. Source committed, new tests not executed at authoring. No actual user tokens, upstream requests or real-account claims.
+- EXACT NEXT: fresh CI on this branch; exercise actual isolated Worker/SQLite DO ticket and WebSocket lifecycle using mocked trusted auth, session expiry/reconnect and committed position/HP; then private pilot renderer mount, edge Access/account checks. Cloud remains disabled; no deployment, public PvP, inventory or production saves.
+
+---
+
+## COMBINED NATIVE GLB COMBAT MERGED — 2026-11-27 PHT
+
+- #930 merged cb7257ffd5e2e4d0f4a1d4428ed7a7265717082e after exact head e0177f25205b21d98d8f9123a8f0fd5a39d426ab Validate 45949794874 and Gameplay 45949794998 terminal SUCCESS. No overlapping Game drift. Tests are local, not deployed PvP or physical-device acceptance.
+- #938 previous head 58699bc42a84c99de767ac4ab06367bef107ed05 Gateway 45950564640, Runtime 45950564665 and Validate 45950564652 SUCCESS; Gameplay 45950564774 running. Reconcile on #930 merge; preserve all historical documentation. Fresh exact-head CI needed. Next add explicit pilot client admission and authenticated mocked runtime regression, separate from existing synthetic and local authored fixture tags. No public activation/deployment.
+
+---
+
+## AUTHORED PRIVATE COMBAT PILOT WORKER CANDIDATE — 2026-11-27 PHT
+
+- Independent branch based on main afb6c4c07e258ad65265880b18e60f351b655787, after #928 merge. #930 fresh Validate 45949794874 SUCCESS, Gameplay 45949794998 running; do not merge #930 until terminal green.
+- Proposed separate Worker c344024a2d93169e594b50f22dcd8d74f65a23b4 adapts audited synthetic preview lifecycle to the fixed authored Jarrell camp fixture. Separate DO class/binding, proposed dedicated hostname (not provisioned), explicit AUTHORED_PILOT_ENABLED flag and two-account allowlist, exact same-origin, authenticated nonanonymous user required, allowlist rechecked on ticket consumption, room-specific single-use tickets and bounded preview operation budget. Existing synthetic/public Workers untouched. Source only, no Wrangler config/DNS/route/credentials or deployment. External Access policy must be verified before any deployment; no claim of reviewed production security.
+- Admission gate unit tests 2eebcdab88344bbfdf3379f25b51681638730f98 run under existing gateway workflow wildcard. Test disabled/wrong origin/wrong host, fixed room, internal routes denied, malformed admission and upstream auth budget denial. Not yet executed; successful auth/admission, expiry, reconnect and actual Worker/DO integration need further regression coverage. Pilot fixture tag intentionally differs from local/synthetic client tags; separate explicit client adapter required.
+- EXACT NEXT: finish #930 exact-head CI and merge; verify pilot CI, add local Worker/DO tests with mocked trusted auth (not actual accounts), review fail-closed lifecycle and pilot client binding, then independently verify edge Access and account ownership. Keep cloud disabled and no public PvP, loot or production save mutation.
+
+---
