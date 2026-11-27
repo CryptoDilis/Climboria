@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A SIMULTANEOUS VISUAL PAIR CANDIDATE — 2026-11-28 PHT
+
+- #1010 exact head 11f124a71fb2b74f19047002252d784ba9cd45db: 3/5 source CI green, focused and gameplay still running. #1013 exact bdc45d87f517b8d927c34eb0e7cc35066de48ce1: foundation 46032633185 SUCCESS, focused browser 46032633058 pending. Preserve both active runs.
+- Smoke-only simultaneous same-camera pair rendering candidate: desktop two independent owned GLBs; mobile one GLB plus existing scene-owned lightweight silhouette (not skeletal animation). Existing cap of 3 desktop/2 mobile retained with one slot reserved for real peers; reject budget/priority changes, assert two actual mesh/nameplate submissions in the same render, stable position/identity, bounded spacing, movement, exact heavy animation and resource cleanup. Fresh desktop/mobile CI required; no continuous normal camera loop, physical-device benchmark, public NPC spawn or production changes.
+- NEXT: verify parent and candidate results, integrate verified stack on current main; add normal-frame paired lifecycle with fallback and real-peer preemption, then measure physical device performance and reviewed multiplayer authority. No financial or unrelated edits.
+
+---
+
 ## R5A ACTUAL MAP PAIR SPACING CANDIDATE — 2026-11-28 PHT
 
 - #1010 exact head 11f124a71fb2b74f19047002252d784ba9cd45db: foundation 46032106652, chat 46032106500, Validate 46032106502 SUCCESS; focused browser 46032106676 and gameplay 46032106531 running at inspection. Preserve parent CI.
