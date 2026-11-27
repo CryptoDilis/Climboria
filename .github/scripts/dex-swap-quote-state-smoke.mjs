@@ -78,6 +78,13 @@ async function quotePage(browser,kind,viewport,{walletProvider=false,tokenSearch
   if(kind==='DEX') {
     await page.locator('#showDexQuote').click();
     assert.equal(await page.locator('#swapQuote').isVisible(),true);
+  }else{
+    assert.equal(await page.locator('html').getAttribute('data-climboria-swap-network'),'base');
+    assert.equal(await page.locator('#getQuote').isDisabled(),true);
+    assert.equal(await page.locator('#connectWallet').isDisabled(),true);
+    assert.equal(await page.locator('#swapExternalJupiterHandoff').isHidden(),true);
+    await page.locator('#chainSolana').click();
+    assert.equal(await page.locator('#getQuote').isDisabled(),false);
   }
   return {page,forbidden,errors};
 }
