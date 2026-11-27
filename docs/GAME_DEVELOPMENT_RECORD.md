@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## CROWD C1/C2 PRIVATE RENDERER AND MOVEMENT INTEREST CANDIDATE — 2026-11-28 PHT
+
+- Consolidate exact #1033 pure policy files on current main, no source branch reset. Actual renderer tier selection/pressure downgrade/late GLB rejection wired only to explicit smoke fixture; 10/25/32 local renderer entries, no fake ONLINE/admission, no live renderer policy activation. Existing admission cap 32 unchanged; per-frame sorting is a candidate, not final hysteresis or performance proof. Critical marker-only is not production combat safe.
+- Optional default-off PresenceRoom movement interest: trusted positions only, near immediate/mid 500ms/far 2000ms, periodic flush latest suppressed positions and immediate closer-tier snapshot, cleanup on disconnect. No filtering of chat/admission/combat; private caller must schedule flush. Unit and native socket acceptance required. No production gateway change.
+- NEXT: verify exact CI, inspect renderer pressure transitions and transport evidence; add hysteresis/real close-range interaction acceptance before any activation. Physical device and real authenticated production capacity remain unverified.
+
+---
+
 ## R5A FINAL PAIRED ACCEPTANCE MERGED; CROWD FOUNDATION IN PROGRESS — 2026-11-28 PHT
 
 - #1030 exact 9e428d774d6bc3131dd47bc385663a0bae04d861 all nine workflows SUCCESS: authority 46039013422, foundation 46039013337, focused 46039013176, gameplay 46039013215, heroes 46039013246, chest 46039013179, general browser 46039013209, Validate 46039013411, peer priority 46039013341. Zero overlapping changes with intervening main. Merge confirmed e058e1e06cba255f2c9e7d1dc366255dc38de3f8. Public spawn remains off.
