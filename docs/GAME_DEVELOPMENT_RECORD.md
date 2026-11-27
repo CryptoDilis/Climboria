@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## PRIVATE COMBAT EDGE CONFIGURED; BOUNDED PREFLIGHT — 2026-11-27 PHT
+
+- Owner screenshots confirm exact custom hostname attached, workers.dev URLs OFF, Zero Trust Free and One-time PIN selected, authorized browser receives preview-disabled. Cookie-free curl GET / returned 302 to configured Access login host; POST /ticket and /ws upgrade probe returned 302. [Owner evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7206474057). Browser refresh did not prove rate limiting. Dashboard rule is Block/Active on exact hostname; quota warning 1/1 is capacity. Unauthorized email allowlist denial, rate enforcement and cost cap remain unverified.
+- Proposed read-only edge preflight: exact host, expected Access origin/path on all three endpoints, no redirects followed, no credentials or sensitive output; optional one 24-request unauthenticated burst only after redirects pass. 429 evidence is limited to observed response, not billing guarantee or attribution to specific rule without dashboard evidence. PR runs offline tests only; main-only manual run requires CHECK_DISABLED_COMBAT_EDGE while Worker disabled. No deployment, secret configuration, production runtime changes or actual combat test.
+- EXACT NEXT: merge green preflight PR; run manual preflight with rate_probe if operator approves disabled window, verify allowlist denial and dashboard rule events, then scoped two registered account UUIDs and publishable auth key, private QA tokens/cookies via secure local environment, explicit cost/window approval and rollback. Do not enable until gates pass. Game only.
+
+---
+
 ## DISABLED PRIVATE COMBAT WORKER UPLOADED — 2026-11-26 PHT
 
 - #844 merged 5c46a3d4f97f19c9d45d3423cfbcbe34a18dae37, exact head 063560b5681c305e30681ebcd07056034904b38e, five SUCCESS Gateway 45836380119 (job 139966222180: 283/283 + 64/64, including concurrency and second-write rollback), Authority 45836379978, Validate 45836379995, Runtime 45836379887, Gameplay 45836379889. Synthetic receipt/slot only; no real inventory grant.

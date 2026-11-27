@@ -49,3 +49,11 @@ The protected manual browser QA now additionally checks the disconnected target 
 - EXACT NEXT: do not repeat upload unless source/config changes require it. Operator verify separate Worker and namespace, no public workers.dev/preview URL, create Cloudflare Access application for exact private host and two authorized testers, configure edge rate controls and approved cost cap; only then attach exact private hostname, test unauthorized HTTP/WS rejection and authorized disabled response. Configure scoped tester allowlist/auth key without revealing secrets, verify rollback and explicitly approve bounded private QA window before enabling. No live production PvP or loot. No private route/access enforcement or cloud socket QA verified yet. Game only.
 
 ---
+
+## PRIVATE COMBAT EDGE CONFIGURED; BOUNDED PREFLIGHT — 2026-11-27 PHT
+
+- Owner screenshots confirm exact custom hostname attached, workers.dev URLs OFF, Zero Trust Free and One-time PIN selected, authorized browser receives preview-disabled. Cookie-free curl GET / returned 302 to configured Access login host; POST /ticket and /ws upgrade probe returned 302. [Owner evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7206474057). Browser refresh did not prove rate limiting. Dashboard rule is Block/Active on exact hostname; quota warning 1/1 is capacity. Unauthorized email allowlist denial, rate enforcement and cost cap remain unverified.
+- Proposed read-only edge preflight: exact host, expected Access origin/path on all three endpoints, no redirects followed, no credentials or sensitive output; optional one 24-request unauthenticated burst only after redirects pass. 429 evidence is limited to observed response, not billing guarantee or attribution to specific rule without dashboard evidence. PR runs offline tests only; main-only manual run requires CHECK_DISABLED_COMBAT_EDGE while Worker disabled. No deployment, secret configuration, production runtime changes or actual combat test.
+- EXACT NEXT: merge green preflight PR; run manual preflight with rate_probe if operator approves disabled window, verify allowlist denial and dashboard rule events, then scoped two registered account UUIDs and publishable auth key, private QA tokens/cookies via secure local environment, explicit cost/window approval and rollback. Do not enable until gates pass. Game only.
+
+---

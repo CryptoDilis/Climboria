@@ -1,0 +1,50 @@
+name: Game Combat Preview - Read-only Edge Preflight
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'game/multiplayer/worker/preview-edge-preflight.mjs'
+      - 'game/multiplayer/worker/preview-edge-preflight.test.mjs'
+      - '.github/workflows/game-preview-edge-preflight.yml'
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Confirm preview remains disabled: CHECK_DISABLED_COMBAT_EDGE'
+        required: true
+        type: string
+      rate_probe:
+        description: 'One bounded 24-request probe (no retries)'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: game-combat-edge-preflight
+  cancel-in-progress: false
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test game/multiplayer/worker/preview-edge-preflight.test.mjs
+  operator:
+    needs: offline
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.confirmation == 'CHECK_DISABLED_COMBAT_EDGE' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read-only exact-host Access checks
+        env:
+          RATE_PROBE: ${{ inputs.rate_probe }}
+        run: |
+          args=()
+          if [ "$RATE_PROBE" = true ]; then args+=(--rate-probe); fi
+          node game/multiplayer/worker/preview-edge-preflight.mjs CHECK_DISABLED_COMBAT_EDGE "${args[@]}"
