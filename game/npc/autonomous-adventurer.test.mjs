@@ -40,3 +40,23 @@ test('named NPC snapshots retain approved identity throughout movement and closu
  npc.close();assert.equal(npc.snapshot().npcId,id);
  assert.throws(()=>createAutonomousAdventurer({nodes,edges,spawn:'camp',world:world(),identityId:'human:1'}),/Unknown NPC identity/);
 });
+
+test('each registered personality favors its own available activities without forcing a route',()=>{
+ const profiles=[['aurelion','fish','farm'],['kaelvex','gather','fish'],['thornevale','farm','fish'],['vengeancepeak','explore','fish'],['zevransol','swim','farm']];
+ for(const [slug,preferred,other] of profiles){
+  const identityId='npc:jarrell-peak:'+slug;
+  const nodes=[{id:'rest',x:0,z:0,action:'rest'},{id:'preferred',x:3,z:0,action:preferred},{id:'other',x:-3,z:0,action:other}];
+  const edges=[['rest','preferred'],['preferred','rest'],['rest','other'],['other','rest']];
+  const make=(available=true)=>createAutonomousAdventurer({nodes,edges,spawn:'rest',identityId,personalityEnabled:true,seed:17,world:{sample:()=>({ground:0,water:null}),canTraverse:()=>true,canAct:n=>available||n.id!=='preferred'}});
+  const a=make(),b=make(false);assert.equal(a.tick(.1).goal,'preferred',slug);assert.equal(b.tick(.1).goal,'other',slug);a.close();b.close();
+ }
+});
+test('personality is opt-in, seeded by registry by default, and still honors collisions',()=>{
+ const identityId='npc:jarrell-peak:zevransol';
+ const a=createAutonomousAdventurer({nodes,edges,spawn:'camp',world:world(),identityId,personalityEnabled:true});
+ const b=createAutonomousAdventurer({nodes,edges,spawn:'camp',world:world(),identityId,personalityEnabled:true});
+ for(let i=0;i<200;i++)assert.deepEqual(a.tick(.1),b.tick(.1));a.close();b.close();
+ const c=createAutonomousAdventurer({nodes,edges,spawn:'camp',world:world(()=>true),identityId,personalityEnabled:true});
+ for(let i=0;i<100;i++){const s=c.tick(.1);assert.equal(s.x,0);assert.equal(s.z,0)}c.close();
+ assert.throws(()=>createAutonomousAdventurer({nodes,edges,spawn:'camp',world:world(),personalityEnabled:true}),/registered identity/);
+});

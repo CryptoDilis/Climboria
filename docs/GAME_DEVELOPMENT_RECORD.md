@@ -1,5 +1,109 @@
 # Climboria Game Development Record
 
+## R5A NATIVE LOOPBACK NPC WEBSOCKET ACCEPTANCE CANDIDATE — 2026-11-27
+
+- #999 foundation 46018846978 and chat acceptance 46018847001 passed; focused browser 46018846891 pending. #990 general browser 46018616380 repeated unrelated homepage navigation assertion 11 vs 12 at climb-token-record-smoke.mjs:33; no Game scope bypass. Other completed #990 checks green, gameplay and focused browser pending at inspection.
+- Add dedicated loopback-only native browser WebSocket fixture with two separate Chromium contexts, synthetic one-use tickets, actual PresenceRoom and private scheduler; controlled server clock, synthetic geometry, local server only. Verify identical linked NPC replies through real frames, two human ONLINE, draft preservation, client forged NPC frame rejection and close cleanup. No production Worker, real auth, public route, persistent storage, or actual reviewed server map. Add CI step; fresh verification pending.
+- NEXT: inspect candidate and consolidated CI; resolve homepage contract via separate owner workstream, consolidate verified changes. Private workerd/DO scheduling and reviewed map actor admission still required; then simultaneous actors, spacing, physical device and public release gates.
+
+---
+
+## R5A PRIVATE NPC SERVER SCHEDULER CANDIDATE — 2026-11-27
+
+- #990 exact consolidated head db712b556d36bab459fd44b3d3dc96b2eb34a767: foundation 46018616313, authenticated gateway 46018616370 and server authority 46018616218 passed; eight other runs pending at inspection. Preserve active consolidated branch. Existing general browser homepage blocker remains unresolved until fresh run proves otherwise.
+- Add isolated disabled-by-default one-shot server scheduler owning trusted room bridge and two actor controllers; starts only with visible room recipients, max 60s / 600 ticks at 100ms, no catch-up burst, one pending timer, close on empty room, budget expiry, clock error or explicit stop. Capability true only while running. Tests with actual controllers and room core verify linked dialogue, unchanged human roster, disabled gate, expiry, stale timer and shutdown. Fresh CI pending. Not connected to production Worker, preview combat Worker, external auth or deployed WSS. Synthetic fixture geometry is not reviewed production terrain.
+- NEXT: verify current CI, consolidate and merge green Game changes; add private reviewed server geometry/actor admission, bind scheduler to isolated authenticated room lifecycle with capability and local workerd WebSocket acceptance. Physical device performance, actor spacing, public activation remain gated.
+
+---
+
+## R5A VERIFIED TWO-BROWSER CHAT CONSOLIDATION — 2026-11-27
+
+- #998 exact head ad100babd0868f05a1274e655f1b2bbe5b5b4ef5 chat acceptance 46018097512, job 140570329819: 100 tests passed, 0 failed; actual Chromium desktop 1280 and mobile-emulated 390 DOM fixture received identical three NPC events including linked reply; human ONLINE 2, mute, duplicate rejection, draft preservation and disconnect cleanup passed. Local synthetic auth/transport, not production WSS or physical device verification.
+- Consolidate exact verified #998 tree (including #995/#996) onto current main 2ca38e2f2b6c7ed225d6cda818009a5334edb625 in #990. Main changes since prior base exclusively non-game paths; preserve all. Fresh full CI required; previous homepage nav count failure 46014811410 remains unresolved until new run proves otherwise. Do not skip unrelated tests. No public activation, Worker scheduling, deployment or financial changes.
+- NEXT: review fresh main-targeted CI and merge only when green; private bounded authoritative scheduler with reviewed map geometry and room capability, then real local WebSocket acceptance and physical device tests. Simultaneous NPC visual rendering and actor avoidance remain pending.
+
+---
+
+## R5A NPC CHAT CLIENT CI AND TWO-BROWSER FIXTURE — 2026-11-27
+
+- #996 foundation 46016987107 and focused browser 46016987177 passed. #998 initial head 596760914dd3f4b1ed7859c9ab375445bd3375a4 had no returned workflow runs because client-presence paths were outside the NPC workflow filters. Add dedicated chat acceptance workflow, not a bypass of existing checks.
+- New two independent Chromium contexts (desktop 1280 and mobile-emulated 390) run actual client-presence.js and real DOM, with local synthetic auth/socket fixture only; Node owns real PresenceRoom, two autonomous NPC controllers and dialogue bridge. Checks matching linked event transcripts, NPC mute/deduplication, two human ONLINE, human draft preservation, client packet rejection and disconnect cleanup. External traffic blocked; not a production WebSocket or real account test, not physical mobile performance. Fresh CI pending.
+- #990 general browser still red from unrelated homepage navigation count; do not alter that workstream. NEXT: verify new workflow and client tests, reconcile current main for consolidated merge, implement reviewed server scheduler/capability on private authoritative room and actual WSS acceptance; simultaneous actors, avoidance, physical device and public activation remain gated.
+
+---
+
+## R5A NPC WORLD CHAT CLIENT CANDIDATE — 2026-11-27
+
+- #996 foundation 46016987107 passed, focused browser 46016987177 pending at inspection. #990 retains unrelated homepage navigation failure 46014811410; main changes since branch base are other workstreams. No scope bypass.
+- Add dedicated NPC-only World Chat handling to existing authenticated client. Explicit server spawn capability required; exact five registry labels/IDs, bounded plain text, valid session message IDs and linked reply IDs, monotonic dedupe, per-page NPC mute, cleanup on disconnect. NPC events cannot add peers, send packets, acknowledge or clear human drafts. Existing human chat and production capability unchanged. Client fixture tests added; fresh CI pending. No deployed Worker emits the capability yet.
+- NEXT: verify client and bridge CI, re-evaluate homepage blocker against latest main, wire private authoritative scheduler with reviewed server geometry and capability handshake; prove two actual browser clients receive identical server-owned events, moderation/reconnect, and performance. Public NPC activation remains locked.
+
+---
+
+## R5A PRIVATE NPC ROOM DIALOGUE BRIDGE CANDIDATE — 2026-11-27
+
+- #995 foundation 46015243641 and browser 46015243679 passed. Both profiles: 281 simulation steps, Aurelion 39.3m and ZevranSol 53.4m, 0.3m max steps, opener at 24.1s while resting and linked reply at 28.1s, separation 11.94m then 3.61m, unchanged player/inventory/peers and cleanup. #990 seven of eight passed; general browser 46014811410 still failed on unrelated homepage nav count. No scope bypass.
+- Add disabled-by-default private server room bridge owning exactly two named actor controllers. Trusted scheduler samples actors only; dedicated npc-world-chat packets broadcast via existing PresenceRoom transport, no NPC admission into human roster, no client injection path, no message persistence/replay. Two fake transport tests use actual controller ticks, visible recipients, hidden member exclusion, reconnect, disabled/empty room and identity mismatch. No deployed Worker scheduling or client UI wired; fresh CI pending.
+- NEXT: verify bridge tests, review #990 merge blocker with homepage owner; integrate a private authoritative room scheduler only after server geometry/actor admission review, add dedicated client packet validation, text-only display, mute/dedupe, two browser clients and real device performance. No public NPC activation, wallet/reward changes or human presence inflation.
+
+---
+
+## R5A PAIRED ACTUAL NPC DIALOGUE SMOKE CANDIDATE — 2026-11-27
+
+- #990 consolidated head 1b7116ac09aaf3db0262c6d14b681e8d1ab58946 foundation 46014811353, server authority 46014811301, validation 46014811385 passed. General browser 46014811410 failed at unrelated desktop homepage nav child count 11 vs expected 12 in climb-token-record-smoke.mjs:33; PR comment 7220671802 records blocker. Game wallet smoke passed all three widths. Do not bypass or alter cross-workstream checks; other runs pending at inspection.
+- Add isolated browser audit using two independently ticking named controllers (Aurelion and ZevranSol), distinct initial lake waypoints, actual loaded map adapters and enabled personalities. Feed genuine snapshots to dialogue engine; require linked opener/reply from different NPCs, nearby range, >=4s delay, movement, <=0.3m steps, cleanup and unchanged player/inventory/peers. No fabricated activity snapshots or public messages. This is paired simulation, not simultaneous GLB rendering, inter-NPC avoidance, world chat UI or shared server acceptance. Fresh browser CI pending.
+- NEXT: inspect #990 and candidate CI; coordinate unrelated homepage navigation test fix with its owner before main merge. Verify actual pair dialogue, add authoritative room-owned transport and two-client display/reconnect/mute/abuse checks. Inter-NPC collision/spacing, player interaction, real-time performance and public activation remain pending.
+
+---
+
+## R5A VERIFIED PERSONALITY AND DIALOGUE CONSOLIDATION — 2026-11-27
+
+- #990 foundation 46011575420 passed; focused browser 46011575438 cancelled after mobile success. #991 foundation 46012752331 and desktop/mobile browser 46012752264 passed; #993 foundation 46013225215 and desktop/mobile browser 46013225116 passed, including inherited same-actor visuals. Personality and dialogue unit acceptance green; no server chat or actual paired NPC dialogue yet.
+- Consolidate exact #993 verified code onto checked main 8326380affc99b5e6a6a23c65723a95012c26cb9 via existing #990, preserving all unrelated main changes. Eleven game-scoped files only. Fresh main-targeted CI and mergeability required. No public spawn or economic changes.
+- NEXT: verify consolidated CI, merge if green; build actual paired autonomous NPC dialogue fixture, then trusted server room transport, two-client acceptance and physical mobile tests. Keep NPC activation gated.
+
+---
+
+## R5A CONTEXTUAL NPC DIALOGUE FOUNDATION — 2026-11-27
+
+- #990 foundation 46011575420 and mobile visual profile passed; desktop pending. #991 foundation 46012752331 passed; browser 46012752264 pending. Separate child branch preserves both active runs.
+- Add isolated trusted-scheduler dialogue engine: exact registry identities, nearby NPCs within 12m, actual stationary activity context, authored safe lines and personality replies, 4s reply delay, 12s conversation gap, 30s per-speaker cooldown, bounded state, duplicate/spoof rejection and cancellation on separation/expiry. Stable session-scoped message IDs with reply linkage and explicit NPC sender. No transport or public world chat publication; trusted server integration required, never accept client-submitted NPC snapshots. Unit tests pending.
+- NEXT: verify current candidates, merge consolidated game changes when green, integrate engine with actual autonomous actors and authoritative room scheduler, verify same world-chat events on two clients with mute/moderation, reconnect/dedupe and abuse checks. No public activation or human ONLINE count inflation. Physical mobile performance still pending.
+
+---
+
+## R5A NPC PERSONALITY UTILITY CANDIDATE — 2026-11-27
+
+- #990 consolidated head 1a42ae23ebd3133b70e62bd56e81bd578ea9fb4d: foundation 46011575420 passed; mobile job 140548139495 passed same-actor GLB projection and sampled swim/fish/gather/transit draws (4 mesh, 4 nameplate), 477.786m, 2441 steps, stable identity, cleanup, unchanged player/inventory/peers. Desktop job 140548139793 pending at inspection. No physical device or real-time full-route performance evidence. Preserve active parent CI.
+- Add opt-in personality goal scoring to the autonomous controller and connected adapter: exact registry preferences, bounded 2.4 utility bonus (0.6 under low stamina), no repeat bonus, stable registry seed unless explicit seed supplied. Existing defaults unchanged; preference cannot authorize unavailable activities or override collision. Tests cover all five registered NPCs, unavailable preferred goals, deterministic replay, collision and connected diverse activity completion. No public spawn, multi-actor admission, chat or real economy changes. Fresh CI pending.
+- NEXT: verify #990 full CI and mergeability, verify personality tests, integrate opt-in named behavior into actual map smoke; then authored contextual NPC dialogue and server-authoritative world chat with two-client tests, shared state and physical mobile performance. Keep public activation locked.
+
+---
+
+## R5A CONNECTED MAP VERIFIED; SAME-ACTOR VISUAL CANDIDATE — 2026-11-27
+
+- #988 foundation 46009216068 and focused browser 46009216013 passed; #990 foundation 46010066229 and focused browser 46010066104 passed. Both actual map profiles: 477.786m travel, 2441 steps, max step 0.3m, direct validated connector with 1381 probes, swim/fish/gather completion and water exit, one synthetic wood, stable identity, unchanged player/inventory/peers/diagnostics. No actual continuous visual rendering proven by those runs.
+- Consolidate verified graph/map files onto current main 52171486b11eec512afe68fddf0cda7b2bdf3f0b. Route planner already merged and identical; preserve all other main changes. Add same-actor GLB projection on every simulation tick and sampled real WebGL draws for fish/swim/gather and transit, nameplate and cleanup. No new public spawn or chat, no real resources. Fresh combined CI pending; sampled renders are not real-time or physical-device performance evidence.
+- NEXT: verify combined main-targeted CI, then merge if green, add actual personality goal preferences and contextual NPC dialogue foundation, shared chat authority and physical device gates. Keep public NPC activation disabled.
+
+---
+
+## R5A ACTUAL CONNECTED MAP SMOKE CANDIDATE — 2026-11-27
+
+- #987 merged into main as a26ced3924a15a562b8d30ab8d2a7cc42c3ccdc9 after four green source workflows. #988 foundation 46009216068 passed, focused browser 46009216013 pending at inspection. Separate child branch preserves its active CI.
+- Smoke-only connected map audit uses the same loaded lake/forest terrain, nearest up to three existing authored fallen-log candidates, bounded connector search and one named Aurelion controller. Requires completed fish/swim/gather, actual water exit, stable identity, <=0.3m steps, synthetic wood, unchanged player state/inventory/peers/diagnostics. This is actual map simulation, not continuous visual rendering or physical device performance. Existing independent GLB draw audits remain. No public spawn or real economy. Fresh browser verification pending.
+- NEXT: verify #988 and this candidate, inspect route attempt diagnostics if no safe corridor, improve bounded navigation without bypassing terrain or collision; then connected visual acceptance, personality biases, contextual world chat and shared authority.
+
+---
+
+## R5A CONNECTED ACTIVITY GRAPH CANDIDATE — 2026-11-27
+
+- Parent #987 head 95baea762efcc7a4cb8524661c31f041311219a5 foundation 46008239837, focused browser 46008239990 and validation 46008239857 passed; gameplay smoke 46008239874 pending at inspection. Main post-merge run not returned for #971 merge SHA. Parent branch unchanged while CI runs.
+- Compose existing lake and forest graph adapters into one continuous actor using verified dry connector; retain one stable NPC identity, private synthetic resource accounting, collision validation, and bounded novelty goal bias to encourage varied activity without scripted order. Transit waypoints are not activity goals. Unit tests require actual continuous fixture travel, fishing/swimming/gathering completion, stable identity, no teleport, fail-closed unloaded gap. Actual terrain browser integration and CI still pending. No public NPC activation, chat, economy or player state changes.
+- NEXT: inspect parent and candidate CI, integrate smoke-only actual loaded map connector and verify bounded continuous travel on actual terrain; if no safe corridor, choose authored nearer source or adjust planner within measured budgets, never bypass collision. Then named behavioral preferences and world chat, shared authority, physical mobile performance.
+
+---
+
 ## R5A CONNECTED NAVIGATION FOUNDATION — 2026-11-27
 
 - #971 merged into main as 7ae83e97c7dcc4524127a63182b24c9a4a689175 after all eight source CI workflows passed (NPC browser 45971734920, foundation 45971735025, gameplay 45971735003; other checks passed). Public NPC spawn remains disabled. Main post-merge CI pending at this checkpoint.

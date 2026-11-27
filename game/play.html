@@ -3847,6 +3847,92 @@ if(new URLSearchParams(location.search).has('smoke')){
  document.addEventListener('visibilitychange',()=>{if(document.hidden)window.ENDLESS_WILDS.npcContinuousStop()});
 }
 if(new URLSearchParams(location.search).has('smoke')){
+ window.ENDLESS_WILDS.npcPairedDialogueAudit=async()=>{
+  const [{createAutonomousAdventurer},{createNpcDialogue}]=await Promise.all([import('./npc/autonomous-adventurer.mjs'),import('./npc/npc-dialogue.mjs')]);
+  if(!restoreExplorerPosition({x:258,z:80,y:groundAt(258,80)+1.75,yaw:Math.PI/2}))throw Error('Paired NPC lake fixture unavailable');
+  const before={x:P.x,y:P.y,z:P.z,inventory:JSON.stringify(inventory),diag:window.__climboriaLastCollision,peers:livePeers.size};
+  const lakeRoute=await makeLakeNpcForSmoke();lakeRoute.npc.close();
+  const actors=[],messages=[],dialogue=createNpcDialogue({sessionId:'local-pair-smoke'});
+  let maxStep=0,steps=0;const distances=[0,0],seen=[new Set(),new Set()];
+  try{
+   for(const [identityId,spawn] of [['npc:jarrell-peak:aurelion','rest'],['npc:jarrell-peak:zevransol','shore']]){
+    actors.push(createAutonomousAdventurer({nodes:lakeRoute.nodes,edges:lakeRoute.edges,world:lakeRoute.world,spawn,identityId,personalityEnabled:true}));
+   }
+   let previous=actors.map(a=>a.snapshot());
+   for(;steps<6000;steps++){
+    const snapshots=actors.map(a=>a.tick(.1));
+    for(const [i,v] of snapshots.entries()){
+     const step=Math.hypot(v.x-previous[i].x,v.z-previous[i].z);
+     maxStep=Math.max(maxStep,step);distances[i]+=step;seen[i].add(v.mode);
+    }
+    previous=snapshots;
+    // Only live controller snapshots, never authored fake activity or chat inputs.
+    const message=dialogue.tick(steps*100,snapshots);
+    if(message)messages.push({message,separation:Math.hypot(snapshots[0].x-snapshots[1].x,snapshots[0].z-snapshots[1].z),
+     modes:snapshots.map(v=>({id:v.npcId,mode:v.mode,goal:v.goal}))});
+    if(messages.some(e=>e.message.replyTo&&messages.some(m=>m.message.id===e.message.replyTo))&&distances.every(v=>v>5))break;
+   }
+  }finally{dialogue.close();for(const a of actors)a.close()}
+  return {steps,maxStep,distances,seen:seen.map(v=>[...v]),messages,closed:actors.length===2&&actors.every(a=>a.snapshot().closed),
+   playerUnchanged:P.x===before.x&&P.y===before.y&&P.z===before.z,inventoryUnchanged:before.inventory===JSON.stringify(inventory),
+   diagnosticsUnchanged:before.diag===window.__climboriaLastCollision,peersUnchanged:before.peers===livePeers.size};
+ };
+ window.ENDLESS_WILDS.npcConnectedMapAudit=async()=>{
+  const [{createConnectedAdventurer},{createAdventurerRenderer},{buildNpcActivityClips}]=await Promise.all([import('./npc/connected-adventurer.mjs'),import('./npc/adventurer-renderer.mjs'),import('./npc/npc-activity-clips.mjs')]);
+  if(remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB)throw Error('No shared GLB slot for connected route');
+  const lake=WATER_BODIES.find(b=>b.id==='sanctuary_lake'),bank=FAC.find(f=>f.type==='fish'&&f.waterBodyId===lake?.id);
+  if(!bank||!restoreExplorerPosition({x:258,z:80,y:groundAt(258,80)+1.75,yaw:Math.PI/2}))throw Error('Lake fixture unavailable');
+  const loaded=(x,z)=>{const cx=Math.floor(x/CS),cz=Math.floor(z/CS);
+   for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)if(!chunks.has((cx+i)+','+(cz+j)))return false;return true};
+  const before={x:P.x,y:P.y,z:P.z,inventory:JSON.stringify(inventory),diag:window.__climboriaLastCollision,peers:livePeers.size};
+  const candidates=cc0LogSpots.filter(p=>loaded(p.x,p.z)&&Math.hypot(p.x-bank.x,p.z-bank.z)<950)
+   .sort((a,b)=>Math.hypot(a.x-bank.x,a.z-bank.z)-Math.hypot(b.x-bank.x,b.z-bank.z)).slice(0,3);
+  const attempts=[];let connected;
+  // All candidates use the same loaded world, with no chunk streaming or actor teleport between activities.
+  for(const spot of candidates){
+   try{connected=createConnectedAdventurer({groundAt,waterBodyAt,actorBlocked,loaded,fishingSpots:FAC,lake,logSpots:[spot],forestCenter:spot,
+    identityId:'npc:jarrell-peak:aurelion',routeOptions:{grid:24,maxProbes:24000,maxExpanded:256,maxWaypoints:48}});break}
+   catch(error){attempts.push({x:spot.x,z:spot.z,error:String(error)})}
+  }
+  if(!connected)throw Error('Actual connected route unavailable: '+JSON.stringify({candidates,attempts}));
+  const npc=connected.npc,required=['fish','swim','gather'];let previous=npc.snapshot(),distance=0,maxStep=0,wet=false,exited=false,steps=0,stableIdentity=true;
+  const budgetBefore=remoteGLBLoading+remoteGLBResidents,drawn=new Set(),clipsSeen={};
+  let gltf,group,label,projection,loading=false,resident=false,draws=0,nameplateDraws=0,transitDraw=false;
+  try{
+   remoteGLBLoading++;loading=true;
+   gltf=await new T3.GLTFLoader().loadAsync('../assets/characters/Climboria_Jarrell.glb');
+   remoteGLBLoading--;loading=false;remoteGLBResidents++;resident=true;
+   const clips=buildNpcActivityClips(T3,gltf.scene,poseMeshyNeutralRest),fit=fitRemoteHero(gltf.scene);
+   if(!fit)throw Error('Connected NPC GLB fit failed');
+   group=new T3.Group();group.name='AutonomousNPC:connected-smoke';label=peerMarker(npc.snapshot().label);label.onBeforeRender=()=>{nameplateDraws++};group.add(fit,label);scene.add(group);
+   gltf.scene.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;const prior=o.onBeforeRender;o.onBeforeRender=function(...args){draws++;prior?.apply(this,args)}}});
+   projection=createAdventurerRenderer({group,clips:[...gltf.animations,...clips],mixer:new T3.AnimationMixer(gltf.scene),loopRepeat:T3.LoopRepeat,identityId:npc.snapshot().npcId,dispose:()=>{}});
+   const camera=new T3.PerspectiveCamera(45,cam.aspect,.1,100);
+   const drawAt=s=>{const prior=draws;camera.position.set(s.x+4,s.y+3,s.z+5);camera.lookAt(s.x,s.y+.7,s.z);camera.updateMatrixWorld(true);renderer.render(scene,camera);if(draws<=prior)throw Error('Connected NPC missing WebGL draw');};
+   if(!projection.frame(previous,.1))throw Error('Connected NPC spawn projection rejected');
+   for(;steps<24000;steps++){
+    const s=npc.tick(.1),step=Math.hypot(s.x-previous.x,s.z-previous.z);
+    distance+=step;maxStep=Math.max(maxStep,step);
+    stableIdentity=stableIdentity&&s.npcId==='npc:jarrell-peak:aurelion'&&s.label==='Aurelion [NPC]';
+    if(s.swim)wet=true;if(wet&&!s.swim)exited=true;previous=s;
+    if(!projection.frame(s,.1))throw Error('Connected NPC projection rejected');
+    const a=projection.audit();
+    if(a.exact&&required.includes(a.requested)&&!drawn.has(a.requested)){drawAt(s);drawn.add(a.requested);clipsSeen[a.requested]=a.clipName;}
+    if(!transitDraw&&distance>150&&a.exact&&['walk','run'].includes(a.requested)){drawAt(s);transitDraw=true;}
+    if(exited&&required.every(a=>connected.audit().completed.includes(a)&&drawn.has(a))&&transitDraw)break;
+   }
+  }finally{
+   npc.close();projection?.close();if(group)scene.remove(group);
+   if(label){label.material.map?.dispose();label.material.dispose()}
+   if(gltf)disposeRemoteHero(gltf.scene);if(loading)remoteGLBLoading--;if(resident)remoteGLBResidents--;
+   renderer.render(scene,cam);
+  }
+  return {source:connected.source,authoredSource:cc0LogSpots.some(p=>p.x===connected.source.x&&p.z===connected.source.z),
+   connector:connected.route,attempts,steps,distance,maxStep,wet,exited,stableIdentity,closed:npc.snapshot().closed,
+   drawn:[...drawn],clipsSeen,draws,nameplateDraws,transitDraw,visualCleaned:!!group&&group.parent===null&&remoteGLBLoading+remoteGLBResidents===budgetBefore,
+   ...connected.audit(),playerUnchanged:P.x===before.x&&P.y===before.y&&P.z===before.z,
+   inventoryUnchanged:before.inventory===JSON.stringify(inventory),diagnosticsUnchanged:before.diag===window.__climboriaLastCollision,peersUnchanged:before.peers===livePeers.size};
+ };
  window.ENDLESS_WILDS.npcForestAudit=async()=>{
   const [{createForestGatherer},{createAdventurerRenderer},{buildNpcActivityClips}]=await Promise.all([
    import('./npc/forest-gatherer.mjs'),import('./npc/adventurer-renderer.mjs'),import('./npc/npc-activity-clips.mjs')]);
