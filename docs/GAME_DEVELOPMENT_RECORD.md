@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## COMBAT: COMMITTED RESPAWN NOTIFICATION — 2026-11-27 PHT (PROPOSED)
+
+- Prior damage push #894 merged at 7b59a82b82efdf37e2499b1599b611efc0d200db. This follow-up sends preview-respawn to the exact active session after successful durable runtime tick; duplicate IDs deduplicated, retired/expired sessions ignored, failed tick quarantines without notification. Event is advisory; snapshot remains authoritative. No additional storage write or public enablement.
+- Source 520c92dd56bf97956745ebef41763915867fae14; scheduler routing regression 141fa4af09370d91bebc525dcd24cfe79b1ab72f uses controlled tick outcomes, not a full death/respawn lifecycle test. CI pending.
+- EXACT NEXT: verify exact-head CI, then real lifecycle lethal-hit, downed reconnect, committed respawn and restart acceptance with bounded fixture budget. Keep private cloud preview disabled; no loot/inventory or other workstreams changed.
+
+---
+
 ## COMBAT-ONLY PRIORITY: COMMITTED TARGET HP PUSH — 2026-11-27 PHT (PROPOSED)
 
 - Owner explicitly redirected work to combat only. Do not advance loot/inventory in this cycle; #892 is separate and not required for combat. Private cloud QA deferred after Access denial; keep deployed preview disabled, no bypass or production changes.
