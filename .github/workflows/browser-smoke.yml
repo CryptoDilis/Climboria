@@ -144,6 +144,8 @@ jobs:
               await Promise.all([page.waitForURL('**/dex/'),page.locator('#swapBtn').click()]);
               if(new URL(page.url()).pathname!=='/dex/') throw new Error('Homepage DEX CTA did not navigate to /dex/');
               const dexPage=page;
+              // Desktop uses the same deterministic market-row fixture as mobile; live provider availability is separate.
+              await page.route('https://api.coingecko.com/api/v3/coins/markets**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(['bitcoin','ethereum','solana','binancecoin','ripple','usd-coin'].map((id,i)=>({id,symbol:['btc','eth','sol','bnb','xrp','usdc'][i],name:['Bitcoin','Ethereum','Solana','BNB','XRP','USD Coin'][i],current_price:i?10:50000,price_change_percentage_24h:1,sparkline_in_7d:{price:[1,2,3]}})))}));
               if(!await dexPage.locator('#markets').count()) throw new Error('DEX CTA did not open the market explorer');
               // Let the page's initial market bootstrap finish before the isolated search fixture.
               // Otherwise a late boot response can overwrite the search response in state.pairs.
