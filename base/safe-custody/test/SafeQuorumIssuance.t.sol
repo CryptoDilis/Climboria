@@ -6,13 +6,14 @@ import {IV3SyntheticPool} from "v3-src/V3LiquidityPolicyFixture.sol";
 import {IV3SyntheticPoolBuilder} from "v3-src/V3AtomicSuccessorFixture.sol";
 import {Enum} from "safe-contracts/common/Enum.sol";
 import {SafeQuorumReserveFactoryFixture,SafeQuorumReserveGuardFixture,V3QuorumSuccessorFixture} from "../src/SafeQuorumIssuanceFixture.sol";
-import {V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorTestToken} from "v3-src/V3AtomicSuccessorFixture.sol";
+import {V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorTestToken,V3SuccessorConditionalDeployer} from "v3-src/V3AtomicSuccessorFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "v3-src/V3EpochSpendFixture.sol";
 import {V3SharedExpenseRegistry} from "v3-src/V3SharedExpenseFixture.sol";
 import {V3GameRewardFixture} from "v3-src/V3GameRewardFixture.sol";
 import {ReserveQuote,ReservePool,ReservePoolBuilder,ReserveLPDestination} from "./SafeReserveGuard.t.sol";
 interface VmQuorumIssue {
     function chainId(uint256) external;
+    function etch(address,bytes calldata) external;
     function addr(uint256) external returns(address);
     function sign(uint256,bytes32) external returns(uint8,bytes32,bytes32);
     function warp(uint256) external;
@@ -59,7 +60,8 @@ contract SafeQuorumIssuanceTest {
     function setUp() public {
         vm.chainId(84532);
         setup=new SafeQuorumReserveFactoryFixture();
-        successor=new V3QuorumSuccessorFixture(address(setup));
+        V3SuccessorConditionalDeployer helper=new V3SuccessorConditionalDeployer();
+        successor=new V3QuorumSuccessorFixture(address(setup),helper,address(helper).codehash);
         keys=[uint256(0x12345),uint256(0x23456),uint256(0x34567)];
         for(uint256 i=0;i<3;i++)for(uint256 j=i+1;j<3;j++){
             if(vm.addr(keys[j])<vm.addr(keys[i]))(keys[i],keys[j])=(keys[j],keys[i]);
@@ -89,6 +91,16 @@ contract SafeQuorumIssuanceTest {
         require(address(guard.asset())==address(0)&&guard.founder()==address(0)&&guard.distributor()==address(0));
         for(uint256 i=0;i<7;i++)require(successor.vaults(i)==address(0)&&guard.destinations(i)==address(0));
     }
+    function testChangedConditionalHelperRejectsQuorumIssuance() public {
+        address helper=address(successor.conditional());
+        bytes memory original=helper.code;
+        require(helper.codehash==successor.conditionalHash());
+        vm.etch(helper,hex"60006000f3");
+        bytes memory data=_data();bytes memory sigs=_sign(data,3);
+        vm.expectRevert();_exec(data,sigs);_empty();
+        vm.etch(helper,original);_issue();
+        require(successor.token().totalSupply()==SUPPLY);
+    }
     function testNoCreatorOrUnregisteredCallerIssuance() public {
         require(successor.configuredGuard()==address(guard));
         vm.expectRevert();successor.create(cfg);
@@ -98,7 +110,7 @@ contract SafeQuorumIssuanceTest {
         _empty();
     }
     function testSetupFactoryCannotBeFrontRunOrReused() public {
-        V3QuorumSuccessorFixture fresh=new V3QuorumSuccessorFixture(address(setup));
+        V3QuorumSuccessorFixture fresh=new V3QuorumSuccessorFixture(address(setup),successor.conditional(),successor.conditionalHash());
         vm.prank(PAYEE);vm.expectRevert();setup.create(owners,fresh);
         require(fresh.configuredGuard()==address(0));
         vm.expectRevert();setup.create(owners,successor);

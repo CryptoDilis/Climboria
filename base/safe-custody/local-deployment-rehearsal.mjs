@@ -73,7 +73,12 @@ try{
  assert.equal(new Set([setup,singleton,bootstrap]).size,3);
  const verify=async(file,name,at,imm=[])=>verifyRuntime(JSON.parse(readFileSync('out/'+file+'/'+name+'.json','utf8')),await rpc('eth_getCode',[at,'latest']),imm);
  const factoryProvenance={setup:await verify('SafeQuorumIssuanceFixture.sol','SafeQuorumReserveFactoryFixture',setup,[singleton,bootstrap]),singleton:await verify('Safe.sol','Safe',singleton),bootstrap:await verify('SafeEpochGuardFixture.sol','SafeGuardBootstrapFixture',bootstrap),singletonAddress:singleton,bootstrapAddress:bootstrap};
- const successor=await deploy('successorFactory','SafeQuorumIssuanceFixture.sol','V3QuorumSuccessorFixture',creator,cast('abi-encode','f(address)',setup));
+ const helper=await deploy('conditionalHelper','V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',creator);
+ factoryProvenance.conditionalHelper=await verify('V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',helper);
+ const helperHash=contracts.conditionalHelper.runtimeKeccak256;
+ const successor=await deploy('successorFactory','SafeQuorumIssuanceFixture.sol','V3QuorumSuccessorFixture',creator,cast('abi-encode','f(address,address,bytes32)',setup,helper,helperHash));
+ assert.equal(await address(successor,'conditional()'),helper);
+ assert.equal(await call(successor,'conditionalHash()'),helperHash);
  const quote=await deploy('syntheticQuote','SafeReserveGuard.t.sol','ReserveQuote',creator);
  const builder=await deploy('syntheticPoolBuilder','SafeReserveGuard.t.sol','ReservePoolBuilder',creator);
  const lp=await deploy('syntheticLPDestination','SafeReserveGuard.t.sol','ReserveLPDestination',creator);

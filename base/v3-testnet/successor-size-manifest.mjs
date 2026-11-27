@@ -3,7 +3,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 const specs=[
- ['V3AtomicSuccessorFixture.sol','V3AtomicSuccessorFixture',0],
+ ['V3AtomicSuccessorFixture.sol','V3AtomicSuccessorFixture',2],
  ['V3AtomicSuccessorFixture.sol','V3SuccessorTestToken',0],
  ['V3AtomicSuccessorFixture.sol','V3SuccessorCoreDeployer',0],
  ['V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',0],
