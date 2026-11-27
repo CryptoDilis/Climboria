@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## R5A NAMED NPC RUNTIME SMOKE CANDIDATE — 2026-11-27
+
+- On top of #972 (f1dc32783766eccc9b5177d9c77441334816ae6d), bind optional registry identity to autonomous snapshots and renderer; reject mismatched or unknown IDs, retain generic fixture compatibility. Continuous smoke actor uses Aurelion [NPC] actual canvas nameplate, records sprite draw callbacks and asserts stable ID, label and cleanup. No extra actors, public spawn, presence, chat or economy changes. New tests and browser acceptance pending.
+- #971 6/8 passed, remaining gameplay and focused browser runs pending; #972 foundation 45969578112 passed and browser 45969578125 pending. Separate branch preserves active CI. Next verify integration chain; continuous connected lake/forest route still pending (verified sites are far apart, loaded terrain constraints apply), then chat and behavior biases, shared authority and physical mobile performance.
+
+---
+
 ## R5A VERIFIED FOREST AND ROSTER INTEGRATION CANDIDATE — 2026-11-27
 
 - #969 head 48e8b817539a0c5172649de5bd581a15f0b3a39a: foundation 45968343291 and browser 45968343205 passed. Both desktop and mobile reported actual authored forest source, 24.4m travel, bounded 0.3m steps, NPC_Gather draw, one synthetic wood collected, unchanged inventory/peers/diagnostics and cleanup. #966 head 16be2dc95694b8ba5a0320b65093906191e4ad79: foundation 45968540003 and browser 45968540132 passed; stable roster only, not runtime nameplate or chat.

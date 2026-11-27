@@ -1,5 +1,6 @@
 // Dedicated NPC presentation only. Does not import presence, inventory or player controls.
 // A caller supplies owned GLB resources and a scene group, after budget admission.
+import {getNpcIdentity} from './npc-roster.mjs';
 const finite=Number.isFinite;
 const patterns={
  idle:/^(Idle_03|Standing_Idle|Idle)$/i,
@@ -10,7 +11,9 @@ const patterns={
  farm:/^(NPC_Farm)$/i,
  rest:/^(Sitting_Idle|Sit_Idle|Resting|NPC_Rest)$/i
 };
-export function createAdventurerRenderer({group,clips,mixer,dispose,loopRepeat,footOffset=0}={}){
+export function createAdventurerRenderer({group,clips,mixer,dispose,loopRepeat,footOffset=0,identityId=null}={}){
+ const identity=identityId===null?null:getNpcIdentity(identityId);
+ if(identityId!==null&&!identity)throw Error('Unknown NPC renderer identity');
  if(typeof group?.position?.set!=='function'||!group.rotation||
     !Array.isArray(clips)||!clips.length||typeof mixer?.clipAction!=='function'||
     typeof mixer.update!=='function'||typeof mixer.stopAllAction!=='function'||
@@ -21,7 +24,7 @@ export function createAdventurerRenderer({group,clips,mixer,dispose,loopRepeat,f
  function frame(s,dt){
   if(closed)return false;
   if(s?.closed){close();return false}
-  if(s?.kind!=='npc'||s.label!=='Adventurer [NPC]'||
+  if(s?.kind!=='npc'||s.label!==(identity?.label??'Adventurer [NPC]')||(identity?s.npcId!==identity.id:s.npcId!==undefined)||
      ![s.x,s.y,s.z,dt].every(finite)||dt<0||Math.abs(s.x)>50000||Math.abs(s.z)>50000||Math.abs(s.y)>50000||
      !Object.hasOwn(patterns,s.mode)&&s.mode!=='explore'||typeof s.swim!=='boolean')
    return hide();

@@ -43,11 +43,13 @@ try{
  }
  const active=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
  assert.ok(active.attached&&active.visible&&!active.session.closed&&active.draws>0);
+ assert.equal(active.session.position.npcId,'npc:jarrell-peak:aurelion');
+ assert.equal(active.session.position.label,'Aurelion [NPC]');assert.equal(active.nameplate,'Aurelion [NPC]');assert.ok(active.nameplateDraws>0);
  assert.equal(active.peers,count);assert.ok(active.loading+active.resident<=active.budget);
  await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak;w.resumeAtRoomPosition({x:0,z:-30,y:w.groundAt(0,-30)+1.75})});
  await page.waitForFunction(()=>window.__climboriaJarrellsPeak.npcContinuousAudit().session?.closed,undefined,{timeout:15000});
  const ended=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
- assert.equal(ended.session.reason,'distance');assert.ok(!ended.attached&&!ended.visible);assert.equal(ended.peers,count);
+ assert.equal(ended.session.reason,'distance');assert.ok(!ended.attached&&!ended.visible);assert.equal(ended.peers,count);assert.equal(ended.nameplate,null);
  const forest=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcForestAudit());
  console.log('NPC actual forest gathering audit',JSON.stringify(forest));
  assert.ok(forest.authoredSource&&forest.gatherDraw&&forest.draws>0&&forest.resources.gathered>0&&forest.resources.gathered<=forest.resources.capacity);
