@@ -3,6 +3,7 @@ import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {Miniflare} from 'miniflare';
+import {attachPreviewCombatTransport} from '../../game/multiplayer/preview-combat-client-transport.mjs';
 
 // Actual local workerd and SQLite Durable Objects, no upstream auth,
 // production credentials, route, deployment or real account data.
@@ -14,6 +15,13 @@ const timeout=(promise,ms=10000)=>new Promise((resolve,reject)=>{
  const t=setTimeout(()=>reject(Error('preview runtime operation timed out')),ms);
  Promise.resolve(promise).then(v=>{clearTimeout(t);resolve(v)},e=>{clearTimeout(t);reject(e)});
 });
+async function waitForClient(predicate){
+ const deadline=Date.now()+5000;
+ while(!predicate()){
+  if(Date.now()>=deadline)throw Error('Private client reconciliation deadline');
+  await new Promise(resolve=>setTimeout(resolve,20));
+ }
+}
 async function start(enabled='true'){
  mf=new Miniflare({
   modules:true,scriptPath:resolve('game/multiplayer/worker/preview-worker.mjs'),
@@ -76,20 +84,29 @@ try{
  assert.equal((await upgrade(stub,ta)).status,401,'single-use ticket must not replay');
  const b=await connect(stub,await ticket(stub,B));
  const aid=a.joined.id,bid=b.joined.id;
+ // b's raw listener remains passive for packet evidence; only its adapter sends.
+ const client=attachPreviewCombatTransport(b.ws,b.joined);
+ assert.equal(client.read().health,500);assert.equal(client.canAct(),true);
  await a.next(m=>m.type==='preview-peers'&&m.ids.length===2&&m.ids.includes(bid));
  assert.equal((await a.send({type:'attack',targetId:bid,damage:999})).ok,false);
  const hit=await a.send({type:'attack',targetId:bid});
  assert.equal(hit.ok,true);assert.equal(hit.health,495);
  const pushed=await b.next(m=>m.type==='preview-hit');
  assert.deepEqual(pushed,{type:'preview-hit',actorId:aid,targetId:bid,health:495,damage:5,downed:false});
- assert.equal((await b.send({type:'snapshot'})).snapshot.health,495);
  assert.equal((await a.send({type:'attack',targetId:bid})).ok,false);
- b.close();
+ await waitForClient(()=>client.read()?.health===495&&client.canAct());
+ assert.equal(client.read().downed,false);
+ client.close();assert.equal(client.read(),null);assert.equal(client.canAct(),false);
+ sockets.delete(b.ws);
  await a.next(m=>m.type==='preview-peers'&&m.ids.length===1&&m.ids[0]===aid);
  const b2=await connect(stub,await ticket(stub,B));
  assert.equal(b2.joined.snapshot.health,495);
  assert.notEqual(b2.joined.id,bid);
- b2.close();
+ const replacement=attachPreviewCombatTransport(b2.ws,b2.joined);
+ assert.equal(replacement.read().health,495);assert.equal(replacement.refresh(),true);
+ await waitForClient(()=>replacement.canAct());
+ assert.equal(replacement.read().health,495);
+ replacement.close();sockets.delete(b2.ws);
  await a.next(m=>m.type==='preview-peers'&&m.ids.length===1&&m.ids[0]===aid);
  a.close();
  await stop();
@@ -119,5 +136,5 @@ try{
  assert.equal(denied.status,503);
  const outer=await mf.dispatchFetch('https://preview.invalid/ticket',{method:'POST'});
  assert.equal(outer.status,503);
- console.log('PASS: actual local workerd WebSockets, private SQLite DO tickets, committed HP push to target, reconnect/restart, persistent auth/admission caps and disabled-by-default admission');
+ console.log('PASS: actual local workerd WebSockets, private SQLite DO tickets, committed HP push and exclusive client snapshot reconciliation, reconnect/restart, persistent auth/admission caps and disabled-by-default admission');
 }finally{await stop();await rm(dir,{recursive:true,force:true})}
