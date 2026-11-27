@@ -17,6 +17,7 @@ try{
  const snapshot=()=>page.evaluate(()=>({single:window.__climboriaJarrellsPeak.npcContinuousAudit(),pair:window.__climboriaJarrellsPeak.npcPairContinuousAudit(),peer:window.__CLIMBORIA_GAME_PEERS.audit()}));
  const position=()=>page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairSmokeView());
  const measure=async(label)=>{
+  console.log('NPC population sample started',JSON.stringify({label,elapsedMs:Date.now()-start}));
   const before=await snapshot();
   const times=await page.evaluate(async()=>{
    const next=()=>new Promise(resolve=>requestAnimationFrame(resolve));
@@ -32,6 +33,7 @@ try{
   const after=await snapshot();
   assert.equal(before.peer.peers,0);assert.equal(after.peer.peers,0);
   assert.ok(after.peer.loading+after.peer.resident<=after.peer.budget-1);
+  console.log('NPC population sample completed',JSON.stringify({label,samples:times.length,p95Ms:q(.95),elapsedMs:Date.now()-start}));
   return {label,samples:times.length,meanMs:total/times.length,p50Ms:q(.5),p95Ms:q(.95),maxMs:sorted.at(-1),over50Ms:times.filter(t=>t>50).length,over100Ms:times.filter(t=>t>100).length,observedFps:1000*times.length/total,before,after};
  };
  const empty=async()=>{
