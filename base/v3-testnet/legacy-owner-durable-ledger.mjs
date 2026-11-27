@@ -5,11 +5,13 @@ import {createHash} from 'node:crypto';
 import {syntheticOwnerMessage} from './legacy-owner-proof.mjs';
 import {DatabaseSync} from 'node:sqlite';
 import {openSync,closeSync,lstatSync} from 'node:fs';
+import {RESERVE} from './legacy-canonical-evidence.mjs';
 import {verifySyntheticBatch} from './legacy-owner-ledger.mjs';
-const SCHEMA='CLIMB_SYNTHETIC_REPLAY_V4';
+const SCHEMA='CLIMB_SYNTHETIC_REPLAY_V5';
 const fail=msg=>{throw Error('NO_GO: '+msg);};
 // Trusted fixture operator explicitly approves campaign and eligible rows.
-// Production authorization and global economic policy remain out of scope.
+// Reserve a shared synthetic budget across all campaigns in this database.
+// Production authorization and economic policy remain out of scope.
 function campaignDigest(c){
  return createHash('sha256').update(JSON.stringify(['CLIMB_SYNTHETIC_CAMPAIGN_V1',
  c.mode,c.sourceGenesis,c.sourceMint,c.snapshotSlot,c.snapshotHash,c.inventoryDigest,
@@ -29,7 +31,7 @@ export function initializeSyntheticReplayFile(path){
  const db=new DatabaseSync(path);
  try{
   configure(db);
-  db.exec("BEGIN IMMEDIATE; CREATE TABLE metadata (version TEXT PRIMARY KEY) STRICT; CREATE TABLE nonces (id TEXT PRIMARY KEY NOT NULL) STRICT; CREATE TABLE sources (id TEXT PRIMARY KEY NOT NULL) STRICT; CREATE TABLE issued (nonce TEXT PRIMARY KEY NOT NULL, digest TEXT NOT NULL, consumed INTEGER NOT NULL DEFAULT 0 CHECK(consumed IN (0,1))) STRICT; CREATE TABLE campaigns (id TEXT PRIMARY KEY NOT NULL, digest TEXT NOT NULL, cap TEXT NOT NULL, used TEXT NOT NULL) STRICT; CREATE TABLE eligible (campaign TEXT NOT NULL, account TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(campaign,account)) STRICT;");
+  db.exec("BEGIN IMMEDIATE; CREATE TABLE metadata (version TEXT PRIMARY KEY) STRICT; CREATE TABLE nonces (id TEXT PRIMARY KEY NOT NULL) STRICT; CREATE TABLE sources (id TEXT PRIMARY KEY NOT NULL) STRICT; CREATE TABLE issued (nonce TEXT PRIMARY KEY NOT NULL, digest TEXT NOT NULL, consumed INTEGER NOT NULL DEFAULT 0 CHECK(consumed IN (0,1))) STRICT; CREATE TABLE campaigns (id TEXT PRIMARY KEY NOT NULL, digest TEXT NOT NULL, cap TEXT NOT NULL, used TEXT NOT NULL) STRICT; CREATE TABLE eligible (campaign TEXT NOT NULL, account TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(campaign,account)) STRICT; CREATE TABLE budget (id INTEGER PRIMARY KEY CHECK(id=1), reserved TEXT NOT NULL) STRICT; INSERT INTO budget(id,reserved) VALUES (1,'0');");
   db.prepare('INSERT INTO metadata(version) VALUES (?)').run(SCHEMA);
   db.exec('COMMIT');
  }finally{db.close();}
@@ -53,6 +55,15 @@ export function openSyntheticReplayLedger(path){
   const updateCampaign=db.prepare('UPDATE campaigns SET used=? WHERE id=? AND used=?');
   const getEligible=db.prepare('SELECT digest FROM eligible WHERE campaign=? AND account=?');
   const insertEligible=db.prepare('INSERT INTO eligible(campaign,account,digest) VALUES (?,?,?)');
+  const getBudget=db.prepare('SELECT reserved FROM budget WHERE id=1');
+  const updateBudget=db.prepare('UPDATE budget SET reserved=? WHERE id=1 AND reserved=?');
+  function reserveCampaign(cap){
+   const budget=getBudget.get();
+   if(!budget||!/^(0|[1-9][0-9]{0,19})$/.test(budget.reserved))fail('invalid shared budget');
+   const reserved=BigInt(budget.reserved),next=reserved+BigInt(cap);
+   if(reserved>RESERVE||next>RESERVE)fail('shared synthetic reserve exceeded');
+   if(updateBudget.run(next.toString(),budget.reserved).changes!==1)fail('shared budget update failed');
+  }
   function transaction(fn){
    db.exec('BEGIN IMMEDIATE');
    try{const result=fn();db.exec('COMMIT');return result;}
@@ -69,7 +80,10 @@ export function openSyntheticReplayLedger(path){
    return transaction(()=>{
     const record=getCampaign.get(challenge.campaign),digest=campaignDigest(challenge);
     if(record&&(record.digest!==digest||record.cap!==challenge.cap))fail('campaign context mismatch');
-    if(!record)insertCampaign.run(challenge.campaign,digest,challenge.cap,'0');
+    if(!record){
+     reserveCampaign(challenge.cap);
+     insertCampaign.run(challenge.campaign,digest,challenge.cap,'0');
+    }
     return {status:'SYNTHETIC_CAMPAIGN_APPROVED',authorization:false};
    });
   },approveEligibility(challenge){
@@ -105,7 +119,7 @@ export function openSyntheticReplayLedger(path){
     const record=getCampaign.get(input.campaign);
     if(!record)fail('unregistered campaign');
     const batch=verifySyntheticBatch(input,inventory,proofs,now,{
-     hasNonce:n=>!!hasNonce.get(n),hasSource:s=>!!hasSource.get(s),
+     hasNonce:n=>!!hasNonce.get(n),hasSource:s=>!!hasSource.get(s),globalSource:true,
      checkIssued:(nonce,digest)=>{
       const record=getIssued.get(nonce);
       if(!record||record.consumed!==0||record.digest!==digest)fail('unregistered or mismatched challenge');

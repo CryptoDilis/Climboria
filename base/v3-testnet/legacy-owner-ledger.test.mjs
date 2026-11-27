@@ -9,15 +9,15 @@ const alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 function b58(s){let n=BigInt('0x'+s),out='';while(n){out=alphabet[Number(n%58n)]+out;n/=58n;}return '1'.repeat(s.match(/^(00)*/)[0].length/2)+out;}
 const fixed=i=>((1n<<248n)+BigInt(i)).toString(16).padStart(64,'0');
 const hash=s=>createHash('sha256').update(s).digest('hex');
-function fixture({cap='1000',award='50',offset=0,policyHash=h(5)}={}){
+function fixture({cap='1000',award='50',offset=0,nonceOffset=offset,campaign=h(6),policyHash=h(5)}={}){
  const inventory=h(4),sourceGenesis=fixed(1),sourceMint=fixed(2);
- const input={mode:'SYNTHETIC_ONLY',sourceGenesis:b58(sourceGenesis),sourceMint:b58(sourceMint),snapshotSlot:'123',snapshotHash:h(3),policyHash,targetChainId:84532,targetToken:addr(1),targetVault:addr(2),campaign:h(6),cap,entries:[]};
+ const input={mode:'SYNTHETIC_ONLY',sourceGenesis:b58(sourceGenesis),sourceMint:b58(sourceMint),snapshotSlot:'123',snapshotHash:h(3),policyHash,targetChainId:84532,targetToken:addr(1),targetVault:addr(2),campaign,cap,entries:[]};
  const proofs=[],pairs=[],challenges=[];
  for(let i=0;i<2;i++){
   const pair=generateKeyPairSync('ed25519');pairs.push(pair);
   const sourceOwner=pair.publicKey.export({format:'der',type:'spki'}).subarray(-32).toString('hex'),sourceAccount=fixed(10+i+offset);
   const row={sourceAccount:b58(sourceAccount),sourceOwner:b58(sourceOwner),recipient:addr(3+i),sourceAmount:'100',award};
-  const p={sourceAccount:row.sourceAccount,nonce:h(20+i+offset),issuedAt:1000,expiresAt:1900};
+  const p={sourceAccount:row.sourceAccount,nonce:h(20+i+nonceOffset),issuedAt:1000,expiresAt:1900};
   const c={mode:input.mode,sourceGenesis,sourceMint,snapshotSlot:input.snapshotSlot,snapshotHash:input.snapshotHash,inventoryDigest:inventory,policyHash:input.policyHash,cap:input.cap,campaign:input.campaign,sourceAccount,sourceOwner,sourceAmount:row.sourceAmount,targetChainId:input.targetChainId,targetToken:input.targetToken,targetVault:input.targetVault,recipient:row.recipient,award:row.award,nonce:p.nonce,issuedAt:p.issuedAt,expiresAt:p.expiresAt};
   challenges.push(c);
   const msg=syntheticOwnerMessage(c);p.signature=sign(null,msg,pair.privateKey).toString('hex');
@@ -249,5 +249,40 @@ test('new campaign cannot inherit previous campaign approval or eligibility',t=>
   assert.throws(()=>db.approveEligibility(other),/unapproved campaign/);
   db.approveCampaign(other);
   assert.throws(()=>db.registerChallenge(other,1000),/unapproved or mismatched eligibility/);
+ }finally{db.close();}
+});
+
+test('shared synthetic reserve limits total approved campaign caps across reopen',t=>{
+ const {path}=withDatabase(t),a=fixture({cap:'8888888880000'}),b=fixture({campaign:h(77),offset:100});
+ let db=openSyntheticReplayLedger(path);
+ try{
+  db.approveCampaign(a.challenges[0]);
+  db.approveCampaign(a.challenges[1]); // idempotent approval must not reserve twice
+ }finally{db.close();}
+ db=openSyntheticReplayLedger(path);
+ try{
+  assert.throws(()=>db.approveCampaign(b.challenges[0]),/shared synthetic reserve exceeded/);
+  assert.throws(()=>db.approveEligibility(b.challenges[0]),/unapproved campaign/);
+  registerAll(db,a.challenges);
+  assert.equal(db.consume(a.input,a.inventory,a.proofs,1001).campaignUsed,'100');
+ }finally{db.close();}
+});
+test('same source cannot receive twice through different approved campaigns and fresh nonces',t=>{
+ const {path}=withDatabase(t),a=fixture(),b=fixture({campaign:h(77),nonceOffset:100});
+ let db=openSyntheticReplayLedger(path);
+ try{registerAll(db,a.challenges);registerAll(db,b.challenges);db.consume(a.input,a.inventory,a.proofs,1001);}
+ finally{db.close();}
+ db=openSyntheticReplayLedger(path);
+ try{assert.throws(()=>db.consume(b.input,b.inventory,b.proofs,1001),/source already consumed/);}
+ finally{db.close();}
+});
+test('distinct source accounts can use separate approved campaigns within shared reserve',t=>{
+ const {path}=withDatabase(t),a=fixture({cap:'8888888879000'}),b=fixture({cap:'1000',campaign:h(77),offset:100}),c=fixture({campaign:h(88),offset:200});
+ const db=openSyntheticReplayLedger(path);
+ try{
+  registerAll(db,a.challenges);registerAll(db,b.challenges);
+  assert.throws(()=>db.approveCampaign(c.challenges[0]),/shared synthetic reserve exceeded/);
+  assert.equal(db.consume(a.input,a.inventory,a.proofs,1001).campaignUsed,'100');
+  assert.equal(db.consume(b.input,b.inventory,b.proofs,1001).campaignUsed,'100');
  }finally{db.close();}
 });
