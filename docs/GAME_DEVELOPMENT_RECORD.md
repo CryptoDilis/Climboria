@@ -1,5 +1,21 @@
 # Climboria Game Development Record
 
+## R5A STABLE NPC IDENTITY REGISTRY CANDIDATE — 2026-11-27
+
+- PR #966 now includes isolated `game/npc/npc-roster.mjs` (e8cfdeb7dea4959cf42c199a67b88c4890f8a93e) and unit tests (fff5588d92346fa1dabfe03186d2ccc3169dc69a). Exact owner-approved names, stable NPC-only IDs, immutable labels/preferences and unique deterministic seeds; default roster selection one, explicit bounded cap up to five. Preferences are initial metadata, not implemented behavioral rules. Registry does not create actors, human presence, chat or economic activity. Runtime integration and tests pending.
+- Verified foundation runs #963 45967765549, #967 45968097821, #969 45968343291 passed; #963 and #967 mobile browser jobs passed; desktop and #969 browser verification pending at inspection. No existing runtime candidate branch changed.
+- NEXT: inspect terminal browser evidence, resolve failures, verify actual forest map and connected lake/forest travel before wiring identity registry into NPC snapshots/render/nameplates and implementing contextual chat. No public spawn or deployment.
+
+---
+
+## NAMED NPC ROSTER AND WORLD CHAT HANDOFF — 2026-11-27
+
+- Owner approved Aurelion, KaelVex, Thornevale, VengeancePeak, ZevranSol and requested contextual NPC dialogue visible in actual world chat. Requirements R5A.10–R5A.11 added in 909a78e78ae538b48727206b207ca8b6fedb0555. Explicit NPC identity, no inflated human presence, shared authoritative delivery, bounded chat, no real inventory/rewards. Documentation only; implementation pending.
+- PR #963 head 406be39be3f56a28448d72c0f4cd93fdb53a512b adds failure diagnostics; foundation run 45967087197 passed, focused browser run 45967087434 was in progress at inspection. Previous desktop continuous acceptance timed out; actual terrace crop/farm/climb and mobile passed on 9d033044. Do not claim desktop acceptance or public NPC release. Keep this docs candidate separate from running browser verification.
+- NEXT: inspect terminal browser run and timeout audit, fix root cause without reducing draw/movement requirements, rerun both profiles; then resource gathering, stable names and chat, shared multiplayer authority. Game only; no other workstream or production changes.
+
+---
+
 ## PLAYER-DRIVEN PROFESSIONS, EXPEDITION DEPTH AND IMMERSION APPROVED — 2026-11-27 PHT
 
 - Owner approved all ten proposed additions. R10.1–R10.11 in [Game player experience backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 1c5322fc7403216aaad8e736b24f08dd93ff151f; root P4 checklist update 19166c3b30a1b014a6628b5cc0223fcebba1977d. Scope: Player Job Board, merchant caravans, backpack weight/capacity, equipment inspection, environmental tracking, player shops/market stalls, combat training ground, expedition records, treasure recovery expeditions and environmental audio. All implementation items unchecked. Reuse existing R1–R9 systems and preserve original soundtrack, gameplay, privacy, no magic/no global character level, browser-first/mobile performance.
