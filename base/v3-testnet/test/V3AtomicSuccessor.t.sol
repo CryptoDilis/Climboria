@@ -6,9 +6,10 @@ import {V3FounderVesting} from "../src/ClimbV3TestToken.sol";
 import {V3GovernedGameRewardFixture} from "../src/V3GovernedGameRewardFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "../src/V3EpochSpendFixture.sol";
 import {V3DeferredLegacyFixture} from "../src/V3DeferredLegacyFixture.sol";
+import {V3LegacyProofClaimFixture} from "../src/V3LegacyProofClaimFixture.sol";
 import {IV3SyntheticPool} from "../src/V3LiquidityPolicyFixture.sol";
 import {V3DeferredLiquidityFixture} from "../src/V3DeferredLiquidityFixture.sol";
-import {V3AtomicSuccessorFixture,V3SuccessorConditionalDeployer,V3SuccessorTestToken,V3SuccessorConfig,V3SuccessorLiquidityConfig,IV3SyntheticPoolBuilder} from "../src/V3AtomicSuccessorFixture.sol";
+import {V3AtomicSuccessorFixture,V3SuccessorConditionalDeployer,V3SuccessorLegacyDeployer,V3SuccessorTestToken,V3SuccessorConfig,V3SuccessorLiquidityConfig,IV3SyntheticPoolBuilder} from "../src/V3AtomicSuccessorFixture.sol";
 interface VmSuccessor {
     function chainId(uint256) external;
     function etch(address,bytes calldata) external;
@@ -86,6 +87,27 @@ contract V3AtomicSuccessorTest {
         require(!factory.used()&&address(factory.token())==address(0));
         vm.etch(address(helper),original);
         require(factory.create(cfg).totalSupply()==SUPPLY);
+    }
+    function testStagedLegacyHelperIdentityAndRollback() public {
+        V3SuccessorConditionalDeployer helper=factory.conditional();
+        V3SuccessorLegacyDeployer stage=helper.legacyDeployer();
+        require(stage.factory()==address(helper)&&helper.legacyDeployerHash()==address(stage).codehash);
+        V3SuccessorTestToken empty=new V3SuccessorTestToken();
+        vm.expectRevert(V3SuccessorLegacyDeployer.Unauthorized.selector);
+        stage.legacy(empty,control);
+        vm.expectRevert(V3SuccessorLegacyDeployer.Unauthorized.selector);
+        stage.proofLegacy(empty,control);
+        bytes memory original=address(stage).code;
+        vm.etch(address(stage),hex"60006000f3");
+        vm.expectRevert(V3SuccessorConditionalDeployer.InvalidLegacyDeployer.selector);
+        factory.create(cfg);
+        require(!factory.used()&&address(factory.token())==address(0)&&factory.vaults(6)==address(0));
+        vm.etch(address(stage),original);
+        V3LegacyProofClaimFixture proof=helper.proofLegacy(empty,control);
+        require(address(proof.token())==address(empty)&&address(proof.custody())==address(control)&&!proof.activated());
+        require(empty.totalSupply()==0&&empty.balanceOf(address(proof))==0);
+        V3SuccessorTestToken token=factory.create(cfg);
+        require(token.totalSupply()==SUPPLY&&token.balanceOf(factory.vaults(6))==8888888880000);
     }
     function testAtomicSevenDestinationsAndZeroFloat() public {
         V3SuccessorTestToken token=factory.create(cfg);

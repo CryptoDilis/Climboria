@@ -7,6 +7,7 @@ const specs=[
  ['V3AtomicSuccessorFixture.sol','V3SuccessorTestToken',0],
  ['V3AtomicSuccessorFixture.sol','V3SuccessorCoreDeployer',0],
  ['V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',0],
+ ['V3AtomicSuccessorFixture.sol','V3SuccessorLegacyDeployer',0],
  ['ClimbV3TestToken.sol','V3FounderVesting',3],
  ['V3GameRewardFixture.sol','V3GameRewardFixture',5],
  ['V3GovernedGameRewardFixture.sol','V3GovernedGameRewardFixture',6],
@@ -33,6 +34,7 @@ const contracts=specs.map(([file,name,words])=>{
  const initcodeBytes=init.length+32*words;
  assert.ok(initcodeBytes<=49152,name+' initcode size');
  assert.ok(runtime.length<=24576,name+' runtime size');
+ if(name==='V3SuccessorLegacyDeployer'||name==='V3SuccessorConditionalDeployer')assert.ok(24576-runtime.length>=1024,name+' less than 1 KiB runtime headroom');
  return {name,initcodeBytes,runtimeBytes:runtime.length,creationSha256:digest(init),runtimeTemplateSha256:digest(runtime)};
 });
 const manifest={status:'SUCCESSOR_TEST_ONLY_SIZE_OBSERVATION',sourceSha:process.env.V3_SOURCE_SHA,chainId:84532,contracts,caveat:'Compiler template sizes plus static constructor arguments; not a gas estimate, actual deployment, audit or production approval. External synthetic pool and custody dependencies are not included.'};

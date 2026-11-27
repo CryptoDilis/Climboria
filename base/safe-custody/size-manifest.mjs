@@ -11,6 +11,8 @@ const specs=[
  ['SafeReserveGuardFixture.sol','SafeReserveGuardFixture',3],
  ['SafeReserveGuardFixture.sol','SafeReserveFactoryFixture',0],
  ['V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',0],
+ ['V3AtomicSuccessorFixture.sol','V3SuccessorLegacyDeployer',0],
+ ['V3LegacyProofClaimFixture.sol','V3LegacyProofClaimFixture',2],
  ['V3AtomicSuccessorFixture.sol','V3SuccessorCoreDeployer',0],
  ['V3GovernedGameRewardFixture.sol','V3GovernedGameRewardFixture',6],
  ['SafeQuorumIssuanceFixture.sol','V3QuorumSuccessorFixture',3],
@@ -35,7 +37,7 @@ const contracts=specs.map(([file,name,words])=>{
  const initcodeHeadroom=49152-initcodeBytes,runtimeHeadroom=24576-runtime.length;
  console.log(`${name}: initcode=${initcodeBytes}, runtime=${runtime.length}, initcodeHeadroom=${initcodeHeadroom}, runtimeHeadroom=${runtimeHeadroom}`);
  if(name==='V3QuorumSuccessorFixture')assert.ok(initcodeHeadroom>=1024,name+' less than 1 KiB initcode headroom');
- if(name==='SafeQuorumReserveFactoryFixture'||name==='SafeQuorumGuardDeployerFixture')assert.ok(runtimeHeadroom>=1024,name+' less than 1 KiB runtime headroom');
+ if(name==='SafeQuorumReserveFactoryFixture'||name==='SafeQuorumGuardDeployerFixture'||name==='V3SuccessorLegacyDeployer'||name==='V3SuccessorConditionalDeployer')assert.ok(runtimeHeadroom>=1024,name+' less than 1 KiB runtime headroom');
  return {name,initcodeBytes,runtimeBytes:runtime.length,initcodeHeadroom,runtimeHeadroom,creationSha256:hash(init),runtimeTemplateSha256:hash(runtime)};
 });
 const manifest={status:'SAFE_TEST_ONLY_SIZE_OBSERVATION',sourceSha:process.env.GITHUB_SHA,safeSource:'bf943f80fec5ac647159d26161446ac5d716a294',openzeppelinSource:'dc44c9f1a4c3b10af99492eed84f83ed244203f6',contracts,caveat:'Compiled local templates only, not official deployed Safe runtime, actual deployment, gas or approval.'};
