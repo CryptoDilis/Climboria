@@ -43,3 +43,18 @@ test('trusted clock enforces expiry; no retry with client supplied time',async t
  await assert.rejects(request('verify',{id:c.id,signature,now:c.expires-1}));
  await assert.rejects(request('verify',{id:c.id,signature}));
 });
+
+test('request mutation during auth cannot change wallet challenge or signature',async t=>{
+ const {request}=setup(t),original=Wallet.createRandom(),other=Wallet.createRandom();
+ const body={address:original.address,chain:8453};
+ const pending=request('issue',body);
+ body.address=other.address;body.chain=1;
+ const c=await pending;
+ assert.ok(c.message.includes(original.address));
+ assert.ok(!c.message.includes(other.address));
+ const signature=await original.signMessage(c.message);
+ const proof={id:c.id,signature};
+ const verifying=request('verify',proof);
+ proof.id='0'.repeat(32);proof.signature='0x'+'0'.repeat(130);
+ assert.equal((await verifying).address,original.address);
+});

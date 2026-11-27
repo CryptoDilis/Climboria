@@ -124,6 +124,7 @@ try {
   console.log('Actual NPC GLB route audit',JSON.stringify(npcGlb));
   if(!npcGlb.meshes||npcGlb.frames!==500||npcGlb.distance<10||!npcGlb.wet||!npcGlb.exited||
      !npcGlb.clips.walk||!npcGlb.clips.run||!npcGlb.clips.swim||
+     !['walk','run','swim'].every(mode=>npcGlb.drawnModes.includes(mode))||npcGlb.draws<3||
      !npcGlb.attached||!npcGlb.visible||!npcGlb.label||!npcGlb.peersUnchanged||!npcGlb.playerUnchanged||
      !npcGlb.withinBudget||!npcGlb.hidden||!npcGlb.detached)
     errors.push('Actual NPC GLB projection failed: '+JSON.stringify(npcGlb));
