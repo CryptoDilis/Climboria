@@ -1,10 +1,11 @@
-import {createPreviewCombatClientState,createAuthoredLocalCombatClientState} from './preview-combat-client-state.mjs';
+import {createPreviewCombatClientState,createAuthoredLocalCombatClientState,createAuthoredPilotCombatClientState} from './preview-combat-client-state.mjs';
 // Exclusive owner of an already admitted private preview socket. No other
 // code may send commands on this socket: result packets have no request ID.
 // No connection creation, credentials, public gameplay or automatic attack.
 const sid=id=>typeof id==='string'&&/^s_[a-f0-9]{32}$/.test(id);
 export function attachPreviewCombatTransport(socket,joined,options){return attach(socket,joined,createPreviewCombatClientState,options)}
 export function attachAuthoredLocalCombatTransport(socket,joined,options){return attach(socket,joined,createAuthoredLocalCombatClientState,options)}
+export function attachAuthoredPilotCombatTransport(socket,joined,options){return attach(socket,joined,createAuthoredPilotCombatClientState,options)}
 function attach(socket,joined,createState,{timeoutMs=5000,setTimer=setTimeout,clearTimer=clearTimeout}={}){
  if(socket?.readyState!==1||!['send','close','addEventListener','removeEventListener'].every(k=>typeof socket[k]==='function')||
     !Number.isSafeInteger(timeoutMs)||timeoutMs<100||timeoutMs>10000)throw Error('Invalid preview transport');
