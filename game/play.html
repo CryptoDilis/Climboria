@@ -3609,6 +3609,8 @@ window.ENDLESS_WILDS={npcLakeRouteAudit:new URLSearchParams(location.search).has
 const MAX_REMOTE_GLB=MOB?2:3;
 const REMOTE_HERO_HEIGHT=1.9,NEARBY_CHAT_METERS=20,NEARBY_BUBBLE_MS=5000;
 let remoteGLBLoading=0,remoteGLBResidents=0,remoteModelClock=0;
+// Explicit local smoke fixture only; never activate crowd culling for live combat or room admission.
+let crowdPlanner=null,crowdTiers=new Map(),crowdPressure='normal';
 // Shared geometry/materials remain owned by the Game scene for its lifetime:
 // 32 peers reuse these few GPU buffers instead of allocating 32 skeletons or
 // downloading 43MB Adventurer GLBs per remote peer, especially on mobile.
@@ -4217,7 +4219,7 @@ function loadPeerHero(peer){
  peer.loading=true;remoteGLBLoading++;
  new T3.GLTFLoader().load(path,gltf=>{
   remoteGLBLoading--;peer.loading=false;
-  if(livePeers.get(peer.id)!==peer||
+  if(livePeers.get(peer.id)!==peer||(crowdPlanner&&crowdTiers.get(peer.id)!=='heavy')||
      Math.hypot(peer.group.position.x-cam.position.x,peer.group.position.z-cam.position.z)>180){
    disposeRemoteHero(gltf.scene);return;
   }
@@ -4298,6 +4300,10 @@ window.__CLIMBORIA_GAME_PEERS={
  clear(){for(const id of [...livePeers.keys()])this.remove(id)},
  update(dt){
   const now=performance.now();
+  if(crowdPlanner){
+   const plan=crowdPlanner({players:[...livePeers.values()].map(p=>({id:p.id,kind:'player',x:p.position.x,z:p.position.z,hasModel:p.model==='Jarrell'||p.model==='Lheiz'})),viewer:{x:P.x,z:P.z},device:MOB?'mobile':'desktop',pressure:crowdPressure,npcCap:0});
+   crowdTiers=new Map(plan.assignments.map(a=>[a.id,a.tier]));
+  }
   for(const p of livePeers.values()){
    const at=p.target,t=Math.min(1,dt*9);
    p.group.position.x+=(at.x-p.group.position.x)*t;
@@ -4317,6 +4323,15 @@ window.__CLIMBORIA_GAME_PEERS={
    // Beyond the mobile-safe visual range keep the low-cost identity marker
    // record but release owned heavy GLB geometry/textures.
    if(dist>260&&p.root)unloadPeerHero(p);
+   if(crowdPlanner){
+    const tier=crowdTiers.get(p.id)??'hidden';
+    if(tier!=='heavy'&&p.root)unloadPeerHero(p);
+    p.group.visible=tier!=='hidden';
+    p.fallback.visible=!p.root&&(tier==='heavy'||tier==='light');
+    p.nameplate.visible=(tier==='heavy'||tier==='light')&&dist<65;
+    const ring=p.group.getObjectByName('RemoteMarkerRing');if(ring)ring.visible=tier!=='hidden';
+    if(p.bubble)p.bubble.visible=p.bubble.visible&&p.group.visible;
+   }
    if(p.mixer){setPeerAnimation(p,now<p.punchUntil?'punch':now<p.walkUntil?'walk':'idle');p.mixer.update(dt);}
   }
   remoteModelClock+=dt;
@@ -4324,7 +4339,7 @@ window.__CLIMBORIA_GAME_PEERS={
    remoteModelClock=0;
    const available=MAX_REMOTE_GLB-remoteGLBLoading-remoteGLBResidents;
    if(available>0){
-    const peers=[...livePeers.values()].filter(p=>!p.root&&!p.loading&&p.retryAt<=Date.now()&&
+    const peers=[...livePeers.values()].filter(p=>!p.root&&!p.loading&&p.retryAt<=Date.now()&&(!crowdPlanner||crowdTiers.get(p.id)==='heavy')&&
       (p.model==='Jarrell'||p.model==='Lheiz')&&
       Math.hypot(p.group.position.x-cam.position.x,p.group.position.z-cam.position.z)<120)
       .sort((a,b)=>Math.hypot(a.group.position.x-cam.position.x,a.group.position.z-cam.position.z)-
@@ -4357,6 +4372,14 @@ window.__CLIMBORIA_GAME_PEERS={
   }))}}
 };
 
+if(new URLSearchParams(location.search).has('smoke')){
+ window.ENDLESS_WILDS.crowdSmokeEnable=async()=>{
+  if(livePeers.size||npcContinuousPending||npcPairPending||npcContinuousSession&&!npcContinuousSession.audit().closed||npcPairSession&&!npcPairSession.audit().closed||remoteGLBLoading||remoteGLBResidents)return false;
+  const {planCrowdRendering}=await import('./npc/crowd-render-policy.mjs');crowdPlanner=planCrowdRendering;crowdPressure='normal';return true;
+ };
+ window.ENDLESS_WILDS.crowdSmokePressure=pressure=>{if(!crowdPlanner||!['normal','constrained','critical'].includes(pressure))return false;crowdPressure=pressure;return true};
+ window.ENDLESS_WILDS.crowdSmokeAudit=()=>({pressure:crowdPressure,enabled:!!crowdPlanner,tiers:[...livePeers.values()].map(p=>({id:p.id,tier:crowdTiers.get(p.id)??'hidden',visible:p.group.visible,body:!!p.root&&p.root.visible||p.fallback.visible,heavy:!!p.root,attached:p.group.parent===scene,nameplate:p.nameplate.visible})),peer:window.__CLIMBORIA_GAME_PEERS.audit()});
+}
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 // A room may re-anchor a registered player only using coordinates that came
 // from the authenticated ticket's server-validated last position. This local
