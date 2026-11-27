@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A FOREST GATHERING CANDIDATE — 2026-11-27
+
+- Isolated forest adapter `game/npc/forest-gatherer.mjs` (a7cd8ef2348fa56aaf16087df69b715ebb1b4f90) reuses the autonomous adventurer controller, accepts authored fallen-log locations, requires loaded dry terrain and bidirectional bounded collision-safe approaches; only a private synthetic wood counter with capacity 12 is credited. No actual resource depletion, real inventory, token, multiplayer or public spawning changes. Unit tests added in a453d003222be192a6daab871e51a0d9e232829c; CI and real map integration pending.
+- Parent PR #963 head b33a8672f5d57b4668bf745b8e753c238b093c8e: foundation run 45967765549 passed; focused browser run 45967765504 in progress at inspection. Prior desktop diagnostics: 12/15 frames, 1.92m, 12 draws, active session, no JS errors. Preserve all acceptance gates. PR #966 separately tracks named roster and chat.
+- NEXT: verify parent terminal CI and forest unit tests, then integrate actual cc0LogSpots and actor-safe adapters into smoke-only map audit, require genuine movement, gathering animation draw and synthetic completion, check cleanup and unchanged player inventory/peers. Then test continuous travel among lake and forest activities, before named NPC chat/shared authority. No production deployment.
+
+---
+
 ## PLAYER-DRIVEN PROFESSIONS, EXPEDITION DEPTH AND IMMERSION APPROVED — 2026-11-27 PHT
 
 - Owner approved all ten proposed additions. R10.1–R10.11 in [Game player experience backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 1c5322fc7403216aaad8e736b24f08dd93ff151f; root P4 checklist update 19166c3b30a1b014a6628b5cc0223fcebba1977d. Scope: Player Job Board, merchant caravans, backpack weight/capacity, equipment inspection, environmental tracking, player shops/market stalls, combat training ground, expedition records, treasure recovery expeditions and environmental audio. All implementation items unchecked. Reuse existing R1–R9 systems and preserve original soundtrack, gameplay, privacy, no magic/no global character level, browser-first/mobile performance.
