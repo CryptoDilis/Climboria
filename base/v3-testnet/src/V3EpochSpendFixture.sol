@@ -54,7 +54,9 @@ contract V3EpochSpendFixture is ReentrancyGuard {
            cap==0||cap>888888888000000||begin<=block.timestamp||begin-block.timestamp>365 days||founder==address(0)||label==0) revert InvalidConfig();
         token=asset;custody=control;registry=shared;budget=cap;start=begin;excludedFounder=founder;purpose=label;
         custodyCodeHash=address(control).codehash;
-        highestObservedEpoch=_readEpoch();
+        uint256 initialEpoch=control.epoch();
+        if(initialEpoch==0||control.threshold()!=3||control.memberCount()!=5) revert InvalidConfig();
+        highestObservedEpoch=initialEpoch;
     }
     function _readEpoch() internal view returns(uint256 e){
         if(address(custody).codehash!=custodyCodeHash||custody.threshold()!=3||custody.memberCount()!=5) revert InvalidConfig();
