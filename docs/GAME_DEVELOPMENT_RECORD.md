@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## PRIVATE COMBAT CLIENT SNAPSHOT RECONCILIATION — 2026-11-27 PHT (PROPOSED)
+
+- Parent #903 merged at 3a6f7b9592084b66e1a54840b598a8f24b49d9b2; exact head b091bb2ff997c9dfe6373aa3d22abc93039dea35 passed all five checks (Validate 45938857653, Runtime 45938857715, Gateway 45938857813, Authority 45938857701, Gameplay 45938857694).
+- Source bb9586bdc7828e3cbe5293ad55d2deb0e2fc8807: private client state projection, valid own session snapshot only; hit and respawn pushes invalidate rather than mutate HP, block controls until fresh valid snapshot, single outstanding snapshot token and invalidation revision reject late/stale responses, close isolates retired session. No public game connection or transport implementation yet.
+- Tests fc126d1450d1d70dec02ddb6798dd013bd0f793a and CI path filters a9a1afead1fece4d5b0ca5fa2078eb063b443da5; fresh execution pending. Added exclusive private socket adapter 25b43a7e0f59473099aab55ffd4568c63574419a: one outstanding command, snapshot refresh after pushes, bounded reconciliation retries, timeout closes without retrying ambiguous attack, blocks controls while awaiting result. Four mock transport tests 12f176bab0165264dff4a603cd1fbcf929deb63e; CI filters 6e0ebcf0e0406a3d48e05fb7f10d3ebbee61a171. Not yet executed. Local workerd smoke integration 63ac7b0dd626386c584fcc8d2a60be6abf297ef4 attaches the exclusive adapter to the victim's actual local WebSocket, verifies pushed hit and automatic authoritative 495 HP reconciliation, closes and checks controls disabled, then admits a new session and checks persisted HP and explicit refresh. Existing SQLite restart and budget assertions retained. Execution pending. Movement intent gate a8e1eff9470a0cd9e1dc99788962a6647962b408 and tests 76453624a1fb289ee939674c3540bd005d0ed53d: finite bounded directional inputs, session-local monotonic sequence, one outstanding request, block input and attack while stale/downed, fatal server denials close transport immediately. Execution pending. EXACT NEXT: verify reconciled #905 fresh CI (including actual local workerd integration), fix failures before merge. No actual browser/game integration or public enablement. Private cloud disabled; no loot/inventory or other workstreams.
+
+---
+
 ## COMBAT: LETHAL HIT / DOWNED REJOIN / RESPAWN ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
 
 - Parent #901 MERGED at 5ba6fba900449c34a2e77364a8e8a79c5a4064f7, exact head c23401fb76c6b1320950204414d30cb45f0f5396; all five CI SUCCESS: Validate 45938075227, Runtime 45938075126, Gateway 45938075127, Authority 45938075200, Gameplay 45938075149.
