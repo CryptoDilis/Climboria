@@ -72,7 +72,11 @@ export function createAutonomousAdventurer({nodes,edges,spawn,world,seed,identit
  function tick(dt){
   if(closed||!finite(dt)||dt<=0)return snapshot();
   dt=Math.min(dt,.1);time+=dt;
-  if(wait>0){wait=Math.max(0,wait-dt);if(mode==='rest')stamina=Math.min(100,stamina+dt*18);
+  if(wait>0){
+   // Revalidate a running activity, not only its final completion. A disappearing
+   // plot/resource must cancel this attempt rather than resume stale work.
+   if(activity&&world.canAct(activity,activity.action)!==true){activity=null;wait=0;mode='idle';return snapshot()}
+   wait=Math.max(0,wait-dt);if(mode==='rest')stamina=Math.min(100,stamina+dt*18);
    if(wait===0&&activity){const n=activity;activity=null;if(world.canAct(n,n.action)===true)world.onActivityComplete?.(n,n.action)}return snapshot()}
   if(next===null)choose();
   if(next===null)return snapshot();

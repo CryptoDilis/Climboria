@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A PRIVATE HOST MERGED; ACTIVITY INTEGRATION CANDIDATE — 2026-11-27 UTC
+
+- #1005 exact head d17aa99165f49315e28ac477a1173e4aefaa7ab0: five source workflows SUCCESS (Validate 46023173150, foundation 46023173129, chat 46023173036, gameplay 46023172992, focused browser 46023173019). Intervening main changes only Base handoff documentation; no overlapping paths. Merged 91e4fc79d9a308a65841857c281b6239fd24d883; post-merge CI not yet verified. Host remains private/unwired from production.
+- #1004 exact head aa17d31cab6839ddaeb163f6682437ddb4a4346a: all three workflows SUCCESS (foundation 46021451241, chat 46021451254, focused browser 46021451335). Includes #1002 activity changes; #1002 foundation and chat passed but focused browser 46021239419 cancelled, not counted as success. Copy four exact verified activity files to latest main 91e4fc79d9a308a65841857c281b6239fd24d883, each target blob matches original parent; retain main history and private host. Fresh integrated CI required.
+- NEXT: verify integrated checks, then paired visible NPCs with bounded spacing and cleanup. Actual vertical wall climbing, shared production authority, real account/WSS and physical device performance remain open. No public NPC activation, real inventory or token payouts.
+
+---
+
 ## R5A VERIFIED PRIVATE HOST MAIN CANDIDATE — 2026-11-27 UTC
 
 - #1003 exact head 3b47a4c74fbf3671308dc39a98b77e23492513bd: all three source workflows SUCCESS (foundation 46021246459, native chat 46021246494, focused browser 46021246433). Private explicit two-human admission and first disconnect/overcapacity cleanup, no restart. Copy only three verified source paths onto main b0a4605a85096fc5bb0f455c028b3e2531696010; existing native socket fixture unchanged on main since parent, retain main development history and Base files. New main-targeted full CI required.
