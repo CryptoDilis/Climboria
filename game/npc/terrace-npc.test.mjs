@@ -16,3 +16,13 @@ test('NPC independently climbs validated slope and completes farm cycle',()=>{
  assert.ok(climb&&rise>1);assert.ok(crop.snapshot().harvested>0);
  assert.throws(()=>createTerraceNpc({center:{x:0,z:0},groundAt:()=>0,waterBodyAt:()=>null,actorBlocked:()=>true,loaded:()=>true}));
 });
+
+test('closing terrace NPC freezes crop growth and prevents further activity',()=>{
+ const {npc,crop}=createTerraceNpc({center:{x:0,z:0},groundAt:x=>Math.max(0,(x-2)*.65),waterBodyAt:()=>null,actorBlocked:()=>false,loaded:()=>true});
+ for(let i=0;i<2500&&crop.snapshot().state!=='growing';i++)npc.tick(.1);
+ assert.equal(crop.snapshot().state,'growing');
+ assert.ok(crop.snapshot().remaining>0);
+ npc.close();const closed=npc.snapshot(),before=crop.snapshot();
+ for(let i=0;i<100;i++)assert.deepEqual(npc.tick(.1),closed);
+ assert.deepEqual(crop.snapshot(),before);
+});
