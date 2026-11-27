@@ -367,15 +367,41 @@ jobs:
               require(all(set(v) == {"content"} and isinstance(v["content"], str) for v in inp["sources"].values()), "all source bytes must be embedded, no URL fetches")
               previous = json.loads(record.with_name("output.json").read_bytes())
               require(not any(e.get("severity") == "error" for e in previous.get("errors", [])), "original compiler error")
-              # No repository checkout, Foundry, allow-paths, or source-tree reads.
+              # No repository checkout, Foundry, or uncaptured source-tree reads.
               # Preserve every byte of the captured JSON, including absolute source-unit names.
+              missing = set(previous["sources"]) - set(inp["sources"])
+              allowed = {"../v3-testnet/src/V3BoundedLegacyFixture.sol", "../v3-testnet/src/V3DeferredLegacyFixture.sol"} if project == "safe-custody" else set()
+              require(missing == allowed, f"unexpected compiler filesystem source set: {sorted(missing)}")
+              restored = {}
               with tempfile.TemporaryDirectory() as empty:
-                  result = subprocess.run([str(compiler), "--standard-json"], input=raw, cwd=empty, capture_output=True, timeout=180)
+                  root = Path(empty)
+                  base = root / "safe-custody" if project == "safe-custody" else root
+                  base.mkdir(exist_ok=True)
+                  args = [str(compiler)]
+                  if missing:
+                      workspace = Path(Path("evidence/workspace.txt").read_text().strip())
+                      require(workspace.is_absolute() and ".." not in workspace.parts, "invalid captured workspace")
+                      sibling = root / "v3-testnet" / "src"
+                      sibling.mkdir(parents=True)
+                      # These two source-unit aliases were loaded from disk in the original build.
+                      # Reconstruct only those files, from their exact embedded absolute-name counterparts.
+                      for alias in sorted(missing):
+                          name = Path(alias).name
+                          absolute = str(workspace / "base" / "v3-testnet" / "src" / name)
+                          require(absolute in inp["sources"], f"missing captured absolute alias: {absolute}")
+                          content = inp["sources"][absolute]["content"].encode("utf-8")
+                          (sibling / name).write_bytes(content)
+                          restored[alias] = {"embeddedSource": absolute, "sha256": digest(content)}
+                      args += ["--base-path", str(base), "--allow-paths", str(sibling)]
+                  args += ["--standard-json"]
+                  result = subprocess.run(args, input=raw, cwd=base, capture_output=True, timeout=180)
+              Path("replay", f"{index}-restored-sources.json").write_text(json.dumps(restored, indent=2))
               Path("replay", f"{index}-output.json").write_bytes(result.stdout)
               Path("replay", f"{index}-stderr.txt").write_bytes(result.stderr)
               require(result.returncode == 0, "replay compiler process failed")
               current = json.loads(result.stdout)
-              require(not any(e.get("severity") == "error" for e in current.get("errors", [])), "replay compiler error")
+              errors = [e.get("formattedMessage", e.get("message", "")) for e in current.get("errors", []) if e.get("severity") == "error"]
+              require(not errors, "replay compiler error: " + repr(errors))
               def flatten(out):
                   return {(source, name): artifact for source, entries in out["contracts"].items() for name, artifact in entries.items()}
               a, b = flatten(previous), flatten(current)
@@ -390,6 +416,7 @@ jobs:
                   if a[key] != b[key]:
                       report["differences"].append(f"complete contract output mismatch: {key}")
                   seen.add(key)
+              require(set(current["sources"]) - set(inp["sources"]) == missing, "replay filesystem source set mismatch")
               if previous.get("sources") != current.get("sources"):
                   report["differences"].append(f"source IDs or AST mismatch: invocation {index}")
               report["records"].append({"inputSha256": digest(raw), "originalContractSha256": digest(canonical(previous["contracts"])), "replayedContractSha256": digest(canonical(current["contracts"])), "contracts": len(a), "nonemptyCreation": sum(bool(x["evm"]["bytecode"]["object"]) for x in a.values()), "nonemptyRuntime": sum(bool(x["evm"]["deployedBytecode"]["object"]) for x in a.values())})
