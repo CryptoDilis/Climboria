@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "status": "DRAFT_NOT_LIVE",
+  "network": {
+    "name": "Base",
+    "chainId": 8453,
+    "standard": "ERC-20"
+  },
+  "identity": {
+    "name": "Climboria",
+    "symbol": "CLIMB",
+    "decimals": 6,
+    "initialSupply": "888888888",
+    "initialSupplyRaw": "888888888000000",
+    "contractAddress": null,
+    "description": "CLIMB is the planned token for the Climboria ecosystem on Base, including future game rewards and ecosystem utility. Features and distributions remain subject to verification and release approval.",
+    "website": "https://climboria.fun/",
+    "whitepaper": "https://climboria.fun/whitepaper/",
+    "social": {
+      "x": "https://x.com/ClimboriaHQ"
+    },
+    "logo": {
+      "sourcePath": "assets/climb-token-official-cutout.avif",
+      "sourceGitBlob": "c7b9e84d539e1159327d073c0bde23c2e6ca97e6",
+      "alternatePath": "assets/climb-token-official-hd.webp",
+      "pngExportStatus": "PENDING_IMAGE_INSPECTION"
+    }
+  },
+  "allocations": [
+    {
+      "purpose": "gaming",
+      "percent": 35,
+      "raw": "311111110800000"
+    },
+    {
+      "purpose": "liquidity",
+      "percent": 25,
+      "raw": "222222222000000"
+    },
+    {
+      "purpose": "ecosystem",
+      "percent": 15,
+      "raw": "133333333200000"
+    },
+    {
+      "purpose": "community",
+      "percent": 10,
+      "raw": "88888888800000"
+    },
+    {
+      "purpose": "treasury",
+      "percent": 12,
+      "raw": "106666666560000"
+    },
+    {
+      "purpose": "founderTeam",
+      "percent": 2,
+      "raw": "17777777760000"
+    },
+    {
+      "purpose": "legacyMaximum",
+      "percent": 1,
+      "raw": "8888888880000"
+    }
+  ],
+  "release": {
+    "mainnetDeployment": "NO_GO",
+    "trading": "DISABLED",
+    "claims": "DISABLED",
+    "gameRewards": "DISABLED",
+    "circulatingSupply": null,
+    "tokenList": null,
+    "productionContractVerified": false
+  },
+  "legacy": {
+    "model": "DISTINCT_REPLACEMENT_NOT_BRIDGE",
+    "automaticOneToOne": false,
+    "eligibilityCertified": false
+  },
+  "notes": [
+    "Proposed identity and V3 allocation; not a deployed contract or listing.",
+    "Legacy reserve maximum is not an entitlement.",
+    "Liquidity token reserve is not funded paired liquidity."
+  ]
+}
