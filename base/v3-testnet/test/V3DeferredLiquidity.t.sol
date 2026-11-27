@@ -72,7 +72,7 @@ contract V3DeferredLiquidityTest {
     }
     function testStaleEpochAndCancellation() public {
         bytes32 a=schedule(1000,"A");bytes32 b=schedule(1000,"B");
-        control.cancel(b);control.rotate();vault.syncEpoch();quote.transfer(address(vault),500);
+        control.cancel(vault,b);control.rotate();vault.syncEpoch();quote.transfer(address(vault),500);
         vm.warp(block.timestamp+2 days);
         vm.expectRevert(V3DeferredLiquidityFixture.NotReady.selector);vault.execute(a);
         vm.expectRevert(V3DeferredLiquidityFixture.NotReady.selector);vault.execute(b);
