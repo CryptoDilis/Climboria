@@ -349,6 +349,18 @@ contract SafeQuorumIssuanceTest {
         require(_exec(correct,_sign(correct,3)));
         require(gaming.generation()==2);
     }
+    function testInitialRewardBindingPredicate() public {
+        _issue();
+        V3GovernedGameRewardFixture gaming=V3GovernedGameRewardFixture(successor.vaults(1));
+        address t=address(successor.token());
+        require(gaming.matchesInitialBinding(t,address(guard),cfg.founder));
+        require(!gaming.matchesInitialBinding(PAYEE,address(guard),cfg.founder));
+        require(!gaming.matchesInitialBinding(t,PAYEE,cfg.founder));
+        require(!gaming.matchesInitialBinding(t,address(guard),PAYEE));
+        bytes memory data=abi.encodeCall(guard.revokeRewardSigner,(1,1));
+        require(_exec(data,_sign(data,3)));
+        require(!gaming.matchesInitialBinding(t,address(guard),cfg.founder));
+    }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
         bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours));
