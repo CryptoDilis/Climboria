@@ -32,3 +32,6 @@ Capture actual block gas limit, independent estimates and agreed fee cap for eve
 ## Release conditions
 
 Independent security review, production signer independence and below-quorum recovery, real legacy eligibility and appeals, real game authority, reviewed liquidity/locker or explicit deferral, and exact production build approval remain open. Public testnet success does not close them. Do not deploy/fund a production token from this fixture.
+
+## Frozen offline first-stage preflight (PR #877)
+The exact previously tested candidate is pinned to source d8ed14ff19b21db9d5d5e81e86cab9a86deb0e0f and main Safe CI 45922146615, not an independent security approval. See frozen-testnet-candidate.json in the PR. Reproduce the build with pinned dependencies, run node testnet-preflight.mjs --verify-build and node --test testnet-preflight.test.mjs from base/safe-custody. The example JSON is intentionally incomplete and must fail; never add private keys or seed phrases. Evidence hashes are references only and must be independently verified, and a complete structure remains NO_GO. The offline first-stage review output contains creation bytes, not a broadcastable transaction with nonce/gas/fees. Reconcile actual on-chain state and obtain specific authorization separately. No current role addresses or budget selected.
