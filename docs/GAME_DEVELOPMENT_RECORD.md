@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A ACTIVITY MERGED; PAIR SPACING FOUNDATION — 2026-11-28 PHT
+
+- #1006 exact c249be663df4f2e15039685141d4269dd9d14777: five workflows passed (foundation 46028324815, chat 46028324818, Validate 46028324762, focused browser 46028324947, gameplay 46028324735). Main changes only Base files/workflow, no overlap. GitHub confirmed merge 2ae6632f50394413cf268357bdb267e9fcd2848d. Post-merge CI not yet verified.
+- New isolated two-controller candidate adds swept horizontal spacing against latest peer position, alternating bounded tick order, terrain collision priority, unique identity/spawn checks and owned cleanup. Tests head-on movement and terrain denial; fresh CI required. This is not crowd pathfinding or actual map/GLB acceptance; narrow routes may require backoff/rerouting.
+- NEXT: verify unit CI, then use actual loaded map adapters and two visible GLBs within the existing real-peer-reserved budget, check spacing, movement, identity and cleanup on desktop/mobile. Physical-device and production authority gates remain closed. No public spawn, inventory or token changes.
+
+---
+
 ## R5A PRIVATE HOST MERGED; ACTIVITY INTEGRATION CANDIDATE — 2026-11-27 UTC
 
 - #1005 exact head d17aa99165f49315e28ac477a1173e4aefaa7ab0: five source workflows SUCCESS (Validate 46023173150, foundation 46023173129, chat 46023173036, gameplay 46023172992, focused browser 46023173019). Intervening main changes only Base handoff documentation; no overlapping paths. Merged 91e4fc79d9a308a65841857c281b6239fd24d883; post-merge CI not yet verified. Host remains private/unwired from production.
