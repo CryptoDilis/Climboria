@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {inspectTester,distinctTesters} from './preview-local-operator-qa.mjs';
+import {inspectTester,distinctTesters,testerCheck,pairCheck} from './preview-local-operator-qa.mjs';
 const now=1700000000000,host='game-combat-preview.climboria.fun';
 const token=payload=>'e30.'+Buffer.from(JSON.stringify(payload)).toString('base64url')+'.fake';
 function fixture(n=1){
@@ -28,4 +28,18 @@ test('malformed or mismatched credentials fail closed, decoding is not auth',()=
  assert.equal(inspectTester({...f,session:{...f.session,access_token:fixture(2).session.access_token}}),null);
  assert.equal(inspectTester({...f,cookie:{...f.cookie,value:'bad'}}),null);
  assert.equal(inspectTester(),null);
+});
+
+test('safe diagnostics distinguish email mismatch, freshness, cookie scope and duplicate accounts',()=>{
+ const f=fixture(),other=fixture(2),a=inspectTester(f),b=inspectTester(other);
+ assert.equal(testerCheck(f),'ok');
+ assert.equal(testerCheck({...f,cookie:other.cookie}),'access-email-mismatch');
+ assert.equal(testerCheck({...f,cookie:{...f.cookie,domain:'climboria.fun'}}),'access-cookie-scope-invalid');
+ assert.equal(testerCheck({...f,cookie:{...f.cookie,value:'bad'}}),'access-identity-invalid');
+ assert.equal(testerCheck({...f,now:now+500000}),'game-session-expiring');
+ assert.equal(testerCheck({...f,cookie:{...f.cookie,value:token({email:f.user.email,exp:now/1000+30})}}),'access-session-expiring');
+ assert.equal(pairCheck(a,b,now),'ok');
+ assert.equal(pairCheck(a,a,now),'same-tester');
+ assert.equal(pairCheck({...a,expiresAt:now+30000},b,now),'tester-a-expiring');
+ assert.equal(pairCheck(a,{...b,expiresAt:now+30000},now),'tester-b-expiring');
 });
