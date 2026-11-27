@@ -101,9 +101,7 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
             !(pending.digest!=0&&block.timestamp<pending.expiresAt&&a==pending.newOwner);
     }
     function _rewardRole(address a) private view returns(bool){
-        V3GovernedGameRewardFixture g=_gaming();
-        (address candidate,,,)=g.pending();
-        return g.formerOrCurrentSigner(a)||a==candidate;
+        return _gaming().reservedSignerRole(a);
     }
     function revokeRewardSigner(uint256 expected,uint256 generation) external onlyWallet {
         V3GovernedGameRewardFixture(_target(1,expected)).revoke(expected,generation);
