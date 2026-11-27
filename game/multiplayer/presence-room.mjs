@@ -6,19 +6,24 @@
  * Not wired to the live Game. No fake player ghosts, loot, damage or rewards.
  */
 import {ROOM_RULES,validatePlayerMove} from './server-authority-rules.mjs';
+import {createMovementInterest} from './movement-interest.mjs';
 const VALID_ID=/^[a-zA-Z0-9_-]{16,100}$/;
 const VALID_NAME=/^[a-zA-Z0-9 _-]{2,24}$/;
 const ALLOWED_MODELS=new Set(['Adventurer','Jarrell','Lheiz']);
 const INITIAL_POSITION=Object.freeze({x:0,y:2,z:-30});
 
 export class PresenceRoom{
- constructor({roomId='jarrell-peak',now=()=>Date.now(),limit=32}={}){
+ constructor({roomId='jarrell-peak',now=()=>Date.now(),limit=32,movementInterest=false,movementBatch=false}={}){
   if(typeof roomId!=='string'||!roomId||typeof now!=='function'||!Number.isInteger(limit)||limit<2||limit>128)
    throw Error('Invalid trusted room configuration');
   this.roomId=roomId;
   this.now=now;
   this.limit=limit;
   this.members=new Map();
+  if(typeof movementInterest!=='boolean')throw Error('Invalid movement interest configuration');
+  this.movementInterest=movementInterest?createMovementInterest():null;
+  if(typeof movementBatch!=='boolean'||(movementBatch&&!movementInterest))throw Error('Invalid private movement batch configuration');
+  this.movementBatch=movementBatch;
  }
  snapshot(){
   return [...this.members.values()].filter(m=>m.visible!==false).map(m=>({
@@ -101,8 +106,35 @@ export class PresenceRoom{
   // Ignore any client-provided id, name, room or health fields.
   m.position={x:payload.position.x,y:payload.position.y,z:payload.position.z};
   m.lastMoveAt=now;
-  this.broadcast({type:'player-moved',id:m.id,position:{...m.position}},m.id);
+  if(this.movementBatch){/* Private fixture explicitly flushes at its bounded tick. */}
+  else if(this.movementInterest)this.flushMovementInterest(m.id);
+  else this.broadcast({type:'player-moved',id:m.id,position:{...m.position}},m.id);
   return {ok:true};
+ }
+ // Private test/preview owner must call periodically (e.g. 250ms). Production remains default-off.
+ flushMovementInterest(sourceId=null){
+  if(!this.movementInterest)return 0;
+  // Private, explicitly opted-in protocol: one bounded array per recipient per chunk.
+  // No pending packet queue survives a flush or a disconnect; only current trusted positions.
+  if(this.movementBatch){
+   if(sourceId!==null)throw Error('Private batch requires a full tick flush');
+   const batches=new Map();
+   const result=this.movementInterest.dispatch({members:this.members,now:this.now(),deliver:(member,packet)=>{
+    let batch=batches.get(member.id);if(!batch){batch=[];batches.set(member.id,batch)}
+    batch.push({id:packet.id,position:packet.position});
+   }});
+   const failed=new Set(result.failed);let delivered=0;
+   for(const [id,entries] of batches){
+    const member=this.members.get(id);if(!member||member.visible===false)continue;
+    try{for(let i=0;i<entries.length;i+=32){const moves=entries.slice(i,i+32);member.send({type:'players-moved',moves});delivered+=moves.length}}
+    catch{failed.add(id)}
+   }
+   for(const id of failed)this.disconnect(id);
+   return delivered;
+  }
+  const result=this.movementInterest.dispatch({members:this.members,now:this.now(),sourceId,deliver:(m,packet)=>m.send(packet)});
+  for(const id of result.failed)this.disconnect(id);
+  return result.delivered;
  }
  receive(trustedSessionId,packet){
   if(!packet||typeof packet!=='object')return {ok:false,reason:'invalid-packet'};
@@ -114,7 +146,7 @@ export class PresenceRoom{
  disconnect(trustedSessionId){
   const member=this.members.get(trustedSessionId);
   if(!member)return false;
-  this.members.delete(trustedSessionId);
+  this.members.delete(trustedSessionId);this.movementInterest?.remove(trustedSessionId);
   if(member.visible!==false)this.broadcast({type:'player-left',id:trustedSessionId},trustedSessionId);
   return true;
  }

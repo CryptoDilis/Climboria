@@ -1,0 +1,30 @@
+name: Game Crowd Native Socket Load
+on:
+  push:
+    paths: ['game/multiplayer/presence-room.mjs','game/multiplayer/movement-interest.mjs','game/multiplayer/movement-interest.test.mjs','game/npc/crowd-render-policy.mjs','game/npc/crowd-render-policy.test.mjs','.github/scripts/game-crowd-native-load.mjs','.github/workflows/game-crowd-native-load.yml']
+  pull_request:
+    paths: ['game/multiplayer/presence-room.mjs','game/multiplayer/movement-interest.mjs','game/multiplayer/movement-interest.test.mjs','game/npc/crowd-render-policy.mjs','game/npc/crowd-render-policy.test.mjs','.github/scripts/game-crowd-native-load.mjs','.github/workflows/game-crowd-native-load.yml']
+permissions:
+  contents: read
+concurrency:
+  group: game-crowd-native-load-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  private-loopback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install local fixture transport
+        run: |
+          npm init -y
+          npm install --no-save ws@8.18.3
+      - name: Run movement and crowd policy regression tests
+        run: node --test game/multiplayer/movement-interest.test.mjs game/npc/crowd-render-policy.test.mjs
+      - name: Run 10 25 50 100 private native clients
+        run: node .github/scripts/game-crowd-native-load.mjs
