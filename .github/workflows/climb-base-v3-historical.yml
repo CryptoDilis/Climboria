@@ -1,0 +1,63 @@
+name: CLIMB Base V3 Historical RPC Observation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/climb-base-v3-historical.yml'
+      - 'base/v3-testnet/verify-creation.mjs'
+      - 'base/v3-testnet/check-prestart.mjs'
+      - 'base/v3-testnet/src/ClimbV3IntegratedTestToken.sol'
+      - 'base/v3-testnet/src/ClimbV3TestToken.sol'
+      - 'base/v3-testnet/src/V3RestrictedSpend.sol'
+      - 'base/v3-testnet/foundry.toml'
+permissions:
+  contents: read
+jobs:
+  historical:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: base/v3-testnet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Fetch pinned OpenZeppelin source
+        run: |
+          set -euo pipefail
+          mkdir -p lib/openzeppelin-contracts
+          git -C lib/openzeppelin-contracts init
+          git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+      - name: Rebuild pinned historical test fixture
+        run: forge build
+      - name: Verify submitted V3 creation (read-only, finalized)
+        run: |
+          set -euo pipefail
+          node verify-creation.mjs > "$RUNNER_TEMP/v3-finalized-creation.json"
+          cat "$RUNNER_TEMP/v3-finalized-creation.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-v3-finalized-creation
+          path: ${{ runner.temp }}/v3-finalized-creation.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Observe historical pre-start restrictions (read-only)
+        run: |
+          set -euo pipefail
+          node check-prestart.mjs "$RUNNER_TEMP/v3-finalized-creation.json" > "$RUNNER_TEMP/v3-prestart.json"
+          cat "$RUNNER_TEMP/v3-prestart.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-v3-historical-prestart
+          path: ${{ runner.temp }}/v3-prestart.json
+          if-no-files-found: error
+          retention-days: 14
