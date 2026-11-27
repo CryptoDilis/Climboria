@@ -31,3 +31,4 @@ jobs:
         run: |
           psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d wallet_fixture_test -f game/wallet-proof/postgres-fixture/schema.sql
           psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d wallet_fixture_test -f game/wallet-proof/postgres-fixture/acceptance.sql
+          python3 game/wallet-proof/postgres-fixture/concurrency.py
