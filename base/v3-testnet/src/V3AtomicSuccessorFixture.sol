@@ -112,16 +112,22 @@ contract V3AtomicSuccessorFixture {
         used=true;
         asset=new V3SuccessorTestToken();
         token=asset;
+        _deployPolicies(asset,cfg);
+        // No supply before all policy constructors succeed; no intermediate EOA/factory float.
+        asset.issue(vaults);
+        _activateLegacy(cfg.legacy);
+        assert(asset.balanceOf(address(this))==0&&asset.balanceOf(msg.sender)==0&&asset.balanceOf(cfg.founder)==0&&asset.balanceOf(cfg.distributor)==0);
+        emit Created(address(asset),vaults);
+    }
+    function _deployPolicies(V3SuccessorTestToken asset,V3SuccessorConfig calldata cfg) private {
         (address f,address g,V3EpochPolicyFactory e)=core.deploy(asset,cfg);
         expenses=e;
-        V3LiquidityPolicyFixture l=conditional.liquidity(asset,cfg.liquidity);
-        V3BoundedLegacyFixture legacy=conditional.legacy(asset,cfg.legacy);
-        address[7] memory destinations=[f,g,address(l),address(e.ecosystem()),address(e.community()),address(e.treasury()),address(legacy)];
-        vaults=destinations;
-        // No supply before all policy constructors succeed; no intermediate EOA/factory float.
-        asset.issue(destinations);
-        legacy.activate(cfg.legacy.ids,cfg.legacy.recipients,cfg.legacy.amounts,cfg.legacy.cap,cfg.legacy.campaign);
-        assert(asset.balanceOf(address(this))==0&&asset.balanceOf(msg.sender)==0&&asset.balanceOf(cfg.founder)==0&&asset.balanceOf(cfg.distributor)==0);
-        emit Created(address(asset),destinations);
+        vaults[0]=f;vaults[1]=g;
+        vaults[2]=address(conditional.liquidity(asset,cfg.liquidity));
+        vaults[3]=address(e.ecosystem());vaults[4]=address(e.community());vaults[5]=address(e.treasury());
+        vaults[6]=address(conditional.legacy(asset,cfg.legacy));
+    }
+    function _activateLegacy(V3SuccessorLegacyConfig calldata cfg) private {
+        V3BoundedLegacyFixture(vaults[6]).activate(cfg.ids,cfg.recipients,cfg.amounts,cfg.cap,cfg.campaign);
     }
 }
