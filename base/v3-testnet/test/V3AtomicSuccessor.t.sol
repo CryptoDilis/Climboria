@@ -5,10 +5,11 @@ import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {V3FounderVesting} from "../src/ClimbV3TestToken.sol";
 import {V3GovernedGameRewardFixture} from "../src/V3GovernedGameRewardFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "../src/V3EpochSpendFixture.sol";
-import {V3DeferredLegacyFixture} from "../src/V3DeferredLegacyFixture.sol";
+import {V3LegacyProofVerifierFixture as LegacyVerifier} from "../src/V3LegacyProofVerifierFixture.sol";
+import {V3LegacyProofClaimFixture} from "../src/V3LegacyProofClaimFixture.sol";
 import {IV3SyntheticPool} from "../src/V3LiquidityPolicyFixture.sol";
 import {V3DeferredLiquidityFixture} from "../src/V3DeferredLiquidityFixture.sol";
-import {V3AtomicSuccessorFixture,V3SuccessorConditionalDeployer,V3SuccessorTestToken,V3SuccessorConfig,V3SuccessorLiquidityConfig,IV3SyntheticPoolBuilder} from "../src/V3AtomicSuccessorFixture.sol";
+import {V3AtomicSuccessorFixture,V3SuccessorConditionalDeployer,V3SuccessorLegacyDeployer,V3SuccessorTestToken,V3SuccessorConfig,V3SuccessorLiquidityConfig,IV3SyntheticPoolBuilder} from "../src/V3AtomicSuccessorFixture.sol";
 interface VmSuccessor {
     function chainId(uint256) external;
     function etch(address,bytes calldata) external;
@@ -33,7 +34,7 @@ contract SuccessorMockCustody is IV3CustodyEpochFixture {
         return v.propose(recipient,amount,evidence,0,nonce);
     }
     function scheduleLiquidity(V3DeferredLiquidityFixture v,uint256 deadline) external returns(bytes32){return v.schedule(1000,500,50,deadline,"LP");}
-    function scheduleLegacy(V3DeferredLegacyFixture v,bytes32 digest,uint256 expiry) external {v.schedule(digest,expiry);}
+    function scheduleLegacy(V3LegacyProofClaimFixture v,bytes32 digest,uint256 expiry) external {v.schedule(digest,expiry);}
     function rotate() external {epoch++;}
 }
 contract SuccessorMockPool is ERC20 {
@@ -87,6 +88,27 @@ contract V3AtomicSuccessorTest {
         vm.etch(address(helper),original);
         require(factory.create(cfg).totalSupply()==SUPPLY);
     }
+    function testStagedLegacyHelperIdentityAndRollback() public {
+        V3SuccessorConditionalDeployer helper=factory.conditional();
+        V3SuccessorLegacyDeployer stage=helper.legacyDeployer();
+        require(stage.factory()==address(helper)&&helper.legacyDeployerHash()==address(stage).codehash);
+        V3SuccessorTestToken empty=new V3SuccessorTestToken();
+        vm.expectRevert(V3SuccessorLegacyDeployer.Unauthorized.selector);
+        stage.legacy(empty,control);
+        vm.expectRevert(V3SuccessorLegacyDeployer.Unauthorized.selector);
+        stage.proofLegacy(empty,control);
+        bytes memory original=address(stage).code;
+        vm.etch(address(stage),hex"60006000f3");
+        vm.expectRevert(V3SuccessorConditionalDeployer.InvalidLegacyDeployer.selector);
+        factory.create(cfg);
+        require(!factory.used()&&address(factory.token())==address(0)&&factory.vaults(6)==address(0));
+        vm.etch(address(stage),original);
+        V3LegacyProofClaimFixture proof=helper.proofLegacy(empty,control);
+        require(address(proof.token())==address(empty)&&address(proof.custody())==address(control)&&!proof.activated());
+        require(empty.totalSupply()==0&&empty.balanceOf(address(proof))==0);
+        V3SuccessorTestToken token=factory.create(cfg);
+        require(token.totalSupply()==SUPPLY&&token.balanceOf(factory.vaults(6))==8888888880000);
+    }
     function testAtomicSevenDestinationsAndZeroFloat() public {
         V3SuccessorTestToken token=factory.create(cfg);
         require(token.issued()&&token.issuer()==address(factory)&&token.totalSupply()==SUPPLY&&token.decimals()==6);
@@ -102,7 +124,7 @@ contract V3AtomicSuccessorTest {
         require(address(V3EpochSpendFixture(factory.vaults(3)).token())==address(token));
         require(address(V3EpochSpendFixture(factory.vaults(4)).token())==address(token));
         require(address(V3EpochSpendFixture(factory.vaults(5)).token())==address(token));
-        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(factory.vaults(6));
+        V3LegacyProofClaimFixture legacy=V3LegacyProofClaimFixture(factory.vaults(6));
         require(address(legacy.token())==address(token)&&!legacy.activated()&&legacy.allocated()==0&&address(legacy.custody())==address(control));
     }
     function testFactoryAndTokenCannotIssueTwice() public {
@@ -134,9 +156,9 @@ contract V3AtomicSuccessorTest {
         _executeLiquidity(token);
         vm.expectRevert(bytes4(keccak256("ExpenseAlreadyConsumed()")));c.execute(b);
         _claimGameReward();
-        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(factory.vaults(6));
+        V3LegacyProofClaimFixture legacy=V3LegacyProofClaimFixture(factory.vaults(6));
         _activateLegacy(legacy);
-        vm.prank(CLAIMANT);legacy.claim("CLAIM");
+        vm.prank(CLAIMANT);legacy.claim(0,_legacyRow(),new LegacyVerifier.Node[](0));
         require(token.totalSupply()==SUPPLY&&token.balanceOf(PAYEE)==210&&token.balanceOf(DISTRIBUTOR)==0&&token.balanceOf(CLAIMANT)==100);
         vm.prank(CLAIMANT);token.burn(10);
         vm.warp(legacy.appealEnd());
@@ -144,25 +166,29 @@ contract V3AtomicSuccessorTest {
         vm.warp(block.timestamp+2 days);legacy.finalize("REVIEW");
         require(token.totalSupply()==SUPPLY-10-(legacy.RESERVE()-100)&&legacy.paid()+legacy.burned()==legacy.RESERVE());
     }
-    function _manifest() private pure returns(bytes32[] memory ids,address[] memory recipients,uint256[] memory amounts){
-        ids=new bytes32[](1);recipients=new address[](1);amounts=new uint256[](1);
-        ids[0]="CLAIM";recipients[0]=CLAIMANT;amounts[0]=100;
+    function _legacyRow() private pure returns(LegacyVerifier.Row memory){
+        return LegacyVerifier.Row(bytes32(uint256(11)),bytes32(uint256(21)),CLAIMANT,100,100,bytes32(uint256(31)));
+    }
+    function _manifest(V3LegacyProofClaimFixture legacy) private view returns(LegacyVerifier.Commitment memory c){
+        bytes32 domain=sha256("CLIMB_BASE_LEGACY_BINARY_SUM_TEST_V2");
+        LegacyVerifier.Row memory r=_legacyRow();
+        bytes32 leaf=sha256(abi.encodePacked(domain,bytes1(0x01),bytes32(uint256(1)),uint256(0),r.sourceAccount,r.sourceOwner,r.recipient,r.sourceAmount,r.award,r.evidenceHash));
+        c=LegacyVerifier.Commitment(bytes32(uint256(1)),bytes32(uint256(2)),address(legacy.token()),address(legacy),1,100,100,
+            sha256(abi.encodePacked(domain,bytes1(0x04),bytes32(uint256(1)),bytes32(uint256(2)),uint256(84532),address(legacy.token()),address(legacy),uint256(1),uint256(100),leaf,uint256(100))));
     }
     function _scheduleLegacy() private {
-        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(factory.vaults(6));
-        (bytes32[] memory ids,address[] memory recipients,uint256[] memory amounts)=_manifest();
-        control.scheduleLegacy(legacy,legacy.manifestDigest("TEST_CAMPAIGN",100,ids,recipients,amounts),block.timestamp+7 days);
+        V3LegacyProofClaimFixture legacy=V3LegacyProofClaimFixture(factory.vaults(6));
+        control.scheduleLegacy(legacy,legacy.activationDigest(_manifest(legacy)),block.timestamp+7 days);
     }
-    function _activateLegacy(V3DeferredLegacyFixture legacy) private {
-        (bytes32[] memory ids,address[] memory recipients,uint256[] memory amounts)=_manifest();
-        legacy.activate("TEST_CAMPAIGN",100,ids,recipients,amounts);
+    function _activateLegacy(V3LegacyProofClaimFixture legacy) private {
+        legacy.activate(_manifest(legacy));
     }
     function testDeferredLegacyDoesNotBlockIssuanceOrRequireEarlyManifest() public {
         V3SuccessorTestToken token=factory.create(cfg);
-        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(factory.vaults(6));
+        V3LegacyProofClaimFixture legacy=V3LegacyProofClaimFixture(factory.vaults(6));
         vm.warp(block.timestamp+365 days);
         require(!legacy.activated()&&token.balanceOf(address(legacy))==legacy.RESERVE());
-        vm.expectRevert(V3DeferredLegacyFixture.NotReady.selector);legacy.finalize("REVIEW");
+        vm.expectRevert(V3LegacyProofClaimFixture.NotReady.selector);legacy.finalize("REVIEW");
         _scheduleLegacy();
         vm.warp(block.timestamp+2 days);_activateLegacy(legacy);
         require(legacy.activated()&&legacy.deadline()==block.timestamp+30 days&&token.totalSupply()==SUPPLY);

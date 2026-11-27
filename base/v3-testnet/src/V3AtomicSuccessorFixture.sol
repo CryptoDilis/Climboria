@@ -7,6 +7,7 @@ import {V3GovernedGameRewardFixture,IV3RewardCustody} from "./V3GovernedGameRewa
 import {V3EpochPolicyFactory,IV3CustodyEpochFixture} from "./V3EpochSpendFixture.sol";
 import {IV3BurnableAsset} from "./V3BoundedLegacyFixture.sol";
 import {V3DeferredLegacyFixture} from "./V3DeferredLegacyFixture.sol";
+import {V3LegacyProofClaimFixture} from "./V3LegacyProofClaimFixture.sol";
 import {IV3SyntheticPool} from "./V3LiquidityPolicyFixture.sol";
 import {V3DeferredLiquidityFixture} from "./V3DeferredLiquidityFixture.sol";
 
@@ -65,13 +66,47 @@ contract V3SuccessorCoreDeployer {
         expenses=new V3EpochPolicyFactory(asset,cfg.control,cfg.start,cfg.founder);
     }
 }
+/// @notice Constructor-created staging helper; never receives issued supply.
+contract V3SuccessorLegacyDeployer {
+    error Unauthorized();
+    address public immutable factory;
+    constructor(){factory=msg.sender;}
+    function legacy(V3SuccessorTestToken asset,IV3CustodyEpochFixture control) external returns(V3DeferredLegacyFixture){
+        if(msg.sender!=factory||block.chainid!=84532)revert Unauthorized();
+        return new V3DeferredLegacyFixture(IV3BurnableAsset(address(asset)),control);
+    }
+    function proofLegacy(V3SuccessorTestToken asset,IV3CustodyEpochFixture control) external returns(V3LegacyProofClaimFixture){
+        if(msg.sender!=factory||block.chainid!=84532)revert Unauthorized();
+        return new V3LegacyProofClaimFixture(IV3BurnableAsset(address(asset)),control);
+    }
+}
 contract V3SuccessorConditionalDeployer {
+    error InvalidLegacyDeployer();
+    V3SuccessorLegacyDeployer public immutable legacyDeployer;
+    bytes32 public legacyDeployerHash;
+    constructor(){
+        V3SuccessorLegacyDeployer helper=new V3SuccessorLegacyDeployer();
+        legacyDeployer=helper;legacyDeployerHash=address(helper).codehash;
+    }
     function liquidity(IERC20 asset,V3SuccessorLiquidityConfig calldata cfg,IV3CustodyEpochFixture control) external returns(V3DeferredLiquidityFixture v){
         IV3SyntheticPool p=cfg.builder.createPool(asset,cfg.quote);
         v=new V3DeferredLiquidityFixture(asset,cfg.quote,p,control,cfg.custody,cfg.trancheCap);
     }
     function legacy(V3SuccessorTestToken asset,IV3CustodyEpochFixture control) external returns(V3DeferredLegacyFixture v){
-        v=new V3DeferredLegacyFixture(IV3BurnableAsset(address(asset)),control);
+        _checkLegacyDeployer();
+        v=legacyDeployer.legacy(asset,control);
+        _checkLegacyDeployer();
+        if(address(v.token())!=address(asset)||address(v.custody())!=address(control))revert InvalidLegacyDeployer();
+    }
+    // Proof-based vault selected by the synthetic successor issuance.
+    function proofLegacy(V3SuccessorTestToken asset,IV3CustodyEpochFixture control) external returns(V3LegacyProofClaimFixture v){
+        _checkLegacyDeployer();
+        v=legacyDeployer.proofLegacy(asset,control);
+        _checkLegacyDeployer();
+        if(address(v.token())!=address(asset)||address(v.custody())!=address(control))revert InvalidLegacyDeployer();
+    }
+    function _checkLegacyDeployer() private view {
+        if(address(legacyDeployer).codehash!=legacyDeployerHash)revert InvalidLegacyDeployer();
     }
 }
 
@@ -123,6 +158,6 @@ contract V3AtomicSuccessorFixture {
         vaults[0]=f;vaults[1]=g;
         vaults[2]=address(conditional.liquidity(asset,cfg.liquidity,cfg.control));
         vaults[3]=address(e.ecosystem());vaults[4]=address(e.community());vaults[5]=address(e.treasury());
-        vaults[6]=address(conditional.legacy(asset,cfg.control));
+        vaults[6]=address(conditional.proofLegacy(asset,cfg.control));
     }
 }
