@@ -7,7 +7,7 @@ import {TextEncoder} from 'node:util';
 const source=readFileSync('game/multiplayer/client-presence.js','utf8');
 const config=JSON.parse(readFileSync('game/multiplayer/client-config.json','utf8'));
 const peer={id:'s_'+'a'.repeat(32),name:'Explorer B',model:'Jarrell',position:{x:0,y:9.5,z:-30}};
-function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,configFailures=0,configGate=null,configBadSchema=false,refreshMode=null,guest=false,heroOwner=null,mobile=false}={}){
+function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token:'verified-token'},ticketGate=null,ticketJSONGate=null,sessionGate=null,ticketFailures=0,ticketStatuses=[],ticketPayloads=[],delayedClients=false,configUnavailable=false,configFailures=0,configGate=null,configBadSchema=false,refreshMode=null,guest=false,heroOwner=null,mobile=false,random=()=>0}={}){
  const state={session:initialSession,ticketFailures,ticketStatuses:[...ticketStatuses],ticketPayloads:[...ticketPayloads],configFailures,configCalls:0};
  const authListeners=[],intervals=[];
  const clients=[],adds=[],moves=[],removes=[],punches=[],speeches=[],calls=[],timers=[],created=[];
@@ -100,7 +100,7 @@ function harness(enabled,{initialSession={user:{id:'verified-uuid'},access_token
   }
   throw Error('unexpected fetch');
  };
- const context={window,document,fetch,URL,TextEncoder,AbortController,WebSocket:Socket,
+ const context={window,document,fetch,URL,TextEncoder,AbortController,WebSocket:Socket,Math:Object.assign(Object.create(Math),{random}),
   Event:class{constructor(type){this.type=type}},
   location:{href:'https://climboria.fun/game/play.html'},
   setTimeout:(fn,delay)=>{timers.push({fn,delay,cancelled:false});return timers.length},
@@ -282,7 +282,7 @@ test('live Game refuses the retired forced-Sanctuary mobile prompt',()=>{
  assert.doesNotMatch(game,/climboria:room-return-to-sanctuary/);
  assert.match(game,/const TP=\{1:\(\)=>tp\(0,-30,0\)/,
   'Game must keep Sanctuary at the actual protected server spawn center');
- assert.match(game,/client-presence\.js\?v=20261126-game-movement-1/,
+ assert.match(game,/client-presence\.js\?v=20261128-game-reconnect-1/,
   'production Game must load fresh Nearby Chat and remote size renderer');
 });
 
@@ -1375,4 +1375,39 @@ test('NPC World Chat requires explicit server capability, validates identities, 
  send({...reply,messageId:'npc-chat:qa-room:3',text:'<img onerror=alert(1)>'});assert.equal(log.children.length,2);assert.equal(log.children[1].children.length,0);
  assert.equal(input.value,'My human draft');assert.equal(notice.textContent,pending);
  socket.close();assert.equal(log.children.length,0);assert.equal(mute.style.display,'none');
+});
+
+test('network retries spread and cap, use fresh authenticated tickets, and reset after accepted spawn',async()=>{
+ const h=harness(true,{random:()=>0.99999});await flush();
+ const accepted='s_'+'e'.repeat(32);
+ for(const [index, expected] of [6250,12500,25000,30000,30000].entries()){
+  const socket=h.clients[index];
+  assert.ok(socket);
+  socket.close();
+  if(index===0){
+   const refreshed={user:{id:'verified-uuid'},access_token:'new-token'};
+   h.authChange(refreshed,'TOKEN_REFRESHED');
+   h.authChange(refreshed,'SIGNED_IN');
+  }
+  assert.equal(h.runNextTimer(),expected);
+  await flush();
+ }
+ const recovered=h.clients[5];
+ recovered.onopen();
+ recovered.onmessage({data:JSON.stringify({type:'welcome',selfId:accepted,peers:[peer]})});
+ assert.equal(h.adds.length,0,'welcome remains provisional during recovery');
+ recovered.onmessage({data:JSON.stringify({type:'spawn-accepted',id:accepted,position:peer.position,peers:[peer]})});
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'connected');
+ assert.equal(h.adds.length,1);
+ assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).length,6);
+ assert.equal(h.calls.filter(c=>c.url.endsWith('/ticket')).at(-1).options.headers.Authorization,'Bearer new-token');
+ recovered.close();
+ assert.deepEqual(h.removes,[peer.id]);
+ const retry=h.timers.find(timer=>!timer.cancelled);
+ assert.equal(retry?.delay,6250);
+ h.authChange(null);
+ assert.equal(retry.cancelled,true);
+ await flush();
+ assert.equal(h.clients.length,6);
+ assert.equal(h.document.documentElement.dataset.climboriaMultiplayer,'login-required');
 });

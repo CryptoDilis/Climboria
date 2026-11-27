@@ -90,7 +90,7 @@
  let socket=null,disposed=false,reconnect=null,movement=null,clientUser=null,selfId=null;
  let connecting=false,connectEpoch=0,authSubscription=null,spawnConfirmed=false;
  let sameAccountInUse=false,waitForVoluntarySpawn=false;
- let admissionTimer=null;
+ let admissionTimer=null,retryFailures=0;
  let sessionLookupCancel=null,ticketLookupCancel=null;
  const known=new Map(),validId=x=>typeof x==='string'&&/^s_[a-f0-9]{32}$/.test(x);
  const validPosition=p=>p&&['x','y','z'].every(k=>typeof p[k]==='number'&&Number.isFinite(p[k])&&Math.abs(p[k])<50000);
@@ -396,7 +396,7 @@
     for(const peer of peers)addPlayer(peer);
     spawnConfirmed=true;nearbyChatReady=msg.nearbyChatEnabled===true;npcChatReady=msg.npcChatEnabled===true;
     // Only a verified server spawn-accepted completes room admission.
-    clearAdmissionTimer();
+    clearAdmissionTimer();retryFailures=0;
     ensureWorldChatUi();updateNpcChatControl();
     world.roomResumeVerified=true;
     showStatus('connected','ONLINE: '+(known.size+1));
@@ -482,6 +482,13 @@
   if(reconnect)clearTimeout(reconnect);
   reconnect=setTimeout(()=>{reconnect=null;void connect()},delay);
  }
+ function scheduleNetworkRetry(minimum){
+  // Spread retries across tabs after a network or room outage. Keep a
+  // jitter window at the cap so repeated failures cannot synchronize them.
+  const base=Math.min(24000,minimum*2**retryFailures);
+  retryFailures=Math.min(3,retryFailures+1);
+  scheduleConnect(base+Math.floor(Math.random()*(base/4+1)));
+ }
  function clearAdmissionTimer(){
   if(admissionTimer!==null){clearTimeout(admissionTimer);admissionTimer=null}
  }
@@ -498,13 +505,13 @@
    clearPeers();
    try{ws.close()}catch{}
    showStatus('offline','MULTIPLAYER · RECONNECTING');
-   scheduleConnect(5000);
+   scheduleNetworkRetry(5000);
   },12000);
  }
  function resetConnection(){
   clearAdmissionTimer();
   waitForVoluntarySpawn=false;
-  sameAccountInUse=false;
+  sameAccountInUse=false;retryFailures=0;
   // Invalidate pending getSession/ticket responses so a signed-out account
   // cannot later create a socket or revive its World Chat after logout.
   connectEpoch++;
@@ -656,7 +663,7 @@
     // An authenticated room can be temporarily full or this account may
     // already have two outstanding tickets. Do not claim the server is down.
     showStatus('room-busy','MULTIPLAYER · ROOM BUSY · RETRYING');
-    scheduleConnect(10000);
+    scheduleNetworkRetry(10000);
     return;
    }
    if(issued.loginRequired){
@@ -732,13 +739,13 @@
      return;
     }
     showStatus('offline','MULTIPLAYER · RECONNECTING');
-    scheduleConnect(5000);
+    scheduleNetworkRetry(5000);
    };
    ws.onerror=()=>{if(ws.readyState!==WebSocket.CLOSED)ws.close()};
   }catch(error){
    if(disposed||epoch!==connectEpoch)return;
    showStatus('offline','MULTIPLAYER · UNAVAILABLE');
-   scheduleConnect(10000);
+   scheduleNetworkRetry(10000);
   }finally{
    if(epoch===connectEpoch)connecting=false;
   }
@@ -775,7 +782,9 @@
    // its possible stale result and obtain a fresh session for this login.
    resetConnection();
   }
-  if(!socket&&!connecting)scheduleConnect(0);
+  // Same-account auth notifications must respect an existing retry. A real
+  // account change cleared it above and can connect immediately.
+  if(!socket&&!connecting&&reconnect===null)scheduleConnect(0);
  })?.data?.subscription;
  void connect();
 })();
