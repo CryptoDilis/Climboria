@@ -24,13 +24,15 @@ export class OfflineWalletProofStore{
   this.#db=new DatabaseSync(path);
   this.#db.exec(`PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL;
   CREATE TABLE IF NOT EXISTS fixture_challenge(id TEXT PRIMARY KEY,uid TEXT NOT NULL,address TEXT NOT NULL,nonce TEXT NOT NULL UNIQUE,message TEXT NOT NULL,issued INTEGER NOT NULL,expires INTEGER NOT NULL,used INTEGER NOT NULL DEFAULT 0 CHECK(used IN (0,1)));
-  CREATE TABLE IF NOT EXISTS fixture_association(chain INTEGER NOT NULL CHECK(chain=8453),address TEXT NOT NULL,uid TEXT NOT NULL,evidence TEXT NOT NULL UNIQUE,verified INTEGER NOT NULL,message_hash TEXT NOT NULL,PRIMARY KEY(chain,address));`);
+  CREATE TABLE IF NOT EXISTS fixture_association(chain INTEGER NOT NULL CHECK(chain=8453),address TEXT NOT NULL,uid TEXT NOT NULL,evidence TEXT NOT NULL UNIQUE,verified INTEGER NOT NULL,message_hash TEXT NOT NULL,PRIMARY KEY(chain,address));
+  CREATE TABLE IF NOT EXISTS fixture_revocation(chain INTEGER NOT NULL CHECK(chain=8453),address TEXT NOT NULL,evidence TEXT NOT NULL UNIQUE,revoked INTEGER NOT NULL,PRIMARY KEY(chain,address));`);
  }
  close(){this.#db.close();}
  #atomic(fn){this.#db.exec('BEGIN IMMEDIATE');try{const v=fn();this.#db.exec('COMMIT');return v;}catch(e){this.#db.exec('ROLLBACK');throw e;}}
  issue(user,wallet,chain,now){
   const uid=identity(user),canonical=address(wallet);time(now);if(chain!==CHAIN)fail();
   return this.#atomic(()=>{
+   if(this.#db.prepare('SELECT 1 FROM fixture_revocation WHERE chain=? AND address=?').get(CHAIN,canonical))fail();
    // Reject concurrent pending issuance for this account/address; no silent replacement.
    if(this.#db.prepare('SELECT id FROM fixture_challenge WHERE uid=? AND address=? AND used=0 AND expires>?').get(uid,canonical,now))fail();
    const id=randomBytes(16).toString('hex'),nonce=randomBytes(16).toString('hex');
@@ -39,12 +41,28 @@ export class OfflineWalletProofStore{
    return {mode:'synthetic-test',id,message,expires:now+TTL,authorization:false};
   });
  }
+ // Conservative fixture freeze: preserve evidence, invalidate all pending
+ // challenges for this address and prohibit relinking or reassignment.
+ // Real unlink/recovery policy is deliberately not implemented.
+ revoke(user,wallet,chain,now){
+  const uid=identity(user),canonical=address(wallet);time(now);if(chain!==CHAIN)fail();
+  return this.#atomic(()=>{
+   const association=this.#db.prepare('SELECT uid,evidence,verified FROM fixture_association WHERE chain=? AND address=?').get(CHAIN,canonical);
+   if(!association||association.uid!==uid||now<association.verified)fail();
+   const previous=this.#db.prepare('SELECT evidence,revoked FROM fixture_revocation WHERE chain=? AND address=?').get(CHAIN,canonical);
+   if(previous&&(previous.evidence!==association.evidence||now<previous.revoked))fail();
+   if(!previous)this.#db.prepare('INSERT INTO fixture_revocation(chain,address,evidence,revoked) VALUES(?,?,?,?)').run(CHAIN,canonical,association.evidence,now);
+   this.#db.prepare('UPDATE fixture_challenge SET used=1 WHERE address=? AND used=0').run(canonical);
+   return {mode:'synthetic-test',address:canonical,evidence:association.evidence,revoked:true,authorization:false,productionLink:false};
+  });
+ }
  verify(user,id,signature,now){
   const uid=identity(user);time(now);
   if(typeof id!=='string'||!ID.test(id)||typeof signature!=='string'||!/^0x[0-9a-fA-F]{130}$/.test(signature))fail();
   return this.#atomic(()=>{
    const row=this.#db.prepare('SELECT * FROM fixture_challenge WHERE id=?').get(id);
    if(!row||row.uid!==uid||row.used||now<row.issued||now>=row.expires)fail();
+   if(this.#db.prepare('SELECT 1 FROM fixture_revocation WHERE chain=? AND address=?').get(CHAIN,row.address))fail();
    try{
     const parsed=new SiweMessage(row.message);
     if(parsed.domain!==DOMAIN||parsed.uri!==URI||parsed.statement!==PURPOSE||parsed.version!=='1'||parsed.chainId!==CHAIN||parsed.requestId!==id||parsed.nonce!==row.nonce||parsed.address!==row.address||Date.parse(parsed.issuedAt)!==row.issued||Date.parse(parsed.expirationTime)!==row.expires||parsed.prepareMessage()!==row.message)fail();
