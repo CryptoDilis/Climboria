@@ -76,7 +76,7 @@ try{
    const initial=await sceneState();
    assert.equal(initial.attached,true);assert.ok(initial.meshes>0&&initial.triangles>0);
    assert.equal(initial.visible,true);assert.equal(initial.x,-200);assert.equal(initial.z,-170);
-   assert.ok(Math.abs(initial.ground-9)<.001);assert.equal(initial.hud.health,500);
+   assert.ok(Math.abs(initial.ground-9)<.001);assert.ok(Math.abs(initial.y-(9+initial.offset))<.001);assert.equal(initial.hud.health,500);
    const state=()=>page.locator('#state').textContent().then(JSON.parse);
    const tap=selector=>mobile?page.locator(selector).tap():page.locator(selector).click();
    assert.equal((await state()).snapshot.health,500);
