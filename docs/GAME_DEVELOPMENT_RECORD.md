@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## AUTHORED PILOT FIVE CHECKS GREEN; CONCURRENT RECORD RECONCILIATION — 2026-11-27 PHT
+
+- #938 exact head 85c15b3c4916867f0ba31cf18a7b0e220d41e4d1 all five SUCCESS: Authority 45952119285, Runtime 45952119349, Gateway 45952119334, Validate 45952119296, Gameplay 45952119308. Actual local pilot Worker/SQLite step passed. Main added concurrent Game NPC/backlog records; preserve both histories and all other main paths. No production change. Reconcile and require fresh CI.
+- #940 stacked character session lifecycle head 9a45b913b7673e46f591edb118d2af03934e8638 still unexecuted. Next reconcile #940 and verify CI after #938 merge. Actual private pilot GLB browser, server expiry and authorized edge/account QA remain pending. No deployment or public PvP.
+
+---
+
 ## AUTHORED PILOT LOCAL WORKER/SQLITE LIFECYCLE — 2026-11-27 PHT
 
 - #938 prior exact head b3d54116304b5b0291e71c98716cb31f0fed7895 had four green: Validate 45951411607, Authority 45951411584, Gateway 45951411492 and Runtime 45951411508; Gameplay 45951411513 running. New isolated workerd smoke 7781b09c176b1b09e2c98ad88c1caf7b528ce52c and CI wiring fc052d5679f393b763d5f0ed3d0f7b327b51982b exercise actual authored pilot Worker upgrade and SQLite DO, two synthetic accounts, one-use tickets, rejected public/internal paths, authoritative damage and timer-driven movement, reconnect and durable restart, recheck removed allowlist account at ticket consumption, disabled Worker/DO. Private ticket issuance stands in for verified identity; outer upstream auth is mocked separately in unit tests, not integrated end-to-end. No external credentials, no deployment. Source unexecuted at authoring; expiry and full real-account/edge acceptance remain pending.
@@ -28,6 +35,29 @@
 - Proposed separate Worker c344024a2d93169e594b50f22dcd8d74f65a23b4 adapts audited synthetic preview lifecycle to the fixed authored Jarrell camp fixture. Separate DO class/binding, proposed dedicated hostname (not provisioned), explicit AUTHORED_PILOT_ENABLED flag and two-account allowlist, exact same-origin, authenticated nonanonymous user required, allowlist rechecked on ticket consumption, room-specific single-use tickets and bounded preview operation budget. Existing synthetic/public Workers untouched. Source only, no Wrangler config/DNS/route/credentials or deployment. External Access policy must be verified before any deployment; no claim of reviewed production security.
 - Admission gate unit tests 2eebcdab88344bbfdf3379f25b51681638730f98 run under existing gateway workflow wildcard. Test disabled/wrong origin/wrong host, fixed room, internal routes denied, malformed admission and upstream auth budget denial. Not yet executed; successful auth/admission, expiry, reconnect and actual Worker/DO integration need further regression coverage. Pilot fixture tag intentionally differs from local/synthetic client tags; separate explicit client adapter required.
 - EXACT NEXT: finish #930 exact-head CI and merge; verify pilot CI, add local Worker/DO tests with mocked trusted auth (not actual accounts), review fail-closed lifecycle and pilot client binding, then independently verify edge Access and account ownership. Keep cloud disabled and no public PvP, loot or production save mutation.
+
+---
+
+## AUTONOMOUS ADVENTURER BOTS APPROVED — 2026-11-27 PHT
+
+- Owner explicitly confirmed moving, active bots comparable to Counter-Strike bots, adapted to survival exploration. R5A.1–R5A.9 now approved in [Game player experience backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 6ec92145e6ca4b5b1c3575dafa313bb7aa68fa9c; root master checklist update c7325255f44b2340c02463bdb4e879d38598006b. Supersedes prior pending-confirmation status only.
+- Acceptance requires autonomous goal selection, actual traversal/animation, contextual fishing/swimming/gathering, obstacle recovery and natural interactions, not stationary models or simulated human presence. Start one isolated state-machine NPC, then proposed 3–5 nearby subject to performance. Clearly label NPCs, keep ONLINE real players only; no real financial inventory/reward grants, public PvP or fake chat. Existing Game release gates and current next-task handoff unchanged. Documentation only; no gameplay implementation or deployment.
+
+---
+
+## REALISTIC MASTERY AND LIVING ADVENTURER NPC PROPOSAL — 2026-11-27 PHT
+
+- Owner approved progression refinement in [R3.6–R3.10 and R5A backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 445b1fb29f5f78ff04211ed64c6f913a95d42ee6; root P4 master checklist linked update cdcd8f1d2da3ec23438a80a1c9515d225439e295. No traditional global character level; physical techniques, skill mastery, difficult materials-based crafting, proposed +0–10 enhancements, durability and repair, no magic/pay-to-win. Rank thresholds, enhancement balance and asset/animation acceptance remain open.
+- Owner asked for recommendation on bots during low population. R5A is a proposed transparent adventurer NPC system, not approval to impersonate users or inflate online count. AI-labeled actors can walk, gather/farm, fish, swim, explore/rest, offer authored dialogue and eventually approved cooperative/sparring interactions. Start one lightweight state-machine NPC in isolated tests, then proposed 3–5 nearby subject to real browser performance; no external AI API requirement, fake chat/presence, real loot grants or economy participation. Pending owner confirmation of scope before implementation.
+- Existing next-task handoff unchanged: #930 follow-up private authored room/renderer integration with authorization, actual pilot and physical-device acceptance. All new requirements unchecked; documentation only. No gameplay, runtime, UI, deployment, wallet, token or other workstream changes.
+
+---
+
+## OWNER-APPROVED PLAYER EXPERIENCE AND BROWSER-FIRST EXPANSION — 2026-11-27 PHT
+
+- New [Game player experience master backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit [6f1fb20](https://github.com/CryptoDilis/Climboria/commit/6f1fb205629a6b402e81d8f8ef33dd60d4f72892), linked in canonical root README P4 master checklist commit [886a84d](https://github.com/CryptoDilis/Climboria/commit/886a84d127b3a11ccaa87f637eaa9a57bdc79038). Owner approved new player engagement features and browser-first constraints. R0–R7 records existing verified milestones and open gates, first 10-minute adventure, optional quests/hidden discoveries, dynamic events, skill/equipment/crafting progression, wildlife/enemies/bosses, social/co-op/guild/camp systems, non-punitive return activities, gated Base economy, asset optimization and physical-device budgets. All new items pending, no gameplay implementation in this documentation cycle. Existing master A–G, historical bugs and world expansion retained; no global priority change.
+- Verified #930 merged cb7257ffd5e2e4d0f4a1d4428ed7a7265717082e, exact head e0177f25205b21d98d8f9123a8f0fd5a39d426ab, Validate 45949794874 and Gameplay 45949794998 terminal SUCCESS. Combined native socket + actual GLB acceptance is isolated CI, not public combat. Existing public registered pilot readiness verified, real two-account/physical device acceptance still open.
+- EXACT NEXT: R0.1 authored private pilot room/renderer integration after #930; preserve fixed synthetic preview, explicit account/origin/room restrictions and authorized edge QA; actual two-account and device acceptance in parallel where authorized. Prepare R1 lightweight nonfinancial first adventure/discovery separately when foundations permit; no public PvP, persistent loot, token payouts or deployment authorization. No other workstream changes.
 
 ---
 
