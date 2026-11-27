@@ -147,11 +147,13 @@ test("Actual URL restoration defaults to Base and preserves explicit Solana and 
  const actual="let restoringSwapUrl=false;let quoteTokens={from:{id:'SOL'},to:{id:'USDC'}};\n"+swap.slice(start,end)+"\nrestoreSwapFromUrl()";
  for(const [search,expected,mints] of [
   ["","base",[]],["?chain=base&from=FOREIGN","base",[]],
-  ["?chain=unknown&from=FOREIGN","base",[]],["?chain=solana","solana",[]],
+  ["?chain=unknown&from=FOREIGN&contract=0x123","base",[]],["?chain=ethereum&contract=0x123&to=FOREIGN","base",[]],["?chain=bsc&contract=0x456","base",[]],["?chain=solana","solana",[]],
   ["?from=MINT","solana",["MINT"]],["?chain=solana&to=MINT","solana",["MINT"]]
  ]){
   const selected=[],resolved=[],chosen=[];
-  await runInNewContext(actual,{URLSearchParams,location:{search},setSwapChain:c=>selected.push(c),
+  const loc=new URL("https://climboria.fun/swap/"+search);
+  const history={state:null,replaceState(_state,_title,next){loc.href=String(next)}};
+  await runInNewContext(actual,{URL,URLSearchParams,location:loc,history,setSwapChain:c=>selected.push(c),
    setSwapUrl(){},$:()=>({textContent:"",classList:{add(){}}}),
    async resolveSolanaTokenByMint(mint){resolved.push(mint);return {id:mint};},
    chooseQuoteToken(side,token){chosen.push(token.id);}
@@ -159,5 +161,6 @@ test("Actual URL restoration defaults to Base and preserves explicit Solana and 
   assert.deepEqual(selected,[expected],search);
   assert.deepEqual(resolved,mints,search);
   assert.deepEqual(chosen,mints,search);
+  if(/chain=(unknown|ethereum|bsc)/.test(search))for(const key of ["contract","from","to"])assert.equal(loc.searchParams.has(key),false,search);
  }
 });
