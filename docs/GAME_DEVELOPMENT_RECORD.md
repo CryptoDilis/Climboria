@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## AUTHORED COMBAT GATEWAY ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
+
+- Parent #910 exact head 584d83a30e2926530f30e3dd2dac1ebbafde5c3c: Runtime 45941665985, Authority 45941665882, Gateway 45941665784, Validate 45941665785 SUCCESS; Gameplay 45941665732 running at checkpoint.
+- Gateway regression bfe6b487347b57a36b4ed12b7becef7558d518ca composes fixed authored camp fixture, actual private ticket store and transactional gateway using synthetic UUIDs and mock atomic storage. Checks foreign-room ticket isolation without consumption, one-use admission, forged room/position rejection, authoritative hit and movement, range denial, reconnect HP/location and retired-session denial. Not yet executed; no actual network, real authentication, Worker deployment or public gameplay change.
+- EXACT NEXT: merge #910 only after all five checks pass, reconcile this stacked PR with main, verify fresh CI, then design isolated actual-map local WebSocket acceptance without changing deployed synthetic fixture, live presence or cloud enablement.
+
+---
+
 ## AUTHORED MAP MELEE OBSTRUCTION — 2026-11-27 PHT (PROPOSED)
 
 - Parent #909 merged acbb1db07aca9e14af08d48f4a7fc4e23d587335; exact head 4446f042f6d991f2ab5e16265cd73fba990cf01a all five SUCCESS: Authority 45940909732, Validate 45940909777, Gateway 45940909765, Runtime 45940909755, Gameplay 45940909768.
