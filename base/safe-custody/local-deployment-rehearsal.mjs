@@ -4,9 +4,9 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {spawn,execFileSync} from 'node:child_process';
 import {setTimeout as sleep} from 'node:timers/promises';
 const URL='http://127.0.0.1:18545';
-const CHAIN=84532n, LIMIT=30000000n, SUPPLY=888888888800000n;
+const CHAIN=84532n, LIMIT=30_000_000n, SUPPLY=888_888_888_000_000n;
 const ZERO='0x'+'0'.repeat(40);
-const amounts=[17777777760000n,311111110800000n,222222222000000n,133333333200000n,88888888000000n,106666666560000n,8888888880000n];
+const amounts=[17_777_777_760_000n,311_111_110_800_000n,222_222_222_000_000n,133_333_333_200_000n,88_888_888_800_000n,106_666_666_560_000n,8_888_888_880_000n];
 assert.equal(amounts.reduce((a,b)=>a+b,0n),SUPPLY);
 const cast=(...args)=>execFileSync('cast',args,{encoding:'utf8',maxBuffer:8*1024*1024}).trim();
 const calldata=(sig,...args)=>cast('calldata',sig,...args.map(String));
@@ -50,7 +50,7 @@ async function rejectCall(name,from,to,data){
  await assert.rejects(rpc('eth_call',[{from,to,data,gas:hex(LIMIT)},'latest']),/eth_call:/);
  return name;
 }
-const anvil=spawn('anvil',['--host','127.0.0.1','--port','18545','--chain-id','84532','--gas-limit',String(LIMIT),'--accounts','10','--silent'],{stdio:['ignore','ignore','inherit']});
+const anvil=spawn('anvil',['--host','127.0.0.1','--port','18545','--chain-id','84532','--hardfork','cancun','--gas-limit',String(LIMIT),'--accounts','10','--silent'],{stdio:['ignore','ignore','inherit']});
 try{
  let ready=false;
  for(let i=0;i<100;i++){if(anvil.exitCode!==null)throw Error('Anvil exited');try{await rpc('eth_chainId');ready=true;break;}catch{await sleep(100);}}
@@ -106,7 +106,7 @@ try{
  assert.equal(new Set(vaults.map(x=>x.address)).size,7);
  for(const a of [creator,wallet,guard,successor,founder,distributor,payee,...owners])assert.equal(await number(token,'balanceOf(address)',a),0n);
  negative.push(await rejectCall('consumedSafeNonceCannotReplay',creator,wallet,exec(pack(signers))));
- const manifest={status:'LOCAL_ANVIL_REHEARSAL_ONLY',sourceSha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),chainId:Number(CHAIN),localBlockGasLimit:Number(LIMIT),testOnly:true,contracts,roles:{creator,owners,founder,distributor},startTimestamp:Number(start),totalSupplyRaw:String(SUPPLY),vaults,transactions:steps,negativeEthCalls:negative,limitations:'Synthetic quote/pool/LP, local unlocked Anvil accounts, approved-hash signatures, no public RPC, no real signers, no production review. Gas observations are local receipts only, not a public Base Sepolia gas estimate or authorization.'};
+ const manifest={status:'LOCAL_ANVIL_REHEARSAL_ONLY',sourceSha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),chainId:Number(CHAIN),localHardfork:'cancun',localBlockGasLimit:Number(LIMIT),testOnly:true,contracts,roles:{creator,owners,founder,distributor},startTimestamp:Number(start),totalSupplyRaw:String(SUPPLY),vaults,transactions:steps,negativeEthCalls:negative,limitations:'Synthetic quote/pool/LP, local unlocked Anvil accounts, approved-hash signatures, no public RPC, no real signers, no production review. Gas observations are local receipts only, not a public Base Sepolia gas estimate or authorization.'};
  assert.match(manifest.sourceSha,/^[a-f0-9]{40}$/);
  writeFileSync(process.argv[2],JSON.stringify(manifest,null,2)+'\n');console.log(JSON.stringify(manifest,null,2));
 }finally{anvil.kill();}
