@@ -8,7 +8,10 @@ const sha=value=>createHash('sha256').update(JSON.stringify(value),'utf8').diges
 function requireCondition(ok,message){if(!ok)throw new Error(message);}
 function fields(value,keys){
  requireCondition(value!==null&&typeof value==='object'&&!Array.isArray(value),'invalid object');
- requireCondition(Object.keys(value).sort().join(',')===keys.slice().sort().join(','),'unexpected or missing field');
+ requireCondition(Reflect.ownKeys(value).length===keys.length&&keys.every(key=>{
+  const descriptor=Object.getOwnPropertyDescriptor(value,key);
+  return descriptor?.enumerable===true&&Object.hasOwn(descriptor,'value');
+ }),'unexpected or missing field');
 }
 function pubkey(value){
  requireCondition(typeof value==='string'&&value.length>=32&&value.length<=44,'invalid source key');
@@ -35,8 +38,15 @@ export function normalizeLegacyEvidence(input){
  requireCondition(targetToken!==targetVault,'destination role collision');
  const cap=uint(input.cap,RESERVE);
  requireCondition(Array.isArray(input.entries)&&input.entries.length>0&&input.entries.length<=100000,'invalid entry count');
+ // Require dense own data rows. Array.map would silently skip holes and
+ // produce commitments with an incorrect entry count.
+ const rows=input.entries;
+ requireCondition(Reflect.ownKeys(rows).length===rows.length+1,'invalid dense entry list');
  const seen=new Set();let total=0n;
- const entries=input.entries.map(row=>{
+ const entries=Array.from({length:rows.length},(_,index)=>{
+  const descriptor=Object.getOwnPropertyDescriptor(rows,String(index));
+  requireCondition(descriptor?.enumerable===true&&Object.hasOwn(descriptor,'value'),'invalid dense entry list');
+  const row=descriptor.value;
   fields(row,['sourceAccount','sourceOwner','recipient','sourceAmount','award','evidenceHash']);
   const sourceAccount=pubkey(row.sourceAccount),sourceOwner=pubkey(row.sourceOwner),recipient=evm(row.recipient);
   requireCondition(!seen.has(sourceAccount),'duplicate source account');seen.add(sourceAccount);
