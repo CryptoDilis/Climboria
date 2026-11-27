@@ -98,6 +98,7 @@ try{
  }
  assert.ok(livePair.visuals.length===2&&livePair.visuals.every(v=>v.attached&&v.visible)&&livePair.peers===pairBaseline.peers);
  assert.equal(livePair.visuals.filter(v=>v.animated).length,mobile?1:2);
+ if(mobile){const lod=livePair.visuals.find(v=>!v.animated);assert.ok(lod.gaitFrames>=5&&lod.gaitPeak>.1,'Lightweight NPC must articulate while moving')}
  assert.ok(livePair.normalPairDrawFrames>=2&&livePair.visuals.every(v=>v.normalMeshDraws>0&&v.normalLabelDraws>0));
  assert.ok(livePair.loading+livePair.resident<=livePair.budget-1);
  await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak;w.resumeAtRoomPosition({x:0,z:-30,y:w.groundAt(0,-30)+1.75})});
