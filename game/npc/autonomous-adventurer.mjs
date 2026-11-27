@@ -33,30 +33,36 @@ export function createAutonomousAdventurer({nodes,edges,spawn,world,seed,identit
  if(!position)throw Error('Invalid NPC spawn');
  let time=0,stamina=100,mode='idle',goal=null,route=[],next=null,returning=false,wait=0,last=null,closed=false,stuck=false,activity=null;
  const rejected=new Map();
- function pathTo(id){
-  const queue=[[at]],seen=new Set([at]);
+ function reachableRoutes(){
+  const queue=[at],routes=new Map([[at,{parent:null,hops:0}]]);
   for(let i=0;i<queue.length;i++){
-   const p=queue[i],end=p.at(-1);if(end===id)return p.slice(1);
-   for(const n of links.get(end))if(!seen.has(n)&&(rejected.get(key(end,n))??0)<=time){
-    seen.add(n);queue.push([...p,n]);
+   const from=queue[i],hops=routes.get(from).hops+1;
+   for(const to of links.get(from))if(!routes.has(to)&&(rejected.get(key(from,to))??0)<=time){
+    routes.set(to,{parent:from,hops});queue.push(to);
    }
   }
-  return null;
+  return routes;
  }
  function choose(){
+  // All candidate activities share one shortest-path search from this waypoint.
+  // Rebuild after traversal failure so temporary edge exclusions still apply.
+  const routes=reachableRoutes();
   let best=null,score=-Infinity;
   for(const n of graph.values()){
    if(n.id===at||world.canAct(n,n.action)!==true)continue;
-   const p=pathTo(n.id);if(!p?.length)continue;
+   const candidate=routes.get(n.id);if(!candidate)continue;
    const bias=world.goalBias?.(n, {stamina,last})??0;
    // A preference is a bounded utility bonus, never permission to bypass availability,
    // navigation, collision, or fatigue. Do not reward repeating the last activity.
    const preference=personalityEnabled&&n.action!==last&&identity.preferredActivities.includes(n.action)?(stamina<25?.6:2.4):0;
-   const value=random()*3+(n.action!==last?3:0)+(n.action==='rest'?(100-stamina)/8:0)-p.length*.15+(finite(bias)?Math.max(-12,Math.min(12,bias)):0)+preference;
-   if(value>score){score=value;best={id:n.id,path:p}}
+   const value=random()*3+(n.action!==last?3:0)+(n.action==='rest'?(100-stamina)/8:0)-candidate.hops*.15+(finite(bias)?Math.max(-12,Math.min(12,bias)):0)+preference;
+   if(value>score){score=value;best=n.id}
   }
   if(!best){mode='idle';wait=.5;return}
-  goal=best.id;route=best.path;next=route.shift();returning=false;
+  route=[];
+  for(let id=best;id!==at;id=routes.get(id).parent)route.push(id);
+  route.reverse();
+  goal=best;next=route.shift();returning=false;
  }
  function arrive(){
   if(returning){returning=false;next=null;goal=null;route=[];mode='idle';wait=.2;return}
