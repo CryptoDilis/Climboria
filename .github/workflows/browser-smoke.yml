@@ -172,6 +172,8 @@ jobs:
               for (const selector of ['#connectWallet','#getQuote','#prepareSwap','#quoteAmount']) if(await page.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
               // Major asset buttons must be plain clickable rows with no hover "SELECT" overlay.
               await page.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
+              if(await page.locator('html').getAttribute('data-climboria-swap-network')!=='base'||!await page.locator('#getQuote').isDisabled())throw new Error('Fresh Swap must default to Base with native quote disabled');
+              await page.locator('#chainSolana').click();
               const swapViewport=await page.evaluate(()=>({width:innerWidth,mobile:matchMedia('(max-width:760px)').matches,workspace:document.querySelector('.premium-trade-layout')?.className,rail:getComputedStyle(document.querySelector('.market-rail')).display,nav:!!document.querySelector('#mobileWorkspaceTabs')&&getComputedStyle(document.querySelector('#mobileWorkspaceTabs')).display}));
               if(swapViewport.mobile)await page.locator('#mobileWorkspaceTabs [data-workspace-tab="market"]').click();
               try{await page.locator('#majorCoins .major-row').first().waitFor({state:'visible',timeout:15000});}
@@ -329,6 +331,8 @@ jobs:
               await mobileSwap.route('https://solana-rpc.publicnode.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
               await mobileSwap.route('https://rpc.ankr.com/solana',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
               await mobileSwap.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
+              if(await mobileSwap.locator('html').getAttribute('data-climboria-swap-network')!=='base'||!await mobileSwap.locator('#connectWallet').isDisabled())throw new Error('Fresh mobile Swap must default to Base and fence Solana wallet');
+              await mobileSwap.locator('#chainSolana').tap();
               await mobileSwap.locator('#mobileWorkspaceTabs [data-workspace-tab="market"]').tap();
               await mobileSwap.locator('#majorCoins .major-row[data-major-symbol="BTC"]').waitFor({state:'visible',timeout:15000});
               const mobileAssets=mobileSwap.locator('#majorCoins .major-row');
@@ -417,6 +421,8 @@ jobs:
               for(const selector of ['#connectWallet','#quoteAmount','#quoteFromSearch','#quoteFromSearch','#getQuote','#prepareSwap','#quoteStatus']) if(await page.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
               const heading=await page.locator('h1').first().innerText();
               if(!heading.toLowerCase().includes('swap')) throw new Error('Unexpected Swap page heading: '+heading);
+              if(await page.locator('html').getAttribute('data-climboria-swap-network')!=='base'||!await page.locator('#getQuote').isDisabled())throw new Error('Base default must preserve native execution gate');
+              await page.locator('#chainSolana').tap();
               // Regression: 0.0000157 SOL is exactly 15,700 lamports.
               // Float multiplication followed by floor previously produced 15,699.
               let requestedRawAmount=null;
@@ -757,7 +763,10 @@ jobs:
                 dex.on('pageerror',e=>errors.push('DEX '+e.message));
                 await dex.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
                 await dex.locator('#dexMobileNav').waitFor({state:'visible',timeout:10000});
-                const dexSupport=dex.locator('.toplinks a[href="/support/"]');
+                if(!await dex.locator('#dexMobileNav [data-dex-mobile-view="base"]').evaluate(el=>el.classList.contains('active')))throw new Error('DEX mobile must default to Base');
+                 if(!await dex.locator('#evmMarkets').isVisible())throw new Error('Base market panel must be visible on initial mobile DEX');
+                 await dex.locator('#dexMobileNav [data-dex-mobile-view="solana"]').tap();
+                 const dexSupport=dex.locator('.toplinks a[href="/support/"]');
                 if(!await dexSupport.isVisible()||await dexSupport.getAttribute('href')!=='/support/')throw new Error('DEX mobile header must expose a direct Support link at '+width+'px');
                 const dexMetrics=await dex.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,marketRows:document.querySelectorAll('#rows tr').length,navPosition:getComputedStyle(document.querySelector('#dexMobileNav')).position}));
                 if(dexMetrics.scrollWidth>dexMetrics.width+1||dexMetrics.navPosition!=='fixed')throw new Error('DEX '+width+'px overflow/bottom-nav failure: '+JSON.stringify(dexMetrics));
@@ -816,7 +825,9 @@ jobs:
                 if(!await swapSupport.isVisible()||await swapSupport.getAttribute('href')!=='/support/')throw new Error('Swap mobile header must expose a direct Support link at '+width+'px');
                 if(await tabs.evaluate(el=>getComputedStyle(el).position)!=='fixed')throw new Error('Swap mobile navigation must stay fixed at the bottom');
                 if(await swap.locator('.hero').isVisible()||await swap.locator('.ad-slot').first().isVisible())throw new Error('Swap mobile view must remove the tall hero and ad placeholder from the primary trading fold');
-                const trade=swap.locator('.premium-trade-layout');
+                if(await swap.locator('html').getAttribute('data-climboria-swap-network')!=='base'||!await swap.locator('#getQuote').isDisabled())throw new Error('Compact Swap must default to Base');
+                 await swap.locator('#chainSolana').tap();
+                 const trade=swap.locator('.premium-trade-layout');
                 if(!await trade.locator('.card').isVisible())throw new Error('Swap should open directly on the compact swap form');
                 if(await trade.locator('.market-rail').isVisible())throw new Error('Swap tab must hide the Major Assets rail to avoid a long stacked mobile page');
                 await tabs.locator('[data-workspace-tab="market"]').tap();
@@ -836,7 +847,9 @@ jobs:
               const desktopTable=await desktopDex.locator('#markets .tablewrap table').evaluate(el=>({width:el.getBoundingClientRect().width,minWidth:getComputedStyle(el).minWidth}));
               if(desktopTable.width<600)throw new Error('Desktop market table width unexpectedly changed: '+JSON.stringify(desktopTable));
               if(!await desktopDex.locator('#evmMarkets .tablewrap').isVisible()||await desktopDex.locator('#baseMobileCards').isVisible())throw new Error('Desktop Base market table must remain visible and Base mobile cards hidden');
-              await desktopDex.close();
+              const baseFirst=await desktopDex.evaluate(()=>document.querySelector('#evmMarkets').getBoundingClientRect().left<document.querySelector('#markets').getBoundingClientRect().left);
+               if(!baseFirst)throw new Error('Base market panel must lead on desktop');
+               await desktopDex.close();
               console.log('PASS compact mobile DEX/Swap navigation, Solana card tap/mint selection, desktop market table regression, candlestick defaults, 390px and 360px overflow and first-fold checks.');
             } finally {await browser.close();}
           })().catch(e=>{console.error(e);process.exit(1)});
