@@ -1,0 +1,54 @@
+name: CLIMB Base Stateful Invariants
+on:
+  pull_request:
+    paths:
+      - 'base/v3-testnet/**'
+      - '.github/workflows/climb-base-invariants.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'base/v3-testnet/**'
+      - '.github/workflows/climb-base-invariants.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  invariants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: base/v3-testnet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Fetch exact OpenZeppelin dependency
+        run: |
+          set -euo pipefail
+          mkdir -p lib/openzeppelin-contracts
+          git -C lib/openzeppelin-contracts init
+          git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+      - name: Exercise synthetic state sequences without handler reverts
+        env:
+          FOUNDRY_INVARIANT_RUNS: '32'
+          FOUNDRY_INVARIANT_DEPTH: '24'
+          FOUNDRY_INVARIANT_FAIL_ON_REVERT: 'true'
+        run: |
+          set -euo pipefail
+          forge test --match-contract '^V3SecurityInvariantTest$' --match-test '^invariant_' -vv | tee "$RUNNER_TEMP/climb-invariants.log"
+          grep -Eq '2 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-invariants.log"
+          test "$(grep -Ec 'runs: 32, calls: 768, reverts: 0' "$RUNNER_TEMP/climb-invariants.log")" -eq 2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: climb-stateful-invariant-log
+          path: ${{ runner.temp }}/climb-invariants.log
+          if-no-files-found: error
+          retention-days: 14
