@@ -105,7 +105,7 @@ contract SafeQuorumIssuanceTest {
     function testQuorumAtomicBindingExactAllocationAndNoFloat() public {
         _empty();_issue();
         V3SuccessorTestToken t=successor.token();
-        require(guard.bound()&&!guard.issuing()&&t.issued()&&t.totalSupply()==SUPPLY&&wallet.nonce()==1);
+        require(guard.bound()&&!guard.issuing()&&t.issued()&&t.totalSupply()==SUPPLY&&wallet.nonce()==1&&guard.lpCustody()==cfg.liquidity.custody);
         uint256[7] memory amounts=[uint256(17777777760000),311111110800000,222222222000000,133333333200000,88888888800000,106666666560000,8888888880000];
         for(uint256 i=0;i<7;i++)require(guard.destinations(i)==successor.vaults(i)&&t.balanceOf(guard.destinations(i))==amounts[i]);
         require(t.balanceOf(address(this))==0&&t.balanceOf(address(guard))==0&&t.balanceOf(address(wallet))==0);
