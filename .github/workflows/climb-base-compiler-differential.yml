@@ -1,0 +1,640 @@
+name: CLIMB Base Signer Retirement Compiler Differential
+on:
+  pull_request:
+    paths:
+      - 'base/safe-custody/**'
+      - 'base/v3-testnet/**'
+      - '.github/workflows/climb-base-compiler-differential.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    name: ${{ matrix.project }} / solc ${{ matrix.compiler }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [safe-custody, v3-testnet]
+        compiler: ['0.8.19', '0.8.39']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Fetch exact dependencies
+        working-directory: base/${{ matrix.project }}
+        run: |
+          set -euo pipefail
+          mkdir -p lib/openzeppelin-contracts
+          git -C lib/openzeppelin-contracts init
+          git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          if [ "${{ matrix.project }}" = safe-custody ]; then
+            mkdir -p lib/safe-contracts
+            git -C lib/safe-contracts init
+            git -C lib/safe-contracts fetch --depth=1 https://github.com/safe-fndn/safe-smart-account.git bf943f80fec5ac647159d26161446ac5d716a294
+            git -C lib/safe-contracts checkout --detach FETCH_HEAD
+            test "$(git -C lib/safe-contracts rev-parse HEAD)" = bf943f80fec5ac647159d26161446ac5d716a294
+          fi
+      - name: Prepare isolated compiler experiment
+        env:
+          COMPILER: ${{ matrix.compiler }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/climb-differential"
+          git rev-parse HEAD > "$RUNNER_TEMP/climb-differential/source.txt"
+          printf '%s\n' "$GITHUB_WORKSPACE" > "$RUNNER_TEMP/climb-differential/workspace.txt"
+          forge --version > "$RUNNER_TEMP/climb-differential/foundry.txt"
+          if [ "$COMPILER" = 0.8.19 ]; then
+            curl --fail --show-error --silent --location --retry 2 "https://binaries.soliditylang.org/linux-amd64/solc-linux-amd64-v0.8.19+commit.7dd6d404" -o "$RUNNER_TEMP/solc-baseline"
+            echo "7a5c1d3dc9a8eba62bb2ec37192c9178ae5fe8a54a56e5573fd3c9c17cd9eb48  $RUNNER_TEMP/solc-baseline" | sha256sum -c -
+            chmod 700 "$RUNNER_TEMP/solc-baseline"
+          fi
+          if [ "$COMPILER" = 0.8.39 ]; then
+            curl --fail --show-error --silent --location --retry 2 https://github.com/argotorg/solidity/releases/download/v0.8.39/solc-static-linux -o "$RUNNER_TEMP/solc-candidate"
+            echo "b8b0642d46838575d3177628b685564b52f51f2aee546cb4dce781951d23c666  $RUNNER_TEMP/solc-candidate" | sha256sum -c -
+            chmod 700 "$RUNNER_TEMP/solc-candidate"
+            "$RUNNER_TEMP/solc-candidate" --version | tee "$RUNNER_TEMP/climb-differential/solc.txt"
+            python - <<'PY'
+          from pathlib import Path
+          count = 0
+          for project in ("safe-custody", "v3-testnet"):
+              for folder in ("src", "test"):
+                  for p in Path("base", project, folder).rglob("*.sol"):
+                      original = p.read_bytes()
+                      changed = original.replace(b"pragma solidity 0.8.19;", b"pragma solidity 0.8.39;")
+                      if changed != original:
+                          assert changed.replace(b"pragma solidity 0.8.39;", b"pragma solidity 0.8.19;") == original
+                          p.write_bytes(changed)
+                          count += 1
+          assert count >= 17, count
+          print("Temporary pragma-only files:", count)
+          PY
+          fi
+          git diff -- base/safe-custody/src base/safe-custody/test base/v3-testnet/src base/v3-testnet/test > "$RUNNER_TEMP/climb-differential/pragma-only.patch"
+          git diff --exit-code -- base/safe-custody/foundry.toml base/v3-testnet/foundry.toml
+      - name: Run identical seeded offline properties
+        working-directory: base/${{ matrix.project }}
+        env:
+          COMPILER: ${{ matrix.compiler }}
+          FOUNDRY_FUZZ_SEED: '0x000000000000000000000000000000000000000000000000000000000000c11b'
+          FOUNDRY_FUZZ_RUNS: '256'
+          FOUNDRY_INVARIANT_RUNS: '32'
+          FOUNDRY_INVARIANT_DEPTH: '24'
+          FOUNDRY_INVARIANT_FAIL_ON_REVERT: 'true'
+        run: |
+          set -euo pipefail
+          target=london
+          if [ "${{ matrix.project }}" = safe-custody ]; then target=paris; fi
+          compiler="$RUNNER_TEMP/solc-baseline"
+          if [ "$COMPILER" = 0.8.39 ]; then compiler="$RUNNER_TEMP/solc-candidate"; fi
+          forge clean
+          forge config --json --use "$compiler" --evm-version "$target" > "$RUNNER_TEMP/climb-differential/config.json"
+          forge test --use "$compiler" --evm-version "$target" -vv | tee "$RUNNER_TEMP/climb-differential/tests.log"
+          expected=162
+          if [ "${{ matrix.project }}" = safe-custody ]; then expected=79; fi
+          grep -Eq "(^|[^0-9])${expected} tests passed, 0 failed, 0 skipped" "$RUNNER_TEMP/climb-differential/tests.log"
+          # Capture the actual standard-JSON exchanges, not a reconstructed input.
+          real="$compiler"
+          test -x "$real"
+          export CLIMB_REAL_SOLC="$real"
+          export CLIMB_SOLC_CAPTURE="$RUNNER_TEMP/climb-differential/standard-json"
+          mkdir -p "$CLIMB_SOLC_CAPTURE"
+          "$real" --version | tee "$RUNNER_TEMP/climb-differential/solc.txt"
+          sha256sum "$real" > "$RUNNER_TEMP/climb-differential/solc-sha256.txt"
+          cat > "$RUNNER_TEMP/capture-solc" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          for arg in "$@"; do
+            if [ "$arg" = --standard-json ]; then
+              record="$(mktemp -d "$CLIMB_SOLC_CAPTURE/invocation.XXXXXXXX")"
+              printf '%s\n' "$@" > "$record/args.txt"
+              cat > "$record/input.json"
+              status=0
+              "$CLIMB_REAL_SOLC" "$@" < "$record/input.json" > "$record/output.json" || status=$?
+              cat "$record/output.json"
+              exit "$status"
+            fi
+          done
+          exec "$CLIMB_REAL_SOLC" "$@"
+          SH
+          chmod 700 "$RUNNER_TEMP/capture-solc"
+          forge build --use "$RUNNER_TEMP/capture-solc" --evm-version "$target" --extra-output storageLayout metadata --build-info --force 2>&1 | tee "$RUNNER_TEMP/climb-differential/build.log"
+          test -n "$(find "$CLIMB_SOLC_CAPTURE" -name output.json -print -quit)"
+          cp -r out/build-info "$RUNNER_TEMP/climb-differential/build-info"
+          if [ "${{ matrix.project }}" = safe-custody ]; then
+            node size-manifest.mjs "$RUNNER_TEMP/climb-differential/size.json" | tee "$RUNNER_TEMP/climb-differential/size.log"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compiler-differential-${{ matrix.project }}-${{ matrix.compiler }}
+          path: ${{ runner.temp }}/climb-differential/
+          if-no-files-found: error
+          retention-days: 14
+
+  compatibility:
+    name: Compare ABI, storage and compiler metadata / ${{ matrix.project }}
+    needs: compare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [safe-custody, v3-testnet]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: compiler-differential-${{ matrix.project }}-*
+          path: evidence
+      - name: Verify captured compiler outputs and compare interfaces
+        env:
+          PROJECT: ${{ matrix.project }}
+        run: |
+          set -euo pipefail
+          mkdir -p compatibility
+          python - <<'PY' | tee compatibility/comparison.log
+          import json, os
+          from pathlib import Path, PurePosixPath
+
+          project = os.environ["PROJECT"]
+          target = "paris" if project == "safe-custody" else "london"
+          def require(ok, message):
+              if not ok:
+                  raise ValueError(message)
+
+          def canonical_abi(abi):
+              return sorted(json.dumps(e, sort_keys=True, separators=(",", ":")) for e in abi)
+
+          def canonical_layout(layout):
+              types = layout["types"] or {}
+              def item(entry, stack):
+                  return {**{k: v for k, v in entry.items() if k not in ("astId", "type")},
+                          "type": typ(entry["type"], stack)}
+              def typ(tid, stack):
+                  if tid in stack:
+                      return {"recursiveReference": stack.index(tid)}
+                  desc = types[tid]
+                  next_stack = stack + [tid]
+                  result = {}
+                  for k, v in desc.items():
+                      if k == "members":
+                          result[k] = [item(m, next_stack) for m in v]
+                      elif k in ("base", "key", "value"):
+                          result[k] = typ(v, next_stack)
+                      else:
+                          result[k] = v
+                  return result
+              return [item(e, []) for e in layout["storage"]]
+
+          def collect(version):
+              root = Path("evidence", f"compiler-differential-{project}-{version}")
+              require(root.is_dir(), f"missing artifact {root}")
+              records = sorted((root / "standard-json").glob("*/output.json"))
+              require(records, f"no actual compiler outputs: {version}")
+              contracts = {}
+              sources = {}
+              metadata_rows = []
+              settings_records = []
+              expected_hash = {"0.8.19": "7a5c1d3dc9a8eba62bb2ec37192c9178ae5fe8a54a56e5573fd3c9c17cd9eb48", "0.8.39": "b8b0642d46838575d3177628b685564b52f51f2aee546cb4dce781951d23c666"}[version]
+              require((root / "solc-sha256.txt").read_text().split()[0] == expected_hash, f"compiler digest mismatch: {version}")
+              for output in records:
+                  inp = json.loads(output.with_name("input.json").read_text())
+                  out = json.loads(output.read_text())
+                  require(not any(e.get("severity") == "error" for e in out.get("errors", [])), f"solc error: {output}")
+                  settings = inp["settings"]
+                  settings_records.append(json.dumps(settings, sort_keys=True))
+                  require(settings["evmVersion"] == target, f"EVM target mismatch: {output}")
+                  require(settings["optimizer"]["enabled"] is True and settings["optimizer"]["runs"] == 200, f"optimizer mismatch: {output}")
+                  require(not settings.get("viaIR", False), f"unexpected viaIR: {output}")
+                  for source, data in inp["sources"].items():
+                      content = data["content"]
+                      require(source not in sources or sources[source] == content, f"inconsistent source: {source}")
+                      sources[source] = content
+                  for source, entries in out.get("contracts", {}).items():
+                      for name, artifact in entries.items():
+                          key = f"{source}:{name}"
+                          require(all(k in artifact for k in ("abi", "storageLayout", "metadata")), f"missing output fields: {key}")
+                          meta = json.loads(artifact["metadata"])
+                          actual = meta["compiler"]["version"]
+                          require(actual.split("+")[0] == version, f"compiler metadata mismatch: {key} {actual}")
+                          require(meta["settings"]["evmVersion"] == target, f"metadata target mismatch: {key}")
+                          require(meta["settings"]["compilationTarget"] == {source: name}, f"metadata target identity mismatch: {key}")
+                          abi = canonical_abi(artifact["abi"])
+                          require(abi == canonical_abi(meta["output"]["abi"]), f"metadata ABI mismatch: {key}")
+                          row = {"abi": abi, "storage": canonical_layout(artifact["storageLayout"]), "selectors": artifact["evm"]["methodIdentifiers"]}
+                          require(key not in contracts or contracts[key] == row, f"duplicate inconsistent contract: {key}")
+                          contracts[key] = row
+                          metadata_rows.append({"contract": key, "compiler": actual})
+              require(contracts and any(k.startswith("src/") for k in contracts), "no project contracts captured")
+              Path("compatibility", f"{version}-metadata.json").write_text(json.dumps(metadata_rows, indent=2))
+              print(f"{version}: {len(records)} actual invocations, {len(sources)} sources, {len(contracts)} contracts")
+              workspace = PurePosixPath((root / "workspace.txt").read_text().strip())
+              require(workspace.is_absolute() and ".." not in workspace.parts, "invalid build workspace")
+              return contracts, sources, (root / "source.txt").read_text(), workspace, sorted(settings_records)
+
+          def expected_candidate(source, baseline, workspace):
+              # Only the repository source/test roots touched by the pragma-only experiment.
+              # Safe imports V3 sources by an absolute path in actual solc JSON.
+              p = PurePosixPath(source)
+              roots = [PurePosixPath("src"), PurePosixPath("test")]
+              if project == "safe-custody":
+                  roots.extend([PurePosixPath("../v3-testnet/src"), workspace / "base/v3-testnet/src"])
+              for root in roots:
+                  if p.is_relative_to(root) and p != root and ".." not in p.relative_to(root).parts:
+                      return baseline.replace("pragma solidity 0.8.19;", "pragma solidity 0.8.39;")
+              return baseline
+
+          a, sa, ha, wa, seta = collect("0.8.19")
+          b, sb, hb, wb, setb = collect("0.8.39")
+          # Regression checks: approved import root, dependency and traversal rejection.
+          old = "pragma solidity 0.8.19;\ncontract C {}"
+          new = old.replace("0.8.19", "0.8.39")
+          require(expected_candidate("src/C.sol", old, wa) == new, "local pragma handling")
+          require(expected_candidate("lib/src/C.sol", old, wa) == old, "dependency must remain identical")
+          require(expected_candidate("src/../lib/C.sol", old, wa) == old, "path traversal must not be normalized")
+          if project == "safe-custody":
+              require(expected_candidate(str(wa / "base/v3-testnet/src/C.sol"), old, wa) == new, "Safe absolute import handling")
+              require(expected_candidate(str(wa / "base/v3-testnet/lib/C.sol"), old, wa) == old, "absolute dependency must remain identical")
+          problems = []
+          if ha != hb:
+              problems.append("checkout commit mismatch")
+          if wa != wb:
+              problems.append("workspace mismatch")
+          if seta != setb:
+              problems.append("complete standard JSON settings mismatch")
+          if sa.keys() != sb.keys():
+              problems.append("source identity mismatch: " + repr(sorted(sa.keys() ^ sb.keys())))
+          source_differences = sorted(k for k in sa.keys() & sb.keys() if expected_candidate(k, sa[k], wa) != sb[k])
+          if source_differences:
+              problems.append("source mismatch after exact permitted pragma substitution: " + repr(source_differences))
+          if a.keys() != b.keys():
+              problems.append("contract identity mismatch: " + repr(sorted(a.keys() ^ b.keys())))
+          for key in sorted(a.keys() & b.keys()):
+              for field in ("abi", "storage", "selectors"):
+                  if a[key][field] != b[key][field]:
+                      problems.append(f"{field} differs: {key}")
+          report = {"project": project, "baselineContracts": len(a), "candidateContracts": len(b), "differences": problems}
+          Path("compatibility/report.json").write_text(json.dumps(report, indent=2))
+          print(json.dumps(report, indent=2))
+          require(not problems, "compatibility gate failed; inspect differences before any repin")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compiler-compatibility-${{ matrix.project }}
+          path: compatibility/
+          if-no-files-found: error
+          retention-days: 14
+
+  reproduce:
+    name: Independent runner standard JSON replay / ${{ matrix.project }} / ${{ matrix.compiler }}
+    # Replay and interface comparison consume the same completed matrix artifacts.
+    # Neither consumes the other job's outputs; both remain mandatory for workflow success.
+    needs: compare
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [safe-custody, v3-testnet]
+        compiler: ['0.8.19', '0.8.39']
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: compiler-differential-${{ matrix.project }}-${{ matrix.compiler }}
+          path: evidence
+      - name: Obtain verified compiler in a fresh runner
+        env:
+          COMPILER: ${{ matrix.compiler }}
+        run: |
+          set -euo pipefail
+          mkdir -p replay
+          case "$COMPILER" in
+            0.8.19)
+              url="https://binaries.soliditylang.org/linux-amd64/solc-linux-amd64-v0.8.19+commit.7dd6d404"
+              digest=7a5c1d3dc9a8eba62bb2ec37192c9178ae5fe8a54a56e5573fd3c9c17cd9eb48
+              ;;
+            0.8.39)
+              url="https://github.com/argotorg/solidity/releases/download/v0.8.39/solc-static-linux"
+              digest=b8b0642d46838575d3177628b685564b52f51f2aee546cb4dce781951d23c666
+              ;;
+            *) exit 1 ;;
+          esac
+          curl --fail --show-error --silent --location --retry 2 "$url" -o "$RUNNER_TEMP/replay-solc"
+          echo "$digest  $RUNNER_TEMP/replay-solc" | sha256sum -c -
+          test "$(cut -d' ' -f1 evidence/solc-sha256.txt)" = "$digest"
+          chmod 700 "$RUNNER_TEMP/replay-solc"
+          "$RUNNER_TEMP/replay-solc" --version | tee replay/solc.txt
+          sha256sum "$RUNNER_TEMP/replay-solc" > replay/compiler-sha256.txt
+          cat /etc/os-release > replay/os-release.txt
+          uname -a > replay/uname.txt
+          cp evidence/source.txt replay/source.txt
+      - name: Replay unmodified input and compare all emitted contract data
+        env:
+          PROJECT: ${{ matrix.project }}
+          COMPILER: ${{ matrix.compiler }}
+        run: |
+          set -euo pipefail
+          python - <<'PY' | tee replay/replay.log
+          import hashlib, json, os, subprocess, tempfile
+          from pathlib import Path
+
+          def require(ok, message):
+              if not ok:
+                  raise ValueError(message)
+
+          def digest(data):
+              return hashlib.sha256(data).hexdigest()
+
+          def canonical(obj):
+              return json.dumps(obj, sort_keys=True, separators=(",", ":")).encode()
+
+          compiler = Path(os.environ["RUNNER_TEMP"], "replay-solc")
+          records = sorted(Path("evidence/standard-json").glob("*/input.json"))
+          require(records, "no original compiler inputs")
+          project = os.environ["PROJECT"]
+          version = os.environ["COMPILER"]
+          report = {"project": project, "compiler": version, "records": [], "differences": []}
+          expected_count = {"safe-custody": 114, "v3-testnet": 97}[project]
+          seen = set()
+          for index, record in enumerate(records):
+              raw = record.read_bytes()
+              inp = json.loads(raw)
+              require(inp["language"] == "Solidity" and inp["sources"], "invalid compiler input")
+              require(all(set(v) == {"content"} and isinstance(v["content"], str) for v in inp["sources"].values()), "all source bytes must be embedded, no URL fetches")
+              previous = json.loads(record.with_name("output.json").read_bytes())
+              require(not any(e.get("severity") == "error" for e in previous.get("errors", [])), "original compiler error")
+              # No repository checkout, Foundry, or uncaptured source-tree reads.
+              # Preserve every byte of the captured JSON, including absolute source-unit names.
+              missing = set(previous["sources"]) - set(inp["sources"])
+              allowed = {"../v3-testnet/src/V3BoundedLegacyFixture.sol", "../v3-testnet/src/V3DeferredLegacyFixture.sol"} if project == "safe-custody" else set()
+              require(missing == allowed, f"unexpected compiler filesystem source set: {sorted(missing)}")
+              restored = {}
+              with tempfile.TemporaryDirectory() as empty:
+                  root = Path(empty)
+                  base = root / "safe-custody" if project == "safe-custody" else root
+                  base.mkdir(exist_ok=True)
+                  args = [str(compiler)]
+                  if missing:
+                      workspace = Path(Path("evidence/workspace.txt").read_text().strip())
+                      require(workspace.is_absolute() and ".." not in workspace.parts, "invalid captured workspace")
+                      sibling = root / "v3-testnet" / "src"
+                      sibling.mkdir(parents=True)
+                      # These two source-unit aliases were loaded from disk in the original build.
+                      # Reconstruct only those files, from their exact embedded absolute-name counterparts.
+                      for alias in sorted(missing):
+                          name = Path(alias).name
+                          absolute = str(workspace / "base" / "v3-testnet" / "src" / name)
+                          require(absolute in inp["sources"], f"missing captured absolute alias: {absolute}")
+                          content = inp["sources"][absolute]["content"].encode("utf-8")
+                          (sibling / name).write_bytes(content)
+                          restored[alias] = {"embeddedSource": absolute, "sha256": digest(content)}
+                      args += ["--base-path", str(base), "--allow-paths", str(sibling)]
+                  args += ["--standard-json"]
+                  result = subprocess.run(args, input=raw, cwd=base, capture_output=True, timeout=180)
+                  # Separate diagnostic compile: change only requested output fields.
+                  # Never replace the original exact replay input or result.
+                  diagnostic = json.loads(raw)
+                  for selection in diagnostic["settings"]["outputSelection"].values():
+                      fields = selection.get("*", [])
+                      if fields:
+                          for field in ("evm.bytecode.generatedSources", "evm.deployedBytecode.generatedSources"):
+                              require(field not in fields, "unexpected existing diagnostic field")
+                              fields.append(field)
+                  diagnostic_raw = canonical(diagnostic)
+                  extended = subprocess.run(args, input=diagnostic_raw, cwd=base, capture_output=True, timeout=180)
+              Path("replay", f"{index}-yul-input.json").write_bytes(diagnostic_raw)
+              Path("replay", f"{index}-yul-output.json").write_bytes(extended.stdout)
+              Path("replay", f"{index}-yul-stderr.txt").write_bytes(extended.stderr)
+              Path("replay", f"{index}-restored-sources.json").write_text(json.dumps(restored, indent=2))
+              Path("replay", f"{index}-output.json").write_bytes(result.stdout)
+              Path("replay", f"{index}-stderr.txt").write_bytes(result.stderr)
+              require(result.returncode == 0, "replay compiler process failed")
+              current = json.loads(result.stdout)
+              errors = [e.get("formattedMessage", e.get("message", "")) for e in current.get("errors", []) if e.get("severity") == "error"]
+              require(not errors, "replay compiler error: " + repr(errors))
+              def flatten(out):
+                  return {(source, name): artifact for source, entries in out["contracts"].items() for name, artifact in entries.items()}
+              a, b = flatten(previous), flatten(current)
+              require(extended.returncode == 0, "generated-source diagnostic process failed")
+              extra = json.loads(extended.stdout)
+              require(not any(e.get("severity") == "error" for e in extra.get("errors", [])), "generated-source diagnostic compiler error")
+              c = flatten(extra)
+              require(c.keys() == b.keys(), "diagnostic contract coverage mismatch")
+              generated = []
+              for (source, name), artifact in c.items():
+                  for kind in ("bytecode", "deployedBytecode"):
+                      for unit in artifact["evm"][kind].pop("generatedSources", []):
+                          require(unit.get("language") == "Yul" and isinstance(unit.get("contents"), str), "unexpected generated-source format")
+                          generated.append({"source": source, "contract": name, "kind": kind, "unit": unit.get("name"), "id": unit.get("id"), "sha256": digest(unit["contents"].encode()), "bytes": len(unit["contents"].encode())})
+              require(generated, "no generated Yul captured")
+              require(c == b and extra.get("sources") == current.get("sources"), "diagnostic output selection altered original contract output or AST")
+              Path("replay", f"{index}-yul-inventory.json").write_text(json.dumps(generated, indent=2))
+              print(f"Generated Yul diagnostic: {len(generated)} entries, {len({g['sha256'] for g in generated})} distinct source hashes; original outputs unchanged")
+              require(a and b, "empty contracts")
+              for key in sorted(a.keys() ^ b.keys()):
+                  report["differences"].append(f"contract identity mismatch: {key}")
+              for key in sorted(a.keys() & b.keys()):
+                  for field in ("abi", "storageLayout", "metadata", "evm"):
+                      require(field in a[key] and field in b[key], f"missing {field}: {key}")
+                      if a[key][field] != b[key][field]:
+                          report["differences"].append(f"{field} mismatch: {key}")
+                  if a[key] != b[key]:
+                      report["differences"].append(f"complete contract output mismatch: {key}")
+                  seen.add(key)
+              require(set(current["sources"]) - set(inp["sources"]) == missing, "replay filesystem source set mismatch")
+              if previous.get("sources") != current.get("sources"):
+                  report["differences"].append(f"source IDs or AST mismatch: invocation {index}")
+              report["records"].append({"inputSha256": digest(raw), "originalContractSha256": digest(canonical(previous["contracts"])), "replayedContractSha256": digest(canonical(current["contracts"])), "contracts": len(a), "nonemptyCreation": sum(bool(x["evm"]["bytecode"]["object"]) for x in a.values()), "nonemptyRuntime": sum(bool(x["evm"]["deployedBytecode"]["object"]) for x in a.values())})
+          report["uniqueContractEntries"] = len(seen)
+          require(len(seen) == expected_count, "unexpected contract coverage; review deliberate source changes")
+          require(sum(r["nonemptyCreation"] for r in report["records"]) > 0 and sum(r["nonemptyRuntime"] for r in report["records"]) > 0, "no executable bytecode")
+          Path("replay/report.json").write_text(json.dumps(report, indent=2))
+          print(json.dumps(report, indent=2))
+          require(not report["differences"], "reproducibility mismatch")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compiler-replay-${{ matrix.project }}-${{ matrix.compiler }}
+          path: replay/
+          if-no-files-found: error
+          retention-days: 14
+
+  source-rebuild:
+    needs: compare
+    name: Fresh source rebuild / ${{ matrix.project }} / solc ${{ matrix.compiler }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [safe-custody, v3-testnet]
+        compiler: ['0.8.39']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Fetch exact dependencies
+        working-directory: base/${{ matrix.project }}
+        run: |
+          set -euo pipefail
+          mkdir -p lib/openzeppelin-contracts
+          git -C lib/openzeppelin-contracts init
+          git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          if [ "${{ matrix.project }}" = safe-custody ]; then
+            mkdir -p lib/safe-contracts
+            git -C lib/safe-contracts init
+            git -C lib/safe-contracts fetch --depth=1 https://github.com/safe-fndn/safe-smart-account.git bf943f80fec5ac647159d26161446ac5d716a294
+            git -C lib/safe-contracts checkout --detach FETCH_HEAD
+            test "$(git -C lib/safe-contracts rev-parse HEAD)" = bf943f80fec5ac647159d26161446ac5d716a294
+          fi
+      - name: Prepare isolated compiler experiment
+        env:
+          COMPILER: ${{ matrix.compiler }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/climb-differential"
+          git rev-parse HEAD > "$RUNNER_TEMP/climb-differential/source.txt"
+          printf '%s\n' "$GITHUB_WORKSPACE" > "$RUNNER_TEMP/climb-differential/workspace.txt"
+          forge --version > "$RUNNER_TEMP/climb-differential/foundry.txt"
+          if [ "$COMPILER" = 0.8.19 ]; then
+            curl --fail --show-error --silent --location --retry 2 "https://binaries.soliditylang.org/linux-amd64/solc-linux-amd64-v0.8.19+commit.7dd6d404" -o "$RUNNER_TEMP/solc-baseline"
+            echo "7a5c1d3dc9a8eba62bb2ec37192c9178ae5fe8a54a56e5573fd3c9c17cd9eb48  $RUNNER_TEMP/solc-baseline" | sha256sum -c -
+            chmod 700 "$RUNNER_TEMP/solc-baseline"
+          fi
+          if [ "$COMPILER" = 0.8.39 ]; then
+            curl --fail --show-error --silent --location --retry 2 https://github.com/argotorg/solidity/releases/download/v0.8.39/solc-static-linux -o "$RUNNER_TEMP/solc-candidate"
+            echo "b8b0642d46838575d3177628b685564b52f51f2aee546cb4dce781951d23c666  $RUNNER_TEMP/solc-candidate" | sha256sum -c -
+            chmod 700 "$RUNNER_TEMP/solc-candidate"
+            "$RUNNER_TEMP/solc-candidate" --version | tee "$RUNNER_TEMP/climb-differential/solc.txt"
+            python - <<'PY'
+          from pathlib import Path
+          count = 0
+          for project in ("safe-custody", "v3-testnet"):
+              for folder in ("src", "test"):
+                  for p in Path("base", project, folder).rglob("*.sol"):
+                      original = p.read_bytes()
+                      changed = original.replace(b"pragma solidity 0.8.19;", b"pragma solidity 0.8.39;")
+                      if changed != original:
+                          assert changed.replace(b"pragma solidity 0.8.39;", b"pragma solidity 0.8.19;") == original
+                          p.write_bytes(changed)
+                          count += 1
+          assert count >= 17, count
+          print("Temporary pragma-only files:", count)
+          PY
+          fi
+          git diff -- base/safe-custody/src base/safe-custody/test base/v3-testnet/src base/v3-testnet/test > "$RUNNER_TEMP/climb-differential/pragma-only.patch"
+          git diff --exit-code -- base/safe-custody/foundry.toml base/v3-testnet/foundry.toml
+      - name: Independently compile fresh checkout
+        working-directory: base/${{ matrix.project }}
+        env:
+          COMPILER: ${{ matrix.compiler }}
+          FOUNDRY_FUZZ_SEED: '0x000000000000000000000000000000000000000000000000000000000000c11b'
+          FOUNDRY_FUZZ_RUNS: '256'
+          FOUNDRY_INVARIANT_RUNS: '32'
+          FOUNDRY_INVARIANT_DEPTH: '24'
+          FOUNDRY_INVARIANT_FAIL_ON_REVERT: 'true'
+        run: |
+          set -euo pipefail
+          target=london
+          if [ "${{ matrix.project }}" = safe-custody ]; then target=paris; fi
+          compiler="$RUNNER_TEMP/solc-baseline"
+          if [ "$COMPILER" = 0.8.39 ]; then compiler="$RUNNER_TEMP/solc-candidate"; fi
+          forge clean
+          forge config --json --use "$compiler" --evm-version "$target" > "$RUNNER_TEMP/climb-differential/config.json"
+          # Capture the actual standard-JSON exchanges, not a reconstructed input.
+          real="$compiler"
+          test -x "$real"
+          export CLIMB_REAL_SOLC="$real"
+          export CLIMB_SOLC_CAPTURE="$RUNNER_TEMP/climb-differential/standard-json"
+          mkdir -p "$CLIMB_SOLC_CAPTURE"
+          "$real" --version | tee "$RUNNER_TEMP/climb-differential/solc.txt"
+          sha256sum "$real" > "$RUNNER_TEMP/climb-differential/solc-sha256.txt"
+          cat > "$RUNNER_TEMP/capture-solc" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          for arg in "$@"; do
+            if [ "$arg" = --standard-json ]; then
+              record="$(mktemp -d "$CLIMB_SOLC_CAPTURE/invocation.XXXXXXXX")"
+              printf '%s\n' "$@" > "$record/args.txt"
+              cat > "$record/input.json"
+              status=0
+              "$CLIMB_REAL_SOLC" "$@" < "$record/input.json" > "$record/output.json" || status=$?
+              cat "$record/output.json"
+              exit "$status"
+            fi
+          done
+          exec "$CLIMB_REAL_SOLC" "$@"
+          SH
+          chmod 700 "$RUNNER_TEMP/capture-solc"
+          forge build --use "$RUNNER_TEMP/capture-solc" --evm-version "$target" --extra-output storageLayout metadata --build-info --force 2>&1 | tee "$RUNNER_TEMP/climb-differential/build.log"
+          test -n "$(find "$CLIMB_SOLC_CAPTURE" -name output.json -print -quit)"
+          cp -r out/build-info "$RUNNER_TEMP/climb-differential/build-info"
+          if [ "${{ matrix.project }}" = safe-custody ]; then
+            node size-manifest.mjs "$RUNNER_TEMP/climb-differential/size.json" | tee "$RUNNER_TEMP/climb-differential/size.log"
+          fi
+      - uses: actions/download-artifact@v4
+        with:
+          name: compiler-differential-${{ matrix.project }}-${{ matrix.compiler }}
+          path: original
+      - name: Verify independent source rebuild against original input and output
+        env:
+          PROJECT: ${{ matrix.project }}
+        run: |
+          set -euo pipefail
+          python - <<'PY' | tee "$RUNNER_TEMP/climb-differential/source-rebuild.log"
+          import json, hashlib, os
+          from pathlib import Path
+          def require(ok, message):
+              if not ok:
+                  raise ValueError(message)
+          def sha(obj):
+              return hashlib.sha256(json.dumps(obj, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+          original = Path("original")
+          rebuilt = Path(os.environ["RUNNER_TEMP"], "climb-differential")
+          for field in ("source.txt", "workspace.txt", "solc.txt", "pragma-only.patch"):
+              require((original / field).read_bytes() == (rebuilt / field).read_bytes(), f"provenance mismatch {field}")
+          require((original / "solc-sha256.txt").read_text().split()[0] == (rebuilt / "solc-sha256.txt").read_text().split()[0], "compiler digest mismatch")
+          def load(root):
+              records = sorted((root / "standard-json").glob("*/input.json"))
+              require(records, "missing compiler inputs")
+              data = {}
+              for p in records:
+                  inp = json.loads(p.read_bytes())
+                  out = json.loads(p.with_name("output.json").read_bytes())
+                  require(not any(e.get("severity") == "error" for e in out.get("errors", [])), "compiler error")
+                  require(out.get("contracts") and out.get("sources"), "empty compiler output")
+                  key = sha(inp)
+                  require(key not in data, "duplicate compiler input")
+                  data[key] = {"input": inp, "contracts": out["contracts"], "sources": out["sources"]}
+              return data
+          a, b = load(original), load(rebuilt)
+          require(a.keys() == b.keys(), "input digest mismatch")
+          require(a == b, "fresh source build differs in actual inputs/contracts/source AST")
+          count = sum(len(entries) for record in b.values() for entries in record["contracts"].values())
+          require(count == {"safe-custody":114, "v3-testnet":97}[os.environ["PROJECT"]], "contract coverage mismatch")
+          report = {"project": os.environ["PROJECT"], "contractEntries": count, "inputDigests": sorted(b), "originalOutputSha256": sha(a), "rebuiltOutputSha256": sha(b), "differences": [], "scope": "fresh checkout and pinned dependencies on separate GitHub runner; not external provider"}
+          (rebuilt / "source-rebuild-report.json").write_text(json.dumps(report, indent=2))
+          print(json.dumps(report, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compiler-source-rebuild-${{ matrix.project }}-${{ matrix.compiler }}
+          path: ${{ runner.temp }}/climb-differential/
+          if-no-files-found: error
+          retention-days: 14
