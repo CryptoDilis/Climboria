@@ -76,8 +76,21 @@ async function quotePage(browser,kind,viewport,{walletProvider=false,tokenSearch
   assert.equal(config?.enabled,false,'Wallet execution must remain off');
   assert.equal(config?.proxyEnabled,true,'Quote must use API proxy');
   if(kind==='DEX') {
+    if(mobile){
+      assert.equal(await page.locator('#evmMarkets').isVisible(),true,'Mobile DEX defaults to Base');
+      assert.equal(await page.locator('#markets').isVisible(),false,'Solana market hidden initially');
+      await page.locator('#dexMobileNav [data-dex-mobile-view="solana"]').tap();
+      assert.equal(await page.locator('#markets').isVisible(),true,'Explicit Solana selection');
+    }
     await page.locator('#showDexQuote').click();
     assert.equal(await page.locator('#swapQuote').isVisible(),true);
+  }else{
+    assert.equal(await page.locator('html').getAttribute('data-climboria-swap-network'),'base');
+    assert.equal(await page.locator('#getQuote').isDisabled(),true);
+    assert.equal(await page.locator('#connectWallet').isDisabled(),true);
+    assert.equal(await page.locator('#swapExternalJupiterHandoff').isHidden(),true);
+    await page.locator('#chainSolana').click();
+    assert.equal(await page.locator('#getQuote').isDisabled(),false);
   }
   return {page,forbidden,errors};
 }
