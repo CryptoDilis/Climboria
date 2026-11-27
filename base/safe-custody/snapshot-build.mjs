@@ -15,9 +15,9 @@ export function artifactDigest(a){
  assert.ok(metadata,'missing compiler metadata');
  const m=typeof metadata==='string'?JSON.parse(metadata):metadata;
  assert.match(m.compiler?.version??'',/^0\.8\.19(?:\+|$)/,'unexpected compiler');
- assert.ok(m.settings?.optimizer?.enabled===true&&m.settings.optimizer.runs===200,'unexpected optimizer');
- assert.ok(typeof m.settings.evmVersion==='string','missing EVM target');
- return {sha256:digest({abi:a.abi,bytecode:a.bytecode,deployedBytecode:a.deployedBytecode,metadata:m}),compiler:m.compiler.version,evmVersion:m.settings.evmVersion};
+ assert.ok(m.settings?.optimizer?.enabled===true&&m.settings.optimizer.runs===1,'unexpected optimizer');
+ assert.equal(m.settings.evmVersion,'paris','unexpected EVM target');
+ return {sha256:digest({abi:a.abi,bytecode:a.bytecode,deployedBytecode:a.deployedBytecode,metadata:m}),compiler:m.compiler.version,evmVersion:m.settings.evmVersion,optimizerRuns:m.settings.optimizer.runs};
 }
 export function snapshot(root){
  const entries=[];
