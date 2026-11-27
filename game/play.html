@@ -3877,6 +3877,31 @@ if(new URLSearchParams(location.search).has('smoke')){
    playerUnchanged:P.x===before.x&&P.y===before.y&&P.z===before.z,inventoryUnchanged:before.inventory===JSON.stringify(inventory),
    diagnosticsUnchanged:before.diag===window.__climboriaLastCollision,peersUnchanged:before.peers===livePeers.size};
  };
+ window.ENDLESS_WILDS.npcPairSpacingAudit=async()=>{
+  const {createNpcPair}=await import('./npc/npc-pair.mjs');
+  if(!restoreExplorerPosition({x:258,z:80,y:groundAt(258,80)+1.75,yaw:Math.PI/2}))throw Error('NPC spacing lake fixture unavailable');
+  const before={x:P.x,y:P.y,z:P.z,inventory:JSON.stringify(inventory),diag:window.__climboriaLastCollision,peers:livePeers.size};
+  const lakeRoute=await makeLakeNpcForSmoke();lakeRoute.npc.close();
+  const specs=[['npc:jarrell-peak:aurelion','rest'],['npc:jarrell-peak:zevransol','shore']].map(([identityId,spawn])=>({nodes:lakeRoute.nodes,edges:lakeRoute.edges,world:lakeRoute.world,spawn,identityId,personalityEnabled:true}));
+  const pair=createNpcPair({specs});
+  let previous=pair.snapshot(),minSeparation=Math.hypot(previous[0].x-previous[1].x,previous[0].z-previous[1].z),maxStep=0;
+  const distances=[0,0],seen=[new Set(),new Set()];let stableIdentity=true,waterObserved=false;
+  try{
+   for(let i=0;i<1800;i++){
+    const snapshots=pair.tick(.1);
+    minSeparation=Math.min(minSeparation,Math.hypot(snapshots[0].x-snapshots[1].x,snapshots[0].z-snapshots[1].z));
+    for(const [j,s] of snapshots.entries()){
+     const step=Math.hypot(s.x-previous[j].x,s.z-previous[j].z);maxStep=Math.max(maxStep,step);distances[j]+=step;seen[j].add(s.mode);
+     stableIdentity=stableIdentity&&s.npcId===specs[j].identityId&&s.label===previous[j].label;
+     waterObserved=waterObserved||s.swim;
+    }
+    previous=snapshots;
+   }
+  }finally{pair.close()}
+  return {minSeparation,maxStep,distances,seen:seen.map(s=>[...s]),stableIdentity,waterObserved,pair:pair.audit(),
+   closed:pair.snapshot().every(s=>s.closed),playerUnchanged:P.x===before.x&&P.y===before.y&&P.z===before.z,
+   inventoryUnchanged:before.inventory===JSON.stringify(inventory),diagnosticsUnchanged:before.diag===window.__climboriaLastCollision,peersUnchanged:before.peers===livePeers.size};
+ };
  window.ENDLESS_WILDS.npcConnectedMapAudit=async()=>{
   const [{createConnectedAdventurer},{createAdventurerRenderer},{buildNpcActivityClips}]=await Promise.all([import('./npc/connected-adventurer.mjs'),import('./npc/adventurer-renderer.mjs'),import('./npc/npc-activity-clips.mjs')]);
   if(remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB)throw Error('No shared GLB slot for connected route');
