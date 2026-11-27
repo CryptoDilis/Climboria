@@ -41,3 +41,30 @@ test('invalid snapshot retry chain bounded; unsolicited result closes',()=>{
  assert.equal(f.closed(),true);assert.equal(f.sent.length,3);
  const g=fixture();g.emit({type:'result',ok:true});assert.equal(g.closed(),true);
 });
+
+test('movement uses bounded intents and monotonic sequence; downed or stale state blocks input',()=>{
+ const f=fixture(5);
+ assert.equal(f.client.input(2,0),false);
+ assert.equal(f.client.input(0,0,'true'),false);
+ assert.equal(f.client.input(1,0,true),true);
+ assert.equal(f.client.attack(B),false);
+ assert.deepEqual(f.sent[0],{type:'input',x:1,z:0,sprint:true,sequence:0});
+ f.hit(0);assert.equal(f.client.input(0,1),false);
+ f.emit({type:'result',ok:true});
+ assert.deepEqual(f.sent[1],{type:'snapshot'});
+ f.result(0);assert.equal(f.client.input(0,1),false);
+ f.emit({type:'preview-respawn',targetId:A});
+ assert.equal(f.client.input(0,1),false);
+ f.result(500);
+ assert.equal(f.client.input(0,1),true);
+ assert.deepEqual(f.sent.at(-1),{type:'input',x:0,z:1,sprint:false,sequence:1});
+ f.emit({type:'result',ok:true});
+ assert.equal(f.client.canAct(),true);
+});
+test('fatal server denial closes client without allowing further input or attack',()=>{
+ const f=fixture();assert.equal(f.client.attack(B),true);
+ f.emit({type:'result',ok:false,reason:'room-quarantined'});
+ assert.equal(f.closed(),true);assert.equal(f.client.canAct(),false);
+ assert.equal(f.client.input(0,0),false);assert.equal(f.client.attack(B),false);
+ assert.equal(f.sent.length,1);
+});
