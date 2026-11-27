@@ -87,7 +87,9 @@ try {
     console.log("SKIP real Jupiter widget mount: source-approved OFF rollback confirmed at live API.");
     process.exitCode = 0;
   } else {
-    await page.goto(SITE + "/swap/", { waitUntil: "domcontentloaded", timeout: 45000 });
+    // Base is the public default; this canary explicitly exercises the secondary Solana route.
+    await page.goto(SITE + "/swap/?chain=solana", { waitUntil: "domcontentloaded", timeout: 45000 });
+    await page.waitForFunction(() => document.documentElement.dataset.climboriaSwapNetwork === "solana", null, { timeout: 10000 });
     const button = page.locator('[data-climboria-managed-swap-open]').first();
     await button.waitFor({ state: "visible", timeout: 20000 });
     assert.equal(await button.getAttribute("aria-controls"), "climboriaSwapProviderPanel");
