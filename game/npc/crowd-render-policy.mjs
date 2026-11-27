@@ -25,7 +25,10 @@ export function planCrowdRendering({players,viewer,device,pressure='normal',npcC
  // Keep a marker for closest players even under critical pressure. No effect on actual ONLINE.
  // Small retention bonus prevents repeated GLB reloads as distances cross.
  // Absolute visibility ranges and pressure caps always override retention.
- const select=(tier,eligible,cap)=>new Set(ranked.filter(eligible).sort((a,b)=>(a.distance-(prior.get(a.id)===tier?3:0))-(b.distance-(prior.get(b.id)===tier?3:0))||compareId(a.id,b.id)).slice(0,cap).map(p=>p.id));
+ // A peer entering melee-range horizontal proximity outranks retention outside it.
+ // This is visual priority only, never proof of combat reach or permission.
+ const closeRank=p=>p.distance<=2.8?0:1;
+ const select=(tier,eligible,cap)=>new Set(ranked.filter(eligible).sort((a,b)=>closeRank(a)-closeRank(b)||(a.distance-(prior.get(a.id)===tier?3:0))-(b.distance-(prior.get(b.id)===tier?3:0))||compareId(a.id,b.id)).slice(0,cap).map(p=>p.id));
  const heavyIds=select('heavy',p=>p.distance<120&&p.hasModel,caps.heavy);
  const lightIds=select('light',p=>p.distance<120&&!heavyIds.has(p.id),caps.light);
  const markerIds=select('marker',p=>p.distance<350&&!heavyIds.has(p.id)&&!lightIds.has(p.id),caps.markers);

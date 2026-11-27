@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## CROWD C7 PRIVATE BROWSER BATCH PROJECTION AND CLOSE ENTRANT — 2026-11-28 PHT
+
+- #1038 exact 2a2a7d6d256922aba107e5b003d747d65f4d4a06: native run 46045989344 job 140665286701 SUCCESS including explicit policy regression step; 11/13 listed workflows success at inspection, focused browser and gameplay pending. No merge before terminal exact checks.
+- C7 candidate: atomic validation of 1–32 movement entries, duplicate/invalid coordinate rejection, known peers only, no admission. Browser decoder accessible only after loopback smoke activation, not wired into live WebSocket protocol. Private projection uses bounded exponential interpolation, close horizontal 2.8m entrants outrank stale tier retention outside that range; caps unchanged and no combat authority. Tests for malformed batch, unknown/departed peers, actual scene transform convergence, close entrant body/nameplate and preserved 100 descriptors. Existing critical-pressure marker-only limitation remains, no all-close visibility guarantee.
+- NEXT: fresh C7 native unit and mobile/desktop renderer tests, inspect exact evidence; actual transport-to-browser integration, close crowd pressure policy, real authenticated capacity and physical Android remain gated. No public protocol, room limit, financial or other workstream changes.
+
+---
+
 ## CROWD C1–C6 CONSOLIDATION AND MEASURED BATCH EVIDENCE — 2026-11-28 PHT
 
 - #1034 exact 6ca6e88f8e4990fde06fca3ddb6ff246a5aa47f2 all 13 listed workflows success; #1035 exact 208739f6cbe69897cbdf616ac97cbe01bb52254a all five listed workflows success. #1036 exact d05380bd3097348193dcacef5e0b212f9fb8b3b6 native 46044514193 job 140660287211 and chat 46044514200 success. 100 clustered 118800→4800 envelopes, bytes 11366190→9034590, 118800 position entries retained; 100 distributed 118800→1800 envelopes, bytes 11174328→2700354. Final positions/cleanup passed. Clustered ack p95 55.30→6.63ms, but ack precedes private batch flush, so not comparable to end-to-end movement latency. No physical FPS or cloud capacity claim.

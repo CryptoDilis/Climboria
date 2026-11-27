@@ -1,9 +1,9 @@
 name: Game Crowd Native Socket Load
 on:
   push:
-    paths: ['game/multiplayer/presence-room.mjs','game/multiplayer/movement-interest.mjs','game/multiplayer/movement-interest.test.mjs','game/npc/crowd-render-policy.mjs','game/npc/crowd-render-policy.test.mjs','.github/scripts/game-crowd-native-load.mjs','.github/workflows/game-crowd-native-load.yml']
+    paths: ['game/multiplayer/private-movement-batch.mjs','game/multiplayer/private-movement-batch.test.mjs','game/multiplayer/presence-room.mjs','game/multiplayer/movement-interest.mjs','game/multiplayer/movement-interest.test.mjs','game/npc/crowd-render-policy.mjs','game/npc/crowd-render-policy.test.mjs','.github/scripts/game-crowd-native-load.mjs','.github/workflows/game-crowd-native-load.yml']
   pull_request:
-    paths: ['game/multiplayer/presence-room.mjs','game/multiplayer/movement-interest.mjs','game/multiplayer/movement-interest.test.mjs','game/npc/crowd-render-policy.mjs','game/npc/crowd-render-policy.test.mjs','.github/scripts/game-crowd-native-load.mjs','.github/workflows/game-crowd-native-load.yml']
+    paths: ['game/multiplayer/private-movement-batch.mjs','game/multiplayer/private-movement-batch.test.mjs','game/multiplayer/presence-room.mjs','game/multiplayer/movement-interest.mjs','game/multiplayer/movement-interest.test.mjs','game/npc/crowd-render-policy.mjs','game/npc/crowd-render-policy.test.mjs','.github/scripts/game-crowd-native-load.mjs','.github/workflows/game-crowd-native-load.yml']
 permissions:
   contents: read
 concurrency:
@@ -25,6 +25,6 @@ jobs:
           npm init -y
           npm install --no-save ws@8.18.3
       - name: Run movement and crowd policy regression tests
-        run: node --test game/multiplayer/movement-interest.test.mjs game/npc/crowd-render-policy.test.mjs
+        run: node --test game/multiplayer/private-movement-batch.test.mjs game/multiplayer/movement-interest.test.mjs game/npc/crowd-render-policy.test.mjs
       - name: Run 10 25 50 100 private native clients
         run: node .github/scripts/game-crowd-native-load.mjs

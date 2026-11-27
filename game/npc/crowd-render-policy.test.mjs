@@ -63,3 +63,11 @@ test('retention prevents churn at close distances but yields to significantly cl
  assert.equal(critical.counts.heavy,0);assert.equal(critical.npcHeavyTarget,0);
  assert.equal(plan([],'mobile',{pressure:'constrained'}).npcHeavyTarget,0);
 });
+
+test('close-range entrant preempts stale retention outside interaction distance without exceeding caps',()=>{
+ const players=make(3);players[0].x=3;players[1].x=3.1;players[2].x=4;
+ const first=plan(players);
+ const changed=plan(players.map((p,i)=>({...p,x:i===2?2.7:p.x})),'mobile',{previous:first.assignments});
+ assert.equal(changed.assignments.find(a=>a.id===players[2].id).tier,'heavy');
+ assert.equal(changed.counts.heavy,2);
+});
