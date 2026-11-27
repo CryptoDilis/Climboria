@@ -10,7 +10,7 @@ function key(s){
  return n.toString(16).padStart(64,'0');
 }
 export function verifySyntheticBatch(input,expectedInventoryDigest,proofs,now,{hasNonce,hasSource,checkIssued}){
-  const {entries}=normalizeLegacyEvidence(input);
+  const {entries,total}=normalizeLegacyEvidence(input);
   if(!Array.isArray(proofs)||proofs.length!==entries.length)fail('proof count mismatch');
   const bySource=new Map();
   for(const p of proofs){
@@ -38,7 +38,7 @@ export function verifySyntheticBatch(input,expectedInventoryDigest,proofs,now,{h
    if(digest!==evidenceHash)fail('manifest evidence hash mismatch');
    nonces.add(nonce);sources.add(sourceIdentity);
   }
-  return {nonces:[...nonces],sources:[...sources],count:entries.length};
+  return {nonces:[...nonces],sources:[...sources],count:entries.length,total};
 }
 export function createSyntheticOwnerLedger(){
  const consumedNonces=new Set(),consumedSources=new Set();
