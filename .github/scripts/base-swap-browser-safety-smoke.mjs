@@ -90,4 +90,46 @@ try{
   await page.close();
   console.log("PASS: "+width+"px Base Swap network, read-only EIP-1193, disabled price gate and browser history; 0 paid quotes or signatures");
  }
+
+ // Independent DEX/Swap notification UI regression, with external services blocked.
+ // Only local document interactions; no provider calls or wallet access.
+ for(const path of ["/dex/","/swap/"]){
+  for(const width of [1365,390,360,320]){
+   const page=await browser.newPage({viewport:{width,height:850},deviceScaleFactor:1});
+   try{
+    await page.route("**/*",route=>new URL(route.request().url()).origin===new URL(site).origin?route.continue():route.abort());
+    await page.goto(site+path,{waitUntil:"domcontentloaded",timeout:45000});
+    const bell=page.locator('.top [data-panel="notifications"]'),x=page.locator('.top .dex-social-x');
+    const panel=page.locator('#climboriaPanelBackdrop'),close=page.locator('#climboriaPanelClose');
+    const context=path+" "+width+"px";
+    assert.equal(await bell.count(),1,context);assert.equal(await x.count(),1,context);
+    assert.equal(await page.locator('.top [data-panel="announcements"]').count(),0,context);
+    assert.equal(await x.getAttribute('href'),'https://x.com/ClimboriaHQ');
+    for(const item of [bell,x]){
+     assert.ok(await item.isVisible(),context+" control hidden");
+     const rect=await item.boundingBox();
+     assert.ok(rect&&rect.width>=29&&rect.x>=-1&&rect.x+rect.width<=width+1,context+" control outside viewport: "+JSON.stringify(rect));
+    }
+    assert.equal(await panel.isVisible(),false,context);
+    await bell.click();
+    assert.ok(await panel.isVisible(),context);
+    assert.equal(await bell.getAttribute('aria-expanded'),'true');
+    assert.equal(await page.locator('#climboriaPanelContent h3').count(),2);
+    assert.ok(await page.locator('#climboriaPanelContent a[href="/#climb-base-transition"]').isVisible());
+    assert.match(await panel.innerText(),/when notification services are enabled/);
+    assert.ok(await close.evaluate(e=>document.activeElement===e));
+    await page.keyboard.press('Shift+Tab');
+    assert.ok(await panel.locator('a').last().evaluate(e=>document.activeElement===e));
+    await page.keyboard.press('Tab');
+    assert.ok(await close.evaluate(e=>document.activeElement===e));
+    await page.keyboard.press('Escape');
+    assert.equal(await panel.isVisible(),false);
+    assert.equal(await bell.getAttribute('aria-expanded'),'false');
+    assert.ok(await bell.evaluate(e=>document.activeElement===e));
+    await bell.click();await close.click();
+    assert.equal(await panel.isVisible(),false);
+    console.log("PASS unified notification, official X, bounds and keyboard: "+context);
+   }finally{await page.close();}
+  }
+ }
 }finally{await browser.close();}
