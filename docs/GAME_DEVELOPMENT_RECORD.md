@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## CROWD C11 ACK-INDEPENDENT PRIVATE FLUSH DEADLINE SWEEP — 2026-11-28 PHT
+
+- C9 #1041 exact 81327e0e37bcb2d20bfe1bf61757259fd5aeeda9 renderer run 46054709471 jobs 140694279285 desktop and 140694279651 mobile SUCCESS: all 100 descriptors within 2.8m, critical desktop 3 bodies/9 markers/88 hidden, mobile 2/6/92; overload explicitly incomplete. Native, foundation and chat passed; focused browser still running at inspection. C10 #1043 exact 874024a1ea3ca28ee60bd82ac81d159feaedb212 foundation green; renderer/focused pending.
+- C11 native fixture extends C8 with scheduled 250/100/50/25ms batch deadlines independent of ACK completion, repeating bounded timer flushes until full directed-pair coverage or timeout; input cadence remains 250ms with 40 ticks at 100 clustered sockets. Record actual movement delivery percentiles, flush count and deadline overrun, input-tick overrun, envelopes/bytes, final positions and cleanup. Coverage tracking now uses bounded byte array instead of hundreds of thousands of string keys; sampled heap not directly comparable to C8. No production scheduler or gateway activation.
+- NEXT: inspect exact C11 sweep and C9/C10 terminal CI, select measured low-latency candidate only after tradeoffs and browser integration; test jitter, connection churn and real physical devices. No public 100-player, FPS or combat readiness claim; caps/security unchanged.
+
+---
+
 ## CROWD C10 PRIVATE INSTANCED BODY WEBGL EXPERIMENT — 2026-11-28 PHT
 
 - C8 #1040 exact 0bbf99f6efcc15d4c8c219e4e4eeb9d7911f66fc run 46054530870 job 140693687714 SUCCESS, merged main a93ed42ff788de68bd7734a8db80ec6d24eb784d. At 50 clustered, 98000 delivered entries each; baseline→batch envelopes 98000→4000, delivery p95 14.73→254.86ms. At 100 clustered 396000 entries each; envelopes 396000→16000, JSON bytes 37829781→30057781, ACK p95 89.65→4.03ms but actual delivery p95 89.85→270.10ms. Batch sampled heap 176978544 bytes vs baseline 64699144 (not peak/GC-normalized). No loss, final positions and cleanup passed. 250ms batch latency is NOT close-combat acceptable; shorter or priority flush needed and must be measured. C9 exact 81327e0e37bcb2d20bfe1bf61757259fd5aeeda9 foundation/chat passed, native/render/focused still running at inspection; retargeted to main.
