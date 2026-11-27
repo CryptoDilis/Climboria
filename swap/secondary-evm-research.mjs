@@ -42,7 +42,7 @@ export function initSecondaryEvmResearch({doc=globalThis.document,scope=globalTh
     const card=doc.createElement("article");card.className="base-market-pair";
     const title=doc.createElement("h4");title.textContent=row.symbol+" / "+row.quoteSymbol+" · "+row.venue;card.appendChild(title);
     const proof=doc.createElement("p");proof.className="base-market-contract";proof.textContent=network.name+" · Chain "+network.id+" · Contract "+contract+" · Pool "+row.pairAddress;card.appendChild(proof);
-    const fmt=n=>n===null?"Unavailable":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumSignificantDigits:8}).format(n);
+    const fmt=n=>n===null?"Unavailable":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:n<1?8:2}).format(n);
     const metrics=doc.createElement("p");metrics.className="base-market-metrics";metrics.textContent="Token USD price: "+fmt(row.priceUsd)+" · Liquidity: "+fmt(row.liquidityUsd)+" · 24h volume: "+fmt(row.volume24hUsd);card.appendChild(metrics);
     const link=doc.createElement("a");link.href="https://dexscreener.com/"+network.provider+"/"+row.pairAddress;link.target="_blank";link.rel="noopener noreferrer";link.referrerPolicy="no-referrer";link.textContent="Inspect exact pool on DexScreener";card.appendChild(link);results.appendChild(card);
    }
