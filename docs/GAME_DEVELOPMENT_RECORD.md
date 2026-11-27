@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## SURVIVAL DEPTH AND PLAYER-FUNDED KOS BOUNTY BOARD — 2026-11-27 PHT
+
+- Owner approved eight additional gameplay ideas: revenge/rivalry, hidden treasure clues, grounded survival and cooking, natural events, reputation, equipment provenance, professions, rescue/carry. Added R8.1–R8.9 and R9.1–R9.9 in [Game player experience backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 62c3774a9291bb81ca1e86e266d42aef05b9ba92; root P4 checklist update 14c7e5630f357548539fedb5f27ab710892822a0. Preserve prior tasks, no magic and no traditional global level.
+- Owner requested an in-game KOS listing with issuer-funded reward between 0.1 and 999 CLIMB per verified kill (example 1), automatic kill detection, automatic hunter payout and notifications to issuer/hunter. Proposed finite prefunded escrow, quota/expiry/refunds, real-character identity and unique authoritative kill ID, opt-in bounty PvP, anti-collusion and anti-harassment safeguards, reviewed automatic settlement and onchain confirmation; no bots or fake kills, no real-world targeting. Policy/balance details and legal/security review remain open. Real-token settlement not authorized by this planning record; no Base mainnet token or deployment implied.
+- NEXT: finish and verify the current Game task, then prioritize R5A autonomous adventurers under existing stability gates, as directed by owner. R8 incremental work later; R9 nonfinancial fixture/private tests first, independently reviewed Base testnet and separate production release gates. No gameplay, funds, UI, token contracts, deployment or other workstream changes in this documentation cycle.
+
+---
+
 ## AUTONOMOUS ADVENTURER BOTS APPROVED — 2026-11-27 PHT
 
 - Owner explicitly confirmed moving, active bots comparable to Counter-Strike bots, adapted to survival exploration. R5A.1–R5A.9 now approved in [Game player experience backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 6ec92145e6ca4b5b1c3575dafa313bb7aa68fa9c; root master checklist update c7325255f44b2340c02463bdb4e879d38598006b. Supersedes prior pending-confirmation status only.
