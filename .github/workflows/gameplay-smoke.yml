@@ -8,6 +8,8 @@ on:
       - "assets/characters/**"
       - ".github/scripts/game-smoke.mjs"
       - ".github/scripts/game-authored-browser-smoke.mjs"
+      - ".github/scripts/game-authored-browser-local-worker.mjs"
+      - ".github/scripts/game-authored-browser-runtime-smoke.mjs"
       - ".github/workflows/gameplay-smoke.yml"
   pull_request:
     branches: [main]
@@ -16,6 +18,8 @@ on:
       - "assets/characters/**"
       - ".github/scripts/game-smoke.mjs"
       - ".github/scripts/game-authored-browser-smoke.mjs"
+      - ".github/scripts/game-authored-browser-local-worker.mjs"
+      - ".github/scripts/game-authored-browser-runtime-smoke.mjs"
       - ".github/workflows/gameplay-smoke.yml"
   workflow_dispatch:
 
@@ -80,6 +84,12 @@ jobs:
       - name: Verify isolated authored combat browser controls
         timeout-minutes: 4
         run: node .github/scripts/game-authored-browser-smoke.mjs
+      - name: Verify native browser authored combat sockets
+        timeout-minutes: 4
+        run: |
+          npm ci --prefix .github/game-preview-runtime
+          ln -s game-preview-runtime/node_modules .github/node_modules
+          node .github/scripts/game-authored-browser-runtime-smoke.mjs
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
         run: |

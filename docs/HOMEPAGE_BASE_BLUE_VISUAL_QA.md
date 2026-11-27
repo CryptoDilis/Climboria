@@ -14,3 +14,13 @@ Verified 2026-11-27 (repository source only).
 3. Verify menu, Play, DEX and Launchpad links still behave as before; check focus visibility and mobile drawer.
 4. If blue grade tints the logo or skin excessively, tune only the CSS blend strength and gradient location. No layout, copy, or image replacement.
 5. Record live QA results before marking complete.
+
+## Correction — 2026-11-27
+
+User screenshot showed unwanted blue tint on the logo and heroine. Fix [`68b2a23`](https://github.com/CryptoDilis/Climboria/commit/68b2a23293cead95e773efbe061b7dd4ee0a9169) removes the full-image filter and full-frame color blend, restores the original hero overlay on desktop and mobile, and retains a localized lower-left landscape accent only on wide desktop viewports. Mobile and other aspect ratios use original artwork colors. Navbar and action bar palette retained. Verified identical HTML body and picture markup against pre-fix main; no unrelated task changed. Remaining: live screenshot QA to confirm the localized accent does not overlap foreground artwork at supported sizes and that the corrected commit is deployed.
+
+## Deployed desktop visual evidence — 2026-11-27
+
+- Latest color-only commit [`028b567`](https://github.com/CryptoDilis/Climboria/commit/028b567b8912f6ffdbb46ca84a502c5b1abd7ef2) changed one CSS rule, increasing the lower-left landscape tint and masking it away from the foreground. Exact [GitHub Pages deployment](https://github.com/CryptoDilis/Climboria/actions/runs/45946940498) completed SUCCESS.
+- Owner-supplied desktop screenshot at `climboria.fun/?v=028b567` shows restored metallic silver/gold wordmark, original heroine skin and hair tones, warm chest lighting, blue navbar, and cooler lower-left mountains/sunset. Some warm sky remains intentionally outside the localized accent; the image has not been globally recolored. No layout changes observed in the visible region. Bottom action bar partly outside screenshot.
+- Desktop foreground-color correction visually confirmed from supplied screenshot; final aesthetic approval and mobile visual acceptance not yet confirmed. No independent browser interaction test claimed. No further CSS edits made in this verification cycle.
