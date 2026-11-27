@@ -782,8 +782,8 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 <div class="stat"><label>Solana pairs loaded</label><strong id="pairCount" class="skeleton-value">Loading</strong></div><div class="stat"><label>Tracked profiles</label><strong id="profileCount" class="skeleton-value">Loading</strong></div><div class="stat"><label>Top pair 24h volume</label><strong id="topVolume" class="skeleton-value">Loading</strong></div><div class="stat"><label>Data refresh</label><strong>60 sec</strong></div>
 </section><section class="premium-trending" aria-labelledby="premiumTrendingTitle"><div class="premium-section-head"><div><small>LIVE SOLANA DISCOVERY</small><h2 id="premiumTrendingTitle">Trending on Solana</h2><p>Latest token profiles + active boosts · ranked by 24h volume within this discovery sample · not a global market ranking or endorsement</p></div><span id="premiumTrendingUpdated">Fetching live pairs…</span></div><div class="premium-trending-grid" id="premiumTrendingGrid"><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div></div></section>
 <nav class="dex-mobile-nav" id="dexMobileNav" aria-label="DEX mobile navigation">
- <button type="button" data-dex-mobile-view="solana" class="active" aria-current="page">Markets</button>
- <button type="button" data-dex-mobile-view="base">Base</button>
+ <button type="button" data-dex-mobile-view="base" class="active" aria-current="page">Base</button>
+ <button type="button" data-dex-mobile-view="solana">Solana</button>
  <a href="/swap/">Swap</a>
  <button type="button" id="dexMobileWatchlist">Saved</button>
 </nav>
@@ -1785,7 +1785,7 @@ function setDexMobileView(view){
 }
 const dexMobileNav=$('dexMobileNav');
 if(dexMobileNav){
- setDexMobileView('solana');
+ setDexMobileView('base');
  dexMobileNav.addEventListener('click',event=>{
   const button=event.target.closest('[data-dex-mobile-view]');
   if(button){setDexMobileView(button.dataset.dexMobileView);window.scrollTo({top:0,behavior:'smooth'});return;}
