@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A NORMAL GAME FRAME PAIRED SMOKE CANDIDATE — 2026-11-28 PHT
+
+- #1010 focused browser 46032106676 passed; gameplay 46032106531 pending. #1013/#1015 focused pending. #1017 exact b4019d532f8f95614103daef1ea15452c3874f18: foundation 46033331458 and chat 46033331489 passed; focused 46033331598 pending. Preserve parent runs.
+- Wire paired session to existing normal game update loop, explicitly smoke-only start/stop, mutual exclusion with single NPC session, desktop two GLBs/mobile one GLB and lightweight silhouette, reserved real-peer slot, admission rechecks across async loads, distance/hidden/priority/lifetime cleanup. Browser audit polls normal frames, movement, attached projections, budget and distance cleanup. Fresh CI required; no public spawning or production authority. Mobile silhouette is not skeletal-animated, normal-camera simultaneous draw proof not asserted here (separate visual audit).
+- NEXT: verify exact parent and new browser CI; resolve any regressions, consolidate onto current main, then physical device test and improved route recovery/authority. No economy or other workstreams.
+
+---
+
 ## R5A PAIRED NORMAL-FRAME LIFECYCLE CANDIDATE — 2026-11-28 PHT
 
 - #1010 3/5 CI passed, #1013 foundation 46032633185 passed, #1015 exact 04c0aee9b090c643efb80788c6665ddb99a993f0 foundation 46033108224 passed; focused 46033108161 and earlier browser/gameplay runs pending. Preserve running parents.
