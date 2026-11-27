@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## R5A MAIN-BASED PAIRED INTEGRATION REPAIR — 2026-11-28 PHT
+
+- #1013/#1015 mobile passed; desktop jobs 140620013561 and 140621630238 cancelled after approximately 12-minute job windows; no terminal pass. #1017/#1018 desktop still running, mobile passed. #1020 mobile 140624214280 failed at cleanupErrors assertion (1 instead of 0) after actual map, movement, dialogue and simultaneous draw assertions passed. Source foundation 46033866649 and chat 46033866749 passed. Preserve exact heads and existing runs.
+- Root cause candidate: fallback close callback references v.group after release helper clears it, and active session plus helper both close projections. Fix one-owner teardown (session owns handed-off projection close, helper owns failed startup close), close before clearing references, drop closed session projection references, null-safe fallback close; new regression tests startup/handed-off teardown. Log cleanup state before assertions and require released flags. Preserve existing checks, increase Game-only focused CI cap from 12 to 25 minutes because software-rendered desktop jobs reached original bound.
+- Consolidate six paired source paths from exact #1020 onto latest main 418cfe66497d00c83f70610e0f42c07250994a52 (all overlapping edits since #1010 limited to Game record; preserve canonical record and non-Game files). This is a repaired candidate, NOT verified or merged. Fresh full main-targeted CI required. Source branches retained. Normal-camera paired draw remains separate from dedicated simultaneous camera evidence; physical device and production authority gates remain closed.
+- NEXT: verify exact consolidated head foundation, desktop/mobile focused, gameplay/validation/chat workflows; fix any remaining failure, merge only after passing and checking no overlaps. No public spawning, token, inventory or other workstream changes.
+
+---
+
 ## R5A MOBILE BROWSER PAIR EVIDENCE — 2026-11-28 PHT
 
 - #1013 exact bdc45d87f517b8d927c34eb0e7cc35066de48ce1 mobile job 140620013148 (run 46032633058) SUCCESS: actual lake 1800 ticks, Aurelion 242.6m/ZevranSol 311.58m, minimum spacing 0.8000000000002956m, maximum step 0.30000000000001137m, eight spacing blocks, swim observed, identities stable, actors closed and no player/inventory/peer/diagnostic mutation.
