@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {createTransactionalGatewayPreview} from './transactional-gateway-preview.mjs';
 import {createTransactionalRoomPrototype} from '../transactional-room-prototype.mjs';
 import {createServerCollisionRegion} from '../server-collision-region.mjs';
+import {createJarrellPrivateCombatFixture,JARRELL_PRIVATE_COMBAT_FIXTURE} from '../jarrell-private-combat-fixture.mjs';
+import {createPreviewTicketStore} from './preview-ticket-store.mjs';
 const A='f3ead054-abb4-47ba-b311-5aa7fe483f10',B='2790d4fe-1a26-4f5c-96d2-9a0fbcfb3021';
 const TA='a'.repeat(64),TB='b'.repeat(64),TC='c'.repeat(64);
 function fixture(){
@@ -62,4 +64,50 @@ test('expired, malformed, oversized and rate-limited requests fail closed',async
  for(let i=0;i<24;i++)assert.ok((await send(b,{type:'snapshot'})).ok);
  assert.equal((await send(b,{type:'snapshot'})).reason,'message-rate-limit');
  at(70000);assert.equal((await gateway.connect(TC)).reason,'expired-or-used-ticket');
+});
+
+test('authored camp gateway uses real private tickets, independent room namespace and durable movement',async()=>{
+ let now=40000,seq=0,rows=new Map(),tail=Promise.resolve();
+ const clock=()=>now;
+ const storage={transaction(fn){
+  const task=tail.then(async()=>{
+   const draft=new Map(structuredClone([...rows]));
+   const result=await fn({get:async k=>draft.get(k),put:async(k,v)=>draft.set(k,structuredClone(v)),
+    delete:async k=>draft.delete(k),list:async({prefix,limit})=>new Map([...draft].filter(([k])=>k.startsWith(prefix)).slice(0,limit))});
+   rows=draft;return result;
+  });tail=task.catch(()=>{});return task;
+ }};
+ const roomId=JARRELL_PRIVATE_COMBAT_FIXTURE.roomId;
+ const tickets=createPreviewTicketStore({storage,roomId,clock});
+ const foreign=createPreviewTicketStore({storage,roomId:'preview-combat-fixture',clock});
+ const runtime=createJarrellPrivateCombatFixture({storage,clock});
+ const gateway=createTransactionalGatewayPreview({runtime,clock,consumeTicket:tickets.consumeTicket,
+  sessionId:()=> 's_'+(++seq).toString(16).padStart(32,'0')});
+ async function issue(store,user){
+  const t=await store.issueVerifiedAccount(user);assert.ok(t.ok);return t.ticket;
+ }
+ const other=await issue(foreign,A);
+ assert.equal((await gateway.connect(other)).reason,'expired-or-used-ticket');
+ assert.equal((await foreign.consumeTicket(other)).userId,A);
+ const ta=await issue(tickets,A),a=await gateway.connect(ta);
+ const b=await gateway.connect(await issue(tickets,B));
+ assert.ok(a.ok&&b.ok);assert.equal(a.snapshot.roomId,roomId);
+ assert.equal((await gateway.connect(ta)).reason,'expired-or-used-ticket');
+ assert.equal((await send(a,{type:'attack',targetId:b.id,roomId:'preview-combat-fixture'})).ok,false);
+ assert.equal((await send(a,{type:'attack',targetId:b.id})).health,495);
+ assert.equal((await send(b,{type:'input',x:1,z:0,sequence:0,sprint:true,position:{x:0,y:0,z:0}})).ok,false);
+ assert.ok((await send(b,{type:'input',x:1,z:0,sequence:0,sprint:true})).ok);
+ for(let i=0;i<2;i++){now+=100;assert.ok((await runtime.tick()).ok)}
+ const moved=(await send(b,{type:'snapshot'})).snapshot;
+ assert.ok(moved.position.x>-197.2);assert.equal(moved.health,495);
+ now=41000;assert.ok((await runtime.tick()).ok);
+ assert.equal((await send(a,{type:'attack',targetId:b.id})).reason,'target-out-of-range');
+ assert.ok((await b.close()).ok);
+ const replacement=await gateway.connect(await issue(tickets,B));
+ assert.ok(replacement.ok);assert.notEqual(replacement.id,b.id);
+ assert.equal(replacement.snapshot.health,495);
+ assert.deepEqual(replacement.snapshot.position,moved.position);
+ assert.equal((await send(b,{type:'snapshot'})).reason,'session-closed');
+ assert.equal((await send(a,{type:'attack',targetId:b.id})).reason,'unknown-or-same-session');
+ assert.ok((await replacement.close()).ok);assert.ok((await a.close()).ok);
 });
