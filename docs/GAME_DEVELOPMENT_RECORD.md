@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A PRIVATE ROOM MEMBERSHIP LIFECYCLE CANDIDATE — 2026-11-27 UTC
+
+- #1000 exact head 4f33795c680347bb3fcca2d2b6b6488d0164cdbc: 9/11 workflows green at inspection, including ecosystem Browser 46020395877 (old homepage assertion now resolved), NPC Chat 46020395893, Foundation 46020395851, Validate 46020395800. Focused Browser 46020396061 and Gameplay 46020395784 still running. Keep parent CI intact.
+- New stacked private host `8aea8ea` / `7f4c492`: default OFF, exact trusted private room ID, exactly two visible distinct humans, one-shot server scheduler; closes on membership outside two or scheduler failure/expiry; no automatic restart. Explicit trusted host callback only, not client input. Unit candidate `b89e32f` tests hidden admission, single/third member, disconnect, stale callbacks, wrong room and expiry. Native socket candidate `40ae8e2` replaces ad-hoc scheduler calls with host, checks immediate closure on first disconnect while second human remains. No production Worker or public route wiring; synthetic credentials/terrain only. Fresh CI required.
+- NEXT: verify #1000 and this stacked candidate, reconcile/merge only with fresh exact-head full checks. Then private Worker lifecycle acceptance (no public routes), real map adapters, simultaneous visible GLBs/avoidance, authorized account/WSS and physical mobile evidence. Keep real presence, loot and all financial gates unchanged.
+
+---
+
 ## R5A NATIVE WEBSOCKET VERIFIED; MAIN CONSOLIDATION — 2026-11-27 UTC
 
 - #1000 prior exact head 9681e4eefaf1b05e5609d6ecb11f242b591b1381: [NPC Chat Acceptance 46019460113](https://github.com/CryptoDilis/Climboria/actions/runs/46019460113), job 140575013105 SUCCESS. 103/103 unit contracts; two distinct Chromium DOM clients 1280/390px received identical three NPC events, linked reply, mute, duplicate rejection, preserved drafts and real human count=2. Actual native loopback sockets: 2 clients, 3 events, linked reply, forged packet rejected, room empty at cleanup, scheduler closed with 387 ticks and no pending timer. Synthetic terrain/tickets and controlled clock; not real account or public WSS evidence.
