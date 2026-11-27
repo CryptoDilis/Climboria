@@ -136,8 +136,16 @@ try{
  const moved=(await b.state()).snapshot,mesh=await b.scene();
  assert.ok(moved.position.x>-197.2);assert.equal(mesh.x,moved.position.x);assert.equal(mesh.z,moved.position.z);assert.ok(Math.abs(mesh.ground-moved.position.y)<.001);assert.equal(mesh.hud.stamina,moved.stamina);assert.ok(mesh.triangles>0);
  await a.draw();await a.ready();await a.draw();
+ const deniedStart=await a.page.evaluate(()=>qa.frames.length);
+ const hitStart=await b.page.evaluate(()=>qa.frames.filter(p=>p.type==='preview-hit').length);
  await a.tap('#attack');await a.ready();
- assert.ok(await a.page.evaluate(()=>qa.frames.some(p=>p.type==='result'&&p.reason==='target-out-of-range')));
+ assert.ok(await a.page.evaluate(start=>qa.frames.slice(start).some(p=>p.type==='result'&&p.ok===false&&p.reason==='target-out-of-range'),deniedStart));
+ // Prove unchanged authoritative HP, not merely an unchanged cached HUD.
+ const snapshotStart=await b.page.evaluate(()=>qa.frames.length);
+ assert.equal(await b.page.evaluate(()=>qa.transport.refresh()),true);
+ await b.page.waitForFunction(start=>qa.frames.slice(start).some(p=>p.type==='result'&&p.ok===true&&p.snapshot?.health===495)&&qa.transport.canAct(),snapshotStart,{timeout:10000});
+ await b.draw();
+ assert.equal(await b.page.evaluate(()=>qa.frames.filter(p=>p.type==='preview-hit').length),hitStart);
  assert.equal((await b.state()).snapshot.health,495);
  assert.equal((await b.scene()).hud.health,495);
  await b.page.evaluate(()=>qa.ui.close());
