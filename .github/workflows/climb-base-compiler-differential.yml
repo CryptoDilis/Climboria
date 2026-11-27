@@ -293,7 +293,9 @@ jobs:
 
   reproduce:
     name: Independent runner standard JSON replay / ${{ matrix.project }} / ${{ matrix.compiler }}
-    needs: [compare, compatibility]
+    # Replay and interface comparison consume the same completed matrix artifacts.
+    # Neither consumes the other job's outputs; both remain mandatory for workflow success.
+    needs: compare
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     strategy:
