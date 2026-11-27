@@ -5,12 +5,26 @@ import {WebSocket,WebSocketServer} from 'ws';
 import {PresenceRoom} from '../../game/multiplayer/presence-room.mjs';
 const id=i=>'session_'+String(i).padStart(18,'0');
 const wait=async(fn,label,ms=30000)=>{const end=performance.now()+ms;while(!fn()){if(performance.now()>end)throw Error(label);await new Promise(r=>setTimeout(r,5))}};
-async function scenario(n,distributed,optimized,batched=false){
+async function scenario(n,distributed,optimized,batched=false,sustained=false){
  let now=1000,seq=0,wireBytes=0,movePackets=0,moveEntries=0,serverError=null;
  const room=new PresenceRoom({roomId:'private-crowd-fixture',now:()=>now,limit:n,movementInterest:optimized,movementBatch:batched});
  const wss=new WebSocketServer({host:'127.0.0.1',port:0,maxPayload:1024,perMessageDeflate:false});
  const sockets=new Map(),clients=[],rtts=[],start=performance.now();
+ const ticks=sustained?40:12,periodMs=250,delivery=[],sentTimes=new Map(),received=new Set(),overruns=[];
+ if(sustained&&distributed)throw Error('Sustained evidence requires all clustered pairs');
  const initial=i=>({x:i*(distributed?12:.3),y:2,z:-30});
+ const sourceIndices=new Map(Array.from({length:n},(_,i)=>[id(i),i]));
+ function project(c,m){
+  c.positions.set(m.id,m.position);
+  if(!sustained)return;
+  const source=sourceIndices.get(m.id);assert.ok(source!==undefined&&source!==c.index);
+  const step=Math.round((m.position.x-initial(source).x)*4);
+  if(step===0)return;
+  const sent=sentTimes.get(source+':'+step),key=c.index+':'+source+':'+step;
+  assert.ok(Number.isFinite(sent)&&step>=1&&step<=ticks&&!received.has(key),'unexpected or duplicate delivered step');
+  assert.ok(Math.abs(m.position.x-(initial(source).x+step*.25))<1e-7);
+  received.add(key);delivery.push(performance.now()-sent);
+ }
  wss.on('connection',socket=>{
   const i=seq++,sid=id(i);sockets.set(sid,socket);
   const send=packet=>{if(socket.readyState!==WebSocket.OPEN)throw Error('Closed fixture socket');const raw=JSON.stringify(packet);wireBytes+=Buffer.byteLength(raw);if(packet.type==='player-moved'){movePackets++;moveEntries++}if(packet.type==='players-moved'){movePackets++;moveEntries+=packet.moves.length}socket.send(raw)};
@@ -38,8 +52,8 @@ async function scenario(n,distributed,optimized,batched=false){
     if(m.type==='fixture-ack'){assert.ok(m.ok,m.reason);c.ack=m.step;rtts.push(performance.now()-c.sentAt)}
     if(m.type==='welcome')for(const p of m.peers)c.positions.set(p.id,p.position);
     if(m.type==='player-joined')c.positions.set(m.player.id,m.player.position);
-    if(m.type==='player-moved')c.positions.set(m.id,m.position);
-    if(m.type==='players-moved'){assert.ok(batched);assert.ok(m.moves.length>0&&m.moves.length<=32);for(const p of m.moves)c.positions.set(p.id,p.position)}
+    if(m.type==='player-moved')project(c,m);
+    if(m.type==='players-moved'){assert.ok(batched);assert.ok(m.moves.length>0&&m.moves.length<=32);for(const p of m.moves)project(c,p)}
     if(m.type==='player-left')c.positions.delete(m.id);
     if(m.type==='fixture-barrier')c.barrier=true;
    }catch(e){c.error=e}});
@@ -47,15 +61,27 @@ async function scenario(n,distributed,optimized,batched=false){
   }
   assert.equal(room.snapshot().length,n);assert.equal(sockets.size,n);
   room.flushMovementInterest();wireBytes=0;movePackets=0;moveEntries=0;
-  for(let step=1;step<=12;step++){
-   now+=250;
+  for(let step=1;step<=ticks;step++){
+   const tickStart=performance.now();
+   now+=periodMs;
    for(const c of clients){
-    const pos=initial(c.index);pos.x+=step*.25;c.sentAt=performance.now();
+    const pos=initial(c.index);pos.x+=step*.25;c.sentAt=performance.now();if(sustained)sentTimes.set(c.index+':'+step,c.sentAt);
     c.ws.send(JSON.stringify({type:'move',step,id:id((c.index+1)%n),position:pos}));
    }
    await wait(()=>serverError||clients.some(c=>c.error)||clients.every(c=>c.ack===step),'movement ack timeout');
    if(serverError)throw serverError;for(const c of clients)if(c.error)throw c.error;
+   if(sustained){
+    // Wait for the real scheduled deadline, not just immediate server ACK.
+    // Late ACKs are measured as schedule overruns; no simulated wall latency.
+    const remaining=tickStart+periodMs-performance.now();
+    if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));
+    overruns.push(Math.max(0,performance.now()-tickStart-periodMs));
+   }
    room.flushMovementInterest();
+   if(sustained){
+    await wait(()=>serverError||clients.some(c=>c.error)||received.size===step*n*(n-1),'full clustered delivery timeout',5000);
+    if(serverError)throw serverError;for(const c of clients)if(c.error)throw c.error;
+   }
   }
   now+=2000;room.flushMovementInterest();
   for(const socket of sockets.values())socket.send(JSON.stringify({type:'fixture-barrier'}));
@@ -63,7 +89,7 @@ async function scenario(n,distributed,optimized,batched=false){
   for(const c of clients){
    if(c.error)throw c.error;
    assert.equal(c.positions.size,n-1);
-   for(let i=0;i<n;i++)if(i!==c.index)assert.deepEqual(c.positions.get(id(i)),{...initial(i),x:initial(i).x+3});
+   for(let i=0;i<n;i++)if(i!==c.index)assert.deepEqual(c.positions.get(id(i)),{...initial(i),x:initial(i).x+ticks*.25});
   }
   assert.equal(room.members.size,n);
   const count=movePackets,bytes=wireBytes;
@@ -71,7 +97,10 @@ async function scenario(n,distributed,optimized,batched=false){
   await wait(()=>room.members.size===0&&sockets.size===0,'disconnect cleanup timeout');
   assert.equal(room.movementInterest?.size()??0,0);
   const sorted=[...rtts].sort((a,b)=>a-b);
-  return {n,distributed,optimized,batched,moveEntries,movePackets:count,wireBytes:bytes,ackP95Ms:sorted[Math.ceil(sorted.length*.95)-1],elapsedMs:performance.now()-start,heapUsedBytes:process.memoryUsage().heapUsed,finalPositions:true,cleanup:true};
+  const pct=(values,q)=>{const a=[...values].sort((x,y)=>x-y);return a[Math.ceil(a.length*q)-1]??null};
+  const sustainedEvidence=sustained?{ticks,periodMs,deliverySamples:delivery.length,deliveryP50Ms:pct(delivery,.5),deliveryP95Ms:pct(delivery,.95),deliveryP99Ms:pct(delivery,.99),deliveryMaxMs:pct(delivery,1),flushScheduleOverrunP95Ms:pct(overruns,.95)}:null;
+  if(sustained){assert.equal(delivery.length,ticks*n*(n-1));assert.ok(delivery.every(x=>Number.isFinite(x)&&x>=0&&x<5000));assert.equal(moveEntries,ticks*n*(n-1));}
+  return {n,distributed,optimized,batched,sustainedEvidence,moveEntries,movePackets:count,wireBytes:bytes,ackP95Ms:sorted[Math.ceil(sorted.length*.95)-1],elapsedMs:performance.now()-start,heapUsedBytes:process.memoryUsage().heapUsed,finalPositions:true,cleanup:true};
  }finally{
   for(const c of clients)c.ws.terminate();
   for(const socket of wss.clients)socket.terminate();
@@ -88,4 +117,14 @@ for(const n of [10,25,50,100])for(const distributed of [false,true]){
  assert.ok(batched.movePackets<=optimized.movePackets);
  if(!distributed){assert.equal(batched.moveEntries,baseline.moveEntries);assert.equal(batched.movePackets,12*n*Math.ceil((n-1)/32));assert.ok(batched.wireBytes<baseline.wireBytes)}
  console.log('Private native batch evidence',JSON.stringify({n,distributed,batched,packetRatio:batched.movePackets/baseline.movePackets,byteRatio:batched.wireBytes/baseline.wireBytes}));
+}
+
+// 40 real 250ms tick deadlines per scenario: full peer delivery measured separately from ACK.
+// These are local transport observations, not internet latency or production SLA.
+for(const n of [50,100]){
+ const baseline=await scenario(n,false,false,false,true),batched=await scenario(n,false,true,true,true);
+ assert.equal(baseline.movePackets,40*n*(n-1));
+ assert.equal(batched.movePackets,40*n*Math.ceil((n-1)/32));
+ assert.equal(baseline.sustainedEvidence.deliverySamples,batched.sustainedEvidence.deliverySamples);
+ console.log('Private sustained end-to-end movement evidence',JSON.stringify({n,baseline,batched}));
 }
