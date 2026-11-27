@@ -53,6 +53,17 @@ try{
     return route.fulfill({status:200,contentType:"application/json",headers:{"access-control-allow-origin":"*"},
       body:JSON.stringify({pairs:["base","ethereum","bsc"].map((chainId,i)=>({chainId,pairAddress:pool,baseToken:{address:ACCOUNT,symbol:"QA"},quoteToken:{address:other,symbol:"WETH"},priceUsd:String(i+1),liquidity:{usd:1000}}))})});
   });
+  // Follow the DEX link without initiating a lookup or wallet session.
+  await page.goto(site+"/swap/?chain=base&research=56#secondaryEvmResearch",{waitUntil:"domcontentloaded"});
+  await page.waitForFunction(()=>document.querySelector("#secondaryEvmResearch")?.open);
+  assert.equal(await page.locator("#secondaryEvmChain").inputValue(),"56");
+  assert.equal(await page.locator("#secondaryEvmContract").inputValue(),"");
+  assert.equal(await page.locator("html").getAttribute("data-climboria-swap-network"),"base");
+  assert.equal(await page.locator("#getQuote").isDisabled(),true);
+  assert.deepEqual(await page.evaluate(()=>window.__baseWalletRequests),[]);
+  assert.equal(researchRequests.length,0);
+  await page.goto(mainUrl,{waitUntil:"domcontentloaded"});
+  await research.waitFor({state:"visible"});
   await research.locator("summary").click();
   assert.equal(researchRequests.length,0);
   await page.locator("#secondaryEvmContract").fill(ACCOUNT);
@@ -155,6 +166,13 @@ try{
      assert.ok(rect&&rect.width>=29&&rect.x>=-1&&rect.x+rect.width<=width+1,context+" control outside viewport: "+JSON.stringify(rect));
     }
     if(path==="/dex/"){
+     const researchLinks=page.locator(".secondary-research-links a");
+     assert.equal(await researchLinks.count(),2);
+     for(const [i,chain] of ["1","56"].entries()){
+      const link=researchLinks.nth(i);
+      assert.ok(await link.isVisible(),context+" research link hidden");
+      assert.equal(await link.getAttribute("href"),"/swap/?chain=base&research="+chain+"#secondaryEvmResearch");
+     }
      assert.match(await page.title(),/Base Markets/);
      assert.equal(await page.locator('.hero #heroMarket').count(),0);
      assert.ok(await page.locator('.base-primary-hero').isVisible());
@@ -176,9 +194,9 @@ try{
      assert.equal(await page.locator("#chainSolana").getAttribute("aria-pressed"),"false");
      const roadmap=page.locator(".network-roadmap");
      assert.equal(await roadmap.locator("button,a,select,input").count(),0);
-     assert.match(await roadmap.textContent(),/Ethereum.*Planned.*BNB Chain.*Planned/s);
+     assert.match(await roadmap.textContent(),/Ethereum.*Market research.*BNB Chain.*Market research/s);
      if(width<=760)await page.locator(".mobile-routing-details summary").click();
-     assert.ok(await roadmap.isVisible(),context+" planned networks not accessible");
+     assert.ok(await roadmap.isVisible(),context+" secondary network capabilities not accessible");
      if(width<=760)await page.locator(".mobile-routing-details summary").click();
 
      if(width<=760){

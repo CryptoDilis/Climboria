@@ -53,6 +53,15 @@ export function initSecondaryEvmResearch({doc=globalThis.document,scope=globalTh
  });
  doc.addEventListener?.("climboria:managed-provider-pair-change",sync);
  scope.addEventListener?.("popstate",()=>scope.setTimeout(sync,0));
- sync();return {ready:true,sync};
+ sync();
+ // Explicit research-only entry links never alter Swap network, prefill
+ // a contract, request provider data, or connect a wallet.
+ const params=new URLSearchParams(scope.location?.search||"");
+ const requested=params.get("research");
+ if(visible()&&params.get("chain")==="base"&&requested!==null&&Object.hasOwn(CHAINS,requested)){
+  chain.value=requested;input.value="";panel.open=true;
+  status.textContent="Enter an exact contract on the selected research network.";
+ }
+ return {ready:true,sync};
 }
 if(typeof document!=="undefined"&&typeof window!=="undefined")initSecondaryEvmResearch();
