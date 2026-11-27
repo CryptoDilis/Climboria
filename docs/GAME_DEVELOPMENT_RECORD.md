@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## AUTHORITATIVE CHARACTER PROJECTION MERGED — 2026-11-27 PHT
+
+- #925 merged 300972e5a49dea4423ad9b519fb620784851a4cc after exact head 1c19cf97595e27407bd3e2d65dca6db7248e436e all five SUCCESS: Gameplay 45947412023, Runtime 45947412045, Gateway 45947412093, Authority 45947411967, Validate 45947411962. Main drift only unrelated Base ledger work. Adapter is not public gameplay integration.
+- Reconcile #928 with squash merge preserving actual GLB harness, pinned Three.js, existing native WebSocket smoke and all historical records. Retarget to main and require fresh Validate and Gameplay CI. #930 remains stacked until #928 green and merged. No public PvP, deployment or loot.
+
+---
+
 ## GLB BROWSER BRANCH RECONCILIATION — 2026-11-27 PHT
 
 - #928 incorporates reconciled #925 head 1c19cf97595e27407bd3e2d65dca6db7248e436e (4/5 fresh CI passed; Gameplay 45947412023 running when checked), including merged native browser #922. Preserve both native socket and isolated GLB smoke, pinned Three.js and all historical records. Parent CI unchanged; GLB test unexecuted.
