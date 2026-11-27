@@ -32,8 +32,10 @@ try{
   return w.npcContinuousStart();
  });
  assert.equal(started,true);
+ // Software-rendered desktop CI can deliver very few normal frames per wall-clock second.
+ // Keep the same movement/draw/frame assertions; physical-device performance is a separate gate.
  try{
- await page.waitForFunction(()=>{const a=window.__climboriaJarrellsPeak.npcContinuousAudit();return a.session?.frames>=15&&a.session.distance>.5&&a.draws>0;},undefined,{timeout:45000});
+ await page.waitForFunction(()=>{const a=window.__climboriaJarrellsPeak.npcContinuousAudit();return a.session?.frames>=15&&a.session.distance>.5&&a.draws>0;},undefined,{timeout:mobile?45000:90000,polling:1000});
  }catch(error){
   const audit=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
   console.error('NPC continuous acceptance failed',JSON.stringify({mobile,audit,errors}));
