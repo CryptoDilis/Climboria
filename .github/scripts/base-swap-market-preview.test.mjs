@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   BASE_CHAIN_ID, BASE_MARKET_ENDPOINT, canonicalBaseAddress,
-  parseBaseMarketPairs, baseMarketUrl, initializeBaseMarketPreview
+  parseBaseMarketPairs, parseEvmMarketPairs, baseMarketUrl, initializeBaseMarketPreview
 } from "../../swap/base-market-preview.mjs";
 
 const BASE_TOKEN = "0x" + "a".repeat(40);
@@ -246,4 +246,39 @@ test("Base DEX rejects malformed pool identities and renders unavailable metrics
   await api.loadBaseMarkets();
   api.renderBaseMarkets();
   assert.match(nodes.baseCoverage.textContent,/Refresh failed/);
+});
+
+test("EVM market candidate enforces explicit numeric chain and isolates identical contract/pool addresses",()=>{
+  const rows={pairs:[
+    pair({chainId:"base",priceUsd:"0.42"}),
+    pair({chainId:"ethereum",priceUsd:"2.50"}),
+    pair({chainId:"bsc",priceUsd:"3.75"}),
+    pair({chainId:"solana",priceUsd:"9000"}),
+    pair({chainId:"bnb",priceUsd:"9000"})
+  ]};
+  for(const [chainId,expected] of [[8453,0.42],[1,2.5],[56,3.75]]){
+    const result=parseEvmMarketPairs(rows,BASE_TOKEN,chainId);
+    assert.equal(result.length,1);
+    assert.equal(result[0].priceUsd,expected);
+  }
+  assert.deepEqual(parseBaseMarketPairs(rows,BASE_TOKEN),parseEvmMarketPairs(rows,BASE_TOKEN,8453));
+  for(const chain of [undefined,null,0,137,84532,"1","56","base",true,{},NaN]){
+    assert.deepEqual(parseEvmMarketPairs(rows,BASE_TOKEN,chain),[]);
+  }
+});
+test("Ethereum and BNB candidates reject invalid counterpart identity and quote-side metric borrowing",()=>{
+  for(const [chainId,provider] of [[1,"ethereum"],[56,"bsc"]]){
+    const q=pair({chainId:provider,baseToken:{address:OTHER,symbol:"OTHER"},quoteToken:{address:BASE_TOKEN,symbol:"ME"}});
+    const data={pairs:[q,
+      pair({chainId:provider,quoteToken:{address:"USDC"},liquidity:{usd:999999}}),
+      pair({chainId:provider,baseToken:{address:BASE_TOKEN},quoteToken:{address:BASE_TOKEN},liquidity:{usd:999999}}),
+      pair({chainId:provider,pairAddress:"invalid"}),
+      pair({chainId:provider,liquidity:{usd:0}})
+    ]};
+    const result=parseEvmMarketPairs(data,BASE_TOKEN,chainId);
+    assert.equal(result.length,1);
+    assert.equal(result[0].symbol,"ME");
+    assert.equal(result[0].priceUsd,null);
+    assert.equal(result[0].change24h,null);
+  }
 });
