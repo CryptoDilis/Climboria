@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {observeTestnet,endpoints} from './observe-testnet.mjs';
 import {expected} from '../v3-testnet/verify-creation.mjs';
@@ -28,6 +29,14 @@ const mock=(alter=()=>undefined)=>{
  };
  return {fn,seen};
 };
+const pin=JSON.parse(readFileSync(new URL('./frozen-testnet-candidate.json',import.meta.url),'utf8'));
+if(pin.status==='RETIRED_PENDING_VERIFIED_REPIN'){
+ test('retired candidate blocks public RPC before any request',async()=>{
+  let called=false;
+  await assert.rejects(observeTestnet(async()=>{called=true;throw Error('unexpected RPC');},now),/FROZEN_CANDIDATE_RETIRED/);
+  assert.equal(called,false);
+ });
+}else{
 test('different finalized heights reconcile on common finalized block; no signing',async()=>{
  const {fn,seen}=mock();const a=await observeTestnet(fn,now);
  assert.equal(a.status,'DUAL_RPC_HISTORICAL_AND_CHAIN_OBSERVATION_ONLY_NO_GO');
@@ -47,3 +56,5 @@ test('delegated prior role clearly reported, never approved',async()=>{
  assert.equal(r.priorFixture.previousRoles[0].codeState,'DELEGATED');
  assert.match(r.status,/NO_GO$/);
 });
+
+}
