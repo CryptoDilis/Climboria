@@ -9,7 +9,7 @@ import {V3SharedExpenseRegistry} from "v3-src/V3SharedExpenseFixture.sol";
 import {V3DeferredLiquidityFixture} from "v3-src/V3DeferredLiquidityFixture.sol";
 import {V3DeferredLegacyFixture} from "v3-src/V3DeferredLegacyFixture.sol";
 import {V3FounderVesting} from "v3-src/ClimbV3TestToken.sol";
-import {V3GameRewardFixture} from "v3-src/V3GameRewardFixture.sol";
+import {V3GovernedGameRewardFixture} from "v3-src/V3GovernedGameRewardFixture.sol";
 
 /// @notice Test-only typed governance adapter over actual pinned Safe.
 /// One fixed successor, one quorum-approved binding, no generic call or transfer.
@@ -51,8 +51,8 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
             destinations[i]=v;destinationHashes[i]=v.codehash;
         }
         V3FounderVesting f=V3FounderVesting(destinations[0]);
-        V3GameRewardFixture g=V3GameRewardFixture(destinations[1]);
-        if(address(f.token())!=address(t)||address(g.token())!=address(t))revert InvalidConfig();
+        V3GovernedGameRewardFixture g=V3GovernedGameRewardFixture(destinations[1]);
+        if(address(f.token())!=address(t)||address(g.token())!=address(t)||address(g.custody())!=address(this)||g.generation()!=1||g.excludedFounder()!=f.beneficiary())revert InvalidConfig();
         founder=f.beneficiary();distributor=g.distributor();
         if(wallet.isOwner(founder)||wallet.isOwner(distributor)||founder==address(wallet)||distributor==address(wallet)||
             founder==address(this)||distributor==address(this))revert InvalidConfig();
@@ -83,10 +83,44 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
         if(i<3||i>5)revert Forbidden();
         return V3EpochSpendFixture(_target(i,expected));
     }
+    function _gaming() private view returns(V3GovernedGameRewardFixture g){
+        if(!bound||destinations[1].codehash!=destinationHashes[1])revert InvalidConfig();
+        return V3GovernedGameRewardFixture(destinations[1]);
+    }
+    function _reservedRole(address a) private view returns(bool){
+        if(a==founder||a==lpCustody||a==address(successor)||a==address(asset)||a==singleton||a==address(wallet)||a==address(this))return true;
+        for(uint256 i=0;i<7;i++)if(a==destinations[i])return true;
+        return false;
+    }
+    function rewardSignerAllowed(address a) external view returns(bool){
+        validateConfig();
+        // The constructor calls before binding, whereas a deployed vault may claim only after binding.
+        if(!bound&&msg.sender.code.length!=0)return false;
+        if(bound&&destinations[1].codehash!=destinationHashes[1])return false;
+        return a!=address(0)&&!_reservedRole(a)&&!wallet.isOwner(a)&&
+            !(pending.digest!=0&&block.timestamp<pending.expiresAt&&a==pending.newOwner);
+    }
+    function _rewardRole(address a) private view returns(bool){
+        V3GovernedGameRewardFixture g=_gaming();
+        (address candidate,,,)=g.pending();
+        return g.formerOrCurrentSigner(a)||a==candidate;
+    }
+    function revokeRewardSigner(uint256 expected,uint256 generation) external onlyWallet {
+        V3GovernedGameRewardFixture(_target(1,expected)).revoke(expected,generation);
+    }
+    function scheduleRewardSigner(uint256 expected,uint256 generation,address signer,uint256 validAfter,uint256 validUntil) external onlyWallet {
+        V3GovernedGameRewardFixture(_target(1,expected)).schedule(expected,generation,signer,validAfter,validUntil);
+    }
+    function cancelRewardSigner(uint256 expected,uint256 generation,uint256 serial) external onlyWallet {
+        V3GovernedGameRewardFixture(_target(1,expected)).cancel(expected,generation,serial);
+    }
+    function activateRewardSigner(uint256 expected,uint256 generation,uint256 serial,address signer) external onlyWallet {
+        V3GovernedGameRewardFixture(_target(1,expected)).activate(expected,generation,serial,signer);
+    }
     // Both bounds are signed as Safe calldata. This constrains execution, not signing time.
     function proposeExpense(uint256 expected,uint256 i,address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce,uint256 validAfter,uint256 validUntil) external onlyWallet {
         _authorizationWindow(validAfter,validUntil);
-        if(recipient==address(wallet)||recipient==distributor)revert Forbidden();
+        if(recipient==address(wallet)||recipient==distributor||_rewardRole(recipient))revert Forbidden();
         for(uint256 j=0;j<7;j++)if(recipient==destinations[j])revert Forbidden();
         _expense(i,expected).propose(recipient,amount,evidence,month,nonce);
     }
@@ -107,9 +141,7 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     }
     function _rotationOwnerAllowed(address a) internal view virtual override returns(bool){
         // Prevent changes before binding and known role conflicts afterwards.
-        if(!bound||a==founder||a==distributor||a==lpCustody||a==address(successor)||a==address(asset)||a==singleton)return false;
-        for(uint256 i=0;i<7;i++)if(a==destinations[i])return false;
-        return true;
+        return bound&&a!=distributor&&!_reservedRole(a)&&!_rewardRole(a);
     }
     function _policyCallAllowed(bytes4 selector,uint256 len) internal view virtual override returns(bool){
         if(!bound)return selector==this.bindSuccessor.selector&&len==100;
@@ -118,7 +150,11 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
                (selector==this.scheduleLiquidity.selector&&len==260)||
                (selector==this.cancelLiquidity.selector&&len==68)||
                (selector==this.scheduleLegacy.selector&&len==164)||
-               (selector==this.cancelLegacy.selector&&len==68);
+               (selector==this.cancelLegacy.selector&&len==68)||
+               (selector==this.revokeRewardSigner.selector&&len==68)||
+               (selector==this.scheduleRewardSigner.selector&&len==164)||
+               (selector==this.cancelRewardSigner.selector&&len==100)||
+               (selector==this.activateRewardSigner.selector&&len==132);
     }
 }
 contract SafeReserveFactoryFixture {
