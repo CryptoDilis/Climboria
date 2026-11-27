@@ -25,6 +25,9 @@ export function createSecondaryEvmWallet({getProvider=()=>globalThis.ethereum}={
    for(const name of events){
     if(epoch!==attempt)return snapshot();
     provider.on(name,changed);
+    // Some providers synchronously emit during registration. Remove even a
+    // listener installed after an invalidation fired inside provider.on.
+    if(epoch!==attempt){try{provider.removeListener(name,changed);}catch{}return snapshot();}
    }
    if(epoch!==attempt)return snapshot();
    const before=await provider.request({method:"eth_chainId"});
