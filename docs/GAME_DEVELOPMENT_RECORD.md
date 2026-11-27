@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## AUTHORED COMBAT BROWSER CONTROL ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
+
+- #913 exact head dca91160f9a2e40f7bedb3a97c5aae1a4a254c66: Validate 45942752012, Authority 45942751996, Gateway 45942752611 and Runtime 45942752001 SUCCESS. Local Runtime job 140320511542 explicitly passed bounded authored map over CI-only local WebSockets. Gameplay 45942752087 still running.
+- Browser regression e0308b0189bf469c3bc1ea2b700d95268d48166b mounts a test-only DOM via Playwright route, imports actual authored client transport and control adapter, verifies desktop click and mobile touch, server position reconciliation, attack gating, lethal hit, respawn and close. Uses deterministic socket double, not a real browser-to-Worker connection, 3D gameplay or deployment. Execution pending.
+- EXACT NEXT: verify #913 all five CI, merge, reconcile stacked browser PR with main and verify fresh CI. Then connect isolated browser harness to actual local socket transport and review character renderer integration. No public game or preview cloud enablement.
+
+---
+
 ## AUTHORED COMBAT GATEWAY ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
 
 - Parent #910 merged at 5f7895bbc7efdfe10e4431cd5bc529b27e0949a8; exact head 584d83a30e2926530f30e3dd2dac1ebbafde5c3c all five SUCCESS: Runtime 45941665985, Authority 45941665882, Gateway 45941665784, Validate 45941665785, Gameplay 45941665732.
