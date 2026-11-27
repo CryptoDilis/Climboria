@@ -3157,3 +3157,61 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 
 - #938 exact head `bb7790402d98d449378546a35caa74c75b798075` terminal SUCCESS: [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45954458097), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45954458090), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45954458162), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45954458055), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45954458092). Concurrent main `387777b46395dd8012a17d046f8ebaa32bcf3024` changed documentation only; only overlapping path is this record. Preserve main history and append all pilot-only history. No pilot code or release gate changed. Fresh exact-head CI required before merge.
 - NEXT: merge #938 after fresh green; reconcile #940 renderer and real server expiry checks; then prioritize R5A.1–R5A.9 one autonomous NPC. Authorized edge/real-account and physical-device QA remain open; no public PvP or deployment.
+
+
+---
+
+## PRIVATE PILOT RECONCILIATION AFTER GREEN PARENT — 2026-11-27 PHT
+
+- #938 previous head 71d02f0 five checks SUCCESS, reconciled head bb7790402d98d449378546a35caa74c75b798075 awaiting fresh CI after concurrent survival/bounty record. #940 incorporates parent and preserves all newer documentation. Prior browser step green; new real server expiry smoke still unverified. Draft parallel CI only; no merge before #938 verified merge. R5A next per owner, no public activation.
+
+---
+
+## PRIVATE PILOT BROWSER GREEN STEP; REAL SERVER EXPIRY REGRESSION — 2026-11-27 PHT
+
+- #940 prior exact head 26026e764234321f0b9dd1b2b74d6a465b5f334f Authority 45953476648, Gateway 45953476682, Runtime 45953476476, Validate 45953476755 SUCCESS; Gameplay 45953476634 job 140354546400 explicitly reports actual private pilot browser GLB session step SUCCESS, full gameplay pending at check. Local desktop/touch Chromium only, no visual/physical device or real-account/Access proof.
+- Server expiry smoke 7d205429a6bc3277c4715a8080ddd58b644712ef and workflow 34a8f8d669c1bce4f524933527295c200871a760 test real unmodified 60-second server lifetime with no client messages/timeout or mocked clock, expected close code/reason, then fresh admission. Source unexecuted; no change to server policy. Fresh CI required.
+- EXACT NEXT: #938 refreshed full Gameplay 45953113010 then verified merge; reconcile #940 records/README/backlog with latest main and fresh exact-head CI including server expiry. External authorized edge and real-account acceptance still unverified; keep public PvP and cloud disabled. Owner-directed R5A next after current task verified, no NPC implementation yet.
+
+---
+
+## ACTUAL PRIVATE PILOT GLB ACCEPTANCE AND R5A PRIORITY — 2026-11-27 PHT
+
+- Owner explicitly orders current private combat task completed/verified first, then immediately prioritize R5A.1–R5A.9 within Game. Reviewed current README, detailed backlog and development record; updated backlog 25c71ba3e9cb6e7641329771b40acd31cd6a62e9 and README e049a9da9e61c4a31071cc19b64d34a5f94451c8. Preserve all existing game/release/security gates and other workstreams. R5A not implemented yet.
+- #940 added CI-only loopback browser harness 241dadb252813dfb6eab4a2e5192946572cca051 and native actual pilot DO/GLB desktop/touch smoke 647cbf42e8a95e9e9ca430d3c4d9cc7e31bc7ce0, CI 9d14d7af830af4b82e6240a4015e02d0214441bc, snapshot sequencing 6a84a1e8069bbba433d9d9bf46e25befed1298e0. Composes actual pilot DO, actual GLB and explicit pilot session mount; checks committed HP/movement, root/ground, no speculative movement, local expiry cleanup. Direct private ticket issuance and CI loopback bridge do NOT prove actual authentication/Access or real server expiry. Source unexecuted, fresh CI needed. No public gameplay or cloud configuration.
+- #938 refreshed 71d02f0 had 4/5 green, Gameplay 45953113010 pending at check. EXACT NEXT: finish #938 and merge; verify #940 CI and reconcile onto resulting main preserving other Game records. Complete server-side expiry test and authorized edge/real-account pilot acceptance (external prerequisites not verified). Then implement one active R5A autonomous NPC using actual terrain/water/collision/animations, independent goals, movement and action loop; no static animation/teleport/fake ONLINE or economy. Test real movement and three activities, then scale 3–5 only with measured mobile/browser evidence. No NPC checkbox closure without actual proof.
+
+---
+
+## PRIVATE CHARACTER SESSION RECONCILED — 2026-11-27 PHT
+
+- #938 prior exact head 85c15b3c4916867f0ba31cf18a7b0e220d41e4d1 5/5 green; updated head 71d02f0107caac8244c43305187c17b1f5bdb50f incorporates concurrent Game documentation without loss. #940 reconciled on that parent, preserving its two new session lifecycle files. New tests unexecuted. Next parallel draft CI if available; no merge until #938 fresh green/merged, then reconcile and verify exact head. No deployment or public PvP.
+
+---
+
+## PRIVATE PILOT CHARACTER SESSION LIFECYCLE — 2026-11-27 PHT
+
+- #938 exact head 85c15b3c4916867f0ba31cf18a7b0e220d41e4d1: Validate 45952119296, Authority 45952119285, Gateway 45952119334, Runtime 45952119349 SUCCESS. Runtime job 140350155659 explicitly passed the actual authored pilot Worker/SQLite socket lifecycle step. Full Gameplay 45952119308 running at check. Authentication is separately mocked; no real account or edge proof.
+- Stacked branch adds private pilot character session composition 9efe74dff6bf49cc92cd77e3773bacfcb0bbe153, binding explicit admitted pilot transport, dedicated render-only root/HUD and controls. Local monotonic deadline and timer fail closed on expiry, socket close/error or clock rollback; guarded movement/attack and cleanup. Server expiry remains authoritative. Regression f2acc323b9523fa0017df476123abf48c8e76302 covers snapshot/hit projection, stale input, socket close, suspended timer, expiry, rollback, wrong fixture and renderer exception. Code only, not yet executed; no actual GLB mount in pilot or server expiry test.
+- EXACT NEXT: finish #938 full CI and merge when verified, reconcile this stacked branch to merged main and fresh CI. Then actual private pilot GLB browser integration and server-side expiry acceptance, authorized edge/real-account QA. No public PvP, deploy, loot or production saves.
+
+---
+
+
+## PARALLEL PRIVATE PILOT RENDERER CI — 2026-11-27 PHT
+
+- #938 refreshed head f34261ac7578f98862e70095514e2ca528dcdcc7: Authority 45955902077, Gateway 45955902098, Runtime 45955902033, Validate 45955902095 SUCCESS; Gameplay 45955902080 native controls/socket/GLB steps passed, full smoke pending at check. Parent head untouched. #940 reconciled on parent and main 094fffd8dfb40b90488032fc59bef3f1c07bfdab, preserving main wallet changes and both histories. Keep current main README/backlog, already documenting R5A priority. Retain renderer and real server expiry tests. Draft for parallel CI only, no public PvP or deployment.
+- NEXT: finish #938 green/merge; reconcile #940 on resulting main and verify fresh CI, then prioritize one R5A autonomous NPC. Real-account/authorized edge and physical-device acceptance open.
+
+
+## SERVER EXPIRY CLOSE HANDSHAKE REGRESSION — 2026-11-27 PHT
+
+- #940 head 3d88f6c0ef6048597354f72b169cecd6e647b911: Runtime [45956169767](https://github.com/CryptoDilis/Climboria/actions/runs/45956169767) failed solely in new real expiry smoke at line 34: test-side readyState was CLOSING (2), not CLOSED (3), after ~61 seconds. Preceding assertions of server-initiated close code 1000, reason preview-session-expired and elapsed 59–75 seconds passed; earlier local Worker/SQLite lifecycle passed. Adjust test-side handshake only: after validating server frame, acknowledge if still CLOSING and require CLOSED within 2 seconds, then retain fresh admission assertions. No timer, server authority, operation budget or production change. Fresh CI required; do not count full expiry/rejoin as passed yet.
+- NEXT: #938 terminal green and merge; #940 fresh Runtime and Gameplay plus Authority/Gateway/Validate, reconcile after parent merge; then R5A one autonomous NPC. No public PvP or deployment.
+
+
+## PRIVATE PILOT WORKER MERGED; RENDERER RECONCILED — 2026-11-27 PHT
+
+- #938 merged `5f2abbd0218ab532fbd61fbfd1fce7b8f6322ef9` after exact head `f34261ac7578f98862e70095514e2ca528dcdcc7` all five terminal SUCCESS: Authority 45955902077, Gateway 45955902098, Runtime 45955902033, Validate 45955902095, Gameplay 45955902080. Main drift had no overlapping pilot paths. No public PvP or cloud activation.
+- #940 prior head `7ebabb4ebb572b3509a5ed829d4a834d2a7862a2`: Authority 45956599408, Gateway 45956599420, Validate 45956599679, Runtime 45956599483 SUCCESS; actual server expiry and fresh admission log 60113 ms. Gameplay 45956599384 actual pilot GLB browser step SUCCESS, full smoke running at check. Reconcile onto #938 squash merge; retain main wallet work and both development histories. Fresh CI required on resulting draft. No renderer logic or security gate change.
+- NEXT: verify refreshed #940 all five green, mark ready and merge, then R5A.1–R5A.9 first autonomous NPC (existing terrain/water/collision source audit recorded on PR #940). Authorized edge/real-account and physical-device acceptance still pending; no release of public combat or real economy.
