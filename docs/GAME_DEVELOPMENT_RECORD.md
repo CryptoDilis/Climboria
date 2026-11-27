@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A VERIFIED FOREST AND ROSTER INTEGRATION CANDIDATE — 2026-11-27
+
+- #969 head 48e8b817539a0c5172649de5bd581a15f0b3a39a: foundation 45968343291 and browser 45968343205 passed. Both desktop and mobile reported actual authored forest source, 24.4m travel, bounded 0.3m steps, NPC_Gather draw, one synthetic wood collected, unchanged inventory/peers/diagnostics and cleanup. #966 head 16be2dc95694b8ba5a0320b65093906191e4ad79: foundation 45968540003 and browser 45968540132 passed; stable roster only, not runtime nameplate or chat.
+- Integrate those verified files and R5A.10–11 requirements on top of #971 head 2b863f199d868e02dc1b778ee832deabf11bd601; preserve its running CI. At inspection, #971 six workflows passed and gameplay smoke 45968900762 / NPC focused browser 45968900757 pending. No public spawn, no financial action, no shared authority. New integration CI required.
+- NEXT: finish #971 and this integration CI, merge in dependency order after reviewing latest main. Then implement one continuous actor traversing valid connected lake/forest routes, actual nameplates and contextual chat, shared authority and physical device performance. Do not mark R5A complete or release public NPCs based on isolated audits.
+
+---
+
 ## R5A VERIFIED ACTIVITY CONSOLIDATION CANDIDATE — 2026-11-27
 
 - Main-based integration from 0a7436407f36833f5cb114e7c4168c703492425c. #960 focused browser 45964759337 passed; #962 foundation 45965565093 and browser 45965565109 passed; #963 foundation 45967765549 and browser 45967765504 passed; #967 foundation 45968097821 and browser 45968097776 passed. #963 actual continuous desktop/mobile 17 frames, 17 draws, 2.72m, correct distance cleanup. Physical device performance still pending. #960 retarget to main conflicts because prior #958 changes already landed independently; preserve main record and unchanged game files, copy only verified activity and synthetic gathering candidate files. #969 actual forest map and #966 roster browser runs pending; not included. No public spawning or financial activity.
