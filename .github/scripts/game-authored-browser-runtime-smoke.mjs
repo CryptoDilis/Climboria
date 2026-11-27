@@ -25,6 +25,8 @@ try{
   }
  }
  assert.equal((await mf.dispatchFetch(address.href+'ticket',{method:'POST'})).status,404);
+ const rejected=await mf.dispatchFetch(address.href+'ws',{headers:{Origin:origin,Upgrade:'websocket','Sec-WebSocket-Protocol':'climboria-preview-v1,t-'+'0'.repeat(64)}});
+ assert.equal(rejected.status,401,'loopback upgrade must reach private ticket validation');
  browser=await chromium.launch({headless:true});
  async function player(id,mobile){
   const context=await browser.newContext(mobile?{viewport:{width:390,height:844},isMobile:true,hasTouch:true}:{viewport:{width:1280,height:800}});
@@ -35,6 +37,10 @@ try{
 import {attachAuthoredLocalCombatTransport} from '/game/multiplayer/preview-combat-client-transport.mjs';
 import {bindAuthoredLocalCombatControls} from '/game/multiplayer/authored-local-combat-controls.mjs';
 const socket=new WebSocket(${JSON.stringify(wsURL)},['climboria-preview-v1',${JSON.stringify('t-'+token)}]);
+window.qaSocketStatus='connecting';
+socket.addEventListener('open',()=>{window.qaSocketStatus='open'});
+socket.addEventListener('error',()=>{window.qaSocketStatus='error'});
+socket.addEventListener('close',e=>{window.qaSocketStatus='closed:'+e.code});
 socket.addEventListener('message',function joined(e){
  const p=JSON.parse(e.data);if(p.type!=='preview-joined')return;
  socket.removeEventListener('message',joined);
@@ -52,8 +58,14 @@ socket.addEventListener('message',function joined(e){
 });
 </script>`;
   await context.route(origin+'/__authored_runtime_ci__',route=>route.fulfill({contentType:'text/html',body:html}));
-  const page=await context.newPage();await page.goto(origin+'/__authored_runtime_ci__');
-  await page.waitForFunction(()=>!!window.qa,{},{timeout:10000});
+  const page=await context.newPage();
+  const cdp=await context.newCDPSession(page);await cdp.send('Network.enable');
+  const diagnostic={handshake:[],pageErrors:[]};
+  cdp.on('Network.webSocketHandshakeResponseReceived',e=>diagnostic.handshake.push(e.response.status));
+  page.on('pageerror',e=>diagnostic.pageErrors.push(e.message.replace(/[a-f0-9]{64}/gi,'[redacted]').slice(0,300)));
+  await page.goto(origin+'/__authored_runtime_ci__');
+  try{await page.waitForFunction(()=>!!window.qa,{},{timeout:10000})}
+  catch(error){console.error('Native browser admission diagnostic',JSON.stringify({...diagnostic,socketStatus:await page.evaluate(()=>window.qaSocketStatus??'module-not-started')}));throw error}
   return {page,context,id:await page.evaluate(()=>qa.id),
    state:()=>page.locator('#state').textContent().then(JSON.parse),
    tap:s=>mobile?page.locator(s).tap():page.locator(s).click(),
