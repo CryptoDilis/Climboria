@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## NATIVE BROWSER LOCAL NETWORK ACCESS COUNTER-FIX — 2026-11-27 PHT
+
+- #922 exact head e1cdfb262910eddfc1292f3d4b79c521b5dfb102: Validate 45945239729 SUCCESS; Gameplay 45945239701 FAILURE, job 140328326685. Simulated controls passed. Chromium explicitly reported net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS before the native handshake; no page errors, close 1006. Main gameplay smoke skipped.
+- Counter-fix 5e0448b84537c71dd62f528704a4cd456767bc32 and 5e5af724e67d9e80751c18d7178d225cdce30aa7 serve a real HTTP document and three allowlisted client modules from the actual loopback workerd listener. No Playwright synthetic navigation response, no browser security feature disabled. Test ticket passed in URL fragment, removed before socket creation; no ticket issuance or tick route exposed. Explicit CI flag, same-origin upgrade guard, one-use ticket validation, no-store and CSP retained. Hypothesis: synthetic navigation lacked proper local address-space attribution; verify with fresh CI rather than claim resolved.
+- EXACT NEXT: verify exact-head Validate and Gameplay CI, including both browser clients and existing desktop/mobile game smoke; if local network access still blocks, inspect browser permission/address-space evidence with no global security bypass. No public PvP or deployment.
+
+---
+
 ## NATIVE BROWSER SAME-ORIGIN COUNTER-FIX — 2026-11-27 PHT
 
 - #922 head afde76bce23dfa920efc635d81b741f314e5312b: Validate 45944969801 SUCCESS; Gameplay 45944969778 FAILURE, job 140327521654. Simulated browser control test and invalid-ticket 401 probe passed. Native browser admission diagnostic: handshake [], pageErrors [], socketStatus closed:1006. Exact root cause still unconfirmed; no browser admission, main gameplay step skipped.
