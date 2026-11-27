@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## CROWD C6 PRIVATE BATCHED MOVEMENT CANDIDATE — 2026-11-28 PHT
+
+- #1035 exact 208739f6cbe69897cbdf616ac97cbe01bb52254a renderer 46043165304 jobs 140655762093 mobile and 140655762531 desktop SUCCESS; actual private loopback renderer fixtures at 10/25/32/50/100 entries with pressure recovery and cleanup. Mobile 100: 2 heavy, 8 light, 16 markers, 74 hidden; no physical device or close-range combat visibility proof. Foundation 46043165313, world chat 46043165465 and native load 46043165314 SUCCESS. Native job 140655749320 clustered 100 unchanged 118800 packets, p95 97.97→124.56ms; distributed 118800→37555, p95 105.87→93.52ms. Runner-specific timings, not production SLA. Focused desktop still running at inspection; #1034 draft not mergeable, its focused desktop still running; hero retry 46042604104 now SUCCESS.
+- C6 private-only opt-in PresenceRoom batch mode, requires existing movement interest; authoritative validated positions only, full explicitly scheduled tick, at most 32 moves per recipient packet. Default protocol/admission remains unchanged, no public gateway/client integration. Failed recipients evicted, no persistent pending queue. Unit tests for 100 clustered members, forged identity rejection, bounded chunks, no stale departed/invisible peers, send failure and cleanup. Native harness now compares baseline, interest and batch modes with final-position/cleanup assertions and counts actual movement envelopes separately from position entries. Theoretical 100 clustered count 4800 vs 118800 envelopes over 12 ticks; not measured until fresh CI succeeds.
+- NEXT: inspect exact C6 native and foundation CI, then reconcile #1034/#1035 onto current main without overwriting unrelated work. Batch introduces a private protocol and deferred near updates; validate real client interpolation, chat ordering and interaction responsiveness before even considering public use. Physical Android and authenticated 50/100 private capacity remain open. Production caps and security gates stay unchanged.
+
+---
+
 ## CROWD PRIVATE 100-ENTRY RENDERER STRESS EXTENSION — 2026-11-28 PHT
 
 - Prior #1034 6ca6e88f8e4990fde06fca3ddb6ff246a5aa47f2 mobile renderer job 140653843614 SUCCESS: 10 entries 2 heavy/8 light; 25 entries 2/8/15 markers; 32 entries 2/8/16 markers/6 hidden; critical 8 markers; cleanup zero. Desktop running. Hero workflow 46042604104 failed on creator WebGL initialization (not confirmed root cause); requested failed-job retry, no failure waived.
