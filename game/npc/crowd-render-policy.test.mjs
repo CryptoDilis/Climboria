@@ -49,3 +49,17 @@ test('ties deterministic; malformed, oversized, NPC and duplicate inputs fail cl
  assert.throws(()=>plan([],'tablet'));
  assert.throws(()=>plan([],'mobile',{npcCap:6}));
 });
+
+test('retention prevents churn at close distances but yields to significantly closer players and pressure',()=>{
+ const players=make(3);
+ const first=plan(players);
+ const move=players.map((p,i)=>({...p,x:[1,2,1.8][i]}));
+ const stable=plan(move,'mobile',{previous:first.assignments});
+ assert.deepEqual(stable.assignments.filter(a=>a.tier==='heavy').map(a=>a.id).sort(),first.assignments.filter(a=>a.tier==='heavy').map(a=>a.id).sort());
+ const nearer=move.map((p,i)=>({...p,x:[1,8,.1][i]}));
+ const changed=plan(nearer,'mobile',{previous:stable.assignments});
+ assert.equal(changed.assignments.find(a=>a.id===players[2].id).tier,'heavy');
+ const critical=plan(nearer,'mobile',{previous:changed.assignments,pressure:'critical'});
+ assert.equal(critical.counts.heavy,0);assert.equal(critical.npcHeavyTarget,0);
+ assert.equal(plan([],'mobile',{pressure:'constrained'}).npcHeavyTarget,0);
+});
