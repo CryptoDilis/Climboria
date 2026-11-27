@@ -40,8 +40,9 @@ export function createForestGatherer({groundAt,waterBodyAt,actorBlocked,loaded,l
  if(!nodes)throw Error('No safe loaded fallen-log approach; probes='+probes);
  let gathered=0;const capacity=12;
  const canAct=(n,action)=>!!pos(n)&&n.action===action&&(action!=='gather'||(gathered<capacity&&!!sample(source.x,source.z)&&dist(n,source)<=2.61));
- const npc=createAutonomousAdventurer({nodes,edges:[['rest','gather'],['gather','rest'],['rest','explore'],['explore','rest']],spawn:'rest',seed,
-  world:{sample,canTraverse,canAct,onActivityComplete:(n,action)=>{if(n.id==='gather'&&action==='gather'&&canAct(n,action))gathered++}}});
- return Object.freeze({npc,nodes:Object.freeze(nodes.map(n=>Object.freeze({...n}))),source,probes,
+ const edges=[['rest','gather'],['gather','rest'],['rest','explore'],['explore','rest']];
+ const world=Object.freeze({sample,canTraverse,canAct,onActivityComplete:(n,action)=>{if(n.id==='gather'&&action==='gather'&&canAct(n,action))gathered++}});
+ const npc=createAutonomousAdventurer({nodes,edges,spawn:'rest',seed,world});
+ return Object.freeze({npc,nodes:Object.freeze(nodes.map(n=>Object.freeze({...n}))),edges:Object.freeze(edges.map(e=>Object.freeze([...e]))),world,source,probes,
   audit:()=>Object.freeze({kind:'synthetic-npc-wood',gathered,capacity})});
 }
