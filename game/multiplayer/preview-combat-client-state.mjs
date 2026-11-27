@@ -25,6 +25,11 @@ function project(id,s,room){
 export function createPreviewCombatClientState(joined){return createState(joined,'synthetic-combat',syntheticRoom)}
 // Explicit opt-in for local authored map only; never infer mode from a packet.
 export function createAuthoredLocalCombatClientState(joined){return createState(joined,'authored-camp-local',authoredRoom)}
+// Separate explicit pilot entry. Never accept the CI-only or synthetic fixture tag.
+export function createAuthoredPilotCombatClientState(joined){
+ if(!Number.isSafeInteger(joined?.expiresInMs)||joined.expiresInMs<=0||joined.expiresInMs>60000)throw Error('Invalid pilot session duration');
+ return createState(joined,'authored-camp-pilot',authoredRoom);
+}
 function createState(joined,fixture,room){
  if(joined?.type!=='preview-joined'||joined.fixture!==fixture||!sid(joined.id))throw Error('Invalid preview admission');
  const id=joined.id;let view=project(id,joined.snapshot,room);
