@@ -58,7 +58,15 @@ function harness(){
  }
  function restore(){Date.now=originals.now;globalThis.setTimeout=originals.setTimeout;globalThis.clearTimeout=originals.clearTimeout;
   globalThis.Response=originals.Response;if(originals.WebSocketPair===undefined)delete globalThis.WebSocketPair;else globalThis.WebSocketPair=originals.WebSocketPair}
- return {create,flush,advance,ticket,connect,send,timers,fail:v=>{fail=v},restore};
+ // Seed only the test harness's fake durable storage, never a Worker route.
+ function seedLowHealth(){
+  const roomId='preview-combat-fixture';
+  rows.set('game:combat:v1:'+roomId+':'+B,{revision:1,checkpoint:{
+   version:1,accountId:B,roomId,savedAtMs:now,hp:5,downedAt:null,lastAttack:null,lastAttempt:null,
+   movement:{roomId,position:{x:200,y:0,z:20},stamina:200000,exhausted:false,downed:false}
+  }});
+ }
+ return {create,flush,advance,ticket,connect,send,timers,seedLowHealth,fail:v=>{fail=v},restore};
 }
 const joined=socket=>socket.inbox.find(p=>p.type==='preview-joined');
 const roster=socket=>socket.inbox.filter(p=>p.type==='preview-peers').at(-1)?.ids;
@@ -114,5 +122,56 @@ test('combat storage failure closes every socket, denies new admission and resta
   const rb=await h.connect(fresh,await h.ticket(fresh,B));assert.equal(rb.status,101);
   assert.equal(joined(rb.webSocket).snapshot.health,500);
   rb.webSocket.close(1000,'test');await h.flush();assert.equal(h.timers.size,0);
+ }finally{h.restore()}
+});
+
+test('committed death and respawn synchronize both active fighters, with retired session excluded',async()=>{
+ const h=harness();
+ try{
+  h.seedLowHealth();
+  const room=h.create(),a=(await h.connect(room,await h.ticket(room,A))).webSocket;
+  const b=(await h.connect(room,await h.ticket(room,B))).webSocket;
+  const aid=joined(a).id,bid=joined(b).id;
+  assert.equal(joined(b).snapshot.health,5);
+  assert.equal((await h.send(a,{type:'attack',targetId:bid})).health,0);
+  assert.deepEqual(b.inbox.filter(p=>p.type==='preview-hit'),[
+   {type:'preview-hit',actorId:aid,targetId:bid,health:0,damage:5,downed:true}
+  ]);
+  assert.equal((await h.send(b,{type:'attack',targetId:aid})).ok,false);
+  assert.equal((await h.send(b,{type:'input',x:1,z:0,sequence:0,sprint:false})).ok,false);
+  b.close(1000,'test');await h.flush();
+  const b2=(await h.connect(room,await h.ticket(room,B))).webSocket,id=joined(b2).id;
+  assert.notEqual(id,bid);assert.equal(joined(b2).snapshot.health,0);
+  await h.advance(4999);
+  assert.equal(a.inbox.some(p=>p.type==='preview-respawn'),false);
+  assert.equal(b2.inbox.some(p=>p.type==='preview-respawn'),false);
+  await h.advance(1);
+  const expected={type:'preview-respawn',targetId:id,health:500,downed:false,position:{x:200,y:0,z:20}};
+  assert.deepEqual(a.inbox.filter(p=>p.type==='preview-respawn'),[expected]);
+  assert.deepEqual(b2.inbox.filter(p=>p.type==='preview-respawn'),[expected]);
+  assert.equal(b.inbox.some(p=>p.type==='preview-respawn'),false);
+  await h.advance(100);
+  assert.equal(a.inbox.filter(p=>p.type==='preview-respawn').length,1);
+  assert.equal((await h.send(b2,{type:'snapshot'})).snapshot.health,500);
+  b2.close(1000,'test');a.close(1000,'test');await h.flush();
+  const fresh=h.create(),rejoined=(await h.connect(fresh,await h.ticket(fresh,B))).webSocket;
+  assert.equal(joined(rejoined).snapshot.health,500);
+  rejoined.close(1000,'test');await h.flush();
+ }finally{h.restore()}
+});
+test('failed respawn commit quarantines the room without notifying either fighter',async()=>{
+ const h=harness();
+ try{
+  h.seedLowHealth();const room=h.create();
+  const a=(await h.connect(room,await h.ticket(room,A))).webSocket;
+  const b=(await h.connect(room,await h.ticket(room,B))).webSocket;
+  assert.equal((await h.send(a,{type:'attack',targetId:joined(b).id})).health,0);
+  h.fail(true);await h.advance(5000);
+  assert.equal(room.quarantined,true);assert.equal(a.closed,true);assert.equal(b.closed,true);
+  assert.equal(a.inbox.some(p=>p.type==='preview-respawn'),false);
+  assert.equal(b.inbox.some(p=>p.type==='preview-respawn'),false);
+  h.fail(false);const fresh=h.create(),rejoined=(await h.connect(fresh,await h.ticket(fresh,B))).webSocket;
+  assert.equal(joined(rejoined).snapshot.health,0,'failed transaction must retain durable downed HP');
+  rejoined.close(1000,'test');await h.flush();
  }finally{h.restore()}
 });
