@@ -53,12 +53,12 @@ jobs:
         run: |
           set -euo pipefail
           forge test --match-contract SafeEpochGuardTest -vv | tee "$RUNNER_TEMP/safe-epoch-guard.log"
-          grep -Eq '14 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-epoch-guard.log"
+          grep -Eq '15 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-epoch-guard.log"
       - name: Exercise actual Safe and seven-vault reserve integration
         run: |
           set -euo pipefail
           forge test --match-contract SafeReserveGuardTest -vv | tee "$RUNNER_TEMP/safe-reserve-guard.log"
-          grep -Eq '10 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-reserve-guard.log"
+          grep -Eq '11 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-reserve-guard.log"
       - name: Exercise atomic quorum issuance and binding
         run: |
           set -euo pipefail

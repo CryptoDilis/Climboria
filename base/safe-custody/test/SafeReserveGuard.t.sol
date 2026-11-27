@@ -73,7 +73,10 @@ contract SafeReserveGuardTest {
         token=successor.create(cfg);
     }
     function _signed(address to,bytes memory data,uint256 count) private returns(bytes memory sigs){
-        bytes32 h=wallet.getTransactionHash(to,0,data,Enum.Operation.Call,0,0,0,address(0),address(0),wallet.nonce());
+        return _signedAt(to,data,count,wallet.nonce());
+    }
+    function _signedAt(address to,bytes memory data,uint256 count,uint256 nonce) private returns(bytes memory sigs){
+        bytes32 h=wallet.getTransactionHash(to,0,data,Enum.Operation.Call,0,0,0,address(0),address(0),nonce);
         for(uint256 i=0;i<count;i++){
             (uint8 v,bytes32 rr,bytes32 ss)=vm.sign(testKeys[i],h);
             sigs=abi.encodePacked(sigs,rr,ss,v);
@@ -136,7 +139,7 @@ contract SafeReserveGuardTest {
     function testRotationInvalidatesOutstandingAndOldEpochAuthorization() public {
         _bind();_quorum(_propose(1,3,"E","N"));
         bytes32 old=_id(1,3,"E","N");
-        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,F)));
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,F,block.timestamp,block.timestamp+1 hours)));
         vm.warp(start+2 days);
         bytes memory swap=abi.encodePacked(abi.encodeWithSignature("swapOwner(address,address,address)",D,E,F),guard.rotationSerial());
         require(_exec(address(wallet),swap,_signed(address(wallet),swap,3)));
@@ -153,7 +156,7 @@ contract SafeReserveGuardTest {
         _reject(address(token),abi.encodeCall(token.transfer,(PAYEE,1)),3);
         _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,0,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours)),3);
         _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,3,address(wallet),10,"E",0,"N",block.timestamp,block.timestamp+1 hours)),3);
-        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,FOUNDER)),3);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,FOUNDER,block.timestamp,block.timestamp+1 hours)),3);
         vm.expectRevert();guard.proposeExpense(1,3,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours);
     }
     function testRoleSeparationPersistsWhenDestinationCodeDisappears() public {
@@ -161,11 +164,11 @@ contract SafeReserveGuardTest {
         address lp=V3DeferredLiquidityFixture(successor.vaults(2)).lpCustody();
         require(guard.lpCustody()==lp);
         vm.etch(lp,"");
-        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,lp)),3);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,lp,block.timestamp,block.timestamp+1 hours)),3);
         address v=successor.vaults(0);vm.etch(v,"");
-        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,v)),3);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,v,block.timestamp,block.timestamp+1 hours)),3);
         // The healthy quorum must still be able to replace an unrelated owner.
-        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,F)));
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,F,block.timestamp,block.timestamp+1 hours)));
         vm.warp(block.timestamp+2 days);
         bytes memory swap=abi.encodePacked(abi.encodeWithSignature("swapOwner(address,address,address)",D,E,F),guard.rotationSerial());
         require(_exec(address(wallet),swap,_signed(address(wallet),swap,3)));
@@ -213,6 +216,21 @@ contract SafeReserveGuardTest {
         vm.expectRevert();_exec(address(guard),legacy,gs);
         require(wallet.nonce()==n&&!guard.transactionActive());
         _quorum(abi.encodeCall(guard.scheduleLiquidity,(1,1000,500,50,t+7 days,"LP",block.timestamp,block.timestamp+1 hours)));
+        require(wallet.nonce()==n+1);
+    }
+    function testStaleLegacyCancellationCannotCancelReplacement() public {
+        _bind();
+        uint256 t=block.timestamp;
+        bytes memory schedule=abi.encodeCall(guard.scheduleLegacy,(1,bytes32("MANIFEST"),t+7 days,t,t+1 hours));
+        _quorum(schedule);
+        require(guard.legacyScheduleSerial()==1);
+        bytes memory cancel=abi.encodeCall(guard.cancelLegacy,(1,1));
+        bytes memory stale=_signedAt(address(guard),cancel,3,wallet.nonce()+2);
+        _quorum(cancel);_quorum(schedule);
+        uint256 n=wallet.nonce();
+        vm.expectRevert();_exec(address(guard),cancel,stale);
+        require(wallet.nonce()==n&&guard.legacyScheduleSerial()==2&&!guard.transactionActive());
+        _quorum(abi.encodeCall(guard.cancelLegacy,(1,2)));
         require(wallet.nonce()==n+1);
     }
     function testLiquidityAndLegacySchedulingThroughActualSafe() public {

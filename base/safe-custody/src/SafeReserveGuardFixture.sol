@@ -14,14 +14,13 @@ import {V3GameRewardFixture} from "v3-src/V3GameRewardFixture.sol";
 /// One fixed successor, one quorum-approved binding, no generic call or transfer.
 /// Not a production dependency, actual eligibility or real liquidity adapter.
 contract SafeReserveGuardFixture is SafeEpochGuardFixture {
-    error InvalidAuthorizationWindow();
-    uint256 public constant MAX_AUTHORIZATION_WINDOW=1 days;
     V3AtomicSuccessorFixture public immutable successor;
     bytes32 public immutable successorHash;
     bool public bound;
     address public founder;
     address public distributor;
     address public lpCustody;
+    uint256 public legacyScheduleSerial;
     V3SuccessorTestToken public asset;
     address[7] public destinations;
     bytes32[7] public destinationHashes;
@@ -34,9 +33,6 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     function _current(uint256 expected) internal view {
         validateConfig();
         if(expected!=epoch)revert Forbidden();
-    }
-    function _authorizationWindow(uint256 validAfter,uint256 validUntil) internal view {
-        if(validAfter>block.timestamp||validUntil<=block.timestamp||validUntil<=validAfter||validUntil-validAfter>MAX_AUTHORIZATION_WINDOW)revert InvalidAuthorizationWindow();
     }
     function bindSuccessor(uint256 expected,uint256 validAfter,uint256 validUntil) external onlyWallet {
         _authorizationWindow(validAfter,validUntil);
@@ -97,8 +93,15 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
         V3DeferredLiquidityFixture(_target(2,expected)).schedule(a,q,minShares,deadline,nonce);
     }
     function cancelLiquidity(uint256 expected,bytes32 id) external onlyWallet {V3DeferredLiquidityFixture(_target(2,expected)).cancel(id);}
-    function scheduleLegacy(uint256 expected,bytes32 digest,uint256 expiresAt,uint256 validAfter,uint256 validUntil) external onlyWallet {_authorizationWindow(validAfter,validUntil);V3DeferredLegacyFixture(_target(6,expected)).schedule(digest,expiresAt);}
-    function cancelLegacy(uint256 expected) external onlyWallet {V3DeferredLegacyFixture(_target(6,expected)).cancel();}
+    function scheduleLegacy(uint256 expected,bytes32 digest,uint256 expiresAt,uint256 validAfter,uint256 validUntil) external onlyWallet {
+        _authorizationWindow(validAfter,validUntil);
+        V3DeferredLegacyFixture(_target(6,expected)).schedule(digest,expiresAt);
+        legacyScheduleSerial++;
+    }
+    function cancelLegacy(uint256 expected,uint256 expectedSerial) external onlyWallet {
+        if(expectedSerial!=legacyScheduleSerial)revert Forbidden();
+        V3DeferredLegacyFixture(_target(6,expected)).cancel();
+    }
     function _rotationOwnerAllowed(address a) internal view virtual override returns(bool){
         // Prevent changes before binding and known role conflicts afterwards.
         if(!bound||a==founder||a==distributor||a==lpCustody||a==address(successor)||a==address(asset)||a==singleton)return false;
@@ -112,7 +115,7 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
                (selector==this.scheduleLiquidity.selector&&len==260)||
                (selector==this.cancelLiquidity.selector&&len==68)||
                (selector==this.scheduleLegacy.selector&&len==164)||
-               (selector==this.cancelLegacy.selector&&len==36);
+               (selector==this.cancelLegacy.selector&&len==68);
     }
 }
 contract SafeReserveFactoryFixture {
