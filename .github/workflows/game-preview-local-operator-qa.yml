@@ -1,0 +1,22 @@
+name: Game Combat Preview - Local Operator Helper
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'game/multiplayer/worker/preview-local-operator-qa.mjs'
+      - 'game/multiplayer/worker/preview-local-operator-qa.test.mjs'
+      - '.github/workflows/game-preview-local-operator-qa.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check game/multiplayer/worker/preview-local-operator-qa.mjs && node --test game/multiplayer/worker/preview-local-operator-qa.test.mjs
