@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## AUTHORED PILOT CLIENT AND TRUSTED AUTH ACCEPTANCE — 2026-11-27 PHT
+
+- #938 reconciled onto merged #930 at 797fd855a3852e157e5dd95e3e1c987338e96904, preserving all records. New explicit pilot client state 3cbede7b6b82e081a80b07e145a0aedcf4747a88 and transport 966f8e33a381dcf7d96168e037ae27a6f4a31fcb require the exact authored-camp-pilot tag, fixed authored snapshot and bounded positive session duration. Synthetic and CI-local admission paths remain distinct. Server expiry remains authoritative; no public socket dialer or UI integration.
+- Regression 9762c254132a5e7def58b5469b42f37d59e1769a covers cross-fixture rejection, invalid snapshot/expiry, authoritative hit reconciliation and fatal budget denial. Mocked upstream authentication regression 9012c0c2d391fb0d6b5aa710d68308da1bbb22f9 verifies allowlisted nonanonymous identity, rejects anonymous/unknown accounts and ignores forged body identity; budget precedes upstream auth. Source committed, new tests not executed at authoring. No actual user tokens, upstream requests or real-account claims.
+- EXACT NEXT: fresh CI on this branch; exercise actual isolated Worker/SQLite DO ticket and WebSocket lifecycle using mocked trusted auth, session expiry/reconnect and committed position/HP; then private pilot renderer mount, edge Access/account checks. Cloud remains disabled; no deployment, public PvP, inventory or production saves.
+
+---
+
 ## COMBINED NATIVE GLB COMBAT MERGED — 2026-11-27 PHT
 
 - #930 merged cb7257ffd5e2e4d0f4a1d4428ed7a7265717082e after exact head e0177f25205b21d98d8f9123a8f0fd5a39d426ab Validate 45949794874 and Gameplay 45949794998 terminal SUCCESS. No overlapping Game drift. Tests are local, not deployed PvP or physical-device acceptance.
