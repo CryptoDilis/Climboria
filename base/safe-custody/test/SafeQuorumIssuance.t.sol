@@ -361,6 +361,40 @@ contract SafeQuorumIssuanceTest {
         require(_exec(data,_sign(data,3)));
         require(!gaming.matchesInitialBinding(t,address(guard),cfg.founder));
     }
+    function _signSyntheticReward(V3GovernedGameRewardFixture gaming,V3GovernedGameRewardFixture.Reward memory reward,uint256 testKey) private returns(bytes memory){
+        (uint8 v,bytes32 r,bytes32 s)=vm.sign(testKey,gaming.digest(reward));
+        return abi.encodePacked(r,s,v);
+    }
+    function testRewardAccountingSurvivesActualQuorumRotation() public {
+        // Disposable deterministic keys, offline fixture only.
+        uint256 first=12345;uint256 replacement=23456;
+        cfg.distributor=vm.addr(first);
+        address candidate=vm.addr(replacement);
+        _issue();vm.warp(cfg.start);
+        V3GovernedGameRewardFixture gaming=V3GovernedGameRewardFixture(successor.vaults(1));
+        V3GovernedGameRewardFixture.Reward memory reward=V3GovernedGameRewardFixture.Reward("PAID",PAYEE,900,0,cfg.start+30 days,1);
+        gaming.claim(reward,_signSyntheticReward(gaming,reward,first));
+        reward.eventId="NEW";reward.amount=100;
+        bytes memory old=_signSyntheticReward(gaming,reward,first);
+        bytes memory data=abi.encodeCall(guard.revokeRewardSigner,(1,1));
+        require(_exec(data,_sign(data,3)));
+        vm.expectRevert(V3GovernedGameRewardFixture.InvalidSigner.selector);gaming.claim(reward,old);
+        data=abi.encodeCall(guard.scheduleRewardSigner,(1,2,candidate,block.timestamp,block.timestamp+1 hours));
+        require(_exec(data,_sign(data,3)));
+        vm.warp(block.timestamp+2 days);
+        data=abi.encodeCall(guard.activateRewardSigner,(1,2,1,candidate));
+        require(_exec(data,_sign(data,3)));
+        vm.expectRevert(V3GovernedGameRewardFixture.InvalidSigner.selector);gaming.claim(reward,old);
+        reward.generation=3;reward.eventId="PAID";
+        bytes memory sig=_signSyntheticReward(gaming,reward,replacement);
+        vm.expectRevert(V3GovernedGameRewardFixture.AlreadyPaid.selector);gaming.claim(reward,sig);
+        reward.eventId="NEW";reward.amount=101;
+        sig=_signSyntheticReward(gaming,reward,replacement);
+        vm.expectRevert(V3GovernedGameRewardFixture.CapExceeded.selector);gaming.claim(reward,sig);
+        reward.amount=100;gaming.claim(reward,_signSyntheticReward(gaming,reward,replacement));
+        require(gaming.released()==1000&&gaming.monthlyReleased(0)==1000&&gaming.walletReleased(0,PAYEE)==1000);
+        require(successor.token().totalSupply()==SUPPLY&&successor.token().balanceOf(PAYEE)==1000);
+    }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
         bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours));
