@@ -57,6 +57,12 @@ try{
  console.log('NPC actual forest gathering audit',JSON.stringify(forest));
  assert.ok(forest.authoredSource&&forest.gatherDraw&&forest.draws>0&&forest.resources.gathered>0&&forest.resources.gathered<=forest.resources.capacity);
  assert.ok(forest.distance>4&&forest.maxStep<=.300001&&forest.inventoryUnchanged&&forest.diagnosticsUnchanged&&forest.peersUnchanged&&forest.cleaned);
+ const connected=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcConnectedMapAudit());
+ console.log('NPC actual connected map audit',JSON.stringify(connected));
+ assert.ok(connected.authoredSource&&connected.connector.points?.length>=2&&connected.stableIdentity&&connected.closed);
+ assert.ok(connected.wet&&connected.exited&&connected.distance>50&&connected.maxStep<=.300001);
+ assert.ok(['fish','swim','gather'].every(a=>connected.completed.includes(a))&&connected.resources.gathered>0);
+ assert.ok(connected.playerUnchanged&&connected.inventoryUnchanged&&connected.diagnosticsUnchanged&&connected.peersUnchanged);
  assert.deepEqual(errors,[]);
  console.log('NPC focused browser PASS',JSON.stringify({mobile,elapsedMs:Date.now()-start,route,glb,active,ended}));
  await context.close();

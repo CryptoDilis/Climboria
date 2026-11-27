@@ -3847,6 +3847,38 @@ if(new URLSearchParams(location.search).has('smoke')){
  document.addEventListener('visibilitychange',()=>{if(document.hidden)window.ENDLESS_WILDS.npcContinuousStop()});
 }
 if(new URLSearchParams(location.search).has('smoke')){
+ window.ENDLESS_WILDS.npcConnectedMapAudit=async()=>{
+  const {createConnectedAdventurer}=await import('./npc/connected-adventurer.mjs');
+  const lake=WATER_BODIES.find(b=>b.id==='sanctuary_lake'),bank=FAC.find(f=>f.type==='fish'&&f.waterBodyId===lake?.id);
+  if(!bank||!restoreExplorerPosition({x:258,z:80,y:groundAt(258,80)+1.75,yaw:Math.PI/2}))throw Error('Lake fixture unavailable');
+  const loaded=(x,z)=>{const cx=Math.floor(x/CS),cz=Math.floor(z/CS);
+   for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)if(!chunks.has((cx+i)+','+(cz+j)))return false;return true};
+  const before={x:P.x,y:P.y,z:P.z,inventory:JSON.stringify(inventory),diag:window.__climboriaLastCollision,peers:livePeers.size};
+  const candidates=cc0LogSpots.filter(p=>loaded(p.x,p.z)&&Math.hypot(p.x-bank.x,p.z-bank.z)<950)
+   .sort((a,b)=>Math.hypot(a.x-bank.x,a.z-bank.z)-Math.hypot(b.x-bank.x,b.z-bank.z)).slice(0,3);
+  const attempts=[];let connected;
+  // All candidates use the same loaded world, with no chunk streaming or actor teleport between activities.
+  for(const spot of candidates){
+   try{connected=createConnectedAdventurer({groundAt,waterBodyAt,actorBlocked,loaded,fishingSpots:FAC,lake,logSpots:[spot],forestCenter:spot,
+    identityId:'npc:jarrell-peak:aurelion',routeOptions:{grid:24,maxProbes:24000,maxExpanded:256,maxWaypoints:48}});break}
+   catch(error){attempts.push({x:spot.x,z:spot.z,error:String(error)})}
+  }
+  if(!connected)throw Error('Actual connected route unavailable: '+JSON.stringify({candidates,attempts}));
+  const npc=connected.npc,required=['fish','swim','gather'];let previous=npc.snapshot(),distance=0,maxStep=0,wet=false,exited=false,steps=0,stableIdentity=true;
+  try{
+   for(;steps<24000;steps++){
+    const s=npc.tick(.1),step=Math.hypot(s.x-previous.x,s.z-previous.z);
+    distance+=step;maxStep=Math.max(maxStep,step);
+    stableIdentity=stableIdentity&&s.npcId==='npc:jarrell-peak:aurelion'&&s.label==='Aurelion [NPC]';
+    if(s.swim)wet=true;if(wet&&!s.swim)exited=true;previous=s;
+    if(exited&&required.every(a=>connected.audit().completed.includes(a)))break;
+   }
+  }finally{npc.close()}
+  return {source:connected.source,authoredSource:cc0LogSpots.some(p=>p.x===connected.source.x&&p.z===connected.source.z),
+   connector:connected.route,attempts,steps,distance,maxStep,wet,exited,stableIdentity,closed:npc.snapshot().closed,
+   ...connected.audit(),playerUnchanged:P.x===before.x&&P.y===before.y&&P.z===before.z,
+   inventoryUnchanged:before.inventory===JSON.stringify(inventory),diagnosticsUnchanged:before.diag===window.__climboriaLastCollision,peersUnchanged:before.peers===livePeers.size};
+ };
  window.ENDLESS_WILDS.npcForestAudit=async()=>{
   const [{createForestGatherer},{createAdventurerRenderer},{buildNpcActivityClips}]=await Promise.all([
    import('./npc/forest-gatherer.mjs'),import('./npc/adventurer-renderer.mjs'),import('./npc/npc-activity-clips.mjs')]);

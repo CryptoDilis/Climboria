@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A ACTUAL CONNECTED MAP SMOKE CANDIDATE — 2026-11-27
+
+- #987 merged into main as a26ced3924a15a562b8d30ab8d2a7cc42c3ccdc9 after four green source workflows. #988 foundation 46009216068 passed, focused browser 46009216013 pending at inspection. Separate child branch preserves its active CI.
+- Smoke-only connected map audit uses the same loaded lake/forest terrain, nearest up to three existing authored fallen-log candidates, bounded connector search and one named Aurelion controller. Requires completed fish/swim/gather, actual water exit, stable identity, <=0.3m steps, synthetic wood, unchanged player state/inventory/peers/diagnostics. This is actual map simulation, not continuous visual rendering or physical device performance. Existing independent GLB draw audits remain. No public spawn or real economy. Fresh browser verification pending.
+- NEXT: verify #988 and this candidate, inspect route attempt diagnostics if no safe corridor, improve bounded navigation without bypassing terrain or collision; then connected visual acceptance, personality biases, contextual world chat and shared authority.
+
+---
+
 ## R5A CONNECTED ACTIVITY GRAPH CANDIDATE — 2026-11-27
 
 - Parent #987 head 95baea762efcc7a4cb8524661c31f041311219a5 foundation 46008239837, focused browser 46008239990 and validation 46008239857 passed; gameplay smoke 46008239874 pending at inspection. Main post-merge run not returned for #971 merge SHA. Parent branch unchanged while CI runs.
