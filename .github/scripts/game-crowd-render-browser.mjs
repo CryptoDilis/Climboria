@@ -76,7 +76,17 @@ try{
    const projection=await page.evaluate(()=>{
     const w=window.__climboriaJarrellsPeak,p=window.__CLIMBORIA_GAME_PEERS;
     if(!w.crowdSmokeProjection(true))throw Error('Projection activation rejected');
-    const initial=w.crowdSmokeProjectionFrame(),removed=initial.ids[0];
+    const instanceProto=THREE.InstancedMesh.prototype,readMatrix=instanceProto.getMatrixAt;
+    let reads=0,readAfterUpdate,readAfterProbe,initial;
+    instanceProto.getMatrixAt=function(...args){
+     if(this.name==='PrivateCrowdInstanceBody')reads++;
+     return readMatrix.apply(this,args);
+    };
+    try{
+     p.update(.016);readAfterUpdate=reads;
+     initial=w.crowdSmokeProjectionFrame();readAfterProbe=reads;
+    }finally{instanceProto.getMatrixAt=readMatrix}
+    const removed=initial.ids[0];
     const original=p.audit().positions.find(q=>q.id===removed);
     p.remove(removed);const afterLeave=w.crowdSmokeProjectionFrame();
     p.add({id:removed,name:'QA Reconnected',model:'Jarrell',position:original});p.update(.016);
@@ -88,9 +98,10 @@ try{
     const afterReturn=w.crowdSmokeProjectionFrame();
     const count=p.count();p.clear();const afterClear=w.crowdSmokeProjectionFrame();
     const off=w.crowdSmokeProjection(false),closed=w.crowdSmokeAudit().instances===null;
-    return {initial,removed,afterLeave,afterJoin,moved,afterMove,afterReturn,count,afterClear,off,closed};
+    return {initial,removed,afterLeave,afterJoin,moved,afterMove,afterReturn,count,afterClear,off,closed,readAfterUpdate,readAfterProbe};
    });
    const check=(a,count)=>{assert.ok(a.match);assert.equal(a.ids.length,count);assert.equal(new Set(a.ids).size,count);assert.deepEqual(a.counts,Array(7).fill(count));assert.equal(a.attached,7);assert.equal(a.frameDraws,count?7:0)};
+   assert.equal(projection.readAfterUpdate,0);assert.equal(projection.readAfterProbe,700);
    check(projection.initial,100);check(projection.afterLeave,99);assert.ok(!projection.afterLeave.ids.includes(projection.removed));
    check(projection.afterJoin,100);check(projection.afterMove,99);assert.ok(!projection.afterMove.ids.includes(projection.moved));
    check(projection.afterReturn,100);check(projection.afterClear,0);assert.equal(projection.count,100);assert.ok(projection.off&&projection.closed);

@@ -3682,7 +3682,7 @@ function remoteExplorerSilhouette(){
 // Private smoke-only projection, not a presence or combat authority.
 function createPrivateCrowdInstances(){
  const template=remoteExplorerSilhouette(),meshes=[],ids=new Set();
- let draws=0,closed=false,match=true;
+ let draws=0,closed=false;
  const readback=new T3.Matrix4();
  try{
   for(const part of template.children){
@@ -3694,16 +3694,12 @@ function createPrivateCrowdInstances(){
  }catch(error){for(const m of meshes){scene.remove(m);m.dispose?.()}throw error}
  function sync(){
   if(closed)return;
-  ids.clear();match=true;let count=0;
+  ids.clear();let count=0;
   for(const p of livePeers.values()){
    if(p.root||Math.hypot(p.position.x-P.x,p.position.z-P.z)>2.8)continue;
    if(count>=100)break;
    p.group.updateMatrixWorld(true);
-   for(let j=0;j<meshes.length;j++){
-    const matrix=p.fallback.children[j].matrixWorld;meshes[j].setMatrixAt(count,matrix);
-    meshes[j].getMatrixAt(count,readback);
-    if(!matrix.elements.every((v,k)=>Math.abs(v-readback.elements[k])<1e-5))match=false;
-   }
+   for(let j=0;j<meshes.length;j++)meshes[j].setMatrixAt(count,p.fallback.children[j].matrixWorld);
    ids.add(p.id);p.fallback.visible=false;count++;
   }
   for(const m of meshes){m.count=count;m.visible=count>0;m.instanceMatrix.needsUpdate=true}
@@ -3712,7 +3708,21 @@ function createPrivateCrowdInstances(){
   if(closed)return;closed=true;ids.clear();
   for(const m of meshes){m.count=0;m.visible=false;scene.remove(m);m.dispose?.()}
  }
- return {sync,close,audit:()=>({ids:[...ids],draws,match,counts:meshes.map(m=>m.count),attached:meshes.filter(m=>m.parent===scene).length,closed})};
+ function audit(){
+  // Read matrices only when an acceptance probe requests them.
+  let match=true,index=0;
+  for(const id of ids){
+   const parts=livePeers.get(id)?.fallback.children;
+   if(!parts){match=false;break}
+   for(let j=0;j<meshes.length;j++){
+    meshes[j].getMatrixAt(index,readback);
+    if(!parts[j].matrixWorld.elements.every((v,k)=>Math.abs(v-readback.elements[k])<1e-5))match=false;
+   }
+   index++;
+  }
+  return {ids:[...ids],draws,match,counts:meshes.map(m=>m.count),attached:meshes.filter(m=>m.parent===scene).length,closed};
+ }
+ return {sync,close,audit,get draws(){return draws}};
 }
 function peerMarker(name){
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=64;
@@ -4522,7 +4532,7 @@ if(new URLSearchParams(location.search).has('smoke')){
  };
  window.ENDLESS_WILDS.crowdSmokeProjectionFrame=()=>{
   if(!crowdInstanceProjection)return null;
-  const before=crowdInstanceProjection.audit().draws;
+  const before=crowdInstanceProjection.draws;
   renderer.render(scene,cam);
   const a=crowdInstanceProjection.audit();return {...a,frameDraws:a.draws-before};
  };
