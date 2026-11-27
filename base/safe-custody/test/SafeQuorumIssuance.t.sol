@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
+import {V3LegacyProofClaimFixture} from "v3-src/V3LegacyProofClaimFixture.sol";
+import {V3LegacyProofVerifierFixture as LegacyVerifier} from "v3-src/V3LegacyProofVerifierFixture.sol";
 import {Safe} from "safe-contracts/Safe.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IV3SyntheticPool} from "v3-src/V3LiquidityPolicyFixture.sol";
@@ -394,6 +396,43 @@ contract SafeQuorumIssuanceTest {
         reward.amount=100;gaming.claim(reward,_signSyntheticReward(gaming,reward,replacement));
         require(gaming.released()==1000&&gaming.monthlyReleased(0)==1000&&gaming.walletReleased(0,PAYEE)==1000);
         require(successor.token().totalSupply()==SUPPLY&&successor.token().balanceOf(PAYEE)==1000);
+    }
+    function _proofLegacyRow() private pure returns(LegacyVerifier.Row memory){
+        return LegacyVerifier.Row(bytes32(uint256(11)),bytes32(uint256(21)),PAYEE,100,100,bytes32(uint256(31)));
+    }
+    function _proofLegacyCommitment(V3LegacyProofClaimFixture legacy) private view returns(LegacyVerifier.Commitment memory c){
+        bytes32 domain=sha256("CLIMB_BASE_LEGACY_BINARY_SUM_TEST_V2");
+        LegacyVerifier.Row memory r=_proofLegacyRow();
+        bytes32 leaf=sha256(abi.encodePacked(domain,bytes1(0x01),bytes32(uint256(1)),uint256(0),r.sourceAccount,r.sourceOwner,r.recipient,r.sourceAmount,r.award,r.evidenceHash));
+        c=LegacyVerifier.Commitment(bytes32(uint256(1)),bytes32(uint256(2)),address(legacy.token()),address(legacy),1,100,100,
+            sha256(abi.encodePacked(domain,bytes1(0x04),bytes32(uint256(1)),bytes32(uint256(2)),uint256(84532),address(legacy.token()),address(legacy),uint256(1),uint256(100),leaf,uint256(100))));
+    }
+    function testQuorumLegacyProofClaimAndClosure() public {
+        _issue();
+        V3LegacyProofClaimFixture legacy=V3LegacyProofClaimFixture(successor.vaults(6));
+        require(legacy.matchesInitialBinding(address(successor.token()),address(guard)));
+        LegacyVerifier.Commitment memory c=_proofLegacyCommitment(legacy);
+        bytes32 digest=legacy.activationDigest(c);
+        bytes memory data=abi.encodeCall(guard.scheduleLegacy,(1,digest,block.timestamp+7 days,block.timestamp,block.timestamp+1 hours));
+        vm.expectRevert();guard.scheduleLegacy(1,digest,block.timestamp+7 days,block.timestamp,block.timestamp+1 hours);
+        bytes memory two=_sign(data,2);
+        vm.expectRevert();_exec(data,two);
+        require(wallet.nonce()==1&&guard.legacyScheduleSerial()==0);
+        require(_exec(data,_sign(data,3)));
+        vm.expectRevert();legacy.activate(c);
+        vm.warp(block.timestamp+2 days);legacy.activate(c);
+        LegacyVerifier.Row memory row=_proofLegacyRow();
+        LegacyVerifier.Node[] memory proof=new LegacyVerifier.Node[](0);
+        vm.prank(PAYEE);legacy.claim(0,row,proof);
+        require(legacy.paid()==100&&successor.token().balanceOf(PAYEE)==100);
+        vm.prank(PAYEE);vm.expectRevert();legacy.claim(0,row,proof);
+        vm.warp(legacy.appealEnd());
+        digest=legacy.closureDigest("REVIEW");
+        data=abi.encodeCall(guard.scheduleLegacy,(1,digest,block.timestamp+7 days,block.timestamp,block.timestamp+1 hours));
+        require(_exec(data,_sign(data,3)));
+        vm.warp(block.timestamp+2 days);legacy.finalize("REVIEW");
+        require(legacy.closed()&&legacy.paid()+legacy.burned()==legacy.RESERVE());
+        require(successor.token().totalSupply()==SUPPLY-legacy.burned());
     }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
