@@ -12,13 +12,18 @@ interface IQuorumBindingFixture {
     function bindBeforeIssuance() external;
     function bound() external view returns(bool);
 }
-/// @notice Test-only factory. Creator can configure one guard, never issue.
+/// @notice Test-only factory. A fixed Safe setup factory configures one guard.
 /// Actual Safe quorum must authorize exact creation payload via that guard.
 contract V3QuorumSuccessorFixture is V3AtomicSuccessorFixture {
+    address public immutable guardFactory;
     address public configuredGuard;
     bytes32 public configuredGuardHash;
+    constructor(address setupFactory){
+        if(setupFactory.code.length==0)revert InvalidConfig();
+        guardFactory=setupFactory;
+    }
     function configureGuard(address guard) external {
-        if(msg.sender!=creator||configuredGuard!=address(0)||used||guard.code.length==0||
+        if(msg.sender!=guardFactory||configuredGuard!=address(0)||used||guard.code.length==0||
            address(IQuorumBindingFixture(guard).successor())!=address(this))revert InvalidConfig();
         configuredGuard=guard;configuredGuardHash=guard.codehash;
     }
@@ -81,11 +86,13 @@ contract SafeQuorumReserveFactoryFixture {
         singleton=new Safe();bootstrap=new SafeGuardBootstrapFixture();
     }
     function create(address[] calldata owners,V3QuorumSuccessorFixture successor) external returns(Safe wallet,SafeQuorumReserveGuardFixture guard){
-        if(block.chainid!=84532||owners.length!=5)revert InvalidConfig();
+        if(block.chainid!=84532||owners.length!=5||successor.creator()!=msg.sender||
+           successor.guardFactory()!=address(this)||successor.configuredGuard()!=address(0))revert InvalidConfig();
         for(uint256 i=0;i<owners.length;i++)if(owners[i].code.length!=0)revert InvalidConfig();
         wallet=Safe(payable(address(new SafeProxy(address(singleton)))));
         guard=new SafeQuorumReserveGuardFixture(wallet,address(singleton),successor);
         wallet.setup(owners,3,address(bootstrap),abi.encodeCall(bootstrap.install,(address(guard))),address(0),address(0),0,payable(address(0)));
         guard.validateConfig();
+        successor.configureGuard(address(guard));
     }
 }
