@@ -1,13 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {checkConfig,checkFrozenArtifacts,prepareStageOne} from './testnet-preflight.mjs';
+import {checkConfig,checkFrozenArtifacts,prepareStageOne,isDisposableRole} from './testnet-preflight.mjs';
 const read=p=>JSON.parse(readFileSync(new URL(p,import.meta.url),'utf8'));
 const pin=read('./frozen-testnet-candidate.json'),example=read('./testnet-preflight.example.json');
 const now=1795820000;
 const addr=n=>'0x'+(0x100000n+BigInt(n)).toString(16).padStart(40,'0');
 const cfg=()=>({...example,deployer:addr(1),owners:[2,3,4,5,6].map(addr),founder:addr(7),distributor:addr(8),startTimestamp:now+86400*7,gamingWalletMonthlyCapRaw:'1000',liquidityTrancheCapRaw:'1000',maxTotalFeeWei:'1000000000000000',signerControlEvidenceSha256:'1'.repeat(64),independentReviewEvidenceSha256:'2'.repeat(64),recoveryAcceptanceEvidenceSha256:'3'.repeat(64),configurationApprovalEvidenceSha256:'4'.repeat(64)});
 const artifacts=()=>pin.contracts.map(x=>read('./out/SafeQuorumIssuanceFixture.sol/'+x.name+'.json'));
+test('rejects all newly used deterministic rehearsal signer identities',()=>{
+ for(const a of ['0x6c45cac6f23b5c34a2a403022bd3613a532a2c27','0xae0478140036d14e93a7b7482512e1d91745b650','0xc2c2173833e552e94246afeecc152f28c0b7fe40'])assert.equal(isDisposableRole(a),true);
+});
 if(pin.status==='RETIRED_PENDING_VERIFIED_REPIN'){
  test('retired pin rejects even structurally complete config and actual compiled artifacts',()=>{
   assert.throws(()=>checkConfig(cfg(),now),/retired candidate/);
