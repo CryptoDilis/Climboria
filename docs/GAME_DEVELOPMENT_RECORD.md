@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## Crowd C13 private recovery checkpoint — 2026-11-28 PHT
+
+- [#1046](https://github.com/CryptoDilis/Climboria/pull/1046) implementation commit `167575e52f29a0a119b57ac3495a4362e80b969d` adds loopback socket coverage for 20 ticks with 0–22 ms application send jitter. At 10/25/50/100 sockets, 8/20/40/80 forcibly disconnected clients returned as fresh synthetic sessions. Every remaining and returning client reconciled to independently expected rosters and positions. Final socket, room and movement-interest cleanup passed. All 23 existing focused policy and presence tests passed locally.
+- [C11 exact CI](https://github.com/CryptoDilis/Climboria/actions/runs/46055286420/job/140696175324) passed at `9eb5dd86b43fbb6e86684818b1dece0304dea5f5`. At 100 clustered loopback sockets, flush deadlines of 250/100/50/25 ms yielded delivery p95 of 269.33/119.11/68.96/44.57 ms respectively. Every candidate delivered 396,000 entries in 16,000 packets and 30,057,781 JSON bytes. These observations are specific to the fixture workload and runner.
+- Next verify exact #1046 native CI. The C9–C12 draft stack requires resolving and testing its dependencies in order. Exercise production-equivalent ticket refresh, durable resume and browser projection in an authorized private environment. Protected registered-account and physical-device acceptance remain separate from synthetic results. Production capacity and release gates are unchanged.
+
+---
+
 ## CROWD C8 SUSTAINED PEER DELIVERY LATENCY — 2026-11-28 PHT
 
 - #1038 exact 2a2a7d6d256922aba107e5b003d747d65f4d4a06 all 13 listed workflows success; merged main 8c3bec433e28392cc8c9e1553d780b415de5f7ff. #1039 exact e29c7d11e2cb4e2f9034e549986d2c1257bb2692 all five listed workflows success. Browser run 46046983548 jobs 140668581236 mobile and 140668581496 desktop: malformed batch rejected without mutation, known peer accepted, unknown ignored, 100 descriptors preserved, previously hidden entrant promoted to visible body/nameplate. Controlled scene-transform error converged monotonically from 10.919m/12.124m to 0.000013m/0.000014m; manual fixture steps, not device FPS or network latency. Retarget #1039 to main; verify exact merge readiness.

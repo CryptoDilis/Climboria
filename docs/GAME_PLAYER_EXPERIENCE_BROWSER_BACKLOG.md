@@ -16,6 +16,11 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 | Arena / Marketplace / Inventory / rewards | Arena future map, marketplace preview, local inventory preview; Base-first future onchain economy approved | Persistent ownership, marketplace, funded rewards, Base token and secure settlement gates, no live payout claim |
 | Legacy backlog | README sections A–G, mobile launch bug list and CLIMBORIA_WORLD_EXPANSION_CHECKLIST.md remain authoritative historical requirements | Reconcile each item against exact evidence before closing; do not blanket-mark completed |
 
+### Multiplayer checkpoint — 2026-11-28 PHT
+
+[R0.2 and R0.8 private socket recovery candidate](https://github.com/CryptoDilis/Climboria/pull/1046) passed locally with 10, 25, 50 and 100 synthetic loopback clients, 20 movement ticks per size and 148 total reconnects. Fresh fixture sessions recovered the current peer snapshot and retired sessions were removed. Verify exact CI, then exercise authenticated ticket refresh, saved-position recovery and browser projection under churn before production acceptance.
+
+
 ## Non-negotiable product direction
 
 - Browser-first, no mandatory download, no wallet required for ordinary gameplay. Preserve existing authentication and guest access policy; do not imply guest multiplayer is already supported.
