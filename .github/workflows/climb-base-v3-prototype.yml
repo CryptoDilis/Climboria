@@ -38,6 +38,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
         with:
           version: v1.5.0
@@ -155,6 +158,8 @@ jobs:
         run: node --test legacy-binary-proof.test.mjs
       - name: Test synthetic legacy key-control signatures
         run: node --test legacy-owner-proof.test.mjs
+      - name: Test synthetic legacy manifest proof consumption
+        run: node --test legacy-owner-ledger.test.mjs
       - name: Test V3 read-only estimator
         run: node --test estimate-creation.test.mjs
       - name: Test unsigned review binding

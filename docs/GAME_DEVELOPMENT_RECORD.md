@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## ISOLATED GLB BROWSER STEP PASSED; COMBINED BRANCH RECONCILED — 2026-11-27 PHT
+
+- #928 exact head d431a8abbb54f1a9116004584130b66c942277c2: Validate 45948604926 SUCCESS; Gameplay 45948604924 job 140338958754 reports isolated authored browser control/GLB step and native socket step SUCCESS; full desktop/mobile gameplay still running. Job logs unavailable (404 while running), so no detailed log or screenshot acceptance claimed.
+- #930 reconciled onto that #928 head preserving stronger fresh victim snapshot and no extra hit push assertions, both existing smoke steps, combined native GLB step, pinned Three.js and all history. Combined test remains unexecuted; parent CI not reset.
+- EXACT NEXT: #928 terminal green then merge, reconcile #930 onto resulting main, retarget and run fresh Validate/Gameplay with all browser steps. No public combat, deployment or loot.
+
+---
+
 ## NATIVE GLB RANGE DENIAL — FRESH AUTHORITATIVE HP PROOF (2026-11-27 PHT)
 
 - Regression hardening 65518a252cc1f82370377865092313566a556b13 on #930: require a new explicit out-of-range denial after the specific attack, request a fresh victim snapshot over the actual socket, assert authoritative HP remains 495, and confirm no additional hit push before comparing rendered HUD. Avoid false positives from old response frames or stale cached HP. Source not executed; parent CI untouched.
@@ -18,6 +26,13 @@
 
 - Stacked on #928 head 30472aaa7c2b5877224ad0665c35b8509ebb8b6e. Independent CI-only workerd entry 387dcb112ed0f725311884733605ea2caf92d34f uses loopback port 4175, explicit same-origin upgrade and one-use ticket checks, no exposed ticket/tick routes. Native browser smoke 779555d2524e7644ec692cd52bdb7206f77837f3 combines real local DO WebSockets and actual checked-in Jarrell GLB on desktop/touch Chromium; checks rendered geometry, ground fit, committed HP, input without speculative movement, committed server position and stamina, range denial and closed scene. Only three exact asset subresources are fulfilled locally; actual navigation and socket handshake are not intercepted. Synthetic account IDs and local deterministic clock only. CI workflow 2f6ac562233d838bb8543ea04ef80eb43ed95372 adds pinned Three.js r128 install and bounded independent smoke, no browser security bypass or public route. Source only, NOT executed, no physical Android FPS or pixel visual acceptance.
 - EXACT NEXT: finish and merge #922, #925, #928 in dependency order with fresh CI per head. Reconcile this child workflow with #922 retaining the separate native socket check, safe dependency install/symlink and both path filters; retarget to main and run fresh CI. Inspect actual combined native GLB outcome and repair without weakening acceptance. No public game/PvP, deployment, inventory or loot changes.
+
+---
+
+## AUTHORITATIVE CHARACTER PROJECTION MERGED — 2026-11-27 PHT
+
+- #925 merged 300972e5a49dea4423ad9b519fb620784851a4cc after exact head 1c19cf97595e27407bd3e2d65dca6db7248e436e all five SUCCESS: Gameplay 45947412023, Runtime 45947412045, Gateway 45947412093, Authority 45947411967, Validate 45947411962. Main drift only unrelated Base ledger work. Adapter is not public gameplay integration.
+- Reconcile #928 with squash merge preserving actual GLB harness, pinned Three.js, existing native WebSocket smoke and all historical records. Retarget to main and require fresh Validate and Gameplay CI. #930 remains stacked until #928 green and merged. No public PvP, deployment or loot.
 
 ---
 
