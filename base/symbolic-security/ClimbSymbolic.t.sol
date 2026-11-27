@@ -62,21 +62,52 @@ contract ClimbSymbolicTokenTest {
         assert(token.issued());
         assert(token.totalSupply()==888888888000000-amount);
     }
-    function check_duplicateReserveRejected(uint8 index) public {
-        vm.assume(index>0 && index<7);
+    function check_duplicateReserveRejected(uint8 first,uint8 second) public {
+        // All 21 unordered duplicate pairs. Each memory access has a concrete offset.
+        vm.assume(first<second && second<7);
         address[7] memory bad=reserves;
-        // Halmos cannot resolve symbolic memory offsets; explicitly split all
-        // six original valid index cases without excluding any input.
-        if(index==1)bad[1]=bad[0];
-        else if(index==2)bad[2]=bad[0];
-        else if(index==3)bad[3]=bad[0];
-        else if(index==4)bad[4]=bad[0];
-        else if(index==5)bad[5]=bad[0];
-        else {assert(index==6);bad[6]=bad[0];}
+        address duplicate;
+        if(first==0)duplicate=bad[0];
+        else if(first==1)duplicate=bad[1];
+        else if(first==2)duplicate=bad[2];
+        else if(first==3)duplicate=bad[3];
+        else if(first==4)duplicate=bad[4];
+        else {assert(first==5);duplicate=bad[5];}
+        if(second==1)bad[1]=duplicate;
+        else if(second==2)bad[2]=duplicate;
+        else if(second==3)bad[3]=duplicate;
+        else if(second==4)bad[4]=duplicate;
+        else if(second==5)bad[5]=duplicate;
+        else {assert(second==6);bad[6]=duplicate;}
         (bool ok,)=address(token).call(abi.encodeCall(token.issue,(bad)));
         assert(!ok);
         assert(token.totalSupply()==0);
         assert(!token.issued());
+    }
+    function check_fullSupplyBurnStillCannotIssue() public {
+        (bool ok,)=address(token).call(abi.encodeCall(token.issue,(reserves)));
+        assert(ok);
+        for(uint256 i=0;i<7;i++){
+            uint256 balance=token.balanceOf(reserves[i]);
+            vm.prank(reserves[i]);
+            (ok,)=address(token).call(abi.encodeCall(token.burn,(balance)));
+            assert(ok);
+        }
+        assert(token.totalSupply()==0 && token.issued());
+        (ok,)=address(token).call(abi.encodeCall(token.issue,(reserves)));
+        assert(!ok);
+        assert(token.totalSupply()==0 && token.issued());
+    }
+    function check_unfundedCallerCannotBurn(address caller,uint256 amount) public {
+        (bool ok,)=address(token).call(abi.encodeCall(token.issue,(reserves)));
+        assert(ok);
+        vm.assume(amount>0);
+        for(uint256 i=0;i<7;i++)vm.assume(caller!=reserves[i]);
+        vm.prank(caller);
+        (ok,)=address(token).call(abi.encodeCall(token.burn,(amount)));
+        assert(!ok);
+        assert(token.totalSupply()==888888888000000);
+        assert(token.issued());
     }
 }
 
