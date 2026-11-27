@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## ACTUAL PRIVATE PILOT GLB ACCEPTANCE AND R5A PRIORITY — 2026-11-27 PHT
+
+- Owner explicitly orders current private combat task completed/verified first, then immediately prioritize R5A.1–R5A.9 within Game. Reviewed current README, detailed backlog and development record; updated backlog 25c71ba3e9cb6e7641329771b40acd31cd6a62e9 and README e049a9da9e61c4a31071cc19b64d34a5f94451c8. Preserve all existing game/release/security gates and other workstreams. R5A not implemented yet.
+- #940 added CI-only loopback browser harness 241dadb252813dfb6eab4a2e5192946572cca051 and native actual pilot DO/GLB desktop/touch smoke 647cbf42e8a95e9e9ca430d3c4d9cc7e31bc7ce0, CI 9d14d7af830af4b82e6240a4015e02d0214441bc, snapshot sequencing 6a84a1e8069bbba433d9d9bf46e25befed1298e0. Composes actual pilot DO, actual GLB and explicit pilot session mount; checks committed HP/movement, root/ground, no speculative movement, local expiry cleanup. Direct private ticket issuance and CI loopback bridge do NOT prove actual authentication/Access or real server expiry. Source unexecuted, fresh CI needed. No public gameplay or cloud configuration.
+- #938 refreshed 71d02f0 had 4/5 green, Gameplay 45953113010 pending at check. EXACT NEXT: finish #938 and merge; verify #940 CI and reconcile onto resulting main preserving other Game records. Complete server-side expiry test and authorized edge/real-account pilot acceptance (external prerequisites not verified). Then implement one active R5A autonomous NPC using actual terrain/water/collision/animations, independent goals, movement and action loop; no static animation/teleport/fake ONLINE or economy. Test real movement and three activities, then scale 3–5 only with measured mobile/browser evidence. No NPC checkbox closure without actual proof.
+
+---
+
 ## PRIVATE CHARACTER SESSION RECONCILED — 2026-11-27 PHT
 
 - #938 prior exact head 85c15b3c4916867f0ba31cf18a7b0e220d41e4d1 5/5 green; updated head 71d02f0107caac8244c43305187c17b1f5bdb50f incorporates concurrent Game documentation without loss. #940 reconciled on that parent, preserving its two new session lifecycle files. New tests unexecuted. Next parallel draft CI if available; no merge until #938 fresh green/merged, then reconcile and verify exact head. No deployment or public PvP.
