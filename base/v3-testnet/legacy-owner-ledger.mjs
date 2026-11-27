@@ -9,7 +9,7 @@ function key(s){
  let n=0n;for(const c of s)n=n*58n+BigInt(alphabet.indexOf(c));
  return n.toString(16).padStart(64,'0');
 }
-export function verifySyntheticBatch(input,expectedInventoryDigest,proofs,now,{hasNonce,hasSource}){
+export function verifySyntheticBatch(input,expectedInventoryDigest,proofs,now,{hasNonce,hasSource,checkIssued}){
   const {entries}=normalizeLegacyEvidence(input);
   if(!Array.isArray(proofs)||proofs.length!==entries.length)fail('proof count mismatch');
   const bySource=new Map();
@@ -33,6 +33,7 @@ export function verifySyntheticBatch(input,expectedInventoryDigest,proofs,now,{h
     sourceOwner:key(owner),sourceAmount,targetChainId:input.targetChainId,targetToken:input.targetToken,
     targetVault:input.targetVault,recipient,award,nonce,issuedAt:p.issuedAt,expiresAt:p.expiresAt};
    const result=verifySyntheticOwnerProof(challenge,p.signature,now);
+   if(checkIssued)checkIssued(nonce,result.challengeDigest);
    const digest=createHash('sha256').update(JSON.stringify(['CLIMB_SYNTHETIC_OWNER_EVIDENCE_V2',result.challengeDigest,p.signature])).digest('hex');
    if(digest!==evidenceHash)fail('manifest evidence hash mismatch');
    nonces.add(nonce);sources.add(sourceIdentity);
