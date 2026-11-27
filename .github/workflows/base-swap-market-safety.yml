@@ -10,6 +10,7 @@ on:
       - 'dex/base-token-metadata.mjs'
       - '.github/scripts/base-token-metadata.test.mjs'
       - 'swap/base-market-preview.mjs'
+      - 'swap/secondary-evm-research.mjs'
       - 'swap/base-market-preview.css'
       - '.github/scripts/base-swap-market-preview.test.mjs'
       - '.github/scripts/base-external-uniswap-handoff.test.mjs'
@@ -28,6 +29,7 @@ on:
       - 'dex/base-token-metadata.mjs'
       - '.github/scripts/base-token-metadata.test.mjs'
       - 'swap/base-market-preview.mjs'
+      - 'swap/secondary-evm-research.mjs'
       - 'swap/base-market-preview.css'
       - '.github/scripts/base-swap-market-preview.test.mjs'
       - '.github/scripts/base-external-uniswap-handoff.test.mjs'
@@ -55,6 +57,7 @@ jobs:
       - name: Strict module/test syntax and offline contract-first negative cases
         run: |
           node --check swap/base-market-preview.mjs
+          node --check swap/secondary-evm-research.mjs
           node --check .github/scripts/base-swap-market-preview.test.mjs
           node --check dex/base-token-metadata.mjs
           node --check .github/scripts/base-external-uniswap-handoff.test.mjs

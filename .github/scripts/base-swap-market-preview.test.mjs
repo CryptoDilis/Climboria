@@ -282,3 +282,57 @@ test("Ethereum and BNB candidates reject invalid counterpart identity and quote-
     assert.equal(result[0].change24h,null);
   }
 });
+
+test("secondary EVM research is explicit, chain-isolated and never requests wallet or quote operations",async()=>{
+  const {initSecondaryEvmResearch}=await import("../../swap/secondary-evm-research.mjs");
+  const ids=Object.fromEntries(["secondaryEvmResearch","secondaryEvmForm","secondaryEvmChain","secondaryEvmContract","secondaryEvmStatus","secondaryEvmResults"].map(k=>[k,new El()]));
+  const events=new Map(),calls=[];
+  const doc={documentElement:{dataset:{climboriaSwapNetwork:"base"}},getElementById:id=>ids[id],createElement:()=>new El(),addEventListener:(name,fn)=>events.set(name,fn)};
+  const scope={setTimeout,clearTimeout,addEventListener(){}};
+  const payload={pairs:[pair({chainId:"base",priceUsd:"99"}),pair({chainId:"ethereum",priceUsd:"2.5"}),pair({chainId:"bsc",priceUsd:"3.75"})]};
+  let delayed=false,resume;
+  const fetchImpl=async(url,options)=>{calls.push({url,method:options.method,redirect:options.redirect});if(delayed)await new Promise(r=>resume=r);return new Response(JSON.stringify(payload),{headers:{"content-type":"application/json"}})};
+  ids.secondaryEvmChain.value="1";
+  const controller=initSecondaryEvmResearch({doc,scope,fetchImpl});
+  assert.equal(controller.ready,true);assert.equal(ids.secondaryEvmResearch.hidden,false);assert.equal(calls.length,0);
+  ids.secondaryEvmContract.value="USDC";await ids.secondaryEvmForm.emit("submit");assert.equal(calls.length,0);
+  ids.secondaryEvmContract.value=BASE_TOKEN;await ids.secondaryEvmForm.emit("submit");
+  assert.deepEqual(calls,[{url:BASE_MARKET_ENDPOINT+BASE_TOKEN,method:"GET",redirect:"error"}]);
+  let card=ids.secondaryEvmResults.children[0];assert.match(card.children[1].textContent,/Ethereum · Chain 1/);assert.match(card.children[2].textContent,/\$2\.50/);
+  assert.equal(card.children[3].href,"https://dexscreener.com/ethereum/"+POOL_A);
+  ids.secondaryEvmChain.value="56";ids.secondaryEvmChain.emit("change");
+  assert.equal(ids.secondaryEvmContract.value,"");assert.equal(ids.secondaryEvmResults.children.length,0);
+  ids.secondaryEvmContract.value=BASE_TOKEN;await ids.secondaryEvmForm.emit("submit");
+  card=ids.secondaryEvmResults.children[0];assert.match(card.children[1].textContent,/BNB Chain · Chain 56/);assert.match(card.children[2].textContent,/\$3\.75/);
+  assert.equal(card.children[3].href,"https://dexscreener.com/bsc/"+POOL_A);
+  delayed=true;const pending=ids.secondaryEvmForm.emit("submit");
+  doc.documentElement.dataset.climboriaSwapNetwork="solana";events.get("climboria:managed-provider-pair-change")();
+  resume();await pending;
+  assert.equal(ids.secondaryEvmResults.children.length,0);assert.equal(ids.secondaryEvmResearch.hidden,true);
+  await ids.secondaryEvmForm.emit("submit");assert.equal(calls.length,3);
+  assert.equal(ids.secondaryEvmResearch.open,false);
+});
+test("secondary EVM research distinguishes unavailable provider data from empty exact-chain results",async()=>{
+  const {initSecondaryEvmResearch}=await import("../../swap/secondary-evm-research.mjs");
+  const ids=Object.fromEntries(["secondaryEvmResearch","secondaryEvmForm","secondaryEvmChain","secondaryEvmContract","secondaryEvmStatus","secondaryEvmResults"].map(k=>[k,new El()]));
+  const doc={documentElement:{dataset:{climboriaSwapNetwork:"base"}},getElementById:id=>ids[id],createElement:()=>new El()};
+  const scope={setTimeout,clearTimeout};
+  let next=()=>new Response("{}",{status:503,headers:{"content-type":"application/json"}});
+  ids.secondaryEvmChain.value="1";
+  initSecondaryEvmResearch({doc,scope,fetchImpl:async()=>next()});
+  ids.secondaryEvmContract.value=BASE_TOKEN;
+  for(const response of [
+    ()=>new Response("{}",{status:503,headers:{"content-type":"application/json"}}),
+    ()=>new Response("<html>error</html>",{headers:{"content-type":"text/html"}}),
+    ()=>new Response(JSON.stringify({pairs:null}),{headers:{"content-type":"application/json"}}),
+    ()=>new Response(" ".repeat(450001),{headers:{"content-type":"application/json"}})
+  ]){
+    next=response;await ids.secondaryEvmForm.emit("submit");
+    assert.equal(ids.secondaryEvmResults.children.length,0);
+    assert.match(ids.secondaryEvmStatus.textContent,/market data unavailable/);
+  }
+  next=()=>new Response(JSON.stringify({pairs:[pair({chainId:"bsc"})]}),{headers:{"content-type":"application/json"}});
+  await ids.secondaryEvmForm.emit("submit");
+  assert.equal(ids.secondaryEvmResults.children.length,0);
+  assert.match(ids.secondaryEvmStatus.textContent,/No matching liquid pools on Ethereum/);
+});
