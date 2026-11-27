@@ -19,3 +19,8 @@ Next: verify actual main-branch CI and live homepage on desktop and mobile. Conf
 
 - `0f4a3a42143ee9522b5c7bb980183588e1140672`: owner screenshot showed undersized navigation and notification text. Desktop navigation labels now 12–15px; mobile navigation 16px; notification title 30px, headings 18px, body 16px with 1.7 line height, lighter text, gold links including visited state, 44px close target and responsive panel width up to 460px. Existing layout, 42px bell/X cards, breakpoints, overlay and functionality retained.
 - Source readback verified updated typography, gold visited links, compact grid and absence of standalone announcement controls. Browser rendering, CI and deployment still pending. Next: inspect label fit at 1450px and mobile, notification text wrapping and link contrast at 360–390px.
+
+## 2026-11-27 UTC — clean premium alert and X marks
+
+- `3c02b2f2ef9684116c40b43a4d530232a6e6d18d`: replaced desktop/mobile notification shield crest with recognizable gold bell SVG. Preserved X brand-shaped SVG path; matched desktop icon dimensions at 22px and existing card dimensions at 42px, with consistent navy background, gold border, hover/focus finish and no inner decorative frames. Mobile X mark styling matched without changing its container dimensions.
+- Seven source readback checks passed: two bell marks, no notification crest, retained X path, matched icon sizes, compact grid, prior readability and panel behavior code. Browser and deployment not verified. Next: visual desktop/mobile check of icon legibility, spacing and prior notification interactions; no new layers or unrelated scope changes.
