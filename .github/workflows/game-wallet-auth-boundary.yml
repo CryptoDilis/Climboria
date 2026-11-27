@@ -1,0 +1,20 @@
+name: Game wallet registered-account boundary
+on:
+  push:
+    paths: ['game/wallet-proof/registered-account*.mjs','.github/workflows/game-wallet-auth-boundary.yml']
+  pull_request:
+    paths: ['game/wallet-proof/registered-account*.mjs','.github/workflows/game-wallet-auth-boundary.yml']
+permissions:
+  contents: read
+jobs:
+  offline-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test game/wallet-proof/registered-account.test.mjs
