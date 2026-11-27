@@ -12,6 +12,8 @@ import {V3DeferredLegacyFixture} from "v3-src/V3DeferredLegacyFixture.sol";
 import {IV3SyntheticPool} from "v3-src/V3LiquidityPolicyFixture.sol";
 interface VmReserveGuard {
     function chainId(uint256) external;
+    function addr(uint256) external returns(address);
+    function sign(uint256,bytes32) external returns(uint8,bytes32,bytes32);
     function warp(uint256) external;
     function prank(address) external;
     function expectRevert() external;
@@ -35,9 +37,9 @@ contract ReservePoolBuilder is IV3SyntheticPoolBuilder {
 }
 contract SafeReserveGuardTest {
     VmReserveGuard constant vm=VmReserveGuard(address(uint160(uint256(keccak256("hevm cheat code")))));
-    address constant A=address(0x101);
-    address constant B=address(0x102);
-    address constant C=address(0x103);
+    // Deterministic disposable offline test keys; never use as funded wallet keys.
+    uint256[3] private testKeys;
+    address A;address B;address C;
     address constant D=address(0x104);
     address constant E=address(0x105);
     address constant F=address(0x106);
@@ -54,6 +56,13 @@ contract SafeReserveGuardTest {
     function setUp() public {
         vm.chainId(84532);successor=new V3AtomicSuccessorFixture();
         SafeReserveFactoryFixture factory=new SafeReserveFactoryFixture();
+        testKeys=[uint256(0x12345),uint256(0x23456),uint256(0x34567)];
+        for(uint256 i=0;i<3;i++)for(uint256 j=i+1;j<3;j++){
+            if(vm.addr(testKeys[j])<vm.addr(testKeys[i])){
+                (testKeys[i],testKeys[j])=(testKeys[j],testKeys[i]);
+            }
+        }
+        A=vm.addr(testKeys[0]);B=vm.addr(testKeys[1]);C=vm.addr(testKeys[2]);
         address[] memory owners=new address[](5);
         owners[0]=A;owners[1]=B;owners[2]=C;owners[3]=D;owners[4]=E;
         (wallet,guard)=factory.create(owners,successor);
@@ -70,6 +79,13 @@ contract SafeReserveGuardTest {
             sigs=abi.encodePacked(sigs,bytes32(uint256(uint160(signers[i]))),bytes32(0),uint8(1));
         }
     }
+    function _signed(address to,bytes memory data,uint256 count) private returns(bytes memory sigs){
+        bytes32 h=wallet.getTransactionHash(to,0,data,Enum.Operation.Call,0,0,0,address(0),address(0),wallet.nonce());
+        for(uint256 i=0;i<count;i++){
+            (uint8 v,bytes32 rr,bytes32 ss)=vm.sign(testKeys[i],h);
+            sigs=abi.encodePacked(sigs,rr,ss,v);
+        }
+    }
     function _exec(address to,bytes memory data,bytes memory sigs) private returns(bool){
         return wallet.execTransaction(to,0,data,Enum.Operation.Call,0,0,0,address(0),payable(address(0)),sigs);
     }
@@ -84,6 +100,26 @@ contract SafeReserveGuardTest {
     function _id(uint256 e,uint256 i,bytes32 evidence,bytes32 nonce) private view returns(bytes32){
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
         return keccak256(abi.encode(block.chainid,address(v),address(token),v.purpose(),e,PAYEE,uint256(10),evidence,uint256(0),nonce));
+    }
+    function testActualECDSAQuorumPayloadBindingAndNonceReplay() public {
+        bytes memory binding=abi.encodeCall(guard.bindSuccessor,(1));
+        bytes memory sigs=_signed(address(guard),binding,3);
+        require(_exec(address(guard),binding,sigs)&&wallet.nonce()==1);
+        bytes memory data=_propose(1,3,"E","N");
+        bytes memory two=_signed(address(guard),data,2);
+        vm.expectRevert();_exec(address(guard),data,two);
+        require(wallet.nonce()==1);
+        sigs=_signed(address(guard),data,3);
+        bytes memory altered=_propose(1,4,"E","N");
+        vm.expectRevert();_exec(address(guard),altered,sigs);
+        require(wallet.nonce()==1);
+        require(_exec(address(guard),data,sigs)&&wallet.nonce()==2);
+        vm.expectRevert();_exec(address(guard),data,sigs);
+        require(wallet.nonce()==2);
+        vm.warp(start+2 days);
+        V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
+        v.execute(_id(1,3,"E","N"));
+        require(token.balanceOf(PAYEE)==10&&token.totalSupply()==SUPPLY);
     }
     function testFixedBindingAndNoDeployerFloat() public {
         require(!guard.bound()&&token.totalSupply()==SUPPLY&&token.balanceOf(address(wallet))==0&&token.balanceOf(address(guard))==0);
