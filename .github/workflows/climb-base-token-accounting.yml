@@ -30,3 +30,11 @@ jobs:
           grep -Fx '# pass 8' "$RUNNER_TEMP/base-accounting.log"
           grep -Fx '# fail 0' "$RUNNER_TEMP/base-accounting.log"
           grep -Fx '# skipped 0' "$RUNNER_TEMP/base-accounting.log"
+      - name: Verify proposed bootstrap pilot cap model (eight offline cases)
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap base/token-accounting/bootstrap-pilot.test.mjs | tee "$RUNNER_TEMP/base-bootstrap.log"
+          grep -Fx '# tests 8' "$RUNNER_TEMP/base-bootstrap.log"
+          grep -Fx '# pass 8' "$RUNNER_TEMP/base-bootstrap.log"
+          grep -Fx '# fail 0' "$RUNNER_TEMP/base-bootstrap.log"
+          grep -Fx '# skipped 0' "$RUNNER_TEMP/base-bootstrap.log"
