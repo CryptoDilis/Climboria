@@ -1,0 +1,106 @@
+name: CLIMB Base Slither Static Analysis
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'base/safe-custody/**'
+      - 'base/v3-testnet/**'
+      - '.github/workflows/climb-base-slither.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'base/safe-custody/**'
+      - 'base/v3-testnet/**'
+      - '.github/workflows/climb-base-slither.yml'
+permissions:
+  contents: read
+jobs:
+  scan:
+    name: Slither (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [safe-custody, v3-testnet]
+    defaults:
+      run:
+        working-directory: base/${{ matrix.project }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Fetch exact Safe dependency
+        if: matrix.project == 'safe-custody'
+        run: |
+          set -euo pipefail
+          mkdir -p lib/safe-contracts
+          git -C lib/safe-contracts init
+          git -C lib/safe-contracts fetch --depth=1 https://github.com/safe-fndn/safe-smart-account.git bf943f80fec5ac647159d26161446ac5d716a294
+          git -C lib/safe-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/safe-contracts rev-parse HEAD)" = bf943f80fec5ac647159d26161446ac5d716a294
+      - name: Fetch exact OpenZeppelin dependency
+        run: |
+          set -euo pipefail
+          mkdir -p lib/openzeppelin-contracts
+          git -C lib/openzeppelin-contracts init
+          git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+      - name: Install versioned analyzer
+        run: |
+          set -euo pipefail
+          python -m pip install 'slither-analyzer==0.11.6'
+          test "$(slither --version)" = 0.11.6
+          python -m pip check
+          mkdir -p "$RUNNER_TEMP/climb-slither"
+          python -m pip freeze > "$RUNNER_TEMP/climb-slither/python-dependencies.txt"
+          git rev-parse HEAD > "$RUNNER_TEMP/climb-slither/source-commit.txt"
+          forge --version > "$RUNNER_TEMP/climb-slither/foundry-version.txt"
+      - name: Analyze without suppressing detector findings
+        run: |
+          set -euo pipefail
+          slither . --fail-none --json "$RUNNER_TEMP/climb-slither/report.json" --json-types detectors,list-detectors 2>&1 | tee "$RUNNER_TEMP/climb-slither/scan.log"
+      - name: Validate report and summarize raw detector results
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import collections, json, os, pathlib
+          root = pathlib.Path(os.environ["RUNNER_TEMP"]) / "climb-slither"
+          data = json.loads((root / "report.json").read_text())
+          if data.get("success") is not True or data.get("error"):
+              raise SystemExit("Analyzer did not complete successfully")
+          results = data.get("results")
+          if not isinstance(results, dict):
+              raise SystemExit("Missing analysis results")
+          detectors = results.get("list-detectors")
+          findings = results.get("detectors", [])
+          if not isinstance(detectors, list) or not detectors or not isinstance(findings, list):
+              raise SystemExit("Missing detector inventory or malformed findings")
+          if any(not isinstance(f, dict) or not f.get("check") or not f.get("impact") for f in findings):
+              raise SystemExit("Malformed detector result")
+          counts = collections.Counter(f["impact"] for f in findings)
+          summary = ["## Slither raw findings — REVIEW REQUIRED", "", "Successful analysis is not security clearance. Includes dependency and sibling-fixture findings; no suppressions or exclusions applied by this workflow.", "", "Source: " + (root / "source-commit.txt").read_text().strip(), "", f"Raw findings: {len(findings)}", "", "| Impact | Count |", "| --- | ---: |"]
+          for impact, count in sorted(counts.items()):
+              summary.append(f"| {impact} | {count} |")
+          summary.extend(["", "Review every applicable High/Medium result against exact source and reachability. No testnet or mainnet permission."])
+          report = "\n".join(summary) + "\n"
+          (root / "summary.md").write_text(report)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as out:
+              out.write(report)
+          print(report)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: climb-slither-${{ matrix.project }}
+          path: ${{ runner.temp }}/climb-slither/
+          if-no-files-found: error
+          retention-days: 14
