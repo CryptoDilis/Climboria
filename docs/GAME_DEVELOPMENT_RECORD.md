@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## COMBAT-ONLY PRIORITY: COMMITTED TARGET HP PUSH — 2026-11-27 PHT (PROPOSED)
+
+- Owner explicitly redirected work to combat only. Do not advance loot/inventory in this cycle; #892 is separate and not required for combat. Private cloud QA deferred after Access denial; keep deployed preview disabled, no bypass or production changes.
+- Reviewed isolated preview Worker: attack ACK and polling snapshot existed, but the target had no pushed hit notification. Added server-only preview-hit event to the exact active target session after serialized durable hit commit, containing actor/target session IDs and authoritative HP/damage/downed. No notification for forged packet, denied/cooldown attempt or failed durable commit; no extra storage write. Session expiry/retired target guard; target send failure closes only that session unless existing room quarantine is triggered by disconnect failure. Attacker ACK and existing snapshots preserved. Transient event is not a durable receipt; reconnect snapshot remains authoritative. No public map or browser integration, no enablement.
+- Added mocked WebSocket regression and actual local workerd/SQLite smoke assertion (pending CI). EXACT NEXT: verify exact-head CI and merge only green, then server-committed respawn notification and local combat death/reconnect acceptance; private cloud test remains deferred. Game combat only.
+
+---
+
 ## PRIVATE COMBAT EDGE CONFIGURED; BOUNDED PREFLIGHT — 2026-11-27 PHT
 
 - Owner screenshots confirm exact custom hostname attached, workers.dev URLs OFF, Zero Trust Free and One-time PIN selected, authorized browser receives preview-disabled. Cookie-free curl GET / returned 302 to configured Access login host; POST /ticket and /ws upgrade probe returned 302. [Owner evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7206474057). Browser refresh did not prove rate limiting. Dashboard rule is Block/Active on exact hostname; quota warning 1/1 is capacity. Unauthorized email allowlist denial, rate enforcement and cost cap remain unverified.
