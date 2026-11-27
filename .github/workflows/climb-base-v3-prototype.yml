@@ -139,6 +139,8 @@ jobs:
           retention-days: 14
       - name: Test synthetic canonical legacy manifest evidence
         run: node --test legacy-canonical-evidence.test.mjs
+      - name: Test synthetic indexed legacy allocation-sum proofs
+        run: node --test legacy-sum-proof.test.mjs
       - name: Test V3 read-only estimator
         run: node --test estimate-creation.test.mjs
       - name: Test unsigned review binding
