@@ -80,6 +80,8 @@ try{
  assert.equal((await a.send({type:'attack',targetId:bid,damage:999})).ok,false);
  const hit=await a.send({type:'attack',targetId:bid});
  assert.equal(hit.ok,true);assert.equal(hit.health,495);
+ const pushed=await b.next(m=>m.type==='preview-hit');
+ assert.deepEqual(pushed,{type:'preview-hit',actorId:aid,targetId:bid,health:495,damage:5,downed:false});
  assert.equal((await b.send({type:'snapshot'})).snapshot.health,495);
  assert.equal((await a.send({type:'attack',targetId:bid})).ok,false);
  b.close();
@@ -117,5 +119,5 @@ try{
  assert.equal(denied.status,503);
  const outer=await mf.dispatchFetch('https://preview.invalid/ticket',{method:'POST'});
  assert.equal(outer.status,503);
- console.log('PASS: actual local workerd WebSockets, private SQLite DO tickets, committed HP, reconnect/restart, persistent auth/admission caps and disabled-by-default admission');
+ console.log('PASS: actual local workerd WebSockets, private SQLite DO tickets, committed HP push to target, reconnect/restart, persistent auth/admission caps and disabled-by-default admission');
 }finally{await stop();await rm(dir,{recursive:true,force:true})}

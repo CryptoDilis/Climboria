@@ -121,6 +121,19 @@ export class PreviewCombatRoom{
    }
   }
  }
+ // Push only a server-committed hit to its exact still-active target.
+ // The result comes from the serialized runtime after durable HP commit.
+ // No client-supplied damage, extra storage operation or broadcast to other rooms.
+ notifyCommittedHit(actorId,result){
+  if(!result?.ok||typeof result.targetId!=='string'||result.targetId===actorId||
+     result.damage!==5||!Number.isInteger(result.health)||result.health<0||result.health>500||
+     result.health%5!==0||result.downed!==(result.health===0))return;
+  const entry=this.sockets.get(result.targetId);
+  if(!entry||this.quarantined||Date.now()>=entry.expiresAt)return;
+  try{entry.socket.send(JSON.stringify({type:'preview-hit',actorId,targetId:result.targetId,
+   health:result.health,damage:result.damage,downed:result.downed}))}
+  catch{const work=this.close(result.targetId,1011,'preview-hit-send-failed');this.state.waitUntil?.(work)}
+ }
  async quarantine(){
   this.quarantined=true;
   if(this.timer!==null){clearTimeout(this.timer);this.timer=null}
@@ -192,6 +205,9 @@ export class PreviewCombatRoom{
       if(!entry)return;
       if(Date.now()>=entry.expiresAt){await this.close(session.id,1000,'preview-session-expired');return;}
       const result=await session.receive(event.data);
+      // Even if the attacker disconnected while storage was committing,
+      // a committed hit must still reach the original active target.
+      this.notifyCommittedHit(session.id,result);
       if(!this.sockets.has(session.id))return;
       socket.send(JSON.stringify({type:'result',...result}));
       if(['room-quarantined','preview-budget-denied'].includes(result.reason)){await this.quarantine();return}

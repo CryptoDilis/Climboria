@@ -74,7 +74,14 @@ test('mock WebSocket transport exercises real preview admission, attack, reconne
   assert.deepEqual(roster(a),[aid,bid]);assert.deepEqual(roster(b),[aid,bid]);
   assert.equal(h.timers.size,1);
   assert.equal((await h.send(a,{type:'attack',targetId:bid,damage:500})).ok,false);
+  assert.equal(b.inbox.filter(p=>p.type==='preview-hit').length,0);
   assert.equal((await h.send(a,{type:'attack',targetId:bid})).health,495);
+  assert.deepEqual(b.inbox.filter(p=>p.type==='preview-hit'),[
+   {type:'preview-hit',actorId:aid,targetId:bid,health:495,damage:5,downed:false}
+  ]);
+  assert.equal(a.inbox.filter(p=>p.type==='preview-hit').length,0);
+  assert.equal((await h.send(a,{type:'attack',targetId:bid})).ok,false);
+  assert.equal(b.inbox.filter(p=>p.type==='preview-hit').length,1);
   assert.equal((await h.send(b,{type:'snapshot'})).snapshot.health,495);
   assert.ok((await h.send(b,{type:'input',x:1,z:0,sequence:0,sprint:true})).ok);
   await h.advance(100);
@@ -98,6 +105,7 @@ test('combat storage failure closes every socket, denies new admission and resta
   h.fail(true);
   const result=await h.send(a,{type:'attack',targetId:joined(b).id});
   assert.equal(result?.reason,'room-quarantined');
+  assert.equal(b.inbox.some(p=>p.type==='preview-hit'),false,'failed commit cannot notify target');
   assert.equal(room.quarantined,true);assert.equal(a.closed,true);assert.equal(b.closed,true);
   assert.equal(room.sockets.size,0);assert.equal(h.timers.size,0);
   const blocked=await room.fetch(request('/_ticket',{method:'POST',body:JSON.stringify({userId:A})}));
