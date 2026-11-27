@@ -5,10 +5,10 @@ import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {V3FounderVesting} from "../src/ClimbV3TestToken.sol";
 import {V3GameRewardFixture} from "../src/V3GameRewardFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "../src/V3EpochSpendFixture.sol";
-import {V3BoundedLegacyFixture} from "../src/V3BoundedLegacyFixture.sol";
+import {V3DeferredLegacyFixture} from "../src/V3DeferredLegacyFixture.sol";
 import {IV3SyntheticPool} from "../src/V3LiquidityPolicyFixture.sol";
 import {V3DeferredLiquidityFixture} from "../src/V3DeferredLiquidityFixture.sol";
-import {V3AtomicSuccessorFixture,V3SuccessorTestToken,V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorLegacyConfig,IV3SyntheticPoolBuilder} from "../src/V3AtomicSuccessorFixture.sol";
+import {V3AtomicSuccessorFixture,V3SuccessorTestToken,V3SuccessorConfig,V3SuccessorLiquidityConfig,IV3SyntheticPoolBuilder} from "../src/V3AtomicSuccessorFixture.sol";
 interface VmSuccessor {
     function chainId(uint256) external;
     function warp(uint256) external;
@@ -31,6 +31,7 @@ contract SuccessorMockCustody is IV3CustodyEpochFixture {
         return v.propose(recipient,amount,evidence,0,nonce);
     }
     function scheduleLiquidity(V3DeferredLiquidityFixture v,uint256 deadline) external returns(bytes32){return v.schedule(1000,500,50,deadline,"LP");}
+    function scheduleLegacy(V3DeferredLegacyFixture v,bytes32 digest,uint256 expiry) external {v.schedule(digest,expiry);}
     function rotate() external {epoch++;}
 }
 contract SuccessorMockPool is ERC20 {
@@ -68,9 +69,6 @@ contract V3AtomicSuccessorTest {
         cfg.gamingWalletMonthlyCap=1000;
         cfg.founder=FOUNDER;cfg.distributor=DISTRIBUTOR;cfg.control=control;cfg.start=block.timestamp+1 days;
         cfg.liquidity=V3SuccessorLiquidityConfig(quote,new SuccessorMockPoolBuilder(),address(new SuccessorCustodyDestination()),1000);
-        cfg.legacy.opens=cfg.start;cfg.legacy.deadline=cfg.start+30 days;cfg.legacy.closure=cfg.start+44 days;
-        cfg.legacy.cap=100;cfg.legacy.campaign="TEST_CAMPAIGN";
-        cfg.legacy.ids.push("CLAIM");cfg.legacy.recipients.push(CLAIMANT);cfg.legacy.amounts.push(100);
     }
     function testAtomicSevenDestinationsAndZeroFloat() public {
         V3SuccessorTestToken token=factory.create(cfg);
@@ -87,8 +85,8 @@ contract V3AtomicSuccessorTest {
         require(address(V3EpochSpendFixture(factory.vaults(3)).token())==address(token));
         require(address(V3EpochSpendFixture(factory.vaults(4)).token())==address(token));
         require(address(V3EpochSpendFixture(factory.vaults(5)).token())==address(token));
-        V3BoundedLegacyFixture legacy=V3BoundedLegacyFixture(factory.vaults(6));
-        require(address(legacy.token())==address(token)&&legacy.activated()&&legacy.allocated()==100);
+        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(factory.vaults(6));
+        require(address(legacy.token())==address(token)&&!legacy.activated()&&legacy.allocated()==0&&address(legacy.custody())==address(control));
     }
     function testFactoryAndTokenCannotIssueTwice() public {
         V3SuccessorTestToken token=factory.create(cfg);
@@ -101,15 +99,16 @@ contract V3AtomicSuccessorTest {
         require(!factory.used()&&address(factory.token())==address(0));
         factory.create(cfg);
     }
-    function testInvalidLegacyManifestRollsBackWholeCreation() public {
-        cfg.legacy.amounts[0]=101;
-        vm.expectRevert(V3BoundedLegacyFixture.InvalidManifest.selector);factory.create(cfg);
+    function testInvalidLiquidityConfigRollsBackWholeCreation() public {
+        cfg.liquidity.trancheCap=0;
+        vm.expectRevert(V3DeferredLiquidityFixture.InvalidConfig.selector);factory.create(cfg);
         require(!factory.used()&&address(factory.token())==address(0)&&factory.vaults(0)==address(0));
-        cfg.legacy.amounts[0]=100;require(factory.create(cfg).totalSupply()==SUPPLY);
+        cfg.liquidity.trancheCap=1000;require(factory.create(cfg).totalSupply()==SUPPLY);
     }
     function testIntegratedReleaseLiquidityClaimAndBurnConservation() public {
         V3SuccessorTestToken token=factory.create(cfg);
         _scheduleLiquidity();
+        _scheduleLegacy();
         V3EpochSpendFixture e=V3EpochSpendFixture(factory.vaults(3));
         V3EpochSpendFixture c=V3EpochSpendFixture(factory.vaults(4));
         bytes32 a=control.propose(e,PAYEE,"E","A",10);
@@ -118,12 +117,38 @@ contract V3AtomicSuccessorTest {
         _executeLiquidity(token);
         vm.expectRevert(bytes4(keccak256("ExpenseAlreadyConsumed()")));c.execute(b);
         _claimGameReward();
-        V3BoundedLegacyFixture legacy=V3BoundedLegacyFixture(factory.vaults(6));
+        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(factory.vaults(6));
+        _activateLegacy(legacy);
         vm.prank(CLAIMANT);legacy.claim("CLAIM");
         require(token.totalSupply()==SUPPLY&&token.balanceOf(PAYEE)==210&&token.balanceOf(DISTRIBUTOR)==0&&token.balanceOf(CLAIMANT)==100);
         vm.prank(CLAIMANT);token.burn(10);
-        vm.warp(cfg.legacy.closure);legacy.closeAndBurn();
+        vm.warp(legacy.appealEnd());
+        control.scheduleLegacy(legacy,legacy.closureDigest("REVIEW"),block.timestamp+7 days);
+        vm.warp(block.timestamp+2 days);legacy.finalize("REVIEW");
         require(token.totalSupply()==SUPPLY-10-(legacy.RESERVE()-100)&&legacy.paid()+legacy.burned()==legacy.RESERVE());
+    }
+    function _manifest() private pure returns(bytes32[] memory ids,address[] memory recipients,uint256[] memory amounts){
+        ids=new bytes32[](1);recipients=new address[](1);amounts=new uint256[](1);
+        ids[0]="CLAIM";recipients[0]=CLAIMANT;amounts[0]=100;
+    }
+    function _scheduleLegacy() private {
+        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(factory.vaults(6));
+        (bytes32[] memory ids,address[] memory recipients,uint256[] memory amounts)=_manifest();
+        control.scheduleLegacy(legacy,legacy.manifestDigest("TEST_CAMPAIGN",100,ids,recipients,amounts),block.timestamp+7 days);
+    }
+    function _activateLegacy(V3DeferredLegacyFixture legacy) private {
+        (bytes32[] memory ids,address[] memory recipients,uint256[] memory amounts)=_manifest();
+        legacy.activate("TEST_CAMPAIGN",100,ids,recipients,amounts);
+    }
+    function testDeferredLegacyDoesNotBlockIssuanceOrRequireEarlyManifest() public {
+        V3SuccessorTestToken token=factory.create(cfg);
+        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(factory.vaults(6));
+        vm.warp(block.timestamp+365 days);
+        require(!legacy.activated()&&token.balanceOf(address(legacy))==legacy.RESERVE());
+        vm.expectRevert(V3DeferredLegacyFixture.NotReady.selector);legacy.finalize("REVIEW");
+        _scheduleLegacy();
+        vm.warp(block.timestamp+2 days);_activateLegacy(legacy);
+        require(legacy.activated()&&legacy.deadline()==block.timestamp+30 days&&token.totalSupply()==SUPPLY);
     }
     bytes32 private lpAction;
     function _scheduleLiquidity() private {

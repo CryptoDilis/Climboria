@@ -5,7 +5,8 @@ import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {V3FounderVesting} from "./ClimbV3TestToken.sol";
 import {V3GameRewardFixture} from "./V3GameRewardFixture.sol";
 import {V3EpochPolicyFactory,IV3CustodyEpochFixture} from "./V3EpochSpendFixture.sol";
-import {V3BoundedLegacyFixture,IV3BurnableAsset} from "./V3BoundedLegacyFixture.sol";
+import {IV3BurnableAsset} from "./V3BoundedLegacyFixture.sol";
+import {V3DeferredLegacyFixture} from "./V3DeferredLegacyFixture.sol";
 import {IV3SyntheticPool} from "./V3LiquidityPolicyFixture.sol";
 import {V3DeferredLiquidityFixture} from "./V3DeferredLiquidityFixture.sol";
 
@@ -46,16 +47,6 @@ struct V3SuccessorLiquidityConfig {
     address custody;
     uint256 trancheCap;
 }
-struct V3SuccessorLegacyConfig {
-    uint256 opens;
-    uint256 deadline;
-    uint256 closure;
-    uint256 cap;
-    bytes32 campaign;
-    bytes32[] ids;
-    address[] recipients;
-    uint256[] amounts;
-}
 struct V3SuccessorConfig {
     address founder;
     address distributor;
@@ -63,7 +54,6 @@ struct V3SuccessorConfig {
     uint256 start;
     uint256 gamingWalletMonthlyCap;
     V3SuccessorLiquidityConfig liquidity;
-    V3SuccessorLegacyConfig legacy;
 }
 
 // Separate immutable deployment helpers avoid putting all child creation bytecode
@@ -80,9 +70,8 @@ contract V3SuccessorConditionalDeployer {
         IV3SyntheticPool p=cfg.builder.createPool(asset,cfg.quote);
         v=new V3DeferredLiquidityFixture(asset,cfg.quote,p,control,cfg.custody,cfg.trancheCap);
     }
-    function legacy(V3SuccessorTestToken asset,V3SuccessorLegacyConfig calldata cfg) external returns(V3BoundedLegacyFixture v){
-        bytes32 commitment=keccak256(abi.encode("CLIMB_V3_SYNTHETIC_LEGACY_V1",block.chainid,address(asset),cfg.opens,cfg.deadline,cfg.closure,cfg.campaign,cfg.cap,cfg.ids,cfg.recipients,cfg.amounts));
-        v=new V3BoundedLegacyFixture(IV3BurnableAsset(address(asset)),commitment,cfg.opens,cfg.deadline,cfg.closure);
+    function legacy(V3SuccessorTestToken asset,IV3CustodyEpochFixture control) external returns(V3DeferredLegacyFixture v){
+        v=new V3DeferredLegacyFixture(IV3BurnableAsset(address(asset)),control);
     }
 }
 
@@ -115,7 +104,6 @@ contract V3AtomicSuccessorFixture {
         _deployPolicies(asset,cfg);
         // No supply before all policy constructors succeed; no intermediate EOA/factory float.
         asset.issue(vaults);
-        _activateLegacy(cfg.legacy);
         assert(asset.balanceOf(address(this))==0&&asset.balanceOf(msg.sender)==0&&asset.balanceOf(cfg.founder)==0&&asset.balanceOf(cfg.distributor)==0);
         emit Created(address(asset),vaults);
     }
@@ -125,9 +113,6 @@ contract V3AtomicSuccessorFixture {
         vaults[0]=f;vaults[1]=g;
         vaults[2]=address(conditional.liquidity(asset,cfg.liquidity,cfg.control));
         vaults[3]=address(e.ecosystem());vaults[4]=address(e.community());vaults[5]=address(e.treasury());
-        vaults[6]=address(conditional.legacy(asset,cfg.legacy));
-    }
-    function _activateLegacy(V3SuccessorLegacyConfig calldata cfg) private {
-        V3BoundedLegacyFixture(vaults[6]).activate(cfg.ids,cfg.recipients,cfg.amounts,cfg.cap,cfg.campaign);
+        vaults[6]=address(conditional.legacy(asset,cfg.control));
     }
 }
