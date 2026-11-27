@@ -7,11 +7,11 @@ import {expected} from '../v3-testnet/verify-creation.mjs';
 const need=(ok,why)=>{if(!ok)throw Error(why);};
 const qty=x=>{need(typeof x==='string'&&/^0x(?:0|[1-9a-f][0-9a-f]*)$/.test(x)&&x.length<=66,'INVALID_QUANTITY');return BigInt(x);};
 const dec=x=>{need(typeof x==='string'&&/^(0|[1-9][0-9]{0,77})$/.test(x),'INVALID_DECIMAL');return BigInt(x);};
-const order=['setupFactory','successorFactory','syntheticQuote','syntheticPoolBuilder','syntheticLPDestination','initializeSafeAndGuard','approveExactSafeHash','approveExactSafeHash','approveExactSafeHash','quorumAtomicIssuance'];
+const order=['setupFactory','successorFactory','syntheticQuote','syntheticPoolBuilder','syntheticLPDestination','initializeSafeAndGuard','quorumAtomicIssuance'];
 const read=p=>JSON.parse(readFileSync(p,'utf8'));
 export function projectBudget(local,obs,estimates,build){
  need(build?.status==='FROZEN_ARTIFACTS_MATCH_NO_APPROVAL'&&obs?.sourceSha===build.sourceSha&&obs.chainId===84532&&obs.status==='DUAL_RPC_HISTORICAL_AND_CHAIN_OBSERVATION_ONLY_NO_GO','OBSERVATION_SOURCE_MISMATCH');
- need(local?.status==='LOCAL_ANVIL_REHEARSAL_ONLY'&&local.chainId===84532&&local.testOnly===true&&local.totalSupplyRaw==='888888888000000'&&/^[a-f0-9]{40}$/.test(local.sourceSha),'INVALID_REHEARSAL');
+ need(local?.status==='LOCAL_ANVIL_REHEARSAL_ONLY'&&local.chainId===84532&&local.testOnly===true&&local.signatureMode==='ECDSA_ONLY'&&local.totalSupplyRaw==='888888888000000'&&/^[a-f0-9]{40}$/.test(local.sourceSha),'INVALID_REHEARSAL');
  need(Array.isArray(local.transactions)&&local.transactions.length===order.length,'REHEARSAL_STEPS');
  const localLimit=local.localBlockGasLimit,publicLimit=qty(obs.commonFinalizedBlock.gasLimit);
  need(Number.isSafeInteger(localLimit)&&localLimit>0,'LOCAL_LIMIT');
@@ -24,15 +24,15 @@ export function projectBudget(local,obs,estimates,build){
   need(t.name===order[i]&&t.blockNumber===i+1&&t.status==='success'&&Number.isSafeInteger(t.gasUsed)&&t.gasUsed>0&&t.gasUsed<localLimit,'REHEARSAL_STEP_MISMATCH');
   const measured=BigInt(t.gasUsed),basis=i===0&&gas1>measured?gas1:measured;
   const bufferedGas=(basis*125n+99n)/100n;
-  return {name:t.name,localGasUsed:String(measured),basisGas:String(basis),bufferedGas:String(bufferedGas),fitsObservedBlockGasLimit:bufferedGas<=publicLimit,illustrativeBufferedL2FeeWei:String(bufferedGas*price),payerType:i>=6&&i<=8?'one of three approving owners':'deployer'};
+  return {name:t.name,localGasUsed:String(measured),basisGas:String(basis),bufferedGas:String(bufferedGas),fitsObservedBlockGasLimit:bufferedGas<=publicLimit,illustrativeBufferedL2FeeWei:String(bufferedGas*price),payerType:'deployer'};
  });
  const sum=xs=>xs.reduce((a,b)=>a+dec(b.illustrativeBufferedL2FeeWei),0n);
  const roles=obs.priorFixture.previousRoles;
  const payer=roles.find(x=>x.role==='priorDeployer');
  need(payer?.address===expected.payer&&payer.codeState==='EMPTY','PRIOR_PAYER_CODE');
  const balance=dec(payer.balanceWei),payerFee=sum(stages.filter(x=>x.payerType==='deployer'));
- const signerFee=sum(stages.filter(x=>x.payerType!=='deployer'));
- return {status:'TESTNET_FEE_OBSERVATION_ONLY_NO_GO',sourceSha:build.sourceSha,localRehearsalSource:local.sourceSha,chainId:84532,commonFinalizedBlock:obs.commonFinalizedBlock,stageOne:{historicalPayer:expected.payer,publicGasEstimates:estimates.map(String),creationTemplateSha256:build.contracts[0].creationSha256},indicativeGasPricesWei:prices.map(String),planningGasBufferPercent:25,stages,illustrativeTotalL2FeeWei:String(payerFee+signerFee),illustrativeDeployerL2FeeWei:String(payerFee),illustrativeThreeApprovalL2FeeWei:String(signerFee),priorDeployerObservedBalanceWei:String(balance),priorDeployerCoversIllustrativeL2Only:balance>=payerFee,priorOwners:roles.filter(x=>x.role.startsWith('priorSigner')).map(x=>({role:x.role,balanceWei:x.balanceWei,codeState:x.codeState})),limitations:['First-stage exact frozen creation estimate only, using prior public payer for simulation; no successor role selection.','Remaining stages use local mined gas, not public estimates; 25% is a planning assumption, not a guaranteed margin.','Excludes L1 data fees, operator fees, future price changes, funding transfers and retries. No total fee ceiling established.','Prior role ownership and independence not verified. No signature, transaction submission or deployment approval.']};
+ const signerFee=0n; // Offline signatures incur no separate on-chain approval transaction.
+ return {status:'TESTNET_FEE_OBSERVATION_ONLY_NO_GO',sourceSha:build.sourceSha,localRehearsalSource:local.sourceSha,chainId:84532,commonFinalizedBlock:obs.commonFinalizedBlock,stageOne:{historicalPayer:expected.payer,publicGasEstimates:estimates.map(String),creationTemplateSha256:build.contracts[0].creationSha256},indicativeGasPricesWei:prices.map(String),planningGasBufferPercent:25,stages,illustrativeTotalL2FeeWei:String(payerFee+signerFee),illustrativeDeployerL2FeeWei:String(payerFee),illustrativeThreeApprovalL2FeeWei:String(signerFee),signatureMode:'ECDSA_ONLY',priorDeployerObservedBalanceWei:String(balance),priorDeployerCoversIllustrativeL2Only:balance>=payerFee,priorOwners:roles.filter(x=>x.role.startsWith('priorSigner')).map(x=>({role:x.role,balanceWei:x.balanceWei,codeState:x.codeState})),limitations:['First-stage exact frozen creation estimate only, using prior public payer for simulation; no successor role selection.','Remaining stages use local mined gas, not public estimates; 25% is a planning assumption, not a guaranteed margin.','Excludes L1 data fees, operator fees, future price changes, funding transfers and retries. No total fee ceiling established.','Prior role ownership and independence not verified. No signature, transaction submission or deployment approval.']};
 }
 export async function observeBudget(artifacts,local,fetchFn=fetch,now=Math.floor(Date.now()/1000)){
  const build=checkFrozenArtifacts(artifacts);
