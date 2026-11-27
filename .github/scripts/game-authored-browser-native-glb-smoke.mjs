@@ -20,7 +20,7 @@ const renderer=new T.WebGLRenderer({antialias:false});renderer.setSize(320,200);
 document.querySelector('#scene').append(renderer.domElement);
 scene.add(new T.HemisphereLight(0xffffff,0x777777,1.5));
 const gltf=await new T.GLTFLoader().loadAsync('/assets/characters/Climboria_Jarrell.glb');
-const root=gltf.scene;let meshes=0;root.traverse(o=>{if(o.isMesh)meshes++});
+const root=new T.Group();root.add(gltf.scene);let meshes=0;root.traverse(o=>{if(o.isMesh)meshes++});
 const height=new T.Box3().setFromObject(root).getSize(new T.Vector3()).y;
 if(!Number.isFinite(height)||height<=0||!meshes)throw Error('Missing actual Jarrell GLB geometry');
 root.scale.setScalar(1.9/height);root.updateMatrixWorld(true);
@@ -30,7 +30,7 @@ let hud;
 const projection=createAuthoredLocalCharacterProjection({root,footOffset:offset,renderHud:value=>hud=value});
 function renderCharacter(frame){
  projection.render(frame);
- if(root.visible){camera.position.set(root.position.x+4,root.position.y+3,root.position.z+6);camera.lookAt(root.position.x,root.position.y+.9,root.position.z)}
+ if(root.visible){camera.position.set(root.position.x+4,root.position.y+3,root.position.z+6);camera.lookAt(root.position.x,frame.snapshot.position.y+.9,root.position.z)}
  renderer.render(scene,camera);
 }
 const token=location.hash.slice(1);
@@ -139,6 +139,7 @@ try{
  await a.tap('#attack');await a.ready();
  assert.ok(await a.page.evaluate(()=>qa.frames.some(p=>p.type==='result'&&p.reason==='target-out-of-range')));
  assert.equal((await b.state()).snapshot.health,495);
+ assert.equal((await b.scene()).hud.health,495);
  await b.page.evaluate(()=>qa.ui.close());
  assert.equal((await b.state()).status,'closed');
  const closed=await b.scene();assert.equal(closed.visible,false);assert.equal(closed.triangles,0);assert.equal(closed.hud.controlsEnabled,false);
