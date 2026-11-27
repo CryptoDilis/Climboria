@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## NATIVE BROWSER COMBAT ACCEPTANCE — GREEN PRIOR HEAD, RECONCILED — 2026-11-27 PHT
+
+- [PR #922](https://github.com/CryptoDilis/Climboria/pull/922) exact prior head `68e4f84e60912d19c41f486a3daf9cae86ddd124`: [Validate 45945502523](https://github.com/CryptoDilis/Climboria/actions/runs/45945502523) and [Gameplay 45945502508](https://github.com/CryptoDilis/Climboria/actions/runs/45945502508) SUCCESS. Job 140329210856 explicitly passed isolated browser controls, native authored combat sockets and existing desktop/mobile gameplay smoke; screenshots uploaded, not visually inspected in this cycle. No browser security bypass, real-account auth, cloud deployment or production 3D integration.
+- Reconciled onto main `b64f5febbbc7988f49fa393b7fce657a9cf341a4` with two-parent commit `c3bd4f5b26df47eded88a8397ede90f91a3fe66b`; main drift was entirely unrelated Base/DEX/homepage/whitepaper work, no overlapping Game paths. Retained all four PR files and current main tree. Fresh exact-head CI required after this record update.
+- Independent [PR #925](https://github.com/CryptoDilis/Climboria/pull/925) at `90caf5a5f8b1ff8e66e15a8761006955ed2234a6` had 4/5 green (Authority 45946244223, Gateway 45946244151, Runtime 45946244140, Validate 45946244105); Gameplay 45946244195 pending when checked. It is render-only, not an actual GLB scene mount.
+- EXACT NEXT: verify fresh #922 Validate/Gameplay exact head and merge only green; reconcile #925 with merged main retaining both Game records and independent changes, re-run its five checks; then actual dedicated GLB root browser acceptance. No public combat enablement, production deployment, or loot work.
+
+---
+
 ## NATIVE BROWSER LOCAL NETWORK ACCESS COUNTER-FIX — 2026-11-27 PHT
 
 - #922 exact head e1cdfb262910eddfc1292f3d4b79c521b5dfb102: Validate 45945239729 SUCCESS; Gameplay 45945239701 FAILURE, job 140328326685. Simulated controls passed. Chromium explicitly reported net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS before the native handshake; no page errors, close 1006. Main gameplay smoke skipped.
