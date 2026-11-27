@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## PLAYER-DRIVEN PROFESSIONS, EXPEDITION DEPTH AND IMMERSION APPROVED — 2026-11-27 PHT
+
+- Owner approved all ten proposed additions. R10.1–R10.11 in [Game player experience backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 1c5322fc7403216aaad8e736b24f08dd93ff151f; root P4 checklist update 19166c3b30a1b014a6628b5cc0223fcebba1977d. Scope: Player Job Board, merchant caravans, backpack weight/capacity, equipment inspection, environmental tracking, player shops/market stalls, combat training ground, expedition records, treasure recovery expeditions and environmental audio. All implementation items unchecked. Reuse existing R1–R9 systems and preserve original soundtrack, gameplay, privacy, no magic/no global character level, browser-first/mobile performance.
+- Proposed delivery: small nonfinancial slices first after their dependencies; token-funded jobs and shops require existing verified Base, inventory, settlement and security/compliance gates. Tracking uses coarse expiring clues, no exact player location; inspection/records honor privacy. Treasure recovery preserves existing planned death/drop rules, not a new live grant. No funds, deployment or runtime change authorized.
+- NEXT remains owner-directed: complete and verify current Game task, then prioritize autonomous AI adventurers R5A subject to required stability gates. R10 follows in dependency order without replacing existing work or global product priorities. Documentation only; no changes to other workstreams.
+
+---
+
 ## SURVIVAL DEPTH AND PLAYER-FUNDED KOS BOUNTY BOARD — 2026-11-27 PHT
 
 - Owner approved eight additional gameplay ideas: revenge/rivalry, hidden treasure clues, grounded survival and cooking, natural events, reputation, equipment provenance, professions, rescue/carry. Added R8.1–R8.9 and R9.1–R9.9 in [Game player experience backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 62c3774a9291bb81ca1e86e266d42aef05b9ba92; root P4 checklist update 14c7e5630f357548539fedb5f27ab710892822a0. Preserve prior tasks, no magic and no traditional global level.
@@ -3145,6 +3153,12 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 ---
 
 
+## AUTHORED PILOT 5/5 GREEN — MAIN HISTORY RECONCILIATION — 2026-11-27 PHT
+
+- #938 exact head `bb7790402d98d449378546a35caa74c75b798075` terminal SUCCESS: [Authority](https://github.com/CryptoDilis/Climboria/actions/runs/45954458097), [Gateway](https://github.com/CryptoDilis/Climboria/actions/runs/45954458090), [Runtime](https://github.com/CryptoDilis/Climboria/actions/runs/45954458162), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/45954458055), [Gameplay](https://github.com/CryptoDilis/Climboria/actions/runs/45954458092). Concurrent main `387777b46395dd8012a17d046f8ebaa32bcf3024` changed documentation only; only overlapping path is this record. Preserve main history and append all pilot-only history. No pilot code or release gate changed. Fresh exact-head CI required before merge.
+- NEXT: merge #938 after fresh green; reconcile #940 renderer and real server expiry checks; then prioritize R5A.1–R5A.9 one autonomous NPC. Authorized edge/real-account and physical-device QA remain open; no public PvP or deployment.
+
+
 ---
 
 ## PRIVATE PILOT RECONCILIATION AFTER GREEN PARENT — 2026-11-27 PHT
@@ -3182,3 +3196,9 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - EXACT NEXT: finish #938 full CI and merge when verified, reconcile this stacked branch to merged main and fresh CI. Then actual private pilot GLB browser integration and server-side expiry acceptance, authorized edge/real-account QA. No public PvP, deploy, loot or production saves.
 
 ---
+
+
+## PARALLEL PRIVATE PILOT RENDERER CI — 2026-11-27 PHT
+
+- #938 refreshed head f34261ac7578f98862e70095514e2ca528dcdcc7: Authority 45955902077, Gateway 45955902098, Runtime 45955902033, Validate 45955902095 SUCCESS; Gameplay 45955902080 native controls/socket/GLB steps passed, full smoke pending at check. Parent head untouched. #940 reconciled on parent and main 094fffd8dfb40b90488032fc59bef3f1c07bfdab, preserving main wallet changes and both histories. Keep current main README/backlog, already documenting R5A priority. Retain renderer and real server expiry tests. Draft for parallel CI only, no public PvP or deployment.
+- NEXT: finish #938 green/merge; reconcile #940 on resulting main and verify fresh CI, then prioritize one R5A autonomous NPC. Real-account/authorized edge and physical-device acceptance open.
