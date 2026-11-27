@@ -881,7 +881,7 @@ jobs:
               const desktopTable=await desktopDex.locator('#markets .tablewrap table').evaluate(el=>({width:el.getBoundingClientRect().width,minWidth:getComputedStyle(el).minWidth}));
               if(desktopTable.width<600)throw new Error('Desktop market table width unexpectedly changed: '+JSON.stringify(desktopTable));
               if(!await desktopDex.locator('#evmMarkets .tablewrap').isVisible()||await desktopDex.locator('#baseMobileCards').isVisible())throw new Error('Desktop Base market table must remain visible and Base mobile cards hidden');
-              const baseFirst=await desktopDex.evaluate(()=>document.querySelector('#evmMarkets').getBoundingClientRect().left<document.querySelector('#markets').getBoundingClientRect().left);
+              const baseFirst=await desktopDex.evaluate(()=>document.querySelector('#evmMarkets').getBoundingClientRect().bottom<=document.querySelector('#markets').getBoundingClientRect().top&&document.querySelector('#evmMarkets').getBoundingClientRect().width>=document.querySelector('#markets').getBoundingClientRect().width-1);
                if(!baseFirst)throw new Error('Base market panel must lead on desktop');
                await desktopDex.close();
               console.log('PASS compact mobile DEX/Swap navigation, Solana card tap/mint selection, desktop market table regression, candlestick defaults, 390px and 360px overflow and first-fold checks.');
