@@ -8,7 +8,8 @@ import {SafeReserveFactoryFixture,SafeReserveGuardFixture} from "../src/SafeRese
 import {V3AtomicSuccessorFixture,V3SuccessorConditionalDeployer,V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorTestToken,IV3SyntheticPoolBuilder} from "v3-src/V3AtomicSuccessorFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "v3-src/V3EpochSpendFixture.sol";
 import {V3DeferredLiquidityFixture} from "v3-src/V3DeferredLiquidityFixture.sol";
-import {V3DeferredLegacyFixture} from "v3-src/V3DeferredLegacyFixture.sol";
+import {V3LegacyProofClaimFixture} from "v3-src/V3LegacyProofClaimFixture.sol";
+import {V3LegacyProofVerifierFixture as LegacyVerifier} from "v3-src/V3LegacyProofVerifierFixture.sol";
 import {IV3SyntheticPool} from "v3-src/V3LiquidityPolicyFixture.sol";
 interface VmReserveGuard {
     function chainId(uint256) external;
@@ -235,21 +236,29 @@ contract SafeReserveGuardTest {
         _quorum(abi.encodeCall(guard.cancelLegacy,(1,2)));
         require(wallet.nonce()==n+1);
     }
+    function _legacyRow() private pure returns(LegacyVerifier.Row memory){
+        return LegacyVerifier.Row(bytes32(uint256(11)),bytes32(uint256(21)),PAYEE,100,100,bytes32(uint256(31)));
+    }
+    function _legacyCommitment(V3LegacyProofClaimFixture legacy) private view returns(LegacyVerifier.Commitment memory c){
+        bytes32 domain=sha256("CLIMB_BASE_LEGACY_BINARY_SUM_TEST_V2");
+        LegacyVerifier.Row memory r=_legacyRow();
+        bytes32 leaf=sha256(abi.encodePacked(domain,bytes1(0x01),bytes32(uint256(1)),uint256(0),r.sourceAccount,r.sourceOwner,r.recipient,r.sourceAmount,r.award,r.evidenceHash));
+        c=LegacyVerifier.Commitment(bytes32(uint256(1)),bytes32(uint256(2)),address(legacy.token()),address(legacy),1,100,100,
+            sha256(abi.encodePacked(domain,bytes1(0x04),bytes32(uint256(1)),bytes32(uint256(2)),uint256(84532),address(legacy.token()),address(legacy),uint256(1),uint256(100),leaf,uint256(100))));
+    }
     function testLiquidityAndLegacySchedulingThroughActualSafe() public {
         _bind();
         V3DeferredLiquidityFixture l=V3DeferredLiquidityFixture(successor.vaults(2));
-        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(successor.vaults(6));
+        V3LegacyProofClaimFixture legacy=V3LegacyProofClaimFixture(successor.vaults(6));
         uint256 deadline=block.timestamp+7 days;
         _quorum(abi.encodeCall(guard.scheduleLiquidity,(1,1000,500,50,deadline,"LP",block.timestamp,block.timestamp+1 hours)));
         bytes32 id=keccak256(abi.encode(block.chainid,address(l),address(token),address(quote),address(l.pool()),uint256(1),uint256(1000),uint256(500),uint256(50),deadline,bytes32("LP")));
-        bytes32[] memory ids=new bytes32[](1);ids[0]="CLAIM";
-        address[] memory recipients=new address[](1);recipients[0]=PAYEE;
-        uint256[] memory amounts=new uint256[](1);amounts[0]=100;
-        _quorum(abi.encodeCall(guard.scheduleLegacy,(1,legacy.manifestDigest("TEST",100,ids,recipients,amounts),deadline,block.timestamp,block.timestamp+1 hours)));
+        LegacyVerifier.Commitment memory c=_legacyCommitment(legacy);
+        _quorum(abi.encodeCall(guard.scheduleLegacy,(1,legacy.activationDigest(c),deadline,block.timestamp,block.timestamp+1 hours)));
         vm.warp(block.timestamp+2 days);
         quote.transfer(address(l),500);l.execute(id);
-        legacy.activate("TEST",100,ids,recipients,amounts);
-        vm.prank(PAYEE);legacy.claim("CLAIM");
+        legacy.activate(c);
+        vm.prank(PAYEE);legacy.claim(0,_legacyRow(),new LegacyVerifier.Node[](0));
         require(l.spent()==1000&&legacy.paid()==100&&token.balanceOf(PAYEE)==100&&token.totalSupply()==SUPPLY);
     }
 }

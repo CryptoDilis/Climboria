@@ -7,7 +7,7 @@ import {IV3BurnableAsset} from "./V3BoundedLegacyFixture.sol";
 import {IV3CustodyEpochFixture} from "./V3EpochSpendFixture.sol";
 import {V3LegacyProofVerifierFixture as Verifier} from "./V3LegacyProofVerifierFixture.sol";
 
-/// @notice Isolated synthetic campaign; not wired into successor issuance.
+/// @notice Synthetic campaign for the test-only successor issuance.
 /// Root approval is a custody commitment, not proof of source eligibility.
 /// No production use, migration or real funds.
 contract V3LegacyProofClaimFixture is ReentrancyGuard {
@@ -58,6 +58,11 @@ contract V3LegacyProofClaimFixture is ReentrancyGuard {
         highestObservedEpoch=e;
     }
     function commitment() external view returns(Verifier.Commitment memory){return active;}
+    function allocated() external view returns(uint256){return active.allocated;}
+    function matchesInitialBinding(address expectedToken,address expectedCustody) external view returns(bool){
+        return address(token)==expectedToken&&address(custody)==expectedCustody&&
+            custodyHash==expectedCustody.codehash&&address(verifier).codehash==verifierHash&&!activated&&!closed&&paid==0;
+    }
     function activationDigest(Verifier.Commitment calldata c) public view returns(bytes32){
         return keccak256(abi.encode("CLIMB_BASE_LEGACY_PROOF_ACTIVATION_TEST_V1",block.chainid,address(this),address(token),c));
     }

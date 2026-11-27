@@ -7,7 +7,7 @@ import {V3AtomicSuccessorFixture,V3SuccessorTestToken} from "v3-src/V3AtomicSucc
 import {V3EpochSpendFixture} from "v3-src/V3EpochSpendFixture.sol";
 import {V3SharedExpenseRegistry} from "v3-src/V3SharedExpenseFixture.sol";
 import {V3DeferredLiquidityFixture} from "v3-src/V3DeferredLiquidityFixture.sol";
-import {V3DeferredLegacyFixture} from "v3-src/V3DeferredLegacyFixture.sol";
+import {V3LegacyProofClaimFixture} from "v3-src/V3LegacyProofClaimFixture.sol";
 import {V3FounderVesting} from "v3-src/ClimbV3TestToken.sol";
 import {V3GovernedGameRewardFixture} from "v3-src/V3GovernedGameRewardFixture.sol";
 
@@ -57,9 +57,9 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
         if(wallet.isOwner(founder)||wallet.isOwner(distributor)||founder==address(wallet)||distributor==address(wallet)||
             founder==address(this)||distributor==address(this))revert InvalidConfig();
         V3DeferredLiquidityFixture l=V3DeferredLiquidityFixture(destinations[2]);
-        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(destinations[6]);
+        V3LegacyProofClaimFixture legacy=V3LegacyProofClaimFixture(destinations[6]);
         if(address(l.asset())!=address(t)||address(l.custody())!=address(this)||
-           address(legacy.token())!=address(t)||address(legacy.custody())!=address(this))revert InvalidConfig();
+           !legacy.matchesInitialBinding(address(t),address(this)))revert InvalidConfig();
         V3SharedExpenseRegistry registry=successor.expenses().registry();
         if(address(registry).code.length==0||!registry.isSealed())revert InvalidConfig();
         for(uint256 i=3;i<=5;i++){
@@ -130,12 +130,12 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     function cancelLiquidity(uint256 expected,bytes32 id) external onlyWallet {V3DeferredLiquidityFixture(_target(2,expected)).cancel(id);}
     function scheduleLegacy(uint256 expected,bytes32 digest,uint256 expiresAt,uint256 validAfter,uint256 validUntil) external onlyWallet {
         _authorizationWindow(validAfter,validUntil);
-        V3DeferredLegacyFixture(_target(6,expected)).schedule(digest,expiresAt);
+        V3LegacyProofClaimFixture(_target(6,expected)).schedule(digest,expiresAt);
         legacyScheduleSerial++;
     }
     function cancelLegacy(uint256 expected,uint256 expectedSerial) external onlyWallet {
         if(expectedSerial!=legacyScheduleSerial)revert Forbidden();
-        V3DeferredLegacyFixture(_target(6,expected)).cancel();
+        V3LegacyProofClaimFixture(_target(6,expected)).cancel();
     }
     function _rotationOwnerAllowed(address a) internal view virtual override returns(bool){
         // Prevent changes before binding and known role conflicts afterwards.
