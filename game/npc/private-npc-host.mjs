@@ -21,7 +21,7 @@ export function createPrivateNpcHost({enabled=false,room,allowedRoomId,sessionId
       new Set(humans.map(h=>h.id)).size!==humans.length)throw Error('Invalid trusted membership');
    if(state==='running'){
     if(!scheduler.capability()){close('scheduler-ended');return false}
-    if(humans.length<minHumans){close('pilot-membership-ended');return false}
+    if(humans.length!==minHumans){close('pilot-membership-ended');return false}
     return true;
    }
    if(humans.length!==minHumans)return false;
