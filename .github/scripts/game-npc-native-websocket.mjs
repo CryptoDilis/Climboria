@@ -6,7 +6,7 @@ import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
 import {PresenceRoom} from '../../game/multiplayer/presence-room.mjs';
 import {createAutonomousAdventurer} from '../../game/npc/autonomous-adventurer.mjs';
-import {createNpcRoomScheduler} from '../../game/npc/npc-room-scheduler.mjs';
+import {createPrivateNpcHost} from '../../game/npc/private-npc-host.mjs';
 // Loopback-only acceptance fixture. Actual native browser WebSockets and room
 // scheduler; synthetic credentials, terrain and controlled server clock.
 // Never import this file in a deployed Worker or expose its test admissions.
@@ -15,9 +15,9 @@ const nodes=[{id:'rest',x:254.5,z:80,action:'rest'},{id:'fish',x:248.5,z:80,acti
 const edges=[['rest','fish'],['fish','rest'],['fish','shore'],['shore','fish'],['shore','swim'],['swim','shore']];
 const world={sample:x=>x<240?{ground:-1,water:0}:{ground:0,water:null},canTraverse:()=>true,canAct:()=>true};
 const factory=identity=>createAutonomousAdventurer({nodes,edges,world,spawn:identity.name==='Aurelion'?'rest':'shore',identityId:identity.id,personalityEnabled:true});
-const room=new PresenceRoom(),sent=[],rejected=[],connections=new Map(),timers=new Map();
+const room=new PresenceRoom({roomId:'native-npc-private-fixture'}),sent=[],rejected=[],connections=new Map(),timers=new Map();
 let now=0,timerId=0;
-const scheduler=createNpcRoomScheduler({enabled:true,room,sessionId:'native-loopback',createActor:factory,
+const scheduler=createPrivateNpcHost({enabled:true,room,allowedRoomId:'native-npc-private-fixture',sessionId:'native-loopback',createActor:factory,
  now:()=>now,setTimer(fn,ms){assert.equal(ms,100);const id=++timerId;timers.set(id,fn);return id},clearTimer:id=>timers.delete(id)});
 const server=createServer((req,res)=>{if(req.url!=='/'){res.writeHead(404).end();return}res.writeHead(200,{'content-type':'text/html','cache-control':'no-store'}).end('<html><body></body></html>')});
 const wss=new WebSocketServer({noServer:true,maxPayload:512,handleProtocols:p=>p.has('climboria-v1')?'climboria-v1':false});
@@ -39,7 +39,7 @@ function admit(ws,i){
  const joined=room.connect({trustedSessionId:id,name:'QA Explorer '+i,model:'Jarrell',send,announceImmediately:false});
  if(!joined.ok){ws.close(1008);return}
  ws.on('error',e=>errors.push(e.message));
- ws.on('close',()=>{connections.delete(id);room.disconnect(id);if(!connections.size)scheduler.close()});
+ ws.on('close',()=>{connections.delete(id);room.disconnect(id);scheduler.membershipChanged()});
  ws.on('message',(raw,binary)=>{
   try{
    if(binary)throw Error('binary packet');
@@ -48,7 +48,7 @@ function admit(ws,i){
     entry.spawn=true;
     if(connections.size===2&&[...connections.values()].every(c=>c.spawn)){
      for(const c of connections.values())room.announce(c.id);
-     assert.ok(scheduler.start());
+     assert.ok(scheduler.membershipChanged());
      for(const c of connections.values())c.ws.send(JSON.stringify({type:'spawn-accepted',id:c.id,position:{x:0,y:9.55,z:-30},peers:room.snapshot().filter(p=>p.id!==c.id),npcChatEnabled:scheduler.capability()}));
     }
     return;
@@ -115,7 +115,11 @@ try{
  for(let i=0;i<100&&!rejected.length;i++)await new Promise(r=>setTimeout(r,10));
  assert.deepEqual(rejected,[{id:'s_'+'1'.repeat(32),type:'npc-world-chat'}]);assert.equal(sent.length,events.length*2);
  // Real transport close clears transcript and visible room member.
- for(const page of clients)await page.evaluate(()=>window.__fixtureSocket.close(4001,'fixture-ended'));
+ await clients[0].evaluate(()=>window.__fixtureSocket.close(4001,'fixture-ended'));
+ for(let i=0;i<100&&connections.size!==1;i++)await new Promise(r=>setTimeout(r,10));
+ assert.equal(connections.size,1);assert.equal(scheduler.capability(),false);assert.equal(timers.size,0);
+ assert.equal(scheduler.audit().reason,'pilot-membership-ended');
+ await clients[1].evaluate(()=>window.__fixtureSocket.close(4001,'fixture-ended'));
  for(const page of clients){
   await page.waitForFunction(()=>document.querySelector('#climboria-world-chat-log')?.children.length===0);
   assert.equal(await page.locator('#climboria-npc-chat-mute').isVisible(),false);
