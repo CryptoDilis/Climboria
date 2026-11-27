@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A CONNECTED NAVIGATION FOUNDATION — 2026-11-27
+
+- #971 merged into main as 7ae83e97c7dcc4524127a63182b24c9a4a689175 after all eight source CI workflows passed (NPC browser 45971734920, foundation 45971735025, gameplay 45971735003; other checks passed). Public NPC spawn remains disabled. Main post-merge CI pending at this checkpoint.
+- Add isolated bounded dry connector route planner and tests. Direct or bounded grid search, every segment sampled at <=0.29m, bidirectional actor collision checks, dry loaded terrain only, probe/expansion/waypoint caps. Does not load terrain or move the player/NPC. Actual lake/forest route not yet verified; unit CI pending.
+- NEXT: connect existing activity graphs using a verified nearby forest source and loaded map adapters in smoke, retain exact stable identity, test continuous travel fishing/swimming/gathering and no resource/presence side effects. Then authored contextual world chat and shared authority, physical device performance, public release gates.
+
+---
+
 ## R5A MAIN CONSOLIDATION AND CI POLLING CORRECTION — 2026-11-27
 
 - #972 foundation 45969578112 and browser 45969578125 passed; #974 foundation 45969801320 and browser 45969801209 passed, including actual Aurelion nameplate. #971 seven of eight workflows passed; desktop focused browser 45968900757 timed out despite final audit showing 15 frames, 15 draws, 2.4m movement, open session, zero JS errors; mobile passed. Replace in-page polling with bounded Node-side audit sampling (desktop 120s/mobile 45s between samples), keep movement/frame/draw/nameplate and cleanup assertions. Overall workflow timeout still applies. This is not a performance benchmark or verified fix until fresh CI passes.
