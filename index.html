@@ -640,7 +640,7 @@ nav{background-color:rgba(5,13,28,.94);border-color:rgba(64,140,255,.45)}
    Narrow/mobile and extreme aspect ratios retain unfiltered original artwork. */
 @media (min-width:1000px) and (min-aspect-ratio:16/9) and (max-aspect-ratio:7/3){
  .hero picture{isolation:isolate}
- .hero picture::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:color;background:radial-gradient(ellipse 21% 19% at 22% 77%,rgba(0,92,255,.56) 0%,rgba(0,107,255,.30) 48%,transparent 100%)}
+ .hero picture::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:color;background:radial-gradient(ellipse 30% 23% at 21% 72%,rgba(0,92,255,.90) 0%,rgba(0,108,255,.76) 38%,rgba(0,100,255,.34) 72%,transparent 100%);clip-path:inset(53% 49% 0 0);mask-image:linear-gradient(180deg,transparent 53%,#000 60%,#000 88%,transparent 100%)}
 }
 
 </style>
