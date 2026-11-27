@@ -434,6 +434,57 @@ contract SafeQuorumIssuanceTest {
         require(legacy.closed()&&legacy.paid()+legacy.burned()==legacy.RESERVE());
         require(successor.token().totalSupply()==SUPPLY-legacy.burned());
     }
+    function _multiLegacyLeaf(uint256 index,LegacyVerifier.Row memory r) private pure returns(bytes32){
+        return sha256(abi.encodePacked(sha256("CLIMB_BASE_LEGACY_BINARY_SUM_TEST_V2"),bytes1(0x01),
+            bytes32(uint256(1)),index,r.sourceAccount,r.sourceOwner,r.recipient,r.sourceAmount,r.award,r.evidenceHash));
+    }
+    function _multiLegacyRoot(V3LegacyProofClaimFixture legacy,bytes32 left,bytes32 right) private view returns(LegacyVerifier.Commitment memory c){
+        bytes32 domain=sha256("CLIMB_BASE_LEGACY_BINARY_SUM_TEST_V2");
+        bytes32 top=sha256(abi.encodePacked(domain,bytes1(0x03),left,uint256(100),right,uint256(200)));
+        c=LegacyVerifier.Commitment(bytes32(uint256(1)),bytes32(uint256(2)),address(legacy.token()),address(legacy),2,300,300,
+            sha256(abi.encodePacked(domain,bytes1(0x04),bytes32(uint256(1)),bytes32(uint256(2)),uint256(84532),
+            address(legacy.token()),address(legacy),uint256(2),uint256(300),top,uint256(300))));
+    }
+    function _activateMultiLegacy(V3LegacyProofClaimFixture legacy,LegacyVerifier.Commitment memory c) private {
+        bytes memory data=abi.encodeCall(guard.scheduleLegacy,(1,legacy.activationDigest(c),block.timestamp+7 days,block.timestamp,block.timestamp+1 hours));
+        require(_exec(data,_sign(data,3)));
+        vm.warp(block.timestamp+2 days);legacy.activate(c);
+    }
+    function testQuorumMultiLeafLegacyProofConservation() public {
+        _issue();
+        V3LegacyProofClaimFixture legacy=V3LegacyProofClaimFixture(successor.vaults(6));
+        LegacyVerifier.Row memory a=_proofLegacyRow();
+        address other=address(0x204);
+        LegacyVerifier.Row memory b=LegacyVerifier.Row(bytes32(uint256(12)),bytes32(uint256(22)),other,200,200,bytes32(uint256(32)));
+        bytes32 left=_multiLegacyLeaf(0,a);bytes32 right=_multiLegacyLeaf(1,b);
+        _activateMultiLegacy(legacy,_multiLegacyRoot(legacy,left,right));
+        LegacyVerifier.Node[] memory p=new LegacyVerifier.Node[](1);
+        p[0]=LegacyVerifier.Node(left,100);
+        vm.prank(other);legacy.claim(1,b,p);
+        p[0]=LegacyVerifier.Node(right,201);
+        vm.prank(PAYEE);vm.expectRevert(V3LegacyProofClaimFixture.NotEligible.selector);legacy.claim(0,a,p);
+        require(!legacy.claimedIndex(0)&&!legacy.claimedSource(a.sourceAccount)&&legacy.paid()==200);
+        p[0]=LegacyVerifier.Node(right,200);
+        vm.prank(PAYEE);legacy.claim(0,a,p);
+        require(legacy.paid()==300&&legacy.allocated()==300&&successor.token().balanceOf(PAYEE)==100&&successor.token().balanceOf(other)==200);
+        require(successor.token().totalSupply()==SUPPLY&&successor.token().balanceOf(address(legacy))==legacy.RESERVE()-300);
+    }
+    function testQuorumDuplicateSourceInApprovedRootCannotDoublePay() public {
+        _issue();
+        V3LegacyProofClaimFixture legacy=V3LegacyProofClaimFixture(successor.vaults(6));
+        LegacyVerifier.Row memory a=_proofLegacyRow();
+        address other=address(0x204);
+        LegacyVerifier.Row memory b=LegacyVerifier.Row(a.sourceAccount,bytes32(uint256(22)),other,200,200,bytes32(uint256(32)));
+        bytes32 left=_multiLegacyLeaf(0,a);bytes32 right=_multiLegacyLeaf(1,b);
+        _activateMultiLegacy(legacy,_multiLegacyRoot(legacy,left,right));
+        LegacyVerifier.Node[] memory p=new LegacyVerifier.Node[](1);
+        p[0]=LegacyVerifier.Node(right,200);
+        vm.prank(PAYEE);legacy.claim(0,a,p);
+        p[0]=LegacyVerifier.Node(left,100);
+        vm.prank(other);vm.expectRevert(V3LegacyProofClaimFixture.AlreadyClaimed.selector);legacy.claim(1,b,p);
+        require(legacy.paid()==100&&!legacy.claimedIndex(1)&&successor.token().balanceOf(other)==0);
+        require(successor.token().totalSupply()==SUPPLY);
+    }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
         bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours));
