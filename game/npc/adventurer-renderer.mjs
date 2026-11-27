@@ -4,10 +4,11 @@ const finite=Number.isFinite;
 const patterns={
  idle:/^(Idle_03|Standing_Idle|Idle)$/i,
  walk:/^(Walking|Walk)$/i,run:/^(Running|Run)$/i,
- swim:/^(Swim_Forward|Swimming)$/i,swimIdle:/^(Swim_Idle)$/i,
+ swim:/^(Swim_Forward|Swimming)$/i,swimIdle:/^(Swim_Idle|NPC_Tread)$/i,
  climb:/^(climbing_up_wall|Climbing)$/i,
- fish:/^(Fishing|Fishing_Idle)$/i,gather:/^(Gathering|Gather|Harvesting)$/i,
- rest:/^(Sitting_Idle|Sit_Idle|Resting)$/i
+ fish:/^(Fishing|Fishing_Idle|NPC_Fish)$/i,gather:/^(Gathering|Gather|Harvesting|NPC_Gather)$/i,
+ farm:/^(NPC_Farm)$/i,
+ rest:/^(Sitting_Idle|Sit_Idle|Resting|NPC_Rest)$/i
 };
 export function createAdventurerRenderer({group,clips,mixer,dispose,loopRepeat,footOffset=0}={}){
  if(typeof group?.position?.set!=='function'||!group.rotation||
@@ -31,7 +32,7 @@ export function createAdventurerRenderer({group,clips,mixer,dispose,loopRepeat,f
   group.position.set(s.x,s.y+footOffset,s.z);
   requested=s.swim?(distance>.00001?'swim':'swimIdle'):
    distance>.00001?(s.mode==='run'?'run':s.mode==='climb'?'climb':'walk'):
-   ['fish','gather','rest'].includes(s.mode)?s.mode:'idle';
+   ['fish','gather','farm','rest'].includes(s.mode)?s.mode:'idle';
   const exact=clips.find(c=>patterns[requested].test(c.name));
   // Never silently substitute walking for swimming, climbing, or resource actions.
   // Missing authored action is explicit in the read-only audit; idle is just a visual fallback.
