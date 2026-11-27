@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## COMBAT: LETHAL HIT / DOWNED REJOIN / RESPAWN ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
+
+- Stacked on #901 exact head c23401fb76c6b1320950204414d30cb45f0f5396; parent CI four successes (Validate 45938075227, Runtime 45938075126, Gateway 45938075127, Authority 45938075200), Gameplay 45938075149 still running at checkpoint.
+- Test commits b4c95718dfe3fd69a7f8d14db77e8b4ce231467c and 9dc1261b7061e88ad9e8eb4768e302d0d5bd343f exercise real preview runtime through mocked WebSockets/storage/clock: 100 legal 5 HP hits, both clients rejoin midway to honor 60-second expiry, lethal push, movement/attack denial, fresh target session retains death timer, no early respawn, exact five-second respawn notification once, 500 HP and stamina restoration, fresh runtime recovery. No production or budget changes. Not yet executed/verified on exact head.
+- EXACT NEXT: merge #901 only after all required checks green; retarget this stacked PR to main and verify fresh exact-head CI, fix failures before merge. Add durable respawn rollback regression if not already covered. Private cloud remains disabled; no public combat, loot/inventory or other workstreams changed.
+
+---
+
 ## COMBAT: COMMITTED RESPAWN NOTIFICATION — 2026-11-27 PHT (PROPOSED)
 
 - Prior damage push #894 merged at 7b59a82b82efdf37e2499b1599b611efc0d200db. This follow-up sends preview-respawn to the exact active session after successful durable runtime tick; duplicate IDs deduplicated, retired/expired sessions ignored, failed tick quarantines without notification. Event is advisory; snapshot remains authoritative. No additional storage write or public enablement.
