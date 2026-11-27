@@ -98,7 +98,7 @@ contract V3SuccessorConditionalDeployer {
         _checkLegacyDeployer();
         if(address(v.token())!=address(asset)||address(v.custody())!=address(control))revert InvalidLegacyDeployer();
     }
-    // Staged for isolated rehearsal only; atomic issuance still uses legacy().
+    // Proof-based vault selected by the synthetic successor issuance.
     function proofLegacy(V3SuccessorTestToken asset,IV3CustodyEpochFixture control) external returns(V3LegacyProofClaimFixture v){
         _checkLegacyDeployer();
         v=legacyDeployer.proofLegacy(asset,control);
@@ -158,6 +158,6 @@ contract V3AtomicSuccessorFixture {
         vaults[0]=f;vaults[1]=g;
         vaults[2]=address(conditional.liquidity(asset,cfg.liquidity,cfg.control));
         vaults[3]=address(e.ecosystem());vaults[4]=address(e.community());vaults[5]=address(e.treasury());
-        vaults[6]=address(conditional.legacy(asset,cfg.control));
+        vaults[6]=address(conditional.proofLegacy(asset,cfg.control));
     }
 }
