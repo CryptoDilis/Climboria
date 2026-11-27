@@ -63,7 +63,7 @@ jobs:
         run: |
           set -euo pipefail
           forge test --match-contract SafeQuorumIssuanceTest -vv | tee "$RUNNER_TEMP/safe-quorum-issuance.log"
-          grep -Eq '18 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-quorum-issuance.log"
+          grep -Eq '19 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-quorum-issuance.log"
       - name: Verify Safe custody bytecode size limits
         run: |
           set -euo pipefail
