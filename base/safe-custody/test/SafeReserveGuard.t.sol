@@ -86,7 +86,7 @@ contract SafeReserveGuardTest {
     function _reject(address to,bytes memory data,uint256 count) private {
         bytes memory sigs=_signed(to,data,count);vm.expectRevert();_exec(to,data,sigs);
     }
-    function _bind() private {_quorum(abi.encodeCall(guard.bindSuccessor,(1)));}
+    function _bind() private {_quorum(abi.encodeCall(guard.bindSuccessor,(1,block.timestamp,block.timestamp+1 hours)));}
     function _propose(uint256 e,uint256 i,bytes32 evidence,bytes32 nonce) private view returns(bytes memory){
         return abi.encodeCall(SafeReserveGuardFixture.proposeExpense,(e,i,PAYEE,10,evidence,0,nonce,block.timestamp,block.timestamp+1 hours));
     }
@@ -95,7 +95,7 @@ contract SafeReserveGuardTest {
         return keccak256(abi.encode(block.chainid,address(v),address(token),v.purpose(),e,PAYEE,uint256(10),evidence,uint256(0),nonce));
     }
     function testActualECDSAQuorumPayloadBindingAndNonceReplay() public {
-        bytes memory binding=abi.encodeCall(guard.bindSuccessor,(1));
+        bytes memory binding=abi.encodeCall(guard.bindSuccessor,(1,block.timestamp,block.timestamp+1 hours));
         bytes memory sigs=_signed(address(guard),binding,3);
         require(_exec(address(guard),binding,sigs)&&wallet.nonce()==1);
         bytes memory data=_propose(1,3,"E","N");
@@ -117,10 +117,10 @@ contract SafeReserveGuardTest {
     function testFixedBindingAndNoDeployerFloat() public {
         require(!guard.bound()&&token.totalSupply()==SUPPLY&&token.balanceOf(address(wallet))==0&&token.balanceOf(address(guard))==0);
         _reject(address(guard),_propose(1,3,"E","N"),3);
-        _reject(address(guard),abi.encodeCall(guard.bindSuccessor,(1)),2);
+        _reject(address(guard),abi.encodeCall(guard.bindSuccessor,(1,block.timestamp,block.timestamp+1 hours)),2);
         _bind();require(guard.bound()&&address(guard.asset())==address(token));
         for(uint256 i=0;i<7;i++)require(guard.destinations(i)==successor.vaults(i));
-        _reject(address(guard),abi.encodeCall(guard.bindSuccessor,(1)),3);
+        _reject(address(guard),abi.encodeCall(guard.bindSuccessor,(1,block.timestamp,block.timestamp+1 hours)),3);
     }
     function testActualQuorumExpenseAndSharedReplay() public {
         _bind();_reject(address(guard),_propose(1,3,"E","N"),2);
@@ -181,7 +181,7 @@ contract SafeReserveGuardTest {
         V3SuccessorConfig memory cfg=V3SuccessorConfig(FOUNDER,DISTRIBUTOR,IV3CustodyEpochFixture(address(guard)),start,1000,
             V3SuccessorLiquidityConfig(quote,new ReservePoolBuilder(),address(successor),1000));
         token=successor.create(cfg);
-        _reject(address(guard),abi.encodeCall(guard.bindSuccessor,(1)),3);
+        _reject(address(guard),abi.encodeCall(guard.bindSuccessor,(1,block.timestamp,block.timestamp+1 hours)),3);
         require(!guard.bound()&&guard.lpCustody()==address(0)&&wallet.nonce()==0&&!guard.transactionActive());
     }
     function testSignedExpenseValidityWindow() public {
@@ -200,17 +200,32 @@ contract SafeReserveGuardTest {
         _quorum(_propose(1,3,"E","N"));
         require(wallet.nonce()==2&&token.totalSupply()==SUPPLY);
     }
+    function testSchedulingRejectsExpiredSignedWindows() public {
+        _bind();
+        uint256 t=block.timestamp;
+        bytes memory liquidity=abi.encodeCall(guard.scheduleLiquidity,(1,1000,500,50,t+7 days,"LP",t,t+1 hours));
+        bytes memory legacy=abi.encodeCall(guard.scheduleLegacy,(1,bytes32("MANIFEST"),t+7 days,t,t+1 hours));
+        bytes memory ls=_signed(address(guard),liquidity,3);
+        bytes memory gs=_signed(address(guard),legacy,3);
+        uint256 n=wallet.nonce();
+        vm.warp(t+1 hours);
+        vm.expectRevert();_exec(address(guard),liquidity,ls);
+        vm.expectRevert();_exec(address(guard),legacy,gs);
+        require(wallet.nonce()==n&&!guard.transactionActive());
+        _quorum(abi.encodeCall(guard.scheduleLiquidity,(1,1000,500,50,t+7 days,"LP",block.timestamp,block.timestamp+1 hours)));
+        require(wallet.nonce()==n+1);
+    }
     function testLiquidityAndLegacySchedulingThroughActualSafe() public {
         _bind();
         V3DeferredLiquidityFixture l=V3DeferredLiquidityFixture(successor.vaults(2));
         V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(successor.vaults(6));
         uint256 deadline=block.timestamp+7 days;
-        _quorum(abi.encodeCall(guard.scheduleLiquidity,(1,1000,500,50,deadline,"LP")));
+        _quorum(abi.encodeCall(guard.scheduleLiquidity,(1,1000,500,50,deadline,"LP",block.timestamp,block.timestamp+1 hours)));
         bytes32 id=keccak256(abi.encode(block.chainid,address(l),address(token),address(quote),address(l.pool()),uint256(1),uint256(1000),uint256(500),uint256(50),deadline,bytes32("LP")));
         bytes32[] memory ids=new bytes32[](1);ids[0]="CLAIM";
         address[] memory recipients=new address[](1);recipients[0]=PAYEE;
         uint256[] memory amounts=new uint256[](1);amounts[0]=100;
-        _quorum(abi.encodeCall(guard.scheduleLegacy,(1,legacy.manifestDigest("TEST",100,ids,recipients,amounts),deadline)));
+        _quorum(abi.encodeCall(guard.scheduleLegacy,(1,legacy.manifestDigest("TEST",100,ids,recipients,amounts),deadline,block.timestamp,block.timestamp+1 hours)));
         vm.warp(block.timestamp+2 days);
         quote.transfer(address(l),500);l.execute(id);
         legacy.activate("TEST",100,ids,recipients,amounts);
