@@ -3794,6 +3794,7 @@ if(new URLSearchParams(location.search).has('smoke')){
 }
 // Explicit smoke-only continuous frame-loop candidate; no default actor.
 let npcContinuousSession=null,npcContinuousPending=false,npcContinuousCancel=false;
+let npcPairSession=null,npcPairPending=false,npcPairCancel=false,npcPairVisuals=[];
 let npcContinuousDraws=0,npcContinuousGroup=null,npcContinuousNameplateDraws=0;
 function npcContinuousNear(s){return P.mode==='walk'&&Math.hypot(s.x-P.x,s.z-P.z)<100}
 function npcContinuousPriorityFree(){
@@ -3803,7 +3804,7 @@ if(new URLSearchParams(location.search).has('smoke')){
  window.ENDLESS_WILDS.npcSmokePositionAtLake=()=>restoreExplorerPosition({x:258,z:80,y:groundAt(258,80)+1.75,yaw:Math.PI/2});
  window.ENDLESS_WILDS.npcSmokePositionAtTerrace=()=>restoreExplorerPosition({x:RICE.x,z:RICE.z,y:groundAt(RICE.x,RICE.z)+1.75,yaw:0});
  window.ENDLESS_WILDS.npcContinuousStart=async()=>{
-  if(npcContinuousPending||npcContinuousSession&&!npcContinuousSession.audit().closed)return false;
+  if(npcPairPending||npcPairSession&&!npcPairSession.audit().closed||npcContinuousPending||npcContinuousSession&&!npcContinuousSession.audit().closed)return false;
   if(document.hidden||!npcContinuousPriorityFree()||remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB-1)return false;
   npcContinuousPending=true;npcContinuousCancel=false;let loading=false,resident=false,npc,gltf,group,label,projection;
   const dispose=()=>{
@@ -3902,6 +3903,68 @@ if(new URLSearchParams(location.search).has('smoke')){
    closed:pair.snapshot().every(s=>s.closed),playerUnchanged:P.x===before.x&&P.y===before.y&&P.z===before.z,
    inventoryUnchanged:before.inventory===JSON.stringify(inventory),diagnosticsUnchanged:before.diag===window.__climboriaLastCollision,peersUnchanged:before.peers===livePeers.size};
  };
+ window.ENDLESS_WILDS.npcPairContinuousStart=async()=>{
+  if(npcPairPending||npcPairSession&&!npcPairSession.audit().closed||npcContinuousPending||npcContinuousSession&&!npcContinuousSession.audit().closed)return false;
+  const heavy=MOB?1:2,baseline=remoteGLBLoading+remoteGLBResidents;
+  const priority=()=>npcContinuousPriorityFree()&&remoteGLBLoading+remoteGLBResidents<=MAX_REMOTE_GLB-1;
+  if(document.hidden||!priority()||baseline+heavy>MAX_REMOTE_GLB-1)return false;
+  npcPairPending=true;npcPairCancel=false;npcPairVisuals=[];npcPairSession=null;
+  let pair,handedOff=false,disposed=false;
+  const dispose=()=>{
+   if(disposed)return;disposed=true;
+   for(const v of npcPairVisuals){
+    try{if(v.group)scene.remove(v.group);if(v.label){v.label.material.map?.dispose();v.label.material.dispose()}if(v.gltf)disposeRemoteHero(v.gltf.scene)}
+    finally{if(v.loading){remoteGLBLoading--;v.loading=false}if(v.resident){remoteGLBResidents--;v.resident=false}}
+   }
+  };
+  try{
+   const [{createNpcPair},{createNpcPairFrameSession},{createAdventurerRenderer},{buildNpcActivityClips}]=await Promise.all([
+    import('./npc/npc-pair.mjs'),import('./npc/npc-pair-frame-session.mjs'),import('./npc/adventurer-renderer.mjs'),import('./npc/npc-activity-clips.mjs')]);
+   const route=await makeLakeNpcForSmoke();route.npc.close();
+   const specs=[['npc:jarrell-peak:aurelion','rest'],['npc:jarrell-peak:zevransol','shore']].map(([identityId,spawn])=>({nodes:route.nodes,edges:route.edges,world:route.world,spawn,identityId,personalityEnabled:true}));
+   pair=createNpcPair({specs});const initial=pair.snapshot();
+   const allowed=()=>!npcPairCancel&&!document.hidden&&priority()&&pair.snapshot().every(npcContinuousNear);
+   if(!allowed())return false;
+   for(let i=0;i<2;i++){
+    if(!allowed())return false;
+    const v={group:new T3.Group(),label:null,gltf:null,projection:null,loading:false,resident:false,draws:0,animated:i<heavy};
+    npcPairVisuals.push(v);let body;
+    if(v.animated){
+     if(remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB-1)return false;
+     remoteGLBLoading++;v.loading=true;
+     v.gltf=await new T3.GLTFLoader().loadAsync('../assets/characters/Climboria_Jarrell.glb');
+     remoteGLBLoading--;v.loading=false;remoteGLBResidents++;v.resident=true;
+     if(!allowed())return false;
+     body=fitRemoteHero(v.gltf.scene);if(!body)throw Error('Continuous pair fit failed');
+     const clips=buildNpcActivityClips(T3,v.gltf.scene,poseMeshyNeutralRest);
+     v.projection=createAdventurerRenderer({group:v.group,clips:[...v.gltf.animations,...clips],mixer:new T3.AnimationMixer(v.gltf.scene),loopRepeat:T3.LoopRepeat,identityId:specs[i].identityId,dispose:()=>{}});
+    }else{
+     body=remoteExplorerSilhouette();let last=initial[i];
+     v.projection={frame(s){if(s.npcId!==specs[i].identityId||s.closed)return false;const dx=s.x-last.x,dz=s.z-last.z;
+      v.group.position.set(s.x,s.y,s.z);if(Math.hypot(dx,dz)>.00001)v.group.rotation.y=Math.atan2(dx,dz);
+      v.group.visible=true;last=s;return true},close(){v.group.visible=false}};
+    }
+    v.group.name='AutonomousNPC:continuous-pair-'+i;v.label=peerMarker(initial[i].label);v.label.userData.npcLabel=initial[i].label;
+    v.group.add(body,v.label);
+    body.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;const prior=o.onBeforeRender;o.onBeforeRender=function(...args){v.draws++;prior?.apply(this,args)}}});
+    if(!v.projection.frame(initial[i],0))throw Error('Continuous pair initial projection failed');
+    v.group.visible=false;
+   }
+   if(!allowed())return false;
+   for(const v of npcPairVisuals)scene.add(v.group);
+   npcPairSession=createNpcPairFrameSession({pair,projections:npcPairVisuals.map(v=>v.projection),dispose,near:npcContinuousNear,visible:()=>!document.hidden,priorityFree:priority});
+   handedOff=true;return true;
+  }finally{
+   npcPairPending=false;
+   if(!handedOff){pair?.close();for(const v of npcPairVisuals)v.projection?.close();dispose()}
+  }
+ };
+ window.ENDLESS_WILDS.npcPairContinuousStop=()=>{npcPairCancel=true;npcPairSession?.close()};
+ window.ENDLESS_WILDS.npcPairContinuousAudit=()=>({session:npcPairSession?.audit()??null,pending:npcPairPending,
+  visuals:npcPairVisuals.map(v=>({attached:v.group?.parent===scene,visible:v.group?.visible===true,animated:v.animated,draws:v.draws,label:v.label?.userData.npcLabel})),
+  peers:livePeers.size,loading:remoteGLBLoading,resident:remoteGLBResidents,budget:MAX_REMOTE_GLB});
+ window.addEventListener('pagehide',()=>window.ENDLESS_WILDS.npcPairContinuousStop());
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)window.ENDLESS_WILDS.npcPairContinuousStop()});
  window.ENDLESS_WILDS.npcPairVisualAudit=async()=>{
   const [{createNpcPair},{createAdventurerRenderer},{buildNpcActivityClips}]=await Promise.all([
    import('./npc/npc-pair.mjs'),import('./npc/adventurer-renderer.mjs'),import('./npc/npc-activity-clips.mjs')]);
@@ -4382,7 +4445,7 @@ function update(dt){
   }else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='awaiting-saved-glb';}
  }
  mapMarkerClock+=dt;if(mapMarkerClock>=.12){mapMarkerClock=0;drawWorldMapPlayer();}
- const cp=cam.position;gameTick(dt,cp);npcContinuousSession?.frame(dt);window.__CLIMBORIA_GAME_PEERS?.update(dt);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
+ const cp=cam.position;gameTick(dt,cp);npcContinuousSession?.frame(dt);npcPairSession?.frame(dt);window.__CLIMBORIA_GAME_PEERS?.update(dt);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
  updateChunks(cp.x,cp.z,ready?1:0);
  sky.position.copy(cp);const sx=(Math.floor(cp.x/CS)+.5)*CS,sz=(Math.floor(cp.z/CS)+.5)*CS;water.position.set(sx,0,sz);
  sunL.position.copy(cp).addScaledVector(sunDir,200);sunL.target.position.copy(cp);
