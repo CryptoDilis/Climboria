@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## AUTHORED DRY MAP COMBAT ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
+
+- #903 merged 3a6f7b9592084b66e1a54840b598a8f24b49d9b2 after five exact-head CI successes. #905 exact head 583cf311ce87195596654a70b08387b5914bbfdb has four successes (Runtime 45940257524, Authority 45940257511, Gateway 45940257490, Validate 45940257478); Gameplay 45940257471 pending at review.
+- Test 8769f0b005581033bec0dd3402ffb170e05709ea composes actual authored dry-region terrain and collision references with transactional combat. Exercises Sanctuary denial, camp melee acceptance, server-controlled movement beyond melee range and unchanged HP on denial. Proposed test, not executed yet; region remains unreviewed for production. No public gateway, deployment, inventory or reward changes.
+- EXACT NEXT: verify #905 and this map test PR exact-head CI, reconcile overlapping record entries as needed and merge green. Review browser-to-server coordinate parity and complete collision/terrain coverage before restricted actual-map combat pilot. Keep private cloud disabled and existing public cosmetic presence unchanged.
+
+---
+
 ## COMBAT: LETHAL HIT / DOWNED REJOIN / RESPAWN ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
 
 - Parent #901 MERGED at 5ba6fba900449c34a2e77364a8e8a79c5a4064f7, exact head c23401fb76c6b1320950204414d30cb45f0f5396; all five CI SUCCESS: Validate 45938075227, Runtime 45938075126, Gateway 45938075127, Authority 45938075200, Gameplay 45938075149.
