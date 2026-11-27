@@ -1,0 +1,58 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {getPlatformProxy} from 'wrangler';
+import {Wallet} from 'ethers';
+import worker from '../index.mjs';
+const ORIGIN='https://climboria.fun';
+test('actual local D1 wallet-only forum lifecycle',async()=>{
+ const platform=await getPlatformProxy({configPath:'wrangler.toml',persist:false});
+ try{
+ const db=platform.env.DB;
+ const sql=await readFile(new URL('../migrations/0001_forum.sql',import.meta.url),'utf8');
+ for(const s of sql.split(';').map(x=>x.trim()).filter(Boolean))await db.prepare(s).run();
+ const env={DB:db,FORUM_ORIGIN:ORIGIN,FORUM_ENABLED:'true'};
+ const call=async(path,data,token,origin=ORIGIN,extra={})=>{
+  const headers={...(origin?{origin}:{}),...(data===undefined?{}:{'content-type':'application/json'}),...(token?{authorization:'Bearer '+token}:{}),...extra};
+  const res=await worker.fetch(new Request('https://forum.example'+path,{method:data===undefined?'GET':'POST',headers,...(data===undefined?{}:{body:JSON.stringify(data)})}),env);
+  return {status:res.status,data:await res.json()};
+ };
+ const a=Wallet.createRandom(),b=Wallet.createRandom();
+ const challenge=async w=>(await call('/v1/challenge',{address:w.address,chainId:8453})).data;
+ const login=async w=>{const c=await challenge(w);const v=await call('/v1/verify',{nonce:c.nonce,signature:await w.signMessage(c.message)});assert.equal(v.status,200);return v.data.token;};
+ const off=await worker.fetch(new Request('https://forum.example/v1/topics'),{...env,FORUM_ENABLED:'false'});assert.equal(off.status,503);
+ assert.equal((await call('/v1/topics',undefined,null,null)).status,200);
+ assert.equal((await call('/v1/challenge',{address:a.address,chainId:1})).status,400);
+ assert.equal((await call('/v1/challenge',{address:a.address,chainId:8453},null,'https://evil.example')).status,403);
+ assert.equal((await call('/v1/challenge',{address:a.address,chainId:8453},null,null)).status,403);
+ const c=await challenge(a);assert.match(c.message,/Chain ID: 8453/);assert.match(c.message,/climboria\.fun/);
+ assert.equal((await call('/v1/verify',{nonce:c.nonce,signature:await b.signMessage(c.message)})).status,401);
+ const proof={nonce:c.nonce,signature:await a.signMessage(c.message)};
+ const outcomes=await Promise.all([call('/v1/verify',proof),call('/v1/verify',proof)]);
+ assert.deepEqual(outcomes.map(x=>x.status).sort(),[200,401]);
+ const token=outcomes.find(x=>x.status===200).data.token;
+ const expired=await challenge(a);await db.prepare('UPDATE challenges SET expires_at=0 WHERE nonce=?').bind(expired.nonce).run();
+ assert.equal((await call('/v1/verify',{nonce:expired.nonce,signature:await a.signMessage(expired.message)})).status,401);
+ const input={category:'general',title:'Hello',body:'<script>alert(1)</script>',wallet:b.address,role:'admin'};
+ for(const route of ['/v1/topics','/v1/topics/1/replies','/v1/topics/1/reports','/v1/proposals','/v1/votes','/v1/reactions','/v1/moderation']){
+  assert.equal((await call(route,input)).status,401);
+  assert.equal((await call(route,input,'email-only-session')).status,401);
+ }
+ const post=await call('/v1/topics',input,token);assert.equal(post.status,201);
+ const rows=(await call('/v1/topics')).data.topics;assert.equal(rows.length,1);assert.equal(rows[0].wallet,a.address.toLowerCase());assert.equal(rows[0].body,input.body);
+ const topic=post.data.id,other=await login(b);
+ assert.equal((await call('/v1/topics/'+topic+'/replies',{body:'Reply',wallet:a.address},other)).status,201);
+ const replies=(await call('/v1/topics/'+topic+'/replies')).data.replies;assert.equal(replies[0].wallet,b.address.toLowerCase());
+ assert.equal((await call('/v1/topics/'+topic+'/reports',{reason:'spam'},other)).status,201);
+ assert.equal((await call('/v1/topics/'+topic+'/reports',{reason:'duplicate'},other)).status,409);
+ assert.equal((await call('/v1/proposals',{},token)).status,503);
+ assert.equal((await call('/v1/votes',{},token)).status,503);
+ assert.equal((await call('/v1/topics',input,token,'https://evil.example')).status,403);
+ assert.equal((await call('/v1/topics',input,token,null)).status,403);
+ assert.equal((await call('/v1/logout',{},token)).status,200);
+ assert.equal((await call('/v1/topics',input,token)).status,401);
+ await db.prepare('UPDATE sessions SET expires_at=0 WHERE wallet=?').bind(b.address.toLowerCase()).run();
+ assert.equal((await call('/v1/topics/'+topic+'/replies',{body:'Expired'},other)).status,401);
+ const stored=await db.prepare('SELECT token_hash FROM sessions').all();assert.ok(stored.results.every(x=>x.token_hash!==token&&x.token_hash!==other));
+ }finally{await platform.dispose();}
+});

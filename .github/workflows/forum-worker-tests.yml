@@ -1,0 +1,27 @@
+name: Governance Forum Backend Tests
+on:
+  pull_request:
+    branches: [main]
+    paths: ['site/forum-worker/**', '.github/workflows/forum-worker-tests.yml']
+  push:
+    branches: [main]
+    paths: ['site/forum-worker/**', '.github/workflows/forum-worker-tests.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-d1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: site/forum-worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run check
+      - run: npm test
+      - run: npx wrangler deploy --dry-run --outdir /tmp/forum-bundle

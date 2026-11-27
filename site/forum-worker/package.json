@@ -1,0 +1,15 @@
+{
+  "name": "climboria-forum-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check index.mjs"
+  },
+  "dependencies": {
+    "ethers": "6.13.4"
+  },
+  "devDependencies": {
+    "wrangler": "4.36.0"
+  }
+}
