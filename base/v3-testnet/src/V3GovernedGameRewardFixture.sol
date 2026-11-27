@@ -104,6 +104,9 @@ contract V3GovernedGameRewardFixture is EIP712,ReentrancyGuard {
         delete pending;generation++;distributor=signer;formerOrCurrentSigner[signer]=true;
         emit SignerActivated(signer,generation,serial);
     }
+    function reservedSignerRole(address a) external view returns(bool){
+        return formerOrCurrentSigner[a]||a==pending.signer;
+    }
     function monthlyCap(uint256 m) public pure returns(uint256){
         if(m>=60)return 0;
         uint256 annual=ALLOCATION*(30-5*(m/12))/100;
