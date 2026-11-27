@@ -137,7 +137,7 @@ export default {
     const before=u.searchParams.has('before')?id(u.searchParams.get('before')):Number.MAX_SAFE_INTEGER;
     const actor=await db.prepare('SELECT wallet FROM moderators WHERE wallet=? AND active=1 AND '+sessionCheck).bind(s.wallet,s.digest,s.wallet,Date.now()).first();
     if(!actor)reject(403,'moderator_required');
-    const result=await db.prepare('SELECT id,topic_id,wallet,reason,created_at FROM reports WHERE id<? AND EXISTS(SELECT 1 FROM moderators WHERE wallet=? AND active=1) AND '+sessionCheck+' ORDER BY id DESC LIMIT 51').bind(before,s.wallet,s.digest,s.wallet,Date.now()).all();
+    const result=await db.prepare('SELECT r.id,r.topic_id,r.wallet,r.reason,r.created_at,t.title AS topic_title,t.body AS topic_body,t.hidden AS topic_hidden FROM reports r JOIN topics t ON t.id=r.topic_id WHERE r.id<? AND EXISTS(SELECT 1 FROM moderators WHERE wallet=? AND active=1) AND '+sessionCheck+' ORDER BY r.id DESC LIMIT 51').bind(before,s.wallet,s.digest,s.wallet,Date.now()).all();
     return send({reports:result.results.slice(0,50),nextBefore:result.results.length>50?String(result.results[49].id):null});
    }
    if(req.method==='POST'&&p==='/v1/moderation/actions'){
