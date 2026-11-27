@@ -14,5 +14,7 @@ export default {async fetch(req,env){
  const headers=new Headers(req.headers);
  headers.set('Sec-WebSocket-Protocol',protocols.join(','));
  const stub=env.ROOM.get(env.ROOM.idFromName('preview-jarrell-camp-v1'));
- return stub.fetch(new Request('https://local.internal/ws',{headers}));
+ // Preserve the original native upgrade request rather than constructing a
+ // synthetic HTTPS request. Only its protocol header is normalized.
+ return stub.fetch(new Request(req,{headers}));
 }};
