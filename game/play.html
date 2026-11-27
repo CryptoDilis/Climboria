@@ -3610,7 +3610,7 @@ const MAX_REMOTE_GLB=MOB?2:3;
 const REMOTE_HERO_HEIGHT=1.9,NEARBY_CHAT_METERS=20,NEARBY_BUBBLE_MS=5000;
 let remoteGLBLoading=0,remoteGLBResidents=0,remoteModelClock=0;
 // Explicit local smoke fixture only; never activate crowd culling for live combat or room admission.
-let crowdPlanner=null,crowdTiers=new Map(),crowdPressure='normal';
+let crowdPlanner=null,crowdTiers=new Map(),crowdPressure='normal',crowdNextPlanAt=0,crowdPlanDirty=true;
 // Shared geometry/materials remain owned by the Game scene for its lifetime:
 // 32 peers reuse these few GPU buffers instead of allocating 32 skeletons or
 // downloading 43MB Adventurer GLBs per remote peer, especially on mobile.
@@ -4267,7 +4267,7 @@ window.__CLIMBORIA_GAME_PEERS={
   group.add(ring,nameplate,fallback);
   const p={id:data.id,group,fallback,nameplate,bubble:null,bubbleUntil:0,model:data.model,position:{...position},target:null,root:null,mixer:null,clips:null,action:null,actionName:'',loading:false,retryAt:0,punchUntil:0,walkUntil:0};
   const spot=remoteRootAt(position.x,position.z,position.y);p.target=spot;group.position.set(spot.x,spot.y,spot.z);
-  scene.add(group);livePeers.set(data.id,p);
+  scene.add(group);livePeers.set(data.id,p);crowdPlanDirty=true;
   // Reflect a verified join instantly; sparse WebGL frames must not hide
   // a genuine explorer on the field map until the next rendered frame.
   drawWorldMapPlayer();
@@ -4294,14 +4294,15 @@ window.__CLIMBORIA_GAME_PEERS={
   scene.remove(p.group);
   p.group.traverse(n=>{if(n.isSprite){n.material?.map?.dispose();n.material?.dispose()}else if(n.name==='RemoteMarkerRing'){n.geometry?.dispose();n.material?.dispose()}});
   unloadPeerHero(p);
-  livePeers.delete(id);
+  livePeers.delete(id);crowdTiers.delete(id);crowdPlanDirty=true;
   drawWorldMapPlayer();
  },
  clear(){for(const id of [...livePeers.keys()])this.remove(id)},
  update(dt){
   const now=performance.now();
-  if(crowdPlanner){
-   const plan=crowdPlanner({players:[...livePeers.values()].map(p=>({id:p.id,kind:'player',x:p.position.x,z:p.position.z,hasModel:p.model==='Jarrell'||p.model==='Lheiz'})),viewer:{x:P.x,z:P.z},device:MOB?'mobile':'desktop',pressure:crowdPressure,npcCap:0});
+  if(crowdPlanner&&(crowdPlanDirty||now>=crowdNextPlanAt)){
+   crowdPlanDirty=false;crowdNextPlanAt=now+250;
+   const plan=crowdPlanner({players:[...livePeers.values()].map(p=>({id:p.id,kind:'player',x:p.position.x,z:p.position.z,hasModel:p.model==='Jarrell'||p.model==='Lheiz'})),viewer:{x:P.x,z:P.z},device:MOB?'mobile':'desktop',pressure:crowdPressure,npcCap:0,previous:[...crowdTiers].map(([id,tier])=>({id,tier}))});
    crowdTiers=new Map(plan.assignments.map(a=>[a.id,a.tier]));
   }
   for(const p of livePeers.values()){
@@ -4375,9 +4376,9 @@ window.__CLIMBORIA_GAME_PEERS={
 if(new URLSearchParams(location.search).has('smoke')){
  window.ENDLESS_WILDS.crowdSmokeEnable=async()=>{
   if(livePeers.size||npcContinuousPending||npcPairPending||npcContinuousSession&&!npcContinuousSession.audit().closed||npcPairSession&&!npcPairSession.audit().closed||remoteGLBLoading||remoteGLBResidents)return false;
-  const {planCrowdRendering}=await import('./npc/crowd-render-policy.mjs');crowdPlanner=planCrowdRendering;crowdPressure='normal';return true;
+  const {planCrowdRendering}=await import('./npc/crowd-render-policy.mjs');crowdPlanner=planCrowdRendering;crowdPressure='normal';crowdPlanDirty=true;return true;
  };
- window.ENDLESS_WILDS.crowdSmokePressure=pressure=>{if(!crowdPlanner||!['normal','constrained','critical'].includes(pressure))return false;crowdPressure=pressure;return true};
+ window.ENDLESS_WILDS.crowdSmokePressure=pressure=>{if(!crowdPlanner||!['normal','constrained','critical'].includes(pressure))return false;crowdPressure=pressure;crowdPlanDirty=true;return true};
  window.ENDLESS_WILDS.crowdSmokeAudit=()=>({pressure:crowdPressure,enabled:!!crowdPlanner,tiers:[...livePeers.values()].map(p=>({id:p.id,tier:crowdTiers.get(p.id)??'hidden',visible:p.group.visible,body:!!p.root&&p.root.visible||p.fallback.visible,heavy:!!p.root,attached:p.group.parent===scene,nameplate:p.nameplate.visible})),peer:window.__CLIMBORIA_GAME_PEERS.audit()});
 }
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
