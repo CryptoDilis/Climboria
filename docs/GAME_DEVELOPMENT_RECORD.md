@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A VERIFIED PRIVATE HOST MAIN CANDIDATE — 2026-11-27 UTC
+
+- #1003 exact head 3b47a4c74fbf3671308dc39a98b77e23492513bd: all three source workflows SUCCESS (foundation 46021246459, native chat 46021246494, focused browser 46021246433). Private explicit two-human admission and first disconnect/overcapacity cleanup, no restart. Copy only three verified source paths onto main b0a4605a85096fc5bb0f455c028b3e2531696010; existing native socket fixture unchanged on main since parent, retain main development history and Base files. New main-targeted full CI required.
+- #1002 and #1004 focused browser 46021239419/46021451335 still running at inspection; their foundation/chat checks passed. Excluded from this candidate until terminal checks; preserve branches.
+- NEXT: verify fresh integration CI, then reconcile remaining activity candidates and add paired visible NPC renderer/spacing acceptance. Private host remains unwired from production Worker, no public NPC spawn, actual account/WSS or physical device proof, no real resource or token grants.
+
+---
+
 ## R5A MAIN INTEGRATION MERGED — 2026-11-27 UTC
 
 - #1000 exact head 4f33795c680347bb3fcca2d2b6b6488d0164cdbc: all 11 source workflows SUCCESS. Focused NPC desktop/mobile 46020396061, full gameplay 46020395784, native chat 46020395893, foundation 46020395851, ecosystem browser 46020395877; six other checks green. Compared intervening main changes: only Base handoff documentation, no overlapping paths. GitHub confirmed merge efc90d622b6c7547f97809ebdb7ea9aaed7e4862. No public NPC activation; post-merge CI not yet verified.
