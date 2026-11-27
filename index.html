@@ -548,11 +548,11 @@ footer:first-of-type>div{
 @media(min-width:1201px){
  nav{gap:clamp(16px,2vw,34px);padding:14px clamp(18px,2.4vw,42px)}
  nav>.logo{flex:0 0 auto;font-size:clamp(17px,1.5vw,22px);letter-spacing:2px;white-space:nowrap}
- .navl{display:grid;grid-template-columns:repeat(9,minmax(0,1fr)) 42px 42px minmax(0,1fr);grid-template-rows:42px;flex:1;min-width:0;gap:clamp(5px,.55vw,10px);align-items:stretch}
+ .navl{display:grid;grid-template-columns:repeat(9,minmax(0,1fr)) repeat(3,42px);grid-template-rows:42px;flex:1;min-width:0;gap:clamp(5px,.55vw,10px);align-items:stretch}
  .navl>a:not([target]),.navl>.hub-link,.navl>.btn-gold,.navl>.nav-x-link{display:flex!important;align-items:center!important;justify-content:center!important;gap:3px!important;min-width:0!important;width:100%!important;height:42px!important;min-height:42px!important;margin:0!important;padding:0 4px!important;border:1px solid rgba(194,153,83,.34)!important;border-radius:9px!important;background:linear-gradient(180deg,rgba(23,39,59,.96),rgba(9,18,31,.96))!important;color:#e8d3a5!important;box-shadow:none!important;font:700 clamp(8px,.67vw,10px) Inter,system-ui,sans-serif!important;letter-spacing:0!important;white-space:nowrap!important;text-decoration:none!important;text-transform:uppercase!important;cursor:pointer}
  .navl>.hub-link .climboria-icon{width:26px!important;height:26px!important;flex:0 0 26px!important}
  .navl>.btn-gold{border-color:#b98e46!important;color:#f9dfaa!important}
- .navl>.nav-x-link{font-size:17px!important}
+ .navl>.nav-x-link{font-size:20px!important;line-height:1!important}
  .navl>a:hover,.navl>button:hover{border-color:#f0c87d!important;background:#1d3145!important;color:#fff2ce!important}
  .navl>a:focus-visible,.navl>button:focus-visible{outline:2px solid #f0c87d;outline-offset:3px}
 }
@@ -587,7 +587,8 @@ footer:first-of-type>div{
  nav{padding:14px 20px}
 }
 @media(min-width:1450px){
- .navl>a:not([target]),.navl>.hub-link,.navl>.btn-gold,.navl>.nav-x-link{font-size:clamp(9px,.7vw,11px)!important;letter-spacing:0!important}
+ .navl>a:not([target]),.navl>.hub-link,.navl>.btn-gold{font-size:clamp(9px,.7vw,11px)!important;letter-spacing:0!important}
+ .navl>.nav-x-link{font-size:20px!important;line-height:1!important}
  .navl>.hub-link .climboria-icon{width:26px!important;height:26px!important;flex-basis:26px!important}
 }
 @media(prefers-reduced-motion:reduce){.mobile-menu,.hamburger span,.navl>a,.navl>button{transition:none!important}}
