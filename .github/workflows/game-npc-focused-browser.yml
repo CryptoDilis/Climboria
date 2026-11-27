@@ -16,7 +16,7 @@ jobs:
       matrix:
         device: [desktop, mobile]
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 25
     env:
       NPC_QA_DEVICE: ${{ matrix.device }}
     steps:
