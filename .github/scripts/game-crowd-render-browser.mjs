@@ -52,9 +52,18 @@ try{
    assert.equal(promoted.peer.peers,100);
    console.log('Private batch interpolation and close entrant PASS',JSON.stringify({mobile,motion,tier:promoted.tiers.find(t=>t.id===hidden)}));
   }
+  if(n===100){
+   const accepted=await page.evaluate(()=>{
+    const w=window.__climboriaJarrellsPeak,p=window.__CLIMBORIA_GAME_PEERS;
+    const moves=p.audit().positions.map((q,i)=>{const x=(i%10-4.5)*.1,z=-30.5-Math.floor(i/10)*.1;return {id:q.id,position:{x,z,y:w.groundAt(x,z)+1.75}}});
+    let applied=0;for(let i=0;i<moves.length;i+=32){const a=w.crowdSmokeBatch({type:'players-moved',moves:moves.slice(i,i+32)});if(!a.ok)throw Error('close batch rejected');applied+=a.applied}
+    for(let i=0;i<30;i++)p.update(.05);return applied;
+   });assert.equal(accepted,100);
+  }
   assert.equal(await page.evaluate(()=>window.__climboriaJarrellsPeak.crowdSmokePressure('critical')),true);
-  const critical=await wait('critical cleanup',a=>a.peer.resident+a.peer.loading===0&&a.tiers.every(t=>!t.body)&&a.tiers.filter(t=>t.visible).length<= (mobile?8:12));
+  const critical=await wait('critical cleanup',a=>a.peer.resident+a.peer.loading===0&&a.tiers.filter(t=>t.body&&t.visible).length<=(mobile?2:3)&&a.tiers.filter(t=>t.visible).length<= (mobile?8:12)&&a.closeCoverage!==null);
   assert.equal(critical.peer.peers,n);
+  if(n===100){const reserve=mobile?2:3,total=mobile?8:12;assert.deepEqual(critical.closeCoverage,{total:100,bodies:reserve,markers:total-reserve,hidden:100-total,complete:false});assert.equal(critical.tiers.filter(t=>t.body&&t.visible&&t.nameplate).length,reserve);console.log('Private critical close coverage',JSON.stringify({mobile,coverage:critical.closeCoverage}));}
   assert.equal(await page.evaluate(()=>window.__climboriaJarrellsPeak.crowdSmokePressure('normal')),true);
   const recovered=await wait('recover heavy',a=>a.peer.sceneVisibleResidents===(mobile?2:3));
   await page.evaluate(()=>window.__CLIMBORIA_GAME_PEERS.clear());

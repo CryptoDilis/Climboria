@@ -71,3 +71,17 @@ test('close-range entrant preempts stale retention outside interaction distance 
  assert.equal(changed.assignments.find(a=>a.id===players[2].id).tier,'heavy');
  assert.equal(changed.counts.heavy,2);
 });
+
+test('private critical close protection reserves bounded silhouettes and truthfully reports overload',()=>{
+ for(const device of ['mobile','desktop']){
+  const players=make(100,.01),p=plan(players,device,{pressure:'critical',closeProtection:true});
+  const reserve=device==='mobile'?2:3,total=device==='mobile'?8:12;
+  assert.equal(p.counts.heavy,0);assert.equal(p.counts.light,reserve);
+  assert.equal(p.counts.markers,total-reserve);assert.equal(p.npcTarget,0);
+  assert.deepEqual(p.closeCoverage,{total:100,bodies:reserve,markers:total-reserve,hidden:100-total,complete:false});
+  assert.deepEqual(plan(make(1),'mobile',{pressure:'critical',closeProtection:true}).closeCoverage,{total:1,bodies:1,markers:0,hidden:0,complete:true});
+  assert.equal(plan(make(1,10),device,{pressure:'critical',closeProtection:true}).counts.light,0);
+  assert.equal(plan(players,device,{pressure:'critical'}).counts.light,0);
+ }
+ assert.throws(()=>plan([],'mobile',{closeProtection:'yes'}));
+});

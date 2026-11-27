@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## CROWD C9 PRIVATE CRITICAL CLOSE VISIBILITY — 2026-11-28 PHT
+
+- C7 #1039 all five exact workflows green, merged main 99b637f959feb89615240a82059a7a2c0a0f331a. C8 #1040 native run 46054530870 job 140693687714 regression tests green, sustained socket test running at inspection; retargeted to main, no latency result yet.
+- C9 explicit private close-protection option reserves at most two mobile/three desktop lightweight silhouettes within 2.8m horizontal distance under critical pressure, zero heavy GLBs; reduces marker budget by reserve, total visible cap unchanged (8/12). Reports close body/marker/hidden coverage honestly; overload is NOT combat-ready. Default pure planner option remains false; loopback smoke only opts in. Unit and actual renderer fixture exercise 100 close descriptors, pressure, bounded bodies/nameplates and cleanup. No change to authoritative combat or live protocol.
+- NEXT: verify C8 terminal sustained results and C9 exact CI. All-close overload remains unresolved (at most 2/3 bodies under critical pressure); evaluate actual GPU/physical devices, shared geometry and private authenticated acceptance before any public crowd policy. No production cap change.
+
+---
+
 ## CROWD C8 SUSTAINED PEER DELIVERY LATENCY — 2026-11-28 PHT
 
 - #1038 exact 2a2a7d6d256922aba107e5b003d747d65f4d4a06 all 13 listed workflows success; merged main 8c3bec433e28392cc8c9e1553d780b415de5f7ff. #1039 exact e29c7d11e2cb4e2f9034e549986d2c1257bb2692 all five listed workflows success. Browser run 46046983548 jobs 140668581236 mobile and 140668581496 desktop: malformed batch rejected without mutation, known peer accepted, unknown ignored, 100 descriptors preserved, previously hidden entrant promoted to visible body/nameplate. Controlled scene-transform error converged monotonically from 10.919m/12.124m to 0.000013m/0.000014m; manual fixture steps, not device FPS or network latency. Retarget #1039 to main; verify exact merge readiness.
