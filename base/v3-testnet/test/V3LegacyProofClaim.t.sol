@@ -77,6 +77,40 @@ contract V3LegacyProofClaimTest {
         vm.expectRevert(Claim.NotReady.selector);vault.activate(c);
         _ready();require(vault.activated());
     }
+    function _scheduleClosure(bytes32 review) private {
+        bytes32 digest=vault.closureDigest(review);
+        vm.prank(address(control));vault.schedule(digest,block.timestamp+7 days);
+    }
+    function testClosureRequiresAppealWindowAndCurrentEpoch() public {
+        _ready();vm.prank(A);vault.claim(0,a,p);
+        bytes32 review=bytes32(uint256(99));
+        bytes32 digest=vault.closureDigest(review);
+        vm.prank(address(control));vm.expectRevert(Claim.InvalidAction.selector);
+        vault.schedule(digest,block.timestamp+7 days);
+        vm.warp(vault.appealEnd());
+        vm.expectRevert(Claim.NotReady.selector);vault.finalize(review);
+        _scheduleClosure(review);control.rotate();vm.warp(block.timestamp+2 days);
+        vm.expectRevert(Claim.NotReady.selector);vault.finalize(review);
+        _scheduleClosure(review);vm.warp(block.timestamp+2 days);
+        vm.expectRevert(Claim.NotReady.selector);vault.finalize(bytes32(uint256(98)));
+        vault.finalize(review);
+        require(vault.closed()&&vault.paid()==7&&vault.burned()+vault.paid()==vault.RESERVE());
+        require(asset.totalSupply()==888888888000000-vault.burned());
+        vm.expectRevert(Claim.NotReady.selector);vault.finalize(review);
+    }
+    function testClosureCancellationAndDonationsPreserveAccounting() public {
+        _ready();vm.prank(B);vault.claim(1,b,q);
+        asset.transfer(address(vault),5);
+        vm.warp(vault.appealEnd());
+        bytes32 review=bytes32(uint256(99));
+        _scheduleClosure(review);vm.prank(address(control));vault.cancel();
+        vm.warp(block.timestamp+2 days);
+        vm.expectRevert(Claim.NotReady.selector);vault.finalize(review);
+        _scheduleClosure(review);vm.warp(block.timestamp+2 days);vault.finalize(review);
+        require(vault.closed()&&vault.burned()==vault.RESERVE()-9&&asset.balanceOf(address(vault))==5);
+        vm.expectRevert(Claim.InvalidAction.selector);vault.activate(c);
+        vm.prank(A);vm.expectRevert(Claim.NotReady.selector);vault.claim(0,a,p);
+    }
     function testUnauthorizedScheduleAndDeadline() public {
         bytes32 digest=vault.activationDigest(c);
         vm.expectRevert(Claim.Unauthorized.selector);vault.schedule(digest,block.timestamp+7 days);
