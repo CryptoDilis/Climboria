@@ -5,15 +5,15 @@ import {WebSocket,WebSocketServer} from 'ws';
 import {PresenceRoom} from '../../game/multiplayer/presence-room.mjs';
 const id=i=>'session_'+String(i).padStart(18,'0');
 const wait=async(fn,label,ms=30000)=>{const end=performance.now()+ms;while(!fn()){if(performance.now()>end)throw Error(label);await new Promise(r=>setTimeout(r,5))}};
-async function scenario(n,distributed,optimized){
- let now=1000,seq=0,wireBytes=0,movePackets=0,serverError=null;
- const room=new PresenceRoom({roomId:'private-crowd-fixture',now:()=>now,limit:n,movementInterest:optimized});
+async function scenario(n,distributed,optimized,batched=false){
+ let now=1000,seq=0,wireBytes=0,movePackets=0,moveEntries=0,serverError=null;
+ const room=new PresenceRoom({roomId:'private-crowd-fixture',now:()=>now,limit:n,movementInterest:optimized,movementBatch:batched});
  const wss=new WebSocketServer({host:'127.0.0.1',port:0,maxPayload:1024,perMessageDeflate:false});
  const sockets=new Map(),clients=[],rtts=[],start=performance.now();
  const initial=i=>({x:i*(distributed?12:.3),y:2,z:-30});
  wss.on('connection',socket=>{
   const i=seq++,sid=id(i);sockets.set(sid,socket);
-  const send=packet=>{if(socket.readyState!==WebSocket.OPEN)throw Error('Closed fixture socket');const raw=JSON.stringify(packet);wireBytes+=Buffer.byteLength(raw);if(packet.type==='player-moved')movePackets++;socket.send(raw)};
+  const send=packet=>{if(socket.readyState!==WebSocket.OPEN)throw Error('Closed fixture socket');const raw=JSON.stringify(packet);wireBytes+=Buffer.byteLength(raw);if(packet.type==='player-moved'){movePackets++;moveEntries++}if(packet.type==='players-moved'){movePackets++;moveEntries+=packet.moves.length}socket.send(raw)};
   const joined=room.connect({trustedSessionId:sid,name:'QA '+i,model:'Jarrell',announceImmediately:false,send});
   if(!joined.ok){serverError=Error(joined.reason);socket.close();return}
   room.members.get(sid).position=initial(i);room.announce(sid);
@@ -39,13 +39,14 @@ async function scenario(n,distributed,optimized){
     if(m.type==='welcome')for(const p of m.peers)c.positions.set(p.id,p.position);
     if(m.type==='player-joined')c.positions.set(m.player.id,m.player.position);
     if(m.type==='player-moved')c.positions.set(m.id,m.position);
+    if(m.type==='players-moved'){assert.ok(batched);assert.ok(m.moves.length>0&&m.moves.length<=32);for(const p of m.moves)c.positions.set(p.id,p.position)}
     if(m.type==='player-left')c.positions.delete(m.id);
     if(m.type==='fixture-barrier')c.barrier=true;
    }catch(e){c.error=e}});
    await wait(()=>c.index!==null||c.error,'ready timeout');if(c.error)throw c.error;
   }
   assert.equal(room.snapshot().length,n);assert.equal(sockets.size,n);
-  room.flushMovementInterest();wireBytes=0;movePackets=0;
+  room.flushMovementInterest();wireBytes=0;movePackets=0;moveEntries=0;
   for(let step=1;step<=12;step++){
    now+=250;
    for(const c of clients){
@@ -70,7 +71,7 @@ async function scenario(n,distributed,optimized){
   await wait(()=>room.members.size===0&&sockets.size===0,'disconnect cleanup timeout');
   assert.equal(room.movementInterest?.size()??0,0);
   const sorted=[...rtts].sort((a,b)=>a-b);
-  return {n,distributed,optimized,movePackets:count,wireBytes:bytes,ackP95Ms:sorted[Math.ceil(sorted.length*.95)-1],elapsedMs:performance.now()-start,heapUsedBytes:process.memoryUsage().heapUsed,finalPositions:true,cleanup:true};
+  return {n,distributed,optimized,batched,moveEntries,movePackets:count,wireBytes:bytes,ackP95Ms:sorted[Math.ceil(sorted.length*.95)-1],elapsedMs:performance.now()-start,heapUsedBytes:process.memoryUsage().heapUsed,finalPositions:true,cleanup:true};
  }finally{
   for(const c of clients)c.ws.terminate();
   for(const socket of wss.clients)socket.terminate();
@@ -83,4 +84,8 @@ for(const n of [10,25,50,100])for(const distributed of [false,true]){
  if(distributed&&n>=25)assert.ok(optimized.movePackets<baseline.movePackets);
  assert.ok(optimized.movePackets<=baseline.movePackets+ n*(n-1));
  console.log('Private native crowd socket evidence',JSON.stringify({baseline,optimized,ratio:optimized.movePackets/baseline.movePackets}));
+ const batched=await scenario(n,distributed,true,true);
+ assert.ok(batched.movePackets<=optimized.movePackets);
+ if(!distributed){assert.equal(batched.moveEntries,baseline.moveEntries);assert.equal(batched.movePackets,12*n*Math.ceil((n-1)/32));assert.ok(batched.wireBytes<baseline.wireBytes)}
+ console.log('Private native batch evidence',JSON.stringify({n,distributed,batched,packetRatio:batched.movePackets/baseline.movePackets,byteRatio:batched.wireBytes/baseline.wireBytes}));
 }
