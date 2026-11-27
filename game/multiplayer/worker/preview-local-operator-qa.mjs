@@ -4,6 +4,7 @@
  */
 import {pathToFileURL} from 'node:url';
 import {createInterface} from 'node:readline/promises';
+import {signInGoogleNormally} from './preview-google-pkce.mjs';
 const GAME='https://climboria.fun',HOST='game-combat-preview.climboria.fun',PREVIEW='https://'+HOST;
 const uid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const jwt=/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
@@ -31,21 +32,24 @@ export function distinctTesters(a,b,now=Date.now()){
  return !!a&&!!b&&a.id!==b.id&&a.email!==b.email&&a.token!==b.token&&a.access!==b.access&&
   a.expiresAt-now>=120000&&b.expiresAt-now>=120000;
 }
-async function capture(browser,ask,label){
+async function capture(browser,ask,label,google){
  const ctx=await browser.newContext({serviceWorkers:'block'});let page;
  try{
   page=await ctx.newPage();
+  let auth;
+  if(google){auth=await signInGoogleNormally(label)}else{
   await page.goto(GAME+'/game/index.html',{waitUntil:'domcontentloaded',timeout:30000});
   await ask('Tester '+label+': sign in to the disposable registered Game account in the browser, then press Enter here. ');
   if(new URL(page.url()).origin!==GAME||new URL(page.url()).pathname!=='/game/index.html')
    throw Error('game-menu-required');
-  const auth=await page.evaluate(async()=>{
+  auth=await page.evaluate(async()=>{
    const auth=typeof heroAuth==='undefined'?null:heroAuth?.auth;
    if(!auth)return null;
    const [s,u]=await Promise.race([Promise.all([auth.getSession(),auth.getUser()]),
     new Promise((_,reject)=>setTimeout(()=>reject(Error('auth-deadline')),15000))]);
    return s?.error||u?.error?null:{session:s?.data?.session,user:u?.data?.user};
   });
+  }
   if(!auth)throw Error('registered-session-required');
   await page.goto(PREVIEW+'/',{waitUntil:'domcontentloaded',timeout:30000});
   await ask('Tester '+label+': finish Access email PIN login; expect preview-disabled, then press Enter here. ');
@@ -62,7 +66,8 @@ async function capture(browser,ask,label){
 }
 async function main(){
  if(process.env.CI||!process.stdin.isTTY||!process.stdout.isTTY||
-    process.argv.length!==3||process.argv[2]!=='PREPARE_PRIVATE_COMBAT_QA'){
+    ![3,4].includes(process.argv.length)||process.argv[2]!=='PREPARE_PRIVATE_COMBAT_QA'||
+    (process.argv.length===4&&process.argv[3]!=='--google')){
   console.error('Refusing: local interactive operator session and explicit preparation required.');
   process.exitCode=1;return;
  }
@@ -76,8 +81,9 @@ async function main(){
   'GAME_PREVIEW_A_ACCESS_COOKIE','GAME_PREVIEW_B_ACCESS_COOKIE'];
  try{
   console.log('Local preparation only: preview must stay disabled until all operator gates pass.');
-  const a=await capture(browser,ask,'A');contexts.push(a.ctx);
-  const b=await capture(browser,ask,'B');contexts.push(b.ctx);
+  const google=process.argv[3]==='--google';
+  const a=await capture(browser,ask,'A',google);contexts.push(a.ctx);
+  const b=await capture(browser,ask,'B',google);contexts.push(b.ctx);
   if(!distinctTesters(a.tester,b.tester))throw Error('two-distinct-testers-required');
   // UUIDs are account identifiers, not passwords. Display locally only so
   // the operator can configure the scoped allowlist; never log tokens.

@@ -5,6 +5,8 @@ on:
     paths:
       - 'game/multiplayer/worker/preview-local-operator-qa.mjs'
       - 'game/multiplayer/worker/preview-local-operator-qa.test.mjs'
+      - 'game/multiplayer/worker/preview-google-pkce.mjs'
+      - 'game/multiplayer/worker/preview-google-pkce.test.mjs'
       - '.github/workflows/game-preview-local-operator-qa.yml'
 permissions:
   contents: read
@@ -19,4 +21,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --check game/multiplayer/worker/preview-local-operator-qa.mjs && node --test game/multiplayer/worker/preview-local-operator-qa.test.mjs
+      - run: node --check game/multiplayer/worker/preview-local-operator-qa.mjs && node --test game/multiplayer/worker/preview-local-operator-qa.test.mjs game/multiplayer/worker/preview-google-pkce.test.mjs
