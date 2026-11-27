@@ -28,7 +28,11 @@ const contracts=specs.map(([file,name,words])=>{
  const initcodeBytes=init.length+32*words;
  assert.ok(initcodeBytes<=49152,name+' initcode size');
  assert.ok(runtime.length<=24576,name+' runtime size');
- return {name,initcodeBytes,runtimeBytes:runtime.length,creationSha256:hash(init),runtimeTemplateSha256:hash(runtime)};
+ const initcodeHeadroom=49152-initcodeBytes,runtimeHeadroom=24576-runtime.length;
+ // Engineering margin for forthcoming controls, not a change to the EVM limit.
+ if(name==='V3QuorumSuccessorFixture')assert.ok(initcodeHeadroom>=1024,name+' less than 1 KiB initcode headroom');
+ if(name==='SafeQuorumReserveFactoryFixture')assert.ok(runtimeHeadroom>=1024,name+' less than 1 KiB runtime headroom');
+ return {name,initcodeBytes,runtimeBytes:runtime.length,initcodeHeadroom,runtimeHeadroom,creationSha256:hash(init),runtimeTemplateSha256:hash(runtime)};
 });
-const manifest={status:'SAFE_TEST_ONLY_SIZE_OBSERVATION',sourceSha:process.env.GITHUB_SHA,safeSource:'bf943f80fec5ac647159d26161446ac5d716a294',openzeppelinSource:'dc44c9f1a4c3b10af99492eed84f83ed244203f6',contracts,caveat:'Compiled local templates only, not official deployed Safe runtime, actual deployment, gas or approval.'};
+const manifest={status:'SAFE_TEST_ONLY_SIZE_OBSERVATION',optimizerRuns:1,evmVersion:'paris',sourceSha:process.env.GITHUB_SHA,safeSource:'bf943f80fec5ac647159d26161446ac5d716a294',openzeppelinSource:'dc44c9f1a4c3b10af99492eed84f83ed244203f6',contracts,caveat:'Compiled local templates only, not official deployed Safe runtime, actual deployment, gas or approval.'};
 writeFileSync(process.argv[2],JSON.stringify(manifest,null,2)+'\n');console.log(JSON.stringify(manifest,null,2));
