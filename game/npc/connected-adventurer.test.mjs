@@ -22,3 +22,14 @@ test('one stable actor completes fishing, swimming and actual synthetic gatherin
 test('unloaded gap prevents a connected actor instead of teleporting',()=>{
  assert.throws(()=>createConnectedAdventurer({...base,loaded:(x)=>x<40||x>60}),/No verified connected activity route/);
 });
+
+test('personality-enabled connected actor remains autonomous and completes diverse activities',()=>{
+ const a=createConnectedAdventurer({...base,personalityEnabled:true,identityId:'npc:jarrell-peak:thornevale'});
+ let previous=a.npc.snapshot();
+ for(let i=0;i<18000;i++){
+  const s=a.npc.tick(.1);assert.equal(s.npcId,'npc:jarrell-peak:thornevale');assert.ok(Math.hypot(s.x-previous.x,s.z-previous.z)<=.300001);previous=s;
+  if(['fish','swim','gather'].every(x=>a.audit().completed.includes(x)))break;
+ }
+ for(const action of ['fish','swim','gather'])assert.ok(a.audit().completed.includes(action),action);
+ assert.ok(a.audit().resources.gathered>0);a.npc.close();
+});
