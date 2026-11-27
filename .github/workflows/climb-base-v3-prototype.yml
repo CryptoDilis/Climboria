@@ -137,6 +137,8 @@ jobs:
           path: ${{ runner.temp }}/v3-build-manifest.json
           if-no-files-found: error
           retention-days: 14
+      - name: Test synthetic canonical legacy manifest evidence
+        run: node --test legacy-canonical-evidence.test.mjs
       - name: Test V3 read-only estimator
         run: node --test estimate-creation.test.mjs
       - name: Test unsigned review binding
