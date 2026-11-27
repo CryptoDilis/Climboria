@@ -152,9 +152,7 @@ test('real preview lifecycle delivers lethal hit, preserves death through fresh 
     a=await connect(A);b=await connect(B);
     assert.equal(joined(b).snapshot.health,250);
    }
-   const bid=joined(b)?.id??[...room.sockets.keys()].find(id=>id!==joined(a)?.id);
-   // send() clears the sender inbox, so retain the target via the server roster.
-   assert.ok(bid);
+   const bid=joined(b).id;
    const hit=await h.send(a,{type:'attack',targetId:bid});
    assert.equal(hit.ok,true);assert.equal(hit.health,500-5*(i+1));
   }
