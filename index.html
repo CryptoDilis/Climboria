@@ -623,6 +623,27 @@ footer:first-of-type>div{
 .hero .hero-content .hero-buttons>.btn-launch{background:linear-gradient(180deg,#27476f,#142b4e)!important;color:#ffe5a3!important}
 .hero .hero-content .hero-buttons>button+button{border-left:2px solid #f3c46c!important}
 .hero .hero-content .hero-buttons>button:hover{filter:brightness(1.18)!important}
+
+/* Base-blue homepage color grade only: original desktop/mobile artwork and geometry retained. */
+body{background-color:#050d1c}
+.hero picture{isolation:isolate}
+.hero picture img{filter:saturate(1.04) contrast(1.035)}
+.hero picture::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:color;background:radial-gradient(ellipse at 23% 69%,rgba(0,83,255,.66),rgba(0,115,255,.26) 44%,transparent 72%),linear-gradient(180deg,rgba(0,82,255,.16),rgba(0,82,255,.12) 48%,rgba(0,71,196,.35));}
+.hero-overlay{background:linear-gradient(180deg,rgba(3,13,35,.15) 0%,rgba(3,13,35,0) 35%,rgba(5,17,43,.4) 70%,rgba(5,13,28,.95) 100%)}
+nav{background-color:rgba(5,13,28,.94);border-color:rgba(64,140,255,.45)}
+.mobile-menu{background-color:rgba(5,13,28,.985);border-color:rgba(64,140,255,.45)}
+.mobile-menu a:hover,.mobile-menu a:focus-visible{color:#76b5ff}
+.navl>a:not([target]),.navl>a[target],.navl>.hub-link,.navl>.btn-gold{background:linear-gradient(180deg,#102b52,#08162c)!important}
+.navl>a:hover,.navl>button:hover,.navl>a:focus-visible,.navl>button:focus-visible{background:linear-gradient(180deg,#164485,#0a2247)!important;border-color:#5ba8ff!important;color:#fff3d4!important;box-shadow:0 0 14px rgba(0,82,255,.32)!important;outline-color:#76b5ff}
+.hero .hero-content .hero-buttons{background:linear-gradient(180deg,#164688,#091c3b)!important;box-shadow:0 0 14px rgba(0,112,255,.58),0 0 32px rgba(0,82,255,.25),0 6px 22px rgba(0,0,0,.52)!important}
+.hero .hero-content .hero-buttons>.btn-trade{background:linear-gradient(180deg,#1456aa,#103367)!important}
+.hero .hero-content .hero-buttons>.btn-launch{background:linear-gradient(180deg,#123e7d,#0a234d)!important}
+.climboria-footer{background:#09182e!important;border-top-color:rgba(64,140,255,.23)!important}
+@media(max-width:900px){
+ .hero picture::after{background:linear-gradient(180deg,rgba(0,82,255,.16),rgba(0,100,255,.24) 48%,rgba(0,82,255,.32))}
+ .hero-overlay{background:linear-gradient(180deg,rgba(3,13,35,.2) 0%,rgba(3,13,35,.02) 35%,rgba(5,17,43,.45) 60%,rgba(5,13,28,.96) 100%)}
+}
+
 </style>
 </head>
 <body>
