@@ -177,3 +177,6 @@ Opened PR #921, exact head 198b1f366e7433c4b68067014b00ecd26e9f1f48, test-only t
 
 ## Base-first product direction — 2026-11-27 UTC
 Owner now prioritizes Base as Climboria's primary ecosystem chain and UI default; Solana remains supported alongside additional networks. See [cross-workstream direction](../docs/CLIMBORIA_BASE_FIRST_ECOSYSTEM_DIRECTION.md). T11 supply model and all release gates remain unresolved; do not infer authorization to mint, migrate or alter legacy eligibility. Continue exact #921 CI and source evidence work. No real transactions.
+
+## T07 multi-leaf actual quorum regressions verified — 2026-11-27 UTC
+PR #921 merged as cb17adf3f46b2b2c3040388c197440dff0f215a9, exact head 198b1f366e7433c4b68067014b00ecd26e9f1f48. Safe 45943946793 job 140324253554 SUCCESS: 58 tests (6+15+11+26), multi-leaf conservation/tampered proof rollback and duplicate source across approved leaves passed; size and local rehearsal passed. Validate 45943946773 SUCCESS. Post-merge CI not independently verified. T07 source authentication, fairness, real appeals and T11 supply model remain open. 9/13 partial, zero release-certified; TESTNET_NO_GO / MAINNET_NO_GO. Next continue source eligibility and T11 supply reconciliation independently of UI PR #923.
