@@ -115,6 +115,20 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 - [ ] R5A.11 Owner-requested actual world chat: short context-aware authored NPC-to-NPC dialogue and optional responses to players, based on verified activity/nearby world events. Explicit [NPC] sender badge from authoritative server metadata, never forged human identities or ONLINE count. Shared delivery across two clients with bounded rate, dedupe, mute/moderation, safe authored text, no wallet/financial requests, no external LLM requirement. Local smoke fixtures must not publish real room chat. Test desktop/mobile visibility, reconnect and abuse cases before separately gated rollout. No fabricated human conversation or economic effects. Resource gathering and current desktop acceptance precede implementation.
 
 
+## R5B — Multiplayer crowd scalability (owner priority 2026-11-28 PHT)
+
+- [x] Pure bounded rendering planner, nearest-player priority and NPC suppression: #1033 foundation passed; exact policy consolidated into #1034 and subsequent stability work #1035.
+- [x] 10/25/50/100 synthetic descriptor policy tests passed; these do not represent authenticated players.
+- [x] Private actual renderer acceptance 10/25/32 entries desktop/mobile passed, run 46042603882, jobs 140653843614/140653844088. At 32: mobile 2 heavy/8 light/16 markers/6 hidden, desktop 3 heavy/12 light/17 markers. Critical pressure and cleanup passed. Existing live cap unchanged. No public culling/quality downgrade enabled.
+- [x] Optional trusted movement-interest implementation and private loopback load acceptance: #1034 exact 6ca6e88f8e4990fde06fca3ddb6ff246a5aa47f2 run 46042603936 job 140653843661 passed for 10/25/50/100 actual local WebSocket transports using synthetic trusted sessions. Distributed 100 movement packets 118800→37555 (JSON bytes 11174328→3512958); clustered 100 no savings, ack p95 worsened. Final positions and disconnect cleanup passed. No real-account/production capacity claim.
+- [x] Targeted linear pair scanning and hysteretic LOD implementation candidate #1035 first head fac9f3b7e3882406f5234bec91b3bcb0693fdd58 foundation 46042903111 and native 46042903110 passed. 100 distributed ack p95 48.34→46.24ms; clustered 46.82→63.03ms; different runner timings not comparable. Pressure caps retained.
+- [ ] #1034 remaining exact CI and main consolidation; hero creator renderer initialization failure 46042604104 retried, not waived. Full gameplay and focused desktop CI pending at checkpoint.
+- [ ] #1035 latest exact 208739f6cbe69897cbdf616ac97cbe01bb52254a: private loopback-only 50/100 actual renderer fixture extension, strict budgets and recovery, fresh focused 46043165359, foundation 46043165313, chat 46043165465, native 46043165314 and crowd renderer 46043165304. Verify terminal results, consolidate on latest main; no actual 50/100 renderer pass yet.
+- [ ] Physical Android/desktop acceptance (see GAME_NPC_PHYSICAL_DEVICE_ACCEPTANCE.md). Requires hardware and owner-authorized private preview; software-rendered CI is not substitute.
+- [ ] Actual authenticated 50/100 concurrent-client private capacity acceptance, server admission/interest scheduler and cloud/network cost measurement. Preserve current live Worker and renderer 32 limits, truthful ONLINE, close-range interaction visibility, world/nearby chat, combat and economy gates. No production enablement before evidence.
+
+**Next:** complete exact CI and merge compatible Game-only candidates, then physical device and authenticated private capacity testing. No production scalability claim or authorization from this checklist.
+
 ## R6 — Reasons to return (optional, non-punitive)
 
 - [ ] R6.1 Optional rotating daily adventures and weekly expeditions/challenges, no mandatory streaks, no lost progression for absence.
