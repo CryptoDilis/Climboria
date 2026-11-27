@@ -55,3 +55,66 @@ Resolved config.json in all four: optimizer enabled/200 runs, via_ir=false, Safe
 Largest observed candidate initcode in manifest SafeQuorumReserveFactoryFixture 39167 (baseline39298), headroom9985. Some smaller contracts grow; no universal optimization claim. All actual compiler bytecode identities differ or require re-verification; no existing deployment pin transfers to candidate.
 
 Disposition: 0.8.39 is a viable experimental compiler candidate for further review; no observed test/size incompatibility within this suite. Not an independent build, not proof SOL-2026-7 cannot affect untested paths. Foundry resolved config verified but actual standard JSON build-info, ABI/storage layout equivalence and per-artifact metadata are not in retained ZIPs; add explicit evidence and compare before any canonical compiler switch. Experimental PR remains open, no canonical compiler/contract changes. No funding/signatures/deployment/repin; Kimi pending. TESTNET_NO_GO / MAINNET_NO_GO.
+
+## Repaired replay and independent imported-source provenance — 2026-11-27 UTC
+#1022 head d7ba830fe6127036bf316e99250a0a49903b0da8, actual checkout 38530c55630d7e16e52a1f5039daaf6d76daa340, CI 46038974891 all ten jobs SUCCESS. All four replay reports have zero differences, including complete emitted contract objects and source IDs/AST. Safe restores two relative source aliases from captured absolute-name content; V3 restores none.
+| Project/compiler | Replay job | Contract entries | Nonempty creation/runtime each | Original = replayed canonical contract SHA256 |
+|---|---:|---:|---:|---|
+| Safe 0.8.19 |140641969021|114|74|dc7e49f7419fb351524fa40454a8be48789a4a0ecaea831e6430f8bb38ea5c34|
+| Safe 0.8.39 |140641969018|114|74|4be709e6f9e8c6a49a8c1bc0446b259e0d26c39923f91591a54bb4ca99003103|
+| V3 0.8.19 |140641968986|97|72|d0dd6f0074d4fb74134bd77f50bf90947237e001cb541534109ba8554ab6ac21|
+| V3 0.8.39 |140641969032|97|72|cc8fadd7e558a0ca8435a2bebece7ab2d9510d8c20add98710152166579a91bc|
+Locally downloaded and SHA256 verified six ZIPs against GitHub metadata:
+- Safe baseline original 15217614241 3e64cd38f3b4c544ab6f5f1b39a893811d646bc3b63e01fd6747b24e7d6dc190
+- V3 baseline original 15218952398 bfbeeff5eeb9b9e5ca24be5112dceb39ecca6debf95204b8595cb9af0db02c33
+- Safe baseline replay 15219002509 5b6809517a541b4f504d66004cbaf54861bb30c8b91571edcc132cd29cbe1c97
+- Safe candidate replay 15217973841 8c05336591e368aa9ce1d6e768f857d3a2d785c57e167f89b2a62372cc660677
+- V3 baseline replay 15217869344 e6801b478800047d8e625aacd812d5b67febaa565d798aa5a8f21d173c379273
+- V3 candidate replay 15218213524 67afbd9a2a10a443c85a79a2c455c7e49b15e24e6640dadc8aa9c6468fcaed9d
+Locally parsed all four reports; independently compared original and replayed baseline contracts/source JSON for both projects, exact equality, original raw input digest matches report. Candidate originals not downloaded in this step; candidate exact equality is CI/report evidence.
+
+### Actual imported source provenance
+Computed Git blob SHA1 from exact UTF-8 source bytes embedded in baseline standard JSON: SHA1("blob " + byte length + NUL + bytes). Every one of 33 distinct imported dependency files matches GitHub-reported blob at the pinned upstream commit, independently fetched by exact path/ref, no mismatch or unavailable file. Safe graph has 16 OZ and 17 Safe files; V3 graph has the same 16 OZ files. This covers actual imported baseline source contents, not unrelated upstream repository files, independent upstream compiler builds, or deployed on-chain code.
+OZ dc44c9f1a4c3b10af99492eed84f83ed244203f6:
+| contracts/ path | Matching blob |
+|---|---|
+|interfaces/IERC5267.sol|4d3a6b92a272c5e13ede3e88e04f90452c7dcaa2|
+|security/ReentrancyGuard.sol|dac508b6a028c8741c8dfb328b9cf2f3e27ce241|
+|token/ERC20/ERC20.sol|91b7f98f604f8cc33683ab05cd15975fc082def3|
+|token/ERC20/IERC20.sol|6d5b4e9f1968c2af847980b1bdbfd75511f26f22|
+|token/ERC20/extensions/IERC20Metadata.sol|83ba6ac5ed12a58f84082045d4dae3fc45608fb9|
+|token/ERC20/extensions/IERC20Permit.sol|ec2b5483c7183fc201d401afee3f0cdc759c7139|
+|token/ERC20/utils/SafeERC20.sol|d4bcd9888f2e570cc3624dc5ced2f640c48bebe6|
+|utils/Address.sol|0791a66a73d0deb3b04bbf4b983670877cdc5705|
+|utils/Context.sol|8e410bda17846f9b282539ea154cfa183e1342fb|
+|utils/ShortStrings.sol|90a05499924e959f1e28725964aef70c448b16fb|
+|utils/StorageSlot.sol|df62b8f7b8cc0a6182202a9b7b87f9436951fb5b|
+|utils/Strings.sol|657ebd6636b2c1f3c1e031baaf6bee1ddc4a39f8|
+|utils/cryptography/ECDSA.sol|4326e5b66428db3508fab34d4501271f7190163b|
+|utils/cryptography/EIP712.sol|2a0e734860471fa3e56dae9e30f7498ea1b1c762|
+|utils/math/Math.sol|551b1a5126b3b8095bb67449b33f550ccffafe41|
+|utils/math/SignedMath.sol|3ea9f8bf02d5140d423dfd25e7d8baff78a08fcc|
+Safe bf943f80fec5ac647159d26161446ac5d716a294:
+| contracts/ path | Matching blob |
+|---|---|
+|Safe.sol|3bd2ed9e9693838db0fb21960d00b78427a63c87|
+|base/Executor.sol|121834566d72e6386a6f6f784a5142e9e2bfb4e6|
+|base/FallbackManager.sol|baf307a6c3bebea6fb446eb4a62fc95f1fe27730|
+|base/GuardManager.sol|4bd3cc0d327dd0581eb3bb50e2302ef75680b787|
+|base/ModuleManager.sol|ecc3938adaee3f7f13f93712f45bb0045368d28b|
+|base/OwnerManager.sol|29a5a4880d2257fa08a82c6fa13a4920c354b8a9|
+|common/Enum.sol|9ce0f5d539b7f1b8d3a92d2840bbd3f18fd25e0c|
+|common/NativeCurrencyPaymentFallback.sol|5903ba1d7b2604d83e023273a135acf87fa78caa|
+|common/SecuredTokenTransfer.sol|bddffd8318a1cde4e92d65a38f7ac211c4239f1d|
+|common/SelfAuthorized.sol|4e60bb9d6ba0e46aab3d2167e776930f12e8d6a0|
+|common/SignatureDecoder.sol|b505cbf67e45ad2ae6651b31e0fbbb7da73d07fb|
+|common/Singleton.sol|9fafeba8c0589b764fe558a913411217e9420a9a|
+|common/StorageAccessible.sol|0b72714bacc7c6ebe6d72585672b2230e3024852|
+|external/SafeMath.sol|37d4353a0de5bd518be190bde9f74fe020aeef17|
+|interfaces/IERC165.sol|732cc02b109aec16f55b6851bbdc1aaea463a5f5|
+|interfaces/ISignatureValidator.sol|d2cd2e5fed06065c7792f9de07d9e1c7d1fbfb17|
+|proxies/SafeProxy.sol|eb21260363a19f1a35ef34e323761e63cf5600e3|
+
+### Compiler AST applicability extension
+Re-read official registry at immutable 08ec22bd62087af25ac665653b117b2c3e19c9ab. Walked raw baseline compiler non-test ASTs: Safe 55 source-unit ASTs (includes duplicated V3 aliases), V3 30. Two Safe relative output-only aliases lack ASTs, but same-named embedded absolute aliases have ASTs and are covered by replay and V3. Safe 30 struct declarations, 16 delete expressions, 23 selector accesses, 35 inline assembly blocks; V3 21 structs, 8 delete expressions, 7 selector accesses, 18 assembly blocks. Counts are occurrences, not unique cross-project constructs. No ABI coder v1 opt-in; no struct member containing recursive dynamically sized struct arrays observed; all delete operands are pending/rotation storage struct identifiers, none a memory bytes index; no selector receiver subtree containing FunctionCall, Assignment, Conditional or UnaryOperation. Actual input confirms viaIR=false and default optimizer configuration. Thus the observed prerequisites for SOL-2026-9, SOL-2026-8, SOL-2026-5, SOL-2023-1 are not found in screened non-test graphs; IR-only and nondefault sequence entries remain inapplicable to actual settings. SOL-2025-1 remains a storage layout/array assessment, no blanket closure. SOL-2026-7 remains OPEN: one SafeProxy assembly block has no Solidity externalReferences; inspection shows _singleton and success each declared once, no reassignment of symbolic base variables, literal memory offsets, no evident registry trigger in that block; other assembly blocks have external refs. Compiler-generated Yul utilities still need targeted review/differential testing. This is applicability screening, not formal proof.
+Kimi report now received and triaged (base/CLIMB_BASE_KIMI_RE_REVIEW_TRIAGE.md); do not treat initial report as pending. Next independently verify candidate original/replay artifacts and project source-to-checkout identities, review generated Yul and storage layouts, remaining Slither findings, custody/signer/recipient decisions and external source build. No compiler repin, merge, signing, spending or deployment. TESTNET_NO_GO / MAINNET_NO_GO.
