@@ -5,6 +5,8 @@ import {Enum} from "safe-contracts/common/Enum.sol";
 import {SafeEpochGuardFixture,GuardedSafeFactoryFixture} from "../src/SafeEpochGuardFixture.sol";
 interface VmEpochGuard {
     function chainId(uint256) external;
+    function addr(uint256) external returns(address);
+    function sign(uint256,bytes32) external returns(uint8,bytes32,bytes32);
     function warp(uint256) external;
     function etch(address,bytes calldata) external;
     function prank(address) external;
@@ -16,9 +18,8 @@ contract PermissiveOwnerValidator {
 }
 contract SafeEpochGuardTest {
     VmEpochGuard constant vm=VmEpochGuard(address(uint160(uint256(keccak256("hevm cheat code")))));
-    address constant A=address(0x101);
-    address constant B=address(0x102);
-    address constant C=address(0x103);
+    uint256[3] private keys;
+    address A;address B;address C;
     address constant D=address(0x104);
     address constant E=address(0x105);
     address constant F=address(0x106);
@@ -27,15 +28,25 @@ contract SafeEpochGuardTest {
     GuardedSafeFactoryFixture factory;
     function setUp() public {
         vm.chainId(84532);factory=new GuardedSafeFactoryFixture();
+        keys=[uint256(0x12345),uint256(0x23456),uint256(0x34567)];
+        for(uint256 i=0;i<3;i++)for(uint256 j=i+1;j<3;j++)if(vm.addr(keys[j])<vm.addr(keys[i]))(keys[i],keys[j])=(keys[j],keys[i]);
+        A=vm.addr(keys[0]);B=vm.addr(keys[1]);C=vm.addr(keys[2]);
         address[] memory owners=new address[](5);
         owners[0]=A;owners[1]=B;owners[2]=C;owners[3]=D;owners[4]=E;
         (wallet,guard)=factory.create(owners);
     }
-    function _approved(address to,bytes memory data,Enum.Operation op,uint256 count) private returns(bytes memory sigs){
-        return _approvedAt(to,data,op,count,wallet.nonce());
+    function _signed(address to,bytes memory data,Enum.Operation op,uint256 count) private returns(bytes memory sigs){
+        return _signedAt(to,data,op,count,wallet.nonce());
     }
-    function _approvedAt(address to,bytes memory data,Enum.Operation op,uint256 count,uint256 nonce) private returns(bytes memory sigs){
+    function _signedAt(address to,bytes memory data,Enum.Operation op,uint256 count,uint256 nonce) private returns(bytes memory sigs){
         bytes32 hash=wallet.getTransactionHash(to,0,data,op,0,0,0,address(0),address(0),nonce);
+        for(uint256 i=0;i<count;i++){
+            (uint8 v,bytes32 r,bytes32 s)=vm.sign(keys[i],hash);
+            sigs=abi.encodePacked(sigs,r,s,v);
+        }
+    }
+    function _approved(address to,bytes memory data,Enum.Operation op,uint256 count) private returns(bytes memory sigs){
+        bytes32 hash=wallet.getTransactionHash(to,0,data,op,0,0,0,address(0),address(0),wallet.nonce());
         address[3] memory signers=[A,B,C];
         for(uint256 i=0;i<count;i++){
             vm.prank(signers[i]);wallet.approveHash(hash);
@@ -46,10 +57,10 @@ contract SafeEpochGuardTest {
         return wallet.execTransaction(to,0,data,op,0,0,0,address(0),payable(address(0)),sigs);
     }
     function _quorum(address to,bytes memory data) private {
-        require(_exec(to,data,Enum.Operation.Call,_approved(to,data,Enum.Operation.Call,3)));
+        require(_exec(to,data,Enum.Operation.Call,_signed(to,data,Enum.Operation.Call,3)));
     }
     function _reject(address to,bytes memory data,Enum.Operation op,uint256 count) private {
-        bytes memory sigs=_approved(to,data,op,count);
+        bytes memory sigs=_signed(to,data,op,count);
         vm.expectRevert();_exec(to,data,op,sigs);
     }
     function _schedule(uint256 e,address oldOwner,address newOwner) private {
@@ -107,9 +118,9 @@ contract SafeEpochGuardTest {
         _schedule(1,E,F);
         bytes memory stale=_swap(E,F);
         uint256 first=guard.rotationSerial();
-        // Cancel and reschedule each consume one nonce. Approve the old payload at
+        // Cancel and reschedule each consume one nonce. Sign the old payload at
         // the future nonce so the Safe nonce alone cannot explain its rejection.
-        bytes memory sigs=_approvedAt(address(wallet),stale,Enum.Operation.Call,3,wallet.nonce()+2);
+        bytes memory sigs=_signedAt(address(wallet),stale,Enum.Operation.Call,3,wallet.nonce()+2);
         _quorum(address(guard),abi.encodeCall(guard.cancelRotation,(1)));
         _schedule(1,E,F);
         require(guard.rotationSerial()==first+1&&wallet.nonce()==3);
@@ -146,7 +157,7 @@ contract SafeEpochGuardTest {
     function testContractSignatureFromCodeBearingOwnerRejected() public {
         vm.etch(C,address(new PermissiveOwnerValidator()).code);
         bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F));
-        bytes memory sigs=_approved(address(guard),data,Enum.Operation.Call,2);
+        bytes memory sigs=_signed(address(guard),data,Enum.Operation.Call,2);
         // Safe v1.4.1 validates the permissive contract signature before the guard.
         sigs=abi.encodePacked(sigs,bytes32(uint256(uint160(C))),bytes32(uint256(195)),uint8(0),uint256(0));
         vm.expectRevert(SafeEpochGuardFixture.UnsupportedSignatureMode.selector);
@@ -160,6 +171,17 @@ contract SafeEpochGuardTest {
         vm.expectRevert(SafeEpochGuardFixture.UnsupportedSignatureMode.selector);
         _exec(address(guard),data,Enum.Operation.Call,sigs);
         require(wallet.nonce()==0&&!guard.transactionActive()&&guard.epoch()==1);
+    }
+    function testApprovedHashesRejectedAfterOwnerCodeCleared() public {
+        bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F));
+        vm.etch(C,address(new PermissiveOwnerValidator()).code);
+        bytes memory sigs=_approved(address(guard),data,Enum.Operation.Call,3);
+        vm.etch(C,"");
+        vm.expectRevert(SafeEpochGuardFixture.UnsupportedSignatureMode.selector);
+        _exec(address(guard),data,Enum.Operation.Call,sigs);
+        require(wallet.nonce()==0&&!guard.transactionActive()&&guard.epoch()==1);
+        _quorum(address(guard),data);
+        require(wallet.nonce()==1);
     }
     function testNonSigningCodeBearingOwnerCanBeRotatedOut() public {
         vm.etch(E,address(new PermissiveOwnerValidator()).code);
