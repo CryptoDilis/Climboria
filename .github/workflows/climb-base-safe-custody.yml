@@ -1,0 +1,41 @@
+name: CLIMB Base Safe Custody Boundary
+on:
+  pull_request:
+    paths:
+      - 'base/safe-custody/**'
+      - '.github/workflows/climb-base-safe-custody.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'base/safe-custody/**'
+      - '.github/workflows/climb-base-safe-custody.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: base/safe-custody
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Fetch exact Safe v1.4.1 source
+        run: |
+          set -euo pipefail
+          mkdir -p lib/safe-contracts
+          git -C lib/safe-contracts init
+          git -C lib/safe-contracts fetch --depth=1 https://github.com/safe-fndn/safe-smart-account.git bf943f80fec5ac647159d26161446ac5d716a294
+          git -C lib/safe-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/safe-contracts rev-parse HEAD)" = bf943f80fec5ac647159d26161446ac5d716a294
+      - name: Exercise actual Safe and proxy custody boundaries
+        run: |
+          set -euo pipefail
+          forge test --match-contract SafeCustodyBoundaryTest -vv | tee "$RUNNER_TEMP/safe-boundary.log"
+          grep -Eq '6 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-boundary.log"
