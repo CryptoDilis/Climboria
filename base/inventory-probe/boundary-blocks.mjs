@@ -80,6 +80,6 @@ export async function observeBoundaryBlocks(a,b,{fetchFn=fetch}={}){
   try{assertDistinctRpcEndpoints(a,b);}catch{fail('CONFIG_INVALID');}
   const first=await source(a,'A',fetchFn),second=await source(b,'B',fetchFn);
   if(canonical(first)!==canonical(second))fail('SOURCE_DISAGREEMENT');
-  return {status:'REPORTED_BOUNDARY_BLOCKS_ONLY',candidateUtc:'2026-11-27T07:52:22.702Z',blocks:first,providerIndependence:'NOT_VERIFIED',digestScope:'CANONICAL_PARSED_JS_JSON_NOT_RAW_BYTES',mintMentionCoverage:'NOT_CERTIFIED',eligibility:'NOT_CERTIFIED',authorization:false};
+  return {status:'REPORTED_BOUNDARY_BLOCKS_ONLY',observedMint:CLIMB_SOLANA_MINT,candidateUtc:'2026-11-27T07:52:22.702Z',blocks:first,providerIndependence:'NOT_VERIFIED',digestScope:'CANONICAL_PARSED_JS_JSON_NOT_RAW_BYTES',mintMentionCoverage:'NOT_CERTIFIED',eligibility:'NOT_CERTIFIED',authorization:false};
  }catch(e){fail(boundaryFailureCode(e));}
 }

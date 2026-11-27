@@ -63,6 +63,7 @@ try{
  assert.ok(connected.wet&&connected.exited&&connected.distance>50&&connected.maxStep<=.300001);
  assert.ok(['fish','swim','gather'].every(a=>connected.completed.includes(a))&&connected.resources.gathered>0);
  assert.ok(connected.playerUnchanged&&connected.inventoryUnchanged&&connected.diagnosticsUnchanged&&connected.peersUnchanged);
+ assert.ok(['fish','swim','gather'].every(a=>connected.drawn.includes(a))&&connected.transitDraw&&connected.nameplateDraws>0&&connected.visualCleaned);
  assert.deepEqual(errors,[]);
  console.log('NPC focused browser PASS',JSON.stringify({mobile,elapsedMs:Date.now()-start,route,glb,active,ended}));
  await context.close();

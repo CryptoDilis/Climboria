@@ -119,6 +119,8 @@ jobs:
             echo "Blank config unexpectedly accepted"; exit 1
           fi
           test ! -e "$RUNNER_TEMP/blocked-preflight.json"
+      - name: Verify offline custody role-control evidence
+        run: node --test role-control-evidence.test.mjs
       - name: Verify fee-budget observation arithmetic
         run: node --test observe-fee-budget.test.mjs
       - name: Check active public evidence pin

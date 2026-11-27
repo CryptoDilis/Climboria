@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A CONNECTED MAP VERIFIED; SAME-ACTOR VISUAL CANDIDATE — 2026-11-27
+
+- #988 foundation 46009216068 and focused browser 46009216013 passed; #990 foundation 46010066229 and focused browser 46010066104 passed. Both actual map profiles: 477.786m travel, 2441 steps, max step 0.3m, direct validated connector with 1381 probes, swim/fish/gather completion and water exit, one synthetic wood, stable identity, unchanged player/inventory/peers/diagnostics. No actual continuous visual rendering proven by those runs.
+- Consolidate verified graph/map files onto current main 52171486b11eec512afe68fddf0cda7b2bdf3f0b. Route planner already merged and identical; preserve all other main changes. Add same-actor GLB projection on every simulation tick and sampled real WebGL draws for fish/swim/gather and transit, nameplate and cleanup. No new public spawn or chat, no real resources. Fresh combined CI pending; sampled renders are not real-time or physical-device performance evidence.
+- NEXT: verify combined main-targeted CI, then merge if green, add actual personality goal preferences and contextual NPC dialogue foundation, shared chat authority and physical device gates. Keep public NPC activation disabled.
+
+---
+
 ## R5A ACTUAL CONNECTED MAP SMOKE CANDIDATE — 2026-11-27
 
 - #987 merged into main as a26ced3924a15a562b8d30ab8d2a7cc42c3ccdc9 after four green source workflows. #988 foundation 46009216068 passed, focused browser 46009216013 pending at inspection. Separate child branch preserves its active CI.
