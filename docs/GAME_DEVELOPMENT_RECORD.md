@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## ACTUAL GLB ACCEPTANCE MERGED; COMBINED NATIVE GLB STEP PASSED — 2026-11-27 PHT
+
+- #928 merged 7fa859e9462c9934e6ce0f6bd7b05654afceccc2 after exact head d431a8abbb54f1a9116004584130b66c942277c2: Validate 45948604926 and Gameplay 45948604924 SUCCESS. Main drift unrelated Base/homepage work.
+- #930 prior exact head 3bf891310a0abbd801b1032acff1eacbc5995be9 Validate 45949487565 SUCCESS; Gameplay 45949487596 job 140341783661 isolated actual GLB, native socket and combined native browser GLB projection steps SUCCESS, full gameplay running at check. Reconcile on #928 squash merge preserving native socket closure, fresh victim snapshot/denial checks and all history. Fresh exact-head CI required; no visual screenshot or physical device QA claimed.
+- NEXT after #930 verified merge: separate authored private pilot room/renderer integration. Current wrangler.preview.toml disables preview, workers_dev and preview_urls; existing preview-worker.mjs fixed synthetic fixture must remain unchanged. Explicit account/origin/room gates and authorized edge QA required; no deployment or public PvP activation. No loot work.
+
+---
+
 ## PARALLEL COMBINED GLB CI — 2026-11-27 PHT
 
 - #928 exact d431a8abbb54f1a9116004584130b66c942277c2 Validate SUCCESS, isolated GLB and native socket steps SUCCESS, full gameplay 45948604924 still running. To avoid serial wait, #930 retargeted to main AS DRAFT ONLY for early combined CI; exact diff five Game files including pending #928. No unrelated changes in PR. No merge until #928 green and merged, then reconcile and refresh checks. Workflow dispatch unavailable via connector.
