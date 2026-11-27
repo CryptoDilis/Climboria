@@ -48,6 +48,10 @@ try{
  await page.waitForFunction(()=>window.__climboriaJarrellsPeak.npcContinuousAudit().session?.closed,undefined,{timeout:15000});
  const ended=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
  assert.equal(ended.session.reason,'distance');assert.ok(!ended.attached&&!ended.visible);assert.equal(ended.peers,count);
+ const forest=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcForestAudit());
+ console.log('NPC actual forest gathering audit',JSON.stringify(forest));
+ assert.ok(forest.authoredSource&&forest.gatherDraw&&forest.draws>0&&forest.resources.gathered>0&&forest.resources.gathered<=forest.resources.capacity);
+ assert.ok(forest.distance>4&&forest.maxStep<=.300001&&forest.inventoryUnchanged&&forest.diagnosticsUnchanged&&forest.peersUnchanged&&forest.cleaned);
  assert.deepEqual(errors,[]);
  console.log('NPC focused browser PASS',JSON.stringify({mobile,elapsedMs:Date.now()-start,route,glb,active,ended}));
  await context.close();
