@@ -88,7 +88,12 @@ try{
  stage='committed-attack';
  const hit=await send(a,{type:'attack',targetId:jb.id});
  assert.equal(hit.ok,true);assert.equal(hit.health,495);
+ stage='target-hit-push';
+ assert.deepEqual(await packet(b,'preview-hit'),{
+  type:'preview-hit',actorId:ja.id,targetId:jb.id,health:495,damage:5,downed:false
+ });
  assert.equal((await send(b,{type:'snapshot'})).snapshot.health,495);
+ assert.equal(await a.evaluate(()=>window.__privateQa.inbox.some(m=>m.type==='preview-hit')),false);
  stage='reconnect';
  await b.evaluate(()=>window.__privateQa.ws.close(1000,'qa-reconnect'));
  await roster(a,[ja.id]);
@@ -104,9 +109,14 @@ try{
  const counter=await send(b2,{type:'attack',targetId:ja.id});
  assert.equal(counter.ok,true);assert.equal(counter.targetId,ja.id);
  assert.equal(counter.health,495);assert.equal(counter.damage,5);
+ stage='counterattack-target-hit-push';
+ assert.deepEqual(await packet(a,'preview-hit'),{
+  type:'preview-hit',actorId:j2.id,targetId:ja.id,health:495,damage:5,downed:false
+ });
+ assert.equal(await b2.evaluate(()=>window.__privateQa.inbox.some(m=>m.type==='preview-hit')),false);
  assert.equal((await send(a,{type:'snapshot'})).snapshot.health,495);
  assert.equal((await send(b2,{type:'snapshot'})).snapshot.health,495);
- console.log('PASS: two registered accounts, synthetic combat, rejected forged damage and retired session, committed HP, reconnect and reciprocal attack.');
+ console.log('PASS: two registered accounts, synthetic combat, rejected forged damage and retired session, committed target HP push, reconnect and reciprocal attack.');
  console.log('Not production map acceptance. Operator must disable preview and inspect cloud cost metrics.');
 }catch{
  // Never print exception objects from browser/network APIs: they may contain credentials.
