@@ -420,6 +420,17 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
   <p class="base-market-warning"><strong>Market data only · Base chain 8453.</strong> This is not a router quote, token approval or executable swap. Gas, allowances, wallet signing and Base trading remain unavailable in Climboria.</p>
   <p id="baseMarketStatus" class="base-market-status" role="status" aria-live="polite">Enter an exact Base contract address to inspect its markets.</p>
   <div class="base-market-results" id="baseMarketResults"></div>
+  <details id="secondaryEvmResearch" class="secondary-evm-research" hidden>
+   <summary>Ethereum &amp; BNB Chain · market research</summary>
+   <p>Explore current provider-reported pools on other EVM networks. Research only: this does not change the Swap network, connect a wallet, quote a route, or enable a trade.</p>
+   <form id="secondaryEvmForm" autocomplete="off">
+    <label for="secondaryEvmChain">Research network</label><select id="secondaryEvmChain"><option value="1">Ethereum · Chain 1</option><option value="56">BNB Chain · Chain 56</option></select>
+    <label for="secondaryEvmContract">Exact contract on selected network</label><input id="secondaryEvmContract" inputmode="text" maxlength="42" spellcheck="false" autocomplete="off" placeholder="0x… (exact contract)" required>
+    <button type="submit">Find pools</button>
+   </form>
+   <p id="secondaryEvmStatus" role="status" aria-live="polite">Enter an exact contract on the selected research network.</p>
+   <div id="secondaryEvmResults" class="base-market-results"></div>
+  </details>
 </section>
 <section id="baseSwapWorkspace" class="base-swap-workspace" hidden aria-label="Base read-only wallet and indicative price workspace">
  <div class="base-swap-grid">
@@ -486,7 +497,7 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 <p class="foot">CLIMBORIA SWAP · BASE FIRST · MULTICHAIN · <a href="/dex/partners/">PARTNERSHIPS</a> · <a href="/support/">CUSTOMER SUPPORT</a></p></main></div>
 <script src="/dex/swap-amount.js"></script>
 <script src="/swap-config.js"></script>
-<script type="module" src="/dex/provider-managed-swap.mjs?v=10"></script><script type="module" src="/swap/base-market-preview.mjs?v=1"></script><script type="module" src="/dex/base-wallet-session.mjs?v=1"></script><script type="module" src="/dex/base-price-preview.mjs?v=2"></script><script type="module" src="/swap/base-workspace.mjs?v=1"></script>
+<script type="module" src="/dex/provider-managed-swap.mjs?v=10"></script><script type="module" src="/swap/base-market-preview.mjs?v=1"></script><script type="module" src="/swap/secondary-evm-research.mjs?v=1"></script><script type="module" src="/dex/base-wallet-session.mjs?v=1"></script><script type="module" src="/dex/base-price-preview.mjs?v=2"></script><script type="module" src="/swap/base-workspace.mjs?v=1"></script>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1183,4 +1194,10 @@ html[data-climboria-swap-network="base"] .solana-only-trust,html[data-climboria-
 .network-roadmap strong{display:block;font-size:13px;line-height:1.4;color:#e5eaf2}
 .network-roadmap span{display:block;font-size:12px;line-height:1.4;color:#aabbd0;margin-top:2px}
 .routing-coverage-foot{font-size:12px;line-height:1.5;color:#b9c8db}
+
+.secondary-evm-research{margin-top:12px;border:1px solid #4c5d77;border-radius:12px;padding:10px;background:#111d2e;color:#e2eaf6;font-size:13px;line-height:1.5}
+.secondary-evm-research summary{cursor:pointer;font-weight:800;color:#f2d99e}
+.secondary-evm-research form{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:6px!important;margin-top:10px}
+.secondary-evm-research input,.secondary-evm-research select,.secondary-evm-research button{width:100%;min-width:0;min-height:42px;font-size:14px}
+.secondary-evm-research p{overflow-wrap:anywhere}
 </style></body></html>
