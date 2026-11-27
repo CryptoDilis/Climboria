@@ -7,7 +7,7 @@ const pins=[
  {slot:474473090,blockTime:1795765943,parentSlot:474473089,blockhash:'HPh9zhR5mvsZv7nkoFEhjGM3i2U8jrcJ6KX7ifknxxqQ',previousBlockhash:'Pg3nSMoABAGRGxN7Jex97A3MgD98EhqZg4QpSbnYmip'}
 ];
 const methods=['getGenesisHash','getBlock'];
-const reasons=['TRANSPORT','HTTP_429','HTTP_OTHER','BODY','ENVELOPE','RPC_ERROR','GENESIS','HEADER','TRANSACTION_SHAPE','SOURCE_DISAGREEMENT'];
+const reasons=['TRANSPORT','HTTP_429','HTTP_OTHER','BODY','ENVELOPE','RPC_ERROR','RPC_HISTORY_UNAVAILABLE','RPC_UNSUPPORTED_VERSION','RPC_INVALID_PARAMS','RPC_METHOD_UNAVAILABLE','RPC_NODE_UNHEALTHY','RPC_RATE_LIMIT','GENESIS','HEADER','TRANSACTION_SHAPE','SOURCE_DISAGREEMENT'];
 const allowed=new Set(['CONFIG_INVALID','SOURCE_DISAGREEMENT','UNCLASSIFIED']);
 for(const p of ['A','B'])for(const m of methods)for(const reason of reasons)allowed.add(p+'_'+m+'_'+reason);
 class BoundaryFailure extends Error{constructor(code){super('NO_GO: boundary block evidence unavailable or inconsistent');this.code=code;}}
@@ -28,7 +28,14 @@ async function rpc(url,id,method,params,p,fetchFn){
   finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
   const x=JSON.parse(Buffer.concat(chunks).toString('utf8'));why='ENVELOPE';
   if(x?.jsonrpc!=='2.0'||x.id!==id)throw Error();
-  if(Object.hasOwn(x,'error')){why='RPC_ERROR';throw Error();}
+  if(Object.hasOwn(x,'error')){
+   const code=x.error?.code;
+   why=[-32001,-32004,-32007,-32009,-32011].includes(code)?'RPC_HISTORY_UNAVAILABLE':
+    code===-32015?'RPC_UNSUPPORTED_VERSION':code===-32602?'RPC_INVALID_PARAMS':
+    code===-32601?'RPC_METHOD_UNAVAILABLE':code===-32005?'RPC_NODE_UNHEALTHY':
+    code===429?'RPC_RATE_LIMIT':'RPC_ERROR';
+   throw Error();
+  }
   if(!Object.hasOwn(x,'result'))throw Error();
   return x.result;
  }catch{fail(p+'_'+method+'_'+why);}
