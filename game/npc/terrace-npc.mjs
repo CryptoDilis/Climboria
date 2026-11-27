@@ -43,5 +43,5 @@ export function createTerraceNpc({groundAt,waterBodyAt,actorBlocked,loaded,cente
  const edges=[['plot','rest'],['rest','plot'],['plot','hill'],['hill','plot']];
  const npc=createAutonomousAdventurer({nodes,edges,spawn:'rest',seed,world:{sample,canTraverse,isClimb,
   canAct:(n,action)=>!!pos(n)&&n.action===action,onActivityComplete:(n,action)=>{if(n.id==='plot'&&action==='farm')crop.work()}}});
- return Object.freeze({nodes,probes,crop,npc:Object.freeze({...npc,tick(dt){crop.advance(dt);return npc.tick(dt)}})});
+ return Object.freeze({nodes,probes,crop,npc:Object.freeze({...npc,tick(dt){if(!npc.snapshot().closed)crop.advance(dt);return npc.tick(dt)}})});
 }
