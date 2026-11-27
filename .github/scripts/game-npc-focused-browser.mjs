@@ -21,18 +21,28 @@ try{
  assert.ok(glb.attached&&glb.visible&&glb.label&&glb.withinBudget&&glb.peersUnchanged&&glb.playerUnchanged&&glb.hidden&&glb.detached);
  assert.ok(['walk','run','swim','fish','rest','swimIdle'].every(m=>glb.drawnModes.includes(m)));
  assert.equal(glb.generatedClips.length,5);assert.ok(glb.generatedClips.every(c=>c.tracks>0));
- const terrace=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcTerraceAudit());
+ const terrace=await page.evaluate(async()=>{const w=window.__climboriaJarrellsPeak;w.npcSmokePositionAtTerrace();return w.npcTerraceAudit()});
  console.log('NPC actual terrace activity audit',JSON.stringify(terrace));
- assert.ok(terrace.rise>.75&&terrace.crop.harvested>0&&terrace.maxStep<=.300001&&terrace.inventoryUnchanged&&terrace.diagnosticsUnchanged);
+ assert.ok(terrace.rise>.75&&terrace.crop.harvested>0&&terrace.maxStep<=.300001&&terrace.inventoryUnchanged&&terrace.diagnosticsUnchanged&&terrace.peersUnchanged&&terrace.cleaned);
+ assert.ok(['farm','climb'].every(m=>terrace.drawn.includes(m)));
+ assert.ok(['growing','ripe'].every(m=>terrace.cropDrawn.includes(m)));
  const count=await page.evaluate(()=>window.__CLIMBORIA_GAME_PEERS.count());
  const started=await page.evaluate(async()=>{const w=window.__climboriaJarrellsPeak;
-  if(!w.resumeAtRoomPosition({x:258,z:80,y:w.groundAt(258,80)+1.75}))return false;
+  if(!w.npcSmokePositionAtLake())return false;
   return w.npcContinuousStart();
  });
  assert.equal(started,true);
- await page.waitForFunction(()=>{const a=window.__climboriaJarrellsPeak.npcContinuousAudit();return a.session?.frames>=15&&a.session.distance>.5;},undefined,{timeout:45000});
+ // Software-rendered desktop CI can deliver very few normal frames per wall-clock second.
+ // Keep the same movement/draw/frame assertions; physical-device performance is a separate gate.
+ try{
+ await page.waitForFunction(()=>{const a=window.__climboriaJarrellsPeak.npcContinuousAudit();return a.session?.frames>=15&&a.session.distance>.5&&a.draws>0;},undefined,{timeout:mobile?45000:90000,polling:1000});
+ }catch(error){
+  const audit=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
+  console.error('NPC continuous acceptance failed',JSON.stringify({mobile,audit,errors}));
+  throw error;
+ }
  const active=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
- assert.ok(active.attached&&active.visible&&!active.session.closed);
+ assert.ok(active.attached&&active.visible&&!active.session.closed&&active.draws>0);
  assert.equal(active.peers,count);assert.ok(active.loading+active.resident<=active.budget);
  await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak;w.resumeAtRoomPosition({x:0,z:-30,y:w.groundAt(0,-30)+1.75})});
  await page.waitForFunction(()=>window.__climboriaJarrellsPeak.npcContinuousAudit().session?.closed,undefined,{timeout:15000});
