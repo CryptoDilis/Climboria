@@ -1,5 +1,21 @@
 # Climboria Game Development Record
 
+## R5A NPC CHAT CLIENT CI AND TWO-BROWSER FIXTURE — 2026-11-27
+
+- #996 foundation 46016987107 and focused browser 46016987177 passed. #998 initial head 596760914dd3f4b1ed7859c9ab375445bd3375a4 had no returned workflow runs because client-presence paths were outside the NPC workflow filters. Add dedicated chat acceptance workflow, not a bypass of existing checks.
+- New two independent Chromium contexts (desktop 1280 and mobile-emulated 390) run actual client-presence.js and real DOM, with local synthetic auth/socket fixture only; Node owns real PresenceRoom, two autonomous NPC controllers and dialogue bridge. Checks matching linked event transcripts, NPC mute/deduplication, two human ONLINE, human draft preservation, client packet rejection and disconnect cleanup. External traffic blocked; not a production WebSocket or real account test, not physical mobile performance. Fresh CI pending.
+- #990 general browser still red from unrelated homepage navigation count; do not alter that workstream. NEXT: verify new workflow and client tests, reconcile current main for consolidated merge, implement reviewed server scheduler/capability on private authoritative room and actual WSS acceptance; simultaneous actors, avoidance, physical device and public activation remain gated.
+
+---
+
+## R5A NPC WORLD CHAT CLIENT CANDIDATE — 2026-11-27
+
+- #996 foundation 46016987107 passed, focused browser 46016987177 pending at inspection. #990 retains unrelated homepage navigation failure 46014811410; main changes since branch base are other workstreams. No scope bypass.
+- Add dedicated NPC-only World Chat handling to existing authenticated client. Explicit server spawn capability required; exact five registry labels/IDs, bounded plain text, valid session message IDs and linked reply IDs, monotonic dedupe, per-page NPC mute, cleanup on disconnect. NPC events cannot add peers, send packets, acknowledge or clear human drafts. Existing human chat and production capability unchanged. Client fixture tests added; fresh CI pending. No deployed Worker emits the capability yet.
+- NEXT: verify client and bridge CI, re-evaluate homepage blocker against latest main, wire private authoritative scheduler with reviewed server geometry and capability handshake; prove two actual browser clients receive identical server-owned events, moderation/reconnect, and performance. Public NPC activation remains locked.
+
+---
+
 ## R5A PRIVATE NPC ROOM DIALOGUE BRIDGE CANDIDATE — 2026-11-27
 
 - #995 foundation 46015243641 and browser 46015243679 passed. Both profiles: 281 simulation steps, Aurelion 39.3m and ZevranSol 53.4m, 0.3m max steps, opener at 24.1s while resting and linked reply at 28.1s, separation 11.94m then 3.61m, unchanged player/inventory/peers and cleanup. #990 seven of eight passed; general browser 46014811410 still failed on unrelated homepage nav count. No scope bypass.

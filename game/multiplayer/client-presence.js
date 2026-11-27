@@ -99,6 +99,42 @@
  // World Chat never appears without a verified room welcome. Messages are
  // plain text, room-scoped, short-lived in the DOM and never stored locally.
  let chatUi=null,chatExpanded=false,pendingWorldChat=null,worldChatSequence=0,chatMode='world-chat',nearbyChatReady=false;
+ // Separate NPC event stream; never admit NPCs to the real player roster.
+ const npcNames=new Map([['aurelion','Aurelion'],['kaelvex','KaelVex'],['thornevale','Thornevale'],['vengeancepeak','VengeancePeak'],['zevransol','ZevranSol']].map(([slug,name])=>['npc:jarrell-peak:'+slug,name+' [NPC]']));
+ let npcChatReady=false,npcMuted=false,npcStream=null,npcSequence=0;
+ function updateNpcChatControl(){
+  if(!chatUi?.npcMute)return;
+  chatUi.npcMute.style.display=npcChatReady?'inline-block':'none';
+  chatUi.npcMute.textContent=npcMuted?'UNMUTE NPCs':'MUTE NPCs';
+  chatUi.npcMute.setAttribute('aria-pressed',String(npcMuted));
+ }
+ function appendNpcWorldChat(msg){
+  if(!spawnConfirmed||!npcChatReady||!chatUi||msg.kind!=='npc'||!npcNames.has(msg.npcId)||npcNames.get(msg.npcId)!==msg.name||
+     !npcNames.has(msg.targetNpcId)||msg.targetNpcId===msg.npcId||typeof msg.messageId!=='string'||
+     typeof msg.text!=='string'||!msg.text.trim()||[...msg.text].length>160||new TextEncoder().encode(msg.text).byteLength>384||
+     /[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/u.test(msg.text)||
+     !Number.isSafeInteger(msg.at)||msg.at<0)return;
+  const match=/^npc-chat:([a-zA-Z0-9_-]{1,48}):([1-9][0-9]{0,14})$/.exec(msg.messageId);
+  if(!match)return;
+  const seq=Number(match[2]);
+  if(!Number.isSafeInteger(seq)||seq<=npcSequence||(npcStream!==null&&npcStream!==match[1]))return;
+  if(msg.replyTo!==null){
+   if(typeof msg.replyTo!=='string')return;
+   const reply=/^npc-chat:([a-zA-Z0-9_-]{1,48}):([1-9][0-9]{0,14})$/.exec(msg.replyTo);
+   if(!reply||reply[1]!==match[1]||Number(reply[2])>=seq)return;
+  }
+  // Consume even muted events so unmuting cannot replay a suppressed message.
+  npcStream=match[1];npcSequence=seq;
+  if(npcMuted)return;
+  const line=document.createElement('div');
+  line.style.cssText='padding:5px 0;border-bottom:1px solid #d8b46b25;white-space:pre-wrap;overflow-wrap:anywhere;color:#d8b46b';
+  line.setAttribute('data-chat-kind','npc');
+  line.textContent=msg.name+': '+msg.text;
+  const entries=Array.from(chatUi.log.children);
+  if(entries.length>=40)chatUi.log.replaceChildren(...entries.slice(-39));
+  chatUi.log.appendChild(line);chatUi.log.scrollTop=chatUi.log.scrollHeight;
+  // Never acknowledge a human send, erase a draft, or invoke peer rendering.
+ }
  function clearPendingWorldChat(){
   if(pendingWorldChat?.timeout)clearTimeout(pendingWorldChat.timeout);
   pendingWorldChat=null;
@@ -117,6 +153,7 @@
  }
  function clearWorldChatUi(){
   chatExpanded=false;chatMode='world-chat';nearbyChatReady=false;
+  npcChatReady=false;npcStream=null;npcSequence=0;updateNpcChatControl();
   // Clear drafts on sign-out/disconnect to avoid leaking text between
   // authenticated accounts or reviving messages after room reconnection.
   clearPendingWorldChat();
@@ -254,7 +291,12 @@
    controls.appendChild(input);controls.appendChild(sendButton);controls.appendChild(channelButton);
    panel.appendChild(count);panel.appendChild(log);panel.appendChild(controls);panel.appendChild(notice);
    document.body.appendChild(toggle);document.body.appendChild(panel);
-   chatUi={toggle,panel,count,log,input,notice,channel:channelButton,mobile};
+   const npcMute=document.createElement('button');
+   npcMute.id='climboria-npc-chat-mute';npcMute.type='button';npcMute.style.cssText='display:none;margin-top:4px;padding:5px 8px;border:1px solid #d8b46b88;border-radius:6px;background:#111c29;color:#ffe3a3;font:700 10px system-ui;cursor:pointer';
+   npcMute.setAttribute('aria-label','Mute or unmute NPC World Chat');
+   npcMute.addEventListener('click',()=>{if(!npcChatReady)return;npcMuted=!npcMuted;updateNpcChatControl()});
+   panel.appendChild(npcMute);
+   chatUi={toggle,panel,count,log,input,notice,channel:channelButton,mobile,npcMute};
   }
   if(!chatExpanded){chatExpanded=true;chatUi.panel.style.display='block';}
   chatUi.toggle.style.display='block';
@@ -352,10 +394,10 @@
     const verifiedIds=new Set(peers.map(p=>p.id));
     for(const id of [...known.keys()])if(!verifiedIds.has(id))leave(id);
     for(const peer of peers)addPlayer(peer);
-    spawnConfirmed=true;nearbyChatReady=msg.nearbyChatEnabled===true;
+    spawnConfirmed=true;nearbyChatReady=msg.nearbyChatEnabled===true;npcChatReady=msg.npcChatEnabled===true;
     // Only a verified server spawn-accepted completes room admission.
     clearAdmissionTimer();
-    ensureWorldChatUi();
+    ensureWorldChatUi();updateNpcChatControl();
     world.roomResumeVerified=true;
     showStatus('connected','ONLINE: '+(known.size+1));
    }
@@ -367,6 +409,7 @@
     renderer.move(msg.id,msg.position);
    }
   }else if(msg.type==='player-left'){if(spawnConfirmed)leave(msg.id)}
+  else if(msg.type==='npc-world-chat'){appendNpcWorldChat(msg)}
   else if(msg.type==='world-chat'||msg.type==='nearby-chat'){
    if(spawnConfirmed&&(msg.type==='world-chat'||nearbyChatReady))appendWorldChat(msg)
   }
