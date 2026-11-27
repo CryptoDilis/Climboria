@@ -79,6 +79,13 @@ try{
  assert.ok(spacing.closed&&spacing.pair.closed&&spacing.pair.frames===1800&&spacing.stableIdentity);
  assert.ok(spacing.distances.every(v=>v>5)&&spacing.maxStep<=.300001&&spacing.minSeparation>=.8-1e-9);
  assert.ok(spacing.playerUnchanged&&spacing.inventoryUnchanged&&spacing.diagnosticsUnchanged&&spacing.peersUnchanged);
+ const visualPair=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairVisualAudit());
+ console.log('NPC simultaneous visual pair audit',JSON.stringify(visualPair));
+ assert.equal(visualPair.mobile,mobile);assert.equal(visualPair.heavyCount,mobile?1:2);
+ assert.ok(visualPair.sameFrameDraws>=2&&visualPair.minSeparation>=.8-1e-9&&visualPair.distances.every(d=>d>.5));
+ assert.ok(visualPair.peak<=visualPair.budget-1&&visualPair.cleaned&&visualPair.playerUnchanged&&visualPair.inventoryUnchanged&&visualPair.diagnosticsUnchanged&&visualPair.peersUnchanged);
+ assert.deepEqual(visualPair.visuals.map(v=>v.label),['Aurelion [NPC]','ZevranSol [NPC]']);
+ assert.ok(visualPair.visuals.every(v=>v.detached&&v.draws>0&&v.nameplateDraws>0&&(!v.animated||v.exactMotion)));
  assert.deepEqual(errors,[]);
  console.log('NPC focused browser PASS',JSON.stringify({mobile,elapsedMs:Date.now()-start,route,glb,active,ended}));
  await context.close();
