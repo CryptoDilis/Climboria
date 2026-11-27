@@ -20,4 +20,4 @@ jobs:
       - name: Install exact direct test dependencies without lifecycle scripts
         run: npm install --prefix game/wallet-proof --no-save --package-lock=false --ignore-scripts --no-audit --no-fund ethers@6.11.1 siwe@3.0.0
       - name: Run isolated signed-message and durable replay tests
-        run: node --test game/wallet-proof/offline-store.test.mjs
+        run: node --test game/wallet-proof/*.test.mjs
