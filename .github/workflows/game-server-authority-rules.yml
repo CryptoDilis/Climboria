@@ -24,6 +24,8 @@ on:
       - "game/multiplayer/server-ground-movement.test.mjs"
       - "game/multiplayer/preview-combat-client-transport.mjs"
       - "game/multiplayer/preview-combat-client-transport.test.mjs"
+      - "game/multiplayer/authored-local-character-projection.mjs"
+      - "game/multiplayer/authored-local-character-projection.test.mjs"
       - "game/multiplayer/authored-local-combat-controls.mjs"
       - "game/multiplayer/authored-local-combat-controls.test.mjs"
       - "game/multiplayer/preview-combat-client-state.mjs"
