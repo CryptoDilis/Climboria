@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A LIGHTWEIGHT NPC GAIT CANDIDATE — 2026-11-28 PHT
+
+- #1030 exact 9e428d774d6bc3131dd47bc385663a0bae04d861 seven of nine workflows green, both peer-priority jobs and mobile focused passed, desktop focused and gameplay pending. #1031 exact cc34aa8b688d3bc59df3f4084839752b94d665d5 mobile benchmark job 140643897029 SUCCESS: 40 RAF samples per stage, p95 416.6/350.1/350.0/316.7ms (0/1/2/recovered 0), mean 348.74/337.07/336.24/307.49ms. All samples >100ms; SwiftShader only, ~2.9–3.25 observed FPS; sequential warming/order confounding, no claim NPCs improve real performance. Desktop pending.
+- Independent smoke-only candidate from #1030: animate existing seven-mesh mobile fallback using displacement-driven opposing limb gait, no extra mesh/material/GLB or player root motion; neutral on rest/no travel, bounded steps, safe close. Preserve actual normal camera, existing model budget and preemption. Unit tests and mobile actual normal-frame gait assertion; separate source CI needed. Lightweight approximation, not full skeletal or authentic activity animation. No live player fallback changes.
+- NEXT: complete #1030 combined CI and merge; inspect desktop benchmark; verify lightweight gait CI, then physical-device benchmark and separately gated third actor. No public activation or economy changes.
+
+---
+
 ## R5A PAIRED INTEGRATION MERGED; FINAL ACCEPTANCE CONSOLIDATION — 2026-11-28 PHT
 
 - #1023 exact 36a4734b1c9ae0b4345ee70b6a94aeb5e5834eb8 all nine workflows SUCCESS: Validate 46035164512, chat 46035164305, general browser 46035164230, foundation 46035164267, focused desktop/mobile 46035164429, chest 46035164373, heroes 46035164347, full gameplay 46035164387, authority 46035164210. Compared intervening main files, zero overlapping candidate paths. GitHub merge confirmed 2b9df4e94c452526ebf3805f36690ed6671853e4. Post-merge CI not yet verified.
