@@ -1,9 +1,9 @@
 name: Game NPC World Chat Acceptance
 on:
   push:
-    paths: ['game/npc/**','game/multiplayer/client-presence.js','game/multiplayer/client-presence.test.mjs','game/multiplayer/presence-room.mjs','.github/scripts/game-npc-chat-browser.mjs','.github/workflows/game-npc-chat-acceptance.yml']
+    paths: ['game/npc/**','game/multiplayer/client-presence.js','game/multiplayer/client-presence.test.mjs','game/multiplayer/presence-room.mjs','.github/scripts/game-npc-chat-browser.mjs','.github/scripts/game-npc-native-websocket.mjs','.github/workflows/game-npc-chat-acceptance.yml']
   pull_request:
-    paths: ['game/npc/**','game/multiplayer/client-presence.js','game/multiplayer/client-presence.test.mjs','game/multiplayer/presence-room.mjs','.github/scripts/game-npc-chat-browser.mjs','.github/workflows/game-npc-chat-acceptance.yml']
+    paths: ['game/npc/**','game/multiplayer/client-presence.js','game/multiplayer/client-presence.test.mjs','game/multiplayer/presence-room.mjs','.github/scripts/game-npc-chat-browser.mjs','.github/scripts/game-npc-native-websocket.mjs','.github/workflows/game-npc-chat-acceptance.yml']
 permissions:
   contents: read
 jobs:
@@ -22,7 +22,9 @@ jobs:
       - name: Install Chromium fixture dependencies
         run: |
           npm init -y
-          npm install --no-save playwright
+          npm install --no-save playwright ws
           npx playwright install chromium
       - name: Verify two separate browser DOMs receive private room events
         run: node .github/scripts/game-npc-chat-browser.mjs
+      - name: Verify native loopback WebSocket room scheduling
+        run: node .github/scripts/game-npc-native-websocket.mjs

@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A NATIVE LOOPBACK NPC WEBSOCKET ACCEPTANCE CANDIDATE — 2026-11-27
+
+- #999 foundation 46018846978 and chat acceptance 46018847001 passed; focused browser 46018846891 pending. #990 general browser 46018616380 repeated unrelated homepage navigation assertion 11 vs 12 at climb-token-record-smoke.mjs:33; no Game scope bypass. Other completed #990 checks green, gameplay and focused browser pending at inspection.
+- Add dedicated loopback-only native browser WebSocket fixture with two separate Chromium contexts, synthetic one-use tickets, actual PresenceRoom and private scheduler; controlled server clock, synthetic geometry, local server only. Verify identical linked NPC replies through real frames, two human ONLINE, draft preservation, client forged NPC frame rejection and close cleanup. No production Worker, real auth, public route, persistent storage, or actual reviewed server map. Add CI step; fresh verification pending.
+- NEXT: inspect candidate and consolidated CI; resolve homepage contract via separate owner workstream, consolidate verified changes. Private workerd/DO scheduling and reviewed map actor admission still required; then simultaneous actors, spacing, physical device and public release gates.
+
+---
+
 ## R5A PRIVATE NPC SERVER SCHEDULER CANDIDATE — 2026-11-27
 
 - #990 exact consolidated head db712b556d36bab459fd44b3d3dc96b2eb34a767: foundation 46018616313, authenticated gateway 46018616370 and server authority 46018616218 passed; eight other runs pending at inspection. Preserve active consolidated branch. Existing general browser homepage blocker remains unresolved until fresh run proves otherwise.
