@@ -1,0 +1,42 @@
+# CLIMB V3 quorum issuance — exact candidate review packet
+
+Status: TEST_ONLY / MAINNET_NO_GO. Prepared 2026-11-27 UTC. This is a review handoff, not independent auditor approval, public deployment authorization, or a funding request.
+
+## Review baseline
+
+- [PR #874](https://github.com/CryptoDilis/Climboria/pull/874), merged `3510156ec828337d3abbeb69269fce9f8019ec7a`, tested head `12092452df87377fba3c88170d4aaafd348a4459`. [Safe CI](https://github.com/CryptoDilis/Climboria/actions/runs/45921288293), [V3 CI](https://github.com/CryptoDilis/Climboria/actions/runs/45921288271), [repository validation](https://github.com/CryptoDilis/Climboria/actions/runs/45921288268) SUCCESS. Post-merge [Safe](https://github.com/CryptoDilis/Climboria/actions/runs/45921361044), [V3](https://github.com/CryptoDilis/Climboria/actions/runs/45921361051), [validation](https://github.com/CryptoDilis/Climboria/actions/runs/45921361030) SUCCESS. 137 V3 + 26 Safe offline cases. Pages run 45921360859 cancelled; publication not verified.
+- [PR #875](https://github.com/CryptoDilis/Climboria/pull/875) proposed follow-up, head `bd7d7df23b72b11d8a1e9e1033c27a994c225889`. [Safe CI](https://github.com/CryptoDilis/Climboria/actions/runs/45921476436), [validation](https://github.com/CryptoDilis/Climboria/actions/runs/45921476578) pending at initial check. This is not yet an approved replacement review baseline.
+- Pinned Safe source `bf943f80fec5ac647159d26161446ac5d716a294`; OpenZeppelin `dc44c9f1a4c3b10af99492eed84f83ed244203f6`. Build pins in [Safe workflow](../.github/workflows/climb-base-safe-custody.yml) and [V3 workflow](../.github/workflows/climb-base-v3-prototype.yml). The local compiled Safe is not evidence of an official deployed Base Safe singleton.
+- #874 artifact metadata inspected: [Safe size manifest ZIP](https://github.com/CryptoDilis/Climboria/actions/runs/45921288293/artifacts/15163974706), SHA256 `ca92542a97fb82a286f620cb280694d83cc83426a702d1328278d77245fba99d`; [V3 successor sizes ZIP](https://github.com/CryptoDilis/Climboria/actions/runs/45921288271/artifacts/15164428786), SHA256 `cc5e8e7365518250ad3783aa5300f6ed9653e5a39cf8fc43ffd36becdae8ee10`; [V3 build manifest ZIP](https://github.com/CryptoDilis/Climboria/actions/runs/45921288271/artifacts/15164054814), SHA256 `1efc85111558ce383cfe7762d76a4a7b7fb40ca416829baee3d11f7f7d3cdfea`. ZIP bytes and contents not independently downloaded/rehashed; hashes are GitHub-reported artifact digests, not deployed runtime hashes.
+
+## Review scope
+
+Read exact source at the selected tested commit, not only this summary:
+- `base/safe-custody/src/SafeQuorumIssuanceFixture.sol`, `SafeReserveGuardFixture.sol`, `SafeEpochGuardFixture.sol`.
+- `base/v3-testnet/src/V3AtomicSuccessorFixture.sol`, `ClimbV3TestToken.sol`, `V3EpochSpendFixture.sol`, `V3SharedExpenseFixture.sol`, `V3DeferredLiquidityFixture.sol`, `V3DeferredLegacyFixture.sol`, `V3GameRewardFixture.sol`, and imported dependencies.
+- Corresponding Safe and V3 tests, build configuration and size manifests.
+
+### Invariants to verify independently
+
+1. Exact 3-of-5 signature and nonce binding for fixed creation config; no unguarded issuer, fake setup/guard, front-run, substitute dependency, reinitialization or retry that changes an authorized payload. Test fixture rejects mainnet chain.
+2. Binding must occur with zero supply, before single mint; all seven vault roles, token/custody identities, shared expense registry, amounts and zero role/deployer float verified. Late failure must revert factory, guard, token and nonce. Test against adversarial pool builder and callback; verify nested transaction lock once #875 passes.
+3. Real Safe owners and replacement process: no arbitrary delegatecall, module enablement, guard replacement, fallback handler, fee/refund bypass, threshold reduction, role conflicts or stale epoch A/B/A. Review EIP-1271, EIP-7702/delegated-account behavior and signature-validation callbacks before the guard executes. No below-quorum recovery currently implemented; do not add a unilateral escape hatch.
+4. Expense and reward conservation: shared duplicate-expense protection, recipient constraints, per-month and lifetime caps, authorized game event and wallet signatures, replay, stale epoch, canceled requests and atomic accounting. Synthetic signatures are not actual game event authority.
+5. Legacy claims: reviewed real holder eligibility, source/destination authentication, durable cross-instance replay, notice/appeals/recovery, exact approved cap and no unauthorized closure or burn. Existing synthetic manifest and review hashes do not establish those facts.
+6. Liquidity: synthetic pool/LP destination is not a production DEX or locker. Independently verify exact deployed adapter, quote asset, pool/factory, lock and withdrawal/recovery policy or document a safe zero-funded deferral. No market or pricing promise.
+7. Compile reproducibility, full constructor arguments, deployment ordering, actual chain/address/code verification, transaction gas and block limits, finalized receipts, existing V3 template digests. CI bytecode sizes and offline tests do not prove public deployment success.
+
+## Release decisions and evidence still required
+
+| Gate | Required evidence | Status |
+| --- | --- | --- |
+| Custody | Five independently controlled approved signer addresses, conflict/recovery policy, independently verified setup and guard implementation | OPEN |
+| Supply and configuration | Owner approval of exact real allocation destinations and schedule, verified exact build and deployment plan | OPEN |
+| Legacy | Independently verified snapshot, fair policy, authenticated claim and appeals evidence | OPEN |
+| Game | Real authoritative event ledger, anti-abuse and reward signing operations | OPEN |
+| Liquidity | Verified quote/DEX/LP lock configuration or explicit reviewed deferral | OPEN |
+| Audit | Independent exact-candidate security review, remediation and retest | OPEN |
+| Public testnet | Separately approved exact-artifact deployment, verified lifecycle/receipts | OPEN |
+| Mainnet | All production gates plus separate exact owner authorization and fee budget | OPEN |
+
+No owner signatures or funds needed for this review-only packet. Request reviewers to return GO/NO_GO per invariant, exact file/function and exploit or failure trace, severity, remediation and reproducible tests. A GO for an offline prototype is not GO for mainnet funds.
