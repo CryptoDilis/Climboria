@@ -1,4 +1,4 @@
-// Retirement UI regression. Historical mint remains verifiable in whitepaper only.
+// Base V3 tokenomics UI; prior-holder protection without historical mint display.
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 const MINT='9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump',base='http://127.0.0.1:4173/';
@@ -13,13 +13,15 @@ try{
    assert.ok((await page.goto(base,{waitUntil:'domcontentloaded'}))?.ok());
    const primary=page.locator('#climb-base-transition'),notice=page.locator('#climb-token-record'),utility=page.locator('.climb-token-utility');
    assert.equal(await primary.count(),1);assert.equal(await notice.count(),1);assert.equal(await utility.count(),1);
-   assert.match(await primary.innerText(),/Not yet published/);assert.match(await primary.innerText(),/Not verified \/ not published/);assert.match(await primary.innerText(),/Not open/);
+   assert.match(await primary.innerText(),/Not yet published/);assert.match(await primary.innerText(),/888,888,888 CLIMB/);assert.match(await primary.innerText(),/Not open/);
    assert.match(await notice.innerText(),/first official public retirement announcement/);
    assert.match(await notice.innerText(),/Purchases after that announcement will not qualify/);
    assert.match(await notice.innerText(),/exact UTC publication time, finalized snapshot/);
    assert.match(await notice.innerText(),/No conversion rate or allocation is guaranteed/);
-   assert.match(await notice.innerText(),/does not burn or disable it/);
-   assert.equal(await notice.locator('a[href="/whitepaper/#climb-token-facts-title"]').count(),1);
+   assert.match(await notice.innerText(),/may still exist and trade independently/);
+   assert.equal(await primary.locator('a[href="/whitepaper/#economy"]').count(),1);
+   assert.equal(await primary.locator("#climb-v3-allocations .climb-token-fact").count(),7);
+   assert.equal(await notice.locator("#climb-v3-marketing .climb-token-fact").count(),4);
    assert.equal(await page.locator('#climbOfficialCa,#copyClimbCa,#climbSupplyPanel,#climbSupplyRefresh,script[src="/climb-token-supply.js"]').count(),0);
    assert.ok(!(await page.content()).includes(MINT));assert.equal(await page.locator('a[href*="pump.fun/coin/"],a[href*="solscan.io/token/"]').count(),0);
    assert.match(await utility.innerText(),/NOT YET LIVE/);
@@ -46,11 +48,14 @@ try{
     assert.equal(await planned.count(),1);assert.equal(await legacy.count(),1);
     assert.match(await planned.innerText(),/Exclusive planned/);assert.match(await planned.innerText(),/Not yet published/);assert.match(await planned.innerText(),/Not open/);
     assert.ok(!(await planned.innerText()).includes(MINT));
-    assert.equal((await legacy.locator('.token-address').textContent()).trim(),MINT);
-    assert.match(await legacy.innerText(),/Retired from official support/);assert.match(await legacy.innerText(),/1,000,000,000/);
-    assert.match(await legacy.innerText(),/Historical supply above is not the eligibility snapshot/);
+    assert.equal(await legacy.locator(".token-address").count(),0);
+    assert.ok(!(await page.content()).includes(MINT));
+    assert.match(await legacy.innerText(),/Prior-holder notice/);assert.match(await planned.innerText(),/888,888,888 CLIMB/);
+    assert.match(await legacy.innerText(),/not a supply-conserving bridge/);
+    assert.equal(await page.locator("#climb-v3-allocations tbody tr").count(),7);
+    assert.equal(await page.locator("#climb-v3-marketing tbody tr").count(),4);
     assert.match(await legacy.innerText(),/Purchases after that announcement will not qualify/);
-    assert.equal(await legacy.locator('a[href="/#climb-token-record"]').count(),1);assert.equal(await legacy.locator('a[href*="pump.fun"]').count(),0);
+    assert.equal(await legacy.locator('a[href*="solscan.io/token/"]').count(),0);assert.equal(await legacy.locator('a[href*="pump.fun"]').count(),0);
     const boxes=await page.evaluate(()=>({width:document.documentElement.clientWidth,cards:[...document.querySelectorAll('.token-record')].map(e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}})}));
     assert.equal(boxes.cards.length,2);assert.ok(boxes.cards[0].bottom<=boxes.cards[1].top+1);for(const r of boxes.cards)assert.ok(r.left>=-1&&r.right<=boxes.width+1);
     await page.screenshot({path:'climb-whitepaper-'+width+'.png'});
