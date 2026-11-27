@@ -33,6 +33,7 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 
 - [ ] R0.1 Close current #930 follow-up: separate authored private pilot room/renderer integration; keep fixed synthetic preview unchanged; account/origin/room gates, rate/cost controls, authorized edge QA. No public PvP/loot activation.
 - [ ] R0.2 Complete real registered two-account acceptance for movement, avatars, World/Nearby Chat, reconnect, last location and logout/ghost cleanup.
+  - [Reconnect spacing #1047](https://github.com/CryptoDilis/Climboria/pull/1047) and [private native browser recovery #1050](https://github.com/CryptoDilis/Climboria/pull/1050) merged after exact CI. Continue with the main-only hosted two-account workflow in the protected environment and the owner-selected quiet test window. Synthetic transport and hosted read-only parity do not establish that interaction evidence.
 - [ ] R0.3 Reconcile existing hero/animation/scale, stamina/damage, pillar/terrain/cave collision, mobile HUD, camera, audio, map, weather, loading and saved-state bugs with master checklist and exact CI/device evidence.
 - [ ] R0.4 Establish measured desktop, low-end Android, Redmi 14 5G and iPhone/Safari baselines; measure cold/warm time-to-play, transfer bytes, peak memory, frame-time/FPS, thermals, long-session stability, WebGL context loss and reconnect.
 - [ ] R0.5 Reuse world streaming, load/unload chunks and nearby actors; LOD, frustum culling, instancing, pooled effects, bounded AI/ticks and bandwidth; measure rather than assume improvements.
