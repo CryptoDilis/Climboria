@@ -100,6 +100,11 @@ jobs:
           set -euo pipefail
           forge test --match-contract V3DeferredLiquidityTest -vv | tee "$RUNNER_TEMP/climb-v3-deferred-liquidity-tests.log"
           grep -Eq '8 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-deferred-liquidity-tests.log"
+      - name: Run deferred legacy fixture tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3DeferredLegacyTest -vv | tee "$RUNNER_TEMP/climb-v3-deferred-legacy-tests.log"
+          grep -Eq '8 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-deferred-legacy-tests.log"
       - name: Fingerprint integrated test build (no deployment)
         env:
           V3_SOURCE_SHA: ${{ github.sha }}
