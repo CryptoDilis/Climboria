@@ -36,16 +36,38 @@ contract V3GovernedGameRewardTest is IV3RewardCustody {
         vault.revoke(epoch,vault.generation());schedule(signer);
         vm.warp(block.timestamp+2 days);vault.activate(epoch,vault.generation(),vault.rotationSerial(),signer);
     }
-    function testRevocationStopsClaimsAndGenerationPreventsReplayAfterReuse() public {
+    function testRevocationPermanentlyRetiresSignerAndRejectsFutureGenerationSignature() public {
         V3GovernedGameRewardFixture.Reward memory r=reward("OLD",100,1);
         bytes memory old=sign(r,A);
+        r.generation=3;
+        bytes memory future=sign(r,A);
         vault.revoke(1,1);
+        r.generation=1;
         vm.expectRevert(V3GovernedGameRewardFixture.InvalidSigner.selector);vault.claim(r,old);
-        schedule(vm.addr(B));vm.warp(block.timestamp+2 days);vault.activate(1,2,1,vm.addr(B));
-        rotate(vm.addr(A));
-        require(vault.generation()==5&&vault.distributor()==vm.addr(A));
-        vm.expectRevert(V3GovernedGameRewardFixture.InvalidSigner.selector);vault.claim(r,old);
-        r.generation=5;vault.claim(r,sign(r,A));require(vault.paid("OLD"));
+        address a=vm.addr(A);
+        vm.expectRevert(V3GovernedGameRewardFixture.InvalidAuthority.selector);schedule(a);
+        require(vault.rotationSerial()==0&&vault.generation()==2&&vault.distributor()==address(0));
+        address b=vm.addr(B);
+        schedule(b);vm.warp(block.timestamp+2 days);
+        vm.expectRevert(V3GovernedGameRewardFixture.InvalidAuthority.selector);vault.activate(1,2,1,a);
+        vault.activate(1,2,1,b);
+        r.generation=3;
+        vm.expectRevert(V3GovernedGameRewardFixture.InvalidSigner.selector);vault.claim(r,future);
+        vault.claim(r,sign(r,B));require(vault.paid("OLD"));
+        vault.revoke(1,3);
+        vm.expectRevert(V3GovernedGameRewardFixture.InvalidAuthority.selector);schedule(a);
+        vm.expectRevert(V3GovernedGameRewardFixture.InvalidAuthority.selector);schedule(b);
+        require(vault.generation()==4&&vault.rotationSerial()==1&&vault.distributor()==address(0));
+        address c=vm.addr(34567);
+        schedule(c);vm.warp(block.timestamp+2 days);vault.activate(1,4,2,c);
+        require(vault.generation()==5&&vault.distributor()==c&&vault.formerOrCurrentSigner(a)&&vault.formerOrCurrentSigner(b));
+    }
+    function testCancelledUnactivatedCandidateCanBeRescheduled() public {
+        vault.revoke(1,1);
+        address b=vm.addr(B);schedule(b);vault.cancel(1,2,1);
+        require(!vault.formerOrCurrentSigner(b));
+        schedule(b);vm.warp(block.timestamp+2 days);vault.activate(1,2,2,b);
+        require(vault.distributor()==b&&vault.formerOrCurrentSigner(b));
     }
     function testAccountingAndPaidIdsPersistAcrossRotation() public {
         V3GovernedGameRewardFixture.Reward memory r=reward("PAID",900,1);vault.claim(r,sign(r,A));
