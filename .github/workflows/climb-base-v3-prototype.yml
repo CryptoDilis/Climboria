@@ -110,6 +110,11 @@ jobs:
           set -euo pipefail
           forge test --match-contract V3DeferredLegacyTest -vv | tee "$RUNNER_TEMP/climb-v3-deferred-legacy-tests.log"
           grep -Eq '12 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-deferred-legacy-tests.log"
+      - name: Run isolated binary legacy proof verifier tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3LegacyProofVerifierTest -vv | tee "$RUNNER_TEMP/climb-v3-legacy-proof-tests.log"
+          grep -Eq '6 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-legacy-proof-tests.log"
       - name: Fingerprint integrated test build (no deployment)
         env:
           V3_SOURCE_SHA: ${{ github.sha }}
@@ -141,6 +146,8 @@ jobs:
         run: node --test legacy-canonical-evidence.test.mjs
       - name: Test synthetic indexed legacy allocation-sum proofs
         run: node --test legacy-sum-proof.test.mjs
+      - name: Test canonical binary legacy proof generator
+        run: node --test legacy-binary-proof.test.mjs
       - name: Test V3 read-only estimator
         run: node --test estimate-creation.test.mjs
       - name: Test unsigned review binding
