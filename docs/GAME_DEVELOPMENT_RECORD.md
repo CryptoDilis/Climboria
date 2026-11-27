@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A PAIRED VISUAL RESOURCE CLEANUP HARDENING — 2026-11-28 PHT
+
+- #1018 exact ffea332f22d361d98a4292dc1ff080d7b56ab890 foundation 46033578612 passed; focused browser 46033578725 running. Across #1010/#1013/#1015/#1017/#1018, nine source workflows passed and five running; none failed at inspection. Preserve parent runs. Main advanced only non-Game files relative to activity merge; no unrelated edits.
+- Harden paired visual teardown: each model, projection, label texture/material and slot release independently attempted even if another throws; clear retained GLB/group/projection references and preserve scalar audit labels; idempotent cleanup regression with injected mixer and texture failure. No public spawning or budget increase. New CI required.
+- NEXT: inspect browser outcomes before further stacking, fix any regressions and consolidate verified Game-only changes on current main. Actual device performance and production authority remain gated.
+
+---
+
 ## R5A NORMAL GAME FRAME PAIRED SMOKE CANDIDATE — 2026-11-28 PHT
 
 - #1010 focused browser 46032106676 passed; gameplay 46032106531 pending. #1013/#1015 focused pending. #1017 exact b4019d532f8f95614103daef1ea15452c3874f18: foundation 46033331458 and chat 46033331489 passed; focused 46033331598 pending. Preserve parent runs.
