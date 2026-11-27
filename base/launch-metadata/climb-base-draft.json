@@ -23,7 +23,43 @@
       "sourcePath": "assets/climb-token-official-cutout.avif",
       "sourceGitBlob": "c7b9e84d539e1159327d073c0bde23c2e6ca97e6",
       "alternatePath": "assets/climb-token-official-hd.webp",
-      "pngExportStatus": "PENDING_IMAGE_INSPECTION"
+      "pngExportStatus": "VERIFIED_DRAFT_NOT_HOSTED",
+      "sourceDimensions": [
+        256,
+        256
+      ],
+      "sourceAlphaRange": [
+        0,
+        255
+      ],
+      "sourceSha256": "7c2d3c6cb6bfc06c27c5d979db7f9882b623d91827e064d42674b5e38ec39add",
+      "exportEvidence": {
+        "workflowRun": 45971569046,
+        "artifactId": 15184758269,
+        "expiresUtc": "2026-12-11T09:11:13Z",
+        "archiveSha256": "0b3f091ae02b6629abb9358dfc38a610f60b557e383a51c0c835650cddd12fad",
+        "files": [
+          {
+            "name": "climb-logo-256.png",
+            "dimensions": [
+              256,
+              256
+            ],
+            "upscaled": false,
+            "sha256": "5750e8b507376e0d78fae8f092a14102a80a2875053b65fde74ba218593926e6"
+          },
+          {
+            "name": "climb-logo-512.png",
+            "dimensions": [
+              512,
+              512
+            ],
+            "upscaled": true,
+            "sha256": "2b205711b3e0827375b948166c894ee2fb1c2fbdeef6809a9fef4889d973db2a"
+          }
+        ]
+      },
+      "logoURI": null
     }
   },
   "allocations": [
