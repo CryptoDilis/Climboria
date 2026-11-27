@@ -7,7 +7,7 @@ import { PresenceRoom } from '../../game/multiplayer/presence-room.mjs';
 const session = index => 'fixture-session-' + index;
 const at = x => ({ x, y: 2, z: -30 });
 
-async function recoveryScenario(count) {
+async function recoveryScenario(count, { ticks = 20, churnEvery = 5, periodMs = 0 } = {}) {
  const start = performance.now();
  let clock = 1000;
  const room = new PresenceRoom({
@@ -126,6 +126,8 @@ async function recoveryScenario(count) {
   barrier++;
   for (const send of transports.values()) send({ type: 'fixture-barrier', step: barrier });
   await waitFor(() => [...clients.values()].every(client => client.barrier === barrier), 'delivery barrier timeout');
+  assert.ok(room.movementInterest.size() <= clients.size * (clients.size - 1),
+   'interest tracking retained retired session pairs');
   const authoritative = new Map(room.snapshot().map(peer => [peer.id, peer.position]));
   assert.deepEqual(authoritative, new Map([...clients].map(([id, client]) => [id, client.position])));
   for (const client of clients.values()) {
@@ -156,9 +158,11 @@ async function recoveryScenario(count) {
   });
   assert.deepEqual(overflow, { ok: false, reason: 'room-full' });
   const replaced = new Set();
-  for (let step = 1; step <= 20; step++) {
+  const cycleWork = [];
+  for (let step = 1; step <= ticks; step++) {
+   const cycleStart = performance.now();
    await move(step, [...clients.values()]);
-   if (step % 5 === 0) {
+   if (step % churnEvery === 0) {
     // Cut connections after accepting movement but before flushing the batch.
     const dropped = [...clients.values()].filter((_, index) => index % 5 === 0);
     for (const client of dropped) {
@@ -177,12 +181,23 @@ async function recoveryScenario(count) {
    }
    room.flushMovementInterest();
    await verifyRoster();
+   if (periodMs) {
+    const workMs = performance.now() - cycleStart;
+    cycleWork.push(workMs);
+    if (workMs < periodMs) await delay(periodMs - workMs);
+   }
   }
   for (const client of clients.values()) client.socket.close();
   await waitFor(() => room.members.size === 0 && transports.size === 0, 'final cleanup timeout');
   assert.equal(room.movementInterest.size(), 0);
+  const sorted = [...cycleWork].sort((a, b) => a - b);
+  const pacing = periodMs ? {
+   periodMs,
+   cycleWorkP95Ms: Math.round(sorted[Math.ceil(sorted.length * 0.95) - 1]),
+   cycleOverruns: cycleWork.filter(ms => ms > periodMs).length,
+  } : undefined;
   console.log(JSON.stringify({
-   clients: count, movementTicks: 20, reconnects: replaced.size,
+   clients: count, movementTicks: ticks, reconnects: replaced.size, pacing,
    sendDelayRangeMs: [0, 22], elapsedMs: Math.round(performance.now() - start),
    rosterAndPositionsVerified: true, cleanupVerified: true,
   }));
@@ -193,4 +208,8 @@ async function recoveryScenario(count) {
  }
 }
 
-for (const count of [10, 25, 50, 100, 128]) await recoveryScenario(count);
+if (process.argv.includes('--soak')) {
+ await recoveryScenario(100, { ticks: 240, churnEvery: 20, periodMs: 250 });
+} else {
+ for (const count of [10, 25, 50, 100, 128]) await recoveryScenario(count);
+}

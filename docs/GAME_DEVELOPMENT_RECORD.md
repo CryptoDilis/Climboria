@@ -57,6 +57,14 @@
 
 ---
 
+## Sustained private Game socket recovery — 2026-11-28 PHT
+
+- Implementation `227305bc1f3c7abb33258c206d9a959ed9eeb6ba` adds a 240-tick soak at 100 native loopback clients with 250 ms pacing, 0–22 ms application send jitter, and 12 rounds of abrupt disconnect/rejoin. Check complete peer positions and roster every tick, retired session pair bounds throughout, and empty state at teardown.
+- Tested locally at the implementation revision. The soak finished in 60.7 s with 240 reconnections, 92 ms p95 cycle work and zero cycle overruns. The unpaced 10/25/50/100/128 scenarios also passed. Cycle work includes movement acknowledgement, batching, peer delivery and fixture verification. It does not measure end-to-end production latency.
+- [C9–C12 #1049](https://github.com/CryptoDilis/Climboria/pull/1049) merged at `4f726aac27c2090f1d42c030dd70c0281707d6df` after all 20 checks on `e2e06e1c7a38aa75b78bb66dec4bf1adbff09bd3` passed. The close instancing and low-latency experiments remain private. Fresh soak CI, integrated nameplate readability, real hardware and authenticated capacity are pending.
+
+---
+
 ## CROWD C6 PRIVATE BATCHED MOVEMENT CANDIDATE — 2026-11-28 PHT
 
 - #1035 exact 208739f6cbe69897cbdf616ac97cbe01bb52254a renderer 46043165304 jobs 140655762093 mobile and 140655762531 desktop SUCCESS; actual private loopback renderer fixtures at 10/25/32/50/100 entries with pressure recovery and cleanup. Mobile 100: 2 heavy, 8 light, 16 markers, 74 hidden; no physical device or close-range combat visibility proof. Foundation 46043165313, world chat 46043165465 and native load 46043165314 SUCCESS. Native job 140655749320 clustered 100 unchanged 118800 packets, p95 97.97→124.56ms; distributed 118800→37555, p95 105.87→93.52ms. Runner-specific timings, not production SLA. Focused desktop still running at inspection; #1034 draft not mergeable, its focused desktop still running; hero retry 46042604104 now SUCCESS.

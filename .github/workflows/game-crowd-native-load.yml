@@ -30,3 +30,5 @@ jobs:
         run: node .github/scripts/game-crowd-native-load.mjs
       - name: Verify private recovery under jitter and abrupt disconnects
         run: node .github/scripts/game-crowd-native-recovery.mjs
+      - name: Verify sustained private recovery with 100 sockets
+        run: node .github/scripts/game-crowd-native-recovery.mjs --soak
