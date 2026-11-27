@@ -16,19 +16,20 @@ interface IQuorumBindingFixture {
 /// Actual Safe quorum must authorize exact creation payload via that guard.
 contract V3QuorumSuccessorFixture is V3AtomicSuccessorFixture {
     address public immutable guardFactory;
+    bytes32 public immutable guardFactoryHash;
     address public configuredGuard;
     bytes32 public configuredGuardHash;
     constructor(address setupFactory){
         if(setupFactory.code.length==0)revert InvalidConfig();
-        guardFactory=setupFactory;
+        guardFactory=setupFactory;guardFactoryHash=setupFactory.codehash;
     }
     function configureGuard(address guard) external {
-        if(msg.sender!=guardFactory||configuredGuard!=address(0)||used||guard.code.length==0||
+        if(msg.sender!=guardFactory||guardFactory.codehash!=guardFactoryHash||configuredGuard!=address(0)||used||guard.code.length==0||
            address(IQuorumBindingFixture(guard).successor())!=address(this))revert InvalidConfig();
         configuredGuard=guard;configuredGuardHash=guard.codehash;
     }
     function create(V3SuccessorConfig calldata cfg) external override returns(V3SuccessorTestToken asset){
-        if(msg.sender!=configuredGuard||msg.sender.codehash!=configuredGuardHash||
+        if(guardFactory.codehash!=guardFactoryHash||msg.sender!=configuredGuard||msg.sender.codehash!=configuredGuardHash||
            address(cfg.control)!=configuredGuard)revert InvalidConfig();
         return _create(cfg);
     }
