@@ -67,3 +67,28 @@ test("provider missing, denied access or partial listener registration fails clo
  assert.equal((await createSecondaryEvmWallet({getProvider:()=>broken.provider}).connect(1)).status,"unavailable");
  assert.ok([...broken.listeners.values()].every(set=>set.size===0));
 });
+
+test("synchronous provider invalidation during registration leaves no listener or wallet prompt",async()=>{
+ const m=mock(),on=m.provider.on;
+ m.provider.on=(name,fn)=>{if(name==="chainChanged")fn();on(name,fn);};
+ const wallet=createSecondaryEvmWallet({getProvider:()=>m.provider});
+ assert.equal((await wallet.connect(1)).status,"invalidated");
+ assert.deepEqual(m.calls,[]);
+ assert.ok([...m.listeners.values()].every(set=>set.size===0));
+});
+test("a newer chain connection supersedes a pending account permission response",async()=>{
+ const old=mock("0x1"),fresh=mock("0x38"),original=old.provider.request;
+ let release,started;
+ const waiting=new Promise(resolve=>started=resolve);
+ old.provider.request=async args=>{if(args.method!=="eth_requestAccounts")return original(args);old.calls.push(args.method);started();return new Promise(resolve=>release=resolve);};
+ let provider=old.provider;
+ const wallet=createSecondaryEvmWallet({getProvider:()=>provider});
+ const pending=wallet.connect(1);await waiting;
+ provider=fresh.provider;
+ assert.equal((await wallet.connect(56)).chainId,56);
+ release([account]);await pending;
+ assert.deepEqual(wallet.snapshot(),{status:"connected-read-only",chainId:56,address:account});
+ assert.ok([...old.listeners.values()].every(set=>set.size===0));
+ assert.deepEqual(old.calls,["eth_chainId","eth_requestAccounts"]);
+ assert.deepEqual(fresh.calls,["eth_chainId","eth_requestAccounts","eth_chainId"]);
+});
