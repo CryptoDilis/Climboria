@@ -39,10 +39,11 @@ function verifyChallenge(c,a){
 walletButton.addEventListener('click',async()=>{
  if(!enabled||busy)return;
  const p=window.ethereum;if(!p||typeof p.request!=='function'||typeof p.on!=='function'||typeof p.removeListener!=='function'){status('Open this page in a compatible EVM wallet browser.');return;}
- busy=true;const attempt=++generation;provider=p;for(const event of ['accountsChanged','chainChanged','disconnect'])p.on(event,walletChanged);renderAuth();
+ busy=true;const attempt=++generation;provider=p;renderAuth();
  let issued=null;
  try{
   const a=await identity(p,true);if(attempt!==generation)return;
+  for(const event of ['accountsChanged','chainChanged','disconnect'])p.on(event,walletChanged);
   const c=await api('/v1/challenge',{method:'POST',data:{address:a,chainId:8453}});verifyChallenge(c,a);
   if(attempt!==generation||await identity(p)!==a||attempt!==generation)return;
   const bytes=new TextEncoder().encode(c.message);const hex='0x'+Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');
