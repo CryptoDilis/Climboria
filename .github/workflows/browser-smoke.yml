@@ -693,10 +693,11 @@ jobs:
               const response=await mobile.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
               if(!response?.ok()) throw new Error('Mobile DEX route failed to load');
               await mobile.locator('#dexMobileNav').waitFor({state:'visible',timeout:10000});
-              if(await mobile.locator('#evmMarkets').isVisible())throw new Error('Base market explorer should not stack below Solana by default on mobile');
-              if(!await mobile.locator('#markets').isVisible())throw new Error('Solana markets should be the default mobile DEX view');
+              if(!await mobile.locator('#evmMarkets').isVisible()||await mobile.locator('#markets').isVisible())throw new Error('Base must be the only initial mobile market explorer');
               const mobileNav=mobile.locator('#dexMobileNav');
               if(await mobileNav.evaluate(el=>getComputedStyle(el).position)!=='fixed')throw new Error('DEX mobile navigation must stay fixed at the bottom');
+              await mobileNav.locator('[data-dex-mobile-view="solana"]').tap();
+              if(!await mobile.locator('#markets').isVisible()||await mobile.locator('#evmMarkets').isVisible())throw new Error('Solana mobile selection must replace Base markets');
               await mobileNav.locator('[data-dex-mobile-view="base"]').tap();
               if(!await mobile.locator('#evmMarkets').isVisible()||await mobile.locator('#markets').isVisible())throw new Error('Base mobile view must replace, not stack under, Solana markets');
               await mobileNav.locator('[data-dex-mobile-view="solana"]').tap();
