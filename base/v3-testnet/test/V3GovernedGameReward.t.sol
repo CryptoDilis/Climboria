@@ -45,7 +45,7 @@ contract V3GovernedGameRewardTest is IV3RewardCustody {
         r.generation=1;
         vm.expectRevert(V3GovernedGameRewardFixture.InvalidSigner.selector);vault.claim(r,old);
         address a=vm.addr(A);
-        vm.expectRevert(V3GovernedGameRewardFixture.InvalidAuthority.selector);schedule(a);
+        vm.expectRevert(V3GovernedGameRewardFixture.InvalidAuthority.selector);vault.schedule(1,2,a,block.timestamp,block.timestamp+1 days);
         require(vault.rotationSerial()==0&&vault.generation()==2&&vault.distributor()==address(0));
         address b=vm.addr(B);
         schedule(b);vm.warp(block.timestamp+2 days);
@@ -55,8 +55,8 @@ contract V3GovernedGameRewardTest is IV3RewardCustody {
         vm.expectRevert(V3GovernedGameRewardFixture.InvalidSigner.selector);vault.claim(r,future);
         vault.claim(r,sign(r,B));require(vault.paid("OLD"));
         vault.revoke(1,3);
-        vm.expectRevert(V3GovernedGameRewardFixture.InvalidAuthority.selector);schedule(a);
-        vm.expectRevert(V3GovernedGameRewardFixture.InvalidAuthority.selector);schedule(b);
+        vm.expectRevert(V3GovernedGameRewardFixture.InvalidAuthority.selector);vault.schedule(1,4,a,block.timestamp,block.timestamp+1 days);
+        vm.expectRevert(V3GovernedGameRewardFixture.InvalidAuthority.selector);vault.schedule(1,4,b,block.timestamp,block.timestamp+1 days);
         require(vault.generation()==4&&vault.rotationSerial()==1&&vault.distributor()==address(0));
         address c=vm.addr(34567);
         schedule(c);vm.warp(block.timestamp+2 days);vault.activate(1,4,2,c);
