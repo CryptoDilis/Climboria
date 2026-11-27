@@ -90,4 +90,70 @@ try{
   await page.close();
   console.log("PASS: "+width+"px Base Swap network, read-only EIP-1193, disabled price gate and browser history; 0 paid quotes or signatures");
  }
+
+ // Independent DEX/Swap notification UI regression, with external services blocked.
+ // Only local document interactions; no provider calls or wallet access.
+ for(const path of ["/dex/","/swap/"]){
+  for(const width of [1365,390,360,320]){
+   const page=await browser.newPage({viewport:{width,height:850},deviceScaleFactor:1});
+   try{
+    await page.route("**/*",route=>new URL(route.request().url()).origin===new URL(site).origin?route.continue():route.abort());
+    await page.goto(site+path,{waitUntil:"domcontentloaded",timeout:45000});
+    const bell=page.locator('.top [data-panel="notifications"]'),x=page.locator('.top .dex-social-x');
+    const panel=page.locator('#climboriaPanelBackdrop'),close=page.locator('#climboriaPanelClose');
+    const context=path+" "+width+"px";
+    assert.equal(await bell.count(),1,context);assert.equal(await x.count(),1,context);
+    assert.equal(await page.locator('.top [data-panel="announcements"]').count(),0,context);
+    assert.equal(await x.getAttribute('href'),'https://x.com/ClimboriaHQ');
+    for(const item of [bell,x]){
+     assert.ok(await item.isVisible(),context+" control hidden");
+     const rect=await item.boundingBox();
+     assert.ok(rect&&rect.width>=29&&rect.x>=-1&&rect.x+rect.width<=width+1,context+" control outside viewport: "+JSON.stringify(rect));
+    }
+    if(path==="/dex/"){
+     assert.match(await page.title(),/Base Markets/);
+     assert.equal(await page.locator('.hero #heroMarket').count(),0);
+     assert.ok(await page.locator('.base-primary-hero').isVisible());
+     if(width<=760){
+      assert.equal(await page.locator('.base-secondary-tools').isVisible(),false);
+      await page.locator('#dexMobileNav [data-dex-mobile-view="solana"]').click();
+      assert.ok(await page.locator('.base-secondary-tools').isVisible());
+      await page.locator('#dexMobileNav [data-dex-mobile-view="base"]').click();
+     }else{
+      const base=await page.locator('#evmMarkets').boundingBox(),secondary=await page.locator('#secondaryNetwork').boundingBox();
+      assert.ok(base&&secondary&&base.y+base.height<=secondary.y+1,context+" Base must precede all Solana highlights");
+     }
+    }else{
+     assert.equal(await page.locator('html').getAttribute('data-climboria-swap-network'),'base');
+     assert.ok(await page.locator('.card .base-swap-identity').isVisible());
+     assert.equal(await page.locator('.card > .quote-controls').isVisible(),false);
+     assert.equal(await page.locator('#getQuote').isDisabled(),true);
+     if(width<=760){
+      await page.locator('#mobileWorkspaceTabs [data-workspace-tab="market"]').click();
+      assert.ok(await page.locator('#baseMarketPanel').isVisible(),context+" Base Markets tab must display actual Base explorer");
+      await page.locator('#mobileWorkspaceTabs [data-workspace-tab="swap"]').click();
+     }
+    }
+    assert.equal(await panel.isVisible(),false,context);
+    await bell.click();
+    assert.ok(await panel.isVisible(),context);
+    assert.equal(await bell.getAttribute('aria-expanded'),'true');
+    assert.equal(await page.locator('#climboriaPanelContent h3').count(),2);
+    assert.ok(await page.locator('#climboriaPanelContent a[href="/#climb-base-transition"]').isVisible());
+    assert.match(await panel.innerText(),/when notification services are enabled/);
+    assert.ok(await close.evaluate(e=>document.activeElement===e));
+    await page.keyboard.press('Shift+Tab');
+    assert.ok(await panel.locator('a').last().evaluate(e=>document.activeElement===e));
+    await page.keyboard.press('Tab');
+    assert.ok(await close.evaluate(e=>document.activeElement===e));
+    await page.keyboard.press('Escape');
+    assert.equal(await panel.isVisible(),false);
+    assert.equal(await bell.getAttribute('aria-expanded'),'false');
+    assert.ok(await bell.evaluate(e=>document.activeElement===e));
+    await bell.click();await close.click();
+    assert.equal(await panel.isVisible(),false);
+    console.log("PASS unified notification, official X, bounds and keyboard: "+context);
+   }finally{await page.close();}
+  }
+ }
 }finally{await browser.close();}

@@ -30,7 +30,11 @@ try{
    assert.match(await mobile.textContent(),/BASE/);
    if(width===1536){
     const header=await page.evaluate(()=>{const n=document.querySelector('nav'),m=n.querySelector('.navl');return {height:n.getBoundingClientRect().height,cols:getComputedStyle(m).gridTemplateColumns.split(' ').length,items:[...m.children].map(e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,width:r.width}})}});
-    assert.equal(header.items.length,12);assert.equal(header.cols,12);assert.ok(header.height<90);
+    assert.equal(header.items.length,11);assert.equal(header.cols,11);assert.ok(header.height<90);
+    assert.equal(await page.locator('.navl [data-panel="announcements"]').count(),0);
+    assert.equal(await page.locator('.navl [data-panel="notifications"]').count(),1);
+    assert.equal(await page.locator('.navl > :nth-last-child(2)').getAttribute('data-panel'),'notifications');
+    assert.equal(await page.locator('.navl > :last-child').getAttribute('href'),'https://x.com/ClimboriaHQ');
     for(const r of header.items)assert.ok(r.width>0&&r.left>=0&&r.right<=width+1&&Math.abs(r.top-header.items[0].top)<2);
     assert.ok(header.items.at(-1).left>header.items.at(-2).left);
    }
