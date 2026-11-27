@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## AUTONOMOUS ADVENTURER BOTS APPROVED — 2026-11-27 PHT
+
+- Owner explicitly confirmed moving, active bots comparable to Counter-Strike bots, adapted to survival exploration. R5A.1–R5A.9 now approved in [Game player experience backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 6ec92145e6ca4b5b1c3575dafa313bb7aa68fa9c; root master checklist update c7325255f44b2340c02463bdb4e879d38598006b. Supersedes prior pending-confirmation status only.
+- Acceptance requires autonomous goal selection, actual traversal/animation, contextual fishing/swimming/gathering, obstacle recovery and natural interactions, not stationary models or simulated human presence. Start one isolated state-machine NPC, then proposed 3–5 nearby subject to performance. Clearly label NPCs, keep ONLINE real players only; no real financial inventory/reward grants, public PvP or fake chat. Existing Game release gates and current next-task handoff unchanged. Documentation only; no gameplay implementation or deployment.
+
+---
+
 ## REALISTIC MASTERY AND LIVING ADVENTURER NPC PROPOSAL — 2026-11-27 PHT
 
 - Owner approved progression refinement in [R3.6–R3.10 and R5A backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 445b1fb29f5f78ff04211ed64c6f913a95d42ee6; root P4 master checklist linked update cdcd8f1d2da3ec23438a80a1c9515d225439e295. No traditional global character level; physical techniques, skill mastery, difficult materials-based crafting, proposed +0–10 enhancements, durability and repair, no magic/pay-to-win. Rank thresholds, enhancement balance and asset/animation acceptance remain open.
