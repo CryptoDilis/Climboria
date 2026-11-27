@@ -1,0 +1,24 @@
+name: Secondary EVM Wallet Read-only Safety
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'swap/secondary-evm-wallet-readiness.mjs'
+      - '.github/scripts/secondary-evm-wallet-readiness.test.mjs'
+      - '.github/workflows/secondary-evm-wallet-readiness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify isolated read-only wallet lifecycle
+        run: node --test .github/scripts/secondary-evm-wallet-readiness.test.mjs
