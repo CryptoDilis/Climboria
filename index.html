@@ -624,12 +624,8 @@ footer:first-of-type>div{
 .hero .hero-content .hero-buttons>button+button{border-left:2px solid #f3c46c!important}
 .hero .hero-content .hero-buttons>button:hover{filter:brightness(1.18)!important}
 
-/* Base-blue homepage color grade only: original desktop/mobile artwork and geometry retained. */
+/* Base-blue homepage palette: original artwork colors and geometry retained. */
 body{background-color:#050d1c}
-.hero picture{isolation:isolate}
-.hero picture img{filter:saturate(1.04) contrast(1.035)}
-.hero picture::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:color;background:radial-gradient(ellipse at 23% 69%,rgba(0,83,255,.66),rgba(0,115,255,.26) 44%,transparent 72%),linear-gradient(180deg,rgba(0,82,255,.16),rgba(0,82,255,.12) 48%,rgba(0,71,196,.35));}
-.hero-overlay{background:linear-gradient(180deg,rgba(3,13,35,.15) 0%,rgba(3,13,35,0) 35%,rgba(5,17,43,.4) 70%,rgba(5,13,28,.95) 100%)}
 nav{background-color:rgba(5,13,28,.94);border-color:rgba(64,140,255,.45)}
 .mobile-menu{background-color:rgba(5,13,28,.985);border-color:rgba(64,140,255,.45)}
 .mobile-menu a:hover,.mobile-menu a:focus-visible{color:#76b5ff}
@@ -639,9 +635,12 @@ nav{background-color:rgba(5,13,28,.94);border-color:rgba(64,140,255,.45)}
 .hero .hero-content .hero-buttons>.btn-trade{background:linear-gradient(180deg,#1456aa,#103367)!important}
 .hero .hero-content .hero-buttons>.btn-launch{background:linear-gradient(180deg,#123e7d,#0a234d)!important}
 .climboria-footer{background:#09182e!important;border-top-color:rgba(64,140,255,.23)!important}
-@media(max-width:900px){
- .hero picture::after{background:linear-gradient(180deg,rgba(0,82,255,.16),rgba(0,100,255,.24) 48%,rgba(0,82,255,.32))}
- .hero-overlay{background:linear-gradient(180deg,rgba(3,13,35,.2) 0%,rgba(3,13,35,.02) 35%,rgba(5,17,43,.45) 60%,rgba(5,13,28,.96) 100%)}
+
+/* Desktop landscape accent only: leave logo, heroine, flag and treasure outside the tinted area.
+   Narrow/mobile and extreme aspect ratios retain unfiltered original artwork. */
+@media (min-width:1000px) and (min-aspect-ratio:16/9) and (max-aspect-ratio:7/3){
+ .hero picture{isolation:isolate}
+ .hero picture::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:color;background:radial-gradient(ellipse 21% 19% at 22% 77%,rgba(0,92,255,.56) 0%,rgba(0,107,255,.30) 48%,transparent 100%)}
 }
 
 </style>
