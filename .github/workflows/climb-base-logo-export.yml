@@ -1,0 +1,35 @@
+name: CLIMB Base Logo Export
+on:
+  pull_request:
+    paths:
+      - 'base/launch-metadata/export-logo.py'
+      - 'assets/climb-token-official-cutout.avif'
+      - '.github/workflows/climb-base-logo-export.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'base/launch-metadata/export-logo.py'
+      - 'assets/climb-token-official-cutout.avif'
+      - '.github/workflows/climb-base-logo-export.yml'
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install --only-binary=:all: Pillow==12.0.0
+      - run: python base/launch-metadata/export-logo.py --output "$RUNNER_TEMP/climb-logo-export"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-base-logo-draft
+          path: ${{ runner.temp }}/climb-logo-export/
+          retention-days: 14
+          if-no-files-found: error
