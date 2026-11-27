@@ -1,9 +1,9 @@
 name: Game Autonomous Adventurer Foundation
 on:
   push:
-    paths: ['game/npc/**','.github/workflows/game-autonomous-adventurer.yml']
+    paths: ['game/npc/**','game/play.html','.github/workflows/game-autonomous-adventurer.yml']
   pull_request:
-    paths: ['game/npc/**','.github/workflows/game-autonomous-adventurer.yml']
+    paths: ['game/npc/**','game/play.html','.github/workflows/game-autonomous-adventurer.yml']
 permissions:
   contents: read
 jobs:
@@ -17,4 +17,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test game/npc/autonomous-adventurer.test.mjs
+      - run: node --test game/npc/*.test.mjs

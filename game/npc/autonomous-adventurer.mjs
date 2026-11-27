@@ -68,9 +68,11 @@ export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1}={}){
   if(next===null)choose();
   if(next===null)return snapshot();
   const target=graph.get(next),d=dist(position,target);
-  if(d<1e-6){arrive();return snapshot()}
-  const speed=position.swim?1.6:stamina>65?3.2:2;
-  const step=Math.min(d,speed*dt,.3),p=sample({x:position.x+(target.x-position.x)*step/d,z:position.z+(target.z-position.z)*step/d});
+  if(d===0){arrive();return snapshot()}
+  // Approach activity nodes at walking pace and sample the exact endpoint on
+  // the final bounded step, rather than accepting a rounded near-arrival.
+  const speed=position.swim?1.6:stamina>65&&d>1?3.2:2;
+  const step=Math.min(d,speed*dt,.3),p=sample(step===d?target:{x:position.x+(target.x-position.x)*step/d,z:position.z+(target.z-position.z)*step/d});
   const movement=p?.swim?'swim':speed>2?'run':'walk';
   if(!p||world.canTraverse(position,p,movement)!==true){
    mode='idle';wait=.3;stuck=true;
@@ -78,7 +80,7 @@ export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1}={}){
    return snapshot();
   }
   position=p;stuck=false;mode=movement;stamina=Math.max(0,stamina-dt*(movement==='run'?3:1));
-  if(dist(position,target)<1e-6)arrive();
+  if(step===d)arrive();
   return snapshot();
  }
  function snapshot(){return Object.freeze({kind:'npc',label:'Adventurer [NPC]',...position,mode,stamina,goal,stuck,closed})}
