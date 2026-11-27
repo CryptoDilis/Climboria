@@ -870,7 +870,10 @@ jobs:
                 if(!await trade.locator('.selected-panel').isVisible()||await trade.locator('.card').isVisible())throw new Error('Chart tab should show only selected-asset chart workspace');
                 await tabs.locator('[data-workspace-tab="swap"]').tap();
                 const swapMetrics=await swap.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,navPosition:getComputedStyle(document.querySelector('#mobileWorkspaceTabs')).position}));
-                if(swapMetrics.scrollWidth>swapMetrics.width+1||swapMetrics.navPosition!=='fixed'||swapMetrics.scrollHeight>1600)throw new Error('Swap '+width+'px compact layout/overflow failure: '+JSON.stringify(swapMetrics));
+                if(swapMetrics.scrollWidth>swapMetrics.width+1||swapMetrics.navPosition!=='fixed'||swapMetrics.scrollHeight>1600){
+                  const layout=await swap.evaluate(()=>[...document.querySelectorAll('.top,.trade-layout .card,.trade-layout .card > *, .trade-layout .swap-sidebar > *')].map(el=>{const r=el.getBoundingClientRect();return {id:el.id||el.className,tag:el.tagName,y:Math.round(r.y),height:Math.round(r.height),width:Math.round(r.width),display:getComputedStyle(el).display}}).filter(x=>x.height>0));
+                  throw new Error('Swap '+width+'px compact layout/overflow failure: '+JSON.stringify({swapMetrics,layout}));
+                }
                 if(errors.length)throw new Error(errors.join(' | '));
                 await swap.close();
               }
