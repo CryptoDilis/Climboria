@@ -1,0 +1,1853 @@
+CLIMB V3 SUCCESSOR TEST SOURCE REVIEW INPUT — TEST ONLY / NO_GO
+Frozen project commit: cb1d7c05a439009893ac2e0cf0d80868555d3d14
+Source copies from the exact commit, not a new test execution. File separators are editorial; source text is copied without intentional edits.
+
+===== FILE: base/safe-custody/test/SafeCustodyBoundary.t.sol | Git blob: f411b21cc9be90c6ebcbbdb6817ceac38f1bcd9e =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {Safe} from "safe-contracts/Safe.sol";
+import {SafeProxy} from "safe-contracts/proxies/SafeProxy.sol";
+import {Enum} from "safe-contracts/common/Enum.sol";
+import {BaseGuard} from "safe-contracts/base/GuardManager.sol";
+
+interface VmSafeBoundary {
+    function prank(address) external;
+    function expectRevert() external;
+}
+contract BoundaryTarget {
+    uint256 public calls;
+    function touch() external {calls++;}
+}
+contract BoundaryModule {
+    function touch(Safe wallet,BoundaryTarget target) external returns(bool){
+        return wallet.execTransactionFromModule(address(target),0,abi.encodeCall(target.touch,()),Enum.Operation.Call);
+    }
+}
+contract BoundaryDenyGuard is BaseGuard {
+    function checkTransaction(address,uint256,bytes memory,Enum.Operation,uint256,uint256,uint256,address,address payable,bytes memory,address) external pure override {
+        revert("DENIED");
+    }
+    function checkAfterExecution(bytes32,bool) external pure override {}
+}
+contract BoundaryAllowGuard is BaseGuard {
+    function checkTransaction(address,uint256,bytes memory,Enum.Operation,uint256,uint256,uint256,address,address payable,bytes memory,address) external pure override {}
+    function checkAfterExecution(bytes32,bool) external pure override {}
+}
+
+/// @notice Actual pinned Safe source behavior, not a production custody adapter.
+/// Uses approved-hash signatures from synthetic test owners; no private keys or network.
+contract SafeCustodyBoundaryTest {
+    VmSafeBoundary constant vm=VmSafeBoundary(address(uint160(uint256(keccak256("hevm cheat code")))));
+    address constant A=address(0x101);
+    address constant B=address(0x102);
+    address constant C=address(0x103);
+    address constant D=address(0x104);
+    address constant E=address(0x105);
+    address constant F=address(0x106);
+    address constant SENTINEL=address(1);
+    Safe wallet;
+    BoundaryTarget target;
+    function setUp() public {
+        Safe implementation=new Safe();
+        wallet=Safe(payable(address(new SafeProxy(address(implementation)))));
+        address[] memory owners=new address[](5);
+        owners[0]=A;owners[1]=B;owners[2]=C;owners[3]=D;owners[4]=E;
+        wallet.setup(owners,3,address(0),"",address(0),address(0),0,payable(address(0)));
+        target=new BoundaryTarget();
+    }
+    function _approved(address to,bytes memory data,uint256 count) private returns(bytes memory signatures){
+        bytes32 hash=wallet.getTransactionHash(to,0,data,Enum.Operation.Call,0,0,0,address(0),address(0),wallet.nonce());
+        address[3] memory signers=[A,B,C];
+        for(uint256 i=0;i<count;i++){
+            vm.prank(signers[i]);wallet.approveHash(hash);
+            signatures=abi.encodePacked(signatures,bytes32(uint256(uint160(signers[i]))),bytes32(0),uint8(1));
+        }
+    }
+    function _exec(address to,bytes memory data,bytes memory sigs) private returns(bool){
+        return wallet.execTransaction(to,0,data,Enum.Operation.Call,0,0,0,address(0),payable(address(0)),sigs);
+    }
+    function _quorum(address to,bytes memory data) private {
+        bytes memory sigs=_approved(to,data,3);
+        require(_exec(to,data,sigs));
+    }
+    function testActualSetupAndThreeOwnerQuorum() public {
+        require(wallet.getThreshold()==3&&wallet.getOwners().length==5&&wallet.isOwner(A));
+        (address[] memory modules,address next)=wallet.getModulesPaginated(SENTINEL,10);
+        require(modules.length==0&&next==SENTINEL);
+        _quorum(address(target),abi.encodeCall(target.touch,()));
+        require(target.calls()==1&&wallet.nonce()==1);
+    }
+    function testTwoApprovalsCannotExecute() public {
+        bytes memory data=abi.encodeCall(target.touch,());
+        bytes memory sigs=_approved(address(target),data,2);
+        vm.expectRevert();_exec(address(target),data,sigs);
+        require(target.calls()==0&&wallet.nonce()==0);
+    }
+    function testOwnerSetHashReturnsAfterRotationABA() public {
+        bytes32 beforeHash=keccak256(abi.encode(wallet.getOwners()));
+        _quorum(address(wallet),abi.encodeWithSignature("swapOwner(address,address,address)",D,E,F));
+        require(!wallet.isOwner(E)&&wallet.isOwner(F)&&keccak256(abi.encode(wallet.getOwners()))!=beforeHash);
+        _quorum(address(wallet),abi.encodeWithSignature("swapOwner(address,address,address)",D,F,E));
+        require(wallet.isOwner(E)&&!wallet.isOwner(F)&&keccak256(abi.encode(wallet.getOwners()))==beforeHash&&wallet.nonce()==2);
+    }
+    function testOrdinarySafeAllowsThresholdReduction() public {
+        _quorum(address(wallet),abi.encodeWithSignature("changeThreshold(uint256)",1));
+        require(wallet.getThreshold()==1);
+        bytes memory data=abi.encodeCall(target.touch,());
+        require(_exec(address(target),data,_approved(address(target),data,1)));
+        require(target.calls()==1);
+    }
+    function testEnabledModuleBypassesNormalTransactionGuard() public {
+        BoundaryModule module=new BoundaryModule();
+        _quorum(address(wallet),abi.encodeWithSignature("enableModule(address)",address(module)));
+        BoundaryDenyGuard guard=new BoundaryDenyGuard();
+        _quorum(address(wallet),abi.encodeWithSignature("setGuard(address)",address(guard)));
+        bytes memory data=abi.encodeCall(target.touch,());
+        bytes memory sigs=_approved(address(target),data,3);
+        vm.expectRevert();_exec(address(target),data,sigs);
+        require(target.calls()==0);
+        require(module.touch(wallet,target)&&target.calls()==1);
+    }
+    function testOrdinaryAllowGuardCanBeRemoved() public {
+        BoundaryAllowGuard guard=new BoundaryAllowGuard();
+        _quorum(address(wallet),abi.encodeWithSignature("setGuard(address)",address(guard)));
+        _quorum(address(wallet),abi.encodeWithSignature("setGuard(address)",address(0)));
+        _quorum(address(wallet),abi.encodeWithSignature("changeThreshold(uint256)",1));
+        require(wallet.getThreshold()==1);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/safe-custody/test/SafeEpochGuard.t.sol | Git blob: 2e09f5ce7419947b590dde839a9043997f0ff865 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {Safe} from "safe-contracts/Safe.sol";
+import {Enum} from "safe-contracts/common/Enum.sol";
+import {SafeEpochGuardFixture,GuardedSafeFactoryFixture} from "../src/SafeEpochGuardFixture.sol";
+interface VmEpochGuard {
+    function chainId(uint256) external;
+    function warp(uint256) external;
+    function etch(address,bytes calldata) external;
+    function prank(address) external;
+    function expectRevert() external;
+}
+contract SafeEpochGuardTest {
+    VmEpochGuard constant vm=VmEpochGuard(address(uint160(uint256(keccak256("hevm cheat code")))));
+    address constant A=address(0x101);
+    address constant B=address(0x102);
+    address constant C=address(0x103);
+    address constant D=address(0x104);
+    address constant E=address(0x105);
+    address constant F=address(0x106);
+    Safe wallet;
+    SafeEpochGuardFixture guard;
+    GuardedSafeFactoryFixture factory;
+    function setUp() public {
+        vm.chainId(84532);factory=new GuardedSafeFactoryFixture();
+        address[] memory owners=new address[](5);
+        owners[0]=A;owners[1]=B;owners[2]=C;owners[3]=D;owners[4]=E;
+        (wallet,guard)=factory.create(owners);
+    }
+    function _approved(address to,bytes memory data,Enum.Operation op,uint256 count) private returns(bytes memory sigs){
+        bytes32 hash=wallet.getTransactionHash(to,0,data,op,0,0,0,address(0),address(0),wallet.nonce());
+        address[3] memory signers=[A,B,C];
+        for(uint256 i=0;i<count;i++){
+            vm.prank(signers[i]);wallet.approveHash(hash);
+            sigs=abi.encodePacked(sigs,bytes32(uint256(uint160(signers[i]))),bytes32(0),uint8(1));
+        }
+    }
+    function _exec(address to,bytes memory data,Enum.Operation op,bytes memory sigs) private returns(bool){
+        return wallet.execTransaction(to,0,data,op,0,0,0,address(0),payable(address(0)),sigs);
+    }
+    function _quorum(address to,bytes memory data) private {
+        require(_exec(to,data,Enum.Operation.Call,_approved(to,data,Enum.Operation.Call,3)));
+    }
+    function _reject(address to,bytes memory data,Enum.Operation op,uint256 count) private {
+        bytes memory sigs=_approved(to,data,op,count);
+        vm.expectRevert();_exec(to,data,op,sigs);
+    }
+    function _schedule(uint256 e,address oldOwner,address newOwner) private {
+        _quorum(address(guard),abi.encodeCall(guard.scheduleRotation,(e,D,oldOwner,newOwner)));
+    }
+    function _swap(address oldOwner,address newOwner) private pure returns(bytes memory){
+        return abi.encodeWithSignature("swapOwner(address,address,address)",D,oldOwner,newOwner);
+    }
+    function testAtomicInitializationAndConfiguration() public {
+        guard.validateConfig();require(guard.epoch()==1&&guard.threshold()==3&&guard.memberCount()==5&&guard.isMember(E)&&wallet.nonce()==0);
+        vm.expectRevert();wallet.setup(new address[](0),1,address(0),"",address(0),address(0),0,payable(address(0)));
+    }
+    function testRealQuorumAndDirectCallerRejection() public {
+        bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F));
+        vm.expectRevert();guard.scheduleRotation(1,D,E,F);
+        _reject(address(guard),data,Enum.Operation.Call,2);
+        _quorum(address(guard),data);
+        (bytes32 digest,,,,)=guard.pending();require(digest!=0);
+    }
+    function testForbiddenConfigurationAndDelegatecallPaths() public {
+        _reject(address(wallet),abi.encodeWithSignature("changeThreshold(uint256)",1),Enum.Operation.Call,3);
+        _reject(address(wallet),abi.encodeWithSignature("enableModule(address)",F),Enum.Operation.Call,3);
+        _reject(address(wallet),abi.encodeWithSignature("setGuard(address)",address(0)),Enum.Operation.Call,3);
+        _reject(address(wallet),abi.encodeWithSignature("setFallbackHandler(address)",F),Enum.Operation.Call,3);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,F)),Enum.Operation.DelegateCall,3);
+        _reject(F,hex"12345678",Enum.Operation.Call,3);
+        guard.validateConfig();require(guard.epoch()==1);
+    }
+    function testDelayExactRotationAndMonotonicABA() public {
+        _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
+        _schedule(1,E,F);
+        _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
+        vm.warp(block.timestamp+2 days);
+        _reject(address(wallet),_swap(E,address(0x107)),Enum.Operation.Call,3);
+        _quorum(address(wallet),_swap(E,F));
+        require(guard.epoch()==2&&guard.isMember(F)&&!guard.isMember(E));
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,F,E)),Enum.Operation.Call,3);
+        _schedule(2,F,E);vm.warp(block.timestamp+2 days);
+        _quorum(address(wallet),_swap(F,E));
+        require(guard.epoch()==3&&guard.isMember(E)&&!guard.isMember(F));
+    }
+    function testCancelledAndExpiredRotationsRequireFreshDelay() public {
+        _schedule(1,E,F);
+        _quorum(address(guard),abi.encodeCall(guard.cancelRotation,(1)));
+        vm.warp(block.timestamp+2 days);
+        _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
+        _schedule(1,E,F);vm.warp(block.timestamp+9 days);
+        _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
+        _schedule(1,E,F);
+        _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
+        vm.warp(block.timestamp+2 days);_quorum(address(wallet),_swap(E,F));
+        require(guard.epoch()==2);
+    }
+    function testInvalidRotationDoesNotChangeEpoch() public {
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,C,E,F)),Enum.Operation.Call,3);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,A)),Enum.Operation.Call,3);
+        require(guard.epoch()==1&&guard.isMember(E));
+    }
+    function testReplacementAcquiringCodeDuringDelayRejected() public {
+        _schedule(1,E,F);
+        vm.etch(F,hex"60006000f3");
+        vm.warp(block.timestamp+2 days);
+        uint256 nonce=wallet.nonce();
+        _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
+        require(wallet.nonce()==nonce&&guard.epoch()==1&&guard.isMember(E)&&!guard.isMember(F)&&!guard.transactionActive());
+        (bytes32 digest,,,,)=guard.pending();require(digest!=0);
+        _quorum(address(guard),abi.encodeCall(guard.cancelRotation,(1)));
+        (digest,,,,)=guard.pending();require(digest==0);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,F)),Enum.Operation.Call,3);
+        vm.etch(F,"");
+        _schedule(1,E,F);
+        _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
+        vm.warp(block.timestamp+2 days);_quorum(address(wallet),_swap(E,F));
+        require(guard.epoch()==2&&guard.isMember(F)&&!guard.isMember(E)&&!guard.transactionActive());
+    }
+    function testMainnetRejected() public {
+        vm.chainId(8453);
+        vm.expectRevert();new GuardedSafeFactoryFixture();
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/safe-custody/test/SafeQuorumIssuance.t.sol | Git blob: 08d572e3c3a19268cca4df5f43bbea94531ac07f =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {Safe} from "safe-contracts/Safe.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {IV3SyntheticPool} from "v3-src/V3LiquidityPolicyFixture.sol";
+import {IV3SyntheticPoolBuilder} from "v3-src/V3AtomicSuccessorFixture.sol";
+import {Enum} from "safe-contracts/common/Enum.sol";
+import {SafeQuorumReserveFactoryFixture,SafeQuorumReserveGuardFixture,V3QuorumSuccessorFixture} from "../src/SafeQuorumIssuanceFixture.sol";
+import {V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorTestToken} from "v3-src/V3AtomicSuccessorFixture.sol";
+import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "v3-src/V3EpochSpendFixture.sol";
+import {ReserveQuote,ReservePool,ReservePoolBuilder,ReserveLPDestination} from "./SafeReserveGuard.t.sol";
+interface VmQuorumIssue {
+    function chainId(uint256) external;
+    function addr(uint256) external returns(address);
+    function sign(uint256,bytes32) external returns(uint8,bytes32,bytes32);
+    function warp(uint256) external;
+    function prank(address) external;
+    function expectRevert() external;
+}
+/// @notice Malicious synthetic builder attempts a second validly signed Safe transaction
+/// during issuance. It catches the rejection and returns a test-only pool.
+contract NestedSafePoolBuilder is IV3SyntheticPoolBuilder {
+    Safe public immutable wallet;
+    address public immutable guard;
+    bytes private payload;
+    bytes private signatures;
+    bool public attempted;
+    bool public rejected;
+    bytes4 public rejection;
+    constructor(Safe account,address target){wallet=account;guard=target;}
+    function arm(bytes calldata data,bytes calldata sigs) external {payload=data;signatures=sigs;}
+    function createPool(IERC20 a,IERC20 q) external returns(IV3SyntheticPool){
+        attempted=true;
+        try wallet.execTransaction(guard,0,payload,Enum.Operation.Call,0,0,0,address(0),payable(address(0)),signatures) returns(bool){
+            revert("nested Safe transaction unexpectedly accepted");
+        } catch(bytes memory reason){
+            rejected=true;
+            if(reason.length>=4)rejection=bytes4(reason);
+        }
+        return IV3SyntheticPool(address(new ReservePool(a,q)));
+    }
+}
+contract SafeQuorumIssuanceTest {
+    VmQuorumIssue constant vm=VmQuorumIssue(address(uint160(uint256(keccak256("hevm cheat code")))));
+    uint256[3] private keys;
+    address[] private owners;
+    address constant FOUNDER=address(0x201);
+    address constant DISTRIBUTOR=address(0x202);
+    address constant PAYEE=address(0x203);
+    uint256 constant SUPPLY=888888888000000;
+    Safe wallet;
+    SafeQuorumReserveFactoryFixture setup;
+    V3QuorumSuccessorFixture successor;
+    SafeQuorumReserveGuardFixture guard;
+    V3SuccessorConfig cfg;
+    function setUp() public {
+        vm.chainId(84532);
+        setup=new SafeQuorumReserveFactoryFixture();
+        successor=new V3QuorumSuccessorFixture(address(setup));
+        keys=[uint256(0x12345),uint256(0x23456),uint256(0x34567)];
+        for(uint256 i=0;i<3;i++)for(uint256 j=i+1;j<3;j++){
+            if(vm.addr(keys[j])<vm.addr(keys[i]))(keys[i],keys[j])=(keys[j],keys[i]);
+        }
+        for(uint256 i=0;i<3;i++)owners.push(vm.addr(keys[i]));
+        owners.push(address(0x104));owners.push(address(0x105));
+        (wallet,guard)=setup.create(owners,successor);
+        cfg=V3SuccessorConfig(FOUNDER,DISTRIBUTOR,IV3CustodyEpochFixture(address(guard)),block.timestamp+1 days,1000,
+            V3SuccessorLiquidityConfig(new ReserveQuote(),new ReservePoolBuilder(),address(new ReserveLPDestination()),1000));
+    }
+    function _sign(bytes memory data,uint256 n) private returns(bytes memory sigs){
+        return _signAt(data,n,wallet.nonce());
+    }
+    function _signAt(bytes memory data,uint256 n,uint256 nonce) private returns(bytes memory sigs){
+        bytes32 h=wallet.getTransactionHash(address(guard),0,data,Enum.Operation.Call,0,0,0,address(0),address(0),nonce);
+        for(uint256 i=0;i<n;i++){
+            (uint8 v,bytes32 r,bytes32 s)=vm.sign(keys[i],h);sigs=abi.encodePacked(sigs,r,s,v);
+        }
+    }
+    function _exec(bytes memory data,bytes memory sigs) private returns(bool){
+        return wallet.execTransaction(address(guard),0,data,Enum.Operation.Call,0,0,0,address(0),payable(address(0)),sigs);
+    }
+    function _data() private view returns(bytes memory){return abi.encodeCall(guard.issueSuccessor,(1,cfg));}
+    function _issue() private {bytes memory data=_data();require(_exec(data,_sign(data,3)));}
+    function _empty() private view {
+        require(!successor.used()&&!guard.bound()&&!guard.issuing()&&!guard.transactionActive()&&address(successor.token())==address(0)&&wallet.nonce()==0);
+        require(address(guard.asset())==address(0)&&guard.founder()==address(0)&&guard.distributor()==address(0));
+        for(uint256 i=0;i<7;i++)require(successor.vaults(i)==address(0)&&guard.destinations(i)==address(0));
+    }
+    function testNoCreatorOrUnregisteredCallerIssuance() public {
+        require(successor.configuredGuard()==address(guard));
+        vm.expectRevert();successor.create(cfg);
+        vm.expectRevert();successor.configureGuard(address(guard));
+        vm.expectRevert();guard.bindBeforeIssuance();
+        vm.expectRevert();guard.issueSuccessor(1,cfg);
+        _empty();
+    }
+    function testSetupFactoryCannotBeFrontRunOrReused() public {
+        V3QuorumSuccessorFixture fresh=new V3QuorumSuccessorFixture(address(setup));
+        vm.prank(PAYEE);vm.expectRevert();setup.create(owners,fresh);
+        require(fresh.configuredGuard()==address(0));
+        vm.expectRevert();setup.create(owners,successor);
+        _empty();
+    }
+    function testQuorumAtomicBindingExactAllocationAndNoFloat() public {
+        _empty();_issue();
+        V3SuccessorTestToken t=successor.token();
+        require(guard.bound()&&!guard.issuing()&&t.issued()&&t.totalSupply()==SUPPLY&&wallet.nonce()==1);
+        uint256[7] memory amounts=[uint256(17777777760000),311111110800000,222222222000000,133333333200000,88888888800000,106666666560000,8888888880000];
+        for(uint256 i=0;i<7;i++)require(guard.destinations(i)==successor.vaults(i)&&t.balanceOf(guard.destinations(i))==amounts[i]);
+        require(t.balanceOf(address(this))==0&&t.balanceOf(address(guard))==0&&t.balanceOf(address(wallet))==0);
+        bytes memory data=_data();bytes memory sigs=_sign(data,3);
+        vm.expectRevert();_exec(data,sigs);
+        require(t.totalSupply()==SUPPLY);
+    }
+    function testTwoSignaturesAndMutatedConfigurationCannotIssue() public {
+        bytes memory data=_data();bytes memory sigs=_sign(data,2);
+        vm.expectRevert();_exec(data,sigs);_empty();
+        sigs=_sign(data,3);cfg.gamingWalletMonthlyCap=1001;
+        bytes memory altered=_data();vm.expectRevert();_exec(altered,sigs);_empty();
+        cfg.gamingWalletMonthlyCap=1000;require(_exec(data,sigs));
+        require(guard.bound());
+    }
+    function testPolicyFailureRollsBackEntireIssueAndSafeNonce() public {
+        cfg.liquidity.trancheCap=0;
+        bytes memory data=_data();bytes memory sigs=_sign(data,3);
+        vm.expectRevert();_exec(data,sigs);_empty();
+        cfg.liquidity.trancheCap=1000;_issue();require(guard.bound());
+    }
+    function testForbiddenRoleConfigurationRollsBack() public {
+        cfg.founder=owners[0];
+        bytes memory data=_data();bytes memory sigs=_sign(data,3);
+        vm.expectRevert();_exec(data,sigs);_empty();
+        cfg.founder=FOUNDER;cfg.liquidity.custody=address(wallet);
+        data=_data();sigs=_sign(data,3);vm.expectRevert();_exec(data,sigs);_empty();
+    }
+    function testLateBindingFailureRollsBackAllGuardAndVaultState() public {
+        address previous=cfg.liquidity.custody;
+        cfg.liquidity.custody=address(successor);
+        bytes memory data=_data();bytes memory sigs=_sign(data,3);
+        vm.expectRevert();_exec(data,sigs);_empty();
+        cfg.liquidity.custody=previous;_issue();require(guard.bound()&&!guard.transactionActive());
+    }
+    function testNestedValidlySignedSafeTransactionRejectedDuringIssuance() public {
+        NestedSafePoolBuilder builder=new NestedSafePoolBuilder(wallet,address(guard));
+        cfg.liquidity.builder=builder;
+        bytes memory nested=abi.encodeCall(guard.cancelRotation,(1));
+        builder.arm(nested,_signAt(nested,3,wallet.nonce()+1));
+        _issue();
+        require(builder.attempted()&&builder.rejected()&&builder.rejection()==bytes4(keccak256("Forbidden()")));
+        require(wallet.nonce()==1&&guard.bound()&&!guard.transactionActive()&&successor.token().totalSupply()==SUPPLY);
+    }
+    function testBoundPoliciesOperateAfterAtomicIssue() public {
+        _issue();
+        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N"));
+        require(_exec(data,_sign(data,3)));
+        V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
+        bytes32 id=keccak256(abi.encode(block.chainid,address(v),address(successor.token()),v.purpose(),uint256(1),PAYEE,uint256(10),bytes32("E"),uint256(0),bytes32("N")));
+        vm.warp(cfg.start+2 days);v.execute(id);
+        require(successor.token().balanceOf(PAYEE)==10&&successor.token().totalSupply()==SUPPLY);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/safe-custody/test/SafeReserveGuard.t.sol | Git blob: f1a8a20c8cf6f7f4a1d074056659ba3717510d8a =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {Safe} from "safe-contracts/Safe.sol";
+import {Enum} from "safe-contracts/common/Enum.sol";
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeReserveFactoryFixture,SafeReserveGuardFixture} from "../src/SafeReserveGuardFixture.sol";
+import {V3AtomicSuccessorFixture,V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorTestToken,IV3SyntheticPoolBuilder} from "v3-src/V3AtomicSuccessorFixture.sol";
+import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "v3-src/V3EpochSpendFixture.sol";
+import {V3DeferredLiquidityFixture} from "v3-src/V3DeferredLiquidityFixture.sol";
+import {V3DeferredLegacyFixture} from "v3-src/V3DeferredLegacyFixture.sol";
+import {IV3SyntheticPool} from "v3-src/V3LiquidityPolicyFixture.sol";
+interface VmReserveGuard {
+    function chainId(uint256) external;
+    function addr(uint256) external returns(address);
+    function sign(uint256,bytes32) external returns(uint8,bytes32,bytes32);
+    function warp(uint256) external;
+    function prank(address) external;
+    function expectRevert() external;
+}
+contract ReserveQuote is ERC20 {
+    constructor() ERC20("Synthetic quote","QTEST"){_mint(msg.sender,1000000);}
+}
+contract ReserveLPDestination {}
+contract ReservePool is ERC20 {
+    address public immutable asset;
+    address public immutable quote;
+    constructor(IERC20 a,IERC20 q) ERC20("Synthetic LP","LPTEST"){asset=address(a);quote=address(q);}
+    function addLiquidity(uint256 a,uint256 q,uint256 min,address recipient) external returns(uint256){
+        require(IERC20(asset).transferFrom(msg.sender,address(this),a));
+        require(IERC20(quote).transferFrom(msg.sender,address(this),q));
+        require(min<=100);_mint(recipient,100);return 100;
+    }
+}
+contract ReservePoolBuilder is IV3SyntheticPoolBuilder {
+    function createPool(IERC20 a,IERC20 q) external returns(IV3SyntheticPool){return IV3SyntheticPool(address(new ReservePool(a,q)));}
+}
+contract SafeReserveGuardTest {
+    VmReserveGuard constant vm=VmReserveGuard(address(uint160(uint256(keccak256("hevm cheat code")))));
+    // Deterministic disposable offline test keys; never use as funded wallet keys.
+    uint256[3] private testKeys;
+    address A;address B;address C;
+    address constant D=address(0x104);
+    address constant E=address(0x105);
+    address constant F=address(0x106);
+    address constant FOUNDER=address(0x201);
+    address constant DISTRIBUTOR=address(0x202);
+    address constant PAYEE=address(0x203);
+    uint256 constant SUPPLY=888888888000000;
+    Safe wallet;
+    SafeReserveGuardFixture guard;
+    V3AtomicSuccessorFixture successor;
+    V3SuccessorTestToken token;
+    ReserveQuote quote;
+    uint256 start;
+    function setUp() public {
+        vm.chainId(84532);successor=new V3AtomicSuccessorFixture();
+        SafeReserveFactoryFixture factory=new SafeReserveFactoryFixture();
+        testKeys=[uint256(0x12345),uint256(0x23456),uint256(0x34567)];
+        for(uint256 i=0;i<3;i++)for(uint256 j=i+1;j<3;j++){
+            if(vm.addr(testKeys[j])<vm.addr(testKeys[i])){
+                (testKeys[i],testKeys[j])=(testKeys[j],testKeys[i]);
+            }
+        }
+        A=vm.addr(testKeys[0]);B=vm.addr(testKeys[1]);C=vm.addr(testKeys[2]);
+        address[] memory owners=new address[](5);
+        owners[0]=A;owners[1]=B;owners[2]=C;owners[3]=D;owners[4]=E;
+        (wallet,guard)=factory.create(owners,successor);
+        quote=new ReserveQuote();start=block.timestamp+1 days;
+        V3SuccessorConfig memory cfg=V3SuccessorConfig(FOUNDER,DISTRIBUTOR,IV3CustodyEpochFixture(address(guard)),start,1000,
+            V3SuccessorLiquidityConfig(quote,new ReservePoolBuilder(),address(new ReserveLPDestination()),1000));
+        token=successor.create(cfg);
+    }
+    function _approved(address to,bytes memory data,uint256 count) private returns(bytes memory sigs){
+        bytes32 hash=wallet.getTransactionHash(to,0,data,Enum.Operation.Call,0,0,0,address(0),address(0),wallet.nonce());
+        address[3] memory signers=[A,B,C];
+        for(uint256 i=0;i<count;i++){
+            vm.prank(signers[i]);wallet.approveHash(hash);
+            sigs=abi.encodePacked(sigs,bytes32(uint256(uint160(signers[i]))),bytes32(0),uint8(1));
+        }
+    }
+    function _signed(address to,bytes memory data,uint256 count) private returns(bytes memory sigs){
+        bytes32 h=wallet.getTransactionHash(to,0,data,Enum.Operation.Call,0,0,0,address(0),address(0),wallet.nonce());
+        for(uint256 i=0;i<count;i++){
+            (uint8 v,bytes32 rr,bytes32 ss)=vm.sign(testKeys[i],h);
+            sigs=abi.encodePacked(sigs,rr,ss,v);
+        }
+    }
+    function _exec(address to,bytes memory data,bytes memory sigs) private returns(bool){
+        return wallet.execTransaction(to,0,data,Enum.Operation.Call,0,0,0,address(0),payable(address(0)),sigs);
+    }
+    function _quorum(bytes memory data) private {require(_exec(address(guard),data,_approved(address(guard),data,3)));}
+    function _reject(address to,bytes memory data,uint256 count) private {
+        bytes memory sigs=_approved(to,data,count);vm.expectRevert();_exec(to,data,sigs);
+    }
+    function _bind() private {_quorum(abi.encodeCall(guard.bindSuccessor,(1)));}
+    function _propose(uint256 e,uint256 i,bytes32 evidence,bytes32 nonce) private pure returns(bytes memory){
+        return abi.encodeCall(SafeReserveGuardFixture.proposeExpense,(e,i,PAYEE,10,evidence,0,nonce));
+    }
+    function _id(uint256 e,uint256 i,bytes32 evidence,bytes32 nonce) private view returns(bytes32){
+        V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
+        return keccak256(abi.encode(block.chainid,address(v),address(token),v.purpose(),e,PAYEE,uint256(10),evidence,uint256(0),nonce));
+    }
+    function testActualECDSAQuorumPayloadBindingAndNonceReplay() public {
+        bytes memory binding=abi.encodeCall(guard.bindSuccessor,(1));
+        bytes memory sigs=_signed(address(guard),binding,3);
+        require(_exec(address(guard),binding,sigs)&&wallet.nonce()==1);
+        bytes memory data=_propose(1,3,"E","N");
+        bytes memory two=_signed(address(guard),data,2);
+        vm.expectRevert();_exec(address(guard),data,two);
+        require(wallet.nonce()==1);
+        sigs=_signed(address(guard),data,3);
+        bytes memory altered=_propose(1,4,"E","N");
+        vm.expectRevert();_exec(address(guard),altered,sigs);
+        require(wallet.nonce()==1);
+        require(_exec(address(guard),data,sigs)&&wallet.nonce()==2);
+        vm.expectRevert();_exec(address(guard),data,sigs);
+        require(wallet.nonce()==2);
+        vm.warp(start+2 days);
+        V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
+        v.execute(_id(1,3,"E","N"));
+        require(token.balanceOf(PAYEE)==10&&token.totalSupply()==SUPPLY);
+    }
+    function testFixedBindingAndNoDeployerFloat() public {
+        require(!guard.bound()&&token.totalSupply()==SUPPLY&&token.balanceOf(address(wallet))==0&&token.balanceOf(address(guard))==0);
+        _reject(address(guard),_propose(1,3,"E","N"),3);
+        _reject(address(guard),abi.encodeCall(guard.bindSuccessor,(1)),2);
+        _bind();require(guard.bound()&&address(guard.asset())==address(token));
+        for(uint256 i=0;i<7;i++)require(guard.destinations(i)==successor.vaults(i));
+        _reject(address(guard),abi.encodeCall(guard.bindSuccessor,(1)),3);
+    }
+    function testActualQuorumExpenseAndSharedReplay() public {
+        _bind();_reject(address(guard),_propose(1,3,"E","N"),2);
+        _quorum(_propose(1,3,"E","N"));_quorum(_propose(1,4,"E","M"));
+        V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
+        bytes32 id=_id(1,3,"E","N");
+        vm.expectRevert();v.execute(id);
+        vm.warp(start+2 days);v.execute(id);
+        V3EpochSpendFixture c=V3EpochSpendFixture(successor.vaults(4));bytes32 other=_id(1,4,"E","M");
+        vm.expectRevert();c.execute(other);
+        require(token.balanceOf(PAYEE)==10&&token.totalSupply()==SUPPLY);
+    }
+    function testRotationInvalidatesOutstandingAndOldEpochAuthorization() public {
+        _bind();_quorum(_propose(1,3,"E","N"));
+        bytes32 old=_id(1,3,"E","N");
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,F)));
+        vm.warp(start+2 days);
+        bytes memory swap=abi.encodeWithSignature("swapOwner(address,address,address)",D,E,F);
+        require(_exec(address(wallet),swap,_approved(address(wallet),swap,3)));
+        require(guard.epoch()==2);
+        V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
+        vm.expectRevert();v.execute(old);
+        _reject(address(guard),_propose(1,3,"E","N"),3);
+        _quorum(_propose(2,3,"E","N"));bytes32 fresh=_id(2,3,"E","N");
+        vm.warp(block.timestamp+2 days);v.execute(fresh);
+        require(token.balanceOf(PAYEE)==10);
+    }
+    function testNoGenericTransferOrRoleConflict() public {
+        _bind();
+        _reject(address(token),abi.encodeCall(token.transfer,(PAYEE,1)),3);
+        _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,0,PAYEE,10,"E",0,"N")),3);
+        _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,3,address(wallet),10,"E",0,"N")),3);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,FOUNDER)),3);
+        vm.expectRevert();guard.proposeExpense(1,3,PAYEE,10,"E",0,"N");
+    }
+    function testLiquidityAndLegacySchedulingThroughActualSafe() public {
+        _bind();
+        V3DeferredLiquidityFixture l=V3DeferredLiquidityFixture(successor.vaults(2));
+        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(successor.vaults(6));
+        uint256 deadline=block.timestamp+7 days;
+        _quorum(abi.encodeCall(guard.scheduleLiquidity,(1,1000,500,50,deadline,"LP")));
+        bytes32 id=keccak256(abi.encode(block.chainid,address(l),address(token),address(quote),address(l.pool()),uint256(1),uint256(1000),uint256(500),uint256(50),deadline,bytes32("LP")));
+        bytes32[] memory ids=new bytes32[](1);ids[0]="CLAIM";
+        address[] memory recipients=new address[](1);recipients[0]=PAYEE;
+        uint256[] memory amounts=new uint256[](1);amounts[0]=100;
+        _quorum(abi.encodeCall(guard.scheduleLegacy,(1,legacy.manifestDigest("TEST",100,ids,recipients,amounts),deadline)));
+        vm.warp(block.timestamp+2 days);
+        quote.transfer(address(l),500);l.execute(id);
+        legacy.activate("TEST",100,ids,recipients,amounts);
+        vm.prank(PAYEE);legacy.claim("CLAIM");
+        require(l.spent()==1000&&legacy.paid()==100&&token.balanceOf(PAYEE)==100&&token.totalSupply()==SUPPLY);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/test/ClimbV3IntegratedTestToken.t.sol | Git blob: 94426c3969ddba33c477efefccdd47168566f768 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {ClimbV3IntegratedTestToken} from "../src/ClimbV3IntegratedTestToken.sol";
+import {V3GamingVault} from "../src/ClimbV3TestToken.sol";
+import {V3RestrictedSpend} from "../src/V3RestrictedSpend.sol";
+interface VmIntegrated {
+    function chainId(uint256) external;
+    function warp(uint256) external;
+    function prank(address) external;
+    function expectRevert(bytes4) external;
+}
+contract ClimbV3IntegratedTestTokenTest {
+    VmIntegrated constant vm=VmIntegrated(address(uint160(uint256(keccak256("hevm cheat code")))));
+    address constant FOUNDER=address(0xF00D);
+    address constant DISTRIBUTOR=address(0xB0B);
+    address constant PAYEE=address(0xCAFE);
+    uint256 constant SUPPLY=888888888000000;
+    uint256 start;
+    address[5] signers;
+    ClimbV3IntegratedTestToken t;
+    function setUp() public {
+        vm.chainId(84532);
+        start=block.timestamp+1 days;
+        for(uint256 i=0;i<5;i++)signers[i]=address(uint160(1000+i));
+        t=new ClimbV3IntegratedTestToken(FOUNDER,DISTRIBUTOR,start,signers);
+    }
+    function testExactFundingAndAssetBinding() public view {
+        require(t.totalSupply()==SUPPLY&&t.decimals()==6);
+        require(t.balanceOf(address(t.founderVault()))==17777777760000);
+        require(t.balanceOf(address(t.gamingVault()))==311111110800000);
+        require(t.balanceOf(address(t.liquidityReserve()))==222222222000000);
+        require(t.balanceOf(address(t.legacyReserve()))==8888888880000);
+        V3RestrictedSpend[3] memory v=[t.ecosystemReserve(),t.communityReserve(),t.treasuryReserve()];
+        uint256[3] memory caps=[uint256(133333333200000),88888888800000,106666666560000];
+        for(uint256 i=0;i<3;i++){
+            require(address(v[i].token())==address(t)&&v[i].budget()==caps[i]&&t.balanceOf(address(v[i]))==caps[i]);
+        }
+        require(t.balanceOf(address(this))==0&&t.balanceOf(FOUNDER)==0&&t.balanceOf(DISTRIBUTOR)==0);
+    }
+    function propose(V3RestrictedSpend v,uint256 amount) internal returns(bytes32 id){
+        vm.prank(signers[0]);id=v.propose(PAYEE,amount,"MILESTONE",0,"NONCE");
+        for(uint256 i=0;i<3;i++){vm.prank(signers[i]);v.approve(id);}
+    }
+    function testReleaseBoundToOneReserve() public {
+        V3RestrictedSpend v=t.ecosystemReserve();
+        uint256 amount=v.monthlyCap(0);
+        bytes32 id=propose(v,amount);
+        vm.warp(start+2 days);
+        V3RestrictedSpend other=t.treasuryReserve();
+        vm.expectRevert(V3RestrictedSpend.NotReady.selector);other.execute(id);
+        v.execute(id);
+        require(t.balanceOf(PAYEE)==amount&&v.totalSpent()==amount);
+        require(t.balanceOf(address(v))==v.budget()-amount);
+        require(t.treasuryReserve().totalSpent()==0&&t.communityReserve().totalSpent()==0);
+        require(t.totalSupply()==SUPPLY);
+    }
+    function testConcurrentReleaseAndBurnConservation() public {
+        uint256 amount=1000000;
+        bytes32 a=propose(t.ecosystemReserve(),amount);
+        bytes32 b=propose(t.communityReserve(),amount);
+        require(a!=b);
+        vm.warp(start+2 days);
+        t.ecosystemReserve().execute(a);
+        t.communityReserve().execute(b);
+        V3GamingVault game=t.gamingVault();
+        vm.prank(DISTRIBUTOR);game.release(amount);
+        vm.prank(PAYEE);t.burn(amount);
+        require(t.totalSupply()==SUPPLY-amount);
+        require(t.balanceOf(PAYEE)==amount&&t.balanceOf(DISTRIBUTOR)==amount);
+        require(t.balanceOf(address(t.liquidityReserve()))==222222222000000);
+        require(t.balanceOf(address(t.legacyReserve()))==8888888880000);
+    }
+    function testNoLiquidityOrLegacyRelease() public {
+        (bool a,)=address(t.liquidityReserve()).call(abi.encodeWithSignature("release(address,uint256)",PAYEE,1));
+        (bool b,)=address(t.legacyReserve()).call(abi.encodeWithSignature("release(address,uint256)",PAYEE,1));
+        require(!a&&!b);
+    }
+    function testRejectSignerDistributorOverlap() public {
+        signers[0]=DISTRIBUTOR;
+        vm.expectRevert(ClimbV3IntegratedTestToken.InvalidConfig.selector);
+        new ClimbV3IntegratedTestToken(FOUNDER,DISTRIBUTOR,start,signers);
+    }
+    function testRejectMainnet() public {
+        vm.chainId(8453);
+        vm.expectRevert(ClimbV3IntegratedTestToken.WrongChain.selector);
+        new ClimbV3IntegratedTestToken(FOUNDER,DISTRIBUTOR,start,signers);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/test/ClimbV3TestToken.t.sol | Git blob: acf600eb037b0ea0a69dfd8e45b53f9f14bbb94c =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {ClimbV3TestToken,V3FounderVesting,V3GamingVault} from "../src/ClimbV3TestToken.sol";
+interface VmV3 {
+    function chainId(uint256) external;
+    function warp(uint256) external;
+    function prank(address) external;
+    function expectRevert(bytes4) external;
+}
+contract ClimbV3TestTokenTest {
+    VmV3 constant vm=VmV3(address(uint160(uint256(keccak256("hevm cheat code")))));
+    address constant FOUNDER=address(0xA11CE);
+    address constant DISTRIBUTOR=address(0xB0B);
+    uint256 constant MONTH=30 days;
+    uint256 constant SUPPLY=888888888000000;
+    uint256 constant F=17777777760000;
+    uint256 constant G=311111110800000;
+    uint256 start;
+    ClimbV3TestToken t;
+    V3FounderVesting f;
+    V3GamingVault g;
+    function setUp() public {
+        vm.chainId(84532);
+        start=block.timestamp+1 days;
+        t=new ClimbV3TestToken(FOUNDER,DISTRIBUTOR,start);
+        f=t.founderVault();g=t.gamingVault();
+    }
+    function testExactAllocationsAndZeroLaunchFloat() public view {
+        require(t.decimals()==6&&t.totalSupply()==SUPPLY);
+        require(t.balanceOf(address(f))==F&&t.balanceOf(address(g))==G);
+        require(t.balanceOf(address(t.liquidityReserve()))==222222222000000);
+        require(t.balanceOf(address(t.ecosystemReserve()))==133333333200000);
+        require(t.balanceOf(address(t.communityReserve()))==88888888800000);
+        require(t.balanceOf(address(t.treasuryReserve()))==106666666560000);
+        require(t.balanceOf(address(t.legacyReserve()))==8888888880000);
+        require(t.balanceOf(address(this))==0&&t.balanceOf(FOUNDER)==0&&t.balanceOf(DISTRIBUTOR)==0);
+    }
+    function testRejectMainnet() public {
+        vm.chainId(8453);
+        vm.expectRevert(ClimbV3TestToken.WrongChain.selector);
+        new ClimbV3TestToken(FOUNDER,DISTRIBUTOR,start);
+    }
+    function testRejectSameBeneficiaryAndDistributor() public {
+        vm.expectRevert(ClimbV3TestToken.InvalidConfig.selector);
+        new ClimbV3TestToken(FOUNDER,FOUNDER,start);
+    }
+    function testRejectImmediateStart() public {
+        vm.expectRevert(V3FounderVesting.InvalidConfig.selector);
+        new ClimbV3TestToken(FOUNDER,DISTRIBUTOR,block.timestamp);
+    }
+    function testFounderCliffNoCatchup() public {
+        vm.warp(start+12*MONTH);
+        require(f.vested()==0);
+        vm.expectRevert(V3FounderVesting.NothingDue.selector);f.release();
+        vm.warp(start+13*MONTH);
+        f.release();
+        require(t.balanceOf(FOUNDER)==F/36&&f.released()==F/36);
+        vm.expectRevert(V3FounderVesting.NothingDue.selector);f.release();
+    }
+    function testFounderExactFinalRemainder() public {
+        for(uint256 i=13;i<=48;i++){
+            vm.warp(start+i*MONTH);
+            f.release();
+            require(f.released()==F*(i-12)/36);
+        }
+        require(t.balanceOf(FOUNDER)==F&&t.balanceOf(address(f))==0);
+        require(t.totalSupply()==SUPPLY);
+    }
+    function testFounderCannotRedirectOrAccelerate() public {
+        (bool a,)=address(f).call(abi.encodeWithSignature("setBeneficiary(address)",address(this)));
+        (bool b,)=address(f).call(abi.encodeWithSignature("accelerate()"));
+        require(!a&&!b);
+        vm.warp(start+13*MONTH);
+        f.release();
+        require(t.balanceOf(address(this))==0&&t.balanceOf(FOUNDER)==F/36);
+    }
+    function testGamingCapsSumToAllocation() public view {
+        uint256 sum;
+        for(uint256 i=0;i<60;i++)sum+=g.monthlyCap(i);
+        require(sum==G&&g.monthlyCap(60)==0);
+        require(g.monthlyCap(0)>g.monthlyCap(12)&&g.monthlyCap(12)>g.monthlyCap(24));
+    }
+    function testGamingBeforeStartAndUnauthorized() public {
+        vm.prank(DISTRIBUTOR);vm.expectRevert(V3GamingVault.OutsideWindow.selector);g.release(1);
+        vm.warp(start);
+        vm.expectRevert(V3GamingVault.NotDistributor.selector);g.release(1);
+    }
+    function testGamingMonthlyCapAndNoCatchup() public {
+        vm.warp(start+MONTH);
+        uint256 cap=g.monthlyCap(1);
+        vm.prank(DISTRIBUTOR);g.release(cap);
+        vm.prank(DISTRIBUTOR);vm.expectRevert(V3GamingVault.CapExceeded.selector);g.release(1);
+        require(g.monthlyReleased(0)==0&&g.monthlyReleased(1)==cap&&g.released()==cap);
+    }
+    function testGamingExpiry() public {
+        vm.warp(start+60*MONTH);
+        vm.prank(DISTRIBUTOR);vm.expectRevert(V3GamingVault.OutsideWindow.selector);g.release(1);
+        require(t.balanceOf(address(g))==G);
+    }
+    function testNoMintForcedBurnOrReserveRelease() public {
+        (bool a,)=address(t).call(abi.encodeWithSignature("mint(address,uint256)",address(this),1));
+        (bool b,)=address(t).call(abi.encodeWithSignature("burnFrom(address,uint256)",address(t.liquidityReserve()),1));
+        (bool c,)=address(t.liquidityReserve()).call(abi.encodeWithSignature("release(address,uint256)",address(this),1));
+        require(!a&&!b&&!c&&t.totalSupply()==SUPPLY);
+    }
+    function testHolderBurnAndUntaxedTransfer() public {
+        vm.warp(start+13*MONTH);f.release();
+        vm.prank(FOUNDER);t.transfer(DISTRIBUTOR,100);
+        require(t.balanceOf(DISTRIBUTOR)==100&&t.totalSupply()==SUPPLY);
+        vm.prank(DISTRIBUTOR);t.burn(100);
+        require(t.totalSupply()==SUPPLY-100&&t.balanceOf(DISTRIBUTOR)==0);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/test/V3AtomicSuccessor.t.sol | Git blob: 23aa78afd6e609594a3eec44262fb0a8d8e2a72d =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {V3FounderVesting} from "../src/ClimbV3TestToken.sol";
+import {V3GameRewardFixture} from "../src/V3GameRewardFixture.sol";
+import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "../src/V3EpochSpendFixture.sol";
+import {V3DeferredLegacyFixture} from "../src/V3DeferredLegacyFixture.sol";
+import {IV3SyntheticPool} from "../src/V3LiquidityPolicyFixture.sol";
+import {V3DeferredLiquidityFixture} from "../src/V3DeferredLiquidityFixture.sol";
+import {V3AtomicSuccessorFixture,V3SuccessorTestToken,V3SuccessorConfig,V3SuccessorLiquidityConfig,IV3SyntheticPoolBuilder} from "../src/V3AtomicSuccessorFixture.sol";
+interface VmSuccessor {
+    function chainId(uint256) external;
+    function warp(uint256) external;
+    function prank(address) external;
+    function addr(uint256) external returns(address);
+    function sign(uint256,bytes32) external returns(uint8,bytes32,bytes32);
+    function expectRevert(bytes4) external;
+}
+contract SuccessorQuote is ERC20 {
+    constructor() ERC20("Synthetic quote","QTEST"){_mint(msg.sender,1000000);}
+}
+contract SuccessorCustodyDestination {}
+// Intentionally unrestricted mock. NOT actual multisig authorization.
+contract SuccessorMockCustody is IV3CustodyEpochFixture {
+    uint256 public override epoch=1;
+    uint256 public constant override threshold=3;
+    uint256 public constant override memberCount=5;
+    function isMember(address) external pure override returns(bool){return false;}
+    function propose(V3EpochSpendFixture v,address recipient,bytes32 evidence,bytes32 nonce,uint256 amount) external returns(bytes32){
+        return v.propose(recipient,amount,evidence,0,nonce);
+    }
+    function scheduleLiquidity(V3DeferredLiquidityFixture v,uint256 deadline) external returns(bytes32){return v.schedule(1000,500,50,deadline,"LP");}
+    function scheduleLegacy(V3DeferredLegacyFixture v,bytes32 digest,uint256 expiry) external {v.schedule(digest,expiry);}
+    function rotate() external {epoch++;}
+}
+contract SuccessorMockPool is ERC20 {
+    address public immutable asset;
+    address public immutable quote;
+    constructor(IERC20 a,IERC20 q) ERC20("Synthetic LP","LPTEST"){asset=address(a);quote=address(q);}
+    function addLiquidity(uint256 a,uint256 q,uint256 minimum,address recipient) external returns(uint256){
+        require(IERC20(asset).transferFrom(msg.sender,address(this),a));
+        require(IERC20(quote).transferFrom(msg.sender,address(this),q));
+        require(minimum<=100);_mint(recipient,100);return 100;
+    }
+}
+contract SuccessorMockPoolBuilder is IV3SyntheticPoolBuilder {
+    function createPool(IERC20 a,IERC20 q) external returns(IV3SyntheticPool){
+        return IV3SyntheticPool(address(new SuccessorMockPool(a,q)));
+    }
+}
+contract V3AtomicSuccessorTest {
+    VmSuccessor constant vm=VmSuccessor(address(uint160(uint256(keccak256("hevm cheat code")))));
+    uint256 constant SUPPLY=888888888000000;
+    address constant FOUNDER=address(1001);
+    uint256 constant REWARD_KEY=12345;
+    address DISTRIBUTOR;
+    address constant CLAIMANT=address(1003);
+    address constant PAYEE=address(1004);
+    SuccessorQuote quote;
+    SuccessorMockCustody control;
+    V3AtomicSuccessorFixture factory;
+    V3SuccessorConfig cfg;
+    function setUp() public {
+        vm.chainId(84532);
+        quote=new SuccessorQuote();control=new SuccessorMockCustody();
+        factory=new V3AtomicSuccessorFixture();
+        DISTRIBUTOR=vm.addr(REWARD_KEY);
+        cfg.gamingWalletMonthlyCap=1000;
+        cfg.founder=FOUNDER;cfg.distributor=DISTRIBUTOR;cfg.control=control;cfg.start=block.timestamp+1 days;
+        cfg.liquidity=V3SuccessorLiquidityConfig(quote,new SuccessorMockPoolBuilder(),address(new SuccessorCustodyDestination()),1000);
+    }
+    function testAtomicSevenDestinationsAndZeroFloat() public {
+        V3SuccessorTestToken token=factory.create(cfg);
+        require(token.issued()&&token.issuer()==address(factory)&&token.totalSupply()==SUPPLY&&token.decimals()==6);
+        uint256[7] memory expected=[uint256(17777777760000),311111110800000,222222222000000,133333333200000,88888888800000,106666666560000,8888888880000];
+        for(uint256 i=0;i<7;i++){
+            require(token.balanceOf(factory.vaults(i))==expected[i]);
+            for(uint256 j=0;j<i;j++)require(factory.vaults(i)!=factory.vaults(j));
+        }
+        require(token.balanceOf(address(this))==0&&token.balanceOf(address(factory))==0&&token.balanceOf(FOUNDER)==0&&token.balanceOf(DISTRIBUTOR)==0);
+        require(address(V3FounderVesting(factory.vaults(0)).token())==address(token));
+        require(address(V3GameRewardFixture(factory.vaults(1)).token())==address(token));
+        require(address(V3DeferredLiquidityFixture(factory.vaults(2)).asset())==address(token));
+        require(address(V3EpochSpendFixture(factory.vaults(3)).token())==address(token));
+        require(address(V3EpochSpendFixture(factory.vaults(4)).token())==address(token));
+        require(address(V3EpochSpendFixture(factory.vaults(5)).token())==address(token));
+        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(factory.vaults(6));
+        require(address(legacy.token())==address(token)&&!legacy.activated()&&legacy.allocated()==0&&address(legacy.custody())==address(control));
+    }
+    function testFactoryAndTokenCannotIssueTwice() public {
+        V3SuccessorTestToken token=factory.create(cfg);
+        vm.expectRevert(V3AtomicSuccessorFixture.InvalidConfig.selector);factory.create(cfg);
+        address[7] memory v;for(uint256 i=0;i<7;i++)v[i]=factory.vaults(i);
+        vm.prank(address(factory));vm.expectRevert(V3SuccessorTestToken.InvalidIssuance.selector);token.issue(v);
+    }
+    function testNonCreatorCannotConsumeFactory() public {
+        vm.prank(PAYEE);vm.expectRevert(V3AtomicSuccessorFixture.InvalidConfig.selector);factory.create(cfg);
+        require(!factory.used()&&address(factory.token())==address(0));
+        factory.create(cfg);
+    }
+    function testInvalidLiquidityConfigRollsBackWholeCreation() public {
+        cfg.liquidity.trancheCap=0;
+        vm.expectRevert(V3DeferredLiquidityFixture.InvalidConfig.selector);factory.create(cfg);
+        require(!factory.used()&&address(factory.token())==address(0)&&factory.vaults(0)==address(0));
+        cfg.liquidity.trancheCap=1000;require(factory.create(cfg).totalSupply()==SUPPLY);
+    }
+    function testIntegratedReleaseLiquidityClaimAndBurnConservation() public {
+        V3SuccessorTestToken token=factory.create(cfg);
+        _scheduleLiquidity();
+        _scheduleLegacy();
+        V3EpochSpendFixture e=V3EpochSpendFixture(factory.vaults(3));
+        V3EpochSpendFixture c=V3EpochSpendFixture(factory.vaults(4));
+        bytes32 a=control.propose(e,PAYEE,"E","A",10);
+        bytes32 b=control.propose(c,PAYEE,"E","B",10);
+        vm.warp(cfg.start+2 days);e.execute(a);
+        _executeLiquidity(token);
+        vm.expectRevert(bytes4(keccak256("ExpenseAlreadyConsumed()")));c.execute(b);
+        _claimGameReward();
+        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(factory.vaults(6));
+        _activateLegacy(legacy);
+        vm.prank(CLAIMANT);legacy.claim("CLAIM");
+        require(token.totalSupply()==SUPPLY&&token.balanceOf(PAYEE)==210&&token.balanceOf(DISTRIBUTOR)==0&&token.balanceOf(CLAIMANT)==100);
+        vm.prank(CLAIMANT);token.burn(10);
+        vm.warp(legacy.appealEnd());
+        control.scheduleLegacy(legacy,legacy.closureDigest("REVIEW"),block.timestamp+7 days);
+        vm.warp(block.timestamp+2 days);legacy.finalize("REVIEW");
+        require(token.totalSupply()==SUPPLY-10-(legacy.RESERVE()-100)&&legacy.paid()+legacy.burned()==legacy.RESERVE());
+    }
+    function _manifest() private pure returns(bytes32[] memory ids,address[] memory recipients,uint256[] memory amounts){
+        ids=new bytes32[](1);recipients=new address[](1);amounts=new uint256[](1);
+        ids[0]="CLAIM";recipients[0]=CLAIMANT;amounts[0]=100;
+    }
+    function _scheduleLegacy() private {
+        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(factory.vaults(6));
+        (bytes32[] memory ids,address[] memory recipients,uint256[] memory amounts)=_manifest();
+        control.scheduleLegacy(legacy,legacy.manifestDigest("TEST_CAMPAIGN",100,ids,recipients,amounts),block.timestamp+7 days);
+    }
+    function _activateLegacy(V3DeferredLegacyFixture legacy) private {
+        (bytes32[] memory ids,address[] memory recipients,uint256[] memory amounts)=_manifest();
+        legacy.activate("TEST_CAMPAIGN",100,ids,recipients,amounts);
+    }
+    function testDeferredLegacyDoesNotBlockIssuanceOrRequireEarlyManifest() public {
+        V3SuccessorTestToken token=factory.create(cfg);
+        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(factory.vaults(6));
+        vm.warp(block.timestamp+365 days);
+        require(!legacy.activated()&&token.balanceOf(address(legacy))==legacy.RESERVE());
+        vm.expectRevert(V3DeferredLegacyFixture.NotReady.selector);legacy.finalize("REVIEW");
+        _scheduleLegacy();
+        vm.warp(block.timestamp+2 days);_activateLegacy(legacy);
+        require(legacy.activated()&&legacy.deadline()==block.timestamp+30 days&&token.totalSupply()==SUPPLY);
+    }
+    bytes32 private lpAction;
+    function _scheduleLiquidity() private {
+        V3DeferredLiquidityFixture liquidity=V3DeferredLiquidityFixture(factory.vaults(2));
+        require(quote.balanceOf(address(liquidity))==0&&liquidity.spent()==0);
+        lpAction=control.scheduleLiquidity(liquidity,cfg.start+7 days);
+    }
+    function _executeLiquidity(V3SuccessorTestToken token) private {
+        V3DeferredLiquidityFixture liquidity=V3DeferredLiquidityFixture(factory.vaults(2));
+        vm.expectRevert(V3DeferredLiquidityFixture.NotReady.selector);liquidity.execute(lpAction);
+        quote.transfer(address(liquidity),500);liquidity.execute(lpAction);
+        (,,,,,,,,address lock)=liquidity.actions(lpAction);
+        require(liquidity.pool().balanceOf(lock)==100&&token.balanceOf(address(liquidity.pool()))==1000);
+    }
+    function _claimGameReward() private {
+        V3GameRewardFixture gaming=V3GameRewardFixture(factory.vaults(1));
+        V3GameRewardFixture.Reward memory x=V3GameRewardFixture.Reward("GAME_EVENT",PAYEE,200,0,cfg.start+30 days);
+        (uint8 v,bytes32 r,bytes32 s)=vm.sign(REWARD_KEY,gaming.digest(x));
+        gaming.claim(x,abi.encodePacked(r,s,v));
+    }
+    function testEpochChangeAndFounderCliffInIntegratedAsset() public {
+        V3SuccessorTestToken token=factory.create(cfg);
+        V3EpochSpendFixture e=V3EpochSpendFixture(factory.vaults(3));
+        bytes32 old=control.propose(e,PAYEE,"E","A",10);
+        vm.warp(cfg.start+2 days);control.rotate();
+        vm.expectRevert(V3EpochSpendFixture.NotReady.selector);e.execute(old);
+        V3FounderVesting f=V3FounderVesting(factory.vaults(0));
+        vm.warp(cfg.start+12*30 days);
+        vm.expectRevert(V3FounderVesting.NothingDue.selector);f.release();
+        vm.warp(cfg.start+13*30 days);f.release();
+        require(token.balanceOf(FOUNDER)==f.ALLOCATION()/36&&token.totalSupply()==SUPPLY);
+    }
+    function testMainnetRejected() public {
+        vm.chainId(8453);
+        vm.expectRevert(V3AtomicSuccessorFixture.InvalidConfig.selector);new V3AtomicSuccessorFixture();
+        vm.expectRevert(V3AtomicSuccessorFixture.InvalidConfig.selector);factory.create(cfg);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/test/V3BoundedLegacy.t.sol | Git blob: dc2d2c5c65a038d3591dc49cbaf0f655abf74d13 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import {V3BoundedLegacyFixture,IV3BurnableAsset} from "../src/V3BoundedLegacyFixture.sol";
+interface VmLegacy {
+    function chainId(uint256) external;
+    function warp(uint256) external;
+    function prank(address) external;
+    function expectRevert(bytes4) external;
+}
+contract LegacyFixtureAsset is ERC20 {
+    constructor() ERC20("Synthetic legacy asset","LEGTEST"){_mint(msg.sender,888888888000000);}
+    function burn(uint256 amount) external {_burn(msg.sender,amount);}
+}
+contract V3BoundedLegacyTest {
+    VmLegacy constant vm=VmLegacy(address(uint160(uint256(keccak256("hevm cheat code")))));
+    uint256 constant RESERVE=8888888880000;
+    uint256 constant SUPPLY=888888888000000;
+    uint256 constant CAP=1000000;
+    address constant A=address(101);
+    address constant B=address(102);
+    bytes32 constant CAMPAIGN="SYNTHETIC";
+    LegacyFixtureAsset asset;
+    V3BoundedLegacyFixture vault;
+    uint256 opens;uint256 deadline;uint256 closure;
+    bytes32[] ids;address[] recipients;uint256[] amounts;
+    function setUp() public {
+        vm.chainId(84532);
+        asset=new LegacyFixtureAsset();
+        opens=block.timestamp+1 days;deadline=opens+30 days;closure=deadline+14 days;
+        ids.push("A");ids.push("B");recipients.push(A);recipients.push(B);amounts.push(100);amounts.push(200);
+        vault=make(CAP);
+        asset.transfer(address(vault),RESERVE);
+    }
+    function make(uint256 cap) internal returns(V3BoundedLegacyFixture){
+        bytes32 h=keccak256(abi.encode("CLIMB_V3_SYNTHETIC_LEGACY_V1",block.chainid,address(asset),opens,deadline,closure,CAMPAIGN,cap,ids,recipients,amounts));
+        return new V3BoundedLegacyFixture(IV3BurnableAsset(address(asset)),h,opens,deadline,closure);
+    }
+    function activate() internal {vault.activate(ids,recipients,amounts,CAP,CAMPAIGN);}
+    function testExactManifestOneTimeActivation() public {
+        activate();require(vault.activated()&&vault.budget()==CAP&&vault.allocated()==300);
+        vm.expectRevert(V3BoundedLegacyFixture.InvalidWindow.selector);activate();
+    }
+    function testManifestMutationRejected() public {
+        amounts[0]=101;
+        vm.expectRevert(V3BoundedLegacyFixture.InvalidManifest.selector);activate();
+        require(!vault.activated());
+    }
+    function testUnfundedCannotActivate() public {
+        vault=make(CAP);
+        vm.expectRevert(V3BoundedLegacyFixture.NotFunded.selector);activate();
+        require(!vault.activated());
+    }
+    function testDuplicateAndOversizedAllocationRejected() public {
+        ids[1]=ids[0];vault=make(CAP);asset.transfer(address(vault),RESERVE);
+        vm.expectRevert(V3BoundedLegacyFixture.InvalidManifest.selector);activate();
+        require(!vault.activated()&&vault.recipient(ids[0])==address(0));
+        ids[1]="B";amounts[1]=CAP;vault=make(CAP);asset.transfer(address(vault),RESERVE);
+        vm.expectRevert(V3BoundedLegacyFixture.InvalidManifest.selector);activate();
+    }
+    function testCapAboveReserveRejected() public {
+        vault=make(RESERVE+1);
+        vm.expectRevert(V3BoundedLegacyFixture.InvalidManifest.selector);vault.activate(ids,recipients,amounts,RESERVE+1,CAMPAIGN);
+    }
+    function testRecipientOnlyClaimAndReplayNoMint() public {
+        activate();vm.warp(opens);
+        vm.expectRevert(V3BoundedLegacyFixture.NotEligible.selector);vault.claim("A");
+        vm.prank(A);vault.claim("A");
+        require(asset.balanceOf(A)==100&&vault.paid()==100&&asset.totalSupply()==SUPPLY);
+        vm.prank(A);vm.expectRevert(V3BoundedLegacyFixture.AlreadyClaimed.selector);vault.claim("A");
+    }
+    function testClaimAndClosureWindows() public {
+        activate();vm.prank(A);vm.expectRevert(V3BoundedLegacyFixture.InvalidWindow.selector);vault.claim("A");
+        vm.warp(deadline);vm.prank(A);vm.expectRevert(V3BoundedLegacyFixture.InvalidWindow.selector);vault.claim("A");
+        vm.expectRevert(V3BoundedLegacyFixture.InvalidWindow.selector);vault.closeAndBurn();
+        vm.warp(closure);vault.closeAndBurn();
+        require(vault.closed()&&vault.burned()==RESERVE&&asset.totalSupply()==SUPPLY-RESERVE);
+        vm.expectRevert(V3BoundedLegacyFixture.InvalidWindow.selector);vault.closeAndBurn();
+    }
+    function testPaidAndBurnedReconcileDonationExcluded() public {
+        activate();asset.transfer(address(vault),5);vm.warp(opens);
+        vm.prank(B);vault.claim("B");vm.warp(closure);vault.closeAndBurn();
+        require(vault.paid()+vault.burned()==RESERVE&&vault.burned()==RESERVE-200&&asset.balanceOf(address(vault))==5&&asset.totalSupply()==SUPPLY-RESERVE+200);
+    }
+    function testMissedActivationFailsClosed() public {
+        vm.warp(opens);vm.expectRevert(V3BoundedLegacyFixture.InvalidWindow.selector);activate();
+        vm.warp(closure);vm.expectRevert(V3BoundedLegacyFixture.InvalidWindow.selector);vault.closeAndBurn();
+        require(asset.balanceOf(address(vault))==RESERVE);
+    }
+    function testMainnetRejected() public {
+        vm.chainId(8453);
+        vm.expectRevert(V3BoundedLegacyFixture.WrongChain.selector);
+        new V3BoundedLegacyFixture(IV3BurnableAsset(address(asset)),bytes32("M"),opens,deadline,closure);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/test/V3DeferredLegacy.t.sol | Git blob: 8dadb85c62f72403cd6533c42059456e6acbd30f =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {V3DeferredLegacyFixture} from "../src/V3DeferredLegacyFixture.sol";
+import {IV3BurnableAsset} from "../src/V3BoundedLegacyFixture.sol";
+import {IV3CustodyEpochFixture} from "../src/V3EpochSpendFixture.sol";
+import {LegacyFixtureAsset} from "./V3BoundedLegacy.t.sol";
+interface VmDeferredLegacy {
+    function chainId(uint256) external;
+    function warp(uint256) external;
+    function prank(address) external;
+    function expectRevert(bytes4) external;
+}
+contract DeferredLegacyMockCustody is IV3CustodyEpochFixture {
+    uint256 public override epoch=1;
+    uint256 public constant override threshold=3;
+    uint256 public constant override memberCount=5;
+    function isMember(address) external pure override returns(bool){return false;}
+    function rotate() external {epoch++;}
+    function schedule(V3DeferredLegacyFixture v,bytes32 h,uint256 expiry) external {v.schedule(h,expiry);}
+    function cancel(V3DeferredLegacyFixture v) external {v.cancel();}
+}
+contract V3DeferredLegacyTest {
+    VmDeferredLegacy constant vm=VmDeferredLegacy(address(uint160(uint256(keccak256("hevm cheat code")))));
+    uint256 constant RESERVE=8888888880000;
+    uint256 constant SUPPLY=888888888000000;
+    address constant A=address(101);
+    bytes32 constant CAMPAIGN="SYNTHETIC";
+    bytes32 constant REVIEW="REVIEW";
+    LegacyFixtureAsset asset;
+    DeferredLegacyMockCustody control;
+    V3DeferredLegacyFixture vault;
+    bytes32[] ids; address[] recipients; uint256[] amounts;
+    function setUp() public {
+        vm.chainId(84532);asset=new LegacyFixtureAsset();control=new DeferredLegacyMockCustody();
+        vault=new V3DeferredLegacyFixture(IV3BurnableAsset(address(asset)),control);
+        asset.transfer(address(vault),RESERVE);
+        ids.push("A");recipients.push(A);amounts.push(100);
+    }
+    function digest() internal view returns(bytes32){return vault.manifestDigest(CAMPAIGN,100,ids,recipients,amounts);}
+    function schedule() internal {control.schedule(vault,digest(),block.timestamp+7 days);}
+    function activate() internal {vault.activate(CAMPAIGN,100,ids,recipients,amounts);}
+    function ready() internal {schedule();vm.warp(block.timestamp+2 days);activate();}
+    function testIndefiniteDeferralAndRelativeWindows() public {
+        vm.warp(block.timestamp+365 days);require(!vault.activated()&&asset.balanceOf(address(vault))==RESERVE);
+        ready();require(vault.opens()==block.timestamp&&vault.deadline()==block.timestamp+30 days&&vault.appealEnd()==block.timestamp+44 days);
+    }
+    function testUnauthorizedAndDelay() public {
+        bytes32 h=digest();vm.expectRevert(V3DeferredLegacyFixture.Unauthorized.selector);vault.schedule(h,block.timestamp+7 days);
+        schedule();vm.expectRevert(V3DeferredLegacyFixture.NotReady.selector);activate();
+        vm.warp(block.timestamp+2 days);activate();
+        vm.expectRevert(V3DeferredLegacyFixture.InvalidAction.selector);activate();
+    }
+    function testExpiredAndCancelledCommitmentCanBeReplaced() public {
+        schedule();vm.warp(block.timestamp+7 days);
+        vm.expectRevert(V3DeferredLegacyFixture.NotReady.selector);activate();
+        schedule();control.cancel(vault);vm.warp(block.timestamp+2 days);
+        vm.expectRevert(V3DeferredLegacyFixture.NotReady.selector);activate();
+        ready();
+    }
+    function testStaleEpochRequiresNewDelay() public {
+        schedule();control.rotate();vm.warp(block.timestamp+2 days);
+        vm.expectRevert(V3DeferredLegacyFixture.NotReady.selector);activate();
+        schedule();vm.expectRevert(V3DeferredLegacyFixture.NotReady.selector);activate();
+        vm.warp(block.timestamp+2 days);activate();
+    }
+    function testManifestBindingAndAtomicFailure() public {
+        schedule();vm.warp(block.timestamp+2 days);amounts[0]=99;
+        vm.expectRevert(V3DeferredLegacyFixture.NotReady.selector);activate();
+        amounts[0]=100;activate();require(vault.allocated()==100);
+    }
+    function testRecipientOnlyReplayAndClaimDeadline() public {
+        ready();vm.expectRevert(V3DeferredLegacyFixture.NotEligible.selector);vault.claim("A");
+        vm.prank(A);vault.claim("A");require(asset.balanceOf(A)==100&&asset.totalSupply()==SUPPLY);
+        vm.prank(A);vm.expectRevert(V3DeferredLegacyFixture.AlreadyClaimed.selector);vault.claim("A");
+        vm.warp(vault.deadline());vm.prank(A);vm.expectRevert(V3DeferredLegacyFixture.NotReady.selector);vault.claim("A");
+    }
+    function testClosureRequiresSeparateDelayedCurrentEpochReview() public {
+        ready();vm.prank(A);vault.claim("A");asset.transfer(address(vault),5);
+        bytes32 h=vault.closureDigest(REVIEW);
+        vm.expectRevert(V3DeferredLegacyFixture.InvalidAction.selector);control.schedule(vault,h,block.timestamp+7 days);
+        vm.warp(vault.appealEnd());
+        vm.expectRevert(V3DeferredLegacyFixture.NotReady.selector);vault.finalize(REVIEW);
+        control.schedule(vault,h,block.timestamp+7 days);control.rotate();vm.warp(block.timestamp+2 days);
+        vm.expectRevert(V3DeferredLegacyFixture.NotReady.selector);vault.finalize(REVIEW);
+        control.schedule(vault,h,block.timestamp+7 days);vm.warp(block.timestamp+2 days);
+        vm.expectRevert(V3DeferredLegacyFixture.NotReady.selector);vault.finalize("OTHER");
+        vault.finalize(REVIEW);
+        require(vault.closed()&&vault.burned()+vault.paid()==RESERVE&&asset.balanceOf(address(vault))==5&&asset.totalSupply()==SUPPLY-RESERVE+100);
+    }
+    function testMainnetRejected() public {
+        vm.chainId(8453);vm.expectRevert(V3DeferredLegacyFixture.InvalidConfig.selector);
+        new V3DeferredLegacyFixture(IV3BurnableAsset(address(asset)),control);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/test/V3DeferredLiquidity.t.sol | Git blob: 3b1e298915e79e9b4ee4df48ce26a4e6871f829c =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {V3DeferredLiquidityFixture} from "../src/V3DeferredLiquidityFixture.sol";
+import {V3SyntheticLPLock,IV3SyntheticPool} from "../src/V3LiquidityPolicyFixture.sol";
+import {LPFixtureAsset,LPFixturePool,LPFixtureCustody} from "./V3LiquidityPolicy.t.sol";
+import {IV3CustodyEpochFixture} from "../src/V3EpochSpendFixture.sol";
+interface VmDeferred {
+    function chainId(uint256) external;
+    function warp(uint256) external;
+    function expectRevert(bytes4) external;
+}
+contract DeferredMockControl is IV3CustodyEpochFixture {
+    uint256 public override epoch=1;
+    uint256 public constant override threshold=3;
+    uint256 public constant override memberCount=5;
+    function isMember(address) external pure override returns(bool){return false;}
+    function rotate() external {epoch++;}
+    function schedule(V3DeferredLiquidityFixture v,uint256 a,uint256 q,uint256 min,uint256 deadline,bytes32 nonce) external returns(bytes32){
+        return v.schedule(a,q,min,deadline,nonce);
+    }
+    function cancel(V3DeferredLiquidityFixture v,bytes32 id) external {v.cancel(id);}
+}
+contract V3DeferredLiquidityTest {
+    VmDeferred constant vm=VmDeferred(address(uint160(uint256(keccak256("hevm cheat code")))));
+    uint256 constant RESERVE=222222222000000;
+    LPFixtureAsset asset;
+    LPFixtureAsset quote;
+    LPFixturePool pool;
+    LPFixtureCustody destination;
+    DeferredMockControl control;
+    V3DeferredLiquidityFixture vault;
+    function setUp() public {
+        vm.chainId(84532);asset=new LPFixtureAsset();quote=new LPFixtureAsset();
+        pool=new LPFixturePool(address(asset),address(quote));destination=new LPFixtureCustody();control=new DeferredMockControl();
+        vault=new V3DeferredLiquidityFixture(asset,quote,IV3SyntheticPool(address(pool)),control,address(destination),RESERVE/2);
+        asset.transfer(address(vault),RESERVE);
+    }
+    function schedule(uint256 a,bytes32 nonce) internal returns(bytes32){
+        return control.schedule(vault,a,500,50,block.timestamp+7 days,nonce);
+    }
+    function testZeroQuoteIndefiniteDeferralAndLaterFunding() public {
+        vm.warp(block.timestamp+365 days);
+        require(asset.balanceOf(address(vault))==RESERVE&&vault.spent()==0&&quote.balanceOf(address(vault))==0);
+        bytes32 id=schedule(1000,"A");
+        vm.warp(block.timestamp+2 days);
+        vm.expectRevert(V3DeferredLiquidityFixture.NotReady.selector);vault.execute(id);
+        quote.transfer(address(vault),500);vault.execute(id);
+        require(vault.spent()==1000&&asset.balanceOf(address(vault))==RESERVE-1000);
+    }
+    function testCustodyOnlyAndDelay() public {
+        vm.expectRevert(V3DeferredLiquidityFixture.Unauthorized.selector);vault.schedule(1000,500,50,block.timestamp+7 days,"A");
+        bytes32 id=schedule(1000,"A");quote.transfer(address(vault),500);
+        vm.expectRevert(V3DeferredLiquidityFixture.NotReady.selector);vault.execute(id);
+        vm.warp(block.timestamp+2 days);vault.execute(id);
+        vm.expectRevert(V3DeferredLiquidityFixture.NotReady.selector);vault.execute(id);
+    }
+    function testMultipleTranchesAndDistinctLocks() public {
+        bytes32 a=schedule(1000,"A");bytes32 b=schedule(2000,"B");quote.transfer(address(vault),1000);
+        vm.warp(block.timestamp+2 days);vault.execute(a);vault.execute(b);
+        (,,,,,uint256 deadlineA,,,address lockA)=vault.actions(a);
+        (,,,,,,,,address lockB)=vault.actions(b);
+        require(lockA!=lockB&&pool.balanceOf(lockA)==100&&pool.balanceOf(lockB)==100);
+        require(V3SyntheticLPLock(lockA).unlockAt()==deadlineA+730 days&&vault.spent()==3000);
+        require(asset.allowance(address(vault),address(pool))==0&&quote.allowance(address(vault),address(pool))==0);
+    }
+    function testExpiredActionCanBeReplacedWithoutUnlocking() public {
+        bytes32 old=schedule(1000,"A");quote.transfer(address(vault),500);
+        vm.warp(block.timestamp+7 days);
+        vm.expectRevert(V3DeferredLiquidityFixture.NotReady.selector);vault.execute(old);
+        bytes32 fresh=schedule(1000,"B");vm.warp(block.timestamp+2 days);vault.execute(fresh);
+        require(vault.spent()==1000);
+    }
+    function testStaleEpochAndCancellation() public {
+        bytes32 a=schedule(1000,"A");bytes32 b=schedule(1000,"B");
+        control.cancel(vault,b);control.rotate();vault.syncEpoch();quote.transfer(address(vault),500);
+        vm.warp(block.timestamp+2 days);
+        vm.expectRevert(V3DeferredLiquidityFixture.NotReady.selector);vault.execute(a);
+        vm.expectRevert(V3DeferredLiquidityFixture.NotReady.selector);vault.execute(b);
+        bytes32 fresh=schedule(1000,"A");require(fresh!=a);
+        vm.warp(block.timestamp+2 days);vault.execute(fresh);
+    }
+    function testTrancheAndTotalCap() public {
+        vm.expectRevert(V3DeferredLiquidityFixture.InvalidAction.selector);schedule(RESERVE/2+1,"X");
+        bytes32 a=schedule(RESERVE/2,"A");bytes32 b=schedule(RESERVE/2,"B");bytes32 c=schedule(1,"C");
+        quote.transfer(address(vault),1500);vm.warp(block.timestamp+2 days);
+        vault.execute(a);vault.execute(b);
+        vm.expectRevert(V3DeferredLiquidityFixture.NotReady.selector);vault.execute(c);
+        require(vault.spent()==RESERVE);
+    }
+    function testPoolMismatchRollsBack() public {
+        bytes32 id=schedule(1000,"A");quote.transfer(address(vault),500);vm.warp(block.timestamp+2 days);
+        pool.setMode(1);
+        vm.expectRevert(V3DeferredLiquidityFixture.BalanceMismatch.selector);vault.execute(id);
+        require(vault.spent()==0&&asset.balanceOf(address(vault))==RESERVE&&quote.balanceOf(address(vault))==500);
+        pool.setMode(0);vault.execute(id);require(vault.spent()==1000);
+    }
+    function testMainnetRejected() public {
+        vm.chainId(8453);vm.expectRevert(V3DeferredLiquidityFixture.InvalidConfig.selector);
+        new V3DeferredLiquidityFixture(asset,quote,IV3SyntheticPool(address(pool)),control,address(destination),1000);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/test/V3EpochPolicy.t.sol | Git blob: 082f3e9d1f99b3f4a9d260e3de3d53df1f703911 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import {V3EpochSpendFixture,V3EpochPolicyFactory,IV3CustodyEpochFixture} from "../src/V3EpochSpendFixture.sol";
+import {V3SharedExpenseRegistry} from "../src/V3SharedExpenseFixture.sol";
+interface VmEpoch {
+    function chainId(uint256) external;
+    function warp(uint256) external;
+    function expectRevert(bytes4) external;
+}
+contract EpochTestAsset is ERC20 {
+    constructor() ERC20("Synthetic epoch asset","EPOCHTEST"){_mint(msg.sender,888888888000000);}
+}
+// Deliberately unrestricted mock. Never use this for actual custody.
+contract MockEpochCustody is IV3CustodyEpochFixture {
+    uint256 public override epoch=1;
+    uint256 public override threshold=3;
+    uint256 public override memberCount=5;
+    mapping(address=>bool) public override isMember;
+    function configure(uint256 e,uint256 t,uint256 n) external {epoch=e;threshold=t;memberCount=n;}
+    function member(address a,bool yes) external {isMember[a]=yes;}
+    function propose(V3EpochSpendFixture v,address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce) external returns(bytes32){
+        return v.propose(recipient,amount,evidence,month,nonce);
+    }
+    function cancel(V3EpochSpendFixture v,bytes32 id) external {v.cancel(id);}
+}
+contract V3EpochPolicyTest {
+    VmEpoch constant vm=VmEpoch(address(uint160(uint256(keccak256("hevm cheat code")))));
+    address constant FOUNDER=address(99);
+    address constant PAYEE=address(100);
+    uint256 start;
+    EpochTestAsset token;
+    MockEpochCustody control;
+    V3EpochPolicyFactory factory;
+    V3EpochSpendFixture e;
+    V3EpochSpendFixture c;
+    function setUp() public {
+        vm.chainId(84532);
+        token=new EpochTestAsset();control=new MockEpochCustody();
+        start=block.timestamp+1 days;
+        factory=new V3EpochPolicyFactory(token,control,start,FOUNDER);
+        e=factory.ecosystem();c=factory.community();
+        token.transfer(address(e),e.budget());token.transfer(address(c),c.budget());
+    }
+    function propose(V3EpochSpendFixture v,bytes32 evidence,bytes32 nonce,uint256 amount) internal returns(bytes32){
+        return control.propose(v,PAYEE,amount,evidence,0,nonce);
+    }
+    function testOnlyCustodyAuthorizesAndDelay() public {
+        vm.expectRevert(V3EpochSpendFixture.Unauthorized.selector);e.propose(PAYEE,10,"E",0,"N");
+        bytes32 id=propose(e,"E","N",10);
+        vm.warp(start);
+        vm.expectRevert(V3EpochSpendFixture.NotReady.selector);e.execute(id);
+        vm.warp(start+2 days);e.execute(id);
+        require(e.totalSpent()==10&&token.balanceOf(PAYEE)==10);
+    }
+    function testRotationInvalidatesPriorProposalAndRequiresFreshDelay() public {
+        bytes32 old=propose(e,"E","N",10);
+        vm.warp(start+2 days);control.configure(2,3,5);e.syncEpoch();
+        vm.expectRevert(V3EpochSpendFixture.NotReady.selector);e.execute(old);
+        bytes32 fresh=propose(e,"E","N",10);require(fresh!=old);
+        vm.expectRevert(V3EpochSpendFixture.NotReady.selector);e.execute(fresh);
+        vm.warp(start+4 days);e.execute(fresh);require(e.totalSpent()==10);
+    }
+    function testObservedEpochRollbackAndWrongThresholdRejected() public {
+        control.configure(2,3,5);e.syncEpoch();control.configure(1,3,5);
+        vm.expectRevert(V3EpochSpendFixture.InvalidConfig.selector);e.syncEpoch();
+        control.configure(3,2,5);
+        vm.expectRevert(V3EpochSpendFixture.InvalidConfig.selector);e.syncEpoch();
+        control.configure(3,3,4);
+        vm.expectRevert(V3EpochSpendFixture.InvalidConfig.selector);e.syncEpoch();
+        require(e.highestObservedEpoch()==2);
+    }
+    function testConsumedExpenseSurvivesEpochAcrossPurposes() public {
+        bytes32 a=propose(e,"E","A",10);vm.warp(start+2 days);e.execute(a);
+        control.configure(2,3,5);
+        vm.expectRevert(V3EpochSpendFixture.InvalidProposal.selector);propose(c,"E","B",20);
+        require(factory.registry().consumedBy("E")==address(e)&&e.totalSpent()==10);
+    }
+    function testRecipientRecheckedBeforeExecution() public {
+        bytes32 a=propose(e,"E","A",10);vm.warp(start+2 days);
+        control.member(PAYEE,true);
+        vm.expectRevert(V3EpochSpendFixture.NotReady.selector);e.execute(a);
+        require(e.totalSpent()==0);
+    }
+    function testCancellationAndCapPreserved() public {
+        uint256 cap=e.monthlyCap(0);
+        bytes32 a=propose(e,"E","A",cap);control.cancel(e,a);
+        bytes32 b=propose(e,"F","B",cap);bytes32 d=propose(e,"G","D",1);
+        vm.warp(start+2 days);
+        vm.expectRevert(V3EpochSpendFixture.NotReady.selector);e.execute(a);
+        e.execute(b);
+        vm.expectRevert(V3EpochSpendFixture.CapExceeded.selector);e.execute(d);
+        require(e.totalSpent()==cap&&factory.registry().consumedBy("E")==address(0));
+    }
+    function testMainnetRejected() public {
+        vm.chainId(8453);
+        vm.expectRevert(V3SharedExpenseRegistry.InvalidBinding.selector);
+        new V3EpochPolicyFactory(token,control,start,FOUNDER);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/test/V3GameReward.t.sol | Git blob: da6d806c6bfc10430165edc951c0224710b49f55 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import {V3GameRewardFixture} from "../src/V3GameRewardFixture.sol";
+interface VmReward {
+    function chainId(uint256) external;
+    function warp(uint256) external;
+    function addr(uint256) external returns(address);
+    function sign(uint256,bytes32) external returns(uint8,bytes32,bytes32);
+    function expectRevert(bytes4) external;
+    function expectRevert() external;
+}
+contract RewardTestAsset is ERC20 {
+    constructor() ERC20("Synthetic reward asset","REWARDTEST"){_mint(msg.sender,888888888000000);}
+}
+contract V3GameRewardTest {
+    VmReward constant vm=VmReward(address(uint160(uint256(keccak256("hevm cheat code")))));
+    uint256 constant KEY=12345;
+    address constant FOUNDER=address(99);
+    address constant PLAYER=address(100);
+    uint256 start;
+    RewardTestAsset token;
+    V3GameRewardFixture vault;
+    function setUp() public {
+        vm.chainId(84532);token=new RewardTestAsset();start=block.timestamp+1 days;
+        vault=new V3GameRewardFixture(token,vm.addr(KEY),FOUNDER,start,1000);
+        token.transfer(address(vault),vault.ALLOCATION());
+    }
+    function reward(bytes32 id,address recipient,uint256 amount,uint256 m) internal view returns(V3GameRewardFixture.Reward memory){
+        return V3GameRewardFixture.Reward(id,recipient,amount,m,start+(m+1)*30 days);
+    }
+    function sig(V3GameRewardFixture target,V3GameRewardFixture.Reward memory x,uint256 key) internal returns(bytes memory){
+        (uint8 v,bytes32 r,bytes32 s)=vm.sign(key,target.digest(x));return abi.encodePacked(r,s,v);
+    }
+    function testSignedRewardDirectToPlayerAndReplay() public {
+        vm.warp(start);V3GameRewardFixture.Reward memory x=reward("E",PLAYER,100,0);
+        bytes memory s=sig(vault,x,KEY);vault.claim(x,s);
+        require(token.balanceOf(PLAYER)==100&&vault.released()==100&&vault.paid("E")&&vault.walletReleased(0,PLAYER)==100);
+        vm.expectRevert(V3GameRewardFixture.AlreadyPaid.selector);vault.claim(x,s);
+        x.recipient=address(101);s=sig(vault,x,KEY);
+        vm.expectRevert(V3GameRewardFixture.AlreadyPaid.selector);vault.claim(x,s);
+    }
+    function testWrongSignerAndModifiedRecipientRejected() public {
+        vm.warp(start);V3GameRewardFixture.Reward memory x=reward("E",PLAYER,100,0);
+        bytes memory s=sig(vault,x,KEY+1);
+        vm.expectRevert(V3GameRewardFixture.InvalidSigner.selector);vault.claim(x,s);
+        s=sig(vault,x,KEY);x.recipient=address(101);
+        vm.expectRevert(V3GameRewardFixture.InvalidSigner.selector);vault.claim(x,s);
+    }
+    function testCrossVaultSignatureRejected() public {
+        V3GameRewardFixture other=new V3GameRewardFixture(token,vm.addr(KEY),FOUNDER,start,1000);
+        vm.warp(start);V3GameRewardFixture.Reward memory x=reward("E",PLAYER,100,0);
+        bytes memory s=sig(vault,x,KEY);
+        vm.expectRevert(V3GameRewardFixture.InvalidSigner.selector);other.claim(x,s);
+    }
+    function testMonthAndExpiry() public {
+        V3GameRewardFixture.Reward memory x=reward("E",PLAYER,100,0);bytes memory s=sig(vault,x,KEY);
+        vm.expectRevert(V3GameRewardFixture.OutsideWindow.selector);vault.claim(x,s);
+        vm.warp(start+30 days);vm.expectRevert(V3GameRewardFixture.OutsideWindow.selector);vault.claim(x,s);
+        vm.warp(start+60*30 days);vm.expectRevert(V3GameRewardFixture.OutsideWindow.selector);vault.claim(x,s);
+    }
+    function testWalletCapAndNoRollover() public {
+        vm.warp(start);V3GameRewardFixture.Reward memory x=reward("A",PLAYER,900,0);vault.claim(x,sig(vault,x,KEY));
+        x=reward("B",PLAYER,101,0);bytes memory s=sig(vault,x,KEY);
+        vm.expectRevert(V3GameRewardFixture.CapExceeded.selector);vault.claim(x,s);
+        vm.warp(start+30 days);x=reward("C",PLAYER,1001,1);s=sig(vault,x,KEY);
+        vm.expectRevert(V3GameRewardFixture.CapExceeded.selector);vault.claim(x,s);
+        x=reward("D",PLAYER,1000,1);vault.claim(x,sig(vault,x,KEY));require(vault.released()==1900);
+    }
+    function testAggregateCap() public {
+        V3GameRewardFixture large=new V3GameRewardFixture(token,vm.addr(KEY),FOUNDER,start,vault.ALLOCATION());
+        token.transfer(address(large),large.ALLOCATION());vm.warp(start);
+        V3GameRewardFixture.Reward memory x=reward("A",PLAYER,large.monthlyCap(0),0);large.claim(x,sig(large,x,KEY));
+        x=reward("B",address(101),1,0);bytes memory s=sig(large,x,KEY);
+        vm.expectRevert(V3GameRewardFixture.CapExceeded.selector);large.claim(x,s);
+    }
+    function testTransferRevertRollsBackAccounting() public {
+        V3GameRewardFixture empty=new V3GameRewardFixture(token,vm.addr(KEY),FOUNDER,start,1000);
+        vm.warp(start);V3GameRewardFixture.Reward memory x=reward("E",PLAYER,100,0);bytes memory s=sig(empty,x,KEY);
+        vm.expectRevert();empty.claim(x,s);
+        require(!empty.paid("E")&&empty.released()==0&&empty.walletReleased(0,PLAYER)==0);
+        token.transfer(address(empty),100);empty.claim(x,s);require(empty.paid("E"));
+    }
+    function testFounderAndSignerExcluded() public {
+        vm.warp(start);V3GameRewardFixture.Reward memory x=reward("A",FOUNDER,100,0);bytes memory s=sig(vault,x,KEY);
+        vm.expectRevert(V3GameRewardFixture.InvalidReward.selector);vault.claim(x,s);
+        x=reward("B",vault.distributor(),100,0);s=sig(vault,x,KEY);
+        vm.expectRevert(V3GameRewardFixture.InvalidReward.selector);vault.claim(x,s);
+    }
+    function testMainnetRejected() public {
+        address signer=vm.addr(KEY);vm.chainId(8453);
+        vm.expectRevert(V3GameRewardFixture.InvalidConfig.selector);new V3GameRewardFixture(token,signer,FOUNDER,start,1000);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/test/V3LiquidityPolicy.t.sol | Git blob: 7c36aa5eaa4fac4435f120f06022bd287784e1b9 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {V3LiquidityPolicyFixture,V3SyntheticLPLock,IV3SyntheticPool} from "../src/V3LiquidityPolicyFixture.sol";
+interface VmLP {
+    function chainId(uint256) external;
+    function warp(uint256) external;
+    function expectRevert(bytes4) external;
+}
+contract LPFixtureAsset is ERC20 {
+    constructor() ERC20("Synthetic asset","SYN"){_mint(msg.sender,888888888000000);}
+}
+contract LPFixtureCustody {}
+contract LPFixturePool is ERC20 {
+    address public immutable asset;
+    address public immutable quote;
+    uint256 public mode;
+    constructor(address a,address q) ERC20("Synthetic LP","SYNLP"){asset=a;quote=q;}
+    function setMode(uint256 m) external {mode=m;}
+    function addLiquidity(uint256 a,uint256 q,uint256,address recipient) external returns(uint256){
+        require(IERC20(asset).transferFrom(msg.sender,address(this),mode==1?a-1:a));
+        require(IERC20(quote).transferFrom(msg.sender,address(this),q));
+        uint256 shares=mode==2?1:100;
+        _mint(mode==3?msg.sender:recipient,shares);
+        return mode==4?101:shares;
+    }
+}
+contract V3LiquidityPolicyTest {
+    VmLP constant vm=VmLP(address(uint160(uint256(keccak256("hevm cheat code")))));
+    uint256 constant RESERVE=222222222000000;
+    uint256 constant A=1000;
+    uint256 constant Q=500;
+    LPFixtureAsset asset;
+    LPFixtureAsset quote;
+    LPFixturePool pool;
+    LPFixtureCustody custody;
+    V3LiquidityPolicyFixture vault;
+    uint256 expiry;
+    function setUp() public {
+        vm.chainId(84532);
+        asset=new LPFixtureAsset();quote=new LPFixtureAsset();
+        pool=new LPFixturePool(address(asset),address(quote));custody=new LPFixtureCustody();
+        expiry=block.timestamp+1 days;
+        vault=make(address(custody),A,Q,50,expiry,address(pool).codehash);
+        asset.transfer(address(vault),RESERVE);quote.transfer(address(vault),Q);
+    }
+    function make(address dest,uint256 a,uint256 q,uint256 minimum,uint256 end,bytes32 h) internal returns(V3LiquidityPolicyFixture){
+        return new V3LiquidityPolicyFixture(asset,quote,IV3SyntheticPool(address(pool)),h,dest,a,q,minimum,end);
+    }
+    function testExactSpendAndDirectLockedShares() public {
+        vault.execute();
+        require(vault.executed()&&vault.sharesLocked()==100);
+        require(asset.balanceOf(address(vault))==RESERVE-A&&quote.balanceOf(address(vault))==0);
+        require(asset.balanceOf(address(pool))==A&&quote.balanceOf(address(pool))==Q);
+        require(pool.balanceOf(address(vault.locker()))==100&&pool.balanceOf(address(vault))==0);
+        require(asset.allowance(address(vault),address(pool))==0&&quote.allowance(address(vault),address(pool))==0);
+        vm.expectRevert(V3LiquidityPolicyFixture.NotReady.selector);vault.execute();
+    }
+    function testLockDurationAndFixedCustody() public {
+        vault.execute();
+        V3SyntheticLPLock lock=vault.locker();
+        require(lock.unlockAt()==expiry+730 days&&lock.custody()==address(custody));
+        vm.warp(lock.unlockAt()-1);
+        vm.expectRevert(V3SyntheticLPLock.Locked.selector);lock.release();
+        vm.warp(lock.unlockAt());lock.release();
+        require(pool.balanceOf(address(custody))==100&&pool.balanceOf(address(lock))==0);
+    }
+    function testUnfundedQuoteAndReserveRejected() public {
+        V3LiquidityPolicyFixture empty=make(address(custody),A,Q,50,expiry,address(pool).codehash);
+        vm.expectRevert(V3LiquidityPolicyFixture.NotReady.selector);empty.execute();
+        asset.transfer(address(empty),RESERVE);
+        vm.expectRevert(V3LiquidityPolicyFixture.NotReady.selector);empty.execute();
+        require(!empty.executed());
+    }
+    function testRejectPartialSpendLowSharesWrongRecipientOrReport() public {
+        for(uint256 m=1;m<=4;m++){
+            pool.setMode(m);
+            vm.expectRevert(V3LiquidityPolicyFixture.BalanceMismatch.selector);vault.execute();
+            require(!vault.executed()&&asset.balanceOf(address(vault))==RESERVE&&quote.balanceOf(address(vault))==Q);
+            require(asset.allowance(address(vault),address(pool))==0&&quote.allowance(address(vault),address(pool))==0);
+            require(pool.totalSupply()==0);
+        }
+        pool.setMode(0);vault.execute();require(vault.executed());
+    }
+    function testRejectInvalidParametersAndEOACustody() public {
+        bytes32 h=address(pool).codehash;
+        vm.expectRevert(V3LiquidityPolicyFixture.InvalidConfig.selector);make(address(custody),RESERVE+1,Q,50,expiry,h);
+        vm.expectRevert(V3LiquidityPolicyFixture.InvalidConfig.selector);make(address(custody),A,0,50,expiry,h);
+        vm.expectRevert(V3LiquidityPolicyFixture.InvalidConfig.selector);make(address(custody),A,Q,0,expiry,h);
+        vm.expectRevert(V3LiquidityPolicyFixture.InvalidConfig.selector);make(address(custody),A,Q,50,expiry,bytes32(0));
+        vm.expectRevert(V3SyntheticLPLock.InvalidLock.selector);make(address(123),A,Q,50,expiry,h);
+    }
+    function testExpiryKeepsReserveLocked() public {
+        vm.warp(expiry);
+        vm.expectRevert(V3LiquidityPolicyFixture.NotReady.selector);vault.execute();
+        require(asset.balanceOf(address(vault))==RESERVE&&quote.balanceOf(address(vault))==Q);
+    }
+    function testMainnetRejected() public {
+        bytes32 h=address(pool).codehash;
+        vm.chainId(8453);
+        vm.expectRevert(V3LiquidityPolicyFixture.InvalidConfig.selector);make(address(custody),A,Q,50,expiry,h);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/test/V3RestrictedSpend.t.sol | Git blob: 92c32f4b428859eea1f6482e73808499a5de5136 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import {V3RestrictedSpend} from "../src/V3RestrictedSpend.sol";
+interface VmSpend {
+    function chainId(uint256) external;
+    function warp(uint256) external;
+    function prank(address) external;
+    function expectRevert(bytes4) external;
+}
+contract SpendFixtureToken is ERC20 {
+    constructor() ERC20("Synthetic spend fixture","FIXTURE"){_mint(msg.sender,600000);}
+}
+contract V3RestrictedSpendTest {
+    VmSpend constant vm=VmSpend(address(uint160(uint256(keccak256("hevm cheat code")))));
+    address constant FOUNDER=address(99);
+    address constant PAYEE=address(100);
+    uint256 start;
+    SpendFixtureToken token;
+    V3RestrictedSpend v;
+    address[5] signers;
+    function setUp() public {
+        vm.chainId(84532);
+        for(uint256 i=0;i<5;i++) signers[i]=address(uint160(i+10));
+        token=new SpendFixtureToken();
+        start=block.timestamp+1 days;
+        v=new V3RestrictedSpend(token,signers,FOUNDER,start,600000,"TREASURY");
+        token.transfer(address(v),600000);
+    }
+    function propose(uint256 amount,uint256 month,bytes32 nonce) internal returns(bytes32 id){
+        vm.prank(signers[0]);id=v.propose(PAYEE,amount,"EVIDENCE",month,nonce);
+    }
+    function approve3(bytes32 id) internal {
+        for(uint256 i=0;i<3;i++){vm.prank(signers[i]);v.approve(id);}
+    }
+    function testThresholdDelayAndExactPayment() public {
+        bytes32 id=propose(10000,0,"A");
+        for(uint256 i=0;i<2;i++){vm.prank(signers[i]);v.approve(id);}
+        vm.warp(start);
+        vm.expectRevert(V3RestrictedSpend.NotReady.selector);v.execute(id);
+        vm.prank(signers[2]);v.approve(id);
+        vm.expectRevert(V3RestrictedSpend.NotReady.selector);v.execute(id);
+        vm.warp(start+2 days);v.execute(id);
+        require(token.balanceOf(PAYEE)==10000&&v.totalSpent()==10000&&v.spent(0)==10000);
+        vm.expectRevert(V3RestrictedSpend.NotReady.selector);v.execute(id);
+    }
+    function testDuplicateAndUnauthorizedApprovals() public {
+        bytes32 id=propose(1,0,"A");
+        vm.prank(FOUNDER);vm.expectRevert(V3RestrictedSpend.Unauthorized.selector);v.approve(id);
+        vm.prank(signers[0]);v.approve(id);
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.AlreadyApproved.selector);v.approve(id);
+    }
+    function testAggregateCapAndNoRollover() public {
+        bytes32 a=propose(8000,1,"A");
+        bytes32 b=propose(3000,1,"B");
+        approve3(a);approve3(b);
+        vm.warp(start+30 days);v.execute(a);
+        vm.expectRevert(V3RestrictedSpend.CapExceeded.selector);v.execute(b);
+        require(v.spent(0)==0&&v.spent(1)==8000);
+    }
+    function testExpiry() public {
+        bytes32 a=propose(1,0,"A");approve3(a);
+        vm.warp(start+30 days);
+        vm.expectRevert(V3RestrictedSpend.NotReady.selector);v.execute(a);
+    }
+    function testBeforeWindowEvenWithThreshold() public {
+        bytes32 a=propose(1,1,"A");approve3(a);
+        vm.warp(start+2 days);
+        vm.expectRevert(V3RestrictedSpend.NotReady.selector);v.execute(a);
+    }
+    function testRejectDirectFounderAndSignerRecipient() public {
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.propose(FOUNDER,1,"E",0,"A");
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.propose(signers[1],1,"E",0,"A");
+    }
+    function testRejectDuplicateSignerAndFounderSigner() public {
+        address[5] memory s=signers;s[4]=s[0];
+        vm.expectRevert(V3RestrictedSpend.InvalidConfig.selector);new V3RestrictedSpend(token,s,FOUNDER,start,1,"T");
+        s[4]=FOUNDER;
+        vm.expectRevert(V3RestrictedSpend.InvalidConfig.selector);new V3RestrictedSpend(token,s,FOUNDER,start,1,"T");
+    }
+    function testExactCapSum() public {
+        V3RestrictedSpend odd=new V3RestrictedSpend(token,signers,FOUNDER,start,600001,"ODD");
+        uint256 sum;for(uint256 i=0;i<60;i++)sum+=odd.monthlyCap(i);
+        require(sum==600001&&odd.monthlyCap(60)==0);
+    }
+    function testDuplicateProposalAndMissingEvidence() public {
+        propose(1,0,"A");
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.propose(PAYEE,1,"EVIDENCE",0,"A");
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.propose(PAYEE,1,0,0,"B");
+    }
+    function testRejectMainnet() public {
+        vm.chainId(8453);
+        vm.expectRevert(V3RestrictedSpend.WrongChain.selector);new V3RestrictedSpend(token,signers,FOUNDER,start,1,"T");
+    }
+
+    function testRevocationResetsDelayAtLostQuorum() public {
+        bytes32 id=propose(10000,0,"A");approve3(id);
+        vm.warp(start+2 days);
+        vm.prank(signers[1]);v.revokeApproval(id);
+        vm.expectRevert(V3RestrictedSpend.NotReady.selector);v.execute(id);
+        vm.prank(signers[3]);v.approve(id);
+        vm.expectRevert(V3RestrictedSpend.NotReady.selector);v.execute(id);
+        vm.warp(start+4 days);v.execute(id);
+        require(token.balanceOf(PAYEE)==10000);
+    }
+    function testRevocationWithRemainingQuorumKeepsDelay() public {
+        bytes32 id=propose(1,0,"A");approve3(id);
+        vm.prank(signers[3]);v.approve(id);
+        vm.prank(signers[0]);v.revokeApproval(id);
+        vm.warp(start+2 days);v.execute(id);
+        require(token.balanceOf(PAYEE)==1);
+    }
+    function testCancellationQuorumPermanentAndNoSpend() public {
+        bytes32 id=propose(10000,0,"A");approve3(id);
+        for(uint256 i=0;i<3;i++){vm.prank(signers[i]);v.voteCancel(id);}
+        require(v.cancelled(id)&&v.cancelVotes(id)==3);
+        vm.warp(start+2 days);
+        vm.expectRevert(V3RestrictedSpend.NotReady.selector);v.execute(id);
+        vm.prank(signers[3]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.approve(id);
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.revokeApproval(id);
+        require(v.totalSpent()==0&&token.balanceOf(PAYEE)==0);
+        bytes32 next=propose(10000,0,"B");approve3(next);
+        vm.warp(start+4 days);v.execute(next);
+        require(token.balanceOf(PAYEE)==10000);
+    }
+    function testMinorityCancelCannotVetoOrDoubleVote() public {
+        bytes32 id=propose(1,0,"A");approve3(id);
+        vm.prank(signers[0]);v.voteCancel(id);
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.voteCancel(id);
+        vm.prank(signers[1]);v.voteCancel(id);
+        require(!v.cancelled(id));
+        vm.warp(start+2 days);v.execute(id);
+        vm.prank(signers[2]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.voteCancel(id);
+    }
+    function testUnauthorizedUnknownAndExpiredActions() public {
+        bytes32 id=propose(1,0,"A");approve3(id);
+        vm.prank(FOUNDER);vm.expectRevert(V3RestrictedSpend.Unauthorized.selector);v.voteCancel(id);
+        vm.prank(FOUNDER);vm.expectRevert(V3RestrictedSpend.Unauthorized.selector);v.revokeApproval(id);
+        vm.prank(signers[4]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.revokeApproval(id);
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.voteCancel(bytes32(uint256(999)));
+        vm.warp(start+30 days);
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.revokeApproval(id);
+        vm.prank(signers[0]);vm.expectRevert(V3RestrictedSpend.InvalidProposal.selector);v.voteCancel(id);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/test/V3SharedExpense.t.sol | Git blob: 7be349f573d7b827f586112c21ef58948348fb7f =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import {V3SharedExpenseFixture,V3SharedExpenseRegistry,V3SharedRestrictedSpend} from "../src/V3SharedExpenseFixture.sol";
+interface VmShared {
+    function chainId(uint256) external;
+    function warp(uint256) external;
+    function prank(address) external;
+    function expectRevert(bytes4) external;
+    function expectRevert() external;
+}
+contract SharedTestAsset is ERC20 {
+    constructor() ERC20("Synthetic expense asset","EXPTEST"){_mint(msg.sender,888888888000000);}
+}
+contract V3SharedExpenseTest {
+    VmShared constant vm=VmShared(address(uint160(uint256(keccak256("hevm cheat code")))));
+    address constant FOUNDER=address(99);
+    address constant PAYEE=address(100);
+    uint256 start;
+    SharedTestAsset token;
+    V3SharedExpenseFixture fixture;
+    V3SharedExpenseRegistry registry;
+    V3SharedRestrictedSpend e;
+    V3SharedRestrictedSpend c;
+    V3SharedRestrictedSpend t;
+    address[5] signers;
+    function setUp() public {
+        vm.chainId(84532);
+        for(uint256 i=0;i<5;i++)signers[i]=address(uint160(i+10));
+        token=new SharedTestAsset();
+        start=block.timestamp+1 days;
+        fixture=new V3SharedExpenseFixture(token,signers,FOUNDER,start);
+        registry=fixture.registry();e=fixture.ecosystem();c=fixture.community();t=fixture.treasury();
+        token.transfer(address(e),e.budget());token.transfer(address(c),c.budget());
+        // Treasury deliberately unfunded until a test transfers funds.
+    }
+    function proposal(V3SharedRestrictedSpend v,bytes32 evidence,bytes32 nonce,uint256 amount) internal returns(bytes32 id){
+        vm.prank(signers[0]);id=v.propose(PAYEE,amount,evidence,0,nonce);
+        for(uint256 i=0;i<3;i++){vm.prank(signers[i]);v.approve(id);}
+    }
+    function testAtomicBindingAndNoRebind() public {
+        require(registry.isSealed()&&registry.consumer(address(e))&&registry.consumer(address(c))&&registry.consumer(address(t)));
+        require(address(e.registry())==address(registry)&&address(c.registry())==address(registry)&&address(t.registry())==address(registry));
+        vm.expectRevert(V3SharedExpenseRegistry.InvalidBinding.selector);registry.bind([address(e),address(c),address(t)]);
+        vm.expectRevert(V3SharedExpenseRegistry.UnauthorizedConsumer.selector);registry.consume("E","P");
+    }
+    function testSameExpenseAcrossPurposesCannotPayTwice() public {
+        bytes32 a=proposal(e,"E","A",10);bytes32 b=proposal(c,"E","B",20);
+        vm.warp(start+2 days);e.execute(a);
+        require(registry.consumedBy("E")==address(e)&&registry.consumedProposal("E")==a);
+        vm.expectRevert(V3SharedExpenseRegistry.ExpenseAlreadyConsumed.selector);c.execute(b);
+        require(e.totalSpent()==10&&c.totalSpent()==0&&token.balanceOf(PAYEE)==10);
+    }
+    function testSameVaultDifferentNonceCannotReplayExpense() public {
+        bytes32 a=proposal(e,"E","A",10);bytes32 b=proposal(e,"E","B",20);
+        vm.warp(start+2 days);e.execute(a);
+        vm.expectRevert(V3SharedExpenseRegistry.ExpenseAlreadyConsumed.selector);e.execute(b);
+        require(e.totalSpent()==10&&token.balanceOf(PAYEE)==10);
+    }
+    function testTransferRevertRollsBackConsumptionAndAccounting() public {
+        bytes32 a=proposal(t,"E","A",10);
+        vm.warp(start+2 days);
+        vm.expectRevert();t.execute(a);
+        require(registry.consumedBy("E")==address(0)&&t.totalSpent()==0&&t.spent(0)==0);
+        token.transfer(address(t),10);t.execute(a);
+        require(registry.consumedBy("E")==address(t)&&t.totalSpent()==10&&token.balanceOf(PAYEE)==10);
+    }
+    function testCancelledProposalDoesNotConsumeExpense() public {
+        bytes32 a=proposal(e,"E","A",10);bytes32 b=proposal(c,"E","B",20);
+        for(uint256 i=0;i<3;i++){vm.prank(signers[i]);e.voteCancel(a);}
+        vm.warp(start+2 days);
+        vm.expectRevert(V3SharedRestrictedSpend.NotReady.selector);e.execute(a);
+        require(registry.consumedBy("E")==address(0));c.execute(b);
+        require(registry.consumedBy("E")==address(c)&&token.balanceOf(PAYEE)==20);
+    }
+    function testDifferentExpensesAndDelay() public {
+        bytes32 a=proposal(e,"E","A",10);bytes32 b=proposal(c,"F","B",20);
+        vm.expectRevert(V3SharedRestrictedSpend.NotReady.selector);e.execute(a);
+        vm.warp(start+2 days);e.execute(a);c.execute(b);
+        require(registry.consumedBy("E")==address(e)&&registry.consumedBy("F")==address(c)&&token.balanceOf(PAYEE)==30);
+    }
+    function testMainnetRejected() public {
+        vm.chainId(8453);vm.expectRevert(V3SharedExpenseRegistry.InvalidBinding.selector);new V3SharedExpenseFixture(token,signers,FOUNDER,block.timestamp+1 days);
+    }
+}
+
+===== END FILE =====
