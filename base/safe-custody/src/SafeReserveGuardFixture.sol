@@ -52,8 +52,8 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
         }
         V3FounderVesting f=V3FounderVesting(destinations[0]);
         V3GovernedGameRewardFixture g=V3GovernedGameRewardFixture(destinations[1]);
-        if(address(f.token())!=address(t)||address(g.token())!=address(t)||address(g.custody())!=address(this)||g.generation()!=1||g.excludedFounder()!=f.beneficiary())revert InvalidConfig();
         founder=f.beneficiary();distributor=g.distributor();
+        if(address(f.token())!=address(t)||address(g.token())!=address(t)||address(g.custody())!=address(this)||g.generation()!=1||g.excludedFounder()!=founder)revert InvalidConfig();
         if(wallet.isOwner(founder)||wallet.isOwner(distributor)||founder==address(wallet)||distributor==address(wallet)||
             founder==address(this)||distributor==address(this))revert InvalidConfig();
         V3DeferredLiquidityFixture l=V3DeferredLiquidityFixture(destinations[2]);
@@ -143,16 +143,13 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     }
     function _policyCallAllowed(bytes4 selector,uint256 len) internal view virtual override returns(bool){
         if(!bound)return selector==this.bindSuccessor.selector&&len==100;
-        return (selector==this.proposeExpense.selector&&len==292)||
-               (selector==this.cancelExpense.selector&&len==100)||
-               (selector==this.scheduleLiquidity.selector&&len==260)||
-               (selector==this.cancelLiquidity.selector&&len==68)||
-               (selector==this.scheduleLegacy.selector&&len==164)||
-               (selector==this.cancelLegacy.selector&&len==68)||
-               (selector==this.revokeRewardSigner.selector&&len==68)||
-               (selector==this.scheduleRewardSigner.selector&&len==164)||
-               (selector==this.cancelRewardSigner.selector&&len==100)||
-               (selector==this.activateRewardSigner.selector&&len==132);
+        // Group exact static ABI lengths; the accepted selector/length pairs are unchanged.
+        if(len==68)return selector==this.cancelLiquidity.selector||selector==this.cancelLegacy.selector||selector==this.revokeRewardSigner.selector;
+        if(len==100)return selector==this.cancelExpense.selector||selector==this.cancelRewardSigner.selector;
+        if(len==164)return selector==this.scheduleLegacy.selector||selector==this.scheduleRewardSigner.selector;
+        if(len==132)return selector==this.activateRewardSigner.selector;
+        if(len==260)return selector==this.scheduleLiquidity.selector;
+        return len==292&&selector==this.proposeExpense.selector;
     }
 }
 contract SafeReserveFactoryFixture {
