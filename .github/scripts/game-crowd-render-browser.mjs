@@ -18,6 +18,14 @@ try{
  const wait=async(label,ok)=>{const end=Date.now()+180000;for(;;){const a=await audit();if(ok(a))return a;if(Date.now()>end)throw Error(label+': '+JSON.stringify(a));await new Promise(r=>setTimeout(r,750))}};
  assert.equal(await page.evaluate(()=>window.__climboriaJarrellsPeak.crowdSmokeEnable()),true);
  const results=[];
+ for(const n of [10,50,100]){
+  const a=await page.evaluate(n=>window.__climboriaJarrellsPeak.crowdSmokeInstancedBodies(n),n);
+  assert.ok(a&&a.match&&a.moved&&a.peersUnchanged);assert.equal(a.unique,n);assert.equal(a.parts,7);
+  assert.equal(a.ordinaryDraws,n*7);assert.equal(a.instanceDrawsPerFrame,7);
+  assert.equal(a.ordinaryCalls,n*7);assert.equal(a.instanceCalls,7);
+  console.log('Private instanced body WebGL evidence',JSON.stringify({mobile,...a}));
+ }
+
  for(const n of [10,25,32,50,100]){
   await page.evaluate(n=>{const w=window.__climboriaJarrellsPeak,p=window.__CLIMBORIA_GAME_PEERS;w.resumeAtRoomPosition({x:0,z:-30,y:w.groundAt(0,-30)+1.75});
    for(let i=0;i<n;i++){const x=(i%10-4.5)*1.5,z=-36-Math.floor(i/10)*1.5;p.add({id:'qa-crowd-player-'+String(i).padStart(3,'0'),name:'QA Explorer '+i,model:'Jarrell',position:{x,z,y:w.groundAt(x,z)+1.75}})}

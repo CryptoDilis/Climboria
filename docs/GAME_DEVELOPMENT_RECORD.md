@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## CROWD C10 PRIVATE INSTANCED BODY WEBGL EXPERIMENT — 2026-11-28 PHT
+
+- C8 #1040 exact 0bbf99f6efcc15d4c8c219e4e4eeb9d7911f66fc run 46054530870 job 140693687714 SUCCESS, merged main a93ed42ff788de68bd7734a8db80ec6d24eb784d. At 50 clustered, 98000 delivered entries each; baseline→batch envelopes 98000→4000, delivery p95 14.73→254.86ms. At 100 clustered 396000 entries each; envelopes 396000→16000, JSON bytes 37829781→30057781, ACK p95 89.65→4.03ms but actual delivery p95 89.85→270.10ms. Batch sampled heap 176978544 bytes vs baseline 64699144 (not peak/GC-normalized). No loss, final positions and cleanup passed. 250ms batch latency is NOT close-combat acceptable; shorter or priority flush needed and must be measured. C9 exact 81327e0e37bcb2d20bfe1bf61757259fd5aeeda9 foundation/chat passed, native/render/focused still running at inspection; retargeted to main.
+- C10 private loopback-only isolated WebGL experiment: compare existing seven-part shared fallback mesh per actor with seven InstancedMesh batches for 10/50/100 synthetic bodies. Assert actual draw callbacks and renderer.info.render.calls, matrix readback matches original transforms, subsequent motion updates and no real-peer mutation. Remove temporary meshes, never dispose shared Game assets; restore world render. Expected 700→7 body draw calls at 100, not verified until exact CI. No live renderer integration, nameplate/interaction coverage, physical FPS or production capacity claim.
+- NEXT: inspect C9/C10 exact CI; test shorter/priority batch flush latency and memory; integrate only measured private instanced close body projection with identity/nameplate visibility and lifecycle handling, then physical and authenticated capacity acceptance. Production limits and security gates remain unchanged.
+
+---
+
 ## CROWD C9 PRIVATE CRITICAL CLOSE VISIBILITY — 2026-11-28 PHT
 
 - C7 #1039 all five exact workflows green, merged main 99b637f959feb89615240a82059a7a2c0a0f331a. C8 #1040 native run 46054530870 job 140693687714 regression tests green, sustained socket test running at inspection; retargeted to main, no latency result yet.

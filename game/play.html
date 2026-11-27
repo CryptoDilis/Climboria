@@ -4383,6 +4383,50 @@ if(new URLSearchParams(location.search).has('smoke')){
   const [{planCrowdRendering},{applyPrivateMovementBatch}]=await Promise.all([import('./npc/crowd-render-policy.mjs'),import('./multiplayer/private-movement-batch.mjs')]);
   crowdPlanner=planCrowdRendering;crowdBatchDecoder=applyPrivateMovementBatch;crowdPressure='normal';crowdPlanDirty=true;return true;
  };
+ // Isolated WebGL experiment: reuse existing silhouette parts, no live peer mutation.
+ window.ENDLESS_WILDS.crowdSmokeInstancedBodies=n=>{
+  if(!crowdPlanner||!['localhost','127.0.0.1','[::1]'].includes(location.hostname)||livePeers.size||![10,50,100].includes(n))return null;
+  const fixture=new T3.Scene(),camera=new T3.PerspectiveCamera(55,cam.aspect,.1,100);
+  camera.position.set(0,15,25);camera.lookAt(0,0,0);camera.updateMatrixWorld(true);
+  fixture.add(new T3.AmbientLight(0xffffff,1));
+  const originals=[],batches=[],mat=new T3.Matrix4(),readback=new T3.Matrix4(),ids=new Set();
+  let ordinaryDraws=0,instanceDraws=0,ordinaryCalls=0,instanceCalls=0,match=true,moved=false;
+  try{
+   for(let i=0;i<n;i++){
+    const body=remoteExplorerSilhouette(),id='private-instance-'+i;
+    ids.add(id);body.position.set((i%10-4.5)*1.25,0,(Math.floor(i/10)-4.5)*1.25);body.rotation.y=i*.1;
+    for(const part of body.children){part.frustumCulled=false;part.onBeforeRender=()=>ordinaryDraws++}
+    fixture.add(body);originals.push(body);
+   }
+   fixture.updateMatrixWorld(true);renderer.render(fixture,camera);ordinaryCalls=renderer.info.render.calls;
+   // One instance batch per silhouette part; shared geometry/materials stay Game-owned.
+   for(const part of originals[0].children){
+    const mesh=new T3.InstancedMesh(part.geometry,part.material,n);
+    mesh.frustumCulled=false;mesh.instanceMatrix.setUsage(T3.DynamicDrawUsage);
+    mesh.onBeforeRender=()=>instanceDraws++;batches.push(mesh);fixture.add(mesh);
+   }
+   function sync(){
+    for(let i=0;i<n;i++){
+     originals[i].updateMatrixWorld(true);
+     for(let j=0;j<batches.length;j++){
+      mat.copy(originals[i].children[j].matrixWorld);batches[j].setMatrixAt(i,mat);
+      batches[j].getMatrixAt(i,readback);
+      if(!mat.elements.every((v,k)=>Math.abs(v-readback.elements[k])<1e-5))match=false;
+     }
+    }
+    for(const mesh of batches)mesh.instanceMatrix.needsUpdate=true;
+   }
+   sync();for(const body of originals)fixture.remove(body);
+   renderer.render(fixture,camera);instanceCalls=renderer.info.render.calls;
+   const before=instanceDraws;originals[0].position.x+=.5;originals[0].rotation.y+=.2;sync();
+   renderer.render(fixture,camera);moved=instanceDraws-before===batches.length;
+   return {n,unique:ids.size,parts:batches.length,ordinaryDraws,instanceDrawsPerFrame:before,ordinaryCalls,instanceCalls,match,moved,peersUnchanged:livePeers.size===0};
+  }finally{
+   for(const body of originals)fixture.remove(body);
+   for(const mesh of batches){fixture.remove(mesh);mesh.dispose?.()}
+   renderer.render(scene,cam);
+  }
+ };
  window.ENDLESS_WILDS.crowdSmokeBatch=packet=>{
   if(!crowdPlanner||!crowdBatchDecoder||!['localhost','127.0.0.1','[::1]'].includes(location.hostname))return {ok:false,applied:0};
   return crowdBatchDecoder(packet,{hasPeer:id=>livePeers.has(id),move:(id,position)=>window.__CLIMBORIA_GAME_PEERS.move(id,position)});
