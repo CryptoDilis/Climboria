@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {observeHistoricalBracket,CANDIDATE_MS} from './historical-bracket.mjs';
+import {observeHistoricalBracket,CANDIDATE_MS,bracketFailureCode} from './historical-bracket.mjs';
 const A='https://a.invalid',B='https://b.invalid';
 const lo=474168385,head=lo+200,target=Math.floor(CANDIDATE_MS/1000);
 const present=s=>s!==lo+101;
@@ -37,4 +37,18 @@ test('fail closed on provider disagreement, broken ancestry and RPC errors witho
   (x,q)=>{if(q.method==='getBlockTime')x.error={message:'SECRET'};},
   (x,q)=>{if(q.method==='getBlocks')x.result=[];}
  ])await assert.rejects(observeHistoricalBracket(A,B,{fetchFn:fixture(mutate).fetchFn}),e=>e.message.includes('NO_GO')&&!e.message.includes('SECRET'));
+});
+
+test('fixed diagnostic distinguishes provider, history access and invalid block time',async()=>{
+ const cases=[
+  [(x,q,url)=>{if(q.method==='getBlockTime'&&url===B)x.error={code:-32004,message:'SECRET'};},'B_getBlockTime_RPC_HISTORY_UNAVAILABLE'],
+  [(x,q,url)=>{if(q.method==='getBlockTime'&&url===A)x.result=null;},'A_BLOCK_TIME'],
+  [(x,q,url)=>{if(q.method==='getBlock'&&url===B)x.result.blockhash='C'.repeat(32);},'B_PARENT_LINK'],
+  [(x,q)=>{if(q.method==='getBlocks')x.result=[];},'A_EMPTY_WINDOW']
+ ];
+ for(const [mutate,code] of cases)await assert.rejects(observeHistoricalBracket(A,B,{fetchFn:fixture(mutate).fetchFn}),e=>bracketFailureCode(e)===code&&!e.message.includes('SECRET'));
+ const {fetchFn}=fixture();
+ await assert.rejects(observeHistoricalBracket(A,B,{fetchFn:async(url,opts)=>url===B?new Response('SECRET',{status:429}):fetchFn(url,opts)}),e=>bracketFailureCode(e)==='B_getGenesisHash_HTTP_429');
+ assert.equal(bracketFailureCode({code:'A_BLOCK_TIME'}),'UNCLASSIFIED');
+ assert.equal(bracketFailureCode(Error('SECRET')),'UNCLASSIFIED');
 });
