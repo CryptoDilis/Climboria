@@ -1,0 +1,28 @@
+# Climboria — Base-first, multichain ecosystem direction
+Owner direction received 2026-11-27 UTC. Status: PRODUCT_DIRECTION_APPROVED / IMPLEMENTATION_PENDING. Applies across Game, Base token, DEX/Swap, ClimbX, Launchpad, homepage and whitepaper.
+
+## Product decision
+Base is the intended primary blockchain and default network of Climboria's ecosystem and main UI. Solana is retained as a secondary supported blockchain alongside Ethereum, BNB Chain and future separately verified networks; Solana is not an EVM chain. Previous Solana-first prioritization is superseded for new product planning, not a directive to remove working routes or bypass security controls. Existing Solana token identity, history, balances and records must not be erased or misrepresented.
+
+## Implementation requirements
+| Workstream | Target direction | Acceptance |
+|---|---|---|
+| Main UI / whitepaper | Base-first chain branding, navigation, wallet context and default selection | Accurate network labels; distinguish live, test-only, quote-only and planned features; do not invent a Base CA or claim live issuance. Keep user-selected chain on subsequent visits where safe. |
+| Game (Jarrell's Peak and Arena) | Base for future blockchain-backed assets, ownership, reward settlement and optional on-chain actions | Retain existing email/social/guest authentication and real-time off-chain movement, combat, chat and cloud saves; link wallet separately. Authenticate game event ledger, prevent replay, respect caps and custody. Gameplay remains playable without an on-chain transaction per action. |
+| CLIMB | Base intended primary token network | Current public Solana mint remains distinct and accurately disclosed. No mainnet issue, supply change, bridge, migration or token claim until supply model, source eligibility, security review and release gates are approved. |
+| DEX / Swap | Base primary default; Solana and other EVM chains selectable | Preserve verified functionality and fail-closed execution gates; per-chain provider/token/transaction verification; no unsupported route presented as live; do not silently switch wallet networks or sign. |
+| ClimbX | Base-first strategy and execution integration | Separate chain-specific execution, budget denomination and risk policies; preserve existing Solana policy until explicitly redesigned. No execution without verified DEX path and authorization. |
+| Climboria Signature Launchpad | Base first, then additional supported networks | Separate chain-specific launch contracts, fees, supply and verification; no automatic launch or funds. |
+
+## Implementation order
+1. Inventory homepage, navigation, whitepaper, wallet/network defaults, runtime gates and current public disclosures. Implement a chain capability model and Base-first UI defaults without altering security gates.
+2. Continue Base V3 remediation and exact CI; verify #921 and T07 evidence. Decide T11 cross-chain supply model before any public Base token issuance. A Base-first product is not permission to mint a duplicate supply or replace Solana balances.
+3. Align Game wallet linking and future reward settlement with Base while preserving existing real-time gameplay and auth. Finish authenticated event evidence and custody reviews before token rewards.
+4. Reprioritize Base DEX/Swap; retain Solana routes at their actual verified readiness. Expand ClimbX and Launchpad only after verified execution and chain-specific review.
+5. Verify desktop/mobile UI, network switching, identity, no false live claims, and exact production release evidence. Update workstream development records with PR/SHA, CI, remaining gates.
+
+## Non-negotiable safety and release state
+This is a product-direction decision, not approval of new token economics or transactions. ETH on Base mainnet and Base Sepolia ETH are separate gas assets. No live wallet signing, public deployment, liquidity funding, legacy holder allocation, real bridge or migration authorized by this record. Base V3 TESTNET_NO_GO / MAINNET_NO_GO remain unchanged pending existing review gates. No inference of user eligibility from founder status or former token holdings. No personal financial details recorded here.
+
+## Open decisions
+Canonical bridge versus migration/replacement, authoritative Solana snapshot/cutoff if applicable, total supply conservation, real Base asset contract selection, game reward settlement and chain-specific ClimbX budget units require separate review. Preserve existing allocations until a deliberate reviewed decision changes them. Base default is a UX priority, not mandatory wallet switching or a requirement to hold CLIMB to play.
