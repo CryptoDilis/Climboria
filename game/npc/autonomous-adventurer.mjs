@@ -1,9 +1,12 @@
 // Isolated nonfinancial R5A foundation. No player, socket, economy or renderer imports.
 // The caller must supply actor-safe terrain/collision and authored navigation adapters.
+import {getNpcIdentity} from './npc-roster.mjs';
 const ACTIONS=new Set(['explore','fish','gather','farm','rest','swim']);
 const finite=Number.isFinite, dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const key=(a,b)=>a+'>'+b;
-export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1}={}){
+export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1,identityId=null}={}){
+ const identity=identityId===null?null:getNpcIdentity(identityId);
+ if(identityId!==null&&!identity)throw Error('Unknown NPC identity');
  if(!Array.isArray(nodes)||nodes.length<2||nodes.length>64||!Array.isArray(edges)||edges.length>256||
     typeof world?.sample!=='function'||typeof world?.canTraverse!=='function'||typeof world?.canAct!=='function')
   throw Error('Bounded NPC navigation and world adapters required');
@@ -84,6 +87,6 @@ export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1}={}){
   if(step===d)arrive();
   return snapshot();
  }
- function snapshot(){return Object.freeze({kind:'npc',label:'Adventurer [NPC]',...position,mode,stamina,goal,stuck,closed})}
+ function snapshot(){return Object.freeze({kind:'npc',label:identity?.label??'Adventurer [NPC]',...(identity?{npcId:identity.id}:{}),...position,mode,stamina,goal,stuck,closed})}
  return Object.freeze({tick,snapshot,close(){closed=true;mode='idle';goal=null;next=null;route=[];wait=0;activity=null}});
 }

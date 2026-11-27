@@ -3573,7 +3573,7 @@ function caveApproachGroundAudit(){
   textureRepeat:ground?.material?.map?.repeat?.x||0};
 }
 // Explicit smoke-only adapter: no default NPC spawning or real player changes.
-async function makeLakeNpcForSmoke(){
+async function makeLakeNpcForSmoke(identityId=null){
  const {createJarrellLakeAdventurer}=await import('./npc/jarrell-lake-adventurer.mjs');
  const lake=WATER_BODIES.find(b=>b.id==='sanctuary_lake');
  const loaded=(x,z)=>{
@@ -3581,7 +3581,7 @@ async function makeLakeNpcForSmoke(){
   for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)if(!chunks.has((cx+i)+','+(cz+j)))return false;
   return true;
  };
- return createJarrellLakeAdventurer({groundAt,waterBodyAt,actorBlocked,loaded,fishingSpots:FAC,lake});
+ return createJarrellLakeAdventurer({groundAt,waterBodyAt,actorBlocked,loaded,fishingSpots:FAC,lake,identityId});
 }
 async function npcLakeRouteAudit(){
  const {npc,nodes,probes}=await makeLakeNpcForSmoke();
@@ -3794,7 +3794,7 @@ if(new URLSearchParams(location.search).has('smoke')){
 }
 // Explicit smoke-only continuous frame-loop candidate; no default actor.
 let npcContinuousSession=null,npcContinuousPending=false,npcContinuousCancel=false;
-let npcContinuousDraws=0,npcContinuousGroup=null;
+let npcContinuousDraws=0,npcContinuousGroup=null,npcContinuousNameplateDraws=0;
 function npcContinuousNear(s){return P.mode==='walk'&&Math.hypot(s.x-P.x,s.z-P.z)<100}
 function npcContinuousPriorityFree(){
  return ![...livePeers.values()].some(p=>!p.root&&Math.hypot(p.group.position.x-cam.position.x,p.group.position.z-cam.position.z)<120);
@@ -3817,7 +3817,7 @@ if(new URLSearchParams(location.search).has('smoke')){
   try{
    const [{createAdventurerRenderer},{createNpcFrameSession}]=await Promise.all([
     import('./npc/adventurer-renderer.mjs'),import('./npc/npc-frame-session.mjs')]);
-   ({npc}=await makeLakeNpcForSmoke());
+   ({npc}=await makeLakeNpcForSmoke('npc:jarrell-peak:aurelion'));
    if(npcContinuousCancel||document.hidden||!npcContinuousNear(npc.snapshot())||!npcContinuousPriorityFree()||remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB-1)return false;
    remoteGLBLoading++;loading=true;
    gltf=await new T3.GLTFLoader().loadAsync('../assets/characters/Climboria_Jarrell.glb');
@@ -3826,11 +3826,12 @@ if(new URLSearchParams(location.search).has('smoke')){
    const {buildNpcActivityClips}=await import('./npc/npc-activity-clips.mjs');
    const activityClips=buildNpcActivityClips(T3,gltf.scene,poseMeshyNeutralRest);
    const fit=fitRemoteHero(gltf.scene);if(!fit)throw Error('NPC fit unavailable');
-   group=new T3.Group();group.name='AutonomousNPC:continuous';label=peerMarker('Adventurer [NPC]');label.name='NPCNameplate';
+   group=new T3.Group();group.name='AutonomousNPC:continuous';label=peerMarker(npc.snapshot().label);label.name='NPCNameplate';label.userData.npcLabel=npc.snapshot().label;
+   npcContinuousNameplateDraws=0;label.onBeforeRender=()=>{npcContinuousNameplateDraws++};
    group.add(fit,label);scene.add(group);npcContinuousGroup=group;npcContinuousDraws=0;
    gltf.scene.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;
     const previous=o.onBeforeRender;o.onBeforeRender=function(...args){npcContinuousDraws++;previous?.apply(this,args)}}});
-   projection=createAdventurerRenderer({group,clips:[...gltf.animations,...activityClips],mixer:new T3.AnimationMixer(gltf.scene),loopRepeat:T3.LoopRepeat,dispose:()=>{}});
+   projection=createAdventurerRenderer({group,clips:[...gltf.animations,...activityClips],mixer:new T3.AnimationMixer(gltf.scene),loopRepeat:T3.LoopRepeat,identityId:npc.snapshot().npcId,dispose:()=>{}});
    npcContinuousSession=createNpcFrameSession({npc,projection,dispose,near:npcContinuousNear,visible:()=>!document.hidden,priorityFree:npcContinuousPriorityFree});
    return true;
   }finally{
@@ -3840,7 +3841,7 @@ if(new URLSearchParams(location.search).has('smoke')){
  };
  window.ENDLESS_WILDS.npcContinuousStop=()=>{npcContinuousCancel=true;npcContinuousSession?.close()};
  window.ENDLESS_WILDS.npcContinuousAudit=()=>({session:npcContinuousSession?.audit()??null,pending:npcContinuousPending,
-  attached:npcContinuousGroup?.parent===scene,visible:npcContinuousGroup?.visible===true,draws:npcContinuousDraws,
+  attached:npcContinuousGroup?.parent===scene,visible:npcContinuousGroup?.visible===true,draws:npcContinuousDraws,nameplateDraws:npcContinuousNameplateDraws,nameplate:npcContinuousGroup?.getObjectByName('NPCNameplate')?.userData.npcLabel??null,
   peers:livePeers.size,loading:remoteGLBLoading,resident:remoteGLBResidents,budget:MAX_REMOTE_GLB});
  window.addEventListener('pagehide',()=>window.ENDLESS_WILDS.npcContinuousStop());
  document.addEventListener('visibilitychange',()=>{if(document.hidden)window.ENDLESS_WILDS.npcContinuousStop()});
