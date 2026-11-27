@@ -173,10 +173,17 @@ try{
    await page.evaluate(()=>{window.__walletChain="0x38";window.__walletCalls=[];});
    await connect.click();await page.waitForFunction(()=>document.querySelector("#secondaryWalletAddress")?.textContent==="0x"+"a".repeat(40));
    assert.deepEqual(await page.evaluate(()=>window.__walletCalls),["eth_chainId","eth_requestAccounts","eth_chainId"]);
-   await research.locator("summary").click();await page.waitForFunction(()=>document.getElementById("secondaryWalletConnect").disabled);
+   // A connected button is already disabled, so wait for the closed panel
+   // AND the cleared address rather than treating disabled as completion.
+   await research.locator("summary").click();
+   await page.waitForFunction(()=>!document.getElementById("secondaryEvmResearch").open&&document.getElementById("secondaryWalletAddress").textContent===""&&document.getElementById("secondaryWalletConnect").disabled);
    assert.equal(await address.textContent(),"");
    await research.locator("summary").click();await page.waitForFunction(()=>!document.getElementById("secondaryWalletConnect").disabled);
    assert.equal(await address.textContent(),"");
+   await connect.click();await page.waitForFunction(()=>document.querySelector("#secondaryWalletAddress")?.textContent==="0x"+"a".repeat(40));
+   await research.locator("summary").evaluate(el=>{el.click();el.click();});
+   assert.equal(await address.textContent(),"","Rapid close/reopen must clear the wallet synchronously");
+   await page.waitForFunction(()=>!document.getElementById("secondaryWalletConnect").disabled);
    await connect.click();await page.waitForFunction(()=>document.querySelector("#secondaryWalletAddress")?.textContent==="0x"+"a".repeat(40));
    if(width<=760){
     await page.locator('#mobileWorkspaceTabs [data-workspace-tab="trust"]').click();
