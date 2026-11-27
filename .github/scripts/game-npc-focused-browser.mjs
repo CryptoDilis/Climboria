@@ -86,6 +86,25 @@ try{
  assert.ok(visualPair.peak<=visualPair.budget-1&&visualPair.cleaned&&visualPair.playerUnchanged&&visualPair.inventoryUnchanged&&visualPair.diagnosticsUnchanged&&visualPair.peersUnchanged);
  assert.deepEqual(visualPair.visuals.map(v=>v.label),['Aurelion [NPC]','ZevranSol [NPC]']);
  assert.ok(visualPair.visuals.every(v=>v.detached&&v.draws>0&&v.nameplateDraws>0&&(!v.animated||v.exactMotion)));
+ const pairBaseline=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairContinuousAudit());
+ assert.equal(await page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairContinuousStart()),true);
+ const pairDeadline=Date.now()+(mobile?60000:120000);let livePair;
+ for(;;){
+  livePair=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairContinuousAudit());
+  if(livePair.session?.frames>=15&&livePair.session.distances.every(d=>d>.5))break;
+  if(Date.now()>=pairDeadline||livePair.session?.closed)throw Error('Continuous NPC pair incomplete: '+JSON.stringify(livePair));
+  await new Promise(r=>setTimeout(r,1000));
+ }
+ assert.ok(livePair.visuals.length===2&&livePair.visuals.every(v=>v.attached&&v.visible)&&livePair.peers===pairBaseline.peers);
+ assert.equal(livePair.visuals.filter(v=>v.animated).length,mobile?1:2);
+ assert.ok(livePair.loading+livePair.resident<=livePair.budget-1);
+ await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak;w.resumeAtRoomPosition({x:0,z:-30,y:w.groundAt(0,-30)+1.75})});
+ await page.waitForFunction(()=>window.__climboriaJarrellsPeak.npcPairContinuousAudit().session?.closed,undefined,{timeout:15000});
+ const pairEnded=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairContinuousAudit());
+ assert.equal(pairEnded.session.reason,'distance');assert.equal(pairEnded.session.cleanupErrors,0);
+ assert.ok(pairEnded.visuals.every(v=>!v.attached&&!v.visible)&&pairEnded.peers===pairBaseline.peers);
+ assert.equal(pairEnded.loading+pairEnded.resident,pairBaseline.loading+pairBaseline.resident);
+ console.log('NPC continuous pair normal-frame audit',JSON.stringify({livePair,pairEnded}));
  assert.deepEqual(errors,[]);
  console.log('NPC focused browser PASS',JSON.stringify({mobile,elapsedMs:Date.now()-start,route,glb,active,ended}));
  await context.close();
