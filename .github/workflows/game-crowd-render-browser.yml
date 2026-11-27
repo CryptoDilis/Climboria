@@ -1,9 +1,9 @@
 name: Game Crowd Render Acceptance
 on:
   push:
-    paths: ['.github/scripts/game-crowd-render-browser.mjs','.github/workflows/game-crowd-render-browser.yml']
+    paths: ['game/play.html','game/npc/crowd-render-policy.mjs','.github/scripts/game-crowd-render-browser.mjs','.github/workflows/game-crowd-render-browser.yml']
   pull_request:
-    paths: ['.github/scripts/game-crowd-render-browser.mjs','.github/workflows/game-crowd-render-browser.yml']
+    paths: ['game/play.html','game/npc/crowd-render-policy.mjs','.github/scripts/game-crowd-render-browser.mjs','.github/workflows/game-crowd-render-browser.yml']
 permissions:
   contents: read
 concurrency:
@@ -16,7 +16,7 @@ jobs:
       matrix:
         device: [desktop, mobile]
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     env:
       NPC_QA_DEVICE: ${{ matrix.device }}
     steps:
@@ -43,5 +43,5 @@ jobs:
             sleep 1
           done
           exit 1
-      - name: Verify actual 10/25/32 renderer entries and pressure cleanup
+      - name: Verify private 10/25/32/50/100 renderer entries and pressure cleanup
         run: node .github/scripts/game-crowd-render-browser.mjs
