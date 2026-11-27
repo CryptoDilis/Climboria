@@ -39,3 +39,8 @@ jobs:
           set -euo pipefail
           forge test --match-contract SafeCustodyBoundaryTest -vv | tee "$RUNNER_TEMP/safe-boundary.log"
           grep -Eq '6 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-boundary.log"
+      - name: Exercise restricted Safe rotation guard
+        run: |
+          set -euo pipefail
+          forge test --match-contract SafeEpochGuardTest -vv | tee "$RUNNER_TEMP/safe-epoch-guard.log"
+          grep -Eq '7 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-epoch-guard.log"
