@@ -93,8 +93,12 @@ contract V3AtomicSuccessorFixture {
         core=new V3SuccessorCoreDeployer();
         conditional=new V3SuccessorConditionalDeployer();
     }
-    function create(V3SuccessorConfig calldata cfg) external returns(V3SuccessorTestToken asset){
-        if(msg.sender!=creator||used||block.chainid!=84532||cfg.founder==address(0)||cfg.distributor==address(0)||cfg.founder==cfg.distributor||
+    function create(V3SuccessorConfig calldata cfg) external virtual returns(V3SuccessorTestToken asset){
+        if(msg.sender!=creator)revert InvalidConfig();
+        return _create(cfg);
+    }
+    function _create(V3SuccessorConfig calldata cfg) internal returns(V3SuccessorTestToken asset){
+        if(used||block.chainid!=84532||cfg.founder==address(0)||cfg.distributor==address(0)||cfg.founder==cfg.distributor||
            cfg.founder==address(this)||cfg.distributor==address(this)||cfg.liquidity.custody==cfg.founder||cfg.liquidity.custody==cfg.distributor||
            address(cfg.control)==cfg.founder||address(cfg.control)==cfg.distributor||
            cfg.control.isMember(cfg.founder)||cfg.control.isMember(cfg.distributor)) revert InvalidConfig();
@@ -103,10 +107,12 @@ contract V3AtomicSuccessorFixture {
         token=asset;
         _deployPolicies(asset,cfg);
         // No supply before all policy constructors succeed; no intermediate EOA/factory float.
+        _beforeIssue();
         asset.issue(vaults);
         assert(asset.balanceOf(address(this))==0&&asset.balanceOf(msg.sender)==0&&asset.balanceOf(cfg.founder)==0&&asset.balanceOf(cfg.distributor)==0);
         emit Created(address(asset),vaults);
     }
+    function _beforeIssue() internal virtual {}
     function _deployPolicies(V3SuccessorTestToken asset,V3SuccessorConfig calldata cfg) private {
         (address f,address g,V3EpochPolicyFactory e)=core.deploy(asset,cfg);
         expenses=e;

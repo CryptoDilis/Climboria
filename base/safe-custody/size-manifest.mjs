@@ -9,7 +9,10 @@ const specs=[
  ['SafeEpochGuardFixture.sol','SafeGuardBootstrapFixture',0],
  ['SafeEpochGuardFixture.sol','GuardedSafeFactoryFixture',0],
  ['SafeReserveGuardFixture.sol','SafeReserveGuardFixture',3],
- ['SafeReserveGuardFixture.sol','SafeReserveFactoryFixture',0]
+ ['SafeReserveGuardFixture.sol','SafeReserveFactoryFixture',0],
+ ['SafeQuorumIssuanceFixture.sol','V3QuorumSuccessorFixture',1],
+ ['SafeQuorumIssuanceFixture.sol','SafeQuorumReserveGuardFixture',3],
+ ['SafeQuorumIssuanceFixture.sol','SafeQuorumReserveFactoryFixture',0]
 ];
 const bytes=x=>{assert.match(x,/^0x(?:[0-9a-fA-F]{2})+$/);return Buffer.from(x.slice(2),'hex');};
 const hash=x=>createHash('sha256').update(x).digest('hex');
