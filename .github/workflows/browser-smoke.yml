@@ -900,6 +900,7 @@ jobs:
           path: |
             climboria-desktop-home.png
             climb-tokenomics-*.png
+            climb-whitepaper-*.png
             climboria-mobile-home.png
             climboria-desktop-gameplay.png
             climboria-mobile-gameplay.png
