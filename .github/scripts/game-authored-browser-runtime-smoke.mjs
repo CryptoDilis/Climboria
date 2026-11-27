@@ -6,39 +6,15 @@ import {Miniflare} from 'miniflare';
 const origin='http://127.0.0.1:4174';
 const modulePaths=['preview-combat-client-transport.mjs','preview-combat-client-state.mjs','authored-local-combat-controls.mjs'];
 const A='f3ead054-abb4-47ba-b311-5aa7fe483f10',B='2790d4fe-1a26-4f5c-96d2-9a0fbcfb3021';
-const mf=new Miniflare({host:'127.0.0.1',port:4174,modules:true,modulesRoot:resolve('.'),
- scriptPath:resolve('.github/scripts/game-authored-browser-local-worker.mjs'),
- compatibilityDate:'2026-08-06',bindings:{AUTHORED_BROWSER_CI:'true'},
- durableObjects:{ROOM:{className:'AuthoredLocalRoom',useSQLite:true}}});
-let browser;
-try{
- const address=await mf.ready;
- assert.equal(address.origin,origin);
- const wsURL='ws://127.0.0.1:'+address.port+'/ws';
- const ns=await mf.getDurableObjectNamespace('ROOM'),stub=ns.get(ns.idFromName('preview-jarrell-camp-v1'));
- async function ticket(id){
-  const r=await stub.fetch('https://local.internal/ticket',{method:'POST',body:id});
-  assert.equal(r.status,200);return (await r.json()).ticket;
- }
- async function tick(n){
-  for(let i=0;i<n;i++){
-   const r=await stub.fetch('https://local.internal/tick',{method:'POST'});
-   assert.equal((await r.json()).ok,true);
-  }
- }
- assert.equal((await mf.dispatchFetch(address.href+'ticket',{method:'POST'})).status,404);
- const rejected=await mf.dispatchFetch(address.href+'ws',{headers:{Origin:origin,Upgrade:'websocket','Sec-WebSocket-Protocol':'climboria-preview-v1,t-'+'0'.repeat(64)}});
- assert.equal(rejected.status,401,'loopback upgrade must reach private ticket validation');
- browser=await chromium.launch({headless:true,args:['--no-proxy-server']});
- async function player(id,mobile){
-  const context=await browser.newContext(mobile?{viewport:{width:390,height:844},isMobile:true,hasTouch:true}:{viewport:{width:1280,height:800}});
-  const token=await ticket(id);
-  const html=`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">
+const html=`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">
 <button id="move">Move</button><button id="attack">Attack</button><output id="state"></output>
 <script type="module">
 import {attachAuthoredLocalCombatTransport} from '/game/multiplayer/preview-combat-client-transport.mjs';
 import {bindAuthoredLocalCombatControls} from '/game/multiplayer/authored-local-combat-controls.mjs';
-const socket=new WebSocket(${JSON.stringify(wsURL)},['climboria-preview-v1',${JSON.stringify('t-'+token)}]);
+const token=location.hash.slice(1);
+history.replaceState(null,'',location.pathname);
+if(!/^[a-f0-9]{64}$/.test(token))throw Error('Missing test ticket');
+const socket=new WebSocket('ws://'+location.host+'/ws',['climboria-preview-v1','t-'+token]);
 window.qaSocketStatus='connecting';
 socket.addEventListener('open',()=>{window.qaSocketStatus='open'});
 socket.addEventListener('error',()=>{window.qaSocketStatus='error'});
@@ -59,12 +35,34 @@ socket.addEventListener('message',function joined(e){
   draw(){ui.frame(time++)},poll(){time+=200;ui.frame(time++)}};
 });
 </script>`;
-  // Serve only the exact local modules in the test page's own origin.
-  for(const name of modulePaths){
-   const body=await readFile(resolve('game/multiplayer',name),'utf8');
-   await context.route(origin+'/game/multiplayer/'+name,route=>route.fulfill({contentType:'text/javascript',body}));
+const [CI_TRANSPORT,CI_STATE,CI_CONTROLS]=await Promise.all(modulePaths.map(name=>readFile(resolve('game/multiplayer',name),'utf8')));
+const mf=new Miniflare({host:'127.0.0.1',port:4174,modules:true,modulesRoot:resolve('.'),
+ scriptPath:resolve('.github/scripts/game-authored-browser-local-worker.mjs'),
+ compatibilityDate:'2026-08-06',bindings:{AUTHORED_BROWSER_CI:'true',CI_PAGE:html,CI_TRANSPORT,CI_STATE,CI_CONTROLS},
+ durableObjects:{ROOM:{className:'AuthoredLocalRoom',useSQLite:true}}});
+let browser;
+try{
+ const address=await mf.ready;
+ assert.equal(address.origin,origin);
+ const ns=await mf.getDurableObjectNamespace('ROOM'),stub=ns.get(ns.idFromName('preview-jarrell-camp-v1'));
+ async function ticket(id){
+  const r=await stub.fetch('https://local.internal/ticket',{method:'POST',body:id});
+  assert.equal(r.status,200);return (await r.json()).ticket;
+ }
+ async function tick(n){
+  for(let i=0;i<n;i++){
+   const r=await stub.fetch('https://local.internal/tick',{method:'POST'});
+   assert.equal((await r.json()).ok,true);
   }
-  await context.route(origin+'/__authored_runtime_ci__',route=>route.fulfill({contentType:'text/html',body:html}));
+ }
+ assert.equal((await mf.dispatchFetch(address.href+'ticket',{method:'POST'})).status,404);
+ const rejected=await mf.dispatchFetch(address.href+'ws',{headers:{Origin:origin,Upgrade:'websocket','Sec-WebSocket-Protocol':'climboria-preview-v1,t-'+'0'.repeat(64)}});
+ assert.equal(rejected.status,401,'loopback upgrade must reach private ticket validation');
+ browser=await chromium.launch({headless:true,args:['--no-proxy-server']});
+ async function player(id,mobile){
+  const context=await browser.newContext(mobile?{viewport:{width:390,height:844},isMobile:true,hasTouch:true}:{viewport:{width:1280,height:800}});
+  const token=await ticket(id);assert.match(token,/^[a-f0-9]{64}$/);
+
   const page=await context.newPage();
   const cdp=await context.newCDPSession(page);await cdp.send('Network.enable');
   const diagnostic={handshake:[],pageErrors:[],consoleErrors:[],socketErrors:[]};
@@ -73,7 +71,9 @@ socket.addEventListener('message',function joined(e){
   page.on('websocket',ws=>ws.on('socketerror',e=>diagnostic.socketErrors.push(sanitize(e))));
   cdp.on('Network.webSocketHandshakeResponseReceived',e=>diagnostic.handshake.push(e.response.status));
   page.on('pageerror',e=>diagnostic.pageErrors.push(e.message.replace(/[a-f0-9]{64}/gi,'[redacted]').slice(0,300)));
-  await page.goto(origin+'/__authored_runtime_ci__');
+  const response=await page.goto(origin+'/__authored_runtime_ci__#'+token);
+  assert.equal(response.status(),200);
+  assert.equal(await page.evaluate(()=>location.origin),origin);
   try{await page.waitForFunction(()=>!!window.qa,{},{timeout:10000})}
   catch(error){console.error('Native browser admission diagnostic',JSON.stringify({...diagnostic,socketStatus:await page.evaluate(()=>window.qaSocketStatus??'module-not-started')}));throw error}
   return {page,context,id:await page.evaluate(()=>qa.id),
