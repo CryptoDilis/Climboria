@@ -89,20 +89,35 @@ contract SafeQuorumReserveGuardFixture is SafeReserveGuardFixture {
         return super._policyCallAllowed(selector,len);
     }
 }
+/// @notice Created by the setup factory constructor, not supplied by a caller.
+contract SafeQuorumGuardDeployerFixture {
+    error Unauthorized();
+    address public immutable factory;
+    constructor(){factory=msg.sender;}
+    function deploy(Safe wallet,address singleton,V3QuorumSuccessorFixture successor) external returns(SafeQuorumReserveGuardFixture){
+        if(msg.sender!=factory||block.chainid!=84532)revert Unauthorized();
+        return new SafeQuorumReserveGuardFixture(wallet,singleton,successor);
+    }
+}
 contract SafeQuorumReserveFactoryFixture {
     error InvalidConfig();
     Safe public immutable singleton;
     SafeGuardBootstrapFixture public immutable bootstrap;
+    SafeQuorumGuardDeployerFixture public immutable guardDeployer;
+    bytes32 public guardDeployerHash;
     constructor(){
         if(block.chainid!=84532)revert InvalidConfig();
         singleton=new Safe();bootstrap=new SafeGuardBootstrapFixture();
+        SafeQuorumGuardDeployerFixture helper=new SafeQuorumGuardDeployerFixture();
+        guardDeployer=helper;guardDeployerHash=address(helper).codehash;
     }
     function create(address[] calldata owners,V3QuorumSuccessorFixture successor) external returns(Safe wallet,SafeQuorumReserveGuardFixture guard){
-        if(block.chainid!=84532||owners.length!=5||successor.creator()!=msg.sender||
+        if(block.chainid!=84532||address(guardDeployer).codehash!=guardDeployerHash||owners.length!=5||successor.creator()!=msg.sender||
            successor.guardFactory()!=address(this)||successor.configuredGuard()!=address(0))revert InvalidConfig();
         for(uint256 i=0;i<owners.length;i++)if(owners[i].code.length!=0)revert InvalidConfig();
         wallet=Safe(payable(address(new SafeProxy(address(singleton)))));
-        guard=new SafeQuorumReserveGuardFixture(wallet,address(singleton),successor);
+        guard=guardDeployer.deploy(wallet,address(singleton),successor);
+        if(address(guardDeployer).codehash!=guardDeployerHash||guard.wallet()!=wallet||guard.singleton()!=address(singleton)||address(guard.successor())!=address(successor))revert InvalidConfig();
         wallet.setup(owners,3,address(bootstrap),abi.encodeCall(bootstrap.install,(address(guard))),address(0),address(0),0,payable(address(0)));
         guard.validateConfig();
         successor.configureGuard(address(guard));
