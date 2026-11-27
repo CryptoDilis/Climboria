@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## NATIVE BROWSER ADMISSION COUNTER-FIX — 2026-11-27 PHT
+
+- #922 exact head e3ed01c08a9a43fdc56a99e417d595756850b4a5: Validate 45944747574 SUCCESS; Gameplay 45944747565 FAILURE, job 140326758849. Existing simulated desktop/touch browser controls passed; native browser admission timed out in player() at line 56 before window.qa was installed. Main desktop/mobile gameplay smoke skipped. Exact underlying handshake cause not established by original logs.
+- Counter-fix ffa4d71683325dc17634d4b8cde8b74230af9b8d preserves the original native upgrade request when forwarding to the private DO, with normalized protocol header and unchanged loopback/origin/ticket gates. Diagnostic test 4029fb204b6abad75bfb5d64c75c4d7eff1508a2 checks that an invalid ticket reaches 401 validation, records only handshake status codes, sanitized browser errors and socket state on timeout. No credentials logged.
+- EXACT NEXT: inspect fresh exact-head CI, confirm native desktop/touch sockets and gameplay smoke both succeed; if failed, use handshake diagnostic to determine cause and apply targeted fix. No merge/deployment/public PvP until verified.
+
+---
+
 ## NATIVE BROWSER AUTHORED COMBAT — 2026-11-27 PHT (PROPOSED)
 
 - Parent #919 merged at f05fcbeef1e103ac7f96cc0c960cd4b6f36b3fd7; exact head 89211d04f983b2af58339f4cd80edc05cf8ada76: Validate 45943943482 and Gameplay 45943943513 SUCCESS.
