@@ -90,6 +90,7 @@ contract V3SuccessorConditionalDeployer {
 /// token. No real multisig, DEX adapter, Solana authorization, or live eligibility.
 contract V3AtomicSuccessorFixture {
     error InvalidConfig();
+    address public immutable creator;
     V3SuccessorCoreDeployer public immutable core;
     V3SuccessorConditionalDeployer public immutable conditional;
     V3SuccessorTestToken public token;
@@ -99,11 +100,12 @@ contract V3AtomicSuccessorFixture {
     event Created(address indexed token,address[7] vaults);
     constructor(){
         if(block.chainid!=84532) revert InvalidConfig();
+        creator=msg.sender;
         core=new V3SuccessorCoreDeployer();
         conditional=new V3SuccessorConditionalDeployer();
     }
     function create(V3SuccessorConfig calldata cfg) external returns(V3SuccessorTestToken asset){
-        if(used||block.chainid!=84532||cfg.founder==address(0)||cfg.distributor==address(0)||cfg.founder==cfg.distributor||
+        if(msg.sender!=creator||used||block.chainid!=84532||cfg.founder==address(0)||cfg.distributor==address(0)||cfg.founder==cfg.distributor||
            cfg.founder==address(this)||cfg.distributor==address(this)||cfg.liquidity.custody==cfg.founder||cfg.liquidity.custody==cfg.distributor||
            address(cfg.control)==cfg.founder||address(cfg.control)==cfg.distributor||
            cfg.control.isMember(cfg.founder)||cfg.control.isMember(cfg.distributor)) revert InvalidConfig();
