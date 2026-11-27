@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A PRIVATE NPC SERVER SCHEDULER CANDIDATE — 2026-11-27
+
+- #990 exact consolidated head db712b556d36bab459fd44b3d3dc96b2eb34a767: foundation 46018616313, authenticated gateway 46018616370 and server authority 46018616218 passed; eight other runs pending at inspection. Preserve active consolidated branch. Existing general browser homepage blocker remains unresolved until fresh run proves otherwise.
+- Add isolated disabled-by-default one-shot server scheduler owning trusted room bridge and two actor controllers; starts only with visible room recipients, max 60s / 600 ticks at 100ms, no catch-up burst, one pending timer, close on empty room, budget expiry, clock error or explicit stop. Capability true only while running. Tests with actual controllers and room core verify linked dialogue, unchanged human roster, disabled gate, expiry, stale timer and shutdown. Fresh CI pending. Not connected to production Worker, preview combat Worker, external auth or deployed WSS. Synthetic fixture geometry is not reviewed production terrain.
+- NEXT: verify current CI, consolidate and merge green Game changes; add private reviewed server geometry/actor admission, bind scheduler to isolated authenticated room lifecycle with capability and local workerd WebSocket acceptance. Physical device performance, actor spacing, public activation remain gated.
+
+---
+
 ## R5A VERIFIED TWO-BROWSER CHAT CONSOLIDATION — 2026-11-27
 
 - #998 exact head ad100babd0868f05a1274e655f1b2bbe5b5b4ef5 chat acceptance 46018097512, job 140570329819: 100 tests passed, 0 failed; actual Chromium desktop 1280 and mobile-emulated 390 DOM fixture received identical three NPC events including linked reply; human ONLINE 2, mute, duplicate rejection, draft preservation and disconnect cleanup passed. Local synthetic auth/transport, not production WSS or physical device verification.
