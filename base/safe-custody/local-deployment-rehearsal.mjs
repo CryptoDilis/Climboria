@@ -69,10 +69,14 @@ try{
  const owners=[...signers.map(x=>x.address),rest[3],rest[4]];
  assert.equal(new Set([creator,...owners,founder,distributor,payee]).size,9);
  const setup=await deploy('setupFactory','SafeQuorumIssuanceFixture.sol','SafeQuorumReserveFactoryFixture',creator);
- const singleton=await address(setup,'singleton()'),bootstrap=await address(setup,'bootstrap()');
- assert.equal(new Set([setup,singleton,bootstrap]).size,3);
+ const singleton=await address(setup,'singleton()'),bootstrap=await address(setup,'bootstrap()'),guardDeployer=await address(setup,'guardDeployer()');
+ assert.equal(new Set([setup,singleton,bootstrap,guardDeployer]).size,4);
  const verify=async(file,name,at,imm=[])=>verifyRuntime(JSON.parse(readFileSync('out/'+file+'/'+name+'.json','utf8')),await rpc('eth_getCode',[at,'latest']),imm);
- const factoryProvenance={setup:await verify('SafeQuorumIssuanceFixture.sol','SafeQuorumReserveFactoryFixture',setup,[singleton,bootstrap]),singleton:await verify('Safe.sol','Safe',singleton),bootstrap:await verify('SafeEpochGuardFixture.sol','SafeGuardBootstrapFixture',bootstrap),singletonAddress:singleton,bootstrapAddress:bootstrap};
+ const factoryProvenance={setup:await verify('SafeQuorumIssuanceFixture.sol','SafeQuorumReserveFactoryFixture',setup,[singleton,bootstrap,guardDeployer]),singleton:await verify('Safe.sol','Safe',singleton),bootstrap:await verify('SafeEpochGuardFixture.sol','SafeGuardBootstrapFixture',bootstrap),singletonAddress:singleton,bootstrapAddress:bootstrap};
+ assert.equal(await address(guardDeployer,'factory()'),setup);
+ const guardDeployerCode=await requireCode(guardDeployer);
+ assert.equal(await call(setup,'guardDeployerHash()'),guardDeployerCode.runtimeKeccak256);
+ factoryProvenance.guardDeployer={...guardDeployerCode,...await verify('SafeQuorumIssuanceFixture.sol','SafeQuorumGuardDeployerFixture',guardDeployer,[setup])};
  const helper=await deploy('conditionalHelper','V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',creator);
  factoryProvenance.conditionalHelper=await verify('V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',helper);
  const helperHash=contracts.conditionalHelper.runtimeKeccak256;

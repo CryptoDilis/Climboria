@@ -5,7 +5,7 @@ import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IV3SyntheticPool} from "v3-src/V3LiquidityPolicyFixture.sol";
 import {IV3SyntheticPoolBuilder} from "v3-src/V3AtomicSuccessorFixture.sol";
 import {Enum} from "safe-contracts/common/Enum.sol";
-import {SafeQuorumReserveFactoryFixture,SafeQuorumReserveGuardFixture,V3QuorumSuccessorFixture} from "../src/SafeQuorumIssuanceFixture.sol";
+import {SafeQuorumReserveFactoryFixture,SafeQuorumReserveGuardFixture,V3QuorumSuccessorFixture,SafeQuorumGuardDeployerFixture} from "../src/SafeQuorumIssuanceFixture.sol";
 import {V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorTestToken,V3SuccessorConditionalDeployer} from "v3-src/V3AtomicSuccessorFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "v3-src/V3EpochSpendFixture.sol";
 import {V3SharedExpenseRegistry} from "v3-src/V3SharedExpenseFixture.sol";
@@ -90,6 +90,23 @@ contract SafeQuorumIssuanceTest {
         require(!successor.used()&&!guard.bound()&&!guard.issuing()&&!guard.transactionActive()&&address(successor.token())==address(0)&&wallet.nonce()==0);
         require(address(guard.asset())==address(0)&&guard.founder()==address(0)&&guard.distributor()==address(0));
         for(uint256 i=0;i<7;i++)require(successor.vaults(i)==address(0)&&guard.destinations(i)==address(0));
+    }
+    function testRestrictedGuardDeployerAndMutationRollback() public {
+        SafeQuorumGuardDeployerFixture helper=setup.guardDeployer();
+        require(helper.factory()==address(setup)&&address(helper).codehash==setup.guardDeployerHash());
+        address implementation=address(setup.singleton());
+        vm.expectRevert(SafeQuorumGuardDeployerFixture.Unauthorized.selector);
+        helper.deploy(wallet,implementation,successor);
+        V3QuorumSuccessorFixture fresh=new V3QuorumSuccessorFixture(address(setup),successor.conditional(),successor.conditionalHash());
+        bytes memory original=address(helper).code;
+        vm.etch(address(helper),hex"60006000f3");
+        vm.expectRevert();setup.create(owners,fresh);
+        require(fresh.configuredGuard()==address(0)&&!fresh.used());
+        vm.etch(address(helper),original);
+        (Safe nextWallet,SafeQuorumReserveGuardFixture nextGuard)=setup.create(owners,fresh);
+        require(address(nextWallet)!=address(wallet)&&fresh.configuredGuard()==address(nextGuard));
+        nextGuard.validateConfig();
+        _empty();_issue();
     }
     function testChangedConditionalHelperRejectsQuorumIssuance() public {
         address helper=address(successor.conditional());
