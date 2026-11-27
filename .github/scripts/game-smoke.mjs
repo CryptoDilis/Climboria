@@ -114,6 +114,12 @@ try {
   // turning point and under-report a real but deliberately subtle idle motion.
   await page.waitForTimeout(1000);
 
+  const npcRoute=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcLakeRouteAudit());
+  console.log('Actual lake NPC route audit',JSON.stringify(npcRoute));
+  if(!npcRoute.playerUnchanged||!npcRoute.diagnosticsUnchanged||!npcRoute.closed||
+     !npcRoute.wet||!npcRoute.exited||npcRoute.distance<10||npcRoute.maxStep>.300001||
+     !['fish','rest','swim'].every(a=>npcRoute.activities.includes(a)))
+    errors.push('Actual lake autonomous route failed: '+JSON.stringify(npcRoute));
   const weatherAudit=await page.evaluate(()=>window.__climboriaJarrellsPeak?.automaticWeatherAudit?.()??null);
   if(!weatherAudit||weatherAudit.intervalMs!==900000||
     weatherAudit.justBefore?.index!==0||weatherAudit.justBefore?.elapsedMs!==899999||
