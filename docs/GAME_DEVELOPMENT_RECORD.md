@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## AUTHORED PRIVATE COMBAT PILOT WORKER CANDIDATE — 2026-11-27 PHT
+
+- Independent branch based on main afb6c4c07e258ad65265880b18e60f351b655787, after #928 merge. #930 fresh Validate 45949794874 SUCCESS, Gameplay 45949794998 running; do not merge #930 until terminal green.
+- Proposed separate Worker c344024a2d93169e594b50f22dcd8d74f65a23b4 adapts audited synthetic preview lifecycle to the fixed authored Jarrell camp fixture. Separate DO class/binding, proposed dedicated hostname (not provisioned), explicit AUTHORED_PILOT_ENABLED flag and two-account allowlist, exact same-origin, authenticated nonanonymous user required, allowlist rechecked on ticket consumption, room-specific single-use tickets and bounded preview operation budget. Existing synthetic/public Workers untouched. Source only, no Wrangler config/DNS/route/credentials or deployment. External Access policy must be verified before any deployment; no claim of reviewed production security.
+- Admission gate unit tests 2eebcdab88344bbfdf3379f25b51681638730f98 run under existing gateway workflow wildcard. Test disabled/wrong origin/wrong host, fixed room, internal routes denied, malformed admission and upstream auth budget denial. Not yet executed; successful auth/admission, expiry, reconnect and actual Worker/DO integration need further regression coverage. Pilot fixture tag intentionally differs from local/synthetic client tags; separate explicit client adapter required.
+- EXACT NEXT: finish #930 exact-head CI and merge; verify pilot CI, add local Worker/DO tests with mocked trusted auth (not actual accounts), review fail-closed lifecycle and pilot client binding, then independently verify edge Access and account ownership. Keep cloud disabled and no public PvP, loot or production save mutation.
+
+---
+
 ## AUTHORITATIVE CHARACTER PROJECTION MERGED — 2026-11-27 PHT
 
 - #925 merged 300972e5a49dea4423ad9b519fb620784851a4cc after exact head 1c19cf97595e27407bd3e2d65dca6db7248e436e all five SUCCESS: Gameplay 45947412023, Runtime 45947412045, Gateway 45947412093, Authority 45947411967, Validate 45947411962. Main drift only unrelated Base ledger work. Adapter is not public gameplay integration.
