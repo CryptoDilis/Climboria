@@ -3,11 +3,13 @@ on:
   pull_request:
     paths:
       - 'base/safe-custody/**'
+      - 'base/v3-testnet/src/**'
       - '.github/workflows/climb-base-safe-custody.yml'
   push:
     branches: [main]
     paths:
       - 'base/safe-custody/**'
+      - 'base/v3-testnet/src/**'
       - '.github/workflows/climb-base-safe-custody.yml'
 permissions:
   contents: read
@@ -34,6 +36,14 @@ jobs:
           git -C lib/safe-contracts fetch --depth=1 https://github.com/safe-fndn/safe-smart-account.git bf943f80fec5ac647159d26161446ac5d716a294
           git -C lib/safe-contracts checkout --detach FETCH_HEAD
           test "$(git -C lib/safe-contracts rev-parse HEAD)" = bf943f80fec5ac647159d26161446ac5d716a294
+      - name: Fetch pinned OpenZeppelin source
+        run: |
+          set -euo pipefail
+          mkdir -p lib/openzeppelin-contracts
+          git -C lib/openzeppelin-contracts init
+          git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
       - name: Exercise actual Safe and proxy custody boundaries
         run: |
           set -euo pipefail
@@ -44,3 +54,8 @@ jobs:
           set -euo pipefail
           forge test --match-contract SafeEpochGuardTest -vv | tee "$RUNNER_TEMP/safe-epoch-guard.log"
           grep -Eq '7 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-epoch-guard.log"
+      - name: Exercise actual Safe and seven-vault reserve integration
+        run: |
+          set -euo pipefail
+          forge test --match-contract SafeReserveGuardTest -vv | tee "$RUNNER_TEMP/safe-reserve-guard.log"
+          grep -Eq '5 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-reserve-guard.log"
