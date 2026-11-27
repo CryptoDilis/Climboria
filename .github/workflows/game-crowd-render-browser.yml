@@ -1,9 +1,9 @@
 name: Game Crowd Render Acceptance
 on:
   push:
-    paths: ['game/multiplayer/private-movement-batch.mjs','game/multiplayer/private-movement-batch.test.mjs','game/play.html','game/npc/crowd-render-policy.mjs','.github/scripts/game-crowd-render-browser.mjs','.github/workflows/game-crowd-render-browser.yml']
+    paths: ['game/multiplayer/private-movement-batch.mjs','game/multiplayer/private-movement-batch.test.mjs','game/play.html','game/npc/crowd-render-policy.mjs','.github/scripts/game-crowd-render-browser.mjs','.github/scripts/game-crowd-browser-transport.mjs','.github/workflows/game-crowd-render-browser.yml']
   pull_request:
-    paths: ['game/multiplayer/private-movement-batch.mjs','game/multiplayer/private-movement-batch.test.mjs','game/play.html','game/npc/crowd-render-policy.mjs','.github/scripts/game-crowd-render-browser.mjs','.github/workflows/game-crowd-render-browser.yml']
+    paths: ['game/multiplayer/private-movement-batch.mjs','game/multiplayer/private-movement-batch.test.mjs','game/play.html','game/npc/crowd-render-policy.mjs','.github/scripts/game-crowd-render-browser.mjs','.github/scripts/game-crowd-browser-transport.mjs','.github/workflows/game-crowd-render-browser.yml']
 permissions:
   contents: read
 concurrency:
@@ -33,7 +33,7 @@ jobs:
       - name: Install focused browser dependencies
         run: |
           npm init -y
-          npm install --no-save playwright three@0.128.0
+          npm install --no-save playwright three@0.128.0 ws@8.18.3
           npx playwright install chromium
       - name: Start local static server
         run: |
@@ -45,3 +45,5 @@ jobs:
           exit 1
       - name: Verify private 10/25/32/50/100 renderer entries and pressure cleanup
         run: node .github/scripts/game-crowd-render-browser.mjs
+      - name: Verify private native browser movement and reconnect
+        run: node .github/scripts/game-crowd-browser-transport.mjs
