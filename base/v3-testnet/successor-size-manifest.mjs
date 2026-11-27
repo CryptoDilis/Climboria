@@ -12,7 +12,7 @@ const specs=[
  ['V3EpochSpendFixture.sol','V3EpochPolicyFactory',4],
  ['V3EpochSpendFixture.sol','V3EpochSpendFixture',7],
  ['V3SharedExpenseFixture.sol','V3SharedExpenseRegistry',0],
- ['V3LiquidityPolicyFixture.sol','V3LiquidityPolicyFixture',9],
+ ['V3DeferredLiquidityFixture.sol','V3DeferredLiquidityFixture',6],
  ['V3LiquidityPolicyFixture.sol','V3SyntheticLPLock',3],
  ['V3BoundedLegacyFixture.sol','V3BoundedLegacyFixture',5]
 ];
