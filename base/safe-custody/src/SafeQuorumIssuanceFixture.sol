@@ -48,9 +48,10 @@ contract SafeQuorumReserveGuardFixture is SafeReserveGuardFixture {
     event QuorumIssued(address indexed token,bytes32 indexed configHash);
     constructor(Safe wallet_,address implementation,V3QuorumSuccessorFixture factory_)
         SafeReserveGuardFixture(wallet_,implementation,factory_){}
-    function issueSuccessor(uint256 expected,uint256 deadline,V3SuccessorConfig calldata cfg) external onlyWallet {
+    function issueSuccessor(uint256 expected,uint256 validAfter,uint256 deadline,V3SuccessorConfig calldata cfg) external onlyWallet {
         _current(expected);
-        if(deadline<=block.timestamp||deadline-block.timestamp>MAX_ISSUANCE_WINDOW||deadline>cfg.start)revert InvalidIssuanceDeadline();
+        _authorizationWindow(validAfter,deadline);
+        if(deadline>cfg.start)revert InvalidIssuanceDeadline();
         if(issuing||bound||address(cfg.control)!=address(this)||
            V3QuorumSuccessorFixture(address(successor)).configuredGuard()!=address(this)||
            cfg.founder==address(wallet)||cfg.distributor==address(wallet)||
@@ -81,7 +82,7 @@ contract SafeQuorumReserveGuardFixture is SafeReserveGuardFixture {
     }
     function _policyCallAllowed(bytes4 selector,uint256 len) internal view override returns(bool){
         if(issuing)return false;
-        if(!bound)return (selector==this.issueSuccessor.selector&&len==356)||
+        if(!bound)return (selector==this.issueSuccessor.selector&&len==388)||
             (selector==this.invalidateIssuance.selector&&len==36);
         return super._policyCallAllowed(selector,len);
     }

@@ -80,7 +80,7 @@ contract SafeQuorumIssuanceTest {
     function _exec(bytes memory data,bytes memory sigs) private returns(bool){
         return wallet.execTransaction(address(guard),0,data,Enum.Operation.Call,0,0,0,address(0),payable(address(0)),sigs);
     }
-    function _data() private view returns(bytes memory){return abi.encodeCall(guard.issueSuccessor,(1,block.timestamp+1 hours,cfg));}
+    function _data() private view returns(bytes memory){return abi.encodeCall(guard.issueSuccessor,(1,block.timestamp,block.timestamp+1 hours,cfg));}
     function _issue() private {bytes memory data=_data();require(_exec(data,_sign(data,3)));}
     function _empty() private view {
         require(!successor.used()&&!guard.bound()&&!guard.issuing()&&!guard.transactionActive()&&address(successor.token())==address(0)&&wallet.nonce()==0);
@@ -92,7 +92,7 @@ contract SafeQuorumIssuanceTest {
         vm.expectRevert();successor.create(cfg);
         vm.expectRevert();successor.configureGuard(address(guard));
         vm.expectRevert();guard.bindBeforeIssuance();
-        vm.expectRevert();guard.issueSuccessor(1,block.timestamp+1 hours,cfg);
+        vm.expectRevert();guard.issueSuccessor(1,block.timestamp,block.timestamp+1 hours,cfg);
         _empty();
     }
     function testSetupFactoryCannotBeFrontRunOrReused() public {
@@ -149,6 +149,16 @@ contract SafeQuorumIssuanceTest {
         _issue();
         require(builder.attempted()&&builder.rejected()&&builder.rejection()==bytes4(keccak256("TransactionInProgress()")));
         require(wallet.nonce()==1&&guard.bound()&&!guard.transactionActive()&&successor.token().totalSupply()==SUPPLY);
+    }
+    function testIssuanceRejectsPrematureAndOverlongSignedWindows() public {
+        uint256 t=block.timestamp;
+        bytes memory early=abi.encodeCall(guard.issueSuccessor,(1,t+1 hours,t+2 hours,cfg));
+        bytes memory sigs=_sign(early,3);
+        vm.expectRevert();_exec(early,sigs);_empty();
+        bytes memory wide=abi.encodeCall(guard.issueSuccessor,(1,t,t+2 days,cfg));
+        sigs=_sign(wide,3);
+        vm.expectRevert();_exec(wide,sigs);_empty();
+        _issue();require(guard.bound());
     }
     function testExpiredIssuanceCannotExecute() public {
         bytes memory data=_data();bytes memory sigs=_sign(data,3);
