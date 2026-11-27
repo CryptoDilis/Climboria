@@ -54,7 +54,7 @@ socket.addEventListener('message',function joined(e){
  socket.addEventListener('message',e=>frames.push(JSON.parse(e.data)));
  move.onclick=()=>ui.move(1,0,true);
  attack.onclick=()=>ui.attack(peer);
- window.qa={id:p.id,transport,ui,frames,setPeer:id=>peer=id,
+ window.qa={id:p.id,transport,ui,frames,socketState:()=>socket.readyState,setPeer:id=>peer=id,
  sceneState(){root.updateMatrixWorld(true);return {attached:root.parent===scene,meshes,visible:root.visible,x:root.position.x,y:root.position.y,z:root.position.z,offset,ground:new T.Box3().setFromObject(root).min.y,triangles:renderer.info.render.triangles,hud}},
  dispose(){projection.close();renderer.dispose()},
 
@@ -151,8 +151,12 @@ try{
  await b.page.evaluate(()=>qa.ui.close());
  assert.equal((await b.state()).status,'closed');
  const closed=await b.scene();assert.equal(closed.visible,false);assert.equal(closed.triangles,0);assert.equal(closed.hud.controlsEnabled,false);
+ await b.page.waitForFunction(()=>qa.socketState()===WebSocket.CLOSED&&!qa.transport.canAct(),{},{timeout:10000});
+ assert.equal(await b.page.locator('#move').isDisabled(),true);
+ assert.equal(await b.page.locator('#attack').isDisabled(),true);
  await b.page.evaluate(()=>qa.dispose());
  await a.page.evaluate(()=>{qa.ui.close();qa.dispose()});
+ await a.page.waitForFunction(()=>qa.socketState()===WebSocket.CLOSED&&!qa.transport.canAct(),{},{timeout:10000});
  await a.context.close();await b.context.close();
  console.log('PASS: native Chromium desktop and touch workerd WebSockets drive actual Jarrell GLB transforms, HP, stamina, range denial and close');
 }finally{if(browser)await browser.close();await mf.dispose()}
