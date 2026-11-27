@@ -87,6 +87,54 @@ contract V3DeferredLegacyTest {
         vault.finalize(REVIEW);
         require(vault.closed()&&vault.burned()+vault.paid()==RESERVE&&asset.balanceOf(address(vault))==5&&asset.totalSupply()==SUPPLY-RESERVE+100);
     }
+    function testDuplicateIdentityRollsBackApprovedManifest() public {
+        ids.push("A");recipients.push(address(102));amounts.push(1);
+        bytes32 h=vault.manifestDigest(CAMPAIGN,101,ids,recipients,amounts);
+        control.schedule(vault,h,block.timestamp+7 days);
+        vm.warp(block.timestamp+2 days);
+        vm.expectRevert(V3DeferredLegacyFixture.InvalidManifest.selector);
+        vault.activate(CAMPAIGN,101,ids,recipients,amounts);
+        require(!vault.activated()&&vault.recipient("A")==address(0)&&vault.award("A")==0&&vault.allocated()==0);
+        (bytes32 retained,,,)=vault.pending();require(retained==h);
+        require(asset.balanceOf(address(vault))==RESERVE&&asset.totalSupply()==SUPPLY);
+    }
+    function testExactManifestEntryLimitAndDistinctClaims() public {
+        amounts[0]=1;
+        for(uint256 i=1;i<33;i++){
+            ids.push(bytes32(i));recipients.push(address(uint160(1000+i)));amounts.push(1);
+        }
+        bytes32 h=vault.manifestDigest(CAMPAIGN,33,ids,recipients,amounts);
+        control.schedule(vault,h,block.timestamp+7 days);
+        vm.warp(block.timestamp+2 days);
+        vm.expectRevert(V3DeferredLegacyFixture.InvalidManifest.selector);
+        vault.activate(CAMPAIGN,33,ids,recipients,amounts);
+        require(!vault.activated()&&vault.allocated()==0);
+        control.cancel(vault);ids.pop();recipients.pop();amounts.pop();
+        h=vault.manifestDigest(CAMPAIGN,32,ids,recipients,amounts);
+        control.schedule(vault,h,block.timestamp+7 days);vm.warp(block.timestamp+2 days);
+        vault.activate(CAMPAIGN,32,ids,recipients,amounts);
+        require(vault.activated()&&vault.allocated()==32);
+        for(uint256 i=0;i<32;i++){
+            vm.prank(recipients[i]);vault.claim(ids[i]);
+        }
+        require(vault.paid()==32&&asset.balanceOf(address(vault))==RESERVE-32&&asset.totalSupply()==SUPPLY);
+    }
+    function testOverBudgetManifestCannotPartiallyActivate() public {
+        ids.push("B");recipients.push(address(102));amounts.push(1);
+        schedule();vm.warp(block.timestamp+2 days);
+        vm.expectRevert(V3DeferredLegacyFixture.InvalidManifest.selector);activate();
+        require(!vault.activated()&&vault.recipient("A")==address(0)&&vault.award("B")==0&&vault.paid()==0);
+        control.cancel(vault);ids.pop();recipients.pop();amounts.pop();
+        ready();require(vault.allocated()==100);
+    }
+    function testDistinctIdsMayShareRecipientInCurrentSyntheticPolicy() public {
+        // Documents existing behavior, not approval of a real eligibility policy.
+        ids.push("B");recipients.push(A);amounts.push(100);
+        control.schedule(vault,vault.manifestDigest(CAMPAIGN,200,ids,recipients,amounts),block.timestamp+7 days);
+        vm.warp(block.timestamp+2 days);vault.activate(CAMPAIGN,200,ids,recipients,amounts);
+        vm.prank(A);vault.claim("A");vm.prank(A);vault.claim("B");
+        require(vault.paid()==200&&asset.balanceOf(A)==200&&asset.totalSupply()==SUPPLY);
+    }
     function testMainnetRejected() public {
         vm.chainId(8453);vm.expectRevert(V3DeferredLegacyFixture.InvalidConfig.selector);
         new V3DeferredLegacyFixture(IV3BurnableAsset(address(asset)),control);
