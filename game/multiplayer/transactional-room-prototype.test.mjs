@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createTransactionalRoomPrototype} from './transactional-room-prototype.mjs';
 import {createServerCollisionRegion} from './server-collision-region.mjs';
 import {createJarrellDryRegionPrototype} from './jarrell-dry-region-prototype.mjs';
+import {createJarrellPrivateCombatFixture,JARRELL_PRIVATE_COMBAT_FIXTURE} from './jarrell-private-combat-fixture.mjs';
 const roomId='test-room',A='session_1111111111111111',B='session_2222222222222222',C='session_3333333333333333';
 const X='account_1111111111111111',Y='account_2222222222222222';
 function deferred(){let resolve;const promise=new Promise(r=>{resolve=r});return {promise,resolve}}
@@ -162,4 +163,59 @@ test('authored dry terrain integration permits only verified combat outside Sanc
  assert.equal((await camp.attack(A,B)).reason,'target-out-of-range');
  assert.equal((await camp.readSnapshot(B)).snapshot.health,495);
  assert.equal(camp.reviewedForProduction,false);
+});
+
+test('authored park swing obstructs melee between close server-controlled players',async()=>{
+ const roomId='jarrell-park-obstruction-test',map=createJarrellDryRegionPrototype({
+  roomId,bounds:{minX:-200,maxX:-175,minZ:30,maxZ:50}
+ });
+ let now=40000;
+ const room=createTransactionalRoomPrototype({roomId,clock:()=>now,storage:fakeStorage(),
+  spawn:{x:-188,z:36.65},collision:map.collision,sampleWalkableGround:map.sampleWalkableGround});
+ await joinTwo(room);
+ let sequence=0;
+ async function walk(x,z,count){
+  for(let i=0;i<count;i++){
+   assert.ok((await room.input(B,{x,z,sequence:sequence++,sprint:false})).ok);
+   now+=100;assert.ok((await room.tick()).ok);
+  }
+ }
+ // Walk around the swing and its supporting post using server movement.
+ await walk(1,0,4);await walk(0,1,3);await walk(-1,0,4);
+ const a=(await room.readSnapshot(A)).snapshot,b=(await room.readSnapshot(B)).snapshot;
+ assert.ok(Math.abs(b.position.x+188)<1e-6);
+ assert.ok(Math.abs(b.position.z-39.35)<1e-6);
+ assert.ok(Math.hypot(a.position.x-b.position.x,a.position.y-b.position.y,a.position.z-b.position.z)<2.8);
+ assert.equal(map.collision.clearPath(a.position,b.position,roomId),false);
+ assert.equal((await room.attack(A,B)).reason,'blocked-or-unverified-melee-path');
+ assert.equal((await room.readSnapshot(B)).snapshot.health,500);
+ // Returning around the same obstacle restores a legitimate melee path.
+ await walk(1,0,4);await walk(0,-1,3);await walk(-1,0,4);
+ assert.equal((await room.attack(A,B)).health,495);
+});
+
+test('fixed authored camp fixture isolates checkpoints and constrains server movement',async()=>{
+ const {storage,create,at}=fixture();let now=40000;
+ const synthetic=create();await joinTwo(synthetic);
+ assert.equal((await synthetic.attack(A,B)).health,495);
+ const make=()=>createJarrellPrivateCombatFixture({storage,clock:()=>now});
+ assert.throws(()=>createJarrellPrivateCombatFixture({storage,roomId:'test-room'}));
+ assert.throws(()=>createJarrellPrivateCombatFixture({storage,spawn:{x:0,z:0}}));
+ const room=make();await joinTwo(room);
+ const initial=(await room.readSnapshot(B)).snapshot;
+ assert.equal(initial.roomId,JARRELL_PRIVATE_COMBAT_FIXTURE.roomId);
+ assert.equal(initial.health,500);assert.equal(initial.position.x,-200);assert.equal(initial.position.z,-170);
+ assert.equal(room.reviewedForProduction,false);
+ for(let i=0;i<20;i++){
+  assert.ok((await room.input(B,{x:1,z:0,sprint:true,sequence:i})).ok);
+  now+=100;assert.ok((await room.tick()).ok);
+ }
+ const moved=(await room.readSnapshot(B)).snapshot;
+ assert.ok(moved.position.x>-195&&moved.position.x<=-180.4+1e-6);
+ assert.ok((await room.disconnect(B)).ok);
+ const restarted=make();
+ const rejoined=await restarted.join({sessionId:C,accountId:Y});
+ assert.ok(rejoined.ok);assert.deepEqual(rejoined.snapshot.position,moved.position);
+ assert.equal(rejoined.snapshot.health,500);
+ assert.equal((await synthetic.readSnapshot(B)).snapshot.health,495);
 });

@@ -34,6 +34,7 @@ on:
       - "game/multiplayer/jarrell-cave-wall-sweep.test.mjs"
       - "game/multiplayer/jarrell-ceiling-geometry.mjs"
       - "game/multiplayer/jarrell-ceiling-geometry.test.mjs"
+      - "game/multiplayer/jarrell-private-combat-fixture.mjs"
       - "game/multiplayer/jarrell-dry-region-prototype.mjs"
       - "game/multiplayer/jarrell-dry-region-prototype.test.mjs"
       - "game/multiplayer/transactional-room-prototype.mjs"
