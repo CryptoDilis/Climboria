@@ -14,3 +14,7 @@ Verified 2026-11-27 (repository source only).
 3. Verify menu, Play, DEX and Launchpad links still behave as before; check focus visibility and mobile drawer.
 4. If blue grade tints the logo or skin excessively, tune only the CSS blend strength and gradient location. No layout, copy, or image replacement.
 5. Record live QA results before marking complete.
+
+## Correction — 2026-11-27
+
+User screenshot showed unwanted blue tint on the logo and heroine. Fix [`68b2a23`](https://github.com/CryptoDilis/Climboria/commit/68b2a23293cead95e773efbe061b7dd4ee0a9169) removes the full-image filter and full-frame color blend, restores the original hero overlay on desktop and mobile, and retains a localized lower-left landscape accent only on wide desktop viewports. Mobile and other aspect ratios use original artwork colors. Navbar and action bar palette retained. Verified identical HTML body and picture markup against pre-fix main; no unrelated task changed. Remaining: live screenshot QA to confirm the localized accent does not overlap foreground artwork at supported sizes and that the corrected commit is deployed.
