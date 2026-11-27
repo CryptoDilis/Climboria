@@ -292,6 +292,28 @@ contract SafeQuorumIssuanceTest {
         require(registry.consumedBy("CANCELLED")==address(replacement)&&previous.totalSpent()==0&&replacement.totalSpent()==10);
         require(successor.token().balanceOf(PAYEE)==10&&successor.token().totalSupply()==SUPPLY);
     }
+    function testQuorumRewardRevocationAndActivation() public {
+        _issue();
+        V3GovernedGameRewardFixture gaming=V3GovernedGameRewardFixture(successor.vaults(1));
+        require(address(gaming.custody())==address(guard)&&gaming.generation()==1);
+        vm.expectRevert();guard.revokeRewardSigner(1,1);
+        bytes memory data=abi.encodeCall(guard.revokeRewardSigner,(1,1));
+        bytes memory two=_sign(data,2);
+        vm.expectRevert();_exec(data,two);
+        require(wallet.nonce()==1&&gaming.generation()==1);
+        require(_exec(data,_sign(data,3)));
+        require(gaming.distributor()==address(0)&&gaming.generation()==2);
+        address candidate=address(0x9876);
+        data=abi.encodeCall(guard.scheduleRewardSigner,(1,2,candidate,block.timestamp,block.timestamp+1 hours));
+        require(_exec(data,_sign(data,3)));
+        data=abi.encodeCall(guard.activateRewardSigner,(1,2,1,candidate));
+        bytes memory early=_sign(data,3);
+        vm.expectRevert();_exec(data,early);
+        require(gaming.generation()==2);
+        vm.warp(block.timestamp+2 days);
+        require(_exec(data,_sign(data,3)));
+        require(gaming.distributor()==candidate&&gaming.generation()==3&&successor.token().totalSupply()==SUPPLY);
+    }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
         bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours));
