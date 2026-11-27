@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildLegacyEvidence,RESERVE} from './legacy-canonical-evidence.mjs';
+import {buildLegacyProofTree} from './legacy-sum-proof.mjs';
+import {buildBinaryLegacyTree} from './legacy-binary-proof.mjs';
 // Deterministic synthetic keys, not accounts selected from the live chain.
 const alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 function key(i){let n=(1n<<248n)+BigInt(i),s='';while(n){s=alphabet[Number(n%58n)]+s;n/=58n;}return s;}
@@ -47,4 +49,23 @@ test('unknown fields, empty manifests and reserved destination roles are rejecte
 test('multiple accounts may share owner or recipient; this does not authenticate ownership',()=>{
  const x=fixture(2);x.entries[1].sourceOwner=x.entries[0].sourceOwner;x.entries[1].recipient=x.entries[0].recipient;
  const a=buildLegacyEvidence(x);assert.equal(a.allocated,'2');assert.equal(a.sourceAuthenticated,false);
+});
+
+test('exact field identity rejects comma-joined key ambiguity, inherited fields and accessors',()=>{
+ const x=fixture(1),row=x.entries[0];
+ const {award,evidenceHash,...rest}=row;
+ x.entries[0]=Object.assign(Object.create({award,evidenceHash}),rest,{'award,evidenceHash':true});
+ for(const build of [buildLegacyEvidence,buildLegacyProofTree,buildBinaryLegacyTree])assert.throws(()=>build(x),/field/);
+ x.entries[0]=row;Object.defineProperty(row,'award',{enumerable:true,get(){throw Error('accessor executed');}});
+ assert.throws(()=>buildLegacyEvidence(x),/field/);
+});
+test('all three commitments reject sparse, decorated and accessor-backed row lists',()=>{
+ for(const build of [buildLegacyEvidence,buildLegacyProofTree,buildBinaryLegacyTree]){
+  const sparse=fixture(2);delete sparse.entries[0];
+  assert.throws(()=>build(sparse),/dense entry list/);
+  const decorated=fixture(1);decorated.entries.extra=true;
+  assert.throws(()=>build(decorated),/dense entry list/);
+  const accessor=fixture(1);Object.defineProperty(accessor.entries,'0',{enumerable:true,get(){throw Error('accessor executed');}});
+  assert.throws(()=>build(accessor),/dense entry list/);
+ }
 });

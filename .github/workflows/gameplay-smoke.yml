@@ -8,6 +8,8 @@ on:
       - "assets/characters/**"
       - ".github/scripts/game-smoke.mjs"
       - ".github/scripts/game-authored-browser-smoke.mjs"
+      - ".github/scripts/game-authored-browser-local-worker.mjs"
+      - ".github/scripts/game-authored-browser-runtime-smoke.mjs"
       - ".github/scripts/game-authored-browser-native-glb-worker.mjs"
       - ".github/scripts/game-authored-browser-native-glb-smoke.mjs"
       - ".github/workflows/gameplay-smoke.yml"
@@ -18,6 +20,8 @@ on:
       - "assets/characters/**"
       - ".github/scripts/game-smoke.mjs"
       - ".github/scripts/game-authored-browser-smoke.mjs"
+      - ".github/scripts/game-authored-browser-local-worker.mjs"
+      - ".github/scripts/game-authored-browser-runtime-smoke.mjs"
       - ".github/scripts/game-authored-browser-native-glb-worker.mjs"
       - ".github/scripts/game-authored-browser-native-glb-smoke.mjs"
       - ".github/workflows/gameplay-smoke.yml"
@@ -84,12 +88,15 @@ jobs:
       - name: Verify isolated authored combat browser controls
         timeout-minutes: 4
         run: node .github/scripts/game-authored-browser-smoke.mjs
-      - name: Verify native browser GLB combat projection
-        timeout-minutes: 5
+      - name: Verify native browser authored combat sockets
+        timeout-minutes: 4
         run: |
           npm ci --prefix .github/game-preview-runtime
-          if [ ! -e .github/node_modules ]; then ln -s game-preview-runtime/node_modules .github/node_modules; fi
-          node .github/scripts/game-authored-browser-native-glb-smoke.mjs
+          ln -s game-preview-runtime/node_modules .github/node_modules
+          node .github/scripts/game-authored-browser-runtime-smoke.mjs
+      - name: Verify native browser GLB combat projection
+        timeout-minutes: 5
+        run: node .github/scripts/game-authored-browser-native-glb-smoke.mjs
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
         run: |

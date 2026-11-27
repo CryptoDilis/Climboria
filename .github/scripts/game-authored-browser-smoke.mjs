@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
+import {resolve} from 'node:path';
 import {chromium} from 'playwright';
 // Test-only DOM and deterministic socket double. The independent workerd
 // workflow verifies the real socket; this does not claim a live browser game.
 const origin='http://127.0.0.1:4173';
 const html=`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">
 <button id="move">Move</button><button id="attack">Attack</button><output id="state"></output><div id="scene"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="/__ci/three.js"></script>
+<script src="/__ci/GLTFLoader.js"></script>
 <script type="module">
 import {attachAuthoredLocalCombatTransport} from '/game/multiplayer/preview-combat-client-transport.mjs';
 import {bindAuthoredLocalCombatControls} from '/game/multiplayer/authored-local-combat-controls.mjs';
@@ -17,7 +18,7 @@ const renderer=new T.WebGLRenderer({antialias:false});renderer.setSize(320,200);
 document.querySelector('#scene').append(renderer.domElement);
 scene.add(new T.HemisphereLight(0xffffff,0x777777,1.5));
 const gltf=await new T.GLTFLoader().loadAsync('/assets/characters/Climboria_Jarrell.glb');
-const root=gltf.scene;let meshes=0;root.traverse(o=>{if(o.isMesh)meshes++});
+const root=new T.Group();root.add(gltf.scene);let meshes=0;root.traverse(o=>{if(o.isMesh)meshes++});
 const height=new T.Box3().setFromObject(root).getSize(new T.Vector3()).y;
 if(!Number.isFinite(height)||height<=0||!meshes)throw Error('Missing actual Jarrell GLB geometry');
 root.scale.setScalar(1.9/height);root.updateMatrixWorld(true);
@@ -27,7 +28,7 @@ let hud;
 const projection=createAuthoredLocalCharacterProjection({root,footOffset:offset,renderHud:value=>hud=value});
 function renderCharacter(frame){
  projection.render(frame);
- if(root.visible){camera.position.set(root.position.x+4,root.position.y+3,root.position.z+6);camera.lookAt(root.position.x,root.position.y+.9,root.position.z)}
+ if(root.visible){camera.position.set(root.position.x+4,root.position.y+3,root.position.z+6);camera.lookAt(root.position.x,frame.snapshot.position.y+.9,root.position.z)}
  renderer.render(scene,camera);
 }
 const id='s_'+'1'.repeat(32),peer='s_'+'2'.repeat(32);
@@ -63,8 +64,14 @@ try{
   const context=await browser.newContext(mobile?{viewport:{width:390,height:844},isMobile:true,hasTouch:true}:{viewport:{width:1280,height:800}});
   try{
    await context.route(origin+'/__authored_combat_ci__',route=>route.fulfill({contentType:'text/html',body:html}));
-   const page=await context.newPage();await page.goto(origin+'/__authored_combat_ci__');
-   await page.waitForFunction(()=>!!window.qa,{},{timeout:45000});
+   for(const [url,path] of [['/__ci/three.js','node_modules/three/build/three.min.js'],['/__ci/GLTFLoader.js','node_modules/three/examples/js/loaders/GLTFLoader.js']]){
+    await context.route(origin+url,route=>route.fulfill({path:resolve(path),contentType:'text/javascript'}));
+   }
+   const page=await context.newPage();const errors=[];
+   page.on('pageerror',error=>errors.push(error.message.slice(0,300)));
+   await page.goto(origin+'/__authored_combat_ci__');
+   try{await page.waitForFunction(()=>!!window.qa,{},{timeout:45000})}
+   catch(error){console.error('Jarrell GLB initialization failed',JSON.stringify({mobile,errors}));throw error}
    const sceneState=()=>page.evaluate(()=>qa.sceneState());
    const initial=await sceneState();
    assert.equal(initial.attached,true);assert.ok(initial.meshes>0&&initial.triangles>0);

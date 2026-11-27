@@ -1,9 +1,23 @@
 # Climboria Game Development Record
 
+## COMBINED GLB TEST BRANCH RECONCILIATION — 2026-11-27 PHT
+
+- #930 reconciled onto #928 head a4e6bb4c2894d6530bf6bc5c6bc2f810c041ba08. Preserve existing native browser sockets, isolated actual GLB smoke, combined native GLB smoke, pinned Three.js and all development records. Both combined and isolated GLB tests still unexecuted; no production change. Parent CI not reset.
+- EXACT NEXT: verify and merge #925, reconcile/retarget #928 and verify CI, then reconcile/retarget #930 and verify all smoke steps before merge. No public PvP or deployment.
+
+---
+
 ## COMBINED NATIVE SOCKET AND JARRELL GLB ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
 
 - Stacked on #928 head 30472aaa7c2b5877224ad0665c35b8509ebb8b6e. Independent CI-only workerd entry 387dcb112ed0f725311884733605ea2caf92d34f uses loopback port 4175, explicit same-origin upgrade and one-use ticket checks, no exposed ticket/tick routes. Native browser smoke 779555d2524e7644ec692cd52bdb7206f77837f3 combines real local DO WebSockets and actual checked-in Jarrell GLB on desktop/touch Chromium; checks rendered geometry, ground fit, committed HP, input without speculative movement, committed server position and stamina, range denial and closed scene. Only three exact asset subresources are fulfilled locally; actual navigation and socket handshake are not intercepted. Synthetic account IDs and local deterministic clock only. CI workflow 2f6ac562233d838bb8543ea04ef80eb43ed95372 adds pinned Three.js r128 install and bounded independent smoke, no browser security bypass or public route. Source only, NOT executed, no physical Android FPS or pixel visual acceptance.
 - EXACT NEXT: finish and merge #922, #925, #928 in dependency order with fresh CI per head. Reconcile this child workflow with #922 retaining the separate native socket check, safe dependency install/symlink and both path filters; retarget to main and run fresh CI. Inspect actual combined native GLB outcome and repair without weakening acceptance. No public game/PvP, deployment, inventory or loot changes.
+
+---
+
+## GLB BROWSER BRANCH RECONCILIATION — 2026-11-27 PHT
+
+- #928 incorporates reconciled #925 head 1c19cf97595e27407bd3e2d65dca6db7248e436e (4/5 fresh CI passed; Gameplay 45947412023 running when checked), including merged native browser #922. Preserve both native socket and isolated GLB smoke, pinned Three.js and all historical records. Parent CI unchanged; GLB test unexecuted.
+- EXACT NEXT: after #925 fresh CI green and squash merge, reconcile child onto main, retarget and verify fresh Validate/Gameplay before merge. Then reconcile #930. No public PvP or deployment.
 
 ---
 
@@ -14,12 +28,60 @@
 
 ---
 
+## NATIVE COMBAT BROWSER MERGED; 3D ADAPTER RECONCILED — 2026-11-27 PHT
+
+- #922 merged at `ee52bf50460324dd3d00163701750bb13ce9fa1d`, exact head `f10611b3945666f5f2f72e54e110de67efe86f5e`: [Validate 45946606206](https://github.com/CryptoDilis/Climboria/actions/runs/45946606206) and [Gameplay 45946606208](https://github.com/CryptoDilis/Climboria/actions/runs/45946606208) SUCCESS; native browser socket step and full desktop/mobile gameplay passed. Main drift was unrelated; no production PvP or 3D integration.
+- #925 prior exact head `90caf5a5f8b1ff8e66e15a8761006955ed2234a6` all five SUCCESS: Authority 45946244223, Gateway 45946244151, Runtime 45946244140, Validate 45946244105, Gameplay 45946244195. Reconcile on #922 merge preserving both Game records and independent adapter code; require fresh five checks before merge. Next reconcile #928 (local pinned Three.js and dedicated actual GLB root) and #930 (native socket + GLB) in order. No cloud enablement or loot. Screenshot artifacts not visually inspected in this cycle.
+
+---
+
 ## AUTHORED 3D CHARACTER SNAPSHOT PROJECTION — 2026-11-27 PHT (PROPOSED)
 
 - #922 head 68e4f84e60912d19c41f486a3daf9cae86ddd124: Validate 45945502523 SUCCESS; Gameplay 45945502508 job 140329210856 native browser WebSocket step SUCCESS, existing Jarrell desktop/mobile smoke running. No final merge claim.
 - Reviewed game/play.html blob 10d85bb988122339a895fc90496487b61cf7efa3: requestVisualPunch deducts local stamina, hurt performs local death/loot/teleport, update mutates local locomotion/stamina and places assetHero at P.y-1.75+assetHeroGroundOffset. Do not attach server snapshots to P while these local writers remain active.
 - Independent branch from main: render-only adapter fa1c79e588eb01d2f013fbb7b03d27b476b9b47b maps validated bounded snapshot coordinates to a dedicated mesh root using ground height plus measured foot offset, renders HP/stamina and disables controls while downed/stale. Unit regression 7b52327381a78c21b81a9414c17ee3d123b1344d, authority workflow 5e3a5010c62a40d8f289c8a436328a085e40d8ee. No execution evidence yet; no GLB scene mounted or production game modified.
 - EXACT NEXT: verify #922 terminal Gameplay CI and merge; verify this independent adapter PR, resolve concurrent documentation changes without dropping history, then mount a dedicated actual GLB root in the isolated browser harness and test server-driven render transforms. Keep public game, save, loot and presence separate; no public combat activation.
+
+---
+
+## NATIVE BROWSER COMBAT ACCEPTANCE — GREEN PRIOR HEAD, RECONCILED — 2026-11-27 PHT
+
+- [PR #922](https://github.com/CryptoDilis/Climboria/pull/922) exact prior head `68e4f84e60912d19c41f486a3daf9cae86ddd124`: [Validate 45945502523](https://github.com/CryptoDilis/Climboria/actions/runs/45945502523) and [Gameplay 45945502508](https://github.com/CryptoDilis/Climboria/actions/runs/45945502508) SUCCESS. Job 140329210856 explicitly passed isolated browser controls, native authored combat sockets and existing desktop/mobile gameplay smoke; screenshots uploaded, not visually inspected in this cycle. No browser security bypass, real-account auth, cloud deployment or production 3D integration.
+- Reconciled onto main `b64f5febbbc7988f49fa393b7fce657a9cf341a4` with two-parent commit `c3bd4f5b26df47eded88a8397ede90f91a3fe66b`; main drift was entirely unrelated Base/DEX/homepage/whitepaper work, no overlapping Game paths. Retained all four PR files and current main tree. Fresh exact-head CI required after this record update.
+- Independent [PR #925](https://github.com/CryptoDilis/Climboria/pull/925) at `90caf5a5f8b1ff8e66e15a8761006955ed2234a6` had 4/5 green (Authority 45946244223, Gateway 45946244151, Runtime 45946244140, Validate 45946244105); Gameplay 45946244195 pending when checked. It is render-only, not an actual GLB scene mount.
+- EXACT NEXT: verify fresh #922 Validate/Gameplay exact head and merge only green; reconcile #925 with merged main retaining both Game records and independent changes, re-run its five checks; then actual dedicated GLB root browser acceptance. No public combat enablement, production deployment, or loot work.
+
+---
+
+## NATIVE BROWSER LOCAL NETWORK ACCESS COUNTER-FIX — 2026-11-27 PHT
+
+- #922 exact head e1cdfb262910eddfc1292f3d4b79c521b5dfb102: Validate 45945239729 SUCCESS; Gameplay 45945239701 FAILURE, job 140328326685. Simulated controls passed. Chromium explicitly reported net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS before the native handshake; no page errors, close 1006. Main gameplay smoke skipped.
+- Counter-fix 5e0448b84537c71dd62f528704a4cd456767bc32 and 5e5af724e67d9e80751c18d7178d225cdce30aa7 serve a real HTTP document and three allowlisted client modules from the actual loopback workerd listener. No Playwright synthetic navigation response, no browser security feature disabled. Test ticket passed in URL fragment, removed before socket creation; no ticket issuance or tick route exposed. Explicit CI flag, same-origin upgrade guard, one-use ticket validation, no-store and CSP retained. Hypothesis: synthetic navigation lacked proper local address-space attribution; verify with fresh CI rather than claim resolved.
+- EXACT NEXT: verify exact-head Validate and Gameplay CI, including both browser clients and existing desktop/mobile game smoke; if local network access still blocks, inspect browser permission/address-space evidence with no global security bypass. No public PvP or deployment.
+
+---
+
+## NATIVE BROWSER SAME-ORIGIN COUNTER-FIX — 2026-11-27 PHT
+
+- #922 head afde76bce23dfa920efc635d81b741f314e5312b: Validate 45944969801 SUCCESS; Gameplay 45944969778 FAILURE, job 140327521654. Simulated browser control test and invalid-ticket 401 probe passed. Native browser admission diagnostic: handshake [], pageErrors [], socketStatus closed:1006. Exact root cause still unconfirmed; no browser admission, main gameplay step skipped.
+- Counter-fix 6e3303b0f688b50b1e823d7a76f74a19237349f1 and 95326ee3df95c4b31fc8fcad28e15eab9c59801b bind local Worker and browser page to the same fixed loopback origin (127.0.0.1:4174), fulfill only three explicit checked-in module routes, disable browser proxy use for this isolated local test, and collect sanitized console/socket-error evidence. Private ticket and origin checks remain fail closed; no cloud configuration or public game changes.
+- EXACT NEXT: verify latest exact-head Validate and Gameplay CI; if native socket fails, inspect the expanded diagnostics and compare direct native Node WebSocket handshake to the Chromium path. Do not merge or enable production until verified.
+
+---
+
+## NATIVE BROWSER ADMISSION COUNTER-FIX — 2026-11-27 PHT
+
+- #922 exact head e3ed01c08a9a43fdc56a99e417d595756850b4a5: Validate 45944747574 SUCCESS; Gameplay 45944747565 FAILURE, job 140326758849. Existing simulated desktop/touch browser controls passed; native browser admission timed out in player() at line 56 before window.qa was installed. Main desktop/mobile gameplay smoke skipped. Exact underlying handshake cause not established by original logs.
+- Counter-fix ffa4d71683325dc17634d4b8cde8b74230af9b8d preserves the original native upgrade request when forwarding to the private DO, with normalized protocol header and unchanged loopback/origin/ticket gates. Diagnostic test 4029fb204b6abad75bfb5d64c75c4d7eff1508a2 checks that an invalid ticket reaches 401 validation, records only handshake status codes, sanitized browser errors and socket state on timeout. No credentials logged.
+- EXACT NEXT: inspect fresh exact-head CI, confirm native desktop/touch sockets and gameplay smoke both succeed; if failed, use handshake diagnostic to determine cause and apply targeted fix. No merge/deployment/public PvP until verified.
+
+---
+
+## NATIVE BROWSER AUTHORED COMBAT — 2026-11-27 PHT (PROPOSED)
+
+- Parent #919 merged at f05fcbeef1e103ac7f96cc0c960cd4b6f36b3fd7; exact head 89211d04f983b2af58339f4cd80edc05cf8ada76: Validate 45943943482 and Gameplay 45943943513 SUCCESS.
+- CI-only loopback Worker f4af792b1c88b4de4644eaec93262f907de6c409 exposes only native WebSocket upgrades under explicit CI flag and local origin. Ticket issuance/ticks stay private DO test calls. Browser smoke a2513f4b518d7efa0e617be3b5322940bf8d16b8 launches desktop and touch Chromium with real local workerd sockets, actual client transport/control adapter, committed target HP, sprint movement, out-of-range melee denial and close. New code not executed. No live route, 3D character rendering, real account auth or deployment.
+- EXACT NEXT: verify reconciled #922 fresh CI. Then review bounded 3D character render/input integration without production activation.
 
 ---
 

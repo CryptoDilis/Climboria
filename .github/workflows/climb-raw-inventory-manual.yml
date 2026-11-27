@@ -1,0 +1,38 @@
+name: CLIMB Raw Holder Inventory - Manual Read-only
+# Main only; never expose RPC secrets to PR code.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: climb-raw-holder-inventory
+  cancel-in-progress: false
+jobs:
+  collect:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify offline collector regressions
+        run: node --test token/climb-bridge/legacy-raw-inventory-collector.test.mjs
+      - name: Collect sanitized exact-slot candidate only
+        env:
+          CLIMB_SOLANA_RPC_A_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL }}
+          CLIMB_SOLANA_RPC_B_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL_SECONDARY }}
+          CLIMB_SOLANA_MAINNET_GENESIS_HASH: ${{ vars.CLIMBORIA_SOLANA_EXPECTED_GENESIS_HASH }}
+        run: |
+          set -euo pipefail
+          node token/climb-bridge/legacy-raw-inventory-cli.mjs > "$RUNNER_TEMP/climb-raw-inventory.json"
+          cat "$RUNNER_TEMP/climb-raw-inventory.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-raw-inventory-candidate
+          path: ${{ runner.temp }}/climb-raw-inventory.json
+          retention-days: 7
+          if-no-files-found: error
