@@ -1,0 +1,1569 @@
+CLIMB V3 SUCCESSOR SOURCE REVIEW INPUT — TEST ONLY / NO_GO
+Frozen project commit: cb1d7c05a439009893ac2e0cf0d80868555d3d14
+Source copies retrieved with the GitHub connector at the exact commit. File separators are editorial; source text is copied without intentional edits. This bundle is not an audit, build or approval. Upstream Safe and OpenZeppelin dependencies are separately pinned in foundry.toml and CI; see dependency links in the review instructions.
+
+===== FILE: base/safe-custody/foundry.toml | Git blob: a7505e3e5bdebea5e0b4b53ad9f83f43f5be2e40 =====
+[profile.default]
+src = "src"
+test = "test"
+libs = ["lib"]
+solc_version = "0.8.19"
+optimizer = true
+optimizer_runs = 200
+allow_paths = ["../v3-testnet"]
+remappings = ["safe-contracts/=lib/safe-contracts/contracts/", "openzeppelin-contracts/=lib/openzeppelin-contracts/", "v3-src/=../v3-testnet/src/"]
+
+===== END FILE =====
+
+===== FILE: base/safe-custody/src/SafeEpochGuardFixture.sol | Git blob: 75348d025fe584d9fd6dfc9c7778c2c3ada906c5 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {Safe} from "safe-contracts/Safe.sol";
+import {SafeProxy} from "safe-contracts/proxies/SafeProxy.sol";
+import {Enum} from "safe-contracts/common/Enum.sol";
+import {BaseGuard} from "safe-contracts/base/GuardManager.sol";
+
+interface ITestSafeProxy { function masterCopy() external view returns(address); }
+
+/// @notice Test-only, rotation-only custody boundary. Cannot spend or forward assets.
+/// Not independently reviewed, no recovery below quorum, do not fund.
+contract SafeEpochGuardFixture is BaseGuard {
+    error InvalidConfig();
+    error Unauthorized();
+    error Forbidden();
+    error NotReady();
+    uint256 public constant DELAY=2 days;
+    uint256 public constant WINDOW=7 days;
+    uint256 private constant GUARD_SLOT=0x4a204f620c8c5ccdca3fd54d003badd85ba500436a431f0cbda4f558c93c34c8;
+    uint256 private constant FALLBACK_SLOT=0x6c9a6c4a39284e37ed1cf53d337577d14212a4870fb976a4366c693b939918d5;
+    bytes4 private constant SWAP=bytes4(keccak256("swapOwner(address,address,address)"));
+    Safe public immutable wallet;
+    address public immutable singleton;
+    bytes32 public immutable proxyHash;
+    bytes32 public immutable singletonHash;
+    uint256 public epoch=1;
+    struct Rotation { bytes32 digest; address oldOwner; address newOwner; uint256 readyAt; uint256 expiresAt; }
+    Rotation public pending;
+    bool private rotating;
+    bool public transactionActive;
+    event RotationScheduled(uint256 indexed epoch,bytes32 indexed digest,uint256 readyAt,uint256 expiresAt);
+    event RotationCancelled(uint256 indexed epoch,bytes32 indexed digest);
+    event Rotated(uint256 indexed epoch,address indexed oldOwner,address indexed newOwner);
+
+    constructor(Safe account,address implementation){
+        if(block.chainid!=84532||address(account).code.length==0||implementation.code.length==0||
+           ITestSafeProxy(address(account)).masterCopy()!=implementation) revert InvalidConfig();
+        wallet=account;singleton=implementation;
+        proxyHash=address(account).codehash;singletonHash=implementation.codehash;
+    }
+    modifier onlyWallet(){if(msg.sender!=address(wallet))revert Unauthorized();_;}
+    function threshold() external view returns(uint256){validateConfig();return wallet.getThreshold();}
+    function memberCount() external view returns(uint256){validateConfig();return wallet.getOwners().length;}
+    function isMember(address a) external view returns(bool){validateConfig();return wallet.isOwner(a);}
+    function validateConfig() public view {
+        if(block.chainid!=84532||address(wallet).codehash!=proxyHash||singleton.codehash!=singletonHash||
+           ITestSafeProxy(address(wallet)).masterCopy()!=singleton||wallet.getThreshold()!=3||
+           wallet.getOwners().length!=5||abi.decode(wallet.getStorageAt(GUARD_SLOT,1),(address))!=address(this)||
+           abi.decode(wallet.getStorageAt(FALLBACK_SLOT,1),(address))!=address(0)) revert InvalidConfig();
+        (address[] memory modules,address next)=wallet.getModulesPaginated(address(1),1);
+        if(modules.length!=0||next!=address(1))revert InvalidConfig();
+    }
+    function _eligibleReplacement(address oldOwner,address newOwner) private view returns(bool){
+        return wallet.isOwner(oldOwner)&&!wallet.isOwner(newOwner)&&newOwner!=address(0)&&newOwner!=address(1)&&
+            newOwner!=address(wallet)&&newOwner!=address(this)&&newOwner.code.length==0&&_rotationOwnerAllowed(newOwner);
+    }
+    function scheduleRotation(uint256 expectedEpoch,address prev,address oldOwner,address newOwner) external onlyWallet {
+        validateConfig();
+        if(expectedEpoch!=epoch||rotating||(pending.digest!=0&&block.timestamp<pending.expiresAt)||
+           !_eligibleReplacement(oldOwner,newOwner))revert Forbidden();
+        address[] memory owners=wallet.getOwners();bool valid;
+        for(uint256 i=0;i<owners.length;i++){
+            if(owners[i]==oldOwner&&prev==(i==0?address(1):owners[i-1]))valid=true;
+        }
+        if(!valid)revert Forbidden();
+        bytes32 digest=keccak256(abi.encodeWithSelector(SWAP,prev,oldOwner,newOwner));
+        pending=Rotation(digest,oldOwner,newOwner,block.timestamp+DELAY,block.timestamp+DELAY+WINDOW);
+        emit RotationScheduled(epoch,digest,pending.readyAt,pending.expiresAt);
+    }
+    function cancelRotation(uint256 expectedEpoch) external onlyWallet {
+        validateConfig();
+        bytes32 d=pending.digest;
+        if(expectedEpoch!=epoch||d==0||rotating)revert Forbidden();
+        delete pending;emit RotationCancelled(epoch,d);
+    }
+    function checkTransaction(address to,uint256 value,bytes memory data,Enum.Operation operation,
+        uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address payable refundReceiver,
+        bytes memory,address) external override onlyWallet {
+        if(transactionActive||value!=0||operation!=Enum.Operation.Call||safeTxGas!=0||baseGas!=0||gasPrice!=0||
+           gasToken!=address(0)||refundReceiver!=address(0))revert Forbidden();
+        transactionActive=true;
+        _checkCall(to,data);
+    }
+    function _rotationOwnerAllowed(address) internal view virtual returns(bool){return true;}
+    function _policyCallAllowed(bytes4,uint256) internal view virtual returns(bool){return false;}
+    function _checkCall(address to,bytes memory data) private {
+        validateConfig();
+        if(rotating||data.length<4)revert Forbidden();
+        bytes4 selector=bytes4(data);
+        if(to==address(this)){
+            if((selector==this.scheduleRotation.selector&&data.length==132)||
+               (selector==this.cancelRotation.selector&&data.length==36)||_policyCallAllowed(selector,data.length))return;
+            revert Forbidden();
+        }
+        if(to!=address(wallet)||selector!=SWAP||data.length!=100)revert Forbidden();
+        Rotation memory p=pending;
+        if(p.digest==0||p.digest!=keccak256(data)||block.timestamp<p.readyAt||block.timestamp>=p.expiresAt)revert NotReady();
+        // A scheduled address may acquire code or cease to satisfy policy during the delay.
+        if(!_eligibleReplacement(p.oldOwner,p.newOwner))revert Forbidden();
+        rotating=true;
+    }
+    function checkAfterExecution(bytes32,bool success) external override onlyWallet {
+        if(!transactionActive||!success)revert Forbidden();
+        validateConfig();
+        if(rotating){
+            Rotation memory p=pending;
+            if(wallet.isOwner(p.oldOwner)||!wallet.isOwner(p.newOwner)||p.newOwner.code.length!=0||!_rotationOwnerAllowed(p.newOwner))revert InvalidConfig();
+            rotating=false;delete pending;epoch++;
+            emit Rotated(epoch,p.oldOwner,p.newOwner);
+        }
+        transactionActive=false;
+    }
+}
+
+/// @dev Used exclusively by the factory as the Safe setup delegatecall target.
+/// Calls the proxy itself, satisfying Safe self-authorization without exposing
+/// a post-setup public initializer or retaining any authority in the helper.
+contract SafeGuardBootstrapFixture {
+    function install(address guard) external {
+        Safe(payable(address(this))).setGuard(guard);
+    }
+}
+
+/// @notice Test-only factory uses freshly compiled actual pinned Safe source.
+/// Proxy initialization and guard installation occur in one transaction.
+contract GuardedSafeFactoryFixture {
+    error InvalidConfig();
+    Safe public immutable singleton;
+    SafeGuardBootstrapFixture public immutable bootstrap;
+    constructor(){
+        if(block.chainid!=84532)revert InvalidConfig();
+        singleton=new Safe();bootstrap=new SafeGuardBootstrapFixture();
+    }
+    function create(address[] calldata owners) external returns(Safe wallet,SafeEpochGuardFixture guard){
+        if(block.chainid!=84532||owners.length!=5)revert InvalidConfig();
+        for(uint256 i=0;i<owners.length;i++)if(owners[i].code.length!=0)revert InvalidConfig();
+        wallet=Safe(payable(address(new SafeProxy(address(singleton)))));
+        guard=new SafeEpochGuardFixture(wallet,address(singleton));
+        wallet.setup(owners,3,address(bootstrap),abi.encodeCall(bootstrap.install,(address(guard))),address(0),address(0),0,payable(address(0)));
+        guard.validateConfig();
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/safe-custody/src/SafeQuorumIssuanceFixture.sol | Git blob: 53f3d8b69f932babfc3b63d5d128260da366f486 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {Safe} from "safe-contracts/Safe.sol";
+import {SafeProxy} from "safe-contracts/proxies/SafeProxy.sol";
+import {SafeGuardBootstrapFixture} from "./SafeEpochGuardFixture.sol";
+import {SafeReserveGuardFixture} from "./SafeReserveGuardFixture.sol";
+import {V3AtomicSuccessorFixture,V3SuccessorTestToken,V3SuccessorConfig} from "v3-src/V3AtomicSuccessorFixture.sol";
+import {V3DeferredLiquidityFixture} from "v3-src/V3DeferredLiquidityFixture.sol";
+
+interface IQuorumBindingFixture {
+    function successor() external view returns(V3AtomicSuccessorFixture);
+    function bindBeforeIssuance() external;
+    function bound() external view returns(bool);
+}
+/// @notice Test-only factory. A fixed Safe setup factory configures one guard.
+/// Actual Safe quorum must authorize exact creation payload via that guard.
+contract V3QuorumSuccessorFixture is V3AtomicSuccessorFixture {
+    address public immutable guardFactory;
+    bytes32 public immutable guardFactoryHash;
+    address public configuredGuard;
+    bytes32 public configuredGuardHash;
+    constructor(address setupFactory){
+        if(setupFactory.code.length==0)revert InvalidConfig();
+        guardFactory=setupFactory;guardFactoryHash=setupFactory.codehash;
+    }
+    function configureGuard(address guard) external {
+        if(msg.sender!=guardFactory||guardFactory.codehash!=guardFactoryHash||configuredGuard!=address(0)||used||guard.code.length==0||
+           address(IQuorumBindingFixture(guard).successor())!=address(this))revert InvalidConfig();
+        configuredGuard=guard;configuredGuardHash=guard.codehash;
+    }
+    function create(V3SuccessorConfig calldata cfg) external override returns(V3SuccessorTestToken asset){
+        if(guardFactory.codehash!=guardFactoryHash||msg.sender!=configuredGuard||msg.sender.codehash!=configuredGuardHash||
+           address(cfg.control)!=configuredGuard)revert InvalidConfig();
+        return _create(cfg);
+    }
+    function _beforeIssue() internal override {
+        IQuorumBindingFixture guard=IQuorumBindingFixture(configuredGuard);
+        guard.bindBeforeIssuance();
+        if(!guard.bound())revert InvalidConfig();
+    }
+}
+/// @notice Actual Safe quorum -> zero-supply creation -> binding -> issuance,
+/// all inside one transaction; failure reverts every step. No production asset.
+contract SafeQuorumReserveGuardFixture is SafeReserveGuardFixture {
+    bool public issuing;
+    event QuorumIssued(address indexed token,bytes32 indexed configHash);
+    constructor(Safe wallet_,address implementation,V3QuorumSuccessorFixture factory_)
+        SafeReserveGuardFixture(wallet_,implementation,factory_){}
+    function issueSuccessor(uint256 expected,V3SuccessorConfig calldata cfg) external onlyWallet {
+        _current(expected);
+        if(issuing||bound||address(cfg.control)!=address(this)||
+           V3QuorumSuccessorFixture(address(successor)).configuredGuard()!=address(this)||
+           cfg.founder==address(wallet)||cfg.distributor==address(wallet)||
+           cfg.liquidity.custody==address(wallet)||cfg.liquidity.custody==address(this))revert InvalidConfig();
+        issuing=true;
+        V3SuccessorTestToken t=successor.create(cfg);
+        if(!bound||address(t)!=address(asset)||!t.issued()||t.totalSupply()!=t.INITIAL_SUPPLY())revert InvalidConfig();
+        uint256[7] memory expectedAmounts=[uint256(17777777760000),311111110800000,222222222000000,133333333200000,88888888800000,106666666560000,8888888880000];
+        for(uint256 i=0;i<7;i++)if(t.balanceOf(destinations[i])!=expectedAmounts[i])revert InvalidConfig();
+        if(t.balanceOf(address(wallet))!=0||t.balanceOf(address(this))!=0||t.balanceOf(address(successor))!=0||
+           t.balanceOf(founder)!=0||t.balanceOf(distributor)!=0)revert InvalidConfig();
+        issuing=false;emit QuorumIssued(address(t),keccak256(abi.encode(cfg)));
+    }
+    function bindBeforeIssuance() external {
+        if(msg.sender!=address(successor)||!issuing||bound)revert Unauthorized();
+        _bind(false);
+        // The liquidity destination must not be a reserve vault or known role.
+        address lp=V3DeferredLiquidityFixture(destinations[2]).lpCustody();
+        if(lp==founder||lp==distributor||lp==address(this)||lp==address(wallet)||lp==address(successor)||wallet.isOwner(lp))revert InvalidConfig();
+        for(uint256 i=0;i<7;i++)if(lp==destinations[i])revert InvalidConfig();
+    }
+    function _rotationOwnerAllowed(address a) internal view override returns(bool){
+        return !issuing&&super._rotationOwnerAllowed(a);
+    }
+    function _policyCallAllowed(bytes4 selector,uint256 len) internal view override returns(bool){
+        if(issuing)return false;
+        if(!bound)return selector==this.issueSuccessor.selector&&len==324;
+        return super._policyCallAllowed(selector,len);
+    }
+}
+contract SafeQuorumReserveFactoryFixture {
+    error InvalidConfig();
+    Safe public immutable singleton;
+    SafeGuardBootstrapFixture public immutable bootstrap;
+    constructor(){
+        if(block.chainid!=84532)revert InvalidConfig();
+        singleton=new Safe();bootstrap=new SafeGuardBootstrapFixture();
+    }
+    function create(address[] calldata owners,V3QuorumSuccessorFixture successor) external returns(Safe wallet,SafeQuorumReserveGuardFixture guard){
+        if(block.chainid!=84532||owners.length!=5||successor.creator()!=msg.sender||
+           successor.guardFactory()!=address(this)||successor.configuredGuard()!=address(0))revert InvalidConfig();
+        for(uint256 i=0;i<owners.length;i++)if(owners[i].code.length!=0)revert InvalidConfig();
+        wallet=Safe(payable(address(new SafeProxy(address(singleton)))));
+        guard=new SafeQuorumReserveGuardFixture(wallet,address(singleton),successor);
+        wallet.setup(owners,3,address(bootstrap),abi.encodeCall(bootstrap.install,(address(guard))),address(0),address(0),0,payable(address(0)));
+        guard.validateConfig();
+        successor.configureGuard(address(guard));
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/safe-custody/src/SafeReserveGuardFixture.sol | Git blob: 7e51d1324b200c95e1dcc418bb5f6e9ad3ec88b5 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {Safe} from "safe-contracts/Safe.sol";
+import {SafeProxy} from "safe-contracts/proxies/SafeProxy.sol";
+import {SafeEpochGuardFixture,SafeGuardBootstrapFixture} from "./SafeEpochGuardFixture.sol";
+import {V3AtomicSuccessorFixture,V3SuccessorTestToken} from "v3-src/V3AtomicSuccessorFixture.sol";
+import {V3EpochSpendFixture} from "v3-src/V3EpochSpendFixture.sol";
+import {V3DeferredLiquidityFixture} from "v3-src/V3DeferredLiquidityFixture.sol";
+import {V3DeferredLegacyFixture} from "v3-src/V3DeferredLegacyFixture.sol";
+import {V3FounderVesting} from "v3-src/ClimbV3TestToken.sol";
+import {V3GameRewardFixture} from "v3-src/V3GameRewardFixture.sol";
+
+/// @notice Test-only typed governance adapter over actual pinned Safe.
+/// One fixed successor, one quorum-approved binding, no generic call or transfer.
+/// Not a production dependency, actual eligibility or real liquidity adapter.
+contract SafeReserveGuardFixture is SafeEpochGuardFixture {
+    V3AtomicSuccessorFixture public immutable successor;
+    bytes32 public immutable successorHash;
+    bool public bound;
+    address public founder;
+    address public distributor;
+    V3SuccessorTestToken public asset;
+    address[7] public destinations;
+    bytes32[7] public destinationHashes;
+    event Bound(address indexed asset,address[7] vaults);
+    constructor(Safe account,address implementation,V3AtomicSuccessorFixture fixedSuccessor)
+        SafeEpochGuardFixture(account,implementation){
+        if(address(fixedSuccessor).code.length==0||fixedSuccessor.used())revert InvalidConfig();
+        successor=fixedSuccessor;successorHash=address(fixedSuccessor).codehash;
+    }
+    function _current(uint256 expected) internal view {
+        validateConfig();
+        if(expected!=epoch)revert Forbidden();
+    }
+    function bindSuccessor(uint256 expected) external onlyWallet {
+        _current(expected);
+        _bind(true);
+    }
+    function _bind(bool alreadyIssued) internal {
+        if(bound||address(successor).codehash!=successorHash||!successor.used())revert InvalidConfig();
+        V3SuccessorTestToken t=successor.token();
+        if(address(t).code.length==0||t.issued()!=alreadyIssued||t.issuer()!=address(successor)||t.totalSupply()!=(alreadyIssued?t.INITIAL_SUPPLY():0))revert InvalidConfig();
+        for(uint256 i=0;i<7;i++){
+            address v=successor.vaults(i);
+            if(v.code.length==0||v==address(this)||v==address(wallet))revert InvalidConfig();
+            for(uint256 j=0;j<i;j++)if(v==destinations[j])revert InvalidConfig();
+            destinations[i]=v;destinationHashes[i]=v.codehash;
+        }
+        V3FounderVesting f=V3FounderVesting(destinations[0]);
+        V3GameRewardFixture g=V3GameRewardFixture(destinations[1]);
+        if(address(f.token())!=address(t)||address(g.token())!=address(t))revert InvalidConfig();
+        founder=f.beneficiary();distributor=g.distributor();
+        if(wallet.isOwner(founder)||wallet.isOwner(distributor)||founder==address(wallet)||distributor==address(wallet)||
+            founder==address(this)||distributor==address(this))revert InvalidConfig();
+        V3DeferredLiquidityFixture l=V3DeferredLiquidityFixture(destinations[2]);
+        V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(destinations[6]);
+        if(address(l.asset())!=address(t)||address(l.custody())!=address(this)||
+           address(legacy.token())!=address(t)||address(legacy.custody())!=address(this))revert InvalidConfig();
+        for(uint256 i=3;i<=5;i++){
+            V3EpochSpendFixture v=V3EpochSpendFixture(destinations[i]);
+            if(address(v.token())!=address(t)||address(v.custody())!=address(this)||
+               address(v.registry())!=address(successor.expenses().registry())||v.excludedFounder()!=founder)revert InvalidConfig();
+        }
+        asset=t;bound=true;emit Bound(address(t),destinations);
+    }
+    function _target(uint256 i,uint256 expected) private view returns(address v){
+        _current(expected);
+        if(!bound||i>=7||address(successor).codehash!=successorHash)revert InvalidConfig();
+        v=destinations[i];
+        if(v.codehash!=destinationHashes[i])revert InvalidConfig();
+    }
+    function _expense(uint256 i,uint256 expected) private view returns(V3EpochSpendFixture){
+        if(i<3||i>5)revert Forbidden();
+        return V3EpochSpendFixture(_target(i,expected));
+    }
+    function proposeExpense(uint256 expected,uint256 i,address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce) external onlyWallet {
+        if(recipient==address(wallet)||recipient==distributor)revert Forbidden();
+        for(uint256 j=0;j<7;j++)if(recipient==destinations[j])revert Forbidden();
+        _expense(i,expected).propose(recipient,amount,evidence,month,nonce);
+    }
+    function cancelExpense(uint256 expected,uint256 i,bytes32 id) external onlyWallet {_expense(i,expected).cancel(id);}
+    function scheduleLiquidity(uint256 expected,uint256 a,uint256 q,uint256 minShares,uint256 deadline,bytes32 nonce) external onlyWallet {
+        V3DeferredLiquidityFixture(_target(2,expected)).schedule(a,q,minShares,deadline,nonce);
+    }
+    function cancelLiquidity(uint256 expected,bytes32 id) external onlyWallet {V3DeferredLiquidityFixture(_target(2,expected)).cancel(id);}
+    function scheduleLegacy(uint256 expected,bytes32 digest,uint256 expiresAt) external onlyWallet {V3DeferredLegacyFixture(_target(6,expected)).schedule(digest,expiresAt);}
+    function cancelLegacy(uint256 expected) external onlyWallet {V3DeferredLegacyFixture(_target(6,expected)).cancel();}
+    function _rotationOwnerAllowed(address a) internal view virtual override returns(bool){
+        // Prevent changes before binding and known role conflicts afterwards.
+        return bound&&a!=founder&&a!=distributor;
+    }
+    function _policyCallAllowed(bytes4 selector,uint256 len) internal view virtual override returns(bool){
+        if(!bound)return selector==this.bindSuccessor.selector&&len==36;
+        return (selector==this.proposeExpense.selector&&len==228)||
+               (selector==this.cancelExpense.selector&&len==100)||
+               (selector==this.scheduleLiquidity.selector&&len==196)||
+               (selector==this.cancelLiquidity.selector&&len==68)||
+               (selector==this.scheduleLegacy.selector&&len==100)||
+               (selector==this.cancelLegacy.selector&&len==36);
+    }
+}
+contract SafeReserveFactoryFixture {
+    error InvalidConfig();
+    Safe public immutable singleton;
+    SafeGuardBootstrapFixture public immutable bootstrap;
+    constructor(){
+        if(block.chainid!=84532)revert InvalidConfig();
+        singleton=new Safe();bootstrap=new SafeGuardBootstrapFixture();
+    }
+    function create(address[] calldata owners,V3AtomicSuccessorFixture successor) external returns(Safe wallet,SafeReserveGuardFixture guard){
+        if(block.chainid!=84532||owners.length!=5)revert InvalidConfig();
+        for(uint256 i=0;i<owners.length;i++)if(owners[i].code.length!=0)revert InvalidConfig();
+        wallet=Safe(payable(address(new SafeProxy(address(singleton)))));
+        guard=new SafeReserveGuardFixture(wallet,address(singleton),successor);
+        wallet.setup(owners,3,address(bootstrap),abi.encodeCall(bootstrap.install,(address(guard))),address(0),address(0),0,payable(address(0)));
+        guard.validateConfig();
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/foundry.toml | Git blob: 60d4b86162d127b5777e6836e853535255c72c34 =====
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+libs = ["lib"]
+remappings = ["openzeppelin-contracts/=lib/openzeppelin-contracts/"]
+solc_version = "0.8.19"
+evm_version = "london"
+optimizer = true
+optimizer_runs = 200
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/src/ClimbV3IntegratedTestToken.sol | Git blob: be7e331ae669c65139b0e1385ca5c6d27bff2872 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {V3FounderVesting,V3GamingVault,V3InactiveReserve} from "./ClimbV3TestToken.sol";
+import {V3RestrictedSpend} from "./V3RestrictedSpend.sol";
+
+/// @notice Integrated offline test candidate; never use real recipients or funds.
+/// Liquidity and legacy reserves intentionally have no release path.
+contract ClimbV3IntegratedTestToken is ERC20 {
+    error WrongChain();
+    error InvalidConfig();
+    uint256 public constant INITIAL_SUPPLY=888888888000000;
+    V3FounderVesting public immutable founderVault;
+    V3GamingVault public immutable gamingVault;
+    V3InactiveReserve public immutable liquidityReserve;
+    V3RestrictedSpend public immutable ecosystemReserve;
+    V3RestrictedSpend public immutable communityReserve;
+    V3RestrictedSpend public immutable treasuryReserve;
+    V3InactiveReserve public immutable legacyReserve;
+    constructor(address founder,address distributor,uint256 start,address[5] memory signers) ERC20("CLIMB V3 Integrated Test Only","CLIMBV3INTTEST"){
+        if(block.chainid!=84532) revert WrongChain();
+        if(founder==address(0)||distributor==address(0)||founder==distributor||founder==address(this)||distributor==address(this)) revert InvalidConfig();
+        for(uint256 i=0;i<5;i++){
+            if(signers[i]==distributor||signers[i]==address(this)) revert InvalidConfig();
+        }
+        founderVault=new V3FounderVesting(IERC20(address(this)),founder,start);
+        gamingVault=new V3GamingVault(IERC20(address(this)),distributor,start);
+        liquidityReserve=new V3InactiveReserve("LIQUIDITY");
+        ecosystemReserve=new V3RestrictedSpend(IERC20(address(this)),signers,founder,start,133333333200000,"ECOSYSTEM");
+        communityReserve=new V3RestrictedSpend(IERC20(address(this)),signers,founder,start,88888888800000,"COMMUNITY");
+        treasuryReserve=new V3RestrictedSpend(IERC20(address(this)),signers,founder,start,106666666560000,"TREASURY");
+        legacyReserve=new V3InactiveReserve("LEGACY");
+        _mint(address(founderVault),17777777760000);
+        _mint(address(gamingVault),311111110800000);
+        _mint(address(liquidityReserve),222222222000000);
+        _mint(address(ecosystemReserve),133333333200000);
+        _mint(address(communityReserve),88888888800000);
+        _mint(address(treasuryReserve),106666666560000);
+        _mint(address(legacyReserve),8888888880000);
+        assert(totalSupply()==INITIAL_SUPPLY);
+    }
+    function decimals() public pure override returns(uint8){return 6;}
+    function burn(uint256 amount) external {_burn(msg.sender,amount);}
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/src/ClimbV3TestToken.sol | Git blob: 29db411f53556b2c68a0c260f19efcb6d7cef579 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+/// @notice Inert test-only reserve. No release path; NOT a production vault or LP lock.
+contract V3InactiveReserve {
+    error WrongChain();
+    bytes32 public immutable purpose;
+    constructor(bytes32 label) {
+        if(block.chainid!=84532) revert WrongChain();
+        purpose=label;
+    }
+}
+
+/// @notice Synthetic fixed beneficiary, no catch-up at cliff, 36 installments.
+/// A model month is exactly 30 days, not a calendar month.
+contract V3FounderVesting {
+    error WrongChain();
+    error InvalidConfig();
+    error NothingDue();
+    IERC20 public immutable token;
+    address public immutable beneficiary;
+    uint256 public immutable start;
+    uint256 public constant MONTH=30 days;
+    uint256 public constant ALLOCATION=17777777760000;
+    uint256 public released;
+    constructor(IERC20 asset,address receiver,uint256 begin){
+        if(block.chainid!=84532) revert WrongChain();
+        if(address(asset)==address(0)||receiver==address(0)||receiver==address(this)||begin<=block.timestamp||begin>block.timestamp+365 days) revert InvalidConfig();
+        token=asset;beneficiary=receiver;start=begin;
+    }
+    function vested() public view returns(uint256){
+        if(block.timestamp<=start) return 0;
+        uint256 elapsed=(block.timestamp-start)/MONTH;
+        if(elapsed<=12) return 0;
+        if(elapsed>=48) return ALLOCATION;
+        return ALLOCATION*(elapsed-12)/36;
+    }
+    function release() external {
+        uint256 amount=vested()-released;
+        if(amount==0) revert NothingDue();
+        released+=amount;
+        require(token.transfer(beneficiary,amount));
+    }
+}
+
+/// @notice Synthetic release ceiling, not a player reward system. Unused monthly
+/// capacity expires; unused tokens remain locked permanently in this prototype.
+contract V3GamingVault {
+    error WrongChain();
+    error InvalidConfig();
+    error NotDistributor();
+    error OutsideWindow();
+    error CapExceeded();
+    IERC20 public immutable token;
+    address public immutable distributor;
+    uint256 public immutable start;
+    uint256 public constant MONTH=30 days;
+    uint256 public constant ALLOCATION=311111110800000;
+    mapping(uint256=>uint256) public monthlyReleased;
+    uint256 public released;
+    constructor(IERC20 asset,address receiver,uint256 begin){
+        if(block.chainid!=84532) revert WrongChain();
+        if(address(asset)==address(0)||receiver==address(0)||receiver==address(this)||begin<=block.timestamp||begin>block.timestamp+365 days) revert InvalidConfig();
+        token=asset;distributor=receiver;start=begin;
+    }
+    function monthlyCap(uint256 m) public pure returns(uint256){
+        if(m>=60) return 0;
+        uint256 annual=ALLOCATION*(30-5*(m/12))/100;
+        uint256 i=m%12;
+        return annual*(i+1)/12-annual*i/12;
+    }
+    function release(uint256 amount) external {
+        if(msg.sender!=distributor) revert NotDistributor();
+        if(block.timestamp<start) revert OutsideWindow();
+        uint256 m=(block.timestamp-start)/MONTH;
+        if(m>=60) revert OutsideWindow();
+        if(amount==0||amount>monthlyCap(m)-monthlyReleased[m]) revert CapExceeded();
+        monthlyReleased[m]+=amount;
+        released+=amount;
+        require(token.transfer(distributor,amount));
+    }
+}
+
+/// @notice Exact V3 test issuance. No production token, quote assets, liquidity,
+/// public claim, external deposit or mainnet deployment.
+contract ClimbV3TestToken is ERC20 {
+    error WrongChain();
+    error InvalidConfig();
+    uint256 public constant INITIAL_SUPPLY=888888888000000;
+    V3FounderVesting public immutable founderVault;
+    V3GamingVault public immutable gamingVault;
+    V3InactiveReserve public immutable liquidityReserve;
+    V3InactiveReserve public immutable ecosystemReserve;
+    V3InactiveReserve public immutable communityReserve;
+    V3InactiveReserve public immutable treasuryReserve;
+    V3InactiveReserve public immutable legacyReserve;
+    constructor(address founder,address distributor,uint256 start) ERC20("CLIMB V3 Test Only","CLIMBV3TEST"){
+        if(block.chainid!=84532) revert WrongChain();
+        if(founder==address(0)||distributor==address(0)||founder==distributor||founder==address(this)||distributor==address(this)) revert InvalidConfig();
+        founderVault=new V3FounderVesting(IERC20(address(this)),founder,start);
+        gamingVault=new V3GamingVault(IERC20(address(this)),distributor,start);
+        liquidityReserve=new V3InactiveReserve("LIQUIDITY");
+        ecosystemReserve=new V3InactiveReserve("ECOSYSTEM");
+        communityReserve=new V3InactiveReserve("COMMUNITY");
+        treasuryReserve=new V3InactiveReserve("TREASURY");
+        legacyReserve=new V3InactiveReserve("LEGACY");
+        _mint(address(founderVault),17777777760000);
+        _mint(address(gamingVault),311111110800000);
+        _mint(address(liquidityReserve),222222222000000);
+        _mint(address(ecosystemReserve),133333333200000);
+        _mint(address(communityReserve),88888888800000);
+        _mint(address(treasuryReserve),106666666560000);
+        _mint(address(legacyReserve),8888888880000);
+        assert(totalSupply()==INITIAL_SUPPLY);
+    }
+    function decimals() public pure override returns(uint8){return 6;}
+    function burn(uint256 amount) external {_burn(msg.sender,amount);}
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/src/V3AtomicSuccessorFixture.sol | Git blob: 09412dba899dd0616cf1256c03167c2852dcbc82 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {V3FounderVesting} from "./ClimbV3TestToken.sol";
+import {V3GameRewardFixture} from "./V3GameRewardFixture.sol";
+import {V3EpochPolicyFactory,IV3CustodyEpochFixture} from "./V3EpochSpendFixture.sol";
+import {IV3BurnableAsset} from "./V3BoundedLegacyFixture.sol";
+import {V3DeferredLegacyFixture} from "./V3DeferredLegacyFixture.sol";
+import {IV3SyntheticPool} from "./V3LiquidityPolicyFixture.sol";
+import {V3DeferredLiquidityFixture} from "./V3DeferredLiquidityFixture.sol";
+
+// Test-only pool builder. Real pool/position manager selection is not implemented.
+interface IV3SyntheticPoolBuilder {
+    function createPool(IERC20 asset,IERC20 quote) external returns(IV3SyntheticPool);
+}
+
+/// @notice Zero-supply on construction; only the atomic factory can issue once.
+contract V3SuccessorTestToken is ERC20 {
+    error InvalidIssuance();
+    uint256 public constant INITIAL_SUPPLY=888888888000000;
+    address public immutable issuer;
+    bool public issued;
+    constructor() ERC20("CLIMB V3 Successor Test Only","CLIMBV3NEXTTEST"){
+        if(block.chainid!=84532) revert InvalidIssuance();
+        issuer=msg.sender;
+    }
+    function decimals() public pure override returns(uint8){return 6;}
+    function burn(uint256 amount) external {_burn(msg.sender,amount);}
+    // Canonical order: founder, gaming, liquidity, ecosystem, community, treasury, legacy.
+    function issue(address[7] calldata vaults) external {
+        if(msg.sender!=issuer||issued||totalSupply()!=0) revert InvalidIssuance();
+        uint256[7] memory amounts=[uint256(17777777760000),311111110800000,222222222000000,133333333200000,88888888800000,106666666560000,8888888880000];
+        for(uint256 i=0;i<7;i++){
+            if(vaults[i].code.length==0||vaults[i]==issuer||vaults[i]==address(this)) revert InvalidIssuance();
+            for(uint256 j=0;j<i;j++) if(vaults[i]==vaults[j]) revert InvalidIssuance();
+        }
+        issued=true;
+        for(uint256 i=0;i<7;i++) _mint(vaults[i],amounts[i]);
+        assert(totalSupply()==INITIAL_SUPPLY);
+    }
+}
+
+struct V3SuccessorLiquidityConfig {
+    IERC20 quote;
+    IV3SyntheticPoolBuilder builder;
+    address custody;
+    uint256 trancheCap;
+}
+struct V3SuccessorConfig {
+    address founder;
+    address distributor;
+    IV3CustodyEpochFixture control;
+    uint256 start;
+    uint256 gamingWalletMonthlyCap;
+    V3SuccessorLiquidityConfig liquidity;
+}
+
+// Separate immutable deployment helpers avoid putting all child creation bytecode
+// in the runtime of the atomic issuer. No token custody or generic calls.
+contract V3SuccessorCoreDeployer {
+    function deploy(IERC20 asset,V3SuccessorConfig calldata cfg) external returns(address founder,address gaming,V3EpochPolicyFactory expenses){
+        founder=address(new V3FounderVesting(asset,cfg.founder,cfg.start));
+        gaming=address(new V3GameRewardFixture(asset,cfg.distributor,cfg.founder,cfg.start,cfg.gamingWalletMonthlyCap));
+        expenses=new V3EpochPolicyFactory(asset,cfg.control,cfg.start,cfg.founder);
+    }
+}
+contract V3SuccessorConditionalDeployer {
+    function liquidity(IERC20 asset,V3SuccessorLiquidityConfig calldata cfg,IV3CustodyEpochFixture control) external returns(V3DeferredLiquidityFixture v){
+        IV3SyntheticPool p=cfg.builder.createPool(asset,cfg.quote);
+        v=new V3DeferredLiquidityFixture(asset,cfg.quote,p,control,cfg.custody,cfg.trancheCap);
+    }
+    function legacy(V3SuccessorTestToken asset,IV3CustodyEpochFixture control) external returns(V3DeferredLegacyFixture v){
+        v=new V3DeferredLegacyFixture(IV3BurnableAsset(address(asset)),control);
+    }
+}
+
+/// @notice Offline integration of the existing successor fixtures, not a production
+/// token. No real multisig, DEX adapter, Solana authorization, or live eligibility.
+contract V3AtomicSuccessorFixture {
+    error InvalidConfig();
+    address public immutable creator;
+    V3SuccessorCoreDeployer public immutable core;
+    V3SuccessorConditionalDeployer public immutable conditional;
+    V3SuccessorTestToken public token;
+    address[7] public vaults;
+    V3EpochPolicyFactory public expenses;
+    bool public used;
+    event Created(address indexed token,address[7] vaults);
+    constructor(){
+        if(block.chainid!=84532) revert InvalidConfig();
+        creator=msg.sender;
+        core=new V3SuccessorCoreDeployer();
+        conditional=new V3SuccessorConditionalDeployer();
+    }
+    function create(V3SuccessorConfig calldata cfg) external virtual returns(V3SuccessorTestToken asset){
+        if(msg.sender!=creator)revert InvalidConfig();
+        return _create(cfg);
+    }
+    function _create(V3SuccessorConfig calldata cfg) internal returns(V3SuccessorTestToken asset){
+        if(used||block.chainid!=84532||cfg.founder==address(0)||cfg.distributor==address(0)||cfg.founder==cfg.distributor||
+           cfg.founder==address(this)||cfg.distributor==address(this)||cfg.liquidity.custody==cfg.founder||cfg.liquidity.custody==cfg.distributor||
+           address(cfg.control)==cfg.founder||address(cfg.control)==cfg.distributor||
+           cfg.control.isMember(cfg.founder)||cfg.control.isMember(cfg.distributor)) revert InvalidConfig();
+        used=true;
+        asset=new V3SuccessorTestToken();
+        token=asset;
+        _deployPolicies(asset,cfg);
+        // No supply before all policy constructors succeed; no intermediate EOA/factory float.
+        _beforeIssue();
+        asset.issue(vaults);
+        assert(asset.balanceOf(address(this))==0&&asset.balanceOf(msg.sender)==0&&asset.balanceOf(cfg.founder)==0&&asset.balanceOf(cfg.distributor)==0);
+        emit Created(address(asset),vaults);
+    }
+    function _beforeIssue() internal virtual {}
+    function _deployPolicies(V3SuccessorTestToken asset,V3SuccessorConfig calldata cfg) private {
+        (address f,address g,V3EpochPolicyFactory e)=core.deploy(asset,cfg);
+        expenses=e;
+        vaults[0]=f;vaults[1]=g;
+        vaults[2]=address(conditional.liquidity(asset,cfg.liquidity,cfg.control));
+        vaults[3]=address(e.ecosystem());vaults[4]=address(e.community());vaults[5]=address(e.treasury());
+        vaults[6]=address(conditional.legacy(asset,cfg.control));
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/src/V3BoundedLegacyFixture.sol | Git blob: c76b46dd34227e10655184d82adb16911687ee5b =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+interface IV3BurnableAsset is IERC20 { function burn(uint256 amount) external; }
+
+/// @notice Isolated test-only, prefunded, one-time campaign fixture.
+/// No source-wallet authentication, live eligibility, or production governance.
+contract V3BoundedLegacyFixture {
+    using SafeERC20 for IERC20;
+    error WrongChain();
+    error InvalidConfig();
+    error InvalidManifest();
+    error InvalidWindow();
+    error NotEligible();
+    error AlreadyClaimed();
+    error NotFunded();
+    uint256 public constant RESERVE = 8888888880000;
+    IV3BurnableAsset public immutable token;
+    bytes32 public immutable commitment;
+    uint256 public immutable opens;
+    uint256 public immutable deadline;
+    uint256 public immutable closure;
+    bool public activated;
+    bool public closed;
+    uint256 public budget;
+    uint256 public allocated;
+    uint256 public paid;
+    uint256 public burned;
+    mapping(bytes32=>address) public recipient;
+    mapping(bytes32=>uint256) public award;
+    mapping(bytes32=>bool) public claimed;
+    event Activated(bytes32 indexed commitment,uint256 budget,uint256 allocated);
+    event Claimed(bytes32 indexed id,address indexed recipient,uint256 amount);
+    event Closed(uint256 burned);
+    constructor(IV3BurnableAsset asset,bytes32 manifest,uint256 begin,uint256 end,uint256 closeAt){
+        if(block.chainid!=84532) revert WrongChain();
+        if(address(asset).code.length==0||manifest==0) revert InvalidConfig();
+        if(begin<=block.timestamp||begin-block.timestamp>365 days||end<=begin||end-begin>90 days||closeAt<=end||closeAt-end>90 days) revert InvalidWindow();
+        token=asset;commitment=manifest;opens=begin;deadline=end;closure=closeAt;
+    }
+    function activate(bytes32[] calldata ids,address[] calldata recipients,uint256[] calldata amounts,uint256 cap,bytes32 campaign) external {
+        if(activated||closed||block.timestamp>=opens) revert InvalidWindow();
+        if(campaign==0||cap==0||cap>RESERVE||ids.length==0||ids.length>32||ids.length!=recipients.length||ids.length!=amounts.length) revert InvalidManifest();
+        if(keccak256(abi.encode("CLIMB_V3_SYNTHETIC_LEGACY_V1",block.chainid,address(token),opens,deadline,closure,campaign,cap,ids,recipients,amounts))!=commitment) revert InvalidManifest();
+        if(token.balanceOf(address(this))<RESERVE) revert NotFunded();
+        uint256 total;
+        for(uint256 i=0;i<ids.length;i++){
+            if(ids[i]==0||recipient[ids[i]]!=address(0)||recipients[i]==address(0)||recipients[i]==address(this)||amounts[i]==0||amounts[i]>cap-total) revert InvalidManifest();
+            recipient[ids[i]]=recipients[i];award[ids[i]]=amounts[i];total+=amounts[i];
+        }
+        activated=true;budget=cap;allocated=total;
+        emit Activated(commitment,cap,total);
+    }
+    function claim(bytes32 id) external {
+        if(!activated||closed||block.timestamp<opens||block.timestamp>=deadline) revert InvalidWindow();
+        if(recipient[id]!=msg.sender) revert NotEligible();
+        if(claimed[id]) revert AlreadyClaimed();
+        claimed[id]=true;uint256 amount=award[id];paid+=amount;
+        IERC20(address(token)).safeTransfer(msg.sender,amount);
+        emit Claimed(id,msg.sender,amount);
+    }
+    // This fixture has no appeals resolution path. Delay is a model closure window only.
+    // Unsolicited donations do not increase the grant cap or the amount burned.
+    function closeAndBurn() external {
+        if(!activated||closed||block.timestamp<closure) revert InvalidWindow();
+        closed=true;burned=RESERVE-paid;token.burn(burned);
+        emit Closed(burned);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/src/V3DeferredLegacyFixture.sol | Git blob: 50f4b7100973ce54af045161ed1fc1bbee86e336 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IV3BurnableAsset} from "./V3BoundedLegacyFixture.sol";
+import {IV3CustodyEpochFixture} from "./V3EpochSpendFixture.sol";
+
+/// @notice Synthetic Base Sepolia fixture only. No actual source authentication,
+/// appeals adjudication, independent custody or cross-deployment replay guarantee.
+contract V3DeferredLegacyFixture {
+    using SafeERC20 for IERC20;
+    error InvalidConfig();
+    error Unauthorized();
+    error InvalidAction();
+    error InvalidManifest();
+    error NotReady();
+    error NotEligible();
+    error AlreadyClaimed();
+    uint256 public constant RESERVE=8888888880000;
+    uint256 public constant DELAY=2 days;
+    uint256 public constant CLAIM_WINDOW=30 days;
+    uint256 public constant APPEAL_WINDOW=14 days;
+    IV3BurnableAsset public immutable token;
+    IV3CustodyEpochFixture public immutable custody;
+    bytes32 public immutable custodyCodeHash;
+    uint256 public highestObservedEpoch;
+    struct Pending { bytes32 digest; uint256 epoch; uint256 readyAt; uint256 expiresAt; }
+    Pending public pending;
+    bool public activated;
+    bool public closed;
+    uint256 public opens;
+    uint256 public deadline;
+    uint256 public appealEnd;
+    uint256 public budget;
+    uint256 public allocated;
+    uint256 public paid;
+    uint256 public burned;
+    mapping(bytes32=>address) public recipient;
+    mapping(bytes32=>uint256) public award;
+    mapping(bytes32=>bool) public claimed;
+    event Scheduled(bool indexed closure,bytes32 indexed digest,uint256 epoch,uint256 readyAt,uint256 expiresAt);
+    event Cancelled(bytes32 indexed digest);
+    event Activated(bytes32 indexed digest,uint256 budget,uint256 allocated,uint256 opens,uint256 deadline,uint256 appealEnd);
+    event Claimed(bytes32 indexed id,address indexed recipient,uint256 amount);
+    event Closed(bytes32 indexed reviewEvidence,uint256 burned);
+
+    constructor(IV3BurnableAsset asset,IV3CustodyEpochFixture control){
+        if(block.chainid!=84532||address(asset).code.length==0||address(control).code.length==0||
+            control.threshold()!=3||control.memberCount()!=5||control.epoch()==0) revert InvalidConfig();
+        token=asset;custody=control;custodyCodeHash=address(control).codehash;
+        highestObservedEpoch=control.epoch();
+    }
+    function _observe() private returns(uint256 e){
+        if(block.chainid!=84532||address(custody).codehash!=custodyCodeHash||
+            custody.threshold()!=3||custody.memberCount()!=5) revert InvalidConfig();
+        e=custody.epoch();
+        if(e==0||e<highestObservedEpoch) revert InvalidConfig();
+        highestObservedEpoch=e;
+    }
+    function syncEpoch() external {_observe();}
+    function schedule(bytes32 digest,uint256 expiresAt) external {
+        if(msg.sender!=address(custody)) revert Unauthorized();
+        uint256 e=_observe();
+        if(closed||digest==0||(activated&&block.timestamp<appealEnd)||
+            expiresAt<=block.timestamp+DELAY||expiresAt-block.timestamp>30 days) revert InvalidAction();
+        Pending memory old=pending;
+        if(old.digest!=0&&old.epoch==e&&block.timestamp<old.expiresAt) revert InvalidAction();
+        pending=Pending(digest,e,block.timestamp+DELAY,expiresAt);
+        emit Scheduled(activated,digest,e,block.timestamp+DELAY,expiresAt);
+    }
+    function cancel() external {
+        if(msg.sender!=address(custody)) revert Unauthorized();
+        _observe();
+        bytes32 digest=pending.digest;
+        if(digest==0) revert InvalidAction();
+        delete pending;emit Cancelled(digest);
+    }
+    function _consume(bytes32 digest) private {
+        uint256 e=_observe();
+        Pending memory p=pending;
+        if(digest==0||p.digest!=digest||p.epoch!=e||block.timestamp<p.readyAt||block.timestamp>=p.expiresAt) revert NotReady();
+        delete pending;
+    }
+    function manifestDigest(bytes32 campaign,uint256 cap,bytes32[] calldata ids,address[] calldata recipients,uint256[] calldata amounts) public view returns(bytes32){
+        return keccak256(abi.encode("CLIMB_V3_DEFERRED_LEGACY_TEST_V1",block.chainid,address(this),address(token),campaign,cap,ids,recipients,amounts));
+    }
+    function activate(bytes32 campaign,uint256 cap,bytes32[] calldata ids,address[] calldata recipients,uint256[] calldata amounts) external {
+        if(activated||closed) revert InvalidAction();
+        if(campaign==0||cap==0||cap>RESERVE||ids.length==0||ids.length>32||ids.length!=recipients.length||ids.length!=amounts.length) revert InvalidManifest();
+        bytes32 digest=manifestDigest(campaign,cap,ids,recipients,amounts);
+        _consume(digest);
+        if(token.balanceOf(address(this))<RESERVE) revert NotReady();
+        uint256 total;
+        for(uint256 i=0;i<ids.length;i++){
+            if(ids[i]==0||recipient[ids[i]]!=address(0)||recipients[i]==address(0)||recipients[i]==address(this)||amounts[i]==0||amounts[i]>cap-total) revert InvalidManifest();
+            recipient[ids[i]]=recipients[i];award[ids[i]]=amounts[i];total+=amounts[i];
+        }
+        activated=true;budget=cap;allocated=total;
+        opens=block.timestamp;deadline=opens+CLAIM_WINDOW;appealEnd=deadline+APPEAL_WINDOW;
+        emit Activated(digest,cap,total,opens,deadline,appealEnd);
+    }
+    function claim(bytes32 id) external {
+        if(block.chainid!=84532||!activated||closed||block.timestamp>=deadline) revert NotReady();
+        if(recipient[id]!=msg.sender) revert NotEligible();
+        if(claimed[id]) revert AlreadyClaimed();
+        claimed[id]=true;uint256 amount=award[id];paid+=amount;
+        IERC20(address(token)).safeTransfer(msg.sender,amount);
+        emit Claimed(id,msg.sender,amount);
+    }
+    // Evidence is a synthetic commitment, NOT proof of adjudicated appeals.
+    function closureDigest(bytes32 reviewEvidence) public view returns(bytes32){
+        return keccak256(abi.encode("CLIMB_V3_DEFERRED_LEGACY_CLOSE_TEST_V1",block.chainid,address(this),address(token),deadline,appealEnd,paid,reviewEvidence));
+    }
+    function finalize(bytes32 reviewEvidence) external {
+        if(!activated||closed||block.timestamp<appealEnd||reviewEvidence==0) revert NotReady();
+        _consume(closureDigest(reviewEvidence));
+        closed=true;burned=RESERVE-paid;token.burn(burned);
+        emit Closed(reviewEvidence,burned);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/src/V3DeferredLiquidityFixture.sol | Git blob: 06d9a1ab9c7cd4e276d7b820da2556d19ae385af =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+import {IV3CustodyEpochFixture} from "./V3EpochSpendFixture.sol";
+import {IV3SyntheticPool,V3SyntheticLPLock} from "./V3LiquidityPolicyFixture.sol";
+
+/// @notice Isolated Base Sepolia synthetic deferral/tranche fixture, NOT a real DEX.
+/// No quote funding required on creation. Custody adapter is trusted for quorum
+/// and monotonic epochs. No unrestricted CLIMB withdrawal or allowance.
+contract V3DeferredLiquidityFixture is ReentrancyGuard {
+    using SafeERC20 for IERC20;
+    error InvalidConfig();
+    error Unauthorized();
+    error InvalidAction();
+    error NotReady();
+    error BalanceMismatch();
+    uint256 public constant RESERVE=222222222000000;
+    uint256 public constant DELAY=2 days;
+    IERC20 public immutable asset;
+    IERC20 public immutable quote;
+    IV3SyntheticPool public immutable pool;
+    IV3CustodyEpochFixture public immutable custody;
+    address public immutable lpCustody;
+    bytes32 public immutable poolCodeHash;
+    bytes32 public immutable custodyCodeHash;
+    bytes32 public immutable lpCustodyCodeHash;
+    uint256 public immutable trancheCap;
+    uint256 public highestObservedEpoch;
+    uint256 public spent;
+    struct Action {
+        uint256 assetAmount;
+        uint256 quoteAmount;
+        uint256 minShares;
+        uint256 epoch;
+        uint256 readyAt;
+        uint256 deadline;
+        bool executed;
+        bool cancelled;
+        address locker;
+    }
+    mapping(bytes32=>Action) public actions;
+    event Scheduled(bytes32 indexed id,uint256 indexed epoch,uint256 assetAmount,uint256 quoteAmount,uint256 readyAt,uint256 deadline);
+    event Cancelled(bytes32 indexed id);
+    event Locked(bytes32 indexed id,address indexed locker,uint256 assetSpent,uint256 quoteSpent,uint256 shares);
+    constructor(IERC20 a,IERC20 q,IV3SyntheticPool p,IV3CustodyEpochFixture control,address destination,uint256 cap){
+        if(block.chainid!=84532||address(a).code.length==0||address(q).code.length==0||address(p).code.length==0||
+           address(control).code.length==0||destination.code.length==0||address(a)==address(q)||address(p)==address(a)||address(p)==address(q)||
+           destination==address(a)||destination==address(q)||destination==address(p)||destination==address(this)||
+           p.asset()!=address(a)||p.quote()!=address(q)||cap==0||cap>RESERVE||
+           control.threshold()!=3||control.memberCount()!=5||control.epoch()==0) revert InvalidConfig();
+        asset=a;quote=q;pool=p;custody=control;lpCustody=destination;trancheCap=cap;
+        poolCodeHash=address(p).codehash;custodyCodeHash=address(control).codehash;lpCustodyCodeHash=destination.codehash;
+        highestObservedEpoch=control.epoch();
+    }
+    function _observe() private returns(uint256 e){
+        if(block.chainid!=84532||address(custody).codehash!=custodyCodeHash||custody.threshold()!=3||custody.memberCount()!=5||
+           address(pool).codehash!=poolCodeHash||pool.asset()!=address(asset)||pool.quote()!=address(quote)||lpCustody.codehash!=lpCustodyCodeHash)revert InvalidConfig();
+        e=custody.epoch();if(e==0||e<highestObservedEpoch)revert InvalidConfig();
+        highestObservedEpoch=e;
+    }
+    function syncEpoch() external {_observe();}
+    function schedule(uint256 a,uint256 q,uint256 minShares,uint256 deadline,bytes32 nonce) external returns(bytes32 id){
+        if(msg.sender!=address(custody))revert Unauthorized();
+        uint256 e=_observe();
+        if(a==0||a>trancheCap||a>RESERVE-spent||q==0||minShares==0||nonce==0||
+           deadline<=block.timestamp+DELAY||deadline-block.timestamp>30 days)revert InvalidAction();
+        id=keccak256(abi.encode(block.chainid,address(this),address(asset),address(quote),address(pool),e,a,q,minShares,deadline,nonce));
+        if(actions[id].readyAt!=0)revert InvalidAction();
+        actions[id]=Action(a,q,minShares,e,block.timestamp+DELAY,deadline,false,false,address(0));
+        emit Scheduled(id,e,a,q,block.timestamp+DELAY,deadline);
+    }
+    function cancel(bytes32 id) external {
+        if(msg.sender!=address(custody))revert Unauthorized();
+        _observe();
+        Action storage x=actions[id];
+        if(x.readyAt==0||x.executed||x.cancelled)revert InvalidAction();
+        x.cancelled=true;emit Cancelled(id);
+    }
+    function execute(bytes32 id) external nonReentrant {
+        uint256 e=_observe();
+        Action storage x=actions[id];
+        if(x.readyAt==0||x.executed||x.cancelled||x.epoch!=e||block.timestamp<x.readyAt||block.timestamp>=x.deadline||
+           x.assetAmount>RESERVE-spent||asset.balanceOf(address(this))<RESERVE-spent||quote.balanceOf(address(this))<x.quoteAmount)revert NotReady();
+        // The fresh locker is fixed to the exact pool shares and destination.
+        V3SyntheticLPLock lock=new V3SyntheticLPLock(pool,lpCustody,x.deadline+730 days);
+        x.executed=true;x.locker=address(lock);spent+=x.assetAmount;
+        uint256 shares=_add(x,lock);
+        emit Locked(id,address(lock),x.assetAmount,x.quoteAmount,shares);
+    }
+    function _add(Action storage x,V3SyntheticLPLock lock) private returns(uint256 shares){
+        uint256 a0=asset.balanceOf(address(this));uint256 q0=quote.balanceOf(address(this));uint256 l0=pool.balanceOf(address(lock));
+        if(asset.allowance(address(this),address(pool))!=0||quote.allowance(address(this),address(pool))!=0)revert BalanceMismatch();
+        asset.safeApprove(address(pool),x.assetAmount);quote.safeApprove(address(pool),x.quoteAmount);
+        shares=pool.addLiquidity(x.assetAmount,x.quoteAmount,x.minShares,address(lock));
+        asset.safeApprove(address(pool),0);quote.safeApprove(address(pool),0);
+        uint256 l1=pool.balanceOf(address(lock));
+        if(asset.balanceOf(address(this))!=a0-x.assetAmount||quote.balanceOf(address(this))!=q0-x.quoteAmount||
+           l1<l0||l1-l0!=shares||shares<x.minShares||asset.allowance(address(this),address(pool))!=0||
+           quote.allowance(address(this),address(pool))!=0)revert BalanceMismatch();
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/src/V3EpochSpendFixture.sol | Git blob: 12ecc97681328239446696f5ec8572d592e0c981 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+import {V3SharedExpenseRegistry} from "./V3SharedExpenseFixture.sol";
+
+// Synthetic custody adapter boundary. A real independently reviewed multisig adapter
+// must enforce monotonic epochs, quorum, rotation delay and authentic configuration.
+interface IV3CustodyEpochFixture {
+    function epoch() external view returns(uint256);
+    function isMember(address account) external view returns(bool);
+    function threshold() external view returns(uint256);
+    function memberCount() external view returns(uint256);
+}
+
+/// @notice Test-only spending policy. No signer rotation or custody implementation here.
+contract V3EpochSpendFixture is ReentrancyGuard {
+    using SafeERC20 for IERC20;
+    error InvalidConfig();
+    error Unauthorized();
+    error InvalidProposal();
+    error NotReady();
+    error CapExceeded();
+    uint256 public constant MONTH=30 days;
+    uint256 public constant DELAY=2 days;
+    IERC20 public immutable token;
+    IV3CustodyEpochFixture public immutable custody;
+    V3SharedExpenseRegistry public immutable registry;
+    bytes32 public immutable custodyCodeHash;
+    uint256 public immutable budget;
+    uint256 public immutable start;
+    address public immutable excludedFounder;
+    bytes32 public immutable purpose;
+    uint256 public highestObservedEpoch;
+    uint256 public totalSpent;
+    mapping(uint256=>uint256) public spent;
+    struct Proposal {
+        address recipient;
+        uint256 amount;
+        bytes32 evidence;
+        uint256 month;
+        uint256 epoch;
+        uint256 readyAt;
+        bool executed;
+        bool cancelled;
+    }
+    mapping(bytes32=>Proposal) public proposals;
+    event Proposed(bytes32 indexed id,uint256 indexed epoch,bytes32 indexed evidence,address recipient,uint256 amount,uint256 readyAt);
+    event Cancelled(bytes32 indexed id);
+    event Executed(bytes32 indexed id,uint256 indexed epoch,uint256 amount);
+    constructor(IERC20 asset,IV3CustodyEpochFixture control,V3SharedExpenseRegistry shared,uint256 cap,uint256 begin,address founder,bytes32 label){
+        if(block.chainid!=84532||address(asset).code.length==0||address(control).code.length==0||address(shared).code.length==0||
+           cap==0||cap>888888888000000||begin<=block.timestamp||begin-block.timestamp>365 days||founder==address(0)||label==0) revert InvalidConfig();
+        token=asset;custody=control;registry=shared;budget=cap;start=begin;excludedFounder=founder;purpose=label;
+        custodyCodeHash=address(control).codehash;
+        uint256 initialEpoch=control.epoch();
+        if(initialEpoch==0||control.threshold()!=3||control.memberCount()!=5) revert InvalidConfig();
+        highestObservedEpoch=initialEpoch;
+    }
+    function _readEpoch() internal view returns(uint256 e){
+        if(address(custody).codehash!=custodyCodeHash||custody.threshold()!=3||custody.memberCount()!=5) revert InvalidConfig();
+        e=custody.epoch();
+        if(e==0||e<highestObservedEpoch) revert InvalidConfig();
+    }
+    function _observe() internal returns(uint256 e){e=_readEpoch();highestObservedEpoch=e;}
+    function syncEpoch() external { _observe(); }
+    function monthlyCap(uint256 m) public view returns(uint256){
+        return m>=60?0:budget*(m+1)/60-budget*m/60;
+    }
+    function _recipientAllowed(address recipient) internal view returns(bool){
+        return recipient!=address(0)&&recipient!=address(this)&&recipient!=address(custody)&&recipient!=address(registry)&&recipient!=excludedFounder&&!custody.isMember(recipient);
+    }
+    // Only the synthetic multisig boundary authorizes a proposal; execution is public
+    // after the delay. Fresh authorization is required after any epoch change.
+    function propose(address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce) external returns(bytes32 id){
+        if(msg.sender!=address(custody)) revert Unauthorized();
+        uint256 e=_observe();
+        if(!_recipientAllowed(recipient)||evidence==0||nonce==0||month>=60||amount==0||amount>monthlyCap(month)||
+           block.timestamp+DELAY>=start+(month+1)*MONTH||registry.consumedBy(evidence)!=address(0)) revert InvalidProposal();
+        id=keccak256(abi.encode(block.chainid,address(this),address(token),purpose,e,recipient,amount,evidence,month,nonce));
+        if(proposals[id].recipient!=address(0)) revert InvalidProposal();
+        proposals[id]=Proposal(recipient,amount,evidence,month,e,block.timestamp+DELAY,false,false);
+        emit Proposed(id,e,evidence,recipient,amount,block.timestamp+DELAY);
+    }
+    function cancel(bytes32 id) external {
+        if(msg.sender!=address(custody)) revert Unauthorized();
+        _observe();
+        Proposal storage p=proposals[id];
+        if(p.recipient==address(0)||p.executed||p.cancelled) revert InvalidProposal();
+        p.cancelled=true;emit Cancelled(id);
+    }
+    function execute(bytes32 id) external nonReentrant {
+        uint256 e=_observe();
+        Proposal storage p=proposals[id];
+        if(p.recipient==address(0)||p.executed||p.cancelled||p.epoch!=e||!_recipientAllowed(p.recipient)||
+           block.timestamp<p.readyAt||block.timestamp<start+p.month*MONTH||block.timestamp>=start+(p.month+1)*MONTH) revert NotReady();
+        if(p.amount>monthlyCap(p.month)-spent[p.month]||p.amount>budget-totalSpent) revert CapExceeded();
+        p.executed=true;spent[p.month]+=p.amount;totalSpent+=p.amount;
+        registry.consume(p.evidence,id);
+        token.safeTransfer(p.recipient,p.amount);
+        emit Executed(id,e,p.amount);
+    }
+}
+
+contract V3EpochPolicyFactory {
+    V3SharedExpenseRegistry public immutable registry;
+    V3EpochSpendFixture public immutable ecosystem;
+    V3EpochSpendFixture public immutable community;
+    V3EpochSpendFixture public immutable treasury;
+    constructor(IERC20 asset,IV3CustodyEpochFixture control,uint256 begin,address founder){
+        V3SharedExpenseRegistry shared=new V3SharedExpenseRegistry();
+        registry=shared;
+        V3EpochSpendFixture e=new V3EpochSpendFixture(asset,control,shared,133333333200000,begin,founder,"ECOSYSTEM");
+        V3EpochSpendFixture c=new V3EpochSpendFixture(asset,control,shared,88888888800000,begin,founder,"COMMUNITY");
+        V3EpochSpendFixture t=new V3EpochSpendFixture(asset,control,shared,106666666560000,begin,founder,"TREASURY");
+        ecosystem=e;community=c;treasury=t;
+        shared.bind([address(e),address(c),address(t)]);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/src/V3GameRewardFixture.sol | Git blob: d22448bbae70f9a2a370515d3953e32983142146 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {EIP712} from "openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
+import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
+import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+
+/// @notice Test-only direct reward settlement. A trusted server must establish
+/// event uniqueness, eligibility and player identity before signing; the chain
+/// cannot prove gameplay. Fixed signing key, no production recovery mechanism.
+contract V3GameRewardFixture is EIP712,ReentrancyGuard {
+    using SafeERC20 for IERC20;
+    error InvalidConfig();
+    error InvalidReward();
+    error OutsideWindow();
+    error InvalidSigner();
+    error AlreadyPaid();
+    error CapExceeded();
+    uint256 public constant MONTH=30 days;
+    uint256 public constant ALLOCATION=311111110800000;
+    bytes32 public constant REWARD_TYPEHASH=keccak256("Reward(bytes32 eventId,address recipient,uint256 amount,uint256 month,uint256 deadline)");
+    IERC20 public immutable token;
+    address public immutable distributor;
+    address public immutable excludedFounder;
+    uint256 public immutable start;
+    uint256 public immutable walletMonthlyCap;
+    uint256 public released;
+    mapping(bytes32=>bool) public paid;
+    mapping(uint256=>uint256) public monthlyReleased;
+    mapping(uint256=>mapping(address=>uint256)) public walletReleased;
+    event RewardPaid(bytes32 indexed eventId,address indexed recipient,uint256 amount,uint256 month);
+    struct Reward {bytes32 eventId;address recipient;uint256 amount;uint256 month;uint256 deadline;}
+    constructor(IERC20 asset,address signer,address founder,uint256 begin,uint256 walletCap) EIP712("CLIMB V3 Synthetic Game Rewards","1"){
+        if(block.chainid!=84532||address(asset).code.length==0||signer==address(0)||founder==address(0)||signer==founder||
+           signer.code.length!=0||begin<=block.timestamp||begin-block.timestamp>365 days||walletCap==0||walletCap>ALLOCATION) revert InvalidConfig();
+        token=asset;distributor=signer;excludedFounder=founder;start=begin;walletMonthlyCap=walletCap;
+    }
+    function monthlyCap(uint256 m) public pure returns(uint256){
+        if(m>=60)return 0;
+        uint256 annual=ALLOCATION*(30-5*(m/12))/100;
+        uint256 i=m%12;return annual*(i+1)/12-annual*i/12;
+    }
+    function digest(Reward calldata reward) public view returns(bytes32){
+        return _hashTypedDataV4(keccak256(abi.encode(REWARD_TYPEHASH,reward.eventId,reward.recipient,reward.amount,reward.month,reward.deadline)));
+    }
+    function claim(Reward calldata reward,bytes calldata signature) external nonReentrant {
+        if(block.chainid!=84532||block.timestamp<start)revert OutsideWindow();
+        uint256 m=(block.timestamp-start)/MONTH;
+        if(m>=60||reward.month!=m||block.timestamp>=reward.deadline||reward.deadline>start+(m+1)*MONTH)revert OutsideWindow();
+        if(reward.eventId==0||reward.amount==0||reward.recipient==address(0)||reward.recipient==address(this)||
+           reward.recipient==address(token)||reward.recipient==distributor||reward.recipient==excludedFounder)revert InvalidReward();
+        if(paid[reward.eventId])revert AlreadyPaid();
+        if(ECDSA.recover(digest(reward),signature)!=distributor)revert InvalidSigner();
+        if(reward.amount>monthlyCap(m)-monthlyReleased[m]||reward.amount>walletMonthlyCap-walletReleased[m][reward.recipient]||
+           reward.amount>ALLOCATION-released)revert CapExceeded();
+        paid[reward.eventId]=true;monthlyReleased[m]+=reward.amount;walletReleased[m][reward.recipient]+=reward.amount;released+=reward.amount;
+        token.safeTransfer(reward.recipient,reward.amount);
+        emit RewardPaid(reward.eventId,reward.recipient,reward.amount,m);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/src/V3LiquidityPolicyFixture.sol | Git blob: 650000b2089bfff743471a1938bed0eeaa636fd4 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+
+// Synthetic fungible LP interface ONLY. Not a real DEX router or NFT position manager.
+interface IV3SyntheticPool is IERC20 {
+    function asset() external view returns(address);
+    function quote() external view returns(address);
+    function addLiquidity(uint256 assetAmount,uint256 quoteAmount,uint256 minShares,address recipient) external returns(uint256);
+}
+
+/// @notice Test-only fixed LP custody and time lock. No early release or arbitrary recipient.
+contract V3SyntheticLPLock {
+    using SafeERC20 for IERC20;
+    error InvalidLock();
+    error Locked();
+    IERC20 public immutable lp;
+    address public immutable custody;
+    bytes32 public immutable custodyCodeHash;
+    uint256 public immutable unlockAt;
+    constructor(IERC20 shares,address destination,uint256 unlock){
+        if(block.chainid!=84532||address(shares).code.length==0||destination.code.length==0||unlock<block.timestamp+730 days) revert InvalidLock();
+        lp=shares;custody=destination;custodyCodeHash=destination.codehash;unlockAt=unlock;
+    }
+    function release() external {
+        if(block.timestamp<unlockAt||custody.codehash!=custodyCodeHash) revert Locked();
+        lp.safeTransfer(custody,lp.balanceOf(address(this)));
+    }
+}
+
+/// @notice One exact precommitted synthetic liquidity action, no admin or arbitrary router calls.
+/// A real pool integration must independently validate price, slippage, custody and code.
+contract V3LiquidityPolicyFixture is ReentrancyGuard {
+    using SafeERC20 for IERC20;
+    error InvalidConfig();
+    error NotReady();
+    error BalanceMismatch();
+    uint256 public constant RESERVE=222222222000000;
+    IERC20 public immutable asset;
+    IERC20 public immutable quote;
+    IV3SyntheticPool public immutable pool;
+    bytes32 public immutable poolCodeHash;
+    V3SyntheticLPLock public immutable locker;
+    uint256 public immutable assetAmount;
+    uint256 public immutable quoteAmount;
+    uint256 public immutable minShares;
+    uint256 public immutable executeBefore;
+    bool public executed;
+    uint256 public sharesLocked;
+    event LiquidityLocked(uint256 assetSpent,uint256 quoteSpent,uint256 shares,address locker);
+    constructor(IERC20 a,IERC20 q,IV3SyntheticPool p,bytes32 poolHash,address custody,uint256 aAmount,uint256 qAmount,uint256 minimum,uint256 expiry){
+        if(block.chainid!=84532||address(a).code.length==0||address(q).code.length==0||address(p).code.length==0||
+           address(a)==address(q)||address(p)==address(a)||address(p)==address(q)||poolHash!=address(p).codehash||
+           p.asset()!=address(a)||p.quote()!=address(q)||aAmount==0||aAmount>RESERVE||qAmount==0||minimum==0||
+           expiry<=block.timestamp||expiry-block.timestamp>30 days) revert InvalidConfig();
+        asset=a;quote=q;pool=p;poolCodeHash=poolHash;assetAmount=aAmount;quoteAmount=qAmount;minShares=minimum;executeBefore=expiry;
+        // Expiry + lock length ensures at least 730 days from any permitted execution.
+        locker=new V3SyntheticLPLock(p,custody,expiry+730 days);
+    }
+    function execute() external nonReentrant {
+        if(executed||block.timestamp>=executeBefore||address(pool).codehash!=poolCodeHash||pool.asset()!=address(asset)||pool.quote()!=address(quote)) revert NotReady();
+        uint256 beforeA=asset.balanceOf(address(this));uint256 beforeQ=quote.balanceOf(address(this));
+        uint256 beforeLP=pool.balanceOf(address(locker));
+        if(beforeA<RESERVE||beforeQ<quoteAmount||asset.allowance(address(this),address(pool))!=0||quote.allowance(address(this),address(pool))!=0) revert NotReady();
+        executed=true;
+        asset.safeApprove(address(pool),assetAmount);quote.safeApprove(address(pool),quoteAmount);
+        uint256 reported=pool.addLiquidity(assetAmount,quoteAmount,minShares,address(locker));
+        asset.safeApprove(address(pool),0);quote.safeApprove(address(pool),0);
+        uint256 afterLP=pool.balanceOf(address(locker));
+        if(asset.balanceOf(address(this))!=beforeA-assetAmount||quote.balanceOf(address(this))!=beforeQ-quoteAmount||
+           afterLP<beforeLP||afterLP-beforeLP!=reported||reported<minShares||
+           asset.allowance(address(this),address(pool))!=0||quote.allowance(address(this),address(pool))!=0) revert BalanceMismatch();
+        sharesLocked=reported;
+        emit LiquidityLocked(assetAmount,quoteAmount,reported,address(locker));
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/src/V3RestrictedSpend.sol | Git blob: e46c8af5e5faa6c8632ae837b8c2e439e4b02daf =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+/// @notice Test-only fixed 3-of-5 approval vault for milestone expenditures.
+/// Synthetic signers and limits; independence and evidence truth are off-chain
+/// requirements. No generic calls, signer changes, sweeping or automatic rollover.
+contract V3RestrictedSpend {
+    error WrongChain();
+    error InvalidConfig();
+    error Unauthorized();
+    error InvalidProposal();
+    error AlreadyApproved();
+    error NotReady();
+    error CapExceeded();
+    uint256 public constant MONTH=30 days;
+    uint256 public constant DELAY=2 days;
+    IERC20 public immutable token;
+    uint256 public immutable start;
+    uint256 public immutable budget;
+    address public immutable excludedFounder;
+    bytes32 public immutable purpose;
+    mapping(address=>bool) public signer;
+    mapping(uint256=>uint256) public spent;
+    uint256 public totalSpent;
+    struct Proposal {
+        address recipient;
+        uint256 amount;
+        bytes32 evidence;
+        uint256 month;
+        uint256 readyAt;
+        uint8 approvals;
+        bool executed;
+    }
+    mapping(bytes32=>Proposal) public proposals;
+    mapping(bytes32=>mapping(address=>bool)) public approved;
+    mapping(bytes32=>mapping(address=>bool)) public cancelVoted;
+    mapping(bytes32=>uint8) public cancelVotes;
+    mapping(bytes32=>bool) public cancelled;
+    event Proposed(bytes32 indexed id,address indexed recipient,uint256 amount,bytes32 evidence,uint256 month);
+    event Approved(bytes32 indexed id,address indexed signer);
+    event ApprovalRevoked(bytes32 indexed id,address indexed signer);
+    event CancellationVoted(bytes32 indexed id,address indexed signer);
+    event Cancelled(bytes32 indexed id);
+    event Executed(bytes32 indexed id,address indexed recipient,uint256 amount);
+    constructor(IERC20 asset,address[5] memory signers,address founder,uint256 begin,uint256 cap,bytes32 label){
+        if(block.chainid!=84532) revert WrongChain();
+        if(address(asset)==address(0)||founder==address(0)||begin<=block.timestamp||begin>block.timestamp+365 days||cap==0||cap>888888888000000||label==0) revert InvalidConfig();
+        token=asset;start=begin;budget=cap;purpose=label;excludedFounder=founder;
+        for(uint256 i=0;i<5;i++){
+            address s=signers[i];
+            if(s==address(0)||s==founder||s==address(this)||signer[s]) revert InvalidConfig();
+            signer[s]=true;
+        }
+    }
+    function monthlyCap(uint256 month) public view returns(uint256){
+        if(month>=60) return 0;
+        return budget*(month+1)/60-budget*month/60;
+    }
+    function propose(address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce) external returns(bytes32 id){
+        if(!signer[msg.sender]) revert Unauthorized();
+        if(recipient==address(0)||recipient==address(this)||recipient==excludedFounder||signer[recipient]||evidence==0||nonce==0||month>=60||amount==0||amount>monthlyCap(month)) revert InvalidProposal();
+        uint256 end=start+(month+1)*MONTH;
+        if(block.timestamp+DELAY>=end) revert InvalidProposal();
+        id=keccak256(abi.encode(block.chainid,address(this),purpose,recipient,amount,evidence,month,nonce));
+        if(proposals[id].recipient!=address(0)) revert InvalidProposal();
+        proposals[id]=Proposal(recipient,amount,evidence,month,0,0,false);
+        emit Proposed(id,recipient,amount,evidence,month);
+    }
+    function approve(bytes32 id) external {
+        if(!signer[msg.sender]) revert Unauthorized();
+        Proposal storage p=proposals[id];
+        if(p.recipient==address(0)||p.executed||cancelled[id]||block.timestamp>=start+(p.month+1)*MONTH) revert InvalidProposal();
+        if(approved[id][msg.sender]) revert AlreadyApproved();
+        approved[id][msg.sender]=true;
+        p.approvals++;
+        if(p.approvals==3) p.readyAt=block.timestamp+DELAY;
+        emit Approved(id,msg.sender);
+    }
+    /// @notice A signer can withdraw its own approval before execution.
+    /// Falling below threshold resets the delay; a fresh quorum starts it again.
+    function revokeApproval(bytes32 id) external {
+        if(!signer[msg.sender]) revert Unauthorized();
+        Proposal storage p=proposals[id];
+        if(p.recipient==address(0)||p.executed||cancelled[id]||!approved[id][msg.sender]||block.timestamp>=start+(p.month+1)*MONTH) revert InvalidProposal();
+        approved[id][msg.sender]=false;
+        p.approvals--;
+        if(p.approvals<3) p.readyAt=0;
+        emit ApprovalRevoked(id,msg.sender);
+    }
+    /// @notice Three distinct cancellation votes permanently invalidate this ID.
+    /// Votes are irreversible. Until quorum, execution can still win the race.
+    function voteCancel(bytes32 id) external {
+        if(!signer[msg.sender]) revert Unauthorized();
+        Proposal storage p=proposals[id];
+        if(p.recipient==address(0)||p.executed||cancelled[id]||cancelVoted[id][msg.sender]||block.timestamp>=start+(p.month+1)*MONTH) revert InvalidProposal();
+        cancelVoted[id][msg.sender]=true;
+        cancelVotes[id]++;
+        emit CancellationVoted(id,msg.sender);
+        if(cancelVotes[id]==3){
+            cancelled[id]=true;
+            emit Cancelled(id);
+        }
+    }
+    function execute(bytes32 id) external {
+        Proposal storage p=proposals[id];
+        if(p.executed||cancelled[id]||p.approvals<3||block.timestamp<p.readyAt||block.timestamp<start+p.month*MONTH||block.timestamp>=start+(p.month+1)*MONTH) revert NotReady();
+        if(p.amount>monthlyCap(p.month)-spent[p.month]||p.amount>budget-totalSpent) revert CapExceeded();
+        p.executed=true;
+        spent[p.month]+=p.amount;
+        totalSpent+=p.amount;
+        require(token.transfer(p.recipient,p.amount));
+        emit Executed(id,p.recipient,p.amount);
+    }
+}
+
+===== END FILE =====
+
+===== FILE: base/v3-testnet/src/V3SharedExpenseFixture.sol | Git blob: bf6b4be76c32b7fcff0ad15423673bbe380c67c9 =====
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+/// @notice Test-only fixed 3-of-5 approval vault for milestone expenditures.
+/// Synthetic signers and limits; independence and evidence truth are off-chain
+/// requirements. No generic calls, signer changes, sweeping or automatic rollover.
+/// @notice Test-only registry. Bound once to three policy vaults by the creating factory.
+contract V3SharedExpenseRegistry {
+    error InvalidBinding();
+    error UnauthorizedConsumer();
+    error ExpenseAlreadyConsumed();
+    address private immutable binder;
+    bool public isSealed;
+    mapping(address=>bool) public consumer;
+    mapping(bytes32=>address) public consumedBy;
+    mapping(bytes32=>bytes32) public consumedProposal;
+    event ExpenseConsumed(bytes32 indexed evidence,address indexed vault,bytes32 indexed proposal);
+    constructor(){
+        if(block.chainid!=84532) revert InvalidBinding();
+        binder=msg.sender;
+    }
+    function bind(address[3] calldata vaults) external {
+        if(msg.sender!=binder||isSealed) revert InvalidBinding();
+        for(uint256 i=0;i<3;i++){
+            address v=vaults[i];
+            if(v.code.length==0||consumer[v]) revert InvalidBinding();
+            consumer[v]=true;
+        }
+        isSealed=true;
+    }
+    function consume(bytes32 evidence,bytes32 proposal) external {
+        if(!isSealed||!consumer[msg.sender]) revert UnauthorizedConsumer();
+        if(evidence==0||proposal==0||consumedBy[evidence]!=address(0)) revert ExpenseAlreadyConsumed();
+        consumedBy[evidence]=msg.sender;
+        consumedProposal[evidence]=proposal;
+        emit ExpenseConsumed(evidence,msg.sender,proposal);
+    }
+}
+
+contract V3SharedRestrictedSpend {
+    error WrongChain();
+    error InvalidConfig();
+    error Unauthorized();
+    error InvalidProposal();
+    error AlreadyApproved();
+    error NotReady();
+    error CapExceeded();
+    uint256 public constant MONTH=30 days;
+    uint256 public constant DELAY=2 days;
+    V3SharedExpenseRegistry public immutable registry;
+    IERC20 public immutable token;
+    uint256 public immutable start;
+    uint256 public immutable budget;
+    address public immutable excludedFounder;
+    bytes32 public immutable purpose;
+    mapping(address=>bool) public signer;
+    mapping(uint256=>uint256) public spent;
+    uint256 public totalSpent;
+    struct Proposal {
+        address recipient;
+        uint256 amount;
+        bytes32 evidence;
+        uint256 month;
+        uint256 readyAt;
+        uint8 approvals;
+        bool executed;
+    }
+    mapping(bytes32=>Proposal) public proposals;
+    mapping(bytes32=>mapping(address=>bool)) public approved;
+    mapping(bytes32=>mapping(address=>bool)) public cancelVoted;
+    mapping(bytes32=>uint8) public cancelVotes;
+    mapping(bytes32=>bool) public cancelled;
+    event Proposed(bytes32 indexed id,address indexed recipient,uint256 amount,bytes32 evidence,uint256 month);
+    event Approved(bytes32 indexed id,address indexed signer);
+    event ApprovalRevoked(bytes32 indexed id,address indexed signer);
+    event CancellationVoted(bytes32 indexed id,address indexed signer);
+    event Cancelled(bytes32 indexed id);
+    event Executed(bytes32 indexed id,address indexed recipient,uint256 amount);
+    constructor(IERC20 asset,address[5] memory signers,address founder,uint256 begin,uint256 cap,bytes32 label,V3SharedExpenseRegistry shared){
+        if(block.chainid!=84532) revert WrongChain();
+        if(address(shared).code.length==0||address(asset)==address(0)||founder==address(0)||begin<=block.timestamp||begin>block.timestamp+365 days||cap==0||cap>888888888000000||label==0) revert InvalidConfig();
+        registry=shared;token=asset;start=begin;budget=cap;purpose=label;excludedFounder=founder;
+        for(uint256 i=0;i<5;i++){
+            address s=signers[i];
+            if(s==address(0)||s==founder||s==address(this)||signer[s]) revert InvalidConfig();
+            signer[s]=true;
+        }
+    }
+    function monthlyCap(uint256 month) public view returns(uint256){
+        if(month>=60) return 0;
+        return budget*(month+1)/60-budget*month/60;
+    }
+    function propose(address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce) external returns(bytes32 id){
+        if(!signer[msg.sender]) revert Unauthorized();
+        if(recipient==address(0)||recipient==address(this)||recipient==excludedFounder||signer[recipient]||evidence==0||nonce==0||month>=60||amount==0||amount>monthlyCap(month)) revert InvalidProposal();
+        uint256 end=start+(month+1)*MONTH;
+        if(block.timestamp+DELAY>=end) revert InvalidProposal();
+        id=keccak256(abi.encode(block.chainid,address(this),purpose,recipient,amount,evidence,month,nonce));
+        if(proposals[id].recipient!=address(0)) revert InvalidProposal();
+        proposals[id]=Proposal(recipient,amount,evidence,month,0,0,false);
+        emit Proposed(id,recipient,amount,evidence,month);
+    }
+    function approve(bytes32 id) external {
+        if(!signer[msg.sender]) revert Unauthorized();
+        Proposal storage p=proposals[id];
+        if(p.recipient==address(0)||p.executed||cancelled[id]||block.timestamp>=start+(p.month+1)*MONTH) revert InvalidProposal();
+        if(approved[id][msg.sender]) revert AlreadyApproved();
+        approved[id][msg.sender]=true;
+        p.approvals++;
+        if(p.approvals==3) p.readyAt=block.timestamp+DELAY;
+        emit Approved(id,msg.sender);
+    }
+    /// @notice A signer can withdraw its own approval before execution.
+    /// Falling below threshold resets the delay; a fresh quorum starts it again.
+    function revokeApproval(bytes32 id) external {
+        if(!signer[msg.sender]) revert Unauthorized();
+        Proposal storage p=proposals[id];
+        if(p.recipient==address(0)||p.executed||cancelled[id]||!approved[id][msg.sender]||block.timestamp>=start+(p.month+1)*MONTH) revert InvalidProposal();
+        approved[id][msg.sender]=false;
+        p.approvals--;
+        if(p.approvals<3) p.readyAt=0;
+        emit ApprovalRevoked(id,msg.sender);
+    }
+    /// @notice Three distinct cancellation votes permanently invalidate this ID.
+    /// Votes are irreversible. Until quorum, execution can still win the race.
+    function voteCancel(bytes32 id) external {
+        if(!signer[msg.sender]) revert Unauthorized();
+        Proposal storage p=proposals[id];
+        if(p.recipient==address(0)||p.executed||cancelled[id]||cancelVoted[id][msg.sender]||block.timestamp>=start+(p.month+1)*MONTH) revert InvalidProposal();
+        cancelVoted[id][msg.sender]=true;
+        cancelVotes[id]++;
+        emit CancellationVoted(id,msg.sender);
+        if(cancelVotes[id]==3){
+            cancelled[id]=true;
+            emit Cancelled(id);
+        }
+    }
+    function execute(bytes32 id) external {
+        Proposal storage p=proposals[id];
+        if(p.executed||cancelled[id]||p.approvals<3||block.timestamp<p.readyAt||block.timestamp<start+p.month*MONTH||block.timestamp>=start+(p.month+1)*MONTH) revert NotReady();
+        if(p.amount>monthlyCap(p.month)-spent[p.month]||p.amount>budget-totalSpent) revert CapExceeded();
+        p.executed=true;
+        spent[p.month]+=p.amount;
+        totalSpent+=p.amount;
+        registry.consume(p.evidence,id);
+        require(token.transfer(p.recipient,p.amount));
+        emit Executed(id,p.recipient,p.amount);
+    }
+}
+
+// Factory binds all three consumers atomically, with no subsequent configuration route.
+// This is an isolated test fixture, not a new token or production custody implementation.
+contract V3SharedExpenseFixture {
+    V3SharedExpenseRegistry public immutable registry;
+    V3SharedRestrictedSpend public immutable ecosystem;
+    V3SharedRestrictedSpend public immutable community;
+    V3SharedRestrictedSpend public immutable treasury;
+    constructor(IERC20 asset,address[5] memory signers,address founder,uint256 begin){
+        V3SharedExpenseRegistry shared=new V3SharedExpenseRegistry();
+        registry=shared;
+        V3SharedRestrictedSpend e=new V3SharedRestrictedSpend(asset,signers,founder,begin,133333333200000,"ECOSYSTEM",shared);
+        V3SharedRestrictedSpend c=new V3SharedRestrictedSpend(asset,signers,founder,begin,88888888800000,"COMMUNITY",shared);
+        V3SharedRestrictedSpend t=new V3SharedRestrictedSpend(asset,signers,founder,begin,106666666560000,"TREASURY",shared);
+        ecosystem=e;community=c;treasury=t;
+        shared.bind([address(e),address(c),address(t)]);
+    }
+}
+
+===== END FILE =====
