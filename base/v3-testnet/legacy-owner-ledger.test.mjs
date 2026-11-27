@@ -9,15 +9,15 @@ const alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 function b58(s){let n=BigInt('0x'+s),out='';while(n){out=alphabet[Number(n%58n)]+out;n/=58n;}return '1'.repeat(s.match(/^(00)*/)[0].length/2)+out;}
 const fixed=i=>((1n<<248n)+BigInt(i)).toString(16).padStart(64,'0');
 const hash=s=>createHash('sha256').update(s).digest('hex');
-function fixture(){
+function fixture({cap='1000',award='50',offset=0,policyHash=h(5)}={}){
  const inventory=h(4),sourceGenesis=fixed(1),sourceMint=fixed(2);
- const input={mode:'SYNTHETIC_ONLY',sourceGenesis:b58(sourceGenesis),sourceMint:b58(sourceMint),snapshotSlot:'123',snapshotHash:h(3),policyHash:h(5),targetChainId:84532,targetToken:addr(1),targetVault:addr(2),campaign:h(6),cap:'1000',entries:[]};
+ const input={mode:'SYNTHETIC_ONLY',sourceGenesis:b58(sourceGenesis),sourceMint:b58(sourceMint),snapshotSlot:'123',snapshotHash:h(3),policyHash,targetChainId:84532,targetToken:addr(1),targetVault:addr(2),campaign:h(6),cap,entries:[]};
  const proofs=[],pairs=[],challenges=[];
  for(let i=0;i<2;i++){
   const pair=generateKeyPairSync('ed25519');pairs.push(pair);
-  const sourceOwner=pair.publicKey.export({format:'der',type:'spki'}).subarray(-32).toString('hex'),sourceAccount=fixed(10+i);
-  const row={sourceAccount:b58(sourceAccount),sourceOwner:b58(sourceOwner),recipient:addr(3+i),sourceAmount:'100',award:'50'};
-  const p={sourceAccount:row.sourceAccount,nonce:h(20+i),issuedAt:1000,expiresAt:1900};
+  const sourceOwner=pair.publicKey.export({format:'der',type:'spki'}).subarray(-32).toString('hex'),sourceAccount=fixed(10+i+offset);
+  const row={sourceAccount:b58(sourceAccount),sourceOwner:b58(sourceOwner),recipient:addr(3+i),sourceAmount:'100',award};
+  const p={sourceAccount:row.sourceAccount,nonce:h(20+i+offset),issuedAt:1000,expiresAt:1900};
   const c={mode:input.mode,sourceGenesis,sourceMint,snapshotSlot:input.snapshotSlot,snapshotHash:input.snapshotHash,inventoryDigest:inventory,policyHash:input.policyHash,cap:input.cap,campaign:input.campaign,sourceAccount,sourceOwner,sourceAmount:row.sourceAmount,targetChainId:input.targetChainId,targetToken:input.targetToken,targetVault:input.targetVault,recipient:row.recipient,award:row.award,nonce:p.nonce,issuedAt:p.issuedAt,expiresAt:p.expiresAt};
   challenges.push(c);
   const msg=syntheticOwnerMessage(c);p.signature=sign(null,msg,pair.privateKey).toString('hex');
@@ -144,5 +144,42 @@ test('registration rejects wrong issue time and duplicate nonce before and after
   assert.throws(()=>db.registerChallenge(challenges[0],1000),/already registered/);
   assert.equal(db.consume(input,inventory,proofs,1001).count,2);
   assert.throws(()=>db.registerChallenge(challenges[0],1000),/already registered or consumed/);
+ }finally{db.close();}
+});
+
+test('campaign cap persists across separate batches and restart; exact exhaustion accepted',t=>{
+ const {path}=withDatabase(t),a=fixture({cap:'200'}),b=fixture({cap:'200',offset:100}),c=fixture({cap:'200',offset:200});
+ let db=openSyntheticReplayLedger(path);
+ try{
+  registerAll(db,a.challenges);registerAll(db,b.challenges);registerAll(db,c.challenges);
+  const first=db.consume(a.input,a.inventory,a.proofs,1001);
+  assert.equal(first.campaignUsed,'100');assert.equal(first.campaignRemaining,'100');
+ }finally{db.close();}
+ db=openSyntheticReplayLedger(path);
+ try{
+  const second=db.consume(b.input,b.inventory,b.proofs,1001);
+  assert.equal(second.campaignUsed,'200');assert.equal(second.campaignRemaining,'0');
+  assert.throws(()=>db.consume(c.input,c.inventory,c.proofs,1001),/cumulative campaign cap exceeded/);
+ }finally{db.close();}
+});
+test('campaign context cannot change cap or policy even for independently signed rows',t=>{
+ const {path}=withDatabase(t),a=fixture(),b=fixture({cap:'1001',offset:100}),c=fixture({policyHash:h(99),offset:200});
+ const db=openSyntheticReplayLedger(path);
+ try{
+  registerAll(db,a.challenges);
+  assert.throws(()=>db.registerChallenge(b.challenges[0],1000),/campaign context mismatch/);
+  assert.throws(()=>db.registerChallenge(c.challenges[0],1000),/campaign context mismatch/);
+  assert.equal(db.consume(a.input,a.inventory,a.proofs,1001).campaignUsed,'100');
+ }finally{db.close();}
+});
+test('over-cap batch does not consume challenges or advance cumulative counter',t=>{
+ const {path}=withDatabase(t),a=fixture({cap:'150'}),b=fixture({cap:'150',offset:100});
+ const db=openSyntheticReplayLedger(path);
+ try{
+  registerAll(db,a.challenges);registerAll(db,b.challenges);
+  assert.equal(db.consume(a.input,a.inventory,a.proofs,1001).campaignUsed,'100');
+  assert.throws(()=>db.consume(b.input,b.inventory,b.proofs,1001),/cumulative campaign cap exceeded/);
+  const first={...b.input,entries:[b.input.entries[0]]};
+  assert.equal(db.consume(first,b.inventory,[b.proofs[0]],1001).campaignRemaining,'0');
  }finally{db.close();}
 });
