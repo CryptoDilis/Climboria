@@ -1,0 +1,44 @@
+name: CLIMB Base Signer Retirement Portable Evidence
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/climb-base-portable-compiler-evidence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 6deaf2dc0139882215eb71d1ed8fe2785984a0ab
+          persist-credentials: false
+      - name: Export pinned source and compiler for offline reproduction
+        run: |
+          set -euo pipefail
+          export DIR="$RUNNER_TEMP/portable"
+          mkdir -p "$DIR"
+          test "$(git rev-parse HEAD)" = 6deaf2dc0139882215eb71d1ed8fe2785984a0ab
+          git rev-parse HEAD > "$DIR/source.txt"
+          git archive --format=tar HEAD base/safe-custody/src base/safe-custody/test base/safe-custody/foundry.toml base/v3-testnet/src base/v3-testnet/test base/v3-testnet/foundry.toml > "$DIR/project.tar"
+          git init "$RUNNER_TEMP/oz"
+          git -C "$RUNNER_TEMP/oz" fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          test "$(git -C "$RUNNER_TEMP/oz" rev-parse FETCH_HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C "$RUNNER_TEMP/oz" archive --format=tar FETCH_HEAD contracts > "$DIR/oz.tar"
+          git init "$RUNNER_TEMP/safe"
+          git -C "$RUNNER_TEMP/safe" fetch --depth=1 https://github.com/safe-fndn/safe-smart-account.git bf943f80fec5ac647159d26161446ac5d716a294
+          test "$(git -C "$RUNNER_TEMP/safe" rev-parse FETCH_HEAD)" = bf943f80fec5ac647159d26161446ac5d716a294
+          git -C "$RUNNER_TEMP/safe" archive --format=tar FETCH_HEAD contracts > "$DIR/safe.tar"
+          curl --fail --show-error --silent --location --retry 2 https://github.com/argotorg/solidity/releases/download/v0.8.39/solc-static-linux -o "$DIR/solc-candidate"
+          echo "b8b0642d46838575d3177628b685564b52f51f2aee546cb4dce781951d23c666  $DIR/solc-candidate" | sha256sum -c -
+          chmod 700 "$DIR/solc-candidate"
+          "$DIR/solc-candidate" --version > "$DIR/solc.txt"
+          (cd "$DIR"; sha256sum project.tar oz.tar safe.tar solc-candidate source.txt solc.txt > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-base-signer-retirement-portable-0.8.39
+          path: ${{ runner.temp }}/portable/
+          if-no-files-found: error
+          retention-days: 14

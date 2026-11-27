@@ -82,9 +82,11 @@ contract V3GovernedGameRewardFixture is EIP712,ReentrancyGuard {
         distributor=address(0);generation++;delete pending;
         emit SignerRevoked(old,generation);
     }
+    // Proposed policy: previously activated signers cannot be scheduled or activated again.
+    // Keep _eligible unchanged: the current signer must remain eligible for claims.
     function schedule(uint256 expectedEpoch,uint256 expectedGeneration,address signer,uint256 validAfter,uint256 validUntil) external {
         _authorize(expectedEpoch,expectedGeneration);
-        if(distributor!=address(0)||!_eligible(signer)||validAfter>block.timestamp||validUntil<=block.timestamp||
+        if(distributor!=address(0)||formerOrCurrentSigner[signer]||!_eligible(signer)||validAfter>block.timestamp||validUntil<=block.timestamp||
             validUntil<=validAfter||validUntil-validAfter>1 days||
             (pending.signer!=address(0)&&pending.epoch==expectedEpoch&&block.timestamp<pending.expiresAt))revert InvalidAuthority();
         rotationSerial++;
@@ -100,7 +102,7 @@ contract V3GovernedGameRewardFixture is EIP712,ReentrancyGuard {
         _authorize(expectedEpoch,expectedGeneration);
         Rotation memory p=pending;
         if(distributor!=address(0)||serial!=rotationSerial||p.signer!=signer||p.epoch!=expectedEpoch||
-            block.timestamp<p.readyAt||block.timestamp>=p.expiresAt||!_eligible(signer))revert InvalidAuthority();
+            block.timestamp<p.readyAt||block.timestamp>=p.expiresAt||formerOrCurrentSigner[signer]||!_eligible(signer))revert InvalidAuthority();
         delete pending;generation++;distributor=signer;formerOrCurrentSigner[signer]=true;
         emit SignerActivated(signer,generation,serial);
     }
