@@ -5,6 +5,7 @@ import {SafeProxy} from "safe-contracts/proxies/SafeProxy.sol";
 import {SafeEpochGuardFixture,SafeGuardBootstrapFixture} from "./SafeEpochGuardFixture.sol";
 import {V3AtomicSuccessorFixture,V3SuccessorTestToken} from "v3-src/V3AtomicSuccessorFixture.sol";
 import {V3EpochSpendFixture} from "v3-src/V3EpochSpendFixture.sol";
+import {V3SharedExpenseRegistry} from "v3-src/V3SharedExpenseFixture.sol";
 import {V3DeferredLiquidityFixture} from "v3-src/V3DeferredLiquidityFixture.sol";
 import {V3DeferredLegacyFixture} from "v3-src/V3DeferredLegacyFixture.sol";
 import {V3FounderVesting} from "v3-src/ClimbV3TestToken.sol";
@@ -59,10 +60,12 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
         V3DeferredLegacyFixture legacy=V3DeferredLegacyFixture(destinations[6]);
         if(address(l.asset())!=address(t)||address(l.custody())!=address(this)||
            address(legacy.token())!=address(t)||address(legacy.custody())!=address(this))revert InvalidConfig();
+        V3SharedExpenseRegistry registry=successor.expenses().registry();
+        if(address(registry).code.length==0||!registry.isSealed())revert InvalidConfig();
         for(uint256 i=3;i<=5;i++){
             V3EpochSpendFixture v=V3EpochSpendFixture(destinations[i]);
             if(address(v.token())!=address(t)||address(v.custody())!=address(this)||
-               address(v.registry())!=address(successor.expenses().registry())||v.excludedFounder()!=founder)revert InvalidConfig();
+               address(v.registry())!=address(registry)||!registry.consumer(address(v))||v.excludedFounder()!=founder)revert InvalidConfig();
         }
         address lp=l.lpCustody();
         if(lp.code.length==0||lp==founder||lp==distributor||lp==address(this)||lp==address(wallet)||lp==address(successor)||wallet.isOwner(lp))revert InvalidConfig();
