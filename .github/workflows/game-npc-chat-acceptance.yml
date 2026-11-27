@@ -1,0 +1,30 @@
+name: Game NPC World Chat Acceptance
+on:
+  push:
+    paths: ['game/npc/**','game/multiplayer/client-presence.js','game/multiplayer/client-presence.test.mjs','game/multiplayer/presence-room.mjs','.github/scripts/game-npc-chat-browser.mjs','.github/scripts/game-npc-native-websocket.mjs','.github/workflows/game-npc-chat-acceptance.yml']
+  pull_request:
+    paths: ['game/npc/**','game/multiplayer/client-presence.js','game/multiplayer/client-presence.test.mjs','game/multiplayer/presence-room.mjs','.github/scripts/game-npc-chat-browser.mjs','.github/scripts/game-npc-native-websocket.mjs','.github/workflows/game-npc-chat-acceptance.yml']
+permissions:
+  contents: read
+jobs:
+  chat-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify actual client and NPC unit contracts
+        run: node --test game/multiplayer/client-presence.test.mjs game/npc/*.test.mjs
+      - name: Install Chromium fixture dependencies
+        run: |
+          npm init -y
+          npm install --no-save playwright ws
+          npx playwright install chromium
+      - name: Verify two separate browser DOMs receive private room events
+        run: node .github/scripts/game-npc-chat-browser.mjs
+      - name: Verify native loopback WebSocket room scheduling
+        run: node .github/scripts/game-npc-native-websocket.mjs

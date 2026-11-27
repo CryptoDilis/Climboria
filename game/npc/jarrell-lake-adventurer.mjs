@@ -63,6 +63,7 @@ export function createJarrellLakeAdventurer({groundAt,waterBodyAt,actorBlocked,l
  }
  if(!rest||!shore||!swim)throw Error('No verified loaded lake route: '+JSON.stringify({rest:!!rest,shore:!!shore,swim:!!swim,probes}));
  const nodes=[rest,fish,shore,swim],edges=[['rest','fish'],['fish','rest'],['fish','shore'],['shore','fish'],['shore','swim'],['swim','shore']];
- const npc=createAutonomousAdventurer({nodes,edges,spawn:'rest',world:{sample,canTraverse,canAct},seed,identityId});
- return Object.freeze({npc,nodes:Object.freeze(nodes.map(n=>Object.freeze({...n}))),probes});
+ const world=Object.freeze({sample,canTraverse,canAct});
+ const npc=createAutonomousAdventurer({nodes,edges,spawn:'rest',world,seed,identityId});
+ return Object.freeze({npc,nodes:Object.freeze(nodes.map(n=>Object.freeze({...n}))),edges:Object.freeze(edges.map(e=>Object.freeze([...e]))),world,probes});
 }
