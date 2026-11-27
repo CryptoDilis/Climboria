@@ -78,7 +78,13 @@ try{
  assert.equal(await call(setup,'guardDeployerHash()'),guardDeployerCode.runtimeKeccak256);
  factoryProvenance.guardDeployer={...guardDeployerCode,...await verify('SafeQuorumIssuanceFixture.sol','SafeQuorumGuardDeployerFixture',guardDeployer,[setup])};
  const helper=await deploy('conditionalHelper','V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',creator);
- factoryProvenance.conditionalHelper=await verify('V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',helper);
+ const legacyDeployer=await address(helper,'legacyDeployer()');
+ assert.notEqual(legacyDeployer,helper);
+ assert.equal(await address(legacyDeployer,'factory()'),helper);
+ const legacyDeployerCode=await requireCode(legacyDeployer);
+ assert.equal(await call(helper,'legacyDeployerHash()'),legacyDeployerCode.runtimeKeccak256);
+ factoryProvenance.legacyDeployer={...legacyDeployerCode,...await verify('V3AtomicSuccessorFixture.sol','V3SuccessorLegacyDeployer',legacyDeployer,[helper])};
+ factoryProvenance.conditionalHelper=await verify('V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',helper,[legacyDeployer]);
  const helperHash=contracts.conditionalHelper.runtimeKeccak256;
  const successor=await deploy('successorFactory','SafeQuorumIssuanceFixture.sol','V3QuorumSuccessorFixture',creator,cast('abi-encode','f(address,address,bytes32)',setup,helper,helperHash));
  assert.equal(await address(successor,'conditional()'),helper);
