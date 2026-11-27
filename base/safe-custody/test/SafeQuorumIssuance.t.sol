@@ -316,6 +316,43 @@ contract SafeQuorumIssuanceTest {
         require(_exec(data,_sign(data,3)));
         require(gaming.distributor()==candidate&&gaming.generation()==3&&successor.token().totalSupply()==SUPPLY);
     }
+    function testActualQuorumCannotReauthorizeRetiredRewardSigners() public {
+        _issue();
+        V3GovernedGameRewardFixture gaming=V3GovernedGameRewardFixture(successor.vaults(1));
+        bytes memory data=abi.encodeCall(guard.revokeRewardSigner,(1,1));
+        require(_exec(data,_sign(data,3)));
+        _rejectRetiredRewardSchedule(gaming,DISTRIBUTOR,2,0);
+        address candidate=address(0x9876);
+        data=abi.encodeCall(guard.scheduleRewardSigner,(1,2,candidate,block.timestamp,block.timestamp+1 hours));
+        require(_exec(data,_sign(data,3)));
+        vm.warp(block.timestamp+2 days);
+        data=abi.encodeCall(guard.activateRewardSigner,(1,2,1,DISTRIBUTOR));
+        bytes memory rejected=_sign(data,3);
+        uint256 nonce=wallet.nonce();
+        vm.expectRevert();_exec(data,rejected);
+        require(wallet.nonce()==nonce&&!guard.transactionActive()&&gaming.generation()==2);
+        data=abi.encodeCall(guard.activateRewardSigner,(1,2,1,candidate));
+        require(_exec(data,_sign(data,3)));
+        require(gaming.distributor()==candidate&&gaming.generation()==3);
+        data=abi.encodeCall(guard.revokeRewardSigner,(1,3));
+        require(_exec(data,_sign(data,3)));
+        _rejectRetiredRewardSchedule(gaming,DISTRIBUTOR,4,1);
+        _rejectRetiredRewardSchedule(gaming,candidate,4,1);
+        address fresh=address(0x9877);
+        data=abi.encodeCall(guard.scheduleRewardSigner,(1,4,fresh,block.timestamp,block.timestamp+1 hours));
+        require(_exec(data,_sign(data,3)));
+        vm.warp(block.timestamp+2 days);
+        data=abi.encodeCall(guard.activateRewardSigner,(1,4,2,fresh));
+        require(_exec(data,_sign(data,3)));
+        require(gaming.distributor()==fresh&&gaming.generation()==5&&successor.token().totalSupply()==SUPPLY);
+    }
+    function _rejectRetiredRewardSchedule(V3GovernedGameRewardFixture gaming,address signer,uint256 gen,uint256 serial) private {
+        bytes memory data=abi.encodeCall(guard.scheduleRewardSigner,(1,gen,signer,block.timestamp,block.timestamp+1 hours));
+        bytes memory sigs=_sign(data,3);
+        uint256 nonce=wallet.nonce();
+        vm.expectRevert();_exec(data,sigs);
+        require(wallet.nonce()==nonce&&!guard.transactionActive()&&gaming.generation()==gen&&gaming.rotationSerial()==serial&&gaming.distributor()==address(0));
+    }
     function testPendingRewardAndOwnerRolesCannotOverlap() public {
         _issue();
         address candidate=PAYEE;
