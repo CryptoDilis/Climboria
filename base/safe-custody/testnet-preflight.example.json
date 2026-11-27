@@ -1,0 +1,23 @@
+{
+  "chainId": 84532,
+  "sourceSha": "d8ed14ff19b21db9d5d5e81e86cab9a86deb0e0f",
+  "testOnly": true,
+  "deployer": null,
+  "owners": [
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "founder": null,
+  "distributor": null,
+  "startTimestamp": null,
+  "gamingWalletMonthlyCapRaw": null,
+  "liquidityTrancheCapRaw": null,
+  "maxTotalFeeWei": null,
+  "signerControlEvidenceSha256": null,
+  "independentReviewEvidenceSha256": null,
+  "recoveryAcceptanceEvidenceSha256": null,
+  "configurationApprovalEvidenceSha256": null
+}
