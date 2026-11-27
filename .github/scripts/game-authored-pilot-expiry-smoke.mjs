@@ -27,11 +27,19 @@ try{
  const first=await connect();ws=first.socket;
  assert.equal(first.joined.fixture,'authored-camp-pilot');
  assert.ok(first.joined.expiresInMs>=59000&&first.joined.expiresInMs<=60000);
- // No client commands or client close. Only the real Worker scheduler can terminate this socket.
+ // No client commands or client-initiated close before the real server expiry.
  const result=await bounded(first.closed,75000);
  assert.equal(result.code,1000);assert.equal(result.reason,'preview-session-expired');
  assert.ok(result.elapsed>=59000&&result.elapsed<75000);
- assert.equal(ws.readyState,3);
+ // Miniflare's test-side WebSocket can deliver the server close frame while
+ // still CLOSING. Only acknowledge AFTER validating the server's code, reason
+ // and elapsed time above; never initiate a client close before expiry.
+ assert.ok(ws.readyState===2||ws.readyState===3);
+ if(ws.readyState===2)ws.close(result.code,result.reason);
+ const handshakeDeadline=performance.now()+2000;
+ while(ws.readyState!==3&&performance.now()<handshakeDeadline)
+  await new Promise(r=>setTimeout(r,20));
+ assert.equal(ws.readyState,3,'server-initiated close handshake must complete');
  // Close notification can precede the serialized durable disconnect; wait briefly for it.
  await new Promise(r=>setTimeout(r,500));
  const replacement=await connect();next=replacement.socket;

@@ -3202,3 +3202,9 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 
 - #938 refreshed head f34261ac7578f98862e70095514e2ca528dcdcc7: Authority 45955902077, Gateway 45955902098, Runtime 45955902033, Validate 45955902095 SUCCESS; Gameplay 45955902080 native controls/socket/GLB steps passed, full smoke pending at check. Parent head untouched. #940 reconciled on parent and main 094fffd8dfb40b90488032fc59bef3f1c07bfdab, preserving main wallet changes and both histories. Keep current main README/backlog, already documenting R5A priority. Retain renderer and real server expiry tests. Draft for parallel CI only, no public PvP or deployment.
 - NEXT: finish #938 green/merge; reconcile #940 on resulting main and verify fresh CI, then prioritize one R5A autonomous NPC. Real-account/authorized edge and physical-device acceptance open.
+
+
+## SERVER EXPIRY CLOSE HANDSHAKE REGRESSION — 2026-11-27 PHT
+
+- #940 head 3d88f6c0ef6048597354f72b169cecd6e647b911: Runtime [45956169767](https://github.com/CryptoDilis/Climboria/actions/runs/45956169767) failed solely in new real expiry smoke at line 34: test-side readyState was CLOSING (2), not CLOSED (3), after ~61 seconds. Preceding assertions of server-initiated close code 1000, reason preview-session-expired and elapsed 59–75 seconds passed; earlier local Worker/SQLite lifecycle passed. Adjust test-side handshake only: after validating server frame, acknowledge if still CLOSING and require CLOSED within 2 seconds, then retain fresh admission assertions. No timer, server authority, operation budget or production change. Fresh CI required; do not count full expiry/rejoin as passed yet.
+- NEXT: #938 terminal green and merge; #940 fresh Runtime and Gameplay plus Authority/Gateway/Validate, reconcile after parent merge; then R5A one autonomous NPC. No public PvP or deployment.
