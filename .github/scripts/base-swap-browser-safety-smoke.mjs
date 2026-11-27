@@ -85,6 +85,23 @@ try{
   assert.equal(await page.locator("#basePriceSubmit").isDisabled(),true);
   assert.deepEqual(await page.evaluate(()=>window.__baseWalletRequests),["eth_chainId","eth_requestAccounts","eth_chainId"],
    "No EVM signing/approval/account prompts after chain toggles or browser history");
+  assert.equal(await page.locator("#chainBase").getAttribute("aria-pressed"),"true");
+  assert.equal(await page.locator("#chainSolana").getAttribute("aria-pressed"),"false");
+  // Unsupported EVM deep links must not reinterpret the same hex address as Base.
+  for(const chain of ["ethereum","bsc"]){
+   const url=new URL(mainUrl);
+   url.searchParams.set("chain",chain);
+   url.searchParams.set("contract",ACCOUNT);
+   url.searchParams.set("from","foreign-chain-asset");
+   url.searchParams.set("to","foreign-chain-asset");
+   await page.goto(url.href,{waitUntil:"domcontentloaded",timeout:45000});
+   await page.waitForFunction(()=>new URL(location.href).searchParams.get("chain")==="base");
+   assert.equal(await page.locator("#baseMarketContract").inputValue(),"");
+   assert.match(await page.locator("#chainNotice").innerText(),/Requested network is not supported yet/);
+   assert.ok(["contract","from","to"].every(k=>!new URL(page.url()).searchParams.has(k)));
+   assert.equal(await page.locator("#getQuote").isDisabled(),true);
+   assert.deepEqual(await page.evaluate(()=>window.__baseWalletRequests),[]);
+  }
   assert.equal(errors.filter(s=>/base-workspace|base-wallet-session|base-price-preview/i.test(s)).length,0,
    "Base module page errors: "+JSON.stringify(errors));
   await page.close();
@@ -128,6 +145,15 @@ try{
      assert.ok(await page.locator('.card .base-swap-identity').isVisible());
      assert.equal(await page.locator('.card > .quote-controls').isVisible(),false);
      assert.equal(await page.locator('#getQuote').isDisabled(),true);
+     assert.equal(await page.locator("#chainBase").getAttribute("aria-pressed"),"true");
+     assert.equal(await page.locator("#chainSolana").getAttribute("aria-pressed"),"false");
+     const roadmap=page.locator(".network-roadmap");
+     assert.equal(await roadmap.locator("button,a,select,input").count(),0);
+     assert.match(await roadmap.textContent(),/Ethereum.*Planned.*BNB Chain.*Planned/s);
+     if(width<=760)await page.locator(".mobile-routing-details summary").click();
+     assert.ok(await roadmap.isVisible(),context+" planned networks not accessible");
+     if(width<=760)await page.locator(".mobile-routing-details summary").click();
+
      if(width<=760){
       await page.locator('#mobileWorkspaceTabs [data-workspace-tab="market"]').click();
       assert.ok(await page.locator('#baseMarketPanel').isVisible(),context+" Base Markets tab must display actual Base explorer");
