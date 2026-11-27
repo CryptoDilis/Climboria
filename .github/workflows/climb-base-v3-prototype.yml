@@ -53,6 +53,12 @@ jobs:
           git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
           git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
           test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+      - name: Exercise focused allocation and replay fuzz properties
+        run: |
+          set -euo pipefail
+          forge test --match-path test/V3SecurityFuzz.t.sol --match-test '^testFuzz_' --fuzz-runs 256 -vv | tee "$RUNNER_TEMP/climb-v3-fuzz.log"
+          grep -Eq '5 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-fuzz.log"
+          test "$(grep -c 'runs: 256' "$RUNNER_TEMP/climb-v3-fuzz.log")" -eq 5
       - name: Run exact offline V3 prototype tests
         run: |
           set -euo pipefail
