@@ -26,7 +26,9 @@ function addr(a){
  reject(BigInt(x)>0xffffn&&!local.has(x),'zero/sentinel/fixture/disposable address');
  return x;
 }
+const requireActivePin=()=>reject(pin.status==='TEST_ONLY_FROZEN_BUILD_NOT_APPROVAL','retired candidate; exact new build required');
 export function checkFrozenArtifacts(artifacts){
+ requireActivePin();
  reject(Array.isArray(artifacts)&&artifacts.length===pin.contracts.length,'missing artifact set');
  for(let i=0;i<pin.contracts.length;i++){
   const p=pin.contracts[i],a=artifacts[i];
@@ -42,6 +44,7 @@ export function checkFrozenArtifacts(artifacts){
  return {status:'FROZEN_ARTIFACTS_MATCH_NO_APPROVAL',sourceSha:pin.sourceSha,chainId:pin.chainId,contracts:pin.contracts};
 }
 export function checkConfig(c,now=Math.floor(Date.now()/1000)){
+ requireActivePin();
  reject(c&&typeof c==='object'&&!Array.isArray(c)&&JSON.stringify(Object.keys(c).sort())===JSON.stringify(fields),'unknown or missing configuration fields');
  reject(c.chainId===84532&&c.testOnly===true&&c.sourceSha===pin.sourceSha,'wrong chain, source or mode');
  reject(Array.isArray(c.owners)&&c.owners.length===5,'exact five owner slots required');
