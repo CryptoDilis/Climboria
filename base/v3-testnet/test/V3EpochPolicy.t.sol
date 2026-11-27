@@ -17,6 +17,7 @@ contract MockEpochCustody is IV3CustodyEpochFixture {
     uint256 public override threshold=3;
     uint256 public override memberCount=5;
     mapping(address=>bool) public override isMember;
+    function expenseRecipientAllowed(address) external pure returns(bool){return true;}
     function configure(uint256 e,uint256 t,uint256 n) external {epoch=e;threshold=t;memberCount=n;}
     function member(address a,bool yes) external {isMember[a]=yes;}
     function propose(V3EpochSpendFixture v,address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce) external returns(bytes32){
