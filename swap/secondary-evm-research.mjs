@@ -20,7 +20,7 @@ export function initSecondaryEvmResearch({doc=globalThis.document,scope=globalTh
  const visible=()=>doc.documentElement.dataset.climboriaSwapNetwork==="base";
  const selected=()=>Object.hasOwn(CHAINS,chain.value)?CHAINS[chain.value]:null;
  function clear(message){++seq;active?.abort();active=null;results.replaceChildren();status.textContent=message;}
- function sync(){panel.hidden=!visible();if(!visible()){input.value="";clear("Select Base market workspace to access secondary research.");}}
+ function sync(){panel.hidden=!visible();if(!visible()){panel.open=false;input.value="";clear("Select Base market workspace to access secondary research.");}}
  function changeChain(){input.value="";clear("Enter an exact contract on the selected research network.");}
  chain.addEventListener("change",changeChain);
  input.addEventListener("input",()=>clear("Contract changed. Select Find pools to request current data."));
@@ -36,6 +36,7 @@ export function initSecondaryEvmResearch({doc=globalThis.document,scope=globalTh
    if(!response.ok||!/application\/json/i.test(response.headers.get("content-type")||""))throw Error("Provider unavailable");
    const data=await readBounded(response);
    if(!current())return;
+   if(controller.signal.aborted)throw Error("Provider lookup timed out");
    if(!Array.isArray(data?.pairs))throw Error("Invalid provider schema");
    const rows=parseEvmMarketPairs(data,contract,network.id);
    for(const row of rows){
