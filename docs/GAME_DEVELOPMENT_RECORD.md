@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A MAIN INTEGRATION MERGED — 2026-11-27 UTC
+
+- #1000 exact head 4f33795c680347bb3fcca2d2b6b6488d0164cdbc: all 11 source workflows SUCCESS. Focused NPC desktop/mobile 46020396061, full gameplay 46020395784, native chat 46020395893, foundation 46020395851, ecosystem browser 46020395877; six other checks green. Compared intervening main changes: only Base handoff documentation, no overlapping paths. GitHub confirmed merge efc90d622b6c7547f97809ebdb7ea9aaed7e4862. No public NPC activation; post-merge CI not yet verified.
+- #1002 foundation 46021239324/chat 46021239312; #1003 foundation 46021246459/chat 46021246494; #1004 foundation 46021451241/chat 46021451254 passed. Their focused browser runs 46021239419, 46021246433 and 46021451335 were in progress at inspection. Preserve running branches. No claim of real production account/WSS, simultaneous GLB, actual vertical wall climbing or physical-device acceptance.
+- NEXT: finish exact-head focused checks and consolidate #1002/#1004 activity lifecycle and #1003 private host on current main, retaining all intervening non-Game changes. Then verify paired visible actor rendering/avoidance, reviewed map authority and physical devices. Public spawning, real economy and production room gates remain closed.
+
+---
+
 ## R5A NATIVE WEBSOCKET VERIFIED; MAIN CONSOLIDATION — 2026-11-27 UTC
 
 - #1000 prior exact head 9681e4eefaf1b05e5609d6ecb11f242b591b1381: [NPC Chat Acceptance 46019460113](https://github.com/CryptoDilis/Climboria/actions/runs/46019460113), job 140575013105 SUCCESS. 103/103 unit contracts; two distinct Chromium DOM clients 1280/390px received identical three NPC events, linked reply, mute, duplicate rejection, preserved drafts and real human count=2. Actual native loopback sockets: 2 clients, 3 events, linked reply, forged packet rejected, room empty at cleanup, scheduler closed with 387 ticks and no pending timer. Synthetic terrain/tickets and controlled clock; not real account or public WSS evidence.
