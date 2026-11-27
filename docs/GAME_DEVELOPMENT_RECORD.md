@@ -1,5 +1,34 @@
 # Climboria Game Development Record
 
+## R5A MAIN CONSOLIDATION AND CI POLLING CORRECTION — 2026-11-27
+
+- #972 foundation 45969578112 and browser 45969578125 passed; #974 foundation 45969801320 and browser 45969801209 passed, including actual Aurelion nameplate. #971 seven of eight workflows passed; desktop focused browser 45968900757 timed out despite final audit showing 15 frames, 15 draws, 2.4m movement, open session, zero JS errors; mobile passed. Replace in-page polling with bounded Node-side audit sampling (desktop 120s/mobile 45s between samples), keep movement/frame/draw/nameplate and cleanup assertions. Overall workflow timeout still applies. This is not a performance benchmark or verified fix until fresh CI passes.
+- Consolidate #974 verified stack onto latest checked main 7bc1d0d55daa56cbde6ea952d6c5bfc39cd7661a in existing #971 branch; main changes since original base are exclusively Base-workstream files and are preserved. No public NPC spawn, multiplayer chat or financial activity. Fresh integration checks required; then review and merge, followed by connected lake/forest navigation and contextual NPC chat. Physical-device performance pending.
+
+---
+
+## R5A NAMED NPC RUNTIME SMOKE CANDIDATE — 2026-11-27
+
+- On top of #972 (f1dc32783766eccc9b5177d9c77441334816ae6d), bind optional registry identity to autonomous snapshots and renderer; reject mismatched or unknown IDs, retain generic fixture compatibility. Continuous smoke actor uses Aurelion [NPC] actual canvas nameplate, records sprite draw callbacks and asserts stable ID, label and cleanup. No extra actors, public spawn, presence, chat or economy changes. New tests and browser acceptance pending.
+- #971 6/8 passed, remaining gameplay and focused browser runs pending; #972 foundation 45969578112 passed and browser 45969578125 pending. Separate branch preserves active CI. Next verify integration chain; continuous connected lake/forest route still pending (verified sites are far apart, loaded terrain constraints apply), then chat and behavior biases, shared authority and physical mobile performance.
+
+---
+
+## R5A VERIFIED FOREST AND ROSTER INTEGRATION CANDIDATE — 2026-11-27
+
+- #969 head 48e8b817539a0c5172649de5bd581a15f0b3a39a: foundation 45968343291 and browser 45968343205 passed. Both desktop and mobile reported actual authored forest source, 24.4m travel, bounded 0.3m steps, NPC_Gather draw, one synthetic wood collected, unchanged inventory/peers/diagnostics and cleanup. #966 head 16be2dc95694b8ba5a0320b65093906191e4ad79: foundation 45968540003 and browser 45968540132 passed; stable roster only, not runtime nameplate or chat.
+- Integrate those verified files and R5A.10–11 requirements on top of #971 head 2b863f199d868e02dc1b778ee832deabf11bd601; preserve its running CI. At inspection, #971 six workflows passed and gameplay smoke 45968900762 / NPC focused browser 45968900757 pending. No public spawn, no financial action, no shared authority. New integration CI required.
+- NEXT: finish #971 and this integration CI, merge in dependency order after reviewing latest main. Then implement one continuous actor traversing valid connected lake/forest routes, actual nameplates and contextual chat, shared authority and physical device performance. Do not mark R5A complete or release public NPCs based on isolated audits.
+
+---
+
+## R5A VERIFIED ACTIVITY CONSOLIDATION CANDIDATE — 2026-11-27
+
+- Main-based integration from 0a7436407f36833f5cb114e7c4168c703492425c. #960 focused browser 45964759337 passed; #962 foundation 45965565093 and browser 45965565109 passed; #963 foundation 45967765549 and browser 45967765504 passed; #967 foundation 45968097821 and browser 45968097776 passed. #963 actual continuous desktop/mobile 17 frames, 17 draws, 2.72m, correct distance cleanup. Physical device performance still pending. #960 retarget to main conflicts because prior #958 changes already landed independently; preserve main record and unchanged game files, copy only verified activity and synthetic gathering candidate files. #969 actual forest map and #966 roster browser runs pending; not included. No public spawning or financial activity.
+- NEXT: run fresh main-based integration CI, then integrate verified actual forest and roster once their tests finish. Continuous lake-to-forest navigation, named nameplates/chat and shared authority remain pending. Do not enable public NPCs.
+
+---
+
 ## PLAYER-DRIVEN PROFESSIONS, EXPEDITION DEPTH AND IMMERSION APPROVED — 2026-11-27 PHT
 
 - Owner approved all ten proposed additions. R10.1–R10.11 in [Game player experience backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 1c5322fc7403216aaad8e736b24f08dd93ff151f; root P4 checklist update 19166c3b30a1b014a6628b5cc0223fcebba1977d. Scope: Player Job Board, merchant caravans, backpack weight/capacity, equipment inspection, environmental tracking, player shops/market stalls, combat training ground, expedition records, treasure recovery expeditions and environmental audio. All implementation items unchecked. Reuse existing R1–R9 systems and preserve original soundtrack, gameplay, privacy, no magic/no global character level, browser-first/mobile performance.

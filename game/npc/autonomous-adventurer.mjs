@@ -1,9 +1,12 @@
 // Isolated nonfinancial R5A foundation. No player, socket, economy or renderer imports.
 // The caller must supply actor-safe terrain/collision and authored navigation adapters.
-const ACTIONS=new Set(['explore','fish','gather','rest','swim']);
+import {getNpcIdentity} from './npc-roster.mjs';
+const ACTIONS=new Set(['explore','fish','gather','farm','rest','swim']);
 const finite=Number.isFinite, dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const key=(a,b)=>a+'>'+b;
-export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1}={}){
+export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1,identityId=null}={}){
+ const identity=identityId===null?null:getNpcIdentity(identityId);
+ if(identityId!==null&&!identity)throw Error('Unknown NPC identity');
  if(!Array.isArray(nodes)||nodes.length<2||nodes.length>64||!Array.isArray(edges)||edges.length>256||
     typeof world?.sample!=='function'||typeof world?.canTraverse!=='function'||typeof world?.canAct!=='function')
   throw Error('Bounded NPC navigation and world adapters required');
@@ -27,7 +30,7 @@ export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1}={}){
  }
  let at=spawn,position=graph.has(at)?sample(graph.get(at)):null;
  if(!position)throw Error('Invalid NPC spawn');
- let time=0,stamina=100,mode='idle',goal=null,route=[],next=null,returning=false,wait=0,last=null,closed=false,stuck=false;
+ let time=0,stamina=100,mode='idle',goal=null,route=[],next=null,returning=false,wait=0,last=null,closed=false,stuck=false,activity=null;
  const rejected=new Map();
  function pathTo(id){
   const queue=[[at]],seen=new Set([at]);
@@ -55,16 +58,17 @@ export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1}={}){
   at=next;next=route.shift()??null;
   if(next!==null)return;
   const n=graph.get(at),action=n.action;
-  if(world.canAct(n,action)!==true||(action==='swim'&&!position.swim)||(['fish','gather','rest'].includes(action)&&position.swim)){
+  if(world.canAct(n,action)!==true||(action==='swim'&&!position.swim)||(['fish','gather','farm','rest'].includes(action)&&position.swim)){
    goal=null;mode='idle';wait=.25;return;
   }
-  last=action;mode=action;wait=action==='rest'?3:action==='fish'?2+random()*2:1+random();
+  last=action;mode=action;activity=n;wait=action==='rest'?3:action==='fish'?2+random()*2:action==='farm'?3:1+random();
   goal=null;
  }
  function tick(dt){
   if(closed||!finite(dt)||dt<=0)return snapshot();
   dt=Math.min(dt,.1);time+=dt;
-  if(wait>0){wait=Math.max(0,wait-dt);if(mode==='rest')stamina=Math.min(100,stamina+dt*18);return snapshot()}
+  if(wait>0){wait=Math.max(0,wait-dt);if(mode==='rest')stamina=Math.min(100,stamina+dt*18);
+   if(wait===0&&activity){const n=activity;activity=null;if(world.canAct(n,n.action)===true)world.onActivityComplete?.(n,n.action)}return snapshot()}
   if(next===null)choose();
   if(next===null)return snapshot();
   const target=graph.get(next),d=dist(position,target);
@@ -73,16 +77,16 @@ export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1}={}){
   // the final bounded step, rather than accepting a rounded near-arrival.
   const speed=position.swim?1.6:stamina>65&&d>1?3.2:2;
   const step=Math.min(d,speed*dt,.3),p=sample(step===d?target:{x:position.x+(target.x-position.x)*step/d,z:position.z+(target.z-position.z)*step/d});
-  const movement=p?.swim?'swim':speed>2?'run':'walk';
+  const movement=p?.swim?'swim':p&&!position.swim&&world.isClimb?.(position,p)===true?'climb':speed>2?'run':'walk';
   if(!p||world.canTraverse(position,p,movement)!==true){
    mode='idle';wait=.3;stuck=true;
    if(!returning){rejected.set(key(at,next),time+8);next=at;returning=true;route=[]}
    return snapshot();
   }
-  position=p;stuck=false;mode=movement;stamina=Math.max(0,stamina-dt*(movement==='run'?3:1));
+  position=p;stuck=false;mode=movement;stamina=Math.max(0,stamina-dt*(movement==='climb'?4:movement==='run'?3:1));
   if(step===d)arrive();
   return snapshot();
  }
- function snapshot(){return Object.freeze({kind:'npc',label:'Adventurer [NPC]',...position,mode,stamina,goal,stuck,closed})}
- return Object.freeze({tick,snapshot,close(){closed=true;mode='idle';goal=null;next=null;route=[];wait=0}});
+ function snapshot(){return Object.freeze({kind:'npc',label:identity?.label??'Adventurer [NPC]',...(identity?{npcId:identity.id}:{}),...position,mode,stamina,goal,stuck,closed})}
+ return Object.freeze({tick,snapshot,close(){closed=true;mode='idle';goal=null;next=null;route=[];wait=0;activity=null}});
 }
