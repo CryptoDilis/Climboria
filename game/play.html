@@ -3902,6 +3902,77 @@ if(new URLSearchParams(location.search).has('smoke')){
    closed:pair.snapshot().every(s=>s.closed),playerUnchanged:P.x===before.x&&P.y===before.y&&P.z===before.z,
    inventoryUnchanged:before.inventory===JSON.stringify(inventory),diagnosticsUnchanged:before.diag===window.__climboriaLastCollision,peersUnchanged:before.peers===livePeers.size};
  };
+ window.ENDLESS_WILDS.npcPairVisualAudit=async()=>{
+  const [{createNpcPair},{createAdventurerRenderer},{buildNpcActivityClips}]=await Promise.all([
+   import('./npc/npc-pair.mjs'),import('./npc/adventurer-renderer.mjs'),import('./npc/npc-activity-clips.mjs')]);
+  const heavyCount=MOB?1:2,baseline=remoteGLBLoading+remoteGLBResidents;
+  if(document.hidden||!npcContinuousPriorityFree()||baseline+heavyCount>MAX_REMOTE_GLB-1)throw Error('Pair requires reserved real-peer GLB slot');
+  if(!restoreExplorerPosition({x:258,z:80,y:groundAt(258,80)+1.75,yaw:Math.PI/2}))throw Error('Pair visual lake fixture unavailable');
+  const before={x:P.x,y:P.y,z:P.z,inventory:JSON.stringify(inventory),diag:window.__climboriaLastCollision,peers:livePeers.size};
+  const route=await makeLakeNpcForSmoke();route.npc.close();
+  const specs=[['npc:jarrell-peak:aurelion','rest'],['npc:jarrell-peak:zevransol','shore']].map(([identityId,spawn])=>({nodes:route.nodes,edges:route.edges,world:route.world,spawn,identityId,personalityEnabled:true}));
+  const pair=createNpcPair({specs}),visuals=[],distances=[0,0],camera=new T3.PerspectiveCamera(45,cam.aspect,.1,150);
+  let previous=pair.snapshot(),sameFrameDraws=0,peak=baseline,minSeparation=Infinity;
+  const budgetOk=()=>!document.hidden&&npcContinuousPriorityFree()&&remoteGLBLoading+remoteGLBResidents<=MAX_REMOTE_GLB-1;
+  try{
+   for(let i=0;i<2;i++){
+    const v={group:null,label:null,gltf:null,projection:null,loading:false,resident:false,draws:0,nameplateDraws:0,animated:i<heavyCount,exactMotion:false};
+    visuals.push(v);
+    let body;
+    if(v.animated){
+     if(!budgetOk()||remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB-1)throw Error('Reserved GLB slot unavailable');
+     remoteGLBLoading++;v.loading=true;peak=Math.max(peak,remoteGLBLoading+remoteGLBResidents);
+     v.gltf=await new T3.GLTFLoader().loadAsync('../assets/characters/Climboria_Jarrell.glb');
+     remoteGLBLoading--;v.loading=false;remoteGLBResidents++;v.resident=true;
+     if(!budgetOk())throw Error('Real-peer priority changed during load');
+     const clips=buildNpcActivityClips(T3,v.gltf.scene,poseMeshyNeutralRest);
+     body=fitRemoteHero(v.gltf.scene);if(!body)throw Error('Pair GLB fit failed');
+     v.group=new T3.Group();
+     v.projection=createAdventurerRenderer({group:v.group,clips:[...v.gltf.animations,...clips],mixer:new T3.AnimationMixer(v.gltf.scene),loopRepeat:T3.LoopRepeat,identityId:specs[i].identityId,dispose:()=>{}});
+    }else{body=remoteExplorerSilhouette();v.group=new T3.Group()}
+    v.group.name='AutonomousNPC:pair-'+i;v.label=peerMarker(previous[i].label);v.label.userData.npcLabel=previous[i].label;
+    v.label.onBeforeRender=()=>{v.nameplateDraws++};v.group.add(body,v.label);scene.add(v.group);
+    body.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;const prior=o.onBeforeRender;o.onBeforeRender=function(...args){v.draws++;prior?.apply(this,args)}}});
+   }
+   for(let step=0;step<=80;step++){
+    if(!budgetOk())throw Error('Pair visual real-peer priority lost');
+    const snapshots=step?pair.tick(.1):previous;
+    const separation=Math.hypot(snapshots[0].x-snapshots[1].x,snapshots[0].z-snapshots[1].z);minSeparation=Math.min(minSeparation,separation);
+    for(const [i,s] of snapshots.entries()){
+     const v=visuals[i],dx=s.x-previous[i].x,dz=s.z-previous[i].z,moved=Math.hypot(dx,dz);
+     if(moved>.300001||s.npcId!==specs[i].identityId||s.label!==v.label.userData.npcLabel)throw Error('Pair projection identity/step mismatch');
+     distances[i]+=moved;
+     if(v.projection){
+      if(!v.projection.frame(s,.1))throw Error('Pair GLB projection rejected');
+      const p=v.projection.audit();if(moved>.00001&&p.exact&&['walk','run','swim','climb'].includes(p.requested))v.exactMotion=true;
+     }else{v.group.position.set(s.x,s.y,s.z);if(moved>.00001)v.group.rotation.y=Math.atan2(dx,dz)}
+     if(v.group.position.x!==s.x||v.group.position.z!==s.z||v.group.position.y!==s.y)throw Error('Pair position mismatch');
+    }
+    previous=snapshots;
+    if(step%20===0){
+     const [p,q]=snapshots,cx=(p.x+q.x)/2,cy=(p.y+q.y)/2,cz=(p.z+q.z)/2;
+     const range=Math.max(8,(separation+5)/Math.max(.25,cam.aspect));
+     camera.position.set(cx+range*.45,cy+range*.6,cz+range);camera.lookAt(cx,cy+1,cz);camera.updateMatrixWorld(true);
+     const prior=visuals.map(v=>[v.draws,v.nameplateDraws]);renderer.render(scene,camera);
+     if(visuals.every((v,i)=>v.draws>prior[i][0]&&v.nameplateDraws>prior[i][1]))sameFrameDraws++;
+    }
+   }
+  }finally{
+   pair.close();
+   for(const v of visuals){
+    v.projection?.close();if(v.group)scene.remove(v.group);
+    if(v.label){v.label.material.map?.dispose();v.label.material.dispose()}
+    if(v.gltf)disposeRemoteHero(v.gltf.scene);
+    // Fallback uses scene-owned shared geometry/materials: do not dispose them.
+    if(v.loading)remoteGLBLoading--;if(v.resident)remoteGLBResidents--;
+   }
+   renderer.render(scene,cam);
+  }
+  return {mobile:MOB,heavyCount,sameFrameDraws,minSeparation,distances,peak,budget:MAX_REMOTE_GLB,
+   visuals:visuals.map(v=>({animated:v.animated,exactMotion:v.exactMotion,draws:v.draws,nameplateDraws:v.nameplateDraws,label:v.label?.userData.npcLabel,detached:v.group?.parent===null})),
+   cleaned:pair.snapshot().every(s=>s.closed)&&visuals.every(v=>v.group?.parent===null)&&remoteGLBLoading+remoteGLBResidents===baseline,
+   playerUnchanged:P.x===before.x&&P.y===before.y&&P.z===before.z,inventoryUnchanged:before.inventory===JSON.stringify(inventory),diagnosticsUnchanged:before.diag===window.__climboriaLastCollision,peersUnchanged:before.peers===livePeers.size};
+ };
  window.ENDLESS_WILDS.npcConnectedMapAudit=async()=>{
   const [{createConnectedAdventurer},{createAdventurerRenderer},{buildNpcActivityClips}]=await Promise.all([import('./npc/connected-adventurer.mjs'),import('./npc/adventurer-renderer.mjs'),import('./npc/npc-activity-clips.mjs')]);
   if(remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB)throw Error('No shared GLB slot for connected route');
