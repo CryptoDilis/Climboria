@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A PRIVATE NPC ROOM DIALOGUE BRIDGE CANDIDATE — 2026-11-27
+
+- #995 foundation 46015243641 and browser 46015243679 passed. Both profiles: 281 simulation steps, Aurelion 39.3m and ZevranSol 53.4m, 0.3m max steps, opener at 24.1s while resting and linked reply at 28.1s, separation 11.94m then 3.61m, unchanged player/inventory/peers and cleanup. #990 seven of eight passed; general browser 46014811410 still failed on unrelated homepage nav count. No scope bypass.
+- Add disabled-by-default private server room bridge owning exactly two named actor controllers. Trusted scheduler samples actors only; dedicated npc-world-chat packets broadcast via existing PresenceRoom transport, no NPC admission into human roster, no client injection path, no message persistence/replay. Two fake transport tests use actual controller ticks, visible recipients, hidden member exclusion, reconnect, disabled/empty room and identity mismatch. No deployed Worker scheduling or client UI wired; fresh CI pending.
+- NEXT: verify bridge tests, review #990 merge blocker with homepage owner; integrate a private authoritative room scheduler only after server geometry/actor admission review, add dedicated client packet validation, text-only display, mute/dedupe, two browser clients and real device performance. No public NPC activation, wallet/reward changes or human presence inflation.
+
+---
+
 ## R5A PAIRED ACTUAL NPC DIALOGUE SMOKE CANDIDATE — 2026-11-27
 
 - #990 consolidated head 1b7116ac09aaf3db0262c6d14b681e8d1ab58946 foundation 46014811353, server authority 46014811301, validation 46014811385 passed. General browser 46014811410 failed at unrelated desktop homepage nav child count 11 vs expected 12 in climb-token-record-smoke.mjs:33; PR comment 7220671802 records blocker. Game wallet smoke passed all three widths. Do not bypass or alter cross-workstream checks; other runs pending at inspection.
