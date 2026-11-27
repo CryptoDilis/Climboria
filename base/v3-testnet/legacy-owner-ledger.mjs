@@ -9,9 +9,7 @@ function key(s){
  let n=0n;for(const c of s)n=n*58n+BigInt(alphabet.indexOf(c));
  return n.toString(16).padStart(64,'0');
 }
-export function createSyntheticOwnerLedger(){
- const consumedNonces=new Set(),consumedSources=new Set();
- return {consume(input,expectedInventoryDigest,proofs,now){
+export function verifySyntheticBatch(input,expectedInventoryDigest,proofs,now,{hasNonce,hasSource}){
   const {entries}=normalizeLegacyEvidence(input);
   if(!Array.isArray(proofs)||proofs.length!==entries.length)fail('proof count mismatch');
   const bySource=new Map();
@@ -24,9 +22,9 @@ export function createSyntheticOwnerLedger(){
    const p=bySource.get(account);
    if(!p)fail('missing source proof');
    const sourceIdentity=JSON.stringify([input.sourceGenesis,input.sourceMint,input.campaign,account]);
-   if(consumedSources.has(sourceIdentity)||sources.has(sourceIdentity))fail('source already consumed');
+   if(hasSource(sourceIdentity)||sources.has(sourceIdentity))fail('source already consumed');
    const nonce=p.nonce;
-   if(consumedNonces.has(nonce)||nonces.has(nonce))fail('nonce already consumed');
+   if(hasNonce(nonce)||nonces.has(nonce))fail('nonce already consumed');
    // Construct the expected signed message exclusively from the manifest,
    // trusted synthetic inventory digest and issued challenge metadata.
    const challenge={mode:input.mode,sourceGenesis:key(input.sourceGenesis),sourceMint:key(input.sourceMint),
@@ -39,10 +37,17 @@ export function createSyntheticOwnerLedger(){
    if(digest!==evidenceHash)fail('manifest evidence hash mismatch');
    nonces.add(nonce);sources.add(sourceIdentity);
   }
-  // Commit only after every proof succeeds; no partial consumption on rejection.
-  for(const nonce of nonces)consumedNonces.add(nonce);
-  for(const source of sources)consumedSources.add(source);
-  return {status:'SYNTHETIC_BATCH_MATCH',count:entries.length,replayConsumption:'IN_MEMORY_ONLY',
+  return {nonces:[...nonces],sources:[...sources],count:entries.length};
+}
+export function createSyntheticOwnerLedger(){
+ const consumedNonces=new Set(),consumedSources=new Set();
+ return {consume(input,expectedInventoryDigest,proofs,now){
+  const batch=verifySyntheticBatch(input,expectedInventoryDigest,proofs,now,{
+   hasNonce:n=>consumedNonces.has(n),hasSource:s=>consumedSources.has(s)
+  });
+  for(const nonce of batch.nonces)consumedNonces.add(nonce);
+  for(const source of batch.sources)consumedSources.add(source);
+  return {status:'SYNTHETIC_BATCH_MATCH',count:batch.count,replayConsumption:'IN_MEMORY_ONLY',
    sourceAuthenticated:false,holderEligibility:'NOT_DETERMINED',authorization:false};
  }};
 }
