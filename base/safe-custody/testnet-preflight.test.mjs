@@ -16,7 +16,7 @@ if(pin.status==='RETIRED_PENDING_VERIFIED_REPIN'){
  });
 }else{
  test('empty checked-in config is blocked',()=>assert.throws(()=>checkConfig(example,now)));
-test('mainnet, wrong source and mode rejected',()=>{for(const patch of [{chainId:8453},{sourceSha:'a'.repeat(40)},{testOnly:false}])assert.throws(()=>checkConfig({...cfg(),...patch},now));});
+test('mainnet, retired source, wrong source and mode rejected',()=>{for(const patch of [{chainId:8453},{sourceSha:pin.supersedes?.sourceSha??'b'.repeat(40)},{sourceSha:'a'.repeat(40)},{testOnly:false}])assert.throws(()=>checkConfig({...cfg(),...patch},now));});
 test('duplicate case-insensitive role or owner rejected',()=>{const c=cfg();c.founder=c.owners[0].toUpperCase().replace('0X','0x');assert.throws(()=>checkConfig(c,now));});
 test('known disposable local account and zero rejected',()=>{for(const deployer of ['0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266','0x'+'0'.repeat(40)])assert.throws(()=>checkConfig({...cfg(),deployer},now));});
 test('invalid caps, time, fee or evidence rejected',()=>{for(const patch of [{startTimestamp:now},{liquidityTrancheCapRaw:'222222222000001'},{gamingWalletMonthlyCapRaw:'0'},{maxTotalFeeWei:'0'},{independentReviewEvidenceSha256:null},{recoveryAcceptanceEvidenceSha256:'0'.repeat(64)}])assert.throws(()=>checkConfig({...cfg(),...patch},now));});
