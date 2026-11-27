@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## REALISTIC MASTERY AND LIVING ADVENTURER NPC PROPOSAL — 2026-11-27 PHT
+
+- Owner approved progression refinement in [R3.6–R3.10 and R5A backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit 445b1fb29f5f78ff04211ed64c6f913a95d42ee6; root P4 master checklist linked update cdcd8f1d2da3ec23438a80a1c9515d225439e295. No traditional global character level; physical techniques, skill mastery, difficult materials-based crafting, proposed +0–10 enhancements, durability and repair, no magic/pay-to-win. Rank thresholds, enhancement balance and asset/animation acceptance remain open.
+- Owner asked for recommendation on bots during low population. R5A is a proposed transparent adventurer NPC system, not approval to impersonate users or inflate online count. AI-labeled actors can walk, gather/farm, fish, swim, explore/rest, offer authored dialogue and eventually approved cooperative/sparring interactions. Start one lightweight state-machine NPC in isolated tests, then proposed 3–5 nearby subject to real browser performance; no external AI API requirement, fake chat/presence, real loot grants or economy participation. Pending owner confirmation of scope before implementation.
+- Existing next-task handoff unchanged: #930 follow-up private authored room/renderer integration with authorization, actual pilot and physical-device acceptance. All new requirements unchecked; documentation only. No gameplay, runtime, UI, deployment, wallet, token or other workstream changes.
+
+---
+
 ## OWNER-APPROVED PLAYER EXPERIENCE AND BROWSER-FIRST EXPANSION — 2026-11-27 PHT
 
 - New [Game player experience master backlog](GAME_PLAYER_EXPERIENCE_BROWSER_BACKLOG.md), commit [6f1fb20](https://github.com/CryptoDilis/Climboria/commit/6f1fb205629a6b402e81d8f8ef33dd60d4f72892), linked in canonical root README P4 master checklist commit [886a84d](https://github.com/CryptoDilis/Climboria/commit/886a84d127b3a11ccaa87f637eaa9a57bdc79038). Owner approved new player engagement features and browser-first constraints. R0–R7 records existing verified milestones and open gates, first 10-minute adventure, optional quests/hidden discoveries, dynamic events, skill/equipment/crafting progression, wildlife/enemies/bosses, social/co-op/guild/camp systems, non-punitive return activities, gated Base economy, asset optimization and physical-device budgets. All new items pending, no gameplay implementation in this documentation cycle. Existing master A–G, historical bugs and world expansion retained; no global priority change.
