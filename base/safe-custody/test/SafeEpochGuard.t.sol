@@ -64,7 +64,7 @@ contract SafeEpochGuardTest {
         vm.expectRevert();_exec(to,data,op,sigs);
     }
     function _schedule(uint256 e,address oldOwner,address newOwner) private {
-        _quorum(address(guard),abi.encodeCall(guard.scheduleRotation,(e,D,oldOwner,newOwner)));
+        _quorum(address(guard),abi.encodeCall(guard.scheduleRotation,(e,D,oldOwner,newOwner,block.timestamp,block.timestamp+1 hours)));
     }
     function _swap(address oldOwner,address newOwner) private view returns(bytes memory){
         return abi.encodePacked(abi.encodeWithSignature("swapOwner(address,address,address)",D,oldOwner,newOwner),guard.rotationSerial());
@@ -74,8 +74,8 @@ contract SafeEpochGuardTest {
         vm.expectRevert();wallet.setup(new address[](0),1,address(0),"",address(0),address(0),0,payable(address(0)));
     }
     function testRealQuorumAndDirectCallerRejection() public {
-        bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F));
-        vm.expectRevert();guard.scheduleRotation(1,D,E,F);
+        bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F,block.timestamp,block.timestamp+1 hours));
+        vm.expectRevert();guard.scheduleRotation(1,D,E,F,block.timestamp,block.timestamp+1 hours);
         _reject(address(guard),data,Enum.Operation.Call,2);
         _quorum(address(guard),data);
         (bytes32 digest,,,,)=guard.pending();require(digest!=0);
@@ -85,7 +85,7 @@ contract SafeEpochGuardTest {
         _reject(address(wallet),abi.encodeWithSignature("enableModule(address)",F),Enum.Operation.Call,3);
         _reject(address(wallet),abi.encodeWithSignature("setGuard(address)",address(0)),Enum.Operation.Call,3);
         _reject(address(wallet),abi.encodeWithSignature("setFallbackHandler(address)",F),Enum.Operation.Call,3);
-        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,F)),Enum.Operation.DelegateCall,3);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,F,block.timestamp,block.timestamp+1 hours)),Enum.Operation.DelegateCall,3);
         _reject(F,hex"12345678",Enum.Operation.Call,3);
         guard.validateConfig();require(guard.epoch()==1);
     }
@@ -97,7 +97,7 @@ contract SafeEpochGuardTest {
         _reject(address(wallet),_swap(E,address(0x107)),Enum.Operation.Call,3);
         _quorum(address(wallet),_swap(E,F));
         require(guard.epoch()==2&&guard.isMember(F)&&!guard.isMember(E));
-        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,F,E)),Enum.Operation.Call,3);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,F,E,block.timestamp,block.timestamp+1 hours)),Enum.Operation.Call,3);
         _schedule(2,F,E);vm.warp(block.timestamp+2 days);
         _quorum(address(wallet),_swap(F,E));
         require(guard.epoch()==3&&guard.isMember(E)&&!guard.isMember(F));
@@ -145,8 +145,8 @@ contract SafeEpochGuardTest {
         (digest,,,,)=guard.pending();require(digest==0&&wallet.nonce()==4);
     }
     function testInvalidRotationDoesNotChangeEpoch() public {
-        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,C,E,F)),Enum.Operation.Call,3);
-        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,A)),Enum.Operation.Call,3);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,C,E,F,block.timestamp,block.timestamp+1 hours)),Enum.Operation.Call,3);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,A,block.timestamp,block.timestamp+1 hours)),Enum.Operation.Call,3);
         require(guard.epoch()==1&&guard.isMember(E));
     }
     function testReplacementAcquiringCodeDuringDelayRejected() public {
@@ -159,7 +159,7 @@ contract SafeEpochGuardTest {
         (bytes32 digest,,,,)=guard.pending();require(digest!=0);
         _quorum(address(guard),abi.encodeCall(guard.cancelRotation,(1,guard.rotationSerial())));
         (digest,,,,)=guard.pending();require(digest==0);
-        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,F)),Enum.Operation.Call,3);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,F,block.timestamp,block.timestamp+1 hours)),Enum.Operation.Call,3);
         vm.etch(F,"");
         _schedule(1,E,F);
         _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
@@ -168,7 +168,7 @@ contract SafeEpochGuardTest {
     }
     function testContractSignatureFromCodeBearingOwnerRejected() public {
         vm.etch(C,address(new PermissiveOwnerValidator()).code);
-        bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F));
+        bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F,block.timestamp,block.timestamp+1 hours));
         bytes memory sigs=_signed(address(guard),data,Enum.Operation.Call,2);
         // Safe v1.4.1 validates the permissive contract signature before the guard.
         sigs=abi.encodePacked(sigs,bytes32(uint256(uint160(C))),bytes32(uint256(195)),uint8(0),uint256(0));
@@ -177,7 +177,7 @@ contract SafeEpochGuardTest {
         require(wallet.nonce()==0&&!guard.transactionActive()&&guard.epoch()==1);
     }
     function testApprovedHashFromCodeBearingOwnerRejected() public {
-        bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F));
+        bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F,block.timestamp,block.timestamp+1 hours));
         bytes memory sigs=_approved(address(guard),data,Enum.Operation.Call,3);
         vm.etch(C,address(new PermissiveOwnerValidator()).code);
         vm.expectRevert(SafeEpochGuardFixture.UnsupportedSignatureMode.selector);
@@ -185,7 +185,7 @@ contract SafeEpochGuardTest {
         require(wallet.nonce()==0&&!guard.transactionActive()&&guard.epoch()==1);
     }
     function testApprovedHashesRejectedAfterOwnerCodeCleared() public {
-        bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F));
+        bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F,block.timestamp,block.timestamp+1 hours));
         vm.etch(C,address(new PermissiveOwnerValidator()).code);
         bytes memory sigs=_approved(address(guard),data,Enum.Operation.Call,3);
         vm.etch(C,"");
@@ -201,6 +201,15 @@ contract SafeEpochGuardTest {
         vm.warp(block.timestamp+2 days);
         _quorum(address(wallet),_swap(E,F));
         require(wallet.nonce()==2&&guard.epoch()==2&&!guard.isMember(E)&&guard.isMember(F)&&!guard.transactionActive());
+    }
+    function testRotationSchedulingRejectsExpiredAuthorization() public {
+        uint256 t=block.timestamp;
+        bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F,t,t+1 hours));
+        bytes memory sigs=_signed(address(guard),data,Enum.Operation.Call,3);
+        vm.warp(t+1 hours);
+        vm.expectRevert();_exec(address(guard),data,Enum.Operation.Call,sigs);
+        require(wallet.nonce()==0&&guard.rotationSerial()==0&&!guard.transactionActive());
+        _schedule(1,E,F);require(wallet.nonce()==1&&guard.rotationSerial()==1);
     }
     function testMainnetRejected() public {
         vm.chainId(8453);
