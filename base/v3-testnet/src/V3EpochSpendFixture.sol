@@ -14,6 +14,10 @@ interface IV3CustodyEpochFixture {
     function memberCount() external view returns(uint256);
 }
 
+interface IV3ExpenseRecipientPolicy {
+    function expenseRecipientAllowed(address recipient) external view returns(bool);
+}
+
 /// @notice Test-only spending policy. No signer rotation or custody implementation here.
 contract V3EpochSpendFixture is ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -69,7 +73,8 @@ contract V3EpochSpendFixture is ReentrancyGuard {
         return m>=60?0:budget*(m+1)/60-budget*m/60;
     }
     function _recipientAllowed(address recipient) internal view returns(bool){
-        return recipient!=address(0)&&recipient!=address(this)&&recipient!=address(custody)&&recipient!=address(registry)&&recipient!=excludedFounder&&!custody.isMember(recipient);
+        return recipient!=address(0)&&recipient!=address(this)&&recipient!=address(custody)&&recipient!=address(registry)&&recipient!=excludedFounder&&!custody.isMember(recipient)&&
+            IV3ExpenseRecipientPolicy(address(custody)).expenseRecipientAllowed(recipient);
     }
     // Only the synthetic multisig boundary authorizes a proposal; execution is public
     // after the delay. Fresh authorization is required after any epoch change.

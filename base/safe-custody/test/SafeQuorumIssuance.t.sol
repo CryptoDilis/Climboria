@@ -336,6 +336,28 @@ contract SafeQuorumIssuanceTest {
         vm.expectRevert();_exec(data,rejected);
         require(wallet.nonce()==nonce&&!guard.transactionActive());
     }
+    function testExpenseExecutionRechecksPendingActiveAndFormerRewardSigner() public {
+        _issue();
+        _proposeExpense(3,"ROLE_DRIFT","OLD");
+        bytes32 id=_expenseId(3,"ROLE_DRIFT","OLD");
+        V3EpochSpendFixture expense=V3EpochSpendFixture(successor.vaults(3));
+        V3SharedExpenseRegistry registry=successor.expenses().registry();
+        bytes memory data=abi.encodeCall(guard.revokeRewardSigner,(1,1));
+        require(_exec(data,_sign(data,3)));
+        data=abi.encodeCall(guard.scheduleRewardSigner,(1,2,PAYEE,block.timestamp,block.timestamp+1 hours));
+        require(_exec(data,_sign(data,3)));
+        vm.warp(cfg.start+2 days);
+        vm.expectRevert(V3EpochSpendFixture.NotReady.selector);expense.execute(id);
+        data=abi.encodeCall(guard.activateRewardSigner,(1,2,1,PAYEE));
+        require(_exec(data,_sign(data,3)));
+        vm.expectRevert(V3EpochSpendFixture.NotReady.selector);expense.execute(id);
+        data=abi.encodeCall(guard.revokeRewardSigner,(1,3));
+        require(_exec(data,_sign(data,3)));
+        vm.expectRevert(V3EpochSpendFixture.NotReady.selector);expense.execute(id);
+        require(expense.totalSpent()==0&&registry.consumedBy("ROLE_DRIFT")==address(0));
+        require(successor.token().balanceOf(PAYEE)==0&&successor.token().totalSupply()==SUPPLY);
+        (,,,,,,bool executed,)=expense.proposals(id);require(!executed);
+    }
     function testRewardSelectorRejectsTrailingOrMissingWords() public {
         _issue();
         V3GovernedGameRewardFixture gaming=V3GovernedGameRewardFixture(successor.vaults(1));

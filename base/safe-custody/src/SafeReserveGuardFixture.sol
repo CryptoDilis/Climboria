@@ -103,6 +103,10 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     function _rewardRole(address a) private view returns(bool){
         return _gaming().reservedSignerRole(a);
     }
+    // The vault calls this at proposal and execution, including after signer rotation.
+    function expenseRecipientAllowed(address a) public view returns(bool){
+        return bound&&a!=distributor&&!_reservedRole(a)&&!_rewardRole(a);
+    }
     function revokeRewardSigner(uint256 expected,uint256 generation) external onlyWallet {
         V3GovernedGameRewardFixture(_target(1,expected)).revoke(expected,generation);
     }
@@ -118,8 +122,7 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     // Both bounds are signed as Safe calldata. This constrains execution, not signing time.
     function proposeExpense(uint256 expected,uint256 i,address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce,uint256 validAfter,uint256 validUntil) external onlyWallet {
         _authorizationWindow(validAfter,validUntil);
-        if(recipient==address(wallet)||recipient==distributor||_rewardRole(recipient))revert Forbidden();
-        for(uint256 j=0;j<7;j++)if(recipient==destinations[j])revert Forbidden();
+        if(!expenseRecipientAllowed(recipient))revert Forbidden();
         _expense(i,expected).propose(recipient,amount,evidence,month,nonce);
     }
     function cancelExpense(uint256 expected,uint256 i,bytes32 id) external onlyWallet {_expense(i,expected).cancel(id);}
