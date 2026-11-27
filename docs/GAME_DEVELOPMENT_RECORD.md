@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## PARALLEL COMBINED GLB CI — 2026-11-27 PHT
+
+- #928 exact d431a8abbb54f1a9116004584130b66c942277c2 Validate SUCCESS, isolated GLB and native socket steps SUCCESS, full gameplay 45948604924 still running. To avoid serial wait, #930 retargeted to main AS DRAFT ONLY for early combined CI; exact diff five Game files including pending #928. No unrelated changes in PR. No merge until #928 green and merged, then reconcile and refresh checks. Workflow dispatch unavailable via connector.
+- Added actual browser WebSocket CLOSED state and disabled controls assertions after UI closes, 6f02eda24d1bf79cfb1b76588e1cda90b1c8dfb0. Combined test unexecuted when authored. No public gameplay, deployment or PvP.
+- EXACT NEXT: inspect parallel #930 CI (fix failures without weakening acceptance), finish #928 terminal green and merge, reconcile #930 on resulting main and rerun exact-head CI before marking ready/merge.
+
+---
+
 ## ISOLATED GLB BROWSER STEP PASSED; COMBINED BRANCH RECONCILED — 2026-11-27 PHT
 
 - #928 exact head d431a8abbb54f1a9116004584130b66c942277c2: Validate 45948604926 SUCCESS; Gameplay 45948604924 job 140338958754 reports isolated authored browser control/GLB step and native socket step SUCCESS; full desktop/mobile gameplay still running. Job logs unavailable (404 while running), so no detailed log or screenshot acceptance claimed.
