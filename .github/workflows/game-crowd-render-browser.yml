@@ -33,7 +33,7 @@ jobs:
       - name: Install focused browser dependencies
         run: |
           npm init -y
-          npm install --no-save playwright three@0.128.0 ws@8.18.3
+          npm install --no-save playwright three@0.128.0 ws@8.23.1
           npx playwright install chromium
       - name: Start local static server
         run: |
