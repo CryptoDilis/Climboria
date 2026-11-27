@@ -27,6 +27,7 @@ contract SafeEpochGuardFixture is BaseGuard {
     struct Rotation { bytes32 digest; address oldOwner; address newOwner; uint256 readyAt; uint256 expiresAt; }
     Rotation public pending;
     bool private rotating;
+    bool public transactionActive;
     event RotationScheduled(uint256 indexed epoch,bytes32 indexed digest,uint256 readyAt,uint256 expiresAt);
     event RotationCancelled(uint256 indexed epoch,bytes32 indexed digest);
     event Rotated(uint256 indexed epoch,address indexed oldOwner,address indexed newOwner);
@@ -72,8 +73,9 @@ contract SafeEpochGuardFixture is BaseGuard {
     function checkTransaction(address to,uint256 value,bytes memory data,Enum.Operation operation,
         uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address payable refundReceiver,
         bytes memory,address) external override onlyWallet {
-        if(value!=0||operation!=Enum.Operation.Call||safeTxGas!=0||baseGas!=0||gasPrice!=0||
+        if(transactionActive||value!=0||operation!=Enum.Operation.Call||safeTxGas!=0||baseGas!=0||gasPrice!=0||
            gasToken!=address(0)||refundReceiver!=address(0))revert Forbidden();
+        transactionActive=true;
         _checkCall(to,data);
     }
     function _rotationOwnerAllowed(address) internal view virtual returns(bool){return true;}
@@ -93,7 +95,7 @@ contract SafeEpochGuardFixture is BaseGuard {
         rotating=true;
     }
     function checkAfterExecution(bytes32,bool success) external override onlyWallet {
-        if(!success)revert Forbidden();
+        if(!transactionActive||!success)revert Forbidden();
         validateConfig();
         if(rotating){
             Rotation memory p=pending;
@@ -101,6 +103,7 @@ contract SafeEpochGuardFixture is BaseGuard {
             rotating=false;delete pending;epoch++;
             emit Rotated(epoch,p.oldOwner,p.newOwner);
         }
+        transactionActive=false;
     }
 }
 

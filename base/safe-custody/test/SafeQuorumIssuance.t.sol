@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 import {Safe} from "safe-contracts/Safe.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {IV3SyntheticPool} from "v3-src/V3LiquidityPolicyFixture.sol";
+import {IV3SyntheticPoolBuilder} from "v3-src/V3AtomicSuccessorFixture.sol";
 import {Enum} from "safe-contracts/common/Enum.sol";
 import {SafeQuorumReserveFactoryFixture,SafeQuorumReserveGuardFixture,V3QuorumSuccessorFixture} from "../src/SafeQuorumIssuanceFixture.sol";
 import {V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorTestToken} from "v3-src/V3AtomicSuccessorFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "v3-src/V3EpochSpendFixture.sol";
-import {ReserveQuote,ReservePoolBuilder,ReserveLPDestination} from "./SafeReserveGuard.t.sol";
+import {ReserveQuote,ReservePool,ReservePoolBuilder,ReserveLPDestination} from "./SafeReserveGuard.t.sol";
 interface VmQuorumIssue {
     function chainId(uint256) external;
     function addr(uint256) external returns(address);
@@ -13,6 +16,29 @@ interface VmQuorumIssue {
     function warp(uint256) external;
     function prank(address) external;
     function expectRevert() external;
+}
+/// @notice Malicious synthetic builder attempts a second validly signed Safe transaction
+/// during issuance. It catches the rejection and returns a test-only pool.
+contract NestedSafePoolBuilder is IV3SyntheticPoolBuilder {
+    Safe public immutable wallet;
+    address public immutable guard;
+    bytes private payload;
+    bytes private signatures;
+    bool public attempted;
+    bool public rejected;
+    bytes4 public rejection;
+    constructor(Safe account,address target){wallet=account;guard=target;}
+    function arm(bytes calldata data,bytes calldata sigs) external {payload=data;signatures=sigs;}
+    function createPool(IERC20 a,IERC20 q) external returns(IV3SyntheticPool){
+        attempted=true;
+        try wallet.execTransaction(guard,0,payload,Enum.Operation.Call,0,0,0,address(0),payable(address(0)),signatures) returns(bool){
+            revert("nested Safe transaction unexpectedly accepted");
+        } catch(bytes memory reason){
+            rejected=true;
+            if(reason.length>=4)rejection=bytes4(reason);
+        }
+        return IV3SyntheticPool(address(new ReservePool(a,q)));
+    }
 }
 contract SafeQuorumIssuanceTest {
     VmQuorumIssue constant vm=VmQuorumIssue(address(uint160(uint256(keccak256("hevm cheat code")))));
@@ -42,7 +68,10 @@ contract SafeQuorumIssuanceTest {
             V3SuccessorLiquidityConfig(new ReserveQuote(),new ReservePoolBuilder(),address(new ReserveLPDestination()),1000));
     }
     function _sign(bytes memory data,uint256 n) private returns(bytes memory sigs){
-        bytes32 h=wallet.getTransactionHash(address(guard),0,data,Enum.Operation.Call,0,0,0,address(0),address(0),wallet.nonce());
+        return _signAt(data,n,wallet.nonce());
+    }
+    function _signAt(bytes memory data,uint256 n,uint256 nonce) private returns(bytes memory sigs){
+        bytes32 h=wallet.getTransactionHash(address(guard),0,data,Enum.Operation.Call,0,0,0,address(0),address(0),nonce);
         for(uint256 i=0;i<n;i++){
             (uint8 v,bytes32 r,bytes32 s)=vm.sign(keys[i],h);sigs=abi.encodePacked(sigs,r,s,v);
         }
@@ -53,8 +82,9 @@ contract SafeQuorumIssuanceTest {
     function _data() private view returns(bytes memory){return abi.encodeCall(guard.issueSuccessor,(1,cfg));}
     function _issue() private {bytes memory data=_data();require(_exec(data,_sign(data,3)));}
     function _empty() private view {
-        require(!successor.used()&&!guard.bound()&&!guard.issuing()&&address(successor.token())==address(0)&&wallet.nonce()==0);
-        for(uint256 i=0;i<7;i++)require(successor.vaults(i)==address(0));
+        require(!successor.used()&&!guard.bound()&&!guard.issuing()&&!guard.transactionActive()&&address(successor.token())==address(0)&&wallet.nonce()==0);
+        require(address(guard.asset())==address(0)&&guard.founder()==address(0)&&guard.distributor()==address(0));
+        for(uint256 i=0;i<7;i++)require(successor.vaults(i)==address(0)&&guard.destinations(i)==address(0));
     }
     function testNoCreatorOrUnregisteredCallerIssuance() public {
         require(successor.configuredGuard()==address(guard));
@@ -102,6 +132,22 @@ contract SafeQuorumIssuanceTest {
         vm.expectRevert();_exec(data,sigs);_empty();
         cfg.founder=FOUNDER;cfg.liquidity.custody=address(wallet);
         data=_data();sigs=_sign(data,3);vm.expectRevert();_exec(data,sigs);_empty();
+    }
+    function testLateBindingFailureRollsBackAllGuardAndVaultState() public {
+        address previous=cfg.liquidity.custody;
+        cfg.liquidity.custody=address(successor);
+        bytes memory data=_data();bytes memory sigs=_sign(data,3);
+        vm.expectRevert();_exec(data,sigs);_empty();
+        cfg.liquidity.custody=previous;_issue();require(guard.bound()&&!guard.transactionActive());
+    }
+    function testNestedValidlySignedSafeTransactionRejectedDuringIssuance() public {
+        NestedSafePoolBuilder builder=new NestedSafePoolBuilder(wallet,address(guard));
+        cfg.liquidity.builder=builder;
+        bytes memory nested=abi.encodeCall(guard.cancelRotation,(1));
+        builder.arm(nested,_signAt(nested,3,wallet.nonce()+1));
+        _issue();
+        require(builder.attempted()&&builder.rejected()&&builder.rejection()==bytes4(keccak256("Forbidden()")));
+        require(wallet.nonce()==1&&guard.bound()&&!guard.transactionActive()&&successor.token().totalSupply()==SUPPLY);
     }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
