@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A TWO-NPC SPACING FOUNDATION MERGED — 2026-11-28 PHT
+
+- #1010 exact 11f124a71fb2b74f19047002252d784ba9cd45db: all five source workflows SUCCESS (foundation 46032106652, chat 46032106500, Validate 46032106502, focused browser 46032106676, gameplay 46032106531). Compared intervening main files against three candidate paths; zero overlap, no non-Game edits. GitHub confirmed merge 79a3bd9efd94c565d67b3b593f3b4527b21e3369. Post-merge checks not yet verified.
+- #1013/#1015/#1017/#1018/#1020 exact source foundation checks passed. Their focused browser workflows 46032633058, 46033108161, 46033331598, 46033578725, 46033866597 and #1020 chat 46033866749 still running at inspection. Preserve parent branches; do not open another speculative feature stack before checking these outcomes.
+- NEXT: review exact focused browser and cleanup evidence, fix regressions as needed, then consolidate verified paired map/visual/normal-frame stack on latest main with all non-Game edits preserved. Actual physical-device performance, improved narrow-route rerouting, production authority and public NPC spawning remain gated. No real inventory or token changes.
+
+---
+
 ## R5A ACTIVITY MERGED; PAIR SPACING FOUNDATION — 2026-11-28 PHT
 
 - #1006 exact c249be663df4f2e15039685141d4269dd9d14777: five workflows passed (foundation 46028324815, chat 46028324818, Validate 46028324762, focused browser 46028324947, gameplay 46028324735). Main changes only Base files/workflow, no overlap. GitHub confirmed merge 2ae6632f50394413cf268357bdb267e9fcd2848d. Post-merge CI not yet verified.
