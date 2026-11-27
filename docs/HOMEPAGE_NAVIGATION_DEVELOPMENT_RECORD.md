@@ -14,3 +14,8 @@ Scope: homepage `index.html` only. Preserve approved navy-and-gold cards, hero a
 Verification: read exact latest UI commit from GitHub and passed eight static source checks for consolidation, grid, sections, Escape, focus restoration, Tab wrap and link closing. These checks do not constitute browser or deployment verification. Prior commit combined status and PR-filtered workflow query returned no checks/runs; direct main push workflow conclusion and live deployment remain unverified.
 
 Next: verify actual main-branch CI and live homepage on desktop and mobile. Confirm two compact icons, no independent announcement control, notification panel opens/closes by click and Escape, Tab/Shift+Tab stays in panel, focus returns to bell or hamburger, tokenomics link scrolls after closing, and all existing navigation/hero controls remain intact. Do not claim personal alert delivery: notification backend is not enabled by this UI work. No scope expansion without owner direction.
+
+## 2026-11-27 UTC — readability pass
+
+- `0f4a3a42143ee9522b5c7bb980183588e1140672`: owner screenshot showed undersized navigation and notification text. Desktop navigation labels now 12–15px; mobile navigation 16px; notification title 30px, headings 18px, body 16px with 1.7 line height, lighter text, gold links including visited state, 44px close target and responsive panel width up to 460px. Existing layout, 42px bell/X cards, breakpoints, overlay and functionality retained.
+- Source readback verified updated typography, gold visited links, compact grid and absence of standalone announcement controls. Browser rendering, CI and deployment still pending. Next: inspect label fit at 1450px and mobile, notification text wrapping and link contrast at 360–390px.
