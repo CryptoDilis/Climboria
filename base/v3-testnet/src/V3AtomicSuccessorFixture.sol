@@ -82,23 +82,26 @@ contract V3AtomicSuccessorFixture {
     address public immutable creator;
     V3SuccessorCoreDeployer public immutable core;
     V3SuccessorConditionalDeployer public immutable conditional;
+    bytes32 public immutable conditionalHash;
     V3SuccessorTestToken public token;
     address[7] public vaults;
     V3EpochPolicyFactory public expenses;
     bool public used;
     event Created(address indexed token,address[7] vaults);
-    constructor(){
-        if(block.chainid!=84532) revert InvalidConfig();
+    // Staged helper identity must be independently verified against the reviewed
+    // artifact before signing issuance. A caller-selected hash is not authentication.
+    constructor(V3SuccessorConditionalDeployer helper,bytes32 expectedHash){
+        if(block.chainid!=84532||address(helper).code.length==0||expectedHash==0||address(helper).codehash!=expectedHash) revert InvalidConfig();
         creator=msg.sender;
         core=new V3SuccessorCoreDeployer();
-        conditional=new V3SuccessorConditionalDeployer();
+        conditional=helper;conditionalHash=expectedHash;
     }
     function create(V3SuccessorConfig calldata cfg) external virtual returns(V3SuccessorTestToken asset){
         if(msg.sender!=creator)revert InvalidConfig();
         return _create(cfg);
     }
     function _create(V3SuccessorConfig calldata cfg) internal returns(V3SuccessorTestToken asset){
-        if(used||block.chainid!=84532||cfg.founder==address(0)||cfg.distributor==address(0)||cfg.founder==cfg.distributor||
+        if(used||block.chainid!=84532||address(conditional).codehash!=conditionalHash||cfg.founder==address(0)||cfg.distributor==address(0)||cfg.founder==cfg.distributor||
            cfg.founder==address(this)||cfg.distributor==address(this)||cfg.liquidity.custody==cfg.founder||cfg.liquidity.custody==cfg.distributor||
            address(cfg.control)==cfg.founder||address(cfg.control)==cfg.distributor||
            cfg.control.isMember(cfg.founder)||cfg.control.isMember(cfg.distributor)) revert InvalidConfig();
@@ -106,6 +109,7 @@ contract V3AtomicSuccessorFixture {
         asset=new V3SuccessorTestToken();
         token=asset;
         _deployPolicies(asset,cfg);
+        if(address(conditional).codehash!=conditionalHash)revert InvalidConfig();
         // No supply before all policy constructors succeed; no intermediate EOA/factory float.
         _beforeIssue();
         asset.issue(vaults);
