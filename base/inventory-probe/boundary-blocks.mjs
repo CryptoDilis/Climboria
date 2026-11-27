@@ -55,7 +55,8 @@ function summarize(block,pin,p){
   const mintBalance=all.some(x=>x.mint===CLIMB_SOLANA_MINT);
   if(explicitMint||mintBalance)hits.push({index,explicitMint,mintBalance,outcome:meta==null?'UNKNOWN':meta.err===null?'SUCCESS':'FAILED'});
  }
- // Canonical parsed JS JSON hash, not raw bytes or consensus proof.\n // JSON number parsing can lose precision; do not use for exact u64 accounting.
+ // Canonical parsed JS JSON hash, not raw bytes or consensus proof.
+ // JSON number parsing can lose precision; do not use for exact u64 accounting.
  return {slot:pin.slot,blockhash:pin.blockhash,transactionCount:block.transactions.length,failed,missingMeta,missingTokenBalanceFields,transactionsSha256:digest(block.transactions),mintMentionCandidates:hits};
 }
 async function source(url,p,fetchFn){
