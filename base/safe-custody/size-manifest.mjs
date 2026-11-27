@@ -11,6 +11,8 @@ const specs=[
  ['SafeReserveGuardFixture.sol','SafeReserveGuardFixture',3],
  ['SafeReserveGuardFixture.sol','SafeReserveFactoryFixture',0],
  ['V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',0],
+ ['V3AtomicSuccessorFixture.sol','V3SuccessorCoreDeployer',0],
+ ['V3GovernedGameRewardFixture.sol','V3GovernedGameRewardFixture',6],
  ['SafeQuorumIssuanceFixture.sol','V3QuorumSuccessorFixture',3],
  ['SafeQuorumIssuanceFixture.sol','SafeQuorumReserveGuardFixture',3],
  ['SafeQuorumIssuanceFixture.sol','SafeQuorumGuardDeployerFixture',0],
@@ -24,13 +26,14 @@ const contracts=specs.map(([file,name,words])=>{
  const init=bytes(a.bytecode.object),runtime=bytes(a.deployedBytecode.object);
  const args=a.abi.find(x=>x.type==='constructor')?.inputs??[];
  assert.equal(args.length,words,name+' constructor arity');
- assert.ok(args.every(x=>['address','bytes32'].includes(x.type)),name+' static address constructor args');
+ assert.ok(args.every(x=>['address','bytes32','uint256'].includes(x.type)),name+' static address constructor args');
  assert.equal(Object.keys(a.bytecode.linkReferences??{}).length,0);
  assert.equal(Object.keys(a.deployedBytecode.linkReferences??{}).length,0);
  const initcodeBytes=init.length+32*words;
  assert.ok(initcodeBytes<=49152,name+' initcode size');
  assert.ok(runtime.length<=24576,name+' runtime size');
  const initcodeHeadroom=49152-initcodeBytes,runtimeHeadroom=24576-runtime.length;
+ console.log(`${name}: initcode=${initcodeBytes}, runtime=${runtime.length}, initcodeHeadroom=${initcodeHeadroom}, runtimeHeadroom=${runtimeHeadroom}`);
  if(name==='V3QuorumSuccessorFixture')assert.ok(initcodeHeadroom>=1024,name+' less than 1 KiB initcode headroom');
  if(name==='SafeQuorumReserveFactoryFixture'||name==='SafeQuorumGuardDeployerFixture')assert.ok(runtimeHeadroom>=1024,name+' less than 1 KiB runtime headroom');
  return {name,initcodeBytes,runtimeBytes:runtime.length,initcodeHeadroom,runtimeHeadroom,creationSha256:hash(init),runtimeTemplateSha256:hash(runtime)};

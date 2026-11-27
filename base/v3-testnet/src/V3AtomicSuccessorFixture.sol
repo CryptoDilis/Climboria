@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {V3FounderVesting} from "./ClimbV3TestToken.sol";
-import {V3GameRewardFixture} from "./V3GameRewardFixture.sol";
+import {V3GovernedGameRewardFixture,IV3RewardCustody} from "./V3GovernedGameRewardFixture.sol";
 import {V3EpochPolicyFactory,IV3CustodyEpochFixture} from "./V3EpochSpendFixture.sol";
 import {IV3BurnableAsset} from "./V3BoundedLegacyFixture.sol";
 import {V3DeferredLegacyFixture} from "./V3DeferredLegacyFixture.sol";
@@ -61,7 +61,7 @@ struct V3SuccessorConfig {
 contract V3SuccessorCoreDeployer {
     function deploy(IERC20 asset,V3SuccessorConfig calldata cfg) external returns(address founder,address gaming,V3EpochPolicyFactory expenses){
         founder=address(new V3FounderVesting(asset,cfg.founder,cfg.start));
-        gaming=address(new V3GameRewardFixture(asset,cfg.distributor,cfg.founder,cfg.start,cfg.gamingWalletMonthlyCap));
+        gaming=address(new V3GovernedGameRewardFixture(asset,cfg.distributor,cfg.founder,cfg.start,cfg.gamingWalletMonthlyCap,IV3RewardCustody(address(cfg.control))));
         expenses=new V3EpochPolicyFactory(asset,cfg.control,cfg.start,cfg.founder);
     }
 }

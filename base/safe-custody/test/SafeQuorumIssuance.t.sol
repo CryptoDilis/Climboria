@@ -9,7 +9,7 @@ import {SafeQuorumReserveFactoryFixture,SafeQuorumReserveGuardFixture,V3QuorumSu
 import {V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorTestToken,V3SuccessorConditionalDeployer} from "v3-src/V3AtomicSuccessorFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "v3-src/V3EpochSpendFixture.sol";
 import {V3SharedExpenseRegistry} from "v3-src/V3SharedExpenseFixture.sol";
-import {V3GameRewardFixture} from "v3-src/V3GameRewardFixture.sol";
+import {V3GovernedGameRewardFixture} from "v3-src/V3GovernedGameRewardFixture.sol";
 import {ReserveQuote,ReservePool,ReservePoolBuilder,ReserveLPDestination} from "./SafeReserveGuard.t.sol";
 interface VmQuorumIssue {
     function chainId(uint256) external;
@@ -162,7 +162,7 @@ contract SafeQuorumIssuanceTest {
         data=_data();sigs=_sign(data,3);
         vm.expectRevert();_exec(data,sigs);_empty();
         cfg.gamingWalletMonthlyCap=cap;_issue();
-        require(V3GameRewardFixture(successor.vaults(1)).walletMonthlyCap()==cap&&successor.token().totalSupply()==SUPPLY);
+        require(V3GovernedGameRewardFixture(successor.vaults(1)).walletMonthlyCap()==cap&&successor.token().totalSupply()==SUPPLY);
     }
     function testPolicyFailureRollsBackEntireIssueAndSafeNonce() public {
         cfg.liquidity.trancheCap=0;
@@ -291,6 +291,109 @@ contract SafeQuorumIssuanceTest {
         replacement.execute(_expenseId(5,"CANCELLED","NEW"));
         require(registry.consumedBy("CANCELLED")==address(replacement)&&previous.totalSpent()==0&&replacement.totalSpent()==10);
         require(successor.token().balanceOf(PAYEE)==10&&successor.token().totalSupply()==SUPPLY);
+    }
+    function testQuorumRewardRevocationAndActivation() public {
+        _issue();
+        V3GovernedGameRewardFixture gaming=V3GovernedGameRewardFixture(successor.vaults(1));
+        require(address(gaming.custody())==address(guard)&&gaming.generation()==1);
+        vm.expectRevert();guard.revokeRewardSigner(1,1);
+        bytes memory data=abi.encodeCall(guard.revokeRewardSigner,(1,1));
+        bytes memory two=_sign(data,2);
+        vm.expectRevert();_exec(data,two);
+        require(wallet.nonce()==1&&gaming.generation()==1);
+        require(_exec(data,_sign(data,3)));
+        require(gaming.distributor()==address(0)&&gaming.generation()==2);
+        address candidate=address(0x9876);
+        data=abi.encodeCall(guard.scheduleRewardSigner,(1,2,candidate,block.timestamp,block.timestamp+1 hours));
+        require(_exec(data,_sign(data,3)));
+        data=abi.encodeCall(guard.activateRewardSigner,(1,2,1,candidate));
+        bytes memory early=_sign(data,3);
+        vm.expectRevert();_exec(data,early);
+        require(gaming.generation()==2);
+        vm.warp(block.timestamp+2 days);
+        require(_exec(data,_sign(data,3)));
+        require(gaming.distributor()==candidate&&gaming.generation()==3&&successor.token().totalSupply()==SUPPLY);
+    }
+    function testPendingRewardAndOwnerRolesCannotOverlap() public {
+        _issue();
+        address candidate=PAYEE;
+        bytes memory data=abi.encodeCall(guard.revokeRewardSigner,(1,1));
+        require(_exec(data,_sign(data,3)));
+        data=abi.encodeCall(guard.scheduleRewardSigner,(1,2,candidate,block.timestamp,block.timestamp+1 hours));
+        require(_exec(data,_sign(data,3)));
+        bytes memory ownerChange=abi.encodeCall(guard.scheduleRotation,(1,owners[3],owners[4],candidate,block.timestamp,block.timestamp+1 hours));
+        bytes memory rejected=_sign(ownerChange,3);
+        uint256 nonce=wallet.nonce();
+        vm.expectRevert();_exec(ownerChange,rejected);
+        require(wallet.nonce()==nonce&&!guard.transactionActive());
+        data=abi.encodeCall(guard.cancelRewardSigner,(1,2,1));
+        require(_exec(data,_sign(data,3)));
+        require(_exec(ownerChange,_sign(ownerChange,3)));
+        data=abi.encodeCall(guard.scheduleRewardSigner,(1,2,candidate,block.timestamp,block.timestamp+1 hours));
+        rejected=_sign(data,3);nonce=wallet.nonce();
+        vm.expectRevert();_exec(data,rejected);
+        require(wallet.nonce()==nonce&&!guard.transactionActive());
+    }
+    function testRewardSelectorRejectsTrailingOrMissingWords() public {
+        _issue();
+        V3GovernedGameRewardFixture gaming=V3GovernedGameRewardFixture(successor.vaults(1));
+        bytes memory correct=abi.encodeCall(guard.revokeRewardSigner,(1,1));
+        bytes memory trailing=abi.encodePacked(correct,bytes32(uint256(0)));
+        bytes memory sigs=_sign(trailing,3);
+        uint256 n=wallet.nonce();
+        vm.expectRevert();_exec(trailing,sigs);
+        bytes memory shortCall=abi.encodeWithSelector(guard.revokeRewardSigner.selector,uint256(1));
+        sigs=_sign(shortCall,3);
+        vm.expectRevert();_exec(shortCall,sigs);
+        require(wallet.nonce()==n&&gaming.generation()==1&&!guard.transactionActive());
+        require(_exec(correct,_sign(correct,3)));
+        require(gaming.generation()==2);
+    }
+    function testInitialRewardBindingPredicate() public {
+        _issue();
+        V3GovernedGameRewardFixture gaming=V3GovernedGameRewardFixture(successor.vaults(1));
+        address t=address(successor.token());
+        require(gaming.matchesInitialBinding(t,address(guard),cfg.founder));
+        require(!gaming.matchesInitialBinding(PAYEE,address(guard),cfg.founder));
+        require(!gaming.matchesInitialBinding(t,PAYEE,cfg.founder));
+        require(!gaming.matchesInitialBinding(t,address(guard),PAYEE));
+        bytes memory data=abi.encodeCall(guard.revokeRewardSigner,(1,1));
+        require(_exec(data,_sign(data,3)));
+        require(!gaming.matchesInitialBinding(t,address(guard),cfg.founder));
+    }
+    function _signSyntheticReward(V3GovernedGameRewardFixture gaming,V3GovernedGameRewardFixture.Reward memory reward,uint256 testKey) private returns(bytes memory){
+        (uint8 v,bytes32 r,bytes32 s)=vm.sign(testKey,gaming.digest(reward));
+        return abi.encodePacked(r,s,v);
+    }
+    function testRewardAccountingSurvivesActualQuorumRotation() public {
+        // Disposable deterministic keys, offline fixture only.
+        uint256 first=12345;uint256 replacement=23456;
+        cfg.distributor=vm.addr(first);
+        address candidate=vm.addr(replacement);
+        _issue();vm.warp(cfg.start);
+        V3GovernedGameRewardFixture gaming=V3GovernedGameRewardFixture(successor.vaults(1));
+        V3GovernedGameRewardFixture.Reward memory reward=V3GovernedGameRewardFixture.Reward("PAID",PAYEE,900,0,cfg.start+30 days,1);
+        gaming.claim(reward,_signSyntheticReward(gaming,reward,first));
+        reward.eventId="NEW";reward.amount=100;
+        bytes memory old=_signSyntheticReward(gaming,reward,first);
+        bytes memory data=abi.encodeCall(guard.revokeRewardSigner,(1,1));
+        require(_exec(data,_sign(data,3)));
+        vm.expectRevert(V3GovernedGameRewardFixture.InvalidSigner.selector);gaming.claim(reward,old);
+        data=abi.encodeCall(guard.scheduleRewardSigner,(1,2,candidate,block.timestamp,block.timestamp+1 hours));
+        require(_exec(data,_sign(data,3)));
+        vm.warp(block.timestamp+2 days);
+        data=abi.encodeCall(guard.activateRewardSigner,(1,2,1,candidate));
+        require(_exec(data,_sign(data,3)));
+        vm.expectRevert(V3GovernedGameRewardFixture.InvalidSigner.selector);gaming.claim(reward,old);
+        reward.generation=3;reward.eventId="PAID";
+        bytes memory sig=_signSyntheticReward(gaming,reward,replacement);
+        vm.expectRevert(V3GovernedGameRewardFixture.AlreadyPaid.selector);gaming.claim(reward,sig);
+        reward.eventId="NEW";reward.amount=101;
+        sig=_signSyntheticReward(gaming,reward,replacement);
+        vm.expectRevert(V3GovernedGameRewardFixture.CapExceeded.selector);gaming.claim(reward,sig);
+        reward.amount=100;gaming.claim(reward,_signSyntheticReward(gaming,reward,replacement));
+        require(gaming.released()==1000&&gaming.monthlyReleased(0)==1000&&gaming.walletReleased(0,PAYEE)==1000);
+        require(successor.token().totalSupply()==SUPPLY&&successor.token().balanceOf(PAYEE)==1000);
     }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
