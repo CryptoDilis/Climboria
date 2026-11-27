@@ -111,7 +111,8 @@ contract V3AtomicSuccessorTest {
         bytes32 b=control.propose(c,PAYEE,"E","B",10);
         vm.warp(cfg.start+2 days);e.execute(a);
         vm.expectRevert(bytes4(keccak256("ExpenseAlreadyConsumed()")));c.execute(b);
-        vm.prank(DISTRIBUTOR);V3GamingVault(factory.vaults(1)).release(200);
+        V3GamingVault gaming=V3GamingVault(factory.vaults(1));
+        vm.prank(DISTRIBUTOR);gaming.release(200);
         V3BoundedLegacyFixture legacy=V3BoundedLegacyFixture(factory.vaults(6));
         vm.prank(CLAIMANT);legacy.claim("CLAIM");
         require(token.totalSupply()==SUPPLY&&token.balanceOf(PAYEE)==10&&token.balanceOf(DISTRIBUTOR)==200&&token.balanceOf(CLAIMANT)==100);
