@@ -14,29 +14,43 @@ function claims(token){
 }
 // Decoding is only a local freshness/account consistency check, NOT signature
 // verification. Cloudflare and the Worker enforce actual identity/admission.
-export function inspectTester({session,user,cookie,now=Date.now()}={}){
+export function testerCheck({session,user,cookie,now=Date.now()}={}){
  const game=claims(session?.access_token),access=claims(cookie?.value);
  const email=typeof user?.email==='string'?user.email.trim().toLowerCase():'';
  if(!Number.isSafeInteger(now)||!uid.test(user?.id||'')||session?.user?.id!==user.id||
     user.is_anonymous===true||user.app_metadata?.provider==='anonymous'||!email||
-    !game||game.sub!==user.id||!Number.isFinite(game.exp)||game.exp*1000-now<120000||
-    !access||typeof access.email!=='string'||access.email.trim().toLowerCase()!==email||
-    !Number.isFinite(access.exp)||access.exp*1000-now<120000||
-    cookie.name!=='CF_Authorization'||cookie.secure!==true||
-    ![HOST,'.'+HOST].includes(cookie.domain)||cookie.path!=='/')
-  return null;
- return {id:user.id.toLowerCase(),email,token:session.access_token,access:cookie.value,
+    !game||game.sub!==user.id)return 'game-identity-invalid';
+ if(!Number.isFinite(game.exp)||game.exp*1000-now<120000)return 'game-session-expiring';
+ if(!access||typeof access.email!=='string')return 'access-identity-invalid';
+ if(access.email.trim().toLowerCase()!==email)return 'access-email-mismatch';
+ if(!Number.isFinite(access.exp)||access.exp*1000-now<120000)return 'access-session-expiring';
+ if(cookie.name!=='CF_Authorization'||cookie.secure!==true||
+    ![HOST,'.'+HOST].includes(cookie.domain)||cookie.path!=='/')return 'access-cookie-scope-invalid';
+ return 'ok';
+}
+export function inspectTester(input={}){
+ if(testerCheck(input)!=='ok')return null;
+ const {session,user,cookie}=input;
+ const game=claims(session.access_token),access=claims(cookie.value);
+ return {id:user.id.toLowerCase(),email:user.email.trim().toLowerCase(),token:session.access_token,access:cookie.value,
   expiresAt:Math.min(game.exp,access.exp)*1000};
 }
+export function pairCheck(a,b,now=Date.now()){
+ if(!a||!b)return 'tester-missing';
+ if(a.id===b.id||a.email===b.email||a.token===b.token||a.access===b.access)return 'same-tester';
+ if(!(a.expiresAt-now>=120000))return 'tester-a-expiring';
+ if(!(b.expiresAt-now>=120000))return 'tester-b-expiring';
+ return 'ok';
+}
 export function distinctTesters(a,b,now=Date.now()){
- return !!a&&!!b&&a.id!==b.id&&a.email!==b.email&&a.token!==b.token&&a.access!==b.access&&
-  a.expiresAt-now>=120000&&b.expiresAt-now>=120000;
+ return pairCheck(a,b,now)==='ok';
 }
 async function capture(browser,ask,label,google){
- const ctx=await browser.newContext({serviceWorkers:'block'});let page;
+ const ctx=await browser.newContext({serviceWorkers:'block'});let page,stage='browser-setup';
  try{
   page=await ctx.newPage();
   let auth;
+  stage='game-sign-in';
   if(google){auth=await signInGoogleNormally(label)}else{
   await page.goto(GAME+'/game/index.html',{waitUntil:'domcontentloaded',timeout:30000});
   await ask('Tester '+label+': sign in to the disposable registered Game account in the browser, then press Enter here. ');
@@ -51,18 +65,27 @@ async function capture(browser,ask,label,google){
   });
   }
   if(!auth)throw Error('registered-session-required');
+  console.log('PASS: Tester '+label+' registered Game login.');
+  stage='access-navigation';
   await page.goto(PREVIEW+'/',{waitUntil:'domcontentloaded',timeout:30000});
+  stage='access-login-incomplete';
   await ask('Tester '+label+': finish Access email PIN login; expect preview-disabled, then press Enter here. ');
   if(new URL(page.url()).origin!==PREVIEW)throw Error('access-login-incomplete');
+  stage='disabled-response-check';
   const probe=await ctx.request.get(PREVIEW+'/',{maxRedirects:0,timeout:10000});
+  console.log('Tester '+label+' disabled check: HTTP '+probe.status());
   if(probe.status()!==503)throw Error('disabled-preview-required');
   const result=await probe.json();if(result?.error!=='preview-disabled')throw Error('disabled-preview-required');
+  stage='single-access-cookie-required';
   const cookies=(await ctx.cookies(PREVIEW+'/')).filter(c=>c.name==='CF_Authorization');
   if(cookies.length!==1)throw Error('single-access-cookie-required');
-  const tester=inspectTester({...auth,cookie:cookies[0]});
+  const input={...auth,cookie:cookies[0]};
+  stage=testerCheck(input);
+  const tester=inspectTester(input);
   if(!tester)throw Error('tester-identity-or-freshness');
+  console.log('PASS: Tester '+label+' Access identity and session freshness.');
   return {tester,ctx};
- }catch{await ctx.close();throw Error('tester-preparation-failed')}
+ }catch{console.error('Tester '+label+' preparation failed: '+stage);await ctx.close();throw Error('tester-preparation-failed')}
 }
 async function main(){
  if(process.env.CI||!process.stdin.isTTY||!process.stdout.isTTY||
@@ -84,7 +107,9 @@ async function main(){
   const google=process.argv[3]==='--google';
   const a=await capture(browser,ask,'A',google);contexts.push(a.ctx);
   const b=await capture(browser,ask,'B',google);contexts.push(b.ctx);
-  if(!distinctTesters(a.tester,b.tester))throw Error('two-distinct-testers-required');
+  const pair=pairCheck(a.tester,b.tester);
+  if(pair!=='ok'){console.error('Tester pair check failed: '+pair);throw Error('two-distinct-testers-required')}
+  console.log('PASS: two distinct fresh registered testers.');
   // UUIDs are account identifiers, not passwords. Display locally only so
   // the operator can configure the scoped allowlist; never log tokens.
   console.log('Local-only PREVIEW_ACCOUNT_ALLOWLIST: '+a.tester.id+','+b.tester.id);
@@ -92,7 +117,8 @@ async function main(){
   console.log('Only proceed after edge/allowlist checks, cost cap, scoped auth key, fresh disposable namespace and rollback are verified.');
   const answer=await ask('After separately approving and enabling ONE bounded private window, type RUN_PRIVATE_COMBAT_QA (anything else exits without a test): ');
   if(answer!=='RUN_PRIVATE_COMBAT_QA'){console.log('Preparation ended; no combat request sent.');return}
-  if(!distinctTesters(a.tester,b.tester))throw Error('tester-sessions-expired');
+  const ready=pairCheck(a.tester,b.tester);
+  if(ready!=='ok'){console.error('Tester pair check failed: '+ready);throw Error('tester-sessions-expired')}
   const values=[HOST,a.tester.token,b.tester.token,a.tester.access,b.tester.access];
   for(let i=0;i<keys.length;i++)process.env[keys[i]]=values[i];
   await import('./preview-staging-qa.mjs');
