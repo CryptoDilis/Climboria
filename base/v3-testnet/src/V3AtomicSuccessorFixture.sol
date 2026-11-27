@@ -6,7 +6,8 @@ import {V3FounderVesting} from "./ClimbV3TestToken.sol";
 import {V3GameRewardFixture} from "./V3GameRewardFixture.sol";
 import {V3EpochPolicyFactory,IV3CustodyEpochFixture} from "./V3EpochSpendFixture.sol";
 import {V3BoundedLegacyFixture,IV3BurnableAsset} from "./V3BoundedLegacyFixture.sol";
-import {V3LiquidityPolicyFixture,IV3SyntheticPool} from "./V3LiquidityPolicyFixture.sol";
+import {IV3SyntheticPool} from "./V3LiquidityPolicyFixture.sol";
+import {V3DeferredLiquidityFixture} from "./V3DeferredLiquidityFixture.sol";
 
 // Test-only pool builder. Real pool/position manager selection is not implemented.
 interface IV3SyntheticPoolBuilder {
@@ -43,10 +44,7 @@ struct V3SuccessorLiquidityConfig {
     IERC20 quote;
     IV3SyntheticPoolBuilder builder;
     address custody;
-    uint256 assetAmount;
-    uint256 quoteAmount;
-    uint256 minShares;
-    uint256 expiry;
+    uint256 trancheCap;
 }
 struct V3SuccessorLegacyConfig {
     uint256 opens;
@@ -78,9 +76,9 @@ contract V3SuccessorCoreDeployer {
     }
 }
 contract V3SuccessorConditionalDeployer {
-    function liquidity(IERC20 asset,V3SuccessorLiquidityConfig calldata cfg) external returns(V3LiquidityPolicyFixture v){
+    function liquidity(IERC20 asset,V3SuccessorLiquidityConfig calldata cfg,IV3CustodyEpochFixture control) external returns(V3DeferredLiquidityFixture v){
         IV3SyntheticPool p=cfg.builder.createPool(asset,cfg.quote);
-        v=new V3LiquidityPolicyFixture(asset,cfg.quote,p,address(p).codehash,cfg.custody,cfg.assetAmount,cfg.quoteAmount,cfg.minShares,cfg.expiry);
+        v=new V3DeferredLiquidityFixture(asset,cfg.quote,p,control,cfg.custody,cfg.trancheCap);
     }
     function legacy(V3SuccessorTestToken asset,V3SuccessorLegacyConfig calldata cfg) external returns(V3BoundedLegacyFixture v){
         bytes32 commitment=keccak256(abi.encode("CLIMB_V3_SYNTHETIC_LEGACY_V1",block.chainid,address(asset),cfg.opens,cfg.deadline,cfg.closure,cfg.campaign,cfg.cap,cfg.ids,cfg.recipients,cfg.amounts));
@@ -125,7 +123,7 @@ contract V3AtomicSuccessorFixture {
         (address f,address g,V3EpochPolicyFactory e)=core.deploy(asset,cfg);
         expenses=e;
         vaults[0]=f;vaults[1]=g;
-        vaults[2]=address(conditional.liquidity(asset,cfg.liquidity));
+        vaults[2]=address(conditional.liquidity(asset,cfg.liquidity,cfg.control));
         vaults[3]=address(e.ecosystem());vaults[4]=address(e.community());vaults[5]=address(e.treasury());
         vaults[6]=address(conditional.legacy(asset,cfg.legacy));
     }
