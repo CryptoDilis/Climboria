@@ -116,7 +116,7 @@ jobs:
                   raise SystemExit(f"Missing expected homepage control: #{required_id}")
           print("Current homepage structure and hero controls validated.")
           PY
-      - name: Verify Base-exclusive CLIMB and historical retirement disclosure
+      - name: Verify Base-exclusive CLIMB V3 tokenomics and prior-holder protection
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -124,7 +124,8 @@ jobs:
           paper = Path("whitepaper/index.html").read_text(encoding="utf-8")
           mint = "9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump"
           assert mint not in html
-          assert mint in paper and "Retired from official support" in paper
+          assert mint not in paper and "solscan.io/token/" not in paper
+          assert "G8CYYBwU9GzvaEVwdAwZMEbyn9K7JceztSHXW4DzNuJQ" not in html + paper
           assert 'href="/#climb-base-transition"' in html
           assert html.count('id="climb-token-record"') == 1
           assert html.count('id="climb-base-transition"') == 1
@@ -136,13 +137,19 @@ jobs:
               assert "first official public retirement announcement" in page
               assert "Not yet published" in page and "Not open" in page
               assert "exact utc publication time" in page.lower()
-          assert "Historical supply above is not the eligibility snapshot" in paper
+          for page in (html, paper):
+              assert 'id="climb-v3-allocations"' in page and 'id="climb-v3-marketing"' in page
+              for amount in ("888,888,888", "311,111,110.80", "222,222,222.00", "133,333,333.20", "88,888,888.80", "106,666,666.56", "17,777,777.76", "8,888,888.88", "26,666,666.64", "35,555,555.52"):
+                  assert amount in page, amount
+              assert "No conversion rate or allocation is guaranteed" in page
+              assert "not a supply-conserving bridge" in page
+          assert "1,000,000,000" not in paper
           assert "1,000,000,000" not in html
           assert "2.5% buy fee" in html and "2.5% sell fee" in html
           assert "PLANNED LAUNCH TARGET" not in html
           assert "launch-countdown" not in html and "launch-timer" not in html
           assert "TBD" not in html.split('<div id="tokenomics" class="sec">',1)[1].split('<div id="roadmap"',1)[0]
-          print("Base-exclusive token presentation and historical retirement notice verified.")
+          print("Base-exclusive V3 tokenomics and prior-holder notice verified.")
           PY
 
       - name: Verify safe same-origin CLIMB supply snapshot schema
