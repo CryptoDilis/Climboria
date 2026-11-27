@@ -44,6 +44,12 @@ jobs:
           git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
           git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
           test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+      - name: Fuzz actual Safe authorization and rotation
+        run: |
+          set -euo pipefail
+          forge test --match-path test/SafeAdversarialFuzz.t.sol --match-test '^testFuzz_' --fuzz-runs 128 -vv | tee "$RUNNER_TEMP/safe-adversarial-fuzz.log"
+          grep -Eq '4 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-adversarial-fuzz.log"
+          test "$(grep -c 'runs: 128' "$RUNNER_TEMP/safe-adversarial-fuzz.log")" -eq 4
       - name: Exercise actual Safe and proxy custody boundaries
         run: |
           set -euo pipefail
