@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {verifyRuntime} from './verify-runtime-template.mjs';
+const addr=n=>'0x'+n.toString(16).padStart(40,'0');
+const word=n=>n.toString(16).padStart(64,'0');
+const template='0x60'+'00'.repeat(32)+'61'+'00'.repeat(32)+'62'+'00'.repeat(32)+'63';
+const artifact=()=>({deployedBytecode:{object:template,immutableReferences:{'1':[{start:1,length:32},{start:67,length:32}],'2':[{start:34,length:32}]},linkReferences:{}}});
+const runtime=(a=1,b=2,c=1)=>'0x60'+word(a)+'61'+word(b)+'62'+word(c)+'63';
+test('checks all bytes including repeated immutable groups',()=>assert.equal(verifyRuntime(artifact(),runtime(),[addr(1),addr(2)]).immutableGroups,2));
+test('rejects changed nonimmutable byte or wrong address',()=>{assert.throws(()=>verifyRuntime(artifact(),runtime().slice(0,-2)+'64',[addr(1),addr(2)]));assert.throws(()=>verifyRuntime(artifact(),runtime(1,3),[addr(1),addr(2)]));});
+test('rejects inconsistent and duplicated groups',()=>{assert.throws(()=>verifyRuntime(artifact(),runtime(1,2,2),[addr(1),addr(2)]));assert.throws(()=>verifyRuntime(artifact(),runtime(1,1),[addr(1),addr(2)]));});
+test('rejects missing or overlapping compiler ranges',()=>{const a=artifact();delete a.deployedBytecode.immutableReferences['2'];assert.throws(()=>verifyRuntime(a,runtime(),[addr(1),addr(2)]));const b=artifact();b.deployedBytecode.immutableReferences['2'][0].start=1;assert.throws(()=>verifyRuntime(b,runtime(),[addr(1),addr(2)]));});
+test('exact no-immutable runtime match required',()=>{const a={deployedBytecode:{object:'0x6060'}};assert.equal(verifyRuntime(a,'0x6060').immutableGroups,0);assert.throws(()=>verifyRuntime(a,'0x6061'));});
