@@ -361,6 +361,21 @@ jobs:
               await page.goto('http://127.0.0.1:4173/launchpad/',{waitUntil:'domcontentloaded'});
               if(!((await page.locator('h1').first().innerText()).toLowerCase().includes('launch'))) throw new Error('Dedicated Launchpad heading missing');
               if(!/not live yet/i.test(await page.locator('body').innerText())) throw new Error('Launchpad must clearly disclose that launch execution is not live');
+              const launchNetwork=await page.locator('#launchpad-network-status').innerText();
+              if(!launchNetwork.includes('Base mainnet (chain 8453)')||!launchNetwork.includes('Base Sepolia (chain 84532)')||!launchNetwork.includes('Solana remains a planned secondary network')||!launchNetwork.includes('No network is open for token launches'))throw new Error('Launchpad network readiness disclosure is incomplete');
+              if(await page.locator('form, input, button, script').count())throw new Error('Launchpad preview must remain informational without submission, wallet or execution controls');
+              for(const width of [390,360]){
+                const launchMobile=await browser.newPage({viewport:{width,height:844},isMobile:true,hasTouch:true});
+                try{
+                  await launchMobile.goto('http://127.0.0.1:4173/launchpad/',{waitUntil:'domcontentloaded'});
+                  const status=launchMobile.locator('#launchpad-network-status');
+                  if(!await status.isVisible())throw new Error('Launchpad network status missing at '+width+'px');
+                  const rect=await status.boundingBox();
+                  if(!rect||rect.x<0||rect.x+rect.width>width+1)throw new Error('Launchpad network status overflows at '+width+'px');
+                  if(await launchMobile.locator('form, input, button, script').count())throw new Error('Mobile preview must remain informational');
+                }finally{await launchMobile.close();}
+              }
+              console.log('PASS Base-first Launchpad network disclosure and disabled services on desktop/mobile');
               const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
               mobile.on('pageerror',e=>errors.push('MOBILE PAGEERROR '+mobile.url()+' :: '+e.name+' :: '+e.message+' :: '+String(e.stack)));
               mobile.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||(m.location().url.startsWith('https://dexscreener.com/assets/')&&message.includes('@firebase/firestore')&&message.includes('Could not reach Cloud Firestore backend'))||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('MOBILE CONSOLE '+mobile.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
