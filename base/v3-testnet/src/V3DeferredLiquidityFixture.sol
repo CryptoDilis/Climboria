@@ -41,6 +41,7 @@ contract V3DeferredLiquidityFixture is ReentrancyGuard {
         address locker;
     }
     mapping(bytes32=>Action) public actions;
+    struct PoolSnapshot {uint256 assetBalance;uint256 quoteBalance;uint256 supply;}
     event Scheduled(bytes32 indexed id,uint256 indexed epoch,uint256 assetAmount,uint256 quoteAmount,uint256 readyAt,uint256 deadline);
     event Cancelled(bytes32 indexed id);
     event Locked(bytes32 indexed id,address indexed locker,uint256 assetSpent,uint256 quoteSpent,uint256 shares);
@@ -91,6 +92,7 @@ contract V3DeferredLiquidityFixture is ReentrancyGuard {
     }
     function _add(Action storage x,V3SyntheticLPLock lock) private returns(uint256 shares){
         uint256 a0=asset.balanceOf(address(this));uint256 q0=quote.balanceOf(address(this));uint256 l0=pool.balanceOf(address(lock));
+        PoolSnapshot memory beforePool=PoolSnapshot(asset.balanceOf(address(pool)),quote.balanceOf(address(pool)),pool.totalSupply());
         if(asset.allowance(address(this),address(pool))!=0||quote.allowance(address(this),address(pool))!=0)revert BalanceMismatch();
         asset.safeApprove(address(pool),x.assetAmount);quote.safeApprove(address(pool),x.quoteAmount);
         shares=pool.addLiquidity(x.assetAmount,x.quoteAmount,x.minShares,address(lock));
@@ -99,5 +101,10 @@ contract V3DeferredLiquidityFixture is ReentrancyGuard {
         if(asset.balanceOf(address(this))!=a0-x.assetAmount||quote.balanceOf(address(this))!=q0-x.quoteAmount||
            l1<l0||l1-l0!=shares||shares<x.minShares||asset.allowance(address(this),address(pool))!=0||
            quote.allowance(address(this),address(pool))!=0)revert BalanceMismatch();
+        // Synthetic pool must retain both inputs and mint only the reported locked shares.
+        // Pool-reported supply is not independent evidence of economic backing.
+        if(asset.balanceOf(address(pool))!=beforePool.assetBalance+x.assetAmount||
+           quote.balanceOf(address(pool))!=beforePool.quoteBalance+x.quoteAmount||
+           pool.totalSupply()!=beforePool.supply+shares)revert BalanceMismatch();
     }
 }
