@@ -94,8 +94,9 @@ contract SafeQuorumIssuanceTest {
     function testRestrictedGuardDeployerAndMutationRollback() public {
         SafeQuorumGuardDeployerFixture helper=setup.guardDeployer();
         require(helper.factory()==address(setup)&&address(helper).codehash==setup.guardDeployerHash());
+        address implementation=address(setup.singleton());
         vm.expectRevert(SafeQuorumGuardDeployerFixture.Unauthorized.selector);
-        helper.deploy(wallet,address(setup.singleton()),successor);
+        helper.deploy(wallet,implementation,successor);
         V3QuorumSuccessorFixture fresh=new V3QuorumSuccessorFixture(address(setup),successor.conditional(),successor.conditionalHash());
         bytes memory original=address(helper).code;
         vm.etch(address(helper),hex"60006000f3");
