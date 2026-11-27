@@ -1,5 +1,15 @@
 # Climboria Game Development Record
 
+## R5A PAIRED INTEGRATION MERGED; FINAL ACCEPTANCE CONSOLIDATION — 2026-11-28 PHT
+
+- #1023 exact 36a4734b1c9ae0b4345ee70b6a94aeb5e5834eb8 all nine workflows SUCCESS: Validate 46035164512, chat 46035164305, general browser 46035164230, foundation 46035164267, focused desktop/mobile 46035164429, chest 46035164373, heroes 46035164347, full gameplay 46035164387, authority 46035164210. Compared intervening main files, zero overlapping candidate paths. GitHub merge confirmed 2b9df4e94c452526ebf3805f36690ed6671853e4. Post-merge CI not yet verified.
+- #1025 exact b4a8cd00396fc5f692b6ab756323a506c2f53de6: foundation 46035967145 and focused 46035967047 SUCCESS. Desktop job 140631332751: 15 same normal follow-camera frames with both animated bodies and both labels (each 15 draws), both moved 2.4m; distance exit at frame 16, both released, zero cleanup errors/allocations. Mobile job 140631333130: 16 same frames while moving 2.56m, one animated GLB plus non-skeletal silhouette, zero cleanup errors/allocations after exit. No production camera change.
+- #1027 exact e0c03d0337a4109ae481cc4a7889496a13270bc6: desktop/mobile 46036379771 SUCCESS (jobs 140632720519/140632720864). Both desktop animated NPC GLBs released on real-peer-priority, zero cleanup errors, nearby local fixture GLB admitted, removal restored zero peer count/allocations; mobile same preemption and cleanup with one GLB plus silhouette. Local fixture, not actual authenticated multiplayer.
+- Consolidate four exact source/test/workflow files from verified #1025/#1027 on merged main, preserve existing record; fresh combined CI required. No other workstream changed. Keep older source branches as evidence and never blindly merge them.
+- NEXT: verify combined exact-head CI; merge after comparing latest main. Then baseline/pair physical performance and bounded three-actor trial with existing GLB caps and lightweight animated fallback; no population increase or public spawn until gates pass. Actual device and shared production authority still unverified.
+
+---
+
 ## R5A MAIN-BASED PAIRED INTEGRATION REPAIR — 2026-11-28 PHT
 
 - #1013/#1015 mobile passed; desktop jobs 140620013561 and 140621630238 cancelled after approximately 12-minute job windows; no terminal pass. #1017/#1018 desktop still running, mobile passed. #1020 mobile 140624214280 failed at cleanupErrors assertion (1 instead of 0) after actual map, movement, dialogue and simultaneous draw assertions passed. Source foundation 46033866649 and chat 46033866749 passed. Preserve exact heads and existing runs.
