@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## PRIVATE PILOT CHARACTER SESSION LIFECYCLE — 2026-11-27 PHT
+
+- #938 exact head 85c15b3c4916867f0ba31cf18a7b0e220d41e4d1: Validate 45952119296, Authority 45952119285, Gateway 45952119334, Runtime 45952119349 SUCCESS. Runtime job 140350155659 explicitly passed the actual authored pilot Worker/SQLite socket lifecycle step. Full Gameplay 45952119308 running at check. Authentication is separately mocked; no real account or edge proof.
+- Stacked branch adds private pilot character session composition 9efe74dff6bf49cc92cd77e3773bacfcb0bbe153, binding explicit admitted pilot transport, dedicated render-only root/HUD and controls. Local monotonic deadline and timer fail closed on expiry, socket close/error or clock rollback; guarded movement/attack and cleanup. Server expiry remains authoritative. Regression f2acc323b9523fa0017df476123abf48c8e76302 covers snapshot/hit projection, stale input, socket close, suspended timer, expiry, rollback, wrong fixture and renderer exception. Code only, not yet executed; no actual GLB mount in pilot or server expiry test.
+- EXACT NEXT: finish #938 full CI and merge when verified, reconcile this stacked branch to merged main and fresh CI. Then actual private pilot GLB browser integration and server-side expiry acceptance, authorized edge/real-account QA. No public PvP, deploy, loot or production saves.
+
+---
+
 ## AUTHORED PILOT LOCAL WORKER/SQLITE LIFECYCLE — 2026-11-27 PHT
 
 - #938 prior exact head b3d54116304b5b0291e71c98716cb31f0fed7895 had four green: Validate 45951411607, Authority 45951411584, Gateway 45951411492 and Runtime 45951411508; Gameplay 45951411513 running. New isolated workerd smoke 7781b09c176b1b09e2c98ad88c1caf7b528ce52c and CI wiring fc052d5679f393b763d5f0ed3d0f7b327b51982b exercise actual authored pilot Worker upgrade and SQLite DO, two synthetic accounts, one-use tickets, rejected public/internal paths, authoritative damage and timer-driven movement, reconnect and durable restart, recheck removed allowlist account at ticket consumption, disabled Worker/DO. Private ticket issuance stands in for verified identity; outer upstream auth is mocked separately in unit tests, not integrated end-to-end. No external credentials, no deployment. Source unexecuted at authoring; expiry and full real-account/edge acceptance remain pending.
