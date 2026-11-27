@@ -290,3 +290,120 @@ jobs:
           path: compatibility/
           if-no-files-found: error
           retention-days: 14
+
+  reproduce:
+    name: Independent runner standard JSON replay / ${{ matrix.project }} / ${{ matrix.compiler }}
+    needs: [compare, compatibility]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [safe-custody, v3-testnet]
+        compiler: ['0.8.19', '0.8.39']
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: compiler-differential-${{ matrix.project }}-${{ matrix.compiler }}
+          path: evidence
+      - name: Obtain verified compiler in a fresh runner
+        env:
+          COMPILER: ${{ matrix.compiler }}
+        run: |
+          set -euo pipefail
+          mkdir -p replay
+          case "$COMPILER" in
+            0.8.19)
+              url="https://binaries.soliditylang.org/linux-amd64/solc-linux-amd64-v0.8.19+commit.7dd6d404"
+              digest=7a5c1d3dc9a8eba62bb2ec37192c9178ae5fe8a54a56e5573fd3c9c17cd9eb48
+              ;;
+            0.8.39)
+              url="https://github.com/argotorg/solidity/releases/download/v0.8.39/solc-static-linux"
+              digest=b8b0642d46838575d3177628b685564b52f51f2aee546cb4dce781951d23c666
+              ;;
+            *) exit 1 ;;
+          esac
+          curl --fail --show-error --silent --location --retry 2 "$url" -o "$RUNNER_TEMP/replay-solc"
+          echo "$digest  $RUNNER_TEMP/replay-solc" | sha256sum -c -
+          test "$(cut -d' ' -f1 evidence/solc-sha256.txt)" = "$digest"
+          chmod 700 "$RUNNER_TEMP/replay-solc"
+          "$RUNNER_TEMP/replay-solc" --version | tee replay/solc.txt
+          sha256sum "$RUNNER_TEMP/replay-solc" > replay/compiler-sha256.txt
+          cat /etc/os-release > replay/os-release.txt
+          uname -a > replay/uname.txt
+          cp evidence/source.txt replay/source.txt
+      - name: Replay unmodified input and compare all emitted contract data
+        env:
+          PROJECT: ${{ matrix.project }}
+          COMPILER: ${{ matrix.compiler }}
+        run: |
+          set -euo pipefail
+          python - <<'PY' | tee replay/replay.log
+          import hashlib, json, os, subprocess, tempfile
+          from pathlib import Path
+
+          def require(ok, message):
+              if not ok:
+                  raise ValueError(message)
+
+          def digest(data):
+              return hashlib.sha256(data).hexdigest()
+
+          def canonical(obj):
+              return json.dumps(obj, sort_keys=True, separators=(",", ":")).encode()
+
+          compiler = Path(os.environ["RUNNER_TEMP"], "replay-solc")
+          records = sorted(Path("evidence/standard-json").glob("*/input.json"))
+          require(records, "no original compiler inputs")
+          project = os.environ["PROJECT"]
+          version = os.environ["COMPILER"]
+          report = {"project": project, "compiler": version, "records": [], "differences": []}
+          expected_count = {"safe-custody": 114, "v3-testnet": 97}[project]
+          seen = set()
+          for index, record in enumerate(records):
+              raw = record.read_bytes()
+              inp = json.loads(raw)
+              require(inp["language"] == "Solidity" and inp["sources"], "invalid compiler input")
+              require(all(set(v) == {"content"} and isinstance(v["content"], str) for v in inp["sources"].values()), "all source bytes must be embedded, no URL fetches")
+              previous = json.loads(record.with_name("output.json").read_bytes())
+              require(not any(e.get("severity") == "error" for e in previous.get("errors", [])), "original compiler error")
+              # No repository checkout, Foundry, allow-paths, or source-tree reads.
+              # Preserve every byte of the captured JSON, including absolute source-unit names.
+              with tempfile.TemporaryDirectory() as empty:
+                  result = subprocess.run([str(compiler), "--standard-json"], input=raw, cwd=empty, capture_output=True, timeout=180)
+              Path("replay", f"{index}-output.json").write_bytes(result.stdout)
+              Path("replay", f"{index}-stderr.txt").write_bytes(result.stderr)
+              require(result.returncode == 0, "replay compiler process failed")
+              current = json.loads(result.stdout)
+              require(not any(e.get("severity") == "error" for e in current.get("errors", [])), "replay compiler error")
+              def flatten(out):
+                  return {(source, name): artifact for source, entries in out["contracts"].items() for name, artifact in entries.items()}
+              a, b = flatten(previous), flatten(current)
+              require(a and b, "empty contracts")
+              for key in sorted(a.keys() ^ b.keys()):
+                  report["differences"].append(f"contract identity mismatch: {key}")
+              for key in sorted(a.keys() & b.keys()):
+                  for field in ("abi", "storageLayout", "metadata", "evm"):
+                      require(field in a[key] and field in b[key], f"missing {field}: {key}")
+                      if a[key][field] != b[key][field]:
+                          report["differences"].append(f"{field} mismatch: {key}")
+                  if a[key] != b[key]:
+                      report["differences"].append(f"complete contract output mismatch: {key}")
+                  seen.add(key)
+              if previous.get("sources") != current.get("sources"):
+                  report["differences"].append(f"source IDs or AST mismatch: invocation {index}")
+              report["records"].append({"inputSha256": digest(raw), "originalContractSha256": digest(canonical(previous["contracts"])), "replayedContractSha256": digest(canonical(current["contracts"])), "contracts": len(a), "nonemptyCreation": sum(bool(x["evm"]["bytecode"]["object"]) for x in a.values()), "nonemptyRuntime": sum(bool(x["evm"]["deployedBytecode"]["object"]) for x in a.values())})
+          report["uniqueContractEntries"] = len(seen)
+          require(len(seen) == expected_count, "unexpected contract coverage; review deliberate source changes")
+          require(sum(r["nonemptyCreation"] for r in report["records"]) > 0 and sum(r["nonemptyRuntime"] for r in report["records"]) > 0, "no executable bytecode")
+          Path("replay/report.json").write_text(json.dumps(report, indent=2))
+          print(json.dumps(report, indent=2))
+          require(not report["differences"], "reproducibility mismatch")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compiler-replay-${{ matrix.project }}-${{ matrix.compiler }}
+          path: replay/
+          if-no-files-found: error
+          retention-days: 14
