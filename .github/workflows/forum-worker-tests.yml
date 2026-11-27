@@ -2,10 +2,10 @@ name: Governance Forum Backend Tests
 on:
   pull_request:
     branches: [main]
-    paths: ['site/forum-worker/**', '.github/workflows/forum-worker-tests.yml']
+    paths: ['site/forum-worker/**', 'governance/**', '.github/workflows/forum-worker-tests.yml']
   push:
     branches: [main]
-    paths: ['site/forum-worker/**', '.github/workflows/forum-worker-tests.yml']
+    paths: ['site/forum-worker/**', 'governance/**', '.github/workflows/forum-worker-tests.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -24,4 +24,7 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm run check
       - run: npm test
+      - run: npm install --no-save --no-audit --no-fund playwright
+      - run: npx playwright install chromium
+      - run: node test/browser-integration.mjs
       - run: npx wrangler deploy --dry-run --outdir /tmp/forum-bundle
