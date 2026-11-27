@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createPreviewCombatClientState} from './preview-combat-client-state.mjs';
+const A='s_'+'1'.repeat(32),B='s_'+'2'.repeat(32),C='s_'+'3'.repeat(32);
+const snapshot=(id,health)=>({serverId:id,roomId:'preview-combat-fixture',maxHealth:500,health,downed:health===0,respawnAtMs:health===0?5000:null});
+const make=(id=B,health=500)=>createPreviewCombatClientState({type:'preview-joined',fixture:'synthetic-combat',id,snapshot:snapshot(id,health)});
+const hit=(health,targetId=B)=>({type:'preview-hit',actorId:A,targetId,health,damage:5,downed:health===0});
+test('push invalidates rather than mutating local HP; only own fresh snapshot restores controls',()=>{
+ const s=make();
+ assert.equal(s.read().health,500);assert.equal(s.canAct(),true);
+ assert.equal(s.observe(hit(495,C)),false);
+ assert.equal(s.observe({...hit(495),damage:999}),false);
+ assert.equal(s.observe(hit(495)),true);assert.equal(s.read(),null);assert.equal(s.canAct(),false);
+ const token=s.beginSnapshot();assert.equal(s.beginSnapshot(),null);
+ assert.equal(s.acceptSnapshot(token,{ok:true,snapshot:snapshot(C,495)}),false);
+ assert.equal(s.needsSnapshot(),true);
+ assert.equal(s.acceptSnapshot(s.beginSnapshot(),{ok:true,snapshot:snapshot(B,495)}),true);
+ assert.equal(s.read().health,495);assert.equal(s.canAct(),true);
+});
+test('notification during pending snapshot rejects stale read and respawn cannot unlock early',()=>{
+ const s=make(B,5),old=s.beginSnapshot();
+ assert.equal(s.observe(hit(0)),true);
+ assert.equal(s.acceptSnapshot(old,{ok:true,snapshot:snapshot(B,5)}),false);
+ assert.equal(s.acceptSnapshot(s.beginSnapshot(),{ok:true,snapshot:snapshot(B,0)}),true);
+ assert.equal(s.read().downed,true);assert.equal(s.canAct(),false);
+ assert.equal(s.observe({type:'preview-respawn',targetId:B}),true);
+ assert.equal(s.canAct(),false);
+ assert.equal(s.acceptSnapshot(s.beginSnapshot(),{ok:true,snapshot:snapshot(B,500)}),true);
+ assert.equal(s.canAct(),true);
+});
+test('closed session and late responses cannot affect replacement',()=>{
+ const s=make(),old=s.beginSnapshot();s.close();
+ const next=make(C,0);
+ assert.equal(s.observe(hit(495)),false);
+ assert.equal(s.acceptSnapshot(old,{ok:true,snapshot:snapshot(B,495)}),false);
+ assert.equal(next.observe(hit(495)),false);
+ const token=next.beginSnapshot();
+ assert.equal(next.acceptSnapshot(old,{ok:true,snapshot:snapshot(C,500)}),false);
+ assert.equal(next.acceptSnapshot(token,{ok:true,snapshot:snapshot(C,0)}),true);
+ assert.equal(next.canAct(),false);
+});
