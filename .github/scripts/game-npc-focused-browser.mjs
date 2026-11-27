@@ -74,6 +74,39 @@ try{
  assert.equal(reply.message.targetNpcId,opener.message.npcId);assert.ok(reply.message.createdAt-opener.message.createdAt>=4000);
  for(const e of pair.messages){assert.ok(e.separation<=12);assert.equal(e.message.channel,'world');assert.match(e.message.sender,/ \[NPC\]$/);}
  assert.equal(opener.modes.find(v=>v.id===opener.message.npcId).goal,null);
+ const spacing=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairSpacingAudit());
+ console.log('NPC actual paired spacing audit',JSON.stringify(spacing));
+ assert.ok(spacing.closed&&spacing.pair.closed&&spacing.pair.frames===1800&&spacing.stableIdentity);
+ assert.ok(spacing.distances.every(v=>v>5)&&spacing.maxStep<=.300001&&spacing.minSeparation>=.8-1e-9);
+ assert.ok(spacing.playerUnchanged&&spacing.inventoryUnchanged&&spacing.diagnosticsUnchanged&&spacing.peersUnchanged);
+ const visualPair=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairVisualAudit());
+ console.log('NPC simultaneous visual pair audit',JSON.stringify(visualPair));
+ assert.equal(visualPair.mobile,mobile);assert.equal(visualPair.heavyCount,mobile?1:2);
+ assert.ok(visualPair.sameFrameDraws>=2&&visualPair.minSeparation>=.8-1e-9&&visualPair.distances.every(d=>d>.5));
+ assert.ok(visualPair.peak<=visualPair.budget-1&&visualPair.cleaned&&visualPair.playerUnchanged&&visualPair.inventoryUnchanged&&visualPair.diagnosticsUnchanged&&visualPair.peersUnchanged);
+ assert.deepEqual(visualPair.visuals.map(v=>v.label),['Aurelion [NPC]','ZevranSol [NPC]']);
+ assert.ok(visualPair.visuals.every(v=>v.detached&&v.draws>0&&v.nameplateDraws>0&&(!v.animated||v.exactMotion)));
+ const pairBaseline=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairContinuousAudit());
+ assert.equal(await page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairContinuousStart()),true);
+ const pairDeadline=Date.now()+(mobile?60000:120000);let livePair;
+ for(;;){
+  livePair=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairContinuousAudit());
+  if(livePair.session?.frames>=15&&livePair.session.distances.every(d=>d>.5))break;
+  if(Date.now()>=pairDeadline||livePair.session?.closed)throw Error('Continuous NPC pair incomplete: '+JSON.stringify(livePair));
+  await new Promise(r=>setTimeout(r,1000));
+ }
+ assert.ok(livePair.visuals.length===2&&livePair.visuals.every(v=>v.attached&&v.visible)&&livePair.peers===pairBaseline.peers);
+ assert.equal(livePair.visuals.filter(v=>v.animated).length,mobile?1:2);
+ assert.ok(livePair.loading+livePair.resident<=livePair.budget-1);
+ await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak;w.resumeAtRoomPosition({x:0,z:-30,y:w.groundAt(0,-30)+1.75})});
+ await page.waitForFunction(()=>window.__climboriaJarrellsPeak.npcPairContinuousAudit().session?.closed,undefined,{timeout:15000});
+ const pairEnded=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairContinuousAudit());
+ console.log('NPC continuous pair cleanup evidence',JSON.stringify(pairEnded));
+ assert.equal(pairEnded.session.reason,'distance');assert.equal(pairEnded.session.cleanupErrors,0);
+ assert.ok(pairEnded.visuals.every(v=>v.released===true));
+ assert.ok(pairEnded.visuals.every(v=>!v.attached&&!v.visible)&&pairEnded.peers===pairBaseline.peers);
+ assert.equal(pairEnded.loading+pairEnded.resident,pairBaseline.loading+pairBaseline.resident);
+ console.log('NPC continuous pair normal-frame audit',JSON.stringify({livePair,pairEnded}));
  assert.deepEqual(errors,[]);
  console.log('NPC focused browser PASS',JSON.stringify({mobile,elapsedMs:Date.now()-start,route,glb,active,ended}));
  await context.close();
