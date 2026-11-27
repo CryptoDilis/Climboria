@@ -34,6 +34,7 @@ contract SafeEpochGuardFixture is BaseGuard {
     bool public transactionActive;
     event RotationScheduled(uint256 indexed epoch,bytes32 indexed digest,uint256 readyAt,uint256 expiresAt);
     event RotationCancelled(uint256 indexed epoch,bytes32 indexed digest);
+    event AuthorizationInvalidated(uint256 indexed epoch,uint256 indexed consumedNonce);
     event Rotated(uint256 indexed epoch,address indexed oldOwner,address indexed newOwner);
 
     constructor(Safe account,address implementation){
@@ -72,11 +73,18 @@ contract SafeEpochGuardFixture is BaseGuard {
         pending=Rotation(digest,oldOwner,newOwner,block.timestamp+DELAY,block.timestamp+DELAY+WINDOW);
         emit RotationScheduled(epoch,digest,pending.readyAt,pending.expiresAt);
     }
-    function cancelRotation(uint256 expectedEpoch) external onlyWallet {
+    function cancelRotation(uint256 expectedEpoch,uint256 expectedSerial) external onlyWallet {
         validateConfig();
         bytes32 d=pending.digest;
-        if(expectedEpoch!=epoch||d==0||rotating)revert Forbidden();
+        if(expectedEpoch!=epoch||expectedSerial!=rotationSerial||d==0||rotating)revert Forbidden();
         delete pending;emit RotationCancelled(epoch,d);
+    }
+    // Quorum-only nonce consumption, before or after binding. Must win the
+    // transaction ordering race; does not cancel an already executed action.
+    function invalidateAuthorization(uint256 expectedEpoch,uint256 expectedNonce) external onlyWallet {
+        validateConfig();
+        if(!transactionActive||rotating||expectedEpoch!=epoch||expectedNonce!=wallet.nonce()-1)revert Forbidden();
+        emit AuthorizationInvalidated(epoch,expectedNonce);
     }
     function checkTransaction(address to,uint256 value,bytes memory data,Enum.Operation operation,
         uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address payable refundReceiver,
@@ -107,7 +115,8 @@ contract SafeEpochGuardFixture is BaseGuard {
         bytes4 selector=bytes4(data);
         if(to==address(this)){
             if((selector==this.scheduleRotation.selector&&data.length==132)||
-               (selector==this.cancelRotation.selector&&data.length==36)||_policyCallAllowed(selector,data.length))return;
+               (selector==this.cancelRotation.selector&&data.length==68)||
+               (selector==this.invalidateAuthorization.selector&&data.length==68)||_policyCallAllowed(selector,data.length))return;
             revert Forbidden();
         }
         if(to!=address(wallet)||selector!=SWAP||data.length!=132)revert Forbidden();
