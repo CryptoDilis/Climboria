@@ -24,6 +24,17 @@ contract V3LegacyProofVerifierTest {
         Verifier.Row memory r=Verifier.Row(bytes32(uint256(12)),bytes32(uint256(22)),address(102),200,9,bytes32(uint256(32)));
         require(verifier.verify(commitment(),1,r,p));
     }
+    function testCanonicalGeneratorVector() public view {
+        Verifier.Commitment memory c=Verifier.Commitment(
+            0x09ced17b8f096101418527fcff7a87e27c417f7ebff09ff9cc0f2b4522371406,
+            0xda25814f85c83754bee9858baa74f8f431f772f2ff1567e609919599640532ee,
+            address(201),address(202),2,20,16,
+            0x5d5cb73c8bacde515bccff52fcc9efc3604d39be51de7d95dbf2c52bb8d70284);
+        Verifier.Row memory r=Verifier.Row(bytes32((uint256(1)<<248)+11),bytes32((uint256(1)<<248)+21),address(101),100,7,bytes32(uint256(31)));
+        Verifier.Node[] memory p=new Verifier.Node[](1);
+        p[0]=Verifier.Node(0x7cd40b1190294231661d449f7f60100bb708a01b10e502c547c6810360b57e5c,9);
+        require(verifier.verify(c,0,r,p));
+    }
     function testAlteredRowAndIndexRejected() public view {
         Verifier.Row memory r=row();r.award++;
         require(!verifier.verify(commitment(),0,r,proof()));
