@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## CROWD C12 PRIVATE INSTANCED CLOSE BODY PROJECTION — 2026-11-28 PHT
+
+- C9 renderer and native passed, focused browser still running; C10 isolated WebGL renderer/focused still running at inspection; C11 native deadline sweep 46055286420 in progress. No unverified draw-count or latency claim.
+- C12 candidate explicitly opts in only from loopback smoke with critical pressure and zero heavy loading/residents. Seven shared InstancedMesh parts project up to 100 existing close peer transforms in the actual world scene; individual fallbacks suppressed for those IDs. No new presence, admission, combat authority, nameplate expansion or public activation. Existing C9 coverage still reflects the ordinary tier planner, separate instance audit reports projected IDs/counts/matrices/draw callbacks. Private stress configuration bypasses ordinary close-body cap only for instanced bodies; not device-approved. Test 100 close descriptors, actual world render draw submissions, leave/rejoin, movement out/in, all-clear and detach; shared assets stay Game-owned. Restores ordinary recovery fixture after experiment.
+- NEXT: verify C9–C12 exact CI, inspect C11 latency evidence and C10 draw evidence before merging dependent candidates. C12 instancing is not a 100-person visible identity guarantee: nameplate/occlusion, frame-time, triangle costs, server transport integration, long-duration churn and physical/authenticated tests remain open. No production cap or security changes.
+
+---
+
 ## CROWD C11 ACK-INDEPENDENT PRIVATE FLUSH DEADLINE SWEEP — 2026-11-28 PHT
 
 - C9 #1041 exact 81327e0e37bcb2d20bfe1bf61757259fd5aeeda9 renderer run 46054709471 jobs 140694279285 desktop and 140694279651 mobile SUCCESS: all 100 descriptors within 2.8m, critical desktop 3 bodies/9 markers/88 hidden, mobile 2/6/92; overload explicitly incomplete. Native, foundation and chat passed; focused browser still running at inspection. C10 #1043 exact 874024a1ea3ca28ee60bd82ac81d159feaedb212 foundation green; renderer/focused pending.
