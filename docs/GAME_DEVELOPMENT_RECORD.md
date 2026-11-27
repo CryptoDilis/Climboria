@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## AUTHORED DRY MAP COMBAT ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
+
+- #903 merged 3a6f7b9592084b66e1a54840b598a8f24b49d9b2 after five exact-head CI successes. #905 merged 379423d98d78f939264c43dd2d9795ea1dcd249b; exact head 583cf311ce87195596654a70b08387b5914bbfdb all five SUCCESS (Runtime 45940257524, Authority 45940257511, Gateway 45940257490, Validate 45940257478, Gameplay 45940257471).
+- Test 8769f0b005581033bec0dd3402ffb170e05709ea composes actual authored dry-region terrain and collision references with transactional combat. Exercises Sanctuary denial, camp melee acceptance, server-controlled movement beyond melee range and unchanged HP on denial. Original #909 head e2962be911b20f2798c5cb7ad5893512889745cf passed Authority 45940518036, Gateway 45940517984, Runtime 45940518097 and Validate 45940518014; Gameplay 45940518001 was running. Reconciled head requires fresh CI; region remains unreviewed for production. No public gateway, deployment, inventory or reward changes.
+- EXACT NEXT: verify reconciled #909 exact-head CI and merge green. Review browser-to-server coordinate parity and complete collision/terrain coverage before restricted actual-map combat pilot. Keep private cloud disabled and existing public cosmetic presence unchanged.
+
+---
+
 ## PRIVATE COMBAT CLIENT SNAPSHOT RECONCILIATION — 2026-11-27 PHT (PROPOSED)
 
 - Parent #903 merged at 3a6f7b9592084b66e1a54840b598a8f24b49d9b2; exact head b091bb2ff997c9dfe6373aa3d22abc93039dea35 passed all five checks (Validate 45938857653, Runtime 45938857715, Gateway 45938857813, Authority 45938857701, Gameplay 45938857694).
