@@ -491,7 +491,7 @@ jobs:
                 if(await page.locator(selector).count()!==1) throw new Error('Missing DEX control: '+selector);
               }
               const heading=await page.locator('h1').first().innerText();
-              if(!heading.toLowerCase().includes('solana')) throw new Error('Unexpected DEX page heading: '+heading);
+              if(!heading.toLowerCase().includes('base')||heading.toLowerCase().includes('solana')) throw new Error('Unexpected Base-first DEX page heading: '+heading);
               if(errors.length) throw new Error('DEX browser errors: '+errors.join(' | '));
               // Verify DEX token/pool selection is represented in browser history.
               const mint='So11111111111111111111111111111111111111112';
