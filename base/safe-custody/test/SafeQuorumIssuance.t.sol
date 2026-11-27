@@ -314,6 +314,26 @@ contract SafeQuorumIssuanceTest {
         require(_exec(data,_sign(data,3)));
         require(gaming.distributor()==candidate&&gaming.generation()==3&&successor.token().totalSupply()==SUPPLY);
     }
+    function testPendingRewardAndOwnerRolesCannotOverlap() public {
+        _issue();
+        address candidate=PAYEE;
+        bytes memory data=abi.encodeCall(guard.revokeRewardSigner,(1,1));
+        require(_exec(data,_sign(data,3)));
+        data=abi.encodeCall(guard.scheduleRewardSigner,(1,2,candidate,block.timestamp,block.timestamp+1 hours));
+        require(_exec(data,_sign(data,3)));
+        bytes memory ownerChange=abi.encodeCall(guard.scheduleRotation,(1,owners[3],owners[4],candidate,block.timestamp,block.timestamp+1 hours));
+        bytes memory rejected=_sign(ownerChange,3);
+        uint256 nonce=wallet.nonce();
+        vm.expectRevert();_exec(ownerChange,rejected);
+        require(wallet.nonce()==nonce&&!guard.transactionActive());
+        data=abi.encodeCall(guard.cancelRewardSigner,(1,2,1));
+        require(_exec(data,_sign(data,3)));
+        require(_exec(ownerChange,_sign(ownerChange,3)));
+        data=abi.encodeCall(guard.scheduleRewardSigner,(1,2,candidate,block.timestamp,block.timestamp+1 hours));
+        rejected=_sign(data,3);nonce=wallet.nonce();
+        vm.expectRevert();_exec(data,rejected);
+        require(wallet.nonce()==nonce&&!guard.transactionActive());
+    }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
         bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours));
