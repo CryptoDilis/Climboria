@@ -6,6 +6,7 @@ import {SafeEpochGuardFixture,GuardedSafeFactoryFixture} from "../src/SafeEpochG
 interface VmEpochGuard {
     function chainId(uint256) external;
     function warp(uint256) external;
+    function etch(address,bytes calldata) external;
     function prank(address) external;
     function expectRevert() external;
 }
@@ -99,6 +100,23 @@ contract SafeEpochGuardTest {
         _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,C,E,F)),Enum.Operation.Call,3);
         _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,A)),Enum.Operation.Call,3);
         require(guard.epoch()==1&&guard.isMember(E));
+    }
+    function testReplacementAcquiringCodeDuringDelayRejected() public {
+        _schedule(1,E,F);
+        vm.etch(F,hex"60006000f3");
+        vm.warp(block.timestamp+2 days);
+        uint256 nonce=wallet.nonce();
+        _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
+        require(wallet.nonce()==nonce&&guard.epoch()==1&&guard.isMember(E)&&!guard.isMember(F)&&!guard.transactionActive());
+        (bytes32 digest,,,,)=guard.pending();require(digest!=0);
+        _quorum(address(guard),abi.encodeCall(guard.cancelRotation,(1)));
+        (digest,,,,)=guard.pending();require(digest==0);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,F)),Enum.Operation.Call,3);
+        vm.etch(F,"");
+        _schedule(1,E,F);
+        _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
+        vm.warp(block.timestamp+2 days);_quorum(address(wallet),_swap(E,F));
+        require(guard.epoch()==2&&guard.isMember(F)&&!guard.isMember(E)&&!guard.transactionActive());
     }
     function testMainnetRejected() public {
         vm.chainId(8453);
