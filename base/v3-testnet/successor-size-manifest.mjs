@@ -8,7 +8,7 @@ const specs=[
  ['V3AtomicSuccessorFixture.sol','V3SuccessorCoreDeployer',0],
  ['V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',0],
  ['ClimbV3TestToken.sol','V3FounderVesting',3],
- ['ClimbV3TestToken.sol','V3GamingVault',3],
+ ['V3GameRewardFixture.sol','V3GameRewardFixture',5],
  ['V3EpochSpendFixture.sol','V3EpochPolicyFactory',4],
  ['V3EpochSpendFixture.sol','V3EpochSpendFixture',7],
  ['V3SharedExpenseFixture.sol','V3SharedExpenseRegistry',0],

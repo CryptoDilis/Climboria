@@ -2,7 +2,8 @@
 pragma solidity 0.8.19;
 import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {V3FounderVesting,V3GamingVault} from "../src/ClimbV3TestToken.sol";
+import {V3FounderVesting} from "../src/ClimbV3TestToken.sol";
+import {V3GameRewardFixture} from "../src/V3GameRewardFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "../src/V3EpochSpendFixture.sol";
 import {V3BoundedLegacyFixture} from "../src/V3BoundedLegacyFixture.sol";
 import {V3LiquidityPolicyFixture,IV3SyntheticPool} from "../src/V3LiquidityPolicyFixture.sol";
@@ -11,6 +12,8 @@ interface VmSuccessor {
     function chainId(uint256) external;
     function warp(uint256) external;
     function prank(address) external;
+    function addr(uint256) external returns(address);
+    function sign(uint256,bytes32) external returns(uint8,bytes32,bytes32);
     function expectRevert(bytes4) external;
 }
 contract SuccessorQuote is ERC20 {
@@ -47,7 +50,8 @@ contract V3AtomicSuccessorTest {
     VmSuccessor constant vm=VmSuccessor(address(uint160(uint256(keccak256("hevm cheat code")))));
     uint256 constant SUPPLY=888888888000000;
     address constant FOUNDER=address(1001);
-    address constant DISTRIBUTOR=address(1002);
+    uint256 constant REWARD_KEY=12345;
+    address DISTRIBUTOR;
     address constant CLAIMANT=address(1003);
     address constant PAYEE=address(1004);
     SuccessorQuote quote;
@@ -58,6 +62,8 @@ contract V3AtomicSuccessorTest {
         vm.chainId(84532);
         quote=new SuccessorQuote();control=new SuccessorMockCustody();
         factory=new V3AtomicSuccessorFixture();
+        DISTRIBUTOR=vm.addr(REWARD_KEY);
+        cfg.gamingWalletMonthlyCap=1000;
         cfg.founder=FOUNDER;cfg.distributor=DISTRIBUTOR;cfg.control=control;cfg.start=block.timestamp+1 days;
         cfg.liquidity=V3SuccessorLiquidityConfig(quote,new SuccessorMockPoolBuilder(),address(new SuccessorCustodyDestination()),1000,500,50,cfg.start+7 days);
         cfg.legacy.opens=cfg.start;cfg.legacy.deadline=cfg.start+30 days;cfg.legacy.closure=cfg.start+44 days;
@@ -74,7 +80,7 @@ contract V3AtomicSuccessorTest {
         }
         require(token.balanceOf(address(this))==0&&token.balanceOf(address(factory))==0&&token.balanceOf(FOUNDER)==0&&token.balanceOf(DISTRIBUTOR)==0);
         require(address(V3FounderVesting(factory.vaults(0)).token())==address(token));
-        require(address(V3GamingVault(factory.vaults(1)).token())==address(token));
+        require(address(V3GameRewardFixture(factory.vaults(1)).token())==address(token));
         require(address(V3LiquidityPolicyFixture(factory.vaults(2)).asset())==address(token));
         require(address(V3EpochSpendFixture(factory.vaults(3)).token())==address(token));
         require(address(V3EpochSpendFixture(factory.vaults(4)).token())==address(token));
@@ -111,14 +117,19 @@ contract V3AtomicSuccessorTest {
         bytes32 b=control.propose(c,PAYEE,"E","B",10);
         vm.warp(cfg.start+2 days);e.execute(a);
         vm.expectRevert(bytes4(keccak256("ExpenseAlreadyConsumed()")));c.execute(b);
-        V3GamingVault gaming=V3GamingVault(factory.vaults(1));
-        vm.prank(DISTRIBUTOR);gaming.release(200);
+        _claimGameReward();
         V3BoundedLegacyFixture legacy=V3BoundedLegacyFixture(factory.vaults(6));
         vm.prank(CLAIMANT);legacy.claim("CLAIM");
-        require(token.totalSupply()==SUPPLY&&token.balanceOf(PAYEE)==10&&token.balanceOf(DISTRIBUTOR)==200&&token.balanceOf(CLAIMANT)==100);
+        require(token.totalSupply()==SUPPLY&&token.balanceOf(PAYEE)==210&&token.balanceOf(DISTRIBUTOR)==0&&token.balanceOf(CLAIMANT)==100);
         vm.prank(CLAIMANT);token.burn(10);
         vm.warp(cfg.legacy.closure);legacy.closeAndBurn();
         require(token.totalSupply()==SUPPLY-10-(legacy.RESERVE()-100)&&legacy.paid()+legacy.burned()==legacy.RESERVE());
+    }
+    function _claimGameReward() private {
+        V3GameRewardFixture gaming=V3GameRewardFixture(factory.vaults(1));
+        V3GameRewardFixture.Reward memory x=V3GameRewardFixture.Reward("GAME_EVENT",PAYEE,200,0,cfg.start+30 days);
+        (uint8 v,bytes32 r,bytes32 s)=vm.sign(REWARD_KEY,gaming.digest(x));
+        gaming.claim(x,abi.encodePacked(r,s,v));
     }
     function testEpochChangeAndFounderCliffInIntegratedAsset() public {
         V3SuccessorTestToken token=factory.create(cfg);
