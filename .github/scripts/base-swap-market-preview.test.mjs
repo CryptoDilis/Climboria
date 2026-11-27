@@ -282,3 +282,32 @@ test("Ethereum and BNB candidates reject invalid counterpart identity and quote-
     assert.equal(result[0].change24h,null);
   }
 });
+
+test("secondary EVM research is explicit, chain-isolated and never requests wallet or quote operations",async()=>{
+  const {initSecondaryEvmResearch}=await import("../../swap/secondary-evm-research.mjs");
+  const ids=Object.fromEntries(["secondaryEvmResearch","secondaryEvmForm","secondaryEvmChain","secondaryEvmContract","secondaryEvmStatus","secondaryEvmResults"].map(k=>[k,new El()]));
+  const events=new Map(),calls=[];
+  const doc={documentElement:{dataset:{climboriaSwapNetwork:"base"}},getElementById:id=>ids[id],createElement:()=>new El(),addEventListener:(name,fn)=>events.set(name,fn)};
+  const scope={setTimeout,clearTimeout,addEventListener(){}};
+  const payload={pairs:[pair({chainId:"base",priceUsd:"99"}),pair({chainId:"ethereum",priceUsd:"2.5"}),pair({chainId:"bsc",priceUsd:"3.75"})]};
+  let delayed=false,resume;
+  const fetchImpl=async(url,options)=>{calls.push({url,method:options.method,redirect:options.redirect});if(delayed)await new Promise(r=>resume=r);return new Response(JSON.stringify(payload),{headers:{"content-type":"application/json"}})};
+  ids.secondaryEvmChain.value="1";
+  const controller=initSecondaryEvmResearch({doc,scope,fetchImpl});
+  assert.equal(controller.ready,true);assert.equal(ids.secondaryEvmResearch.hidden,false);assert.equal(calls.length,0);
+  ids.secondaryEvmContract.value="USDC";await ids.secondaryEvmForm.emit("submit");assert.equal(calls.length,0);
+  ids.secondaryEvmContract.value=BASE_TOKEN;await ids.secondaryEvmForm.emit("submit");
+  assert.deepEqual(calls,[{url:BASE_MARKET_ENDPOINT+BASE_TOKEN,method:"GET",redirect:"error"}]);
+  let card=ids.secondaryEvmResults.children[0];assert.match(card.children[1].textContent,/Ethereum · Chain 1/);assert.match(card.children[2].textContent,/\$2\.50/);
+  assert.equal(card.children[3].href,"https://dexscreener.com/ethereum/"+POOL_A);
+  ids.secondaryEvmChain.value="56";ids.secondaryEvmChain.emit("change");
+  assert.equal(ids.secondaryEvmContract.value,"");assert.equal(ids.secondaryEvmResults.children.length,0);
+  ids.secondaryEvmContract.value=BASE_TOKEN;await ids.secondaryEvmForm.emit("submit");
+  card=ids.secondaryEvmResults.children[0];assert.match(card.children[1].textContent,/BNB Chain · Chain 56/);assert.match(card.children[2].textContent,/\$3\.75/);
+  assert.equal(card.children[3].href,"https://dexscreener.com/bsc/"+POOL_A);
+  delayed=true;const pending=ids.secondaryEvmForm.emit("submit");
+  doc.documentElement.dataset.climboriaSwapNetwork="solana";events.get("climboria:managed-provider-pair-change")();
+  resume();await pending;
+  assert.equal(ids.secondaryEvmResults.children.length,0);assert.equal(ids.secondaryEvmResearch.hidden,true);
+  await ids.secondaryEvmForm.emit("submit");assert.equal(calls.length,3);
+});

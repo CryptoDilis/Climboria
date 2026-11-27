@@ -44,6 +44,33 @@ try{
   await page.waitForFunction(()=>document.documentElement.dataset.climboriaSwapNetwork==="base"&&
     !document.getElementById("baseSwapWorkspace")?.hidden,{timeout:12000});
   assert.equal(await page.locator("#baseSwapWorkspace").isVisible(),true);
+  const research=page.locator("#secondaryEvmResearch");
+  assert.ok(await research.isVisible());
+  assert.equal(await research.evaluate(e=>e.open),false);
+  const researchRequests=[],pool="0x"+"c".repeat(40),other="0x"+"b".repeat(40);
+  await page.route("https://api.dexscreener.com/latest/dex/tokens/"+ACCOUNT.toLowerCase(),route=>{
+    researchRequests.push(route.request().method());
+    return route.fulfill({status:200,contentType:"application/json",headers:{"access-control-allow-origin":"*"},
+      body:JSON.stringify({pairs:["base","ethereum","bsc"].map((chainId,i)=>({chainId,pairAddress:pool,baseToken:{address:ACCOUNT,symbol:"QA"},quoteToken:{address:other,symbol:"WETH"},priceUsd:String(i+1),liquidity:{usd:1000}}))})});
+  });
+  await research.locator("summary").click();
+  assert.equal(researchRequests.length,0);
+  await page.locator("#secondaryEvmContract").fill(ACCOUNT);
+  await research.getByRole("button",{name:"Find pools"}).click();
+  await page.waitForFunction(()=>document.querySelector("#secondaryEvmStatus")?.textContent.includes("Found 1 Ethereum pool"));
+  assert.equal(await research.locator("a").getAttribute("href"),"https://dexscreener.com/ethereum/"+pool);
+  await page.locator("#secondaryEvmChain").selectOption("56");
+  assert.equal(await page.locator("#secondaryEvmContract").inputValue(),"");
+  assert.equal(await research.locator("article").count(),0);
+  await page.locator("#secondaryEvmContract").fill(ACCOUNT);
+  await research.getByRole("button",{name:"Find pools"}).click();
+  await page.waitForFunction(()=>document.querySelector("#secondaryEvmStatus")?.textContent.includes("Found 1 BNB Chain pool"));
+  assert.equal(await research.locator("a").getAttribute("href"),"https://dexscreener.com/bsc/"+pool);
+  assert.deepEqual(researchRequests,["GET","GET"]);
+  assert.equal(await page.locator("html").getAttribute("data-climboria-swap-network"),"base");
+  assert.deepEqual(await page.evaluate(()=>window.__baseWalletRequests),[]);
+  await research.locator("summary").click();
+
   assert.equal(await page.locator("#baseMarketPanel").isVisible(),true);
   assert.equal(await page.locator("#getQuote").isDisabled(),true);
   assert.equal(await page.locator("#prepareSwap").isDisabled(),true);
