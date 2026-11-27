@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## CROWD PRIVATE 100-ENTRY RENDERER STRESS EXTENSION — 2026-11-28 PHT
+
+- Prior #1034 6ca6e88f8e4990fde06fca3ddb6ff246a5aa47f2 mobile renderer job 140653843614 SUCCESS: 10 entries 2 heavy/8 light; 25 entries 2/8/15 markers; 32 entries 2/8/16 markers/6 hidden; critical 8 markers; cleanup zero. Desktop running. Hero workflow 46042604104 failed on creator WebGL initialization (not confirmed root cause); requested failed-job retry, no failure waived.
+- #1035 first head fac9f3b7e3882406f5234bec91b3bcb0693fdd58 native load 46042903110 job 140654854750 SUCCESS; foundation 46042903111 SUCCESS. Distributed 100 same 37555/118800 packets, within-run ack p95 48.34→46.24ms; clustered 100 unchanged 118800 packets and p95 46.82→63.03ms. Targeted scan improved complexity, not a production latency guarantee. Prior runner timings not directly comparable.
+- Expand actual renderer fixture to 10/25/32/50/100 clustered descriptors on loopback host ONLY; smoke enable rejects non-loopback host, cap 100 only while private planner active. Production renderer/admission remains 32; no public presence or combat effects. Verify body/marker/hidden budgets and pressure recovery/cleanup; dedicated browser workflow now runs on policy/play changes. Fresh exact-head CI required; desktop software runner timeout bounded to 35min, no assertion removed.
+- NEXT: combine parent and follow-up after exact CI, inspect real render fixture logs, complete physical Android/desktop and actual authenticated room capacity gates before release. No claim 50–100 live player support.
+
+---
+
 ## CROWD C4 NATIVE SOCKET EVIDENCE AND STABILITY FOLLOW-UP — 2026-11-28 PHT
 
 - #1034 exact 6ca6e88f8e4990fde06fca3ddb6ff246a5aa47f2 native load workflow 46042603936 job 140653843661 SUCCESS: actual loopback WebSocket transports, synthetic trusted session fixtures, 10/25/50/100 clients, 12 controlled-clock movement ticks. Distributed baseline→interest packet totals 1080→970, 7200→4705, 29400→13155, 118800→37555; all final peer positions and disconnect cleanup passed. 100 distributed JSON bytes 11174328→3512958. Clustered 100 stayed 118800 packets and ack p95 worsened 86.70→119.28ms, distributed 92.22→103.82ms; no Internet/cloud or authenticated-account capacity proof. Parent gateway, authority, foundation and chat workflows passed; renderer pending at inspection.
