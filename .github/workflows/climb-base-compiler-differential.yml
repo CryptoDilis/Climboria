@@ -395,6 +395,20 @@ jobs:
                       args += ["--base-path", str(base), "--allow-paths", str(sibling)]
                   args += ["--standard-json"]
                   result = subprocess.run(args, input=raw, cwd=base, capture_output=True, timeout=180)
+                  # Separate diagnostic compile: change only requested output fields.
+                  # Never replace the original exact replay input or result.
+                  diagnostic = json.loads(raw)
+                  for selection in diagnostic["settings"]["outputSelection"].values():
+                      fields = selection.get("*", [])
+                      if fields:
+                          for field in ("evm.bytecode.generatedSources", "evm.deployedBytecode.generatedSources"):
+                              require(field not in fields, "unexpected existing diagnostic field")
+                              fields.append(field)
+                  diagnostic_raw = canonical(diagnostic)
+                  extended = subprocess.run(args, input=diagnostic_raw, cwd=base, capture_output=True, timeout=180)
+              Path("replay", f"{index}-yul-input.json").write_bytes(diagnostic_raw)
+              Path("replay", f"{index}-yul-output.json").write_bytes(extended.stdout)
+              Path("replay", f"{index}-yul-stderr.txt").write_bytes(extended.stderr)
               Path("replay", f"{index}-restored-sources.json").write_text(json.dumps(restored, indent=2))
               Path("replay", f"{index}-output.json").write_bytes(result.stdout)
               Path("replay", f"{index}-stderr.txt").write_bytes(result.stderr)
@@ -405,6 +419,21 @@ jobs:
               def flatten(out):
                   return {(source, name): artifact for source, entries in out["contracts"].items() for name, artifact in entries.items()}
               a, b = flatten(previous), flatten(current)
+              require(extended.returncode == 0, "generated-source diagnostic process failed")
+              extra = json.loads(extended.stdout)
+              require(not any(e.get("severity") == "error" for e in extra.get("errors", [])), "generated-source diagnostic compiler error")
+              c = flatten(extra)
+              require(c.keys() == b.keys(), "diagnostic contract coverage mismatch")
+              generated = []
+              for (source, name), artifact in c.items():
+                  for kind in ("bytecode", "deployedBytecode"):
+                      for unit in artifact["evm"][kind].pop("generatedSources", []):
+                          require(unit.get("language") == "Yul" and isinstance(unit.get("contents"), str), "unexpected generated-source format")
+                          generated.append({"source": source, "contract": name, "kind": kind, "unit": unit.get("name"), "id": unit.get("id"), "sha256": digest(unit["contents"].encode()), "bytes": len(unit["contents"].encode())})
+              require(generated, "no generated Yul captured")
+              require(c == b and extra.get("sources") == current.get("sources"), "diagnostic output selection altered original contract output or AST")
+              Path("replay", f"{index}-yul-inventory.json").write_text(json.dumps(generated, indent=2))
+              print(f"Generated Yul diagnostic: {len(generated)} entries, {len({g['sha256'] for g in generated})} distinct source hashes; original outputs unchanged")
               require(a and b, "empty contracts")
               for key in sorted(a.keys() ^ b.keys()):
                   report["differences"].append(f"contract identity mismatch: {key}")
