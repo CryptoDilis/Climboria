@@ -183,3 +183,24 @@ test('over-cap batch does not consume challenges or advance cumulative counter',
   assert.equal(db.consume(first,b.inventory,[b.proofs[0]],1001).campaignRemaining,'0');
  }finally{db.close();}
 });
+
+test('distinct batches racing remaining campaign budget commit at most one',async t=>{
+ const {dir,path}=withDatabase(t),a=fixture({cap:'100'}),b=fixture({cap:'100',offset:100});
+ const registry=openSyntheticReplayLedger(path);
+ try{registerAll(registry,a.challenges);registerAll(registry,b.challenges);}finally{registry.close();}
+ const moduleUrl=new URL('./legacy-owner-durable-ledger.mjs',import.meta.url).href;
+ const code=`import {readFileSync} from 'node:fs'; import {openSyntheticReplayLedger} from ${JSON.stringify(moduleUrl)};
+ const {input,inventory,proofs}=JSON.parse(readFileSync(process.argv[2],'utf8'));
+ const db=openSyntheticReplayLedger(process.argv[1]);
+ try{const r=db.consume(input,inventory,proofs,1001);console.log('COMMITTED:'+r.campaignUsed);}
+ catch(e){if(!/cumulative campaign cap exceeded/.test(e.message))throw e;console.log('CAP');}
+ finally{db.close();}`;
+ const worker=(batch,i)=>new Promise((resolve,reject)=>{
+  const payload=join(dir,'cap-'+i+'.json');
+  writeFileSync(payload,JSON.stringify({input:batch.input,inventory:batch.inventory,proofs:batch.proofs}));
+  const p=spawn(process.execPath,['--input-type=module','-e',code,path,payload]);let out='',err='';
+  p.stdout.on('data',v=>out+=v);p.stderr.on('data',v=>err+=v);
+  p.on('error',reject);p.on('close',c=>c===0?resolve(out.trim()):reject(Error(err)));
+ });
+ assert.deepEqual((await Promise.all([worker(a,0),worker(b,1)])).sort(),['CAP','COMMITTED:100']);
+});
