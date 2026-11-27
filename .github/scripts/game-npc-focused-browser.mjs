@@ -74,6 +74,11 @@ try{
  assert.equal(reply.message.targetNpcId,opener.message.npcId);assert.ok(reply.message.createdAt-opener.message.createdAt>=4000);
  for(const e of pair.messages){assert.ok(e.separation<=12);assert.equal(e.message.channel,'world');assert.match(e.message.sender,/ \[NPC\]$/);}
  assert.equal(opener.modes.find(v=>v.id===opener.message.npcId).goal,null);
+ const spacing=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairSpacingAudit());
+ console.log('NPC actual paired spacing audit',JSON.stringify(spacing));
+ assert.ok(spacing.closed&&spacing.pair.closed&&spacing.pair.frames===1800&&spacing.stableIdentity);
+ assert.ok(spacing.distances.every(v=>v>5)&&spacing.maxStep<=.300001&&spacing.minSeparation>=.8-1e-9);
+ assert.ok(spacing.playerUnchanged&&spacing.inventoryUnchanged&&spacing.diagnosticsUnchanged&&spacing.peersUnchanged);
  assert.deepEqual(errors,[]);
  console.log('NPC focused browser PASS',JSON.stringify({mobile,elapsedMs:Date.now()-start,route,glb,active,ended}));
  await context.close();

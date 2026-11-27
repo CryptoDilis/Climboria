@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A ACTUAL MAP PAIR SPACING CANDIDATE — 2026-11-28 PHT
+
+- #1010 exact head 11f124a71fb2b74f19047002252d784ba9cd45db: foundation 46032106652, chat 46032106500, Validate 46032106502 SUCCESS; focused browser 46032106676 and gameplay 46032106531 running at inspection. Preserve parent CI.
+- New smoke-only audit reuses actual loaded Sanctuary Lake route and existing terrain adapters, two independent registered controllers through pair spacing guard, 1800 bounded ticks. Asserts minimum separation >=0.8m, movement for both, stable identity, terrain-step bound, actor cleanup and no player/inventory/peer/collision diagnostic mutation. Add desktop/mobile focused browser acceptance without altering existing dialogue audit. Fresh CI required; no actual-map evidence until passing. No simultaneous GLB or public spawning yet.
+- NEXT: verify pair CI; add two render-only GLBs under shared real-peer-priority cap and actual draw/nameplate cleanup checks. Narrow-route rerouting, physical device performance and production authority remain separate gates.
+
+---
+
 ## R5A ACTIVITY MERGED; PAIR SPACING FOUNDATION — 2026-11-28 PHT
 
 - #1006 exact c249be663df4f2e15039685141d4269dd9d14777: five workflows passed (foundation 46028324815, chat 46028324818, Validate 46028324762, focused browser 46028324947, gameplay 46028324735). Main changes only Base files/workflow, no overlap. GitHub confirmed merge 2ae6632f50394413cf268357bdb267e9fcd2848d. Post-merge CI not yet verified.
