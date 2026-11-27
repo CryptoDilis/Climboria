@@ -9,6 +9,7 @@ import {SafeQuorumReserveFactoryFixture,SafeQuorumReserveGuardFixture,V3QuorumSu
 import {V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorTestToken} from "v3-src/V3AtomicSuccessorFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "v3-src/V3EpochSpendFixture.sol";
 import {V3SharedExpenseRegistry} from "v3-src/V3SharedExpenseFixture.sol";
+import {V3GameRewardFixture} from "v3-src/V3GameRewardFixture.sol";
 import {ReserveQuote,ReservePool,ReservePoolBuilder,ReserveLPDestination} from "./SafeReserveGuard.t.sol";
 interface VmQuorumIssue {
     function chainId(uint256) external;
@@ -121,6 +122,18 @@ contract SafeQuorumIssuanceTest {
         bytes memory altered=_data();vm.expectRevert();_exec(altered,sigs);_empty();
         cfg.gamingWalletMonthlyCap=1000;require(_exec(data,sigs));
         require(guard.bound());
+    }
+    function testGamingCapEnforcedOnChainBeforeIssuance() public {
+        uint256 cap=guard.MAX_TEST_GAMING_WALLET_MONTHLY_CAP();
+        require(cap==5_185_185_180_000);
+        cfg.gamingWalletMonthlyCap=cap+1;
+        bytes memory data=_data();bytes memory sigs=_sign(data,3);
+        vm.expectRevert();_exec(data,sigs);_empty();
+        cfg.gamingWalletMonthlyCap=0;
+        data=_data();sigs=_sign(data,3);
+        vm.expectRevert();_exec(data,sigs);_empty();
+        cfg.gamingWalletMonthlyCap=cap;_issue();
+        require(V3GameRewardFixture(successor.vaults(1)).walletMonthlyCap()==cap&&successor.token().totalSupply()==SUPPLY);
     }
     function testPolicyFailureRollsBackEntireIssueAndSafeNonce() public {
         cfg.liquidity.trancheCap=0;
