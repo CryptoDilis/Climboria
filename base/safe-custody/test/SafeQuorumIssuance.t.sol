@@ -334,6 +334,21 @@ contract SafeQuorumIssuanceTest {
         vm.expectRevert();_exec(data,rejected);
         require(wallet.nonce()==nonce&&!guard.transactionActive());
     }
+    function testRewardSelectorRejectsTrailingOrMissingWords() public {
+        _issue();
+        V3GovernedGameRewardFixture gaming=V3GovernedGameRewardFixture(successor.vaults(1));
+        bytes memory correct=abi.encodeCall(guard.revokeRewardSigner,(1,1));
+        bytes memory trailing=abi.encodePacked(correct,bytes32(uint256(0)));
+        bytes memory sigs=_sign(trailing,3);
+        uint256 n=wallet.nonce();
+        vm.expectRevert();_exec(trailing,sigs);
+        bytes memory shortCall=abi.encodeWithSelector(guard.revokeRewardSigner.selector,uint256(1));
+        sigs=_sign(shortCall,3);
+        vm.expectRevert();_exec(shortCall,sigs);
+        require(wallet.nonce()==n&&gaming.generation()==1&&!guard.transactionActive());
+        require(_exec(correct,_sign(correct,3)));
+        require(gaming.generation()==2);
+    }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
         bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours));
