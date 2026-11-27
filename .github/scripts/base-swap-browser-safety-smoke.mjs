@@ -146,6 +146,44 @@ try{
   console.log("PASS: "+width+"px Base Swap network, read-only EIP-1193, disabled price gate and browser history; 0 paid quotes or signatures");
  }
 
+
+ // Secondary wallet: simulated EIP-1193 only; explicit clicks, no signing or writes.
+ for(const width of [1365,390]){
+  const page=await browser.newPage({viewport:{width,height:900}});
+  try{
+   await page.route("**/*",route=>new URL(route.request().url()).origin===new URL(site).origin?route.continue():route.abort());
+   await page.addInitScript(()=>{
+    const events=new Map();window.__walletCalls=[];window.__walletChain="0x2105";
+    window.__emitWalletEvent=name=>{for(const fn of [...(events.get(name)||[])])fn();};
+    window.ethereum={on(name,fn){const s=events.get(name)||new Set();s.add(fn);events.set(name,s);},removeListener(name,fn){events.get(name)?.delete(fn);},async request({method}){window.__walletCalls.push(method);if(method==="eth_chainId")return window.__walletChain;if(method==="eth_requestAccounts")return ["0x"+"a".repeat(40)];throw Error("Forbidden wallet method");}};
+   });
+   await page.goto(site+"/swap/?chain=base",{waitUntil:"domcontentloaded"});
+   const research=page.locator("#secondaryEvmResearch"),connect=page.locator("#secondaryWalletConnect"),address=page.locator("#secondaryWalletAddress");
+   await research.waitFor({state:"visible"});await research.locator("summary").click();
+   await page.waitForFunction(()=>!document.getElementById("secondaryWalletConnect").disabled);
+   assert.deepEqual(await page.evaluate(()=>window.__walletCalls),[]);
+   await connect.click();
+   await page.waitForFunction(()=>document.querySelector("#secondaryWalletStatus")?.textContent.includes("Manually select Ethereum"));
+   assert.deepEqual(await page.evaluate(()=>window.__walletCalls),["eth_chainId"]);
+   await page.evaluate(()=>{window.__walletChain="0x1";window.__walletCalls=[];});
+   await connect.click();await page.waitForFunction(()=>document.querySelector("#secondaryWalletAddress")?.textContent==="0x"+"a".repeat(40));
+   assert.deepEqual(await page.evaluate(()=>window.__walletCalls),["eth_chainId","eth_requestAccounts","eth_chainId"]);
+   await page.evaluate(()=>window.__emitWalletEvent("accountsChanged"));assert.equal(await address.textContent(),"");
+   await page.locator("#secondaryEvmChain").selectOption("56");
+   await page.evaluate(()=>{window.__walletChain="0x38";window.__walletCalls=[];});
+   await connect.click();await page.waitForFunction(()=>document.querySelector("#secondaryWalletAddress")?.textContent==="0x"+"a".repeat(40));
+   assert.deepEqual(await page.evaluate(()=>window.__walletCalls),["eth_chainId","eth_requestAccounts","eth_chainId"]);
+   await research.locator("summary").click();await page.waitForFunction(()=>document.getElementById("secondaryWalletConnect").disabled);
+   assert.equal(await address.textContent(),"");
+   await research.locator("summary").click();await page.waitForFunction(()=>!document.getElementById("secondaryWalletConnect").disabled);
+   assert.equal(await address.textContent(),"");
+   await connect.click();await page.waitForFunction(()=>document.querySelector("#secondaryWalletAddress")?.textContent==="0x"+"a".repeat(40));
+   await page.locator("#chainSolana").click();assert.equal(await address.textContent(),"");
+   assert.ok(await research.isHidden());
+   console.log("PASS secondary EVM read-only wallet lifecycle at "+width+"px");
+  }finally{await page.close();}
+ }
+
  // Independent DEX/Swap notification UI regression, with external services blocked.
  // Only local document interactions; no provider calls or wallet access.
  for(const path of ["/dex/","/swap/"]){
