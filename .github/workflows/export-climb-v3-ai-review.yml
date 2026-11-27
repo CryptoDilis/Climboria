@@ -1,0 +1,25 @@
+name: Export CLIMB V3 review text
+on:
+  push:
+    branches: [export/climb-v3-ai-review]
+    paths: ['.github/workflows/export-climb-v3-ai-review.yml']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify text bundle
+        run: |
+          test "$(grep -c '^===== FILE:' base/review-evidence/claude/CLIMB_V3_SECURITY_REVIEW.txt)" = 39
+          sha256sum base/review-evidence/claude/CLIMB_V3_SECURITY_REVIEW.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CLIMB_V3_SECURITY_REVIEW
+          path: base/review-evidence/claude/CLIMB_V3_SECURITY_REVIEW.txt
+          if-no-files-found: error
+          retention-days: 7
