@@ -9,6 +9,7 @@ on:
       - ".github/scripts/game-authored-local-worker.mjs"
       - ".github/scripts/game-authored-workerd-smoke.mjs"
       - ".github/scripts/game-authored-pilot-workerd-smoke.mjs"
+      - ".github/scripts/game-authored-pilot-expiry-smoke.mjs"
       - ".github/scripts/game-preview-operation-budget.test.mjs"
       - ".github/workflows/game-preview-worker-runtime.yml"
       - ".github/game-preview-runtime/**"
@@ -20,7 +21,7 @@ permissions:
 jobs:
   local-runtime:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -62,6 +63,9 @@ jobs:
       - name: Verify isolated authored pilot Worker and durable socket lifecycle
         timeout-minutes: 2
         run: node .github/scripts/game-authored-pilot-workerd-smoke.mjs
+      - name: Verify actual pilot server session expiry and fresh admission
+        timeout-minutes: 2
+        run: node .github/scripts/game-authored-pilot-expiry-smoke.mjs
       - name: Require no high or critical local dependency advisories
         run: npm --prefix .github/game-preview-runtime audit --audit-level=high
       - name: Capture verified dependency lock and audit
