@@ -178,6 +178,14 @@ try{
    await research.locator("summary").click();await page.waitForFunction(()=>!document.getElementById("secondaryWalletConnect").disabled);
    assert.equal(await address.textContent(),"");
    await connect.click();await page.waitForFunction(()=>document.querySelector("#secondaryWalletAddress")?.textContent==="0x"+"a".repeat(40));
+   if(width<=760){
+    await page.locator('#mobileWorkspaceTabs [data-workspace-tab="trust"]').click();
+    assert.equal(await address.textContent(),"");
+    assert.equal(await connect.isDisabled(),true);
+    await page.locator('#mobileWorkspaceTabs [data-workspace-tab="swap"]').click();
+    assert.equal(await address.textContent(),"");
+    await connect.click();await page.waitForFunction(()=>document.querySelector("#secondaryWalletAddress")?.textContent==="0x"+"a".repeat(40));
+   }
    await page.locator("#chainSolana").click();assert.equal(await address.textContent(),"");
    assert.ok(await research.isHidden());
    console.log("PASS secondary EVM read-only wallet lifecycle at "+width+"px");
