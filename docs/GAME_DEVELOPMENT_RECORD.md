@@ -2,9 +2,9 @@
 
 ## NATIVE BROWSER AUTHORED COMBAT — 2026-11-27 PHT (PROPOSED)
 
-- Parent #919 exact head 89211d04f983b2af58339f4cd80edc05cf8ada76: Validate 45943943482 SUCCESS; Gameplay 45943943513 running.
+- Parent #919 merged at f05fcbeef1e103ac7f96cc0c960cd4b6f36b3fd7; exact head 89211d04f983b2af58339f4cd80edc05cf8ada76: Validate 45943943482 and Gameplay 45943943513 SUCCESS.
 - CI-only loopback Worker f4af792b1c88b4de4644eaec93262f907de6c409 exposes only native WebSocket upgrades under explicit CI flag and local origin. Ticket issuance/ticks stay private DO test calls. Browser smoke a2513f4b518d7efa0e617be3b5322940bf8d16b8 launches desktop and touch Chromium with real local workerd sockets, actual client transport/control adapter, committed target HP, sprint movement, out-of-range melee denial and close. New code not executed. No live route, 3D character rendering, real account auth or deployment.
-- EXACT NEXT: verify #919 fresh CI and merge, reconcile stacked native browser PR with main and verify fresh CI. Then review bounded 3D character render/input integration without production activation.
+- EXACT NEXT: verify reconciled #922 fresh CI. Then review bounded 3D character render/input integration without production activation.
 
 ---
 
@@ -2946,3 +2946,6 @@ World: Common 65%, Uncommon 25%, Rare 8%, Epic 1.8%, Legendary 0.2%. Cave/geode:
 
 ---
 
+
+## Base-first ecosystem direction — 2026-11-27 UTC
+See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_DIRECTION.md). Future blockchain-linked game assets and reward settlement prioritize Base; preserve real-time off-chain gameplay, chat, cloud saves and existing auth/guest paths. No new wallet requirement for gameplay, token payout or public chain transaction authorized. Continue current Game acceptance work; plan wallet linking and authenticated reward events separately.
