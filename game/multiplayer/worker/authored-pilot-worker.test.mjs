@@ -36,3 +36,29 @@ test('only fixed authored room selected; unauthenticated ticket, internal path a
  assert.equal(res.status,429);
  assert.deepEqual(calls,['preview-jarrell-camp-v1',{name:'preview-jarrell-camp-v1',path:'/_auth',method:'POST'}]);
 });
+
+test('only verified nonanonymous allowlisted identity reaches private ticket issue',async t=>{
+ const {env}=setup(),calls=[],upstream=[];
+ const verified=ids.split(',')[0];let user={id:verified,is_anonymous:false};
+ t.mock.method(globalThis,'fetch',async (url,init)=>{
+  upstream.push({url,redirect:init.redirect,auth:init.headers.Authorization,apiKey:init.headers.apikey});
+  return Response.json(user);
+ });
+ env.AUTHORED_PILOT_ROOMS={idFromName(name){assert.equal(name,'preview-jarrell-camp-v1');return name},get(){return {async fetch(req){
+  const path=new URL(req.url).pathname;calls.push(path);
+  if(path==='/_auth')return new Response(null,{status:204});
+  assert.equal(path,'/_ticket');assert.deepEqual(await req.json(),{userId:verified});
+  return Response.json({fixture:'authored-camp-pilot',ticket:'a'.repeat(64)});
+ }}}};
+ const request=()=>req('/ticket',{method:'POST',headers:{Authorization:'Bearer test.invalid.token'},body:JSON.stringify({userId:'forged'})});
+ for(const invalid of [{id:verified,is_anonymous:true},{id:verified},{id:verified,is_anonymous:false,app_metadata:{provider:'anonymous'}},{id:'00000000-0000-4000-8000-000000000000',is_anonymous:false}]){
+  user=invalid;assert.equal((await authoredPilotWorker.fetch(request(),env)).status,403);
+ }
+ assert.deepEqual(calls,Array(4).fill('/_auth'));
+ user={id:verified,is_anonymous:false};
+ const response=await authoredPilotWorker.fetch(request(),env);
+ assert.equal(response.status,200);assert.equal((await response.json()).fixture,'authored-camp-pilot');
+ assert.deepEqual(calls.slice(-2),['/_auth','/_ticket']);
+ assert.equal(upstream.length,5);
+ assert.ok(upstream.every(x=>x.url==='https://unadepiwbovblkfjlksk.supabase.co/auth/v1/user'&&x.redirect==='error'&&x.auth==='Bearer test.invalid.token'&&x.apiKey===env.SUPABASE_PUBLISHABLE_KEY));
+});
