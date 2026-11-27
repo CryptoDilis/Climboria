@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## AUTHORED PILOT LOCAL WORKER/SQLITE LIFECYCLE — 2026-11-27 PHT
+
+- #938 prior exact head b3d54116304b5b0291e71c98716cb31f0fed7895 had four green: Validate 45951411607, Authority 45951411584, Gateway 45951411492 and Runtime 45951411508; Gameplay 45951411513 running. New isolated workerd smoke 7781b09c176b1b09e2c98ad88c1caf7b528ce52c and CI wiring fc052d5679f393b763d5f0ed3d0f7b327b51982b exercise actual authored pilot Worker upgrade and SQLite DO, two synthetic accounts, one-use tickets, rejected public/internal paths, authoritative damage and timer-driven movement, reconnect and durable restart, recheck removed allowlist account at ticket consumption, disabled Worker/DO. Private ticket issuance stands in for verified identity; outer upstream auth is mocked separately in unit tests, not integrated end-to-end. No external credentials, no deployment. Source unexecuted at authoring; expiry and full real-account/edge acceptance remain pending.
+- EXACT NEXT: inspect fresh #938 CI including new runtime step, fix evidence-based failures without weakening assertions. Add expiry coverage and private renderer binding, verify authorized edge/account requirements before any cloud activation. Keep public game unchanged.
+
+---
+
 ## AUTHORED PILOT CLIENT AND TRUSTED AUTH ACCEPTANCE — 2026-11-27 PHT
 
 - #938 reconciled onto merged #930 at 797fd855a3852e157e5dd95e3e1c987338e96904, preserving all records. New explicit pilot client state 3cbede7b6b82e081a80b07e145a0aedcf4747a88 and transport 966f8e33a381dcf7d96168e037ae27a6f4a31fcb require the exact authored-camp-pilot tag, fixed authored snapshot and bounded positive session duration. Synthetic and CI-local admission paths remain distinct. Server expiry remains authoritative; no public socket dialer or UI integration.
