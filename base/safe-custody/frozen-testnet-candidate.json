@@ -1,0 +1,44 @@
+{
+  "status": "TEST_ONLY_FROZEN_BUILD_NOT_APPROVAL",
+  "sourceSha": "d8ed14ff19b21db9d5d5e81e86cab9a86deb0e0f",
+  "chainId": 84532,
+  "safeSource": "bf943f80fec5ac647159d26161446ac5d716a294",
+  "openzeppelinSource": "dc44c9f1a4c3b10af99492eed84f83ed244203f6",
+  "safeRun": 45922146615,
+  "sizeArtifact": 15164736263,
+  "sizeArtifactZipSha256": "2b2daaf6efaadb776b69a534f48f0edb8223ed9ab1aac15bec19e400ebb3b7b8",
+  "rehearsalArtifact": 15165515006,
+  "rehearsalArtifactZipSha256": "2e29a388799873c36ce847f904338dc4697354c25137694cf5f8360533c3f6df",
+  "contracts": [
+    {
+      "name": "SafeQuorumReserveFactoryFixture",
+      "creationSha256": "33b54f4cf6d56cd7c8db9e7d06ccd8ac9bdea7d01317de1c3164d00873a3b98f",
+      "runtimeTemplateSha256": "7bb084f7955a6128160d542c6bfa9f753a9dcd1f5000064c6e3e0e258112151a",
+      "initcodeBytes": 33942,
+      "runtimeBytes": 20858,
+      "constructorTypes": []
+    },
+    {
+      "name": "V3QuorumSuccessorFixture",
+      "creationSha256": "cfa1db7d326a16dc3efe79c08c88ecc1eaadb14f314a8685bdd74285c55f1981",
+      "runtimeTemplateSha256": "7238a422a22047bfa979dcf2efee0e72a697a78eeb6f37c6d4b79d56b5d37796",
+      "initcodeBytes": 47948,
+      "runtimeBytes": 9253,
+      "constructorTypes": [
+        "address"
+      ]
+    },
+    {
+      "name": "SafeQuorumReserveGuardFixture",
+      "creationSha256": "4bf800b57f2e9687d097538879111f0d8330e46010db0889a47de2fcd7a5f3c7",
+      "runtimeTemplateSha256": "b0a2ce987daf2615983988840499665e22871f05f1d568cffb715da10eac0d04",
+      "initcodeBytes": 18535,
+      "runtimeBytes": 17283,
+      "constructorTypes": [
+        "address",
+        "address",
+        "address"
+      ]
+    }
+  ]
+}

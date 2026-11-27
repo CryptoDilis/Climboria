@@ -85,3 +85,12 @@ jobs:
           path: ${{ runner.temp }}/safe-local-rehearsal.json
           if-no-files-found: error
           retention-days: 14
+      - name: Verify frozen testnet build and fail-closed preflight
+        run: |
+          set -euo pipefail
+          node testnet-preflight.mjs --verify-build
+          node --test testnet-preflight.test.mjs
+          if node testnet-preflight.mjs testnet-preflight.example.json "$RUNNER_TEMP/blocked-preflight.json"; then
+            echo "Blank config unexpectedly accepted"; exit 1
+          fi
+          test ! -e "$RUNNER_TEMP/blocked-preflight.json"
