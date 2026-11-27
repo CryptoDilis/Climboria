@@ -46,6 +46,7 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 - [ ] R1.1 First 10-minute adventure: 0–1 create/select hero; 1–3 visible mystery near spawn; 3–5 traversal/environment challenge or approved beginner enemy; 5–7 useful starter item; 7–10 skill feedback and clue toward a bigger adventure. Timing targets, not forced script.
 - [ ] R1.2 Optional short mini quests and clue-led hidden discoveries: caves, hidden entrances, traps, ruins, lost expeditions, mysterious tracks, abandoned camps, landmarks.
 - [ ] R1.3 Treasure maps and map fragments, readable discovery journal, environmental lore through letters, symbols, artifacts and connected stories; avoid revealing hidden chests prematurely.
+  - Candidate `3748e56f1b91da7c733b6d86d2240742c3b2039a` records three already-mapped landmarks in an optional local journal. Scoped persistence unit tests and a mobile-emulated guest touch test passed locally. Treasure maps, authored lore, full CI and physical playtesting remain open.
 - [ ] R1.4 Reuse existing rarity chest system and publish odds before any reward release; materials, outfits, gear, artifacts and useful nonfinancial starter items. No guaranteed rare or monetary rewards; no real grant until authority is ready.
 - [ ] R1.5 Acceptance: skip/revisit introduction, desktop/touch controls, no blocking modal or forced wallet, resume after reload, no duplicated grants, actual new-player playtest and voluntary feedback. Measure time to first discovery and optional return rates without intrusive telemetry.
 
