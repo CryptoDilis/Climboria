@@ -8,6 +8,7 @@ import {Enum} from "safe-contracts/common/Enum.sol";
 import {SafeQuorumReserveFactoryFixture,SafeQuorumReserveGuardFixture,V3QuorumSuccessorFixture} from "../src/SafeQuorumIssuanceFixture.sol";
 import {V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorTestToken} from "v3-src/V3AtomicSuccessorFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "v3-src/V3EpochSpendFixture.sol";
+import {V3SharedExpenseRegistry} from "v3-src/V3SharedExpenseFixture.sol";
 import {ReserveQuote,ReservePool,ReservePoolBuilder,ReserveLPDestination} from "./SafeReserveGuard.t.sol";
 interface VmQuorumIssue {
     function chainId(uint256) external;
@@ -196,6 +197,58 @@ contract SafeQuorumIssuanceTest {
         require(wallet.nonce()==2&&successor.token().totalSupply()==SUPPLY);
         require(_exec(data,_sign(data,3)));
         require(wallet.nonce()==3);
+    }
+    function _expenseId(uint256 i,bytes32 evidence,bytes32 nonce) private view returns(bytes32){
+        V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
+        return keccak256(abi.encode(block.chainid,address(v),address(successor.token()),v.purpose(),uint256(1),PAYEE,uint256(10),evidence,uint256(0),nonce));
+    }
+    function _proposeExpense(uint256 i,bytes32 evidence,bytes32 nonce) private {
+        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,i,PAYEE,10,evidence,0,nonce,block.timestamp,block.timestamp+1 hours));
+        require(_exec(data,_sign(data,3)));
+    }
+    function testAtomicQuorumExpenseRaceAcrossAllThreeReserves() public {
+        _issue();
+        V3SharedExpenseRegistry registry=successor.expenses().registry();
+        require(registry.isSealed());
+        for(uint256 i=3;i<=5;i++){
+            require(registry.consumer(successor.vaults(i)));
+            _proposeExpense(i,"INVOICE",bytes32(i));
+        }
+        V3EpochSpendFixture winner=V3EpochSpendFixture(successor.vaults(4));
+        bytes32 win=_expenseId(4,"INVOICE",bytes32(uint256(4)));
+        vm.warp(cfg.start+2 days);
+        winner.execute(win);
+        require(registry.consumedBy("INVOICE")==address(winner)&&registry.consumedProposal("INVOICE")==win);
+        for(uint256 i=3;i<=5;i++){
+            V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
+            if(i==4){require(v.totalSpent()==10&&v.spent(0)==10);continue;}
+            bytes32 id=_expenseId(i,"INVOICE",bytes32(i));
+            uint256 beforeBalance=successor.token().balanceOf(address(v));
+            vm.expectRevert(V3SharedExpenseRegistry.ExpenseAlreadyConsumed.selector);v.execute(id);
+            require(v.totalSpent()==0&&v.spent(0)==0&&successor.token().balanceOf(address(v))==beforeBalance);
+            (,,,,,,bool executed,)=v.proposals(id);require(!executed);
+        }
+        require(successor.token().balanceOf(PAYEE)==10&&successor.token().totalSupply()==SUPPLY);
+        // A consumed evidence commitment cannot be proposed again with a fresh nonce.
+        bytes memory duplicate=abi.encodeCall(guard.proposeExpense,(1,5,PAYEE,10,"INVOICE",0,"FRESH",block.timestamp,block.timestamp+1 hours));
+        bytes memory sigs=_sign(duplicate,3);uint256 n=wallet.nonce();
+        vm.expectRevert();_exec(duplicate,sigs);require(wallet.nonce()==n&&!guard.transactionActive());
+    }
+    function testCancelledExpenseDoesNotConsumeEvidence() public {
+        _issue();_proposeExpense(3,"CANCELLED","OLD");
+        bytes32 old=_expenseId(3,"CANCELLED","OLD");
+        bytes memory cancellation=abi.encodeCall(guard.cancelExpense,(1,3,old));
+        require(_exec(cancellation,_sign(cancellation,3)));
+        V3SharedExpenseRegistry registry=successor.expenses().registry();
+        require(registry.consumedBy("CANCELLED")==address(0));
+        _proposeExpense(5,"CANCELLED","NEW");
+        vm.warp(cfg.start+2 days);
+        V3EpochSpendFixture previous=V3EpochSpendFixture(successor.vaults(3));
+        vm.expectRevert(V3EpochSpendFixture.NotReady.selector);previous.execute(old);
+        V3EpochSpendFixture replacement=V3EpochSpendFixture(successor.vaults(5));
+        replacement.execute(_expenseId(5,"CANCELLED","NEW"));
+        require(registry.consumedBy("CANCELLED")==address(replacement)&&previous.totalSpent()==0&&replacement.totalSpent()==10);
+        require(successor.token().balanceOf(PAYEE)==10&&successor.token().totalSupply()==SUPPLY);
     }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
