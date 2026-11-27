@@ -84,9 +84,8 @@ try{
  geometry(await a.scene(),await a.snapshot());geometry(await b.scene(),await b.snapshot());
  await a.tap('#attack');
  await b.page.waitForFunction(()=>qa.last().health===495,{},{timeout:5000});
- await b.page.evaluate(()=>qa.draw());
- await b.page.waitForFunction(()=>qa.frames.some(f=>f.type==='result'&&f.ok&&f.snapshot?.health===495),{},{timeout:5000});
- await b.page.evaluate(()=>qa.draw());geometry(await b.scene(),await b.snapshot());assert.equal((await b.scene()).hud.health,495);
+ await refresh(b);geometry(await b.scene(),await b.snapshot());
+ assert.ok(await b.page.locator('#move').isEnabled());assert.equal((await b.scene()).hud.health,495);
  const old=(await b.scene()).x;
  await b.tap('#move');assert.equal((await b.scene()).x,old);
  await b.page.waitForFunction(()=>qa.frames.some(f=>f.type==='result'&&f.ok&&!f.snapshot),{},{timeout:5000});
