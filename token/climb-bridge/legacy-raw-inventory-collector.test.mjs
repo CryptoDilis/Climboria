@@ -69,3 +69,11 @@ test('reject RPC errors, mismatched ids and redact transport failures',async()=>
  }
  await assert.rejects(run(async()=>{throw Error('https://private.invalid/SECRET')}),e=>/NO_GO/.test(e.message)&&!e.message.includes('SECRET'));
 });
+
+import {inventoryFailureCode} from './legacy-raw-inventory-diagnostics.mjs';
+test('diagnostic codes distinguish exact context and RPC failures without exposing payloads',async()=>{
+ await assert.rejects(run(mock((r,q)=>{if(q.id===3)r.result.context.slot++}).fetchFn),e=>inventoryFailureCode(e)==='SAME_SLOT_UNAVAILABLE');
+ await assert.rejects(run(mock((r,q)=>{if(q.id===5)r.error={message:'secret URL'}}).fetchFn),e=>inventoryFailureCode(e)==='RPC_METHOD_FAILED_getProgramAccounts');
+ await assert.rejects(collectRawInventoryCandidate(A,B,{expectedGenesis:key(1),fetchFn:mock().fetchFn}),e=>inventoryFailureCode(e)==='GENESIS_CONFIG_MISMATCH');
+ for(const e of [Error('https://private.invalid/SECRET'),Error('NO_GO: wrong source genesis SECRET'),{message:'NO_GO: wrong source genesis'},null])assert.equal(inventoryFailureCode(e),'UNCLASSIFIED_FAILURE');
+});

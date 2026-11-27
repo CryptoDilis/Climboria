@@ -1,0 +1,5 @@
+# Raw holder inventory — 2026-11-27 UTC
+
+[Manual run 45962185659](https://github.com/CryptoDilis/Climboria/actions/runs/45962185659), main SHA `e6e84cb8197d4eb88e414671a2e97f0f9d388337`, job 140382382446: FAILURE. Offline collector tests 4/4 passed; live collector exited 1 at 07:58:56 UTC with generic NO_GO. Artifact upload skipped; no artifacts returned. The exact underlying cause is unknown because the CLI deliberately suppresses exception messages. No holder inventory or snapshot certified.
+
+Countermeasure: fixed allowlisted diagnostic codes only; unknown errors remain generic. Original read-only requests, exact context equality, freshness and reconciliation requirements unchanged. Add synthetic regression checks for context, RPC method and config errors and non-disclosure. Fresh CI pending. No credentials, gas, signatures, claims or financial actions. After verified merge, rerun manual workflow on main (not old failed job, which retains original SHA), inspect diagnostic and resolve the actual RPC/configuration problem. A fresh inventory still does not establish the historical announcement-cutoff snapshot. TESTNET_NO_GO / MAINNET_NO_GO unchanged.
