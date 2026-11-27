@@ -4,7 +4,7 @@ import {Safe} from "safe-contracts/Safe.sol";
 import {SafeProxy} from "safe-contracts/proxies/SafeProxy.sol";
 import {SafeGuardBootstrapFixture} from "./SafeEpochGuardFixture.sol";
 import {SafeReserveGuardFixture} from "./SafeReserveGuardFixture.sol";
-import {V3AtomicSuccessorFixture,V3SuccessorTestToken,V3SuccessorConfig} from "v3-src/V3AtomicSuccessorFixture.sol";
+import {V3AtomicSuccessorFixture,V3SuccessorTestToken,V3SuccessorConfig,V3SuccessorConditionalDeployer} from "v3-src/V3AtomicSuccessorFixture.sol";
 
 interface IQuorumBindingFixture {
     function successor() external view returns(V3AtomicSuccessorFixture);
@@ -18,7 +18,7 @@ contract V3QuorumSuccessorFixture is V3AtomicSuccessorFixture {
     bytes32 public immutable guardFactoryHash;
     address public configuredGuard;
     bytes32 public configuredGuardHash;
-    constructor(address setupFactory){
+    constructor(address setupFactory,V3SuccessorConditionalDeployer helper,bytes32 helperHash) V3AtomicSuccessorFixture(helper,helperHash){
         if(setupFactory.code.length==0)revert InvalidConfig();
         guardFactory=setupFactory;guardFactoryHash=setupFactory.codehash;
     }
