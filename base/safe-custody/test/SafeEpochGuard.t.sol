@@ -9,6 +9,10 @@ interface VmEpochGuard {
     function etch(address,bytes calldata) external;
     function prank(address) external;
     function expectRevert() external;
+    function expectRevert(bytes4) external;
+}
+contract PermissiveOwnerValidator {
+    function isValidSignature(bytes memory,bytes memory) external pure returns(bytes4){return 0x20c13b0b;}
 }
 contract SafeEpochGuardTest {
     VmEpochGuard constant vm=VmEpochGuard(address(uint160(uint256(keccak256("hevm cheat code")))));
@@ -117,6 +121,31 @@ contract SafeEpochGuardTest {
         _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
         vm.warp(block.timestamp+2 days);_quorum(address(wallet),_swap(E,F));
         require(guard.epoch()==2&&guard.isMember(F)&&!guard.isMember(E)&&!guard.transactionActive());
+    }
+    function testContractSignatureFromCodeBearingOwnerRejected() public {
+        vm.etch(C,address(new PermissiveOwnerValidator()).code);
+        bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F));
+        bytes memory sigs=_approved(address(guard),data,Enum.Operation.Call,2);
+        // Safe v1.4.1 validates the permissive contract signature before the guard.
+        sigs=abi.encodePacked(sigs,bytes32(uint256(uint160(C))),bytes32(uint256(195)),uint8(0),uint256(0));
+        vm.expectRevert(SafeEpochGuardFixture.UnsupportedSignatureMode.selector);
+        _exec(address(guard),data,Enum.Operation.Call,sigs);
+        require(wallet.nonce()==0&&!guard.transactionActive()&&guard.epoch()==1);
+    }
+    function testApprovedHashFromCodeBearingOwnerRejected() public {
+        bytes memory data=abi.encodeCall(guard.scheduleRotation,(1,D,E,F));
+        bytes memory sigs=_approved(address(guard),data,Enum.Operation.Call,3);
+        vm.etch(C,address(new PermissiveOwnerValidator()).code);
+        vm.expectRevert(SafeEpochGuardFixture.UnsupportedSignatureMode.selector);
+        _exec(address(guard),data,Enum.Operation.Call,sigs);
+        require(wallet.nonce()==0&&!guard.transactionActive()&&guard.epoch()==1);
+    }
+    function testNonSigningCodeBearingOwnerCanBeRotatedOut() public {
+        vm.etch(E,address(new PermissiveOwnerValidator()).code);
+        _schedule(1,E,F);
+        vm.warp(block.timestamp+2 days);
+        _quorum(address(wallet),_swap(E,F));
+        require(wallet.nonce()==2&&guard.epoch()==2&&!guard.isMember(E)&&guard.isMember(F)&&!guard.transactionActive());
     }
     function testMainnetRejected() public {
         vm.chainId(8453);

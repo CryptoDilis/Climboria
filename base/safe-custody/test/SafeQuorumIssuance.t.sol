@@ -16,6 +16,7 @@ interface VmQuorumIssue {
     function warp(uint256) external;
     function prank(address) external;
     function expectRevert() external;
+    function expectRevert(bytes4) external;
 }
 /// @notice Malicious synthetic builder attempts a second validly signed Safe transaction
 /// during issuance. It catches the rejection and returns a test-only pool.
@@ -79,7 +80,7 @@ contract SafeQuorumIssuanceTest {
     function _exec(bytes memory data,bytes memory sigs) private returns(bool){
         return wallet.execTransaction(address(guard),0,data,Enum.Operation.Call,0,0,0,address(0),payable(address(0)),sigs);
     }
-    function _data() private view returns(bytes memory){return abi.encodeCall(guard.issueSuccessor,(1,cfg));}
+    function _data() private view returns(bytes memory){return abi.encodeCall(guard.issueSuccessor,(1,block.timestamp+1 hours,cfg));}
     function _issue() private {bytes memory data=_data();require(_exec(data,_sign(data,3)));}
     function _empty() private view {
         require(!successor.used()&&!guard.bound()&&!guard.issuing()&&!guard.transactionActive()&&address(successor.token())==address(0)&&wallet.nonce()==0);
@@ -91,7 +92,7 @@ contract SafeQuorumIssuanceTest {
         vm.expectRevert();successor.create(cfg);
         vm.expectRevert();successor.configureGuard(address(guard));
         vm.expectRevert();guard.bindBeforeIssuance();
-        vm.expectRevert();guard.issueSuccessor(1,cfg);
+        vm.expectRevert();guard.issueSuccessor(1,block.timestamp+1 hours,cfg);
         _empty();
     }
     function testSetupFactoryCannotBeFrontRunOrReused() public {
@@ -146,8 +147,28 @@ contract SafeQuorumIssuanceTest {
         bytes memory nested=abi.encodeCall(guard.cancelRotation,(1));
         builder.arm(nested,_signAt(nested,3,wallet.nonce()+1));
         _issue();
-        require(builder.attempted()&&builder.rejected()&&builder.rejection()==bytes4(keccak256("Forbidden()")));
+        require(builder.attempted()&&builder.rejected()&&builder.rejection()==bytes4(keccak256("TransactionInProgress()")));
         require(wallet.nonce()==1&&guard.bound()&&!guard.transactionActive()&&successor.token().totalSupply()==SUPPLY);
+    }
+    function testExpiredIssuanceCannotExecute() public {
+        bytes memory data=_data();bytes memory sigs=_sign(data,3);
+        vm.warp(block.timestamp+1 hours);
+        // Safe wraps target execution failure as GS013 (zero safeTxGas/gasPrice).
+        vm.expectRevert();_exec(data,sigs);_empty();
+        _issue();require(guard.bound());
+    }
+    function testQuorumCanInvalidateSignedIssuanceWithoutMinting() public {
+        bytes memory data=_data();bytes memory sigs=_sign(data,3);
+        bytes memory invalidation=abi.encodeCall(guard.invalidateIssuance,(1));
+        vm.expectRevert();guard.invalidateIssuance(1);
+        require(_exec(invalidation,_sign(invalidation,3)));
+        require(wallet.nonce()==1&&!successor.used()&&!guard.bound()&&!guard.transactionActive()&&address(successor.token())==address(0));
+        vm.expectRevert();_exec(data,sigs);
+        require(wallet.nonce()==1&&!successor.used()&&!guard.bound());
+        _issue();require(wallet.nonce()==2&&guard.bound());
+        bytes memory postBindSigs=_sign(invalidation,3);
+        vm.expectRevert();_exec(invalidation,postBindSigs);
+        require(wallet.nonce()==2);
     }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
