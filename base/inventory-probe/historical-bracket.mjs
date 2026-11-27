@@ -1,5 +1,5 @@
 import {assertDistinctRpcEndpoints} from '../../token/climb-bridge/mint-inspect.mjs';
-const GENESIS='5eykt4UsFv8P8NJdTREpY1vzqKZKvdpKuc147dw2N9d';
+import {MAINNET_GENESIS as GENESIS} from '../../token/climb-bridge/legacy-raw-inventory-collector.mjs';
 export const CANDIDATE_MS=1795765942702;
 const LOWER_SLOT=474168385;
 const diagnosticCodes=new Set(['CONFIG_INVALID','SOURCE_DISAGREEMENT','UNCLASSIFIED']);
