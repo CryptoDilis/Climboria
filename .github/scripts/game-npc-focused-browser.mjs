@@ -32,7 +32,13 @@ try{
   return w.npcContinuousStart();
  });
  assert.equal(started,true);
+ try{
  await page.waitForFunction(()=>{const a=window.__climboriaJarrellsPeak.npcContinuousAudit();return a.session?.frames>=15&&a.session.distance>.5&&a.draws>0;},undefined,{timeout:45000});
+ }catch(error){
+  const audit=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
+  console.error('NPC continuous acceptance failed',JSON.stringify({mobile,audit,errors}));
+  throw error;
+ }
  const active=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
  assert.ok(active.attached&&active.visible&&!active.session.closed&&active.draws>0);
  assert.equal(active.peers,count);assert.ok(active.loading+active.resident<=active.budget);
