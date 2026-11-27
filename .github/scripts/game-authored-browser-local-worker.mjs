@@ -6,7 +6,7 @@ export default {async fetch(req,env){
  const u=new URL(req.url);
  if(env.AUTHORED_BROWSER_CI!=='true'||u.hostname!=='127.0.0.1'||
     u.pathname!=='/ws'||req.method!=='GET'||
-    req.headers.get('Origin')!=='http://127.0.0.1:4173'||
+    u.port!=='4174'||req.headers.get('Origin')!=='http://127.0.0.1:4174'||
     req.headers.get('Upgrade')?.toLowerCase()!=='websocket')return new Response(null,{status:404});
  const protocols=(req.headers.get('Sec-WebSocket-Protocol')||'').split(',').map(x=>x.trim());
  if(protocols.length!==2||protocols[0]!=='climboria-preview-v1'||!/^t-[a-f0-9]{64}$/.test(protocols[1]))
