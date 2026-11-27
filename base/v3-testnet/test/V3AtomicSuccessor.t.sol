@@ -30,6 +30,7 @@ contract SuccessorMockCustody is IV3CustodyEpochFixture {
     uint256 public constant override memberCount=5;
     function isMember(address) external pure override returns(bool){return false;}
     function rewardSignerAllowed(address) external pure returns(bool){return true;}
+    function expenseRecipientAllowed(address) external pure returns(bool){return true;}
     function propose(V3EpochSpendFixture v,address recipient,bytes32 evidence,bytes32 nonce,uint256 amount) external returns(bytes32){
         return v.propose(recipient,amount,evidence,0,nonce);
     }

@@ -1349,3 +1349,30 @@ test('movement pilot publishes at 5 Hz only after spawn and drops stale samples 
  ws.close();assert.equal(tick.cancelled,true);
  tick.fn();assert.equal(count(),2,'closed room cannot publish');
 });
+
+test('NPC World Chat requires explicit server capability, validates identities, dedupes, and preserves human draft',async()=>{
+ const h=harness(true);await flush();await waitFor(()=>h.clients.length===1);
+ const socket=h.clients[0],id='s_'+'c'.repeat(32),send=p=>socket.onmessage({data:JSON.stringify(p)});
+ socket.onopen();send({type:'welcome',selfId:id,peers:[peer]});
+ const p={type:'npc-world-chat',kind:'npc',messageId:'npc-chat:qa-room:1',npcId:'npc:jarrell-peak:aurelion',name:'Aurelion [NPC]',targetNpcId:'npc:jarrell-peak:zevransol',text:'A short rest sounds good.',replyTo:null,at:24100};
+ send(p);
+ send({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[peer]});
+ const panel=h.created.find(el=>el.id==='climboria-world-chat-panel'),log=panel.children[1],input=panel.children[2].children[0],sendButton=panel.children[2].children[1],notice=panel.children[3],mute=h.created.find(el=>el.id==='climboria-npc-chat-mute');
+ assert.equal(mute.style.display,'none');send(p);assert.equal(log.children.length,0);
+ send({type:'spawn-accepted',id,position:{x:0,y:9.55,z:-30},peers:[peer],npcChatEnabled:true});
+ assert.equal(mute.style.display,'inline-block');
+ input.value='My human draft';sendButton.click();const pending=notice.textContent;
+ const sends=socket.sent.length,peers=h.adds.length;
+ for(const bad of [{...p,name:'Explorer'},{...p,npcId:'fake'},{...p,targetNpcId:p.npcId},{...p,text:'\u0001'},{...p,replyTo:'npc-chat:qa-room:5'}])send(bad);
+ assert.equal(log.children.length,0);
+ send(p);send(p);assert.equal(log.children.length,1);assert.equal(log.children[0].textContent,'Aurelion [NPC]: A short rest sounds good.');
+ assert.equal(log.children[0]['data-chat-kind'],'npc');assert.equal(input.value,'My human draft');assert.equal(notice.textContent,pending);
+ assert.equal(h.adds.length,peers);assert.equal(socket.sent.length,sends);
+ const reply={...p,messageId:'npc-chat:qa-room:2',npcId:p.targetNpcId,name:'ZevranSol [NPC]',targetNpcId:p.npcId,text:'Nice! See you around the trails.',replyTo:p.messageId,at:28100};
+ mute.click();assert.equal(mute['aria-pressed'],'true');send(reply);assert.equal(log.children.length,1);
+ mute.click();send(reply);assert.equal(log.children.length,1,'muted event cannot replay');
+ send({...reply,messageId:'npc-chat:other-room:3'});assert.equal(log.children.length,1);
+ send({...reply,messageId:'npc-chat:qa-room:3',text:'<img onerror=alert(1)>'});assert.equal(log.children.length,2);assert.equal(log.children[1].children.length,0);
+ assert.equal(input.value,'My human draft');assert.equal(notice.textContent,pending);
+ socket.close();assert.equal(log.children.length,0);assert.equal(mute.style.display,'none');
+});
