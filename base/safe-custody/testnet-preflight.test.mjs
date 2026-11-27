@@ -8,7 +8,14 @@ const now=1795820000;
 const addr=n=>'0x'+(0x100000n+BigInt(n)).toString(16).padStart(40,'0');
 const cfg=()=>({...example,deployer:addr(1),owners:[2,3,4,5,6].map(addr),founder:addr(7),distributor:addr(8),startTimestamp:now+86400*7,gamingWalletMonthlyCapRaw:'1000',liquidityTrancheCapRaw:'1000',maxTotalFeeWei:'1000000000000000',signerControlEvidenceSha256:'1'.repeat(64),independentReviewEvidenceSha256:'2'.repeat(64),recoveryAcceptanceEvidenceSha256:'3'.repeat(64),configurationApprovalEvidenceSha256:'4'.repeat(64)});
 const artifacts=()=>pin.contracts.map(x=>read('./out/SafeQuorumIssuanceFixture.sol/'+x.name+'.json'));
-test('empty checked-in config is blocked',()=>assert.throws(()=>checkConfig(example,now)));
+if(pin.status==='RETIRED_PENDING_VERIFIED_REPIN'){
+ test('retired pin rejects even structurally complete config and actual compiled artifacts',()=>{
+  assert.throws(()=>checkConfig(cfg(),now),/retired candidate/);
+  assert.throws(()=>checkFrozenArtifacts(artifacts()),/retired candidate/);
+  assert.throws(()=>prepareStageOne(artifacts(),cfg(),now),/retired candidate/);
+ });
+}else{
+ test('empty checked-in config is blocked',()=>assert.throws(()=>checkConfig(example,now)));
 test('mainnet, wrong source and mode rejected',()=>{for(const patch of [{chainId:8453},{sourceSha:'a'.repeat(40)},{testOnly:false}])assert.throws(()=>checkConfig({...cfg(),...patch},now));});
 test('duplicate case-insensitive role or owner rejected',()=>{const c=cfg();c.founder=c.owners[0].toUpperCase().replace('0X','0x');assert.throws(()=>checkConfig(c,now));});
 test('known disposable local account and zero rejected',()=>{for(const deployer of ['0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266','0x'+'0'.repeat(40)])assert.throws(()=>checkConfig({...cfg(),deployer},now));});
@@ -18,3 +25,5 @@ test('structurally valid references remain NO_GO',()=>{const x=checkConfig(cfg()
 test('frozen build accepts actual compiled three artifacts',()=>assert.equal(checkFrozenArtifacts(artifacts()).sourceSha,pin.sourceSha));
 test('mutated creation, runtime and constructor rejected',()=>{for(const mutate of [a=>a.bytecode.object+='00',a=>a.deployedBytecode.object+='00',a=>a.abi.push({type:'constructor',inputs:[{type:'address'}]})]){const a=artifacts();mutate(a[0]);assert.throws(()=>checkFrozenArtifacts(a));}});
 test('stage one produces only review data and never transaction approval',()=>{const a=prepareStageOne(artifacts(),cfg(),now);assert.equal(a.status,'UNSIGNED_SETUP_CREATION_REVIEW_NO_GO');assert.equal(a.creationDataSha256,pin.contracts[0].creationSha256);assert.equal(a.transaction,undefined);assert.throws(()=>prepareStageOne(artifacts(),example,now));});
+
+}
