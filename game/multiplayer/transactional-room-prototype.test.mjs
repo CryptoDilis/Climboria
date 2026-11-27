@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createTransactionalRoomPrototype} from './transactional-room-prototype.mjs';
 import {createServerCollisionRegion} from './server-collision-region.mjs';
+import {createJarrellDryRegionPrototype} from './jarrell-dry-region-prototype.mjs';
 const roomId='test-room',A='session_1111111111111111',B='session_2222222222222222',C='session_3333333333333333';
 const X='account_1111111111111111',Y='account_2222222222222222';
 function deferred(){let resolve;const promise=new Promise(r=>{resolve=r});return {promise,resolve}}
@@ -133,4 +134,32 @@ test('failed respawn commit quarantines reads and restart recovers the last dura
  const final=(await restarted.readSnapshot(B)).snapshot;
  assert.equal(final.health,500);assert.equal(final.downed,false);
  assert.equal(final.respawnAtMs,null);
+});
+
+test('authored dry terrain integration permits only verified combat outside Sanctuary',async()=>{
+ let now=40000;
+ const clock=()=>now;
+ function make(id,spawn,bounds){
+  const map=createJarrellDryRegionPrototype({roomId:id,bounds});
+  assert.equal(map.reviewedForProduction,false);
+  assert.ok(Number.isFinite(map.sampleWalkableGround(spawn.x,spawn.z,id)));
+  return createTransactionalRoomPrototype({roomId:id,clock,storage:fakeStorage(),spawn,
+   collision:map.collision,sampleWalkableGround:map.sampleWalkableGround});
+ }
+ const sanctuary=make('jarrell-sanctuary-test',{x:0,z:-30},{minX:-15,maxX:15,minZ:-80,maxZ:-25});
+ await joinTwo(sanctuary);
+ assert.equal((await sanctuary.attack(A,B)).reason,'sanctuary-pvp-disabled');
+ assert.equal((await sanctuary.readSnapshot(B)).snapshot.health,500);
+ const camp=make('jarrell-camp-test',{x:-200,z:-170},{minX:-220,maxX:-180,minZ:-190,maxZ:-150});
+ await joinTwo(camp);
+ assert.equal((await camp.attack(A,B)).health,495);
+ assert.ok((await camp.input(B,{x:1,z:0,sequence:0,sprint:true})).ok);
+ now+=100;assert.ok((await camp.tick()).ok);
+ now+=100;assert.ok((await camp.tick()).ok);
+ const moved=(await camp.readSnapshot(B)).snapshot;
+ assert.ok(moved.position.x>-197.2,'server movement must leave melee range');
+ now=41000;assert.ok((await camp.tick()).ok);
+ assert.equal((await camp.attack(A,B)).reason,'target-out-of-range');
+ assert.equal((await camp.readSnapshot(B)).snapshot.health,495);
+ assert.equal(camp.reviewedForProduction,false);
 });
