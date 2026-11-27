@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## AUTHORED MAP MELEE OBSTRUCTION — 2026-11-27 PHT (PROPOSED)
+
+- Parent #909 reconciled head 4446f042f6d991f2ab5e16265cd73fba990cf01a: Authority 45940909732, Validate 45940909777, Gateway 45940909765 and Runtime 45940909755 SUCCESS; Gameplay 45940909768 running at checkpoint.
+- New regression 14bba5a81372682a9aaa8b03d449b3ea4d426e63: two server-controlled players on opposite sides of an authored park swing seat, directional movement around the posts, within 2.8m but blocked melee, no HP change, then return along a clear route and successful hit. Source committed; fresh CI not yet executed. No production coverage assertion.
+- EXACT NEXT: merge #909 only after all checks green, reconcile stacked obstruction PR with main and verify fresh CI, then review coverage for a bounded authored-map private fixture. Keep cloud preview disabled and public presence unchanged.
+
+---
+
 ## AUTHORED DRY MAP COMBAT ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
 
 - #903 merged 3a6f7b9592084b66e1a54840b598a8f24b49d9b2 after five exact-head CI successes. #905 merged 379423d98d78f939264c43dd2d9795ea1dcd249b; exact head 583cf311ce87195596654a70b08387b5914bbfdb all five SUCCESS (Runtime 45940257524, Authority 45940257511, Gateway 45940257490, Validate 45940257478, Gameplay 45940257471).
