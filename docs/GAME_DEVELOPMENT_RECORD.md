@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A FINAL PAIRED ACCEPTANCE MERGED; CROWD FOUNDATION IN PROGRESS — 2026-11-28 PHT
+
+- #1030 exact 9e428d774d6bc3131dd47bc385663a0bae04d861 all nine workflows SUCCESS: authority 46039013422, foundation 46039013337, focused 46039013176, gameplay 46039013215, heroes 46039013246, chest 46039013179, general browser 46039013209, Validate 46039013411, peer priority 46039013341. Zero overlapping changes with intervening main. Merge confirmed e058e1e06cba255f2c9e7d1dc366255dc38de3f8. Public spawn remains off.
+- #1031 mobile performance 140643897029 SUCCESS, desktop 140643896465 pending. #1032 gait foundation 46040269895 and chat 46040269926 SUCCESS, mobile focused 140645925651 SUCCESS, desktop 140645926165 pending. #1033 crowd pure policy exact 7585e49ce5c0a95fe7b6d579f719818ba41ae668 foundation 46041112595, chat 46041112525, Validate 46041112411 SUCCESS; mobile focused 140648783615 SUCCESS, desktop and full gameplay pending. Synthetic 100 descriptors do not demonstrate actual concurrent users.
+- NEXT: verify remaining exact CI; consolidate benchmark/gait on main after non-overlap and fresh combined tests. Crowd policy remains separate candidate; no changes to existing 32 renderer entry cap or room admission. Add hysteretic renderer reconciler only after policy acceptance; test 10/25/32 actual renderer fixtures, then authorized 50/100 private load tests after room capacity review. Physical device and economy gates remain.
+
+---
+
 ## R5A PAIRED INTEGRATION MERGED; FINAL ACCEPTANCE CONSOLIDATION — 2026-11-28 PHT
 
 - #1023 exact 36a4734b1c9ae0b4345ee70b6a94aeb5e5834eb8 all nine workflows SUCCESS: Validate 46035164512, chat 46035164305, general browser 46035164230, foundation 46035164267, focused desktop/mobile 46035164429, chest 46035164373, heroes 46035164347, full gameplay 46035164387, authority 46035164210. Compared intervening main files, zero overlapping candidate paths. GitHub merge confirmed 2b9df4e94c452526ebf3805f36690ed6671853e4. Post-merge CI not yet verified.
