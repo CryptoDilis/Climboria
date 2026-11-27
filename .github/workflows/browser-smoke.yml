@@ -10,6 +10,8 @@ on:
     paths:
       - "index.html"
       - "whitepaper/**"
+      - "governance/**"
+      - ".github/scripts/governance-transparency-smoke.mjs"
       - ".github/scripts/climb-token-record-smoke.mjs"
       - "climb-token-supply.js"
       - "dex/**"
@@ -29,6 +31,8 @@ on:
     paths:
       - "index.html"
       - "whitepaper/**"
+      - "governance/**"
+      - ".github/scripts/governance-transparency-smoke.mjs"
       - ".github/scripts/climb-token-record-smoke.mjs"
       - "climb-token-supply.js"
       - "dex/**"
@@ -100,6 +104,9 @@ jobs:
 
       - name: Verify permanent $CLIMB tokenomics on desktop and mobile
         run: node .github/scripts/climb-token-record-smoke.mjs
+
+      - name: Verify governance and treasury pre-release UI
+        run: node .github/scripts/governance-transparency-smoke.mjs
 
       - name: Test Supabase auth UI and cloud-save account isolation
         run: node .github/scripts/auth-cloud-save-smoke.mjs
