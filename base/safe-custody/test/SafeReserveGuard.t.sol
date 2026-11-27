@@ -145,7 +145,7 @@ contract SafeReserveGuardTest {
         bytes32 old=_id(1,3,"E","N");
         _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,F)));
         vm.warp(start+2 days);
-        bytes memory swap=abi.encodeWithSignature("swapOwner(address,address,address)",D,E,F);
+        bytes memory swap=abi.encodePacked(abi.encodeWithSignature("swapOwner(address,address,address)",D,E,F),guard.rotationSerial());
         require(_exec(address(wallet),swap,_approved(address(wallet),swap,3)));
         require(guard.epoch()==2);
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));

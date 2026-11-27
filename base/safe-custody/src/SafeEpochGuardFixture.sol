@@ -26,6 +26,8 @@ contract SafeEpochGuardFixture is BaseGuard {
     bytes32 public immutable proxyHash;
     bytes32 public immutable singletonHash;
     uint256 public epoch=1;
+    // Every scheduled rotation has a distinct signed execution payload, even after cancellation.
+    uint256 public rotationSerial;
     struct Rotation { bytes32 digest; address oldOwner; address newOwner; uint256 readyAt; uint256 expiresAt; }
     Rotation public pending;
     bool private rotating;
@@ -65,7 +67,8 @@ contract SafeEpochGuardFixture is BaseGuard {
             if(owners[i]==oldOwner&&prev==(i==0?address(1):owners[i-1]))valid=true;
         }
         if(!valid)revert Forbidden();
-        bytes32 digest=keccak256(abi.encodeWithSelector(SWAP,prev,oldOwner,newOwner));
+        rotationSerial++;
+        bytes32 digest=keccak256(abi.encodePacked(abi.encodeWithSelector(SWAP,prev,oldOwner,newOwner),rotationSerial));
         pending=Rotation(digest,oldOwner,newOwner,block.timestamp+DELAY,block.timestamp+DELAY+WINDOW);
         emit RotationScheduled(epoch,digest,pending.readyAt,pending.expiresAt);
     }
@@ -115,7 +118,9 @@ contract SafeEpochGuardFixture is BaseGuard {
                (selector==this.cancelRotation.selector&&data.length==36)||_policyCallAllowed(selector,data.length))return;
             revert Forbidden();
         }
-        if(to!=address(wallet)||selector!=SWAP||data.length!=100)revert Forbidden();
+        if(to!=address(wallet)||selector!=SWAP||data.length!=132)revert Forbidden();
+        // Safe swapOwner decodes its three address arguments; the appended serial is
+        // additionally authenticated by the Safe transaction hash and this guard's digest.
         Rotation memory p=pending;
         if(p.digest==0||p.digest!=keccak256(data)||block.timestamp<p.readyAt||block.timestamp>=p.expiresAt)revert NotReady();
         // A scheduled address may acquire code or cease to satisfy policy during the delay.

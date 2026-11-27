@@ -32,7 +32,10 @@ contract SafeEpochGuardTest {
         (wallet,guard)=factory.create(owners);
     }
     function _approved(address to,bytes memory data,Enum.Operation op,uint256 count) private returns(bytes memory sigs){
-        bytes32 hash=wallet.getTransactionHash(to,0,data,op,0,0,0,address(0),address(0),wallet.nonce());
+        return _approvedAt(to,data,op,count,wallet.nonce());
+    }
+    function _approvedAt(address to,bytes memory data,Enum.Operation op,uint256 count,uint256 nonce) private returns(bytes memory sigs){
+        bytes32 hash=wallet.getTransactionHash(to,0,data,op,0,0,0,address(0),address(0),nonce);
         address[3] memory signers=[A,B,C];
         for(uint256 i=0;i<count;i++){
             vm.prank(signers[i]);wallet.approveHash(hash);
@@ -52,8 +55,8 @@ contract SafeEpochGuardTest {
     function _schedule(uint256 e,address oldOwner,address newOwner) private {
         _quorum(address(guard),abi.encodeCall(guard.scheduleRotation,(e,D,oldOwner,newOwner)));
     }
-    function _swap(address oldOwner,address newOwner) private pure returns(bytes memory){
-        return abi.encodeWithSignature("swapOwner(address,address,address)",D,oldOwner,newOwner);
+    function _swap(address oldOwner,address newOwner) private view returns(bytes memory){
+        return abi.encodePacked(abi.encodeWithSignature("swapOwner(address,address,address)",D,oldOwner,newOwner),guard.rotationSerial());
     }
     function testAtomicInitializationAndConfiguration() public {
         guard.validateConfig();require(guard.epoch()==1&&guard.threshold()==3&&guard.memberCount()==5&&guard.isMember(E)&&wallet.nonce()==0);
@@ -99,6 +102,24 @@ contract SafeEpochGuardTest {
         _reject(address(wallet),_swap(E,F),Enum.Operation.Call,3);
         vm.warp(block.timestamp+2 days);_quorum(address(wallet),_swap(E,F));
         require(guard.epoch()==2);
+    }
+    function testCancelledScheduleCannotReuseFutureNonceApproval() public {
+        _schedule(1,E,F);
+        bytes memory stale=_swap(E,F);
+        uint256 first=guard.rotationSerial();
+        // Cancel and reschedule each consume one nonce. Approve the old payload at
+        // the future nonce so the Safe nonce alone cannot explain its rejection.
+        bytes memory sigs=_approvedAt(address(wallet),stale,Enum.Operation.Call,3,wallet.nonce()+2);
+        _quorum(address(guard),abi.encodeCall(guard.cancelRotation,(1)));
+        _schedule(1,E,F);
+        require(guard.rotationSerial()==first+1&&wallet.nonce()==3);
+        vm.warp(block.timestamp+2 days);
+        vm.expectRevert(SafeEpochGuardFixture.NotReady.selector);
+        _exec(address(wallet),stale,Enum.Operation.Call,sigs);
+        require(wallet.nonce()==3&&guard.epoch()==1&&!guard.transactionActive()&&guard.isMember(E));
+        _reject(address(wallet),abi.encodeWithSignature("swapOwner(address,address,address)",D,E,F),Enum.Operation.Call,3);
+        _quorum(address(wallet),_swap(E,F));
+        require(wallet.nonce()==4&&guard.epoch()==2&&guard.isMember(F)&&!guard.isMember(E));
     }
     function testInvalidRotationDoesNotChangeEpoch() public {
         _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,C,E,F)),Enum.Operation.Call,3);
