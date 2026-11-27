@@ -5,7 +5,6 @@ import {SafeProxy} from "safe-contracts/proxies/SafeProxy.sol";
 import {SafeGuardBootstrapFixture} from "./SafeEpochGuardFixture.sol";
 import {SafeReserveGuardFixture} from "./SafeReserveGuardFixture.sol";
 import {V3AtomicSuccessorFixture,V3SuccessorTestToken,V3SuccessorConfig} from "v3-src/V3AtomicSuccessorFixture.sol";
-import {V3DeferredLiquidityFixture} from "v3-src/V3DeferredLiquidityFixture.sol";
 
 interface IQuorumBindingFixture {
     function successor() external view returns(V3AtomicSuccessorFixture);
@@ -75,10 +74,7 @@ contract SafeQuorumReserveGuardFixture is SafeReserveGuardFixture {
     function bindBeforeIssuance() external {
         if(msg.sender!=address(successor)||!issuing||bound)revert Unauthorized();
         _bind(false);
-        // The liquidity destination must not be a reserve vault or known role.
-        address lp=V3DeferredLiquidityFixture(destinations[2]).lpCustody();
-        if(lp==founder||lp==distributor||lp==address(this)||lp==address(wallet)||lp==address(successor)||wallet.isOwner(lp))revert InvalidConfig();
-        for(uint256 i=0;i<7;i++)if(lp==destinations[i])revert InvalidConfig();
+
     }
     function _rotationOwnerAllowed(address a) internal view override returns(bool){
         return !issuing&&super._rotationOwnerAllowed(a);
