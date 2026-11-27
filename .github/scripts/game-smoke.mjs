@@ -120,6 +120,13 @@ try {
      !npcRoute.wet||!npcRoute.exited||npcRoute.distance<10||npcRoute.maxStep>.300001||
      !['fish','rest','swim'].every(a=>npcRoute.activities.includes(a)))
     errors.push('Actual lake autonomous route failed: '+JSON.stringify(npcRoute));
+  const npcGlb=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcGlbRouteAudit());
+  console.log('Actual NPC GLB route audit',JSON.stringify(npcGlb));
+  if(!npcGlb.meshes||npcGlb.frames!==500||npcGlb.distance<10||!npcGlb.wet||!npcGlb.exited||
+     !npcGlb.clips.walk||!npcGlb.clips.run||!npcGlb.clips.swim||
+     !npcGlb.attached||!npcGlb.visible||!npcGlb.label||!npcGlb.peersUnchanged||!npcGlb.playerUnchanged||
+     !npcGlb.withinBudget||!npcGlb.hidden||!npcGlb.detached)
+    errors.push('Actual NPC GLB projection failed: '+JSON.stringify(npcGlb));
   const weatherAudit=await page.evaluate(()=>window.__climboriaJarrellsPeak?.automaticWeatherAudit?.()??null);
   if(!weatherAudit||weatherAudit.intervalMs!==900000||
     weatherAudit.justBefore?.index!==0||weatherAudit.justBefore?.elapsedMs!==899999||
