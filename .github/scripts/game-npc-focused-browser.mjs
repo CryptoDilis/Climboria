@@ -64,6 +64,16 @@ try{
  assert.ok(['fish','swim','gather'].every(a=>connected.completed.includes(a))&&connected.resources.gathered>0);
  assert.ok(connected.playerUnchanged&&connected.inventoryUnchanged&&connected.diagnosticsUnchanged&&connected.peersUnchanged);
  assert.ok(['fish','swim','gather'].every(a=>connected.drawn.includes(a))&&connected.transitDraw&&connected.nameplateDraws>0&&connected.visualCleaned);
+ const pair=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcPairedDialogueAudit());
+ console.log('NPC actual paired dialogue audit',JSON.stringify(pair));
+ assert.ok(pair.closed&&pair.distances.every(v=>v>5)&&pair.maxStep<=.300001);
+ assert.ok(pair.playerUnchanged&&pair.inventoryUnchanged&&pair.diagnosticsUnchanged&&pair.peersUnchanged);
+ const reply=pair.messages.find(e=>e.message.replyTo&&pair.messages.some(m=>m.message.id===e.message.replyTo));
+ assert.ok(reply);const opener=pair.messages.find(e=>e.message.id===reply.message.replyTo);
+ assert.notEqual(opener.message.npcId,reply.message.npcId);assert.equal(opener.message.targetNpcId,reply.message.npcId);
+ assert.equal(reply.message.targetNpcId,opener.message.npcId);assert.ok(reply.message.createdAt-opener.message.createdAt>=4000);
+ for(const e of pair.messages){assert.ok(e.separation<=12);assert.equal(e.message.channel,'world');assert.match(e.message.sender,/ \[NPC\]$/);}
+ assert.equal(opener.modes.find(v=>v.id===opener.message.npcId).goal,null);
  assert.deepEqual(errors,[]);
  console.log('NPC focused browser PASS',JSON.stringify({mobile,elapsedMs:Date.now()-start,route,glb,active,ended}));
  await context.close();
