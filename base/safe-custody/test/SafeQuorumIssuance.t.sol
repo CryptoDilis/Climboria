@@ -9,7 +9,7 @@ import {SafeQuorumReserveFactoryFixture,SafeQuorumReserveGuardFixture,V3QuorumSu
 import {V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorTestToken,V3SuccessorConditionalDeployer} from "v3-src/V3AtomicSuccessorFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "v3-src/V3EpochSpendFixture.sol";
 import {V3SharedExpenseRegistry} from "v3-src/V3SharedExpenseFixture.sol";
-import {V3GameRewardFixture} from "v3-src/V3GameRewardFixture.sol";
+import {V3GovernedGameRewardFixture} from "v3-src/V3GovernedGameRewardFixture.sol";
 import {ReserveQuote,ReservePool,ReservePoolBuilder,ReserveLPDestination} from "./SafeReserveGuard.t.sol";
 interface VmQuorumIssue {
     function chainId(uint256) external;
@@ -162,7 +162,7 @@ contract SafeQuorumIssuanceTest {
         data=_data();sigs=_sign(data,3);
         vm.expectRevert();_exec(data,sigs);_empty();
         cfg.gamingWalletMonthlyCap=cap;_issue();
-        require(V3GameRewardFixture(successor.vaults(1)).walletMonthlyCap()==cap&&successor.token().totalSupply()==SUPPLY);
+        require(V3GovernedGameRewardFixture(successor.vaults(1)).walletMonthlyCap()==cap&&successor.token().totalSupply()==SUPPLY);
     }
     function testPolicyFailureRollsBackEntireIssueAndSafeNonce() public {
         cfg.liquidity.trancheCap=0;
