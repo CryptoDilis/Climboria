@@ -15,6 +15,14 @@ const codes=new Map([
  ['NO_GO: raw account inventory bytes disagree','RAW_INVENTORY_DISAGREEMENT'],
  ...['getGenesisHash','getSlot','getAccountInfo','getProgramAccounts','getBlock'].map(method=>['NO_GO: read-only '+method+' request failed','RPC_METHOD_FAILED_'+method])
 ]);
+// Provider letters refer only to configured endpoint order, not actual identities.
+for(const method of ['getGenesisHash','getSlot','getAccountInfo','getProgramAccounts','getBlock']){
+ for(const provider of ['A','B']){
+  for(const reason of ['TRANSPORT_OR_TIMEOUT','HTTP_400','HTTP_401','HTTP_403','HTTP_404','HTTP_405','HTTP_413','HTTP_429','HTTP_5XX','HTTP_OTHER','BODY_UNAVAILABLE','BODY_READ_FAILED','BODY_LIMIT','INVALID_JSON','INVALID_ENVELOPE','RPC_METHOD_NOT_FOUND','RPC_INVALID_PARAMS','RPC_NODE_UNHEALTHY','RPC_INDEX_EXCLUDED','RPC_MIN_CONTEXT_SLOT','RPC_ERROR_OTHER']){
+   codes.set('NO_GO: read-only '+method+' request failed '+provider+' '+reason,'RPC_'+provider+'_'+method+'_'+reason);
+  }
+ }
+}
 export function inventoryFailureCode(error){
  return error instanceof Error ? (codes.get(error.message)??'UNCLASSIFIED_FAILURE') : 'UNCLASSIFIED_FAILURE';
 }
