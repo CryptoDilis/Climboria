@@ -42,12 +42,16 @@ contract V3QuorumSuccessorFixture is V3AtomicSuccessorFixture {
 /// @notice Actual Safe quorum -> zero-supply creation -> binding -> issuance,
 /// all inside one transaction; failure reverts every step. No production asset.
 contract SafeQuorumReserveGuardFixture is SafeReserveGuardFixture {
+    error InvalidIssuanceDeadline();
     bool public issuing;
+    uint256 public constant MAX_ISSUANCE_WINDOW=1 days;
+    event IssuanceInvalidated(uint256 indexed epoch,uint256 indexed consumedNonce);
     event QuorumIssued(address indexed token,bytes32 indexed configHash);
     constructor(Safe wallet_,address implementation,V3QuorumSuccessorFixture factory_)
         SafeReserveGuardFixture(wallet_,implementation,factory_){}
-    function issueSuccessor(uint256 expected,V3SuccessorConfig calldata cfg) external onlyWallet {
+    function issueSuccessor(uint256 expected,uint256 deadline,V3SuccessorConfig calldata cfg) external onlyWallet {
         _current(expected);
+        if(deadline<=block.timestamp||deadline-block.timestamp>MAX_ISSUANCE_WINDOW||deadline>cfg.start)revert InvalidIssuanceDeadline();
         if(issuing||bound||address(cfg.control)!=address(this)||
            V3QuorumSuccessorFixture(address(successor)).configuredGuard()!=address(this)||
            cfg.founder==address(wallet)||cfg.distributor==address(wallet)||
@@ -60,6 +64,13 @@ contract SafeQuorumReserveGuardFixture is SafeReserveGuardFixture {
         if(t.balanceOf(address(wallet))!=0||t.balanceOf(address(this))!=0||t.balanceOf(address(successor))!=0||
            t.balanceOf(founder)!=0||t.balanceOf(distributor)!=0)revert InvalidConfig();
         issuing=false;emit QuorumIssued(address(t),keccak256(abi.encode(cfg)));
+    }
+    // A fresh quorum may consume the pending Safe nonce without issuing any supply.
+    // This is not instant revocation: it must be mined before the old payload.
+    function invalidateIssuance(uint256 expected) external onlyWallet {
+        _current(expected);
+        if(bound||issuing)revert Forbidden();
+        emit IssuanceInvalidated(expected,wallet.nonce()-1);
     }
     function bindBeforeIssuance() external {
         if(msg.sender!=address(successor)||!issuing||bound)revert Unauthorized();
@@ -74,7 +85,8 @@ contract SafeQuorumReserveGuardFixture is SafeReserveGuardFixture {
     }
     function _policyCallAllowed(bytes4 selector,uint256 len) internal view override returns(bool){
         if(issuing)return false;
-        if(!bound)return selector==this.issueSuccessor.selector&&len==324;
+        if(!bound)return (selector==this.issueSuccessor.selector&&len==356)||
+            (selector==this.invalidateIssuance.selector&&len==36);
         return super._policyCallAllowed(selector,len);
     }
 }
