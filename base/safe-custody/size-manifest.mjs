@@ -33,6 +33,7 @@ const contracts=specs.map(([file,name,words])=>{
  assert.ok(initcodeBytes<=49152,name+' initcode size');
  assert.ok(runtime.length<=24576,name+' runtime size');
  const initcodeHeadroom=49152-initcodeBytes,runtimeHeadroom=24576-runtime.length;
+ console.log(`${name}: initcode=${initcodeBytes}, runtime=${runtime.length}, initcodeHeadroom=${initcodeHeadroom}, runtimeHeadroom=${runtimeHeadroom}`);
  if(name==='V3QuorumSuccessorFixture')assert.ok(initcodeHeadroom>=1024,name+' less than 1 KiB initcode headroom');
  if(name==='SafeQuorumReserveFactoryFixture'||name==='SafeQuorumGuardDeployerFixture')assert.ok(runtimeHeadroom>=1024,name+' less than 1 KiB runtime headroom');
  return {name,initcodeBytes,runtimeBytes:runtime.length,initcodeHeadroom,runtimeHeadroom,creationSha256:hash(init),runtimeTemplateSha256:hash(runtime)};
