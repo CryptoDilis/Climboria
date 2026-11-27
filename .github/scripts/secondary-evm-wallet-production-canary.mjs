@@ -41,7 +41,22 @@ try{
     await link.click();
     await page.waitForURL(url=>url.pathname==="/swap/"&&url.searchParams.get("research")===network.id);
     const panel=page.locator("#secondaryEvmResearch"),connect=page.locator("#secondaryWalletConnect"),address=page.locator("#secondaryWalletAddress");
-    await page.waitForFunction(()=>document.querySelector("#secondaryEvmResearch")?.open&&!document.querySelector("#secondaryWalletConnect")?.disabled);
+    // A missing control must not satisfy readiness via !undefined.
+    // Keep deployment mismatch distinct from an actual wallet failure.
+    await connect.waitFor({state:"visible",timeout:15000}).catch(async error=>{
+     const evidence=await page.evaluate(()=>({
+      url:location.href,network:document.documentElement.dataset.climboriaSwapNetwork,
+      researchOpen:document.querySelector("#secondaryEvmResearch")?.open??null,
+      walletControlPresent:!!document.querySelector("#secondaryWalletConnect"),
+      walletModuleScripts:[...document.scripts].map(s=>s.getAttribute("src")).filter(s=>s?.includes("secondary-evm")),
+      title:document.title
+     }));
+     throw Error("Deployed secondary wallet control unavailable: "+JSON.stringify(evidence)+"; "+error.message);
+    });
+    await page.waitForFunction(()=>{
+     const panel=document.querySelector("#secondaryEvmResearch"),button=document.querySelector("#secondaryWalletConnect");
+     return panel?.open===true&&button!==null&&button.disabled===false;
+    },null,{timeout:15000});
     assert.equal(await page.locator("#secondaryEvmChain").inputValue(),network.id);
     assert.equal(await page.locator("#secondaryEvmContract").inputValue(),"");
     assert.equal(await page.locator("html").getAttribute("data-climboria-swap-network"),"base");
@@ -61,7 +76,7 @@ try{
     await page.waitForFunction(account=>document.querySelector("#secondaryWalletAddress")?.textContent===account,account);
     await panel.locator("summary").evaluate(el=>{el.click();el.click();});
     assert.equal(await address.textContent(),"","Rapid reopen must clear session");
-    await page.waitForFunction(()=>!document.querySelector("#secondaryWalletConnect")?.disabled);
+    await page.waitForFunction(()=>document.querySelector("#secondaryWalletConnect")?.disabled===false);
     assert.equal(await address.textContent(),"");
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+2),"Horizontal overflow");
     console.log(JSON.stringify({result:"PASS",width,chainId:network.id,source:"public deployed UI, simulated wallet only",execution:"disabled"}));
