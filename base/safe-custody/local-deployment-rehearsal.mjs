@@ -91,7 +91,7 @@ try{
  const latest=await rpc('eth_getBlockByNumber',['latest',false]);
  const start=BigInt(latest.timestamp)+86400n;
  const tuple='('+[founder,distributor,guard,start,1000,'('+[quote,builder,lp,1000].join(',')+')'].join(',')+')';
- const issue=calldata('issueSuccessor(uint256,uint256,(address,address,address,uint256,uint256,(address,address,address,uint256)))',1,start,tuple);
+ const issue=calldata('issueSuccessor(uint256,uint256,uint256,(address,address,address,uint256,uint256,(address,address,address,uint256)))',1,BigInt(latest.timestamp),start,tuple);
  const negative=[];
  negative.push(await rejectCall('creatorDirectIssuance',creator,successor,calldata('create((address,address,address,uint256,uint256,(address,address,address,uint256)))',tuple)));
  negative.push(await rejectCall('directGuardIssuance',creator,guard,issue));
