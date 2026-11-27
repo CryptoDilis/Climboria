@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## NATIVE BROWSER SAME-ORIGIN COUNTER-FIX — 2026-11-27 PHT
+
+- #922 head afde76bce23dfa920efc635d81b741f314e5312b: Validate 45944969801 SUCCESS; Gameplay 45944969778 FAILURE, job 140327521654. Simulated browser control test and invalid-ticket 401 probe passed. Native browser admission diagnostic: handshake [], pageErrors [], socketStatus closed:1006. Exact root cause still unconfirmed; no browser admission, main gameplay step skipped.
+- Counter-fix 6e3303b0f688b50b1e823d7a76f74a19237349f1 and 95326ee3df95c4b31fc8fcad28e15eab9c59801b bind local Worker and browser page to the same fixed loopback origin (127.0.0.1:4174), fulfill only three explicit checked-in module routes, disable browser proxy use for this isolated local test, and collect sanitized console/socket-error evidence. Private ticket and origin checks remain fail closed; no cloud configuration or public game changes.
+- EXACT NEXT: verify latest exact-head Validate and Gameplay CI; if native socket fails, inspect the expanded diagnostics and compare direct native Node WebSocket handshake to the Chromium path. Do not merge or enable production until verified.
+
+---
+
 ## NATIVE BROWSER ADMISSION COUNTER-FIX — 2026-11-27 PHT
 
 - #922 exact head e3ed01c08a9a43fdc56a99e417d595756850b4a5: Validate 45944747574 SUCCESS; Gameplay 45944747565 FAILURE, job 140326758849. Existing simulated desktop/touch browser controls passed; native browser admission timed out in player() at line 56 before window.qa was installed. Main desktop/mobile gameplay smoke skipped. Exact underlying handshake cause not established by original logs.
