@@ -51,6 +51,11 @@ jobs:
           git rev-parse HEAD > "$RUNNER_TEMP/climb-differential/source.txt"
           printf '%s\n' "$GITHUB_WORKSPACE" > "$RUNNER_TEMP/climb-differential/workspace.txt"
           forge --version > "$RUNNER_TEMP/climb-differential/foundry.txt"
+          if [ "$COMPILER" = 0.8.19 ]; then
+            curl --fail --show-error --silent --location --retry 2 "https://binaries.soliditylang.org/linux-amd64/solc-linux-amd64-v0.8.19+commit.7dd6d404" -o "$RUNNER_TEMP/solc-baseline"
+            echo "7a5c1d3dc9a8eba62bb2ec37192c9178ae5fe8a54a56e5573fd3c9c17cd9eb48  $RUNNER_TEMP/solc-baseline" | sha256sum -c -
+            chmod 700 "$RUNNER_TEMP/solc-baseline"
+          fi
           if [ "$COMPILER" = 0.8.39 ]; then
             curl --fail --show-error --silent --location --retry 2 https://github.com/argotorg/solidity/releases/download/v0.8.39/solc-static-linux -o "$RUNNER_TEMP/solc-candidate"
             echo "b8b0642d46838575d3177628b685564b52f51f2aee546cb4dce781951d23c666  $RUNNER_TEMP/solc-candidate" | sha256sum -c -
@@ -87,15 +92,14 @@ jobs:
           set -euo pipefail
           target=london
           if [ "${{ matrix.project }}" = safe-custody ]; then target=paris; fi
-          compiler="$COMPILER"
+          compiler="$RUNNER_TEMP/solc-baseline"
           if [ "$COMPILER" = 0.8.39 ]; then compiler="$RUNNER_TEMP/solc-candidate"; fi
           forge clean
           forge config --json --use "$compiler" --evm-version "$target" > "$RUNNER_TEMP/climb-differential/config.json"
           forge test --use "$compiler" --evm-version "$target" -vv | tee "$RUNNER_TEMP/climb-differential/tests.log"
           grep -Eq '[1-9][0-9]* tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-differential/tests.log"
           # Capture the actual standard-JSON exchanges, not a reconstructed input.
-          real="$RUNNER_TEMP/solc-candidate"
-          if [ "$COMPILER" = 0.8.19 ]; then real="$HOME/.svm/0.8.19/solc-0.8.19"; fi
+          real="$compiler"
           test -x "$real"
           export CLIMB_REAL_SOLC="$real"
           export CLIMB_SOLC_CAPTURE="$RUNNER_TEMP/climb-differential/standard-json"
@@ -195,11 +199,15 @@ jobs:
               contracts = {}
               sources = {}
               metadata_rows = []
+              settings_records = []
+              expected_hash = {"0.8.19": "7a5c1d3dc9a8eba62bb2ec37192c9178ae5fe8a54a56e5573fd3c9c17cd9eb48", "0.8.39": "b8b0642d46838575d3177628b685564b52f51f2aee546cb4dce781951d23c666"}[version]
+              require((root / "solc-sha256.txt").read_text().split()[0] == expected_hash, f"compiler digest mismatch: {version}")
               for output in records:
                   inp = json.loads(output.with_name("input.json").read_text())
                   out = json.loads(output.read_text())
                   require(not any(e.get("severity") == "error" for e in out.get("errors", [])), f"solc error: {output}")
                   settings = inp["settings"]
+                  settings_records.append(json.dumps(settings, sort_keys=True))
                   require(settings["evmVersion"] == target, f"EVM target mismatch: {output}")
                   require(settings["optimizer"]["enabled"] is True and settings["optimizer"]["runs"] == 200, f"optimizer mismatch: {output}")
                   require(not settings.get("viaIR", False), f"unexpected viaIR: {output}")
@@ -216,7 +224,9 @@ jobs:
                           require(actual.split("+")[0] == version, f"compiler metadata mismatch: {key} {actual}")
                           require(meta["settings"]["evmVersion"] == target, f"metadata target mismatch: {key}")
                           require(meta["settings"]["compilationTarget"] == {source: name}, f"metadata target identity mismatch: {key}")
-                          row = {"abi": canonical_abi(artifact["abi"]), "storage": canonical_layout(artifact["storageLayout"])}
+                          abi = canonical_abi(artifact["abi"])
+                          require(abi == canonical_abi(meta["output"]["abi"]), f"metadata ABI mismatch: {key}")
+                          row = {"abi": abi, "storage": canonical_layout(artifact["storageLayout"]), "selectors": artifact["evm"]["methodIdentifiers"]}
                           require(key not in contracts or contracts[key] == row, f"duplicate inconsistent contract: {key}")
                           contracts[key] = row
                           metadata_rows.append({"contract": key, "compiler": actual})
@@ -225,7 +235,7 @@ jobs:
               print(f"{version}: {len(records)} actual invocations, {len(sources)} sources, {len(contracts)} contracts")
               workspace = PurePosixPath((root / "workspace.txt").read_text().strip())
               require(workspace.is_absolute() and ".." not in workspace.parts, "invalid build workspace")
-              return contracts, sources, (root / "source.txt").read_text(), workspace
+              return contracts, sources, (root / "source.txt").read_text(), workspace, sorted(settings_records)
 
           def expected_candidate(source, baseline, workspace):
               # Only the repository source/test roots touched by the pragma-only experiment.
@@ -239,8 +249,8 @@ jobs:
                       return baseline.replace("pragma solidity 0.8.19;", "pragma solidity 0.8.39;")
               return baseline
 
-          a, sa, ha, wa = collect("0.8.19")
-          b, sb, hb, wb = collect("0.8.39")
+          a, sa, ha, wa, seta = collect("0.8.19")
+          b, sb, hb, wb, setb = collect("0.8.39")
           # Regression checks: approved import root, dependency and traversal rejection.
           old = "pragma solidity 0.8.19;\ncontract C {}"
           new = old.replace("0.8.19", "0.8.39")
@@ -255,6 +265,8 @@ jobs:
               problems.append("checkout commit mismatch")
           if wa != wb:
               problems.append("workspace mismatch")
+          if seta != setb:
+              problems.append("complete standard JSON settings mismatch")
           if sa.keys() != sb.keys():
               problems.append("source identity mismatch: " + repr(sorted(sa.keys() ^ sb.keys())))
           source_differences = sorted(k for k in sa.keys() & sb.keys() if expected_candidate(k, sa[k], wa) != sb[k])
@@ -263,7 +275,7 @@ jobs:
           if a.keys() != b.keys():
               problems.append("contract identity mismatch: " + repr(sorted(a.keys() ^ b.keys())))
           for key in sorted(a.keys() & b.keys()):
-              for field in ("abi", "storage"):
+              for field in ("abi", "storage", "selectors"):
                   if a[key][field] != b[key][field]:
                       problems.append(f"{field} differs: {key}")
           report = {"project": project, "baselineContracts": len(a), "candidateContracts": len(b), "differences": problems}
