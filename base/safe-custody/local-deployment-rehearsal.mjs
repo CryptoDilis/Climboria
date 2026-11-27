@@ -1,0 +1,112 @@
+// Local-only mined deployment rehearsal. No external RPC, private keys, or network broadcast.
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {spawn,execFileSync} from 'node:child_process';
+import {setTimeout as sleep} from 'node:timers/promises';
+const URL='http://127.0.0.1:18545';
+const CHAIN=84532n, LIMIT=30000000n, SUPPLY=888888888800000n;
+const ZERO='0x'+'0'.repeat(40);
+const amounts=[17777777760000n,311111110800000n,222222222000000n,133333333200000n,88888888000000n,106666666560000n,8888888880000n];
+assert.equal(amounts.reduce((a,b)=>a+b,0n),SUPPLY);
+const cast=(...args)=>execFileSync('cast',args,{encoding:'utf8',maxBuffer:8*1024*1024}).trim();
+const calldata=(sig,...args)=>cast('calldata',sig,...args.map(String));
+const norm=a=>a.toLowerCase();
+const wordAddress=x=>'0x'+x.slice(-40).toLowerCase();
+const hex=n=>'0x'+BigInt(n).toString(16);
+const steps=[],contracts={};
+let nextId=0;
+async function rpc(method,params=[]){
+ const response=await fetch(URL,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:++nextId,method,params}),signal:AbortSignal.timeout(10000)});
+ assert.equal(response.ok,true);
+ const result=await response.json();
+ if(result.error)throw Error(method+': '+JSON.stringify(result.error));
+ return result.result;
+}
+async function call(to,sig,...args){return rpc('eth_call',[{to,data:calldata(sig,...args)},'latest']);}
+async function number(to,sig,...args){return BigInt(await call(to,sig,...args));}
+async function address(to,sig,...args){return wordAddress(await call(to,sig,...args));}
+async function requireCode(a){
+ const code=await rpc('eth_getCode',[a,'latest']);assert.notEqual(code,'0x');
+ return {address:a,runtimeBytes:(code.length-2)/2,runtimeKeccak256:cast('keccak',code)};
+}
+async function record(name,tx){
+ const hash=await rpc('eth_sendTransaction',[{...tx,gas:hex(LIMIT)}]);
+ let receipt;
+ for(let i=0;i<50;i++){receipt=await rpc('eth_getTransactionReceipt',[hash]);if(receipt)break;await sleep(100);}
+ assert.ok(receipt,name+' receipt missing');assert.equal(receipt.status,'0x1',name+' failed');
+ const block=await rpc('eth_getBlockByHash',[receipt.blockHash,false]);
+ assert.equal(BigInt(block.gasLimit),LIMIT);
+ assert.ok(BigInt(receipt.gasUsed)<LIMIT,name+' exceeds local gas limit');
+ steps.push({name,txHash:hash,blockNumber:Number(BigInt(receipt.blockNumber)),gasUsed:Number(BigInt(receipt.gasUsed)),status:'success'});
+ return receipt;
+}
+async function deploy(name,file,contract,from,args='0x'){
+ const a=JSON.parse(readFileSync('out/'+file+'/'+contract+'.json','utf8'));
+ const code=a.bytecode.object;assert.match(code,/^0x[0-9a-f]+$/i);assert.match(args,/^0x[0-9a-f]*$/i);
+ const data=code+args.slice(2);assert.ok((data.length-2)/2<=49152);
+ const r=await record(name,{from,data});const dest=norm(r.contractAddress);contracts[name]=await requireCode(dest);return dest;
+}
+async function rejectCall(name,from,to,data){
+ await assert.rejects(rpc('eth_call',[{from,to,data,gas:hex(LIMIT)},'latest']),/eth_call:/);
+ return name;
+}
+const anvil=spawn('anvil',['--host','127.0.0.1','--port','18545','--chain-id','84532','--gas-limit',String(LIMIT),'--accounts','10','--silent'],{stdio:['ignore','ignore','inherit']});
+try{
+ let ready=false;
+ for(let i=0;i<100;i++){if(anvil.exitCode!==null)throw Error('Anvil exited');try{await rpc('eth_chainId');ready=true;break;}catch{await sleep(100);}}
+ assert.ok(ready,'local Anvil not available');
+ assert.match(await rpc('web3_clientVersion'),/anvil/i);assert.equal(BigInt(await rpc('eth_chainId')),CHAIN);
+ assert.equal(BigInt(await rpc('eth_blockNumber')),0n);
+ const accounts=(await rpc('eth_accounts')).map(norm);assert.ok(accounts.length>=9);
+ const [creator,...rest]=accounts,owners=rest.slice(0,5),founder=rest[5],distributor=rest[6],payee=rest[7];
+ assert.equal(new Set([creator,...owners,founder,distributor,payee]).size,9);
+ const setup=await deploy('setupFactory','SafeQuorumIssuanceFixture.sol','SafeQuorumReserveFactoryFixture',creator);
+ const successor=await deploy('successorFactory','SafeQuorumIssuanceFixture.sol','V3QuorumSuccessorFixture',creator,cast('abi-encode','f(address)',setup));
+ const quote=await deploy('syntheticQuote','SafeReserveGuard.t.sol','ReserveQuote',creator);
+ const builder=await deploy('syntheticPoolBuilder','SafeReserveGuard.t.sol','ReservePoolBuilder',creator);
+ const lp=await deploy('syntheticLPDestination','SafeReserveGuard.t.sol','ReserveLPDestination',creator);
+ await record('initializeSafeAndGuard',{from:creator,to:setup,data:calldata('create(address[],address)','['+owners.join(',')+']',successor)});
+ const guard=await address(successor,'configuredGuard()');
+ const wallet=await address(guard,'wallet()');
+ contracts.guard=await requireCode(guard);contracts.wallet=await requireCode(wallet);
+ contracts.singleton=await requireCode(await address(setup,'singleton()'));
+ assert.equal(await address(guard,'successor()'),successor);
+ assert.equal(await number(wallet,'getThreshold()'),3n);
+ assert.equal(await number(guard,'memberCount()'),5n);
+ for(const owner of owners)assert.equal(await number(wallet,'isOwner(address)',owner),1n);
+ assert.equal(await number(wallet,'nonce()'),0n);assert.equal(await number(guard,'epoch()'),1n);
+ assert.equal(await number(successor,'used()'),0n);assert.equal(await address(successor,'token()'),ZERO);
+ const latest=await rpc('eth_getBlockByNumber',['latest',false]);
+ const start=BigInt(latest.timestamp)+86400n;
+ const tuple='('+[founder,distributor,guard,start,1000,'('+[quote,builder,lp,1000].join(',')+')'].join(',')+')';
+ const issue=calldata('issueSuccessor(uint256,(address,address,address,uint256,uint256,(address,address,address,uint256)))',1,tuple);
+ const negative=[];
+ negative.push(await rejectCall('creatorDirectIssuance',creator,successor,calldata('create((address,address,address,uint256,uint256,(address,address,address,uint256)))',tuple)));
+ negative.push(await rejectCall('directGuardIssuance',creator,guard,issue));
+ const hash=await call(wallet,'getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)',guard,0,issue,0,0,0,0,ZERO,ZERO,0);
+ assert.match(hash,/^0x[0-9a-f]{64}$/i);
+ const signers=owners.slice(0,3).sort();
+ for(const owner of signers)await record('approveExactSafeHash',{from:owner,to:wallet,data:calldata('approveHash(bytes32)',hash)});
+ const pack=list=>'0x'+list.map(a=>a.slice(2).padStart(64,'0')+'0'.repeat(64)+'01').join('');
+ const exec=sigs=>calldata('execTransaction(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,bytes)',guard,0,issue,0,0,0,0,ZERO,ZERO,sigs);
+ negative.push(await rejectCall('twoApprovalsCannotIssue',creator,wallet,exec(pack(signers.slice(0,2)))));
+ assert.equal(await number(wallet,'nonce()'),0n);assert.equal(await number(successor,'used()'),0n);
+ await record('quorumAtomicIssuance',{from:creator,to:wallet,data:exec(pack(signers))});
+ assert.equal(await number(wallet,'nonce()'),1n);assert.equal(await number(guard,'bound()'),1n);
+ assert.equal(await number(guard,'transactionActive()'),0n);assert.equal(await number(guard,'issuing()'),0n);
+ const token=await address(successor,'token()');contracts.token=await requireCode(token);
+ assert.equal(await address(guard,'asset()'),token);assert.equal(await number(token,'issued()'),1n);
+ assert.equal(await number(token,'totalSupply()'),SUPPLY);assert.equal(await number(token,'decimals()'),6n);
+ const vaults=[];
+ for(let i=0;i<7;i++){
+  const a=await address(successor,'vaults(uint256)',i);assert.equal(a,await address(guard,'destinations(uint256)',i));
+  const balance=await number(token,'balanceOf(address)',a);assert.equal(balance,amounts[i]);
+  vaults.push({...await requireCode(a),balanceRaw:String(balance)});
+ }
+ assert.equal(new Set(vaults.map(x=>x.address)).size,7);
+ for(const a of [creator,wallet,guard,successor,founder,distributor,payee,...owners])assert.equal(await number(token,'balanceOf(address)',a),0n);
+ negative.push(await rejectCall('consumedSafeNonceCannotReplay',creator,wallet,exec(pack(signers))));
+ const manifest={status:'LOCAL_ANVIL_REHEARSAL_ONLY',sourceSha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),chainId:Number(CHAIN),localBlockGasLimit:Number(LIMIT),testOnly:true,contracts,roles:{creator,owners,founder,distributor},startTimestamp:Number(start),totalSupplyRaw:String(SUPPLY),vaults,transactions:steps,negativeEthCalls:negative,limitations:'Synthetic quote/pool/LP, local unlocked Anvil accounts, approved-hash signatures, no public RPC, no real signers, no production review. Gas observations are local receipts only, not a public Base Sepolia gas estimate or authorization.'};
+ assert.match(manifest.sourceSha,/^[a-f0-9]{40}$/);
+ writeFileSync(process.argv[2],JSON.stringify(manifest,null,2)+'\n');console.log(JSON.stringify(manifest,null,2));
+}finally{anvil.kill();}
