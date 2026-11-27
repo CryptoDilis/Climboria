@@ -3794,7 +3794,7 @@ if(new URLSearchParams(location.search).has('smoke')){
 }
 // Explicit smoke-only continuous frame-loop candidate; no default actor.
 let npcContinuousSession=null,npcContinuousPending=false,npcContinuousCancel=false;
-let npcPairSession=null,npcPairPending=false,npcPairCancel=false,npcPairVisuals=[];
+let npcPairSession=null,npcPairPending=false,npcPairCancel=false,npcPairVisuals=[],npcPairNormalDrawFrame=-1,npcPairNormalDrawFrames=0;
 let npcContinuousDraws=0,npcContinuousGroup=null,npcContinuousNameplateDraws=0;
 function npcContinuousNear(s){return P.mode==='walk'&&Math.hypot(s.x-P.x,s.z-P.z)<100}
 function npcContinuousPriorityFree(){
@@ -3903,12 +3903,14 @@ if(new URLSearchParams(location.search).has('smoke')){
    closed:pair.snapshot().every(s=>s.closed),playerUnchanged:P.x===before.x&&P.y===before.y&&P.z===before.z,
    inventoryUnchanged:before.inventory===JSON.stringify(inventory),diagnosticsUnchanged:before.diag===window.__climboriaLastCollision,peersUnchanged:before.peers===livePeers.size};
  };
+ // Test-only explorer placement; retain actual collision-safe follow camera and FOV.
+ window.ENDLESS_WILDS.npcPairSmokeView=()=>restoreExplorerPosition({x:275,z:83,y:groundAt(275,83)+1.75,yaw:Math.PI/2});
  window.ENDLESS_WILDS.npcPairContinuousStart=async()=>{
   if(npcPairPending||npcPairSession&&!npcPairSession.audit().closed||npcContinuousPending||npcContinuousSession&&!npcContinuousSession.audit().closed)return false;
   const heavy=MOB?1:2,baseline=remoteGLBLoading+remoteGLBResidents;
   const priority=()=>npcContinuousPriorityFree()&&remoteGLBLoading+remoteGLBResidents<=MAX_REMOTE_GLB-1;
   if(document.hidden||!priority()||baseline+heavy>MAX_REMOTE_GLB-1)return false;
-  npcPairPending=true;npcPairCancel=false;npcPairVisuals=[];npcPairSession=null;
+  npcPairPending=true;npcPairCancel=false;npcPairVisuals=[];npcPairSession=null;npcPairNormalDrawFrame=-1;npcPairNormalDrawFrames=0;
   let pair,handedOff=false,disposed=false,releaseNpcVisuals;
   const dispose=()=>{
    if(disposed)return;disposed=true;
@@ -3928,7 +3930,7 @@ if(new URLSearchParams(location.search).has('smoke')){
    if(!allowed())return false;
    for(let i=0;i<2;i++){
     if(!allowed())return false;
-    const v={group:new T3.Group(),label:null,gltf:null,projection:null,loading:false,resident:false,draws:0,animated:i<heavy};
+    const v={group:new T3.Group(),label:null,gltf:null,projection:null,loading:false,resident:false,draws:0,normalMeshFrame:-1,normalLabelFrame:-1,normalMeshDraws:0,normalLabelDraws:0,animated:i<heavy};
     npcPairVisuals.push(v);let body;
     if(v.animated){
      if(remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB-1)return false;
@@ -3947,7 +3949,14 @@ if(new URLSearchParams(location.search).has('smoke')){
     }
     v.group.name='AutonomousNPC:continuous-pair-'+i;v.labelText=initial[i].label;v.label=peerMarker(v.labelText);v.label.userData.npcLabel=v.labelText;
     v.group.add(body,v.label);
-    body.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;const prior=o.onBeforeRender;o.onBeforeRender=function(...args){v.draws++;prior?.apply(this,args)}}});
+    const noteNormalDraw=(kind,args)=>{
+     if(args[2]!==cam)return;
+     const frame=renderer.info.render.frame;
+     if(kind==='mesh'){v.normalMeshFrame=frame;v.normalMeshDraws++}else{v.normalLabelFrame=frame;v.normalLabelDraws++}
+     if(npcPairVisuals.length===2&&npcPairVisuals.every(w=>w.normalMeshFrame===frame&&w.normalLabelFrame===frame)&&npcPairNormalDrawFrame!==frame){npcPairNormalDrawFrame=frame;npcPairNormalDrawFrames++}
+    };
+    v.label.onBeforeRender=(...args)=>noteNormalDraw('label',args);
+    body.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;const prior=o.onBeforeRender;o.onBeforeRender=function(...args){v.draws++;noteNormalDraw('mesh',args);prior?.apply(this,args)}}});
     if(!v.projection.frame(initial[i],0))throw Error('Continuous pair initial projection failed');
     v.group.visible=false;
    }
@@ -3962,7 +3971,8 @@ if(new URLSearchParams(location.search).has('smoke')){
  };
  window.ENDLESS_WILDS.npcPairContinuousStop=()=>{npcPairCancel=true;npcPairSession?.close()};
  window.ENDLESS_WILDS.npcPairContinuousAudit=()=>({session:npcPairSession?.audit()??null,pending:npcPairPending,
-  visuals:npcPairVisuals.map(v=>({attached:v.group?.parent===scene,visible:v.group?.visible===true,animated:v.animated,draws:v.draws,label:v.labelText,released:v.released===true})),
+  visuals:npcPairVisuals.map(v=>({attached:v.group?.parent===scene,visible:v.group?.visible===true,animated:v.animated,draws:v.draws,label:v.labelText,released:v.released===true,normalMeshDraws:v.normalMeshDraws,normalLabelDraws:v.normalLabelDraws})),
+  normalPairDrawFrames:npcPairNormalDrawFrames,
   peers:livePeers.size,loading:remoteGLBLoading,resident:remoteGLBResidents,budget:MAX_REMOTE_GLB});
  window.addEventListener('pagehide',()=>window.ENDLESS_WILDS.npcPairContinuousStop());
  document.addEventListener('visibilitychange',()=>{if(document.hidden)window.ENDLESS_WILDS.npcPairContinuousStop()});
