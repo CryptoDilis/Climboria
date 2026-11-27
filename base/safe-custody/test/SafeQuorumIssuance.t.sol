@@ -172,7 +172,7 @@ contract SafeQuorumIssuanceTest {
     }
     function testBoundQuorumCanInvalidateUnexecutedExpenseAuthorization() public {
         _issue();
-        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N"));
+        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours));
         bytes memory stale=_sign(data,3);
         bytes memory invalidation=abi.encodeCall(guard.invalidateAuthorization,(1,1));
         vm.expectRevert();guard.invalidateAuthorization(1,1);
@@ -189,7 +189,7 @@ contract SafeQuorumIssuanceTest {
     }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
-        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N"));
+        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours));
         require(_exec(data,_sign(data,3)));
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
         bytes32 id=keccak256(abi.encode(block.chainid,address(v),address(successor.token()),v.purpose(),uint256(1),PAYEE,uint256(10),bytes32("E"),uint256(0),bytes32("N")));
