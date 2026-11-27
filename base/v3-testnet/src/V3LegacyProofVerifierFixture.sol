@@ -26,6 +26,14 @@ contract V3LegacyProofVerifierFixture {
         bytes32 evidenceHash;
     }
     struct Node {bytes32 hash;uint256 sum;}
+    function _leaf(bytes32 context,uint256 index,Row calldata row) private pure returns(Node memory){
+        return Node(sha256(abi.encodePacked(DOMAIN,bytes1(0x01),context,index,row.sourceAccount,row.sourceOwner,
+            row.recipient,row.sourceAmount,row.award,row.evidenceHash)),row.award);
+    }
+    function _root(Commitment calldata c,Node memory n) private pure returns(bytes32){
+        return sha256(abi.encodePacked(DOMAIN,bytes1(0x04),c.contextHash,c.manifestDigest,
+            uint256(84532),c.targetToken,c.targetVault,c.count,c.cap,n.hash,n.sum));
+    }
     function verify(Commitment calldata c,uint256 index,Row calldata row,Node[] calldata siblings) external view returns(bool){
         if(block.chainid!=84532||c.contextHash==0||c.manifestDigest==0||c.root==0||
             c.targetToken==address(0)||c.targetVault==address(0)||c.targetToken==c.targetVault||
@@ -36,8 +44,7 @@ contract V3LegacyProofVerifierFixture {
         uint256 depth;uint256 width=1;
         while(width<c.count){width*=2;depth++;}
         if(siblings.length!=depth)return false;
-        Node memory n=Node(sha256(abi.encodePacked(DOMAIN,bytes1(0x01),c.contextHash,index,row.sourceAccount,row.sourceOwner,
-            row.recipient,row.sourceAmount,row.award,row.evidenceHash)),row.award);
+        Node memory n=_leaf(c.contextHash,index,row);
         for(uint256 i=0;i<depth;i++){
             Node calldata s=siblings[i];
             if(s.hash==0||s.sum>c.allocated-n.sum)return false;
@@ -46,7 +53,6 @@ contract V3LegacyProofVerifierFixture {
                 sha256(abi.encodePacked(DOMAIN,bytes1(0x03),s.hash,s.sum,n.hash,n.sum));
             n=Node(h,n.sum+s.sum);index/=2;
         }
-        return n.sum==c.allocated&&c.root==sha256(abi.encodePacked(DOMAIN,bytes1(0x04),c.contextHash,c.manifestDigest,
-            uint256(84532),c.targetToken,c.targetVault,c.count,c.cap,n.hash,n.sum));
+        return n.sum==c.allocated&&c.root==_root(c,n);
     }
 }
