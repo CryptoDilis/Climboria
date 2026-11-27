@@ -6,19 +6,22 @@
  * Not wired to the live Game. No fake player ghosts, loot, damage or rewards.
  */
 import {ROOM_RULES,validatePlayerMove} from './server-authority-rules.mjs';
+import {createMovementInterest} from './movement-interest.mjs';
 const VALID_ID=/^[a-zA-Z0-9_-]{16,100}$/;
 const VALID_NAME=/^[a-zA-Z0-9 _-]{2,24}$/;
 const ALLOWED_MODELS=new Set(['Adventurer','Jarrell','Lheiz']);
 const INITIAL_POSITION=Object.freeze({x:0,y:2,z:-30});
 
 export class PresenceRoom{
- constructor({roomId='jarrell-peak',now=()=>Date.now(),limit=32}={}){
+ constructor({roomId='jarrell-peak',now=()=>Date.now(),limit=32,movementInterest=false}={}){
   if(typeof roomId!=='string'||!roomId||typeof now!=='function'||!Number.isInteger(limit)||limit<2||limit>128)
    throw Error('Invalid trusted room configuration');
   this.roomId=roomId;
   this.now=now;
   this.limit=limit;
   this.members=new Map();
+  if(typeof movementInterest!=='boolean')throw Error('Invalid movement interest configuration');
+  this.movementInterest=movementInterest?createMovementInterest():null;
  }
  snapshot(){
   return [...this.members.values()].filter(m=>m.visible!==false).map(m=>({
@@ -101,8 +104,16 @@ export class PresenceRoom{
   // Ignore any client-provided id, name, room or health fields.
   m.position={x:payload.position.x,y:payload.position.y,z:payload.position.z};
   m.lastMoveAt=now;
-  this.broadcast({type:'player-moved',id:m.id,position:{...m.position}},m.id);
+  if(this.movementInterest)this.flushMovementInterest(m.id);
+  else this.broadcast({type:'player-moved',id:m.id,position:{...m.position}},m.id);
   return {ok:true};
+ }
+ // Private test/preview owner must call periodically (e.g. 250ms). Production remains default-off.
+ flushMovementInterest(sourceId=null){
+  if(!this.movementInterest)return 0;
+  const result=this.movementInterest.dispatch({members:this.members,now:this.now(),sourceId,deliver:(m,packet)=>m.send(packet)});
+  for(const id of result.failed)this.disconnect(id);
+  return result.delivered;
  }
  receive(trustedSessionId,packet){
   if(!packet||typeof packet!=='object')return {ok:false,reason:'invalid-packet'};
@@ -114,7 +125,7 @@ export class PresenceRoom{
  disconnect(trustedSessionId){
   const member=this.members.get(trustedSessionId);
   if(!member)return false;
-  this.members.delete(trustedSessionId);
+  this.members.delete(trustedSessionId);this.movementInterest?.remove(trustedSessionId);
   if(member.visible!==false)this.broadcast({type:'player-left',id:trustedSessionId},trustedSessionId);
   return true;
  }
