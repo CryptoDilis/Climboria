@@ -20,7 +20,7 @@ try{
  const results=[];
  for(const n of [10,25,32,50,100]){
   await page.evaluate(n=>{const w=window.__climboriaJarrellsPeak,p=window.__CLIMBORIA_GAME_PEERS;w.resumeAtRoomPosition({x:0,z:-30,y:w.groundAt(0,-30)+1.75});
-   for(let i=0;i<n;i++){const x=(i%10-4.5)*1.5,z=-36-Math.floor(i/10)*1.5;p.add({id:'qa-crowd-'+String(i).padStart(3,'0'),name:'QA Explorer '+i,model:'Jarrell',position:{x,z,y:w.groundAt(x,z)+1.75}})}
+   for(let i=0;i<n;i++){const x=(i%10-4.5)*1.5,z=-36-Math.floor(i/10)*1.5;p.add({id:'qa-crowd-player-'+String(i).padStart(3,'0'),name:'QA Explorer '+i,model:'Jarrell',position:{x,z,y:w.groundAt(x,z)+1.75}})}
   },n);
   const normal=await wait('normal tiers',a=>a.peer.peers===n&&a.peer.sceneVisibleResidents===(mobile?2:3)&&a.tiers.filter(t=>t.tier==='heavy').length===(mobile?2:3));
   assert.ok(normal.tiers.filter(t=>t.tier==='light').length<=(mobile?8:12));
@@ -30,6 +30,28 @@ try{
   assert.ok(normal.tiers.filter(t=>t.tier==='marker').every(t=>!t.body&&!t.nameplate));
   assert.ok(normal.tiers.filter(t=>t.visible).length<=(mobile?26:39));
   if(n>=50)assert.equal(normal.tiers.filter(t=>t.tier==='hidden').length,n-(mobile?26:39));
+  if(n===100){
+   const hidden=normal.tiers.find(t=>t.tier==='hidden').id;
+   const motion=await page.evaluate(id=>{
+    const w=window.__climboriaJarrellsPeak,p=window.__CLIMBORIA_GAME_PEERS;
+    const target={x:.1,z:-30.5,y:w.groundAt(.1,-30.5)+1.75};
+    const sample=()=>p.audit().renderedPositions.find(q=>q.id===id);
+    const before=sample(),invalid=w.crowdSmokeBatch({type:'players-moved',moves:[{id,position:target},{id,position:target}]});
+    const unchanged=sample();
+    const accepted=w.crowdSmokeBatch({type:'players-moved',moves:[{id,position:target},{id:'qa-crowd-unknown-000',position:target}]});
+    const initial=sample(),distance=q=>Math.hypot(q.x-q.targetX,q.y-q.targetY,q.z-q.targetZ);
+    p.update(.016);const first=sample();let previous=distance(first),monotonic=true;
+    for(let i=0;i<30;i++){p.update(.05);const d=distance(sample());if(d>previous+1e-7)monotonic=false;previous=d}
+    return {before,unchanged,invalid,accepted,initial,first,final:sample(),firstDistance:distance(first),initialDistance:distance(initial),finalDistance:previous,monotonic,count:p.count()};
+   },hidden);
+   assert.deepEqual(motion.invalid,{ok:false,applied:0});assert.deepEqual(motion.before,motion.unchanged);
+   assert.deepEqual(motion.accepted,{ok:true,applied:1});assert.equal(motion.count,100);
+   assert.ok(motion.initialDistance>1&&motion.firstDistance>0&&motion.firstDistance<motion.initialDistance);
+   assert.ok(motion.monotonic&&motion.finalDistance<.05);
+   const promoted=await wait('close entrant visible',a=>a.tiers.some(t=>t.id===hidden&&t.visible&&t.body&&t.nameplate));
+   assert.equal(promoted.peer.peers,100);
+   console.log('Private batch interpolation and close entrant PASS',JSON.stringify({mobile,motion,tier:promoted.tiers.find(t=>t.id===hidden)}));
+  }
   assert.equal(await page.evaluate(()=>window.__climboriaJarrellsPeak.crowdSmokePressure('critical')),true);
   const critical=await wait('critical cleanup',a=>a.peer.resident+a.peer.loading===0&&a.tiers.every(t=>!t.body)&&a.tiers.filter(t=>t.visible).length<= (mobile?8:12));
   assert.equal(critical.peer.peers,n);

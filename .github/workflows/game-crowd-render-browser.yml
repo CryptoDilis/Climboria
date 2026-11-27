@@ -1,9 +1,9 @@
 name: Game Crowd Render Acceptance
 on:
   push:
-    paths: ['game/play.html','game/npc/crowd-render-policy.mjs','.github/scripts/game-crowd-render-browser.mjs','.github/workflows/game-crowd-render-browser.yml']
+    paths: ['game/multiplayer/private-movement-batch.mjs','game/multiplayer/private-movement-batch.test.mjs','game/play.html','game/npc/crowd-render-policy.mjs','.github/scripts/game-crowd-render-browser.mjs','.github/workflows/game-crowd-render-browser.yml']
   pull_request:
-    paths: ['game/play.html','game/npc/crowd-render-policy.mjs','.github/scripts/game-crowd-render-browser.mjs','.github/workflows/game-crowd-render-browser.yml']
+    paths: ['game/multiplayer/private-movement-batch.mjs','game/multiplayer/private-movement-batch.test.mjs','game/play.html','game/npc/crowd-render-policy.mjs','.github/scripts/game-crowd-render-browser.mjs','.github/workflows/game-crowd-render-browser.yml']
 permissions:
   contents: read
 concurrency:
