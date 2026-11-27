@@ -8,6 +8,7 @@ on:
       - ".github/scripts/game-preview-workerd-smoke.mjs"
       - ".github/scripts/game-authored-local-worker.mjs"
       - ".github/scripts/game-authored-workerd-smoke.mjs"
+      - ".github/scripts/game-authored-pilot-workerd-smoke.mjs"
       - ".github/scripts/game-preview-operation-budget.test.mjs"
       - ".github/workflows/game-preview-worker-runtime.yml"
       - ".github/game-preview-runtime/**"
@@ -58,6 +59,9 @@ jobs:
         run: node .github/scripts/game-preview-workerd-smoke.mjs
       - name: Verify bounded authored map over CI-only local WebSockets
         run: node .github/scripts/game-authored-workerd-smoke.mjs
+      - name: Verify isolated authored pilot Worker and durable socket lifecycle
+        timeout-minutes: 2
+        run: node .github/scripts/game-authored-pilot-workerd-smoke.mjs
       - name: Require no high or critical local dependency advisories
         run: npm --prefix .github/game-preview-runtime audit --audit-level=high
       - name: Capture verified dependency lock and audit
