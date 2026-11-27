@@ -75,3 +75,13 @@ jobs:
           path: ${{ runner.temp }}/safe-custody-size.json
           if-no-files-found: error
           retention-days: 14
+      - name: Rehearse separate mined setup and quorum issuance transactions locally
+        run: |
+          set -euo pipefail
+          node local-deployment-rehearsal.mjs "$RUNNER_TEMP/safe-local-rehearsal.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: safe-local-rehearsal
+          path: ${{ runner.temp }}/safe-local-rehearsal.json
+          if-no-files-found: error
+          retention-days: 14
