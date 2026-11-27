@@ -83,7 +83,20 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 - [ ] R5.4 Personal customizable campsite, tent/campfire, crafting station, decorations and trophy display; no invulnerable zone or permanent world claims without explicit policy.
 - [ ] R5.5 Separate Arena, free-for-all, guild battles, spectators and sponsored tournaments remain existing future scope; verify capacity before any concurrency claim.
 
-### R5A — Autonomous AI adventurers (owner-approved 2026-11-27; not implemented)
+### R5A — Autonomous AI adventurers (owner-approved 2026-11-27; implementation in progress, release gated)
+
+**Acceptance checkpoint — 2026-11-28 PHT.** All original release checkboxes below remain open until their complete criteria are met; evidence here distinguishes merged foundations, private/smoke-only candidates and missing release proof.
+
+| Requirement | Current verified evidence | Remaining acceptance |
+|---|---|---|
+| R5A.1 / R5A.10 | Stable five-name NPC roster; clearly labeled Aurelion and ZevranSol; no human count change during paired mobile browser acceptance | Public admission and inspection UX; actual authenticated clients |
+| R5A.2 / R5A.3 / R5A.6 / R5A.7 | #1010 merged 79a3bd9efd94c565d67b3b593f3b4527b21e3369 after five green workflows; #1023 candidate 36a4734b1c9ae0b4345ee70b6a94aeb5e5834eb8 mobile focused job 140628603244 passed: 1800 ticks, 242.6m/311.58m, 0.8m minimum separation, eight blocks, both released, zero cleanup errors | Desktop focused job 140628603543 still running at inspection; three-to-five actor density, varied appearances, route recovery, weather, physical performance and public release |
+| R5A.4 / R5A.5 / R5A.11 | Private host and bounded NPC dialogue foundation; NPC-only identity, synthetic resources and private fixtures; no production room spawn | Player-initiated interactions, authenticated clients, production room authority and separately reviewed economy |
+| R5A.8 / R5A.9 | Actual connected lake/forest activity and bounded traversal in browser fixtures; #1025 candidate b4a8cd00396fc5f692b6ab756323a506c2f53de6 mobile job 140631333130 passed: 16 same normal-camera frames with both bodies/nameplates while moving; mobile one animated GLB plus one non-skeletal silhouette | Desktop draw acceptance, fully animated lightweight fallback or explicit approved LOD, personal space around humans, narrow-route recovery, weather and longer real-client sessions |
+| R5A.6 / R5A.8 real-player priority | #1027 candidate e0c03d0337a4109ae481cc4a7889496a13270bc6 mobile job 140632720864 passed: local renderer fixture preempted both NPCs, zero allocated slots at preemption, actual peer GLB loaded, removal returned slots/peers to zero | Desktop peer-priority job 140632720519 pending; authenticated multiplayer and physical device evidence |
+
+#1023 full gameplay job 140628602754 succeeded (run 46035164387; screenshots artifact 15215904053), including private combat browser fixtures and desktop/mobile core gameplay. Desktop focused workflow still pending; do not treat pending or cancelled workflows as passes. #1025/#1027 desktop pending. Next: merge #1023 only after exact-head terminal green and non-overlap check; integrate visibility and priority tests with fresh combined CI, then start bounded population expansion. No public NPC spawning, live economy or real rewards are authorized by this checkpoint. See canonical GAME_DEVELOPMENT_RECORD.md and #1023 PR acceptance comments for full evidence.
+
 
 - [ ] R5A.1 Add clearly labeled AI-controlled adventurer NPCs, not impersonated human accounts. Display NPC/AI on nameplates and inspection; ONLINE reflects real connected players only. NPC counts may be separate; no fake chat users, fake presence, marketing metrics, rewards, or leaderboard activity.
 - [ ] R5A.2 Pilot with a small proposed pool (3–5 active near a player, subject to measurement). Give NPCs varied appearances, schedules and goals: wander, climb, gather/farm resources, fish, swim, rest at camps, explore trails and react to weather. Reuse approved character meshes, animations, collision and traversal; do not change the player controls or map.
