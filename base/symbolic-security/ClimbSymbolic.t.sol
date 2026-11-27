@@ -65,7 +65,14 @@ contract ClimbSymbolicTokenTest {
     function check_duplicateReserveRejected(uint8 index) public {
         vm.assume(index>0 && index<7);
         address[7] memory bad=reserves;
-        bad[index]=bad[0];
+        // Halmos cannot resolve symbolic memory offsets; explicitly split all
+        // six original valid index cases without excluding any input.
+        if(index==1)bad[1]=bad[0];
+        else if(index==2)bad[2]=bad[0];
+        else if(index==3)bad[3]=bad[0];
+        else if(index==4)bad[4]=bad[0];
+        else if(index==5)bad[5]=bad[0];
+        else {assert(index==6);bad[6]=bad[0];}
         (bool ok,)=address(token).call(abi.encodeCall(token.issue,(bad)));
         assert(!ok);
         assert(token.totalSupply()==0);
