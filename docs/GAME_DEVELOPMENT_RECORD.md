@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A NPC POPULATION PERFORMANCE BENCHMARK CANDIDATE — 2026-11-28 PHT
+
+- #1030 exact 9e428d774d6bc3131dd47bc385663a0bae04d861 six of nine workflows SUCCESS (authority 46039013422, foundation 46039013337, heroes 46039013246, chest 46039013179, general browser 46039013209, Validate 46039013411); peer 46039013341, focused 46039013176, gameplay 46039013215 pending. No workflow returned for #1023 merge SHA; source CI verified separately. Preserve exact #1030 head.
+- Independent browser benchmark on unchanged paired implementation, same lake view and normal game camera: baseline zero NPC, one, two, recovered zero; discard five warmup frames per sample, collect 40 real RAF intervals, mean/median/p95/max, >50ms/>100ms frames, observed FPS and baseline ratios. Verify active controller movement/draws, peer count, existing slot reserve, cleanup and no page errors. Desktop/mobile software Chromium only, no arbitrary FPS pass threshold and no actual-device performance claim. Fresh CI required.
+- NEXT: verify #1030 combined CI and merge; inspect benchmark outputs before selecting physical test criteria and third-actor trial. Physical device acceptance and lightweight animated LOD still required; no public NPC spawn or other workstream changes.
+
+---
+
 ## R5A PAIRED INTEGRATION MERGED; FINAL ACCEPTANCE CONSOLIDATION — 2026-11-28 PHT
 
 - #1023 exact 36a4734b1c9ae0b4345ee70b6a94aeb5e5834eb8 all nine workflows SUCCESS: Validate 46035164512, chat 46035164305, general browser 46035164230, foundation 46035164267, focused desktop/mobile 46035164429, chest 46035164373, heroes 46035164347, full gameplay 46035164387, authority 46035164210. Compared intervening main files, zero overlapping candidate paths. GitHub merge confirmed 2b9df4e94c452526ebf3805f36690ed6671853e4. Post-merge CI not yet verified.
