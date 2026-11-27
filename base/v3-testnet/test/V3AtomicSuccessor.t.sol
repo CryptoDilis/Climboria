@@ -199,7 +199,8 @@ contract V3AtomicSuccessorTest {
     }
     function testMainnetRejected() public {
         vm.chainId(8453);
-        vm.expectRevert(V3AtomicSuccessorFixture.InvalidConfig.selector);new V3AtomicSuccessorFixture(factory.conditional(),factory.conditionalHash());
+        V3SuccessorConditionalDeployer helper=factory.conditional();bytes32 expected=factory.conditionalHash();
+        vm.expectRevert(V3AtomicSuccessorFixture.InvalidConfig.selector);new V3AtomicSuccessorFixture(helper,expected);
         vm.expectRevert(V3AtomicSuccessorFixture.InvalidConfig.selector);factory.create(cfg);
     }
 }
