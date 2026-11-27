@@ -4,7 +4,7 @@
 
 ## Identity and branding
 - Proposed production name **Climboria**, ticker **CLIMB**, Base mainnet chain 8453, ERC-20, six decimals, initial 888,888,888 under V3. Confirm exact name with owner and independently review exact production constructor before release. Existing successor contract is explicitly CLIMB V3 Successor Test Only / CLIMBV3NEXTTEST; do not rename or publish the fixture as production.
-- Existing official logo sources: `assets/climb-token-official-cutout.avif` (Git blob c7b9e84d539e1159327d073c0bde23c2e6ca97e6), `assets/climb-token-official-hd.webp` (2c35ef9206caf904dda4254a95b827bad9b0c467). Preserve art; inspect actual dimensions and alpha, export square transparent PNG in required sizes without stretching or redrawing. Binary art not inspected by connector in this cycle; PNG not created. Do not claim platform-specific size acceptance before verifying current requirements.
+- Existing official logo sources: `assets/climb-token-official-cutout.avif` (Git blob c7b9e84d539e1159327d073c0bde23c2e6ca97e6), `assets/climb-token-official-hd.webp` (2c35ef9206caf904dda4254a95b827bad9b0c467). Preserve art; inspect actual dimensions and alpha, export square transparent PNG in required sizes without stretching or redrawing. Verified draft PNGs from [run 45971569046](https://github.com/CryptoDilis/Climboria/actions/runs/45971569046), artifact 15184758269 (expires 2026-12-11 UTC). The original is 256×256; 512×512 is upscaled, not native HD. Both retain transparency and were visually inspected and hash-checked in the preceding cycle. Reproduce using export-logo.py and Pillow 12.0.0 if artifact expires; do not substitute art. No public hosting or approved logo URI. Do not claim platform-specific size acceptance before verifying current requirements.
 - [Draft metadata](climb-base-draft.json) records exact proposed allocation, official links, and null address, supply circulation and token-list fields. It is NOT a standard public token list and must not be consumed by trading or wallets. Logo URI and token-list entry become valid only after reviewed finalized CA, chain/code verification and asset hosting checks. Keep all existing website safety notices.
 
 ## Release sequence and external gates
@@ -18,10 +18,11 @@
 ## Checklist
 | Item | Status |
 | --- | --- |
-| Existing logo source located | Verified repository paths only |
+| Existing logo source located | Verified pinned original and exported artwork |
 | Identity/description/links | Draft prepared |
 | Allocation arithmetic | Draft matches V3 |
-| PNG export and platform checks | Pending |
+| PNG export | Verified draft; 256 native, 512 upscaled |
+| Hosting and platform checks | Pending |
 | Production exact artifact and signer/custody review | Blocked |
 | Base mainnet CA | None verified |
 | Funded pool | None verified |

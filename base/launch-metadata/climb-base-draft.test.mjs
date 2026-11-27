@@ -32,5 +32,11 @@ test('official existing logo source and official domain links only',()=>{
  assert.equal(draft.identity.whitepaper,'https://climboria.fun/whitepaper/');
  assert.equal(draft.identity.social.x,'https://x.com/ClimboriaHQ');
  for(const p of [draft.identity.logo.sourcePath,draft.identity.logo.alternatePath])assert(existsSync(new URL('../../'+p,import.meta.url)));
- assert.equal(draft.identity.logo.pngExportStatus,'PENDING_IMAGE_INSPECTION');
+ assert.equal(draft.identity.logo.pngExportStatus,'VERIFIED_DRAFT_NOT_HOSTED');
+ assert.equal(draft.identity.logo.logoURI,null);
+ assert.deepEqual(draft.identity.logo.sourceDimensions,[256,256]);
+ assert.deepEqual(draft.identity.logo.sourceAlphaRange,[0,255]);
+ assert.equal(draft.identity.logo.exportEvidence.artifactId,15184758269);
+ assert.deepEqual(draft.identity.logo.exportEvidence.files.map(x=>[x.dimensions,x.upscaled]),[[[256,256],false],[[512,512],true]]);
+ for(const x of draft.identity.logo.exportEvidence.files)assert.match(x.sha256,/^[0-9a-f]{64}$/);
 });
