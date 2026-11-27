@@ -3573,7 +3573,7 @@ function caveApproachGroundAudit(){
   textureRepeat:ground?.material?.map?.repeat?.x||0};
 }
 // Explicit smoke-only adapter: no default NPC spawning or real player changes.
-async function npcLakeRouteAudit(){
+async function makeLakeNpcForSmoke(){
  const {createJarrellLakeAdventurer}=await import('./npc/jarrell-lake-adventurer.mjs');
  const lake=WATER_BODIES.find(b=>b.id==='sanctuary_lake');
  const loaded=(x,z)=>{
@@ -3581,8 +3581,11 @@ async function npcLakeRouteAudit(){
   for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)if(!chunks.has((cx+i)+','+(cz+j)))return false;
   return true;
  };
+ return createJarrellLakeAdventurer({groundAt,waterBodyAt,actorBlocked,loaded,fishingSpots:FAC,lake});
+}
+async function npcLakeRouteAudit(){
+ const {npc,nodes,probes}=await makeLakeNpcForSmoke();
  const before={x:P.x,y:P.y,z:P.z,vy:P.vy,fish:P.fish,inventory:JSON.stringify(inventory),diagnostic:window.__climboriaLastCollision};
- const {npc,nodes,probes}=createJarrellLakeAdventurer({groundAt,waterBodyAt,actorBlocked,loaded,fishingSpots:FAC,lake});
  const seen=new Set(),activities=new Set();let previous=npc.snapshot(),distance=0,maxStep=0,ticks=0,wet=false,exited=false;
  try{
   for(;ticks<3200;ticks++){
@@ -3723,6 +3726,68 @@ if(new URLSearchParams(location.search).has('smoke')){
     root.scale.equals(new T3.Vector3(2,3,1.5))&&root.rotation.y===.35,
    authoredRootAttached:root.parent===fit};
   geometry.dispose();material.dispose();return result;
+ };
+}
+// Smoke-only owned NPC GLB. Real peer admission is still separate.
+if(new URLSearchParams(location.search).has('smoke')){
+ let npcSmokeBusy=false;
+ window.ENDLESS_WILDS.npcGlbRouteAudit=async()=>{
+  if(npcSmokeBusy)throw Error('NPC smoke already running');
+  npcSmokeBusy=true;let gltf,group,label,projection,npc,loading=false,resident=false;
+  try{
+   const {createAdventurerRenderer}=await import('./npc/adventurer-renderer.mjs');
+   if(remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB)throw Error('No shared GLB slot');
+   remoteGLBLoading++;loading=true;
+   gltf=await new T3.GLTFLoader().loadAsync('../assets/characters/Climboria_Jarrell.glb');
+   remoteGLBLoading--;loading=false;remoteGLBResidents++;resident=true;
+   ({npc}=await makeLakeNpcForSmoke());
+   const fit=fitRemoteHero(gltf.scene);if(!fit)throw Error('NPC GLB fit unavailable');
+   group=new T3.Group();group.name='AutonomousNPC:lake';
+   label=peerMarker('Adventurer [NPC]');label.name='NPCNameplate';
+   group.add(fit,label);scene.add(group);
+   let meshes=0,draws=0;const drawnModes=new Set(),camera=new T3.PerspectiveCamera(45,cam.aspect,.1,100);
+   gltf.scene.traverse(o=>{if(o.isMesh){
+    meshes++;o.castShadow=false;o.receiveShadow=false;
+    const previous=o.onBeforeRender;
+    o.onBeforeRender=function(...args){draws++;previous?.apply(this,args)};
+   }});
+   function verifyDraw(mode){
+    if(drawnModes.has(mode))return;
+    camera.position.set(group.position.x+4,group.position.y+3,group.position.z+6);
+    camera.lookAt(group.position.x,group.position.y+.9,group.position.z);
+    camera.updateMatrixWorld(true);
+    const prior=draws;renderer.render(scene,camera);
+    if(draws<=prior)throw Error('NPC mesh not submitted to WebGL: '+mode);
+    drawnModes.add(mode);
+   }
+   const mixer=new T3.AnimationMixer(gltf.scene);
+   const before={peers:livePeers.size,inventory:JSON.stringify(inventory),x:P.x,y:P.y,z:P.z};
+   const clips=new Map(),missing=new Set();let distance=0,previous=npc.snapshot(),wet=false,exited=false,frames=0;
+   projection=createAdventurerRenderer({group,clips:gltf.animations,mixer,loopRepeat:T3.LoopRepeat,dispose:()=>{}});
+   for(let i=0;i<500;i++){
+    const s=npc.tick(.1);
+    if(!projection.frame(s,.1))throw Error('NPC projection rejected route frame');
+    const audit=projection.audit();
+    if(audit.exact){clips.set(audit.requested,audit.clipName);if(['walk','run','swim'].includes(audit.requested))verifyDraw(audit.requested)}else missing.add(audit.requested);
+    distance+=Math.hypot(s.x-previous.x,s.z-previous.z);
+    if(s.swim)wet=true;if(wet&&!s.swim)exited=true;
+    if(group.position.x!==s.x||group.position.z!==s.z||group.position.y!==s.y)throw Error('NPC projection mismatch');
+    previous=s;frames++;
+   }
+   const result={meshes,frames,distance,wet,exited,clips:Object.fromEntries(clips),missing:[...missing],draws,drawnModes:[...drawnModes],availableClips:gltf.animations.map(c=>c.name),
+    attached:group.parent===scene,visible:group.visible,label:label.name==='NPCNameplate'&&label.parent===group,
+    peersUnchanged:before.peers===livePeers.size,playerUnchanged:before.x===P.x&&before.y===P.y&&before.z===P.z&&before.inventory===JSON.stringify(inventory),
+    withinBudget:remoteGLBLoading+remoteGLBResidents<=MAX_REMOTE_GLB};
+   projection.close();result.hidden=!group.visible;scene.remove(group);result.detached=group.parent===null;
+   return result;
+  }finally{
+   npc?.close();projection?.close();if(group)scene.remove(group);
+   if(label){label.material.map?.dispose();label.material.dispose()}
+   if(gltf)disposeRemoteHero(gltf.scene);
+   if(loading)remoteGLBLoading--;if(resident)remoteGLBResidents--;
+   npcSmokeBusy=false;
+   renderer.render(scene,cam);
+  }
  };
 }
 function loadPeerHero(peer){
