@@ -6,14 +6,18 @@ import {syntheticOwnerMessage} from './legacy-owner-proof.mjs';
 import {DatabaseSync} from 'node:sqlite';
 import {openSync,closeSync,lstatSync} from 'node:fs';
 import {verifySyntheticBatch} from './legacy-owner-ledger.mjs';
-const SCHEMA='CLIMB_SYNTHETIC_REPLAY_V3';
+const SCHEMA='CLIMB_SYNTHETIC_REPLAY_V4';
 const fail=msg=>{throw Error('NO_GO: '+msg);};
-// A campaign ID fixes its entire context, not just a caller-selected cap.
-// Distinct campaign authorization and global economic policy remain out of scope.
+// Trusted fixture operator explicitly approves campaign and eligible rows.
+// Production authorization and global economic policy remain out of scope.
 function campaignDigest(c){
  return createHash('sha256').update(JSON.stringify(['CLIMB_SYNTHETIC_CAMPAIGN_V1',
  c.mode,c.sourceGenesis,c.sourceMint,c.snapshotSlot,c.snapshotHash,c.inventoryDigest,
  c.policyHash,c.cap,c.campaign,c.targetChainId,c.targetToken,c.targetVault])).digest('hex');
+}
+function eligibilityDigest(c){
+ return createHash('sha256').update(JSON.stringify(['CLIMB_SYNTHETIC_ELIGIBILITY_V1',
+ campaignDigest(c),c.sourceAccount,c.sourceOwner,c.recipient,c.sourceAmount,c.award])).digest('hex');
 }
 function configure(db){
  db.exec('PRAGMA busy_timeout=5000; PRAGMA synchronous=FULL;');
@@ -25,7 +29,7 @@ export function initializeSyntheticReplayFile(path){
  const db=new DatabaseSync(path);
  try{
   configure(db);
-  db.exec("BEGIN IMMEDIATE; CREATE TABLE metadata (version TEXT PRIMARY KEY) STRICT; CREATE TABLE nonces (id TEXT PRIMARY KEY NOT NULL) STRICT; CREATE TABLE sources (id TEXT PRIMARY KEY NOT NULL) STRICT; CREATE TABLE issued (nonce TEXT PRIMARY KEY NOT NULL, digest TEXT NOT NULL, consumed INTEGER NOT NULL DEFAULT 0 CHECK(consumed IN (0,1))) STRICT; CREATE TABLE campaigns (id TEXT PRIMARY KEY NOT NULL, digest TEXT NOT NULL, cap TEXT NOT NULL, used TEXT NOT NULL) STRICT;");
+  db.exec("BEGIN IMMEDIATE; CREATE TABLE metadata (version TEXT PRIMARY KEY) STRICT; CREATE TABLE nonces (id TEXT PRIMARY KEY NOT NULL) STRICT; CREATE TABLE sources (id TEXT PRIMARY KEY NOT NULL) STRICT; CREATE TABLE issued (nonce TEXT PRIMARY KEY NOT NULL, digest TEXT NOT NULL, consumed INTEGER NOT NULL DEFAULT 0 CHECK(consumed IN (0,1))) STRICT; CREATE TABLE campaigns (id TEXT PRIMARY KEY NOT NULL, digest TEXT NOT NULL, cap TEXT NOT NULL, used TEXT NOT NULL) STRICT; CREATE TABLE eligible (campaign TEXT NOT NULL, account TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(campaign,account)) STRICT;");
   db.prepare('INSERT INTO metadata(version) VALUES (?)').run(SCHEMA);
   db.exec('COMMIT');
  }finally{db.close();}
@@ -47,7 +51,37 @@ export function openSyntheticReplayLedger(path){
   const getCampaign=db.prepare('SELECT digest,cap,used FROM campaigns WHERE id=?');
   const insertCampaign=db.prepare('INSERT INTO campaigns(id,digest,cap,used) VALUES (?,?,?,?)');
   const updateCampaign=db.prepare('UPDATE campaigns SET used=? WHERE id=? AND used=?');
-  return {close(){db.close();},registerChallenge(challenge,now){
+  const getEligible=db.prepare('SELECT digest FROM eligible WHERE campaign=? AND account=?');
+  const insertEligible=db.prepare('INSERT INTO eligible(campaign,account,digest) VALUES (?,?,?)');
+  function transaction(fn){
+   db.exec('BEGIN IMMEDIATE');
+   try{const result=fn();db.exec('COMMIT');return result;}
+   catch(error){try{db.exec('ROLLBACK');}catch{}throw error;}
+  }
+  function requireCampaign(c){
+   const record=getCampaign.get(c.campaign);
+   if(!record)fail('unapproved campaign');
+   if(record.digest!==campaignDigest(c)||record.cap!==c.cap)fail('campaign context mismatch');
+   return record;
+  }
+  return {close(){db.close();},approveCampaign(challenge){
+   syntheticOwnerMessage(challenge);
+   return transaction(()=>{
+    const record=getCampaign.get(challenge.campaign),digest=campaignDigest(challenge);
+    if(record&&(record.digest!==digest||record.cap!==challenge.cap))fail('campaign context mismatch');
+    if(!record)insertCampaign.run(challenge.campaign,digest,challenge.cap,'0');
+    return {status:'SYNTHETIC_CAMPAIGN_APPROVED',authorization:false};
+   });
+  },approveEligibility(challenge){
+   syntheticOwnerMessage(challenge);
+   return transaction(()=>{
+    requireCampaign(challenge);
+    const digest=eligibilityDigest(challenge),record=getEligible.get(challenge.campaign,challenge.sourceAccount);
+    if(record&&record.digest!==digest)fail('eligibility context mismatch');
+    if(!record)insertEligible.run(challenge.campaign,challenge.sourceAccount,digest);
+    return {status:'SYNTHETIC_ELIGIBILITY_APPROVED',authorization:false};
+   });
+  },registerChallenge(challenge,now){
    // Trusted fixture operator supplies the expected challenge, never an
    // untrusted signer. Store exact signed bytes' digest before proof receipt.
    const message=syntheticOwnerMessage(challenge);
@@ -56,9 +90,9 @@ export function openSyntheticReplayLedger(path){
    db.exec('BEGIN IMMEDIATE');
    try{
     if(hasNonce.get(challenge.nonce)||getIssued.get(challenge.nonce))fail('challenge nonce already registered or consumed');
-    const context=campaignDigest(challenge),record=getCampaign.get(challenge.campaign);
-    if(record&&(record.digest!==context||record.cap!==challenge.cap))fail('campaign context mismatch');
-    if(!record)insertCampaign.run(challenge.campaign,context,challenge.cap,'0');
+    requireCampaign(challenge);
+    const eligible=getEligible.get(challenge.campaign,challenge.sourceAccount);
+    if(!eligible||eligible.digest!==eligibilityDigest(challenge))fail('unapproved or mismatched eligibility');
     insertIssued.run(challenge.nonce,digest);
     db.exec('COMMIT');
     return {status:'SYNTHETIC_CHALLENGE_REGISTERED',challengeDigest:digest,authorization:false};
