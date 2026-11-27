@@ -59,6 +59,18 @@ jobs:
           forge test --match-path test/V3SecurityFuzz.t.sol --match-test '^testFuzz_' --fuzz-runs 256 -vv | tee "$RUNNER_TEMP/climb-v3-fuzz.log"
           grep -Eq '5 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-fuzz.log"
           test "$(grep -c 'runs: 256' "$RUNNER_TEMP/climb-v3-fuzz.log")" -eq 5
+      - name: Exercise malicious synthetic liquidity callbacks
+        run: |
+          set -euo pipefail
+          forge test --match-contract '^V3LiquidityCallbackTest$' -vv | tee "$RUNNER_TEMP/climb-liquidity-callbacks.log"
+          grep -Eq '3 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-liquidity-callbacks.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: climb-liquidity-callback-log
+          path: ${{ runner.temp }}/climb-liquidity-callbacks.log
+          if-no-files-found: error
+          retention-days: 14
       - name: Run exact offline V3 prototype tests
         run: |
           set -euo pipefail
