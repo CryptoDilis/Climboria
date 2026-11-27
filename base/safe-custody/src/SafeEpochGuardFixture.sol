@@ -53,7 +53,7 @@ contract SafeEpochGuardFixture is BaseGuard {
         validateConfig();
         if(expectedEpoch!=epoch||rotating||(pending.digest!=0&&block.timestamp<pending.expiresAt)||
            !wallet.isOwner(oldOwner)||wallet.isOwner(newOwner)||newOwner==address(0)||newOwner==address(1)||
-           newOwner==address(wallet)||newOwner==address(this)||newOwner.code.length!=0)revert Forbidden();
+           newOwner==address(wallet)||newOwner==address(this)||newOwner.code.length!=0||!_rotationOwnerAllowed(newOwner))revert Forbidden();
         address[] memory owners=wallet.getOwners();bool valid;
         for(uint256 i=0;i<owners.length;i++){
             if(owners[i]==oldOwner&&prev==(i==0?address(1):owners[i-1]))valid=true;
@@ -76,13 +76,15 @@ contract SafeEpochGuardFixture is BaseGuard {
            gasToken!=address(0)||refundReceiver!=address(0))revert Forbidden();
         _checkCall(to,data);
     }
+    function _rotationOwnerAllowed(address) internal view virtual returns(bool){return true;}
+    function _policyCallAllowed(bytes4,uint256) internal view virtual returns(bool){return false;}
     function _checkCall(address to,bytes memory data) private {
         validateConfig();
         if(rotating||data.length<4)revert Forbidden();
         bytes4 selector=bytes4(data);
         if(to==address(this)){
             if((selector==this.scheduleRotation.selector&&data.length==132)||
-               (selector==this.cancelRotation.selector&&data.length==36))return;
+               (selector==this.cancelRotation.selector&&data.length==36)||_policyCallAllowed(selector,data.length))return;
             revert Forbidden();
         }
         if(to!=address(wallet)||selector!=SWAP||data.length!=100)revert Forbidden();
