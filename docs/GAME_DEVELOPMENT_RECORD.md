@@ -2930,3 +2930,6 @@ World: Common 65%, Uncommon 25%, Rare 8%, Epic 1.8%, Legendary 0.2%. Cave/geode:
 
 ---
 
+
+## Base-first ecosystem direction — 2026-11-27 UTC
+See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_DIRECTION.md). Future blockchain-linked game assets and reward settlement prioritize Base; preserve real-time off-chain gameplay, chat, cloud saves and existing auth/guest paths. No new wallet requirement for gameplay, token payout or public chain transaction authorized. Continue current Game acceptance work; plan wallet linking and authenticated reward events separately.
