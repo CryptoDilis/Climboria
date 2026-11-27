@@ -4,7 +4,8 @@
 
 - Stacked on #901 exact head c23401fb76c6b1320950204414d30cb45f0f5396; parent CI four successes (Validate 45938075227, Runtime 45938075126, Gateway 45938075127, Authority 45938075200), Gameplay 45938075149 still running at checkpoint.
 - Test commits b4c95718dfe3fd69a7f8d14db77e8b4ce231467c and 9dc1261b7061e88ad9e8eb4768e302d0d5bd343f exercise real preview runtime through mocked WebSockets/storage/clock: 100 legal 5 HP hits, both clients rejoin midway to honor 60-second expiry, lethal push, movement/attack denial, fresh target session retains death timer, no early respawn, exact five-second respawn notification once, 500 HP and stamina restoration, fresh runtime recovery. No production or budget changes. Not yet executed/verified on exact head.
-- EXACT NEXT: merge #901 only after all required checks green; retarget this stacked PR to main and verify fresh exact-head CI, fix failures before merge. Add durable respawn rollback regression if not already covered. Private cloud remains disabled; no public combat, loot/inventory or other workstreams changed.
+- Added durable respawn rollback regression efcf5730dbfe8884efdf385e40d3b58feb15e82c: 100 legal hits, failed second-account checkpoint write at exact respawn deadline, quarantined reads/attacks, fresh runtime restores 0 HP and original deadline, successful recovery tick respawns once and subsequent restart retains 500 HP. Source test added; execution pending.
+- EXACT NEXT: merge #901 only after all required checks green; retarget stacked #903 to main and verify fresh exact-head CI, fix failures before merge. Then review preview client handling of committed hit/respawn and snapshot reconciliation. Private cloud remains disabled; no public combat, loot/inventory or other workstreams changed.
 
 ---
 
