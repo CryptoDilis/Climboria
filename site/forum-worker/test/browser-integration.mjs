@@ -54,7 +54,7 @@ try{
   assert.equal(await page.locator('#new-topic').isDisabled(),true);
   return {context,page,errors};
  }
- const a=await member(Wallet.createRandom(),1536),b=await member(Wallet.createRandom(),390);
+ const admin=Wallet.createRandom();const a=await member(admin,1536),b=await member(Wallet.createRandom(),390);
  const sign=async p=>{await p.locator('#forum-wallet').click();await p.locator('#forum-status').filter({hasText:'Signed in with'}).waitFor();};
  await sign(a.page);
  await a.page.locator('#new-topic').click();
@@ -75,9 +75,21 @@ try{
  await b.page.getByLabel('Report reason').fill('test report');
  await b.page.getByRole('button',{name:'Report topic'}).click();
  await b.page.locator('#forum-status').filter({hasText:'Report received.'}).waitFor();
+ await b.page.locator('#moderator-open').click();await b.page.locator('#forum-status').filter({hasText:'Moderator role required.'}).waitFor();
+ assert.equal(await b.page.locator('#moderator-queue').isHidden(),true);
+ await db.prepare('INSERT INTO moderators(wallet,active) VALUES(?,1)').bind(admin.address.toLowerCase()).run();
+ await a.page.locator('#moderator-open').click();await a.page.locator('#moderator-queue').waitFor({state:'visible'});
+ await a.page.getByText('test report',{exact:true}).waitFor();
+ assert.equal(await a.page.locator('#moderator-reports img').count(),0);
+ await a.page.getByRole('button',{name:'Select topic'}).click();await a.page.getByLabel('Moderation reason').fill('Review abuse');
+ await a.page.getByRole('button',{name:'Apply moderation'}).click();await a.page.getByText('Hidden',{exact:true}).waitFor();
+ await a.page.getByText('No published topics.',{exact:true}).waitFor();
+ await a.page.getByRole('button',{name:'Select topic'}).click();await a.page.getByLabel('Moderation reason').fill('Restore after review');
+ await a.page.getByRole('button',{name:'Apply moderation'}).click();await a.page.getByRole('heading',{name:'Browser lifecycle'}).waitFor();
+ assert.equal((await db.prepare('SELECT COUNT(*) n FROM moderation_actions').first()).n,2);
  await b.page.evaluate(()=>window.changeFixtureWallet());
  assert.equal(await b.page.locator('#new-topic').isDisabled(),true);
- await a.page.locator('#forum-logout').click();assert.equal(await a.page.locator('#new-topic').isDisabled(),true);
+ await a.page.locator('#forum-logout').click();assert.equal(await a.page.locator('#new-topic').isDisabled(),true);assert.equal(await a.page.locator('#moderator-queue').isHidden(),true);assert.equal(await a.page.locator('#moderator-reports').innerText(),'');
  assert.ok(await b.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
  assert.deepEqual([...a.errors,...b.errors],[]);
  assert.equal((await db.prepare('SELECT COUNT(*) n FROM topics').first()).n,1);
