@@ -27,7 +27,7 @@ test('six pinned read-only calls; detect explicit, failed and loaded mint mentio
  assert.deepEqual(calls[1].params,[474473089,{commitment:'finalized',encoding:'json',transactionDetails:'full',rewards:false,maxSupportedTransactionVersion:0}]);
  const block=out.blocks[0];assert.equal(block.transactionCount,4);assert.equal(block.missingMeta,1);assert.equal(block.missingTokenBalanceFields,1);assert.equal(block.failed,1);
  assert.deepEqual(block.mintMentionCandidates.map(x=>[x.index,x.outcome]),[[0,'SUCCESS'],[1,'FAILED'],[3,'SUCCESS']]);
- assert.match(block.transactionsSha256,/^[0-9a-f]{64}$/);assert(!JSON.stringify(out).includes('A'.repeat(64)));assert.equal(out.authorization,false);assert.equal(out.eligibility,'NOT_CERTIFIED');
+ assert.match(block.transactionsSha256,/^[0-9a-f]{64}$/);assert(!JSON.stringify(out).includes('A'.repeat(64)));assert.equal(out.observedMint,'9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump');assert.equal(out.authorization,false);assert.equal(out.eligibility,'NOT_CERTIFIED');
 });
 test('reject incorrect header, duplicate tx, divergent data, malformed provider replies and rate limits',async()=>{
  for(const [mutate,code] of [
