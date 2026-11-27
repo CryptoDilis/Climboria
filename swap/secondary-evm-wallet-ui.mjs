@@ -4,7 +4,9 @@ export function initSecondaryEvmWalletUi({doc=globalThis.document,scope=globalTh
  const get=id=>doc?.getElementById(id);
  const panel=get("secondaryEvmResearch"),chain=get("secondaryEvmChain"),connect=get("secondaryWalletConnect"),disconnect=get("secondaryWalletDisconnect"),status=get("secondaryWalletStatus"),address=get("secondaryWalletAddress");
  if(!panel||!chain||!connect||!disconnect||!status||!address)return {ready:false};
- const context=()=>doc.documentElement.dataset.climboriaSwapNetwork==="base"&&panel.open&&!panel.hidden&&Object.hasOwn(LABELS,chain.value);
+ const mobile=scope?.matchMedia?.("(max-width:760px)");
+ const workspace=doc.querySelector?.(".premium-trade-layout");
+ const context=()=>doc.documentElement.dataset.climboriaSwapNetwork==="base"&&panel.open&&!panel.hidden&&Object.hasOwn(LABELS,chain.value)&&!(mobile?.matches&&workspace?.classList.contains("mobile-workspace-trust"));
  let wallet;
  function render(state){
   const available=context(),name=LABELS[chain.value]||"selected network";
@@ -26,6 +28,8 @@ export function initSecondaryEvmWalletUi({doc=globalThis.document,scope=globalTh
  disconnect.addEventListener("click",reset);
  chain.addEventListener("change",reset);
  panel.addEventListener("toggle",sync);
+ get("mobileWorkspaceTabs")?.addEventListener("click",sync);
+ mobile?.addEventListener?.("change",sync);
  get("baseWalletConnect")?.addEventListener("click",reset);
  doc.addEventListener?.("climboria:managed-provider-pair-change",sync);
  scope?.addEventListener?.("pagehide",reset);
