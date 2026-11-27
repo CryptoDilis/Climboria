@@ -1,11 +1,11 @@
-// Private candidate: explicit secondary-chain read-only wallet session.
-// Not imported by public pages. No switching, approvals, signing or transactions.
+// Explicit secondary-chain read-only wallet session.
+// No switching, approvals, signing or transactions.
 const CHAINS=Object.freeze({1:"0x1",56:"0x38"});
 const ADDRESS=/^0x[0-9a-fA-F]{40}$/;
-export function createSecondaryEvmWallet({getProvider=()=>globalThis.ethereum}={}){
+export function createSecondaryEvmWallet({getProvider=()=>globalThis.ethereum,onState=()=>{}}={}){
  let epoch=0,cleanup=null,state=Object.freeze({status:"idle",chainId:null,address:null});
  const snapshot=()=>state;
- function set(status,chainId=null,address=null){state=Object.freeze({status,chainId,address});return state;}
+ function set(status,chainId=null,address=null){state=Object.freeze({status,chainId,address});try{onState(state);}catch{}return state;}
  function clear(status="idle"){
   ++epoch;const remove=cleanup;cleanup=null;
   if(remove)remove();
