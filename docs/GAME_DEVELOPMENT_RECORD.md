@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## R5A NATIVE WEBSOCKET VERIFIED; MAIN CONSOLIDATION — 2026-11-27 UTC
+
+- #1000 prior exact head 9681e4eefaf1b05e5609d6ecb11f242b591b1381: [NPC Chat Acceptance 46019460113](https://github.com/CryptoDilis/Climboria/actions/runs/46019460113), job 140575013105 SUCCESS. 103/103 unit contracts; two distinct Chromium DOM clients 1280/390px received identical three NPC events, linked reply, mute, duplicate rejection, preserved drafts and real human count=2. Actual native loopback sockets: 2 clients, 3 events, linked reply, forged packet rejected, room empty at cleanup, scheduler closed with 387 ticks and no pending timer. Synthetic terrain/tickets and controlled clock; not real account or public WSS evidence.
+- #990 head db712b556d36bab459fd44b3d3dc96b2eb34a767: 9 of 11 checks passed at inspection, gameplay 46018616192 pending; ecosystem browser 46018616380 failed old homepage token/nav assertion. #999 head cacbb22b03ebfefc0c9f69bb63b9db7479a62d9e: foundation and chat green, focused browser pending. Do not cancel parent CI. Main now contains #997 corrected homepage assertion; no unrelated UI changes in this Game cycle.
+- Composed #1000 on main ad0e4d0c62372577ee351c3ba960ab130695b5ae with two parents, commit 1b05a158f1e598e6aa6a99d6606b68aa245328cb. Exact compare: 20 Game-scoped paths, no overlap with intervening main changes, zero behind checked baseline. Retargeted #1000 to main as draft, preserve parent branches. Fresh integrated CI required. No merge, public spawn or production Worker wiring authorized; no other workstream edits.
+- NEXT: verify exact main-targeted CI and parent results, inspect actual connected map/GLB and named dialogue evidence, merge only when full checks pass. Then isolate worker-owned NPC lifecycle with explicit capability, bounded scheduling, actual authorized edge and real account WSS acceptance, two actor visible rendering/avoidance and physical-device performance. No fake human presence, real inventory grants or token payouts.
+
+---
+
 ## R5A NATIVE LOOPBACK NPC WEBSOCKET ACCEPTANCE CANDIDATE — 2026-11-27
 
 - #999 foundation 46018846978 and chat acceptance 46018847001 passed; focused browser 46018846891 pending. #990 general browser 46018616380 repeated unrelated homepage navigation assertion 11 vs 12 at climb-token-record-smoke.mjs:33; no Game scope bypass. Other completed #990 checks green, gameplay and focused browser pending at inspection.
