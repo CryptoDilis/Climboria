@@ -38,12 +38,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Check active public evidence pin
+        id: public-pin
+        run: node -e "console.log('active='+String(require('./base/safe-custody/frozen-testnet-candidate.json').status==='TEST_ONLY_FROZEN_BUILD_NOT_APPROVAL'))" >> "$GITHUB_OUTPUT"
       - name: Observe historical fixture and common finalized chain only
+        if: steps.public-pin.outputs.active == 'true'
         run: |
           set -euo pipefail
           node base/safe-custody/observe-testnet.mjs > "$RUNNER_TEMP/base-sepolia-acceptance.json"
           cat "$RUNNER_TEMP/base-sepolia-acceptance.json"
       - uses: actions/upload-artifact@v4
+        if: steps.public-pin.outputs.active == 'true'
         with:
           name: base-sepolia-read-only-acceptance
           path: ${{ runner.temp }}/base-sepolia-acceptance.json
