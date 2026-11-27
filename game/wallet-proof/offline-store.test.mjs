@@ -49,3 +49,32 @@ test('two independent database connections race for one challenge; exactly one s
  });
  assert.deepEqual((await Promise.all([run(),run()])).sort(),[false,true]);
 });
+
+test('revocation freezes ownership evidence and all outstanding challenges across restart',async t=>{
+ const {store,path}=fixture(t),w=wallet(),initial=store.issue(alice,w.address,8453,now);
+ const linked=store.verify(alice,initial.id,await w.signMessage(initial.message),now+1);
+ const a=store.issue(alice,w.address,8453,now+2),b=store.issue(bob,w.address,8453,now+2);
+ const as=await w.signMessage(a.message),bs=await w.signMessage(b.message);
+ assert.throws(()=>store.revoke(bob,w.address,8453,now+3));
+ assert.throws(()=>store.revoke(alice,w.address,1,now+3));
+ assert.throws(()=>store.revoke(alice,w.address,8453,now));
+ const frozen=store.revoke(alice,w.address,8453,now+3);
+ assert.equal(frozen.evidence,linked.evidence);assert.equal(frozen.revoked,true);assert.equal(frozen.productionLink,false);
+ assert.deepEqual(store.revoke(alice,w.address,8453,now+4),frozen);
+ const reopened=new OfflineWalletProofStore(path);
+ try{
+  assert.throws(()=>reopened.verify(alice,a.id,as,now+4));
+  assert.throws(()=>reopened.verify(bob,b.id,bs,now+4));
+  for(const user of [alice,bob])assert.throws(()=>reopened.issue(user,w.address.toLowerCase(),8453,now+5));
+  assert.throws(()=>reopened.revoke(bob,w.address,8453,now+5));
+  const other=wallet(),c=reopened.issue(alice,other.address,8453,now+5);
+  assert.equal(reopened.verify(alice,c.id,await other.signMessage(c.message),now+6).keyProof,true);
+ }finally{reopened.close();}
+});
+test('independent connection cannot verify after revocation commits',async t=>{
+ const {store,path}=fixture(t),w=wallet(),initial=store.issue(alice,w.address,8453,now);
+ store.verify(alice,initial.id,await w.signMessage(initial.message),now+1);
+ const pending=store.issue(alice,w.address,8453,now+2),sig=await w.signMessage(pending.message);
+ const peer=new OfflineWalletProofStore(path);
+ try{store.revoke(alice,w.address,8453,now+3);assert.throws(()=>peer.verify(alice,pending.id,sig,now+4));}finally{peer.close();}
+});
