@@ -128,6 +128,30 @@ try {
      !npcGlb.attached||!npcGlb.visible||!npcGlb.label||!npcGlb.peersUnchanged||!npcGlb.playerUnchanged||
      !npcGlb.withinBudget||!npcGlb.hidden||!npcGlb.detached)
     errors.push('Actual NPC GLB projection failed: '+JSON.stringify(npcGlb));
+  // Use the normal gameplay frame loop and camera, not the synchronous projection audit.
+  const npcOriginal=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w.player;
+    return {x:p.x,y:p.y,z:p.z,yaw:p.yaw,peers:window.__CLIMBORIA_GAME_PEERS.count()};});
+  try{
+    const started=await page.evaluate(async()=>{const w=window.__climboriaJarrellsPeak;
+      if(!w.resumeAtRoomPosition({x:258,z:80,y:w.groundAt(258,80)+1.75}))return false;
+      // Camera faces the lake from the eastern bank using the existing resume yaw.
+      return w.npcContinuousStart();
+    });
+    if(!started)throw Error('Continuous NPC did not start');
+    await page.waitForFunction(()=>{const a=window.__climboriaJarrellsPeak.npcContinuousAudit();
+      return a.session?.frames>=15&&a.session.distance>.5;},undefined,{timeout:40000});
+    const running=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
+    console.log('Continuous NPC frame-loop audit',JSON.stringify(running));
+    if(!running.attached||!running.visible||running.session.closed||running.peers!==npcOriginal.peers||
+       running.loading+running.resident>running.budget)errors.push('Continuous NPC frame-loop state: '+JSON.stringify(running));
+    await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak;
+      w.resumeAtRoomPosition({x:0,z:-30,y:w.groundAt(0,-30)+1.75});});
+    await page.waitForFunction(()=>window.__climboriaJarrellsPeak.npcContinuousAudit().session?.closed,undefined,{timeout:10000});
+    const ended=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
+    if(ended.attached||ended.visible||ended.session.reason!=='distance')errors.push('NPC distance cleanup: '+JSON.stringify(ended));
+  }finally{
+    await page.evaluate(p=>{const w=window.__climboriaJarrellsPeak;w.npcContinuousStop();w.resumeAtRoomPosition(p)},npcOriginal);
+  }
   const weatherAudit=await page.evaluate(()=>window.__climboriaJarrellsPeak?.automaticWeatherAudit?.()??null);
   if(!weatherAudit||weatherAudit.intervalMs!==900000||
     weatherAudit.justBefore?.index!==0||weatherAudit.justBefore?.elapsedMs!==899999||

@@ -3790,6 +3790,55 @@ if(new URLSearchParams(location.search).has('smoke')){
   }
  };
 }
+// Explicit smoke-only continuous frame-loop candidate; no default actor.
+let npcContinuousSession=null,npcContinuousPending=false,npcContinuousCancel=false;
+let npcContinuousDraws=0,npcContinuousGroup=null;
+function npcContinuousNear(s){return P.mode==='walk'&&Math.hypot(s.x-P.x,s.z-P.z)<100}
+function npcContinuousPriorityFree(){
+ return ![...livePeers.values()].some(p=>!p.root&&Math.hypot(p.group.position.x-cam.position.x,p.group.position.z-cam.position.z)<120);
+}
+if(new URLSearchParams(location.search).has('smoke')){
+ window.ENDLESS_WILDS.npcContinuousStart=async()=>{
+  if(npcContinuousPending||npcContinuousSession&&!npcContinuousSession.audit().closed)return false;
+  if(document.hidden||!npcContinuousPriorityFree()||remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB-1)return false;
+  npcContinuousPending=true;npcContinuousCancel=false;let loading=false,resident=false,npc,gltf,group,label,projection;
+  const dispose=()=>{
+   if(group)scene.remove(group);
+   if(label){label.material.map?.dispose();label.material.dispose();label=null}
+   if(gltf){disposeRemoteHero(gltf.scene);gltf=null}
+   if(loading){remoteGLBLoading--;loading=false}
+   if(resident){remoteGLBResidents--;resident=false}
+   npcContinuousGroup=null;
+  };
+  try{
+   const [{createAdventurerRenderer},{createNpcFrameSession}]=await Promise.all([
+    import('./npc/adventurer-renderer.mjs'),import('./npc/npc-frame-session.mjs')]);
+   ({npc}=await makeLakeNpcForSmoke());
+   if(npcContinuousCancel||document.hidden||!npcContinuousNear(npc.snapshot())||!npcContinuousPriorityFree()||remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB-1)return false;
+   remoteGLBLoading++;loading=true;
+   gltf=await new T3.GLTFLoader().loadAsync('../assets/characters/Climboria_Jarrell.glb');
+   remoteGLBLoading--;loading=false;remoteGLBResidents++;resident=true;
+   if(npcContinuousCancel||document.hidden||!npcContinuousNear(npc.snapshot())||!npcContinuousPriorityFree())return false;
+   const fit=fitRemoteHero(gltf.scene);if(!fit)throw Error('NPC fit unavailable');
+   group=new T3.Group();group.name='AutonomousNPC:continuous';label=peerMarker('Adventurer [NPC]');label.name='NPCNameplate';
+   group.add(fit,label);scene.add(group);npcContinuousGroup=group;npcContinuousDraws=0;
+   gltf.scene.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;
+    const previous=o.onBeforeRender;o.onBeforeRender=function(...args){npcContinuousDraws++;previous?.apply(this,args)}}});
+   projection=createAdventurerRenderer({group,clips:gltf.animations,mixer:new T3.AnimationMixer(gltf.scene),loopRepeat:T3.LoopRepeat,dispose:()=>{}});
+   npcContinuousSession=createNpcFrameSession({npc,projection,dispose,near:npcContinuousNear,visible:()=>!document.hidden,priorityFree:npcContinuousPriorityFree});
+   return true;
+  }finally{
+   npcContinuousPending=false;
+   if(!npcContinuousSession||npcContinuousSession.audit().closed){npc?.close();projection?.close();dispose()}
+  }
+ };
+ window.ENDLESS_WILDS.npcContinuousStop=()=>{npcContinuousCancel=true;npcContinuousSession?.close()};
+ window.ENDLESS_WILDS.npcContinuousAudit=()=>({session:npcContinuousSession?.audit()??null,pending:npcContinuousPending,
+  attached:npcContinuousGroup?.parent===scene,visible:npcContinuousGroup?.visible===true,draws:npcContinuousDraws,
+  peers:livePeers.size,loading:remoteGLBLoading,resident:remoteGLBResidents,budget:MAX_REMOTE_GLB});
+ window.addEventListener('pagehide',()=>window.ENDLESS_WILDS.npcContinuousStop());
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)window.ENDLESS_WILDS.npcContinuousStop()});
+}
 function loadPeerHero(peer){
  if(!peer||peer.loading||peer.root||peer.retryAt>Date.now()||
     remoteGLBLoading+remoteGLBResidents>=MAX_REMOTE_GLB||!T3.GLTFLoader)return;
@@ -4037,7 +4086,7 @@ function update(dt){
   }else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='awaiting-saved-glb';}
  }
  mapMarkerClock+=dt;if(mapMarkerClock>=.12){mapMarkerClock=0;drawWorldMapPlayer();}
- const cp=cam.position;gameTick(dt,cp);window.__CLIMBORIA_GAME_PEERS?.update(dt);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
+ const cp=cam.position;gameTick(dt,cp);npcContinuousSession?.frame(dt);window.__CLIMBORIA_GAME_PEERS?.update(dt);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
  updateChunks(cp.x,cp.z,ready?1:0);
  sky.position.copy(cp);const sx=(Math.floor(cp.x/CS)+.5)*CS,sz=(Math.floor(cp.z/CS)+.5)*CS;water.position.set(sx,0,sz);
  sunL.position.copy(cp).addScaledVector(sunDir,200);sunL.target.position.copy(cp);
