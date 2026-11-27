@@ -87,8 +87,8 @@ contract SafeReserveGuardTest {
         bytes memory sigs=_signed(to,data,count);vm.expectRevert();_exec(to,data,sigs);
     }
     function _bind() private {_quorum(abi.encodeCall(guard.bindSuccessor,(1)));}
-    function _propose(uint256 e,uint256 i,bytes32 evidence,bytes32 nonce) private pure returns(bytes memory){
-        return abi.encodeCall(SafeReserveGuardFixture.proposeExpense,(e,i,PAYEE,10,evidence,0,nonce));
+    function _propose(uint256 e,uint256 i,bytes32 evidence,bytes32 nonce) private view returns(bytes memory){
+        return abi.encodeCall(SafeReserveGuardFixture.proposeExpense,(e,i,PAYEE,10,evidence,0,nonce,block.timestamp,block.timestamp+1 hours));
     }
     function _id(uint256 e,uint256 i,bytes32 evidence,bytes32 nonce) private view returns(bytes32){
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
@@ -151,10 +151,10 @@ contract SafeReserveGuardTest {
     function testNoGenericTransferOrRoleConflict() public {
         _bind();
         _reject(address(token),abi.encodeCall(token.transfer,(PAYEE,1)),3);
-        _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,0,PAYEE,10,"E",0,"N")),3);
-        _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,3,address(wallet),10,"E",0,"N")),3);
+        _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,0,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours)),3);
+        _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,3,address(wallet),10,"E",0,"N",block.timestamp,block.timestamp+1 hours)),3);
         _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,FOUNDER)),3);
-        vm.expectRevert();guard.proposeExpense(1,3,PAYEE,10,"E",0,"N");
+        vm.expectRevert();guard.proposeExpense(1,3,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours);
     }
     function testRoleSeparationPersistsWhenDestinationCodeDisappears() public {
         _bind();
@@ -183,6 +183,22 @@ contract SafeReserveGuardTest {
         token=successor.create(cfg);
         _reject(address(guard),abi.encodeCall(guard.bindSuccessor,(1)),3);
         require(!guard.bound()&&guard.lpCustody()==address(0)&&wallet.nonce()==0&&!guard.transactionActive());
+    }
+    function testSignedExpenseValidityWindow() public {
+        _bind();
+        uint256 t=block.timestamp;
+        bytes memory future=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",t+1 hours,t+2 hours));
+        bytes memory signedFuture=_signed(address(guard),future,3);
+        vm.expectRevert();_exec(address(guard),future,signedFuture);
+        require(wallet.nonce()==1&&!guard.transactionActive());
+        vm.warp(t+1 hours);
+        bytes memory tooLong=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",t,t+2 days));
+        _reject(address(guard),tooLong,3);
+        vm.warp(t+2 hours);
+        vm.expectRevert();_exec(address(guard),future,signedFuture);
+        require(wallet.nonce()==1&&!guard.transactionActive());
+        _quorum(_propose(1,3,"E","N"));
+        require(wallet.nonce()==2&&token.totalSupply()==SUPPLY);
     }
     function testLiquidityAndLegacySchedulingThroughActualSafe() public {
         _bind();
