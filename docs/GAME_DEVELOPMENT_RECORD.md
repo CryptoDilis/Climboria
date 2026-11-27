@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A CONNECTED ACTIVITY GRAPH CANDIDATE — 2026-11-27
+
+- Parent #987 head 95baea762efcc7a4cb8524661c31f041311219a5 foundation 46008239837, focused browser 46008239990 and validation 46008239857 passed; gameplay smoke 46008239874 pending at inspection. Main post-merge run not returned for #971 merge SHA. Parent branch unchanged while CI runs.
+- Compose existing lake and forest graph adapters into one continuous actor using verified dry connector; retain one stable NPC identity, private synthetic resource accounting, collision validation, and bounded novelty goal bias to encourage varied activity without scripted order. Transit waypoints are not activity goals. Unit tests require actual continuous fixture travel, fishing/swimming/gathering completion, stable identity, no teleport, fail-closed unloaded gap. Actual terrain browser integration and CI still pending. No public NPC activation, chat, economy or player state changes.
+- NEXT: inspect parent and candidate CI, integrate smoke-only actual loaded map connector and verify bounded continuous travel on actual terrain; if no safe corridor, choose authored nearer source or adjust planner within measured budgets, never bypass collision. Then named behavioral preferences and world chat, shared authority, physical mobile performance.
+
+---
+
 ## R5A CONNECTED NAVIGATION FOUNDATION — 2026-11-27
 
 - #971 merged into main as 7ae83e97c7dcc4524127a63182b24c9a4a689175 after all eight source CI workflows passed (NPC browser 45971734920, foundation 45971735025, gameplay 45971735003; other checks passed). Public NPC spawn remains disabled. Main post-merge CI pending at this checkpoint.

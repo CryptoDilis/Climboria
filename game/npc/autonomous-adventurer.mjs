@@ -47,7 +47,8 @@ export function createAutonomousAdventurer({nodes,edges,spawn,world,seed=1,ident
   for(const n of graph.values()){
    if(n.id===at||world.canAct(n,n.action)!==true)continue;
    const p=pathTo(n.id);if(!p?.length)continue;
-   const value=random()*3+(n.action!==last?3:0)+(n.action==='rest'?(100-stamina)/8:0)-p.length*.15;
+   const bias=world.goalBias?.(n, {stamina,last})??0;
+   const value=random()*3+(n.action!==last?3:0)+(n.action==='rest'?(100-stamina)/8:0)-p.length*.15+(finite(bias)?Math.max(-12,Math.min(12,bias)):0);
    if(value>score){score=value;best={id:n.id,path:p}}
   }
   if(!best){mode='idle';wait=.5;return}
