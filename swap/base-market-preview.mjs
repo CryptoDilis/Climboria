@@ -26,16 +26,20 @@ function metric(value, { positive = false } = {}) {
  * A DexScreener USD price is for pair.baseToken, NEVER pair.quoteToken.
  * Match the exact user-supplied EVM contract on the Base chain (not the symbol).
  */
-export function parseBaseMarketPairs(payload, contract) {
+// Explicit internal allowlist; this is a read-only parser, NOT release authorization.
+const EVM_MARKET_CHAINS = Object.freeze({8453:"base",1:"ethereum",56:"bsc"});
+export function parseEvmMarketPairs(payload, contract, chainId) {
+  if (!Number.isSafeInteger(chainId) || !Object.hasOwn(EVM_MARKET_CHAINS, chainId)) return [];
+  const providerChain = EVM_MARKET_CHAINS[chainId];
   const address = canonicalBaseAddress(contract);
   if (!address || !Array.isArray(payload?.pairs)) return [];
   const byPair = new Map();
   for (const pair of payload.pairs.slice(0, 150)) {
-    if (!pair || pair.chainId !== "base") continue;
+    if (!pair || pair.chainId !== providerChain) continue;
     const pairAddress = canonicalBaseAddress(pair.pairAddress);
     const baseAddress = canonicalBaseAddress(pair.baseToken?.address);
     const quoteAddress = canonicalBaseAddress(pair.quoteToken?.address);
-    if (!pairAddress || (baseAddress !== address && quoteAddress !== address)) continue;
+    if (!pairAddress || !baseAddress || !quoteAddress || baseAddress === quoteAddress || (baseAddress !== address && quoteAddress !== address)) continue;
     const liquidity = metric(pair.liquidity?.usd, { positive: true });
     if (liquidity === null) continue; // No credible pool liquidity for this discovery card.
     const isBaseAsset = baseAddress === address;
@@ -58,6 +62,10 @@ export function parseBaseMarketPairs(payload, contract) {
   return [...byPair.values()]
     .sort((a,b) => b.liquidityUsd-a.liquidityUsd || a.pairAddress.localeCompare(b.pairAddress))
     .slice(0,MAX_PAIRS);
+}
+// Existing Base runtime remains pinned to chain 8453; no new chain is exposed.
+export function parseBaseMarketPairs(payload, contract) {
+  return parseEvmMarketPairs(payload, contract, BASE_CHAIN_ID);
 }
 function metricSigned(value) {
   if ((typeof value !== "number" && (typeof value !== "string" || !value.trim() || value.length > 50)))
