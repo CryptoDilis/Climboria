@@ -14,6 +14,8 @@ import {V3GameRewardFixture} from "v3-src/V3GameRewardFixture.sol";
 /// One fixed successor, one quorum-approved binding, no generic call or transfer.
 /// Not a production dependency, actual eligibility or real liquidity adapter.
 contract SafeReserveGuardFixture is SafeEpochGuardFixture {
+    error InvalidAuthorizationWindow();
+    uint256 public constant MAX_AUTHORIZATION_WINDOW=1 days;
     V3AtomicSuccessorFixture public immutable successor;
     bytes32 public immutable successorHash;
     bool public bound;
@@ -78,7 +80,9 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
         if(i<3||i>5)revert Forbidden();
         return V3EpochSpendFixture(_target(i,expected));
     }
-    function proposeExpense(uint256 expected,uint256 i,address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce) external onlyWallet {
+    // Both bounds are signed as Safe calldata. This constrains execution, not signing time.
+    function proposeExpense(uint256 expected,uint256 i,address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce,uint256 validAfter,uint256 validUntil) external onlyWallet {
+        if(validAfter>block.timestamp||validUntil<=block.timestamp||validUntil<=validAfter||validUntil-validAfter>MAX_AUTHORIZATION_WINDOW)revert InvalidAuthorizationWindow();
         if(recipient==address(wallet)||recipient==distributor)revert Forbidden();
         for(uint256 j=0;j<7;j++)if(recipient==destinations[j])revert Forbidden();
         _expense(i,expected).propose(recipient,amount,evidence,month,nonce);
@@ -98,7 +102,7 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     }
     function _policyCallAllowed(bytes4 selector,uint256 len) internal view virtual override returns(bool){
         if(!bound)return selector==this.bindSuccessor.selector&&len==36;
-        return (selector==this.proposeExpense.selector&&len==228)||
+        return (selector==this.proposeExpense.selector&&len==292)||
                (selector==this.cancelExpense.selector&&len==100)||
                (selector==this.scheduleLiquidity.selector&&len==196)||
                (selector==this.cancelLiquidity.selector&&len==68)||
