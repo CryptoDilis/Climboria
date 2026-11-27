@@ -144,7 +144,7 @@ contract SafeQuorumIssuanceTest {
     function testNestedValidlySignedSafeTransactionRejectedDuringIssuance() public {
         NestedSafePoolBuilder builder=new NestedSafePoolBuilder(wallet,address(guard));
         cfg.liquidity.builder=builder;
-        bytes memory nested=abi.encodeCall(guard.cancelRotation,(1));
+        bytes memory nested=abi.encodeCall(guard.cancelRotation,(1,0));
         builder.arm(nested,_signAt(nested,3,wallet.nonce()+1));
         _issue();
         require(builder.attempted()&&builder.rejected()&&builder.rejection()==bytes4(keccak256("TransactionInProgress()")));
@@ -169,6 +169,23 @@ contract SafeQuorumIssuanceTest {
         bytes memory postBindSigs=_sign(invalidation,3);
         vm.expectRevert();_exec(invalidation,postBindSigs);
         require(wallet.nonce()==2);
+    }
+    function testBoundQuorumCanInvalidateUnexecutedExpenseAuthorization() public {
+        _issue();
+        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N"));
+        bytes memory stale=_sign(data,3);
+        bytes memory invalidation=abi.encodeCall(guard.invalidateAuthorization,(1,1));
+        vm.expectRevert();guard.invalidateAuthorization(1,1);
+        bytes memory wrong=abi.encodeCall(guard.invalidateAuthorization,(1,2));
+        bytes memory wrongSigs=_sign(wrong,3);
+        vm.expectRevert();_exec(wrong,wrongSigs);
+        require(wallet.nonce()==1);
+        require(_exec(invalidation,_sign(invalidation,3)));
+        require(wallet.nonce()==2&&guard.bound()&&!guard.transactionActive());
+        vm.expectRevert();_exec(data,stale);
+        require(wallet.nonce()==2&&successor.token().totalSupply()==SUPPLY);
+        require(_exec(data,_sign(data,3)));
+        require(wallet.nonce()==3);
     }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
