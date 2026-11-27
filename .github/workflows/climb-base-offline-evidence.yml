@@ -1,0 +1,25 @@
+name: CLIMB Base Offline Evidence Gates
+on:
+  pull_request:
+    paths:
+      - 'base/security-tools/**'
+      - '.github/workflows/climb-base-offline-evidence.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'base/security-tools/**'
+      - '.github/workflows/climb-base-offline-evidence.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify offline evidence regression suite
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s base/security-tools -p 'test_*.py' -v
