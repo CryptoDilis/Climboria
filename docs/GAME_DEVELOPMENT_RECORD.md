@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A PAIRED ACTUAL NPC DIALOGUE SMOKE CANDIDATE — 2026-11-27
+
+- #990 consolidated head 1b7116ac09aaf3db0262c6d14b681e8d1ab58946 foundation 46014811353, server authority 46014811301, validation 46014811385 passed. General browser 46014811410 failed at unrelated desktop homepage nav child count 11 vs expected 12 in climb-token-record-smoke.mjs:33; PR comment 7220671802 records blocker. Game wallet smoke passed all three widths. Do not bypass or alter cross-workstream checks; other runs pending at inspection.
+- Add isolated browser audit using two independently ticking named controllers (Aurelion and ZevranSol), distinct initial lake waypoints, actual loaded map adapters and enabled personalities. Feed genuine snapshots to dialogue engine; require linked opener/reply from different NPCs, nearby range, >=4s delay, movement, <=0.3m steps, cleanup and unchanged player/inventory/peers. No fabricated activity snapshots or public messages. This is paired simulation, not simultaneous GLB rendering, inter-NPC avoidance, world chat UI or shared server acceptance. Fresh browser CI pending.
+- NEXT: inspect #990 and candidate CI; coordinate unrelated homepage navigation test fix with its owner before main merge. Verify actual pair dialogue, add authoritative room-owned transport and two-client display/reconnect/mute/abuse checks. Inter-NPC collision/spacing, player interaction, real-time performance and public activation remain pending.
+
+---
+
 ## R5A VERIFIED PERSONALITY AND DIALOGUE CONSOLIDATION — 2026-11-27
 
 - #990 foundation 46011575420 passed; focused browser 46011575438 cancelled after mobile success. #991 foundation 46012752331 and desktop/mobile browser 46012752264 passed; #993 foundation 46013225215 and desktop/mobile browser 46013225116 passed, including inherited same-actor visuals. Personality and dialogue unit acceptance green; no server chat or actual paired NPC dialogue yet.
