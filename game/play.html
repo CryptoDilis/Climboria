@@ -4257,7 +4257,9 @@ function setPeerAnimation(peer,state){
 }
 window.__CLIMBORIA_GAME_PEERS={
  add(data){
-  if(!data||typeof data.id!=='string'||livePeers.has(data.id)||livePeers.size>=32)return;
+  // Private loopback QA can exercise 100 renderer descriptors; real room admission stays 32.
+  const cap=crowdPlanner&&['localhost','127.0.0.1','[::1]'].includes(location.hostname)?100:32;
+  if(!data||typeof data.id!=='string'||livePeers.has(data.id)||livePeers.size>=cap)return;
   const position=data.position;
   if(!position||!Number.isFinite(position.x)||!Number.isFinite(position.z)||!Number.isFinite(position.y))return;
   const group=new T3.Group();group.name='RealRemoteExplorer:'+data.id;
@@ -4375,6 +4377,7 @@ window.__CLIMBORIA_GAME_PEERS={
 
 if(new URLSearchParams(location.search).has('smoke')){
  window.ENDLESS_WILDS.crowdSmokeEnable=async()=>{
+  if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname))return false;
   if(livePeers.size||npcContinuousPending||npcPairPending||npcContinuousSession&&!npcContinuousSession.audit().closed||npcPairSession&&!npcPairSession.audit().closed||remoteGLBLoading||remoteGLBResidents)return false;
   const {planCrowdRendering}=await import('./npc/crowd-render-policy.mjs');crowdPlanner=planCrowdRendering;crowdPressure='normal';crowdPlanDirty=true;return true;
  };
