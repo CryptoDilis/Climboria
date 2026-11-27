@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## SERIALIZED COMBAT / SYNTHETIC LOOT INTEGRATION — 2026-11-27 PHT (PROPOSED)
+
+- #884 diagnostic helper merged 93f84882b9f20b2927b4ac2e5bc66c7361ef4f04, exact head c7794fa983440990148d58d423e3726631719d56, five SUCCESS Helper 45925211936 (6/6), Runtime 45925211938, Gateway 45925212029, Validate 45925211982, Gameplay 45925211895. Owner confirmed actual normal Google OAuth and Tester A Access/freshness, then B sign-in/Access denied in subsequent attempts. Live edge preflight already green 45918913811; scoped secrets owner-configured. Per owner request defer private cloud QA instead of more manual steps; keep PREVIEW_ENABLED=false, no bypass. No actual two-account combat acceptance. Temporary exact Supabase redirect should be removed after QA or if deferred indefinitely.
+- New isolated room loot integration: exact preview-world-drop-fixture only, serialized claim uses bound active session/account, authoritative fresh movement and HP, collision path, durable checkpoint revision in same transaction as one fixed receipt/slot. Stale runtime and ambiguous storage failure quarantine; retired session and production room denied. No client packet, production Worker, real inventory or wallet integration. Added concurrency, reconnect, stale revision, stale position and collision tests. CI pending.
+- EXACT NEXT: verify exact-head CI and merge only green; add actual local SQLite fixture integration evidence for claim/rollback and review authoritative map integration. Keep cloud combat disabled until two-tester QA, authorized identities and cost/rollback gates complete. No public PvP/loot. Game only.
+
+---
+
 ## PRIVATE COMBAT EDGE CONFIGURED; BOUNDED PREFLIGHT — 2026-11-27 PHT
 
 - Owner screenshots confirm exact custom hostname attached, workers.dev URLs OFF, Zero Trust Free and One-time PIN selected, authorized browser receives preview-disabled. Cookie-free curl GET / returned 302 to configured Access login host; POST /ticket and /ws upgrade probe returned 302. [Owner evidence](https://github.com/CryptoDilis/Climboria/issues/657#issuecomment-7206474057). Browser refresh did not prove rate limiting. Dashboard rule is Block/Active on exact hostname; quota warning 1/1 is capacity. Unauthorized email allowlist denial, rate enforcement and cost cap remain unverified.
