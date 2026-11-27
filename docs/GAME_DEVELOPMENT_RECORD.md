@@ -18,6 +18,17 @@
 
 ---
 
+## Verified reconnect and browser transport merges — 2026-11-28 PHT
+
+- [#1047](https://github.com/CryptoDilis/Climboria/pull/1047) merged at `6d8b1fad74a983ddaf2f2316be09edb385a86b63` after all 20 listed checks passed at `911f087494ec6491c15c6b971bfaa92d2f34cde6`. Browser network retry uses bounded randomized backoff through the existing authenticated ticket path. Confirmed spawn resets the backoff. Logout cancels pending retries. Post-merge hosted parity is tracked by [readiness run 46059088408](https://github.com/CryptoDilis/Climboria/actions/runs/46059088408).
+- [#1050](https://github.com/CryptoDilis/Climboria/pull/1050) merged at `2e5368c4f99e5106db6ab1cc9d293694c3d25613` after all five checks passed at `bc1d0cd7ce50eb742c2acc0db08394d3c4fb8d49`. [Exact Crowd Render Acceptance](https://github.com/CryptoDilis/Climboria/actions/runs/46057961673) verified private native movement into the game's Chromium scene, fresh-snapshot reconnect and cleanup in desktop/mobile viewports with patched test transport.
+- [#1051](https://github.com/CryptoDilis/Climboria/pull/1051) merged at `eb9b36b2b19412a59910a7a934968448bf62ed4c`. [Post-merge native](https://github.com/CryptoDilis/Climboria/actions/runs/46058642213) and [validation](https://github.com/CryptoDilis/Climboria/actions/runs/46058642120) passed. The 128 ceiling is specific to the private fixture.
+- Integrated local checkout passed 400 tests across Game room, Worker, NPC and field journal suites. The C11 deadline sweep with patched transport covered all 396,000 directed updates at each deadline. Local p95 was 282.25/182.27/120.23/105.86 ms at 250/100/50/25 ms. Each used 16,000 packets and 30,057,781 bytes. This varies by runner and workload, including a substantially slower 25 ms outcome than the earlier 44.57 ms CI observation.
+- Pending exact integration: [#1048](https://github.com/CryptoDilis/Climboria/pull/1048) R5A gait and benchmark, `3ad3bd3b2b5b2433fc7d7c76009f813ef4ea9d5d`; [#1049](https://github.com/CryptoDilis/Climboria/pull/1049) C9–C12, `e2e06e1c7a38aa75b78bb66dec4bf1adbff09bd3`; [#1052](https://github.com/CryptoDilis/Climboria/pull/1052) field journal, `65e8e9c86c72af41509d75f8e8612617e2faaae1`; [#1053](https://github.com/CryptoDilis/Climboria/pull/1053) NPC route planning, `caf6d50186dc3fddd8afe77e09ef7e548897450d`. Desktop journal reload and scope-switch fixture passed locally after the journal PR opened.
+- Next: check exact CI on those heads, merge clean Game-only candidates after terminal success, and verify hosted asset parity. Then run protected two-account acceptance and real physical device tests. Keep room and combat gates until the required evidence exists. Arena still has its existing future-map status. Durable progression, bounty settlement and real-token reward release remain outstanding.
+
+---
+
 ## CROWD C7 PRIVATE BROWSER BATCH PROJECTION AND CLOSE ENTRANT — 2026-11-28 PHT
 
 - #1038 exact 2a2a7d6d256922aba107e5b003d747d65f4d4a06: native run 46045989344 job 140665286701 SUCCESS including explicit policy regression step; 11/13 listed workflows success at inspection, focused browser and gameplay pending. No merge before terminal exact checks.
