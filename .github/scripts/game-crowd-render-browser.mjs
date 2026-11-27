@@ -72,6 +72,32 @@ try{
   const critical=await wait('critical cleanup',a=>a.peer.resident+a.peer.loading===0&&a.tiers.filter(t=>t.body&&t.visible).length<=(mobile?2:3)&&a.tiers.filter(t=>t.visible).length<= (mobile?8:12)&&a.closeCoverage!==null);
   assert.equal(critical.peer.peers,n);
   if(n===100){const reserve=mobile?2:3,total=mobile?8:12;assert.deepEqual(critical.closeCoverage,{total:100,bodies:reserve,markers:total-reserve,hidden:100-total,complete:false});assert.equal(critical.tiers.filter(t=>t.body&&t.visible&&t.nameplate).length,reserve);console.log('Private critical close coverage',JSON.stringify({mobile,coverage:critical.closeCoverage}));}
+  if(n===100){
+   const projection=await page.evaluate(()=>{
+    const w=window.__climboriaJarrellsPeak,p=window.__CLIMBORIA_GAME_PEERS;
+    if(!w.crowdSmokeProjection(true))throw Error('Projection activation rejected');
+    const initial=w.crowdSmokeProjectionFrame(),removed=initial.ids[0];
+    const original=p.audit().positions.find(q=>q.id===removed);
+    p.remove(removed);const afterLeave=w.crowdSmokeProjectionFrame();
+    p.add({id:removed,name:'QA Reconnected',model:'Jarrell',position:original});p.update(.016);
+    const afterJoin=w.crowdSmokeProjectionFrame();
+    const moved=afterJoin.ids[1];
+    p.move(moved,{x:10,z:-30,y:w.groundAt(10,-30)+1.75});p.update(.016);
+    const afterMove=w.crowdSmokeProjectionFrame();
+    p.move(moved,{x:.1,z:-30.5,y:w.groundAt(.1,-30.5)+1.75});p.update(.016);
+    const afterReturn=w.crowdSmokeProjectionFrame();
+    const count=p.count();p.clear();const afterClear=w.crowdSmokeProjectionFrame();
+    const off=w.crowdSmokeProjection(false),closed=w.crowdSmokeAudit().instances===null;
+    return {initial,removed,afterLeave,afterJoin,moved,afterMove,afterReturn,count,afterClear,off,closed};
+   });
+   const check=(a,count)=>{assert.ok(a.match);assert.equal(a.ids.length,count);assert.equal(new Set(a.ids).size,count);assert.deepEqual(a.counts,Array(7).fill(count));assert.equal(a.attached,7);assert.equal(a.frameDraws,count?7:0)};
+   check(projection.initial,100);check(projection.afterLeave,99);assert.ok(!projection.afterLeave.ids.includes(projection.removed));
+   check(projection.afterJoin,100);check(projection.afterMove,99);assert.ok(!projection.afterMove.ids.includes(projection.moved));
+   check(projection.afterReturn,100);check(projection.afterClear,0);assert.equal(projection.count,100);assert.ok(projection.off&&projection.closed);
+   console.log('Private close instance lifecycle evidence',JSON.stringify({mobile,initial:projection.initial.ids.length,draws:projection.initial.frameDraws,afterLeave:projection.afterLeave.ids.length,afterJoin:projection.afterJoin.ids.length,afterMove:projection.afterMove.ids.length,afterClear:projection.afterClear.ids.length,closed:projection.closed}));
+   // Restore the ordinary 100-entry fixture for the existing recovery gate.
+   await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=window.__CLIMBORIA_GAME_PEERS;for(let i=0;i<100;i++){const x=(i%10-4.5)*.1,z=-30.5-Math.floor(i/10)*.1;p.add({id:'qa-crowd-player-'+String(i).padStart(3,'0'),name:'QA Explorer '+i,model:'Jarrell',position:{x,z,y:w.groundAt(x,z)+1.75}})}});
+  }
   assert.equal(await page.evaluate(()=>window.__climboriaJarrellsPeak.crowdSmokePressure('normal')),true);
   const recovered=await wait('recover heavy',a=>a.peer.sceneVisibleResidents===(mobile?2:3));
   await page.evaluate(()=>window.__CLIMBORIA_GAME_PEERS.clear());
