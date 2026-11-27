@@ -8,6 +8,8 @@ on:
       - "assets/characters/**"
       - ".github/scripts/game-smoke.mjs"
       - ".github/scripts/game-authored-browser-smoke.mjs"
+      - ".github/scripts/game-authored-browser-native-glb-worker.mjs"
+      - ".github/scripts/game-authored-browser-native-glb-smoke.mjs"
       - ".github/workflows/gameplay-smoke.yml"
   pull_request:
     branches: [main]
@@ -16,6 +18,8 @@ on:
       - "assets/characters/**"
       - ".github/scripts/game-smoke.mjs"
       - ".github/scripts/game-authored-browser-smoke.mjs"
+      - ".github/scripts/game-authored-browser-native-glb-worker.mjs"
+      - ".github/scripts/game-authored-browser-native-glb-smoke.mjs"
       - ".github/workflows/gameplay-smoke.yml"
   workflow_dispatch:
 
@@ -29,7 +33,7 @@ concurrency:
 jobs:
   gameplay-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - name: Check out game
         uses: actions/checkout@v4
@@ -53,7 +57,7 @@ jobs:
         run: |
           # The original 42.9 MB hero can exceed the software-rendered mobile GLB readiness window.
           # Resize embedded textures for CI only; production's original GLB stays unchanged.
-          npm install --no-save playwright @gltf-transform/cli
+          npm install --no-save playwright @gltf-transform/cli three@0.128.0
           node -e "require.resolve('playwright'); console.log('Playwright dependency verified')"
           mv assets/characters/Climboria_Hero.glb /tmp/climboria-original-hero.glb
           npx gltf-transform resize /tmp/climboria-original-hero.glb assets/characters/Climboria_Hero.glb --width 2048 --height 2048
@@ -78,8 +82,14 @@ jobs:
           cat /tmp/climboria-http.log
           exit 1
       - name: Verify isolated authored combat browser controls
-        timeout-minutes: 2
+        timeout-minutes: 4
         run: node .github/scripts/game-authored-browser-smoke.mjs
+      - name: Verify native browser GLB combat projection
+        timeout-minutes: 5
+        run: |
+          npm ci --prefix .github/game-preview-runtime
+          if [ ! -e .github/node_modules ]; then ln -s game-preview-runtime/node_modules .github/node_modules; fi
+          node .github/scripts/game-authored-browser-native-glb-smoke.mjs
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
         run: |
