@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A NPC PERSONALITY UTILITY CANDIDATE — 2026-11-27
+
+- #990 consolidated head 1a42ae23ebd3133b70e62bd56e81bd578ea9fb4d: foundation 46011575420 passed; mobile job 140548139495 passed same-actor GLB projection and sampled swim/fish/gather/transit draws (4 mesh, 4 nameplate), 477.786m, 2441 steps, stable identity, cleanup, unchanged player/inventory/peers. Desktop job 140548139793 pending at inspection. No physical device or real-time full-route performance evidence. Preserve active parent CI.
+- Add opt-in personality goal scoring to the autonomous controller and connected adapter: exact registry preferences, bounded 2.4 utility bonus (0.6 under low stamina), no repeat bonus, stable registry seed unless explicit seed supplied. Existing defaults unchanged; preference cannot authorize unavailable activities or override collision. Tests cover all five registered NPCs, unavailable preferred goals, deterministic replay, collision and connected diverse activity completion. No public spawn, multi-actor admission, chat or real economy changes. Fresh CI pending.
+- NEXT: verify #990 full CI and mergeability, verify personality tests, integrate opt-in named behavior into actual map smoke; then authored contextual NPC dialogue and server-authoritative world chat with two-client tests, shared state and physical mobile performance. Keep public activation locked.
+
+---
+
 ## R5A CONNECTED MAP VERIFIED; SAME-ACTOR VISUAL CANDIDATE — 2026-11-27
 
 - #988 foundation 46009216068 and focused browser 46009216013 passed; #990 foundation 46010066229 and focused browser 46010066104 passed. Both actual map profiles: 477.786m travel, 2441 steps, max step 0.3m, direct validated connector with 1381 probes, swim/fish/gather completion and water exit, one synthetic wood, stable identity, unchanged player/inventory/peers/diagnostics. No actual continuous visual rendering proven by those runs.
