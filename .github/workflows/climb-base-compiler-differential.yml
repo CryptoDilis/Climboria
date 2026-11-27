@@ -49,6 +49,7 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/climb-differential"
           git rev-parse HEAD > "$RUNNER_TEMP/climb-differential/source.txt"
+          printf '%s\n' "$GITHUB_WORKSPACE" > "$RUNNER_TEMP/climb-differential/workspace.txt"
           forge --version > "$RUNNER_TEMP/climb-differential/foundry.txt"
           if [ "$COMPILER" = 0.8.39 ]; then
             curl --fail --show-error --silent --location --retry 2 https://github.com/argotorg/solidity/releases/download/v0.8.39/solc-static-linux -o "$RUNNER_TEMP/solc-candidate"
@@ -154,7 +155,7 @@ jobs:
           mkdir -p compatibility
           python - <<'PY' | tee compatibility/comparison.log
           import json, os
-          from pathlib import Path
+          from pathlib import Path, PurePosixPath
 
           project = os.environ["PROJECT"]
           target = "paris" if project == "safe-custody" else "london"
@@ -204,8 +205,6 @@ jobs:
                   require(not settings.get("viaIR", False), f"unexpected viaIR: {output}")
                   for source, data in inp["sources"].items():
                       content = data["content"]
-                      if version == "0.8.39" and (source.startswith(("src/", "test/", "../v3-testnet/src/"))):
-                          content = content.replace("pragma solidity 0.8.39;", "pragma solidity 0.8.19;")
                       require(source not in sources or sources[source] == content, f"inconsistent source: {source}")
                       sources[source] = content
                   for source, entries in out.get("contracts", {}).items():
@@ -224,15 +223,43 @@ jobs:
               require(contracts and any(k.startswith("src/") for k in contracts), "no project contracts captured")
               Path("compatibility", f"{version}-metadata.json").write_text(json.dumps(metadata_rows, indent=2))
               print(f"{version}: {len(records)} actual invocations, {len(sources)} sources, {len(contracts)} contracts")
-              return contracts, sources, (root / "source.txt").read_text()
+              workspace = PurePosixPath((root / "workspace.txt").read_text().strip())
+              require(workspace.is_absolute() and ".." not in workspace.parts, "invalid build workspace")
+              return contracts, sources, (root / "source.txt").read_text(), workspace
 
-          a, sa, ha = collect("0.8.19")
-          b, sb, hb = collect("0.8.39")
+          def expected_candidate(source, baseline, workspace):
+              # Only the repository source/test roots touched by the pragma-only experiment.
+              # Safe imports V3 sources by an absolute path in actual solc JSON.
+              p = PurePosixPath(source)
+              roots = [PurePosixPath("src"), PurePosixPath("test")]
+              if project == "safe-custody":
+                  roots.extend([PurePosixPath("../v3-testnet/src"), workspace / "base/v3-testnet/src"])
+              for root in roots:
+                  if p.is_relative_to(root) and p != root and ".." not in p.relative_to(root).parts:
+                      return baseline.replace("pragma solidity 0.8.19;", "pragma solidity 0.8.39;")
+              return baseline
+
+          a, sa, ha, wa = collect("0.8.19")
+          b, sb, hb, wb = collect("0.8.39")
+          # Regression checks: approved import root, dependency and traversal rejection.
+          old = "pragma solidity 0.8.19;\ncontract C {}"
+          new = old.replace("0.8.19", "0.8.39")
+          require(expected_candidate("src/C.sol", old, wa) == new, "local pragma handling")
+          require(expected_candidate("lib/src/C.sol", old, wa) == old, "dependency must remain identical")
+          require(expected_candidate("src/../lib/C.sol", old, wa) == old, "path traversal must not be normalized")
+          if project == "safe-custody":
+              require(expected_candidate(str(wa / "base/v3-testnet/src/C.sol"), old, wa) == new, "Safe absolute import handling")
+              require(expected_candidate(str(wa / "base/v3-testnet/lib/C.sol"), old, wa) == old, "absolute dependency must remain identical")
           problems = []
           if ha != hb:
               problems.append("checkout commit mismatch")
-          if sa != sb:
-              problems.append("source mismatch after permitted pragma normalization: " + repr(sorted(k for k in sa.keys() | sb.keys() if sa.get(k) != sb.get(k))))
+          if wa != wb:
+              problems.append("workspace mismatch")
+          if sa.keys() != sb.keys():
+              problems.append("source identity mismatch: " + repr(sorted(sa.keys() ^ sb.keys())))
+          source_differences = sorted(k for k in sa.keys() & sb.keys() if expected_candidate(k, sa[k], wa) != sb[k])
+          if source_differences:
+              problems.append("source mismatch after exact permitted pragma substitution: " + repr(source_differences))
           if a.keys() != b.keys():
               problems.append("contract identity mismatch: " + repr(sorted(a.keys() ^ b.keys())))
           for key in sorted(a.keys() & b.keys()):
