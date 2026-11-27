@@ -105,7 +105,8 @@ export class PreviewCombatRoom{
      const reservation=await this.budget.reserve('tick');
      if(!reservation.ok){await this.quarantine();return;}
      const result=await this.runtime.tick();
-     if(!result.ok)await this.quarantine();
+     if(!result.ok){await this.quarantine();return;}
+     this.notifyCommittedRespawns(result);
     }
    }catch{
     await this.quarantine();
@@ -133,6 +134,16 @@ export class PreviewCombatRoom{
   try{entry.socket.send(JSON.stringify({type:'preview-hit',actorId,targetId:result.targetId,
    health:result.health,damage:result.damage,downed:result.downed}))}
   catch{const work=this.close(result.targetId,1011,'preview-hit-send-failed');this.state.waitUntil?.(work)}
+ }
+ // Tick returns respawn IDs only after durable checkpoint commit.
+ notifyCommittedRespawns(result){
+  if(!result?.ok||!Array.isArray(result.respawned)||this.quarantined)return;
+  for(const id of new Set(result.respawned)){
+   const entry=this.sockets.get(id);
+   if(!entry||Date.now()>=entry.expiresAt||this.quarantined)continue;
+   try{entry.socket.send(JSON.stringify({type:'preview-respawn',targetId:id}))}
+   catch{const work=this.close(id,1011,'preview-respawn-send-failed');this.state.waitUntil?.(work)}
+  }
  }
  async quarantine(){
   this.quarantined=true;
