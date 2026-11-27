@@ -59,6 +59,176 @@ jobs:
           forge test --match-path test/V3SecurityFuzz.t.sol --match-test '^testFuzz_' --fuzz-runs 256 -vv | tee "$RUNNER_TEMP/climb-v3-fuzz.log"
           grep -Eq '5 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-fuzz.log"
           test "$(grep -c 'runs: 256' "$RUNNER_TEMP/climb-v3-fuzz.log")" -eq 5
+      - name: Exercise malicious synthetic liquidity callbacks
+        run: |
+          set -euo pipefail
+          forge test --match-contract '^V3LiquidityCallbackTest
+        run: |
+          set -euo pipefail
+          forge test --match-contract ClimbV3TestTokenTest -vv | tee "$RUNNER_TEMP/climb-v3-tests.log"
+          grep -Eq '13 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-tests.log"
+      - name: Run isolated restricted spend tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3RestrictedSpendTest -vv | tee "$RUNNER_TEMP/climb-v3-spend-tests.log"
+          grep -Eq '15 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-spend-tests.log"
+      - name: Run integrated V3 reserve tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract ClimbV3IntegratedTestTokenTest -vv | tee "$RUNNER_TEMP/climb-v3-integrated-tests.log"
+          grep -Eq '6 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-integrated-tests.log"
+      - name: Run shared expense successor fixture tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3SharedExpenseTest -vv | tee "$RUNNER_TEMP/climb-v3-shared-expense-tests.log"
+          grep -Eq '7 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-shared-expense-tests.log"
+      - name: Run bounded legacy successor fixture tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3BoundedLegacyTest -vv | tee "$RUNNER_TEMP/climb-v3-bounded-legacy-tests.log"
+          grep -Eq '10 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-bounded-legacy-tests.log"
+      - name: Run synthetic liquidity successor fixture tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3LiquidityPolicyTest -vv | tee "$RUNNER_TEMP/climb-v3-liquidity-tests.log"
+          grep -Eq '7 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-liquidity-tests.log"
+      - name: Run custody epoch policy fixture tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3EpochPolicyTest -vv | tee "$RUNNER_TEMP/climb-v3-epoch-tests.log"
+          grep -Eq '7 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-epoch-tests.log"
+      - name: Run atomic seven-policy successor fixture tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3AtomicSuccessorTest -vv | tee "$RUNNER_TEMP/climb-v3-atomic-successor-tests.log"
+          grep -Eq '10 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-atomic-successor-tests.log"
+      - name: Run signed game reward fixture tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3GameRewardTest -vv | tee "$RUNNER_TEMP/climb-v3-game-reward-tests.log"
+          grep -Eq '9 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-game-reward-tests.log"
+      - name: Run isolated governed game reward tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3GovernedGameRewardTest -vv | tee "$RUNNER_TEMP/climb-v3-governed-reward-tests.log"
+          grep -Eq '6 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-governed-reward-tests.log"
+      - name: Run deferred liquidity fixture tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3DeferredLiquidityTest -vv | tee "$RUNNER_TEMP/climb-v3-deferred-liquidity-tests.log"
+          grep -Eq '9 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-deferred-liquidity-tests.log"
+      - name: Run deferred legacy fixture tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3DeferredLegacyTest -vv | tee "$RUNNER_TEMP/climb-v3-deferred-legacy-tests.log"
+          grep -Eq '12 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-deferred-legacy-tests.log"
+      - name: Run isolated binary legacy proof verifier tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3LegacyProofVerifierTest -vv | tee "$RUNNER_TEMP/climb-v3-legacy-proof-tests.log"
+          grep -Eq '6 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-legacy-proof-tests.log"
+      - name: Run isolated legacy proof claim tests
+        run: |
+          set -euo pipefail
+          forge test --match-contract V3LegacyProofClaimTest -vv | tee "$RUNNER_TEMP/climb-v3-legacy-claim-tests.log"
+          grep -Eq '8 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-v3-legacy-claim-tests.log"
+      - name: Fingerprint integrated test build (no deployment)
+        env:
+          V3_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          forge build
+          node build-manifest.mjs "$RUNNER_TEMP/v3-build-manifest.json"
+      - name: Verify original deployed creation template remains unchanged
+        run: |
+          node --input-type=module -e 'import {readFileSync} from "node:fs"; import assert from "node:assert/strict"; const m=JSON.parse(readFileSync(process.env.RUNNER_TEMP+"/v3-build-manifest.json","utf8")); const t=m.contracts.find(x=>x.name==="ClimbV3IntegratedTestToken"); assert.equal(t.creationSha256,"75a53139963cbbf3b62e8769f22064f3a7c4056d1b772be7f64ac15c8aa383cd"); assert.equal(t.runtimeTemplateSha256,"10908e061fc8bb75381a1c17bf221657a3ee802145237472b8df63b173511c30");'
+      - name: Verify successor contract size limits
+        env:
+          V3_SOURCE_SHA: ${{ github.sha }}
+        run: node successor-size-manifest.mjs "$RUNNER_TEMP/v3-successor-size.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-v3-successor-size
+          path: ${{ runner.temp }}/v3-successor-size.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Archive test-only build evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: climb-v3-build-manifest
+          path: ${{ runner.temp }}/v3-build-manifest.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Test local durable game reward reservations
+        run: node --test game-reward-reservation.test.mjs
+      - name: Test synthetic canonical legacy manifest evidence
+        run: node --test legacy-canonical-evidence.test.mjs
+      - name: Test synthetic indexed legacy allocation-sum proofs
+        run: node --test legacy-sum-proof.test.mjs
+      - name: Test canonical binary legacy proof generator
+        run: node --test legacy-binary-proof.test.mjs
+      - name: Test synthetic legacy key-control signatures
+        run: node --test legacy-owner-proof.test.mjs
+      - name: Test synthetic legacy manifest proof consumption
+        run: node --test legacy-owner-ledger.test.mjs
+      - name: Test V3 read-only estimator
+        run: node --test estimate-creation.test.mjs
+      - name: Test unsigned review binding
+        run: node --test unsigned-review.test.mjs
+      - name: Test finalized V3 creation verifier
+        run: node --test verify-creation.test.mjs
+      - name: Test historical pre-start verifier
+        run: node --test check-prestart.test.mjs
+      - name: Test exact monthly unlock disclosure
+        run: node --test unlock-schedule.test.mjs
+      - name: Generate test fixture unlock schedule
+        run: node unlock-schedule.mjs > "$RUNNER_TEMP/v3-unlock-schedule.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climb-v3-test-fixture-unlock-schedule
+          path: ${{ runner.temp }}/v3-unlock-schedule.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Estimate V3 creation (read-only, never deploy)
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        env:
+          TEST_PAYER: ${{ inputs.payer }}
+          TEST_ROLE_CONFIG: ${{ inputs.role_config }}
+        run: |
+          set -euo pipefail
+          node estimate-creation.mjs "$RUNNER_TEMP/v3-build-manifest.json" "$GITHUB_SHA" "$TEST_PAYER" > "$RUNNER_TEMP/v3-creation-estimate.json"
+          cat "$RUNNER_TEMP/v3-creation-estimate.json"
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        with:
+          name: climb-v3-creation-estimate
+          path: ${{ runner.temp }}/v3-creation-estimate.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Prepare unsigned review artifact (no signing)
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.prepare_review
+        env:
+          TEST_PAYER: ${{ inputs.payer }}
+          TEST_ROLE_CONFIG: ${{ inputs.role_config }}
+        run: |
+          set -euo pipefail
+          node unsigned-review.mjs "$RUNNER_TEMP/v3-build-manifest.json" "$GITHUB_SHA" "$TEST_PAYER" "$RUNNER_TEMP/v3-creation-estimate.json" "$RUNNER_TEMP/v3-unsigned-review.json"
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.prepare_review
+        with:
+          name: climb-v3-unsigned-review
+          path: ${{ runner.temp }}/v3-unsigned-review.json
+          if-no-files-found: error
+          retention-days: 3
+ -vv | tee "$RUNNER_TEMP/climb-liquidity-callbacks.log"
+          grep -Eq '3 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-liquidity-callbacks.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: climb-liquidity-callback-log
+          path: ${{ runner.temp }}/climb-liquidity-callbacks.log
+          if-no-files-found: error
+          retention-days: 14
       - name: Run exact offline V3 prototype tests
         run: |
           set -euo pipefail
