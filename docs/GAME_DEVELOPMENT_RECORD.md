@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A NORMAL FOLLOW CAMERA PAIRED DRAW CANDIDATE — 2026-11-28 PHT
+
+- #1023 exact 36a4734b1c9ae0b4345ee70b6a94aeb5e5834eb8: seven of nine workflows SUCCESS (foundation 46035164267, chat 46035164305, Validate 46035164512, general browser 46035164230, authority 46035164210, chest 46035164373, heroes 46035164347). Mobile focused job 140628603244 SUCCESS, cleanupErrors=0, both released, zero allocated slots; desktop focused 140628603543 and gameplay 46035164387 running. Keep parent exact head unchanged.
+- Smoke-only alternate explorer position (275,83), looking west with existing normal follow camera, tests hypothesis that original portrait framing excluded ZevranSol. Track actual normal-camera mesh and nameplate onBeforeRender submissions for both actors in the same renderer frame; require >=2 such frames while both move and retain all cleanup/budget assertions. No forced camera tracking, FOV change, production behavior or NPC teleport. Candidate unverified; if failed inspect geometry/frustum and actual log, not weaken draw requirement.
+- NEXT: complete #1023 CI and merge after non-overlap check; verify normal-camera candidate separately, integrate after parent merge. Actual physical-device performance and public/server activation still gated.
+
+---
+
 ## R5A MAIN-BASED PAIRED INTEGRATION REPAIR — 2026-11-28 PHT
 
 - #1013/#1015 mobile passed; desktop jobs 140620013561 and 140621630238 cancelled after approximately 12-minute job windows; no terminal pass. #1017/#1018 desktop still running, mobile passed. #1020 mobile 140624214280 failed at cleanupErrors assertion (1 instead of 0) after actual map, movement, dialogue and simultaneous draw assertions passed. Source foundation 46033866649 and chat 46033866749 passed. Preserve exact heads and existing runs.
