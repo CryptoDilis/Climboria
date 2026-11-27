@@ -105,7 +105,8 @@ export class PreviewCombatRoom{
      const reservation=await this.budget.reserve('tick');
      if(!reservation.ok){await this.quarantine();return;}
      const result=await this.runtime.tick();
-     if(!result.ok)await this.quarantine();
+     if(!result.ok){await this.quarantine();return}
+     this.notifyCommittedRespawns(result.respawnSnapshots);
     }
    }catch{
     await this.quarantine();
@@ -133,6 +134,24 @@ export class PreviewCombatRoom{
   try{entry.socket.send(JSON.stringify({type:'preview-hit',actorId,targetId:result.targetId,
    health:result.health,damage:result.damage,downed:result.downed}))}
   catch{const work=this.close(result.targetId,1011,'preview-hit-send-failed');this.state.waitUntil?.(work)}
+ }
+ // The private room's committed respawn event is visible to both fighters.
+ // Only a currently active subject can be announced; omit account data.
+ notifyCommittedRespawns(snapshots){
+  if(this.quarantined||!Array.isArray(snapshots))return;
+  for(const s of snapshots){
+   const subject=this.sockets.get(s?.serverId);
+   if(!subject||Date.now()>=subject.expiresAt||s.roomId!==ROOM||
+      s.health!==500||s.downed!==false||s.respawnAtMs!==null||
+      !s.position||!['x','y','z'].every(k=>Number.isFinite(s.position[k])))continue;
+   const packet=JSON.stringify({type:'preview-respawn',targetId:s.serverId,
+    health:s.health,downed:false,position:{x:s.position.x,y:s.position.y,z:s.position.z}});
+   for(const [id,entry] of this.sockets){
+    if(this.quarantined||Date.now()>=entry.expiresAt)continue;
+    try{entry.socket.send(packet)}
+    catch{const work=this.close(id,1011,'preview-respawn-send-failed');this.state.waitUntil?.(work)}
+   }
+  }
  }
  async quarantine(){
   this.quarantined=true;

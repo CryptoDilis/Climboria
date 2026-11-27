@@ -92,7 +92,11 @@ export function createTransactionalRoomPrototype({roomId,clock=()=>Date.now(),sp
    const result=lifecycle.tick();
    if(!result.ok)return fail();
    if(!await persist([...active.keys()]))return fail();
-   return {ok:true,respawned:result.respawned};
+   // Snapshot the respawn inside the serialized operation, after the durable
+   // commit. No second read can race a subsequent input, attack or disconnect.
+   const respawnSnapshots=result.respawned.map(id=>snapshot(id));
+   if(respawnSnapshots.some(s=>!s))return fail();
+   return {ok:true,respawned:result.respawned,respawnSnapshots};
   });
  }
  function disconnect(sessionId){

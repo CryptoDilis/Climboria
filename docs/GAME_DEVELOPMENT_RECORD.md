@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## COMBAT-ONLY: DURABLE DEATH / RESPAWN SYNCHRONIZATION — 2026-11-27 PHT (PROPOSED)
+
+- #894 merged 7b59a82b82efdf37e2499b1599b611efc0d200db, exact head 1a1b5e3f9301859ce0c525739dcec21b33848e9a, five SUCCESS Runtime 45935745375 (job 140298435983 actual local workerd/SQLite WebSocket committed HP push), Validate 45935745360, Gateway 45935745385, Authority 45935745374, Gameplay 45935745370. No cloud deployment; public PvP still disabled.
+- New isolated preview respawn transport: serialized room captures authoritative respawn snapshot after durable checkpoint commit, pushes exact active session ID, HP and server position to both active sockets; no extra storage read or write. No event on failed commit, early timer, expired or retired subject. No account IDs or client-controlled respawn data. Added mocked transport acceptance for lethal hit, downed movement/attack denial, rejoin before respawn, one committed respawn push to both, durable restart HP, failed commit quarantine/rollback. Tests use low-HP seeded fake checkpoint only; no test hook in Worker. Actual local workerd death/respawn acceptance is still pending, not claimed by mocked tests.
+- EXACT NEXT: verify exact-head CI/merge, then actual local runtime death/respawn/reconnect verification and client-side combat presentation integration within isolated fixture; no loot/inventory or public enablement. Private cloud QA deferred per owner; keep preview disabled. Game combat only.
+
+---
+
 ## COMBAT-ONLY PRIORITY: COMMITTED TARGET HP PUSH — 2026-11-27 PHT (PROPOSED)
 
 - Owner explicitly redirected work to combat only. Do not advance loot/inventory in this cycle; #892 is separate and not required for combat. Private cloud QA deferred after Access denial; keep deployed preview disabled, no bypass or production changes.
