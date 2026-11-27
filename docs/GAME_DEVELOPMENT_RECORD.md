@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A ACTUAL FOREST MAP SMOKE CANDIDATE — 2026-11-27
+
+- PR #967 foundation run 45968097821 passed; parent #963 foundation 45967765549 passed, mobile job 140400473936 passed, desktop job 140400473667 in progress at inspection. PR #967 focused browser 45968097776 still running. No active parent CI cancelled.
+- Smoke-only actual map adapter and GLB audit in 5f697e070e9c497a333ba1aa924b715e9e21ca38, browser assertions in 0afd35da2dcaf85a9a28a374a1e6cc5d34dc993e: reuse cc0LogSpots, loaded terrain, actor collision, real character GLB and gather animation draw; require authored source, bounded travel, synthetic completion, unchanged inventory/peers/collision diagnostics and cleanup. Smoke fixture intentionally repositions local explorer; not public gameplay. No runtime activation or financial grants. Browser results not yet verified.
+- NEXT: inspect terminal parent #963 and #967 runs, then this candidate actual-map run; fix any failing checks without dropping assertions. After acceptance, connect lake/forest activity goals for one continuous actor, then stable NPC names and contextual chat, before shared multiplayer and physical mobile performance. Named NPC requirements separately in #966. Keep all public release gates closed.
+
+---
+
 ## R5A FOREST GATHERING CANDIDATE — 2026-11-27
 
 - Isolated forest adapter `game/npc/forest-gatherer.mjs` (a7cd8ef2348fa56aaf16087df69b715ebb1b4f90) reuses the autonomous adventurer controller, accepts authored fallen-log locations, requires loaded dry terrain and bidirectional bounded collision-safe approaches; only a private synthetic wood counter with capacity 12 is credited. No actual resource depletion, real inventory, token, multiplayer or public spawning changes. Unit tests added in a453d003222be192a6daab871e51a0d9e232829c; CI and real map integration pending.
