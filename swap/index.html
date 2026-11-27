@@ -430,6 +430,13 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
    </form>
    <p id="secondaryEvmStatus" role="status" aria-live="polite">Enter an exact contract on the selected research network.</p>
    <div id="secondaryEvmResults" class="base-market-results"></div>
+   <section class="secondary-wallet-card" aria-label="Optional read-only secondary wallet">
+    <h4>Optional wallet · read-only</h4>
+    <p>Manually select the research network in your wallet, then connect to view your public address. No signing, approvals or transactions. Connecting clears any local Base wallet session.</p>
+    <div class="base-swap-controls"><button type="button" id="secondaryWalletConnect" disabled>Connect research wallet</button><button type="button" id="secondaryWalletDisconnect" disabled>Clear local session</button></div>
+    <p id="secondaryWalletStatus" role="status" aria-live="polite">No secondary wallet connected.</p>
+    <div id="secondaryWalletAddress" class="base-swap-result"></div>
+   </section>
   </details>
 </section>
 <section id="baseSwapWorkspace" class="base-swap-workspace" hidden aria-label="Base read-only wallet and indicative price workspace">
@@ -497,7 +504,7 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 <p class="foot">CLIMBORIA SWAP · BASE FIRST · MULTICHAIN · <a href="/dex/partners/">PARTNERSHIPS</a> · <a href="/support/">CUSTOMER SUPPORT</a></p></main></div>
 <script src="/dex/swap-amount.js"></script>
 <script src="/swap-config.js"></script>
-<script type="module" src="/dex/provider-managed-swap.mjs?v=10"></script><script type="module" src="/swap/base-market-preview.mjs?v=1"></script><script type="module" src="/swap/secondary-evm-research.mjs?v=2"></script><script type="module" src="/dex/base-wallet-session.mjs?v=1"></script><script type="module" src="/dex/base-price-preview.mjs?v=2"></script><script type="module" src="/swap/base-workspace.mjs?v=1"></script>
+<script type="module" src="/dex/provider-managed-swap.mjs?v=10"></script><script type="module" src="/swap/base-market-preview.mjs?v=1"></script><script type="module" src="/swap/secondary-evm-research.mjs?v=2"></script><script type="module" src="/swap/secondary-evm-wallet-ui.mjs?v=1"></script><script type="module" src="/dex/base-wallet-session.mjs?v=1"></script><script type="module" src="/dex/base-price-preview.mjs?v=2"></script><script type="module" src="/swap/base-workspace.mjs?v=1"></script>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1200,4 +1207,5 @@ html[data-climboria-swap-network="base"] .solana-only-trust,html[data-climboria-
 .secondary-evm-research form{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:6px!important;margin-top:10px}
 .secondary-evm-research input,.secondary-evm-research select,.secondary-evm-research button{width:100%;min-width:0;min-height:42px;font-size:14px}
 .secondary-evm-research p{overflow-wrap:anywhere}
+.secondary-wallet-card{margin-top:12px;border-top:1px solid #4c5d77;padding-top:10px}.secondary-wallet-card h4{margin:0;font-size:14px;color:#e9d6a6}.secondary-wallet-card .base-swap-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.secondary-wallet-card #secondaryWalletAddress{overflow-wrap:anywhere;font-size:13px;color:#e2eaf6}
 </style></body></html>
