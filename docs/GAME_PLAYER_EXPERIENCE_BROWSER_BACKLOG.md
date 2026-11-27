@@ -60,6 +60,14 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 - [ ] R3.4 Durable authenticated progress/inventory with atomic updates, migrations, reconnect, replay protection, ownership and isolation; guest/local preview remains clearly separate.
 - [ ] R3.5 Acceptance: first mastery unlock, meaningful choices, no pay-to-win, deterministic balance tests, no fabricated inventory.
 
+### Owner-approved progression refinement — 2026-11-27 PHT
+
+- [ ] R3.6 No traditional global character level, level-based combat advantage or mandatory XP grind. Independent skill mastery only; proposed ranks Novice, Apprentice, Skilled, Expert and Master (thresholds and balance to be playtested).
+- [ ] R3.7 Physical combat mastery: punch (Power Punch, Counter Punch, Heavy Punch), kick (Low Kick, Roundhouse Kick, Heavy Kick), defense (block/parry/dodge) and realistic weapon handling. Each technique needs animation, wind-up/recovery, stamina cost, range and authoritative hit validation; timing, positioning and counterplay matter more than raw stats. No magic, supernatural attacks, fireballs or teleport abilities. Interpret earlier creature/event ideas as grounded wilderness threats and environmental phenomena; no magical powers. Deferred teleport-stone concept is not a launch requirement and must not be reintroduced without an explicit new owner decision.
+- [ ] R3.8 Activity-based mastery for climbing/grip, endurance, swimming/diving, fishing, survival, crafting, treasure hunting and weapon handling. Only validated activities or legitimate training grant mastery; reject idle macro/air-punch spam, replay and farming exploits. Diminishing returns and sensible caps; beginner must retain a fair chance against veterans.
+- [ ] R3.9 Difficult material-based equipment crafting and enhancement, proposed +0 through +10: +1–3 accessible, +4–6 challenging, +7–9 difficult, +10 exceptionally difficult. Use exploration, specific materials, recipe knowledge and crafting mastery rather than paid upgrades or mandatory random failures. Exact costs/stat caps and materials subject to balance testing; no unapproved destruction/downgrade on failure, no pay-to-win.
+- [ ] R3.10 Equipment durability, wear and repair using materials; broken equipment becomes unusable until repaired, with earned enhancement retained. Test atomic crafting/repair, duplicate/replay protection, valid item ownership, disconnect recovery and balance. No real assets or financial grants before existing release gates.
+
 ## R4 — Wildlife, enemies and bosses
 
 - [ ] R4.1 Passive/aggressive wildlife, approved hostile NPCs and cave guardians; reconcile older disabled snake/animal rules before specific creature reactivation. No unauthorized reintroduction of retired assets.
@@ -74,6 +82,15 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 - [ ] R5.3 Guilds, rivalry/encounter history and moderation (mute/block/report/anti-spam/privacy). Preserve existing World/Nearby Chat; private messaging after moderation review.
 - [ ] R5.4 Personal customizable campsite, tent/campfire, crafting station, decorations and trophy display; no invulnerable zone or permanent world claims without explicit policy.
 - [ ] R5.5 Separate Arena, free-for-all, guild battles, spectators and sponsored tournaments remain existing future scope; verify capacity before any concurrency claim.
+
+### R5A — Living adventurer NPCs (recommended new feature; pending owner confirmation of scope)
+
+- [ ] R5A.1 Add clearly labeled AI-controlled adventurer NPCs, not impersonated human accounts. Display NPC/AI on nameplates and inspection; ONLINE reflects real connected players only. NPC counts may be separate; no fake chat users, fake presence, marketing metrics, rewards, or leaderboard activity.
+- [ ] R5A.2 Pilot with a small proposed pool (3–5 active near a player, subject to measurement). Give NPCs varied appearances, schedules and goals: wander, climb, gather/farm resources, fish, swim, rest at camps, explore trails and react to weather. Reuse approved character meshes, animations, collision and traversal; do not change the player controls or map.
+- [ ] R5A.3 Lightweight finite-state/utility AI and bounded waypoint navigation using terrain and water validation; idle/walk/gather/fish/swim/rest state transitions, stuck recovery and safe despawn. No external LLM or constant heavy pathfinding required. Pause/downgrade distant NPCs, cap active actors, reuse cached models and prioritize real players; measure on low-end mobile.
+- [ ] R5A.4 Optional player interactions: greetings, short authored dialogue, directions, hints, nonfinancial cooperative exploration and eventually fair sparring when combat gates permit. Clearly distinguish NPC dialogue from actual player chat; do not force interaction or crowd a new player.
+- [ ] R5A.5 Shared NPC authority and deterministic state when real multiplayer is active; local single-player ambient NPCs must remain separate from real room presence and authoritative inventory. NPC farming uses synthetic/nonfinancial resource state initially; no real player inventory theft, scarce loot draining, token rewards, marketplace volume, wallets or leaderboard manipulation. Expand only after reviewed economy and authority.
+- [ ] R5A.6 Start with one isolated NPC walking/fishing/swimming test, then expand to the small pool. Validate terrain, collision, water state, animation, despawn/reconnect, no fake ONLINE increase, no unauthorized grants, desktop/mobile frame-time and server cost before release. Integrate a lightweight NPC into first-adventure R1 only after these checks; reduce ambient density as real population grows without removing meaningful NPC content.
 
 ## R6 — Reasons to return (optional, non-punitive)
 
@@ -90,4 +107,4 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 
 ## Handoff order
 
-Current immediate task is R0.1 (after #930 merged), with real pilot/device acceptance in parallel where authorized. R1 then R2 then R3/R4/R5/R6 in small tested slices; R7 remains gated. Low-cost nonfinancial R1 discovery work may be prepared in isolation while operator-dependent QA is pending, but never skip existing release gates or claim live. Every cycle: inspect current main and existing features, record exact PR/SHA, terminal CI, real device/production evidence, remaining blockers, and next exact action in GAME_DEVELOPMENT_RECORD.md. No changes to DEX, Swap, Launchpad, ClimbX, token contracts or homepage.
+Current immediate task is R0.1 (after #930 merged), with real pilot/device acceptance in parallel where authorized. R1 then R2 then R3/R4/R5/R6 in small tested slices; R7 remains gated. R5A is recommended for early first-adventure ambience after stability and owner scope confirmation; do not displace existing private pilot work. Low-cost nonfinancial R1 discovery work may be prepared in isolation while operator-dependent QA is pending, but never skip existing release gates or claim live. Every cycle: inspect current main and existing features, record exact PR/SHA, terminal CI, real device/production evidence, remaining blockers, and next exact action in GAME_DEVELOPMENT_RECORD.md. No changes to DEX, Swap, Launchpad, ClimbX, token contracts or homepage.
