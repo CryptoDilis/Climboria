@@ -137,3 +137,54 @@ test('committed respawn push is scoped to active target and denied ticks never n
   assert.equal(a.closed,true);assert.equal(b.closed,true);
  }finally{h.restore()}
 });
+
+test('real preview lifecycle delivers lethal hit, preserves death through fresh session and commits respawn once',async()=>{
+ const h=harness();
+ try{
+  const room=h.create();
+  const connect=async account=>(await h.connect(room,await h.ticket(room,account))).webSocket;
+  let a=await connect(A),b=await connect(B);
+  for(let i=0;i<100;i++){
+   if(i>0)await h.advance(950);
+   // Respect the real 60s session expiry while exercising 100 legal hits.
+   if(i===50){
+    a.close(1000,'test');b.close(1000,'test');await h.flush();
+    a=await connect(A);b=await connect(B);
+    assert.equal(joined(b).snapshot.health,250);
+   }
+   const bid=joined(b)?.id??[...room.sockets.keys()].find(id=>id!==joined(a)?.id);
+   // send() clears the sender inbox, so retain the target via the server roster.
+   assert.ok(bid);
+   const hit=await h.send(a,{type:'attack',targetId:bid});
+   assert.equal(hit.ok,true);assert.equal(hit.health,500-5*(i+1));
+  }
+  const last=b.inbox.filter(p=>p.type==='preview-hit').at(-1);
+  assert.equal(last.health,0);assert.equal(last.downed,true);
+  const dead=(await h.send(b,{type:'snapshot'})).snapshot;
+  assert.equal(dead.health,0);assert.equal(dead.downed,true);
+  assert.equal((await h.send(b,{type:'input',x:1,z:0,sequence:0,sprint:false})).ok,false);
+  assert.equal((await h.send(b,{type:'attack',targetId:last.actorId})).ok,false);
+  b.close(1000,'test');await h.flush();
+  b=await connect(B);const newId=joined(b).id;
+  assert.notEqual(newId,last.targetId);
+  assert.equal(joined(b).snapshot.health,0);
+  assert.equal(joined(b).snapshot.respawnAtMs,dead.respawnAtMs);
+  await h.advance(4999);
+  assert.equal(b.inbox.some(p=>p.type==='preview-respawn'),false);
+  assert.equal((await h.send(b,{type:'snapshot'})).snapshot.health,0);
+  await h.advance(1);
+  assert.deepEqual(b.inbox.filter(p=>p.type==='preview-respawn'),[{type:'preview-respawn',targetId:newId}]);
+  await h.advance(100);
+  assert.equal(b.inbox.filter(p=>p.type==='preview-respawn').length,1);
+  assert.equal(a.inbox.some(p=>p.type==='preview-respawn'),false);
+  const alive=(await h.send(b,{type:'snapshot'})).snapshot;
+  assert.equal(alive.health,500);assert.equal(alive.downed,false);
+  assert.equal(alive.respawnAtMs,null);assert.equal(alive.stamina,200);
+  a.close(1000,'test');b.close(1000,'test');await h.flush();
+  const fresh=h.create(),restored=(await h.connect(fresh,await h.ticket(fresh,B))).webSocket;
+  assert.equal(joined(restored).snapshot.health,500);
+  assert.equal(joined(restored).snapshot.downed,false);
+  restored.close(1000,'test');await h.flush();
+  assert.equal(h.timers.size,0);
+ }finally{h.restore()}
+});
