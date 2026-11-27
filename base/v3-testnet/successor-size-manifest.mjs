@@ -3,12 +3,13 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 const specs=[
- ['V3AtomicSuccessorFixture.sol','V3AtomicSuccessorFixture',0],
+ ['V3AtomicSuccessorFixture.sol','V3AtomicSuccessorFixture',2],
  ['V3AtomicSuccessorFixture.sol','V3SuccessorTestToken',0],
  ['V3AtomicSuccessorFixture.sol','V3SuccessorCoreDeployer',0],
  ['V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',0],
  ['ClimbV3TestToken.sol','V3FounderVesting',3],
  ['V3GameRewardFixture.sol','V3GameRewardFixture',5],
+ ['V3GovernedGameRewardFixture.sol','V3GovernedGameRewardFixture',6],
  ['V3EpochSpendFixture.sol','V3EpochPolicyFactory',4],
  ['V3EpochSpendFixture.sol','V3EpochSpendFixture',7],
  ['V3SharedExpenseFixture.sol','V3SharedExpenseRegistry',0],

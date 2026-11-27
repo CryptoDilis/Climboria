@@ -7,7 +7,7 @@ import {expected} from '../v3-testnet/verify-creation.mjs';
 const need=(ok,why)=>{if(!ok)throw Error(why);};
 const qty=x=>{need(typeof x==='string'&&/^0x(?:0|[1-9a-f][0-9a-f]*)$/.test(x)&&x.length<=66,'INVALID_QUANTITY');return BigInt(x);};
 const dec=x=>{need(typeof x==='string'&&/^(0|[1-9][0-9]{0,77})$/.test(x),'INVALID_DECIMAL');return BigInt(x);};
-const order=['setupFactory','successorFactory','syntheticQuote','syntheticPoolBuilder','syntheticLPDestination','initializeSafeAndGuard','quorumAtomicIssuance'];
+const order=['setupFactory','conditionalHelper','successorFactory','syntheticQuote','syntheticPoolBuilder','syntheticLPDestination','initializeSafeAndGuard','quorumAtomicIssuance'];
 const read=p=>JSON.parse(readFileSync(p,'utf8'));
 export function projectBudget(local,obs,estimates,build){
  need(build?.status==='FROZEN_ARTIFACTS_MATCH_NO_APPROVAL'&&obs?.sourceSha===build.sourceSha&&obs.chainId===84532&&obs.status==='DUAL_RPC_HISTORICAL_AND_CHAIN_OBSERVATION_ONLY_NO_GO','OBSERVATION_SOURCE_MISMATCH');

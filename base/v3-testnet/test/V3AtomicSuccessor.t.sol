@@ -8,9 +8,10 @@ import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "../src/V3EpochSpendFix
 import {V3DeferredLegacyFixture} from "../src/V3DeferredLegacyFixture.sol";
 import {IV3SyntheticPool} from "../src/V3LiquidityPolicyFixture.sol";
 import {V3DeferredLiquidityFixture} from "../src/V3DeferredLiquidityFixture.sol";
-import {V3AtomicSuccessorFixture,V3SuccessorTestToken,V3SuccessorConfig,V3SuccessorLiquidityConfig,IV3SyntheticPoolBuilder} from "../src/V3AtomicSuccessorFixture.sol";
+import {V3AtomicSuccessorFixture,V3SuccessorConditionalDeployer,V3SuccessorTestToken,V3SuccessorConfig,V3SuccessorLiquidityConfig,IV3SyntheticPoolBuilder} from "../src/V3AtomicSuccessorFixture.sol";
 interface VmSuccessor {
     function chainId(uint256) external;
+    function etch(address,bytes calldata) external;
     function warp(uint256) external;
     function prank(address) external;
     function addr(uint256) external returns(address);
@@ -64,11 +65,26 @@ contract V3AtomicSuccessorTest {
     function setUp() public {
         vm.chainId(84532);
         quote=new SuccessorQuote();control=new SuccessorMockCustody();
-        factory=new V3AtomicSuccessorFixture();
+        V3SuccessorConditionalDeployer helper=new V3SuccessorConditionalDeployer();
+        factory=new V3AtomicSuccessorFixture(helper,address(helper).codehash);
         DISTRIBUTOR=vm.addr(REWARD_KEY);
         cfg.gamingWalletMonthlyCap=1000;
         cfg.founder=FOUNDER;cfg.distributor=DISTRIBUTOR;cfg.control=control;cfg.start=block.timestamp+1 days;
         cfg.liquidity=V3SuccessorLiquidityConfig(quote,new SuccessorMockPoolBuilder(),address(new SuccessorCustodyDestination()),1000);
+    }
+    function testConditionalHelperIdentityPinned() public {
+        V3SuccessorConditionalDeployer helper=factory.conditional();
+        require(factory.conditionalHash()==address(helper).codehash);
+        vm.expectRevert(V3AtomicSuccessorFixture.InvalidConfig.selector);
+        new V3AtomicSuccessorFixture(helper,bytes32(uint256(1)));
+        vm.expectRevert(V3AtomicSuccessorFixture.InvalidConfig.selector);
+        new V3AtomicSuccessorFixture(V3SuccessorConditionalDeployer(address(0)),bytes32(0));
+        bytes memory original=address(helper).code;
+        vm.etch(address(helper),hex"60006000f3");
+        vm.expectRevert(V3AtomicSuccessorFixture.InvalidConfig.selector);factory.create(cfg);
+        require(!factory.used()&&address(factory.token())==address(0));
+        vm.etch(address(helper),original);
+        require(factory.create(cfg).totalSupply()==SUPPLY);
     }
     function testAtomicSevenDestinationsAndZeroFloat() public {
         V3SuccessorTestToken token=factory.create(cfg);
@@ -183,7 +199,8 @@ contract V3AtomicSuccessorTest {
     }
     function testMainnetRejected() public {
         vm.chainId(8453);
-        vm.expectRevert(V3AtomicSuccessorFixture.InvalidConfig.selector);new V3AtomicSuccessorFixture();
+        V3SuccessorConditionalDeployer helper=factory.conditional();bytes32 expected=factory.conditionalHash();
+        vm.expectRevert(V3AtomicSuccessorFixture.InvalidConfig.selector);new V3AtomicSuccessorFixture(helper,expected);
         vm.expectRevert(V3AtomicSuccessorFixture.InvalidConfig.selector);factory.create(cfg);
     }
 }

@@ -5,7 +5,7 @@ import {Enum} from "safe-contracts/common/Enum.sol";
 import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeReserveFactoryFixture,SafeReserveGuardFixture} from "../src/SafeReserveGuardFixture.sol";
-import {V3AtomicSuccessorFixture,V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorTestToken,IV3SyntheticPoolBuilder} from "v3-src/V3AtomicSuccessorFixture.sol";
+import {V3AtomicSuccessorFixture,V3SuccessorConditionalDeployer,V3SuccessorConfig,V3SuccessorLiquidityConfig,V3SuccessorTestToken,IV3SyntheticPoolBuilder} from "v3-src/V3AtomicSuccessorFixture.sol";
 import {V3EpochSpendFixture,IV3CustodyEpochFixture} from "v3-src/V3EpochSpendFixture.sol";
 import {V3DeferredLiquidityFixture} from "v3-src/V3DeferredLiquidityFixture.sol";
 import {V3DeferredLegacyFixture} from "v3-src/V3DeferredLegacyFixture.sol";
@@ -55,7 +55,8 @@ contract SafeReserveGuardTest {
     ReserveQuote quote;
     uint256 start;
     function setUp() public {
-        vm.chainId(84532);successor=new V3AtomicSuccessorFixture();
+        vm.chainId(84532);V3SuccessorConditionalDeployer helper=new V3SuccessorConditionalDeployer();
+        successor=new V3AtomicSuccessorFixture(helper,address(helper).codehash);
         SafeReserveFactoryFixture factory=new SafeReserveFactoryFixture();
         testKeys=[uint256(0x12345),uint256(0x23456),uint256(0x34567)];
         for(uint256 i=0;i<3;i++)for(uint256 j=i+1;j<3;j++){
@@ -176,7 +177,8 @@ contract SafeReserveGuardTest {
     }
     function testPlainBindingRejectsSuccessorAsLPCustody() public {
         // Fresh sibling flow with an otherwise structurally valid, conflicting LP role.
-        successor=new V3AtomicSuccessorFixture();
+        V3SuccessorConditionalDeployer helper=new V3SuccessorConditionalDeployer();
+        successor=new V3AtomicSuccessorFixture(helper,address(helper).codehash);
         SafeReserveFactoryFixture factory=new SafeReserveFactoryFixture();
         address[] memory owners=new address[](5);
         owners[0]=A;owners[1]=B;owners[2]=C;owners[3]=D;owners[4]=E;
