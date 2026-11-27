@@ -4,7 +4,7 @@
 import {CLIMB_SOLANA_MINT,TOKEN_2022_PROGRAM,assertDistinctRpcEndpoints} from './mint-inspect.mjs';
 import {reconcileRawInventories} from './legacy-raw-inventory.mjs';
 const fail=msg=>{throw Error('NO_GO: '+msg);};
-const MAINNET_GENESIS='5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d';
+export const MAINNET_GENESIS='5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d';
 const MAX_BYTES=32*1024*1024;
 async function rpc(url,id,method,params,fetchFn,provider){
  let reason='TRANSPORT_OR_TIMEOUT';
