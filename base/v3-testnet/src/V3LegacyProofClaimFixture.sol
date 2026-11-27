@@ -32,6 +32,8 @@ contract V3LegacyProofClaimFixture is ReentrancyGuard {
     Pending public pending;
     Verifier.Commitment private active;
     bool public activated;
+    bool public closed;
+    uint256 public burned;
     uint256 public deadline;
     uint256 public appealEnd;
     uint256 public paid;
@@ -40,6 +42,7 @@ contract V3LegacyProofClaimFixture is ReentrancyGuard {
     event Scheduled(bytes32 indexed digest,uint256 epoch,uint256 readyAt,uint256 expiresAt);
     event Cancelled(bytes32 indexed digest);
     event Activated(bytes32 indexed root,uint256 allocated,uint256 deadline);
+    event Closed(bytes32 indexed reviewEvidence,uint256 burned);
     event Claimed(uint256 indexed index,bytes32 indexed source,address indexed recipient,uint256 award);
     constructor(IV3BurnableAsset asset,IV3CustodyEpochFixture control){
         if(block.chainid!=84532||address(asset).code.length==0||address(control).code.length==0||
@@ -61,7 +64,7 @@ contract V3LegacyProofClaimFixture is ReentrancyGuard {
     function schedule(bytes32 digest,uint256 expiresAt) external {
         if(msg.sender!=address(custody))revert Unauthorized();
         uint256 e=_observe();
-        if(activated||digest==0||expiresAt<=block.timestamp+DELAY||expiresAt-block.timestamp>30 days||
+        if(closed||(activated&&block.timestamp<appealEnd)||digest==0||expiresAt<=block.timestamp+DELAY||expiresAt-block.timestamp>30 days||
             (pending.digest!=0&&pending.epoch==e&&block.timestamp<pending.expiresAt))revert InvalidAction();
         pending=Pending(digest,e,block.timestamp+DELAY,expiresAt);
         emit Scheduled(digest,e,pending.readyAt,expiresAt);
@@ -85,7 +88,7 @@ contract V3LegacyProofClaimFixture is ReentrancyGuard {
     }
     function claim(uint256 index,Verifier.Row calldata row,Verifier.Node[] calldata siblings) external nonReentrant {
         _observe();
-        if(!activated||block.timestamp>=deadline)revert NotReady();
+        if(!activated||closed||block.timestamp>=deadline)revert NotReady();
         if(row.recipient!=msg.sender)revert NotEligible();
         if(claimedIndex[index]||claimedSource[row.sourceAccount])revert AlreadyClaimed();
         if(row.award==0||row.award>active.allocated-paid||!verifier.verify(active,index,row,siblings))revert NotEligible();
@@ -93,6 +96,20 @@ contract V3LegacyProofClaimFixture is ReentrancyGuard {
         IERC20(address(token)).safeTransfer(msg.sender,row.award);
         emit Claimed(index,row.sourceAccount,msg.sender,row.award);
     }
-    // Deliberately no closure, burn, sweep, root replacement or appeal adjudication.
-    // The remaining reserve stays locked until a separately reviewed successor policy.
+    // Synthetic parity with the previous deferred legacy policy. A review
+    // digest alone does not establish that real appeals were adjudicated.
+    function closureDigest(bytes32 reviewEvidence) public view returns(bytes32){
+        return keccak256(abi.encode("CLIMB_BASE_LEGACY_PROOF_CLOSURE_TEST_V1",block.chainid,address(this),address(token),
+            active.root,active.manifestDigest,deadline,appealEnd,paid,reviewEvidence));
+    }
+    function finalize(bytes32 reviewEvidence) external nonReentrant {
+        if(!activated||closed||block.timestamp<appealEnd||reviewEvidence==0)revert NotReady();
+        uint256 e=_observe();
+        Pending memory p=pending;
+        if(p.digest!=closureDigest(reviewEvidence)||p.epoch!=e||block.timestamp<p.readyAt||block.timestamp>=p.expiresAt)revert NotReady();
+        delete pending;closed=true;burned=RESERVE-paid;
+        token.burn(burned);
+        emit Closed(reviewEvidence,burned);
+    }
+    // No sweep, root replacement, or appeal adjudication; donations stay locked.
 }
