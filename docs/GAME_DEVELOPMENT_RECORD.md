@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## ACTUAL JARRELL GLB BROWSER PROJECTION — 2026-11-27 PHT (PROPOSED)
+
+- Stacked on independent render adapter #925 head 90caf5a5f8b1ff8e66e15a8761006955ed2234a6. Test commit 25e5dcc7b446b7504713b89d6249d4fc673a61b8 extends the existing isolated socket-double browser harness to load the checked-in Jarrell GLB using the same Three.js r128 scripts as public gameplay. Dedicated scene/root, measured 1.9m height and foot offset, software WebGL render triangle count, exact server position/ground/HP/stamina, stale hidden mesh, downed control lock, respawn and close on desktop/touch. No public renderer, save, presence or live Worker changed. This is a proposed test, NOT executed; no native socket-to-GLB combined claim, pixel QA or physical Android FPS evidence.
+- EXACT NEXT: #922 fresh CI 45946606206/45946606208 on f10611b3945666f5f2f72e54e110de67efe86f5e; merge only green. #925 prior 4/5 green, Gameplay 45946244195 pending; reconcile both records after #922, verify fresh 5/5 before merging. Then reconcile this stacked branch to merged main, retarget and run fresh gameplay smoke; fix any GLB load/render/timeout failures without weakening assertions. Follow with real local native socket-to-GLB combined acceptance. No public combat or loot enablement.
+
+---
+
 ## AUTHORED 3D CHARACTER SNAPSHOT PROJECTION — 2026-11-27 PHT (PROPOSED)
 
 - #922 head 68e4f84e60912d19c41f486a3daf9cae86ddd124: Validate 45945502523 SUCCESS; Gameplay 45945502508 job 140329210856 native browser WebSocket step SUCCESS, existing Jarrell desktop/mobile smoke running. No final merge claim.
