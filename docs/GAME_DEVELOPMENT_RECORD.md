@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## PRIVATE COMBAT CLIENT SNAPSHOT RECONCILIATION — 2026-11-27 PHT (PROPOSED)
+
+- Stacked on #903 head b091bb2ff997c9dfe6373aa3d22abc93039dea35; four checks passed (Validate 45938857653, Runtime 45938857715, Gateway 45938857813, Authority 45938857701), Gameplay 45938857694 pending at review.
+- Source bb9586bdc7828e3cbe5293ad55d2deb0e2fc8807: private client state projection, valid own session snapshot only; hit and respawn pushes invalidate rather than mutate HP, block controls until fresh valid snapshot, single outstanding snapshot token and invalidation revision reject late/stale responses, close isolates retired session. No public game connection or transport implementation yet.
+- Tests fc126d1450d1d70dec02ddb6798dd013bd0f793a and CI path filters a9a1afead1fece4d5b0ca5fa2078eb063b443da5; fresh execution pending. EXACT NEXT: merge parent #903 only green; reconcile this branch to latest main, then wire into isolated preview QA transport (one outstanding snapshot, timeout closes session, bounded retry), verify offline tests and actual private local runtime before any public integration. Private cloud disabled; no loot/inventory or other workstreams.
+
+---
+
 ## COMBAT: LETHAL HIT / DOWNED REJOIN / RESPAWN ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
 
 - Parent #901 MERGED at 5ba6fba900449c34a2e77364a8e8a79c5a4064f7, exact head c23401fb76c6b1320950204414d30cb45f0f5396; all five CI SUCCESS: Validate 45938075227, Runtime 45938075126, Gateway 45938075127, Authority 45938075200, Gameplay 45938075149.
