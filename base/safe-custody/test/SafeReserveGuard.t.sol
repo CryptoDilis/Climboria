@@ -71,14 +71,6 @@ contract SafeReserveGuardTest {
             V3SuccessorLiquidityConfig(quote,new ReservePoolBuilder(),address(new ReserveLPDestination()),1000));
         token=successor.create(cfg);
     }
-    function _approved(address to,bytes memory data,uint256 count) private returns(bytes memory sigs){
-        bytes32 hash=wallet.getTransactionHash(to,0,data,Enum.Operation.Call,0,0,0,address(0),address(0),wallet.nonce());
-        address[3] memory signers=[A,B,C];
-        for(uint256 i=0;i<count;i++){
-            vm.prank(signers[i]);wallet.approveHash(hash);
-            sigs=abi.encodePacked(sigs,bytes32(uint256(uint160(signers[i]))),bytes32(0),uint8(1));
-        }
-    }
     function _signed(address to,bytes memory data,uint256 count) private returns(bytes memory sigs){
         bytes32 h=wallet.getTransactionHash(to,0,data,Enum.Operation.Call,0,0,0,address(0),address(0),wallet.nonce());
         for(uint256 i=0;i<count;i++){
@@ -89,9 +81,9 @@ contract SafeReserveGuardTest {
     function _exec(address to,bytes memory data,bytes memory sigs) private returns(bool){
         return wallet.execTransaction(to,0,data,Enum.Operation.Call,0,0,0,address(0),payable(address(0)),sigs);
     }
-    function _quorum(bytes memory data) private {require(_exec(address(guard),data,_approved(address(guard),data,3)));}
+    function _quorum(bytes memory data) private {require(_exec(address(guard),data,_signed(address(guard),data,3)));}
     function _reject(address to,bytes memory data,uint256 count) private {
-        bytes memory sigs=_approved(to,data,count);vm.expectRevert();_exec(to,data,sigs);
+        bytes memory sigs=_signed(to,data,count);vm.expectRevert();_exec(to,data,sigs);
     }
     function _bind() private {_quorum(abi.encodeCall(guard.bindSuccessor,(1)));}
     function _propose(uint256 e,uint256 i,bytes32 evidence,bytes32 nonce) private pure returns(bytes memory){
@@ -146,7 +138,7 @@ contract SafeReserveGuardTest {
         _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,F)));
         vm.warp(start+2 days);
         bytes memory swap=abi.encodePacked(abi.encodeWithSignature("swapOwner(address,address,address)",D,E,F),guard.rotationSerial());
-        require(_exec(address(wallet),swap,_approved(address(wallet),swap,3)));
+        require(_exec(address(wallet),swap,_signed(address(wallet),swap,3)));
         require(guard.epoch()==2);
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
         vm.expectRevert();v.execute(old);

@@ -58,7 +58,11 @@ try{
  assert.match(await rpc('web3_clientVersion'),/anvil/i);assert.equal(BigInt(await rpc('eth_chainId')),CHAIN);
  assert.equal(BigInt(await rpc('eth_blockNumber')),0n);
  const accounts=(await rpc('eth_accounts')).map(norm);assert.ok(accounts.length>=9);
- const [creator,...rest]=accounts,owners=rest.slice(0,5),founder=rest[5],distributor=rest[6],payee=rest[7];
+ const [creator,...rest]=accounts,founder=rest[5],distributor=rest[6],payee=rest[7];
+ // Public, deterministic disposable test keys; never funded or used outside this loopback rehearsal.
+ const signerKeys=[0x12345n,0x23456n,0x34567n].map(n=>'0x'+n.toString(16).padStart(64,'0'));
+ const signers=signerKeys.map(key=>({key,address:norm(cast('wallet','address','--private-key',key))})).sort((a,b)=>a.address.localeCompare(b.address));
+ const owners=[...signers.map(x=>x.address),rest[3],rest[4]];
  assert.equal(new Set([creator,...owners,founder,distributor,payee]).size,9);
  const setup=await deploy('setupFactory','SafeQuorumIssuanceFixture.sol','SafeQuorumReserveFactoryFixture',creator);
  const successor=await deploy('successorFactory','SafeQuorumIssuanceFixture.sol','V3QuorumSuccessorFixture',creator,cast('abi-encode','f(address)',setup));
@@ -85,13 +89,13 @@ try{
  negative.push(await rejectCall('directGuardIssuance',creator,guard,issue));
  const hash=await call(wallet,'getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)',guard,0,issue,0,0,0,0,ZERO,ZERO,0);
  assert.match(hash,/^0x[0-9a-f]{64}$/i);
- const signers=owners.slice(0,3).sort();
- for(const owner of signers)await record('approveExactSafeHash',{from:owner,to:wallet,data:calldata('approveHash(bytes32)',hash)});
- const pack=list=>'0x'+list.map(a=>a.slice(2).padStart(64,'0')+'0'.repeat(64)+'01').join('');
+ const sigs=signers.map(({key})=>cast('wallet','sign','--no-hash','--private-key',key,hash));
+ for(const sig of sigs)assert.match(sig,/^0x[0-9a-f]{128}(1b|1c)$/i);
+ const pack=list=>'0x'+list.map(x=>x.slice(2)).join('');
  const exec=sigs=>calldata('execTransaction(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,bytes)',guard,0,issue,0,0,0,0,ZERO,ZERO,sigs);
- negative.push(await rejectCall('twoApprovalsCannotIssue',creator,wallet,exec(pack(signers.slice(0,2)))));
+ negative.push(await rejectCall('twoSignaturesCannotIssue',creator,wallet,exec(pack(sigs.slice(0,2)))));
  assert.equal(await number(wallet,'nonce()'),0n);assert.equal(await number(successor,'used()'),0n);
- await record('quorumAtomicIssuance',{from:creator,to:wallet,data:exec(pack(signers))});
+ await record('quorumAtomicIssuance',{from:creator,to:wallet,data:exec(pack(sigs))});
  assert.equal(await number(wallet,'nonce()'),1n);assert.equal(await number(guard,'bound()'),1n);
  assert.equal(await number(guard,'transactionActive()'),0n);assert.equal(await number(guard,'issuing()'),0n);
  const token=await address(successor,'token()');contracts.token=await requireCode(token);
@@ -105,8 +109,8 @@ try{
  }
  assert.equal(new Set(vaults.map(x=>x.address)).size,7);
  for(const a of [creator,wallet,guard,successor,founder,distributor,payee,...owners])assert.equal(await number(token,'balanceOf(address)',a),0n);
- negative.push(await rejectCall('consumedSafeNonceCannotReplay',creator,wallet,exec(pack(signers))));
- const manifest={status:'LOCAL_ANVIL_REHEARSAL_ONLY',sourceSha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),chainId:Number(CHAIN),localHardfork:'cancun',localBlockGasLimit:Number(LIMIT),testOnly:true,contracts,roles:{creator,owners,founder,distributor},startTimestamp:Number(start),totalSupplyRaw:String(SUPPLY),vaults,transactions:steps,negativeEthCalls:negative,limitations:'Synthetic quote/pool/LP, local unlocked Anvil accounts, approved-hash signatures, no public RPC, no real signers, no production review. Gas observations are local receipts only, not a public Base Sepolia gas estimate or authorization.'};
+ negative.push(await rejectCall('consumedSafeNonceCannotReplay',creator,wallet,exec(pack(sigs))));
+ const manifest={status:'LOCAL_ANVIL_REHEARSAL_ONLY',sourceSha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),chainId:Number(CHAIN),localHardfork:'cancun',localBlockGasLimit:Number(LIMIT),testOnly:true,signatureMode:'ECDSA_ONLY',contracts,roles:{creator,owners,founder,distributor},startTimestamp:Number(start),totalSupplyRaw:String(SUPPLY),vaults,transactions:steps,negativeEthCalls:negative,limitations:'Synthetic quote/pool/LP, local unlocked Anvil accounts, three offline ECDSA signatures, no public RPC, no real signers, no production review. Gas observations are local receipts only, not a public Base Sepolia gas estimate or authorization.'};
  assert.match(manifest.sourceSha,/^[a-f0-9]{40}$/);
  writeFileSync(process.argv[2],JSON.stringify(manifest,null,2)+'\n');console.log(JSON.stringify(manifest,null,2));
 }finally{anvil.kill();}
