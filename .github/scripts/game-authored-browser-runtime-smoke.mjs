@@ -1,17 +1,19 @@
 import assert from 'node:assert/strict';
 import {resolve} from 'node:path';
+import {readFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 import {Miniflare} from 'miniflare';
-const origin='http://127.0.0.1:4173';
+const origin='http://127.0.0.1:4174';
+const modulePaths=['preview-combat-client-transport.mjs','preview-combat-client-state.mjs','authored-local-combat-controls.mjs'];
 const A='f3ead054-abb4-47ba-b311-5aa7fe483f10',B='2790d4fe-1a26-4f5c-96d2-9a0fbcfb3021';
-const mf=new Miniflare({host:'127.0.0.1',port:0,modules:true,modulesRoot:resolve('.'),
+const mf=new Miniflare({host:'127.0.0.1',port:4174,modules:true,modulesRoot:resolve('.'),
  scriptPath:resolve('.github/scripts/game-authored-browser-local-worker.mjs'),
  compatibilityDate:'2026-08-06',bindings:{AUTHORED_BROWSER_CI:'true'},
  durableObjects:{ROOM:{className:'AuthoredLocalRoom',useSQLite:true}}});
 let browser;
 try{
  const address=await mf.ready;
- assert.equal(address.hostname,'127.0.0.1');
+ assert.equal(address.origin,origin);
  const wsURL='ws://127.0.0.1:'+address.port+'/ws';
  const ns=await mf.getDurableObjectNamespace('ROOM'),stub=ns.get(ns.idFromName('preview-jarrell-camp-v1'));
  async function ticket(id){
@@ -27,7 +29,7 @@ try{
  assert.equal((await mf.dispatchFetch(address.href+'ticket',{method:'POST'})).status,404);
  const rejected=await mf.dispatchFetch(address.href+'ws',{headers:{Origin:origin,Upgrade:'websocket','Sec-WebSocket-Protocol':'climboria-preview-v1,t-'+'0'.repeat(64)}});
  assert.equal(rejected.status,401,'loopback upgrade must reach private ticket validation');
- browser=await chromium.launch({headless:true});
+ browser=await chromium.launch({headless:true,args:['--no-proxy-server']});
  async function player(id,mobile){
   const context=await browser.newContext(mobile?{viewport:{width:390,height:844},isMobile:true,hasTouch:true}:{viewport:{width:1280,height:800}});
   const token=await ticket(id);
@@ -57,10 +59,18 @@ socket.addEventListener('message',function joined(e){
   draw(){ui.frame(time++)},poll(){time+=200;ui.frame(time++)}};
 });
 </script>`;
+  // Serve only the exact local modules in the test page's own origin.
+  for(const name of modulePaths){
+   const body=await readFile(resolve('game/multiplayer',name),'utf8');
+   await context.route(origin+'/game/multiplayer/'+name,route=>route.fulfill({contentType:'text/javascript',body}));
+  }
   await context.route(origin+'/__authored_runtime_ci__',route=>route.fulfill({contentType:'text/html',body:html}));
   const page=await context.newPage();
   const cdp=await context.newCDPSession(page);await cdp.send('Network.enable');
-  const diagnostic={handshake:[],pageErrors:[]};
+  const diagnostic={handshake:[],pageErrors:[],consoleErrors:[],socketErrors:[]};
+  const sanitize=s=>String(s).replace(/[a-f0-9]{64}/gi,'[redacted]').slice(0,300);
+  page.on('console',m=>{if(m.type()==='error')diagnostic.consoleErrors.push(sanitize(m.text()))});
+  page.on('websocket',ws=>ws.on('socketerror',e=>diagnostic.socketErrors.push(sanitize(e))));
   cdp.on('Network.webSocketHandshakeResponseReceived',e=>diagnostic.handshake.push(e.response.status));
   page.on('pageerror',e=>diagnostic.pageErrors.push(e.message.replace(/[a-f0-9]{64}/gi,'[redacted]').slice(0,300)));
   await page.goto(origin+'/__authored_runtime_ci__');
