@@ -44,6 +44,8 @@ contract SafeQuorumReserveGuardFixture is SafeReserveGuardFixture {
     error InvalidIssuanceDeadline();
     bool public issuing;
     uint256 public constant MAX_ISSUANCE_WINDOW=1 days;
+    // Match the existing testnet preflight ceiling; not a production reward policy.
+    uint256 public constant MAX_TEST_GAMING_WALLET_MONTHLY_CAP=5_185_185_180_000;
     event IssuanceInvalidated(uint256 indexed epoch,uint256 indexed consumedNonce);
     event QuorumIssued(address indexed token,bytes32 indexed configHash);
     constructor(Safe wallet_,address implementation,V3QuorumSuccessorFixture factory_)
@@ -52,7 +54,7 @@ contract SafeQuorumReserveGuardFixture is SafeReserveGuardFixture {
         _current(expected);
         _authorizationWindow(validAfter,deadline);
         if(deadline>cfg.start)revert InvalidIssuanceDeadline();
-        if(issuing||bound||address(cfg.control)!=address(this)||
+        if(issuing||bound||cfg.gamingWalletMonthlyCap==0||cfg.gamingWalletMonthlyCap>MAX_TEST_GAMING_WALLET_MONTHLY_CAP||address(cfg.control)!=address(this)||
            V3QuorumSuccessorFixture(address(successor)).configuredGuard()!=address(this)||
            cfg.founder==address(wallet)||cfg.distributor==address(wallet)||
            cfg.liquidity.custody==address(wallet)||cfg.liquidity.custody==address(this))revert InvalidConfig();
