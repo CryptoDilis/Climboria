@@ -1,5 +1,46 @@
 # Climboria Game Development Record
 
+## CROWD C1–C6 CONSOLIDATION AND MEASURED BATCH EVIDENCE — 2026-11-28 PHT
+
+- #1034 exact 6ca6e88f8e4990fde06fca3ddb6ff246a5aa47f2 all 13 listed workflows success; #1035 exact 208739f6cbe69897cbdf616ac97cbe01bb52254a all five listed workflows success. #1036 exact d05380bd3097348193dcacef5e0b212f9fb8b3b6 native 46044514193 job 140660287211 and chat 46044514200 success. 100 clustered 118800→4800 envelopes, bytes 11366190→9034590, 118800 position entries retained; 100 distributed 118800→1800 envelopes, bytes 11174328→2700354. Final positions/cleanup passed. Clustered ack p95 55.30→6.63ms, but ack precedes private batch flush, so not comparable to end-to-end movement latency. No physical FPS or cloud capacity claim.
+- Consolidate only 12 candidate Game paths plus current main backlog (13 total) onto c941309957bf463a76d76de3f9da6e89b4ae8a2c. Main-side comparison showed seven intervening commits confined to Base files and Game backlog; preserve all unrelated work. Native workflow explicitly runs both policy regression suites and native transport tests on exact consolidated head. Production gates and 32 room/render limits unchanged.
+- NEXT: fresh CI on consolidated head; do not merge until all required checks pass. Private browser decode/interpolation, close interaction visibility, end-to-end delivery latency, real authenticated 50/100 capacity and physical Android remain open. No production admission or economy changes.
+
+---
+
+## CROWD C6 PRIVATE BATCHED MOVEMENT CANDIDATE — 2026-11-28 PHT
+
+- #1035 exact 208739f6cbe69897cbdf616ac97cbe01bb52254a renderer 46043165304 jobs 140655762093 mobile and 140655762531 desktop SUCCESS; actual private loopback renderer fixtures at 10/25/32/50/100 entries with pressure recovery and cleanup. Mobile 100: 2 heavy, 8 light, 16 markers, 74 hidden; no physical device or close-range combat visibility proof. Foundation 46043165313, world chat 46043165465 and native load 46043165314 SUCCESS. Native job 140655749320 clustered 100 unchanged 118800 packets, p95 97.97→124.56ms; distributed 118800→37555, p95 105.87→93.52ms. Runner-specific timings, not production SLA. Focused desktop still running at inspection; #1034 draft not mergeable, its focused desktop still running; hero retry 46042604104 now SUCCESS.
+- C6 private-only opt-in PresenceRoom batch mode, requires existing movement interest; authoritative validated positions only, full explicitly scheduled tick, at most 32 moves per recipient packet. Default protocol/admission remains unchanged, no public gateway/client integration. Failed recipients evicted, no persistent pending queue. Unit tests for 100 clustered members, forged identity rejection, bounded chunks, no stale departed/invisible peers, send failure and cleanup. Native harness now compares baseline, interest and batch modes with final-position/cleanup assertions and counts actual movement envelopes separately from position entries. Theoretical 100 clustered count 4800 vs 118800 envelopes over 12 ticks; not measured until fresh CI succeeds.
+- NEXT: inspect exact C6 native and foundation CI, then reconcile #1034/#1035 onto current main without overwriting unrelated work. Batch introduces a private protocol and deferred near updates; validate real client interpolation, chat ordering and interaction responsiveness before even considering public use. Physical Android and authenticated 50/100 private capacity remain open. Production caps and security gates stay unchanged.
+
+---
+
+## CROWD PRIVATE 100-ENTRY RENDERER STRESS EXTENSION — 2026-11-28 PHT
+
+- Prior #1034 6ca6e88f8e4990fde06fca3ddb6ff246a5aa47f2 mobile renderer job 140653843614 SUCCESS: 10 entries 2 heavy/8 light; 25 entries 2/8/15 markers; 32 entries 2/8/16 markers/6 hidden; critical 8 markers; cleanup zero. Desktop running. Hero workflow 46042604104 failed on creator WebGL initialization (not confirmed root cause); requested failed-job retry, no failure waived.
+- #1035 first head fac9f3b7e3882406f5234bec91b3bcb0693fdd58 native load 46042903110 job 140654854750 SUCCESS; foundation 46042903111 SUCCESS. Distributed 100 same 37555/118800 packets, within-run ack p95 48.34→46.24ms; clustered 100 unchanged 118800 packets and p95 46.82→63.03ms. Targeted scan improved complexity, not a production latency guarantee. Prior runner timings not directly comparable.
+- Expand actual renderer fixture to 10/25/32/50/100 clustered descriptors on loopback host ONLY; smoke enable rejects non-loopback host, cap 100 only while private planner active. Production renderer/admission remains 32; no public presence or combat effects. Verify body/marker/hidden budgets and pressure recovery/cleanup; dedicated browser workflow now runs on policy/play changes. Fresh exact-head CI required; desktop software runner timeout bounded to 35min, no assertion removed.
+- NEXT: combine parent and follow-up after exact CI, inspect real render fixture logs, complete physical Android/desktop and actual authenticated room capacity gates before release. No claim 50–100 live player support.
+
+---
+
+## CROWD C4 NATIVE SOCKET EVIDENCE AND STABILITY FOLLOW-UP — 2026-11-28 PHT
+
+- #1034 exact 6ca6e88f8e4990fde06fca3ddb6ff246a5aa47f2 native load workflow 46042603936 job 140653843661 SUCCESS: actual loopback WebSocket transports, synthetic trusted session fixtures, 10/25/50/100 clients, 12 controlled-clock movement ticks. Distributed baseline→interest packet totals 1080→970, 7200→4705, 29400→13155, 118800→37555; all final peer positions and disconnect cleanup passed. 100 distributed JSON bytes 11174328→3512958. Clustered 100 stayed 118800 packets and ack p95 worsened 86.70→119.28ms, distributed 92.22→103.82ms; no Internet/cloud or authenticated-account capacity proof. Parent gateway, authority, foundation and chat workflows passed; renderer pending at inspection.
+- Follow-up: targeted movement dispatch visits 2(n−1) directed pairs, not n² scan; periodic full flush retained. Unit contract for 198 visited pairs at 100 vs 9900 full. Private render planner refreshed at most every 250ms except membership/pressure change; 3m retention bonus, strict caps/ranges override, test churn/pressure. Constrained NPC heavy reserve respects reduced cap. No live activation. Native and browser CI required on exact new head.
+- #1031 benchmark 46039671292 desktop/mobile SUCCESS. Desktop SwiftShader p95 4133.1/4183.2/4283.2/4066.5ms, 0/1/2/recovered; pair p95 +3.63%, absolute 0.23–0.25 FPS not device proof. Mobile software benchmark previously recorded. Physical device acceptance remains blocked by lack of hardware access; private/production account and combat visibility gates still open.
+
+---
+
+## CROWD C1/C2 PRIVATE RENDERER AND MOVEMENT INTEREST CANDIDATE — 2026-11-28 PHT
+
+- Consolidate exact #1033 pure policy files on current main, no source branch reset. Actual renderer tier selection/pressure downgrade/late GLB rejection wired only to explicit smoke fixture; 10/25/32 local renderer entries, no fake ONLINE/admission, no live renderer policy activation. Existing admission cap 32 unchanged; per-frame sorting is a candidate, not final hysteresis or performance proof. Critical marker-only is not production combat safe.
+- Optional default-off PresenceRoom movement interest: trusted positions only, near immediate/mid 500ms/far 2000ms, periodic flush latest suppressed positions and immediate closer-tier snapshot, cleanup on disconnect. No filtering of chat/admission/combat; private caller must schedule flush. Unit and native socket acceptance required. No production gateway change.
+- NEXT: verify exact CI, inspect renderer pressure transitions and transport evidence; add hysteresis/real close-range interaction acceptance before any activation. Physical device and real authenticated production capacity remain unverified.
+
+---
+
 ## R5A FINAL PAIRED ACCEPTANCE MERGED; CROWD FOUNDATION IN PROGRESS — 2026-11-28 PHT
 
 - #1030 exact 9e428d774d6bc3131dd47bc385663a0bae04d861 all nine workflows SUCCESS: authority 46039013422, foundation 46039013337, focused 46039013176, gameplay 46039013215, heroes 46039013246, chest 46039013179, general browser 46039013209, Validate 46039013411, peer priority 46039013341. Zero overlapping changes with intervening main. Merge confirmed e058e1e06cba255f2c9e7d1dc366255dc38de3f8. Public spawn remains off.
