@@ -465,3 +465,174 @@ jobs:
           path: replay/
           if-no-files-found: error
           retention-days: 14
+
+  source-rebuild:
+    needs: compare
+    name: Fresh source rebuild / ${{ matrix.project }} / solc ${{ matrix.compiler }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [safe-custody, v3-testnet]
+        compiler: ['0.8.39']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Fetch exact dependencies
+        working-directory: base/${{ matrix.project }}
+        run: |
+          set -euo pipefail
+          mkdir -p lib/openzeppelin-contracts
+          git -C lib/openzeppelin-contracts init
+          git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          if [ "${{ matrix.project }}" = safe-custody ]; then
+            mkdir -p lib/safe-contracts
+            git -C lib/safe-contracts init
+            git -C lib/safe-contracts fetch --depth=1 https://github.com/safe-fndn/safe-smart-account.git bf943f80fec5ac647159d26161446ac5d716a294
+            git -C lib/safe-contracts checkout --detach FETCH_HEAD
+            test "$(git -C lib/safe-contracts rev-parse HEAD)" = bf943f80fec5ac647159d26161446ac5d716a294
+          fi
+      - name: Prepare isolated compiler experiment
+        env:
+          COMPILER: ${{ matrix.compiler }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/climb-differential"
+          git rev-parse HEAD > "$RUNNER_TEMP/climb-differential/source.txt"
+          printf '%s\n' "$GITHUB_WORKSPACE" > "$RUNNER_TEMP/climb-differential/workspace.txt"
+          forge --version > "$RUNNER_TEMP/climb-differential/foundry.txt"
+          if [ "$COMPILER" = 0.8.19 ]; then
+            curl --fail --show-error --silent --location --retry 2 "https://binaries.soliditylang.org/linux-amd64/solc-linux-amd64-v0.8.19+commit.7dd6d404" -o "$RUNNER_TEMP/solc-baseline"
+            echo "7a5c1d3dc9a8eba62bb2ec37192c9178ae5fe8a54a56e5573fd3c9c17cd9eb48  $RUNNER_TEMP/solc-baseline" | sha256sum -c -
+            chmod 700 "$RUNNER_TEMP/solc-baseline"
+          fi
+          if [ "$COMPILER" = 0.8.39 ]; then
+            curl --fail --show-error --silent --location --retry 2 https://github.com/argotorg/solidity/releases/download/v0.8.39/solc-static-linux -o "$RUNNER_TEMP/solc-candidate"
+            echo "b8b0642d46838575d3177628b685564b52f51f2aee546cb4dce781951d23c666  $RUNNER_TEMP/solc-candidate" | sha256sum -c -
+            chmod 700 "$RUNNER_TEMP/solc-candidate"
+            "$RUNNER_TEMP/solc-candidate" --version | tee "$RUNNER_TEMP/climb-differential/solc.txt"
+            python - <<'PY'
+          from pathlib import Path
+          count = 0
+          for project in ("safe-custody", "v3-testnet"):
+              for folder in ("src", "test"):
+                  for p in Path("base", project, folder).rglob("*.sol"):
+                      original = p.read_bytes()
+                      changed = original.replace(b"pragma solidity 0.8.19;", b"pragma solidity 0.8.39;")
+                      if changed != original:
+                          assert changed.replace(b"pragma solidity 0.8.39;", b"pragma solidity 0.8.19;") == original
+                          p.write_bytes(changed)
+                          count += 1
+          assert count >= 17, count
+          print("Temporary pragma-only files:", count)
+          PY
+          fi
+          git diff -- base/safe-custody/src base/safe-custody/test base/v3-testnet/src base/v3-testnet/test > "$RUNNER_TEMP/climb-differential/pragma-only.patch"
+          git diff --exit-code -- base/safe-custody/foundry.toml base/v3-testnet/foundry.toml
+      - name: Independently compile fresh checkout
+        working-directory: base/${{ matrix.project }}
+        env:
+          COMPILER: ${{ matrix.compiler }}
+          FOUNDRY_FUZZ_SEED: '0x000000000000000000000000000000000000000000000000000000000000c11b'
+          FOUNDRY_FUZZ_RUNS: '256'
+          FOUNDRY_INVARIANT_RUNS: '32'
+          FOUNDRY_INVARIANT_DEPTH: '24'
+          FOUNDRY_INVARIANT_FAIL_ON_REVERT: 'true'
+        run: |
+          set -euo pipefail
+          target=london
+          if [ "${{ matrix.project }}" = safe-custody ]; then target=paris; fi
+          compiler="$RUNNER_TEMP/solc-baseline"
+          if [ "$COMPILER" = 0.8.39 ]; then compiler="$RUNNER_TEMP/solc-candidate"; fi
+          forge clean
+          forge config --json --use "$compiler" --evm-version "$target" > "$RUNNER_TEMP/climb-differential/config.json"
+          # Capture the actual standard-JSON exchanges, not a reconstructed input.
+          real="$compiler"
+          test -x "$real"
+          export CLIMB_REAL_SOLC="$real"
+          export CLIMB_SOLC_CAPTURE="$RUNNER_TEMP/climb-differential/standard-json"
+          mkdir -p "$CLIMB_SOLC_CAPTURE"
+          "$real" --version | tee "$RUNNER_TEMP/climb-differential/solc.txt"
+          sha256sum "$real" > "$RUNNER_TEMP/climb-differential/solc-sha256.txt"
+          cat > "$RUNNER_TEMP/capture-solc" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          for arg in "$@"; do
+            if [ "$arg" = --standard-json ]; then
+              record="$(mktemp -d "$CLIMB_SOLC_CAPTURE/invocation.XXXXXXXX")"
+              printf '%s\n' "$@" > "$record/args.txt"
+              cat > "$record/input.json"
+              status=0
+              "$CLIMB_REAL_SOLC" "$@" < "$record/input.json" > "$record/output.json" || status=$?
+              cat "$record/output.json"
+              exit "$status"
+            fi
+          done
+          exec "$CLIMB_REAL_SOLC" "$@"
+          SH
+          chmod 700 "$RUNNER_TEMP/capture-solc"
+          forge build --use "$RUNNER_TEMP/capture-solc" --evm-version "$target" --extra-output storageLayout metadata --build-info --force 2>&1 | tee "$RUNNER_TEMP/climb-differential/build.log"
+          test -n "$(find "$CLIMB_SOLC_CAPTURE" -name output.json -print -quit)"
+          cp -r out/build-info "$RUNNER_TEMP/climb-differential/build-info"
+          if [ "${{ matrix.project }}" = safe-custody ]; then
+            node size-manifest.mjs "$RUNNER_TEMP/climb-differential/size.json" | tee "$RUNNER_TEMP/climb-differential/size.log"
+          fi
+      - uses: actions/download-artifact@v4
+        with:
+          name: compiler-differential-${{ matrix.project }}-${{ matrix.compiler }}
+          path: original
+      - name: Verify independent source rebuild against original input and output
+        env:
+          PROJECT: ${{ matrix.project }}
+        run: |
+          set -euo pipefail
+          python - <<'PY' | tee "$RUNNER_TEMP/climb-differential/source-rebuild.log"
+          import json, hashlib, os
+          from pathlib import Path
+          def require(ok, message):
+              if not ok:
+                  raise ValueError(message)
+          def sha(obj):
+              return hashlib.sha256(json.dumps(obj, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+          original = Path("original")
+          rebuilt = Path(os.environ["RUNNER_TEMP"], "climb-differential")
+          for field in ("source.txt", "workspace.txt", "solc.txt", "pragma-only.patch"):
+              require((original / field).read_bytes() == (rebuilt / field).read_bytes(), f"provenance mismatch {field}")
+          require((original / "solc-sha256.txt").read_text().split()[0] == (rebuilt / "solc-sha256.txt").read_text().split()[0], "compiler digest mismatch")
+          def load(root):
+              records = sorted((root / "standard-json").glob("*/input.json"))
+              require(records, "missing compiler inputs")
+              data = {}
+              for p in records:
+                  inp = json.loads(p.read_bytes())
+                  out = json.loads(p.with_name("output.json").read_bytes())
+                  require(not any(e.get("severity") == "error" for e in out.get("errors", [])), "compiler error")
+                  require(out.get("contracts") and out.get("sources"), "empty compiler output")
+                  key = sha(inp)
+                  require(key not in data, "duplicate compiler input")
+                  data[key] = {"input": inp, "contracts": out["contracts"], "sources": out["sources"]}
+              return data
+          a, b = load(original), load(rebuilt)
+          require(a.keys() == b.keys(), "input digest mismatch")
+          require(a == b, "fresh source build differs in actual inputs/contracts/source AST")
+          count = sum(len(entries) for record in b.values() for entries in record["contracts"].values())
+          require(count == {"safe-custody":114, "v3-testnet":97}[os.environ["PROJECT"]], "contract coverage mismatch")
+          report = {"project": os.environ["PROJECT"], "contractEntries": count, "inputDigests": sorted(b), "originalOutputSha256": sha(a), "rebuiltOutputSha256": sha(b), "differences": [], "scope": "fresh checkout and pinned dependencies on separate GitHub runner; not external provider"}
+          (rebuilt / "source-rebuild-report.json").write_text(json.dumps(report, indent=2))
+          print(json.dumps(report, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compiler-source-rebuild-${{ matrix.project }}-${{ matrix.compiler }}
+          path: ${{ runner.temp }}/climb-differential/
+          if-no-files-found: error
+          retention-days: 14
