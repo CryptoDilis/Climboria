@@ -96,3 +96,32 @@ test('interrupted synthetic farming cancels stale work and only a new valid atte
  for(let i=0;i<300&&!completed.length;i++)npc.tick(.1);
  assert.deepEqual(completed,['plot']);npc.close();npc.tick(.1);assert.deepEqual(completed,['plot']);
 });
+
+test('route choice keeps edge order for ties and replans around a blocked shortcut',()=>{
+ const waypoints=[
+  {id:'start',x:0,z:0,action:'rest'},
+  {id:'north',x:0,z:1,action:'explore'},
+  {id:'south',x:0,z:-1,action:'explore'},
+  {id:'goal',x:1,z:0,action:'gather'}
+ ];
+ const edges=[['start','north'],['start','south'],['north','goal'],['south','goal']];
+ const npc=createAutonomousAdventurer({
+  nodes:waypoints,edges,spawn:'start',seed:17,
+  world:{
+   sample:()=>({ground:0,water:null}),
+   canTraverse:(from,to)=>to.z<=.4,
+   canAct:n=>n.id==='goal'
+  }
+ });
+ assert.ok(npc.tick(.1).z>0,'equal-hop routes keep their authored edge order');
+ let last=npc.snapshot(),usedAlternative=false,reached=false;
+ for(let i=0;i<100;i++){
+  const current=npc.tick(.1);
+  assert.ok(current.z<=.4);
+  assert.ok(Math.hypot(current.x-last.x,current.z-last.z)<=.300001);
+  usedAlternative||=current.z < -.4;
+  last=current;
+  if(current.mode==='gather'){reached=true;break}
+ }
+ assert.ok(usedAlternative&&reached);
+});
