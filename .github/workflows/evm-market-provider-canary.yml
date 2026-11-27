@@ -1,0 +1,24 @@
+name: EVM Market Provider Read-only Canary
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'swap/base-market-preview.mjs'
+      - '.github/scripts/evm-market-provider-canary.mjs'
+      - '.github/workflows/evm-market-provider-canary.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  provider-observation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact chain and reference contract market observations
+        run: node .github/scripts/evm-market-provider-canary.mjs
