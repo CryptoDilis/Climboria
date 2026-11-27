@@ -310,4 +310,29 @@ test("secondary EVM research is explicit, chain-isolated and never requests wall
   resume();await pending;
   assert.equal(ids.secondaryEvmResults.children.length,0);assert.equal(ids.secondaryEvmResearch.hidden,true);
   await ids.secondaryEvmForm.emit("submit");assert.equal(calls.length,3);
+  assert.equal(ids.secondaryEvmResearch.open,false);
+});
+test("secondary EVM research distinguishes unavailable provider data from empty exact-chain results",async()=>{
+  const {initSecondaryEvmResearch}=await import("../../swap/secondary-evm-research.mjs");
+  const ids=Object.fromEntries(["secondaryEvmResearch","secondaryEvmForm","secondaryEvmChain","secondaryEvmContract","secondaryEvmStatus","secondaryEvmResults"].map(k=>[k,new El()]));
+  const doc={documentElement:{dataset:{climboriaSwapNetwork:"base"}},getElementById:id=>ids[id],createElement:()=>new El()};
+  const scope={setTimeout,clearTimeout};
+  let next=()=>new Response("{}",{status:503,headers:{"content-type":"application/json"}});
+  ids.secondaryEvmChain.value="1";
+  initSecondaryEvmResearch({doc,scope,fetchImpl:async()=>next()});
+  ids.secondaryEvmContract.value=BASE_TOKEN;
+  for(const response of [
+    ()=>new Response("{}",{status:503,headers:{"content-type":"application/json"}}),
+    ()=>new Response("<html>error</html>",{headers:{"content-type":"text/html"}}),
+    ()=>new Response(JSON.stringify({pairs:null}),{headers:{"content-type":"application/json"}}),
+    ()=>new Response(" ".repeat(450001),{headers:{"content-type":"application/json"}})
+  ]){
+    next=response;await ids.secondaryEvmForm.emit("submit");
+    assert.equal(ids.secondaryEvmResults.children.length,0);
+    assert.match(ids.secondaryEvmStatus.textContent,/market data unavailable/);
+  }
+  next=()=>new Response(JSON.stringify({pairs:[pair({chainId:"bsc"})]}),{headers:{"content-type":"application/json"}});
+  await ids.secondaryEvmForm.emit("submit");
+  assert.equal(ids.secondaryEvmResults.children.length,0);
+  assert.match(ids.secondaryEvmStatus.textContent,/No matching liquid pools on Ethereum/);
 });
