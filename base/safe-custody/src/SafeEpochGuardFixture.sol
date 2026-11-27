@@ -88,23 +88,15 @@ contract SafeEpochGuardFixture is BaseGuard {
         transactionActive=true;
         _checkCall(to,data);
     }
-    // Safe has already validated three sorted owners. Restrict their signature modes,
-    // not the entire owner set: a non-signing delegated owner must remain replaceable.
-    // ECDSA proves possession of the signing key even when its address has code.
-    // Approved-hash/sender mode is retained only for code-less owners.
-    function _checkSignerModes(bytes memory signatures) private view {
+    // Safe has already verified three distinct, sorted owners. Require an actual
+    // ECDSA signature for each; approved-hash and sender modes cannot prove fresh
+    // key authorization, even if a delegated account later clears its code.
+    // Do not reject a whole owner set merely because a non-signing owner has code.
+    function _checkSignerModes(bytes memory signatures) private pure {
         if(signatures.length!=195)revert UnsupportedSignatureMode();
         for(uint256 i=0;i<3;i++){
-            bytes32 r;
-            uint8 v;
-            assembly {
-                let p := add(add(signatures,32),mul(i,65))
-                r := mload(p)
-                v := byte(0,mload(add(p,64)))
-            }
-            if(v==1){
-                if(uint256(r)>type(uint160).max||address(uint160(uint256(r))).code.length!=0)revert UnsupportedSignatureMode();
-            }else if(v!=27&&v!=28&&v!=31&&v!=32)revert UnsupportedSignatureMode();
+            uint8 v=uint8(signatures[i*65+64]);
+            if(v!=27&&v!=28&&v!=31&&v!=32)revert UnsupportedSignatureMode();
         }
     }
     function _rotationOwnerAllowed(address) internal view virtual returns(bool){return true;}
