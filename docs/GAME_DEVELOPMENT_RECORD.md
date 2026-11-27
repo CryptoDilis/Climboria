@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A PAIRED NORMAL-FRAME LIFECYCLE CANDIDATE — 2026-11-28 PHT
+
+- #1010 3/5 CI passed, #1013 foundation 46032633185 passed, #1015 exact 04c0aee9b090c643efb80788c6665ddb99a993f0 foundation 46033108224 passed; focused 46033108161 and earlier browser/gameplay runs pending. Preserve running parents.
+- Isolated pair frame session using actual pair controller: 50ms bounded frame steps, stable identities, per-actor distance, pair-wide visibility/distance/real-peer preemption and lifetime cap; independent cleanup attempts ensure one projection failure cannot strand its partner. Unit fixtures exercise actual controllers and simulated projections. Fresh CI required. Not wired into normal gameplay/rendering, no public spawn.
+- NEXT: verify actual map/visual parent checks; connect frame session to smoke-only normal game frame loop with owned GLB/fallback and real-peer preemption, then full main integration and physical-device testing. Keep production authority and economy disabled.
+
+---
+
 ## R5A SIMULTANEOUS VISUAL PAIR CANDIDATE — 2026-11-28 PHT
 
 - #1010 exact head 11f124a71fb2b74f19047002252d784ba9cd45db: 3/5 source CI green, focused and gameplay still running. #1013 exact bdc45d87f517b8d927c34eb0e7cc35066de48ce1: foundation 46032633185 SUCCESS, focused browser 46032633058 pending. Preserve both active runs.
