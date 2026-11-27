@@ -87,6 +87,9 @@ jobs:
           set -euo pipefail
           forge build
           node build-manifest.mjs "$RUNNER_TEMP/v3-build-manifest.json"
+      - name: Verify original deployed creation template remains unchanged
+        run: |
+          node --input-type=module -e 'import {readFileSync} from "node:fs"; import assert from "node:assert/strict"; const m=JSON.parse(readFileSync(process.env.RUNNER_TEMP+"/v3-build-manifest.json","utf8")); const t=m.contracts.find(x=>x.name==="ClimbV3IntegratedTestToken"); assert.equal(t.creationSha256,"75a53139963cbbf3b62e8769f22064f3a7c4056d1b772be7f64ac15c8aa383cd"); assert.equal(t.runtimeTemplateSha256,"10908e061fc8bb75381a1c17bf221657a3ee802145237472b8df63b173511c30");'
       - name: Archive test-only build evidence
         uses: actions/upload-artifact@v4
         with:
@@ -143,29 +146,3 @@ jobs:
           path: ${{ runner.temp }}/v3-unsigned-review.json
           if-no-files-found: error
           retention-days: 3
-      - name: Verify submitted V3 creation (read-only, finalized)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          set -euo pipefail
-          node verify-creation.mjs > "$RUNNER_TEMP/v3-finalized-creation.json"
-          cat "$RUNNER_TEMP/v3-finalized-creation.json"
-      - uses: actions/upload-artifact@v4
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        with:
-          name: climb-v3-finalized-creation
-          path: ${{ runner.temp }}/v3-finalized-creation.json
-          if-no-files-found: error
-          retention-days: 14
-      - name: Observe historical pre-start restrictions (read-only)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          set -euo pipefail
-          node check-prestart.mjs "$RUNNER_TEMP/v3-finalized-creation.json" > "$RUNNER_TEMP/v3-prestart.json"
-          cat "$RUNNER_TEMP/v3-prestart.json"
-      - uses: actions/upload-artifact@v4
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        with:
-          name: climb-v3-historical-prestart
-          path: ${{ runner.temp }}/v3-prestart.json
-          if-no-files-found: error
-          retention-days: 14
