@@ -55,3 +55,55 @@ test('new source identity cannot reuse a previously consumed nonce in same ledge
  b.input.campaign=h(99);
  assert.throws(()=>ledger.consume(b.input,b.inventory,b.proofs,1001),/nonce already consumed/);
 });
+
+import {mkdtempSync,rmSync,writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {spawn} from 'node:child_process';
+import {initializeSyntheticReplayFile,openSyntheticReplayLedger} from './legacy-owner-durable-ledger.mjs';
+function withDatabase(t){
+ const dir=mkdtempSync(join(tmpdir(),'climb-synthetic-replay-'));
+ t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const path=join(dir,'replay.sqlite');
+ initializeSyntheticReplayFile(path);
+ return {dir,path};
+}
+test('local replay state persists after close and reopen; initialization cannot reset it',t=>{
+ const {path}=withDatabase(t),{input,inventory,proofs}=fixture();
+ let db=openSyntheticReplayLedger(path);
+ try{assert.equal(db.consume(input,inventory,proofs,1001).replayConsumption,'LOCAL_SQLITE_TRANSACTION');}finally{db.close();}
+ assert.throws(()=>initializeSyntheticReplayFile(path),/EEXIST/);
+ db=openSyntheticReplayLedger(path);
+ try{assert.throws(()=>db.consume(input,inventory,proofs,1001),/source already consumed/);}finally{db.close();}
+});
+test('local transaction rolls back failed batch, including after restart',t=>{
+ const {path}=withDatabase(t),{input,inventory,proofs}=fixture(),bad=structuredClone(input);
+ bad.entries[1].evidenceHash=h(99);
+ let db=openSyntheticReplayLedger(path);
+ try{assert.throws(()=>db.consume(bad,inventory,proofs,1001),/manifest evidence hash mismatch/);}finally{db.close();}
+ db=openSyntheticReplayLedger(path);
+ try{assert.equal(db.consume(input,inventory,proofs,1001).count,2);}finally{db.close();}
+});
+test('missing and malformed database do not silently initialize',t=>{
+ const {dir}=withDatabase(t);
+ assert.throws(()=>openSyntheticReplayLedger(join(dir,'missing.sqlite')));
+ const bad=join(dir,'bad.sqlite');writeFileSync(bad,'not a database');
+ assert.throws(()=>openSyntheticReplayLedger(bad));
+});
+test('two independent processes racing the same batch yield one commit',async t=>{
+ const {dir,path}=withDatabase(t),{input,inventory,proofs}=fixture();
+ const payload=join(dir,'batch.json');writeFileSync(payload,JSON.stringify({input,inventory,proofs}));
+ const moduleUrl=new URL('./legacy-owner-durable-ledger.mjs',import.meta.url).href;
+ const code=`import {readFileSync} from 'node:fs'; import {openSyntheticReplayLedger} from ${JSON.stringify(moduleUrl)};
+ const {input,inventory,proofs}=JSON.parse(readFileSync(process.argv[2],'utf8'));
+ const db=openSyntheticReplayLedger(process.argv[1]);
+ try{db.consume(input,inventory,proofs,1001);console.log('COMMITTED');}
+ catch(e){if(!/source already consumed/.test(e.message))throw e;console.log('REPLAY');}
+ finally{db.close();}`;
+ const worker=()=>new Promise((resolve,reject)=>{
+  const p=spawn(process.execPath,['--input-type=module','-e',code,path,payload]);let out='',err='';
+  p.stdout.on('data',b=>out+=b);p.stderr.on('data',b=>err+=b);
+  p.on('error',reject);p.on('close',c=>c===0?resolve(out.trim()):reject(Error(err)));
+ });
+ assert.deepEqual((await Promise.all([worker(),worker()])).sort(),['COMMITTED','REPLAY']);
+});
