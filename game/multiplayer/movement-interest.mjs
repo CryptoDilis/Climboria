@@ -9,19 +9,23 @@ export function createMovementInterest(){
  function dispatch({members,now,sourceId=null,deliver}){
   if(!Number.isFinite(now))throw Error('Invalid trusted clock');
   const active=[...members.values()].filter(m=>m.visible!==false),failed=new Set();
-  let delivered=0;
-  for(const source of active)for(const recipient of active){
-   if(source.id===recipient.id||failed.has(recipient.id))continue;
-   if(sourceId!==null&&source.id!==sourceId&&recipient.id!==sourceId)continue;
+  let delivered=0,visited=0;
+  function pair(source,recipient){
+   if(source.id===recipient.id||failed.has(recipient.id))return;
+   visited++;
    const k=key(source,recipient),t=tier(source,recipient),old=sent.get(k);
    const changed=!old||old.x!==source.position.x||old.y!==source.position.y||old.z!==source.position.z;
    // Receiver crossing into a nearer tier immediately receives authoritative snapshot,
    // even when the source stopped moving. Periodic flush delivers last suppressed move.
-   if(old&&t>=old.tier&&(!changed||now-old.at<interval[t]))continue;
+   if(old&&t>=old.tier&&(!changed||now-old.at<interval[t]))return;
    try{deliver(recipient,{type:'player-moved',id:source.id,position:{...source.position}});sent.set(k,{source:source.id,recipient:recipient.id,tier:t,at:now,...source.position});delivered++}
    catch{failed.add(recipient.id)}
   }
-  return {delivered,failed:[...failed]};
+  // An individual move checks its outgoing/incoming pairs only (O(n));
+  // periodic flush checks all pairs to coalesce and deliver final positions.
+  if(sourceId===null){for(const source of active)for(const recipient of active)pair(source,recipient)}
+  else{const source=members.get(sourceId);if(source&&source.visible!==false)for(const peer of active){if(peer.id===sourceId)continue;pair(source,peer);pair(peer,source)}}
+  return {delivered,visited,failed:[...failed]};
  }
  return Object.freeze({dispatch,remove,size:()=>sent.size});
 }
