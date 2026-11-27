@@ -13,7 +13,7 @@ function fixture(mutate=()=>{}){
   const s=q.params[0];
   let result;
   switch(q.method){
-   case 'getGenesisHash':result='5eykt4UsFv8P8NJdTREpY1vzqKZKvdpKuc147dw2N9d';break;
+   case 'getGenesisHash':result='5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d';break;
    case 'getSlot':result=head;break;
    case 'getBlockTime':result=time(s);break;
    case 'getBlocks':result=Array.from({length:q.params[1]-s+1},(_,i)=>s+i).filter(present);break;
@@ -51,4 +51,12 @@ test('fixed diagnostic distinguishes provider, history access and invalid block 
  await assert.rejects(observeHistoricalBracket(A,B,{fetchFn:async(url,opts)=>url===B?new Response('SECRET',{status:429}):fetchFn(url,opts)}),e=>bracketFailureCode(e)==='B_getGenesisHash_HTTP_429');
  assert.equal(bracketFailureCode({code:'A_BLOCK_TIME'}),'UNCLASSIFIED');
  assert.equal(bracketFailureCode(Error('SECRET')),'UNCLASSIFIED');
+});
+
+test('reject the previous mistyped genesis pin, accept the existing mainnet reference',async()=>{
+ const {fetchFn}=fixture();
+ assert.equal((await observeHistoricalBracket(A,B,{fetchFn})).authorization,false);
+ for(const [target,code] of [[A,'A_GENESIS'],[B,'B_GENESIS']]){
+  await assert.rejects(observeHistoricalBracket(A,B,{fetchFn:fixture((x,q,url)=>{if(q.method==='getGenesisHash'&&url===target)x.result='5eykt4UsFv8P8NJdTREpY1vzqKZKvdpKuc147dw2N9d';}).fetchFn}),e=>bracketFailureCode(e)===code);
+ }
 });
