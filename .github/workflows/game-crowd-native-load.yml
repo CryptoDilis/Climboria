@@ -23,7 +23,7 @@ jobs:
       - name: Install local fixture transport
         run: |
           npm init -y
-          npm install --no-save ws@8.18.3
+          npm install --no-save ws@8.23.1
       - name: Run movement and crowd policy regression tests
         run: node --test game/multiplayer/private-movement-batch.test.mjs game/multiplayer/movement-interest.test.mjs game/npc/crowd-render-policy.test.mjs
       - name: Run 10 25 50 100 private native clients
