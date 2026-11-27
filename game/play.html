@@ -44,6 +44,11 @@ body.free #status-card{opacity:1}
 body.free.mobile-device #climboria-punch-button{display:flex;align-items:center;justify-content:center}
 #climboria-punch-button .attack-control-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;line-height:1;white-space:nowrap}
 body.mobile-device.climboria-portrait #climboria-punch-button{display:none!important}
+#field-journal{margin-top:6px;color:#f4ecd8;font:12px/1.35 system-ui}
+#field-journal summary{cursor:pointer;padding:5px 0;color:#ffe3a3;font-weight:700}
+#field-journal-entries{overflow-wrap:anywhere}
+#field-journal-entries p{margin:4px 0 8px}
+#field-journal-entries b{display:block;color:#ffe3a3}
 #world-map-toggle{display:none}
 #world-map-panel{position:fixed;pointer-events:auto!important;z-index:1000!important;right:0!important;top:0!important;margin:0!important;width:240px;box-sizing:border-box;padding:9px;border:1px solid #d8b46b99;border-top:0;border-right:0;border-radius:0 0 0 13px;background:#080d14ed;box-shadow:0 12px 40px #000b;display:block;transition:width .2s}#world-map-panel.map-expanded{width:min(340px,calc(100vw - 32px))}
 #expedition-settings-toggle{position:fixed;display:grid;place-items:center;pointer-events:auto;z-index:1205;top:10px;right:250px;width:40px;height:40px;border:1px solid #d8b46b99;border-radius:10px;background:#080d14ed;color:#ffe3a3;font-size:22px;cursor:pointer;box-shadow:0 8px 24px #0008}
@@ -263,7 +268,7 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>DAMAGE</span><span id="damage-value">5</span></div><div class="stat-track"><div class="stat-fill" id="damage-fill" style="width:25%;background:#c66b54"></div></div></div>
 <div id="summit-chest-status" role="status" aria-live="polite"><span>JARRELL’S PEAK · SUMMIT CHEST</span><strong id="summit-chest-countdown">READY</strong><small>HIGH-TIER LOOT · 15-MINUTE RESPAWN</small></div>
 <button id="world-map-toggle" type="button">WORLD MAP · M</button><button id="climboria-punch-button" data-mobile-action="punch" type="button" aria-label="Attack animation (PvP damage not enabled)" title="Attack · Q (walking)"><span class="attack-control-label">ATTACK</span></button>
-<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><label for="climboria-music-volume">MUSIC <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><label for="climboria-effects-volume">SOUND EFFECTS <span id="climboria-effects-value">55%</span></label><input id="climboria-effects-volume" type="range" min="0" max="100" value="55" step="1"><div id="expedition-connected-account" role="status" style="font:700 11px/1.5 system-ui;color:#d1dbc6;padding:10px 0;border-top:1px solid #ffffff20">ACCOUNT · CHECKING…</div><button id="expedition-return-menu" type="button">RETURN TO MENU</button><button id="expedition-settings-close" type="button">CLOSE</button></section>
+<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div><details id="field-journal" hidden><summary>Field journal</summary><div id="field-journal-entries"></div></details></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><label for="climboria-music-volume">MUSIC <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><label for="climboria-effects-volume">SOUND EFFECTS <span id="climboria-effects-value">55%</span></label><input id="climboria-effects-volume" type="range" min="0" max="100" value="55" step="1"><div id="expedition-connected-account" role="status" style="font:700 11px/1.5 system-ui;color:#d1dbc6;padding:10px 0;border-top:1px solid #ffffff20">ACCOUNT · CHECKING…</div><button id="expedition-return-menu" type="button">RETURN TO MENU</button><button id="expedition-settings-close" type="button">CLOSE</button></section>
 
 <div id="help">WASD move · Shift sprint · Space jump · Q attack · Mouse look (drag if not locked)<br>E interact · Weather and daylight cycle automatically · V return to walk<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
 
@@ -2223,6 +2228,7 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
     if(localPositionUserId&&localPositionUserId!==userId)this.saveLocalPosition();
     if(localPositionUserId!==userId)localPositionReady=false;
     localPositionUserId=userId||null;
+    renderFieldJournal();
     const previousKey = inventoryStorageKey;
     const previousItems = inventory.map(item => ({ name: item.name, qty: item.qty }));
     const targetKey = userId ? INVENTORY_KEY + ':user:' + userId : INVENTORY_KEY;
@@ -2284,6 +2290,40 @@ document.getElementById('player-card').addEventListener('click',toggleInventory)
 const mapToggle=document.getElementById('world-map-toggle'),mapPanel=document.getElementById('world-map-panel'),mapCanvas=document.getElementById('world-map'),mapCtx=mapCanvas.getContext('2d');
 function toggleWorldMap(){const opening=mapPanel.classList.toggle('map-expanded');if(opening)releaseGameplayInput();drawWorldMap();drawWorldMapPlayer()}
 mapPanel.style.display='block';
+
+const journalPanel=document.getElementById('field-journal'),journalEntries=document.getElementById('field-journal-entries');
+let fieldJournal;
+function renderFieldJournal(){
+ if(!fieldJournal||!journalPanel.open)return;
+ const entries=fieldJournal.entries();
+ journalEntries.replaceChildren();
+ if(!entries.length){
+  const empty=document.createElement('p');
+  empty.textContent='Visit a mapped landmark to record it here.';
+  journalEntries.append(empty);
+ }
+ for(const {name,note} of entries){
+  const entry=document.createElement('p'),title=document.createElement('b');
+  title.textContent=name;entry.append(title,note);journalEntries.append(entry);
+ }
+}
+journalPanel.addEventListener('keydown',e=>e.stopPropagation());
+journalPanel.addEventListener('toggle',()=>{if(journalPanel.open)releaseGameplayInput();renderFieldJournal()});
+void import('./field-journal.mjs').then(({createFieldJournal})=>{
+ const landmarks=[
+  {id:'sanctuary',name:'Sanctuary',note:'The stone pillars mark a sheltered starting point. Follow the mapped trail to the park.',...POI.sanct,radius:24},
+  {id:'park',name:'Park',note:'The trail opens into a clearing. The map marks an expedition camp to the north.',...POI.park,radius:30},
+  {id:'camp',name:'Expedition camp',note:'The camp is a waymark for trips west toward the cave.',...POI.camp,radius:24}
+ ];
+ const getScope=()=>window.__climboriaGuestMode?'guest':localPositionUserId?'user:'+localPositionUserId:null;
+ // Use lazy storage access so browsers that block it can keep a session-only journal.
+ const storage={
+  getItem:key=>window.__climboriaGuestMode?null:localStorage.getItem(key),
+  setItem(key,value){if(!window.__climboriaGuestMode)localStorage.setItem(key,value)}
+ };
+ fieldJournal=createFieldJournal({landmarks,storage,getScope});
+ journalPanel.hidden=false;
+}).catch(error=>console.warn('[Climboria field journal]',error));
 function drawWorldMap(){
  const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.clearRect(0,0,w,h);
  // Shaded-relief terrain render: layered elevation, slope lighting, forest texture, water and trail detail.
@@ -4488,7 +4528,11 @@ function update(dt){
    else animateAssetFallback(Tm,animState,Math.hypot(fw,rt));
   }else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='awaiting-saved-glb';}
  }
- mapMarkerClock+=dt;if(mapMarkerClock>=.12){mapMarkerClock=0;drawWorldMapPlayer();}
+ mapMarkerClock+=dt;
+ if(mapMarkerClock>=.12){
+  mapMarkerClock=0;drawWorldMapPlayer();
+  if(P.mode==='walk'&&!P.swim&&P.jumpState==='grounded'&&fieldJournal?.sample(P))renderFieldJournal();
+ }
  const cp=cam.position;gameTick(dt,cp);npcContinuousSession?.frame(dt);npcPairSession?.frame(dt);window.__CLIMBORIA_GAME_PEERS?.update(dt);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
  updateChunks(cp.x,cp.z,ready?1:0);
  sky.position.copy(cp);const sx=(Math.floor(cp.x/CS)+.5)*CS,sz=(Math.floor(cp.z/CS)+.5)*CS;water.position.set(sx,0,sz);
