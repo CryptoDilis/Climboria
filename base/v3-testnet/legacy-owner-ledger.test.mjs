@@ -69,7 +69,8 @@ function withDatabase(t){
  initializeSyntheticReplayFile(path);
  return {dir,path};
 }
-function registerAll(db,challenges){for(const c of challenges)db.registerChallenge(c,c.issuedAt);}
+function approveAll(db,challenges){for(const c of challenges){db.approveCampaign(c);db.approveEligibility(c);}}
+function registerAll(db,challenges){approveAll(db,challenges);for(const c of challenges)db.registerChallenge(c,c.issuedAt);}
 test('local replay state persists after close and reopen; initialization cannot reset it',t=>{
  const {path}=withDatabase(t),{input,inventory,proofs,challenges}=fixture();
  let db=openSyntheticReplayLedger(path);
@@ -116,6 +117,7 @@ test('valid proof cannot consume an unregistered challenge; registration survive
  let db=openSyntheticReplayLedger(path);
  try{
   assert.throws(()=>db.consume(input,inventory,proofs,1001),/unregistered/);
+  approveAll(db,challenges);
   db.registerChallenge(challenges[0],1000);
   assert.throws(()=>db.consume(input,inventory,proofs,1001),/unregistered/);
   db.registerChallenge(challenges[1],1000);
@@ -127,8 +129,7 @@ test('issued digest cannot be substituted by another correctly signed challenge'
  const {path}=withDatabase(t),{input,inventory,proofs,challenges}=fixture();
  const db=openSyntheticReplayLedger(path);
  try{
-  db.registerChallenge(challenges[0],1000);
-  db.registerChallenge({...challenges[1],recipient:addr(99)},1000);
+  registerAll(db,[challenges[0],{...challenges[1],recipient:addr(99)}]);
   assert.throws(()=>db.consume(input,inventory,proofs,1001),/mismatched challenge/);
   // First row must not have been consumed on partial batch failure.
   const first={...input,entries:[input.entries[0]]};
@@ -203,4 +204,50 @@ test('distinct batches racing remaining campaign budget commit at most one',asyn
   p.on('error',reject);p.on('close',c=>c===0?resolve(out.trim()):reject(Error(err)));
  });
  assert.deepEqual((await Promise.all([worker(a,0),worker(b,1)])).sort(),['CAP','COMMITTED:100']);
+});
+
+test('explicit campaign and eligibility approvals must precede challenge registration',t=>{
+ const {path}=withDatabase(t),{input,inventory,proofs,challenges}=fixture();
+ let db=openSyntheticReplayLedger(path);
+ try{
+  assert.throws(()=>db.registerChallenge(challenges[0],1000),/unapproved campaign/);
+  assert.throws(()=>db.approveEligibility(challenges[0]),/unapproved campaign/);
+  assert.equal(db.approveCampaign(challenges[0]).authorization,false);
+  assert.throws(()=>db.registerChallenge(challenges[0],1000),/unapproved or mismatched eligibility/);
+  assert.equal(db.approveEligibility(challenges[0]).authorization,false);
+ }finally{db.close();}
+ db=openSyntheticReplayLedger(path);
+ try{
+  db.registerChallenge(challenges[0],1000);
+  assert.throws(()=>db.registerChallenge(challenges[1],1000),/unapproved or mismatched eligibility/);
+  db.approveEligibility(challenges[1]);db.registerChallenge(challenges[1],1000);
+  assert.equal(db.consume(input,inventory,proofs,1001).count,2);
+ }finally{db.close();}
+});
+test('approved row fixes owner, destination, source balance and award independent of nonce',t=>{
+ const {path}=withDatabase(t),{input,inventory,proofs,challenges}=fixture();
+ const db=openSyntheticReplayLedger(path);
+ try{
+  const c=challenges[0];approveAll(db,challenges);
+  for(const delta of [{sourceOwner:h(99)},{recipient:addr(99)},{sourceAmount:'101'},{award:'51'}]){
+   const changed={...c,...delta,nonce:h(99)};
+   assert.throws(()=>db.approveEligibility(changed),/eligibility context mismatch/);
+   assert.throws(()=>db.registerChallenge(changed,1000),/unapproved or mismatched eligibility/);
+  }
+  db.registerChallenge({...c,nonce:h(99)},1000);
+  for(const row of challenges)db.registerChallenge(row,1000);
+  assert.equal(db.consume(input,inventory,proofs,1001).count,2);
+ }finally{db.close();}
+});
+test('new campaign cannot inherit previous campaign approval or eligibility',t=>{
+ const {path}=withDatabase(t),{challenges}=fixture();
+ const db=openSyntheticReplayLedger(path);
+ try{
+  approveAll(db,challenges);
+  const other={...challenges[0],campaign:h(77),nonce:h(77)};
+  assert.throws(()=>db.registerChallenge(other,1000),/unapproved campaign/);
+  assert.throws(()=>db.approveEligibility(other),/unapproved campaign/);
+  db.approveCampaign(other);
+  assert.throws(()=>db.registerChallenge(other,1000),/unapproved or mismatched eligibility/);
+ }finally{db.close();}
 });
