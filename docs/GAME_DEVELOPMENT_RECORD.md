@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## AUTHORED 3D CHARACTER SNAPSHOT PROJECTION — 2026-11-27 PHT (PROPOSED)
+
+- #922 head 68e4f84e60912d19c41f486a3daf9cae86ddd124: Validate 45945502523 SUCCESS; Gameplay 45945502508 job 140329210856 native browser WebSocket step SUCCESS, existing Jarrell desktop/mobile smoke running. No final merge claim.
+- Reviewed game/play.html blob 10d85bb988122339a895fc90496487b61cf7efa3: requestVisualPunch deducts local stamina, hurt performs local death/loot/teleport, update mutates local locomotion/stamina and places assetHero at P.y-1.75+assetHeroGroundOffset. Do not attach server snapshots to P while these local writers remain active.
+- Independent branch from main: render-only adapter fa1c79e588eb01d2f013fbb7b03d27b476b9b47b maps validated bounded snapshot coordinates to a dedicated mesh root using ground height plus measured foot offset, renders HP/stamina and disables controls while downed/stale. Unit regression 7b52327381a78c21b81a9414c17ee3d123b1344d, authority workflow 5e3a5010c62a40d8f289c8a436328a085e40d8ee. No execution evidence yet; no GLB scene mounted or production game modified.
+- EXACT NEXT: verify #922 terminal Gameplay CI and merge; verify this independent adapter PR, resolve concurrent documentation changes without dropping history, then mount a dedicated actual GLB root in the isolated browser harness and test server-driven render transforms. Keep public game, save, loot and presence separate; no public combat activation.
+
+---
+
 ## AUTHORED COMBAT BROWSER CONTROL ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
 
 - #913 merged at 65f500c10c3e873539ba7c2921d1fdaadf429dcb; exact head dca91160f9a2e40f7bedb3a97c5aae1a4a254c66 all five SUCCESS: Validate 45942752012, Authority 45942751996, Gateway 45942752611, Runtime 45942752001, Gameplay 45942752087. Local Runtime job 140320511542 explicitly passed bounded authored map over CI-only local WebSockets.
