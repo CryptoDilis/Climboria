@@ -9,7 +9,7 @@ function key(s){
  let n=0n;for(const c of s)n=n*58n+BigInt(alphabet.indexOf(c));
  return n.toString(16).padStart(64,'0');
 }
-export function verifySyntheticBatch(input,expectedInventoryDigest,proofs,now,{hasNonce,hasSource,checkIssued}){
+export function verifySyntheticBatch(input,expectedInventoryDigest,proofs,now,{hasNonce,hasSource,checkIssued,globalSource=false}){
   const {entries,total}=normalizeLegacyEvidence(input);
   if(!Array.isArray(proofs)||proofs.length!==entries.length)fail('proof count mismatch');
   const bySource=new Map();
@@ -21,7 +21,7 @@ export function verifySyntheticBatch(input,expectedInventoryDigest,proofs,now,{h
   for(const [account,owner,recipient,sourceAmount,award,evidenceHash] of entries){
    const p=bySource.get(account);
    if(!p)fail('missing source proof');
-   const sourceIdentity=JSON.stringify([input.sourceGenesis,input.sourceMint,input.campaign,account]);
+   const sourceIdentity=JSON.stringify(globalSource?[input.sourceGenesis,input.sourceMint,account]:[input.sourceGenesis,input.sourceMint,input.campaign,account]);
    if(hasSource(sourceIdentity)||sources.has(sourceIdentity))fail('source already consumed');
    const nonce=p.nonce;
    if(hasNonce(nonce)||nonces.has(nonce))fail('nonce already consumed');
