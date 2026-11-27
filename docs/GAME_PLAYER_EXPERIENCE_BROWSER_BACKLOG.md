@@ -137,6 +137,9 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 
 **Next:** complete exact CI and merge compatible Game-only candidates, then physical device and authenticated private capacity testing. No production scalability claim or authorization from this checklist.
 
+**C9–C13 update (2026-11-28 PHT):** C13 private socket recovery is merged and verified in CI for 10/25/50/100 synthetic clients. C9–C12 private visibility, instancing and deadline candidates are consolidated for fresh CI. The software-rendered world fixture drew seven body parts for 100 instanced peers. The 25 ms loopback flush measured 44.57 ms p95 delivery. R0.2/R0.4/R0.5/R0.8 stay open for registered-account browser reconnect and durable resume, nameplate/interaction visibility, physical metrics and production-equivalent capacity. R5A gait/benchmark integration and physical pair acceptance remain pending.
+
+
 ## R6 — Reasons to return (optional, non-punitive)
 
 - [ ] R6.1 Optional rotating daily adventures and weekly expeditions/challenges, no mandatory streaks, no lost progression for absence.
