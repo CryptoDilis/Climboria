@@ -155,6 +155,8 @@ jobs:
         run: node --test legacy-binary-proof.test.mjs
       - name: Test synthetic legacy key-control signatures
         run: node --test legacy-owner-proof.test.mjs
+      - name: Test synthetic legacy manifest proof consumption
+        run: node --test legacy-owner-ledger.test.mjs
       - name: Test V3 read-only estimator
         run: node --test estimate-creation.test.mjs
       - name: Test unsigned review binding

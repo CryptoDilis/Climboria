@@ -6,7 +6,7 @@ const pair=generateKeyPairSync('ed25519');
 const owner=pair.publicKey.export({format:'der',type:'spki'}).subarray(-32).toString('hex');
 const h=i=>i.toString(16).padStart(64,'0');
 const a=i=>'0x'+i.toString(16).padStart(40,'0');
-const fixture=()=>({mode:'SYNTHETIC_ONLY',sourceGenesis:h(1),sourceMint:h(2),snapshotSlot:'123',snapshotHash:h(3),inventoryDigest:h(4),campaign:h(5),sourceAccount:h(6),sourceOwner:owner,sourceAmount:'1000',targetChainId:84532,targetToken:a(1),targetVault:a(2),recipient:a(3),award:'100',nonce:h(7),issuedAt:1000,expiresAt:1900});
+const fixture=()=>({mode:'SYNTHETIC_ONLY',sourceGenesis:h(1),sourceMint:h(2),snapshotSlot:'123',snapshotHash:h(3),inventoryDigest:h(4),policyHash:h(9),cap:'1000',campaign:h(5),sourceAccount:h(6),sourceOwner:owner,sourceAmount:'1000',targetChainId:84532,targetToken:a(1),targetVault:a(2),recipient:a(3),award:'100',nonce:h(7),issuedAt:1000,expiresAt:1900});
 const signed=c=>sign(null,syntheticOwnerMessage(c),pair.privateKey).toString('hex');
 test('synthetic exact signature matches without authorizing eligibility or claims',()=>{
  const c=fixture(),r=verifySyntheticOwnerProof(c,signed(c),1000);
@@ -17,7 +17,7 @@ test('synthetic exact signature matches without authorizing eligibility or claim
 });
 test('every valid changed context, recipient, quantity and nonce rejects old signature',()=>{
  const c=fixture(),sig=signed(c);
- for(const [k,v] of [['sourceGenesis',h(8)],['sourceMint',h(8)],['snapshotSlot','124'],['snapshotHash',h(8)],['inventoryDigest',h(8)],['campaign',h(8)],['sourceAccount',h(8)],['sourceAmount','1001'],['targetToken',a(8)],['targetVault',a(8)],['recipient',a(8)],['award','101'],['nonce',h(8)],['issuedAt',1001],['expiresAt',1899]]){
+ for(const [k,v] of [['sourceGenesis',h(8)],['sourceMint',h(8)],['snapshotSlot','124'],['snapshotHash',h(8)],['inventoryDigest',h(8)],['policyHash',h(8)],['cap','1001'],['campaign',h(8)],['sourceAccount',h(8)],['sourceAmount','1001'],['targetToken',a(8)],['targetVault',a(8)],['recipient',a(8)],['award','101'],['nonce',h(8)],['issuedAt',1001],['expiresAt',1899]]){
   assert.throws(()=>verifySyntheticOwnerProof({...c,[k]:v},sig,1002),/signature rejected/,k);
  }
 });
