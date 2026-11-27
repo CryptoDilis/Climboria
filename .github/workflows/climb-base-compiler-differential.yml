@@ -92,7 +92,35 @@ jobs:
           forge config --json --use "$compiler" --evm-version "$target" > "$RUNNER_TEMP/climb-differential/config.json"
           forge test --use "$compiler" --evm-version "$target" -vv | tee "$RUNNER_TEMP/climb-differential/tests.log"
           grep -Eq '[1-9][0-9]* tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/climb-differential/tests.log"
-          forge build --use "$compiler" --evm-version "$target" --build-info --force 2>&1 | tee "$RUNNER_TEMP/climb-differential/build.log"
+          # Capture the actual standard-JSON exchanges, not a reconstructed input.
+          real="$RUNNER_TEMP/solc-candidate"
+          if [ "$COMPILER" = 0.8.19 ]; then real="$HOME/.svm/0.8.19/solc-0.8.19"; fi
+          test -x "$real"
+          export CLIMB_REAL_SOLC="$real"
+          export CLIMB_SOLC_CAPTURE="$RUNNER_TEMP/climb-differential/standard-json"
+          mkdir -p "$CLIMB_SOLC_CAPTURE"
+          "$real" --version | tee "$RUNNER_TEMP/climb-differential/solc.txt"
+          sha256sum "$real" > "$RUNNER_TEMP/climb-differential/solc-sha256.txt"
+          cat > "$RUNNER_TEMP/capture-solc" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          for arg in "$@"; do
+            if [ "$arg" = --standard-json ]; then
+              record="$(mktemp -d "$CLIMB_SOLC_CAPTURE/invocation.XXXXXXXX")"
+              printf '%s\n' "$@" > "$record/args.txt"
+              cat > "$record/input.json"
+              status=0
+              "$CLIMB_REAL_SOLC" "$@" < "$record/input.json" > "$record/output.json" || status=$?
+              cat "$record/output.json"
+              exit "$status"
+            fi
+          done
+          exec "$CLIMB_REAL_SOLC" "$@"
+          SH
+          chmod 700 "$RUNNER_TEMP/capture-solc"
+          forge build --use "$RUNNER_TEMP/capture-solc" --evm-version "$target" --extra-output storageLayout metadata --build-info --force 2>&1 | tee "$RUNNER_TEMP/climb-differential/build.log"
+          test -n "$(find "$CLIMB_SOLC_CAPTURE" -name output.json -print -quit)"
+          cp -r out/build-info "$RUNNER_TEMP/climb-differential/build-info"
           if [ "${{ matrix.project }}" = safe-custody ]; then
             node size-manifest.mjs "$RUNNER_TEMP/climb-differential/size.json" | tee "$RUNNER_TEMP/climb-differential/size.log"
           fi
@@ -101,5 +129,125 @@ jobs:
         with:
           name: compiler-differential-${{ matrix.project }}-${{ matrix.compiler }}
           path: ${{ runner.temp }}/climb-differential/
+          if-no-files-found: error
+          retention-days: 14
+
+  compatibility:
+    name: Compare ABI, storage and compiler metadata / ${{ matrix.project }}
+    needs: compare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [safe-custody, v3-testnet]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: compiler-differential-${{ matrix.project }}-*
+          path: evidence
+      - name: Verify captured compiler outputs and compare interfaces
+        env:
+          PROJECT: ${{ matrix.project }}
+        run: |
+          set -euo pipefail
+          mkdir -p compatibility
+          python - <<'PY' | tee compatibility/comparison.log
+          import json, os
+          from pathlib import Path
+
+          project = os.environ["PROJECT"]
+          target = "paris" if project == "safe-custody" else "london"
+          def require(ok, message):
+              if not ok:
+                  raise ValueError(message)
+
+          def canonical_abi(abi):
+              return sorted(json.dumps(e, sort_keys=True, separators=(",", ":")) for e in abi)
+
+          def canonical_layout(layout):
+              types = layout["types"] or {}
+              def item(entry, stack):
+                  return {**{k: v for k, v in entry.items() if k not in ("astId", "type")},
+                          "type": typ(entry["type"], stack)}
+              def typ(tid, stack):
+                  if tid in stack:
+                      return {"recursiveReference": stack.index(tid)}
+                  desc = types[tid]
+                  next_stack = stack + [tid]
+                  result = {}
+                  for k, v in desc.items():
+                      if k == "members":
+                          result[k] = [item(m, next_stack) for m in v]
+                      elif k in ("base", "key", "value"):
+                          result[k] = typ(v, next_stack)
+                      else:
+                          result[k] = v
+                  return result
+              return [item(e, []) for e in layout["storage"]]
+
+          def collect(version):
+              root = Path("evidence", f"compiler-differential-{project}-{version}")
+              require(root.is_dir(), f"missing artifact {root}")
+              records = sorted((root / "standard-json").glob("*/output.json"))
+              require(records, f"no actual compiler outputs: {version}")
+              contracts = {}
+              sources = {}
+              metadata_rows = []
+              for output in records:
+                  inp = json.loads(output.with_name("input.json").read_text())
+                  out = json.loads(output.read_text())
+                  require(not any(e.get("severity") == "error" for e in out.get("errors", [])), f"solc error: {output}")
+                  settings = inp["settings"]
+                  require(settings["evmVersion"] == target, f"EVM target mismatch: {output}")
+                  require(settings["optimizer"]["enabled"] is True and settings["optimizer"]["runs"] == 200, f"optimizer mismatch: {output}")
+                  require(not settings.get("viaIR", False), f"unexpected viaIR: {output}")
+                  for source, data in inp["sources"].items():
+                      content = data["content"]
+                      if version == "0.8.39" and (source.startswith(("src/", "test/", "../v3-testnet/src/"))):
+                          content = content.replace("pragma solidity 0.8.39;", "pragma solidity 0.8.19;")
+                      require(source not in sources or sources[source] == content, f"inconsistent source: {source}")
+                      sources[source] = content
+                  for source, entries in out.get("contracts", {}).items():
+                      for name, artifact in entries.items():
+                          key = f"{source}:{name}"
+                          require(all(k in artifact for k in ("abi", "storageLayout", "metadata")), f"missing output fields: {key}")
+                          meta = json.loads(artifact["metadata"])
+                          actual = meta["compiler"]["version"]
+                          require(actual.split("+")[0] == version, f"compiler metadata mismatch: {key} {actual}")
+                          require(meta["settings"]["evmVersion"] == target, f"metadata target mismatch: {key}")
+                          require(meta["settings"]["compilationTarget"] == {source: name}, f"metadata target identity mismatch: {key}")
+                          row = {"abi": canonical_abi(artifact["abi"]), "storage": canonical_layout(artifact["storageLayout"])}
+                          require(key not in contracts or contracts[key] == row, f"duplicate inconsistent contract: {key}")
+                          contracts[key] = row
+                          metadata_rows.append({"contract": key, "compiler": actual})
+              require(contracts and any(k.startswith("src/") for k in contracts), "no project contracts captured")
+              Path("compatibility", f"{version}-metadata.json").write_text(json.dumps(metadata_rows, indent=2))
+              print(f"{version}: {len(records)} actual invocations, {len(sources)} sources, {len(contracts)} contracts")
+              return contracts, sources, (root / "source.txt").read_text()
+
+          a, sa, ha = collect("0.8.19")
+          b, sb, hb = collect("0.8.39")
+          problems = []
+          if ha != hb:
+              problems.append("checkout commit mismatch")
+          if sa != sb:
+              problems.append("source mismatch after permitted pragma normalization: " + repr(sorted(k for k in sa.keys() | sb.keys() if sa.get(k) != sb.get(k))))
+          if a.keys() != b.keys():
+              problems.append("contract identity mismatch: " + repr(sorted(a.keys() ^ b.keys())))
+          for key in sorted(a.keys() & b.keys()):
+              for field in ("abi", "storage"):
+                  if a[key][field] != b[key][field]:
+                      problems.append(f"{field} differs: {key}")
+          report = {"project": project, "baselineContracts": len(a), "candidateContracts": len(b), "differences": problems}
+          Path("compatibility/report.json").write_text(json.dumps(report, indent=2))
+          print(json.dumps(report, indent=2))
+          require(not problems, "compatibility gate failed; inspect differences before any repin")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compiler-compatibility-${{ matrix.project }}
+          path: compatibility/
           if-no-files-found: error
           retention-days: 14
