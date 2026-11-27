@@ -26,3 +26,14 @@ test('nearer recipient receives stopped source position immediately, pending spa
  assert.equal(packets.find(p=>p.id===id(0)).position.x,2);
  assert.equal(room.snapshot().length,2);
 });
+
+test('targeted movement visits exactly two directed pairs per other visible member',async()=>{
+ const {createMovementInterest}=await import('./movement-interest.mjs');
+ const interest=createMovementInterest(),members=new Map();
+ for(let i=0;i<100;i++)members.set(id(i),{id:id(i),position:{x:i,y:2,z:0},visible:true});
+ const deliver=()=>{};
+ assert.equal(interest.dispatch({members,now:1000,deliver}).visited,9900);
+ members.get(id(0)).position.x=1;
+ assert.equal(interest.dispatch({members,now:1250,sourceId:id(0),deliver}).visited,198);
+ assert.equal(interest.dispatch({members,now:1250,sourceId:'missing',deliver}).visited,0);
+});
