@@ -11,6 +11,8 @@ interface ITestSafeProxy { function masterCopy() external view returns(address);
 /// Not independently reviewed, no recovery below quorum, do not fund.
 contract SafeEpochGuardFixture is BaseGuard {
     error InvalidConfig();
+    error InvalidAuthorizationWindow();
+    uint256 public constant MAX_AUTHORIZATION_WINDOW=1 days;
     error Unauthorized();
     error Forbidden();
     error NotReady();
@@ -59,7 +61,11 @@ contract SafeEpochGuardFixture is BaseGuard {
         return wallet.isOwner(oldOwner)&&!wallet.isOwner(newOwner)&&newOwner!=address(0)&&newOwner!=address(1)&&
             newOwner!=address(wallet)&&newOwner!=address(this)&&newOwner.code.length==0&&_rotationOwnerAllowed(newOwner);
     }
-    function scheduleRotation(uint256 expectedEpoch,address prev,address oldOwner,address newOwner) external onlyWallet {
+    function _authorizationWindow(uint256 validAfter,uint256 validUntil) internal view {
+        if(validAfter>block.timestamp||validUntil<=block.timestamp||validUntil<=validAfter||validUntil-validAfter>MAX_AUTHORIZATION_WINDOW)revert InvalidAuthorizationWindow();
+    }
+    function scheduleRotation(uint256 expectedEpoch,address prev,address oldOwner,address newOwner,uint256 validAfter,uint256 validUntil) external onlyWallet {
+        _authorizationWindow(validAfter,validUntil);
         validateConfig();
         if(expectedEpoch!=epoch||rotating||(pending.digest!=0&&block.timestamp<pending.expiresAt)||
            !_eligibleReplacement(oldOwner,newOwner))revert Forbidden();
@@ -114,7 +120,7 @@ contract SafeEpochGuardFixture is BaseGuard {
         if(rotating||data.length<4)revert Forbidden();
         bytes4 selector=bytes4(data);
         if(to==address(this)){
-            if((selector==this.scheduleRotation.selector&&data.length==132)||
+            if((selector==this.scheduleRotation.selector&&data.length==196)||
                (selector==this.cancelRotation.selector&&data.length==68)||
                (selector==this.invalidateAuthorization.selector&&data.length==68)||_policyCallAllowed(selector,data.length))return;
             revert Forbidden();
