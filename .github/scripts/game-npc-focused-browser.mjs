@@ -19,7 +19,11 @@ try{
  assert.ok(route.distance>10&&route.maxStep<=.300001);
  const glb=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcGlbRouteAudit());
  assert.ok(glb.attached&&glb.visible&&glb.label&&glb.withinBudget&&glb.peersUnchanged&&glb.playerUnchanged&&glb.hidden&&glb.detached);
- assert.ok(['walk','run','swim'].every(m=>glb.drawnModes.includes(m)));
+ assert.ok(['walk','run','swim','fish','rest','swimIdle'].every(m=>glb.drawnModes.includes(m)));
+ assert.equal(glb.generatedClips.length,5);assert.ok(glb.generatedClips.every(c=>c.tracks>0));
+ const terrace=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcTerraceAudit());
+ console.log('NPC actual terrace activity audit',JSON.stringify(terrace));
+ assert.ok(terrace.rise>.75&&terrace.crop.harvested>0&&terrace.maxStep<=.300001&&terrace.inventoryUnchanged&&terrace.diagnosticsUnchanged);
  const count=await page.evaluate(()=>window.__CLIMBORIA_GAME_PEERS.count());
  const started=await page.evaluate(async()=>{const w=window.__climboriaJarrellsPeak;
   if(!w.resumeAtRoomPosition({x:258,z:80,y:w.groundAt(258,80)+1.75}))return false;
