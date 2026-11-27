@@ -1,11 +1,63 @@
 # Climboria Game Development Record
 
+## COMBINED NATIVE GLB COMBAT MERGED — 2026-11-27 PHT
+
+- #930 merged cb7257ffd5e2e4d0f4a1d4428ed7a7265717082e after exact head e0177f25205b21d98d8f9123a8f0fd5a39d426ab Validate 45949794874 and Gameplay 45949794998 terminal SUCCESS. No overlapping Game drift. Tests are local, not deployed PvP or physical-device acceptance.
+- #938 previous head 58699bc42a84c99de767ac4ab06367bef107ed05 Gateway 45950564640, Runtime 45950564665 and Validate 45950564652 SUCCESS; Gameplay 45950564774 running. Reconcile on #930 merge; preserve all historical documentation. Fresh exact-head CI needed. Next add explicit pilot client admission and authenticated mocked runtime regression, separate from existing synthetic and local authored fixture tags. No public activation/deployment.
+
+---
+
 ## AUTHORED PRIVATE COMBAT PILOT WORKER CANDIDATE — 2026-11-27 PHT
 
 - Independent branch based on main afb6c4c07e258ad65265880b18e60f351b655787, after #928 merge. #930 fresh Validate 45949794874 SUCCESS, Gameplay 45949794998 running; do not merge #930 until terminal green.
 - Proposed separate Worker c344024a2d93169e594b50f22dcd8d74f65a23b4 adapts audited synthetic preview lifecycle to the fixed authored Jarrell camp fixture. Separate DO class/binding, proposed dedicated hostname (not provisioned), explicit AUTHORED_PILOT_ENABLED flag and two-account allowlist, exact same-origin, authenticated nonanonymous user required, allowlist rechecked on ticket consumption, room-specific single-use tickets and bounded preview operation budget. Existing synthetic/public Workers untouched. Source only, no Wrangler config/DNS/route/credentials or deployment. External Access policy must be verified before any deployment; no claim of reviewed production security.
 - Admission gate unit tests 2eebcdab88344bbfdf3379f25b51681638730f98 run under existing gateway workflow wildcard. Test disabled/wrong origin/wrong host, fixed room, internal routes denied, malformed admission and upstream auth budget denial. Not yet executed; successful auth/admission, expiry, reconnect and actual Worker/DO integration need further regression coverage. Pilot fixture tag intentionally differs from local/synthetic client tags; separate explicit client adapter required.
 - EXACT NEXT: finish #930 exact-head CI and merge; verify pilot CI, add local Worker/DO tests with mocked trusted auth (not actual accounts), review fail-closed lifecycle and pilot client binding, then independently verify edge Access and account ownership. Keep cloud disabled and no public PvP, loot or production save mutation.
+
+---
+
+## ACTUAL GLB ACCEPTANCE MERGED; COMBINED NATIVE GLB STEP PASSED — 2026-11-27 PHT
+
+- #928 merged 7fa859e9462c9934e6ce0f6bd7b05654afceccc2 after exact head d431a8abbb54f1a9116004584130b66c942277c2: Validate 45948604926 and Gameplay 45948604924 SUCCESS. Main drift unrelated Base/homepage work.
+- #930 prior exact head 3bf891310a0abbd801b1032acff1eacbc5995be9 Validate 45949487565 SUCCESS; Gameplay 45949487596 job 140341783661 isolated actual GLB, native socket and combined native browser GLB projection steps SUCCESS, full gameplay running at check. Reconcile on #928 squash merge preserving native socket closure, fresh victim snapshot/denial checks and all history. Fresh exact-head CI required; no visual screenshot or physical device QA claimed.
+- NEXT after #930 verified merge: separate authored private pilot room/renderer integration. Current wrangler.preview.toml disables preview, workers_dev and preview_urls; existing preview-worker.mjs fixed synthetic fixture must remain unchanged. Explicit account/origin/room gates and authorized edge QA required; no deployment or public PvP activation. No loot work.
+
+---
+
+## PARALLEL COMBINED GLB CI — 2026-11-27 PHT
+
+- #928 exact d431a8abbb54f1a9116004584130b66c942277c2 Validate SUCCESS, isolated GLB and native socket steps SUCCESS, full gameplay 45948604924 still running. To avoid serial wait, #930 retargeted to main AS DRAFT ONLY for early combined CI; exact diff five Game files including pending #928. No unrelated changes in PR. No merge until #928 green and merged, then reconcile and refresh checks. Workflow dispatch unavailable via connector.
+- Added actual browser WebSocket CLOSED state and disabled controls assertions after UI closes, 6f02eda24d1bf79cfb1b76588e1cda90b1c8dfb0. Combined test unexecuted when authored. No public gameplay, deployment or PvP.
+- EXACT NEXT: inspect parallel #930 CI (fix failures without weakening acceptance), finish #928 terminal green and merge, reconcile #930 on resulting main and rerun exact-head CI before marking ready/merge.
+
+---
+
+## ISOLATED GLB BROWSER STEP PASSED; COMBINED BRANCH RECONCILED — 2026-11-27 PHT
+
+- #928 exact head d431a8abbb54f1a9116004584130b66c942277c2: Validate 45948604926 SUCCESS; Gameplay 45948604924 job 140338958754 reports isolated authored browser control/GLB step and native socket step SUCCESS; full desktop/mobile gameplay still running. Job logs unavailable (404 while running), so no detailed log or screenshot acceptance claimed.
+- #930 reconciled onto that #928 head preserving stronger fresh victim snapshot and no extra hit push assertions, both existing smoke steps, combined native GLB step, pinned Three.js and all history. Combined test remains unexecuted; parent CI not reset.
+- EXACT NEXT: #928 terminal green then merge, reconcile #930 onto resulting main, retarget and run fresh Validate/Gameplay with all browser steps. No public combat, deployment or loot.
+
+---
+
+## NATIVE GLB RANGE DENIAL — FRESH AUTHORITATIVE HP PROOF (2026-11-27 PHT)
+
+- Regression hardening 65518a252cc1f82370377865092313566a556b13 on #930: require a new explicit out-of-range denial after the specific attack, request a fresh victim snapshot over the actual socket, assert authoritative HP remains 495, and confirm no additional hit push before comparing rendered HUD. Avoid false positives from old response frames or stale cached HP. Source not executed; parent CI untouched.
+- EXACT NEXT: #925 refreshed Gameplay 45947412023 still running at initial check; merge only after 5/5 green, reconcile and verify #928, then #930. No public PvP, deployment or loot.
+
+---
+
+## COMBINED GLB TEST BRANCH RECONCILIATION — 2026-11-27 PHT
+
+- #930 reconciled onto #928 head a4e6bb4c2894d6530bf6bc5c6bc2f810c041ba08. Preserve existing native browser sockets, isolated actual GLB smoke, combined native GLB smoke, pinned Three.js and all development records. Both combined and isolated GLB tests still unexecuted; no production change. Parent CI not reset.
+- EXACT NEXT: verify and merge #925, reconcile/retarget #928 and verify CI, then reconcile/retarget #930 and verify all smoke steps before merge. No public PvP or deployment.
+
+---
+
+## COMBINED NATIVE SOCKET AND JARRELL GLB ACCEPTANCE — 2026-11-27 PHT (PROPOSED)
+
+- Stacked on #928 head 30472aaa7c2b5877224ad0665c35b8509ebb8b6e. Independent CI-only workerd entry 387dcb112ed0f725311884733605ea2caf92d34f uses loopback port 4175, explicit same-origin upgrade and one-use ticket checks, no exposed ticket/tick routes. Native browser smoke 779555d2524e7644ec692cd52bdb7206f77837f3 combines real local DO WebSockets and actual checked-in Jarrell GLB on desktop/touch Chromium; checks rendered geometry, ground fit, committed HP, input without speculative movement, committed server position and stamina, range denial and closed scene. Only three exact asset subresources are fulfilled locally; actual navigation and socket handshake are not intercepted. Synthetic account IDs and local deterministic clock only. CI workflow 2f6ac562233d838bb8543ea04ef80eb43ed95372 adds pinned Three.js r128 install and bounded independent smoke, no browser security bypass or public route. Source only, NOT executed, no physical Android FPS or pixel visual acceptance.
+- EXACT NEXT: finish and merge #922, #925, #928 in dependency order with fresh CI per head. Reconcile this child workflow with #922 retaining the separate native socket check, safe dependency install/symlink and both path filters; retarget to main and run fresh CI. Inspect actual combined native GLB outcome and repair without weakening acceptance. No public game/PvP, deployment, inventory or loot changes.
 
 ---
 
