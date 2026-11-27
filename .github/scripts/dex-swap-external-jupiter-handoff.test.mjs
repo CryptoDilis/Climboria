@@ -124,3 +124,40 @@ test("External link is not injected into provider widget or automatically opened
   assert.doesNotMatch(html,/window\.open\(['"]https:\/\/jup\.ag\//,"Never auto-open remote trader");
  }
 });
+
+test("Base-first initial markup is fail-closed before network restoration",()=>{
+ assert.match(swap,/<html[^>]*data-climboria-swap-network="base"/);
+ assert.match(swap,/<button class="tab active" id="chainBase"/);
+ assert.match(swap,/<section[^>]*id="swapExternalJupiterHandoff"[^>]*\bhidden\b/);
+ assert.match(swap,/<section[^>]*id="climboriaSwapProviderPanel"[^>]*data-climboria-managed-swap-network="base"[^>]*\bhidden\b/);
+ for(const id of ["connectWallet","getQuote","prepareSwap","searchFrom","searchTo"]){
+  assert.match(swap,new RegExp('<button[^>]*id="'+id+'"[^>]*\\bdisabled\\b'));
+ }
+ assert.match(dex,/content:"PRIMARY · BASE"/);
+ assert.match(dex,/content:"SECONDARY · SOLANA"/);
+ assert.match(dex,/\.layout>#evmMarkets\{grid-column:1;grid-row:1;order:1\}/);
+ assert.match(dex,/\.layout>#markets\{grid-column:2;grid-row:1;order:2\}/);
+ assert.ok(dex.indexOf('id="evmMarkets"')<dex.indexOf('id="markets"'));
+});
+
+test("Actual URL restoration defaults to Base and preserves explicit Solana and legacy mint links",async()=>{
+ const start=swap.indexOf("async function restoreSwapFromUrl(){");
+ const end=swap.indexOf("\nwindow.addEventListener('popstate'",start);
+ assert.ok(start>0&&end>start);
+ const actual="let restoringSwapUrl=false;let quoteTokens={from:{id:'SOL'},to:{id:'USDC'}};\n"+swap.slice(start,end)+"\nrestoreSwapFromUrl()";
+ for(const [search,expected,mints] of [
+  ["","base",[]],["?chain=base&from=FOREIGN","base",[]],
+  ["?chain=unknown&from=FOREIGN","base",[]],["?chain=solana","solana",[]],
+  ["?from=MINT","solana",["MINT"]],["?chain=solana&to=MINT","solana",["MINT"]]
+ ]){
+  const selected=[],resolved=[],chosen=[];
+  await runInNewContext(actual,{URLSearchParams,location:{search},setSwapChain:c=>selected.push(c),
+   setSwapUrl(){},$:()=>({textContent:"",classList:{add(){}}}),
+   async resolveSolanaTokenByMint(mint){resolved.push(mint);return {id:mint};},
+   chooseQuoteToken(side,token){chosen.push(token.id);}
+  });
+  assert.deepEqual(selected,[expected],search);
+  assert.deepEqual(resolved,mints,search);
+  assert.deepEqual(chosen,mints,search);
+ }
+});
