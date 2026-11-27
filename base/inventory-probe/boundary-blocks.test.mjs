@@ -38,3 +38,9 @@ test('reject incorrect header, duplicate tx, divergent data, malformed provider 
  ])await assert.rejects(observeBoundaryBlocks(A,B,{fetchFn:mock(mutate).fetchFn}),e=>boundaryFailureCode(e)===code&&!e.message.includes('SECRET'));
  const {fetchFn}=mock();await assert.rejects(observeBoundaryBlocks(A,B,{fetchFn:async(u,o)=>u===B?new Response('SECRET',{status:429}):fetchFn(u,o)}),e=>boundaryFailureCode(e)==='B_getGenesisHash_HTTP_429');
 });
+
+test('allowlisted historical block error classes never reveal provider text',async()=>{
+ for(const [code,kind] of [[-32004,'RPC_HISTORY_UNAVAILABLE'],[-32015,'RPC_UNSUPPORTED_VERSION'],[-32602,'RPC_INVALID_PARAMS'],[-32601,'RPC_METHOD_UNAVAILABLE'],[-32005,'RPC_NODE_UNHEALTHY'],[429,'RPC_RATE_LIMIT'],['SECRET','RPC_ERROR']]){
+  await assert.rejects(observeBoundaryBlocks(A,B,{fetchFn:mock((x,q,url)=>{if(q.method==='getBlock'&&url===B)x.error={code,message:'SECRET',data:'SECRET'};}).fetchFn}),e=>boundaryFailureCode(e)==='B_getBlock_'+kind&&!e.message.includes('SECRET'));
+ }
+});

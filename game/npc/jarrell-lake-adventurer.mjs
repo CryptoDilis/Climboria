@@ -1,7 +1,7 @@
 // Bounded one-NPC map adapter. No player mutation, chunk creation, rendering or economy.
 import {createAutonomousAdventurer} from './autonomous-adventurer.mjs';
 const d=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
-export function createJarrellLakeAdventurer({groundAt,waterBodyAt,actorBlocked,loaded,fishingSpots,lake,seed=17}={}){
+export function createJarrellLakeAdventurer({groundAt,waterBodyAt,actorBlocked,loaded,fishingSpots,lake,seed=17,identityId=null}={}){
  if(![groundAt,waterBodyAt,actorBlocked,loaded].every(fn=>typeof fn==='function')||
     !Array.isArray(fishingSpots)||lake?.id!=='sanctuary_lake'||
     ![lake.x,lake.z,lake.radius].every(Number.isFinite)||lake.radius<10||lake.radius>100)
@@ -63,6 +63,6 @@ export function createJarrellLakeAdventurer({groundAt,waterBodyAt,actorBlocked,l
  }
  if(!rest||!shore||!swim)throw Error('No verified loaded lake route: '+JSON.stringify({rest:!!rest,shore:!!shore,swim:!!swim,probes}));
  const nodes=[rest,fish,shore,swim],edges=[['rest','fish'],['fish','rest'],['fish','shore'],['shore','fish'],['shore','swim'],['swim','shore']];
- const npc=createAutonomousAdventurer({nodes,edges,spawn:'rest',world:{sample,canTraverse,canAct},seed});
+ const npc=createAutonomousAdventurer({nodes,edges,spawn:'rest',world:{sample,canTraverse,canAct},seed,identityId});
  return Object.freeze({npc,nodes:Object.freeze(nodes.map(n=>Object.freeze({...n}))),probes});
 }

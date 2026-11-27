@@ -32,22 +32,31 @@ try{
   return w.npcContinuousStart();
  });
  assert.equal(started,true);
- // Software-rendered desktop CI can deliver very few normal frames per wall-clock second.
- // Keep the same movement/draw/frame assertions; physical-device performance is a separate gate.
- try{
- await page.waitForFunction(()=>{const a=window.__climboriaJarrellsPeak.npcContinuousAudit();return a.session?.frames>=15&&a.session.distance>.5&&a.draws>0;},undefined,{timeout:mobile?45000:90000,polling:1000});
- }catch(error){
-  const audit=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
-  console.error('NPC continuous acceptance failed',JSON.stringify({mobile,audit,errors}));
-  throw error;
+ // Poll from Node instead of an in-page wait task competing with software rendering.
+ // This is functional smoke evidence, not a physical-device frame-rate benchmark.
+ const deadline=Date.now()+(mobile?45000:120000);
+ let active;
+ for(;;){
+  active=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
+  if(active.session?.frames>=15&&active.session.distance>.5&&active.draws>0&&active.nameplateDraws>0)break;
+  if(Date.now()>=deadline||active.session?.closed){
+   console.error('NPC continuous acceptance failed',JSON.stringify({mobile,audit:active,errors}));
+   throw Error('NPC continuous acceptance requirements not met');
+  }
+  await new Promise(r=>setTimeout(r,1000));
  }
- const active=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
  assert.ok(active.attached&&active.visible&&!active.session.closed&&active.draws>0);
+ assert.equal(active.session.position.npcId,'npc:jarrell-peak:aurelion');
+ assert.equal(active.session.position.label,'Aurelion [NPC]');assert.equal(active.nameplate,'Aurelion [NPC]');assert.ok(active.nameplateDraws>0);
  assert.equal(active.peers,count);assert.ok(active.loading+active.resident<=active.budget);
  await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak;w.resumeAtRoomPosition({x:0,z:-30,y:w.groundAt(0,-30)+1.75})});
  await page.waitForFunction(()=>window.__climboriaJarrellsPeak.npcContinuousAudit().session?.closed,undefined,{timeout:15000});
  const ended=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcContinuousAudit());
- assert.equal(ended.session.reason,'distance');assert.ok(!ended.attached&&!ended.visible);assert.equal(ended.peers,count);
+ assert.equal(ended.session.reason,'distance');assert.ok(!ended.attached&&!ended.visible);assert.equal(ended.peers,count);assert.equal(ended.nameplate,null);
+ const forest=await page.evaluate(()=>window.__climboriaJarrellsPeak.npcForestAudit());
+ console.log('NPC actual forest gathering audit',JSON.stringify(forest));
+ assert.ok(forest.authoredSource&&forest.gatherDraw&&forest.draws>0&&forest.resources.gathered>0&&forest.resources.gathered<=forest.resources.capacity);
+ assert.ok(forest.distance>4&&forest.maxStep<=.300001&&forest.inventoryUnchanged&&forest.diagnosticsUnchanged&&forest.peersUnchanged&&forest.cleaned);
  assert.deepEqual(errors,[]);
  console.log('NPC focused browser PASS',JSON.stringify({mobile,elapsedMs:Date.now()-start,route,glb,active,ended}));
  await context.close();

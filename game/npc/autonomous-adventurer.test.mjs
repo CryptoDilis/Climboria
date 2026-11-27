@@ -33,3 +33,10 @@ test('same seed is deterministic, invalid time ignored, large dt capped, close s
  a.close();const end=a.snapshot();assert.equal(end.closed,true);assert.deepEqual(a.tick(.1),end);
  assert.throws(()=>createAutonomousAdventurer({nodes,edges,spawn:'unknown',world:world()}));
 });
+
+test('named NPC snapshots retain approved identity throughout movement and closure',()=>{
+ const id='npc:jarrell-peak:aurelion';const npc=createAutonomousAdventurer({nodes,edges,spawn:'camp',world:world(),seed:17,identityId:id});
+ for(let i=0;i<240;i++){const s=npc.tick(.1);assert.equal(s.npcId,id);assert.equal(s.label,'Aurelion [NPC]')}
+ npc.close();assert.equal(npc.snapshot().npcId,id);
+ assert.throws(()=>createAutonomousAdventurer({nodes,edges,spawn:'camp',world:world(),identityId:'human:1'}),/Unknown NPC identity/);
+});
