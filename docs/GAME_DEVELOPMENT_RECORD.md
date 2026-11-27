@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## CROWD C8 SUSTAINED PEER DELIVERY LATENCY — 2026-11-28 PHT
+
+- #1038 exact 2a2a7d6d256922aba107e5b003d747d65f4d4a06 all 13 listed workflows success; merged main 8c3bec433e28392cc8c9e1553d780b415de5f7ff. #1039 exact e29c7d11e2cb4e2f9034e549986d2c1257bb2692 all five listed workflows success. Browser run 46046983548 jobs 140668581236 mobile and 140668581496 desktop: malformed batch rejected without mutation, known peer accepted, unknown ignored, 100 descriptors preserved, previously hidden entrant promoted to visible body/nameplate. Controlled scene-transform error converged monotonically from 10.919m/12.124m to 0.000013m/0.000014m; manual fixture steps, not device FPS or network latency. Retarget #1039 to main; verify exact merge readiness.
+- C8 native load extension compares baseline and private batching at 50/100 clustered clients across 40 real 250ms tick deadlines each. Measure actual sender-to-receiver position delivery p50/p95/p99/max separately from ACK; assert every directed pair per tick, no duplicate steps, final position, exact movement entry counts and cleanup. Log flush overrun p95. Controlled trusted simulation clock, real wall-clock pacing and local sockets, not Internet or production capacity. Fresh CI needed; no latency claim yet.
+- NEXT: inspect measured delivery vs ACK and jitter; real browser transport path, crowd interaction visibility under pressure, longer/churn tests and authenticated private/physical-device capacity remain open. Production cap and security gates unchanged; no live protocol activation.
+
+---
+
 ## CROWD C7 PRIVATE BROWSER BATCH PROJECTION AND CLOSE ENTRANT — 2026-11-28 PHT
 
 - #1038 exact 2a2a7d6d256922aba107e5b003d747d65f4d4a06: native run 46045989344 job 140665286701 SUCCESS including explicit policy regression step; 11/13 listed workflows success at inspection, focused browser and gameplay pending. No merge before terminal exact checks.
