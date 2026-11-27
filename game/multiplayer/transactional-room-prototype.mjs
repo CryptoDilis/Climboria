@@ -14,6 +14,7 @@
 import {ServerGroundMovement} from './server-ground-movement.mjs';
 import {ServerHpLifecycle} from './server-hp-lifecycle.mjs';
 import {createCombatCheckpointStore} from './server-combat-checkpoint.mjs';
+import {createWorldDropClaimPreview} from './world-drop-claim-preview.mjs';
 const idOk=id=>typeof id==='string'&&/^[a-zA-Z0-9_-]{16,100}$/.test(id);
 const deny=reason=>({ok:false,reason});
 export function createTransactionalRoomPrototype({roomId,clock=()=>Date.now(),spawn,sampleWalkableGround,collision,storage}={}){
@@ -22,6 +23,16 @@ export function createTransactionalRoomPrototype({roomId,clock=()=>Date.now(),sp
  const store=createCombatCheckpointStore({storage,roomId,clock});
  const sessions=new Map(),active=new Map(),revisions=new Map();
  let tail=Promise.resolve(),pending=0,quarantined=false;
+ // Only the exact isolated loot fixture receives a claim handler. No network
+ // packet dispatch, live inventory, or production map is wired to this method.
+ const loot=roomId==='preview-world-drop-fixture'?createWorldDropClaimPreview({storage,roomId,clock,
+  resolveActor:(id,room)=>{
+   const accountId=sessions.get(id),health=lifecycle.snapshot(id),position=movement.trustedSnapshot(id,room);
+   if(!accountId||active.get(accountId)!==id||!health||!position)return null;
+   return {...position,health:health.health,accountId};
+  },clearPath:(a,b,room)=>collision.clearPath(a,b,room),
+  verifyActorInTransaction:(tx,actor)=>store.matchesRevision(tx,actor.accountId,revisions.get(actor.accountId))
+ }):null;
  function fail(){quarantined=true;return deny('room-quarantined')}
  function enqueue(operation){
   if(quarantined)return Promise.resolve(deny('room-quarantined'));
@@ -104,8 +115,17 @@ export function createTransactionalRoomPrototype({roomId,clock=()=>Date.now(),sp
    return {ok:true};
   });
  }
+ function claimWorldDrop(sessionId,dropId){
+  if(!loot)return Promise.resolve(deny('loot-preview-only'));
+  return enqueue(async()=>{
+   if(!sessions.has(sessionId))return deny('unknown-session');
+   const result=await loot.claim(sessionId,dropId);
+   if(['claim-storage-unavailable','invalid-stored-claim','stale-actor-checkpoint'].includes(result.reason))return fail();
+   return result;
+  });
+ }
  function readSnapshot(sessionId){
   return enqueue(async()=>sessions.has(sessionId)?{ok:true,snapshot:snapshot(sessionId)}:deny('unknown-session'));
  }
- return Object.freeze({join,input,attack,tick,disconnect,readSnapshot,reviewedForProduction:false});
+ return Object.freeze({join,input,attack,tick,disconnect,readSnapshot,claimWorldDrop,reviewedForProduction:false});
 }

@@ -16,9 +16,10 @@ const deny=reason=>({ok:false,reason});
 const point=Object.freeze({x:201,y:0,z:20});
 const drop=Object.freeze({type:'world_drop',binding:'unbound',authoritative:true,roomId:ROOM,
  position:point,claimed:false,paid:false,onChain:false,protectedUntilMs:0});
-export function createWorldDropClaimPreview({storage,roomId,clock=()=>Date.now(),resolveActor,clearPath}={}){
+export function createWorldDropClaimPreview({storage,roomId,clock=()=>Date.now(),resolveActor,clearPath,verifyActorInTransaction=null}={}){
  if(roomId!==ROOM||typeof storage?.transaction!=='function'||typeof clock!=='function'||
-    typeof resolveActor!=='function'||typeof clearPath!=='function')
+    typeof resolveActor!=='function'||typeof clearPath!=='function'||
+    (verifyActorInTransaction!==null&&typeof verifyActorInTransaction!=='function'))
   throw Error('Explicit isolated preview storage and server authority required');
  let unavailable=false;
  async function claim(sessionId,dropId){
@@ -37,6 +38,10 @@ export function createWorldDropClaimPreview({storage,roomId,clock=()=>Date.now()
     const eligible=authorizeWorldGrab({actor,drop,nowMs:now});
     if(!eligible.ok)return eligible;
     if(clearPath(actor.position,point,ROOM)!==true)return deny('blocked-or-unverified-drop-path');
+    // Integrated room verifies the actor's durable revision in THIS same
+    // transaction, not a separate preflight read that can race another room.
+    if(verifyActorInTransaction&&await verifyActorInTransaction(tx,actor)!==true)
+     return deny('stale-actor-checkpoint');
     if(prior!==undefined||slot!==undefined){
      if(!prior||prior.version!==2||prior.roomId!==ROOM||prior.dropId!==DROP||
         !idOk(prior.accountId)||!time(prior.claimedAtMs)||prior.claimedAtMs>now||

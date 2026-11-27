@@ -9,6 +9,7 @@ function fakeStorage(){
  let data=new Map(),queue=Promise.resolve(),fail=false,hold=null;
  return {
   failWrites(v){fail=v},
+  records(){return structuredClone([...data])},
   holdWrite(){const entered=deferred(),release=deferred();hold={entered,release};return {entered:entered.promise,release:release.resolve}},
   transaction(fn){
    const task=queue.then(async()=>{
@@ -24,10 +25,10 @@ function fakeStorage(){
   }
  };
 }
-function fixture(){
+function fixture(roomId='test-room',solids=[]){
  let now=40000;
  const storage=fakeStorage(),clock=()=>now;
- const collision=createServerCollisionRegion({roomId,coverage:{min:{x:190,y:0,z:10},max:{x:220,y:12,z:40}},solids:[]});
+ const collision=createServerCollisionRegion({roomId,coverage:{min:{x:190,y:0,z:10},max:{x:220,y:12,z:40}},solids});
  const create=()=>createTransactionalRoomPrototype({roomId,clock,storage,collision,spawn:{x:200,z:20},sampleWalkableGround:()=>0});
  return {storage,create,at:n=>{now=n}};
 }
@@ -103,4 +104,37 @@ test('queued movement intent uses copied primitives and ignores unknown session'
  at(40100);assert.ok((await room.tick()).ok);
  const snapshot=(await room.readSnapshot(B)).snapshot;
  assert.ok(snapshot.position.x>200);assert.equal(snapshot.stamina,200);
+});
+
+const LOOT_ROOM='preview-world-drop-fixture',DROP='preview-world-drop-1';
+test('serialized fixture binds a single loot claim to authoritative account and durable slot',async()=>{
+ const {create,storage}=fixture(LOOT_ROOM),room=create();await joinTwo(room);
+ const results=await Promise.all([room.claimWorldDrop(A,DROP),room.claimWorldDrop(B,DROP)]);
+ assert.equal(results.filter(r=>r.ok).length,1);
+ assert.equal(results[1].reason,'drop-already-claimed');
+ const records=storage.records().filter(([k])=>k.startsWith('game:preview:world-drop:'));
+ assert.equal(records.length,2);assert.ok(records.every(([,v])=>v.accountId===X));
+ assert.equal(records.find(([k])=>k.endsWith(':synthetic-inventory'))[1].quantity,1);
+ assert.ok((await room.disconnect(A)).ok);
+ assert.equal((await room.claimWorldDrop(A,DROP)).reason,'unknown-session');
+ const fresh=create();assert.ok((await fresh.join({sessionId:C,accountId:X})).ok);
+ assert.equal((await fresh.claimWorldDrop(C,DROP)).reason,'drop-already-claimed');
+});
+test('competing stale room cannot claim before revision verification in same transaction',async()=>{
+ const {create,storage}=fixture(LOOT_ROOM),first=create();await joinTwo(first);
+ const second=create();await joinTwo(second);
+ assert.equal((await first.claimWorldDrop(A,DROP)).reason,'room-quarantined');
+ assert.equal((await first.readSnapshot(A)).reason,'room-quarantined');
+ assert.equal(storage.records().filter(([k])=>k.startsWith('game:preview:world-drop:')).length,0);
+ assert.ok((await second.claimWorldDrop(B,DROP)).ok);
+});
+test('nonfixture, stale position, and blocked path never create synthetic inventory',async()=>{
+ const ordinary=fixture().create();await joinTwo(ordinary);
+ assert.equal((await ordinary.claimWorldDrop(A,DROP)).reason,'loot-preview-only');
+ const f=fixture(LOOT_ROOM),room=f.create();await joinTwo(room);
+ f.at(41001);assert.equal((await room.claimWorldDrop(A,DROP)).reason,'untrusted-or-inactive-actor');
+ assert.equal(f.storage.records().filter(([k])=>k.startsWith('game:preview:world-drop:')).length,0);
+ const blocked=fixture(LOOT_ROOM,[{min:{x:200.6,y:0,z:19},max:{x:200.8,y:2,z:21}}]);
+ const b=blocked.create();await joinTwo(b);
+ assert.equal((await b.claimWorldDrop(A,DROP)).reason,'blocked-or-unverified-drop-path');
 });

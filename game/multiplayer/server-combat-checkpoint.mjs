@@ -84,5 +84,12 @@ export function createCombatCheckpointStore({storage,roomId,clock=()=>Date.now()
    });
   }catch{return invalid('checkpoint-storage-unavailable')}
  }
- return Object.freeze({load,saveBatch});
+ // Caller must provide its current transaction, not start a nested one.
+ async function matchesRevision(tx,accountId,revision){
+  const now=clock();
+  if(typeof tx?.get!=='function'||!idOk(accountId)||!tick(now)||!Number.isSafeInteger(revision)||revision<1)return false;
+  const prior=read(await tx.get(key(accountId)),accountId,now);
+  return prior.ok&&prior.revision===revision&&prior.checkpoint!==null;
+ }
+ return Object.freeze({load,saveBatch,matchesRevision});
 }
