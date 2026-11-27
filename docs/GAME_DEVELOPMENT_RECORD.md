@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## NATIVE GLB RANGE DENIAL — FRESH AUTHORITATIVE HP PROOF (2026-11-27 PHT)
+
+- Regression hardening 65518a252cc1f82370377865092313566a556b13 on #930: require a new explicit out-of-range denial after the specific attack, request a fresh victim snapshot over the actual socket, assert authoritative HP remains 495, and confirm no additional hit push before comparing rendered HUD. Avoid false positives from old response frames or stale cached HP. Source not executed; parent CI untouched.
+- EXACT NEXT: #925 refreshed Gameplay 45947412023 still running at initial check; merge only after 5/5 green, reconcile and verify #928, then #930. No public PvP, deployment or loot.
+
+---
+
 ## COMBINED GLB TEST BRANCH RECONCILIATION — 2026-11-27 PHT
 
 - #930 reconciled onto #928 head a4e6bb4c2894d6530bf6bc5c6bc2f810c041ba08. Preserve existing native browser sockets, isolated actual GLB smoke, combined native GLB smoke, pinned Three.js and all development records. Both combined and isolated GLB tests still unexecuted; no production change. Parent CI not reset.
