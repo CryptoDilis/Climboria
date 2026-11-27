@@ -66,6 +66,16 @@ async function approveRuntime(page) {
   }));
 }
 
+// These scenarios exercise Solana-only provider behavior, not the default network.
+function solanaFixtureUrl(origin,path){
+  return origin+path+(path==="/swap/"?"?chain=solana":"");
+}
+async function selectDexSolana(page,path){
+  if(path!=="/dex/"||!await page.locator("#dexMobileNav").isVisible())return;
+  assert.equal(await page.locator("#evmMarkets").isVisible(),true,"Mobile DEX opens Base first");
+  await page.locator('#dexMobileNav [data-dex-mobile-view="solana"]').click();
+  assert.equal(await page.locator("#markets").isVisible(),true,"Explicit Solana selection");
+}
 async function runPage(browser, path, {badHash = false, apiStatus = false} = {}) {
   const page = await browser.newPage({viewport:{width: path === "/dex/" ? 390 : 1280,height:850}});
   let scriptLoads = 0;
@@ -96,8 +106,9 @@ async function runPage(browser, path, {badHash = false, apiStatus = false} = {})
       headers:{"access-control-allow-origin":"*","cache-control":"no-store"},body:MOCK_SCRIPT});
   });
   try {
-    const response = await page.goto(ORIGIN + path,{waitUntil:"domcontentloaded",timeout:20000});
+    const response = await page.goto(solanaFixtureUrl(ORIGIN,path),{waitUntil:"domcontentloaded",timeout:20000});
     assert.equal(response.status(),200,path + " must load");
+    await selectDexSolana(page,path);
     const button = page.locator("[data-climboria-managed-swap-open]:visible").first();
     await button.waitFor({timeout:15000});
     assert.deepEqual(hostModuleRequests, [ORIGIN + "/dex/provider-managed-swap.mjs?v=10"],
@@ -257,8 +268,9 @@ async function runTabReturnApproval(browser, path, width) {
     });
   });
   try {
-    const response = await page.goto(ORIGIN+path, {waitUntil:"domcontentloaded",timeout:20000});
+    const response = await page.goto(solanaFixtureUrl(ORIGIN,path), {waitUntil:"domcontentloaded",timeout:20000});
     assert.equal(response.status(),200);
+    await selectDexSolana(page,path);
     const button = page.locator("[data-climboria-managed-swap-open]:visible").first();
     const panel = page.locator("[data-climboria-managed-swap-panel]");
     await button.waitFor({timeout:15000});
@@ -360,7 +372,7 @@ async function runBaseSwitchDuringPendingReopen(browser, width) {
     body:MOCK_SCRIPT
   }));
   try {
-    const response = await page.goto(ORIGIN+"/swap/",{waitUntil:"domcontentloaded",timeout:20000});
+    const response = await page.goto(solanaFixtureUrl(ORIGIN,"/swap/"),{waitUntil:"domcontentloaded",timeout:20000});
     assert.equal(response.status(),200);
     const button = page.locator("[data-climboria-managed-swap-open]");
     const panel = page.locator("[data-climboria-managed-swap-panel]");
@@ -428,8 +440,9 @@ async function runCloseDuringLoad(browser, path) {
       headers:{"access-control-allow-origin":"*","cache-control":"no-store"},body:MOCK_SCRIPT});
   });
   try {
-    const resp = await page.goto(ORIGIN + path,{waitUntil:"domcontentloaded",timeout:20000});
+    const resp = await page.goto(solanaFixtureUrl(ORIGIN,path),{waitUntil:"domcontentloaded",timeout:20000});
     assert.equal(resp.status(),200);
+    await selectDexSolana(page,path);
     const button = page.locator("[data-climboria-managed-swap-open]:visible").first();
     await button.waitFor({timeout:15000});
     await button.click();
@@ -530,10 +543,11 @@ async function runRollbackWithCache(browser) {
         page.on("request", request => {
           if (/\/api\/swap\/(?:order|execute)(?:\?|$)/.test(request.url())) forbidden.push(request.url());
         });
-        const url = origin + path;
+        const url = solanaFixtureUrl(origin,path);
         const button = page.locator("[data-climboria-managed-swap-open]:visible").first();
         const panel = page.locator("[data-climboria-managed-swap-panel]");
         await page.goto(url, {waitUntil:"domcontentloaded"});
+        await selectDexSolana(page,path);
         await button.waitFor();
         // Stale-tab regression: runtime was approved when this page loaded,
         // but the operator disabled it just BEFORE the user first clicked.
@@ -549,6 +563,7 @@ async function runRollbackWithCache(browser) {
         enabled = true;
         // Restore the test fixture only; production is not touched.
         await page.reload({waitUntil:"domcontentloaded"});
+        await selectDexSolana(page,path);
         await button.waitFor();
         await button.click();
         await page.waitForFunction(() => window.__mockProviderCalls?.length === 1);
@@ -572,6 +587,7 @@ async function runRollbackWithCache(browser) {
         const statusResponse = page.waitForResponse(response => response.url() === origin +
           (path === "/dex/" ? "/dex-runtime-status.json" : "/swap-runtime-status.json"));
         await page.goto(url, {waitUntil:"load"});
+        await selectDexSolana(page,path);
         assert.equal((await statusResponse).headers()["cache-control"], "no-store");
         assert.equal(configRequests, beforeConfig, "enabled config should still be cached");
         assert.equal(await button.count(), 0);
