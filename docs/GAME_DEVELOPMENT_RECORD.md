@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## R5A PEER RENDERER PREEMPTION BROWSER CANDIDATE — 2026-11-28 PHT
+
+- Parent #1023 exact 36a4734b1c9ae0b4345ee70b6a94aeb5e5834eb8 7/9 workflows green, mobile focused passed; desktop focused and full gameplay pending. #1025 foundation passed, focused pending. Keep both heads unchanged. Older #1017/#1018 desktop focused jobs cancelled, #1020 mobile failed (repaired in #1023).
+- Standalone focused desktop/mobile browser workflow and script, no gameplay edits: launch actual paired smoke session, verify NPC slots and real-peer count zero, inject one local renderer fixture through existing peer display adapter (not a network packet or verified account), require pair-wide real-peer-priority stop, zero cleanup errors, both released and <=1 combined peer allocation, actual attached visible peer GLB residency, fixture removal and zero slots/peers. No claim production admission or same-frame ordering within the renderer beyond observed counters. Separate workflow avoids repeating long map activities. Fresh CI required.
+- NEXT: verify parent exact CI, merge #1023 when green; verify #1025 and this independent acceptance, integrate in sequence preserving other changes. Physical Android performance and public NPC/server activation remain gated.
+
+---
+
 ## R5A MAIN-BASED PAIRED INTEGRATION REPAIR — 2026-11-28 PHT
 
 - #1013/#1015 mobile passed; desktop jobs 140620013561 and 140621630238 cancelled after approximately 12-minute job windows; no terminal pass. #1017/#1018 desktop still running, mobile passed. #1020 mobile 140624214280 failed at cleanupErrors assertion (1 instead of 0) after actual map, movement, dialogue and simultaneous draw assertions passed. Source foundation 46033866649 and chat 46033866749 passed. Preserve exact heads and existing runs.
