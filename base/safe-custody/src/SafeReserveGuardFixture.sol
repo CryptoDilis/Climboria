@@ -53,7 +53,7 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
         V3FounderVesting f=V3FounderVesting(destinations[0]);
         V3GovernedGameRewardFixture g=V3GovernedGameRewardFixture(destinations[1]);
         founder=f.beneficiary();distributor=g.distributor();
-        if(address(f.token())!=address(t)||address(g.token())!=address(t)||address(g.custody())!=address(this)||g.generation()!=1||g.excludedFounder()!=founder)revert InvalidConfig();
+        if(address(f.token())!=address(t)||!g.matchesInitialBinding(address(t),address(this),founder))revert InvalidConfig();
         if(wallet.isOwner(founder)||wallet.isOwner(distributor)||founder==address(wallet)||distributor==address(wallet)||
             founder==address(this)||distributor==address(this))revert InvalidConfig();
         V3DeferredLiquidityFixture l=V3DeferredLiquidityFixture(destinations[2]);
