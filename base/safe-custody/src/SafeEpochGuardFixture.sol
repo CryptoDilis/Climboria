@@ -50,11 +50,14 @@ contract SafeEpochGuardFixture is BaseGuard {
         (address[] memory modules,address next)=wallet.getModulesPaginated(address(1),1);
         if(modules.length!=0||next!=address(1))revert InvalidConfig();
     }
+    function _eligibleReplacement(address oldOwner,address newOwner) private view returns(bool){
+        return wallet.isOwner(oldOwner)&&!wallet.isOwner(newOwner)&&newOwner!=address(0)&&newOwner!=address(1)&&
+            newOwner!=address(wallet)&&newOwner!=address(this)&&newOwner.code.length==0&&_rotationOwnerAllowed(newOwner);
+    }
     function scheduleRotation(uint256 expectedEpoch,address prev,address oldOwner,address newOwner) external onlyWallet {
         validateConfig();
         if(expectedEpoch!=epoch||rotating||(pending.digest!=0&&block.timestamp<pending.expiresAt)||
-           !wallet.isOwner(oldOwner)||wallet.isOwner(newOwner)||newOwner==address(0)||newOwner==address(1)||
-           newOwner==address(wallet)||newOwner==address(this)||newOwner.code.length!=0||!_rotationOwnerAllowed(newOwner))revert Forbidden();
+           !_eligibleReplacement(oldOwner,newOwner))revert Forbidden();
         address[] memory owners=wallet.getOwners();bool valid;
         for(uint256 i=0;i<owners.length;i++){
             if(owners[i]==oldOwner&&prev==(i==0?address(1):owners[i-1]))valid=true;
@@ -92,6 +95,8 @@ contract SafeEpochGuardFixture is BaseGuard {
         if(to!=address(wallet)||selector!=SWAP||data.length!=100)revert Forbidden();
         Rotation memory p=pending;
         if(p.digest==0||p.digest!=keccak256(data)||block.timestamp<p.readyAt||block.timestamp>=p.expiresAt)revert NotReady();
+        // A scheduled address may acquire code or cease to satisfy policy during the delay.
+        if(!_eligibleReplacement(p.oldOwner,p.newOwner))revert Forbidden();
         rotating=true;
     }
     function checkAfterExecution(bytes32,bool success) external override onlyWallet {
@@ -99,7 +104,7 @@ contract SafeEpochGuardFixture is BaseGuard {
         validateConfig();
         if(rotating){
             Rotation memory p=pending;
-            if(wallet.isOwner(p.oldOwner)||!wallet.isOwner(p.newOwner))revert InvalidConfig();
+            if(wallet.isOwner(p.oldOwner)||!wallet.isOwner(p.newOwner)||p.newOwner.code.length!=0||!_rotationOwnerAllowed(p.newOwner))revert InvalidConfig();
             rotating=false;delete pending;epoch++;
             emit Rotated(epoch,p.oldOwner,p.newOwner);
         }

@@ -1,5 +1,5 @@
 {
-  "status": "TEST_ONLY_FROZEN_BUILD_NOT_APPROVAL",
+  "status": "RETIRED_PENDING_VERIFIED_REPIN",
   "sourceSha": "d8ed14ff19b21db9d5d5e81e86cab9a86deb0e0f",
   "chainId": 84532,
   "safeSource": "bf943f80fec5ac647159d26161446ac5d716a294",
@@ -40,5 +40,6 @@
         "address"
       ]
     }
-  ]
+  ],
+  "retirementReason": "Signer rotation execution-time eligibility changed; old build not usable for new review output."
 }

@@ -53,7 +53,7 @@ jobs:
         run: |
           set -euo pipefail
           forge test --match-contract SafeEpochGuardTest -vv | tee "$RUNNER_TEMP/safe-epoch-guard.log"
-          grep -Eq '7 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-epoch-guard.log"
+          grep -Eq '8 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/safe-epoch-guard.log"
       - name: Exercise actual Safe and seven-vault reserve integration
         run: |
           set -euo pipefail
@@ -88,7 +88,13 @@ jobs:
       - name: Verify frozen testnet build and fail-closed preflight
         run: |
           set -euo pipefail
-          node testnet-preflight.mjs --verify-build
+          if node -e "process.exit(require('./frozen-testnet-candidate.json').status==='RETIRED_PENDING_VERIFIED_REPIN'?0:1)"; then
+            if node testnet-preflight.mjs --verify-build; then
+              echo "Retired candidate unexpectedly accepted"; exit 1
+            fi
+          else
+            node testnet-preflight.mjs --verify-build
+          fi
           node --test testnet-preflight.test.mjs
           if node testnet-preflight.mjs testnet-preflight.example.json "$RUNNER_TEMP/blocked-preflight.json"; then
             echo "Blank config unexpectedly accepted"; exit 1
