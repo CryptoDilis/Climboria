@@ -329,6 +329,30 @@ try{
    }
    await page.screenshot({path:'climb-tokenomics-'+width+'.png'});
    console.log('PASS permanent CLIMB Tokenomics layout, copy, links and CTA hierarchy at '+width+'px');
+   if(width===1536||width===390||width===360){
+    const whitepaper=await page.goto(base+'whitepaper/',{waitUntil:'domcontentloaded'});
+    assert.equal(whitepaper?.ok(),true,'whitepaper loads');
+    assert.equal(await page.locator('.meta .chip').filter({hasText:'Base-first · Multichain'}).count(),1);
+    assert.equal(await page.locator('.meta .chip').filter({hasText:'Solana-first'}).count(),0);
+    const planned=page.locator('[aria-labelledby="climb-base-facts-title"]');
+    const legacy=page.locator('[aria-labelledby="climb-token-facts-title"]');
+    assert.equal(await planned.count(),1);
+    assert.equal(await legacy.count(),1);
+    assert.match(await planned.textContent(),/Not yet published/);
+    assert.match(await planned.textContent(),/Not verified \/ not published/);
+    assert.match(await planned.textContent(),/Not open/);
+    assert.ok(!(await planned.textContent()).includes(MINT),'never label Solana mint as Base');
+    assert.equal((await legacy.locator('.token-address').textContent()).trim(),MINT);
+    assert.match(await legacy.textContent(),/1,000,000,000/);
+    assert.equal(await planned.locator('a').getAttribute('href'),'/#climb-base-transition');
+    assert.equal(await legacy.locator('a[href="/#climb-token-record"]').count(),1);
+    const bounds=await page.evaluate(()=>({width:document.documentElement.clientWidth,cards:[...document.querySelectorAll('.token-record')].map(e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};})}));
+    assert.equal(bounds.cards.length,2);
+    assert.ok(bounds.cards[0].bottom<=bounds.cards[1].top+1,'Base card precedes original Solana record');
+    for(const card of bounds.cards)assert.ok(card.left>=-1&&card.right<=bounds.width+1,'whitepaper record stays in viewport');
+    await page.screenshot({path:'climb-whitepaper-'+width+'.png'});
+    console.log('PASS Base-first whitepaper status and original Solana record at '+width+'px');
+   }
   }finally{await context.close()}
  }
 }finally{await browser.close()}

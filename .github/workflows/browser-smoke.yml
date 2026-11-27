@@ -9,6 +9,8 @@ on:
     branches: [main, codex/jarrell-natural-wilderness-pass, codex/mountain-stability-v2, codex/ten-summit-expedition, codex/hero-banga-mountain-results, fix/browser-smoke-homepage-check]
     paths:
       - "index.html"
+      - "whitepaper/**"
+      - ".github/scripts/climb-token-record-smoke.mjs"
       - "climb-token-supply.js"
       - "dex/**"
       - "swap/**"
@@ -24,6 +26,8 @@ on:
     branches: [main]
     paths:
       - "index.html"
+      - "whitepaper/**"
+      - ".github/scripts/climb-token-record-smoke.mjs"
       - "climb-token-supply.js"
       - "dex/**"
       - "swap/**"
@@ -896,6 +900,7 @@ jobs:
           path: |
             climboria-desktop-home.png
             climb-tokenomics-*.png
+            climb-whitepaper-*.png
             climboria-mobile-home.png
             climboria-desktop-gameplay.png
             climboria-mobile-gameplay.png
