@@ -18,7 +18,7 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 
 ### Multiplayer checkpoint — 2026-11-28 PHT
 
-[R0.2 and R0.8 private socket recovery candidate](https://github.com/CryptoDilis/Climboria/pull/1046) passed locally with 10, 25, 50 and 100 synthetic loopback clients, 20 movement ticks per size and 148 total reconnects. Fresh fixture sessions recovered the current peer snapshot and retired sessions were removed. Verify exact CI, then exercise authenticated ticket refresh, saved-position recovery and browser projection under churn before production acceptance.
+[R0.2 and R0.8 private socket recovery](https://github.com/CryptoDilis/Climboria/pull/1046) merged after CI passed at 10, 25, 50 and 100 synthetic loopback clients. The follow-up also passed locally at 128, with 104 reconnects and capacity rejection. [Native browser batch transport](https://github.com/CryptoDilis/Climboria/pull/1050) passed locally in desktop and mobile emulation with synthetic admissions. Exact follow-up CI, hosted ticket and durable resume acceptance, production-equivalent capacity and physical-device measures remain open.
 
 
 ## Non-negotiable product direction
@@ -33,6 +33,7 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 
 - [ ] R0.1 Close current #930 follow-up: separate authored private pilot room/renderer integration; keep fixed synthetic preview unchanged; account/origin/room gates, rate/cost controls, authorized edge QA. No public PvP/loot activation.
 - [ ] R0.2 Complete real registered two-account acceptance for movement, avatars, World/Nearby Chat, reconnect, last location and logout/ghost cleanup.
+  - [Reconnect spacing #1047](https://github.com/CryptoDilis/Climboria/pull/1047) and [private native browser recovery #1050](https://github.com/CryptoDilis/Climboria/pull/1050) merged after exact CI. Continue with the main-only hosted two-account workflow in the protected environment and the owner-selected quiet test window. Synthetic transport and hosted read-only parity do not establish that interaction evidence.
 - [ ] R0.3 Reconcile existing hero/animation/scale, stamina/damage, pillar/terrain/cave collision, mobile HUD, camera, audio, map, weather, loading and saved-state bugs with master checklist and exact CI/device evidence.
 - [ ] R0.4 Establish measured desktop, low-end Android, Redmi 14 5G and iPhone/Safari baselines; measure cold/warm time-to-play, transfer bytes, peak memory, frame-time/FPS, thermals, long-session stability, WebGL context loss and reconnect.
 - [ ] R0.5 Reuse world streaming, load/unload chunks and nearby actors; LOD, frustum culling, instancing, pooled effects, bounded AI/ticks and bandwidth; measure rather than assume improvements.
@@ -46,6 +47,7 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 - [ ] R1.1 First 10-minute adventure: 0–1 create/select hero; 1–3 visible mystery near spawn; 3–5 traversal/environment challenge or approved beginner enemy; 5–7 useful starter item; 7–10 skill feedback and clue toward a bigger adventure. Timing targets, not forced script.
 - [ ] R1.2 Optional short mini quests and clue-led hidden discoveries: caves, hidden entrances, traps, ruins, lost expeditions, mysterious tracks, abandoned camps, landmarks.
 - [ ] R1.3 Treasure maps and map fragments, readable discovery journal, environmental lore through letters, symbols, artifacts and connected stories; avoid revealing hidden chests prematurely.
+  - Candidate `3748e56f1b91da7c733b6d86d2240742c3b2039a` records three already-mapped landmarks in an optional local journal. Scoped persistence unit tests and a mobile-emulated guest touch test passed locally. Treasure maps, authored lore, full CI and physical playtesting remain open.
 - [ ] R1.4 Reuse existing rarity chest system and publish odds before any reward release; materials, outfits, gear, artifacts and useful nonfinancial starter items. No guaranteed rare or monetary rewards; no real grant until authority is ready.
 - [ ] R1.5 Acceptance: skip/revisit introduction, desktop/touch controls, no blocking modal or forced wallet, resume after reload, no duplicated grants, actual new-player playtest and voluntary feedback. Measure time to first discovery and optional return rates without intrusive telemetry.
 
@@ -136,6 +138,9 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 - [ ] Actual authenticated 50/100 concurrent-client private capacity acceptance, server admission/interest scheduler and cloud/network cost measurement. Preserve current live Worker and renderer 32 limits, truthful ONLINE, close-range interaction visibility, world/nearby chat, combat and economy gates. No production enablement before evidence.
 
 **Next:** complete exact CI and merge compatible Game-only candidates, then physical device and authenticated private capacity testing. No production scalability claim or authorization from this checklist.
+
+**C9–C13 update (2026-11-28 PHT):** C13 private socket recovery is merged and verified in CI for 10/25/50/100 synthetic clients. C9–C12 private visibility, instancing and deadline candidates are consolidated for fresh CI. The software-rendered world fixture drew seven body parts for 100 instanced peers. The 25 ms loopback flush measured 44.57 ms p95 delivery. R0.2/R0.4/R0.5/R0.8 stay open for registered-account browser reconnect and durable resume, nameplate/interaction visibility, physical metrics and production-equivalent capacity. R5A gait/benchmark integration and physical pair acceptance remain pending.
+
 
 ## R6 — Reasons to return (optional, non-punitive)
 

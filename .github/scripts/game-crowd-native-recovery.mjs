@@ -150,6 +150,11 @@ async function recoveryScenario(count) {
  try {
   for (let index = 0; index < count; index++) await admit();
   await verifyRoster();
+  const overflow = room.connect({
+   trustedSessionId: 'fixture-session-overflow',
+   send: () => assert.fail('Full room issued a welcome'),
+  });
+  assert.deepEqual(overflow, { ok: false, reason: 'room-full' });
   const replaced = new Set();
   for (let step = 1; step <= 20; step++) {
    await move(step, [...clients.values()]);
@@ -188,4 +193,4 @@ async function recoveryScenario(count) {
  }
 }
 
-for (const count of [10, 25, 50, 100]) await recoveryScenario(count);
+for (const count of [10, 25, 50, 100, 128]) await recoveryScenario(count);

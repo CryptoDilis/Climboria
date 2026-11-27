@@ -44,6 +44,11 @@ body.free #status-card{opacity:1}
 body.free.mobile-device #climboria-punch-button{display:flex;align-items:center;justify-content:center}
 #climboria-punch-button .attack-control-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;line-height:1;white-space:nowrap}
 body.mobile-device.climboria-portrait #climboria-punch-button{display:none!important}
+#field-journal{margin-top:6px;color:#f4ecd8;font:12px/1.35 system-ui}
+#field-journal summary{cursor:pointer;padding:5px 0;color:#ffe3a3;font-weight:700}
+#field-journal-entries{overflow-wrap:anywhere}
+#field-journal-entries p{margin:4px 0 8px}
+#field-journal-entries b{display:block;color:#ffe3a3}
 #world-map-toggle{display:none}
 #world-map-panel{position:fixed;pointer-events:auto!important;z-index:1000!important;right:0!important;top:0!important;margin:0!important;width:240px;box-sizing:border-box;padding:9px;border:1px solid #d8b46b99;border-top:0;border-right:0;border-radius:0 0 0 13px;background:#080d14ed;box-shadow:0 12px 40px #000b;display:block;transition:width .2s}#world-map-panel.map-expanded{width:min(340px,calc(100vw - 32px))}
 #expedition-settings-toggle{position:fixed;display:grid;place-items:center;pointer-events:auto;z-index:1205;top:10px;right:250px;width:40px;height:40px;border:1px solid #d8b46b99;border-radius:10px;background:#080d14ed;color:#ffe3a3;font-size:22px;cursor:pointer;box-shadow:0 8px 24px #0008}
@@ -263,7 +268,7 @@ body.free #hud{display:none!important;visibility:hidden!important;opacity:0!impo
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>DAMAGE</span><span id="damage-value">5</span></div><div class="stat-track"><div class="stat-fill" id="damage-fill" style="width:25%;background:#c66b54"></div></div></div>
 <div id="summit-chest-status" role="status" aria-live="polite"><span>JARRELL’S PEAK · SUMMIT CHEST</span><strong id="summit-chest-countdown">READY</strong><small>HIGH-TIER LOOT · 15-MINUTE RESPAWN</small></div>
 <button id="world-map-toggle" type="button">WORLD MAP · M</button><button id="climboria-punch-button" data-mobile-action="punch" type="button" aria-label="Attack animation (PvP damage not enabled)" title="Attack · Q (walking)"><span class="attack-control-label">ATTACK</span></button>
-<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><label for="climboria-music-volume">MUSIC <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><label for="climboria-effects-volume">SOUND EFFECTS <span id="climboria-effects-value">55%</span></label><input id="climboria-effects-volume" type="range" min="0" max="100" value="55" step="1"><div id="expedition-connected-account" role="status" style="font:700 11px/1.5 system-ui;color:#d1dbc6;padding:10px 0;border-top:1px solid #ffffff20">ACCOUNT · CHECKING…</div><button id="expedition-return-menu" type="button">RETURN TO MENU</button><button id="expedition-settings-close" type="button">CLOSE</button></section>
+<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div><details id="field-journal" hidden><summary>Field journal</summary><div id="field-journal-entries"></div></details></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><label for="climboria-music-volume">MUSIC <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><label for="climboria-effects-volume">SOUND EFFECTS <span id="climboria-effects-value">55%</span></label><input id="climboria-effects-volume" type="range" min="0" max="100" value="55" step="1"><div id="expedition-connected-account" role="status" style="font:700 11px/1.5 system-ui;color:#d1dbc6;padding:10px 0;border-top:1px solid #ffffff20">ACCOUNT · CHECKING…</div><button id="expedition-return-menu" type="button">RETURN TO MENU</button><button id="expedition-settings-close" type="button">CLOSE</button></section>
 
 <div id="help">WASD move · Shift sprint · Space jump · Q attack · Mouse look (drag if not locked)<br>E interact · Weather and daylight cycle automatically · V return to walk<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
 
@@ -2223,6 +2228,7 @@ window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
     if(localPositionUserId&&localPositionUserId!==userId)this.saveLocalPosition();
     if(localPositionUserId!==userId)localPositionReady=false;
     localPositionUserId=userId||null;
+    renderFieldJournal();
     const previousKey = inventoryStorageKey;
     const previousItems = inventory.map(item => ({ name: item.name, qty: item.qty }));
     const targetKey = userId ? INVENTORY_KEY + ':user:' + userId : INVENTORY_KEY;
@@ -2284,6 +2290,40 @@ document.getElementById('player-card').addEventListener('click',toggleInventory)
 const mapToggle=document.getElementById('world-map-toggle'),mapPanel=document.getElementById('world-map-panel'),mapCanvas=document.getElementById('world-map'),mapCtx=mapCanvas.getContext('2d');
 function toggleWorldMap(){const opening=mapPanel.classList.toggle('map-expanded');if(opening)releaseGameplayInput();drawWorldMap();drawWorldMapPlayer()}
 mapPanel.style.display='block';
+
+const journalPanel=document.getElementById('field-journal'),journalEntries=document.getElementById('field-journal-entries');
+let fieldJournal;
+function renderFieldJournal(){
+ if(!fieldJournal||!journalPanel.open)return;
+ const entries=fieldJournal.entries();
+ journalEntries.replaceChildren();
+ if(!entries.length){
+  const empty=document.createElement('p');
+  empty.textContent='Visit a mapped landmark to record it here.';
+  journalEntries.append(empty);
+ }
+ for(const {name,note} of entries){
+  const entry=document.createElement('p'),title=document.createElement('b');
+  title.textContent=name;entry.append(title,note);journalEntries.append(entry);
+ }
+}
+journalPanel.addEventListener('keydown',e=>e.stopPropagation());
+journalPanel.addEventListener('toggle',()=>{if(journalPanel.open)releaseGameplayInput();renderFieldJournal()});
+void import('./field-journal.mjs').then(({createFieldJournal})=>{
+ const landmarks=[
+  {id:'sanctuary',name:'Sanctuary',note:'The stone pillars mark a sheltered starting point. Follow the mapped trail to the park.',...POI.sanct,radius:24},
+  {id:'park',name:'Park',note:'The trail opens into a clearing. The map marks an expedition camp to the north.',...POI.park,radius:30},
+  {id:'camp',name:'Expedition camp',note:'The camp is a waymark for trips west toward the cave.',...POI.camp,radius:24}
+ ];
+ const getScope=()=>window.__climboriaGuestMode?'guest':localPositionUserId?'user:'+localPositionUserId:null;
+ // Use lazy storage access so browsers that block it can keep a session-only journal.
+ const storage={
+  getItem:key=>window.__climboriaGuestMode?null:localStorage.getItem(key),
+  setItem(key,value){if(!window.__climboriaGuestMode)localStorage.setItem(key,value)}
+ };
+ fieldJournal=createFieldJournal({landmarks,storage,getScope});
+ journalPanel.hidden=false;
+}).catch(error=>console.warn('[Climboria field journal]',error));
 function drawWorldMap(){
  const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.clearRect(0,0,w,h);
  // Shaded-relief terrain render: layered elevation, slope lighting, forest texture, water and trail detail.
@@ -3610,7 +3650,7 @@ const MAX_REMOTE_GLB=MOB?2:3;
 const REMOTE_HERO_HEIGHT=1.9,NEARBY_CHAT_METERS=20,NEARBY_BUBBLE_MS=5000;
 let remoteGLBLoading=0,remoteGLBResidents=0,remoteModelClock=0;
 // Explicit local smoke fixture only; never activate crowd culling for live combat or room admission.
-let crowdPlanner=null,crowdBatchDecoder=null,crowdTiers=new Map(),crowdPressure='normal',crowdNextPlanAt=0,crowdPlanDirty=true;
+let crowdPlanner=null,crowdBatchDecoder=null,crowdCloseCoverage=null,crowdInstanceProjection=null,crowdTiers=new Map(),crowdPressure='normal',crowdNextPlanAt=0,crowdPlanDirty=true;
 // Shared geometry/materials remain owned by the Game scene for its lifetime:
 // 32 peers reuse these few GPU buffers instead of allocating 32 skeletons or
 // downloading 43MB Adventurer GLBs per remote peer, especially on mobile.
@@ -3638,6 +3678,41 @@ function remoteExplorerSilhouette(){
  part(remoteFallbackParts.limbs,remoteFallbackCloth,-.22,.47);
  part(remoteFallbackParts.limbs,remoteFallbackCloth,.22,.47);
  return body;
+}
+// Private smoke-only projection, not a presence or combat authority.
+function createPrivateCrowdInstances(){
+ const template=remoteExplorerSilhouette(),meshes=[],ids=new Set();
+ let draws=0,closed=false,match=true;
+ const readback=new T3.Matrix4();
+ try{
+  for(const part of template.children){
+   const m=new T3.InstancedMesh(part.geometry,part.material,100);
+   m.name='PrivateCrowdInstanceBody';m.count=0;m.visible=false;m.frustumCulled=false;
+   m.instanceMatrix.setUsage(T3.DynamicDrawUsage);m.onBeforeRender=()=>draws++;
+   scene.add(m);meshes.push(m);
+  }
+ }catch(error){for(const m of meshes){scene.remove(m);m.dispose?.()}throw error}
+ function sync(){
+  if(closed)return;
+  ids.clear();match=true;let count=0;
+  for(const p of livePeers.values()){
+   if(p.root||Math.hypot(p.position.x-P.x,p.position.z-P.z)>2.8)continue;
+   if(count>=100)break;
+   p.group.updateMatrixWorld(true);
+   for(let j=0;j<meshes.length;j++){
+    const matrix=p.fallback.children[j].matrixWorld;meshes[j].setMatrixAt(count,matrix);
+    meshes[j].getMatrixAt(count,readback);
+    if(!matrix.elements.every((v,k)=>Math.abs(v-readback.elements[k])<1e-5))match=false;
+   }
+   ids.add(p.id);p.fallback.visible=false;count++;
+  }
+  for(const m of meshes){m.count=count;m.visible=count>0;m.instanceMatrix.needsUpdate=true}
+ }
+ function close(){
+  if(closed)return;closed=true;ids.clear();
+  for(const m of meshes){m.count=0;m.visible=false;scene.remove(m);m.dispose?.()}
+ }
+ return {sync,close,audit:()=>({ids:[...ids],draws,match,counts:meshes.map(m=>m.count),attached:meshes.filter(m=>m.parent===scene).length,closed})};
 }
 function peerMarker(name){
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=64;
@@ -4298,7 +4373,7 @@ window.__CLIMBORIA_GAME_PEERS={
   scene.remove(p.group);
   p.group.traverse(n=>{if(n.isSprite){n.material?.map?.dispose();n.material?.dispose()}else if(n.name==='RemoteMarkerRing'){n.geometry?.dispose();n.material?.dispose()}});
   unloadPeerHero(p);
-  livePeers.delete(id);crowdTiers.delete(id);crowdPlanDirty=true;
+  livePeers.delete(id);crowdTiers.delete(id);crowdPlanDirty=true;crowdInstanceProjection?.sync();
   drawWorldMapPlayer();
  },
  clear(){for(const id of [...livePeers.keys()])this.remove(id)},
@@ -4306,8 +4381,8 @@ window.__CLIMBORIA_GAME_PEERS={
   const now=performance.now();
   if(crowdPlanner&&(crowdPlanDirty||now>=crowdNextPlanAt)){
    crowdPlanDirty=false;crowdNextPlanAt=now+250;
-   const plan=crowdPlanner({players:[...livePeers.values()].map(p=>({id:p.id,kind:'player',x:p.position.x,z:p.position.z,hasModel:p.model==='Jarrell'||p.model==='Lheiz'})),viewer:{x:P.x,z:P.z},device:MOB?'mobile':'desktop',pressure:crowdPressure,npcCap:0,previous:[...crowdTiers].map(([id,tier])=>({id,tier}))});
-   crowdTiers=new Map(plan.assignments.map(a=>[a.id,a.tier]));
+   const plan=crowdPlanner({players:[...livePeers.values()].map(p=>({id:p.id,kind:'player',x:p.position.x,z:p.position.z,hasModel:p.model==='Jarrell'||p.model==='Lheiz'})),viewer:{x:P.x,z:P.z},device:MOB?'mobile':'desktop',pressure:crowdPressure,npcCap:0,closeProtection:true,previous:[...crowdTiers].map(([id,tier])=>({id,tier}))});
+   crowdTiers=new Map(plan.assignments.map(a=>[a.id,a.tier]));crowdCloseCoverage=plan.closeCoverage;
   }
   for(const p of livePeers.values()){
    const at=p.target,t=crowdPlanner?1-Math.exp(-9*Math.max(0,Math.min(.1,dt))):Math.min(1,dt*9);
@@ -4339,6 +4414,7 @@ window.__CLIMBORIA_GAME_PEERS={
    }
    if(p.mixer){setPeerAnimation(p,now<p.punchUntil?'punch':now<p.walkUntil?'walk':'idle');p.mixer.update(dt);}
   }
+  crowdInstanceProjection?.sync();
   remoteModelClock+=dt;
   if(remoteModelClock>=1){
    remoteModelClock=0;
@@ -4384,12 +4460,74 @@ if(new URLSearchParams(location.search).has('smoke')){
   const [{planCrowdRendering},{applyPrivateMovementBatch}]=await Promise.all([import('./npc/crowd-render-policy.mjs'),import('./multiplayer/private-movement-batch.mjs')]);
   crowdPlanner=planCrowdRendering;crowdBatchDecoder=applyPrivateMovementBatch;crowdPressure='normal';crowdPlanDirty=true;return true;
  };
+ // Isolated WebGL experiment: reuse existing silhouette parts, no live peer mutation.
+ window.ENDLESS_WILDS.crowdSmokeInstancedBodies=n=>{
+  if(!crowdPlanner||!['localhost','127.0.0.1','[::1]'].includes(location.hostname)||livePeers.size||![10,50,100].includes(n))return null;
+  const fixture=new T3.Scene(),camera=new T3.PerspectiveCamera(55,cam.aspect,.1,100);
+  camera.position.set(0,15,25);camera.lookAt(0,0,0);camera.updateMatrixWorld(true);
+  fixture.add(new T3.AmbientLight(0xffffff,1));
+  const originals=[],batches=[],mat=new T3.Matrix4(),readback=new T3.Matrix4(),ids=new Set();
+  let ordinaryDraws=0,instanceDraws=0,ordinaryCalls=0,instanceCalls=0,match=true,moved=false;
+  try{
+   for(let i=0;i<n;i++){
+    const body=remoteExplorerSilhouette(),id='private-instance-'+i;
+    ids.add(id);body.position.set((i%10-4.5)*1.25,0,(Math.floor(i/10)-4.5)*1.25);body.rotation.y=i*.1;
+    for(const part of body.children){part.frustumCulled=false;part.onBeforeRender=()=>ordinaryDraws++}
+    fixture.add(body);originals.push(body);
+   }
+   fixture.updateMatrixWorld(true);renderer.render(fixture,camera);ordinaryCalls=renderer.info.render.calls;
+   // One instance batch per silhouette part; shared geometry/materials stay Game-owned.
+   for(const part of originals[0].children){
+    const mesh=new T3.InstancedMesh(part.geometry,part.material,n);
+    mesh.frustumCulled=false;mesh.instanceMatrix.setUsage(T3.DynamicDrawUsage);
+    mesh.onBeforeRender=()=>instanceDraws++;batches.push(mesh);fixture.add(mesh);
+   }
+   function sync(){
+    for(let i=0;i<n;i++){
+     originals[i].updateMatrixWorld(true);
+     for(let j=0;j<batches.length;j++){
+      mat.copy(originals[i].children[j].matrixWorld);batches[j].setMatrixAt(i,mat);
+      batches[j].getMatrixAt(i,readback);
+      if(!mat.elements.every((v,k)=>Math.abs(v-readback.elements[k])<1e-5))match=false;
+     }
+    }
+    for(const mesh of batches)mesh.instanceMatrix.needsUpdate=true;
+   }
+   sync();for(const body of originals)fixture.remove(body);
+   renderer.render(fixture,camera);instanceCalls=renderer.info.render.calls;
+   const before=instanceDraws;originals[0].position.x+=.5;originals[0].rotation.y+=.2;sync();
+   renderer.render(fixture,camera);moved=instanceDraws-before===batches.length;
+   return {n,unique:ids.size,parts:batches.length,ordinaryDraws,instanceDrawsPerFrame:before,ordinaryCalls,instanceCalls,match,moved,peersUnchanged:livePeers.size===0};
+  }finally{
+   for(const body of originals)fixture.remove(body);
+   for(const mesh of batches){fixture.remove(mesh);mesh.dispose?.()}
+   renderer.render(scene,cam);
+  }
+ };
  window.ENDLESS_WILDS.crowdSmokeBatch=packet=>{
   if(!crowdPlanner||!crowdBatchDecoder||!['localhost','127.0.0.1','[::1]'].includes(location.hostname))return {ok:false,applied:0};
   return crowdBatchDecoder(packet,{hasPeer:id=>livePeers.has(id),move:(id,position)=>window.__CLIMBORIA_GAME_PEERS.move(id,position)});
  };
- window.ENDLESS_WILDS.crowdSmokePressure=pressure=>{if(!crowdPlanner||!['normal','constrained','critical'].includes(pressure))return false;crowdPressure=pressure;crowdPlanDirty=true;return true};
- window.ENDLESS_WILDS.crowdSmokeAudit=()=>({pressure:crowdPressure,enabled:!!crowdPlanner,tiers:[...livePeers.values()].map(p=>({id:p.id,tier:crowdTiers.get(p.id)??'hidden',visible:p.group.visible,body:!!p.root&&p.root.visible||p.fallback.visible,heavy:!!p.root,attached:p.group.parent===scene,nameplate:p.nameplate.visible})),peer:window.__CLIMBORIA_GAME_PEERS.audit()});
+ window.ENDLESS_WILDS.crowdSmokePressure=pressure=>{
+  if(!crowdPlanner||!['normal','constrained','critical'].includes(pressure))return false;
+  if(pressure!=='critical'&&crowdInstanceProjection){crowdInstanceProjection.close();crowdInstanceProjection=null}
+  crowdPressure=pressure;crowdPlanDirty=true;return true
+ };
+ window.ENDLESS_WILDS.crowdSmokeProjection=enabled=>{
+  if(!crowdPlanner||!['localhost','127.0.0.1','[::1]'].includes(location.hostname)||typeof enabled!=='boolean')return false;
+  if(enabled){
+   if(crowdPressure!=='critical'||remoteGLBLoading||remoteGLBResidents||crowdInstanceProjection)return false;
+   crowdInstanceProjection=createPrivateCrowdInstances();crowdInstanceProjection.sync();
+  }else if(crowdInstanceProjection){crowdInstanceProjection.close();crowdInstanceProjection=null}
+  crowdPlanDirty=true;window.__CLIMBORIA_GAME_PEERS.update(0);return true;
+ };
+ window.ENDLESS_WILDS.crowdSmokeProjectionFrame=()=>{
+  if(!crowdInstanceProjection)return null;
+  const before=crowdInstanceProjection.audit().draws;
+  renderer.render(scene,cam);
+  const a=crowdInstanceProjection.audit();return {...a,frameDraws:a.draws-before};
+ };
+ window.ENDLESS_WILDS.crowdSmokeAudit=()=>({pressure:crowdPressure,enabled:!!crowdPlanner,closeCoverage:crowdCloseCoverage,instances:crowdInstanceProjection?.audit()??null,tiers:[...livePeers.values()].map(p=>({id:p.id,tier:crowdTiers.get(p.id)??'hidden',visible:p.group.visible,body:!!p.root&&p.root.visible||p.fallback.visible,heavy:!!p.root,attached:p.group.parent===scene,nameplate:p.nameplate.visible})),peer:window.__CLIMBORIA_GAME_PEERS.audit()});
 }
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 // A room may re-anchor a registered player only using coordinates that came
@@ -4489,7 +4627,11 @@ function update(dt){
    else animateAssetFallback(Tm,animState,Math.hypot(fw,rt));
   }else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='awaiting-saved-glb';}
  }
- mapMarkerClock+=dt;if(mapMarkerClock>=.12){mapMarkerClock=0;drawWorldMapPlayer();}
+ mapMarkerClock+=dt;
+ if(mapMarkerClock>=.12){
+  mapMarkerClock=0;drawWorldMapPlayer();
+  if(P.mode==='walk'&&!P.swim&&P.jumpState==='grounded'&&fieldJournal?.sample(P))renderFieldJournal();
+ }
  const cp=cam.position;gameTick(dt,cp);npcContinuousSession?.frame(dt);npcPairSession?.frame(dt);window.__CLIMBORIA_GAME_PEERS?.update(dt);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
  updateChunks(cp.x,cp.z,ready?1:0);
  sky.position.copy(cp);const sx=(Math.floor(cp.x/CS)+.5)*CS,sz=(Math.floor(cp.z/CS)+.5)*CS;water.position.set(sx,0,sz);
@@ -4571,6 +4713,6 @@ initChunks();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
 <script src="/game-save.js?v=20261119-game-resume-2"></script>
-<script src="./multiplayer/client-presence.js?v=20261126-game-movement-1"></script>
+<script src="./multiplayer/client-presence.js?v=20261128-game-reconnect-1"></script>
 </body>
 </html>

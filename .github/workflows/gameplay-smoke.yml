@@ -49,6 +49,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Verify field journal persistence and account isolation
+        run: node --test game/field-journal.test.mjs
       - name: Cache Playwright browser binaries
         uses: actions/cache@v4
         with:
