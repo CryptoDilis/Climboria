@@ -103,9 +103,12 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     function _rewardRole(address a) private view returns(bool){
         return _gaming().reservedSignerRole(a);
     }
-    // The vault calls this at proposal and execution, including after signer rotation.
+    /// @notice Partial role predicate; NOT standalone payment authorization.
+    /// @dev The vault must also enforce epoch, recipient, evidence, delay and budget checks.
     function expenseRecipientAllowed(address a) public view returns(bool){
-        return bound&&a!=distributor&&!_reservedRole(a)&&!_rewardRole(a)&&
+        if(!bound)return false;
+        validateConfig();
+        return a!=address(0)&&a!=address(1)&&!wallet.isOwner(a)&&a!=distributor&&!_reservedRole(a)&&!_rewardRole(a)&&
             !(pending.digest!=0&&block.timestamp<pending.expiresAt&&a==pending.newOwner);
     }
     function revokeRewardSigner(uint256 expected,uint256 generation) external onlyWallet {

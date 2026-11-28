@@ -167,7 +167,7 @@ contract SafeReserveGuardTest {
         for(uint256 i=3;i<=5;i++){
             V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
             bytes32 id=_id(1,i,bytes32(i),bytes32(i));
-        vm.expectRevert();v.execute(id);
+            vm.expectRevert();v.execute(id);
             _reject(address(guard),_propose(2,i,bytes32(i+10),bytes32(i+10)),3);
             require(v.totalSpent()==0&&v.registry().consumedBy(bytes32(i))==address(0));
         }
@@ -198,6 +198,23 @@ contract SafeReserveGuardTest {
         require(guard.epoch()==2&&wallet.isOwner(PAYEE)&&!guard.rewardSignerAllowed(PAYEE));
     }
 
+    function testPlainReserveExpensePredicateRejectsInvalidRolesAndConfig() public {
+        require(!guard.expenseRecipientAllowed(PAYEE));
+        _bind();
+        require(!guard.expenseRecipientAllowed(address(0))&&!guard.expenseRecipientAllowed(address(1)));
+        address[] memory current=wallet.getOwners();
+        for(uint256 i=0;i<current.length;i++)require(!guard.expenseRecipientAllowed(current[i]));
+        require(!guard.expenseRecipientAllowed(FOUNDER)&&!guard.expenseRecipientAllowed(DISTRIBUTOR));
+        require(guard.expenseRecipientAllowed(PAYEE));
+        // Ordinary contract payees are not categorically prohibited.
+        require(guard.expenseRecipientAllowed(address(new ReserveLPDestination())));
+        uint256 n=wallet.nonce();
+        _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,3,address(1),10,"E",0,"N",block.timestamp,block.timestamp+1 hours)),3);
+        require(wallet.nonce()==n&&!guard.transactionActive()&&token.totalSupply()==SUPPLY);
+        // An invalid Safe configuration must fail closed even for a standalone view.
+        vm.etch(address(wallet),"");
+        vm.expectRevert();guard.expenseRecipientAllowed(PAYEE);
+    }
     function testNoGenericTransferOrRoleConflict() public {
         _bind();
         _reject(address(token),abi.encodeCall(token.transfer,(PAYEE,1)),3);
