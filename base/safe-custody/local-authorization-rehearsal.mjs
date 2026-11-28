@@ -59,6 +59,8 @@ export async function verifyLocalAuthorizations(x){
    // An actual historical-state read with a deliberately wrong expected runtime hash must reject.
    const wrong={...x,contracts:{...x.contracts,guard:{...x.contracts.guard,runtimeKeccak256:h(999)}}};
    await assert.rejects(()=>verifyLocalHistoricalConfig(wrong,block));
+   const wrongCore={...x,contracts:{...x.contracts,coreDeployer:{...x.contracts.coreDeployer,runtimeKeccak256:h(998)}}};
+   await assert.rejects(()=>verifyLocalHistoricalConfig(wrongCore,block));
   }
   const quorum=verifyRawSafeQuorum({input:mined.input.toLowerCase(),chainId:84532,safe:wallet,nonce:hex(historicalNonce),owners:historicalOwners,threshold:Number(historicalThreshold)});
   assert.equal(quorum.safeTxHash,safeTxHash);
@@ -77,7 +79,7 @@ export async function verifyLocalAuthorizations(x){
   assert.throws(()=>reconcileTypedIntent(c,altered,receipt));
   assert.equal(await number(wallet,'nonce()'),nonce+1n);
   assert.equal(await number(guard,'transactionActive()'),0n);
-  receipts.push({kind,index,...matched,blockNumber:anchor.number,readyAt:expected.readyAt,stateMatched:true,alteredIntentRejected:true,canonicalEnvelopeMatched:true,safeDigestMatched:true,rawQuorumMatched:true,localParentStateMatched:true,verifiedSignerCount:3,localConfigMatched:true,configRuntimeCount:config.checkedRuntimeCount,configParentBlockHash:config.blockHash});
+  receipts.push({kind,index,...matched,blockNumber:anchor.number,readyAt:expected.readyAt,stateMatched:true,alteredIntentRejected:true,canonicalEnvelopeMatched:true,safeDigestMatched:true,rawQuorumMatched:true,localParentStateMatched:true,verifiedSignerCount:3,localConfigMatched:true,helperBindingsMatched:config.helperBindingsMatched,configRuntimeCount:config.checkedRuntimeCount,configParentBlockHash:config.blockHash});
  }
  assert.equal(await number(wallet,'nonce()'),startingNonce+4n);
  assert.deepEqual(await Promise.all(vaults.map(v=>number(token,'balanceOf(address)',v.address))),before);

@@ -76,6 +76,8 @@ try{
  const factoryProvenance={setup:await verify('SafeQuorumIssuanceFixture.sol','SafeQuorumReserveFactoryFixture',setup,[singleton,bootstrap,guardDeployer]),singleton:await verify('Safe.sol','Safe',singleton),bootstrap:await verify('SafeEpochGuardFixture.sol','SafeGuardBootstrapFixture',bootstrap),singletonAddress:singleton,bootstrapAddress:bootstrap};
  assert.equal(await address(guardDeployer,'factory()'),setup);
  const guardDeployerCode=await requireCode(guardDeployer);
+ contracts.guardDeployer=guardDeployerCode;
+ contracts.bootstrap=await requireCode(bootstrap);
  assert.equal(await call(setup,'guardDeployerHash()'),guardDeployerCode.runtimeKeccak256);
  factoryProvenance.guardDeployer={...guardDeployerCode,...await verify('SafeQuorumIssuanceFixture.sol','SafeQuorumGuardDeployerFixture',guardDeployer,[setup])};
  const helper=await deploy('conditionalHelper','V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',creator);
@@ -83,6 +85,7 @@ try{
  assert.notEqual(legacyDeployer,helper);
  assert.equal(await address(legacyDeployer,'factory()'),helper);
  const legacyDeployerCode=await requireCode(legacyDeployer);
+ contracts.legacyDeployer=legacyDeployerCode;
  assert.equal(await call(helper,'legacyDeployerHash()'),legacyDeployerCode.runtimeKeccak256);
  factoryProvenance.legacyDeployer={...legacyDeployerCode,...await verify('V3AtomicSuccessorFixture.sol','V3SuccessorLegacyDeployer',legacyDeployer,[helper])};
  factoryProvenance.conditionalHelper=await verify('V3AtomicSuccessorFixture.sol','V3SuccessorConditionalDeployer',helper,[legacyDeployer]);
@@ -90,6 +93,12 @@ try{
  const successor=await deploy('successorFactory','SafeQuorumIssuanceFixture.sol','V3QuorumSuccessorFixture',creator,cast('abi-encode','f(address,address,bytes32)',setup,helper,helperHash));
  assert.equal(await address(successor,'conditional()'),helper);
  assert.equal(await call(successor,'conditionalHash()'),helperHash);
+ const core=await address(successor,'core()');
+ contracts.coreDeployer=await requireCode(core);
+ factoryProvenance.coreDeployer={...contracts.coreDeployer,...await verify('V3AtomicSuccessorFixture.sol','V3SuccessorCoreDeployer',core)};
+ assert.equal(await address(successor,'creator()'),creator);
+ assert.equal(await address(successor,'guardFactory()'),setup);
+ assert.equal(await call(successor,'guardFactoryHash()'),contracts.setupFactory.runtimeKeccak256);
  const quote=await deploy('syntheticQuote','SafeReserveGuard.t.sol','ReserveQuote',creator);
  const builder=await deploy('syntheticPoolBuilder','SafeReserveGuard.t.sol','ReservePoolBuilder',creator);
  const lp=await deploy('syntheticLPDestination','SafeReserveGuard.t.sol','ReserveLPDestination',creator);
@@ -98,6 +107,7 @@ try{
  const wallet=await address(guard,'wallet()');
  contracts.guard=await requireCode(guard);contracts.wallet=await requireCode(wallet);
  contracts.singleton=await requireCode(await address(setup,'singleton()'));
+ factoryProvenance.wallet=await verify('SafeProxy.sol','SafeProxy',wallet);
  assert.equal(await address(guard,'successor()'),successor);
  assert.equal(await number(wallet,'getThreshold()'),3n);
  assert.equal(await number(guard,'memberCount()'),5n);
@@ -123,6 +133,8 @@ try{
  assert.equal(await number(wallet,'nonce()'),1n);assert.equal(await number(guard,'bound()'),1n);
  assert.equal(await number(guard,'transactionActive()'),0n);assert.equal(await number(guard,'issuing()'),0n);
  const token=await address(successor,'token()');contracts.token=await requireCode(token);
+ factoryProvenance.token=await verify('V3AtomicSuccessorFixture.sol','V3SuccessorTestToken',token,[successor]);
+ assert.equal(await address(token,'issuer()'),successor);
  assert.equal(await address(guard,'asset()'),token);assert.equal(await number(token,'issued()'),1n);
  assert.equal(await number(token,'totalSupply()'),SUPPLY);assert.equal(await number(token,'decimals()'),6n);
  const vaults=[];

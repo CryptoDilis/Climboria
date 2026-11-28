@@ -26,7 +26,7 @@ export async function verifyLocalHistoricalConfig(x,block){
  assert.equal(contracts.wallet.address,wallet);assert.equal(contracts.guard.address,guard);assert.equal(contracts.token.address,token);
  assert.equal(contracts.syntheticQuote.address,quote);
  assert.equal(vaults.length,7);
- const selected=[contracts.wallet,contracts.guard,contracts.singleton,contracts.token,contracts.successorFactory,contracts.syntheticQuote,...vaults];
+ const selected=[contracts.wallet,contracts.guard,contracts.singleton,contracts.token,contracts.successorFactory,contracts.syntheticQuote,contracts.setupFactory,contracts.bootstrap,contracts.guardDeployer,contracts.conditionalHelper,contracts.legacyDeployer,contracts.coreDeployer,...vaults];
  assert.equal(new Set(selected.map(v=>v.address)).size,selected.length);
  for(const m of selected)await expectCode(m);
  const singleton=contracts.singleton.address,successor=contracts.successorFactory.address;
@@ -44,6 +44,26 @@ export async function verifyLocalHistoricalConfig(x,block){
  await expectAddress(guard,'successor()',successor);
  await expectHash(guard,'successorHash()',contracts.successorFactory.runtimeKeccak256);
  await expectAddress(guard,'asset()',token);
+ const setup=contracts.setupFactory.address,helper=contracts.conditionalHelper.address;
+ await expectAddress(setup,'singleton()',singleton);
+ await expectAddress(setup,'bootstrap()',contracts.bootstrap.address);
+ await expectAddress(setup,'guardDeployer()',contracts.guardDeployer.address);
+ await expectHash(setup,'guardDeployerHash()',contracts.guardDeployer.runtimeKeccak256);
+ await expectAddress(contracts.guardDeployer.address,'factory()',setup);
+ await expectAddress(successor,'guardFactory()',setup);
+ await expectHash(successor,'guardFactoryHash()',contracts.setupFactory.runtimeKeccak256);
+ await expectAddress(successor,'configuredGuard()',guard);
+ await expectHash(successor,'configuredGuardHash()',contracts.guard.runtimeKeccak256);
+ await expectAddress(successor,'conditional()',helper);
+ await expectHash(successor,'conditionalHash()',contracts.conditionalHelper.runtimeKeccak256);
+ await expectAddress(successor,'core()',contracts.coreDeployer.address);
+ await expectAddress(helper,'legacyDeployer()',contracts.legacyDeployer.address);
+ await expectHash(helper,'legacyDeployerHash()',contracts.legacyDeployer.runtimeKeccak256);
+ await expectAddress(contracts.legacyDeployer.address,'factory()',helper);
+ await expectAddress(successor,'token()',token);
+ await expectAddress(token,'issuer()',successor);
+ assert.equal(await at(successor,'used()'),'0x'+word(1));
+ assert.equal(await at(token,'issued()'),'0x'+word(1));
  assert.equal(await at(guard,'bound()'),'0x'+word(1));
  assert.equal(await at(guard,'transactionActive()'),ZERO);
  for(let i=0;i<7;i++){
@@ -61,5 +81,5 @@ export async function verifyLocalHistoricalConfig(x,block){
  await expectAddress(liquidity,'custody()',guard);
  await expectHash(liquidity,'custodyCodeHash()',contracts.guard.runtimeKeccak256);
  assert.equal((await rpc('eth_getBlockByNumber',[tag,false])).hash,block.hash);
- return {status:'LOCAL_CONFIG_MATCH_ONLY_NO_GO',blockHash:block.hash,blockNumber:tag,checkedRuntimeCount:selected.length,guardSlotMatched:true,fallbackDisabled:true,modulesEmpty:true,vaultBindingsMatched:true};
+ return {status:'LOCAL_CONFIG_MATCH_ONLY_NO_GO',blockHash:block.hash,blockNumber:tag,checkedRuntimeCount:selected.length,guardSlotMatched:true,fallbackDisabled:true,modulesEmpty:true,vaultBindingsMatched:true,helperBindingsMatched:true};
 }
