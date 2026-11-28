@@ -1,6 +1,7 @@
 // Local mined authorization evidence, invoked only by the loopback Anvil rehearsal.
 // No actual spending, LP funding, public RPC, real signers, or release authorization.
 import assert from 'node:assert/strict';
+import {deriveDirectSafeDigest} from './canonical-safe-envelope.mjs';
 import {deriveTypedIntent,reconcileTypedIntent} from './typed-intent-reconciliation.mjs';
 const ZERO='0x'+'0'.repeat(40);
 const hex=n=>'0x'+BigInt(n).toString(16);
@@ -34,7 +35,11 @@ export async function verifyLocalAuthorizations(x){
   assert.equal(mined.hash,receipt.transactionHash);assert.equal(mined.blockHash,receipt.blockHash);
   assert.equal(anchor.hash,receipt.blockHash);assert.equal(anchor.number,receipt.blockNumber);
   const c={chainId:84532,blockNumber:anchor.number,blockHash:anchor.hash,timestamp:anchor.timestamp,transactionHash:receipt.transactionHash,safe:wallet,guard,safeTxHash,token,epoch:hex(epoch),expenseVaults,liquidityVault,quote,pool};
-  const t={to:guard,operation:0,value:'0x0',safeTxGas:'0x0',baseGas:'0x0',gasPrice:'0x0',gasToken:ZERO,refundReceiver:ZERO,data};
+  assert.equal(mined.value,'0x0');
+  const decoded=deriveDirectSafeDigest(mined.input.toLowerCase(),84532,wallet,hex(nonce));
+  assert.equal(decoded.safeTxHash,safeTxHash);
+  assert.equal(decoded.intent.data,data);
+  const t=decoded.intent;
   const expected=deriveTypedIntent(c,t),matched=reconcileTypedIntent(c,t,receipt);
   assert.equal(matched.status,'RECEIPT_MATCH_ONLY_NO_GO');
   const read=kind==='expense'?'proposals(bytes32)':'actions(bytes32)';
@@ -47,7 +52,7 @@ export async function verifyLocalAuthorizations(x){
   assert.throws(()=>reconcileTypedIntent(c,altered,receipt));
   assert.equal(await number(wallet,'nonce()'),nonce+1n);
   assert.equal(await number(guard,'transactionActive()'),0n);
-  receipts.push({kind,index,...matched,blockNumber:anchor.number,readyAt:expected.readyAt,stateMatched:true,alteredIntentRejected:true});
+  receipts.push({kind,index,...matched,blockNumber:anchor.number,readyAt:expected.readyAt,stateMatched:true,alteredIntentRejected:true,canonicalEnvelopeMatched:true,safeDigestMatched:true});
  }
  assert.equal(await number(wallet,'nonce()'),startingNonce+4n);
  assert.deepEqual(await Promise.all(vaults.map(v=>number(token,'balanceOf(address)',v.address))),before);
@@ -55,5 +60,5 @@ export async function verifyLocalAuthorizations(x){
  assert.equal(await number(token,'totalSupply()'),888888888000000n);
  assert.equal(await number(liquidityVault,'spent()'),0n);
  for(const v of expenseVaults)assert.equal(await number(v,'totalSpent()'),0n);
- return {status:'LOCAL_MINED_AUTHORIZATION_EVIDENCE_ONLY_NO_GO',chainId:84532,sourceSha:x.sourceSha,receipts,unchangedVaultBalances:true,unchangedSupply:true,noPayments:true,limitations:'Local Anvil, synthetic contracts, known disposable signer keys, locally constructed inner calldata checked against exact mined outer input, no external signature recovery, historical public-chain authentication or finality, no production authorization.'};
+ return {status:'LOCAL_MINED_AUTHORIZATION_EVIDENCE_ONLY_NO_GO',chainId:84532,sourceSha:x.sourceSha,receipts,unchangedVaultBalances:true,unchangedSupply:true,noPayments:true,limitations:'Local Anvil, synthetic contracts, known disposable signer keys, independent canonical outer decoding and EIP-712 digest compared with local Safe, no external signature recovery, historical public-chain authentication or finality, no production authorization.'};
 }
