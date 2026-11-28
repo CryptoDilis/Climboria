@@ -1,5 +1,14 @@
 # Climboria Game Development Record
 
+## Phase 06 private lease-bound campfire and exposure — 2026-11-28 PHT
+
+- Stacked on #1126 exact head `0ee6cd620a44ec6f8efec34acd5bb50a70262d32`. Parent dedicated native Node job [46120990441](https://github.com/CryptoDilis/Climboria/actions/runs/46120990441) passed the 16-case suite. Parent gameplay smoke and merge still pending at inspection.
+- Owner-only revision-checked ignition/extinguishing consumes a single synthetic 120-second burn allocation per temporary lease, clipped to lease expiry. Fire state persists within the lease; observed expiry and replacement prevent stale warmth. No actual fuel inventory or refueling; recreating a lease receives a new fixture allocation, not a production resource policy.
+- Optional weather composition requires the same durable camp owner, slot, generation, complete interval and (for fire) actual lit period. Registry observation and exposure write share one transaction, with post-write authority/time revalidation. Legacy private standalone weather mode remains unchanged. No actual map geometry, damage, stamina, combat protection or financial effects.
+- All 19 regression bodies (16 inherited and three new) passed in an isolated JavaScript harness using the fetched source and minimal assertion adapter. Native Node/exact combined CI still required. Source/test checkpoint `9d7ed97b57e4b3d6b706192c59cb1e4f84abaefb`.
+- Next verify parent merge and fresh exact CI; reconcile trusted clock behavior across failed commits, actual fuel/inventory conservation, authored camp geometry and full-interval activity evidence. No public activation until reviewed. Consolidate remaining wildlife, farming, events and profession candidates independently.
+
+
 ## Phase 06 main-based campsite and weather consolidation — 2026-11-28 PHT
 
 - Consolidates exact campsite integration #1118 head `770a69422ab9e982ca88e23378afce6d8c40e17f` (includes #1114 and #1116) and exact campfire/weather #1120 head `065f3e28bdec5fb27e606e475517bbdf05bc0bd3` (includes #1119), onto main `9ffbd59db00c62ade686a15907cdda7ce8fdbcc1`. Copies seven exact Game module/test blobs and preserves current development history. No live routes, authored models, economy or release gate changes.
