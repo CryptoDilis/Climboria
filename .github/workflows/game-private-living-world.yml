@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'game/multiplayer/private-campsite-*.mjs'
+      - 'game/multiplayer/private-crafting-ledger*.mjs'
       - 'game/multiplayer/private-rest-ledger*.mjs'
       - 'game/multiplayer/private-weather-exposure*.mjs'
       - 'game/multiplayer/private-wildlife*.mjs'
@@ -14,6 +15,7 @@ on:
     branches: [main]
     paths:
       - 'game/multiplayer/private-campsite-*.mjs'
+      - 'game/multiplayer/private-crafting-ledger*.mjs'
       - 'game/multiplayer/private-rest-ledger*.mjs'
       - 'game/multiplayer/private-weather-exposure*.mjs'
       - 'game/multiplayer/private-wildlife*.mjs'
@@ -34,4 +36,4 @@ jobs:
         with:
           node-version: '22'
       - name: Run exact private Living World fixture tests
-        run: node --test game/multiplayer/private-campsite-registry.test.mjs game/multiplayer/private-campsite-rest.test.mjs game/multiplayer/private-rest-ledger.test.mjs game/multiplayer/private-weather-exposure.test.mjs game/multiplayer/private-wildlife.test.mjs game/multiplayer/private-player-resources.test.mjs game/multiplayer/private-region-events.test.mjs game/multiplayer/private-mastery-ledger.test.mjs
+        run: node --test game/multiplayer/private-campsite-registry.test.mjs game/multiplayer/private-campsite-refuel.test.mjs game/multiplayer/private-campsite-rest.test.mjs game/multiplayer/private-rest-ledger.test.mjs game/multiplayer/private-weather-exposure.test.mjs game/multiplayer/private-wildlife.test.mjs game/multiplayer/private-player-resources.test.mjs game/multiplayer/private-region-events.test.mjs game/multiplayer/private-mastery-ledger.test.mjs

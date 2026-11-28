@@ -15,6 +15,13 @@
 - Next reconcile exact combined CI and current main before merge; retain earlier drafts until successful reviewed consolidation. Actual authored-world binding, cross-ledger resource/fuel conservation, activity authority and monotonic clock hardening remain open, followed by real account and physical device acceptance. Cooking/meal integration #1105 and crafting UI #1112 remain separate pending candidates.
 
 
+## Phase 06 private campfire refueling and stock conservation — 2026-11-28 PHT
+
+- The existing private campsite and crafting ledgers now renew the fire and spend exactly one wood in the same transaction. Refueling checks camp and inventory revisions, the room-resolved owner, grounded placement, campfire station, and lease expiry. An active fire keeps its remaining time, and a denied or rolled-back renewal keeps its wood.
+- Existing inventory records remain readable. Cooking, eating and refueling share one material balance, with a separate conserved fuel counter. Local Node tests cover concurrency, stale revisions, denial, rollback and stock shared with cooking.
+- Local workerd verified concurrent refuel requests, then restarted its SQLite Durable Object and checked persisted stock, an active renewed fire, replay rejection and fuel expiry. The outer Worker still returns 404.
+- The authenticated room-to-world station binding remains separate. The playable Expedition Camp hearth has a local fuel budget, and real inventory release remains subject to the existing acceptance gates.
+
 ## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
 
 - Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
