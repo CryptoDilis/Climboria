@@ -407,7 +407,8 @@ contract SafeReserveGuardTest {
         _releasePayee();
         require(guard.expenseContext(PAYEE)==4&&guard.expenseRecipientAllowed(PAYEE));
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
-        vm.expectRevert();v.execute(_id(1,3,"E","N"));
+        bytes32 staleId=_id(1,3,"E","N");
+        vm.expectRevert();v.execute(staleId);
         vm.warp(block.timestamp+2 days);
         _quorum(abi.encodeCall(guard.activateRewardSigner,(1,2,3,F)));
         require(!guard.expenseRecipientAllowed(F)&&guard.expenseContext(F)==1);
