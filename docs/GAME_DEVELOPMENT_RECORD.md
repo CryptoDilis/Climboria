@@ -1,5 +1,10 @@
 # Climboria Game Development Record
 
+## Game Economy V4 — immutable CP maximum and marketplace currency — 2026-11-28 PHT
+
+- Owner approved maximum 1,000,000,000 CP (not fixed circulating supply), explicitly no increase even by owner, scarce gameplay acquisition, and official Base CLIMB-only marketplace settlement. Recorded design, conservation invariant, proposed low earning rates and privileged database limitations in economy record and backlog. No cap-changing admin authority or reset/migration bypass; independent verification required before promising absolute immutability.
+- No financial implementation or actual CP issuance, cap-enforcement code, real settlement, minting, release, or token policy/contract change. Existing V4 financial release gate remains. Next: exact earn/spend balancing and marketplace fee/payer/destination; reconcile #1143 CI and continue independent Game development.
+
 ## Game Economy V4 — owner CP direction — 2026-11-28 PHT
 
 - Owner chose Climboria Points (CP), limited global supply with public unmined/circulating UI, gameplay earning and CP service spending recycled to reserve, marketplace-only item transfer, marketplace sale of CP and optional tokenization of all item categories including CP. Recorded design direction and proposed reserve ledger, sample prices, conservation invariant and exclusive ownership rules. Owner delegated additional Treasure Vault funding design; recommend owner deposits and existing approved KOS fee initially, no donation launch.
