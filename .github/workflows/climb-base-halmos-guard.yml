@@ -1,0 +1,89 @@
+name: CLIMB Base Halmos Safe Guard Experiment
+on:
+  pull_request:
+    paths:
+      - 'base/guard-symbolic-security/**'
+      - '.github/workflows/climb-base-halmos-guard.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  symbolic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Prepare isolated reviewed source and pinned toolchain
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/halmos-evidence"
+          project="$RUNNER_TEMP/halmos-project"
+          mkdir -p "$evidence" "$project/test" "$project/lib/openzeppelin-contracts"
+          git rev-parse HEAD > "$evidence/checkout.txt"
+          git archive HEAD base/safe-custody/src/SafeEpochGuardFixture.sol base/safe-custody/foundry.toml | tar -x -C "$project" --strip-components=2
+          cp base/guard-symbolic-security/ClimbGuardSymbolic.t.sol "$project/test/"
+          git -C "$project/lib/openzeppelin-contracts" init
+          git -C "$project/lib/openzeppelin-contracts" fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C "$project/lib/openzeppelin-contracts" checkout --detach FETCH_HEAD
+          test "$(git -C "$project/lib/openzeppelin-contracts" rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          mkdir -p "$project/lib/safe-contracts"
+          git -C "$project/lib/safe-contracts" init
+          git -C "$project/lib/safe-contracts" fetch --depth=1 https://github.com/safe-fndn/safe-smart-account.git bf943f80fec5ac647159d26161446ac5d716a294
+          git -C "$project/lib/safe-contracts" checkout --detach FETCH_HEAD
+          test "$(git -C "$project/lib/safe-contracts" rev-parse HEAD)" = bf943f80fec5ac647159d26161446ac5d716a294
+          curl --fail --show-error --silent --location --retry 2 https://github.com/argotorg/solidity/releases/download/v0.8.39/solc-static-linux -o "$RUNNER_TEMP/solc-candidate"
+          echo "b8b0642d46838575d3177628b685564b52f51f2aee546cb4dce781951d23c666  $RUNNER_TEMP/solc-candidate" | sha256sum -c -
+          chmod 700 "$RUNNER_TEMP/solc-candidate"
+          "$RUNNER_TEMP/solc-candidate" --version > "$evidence/solc.txt"
+          export PROJECT="$project"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          project = Path(os.environ["PROJECT"])
+          for folder in ("src", "test"):
+              for path in (project/folder).rglob("*.sol"):
+                  old = path.read_bytes()
+                  new = old.replace(b"pragma solidity 0.8.19;", b"pragma solidity 0.8.39;")
+                  assert new != old and new.replace(b"pragma solidity 0.8.39;", b"pragma solidity 0.8.19;") == old, path
+                  path.write_bytes(new)
+          config = project/"foundry.toml"
+          old = config.read_text()
+          assert old.count('solc_version = "0.8.19"') == 1
+          config.write_text(old.replace('solc_version = "0.8.19"', 'solc = "'+os.environ["RUNNER_TEMP"]+'/solc-candidate"\nevm_version = "paris"').replace('allow_paths = ["../v3-testnet"]\n','').replace(', "v3-src/=../v3-testnet/src/"',''))
+          PY
+          (cd "$project"; find src test -type f -print0 | sort -z | xargs -0 sha256sum) > "$evidence/sources.sha256"
+          forge --version > "$evidence/foundry.txt"
+      - name: Install exact upstream Halmos source
+        run: |
+          set -euo pipefail
+          python3.12 -m venv "$RUNNER_TEMP/halmos-venv"
+          "$RUNNER_TEMP/halmos-venv/bin/python" -m pip install "git+https://github.com/a16z/halmos.git@079bb4241d1b460baf986257d56ea86977d73451"
+          "$RUNNER_TEMP/halmos-venv/bin/python" -m pip freeze > "$RUNNER_TEMP/halmos-evidence/python-dependencies.txt"
+          "$RUNNER_TEMP/halmos-venv/bin/halmos" --version
+      - name: Execute actual symbolic properties and negative control
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/halmos-project"
+          evidence="$RUNNER_TEMP/halmos-evidence"
+          export PATH="$RUNNER_TEMP/halmos-venv/bin:$PATH"
+          forge build --ast
+          # No RPC, no secrets, no deployment, no transaction submission.
+          common=(--loop 12 --solver z3 --solver-timeout-assertion 60s --solver-timeout-branching 1s)
+          halmos --contract ClimbSymbolicNegativeControl "${common[@]}" --json-output "$evidence/negative.json" > "$evidence/negative.log" 2>&1 && negative=0 || negative=$?
+          cat "$evidence/negative.log"
+          test "$negative" -eq 1
+          halmos --contract ClimbSymbolicGuardTest "${common[@]}" --json-output "$evidence/positive.json" 2>&1 | tee "$evidence/positive.log"
+          python3 "$GITHUB_WORKSPACE/base/guard-symbolic-security/verify-guard-results.py" "$evidence/positive.json" "$evidence/negative.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: climb-halmos-guard-evidence
+          path: ${{ runner.temp }}/halmos-evidence/
+          if-no-files-found: error
+          retention-days: 14
