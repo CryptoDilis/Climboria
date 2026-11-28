@@ -77,3 +77,69 @@ test("authorityAndFailure", async function authorityAndFailure(){
  assert.throws(()=>createPrivateSurvivalLedger({...f.options,roomId:'jarrell-peak'}));
  assert.throws(()=>createPrivateSurvivalLedger({...f.options,hungerRate:0}));
 });
+
+test('one ration is consumed atomically, capped recovery and no replenishment or duplicate', async()=>{
+ const f=fixture(), ledger=f.make();
+ assert.equal((await ledger.provisionSupplies('verified_account_a',2,1)).ok,true);
+ assert.equal((await ledger.provisionSupplies('verified_account_a',20,20)).reason,'supplies-already-provisioned');
+ assert.equal((await ledger.consumeSupply(f.a,'food',0)).reason,'survival-meter-full');
+ assert.equal((await ledger.inspectSupplies(f.b)).reason,'supplies-not-provisioned');
+ f.setProof(f.a,1,60);
+ await ledger.recordActiveInterval(f.a,f.id);
+ const results=await Promise.all([ledger.consumeSupply(f.a,'food',0),f.make().consumeSupply(f.a,'food',0)]);
+ assert.equal(results.filter(r=>r.ok).length,1);
+ assert.equal(results.filter(r=>r.reason==='supplies-revision-changed').length,1);
+ assert.deepEqual(await f.make().inspectSupplies(f.a),{ok:true,food:1,water:1,revision:1});
+ assert.equal((await f.make().inspect(f.a)).hunger,10000);
+ const drink=await f.make().consumeSupply(f.a,'water',1);
+ assert.equal(drink.thirst,10000);
+ assert.deepEqual(drink.supplies,{food:1,water:0,revision:2});
+ assert.equal((await ledger.consumeSupply(f.a,'water',2)).reason,'insufficient-survival-supplies');
+ assert.equal((await ledger.consumeSupply(f.a,'__proto__',2)).reason,'invalid-survival-intent');
+});
+
+test('recovery fails closed on revoked ownership and ambiguous commit without double consumption',async()=>{
+ const f=fixture(), ledger=f.make();
+ await ledger.provisionSupplies('verified_account_a',2,1);
+ f.setProof(f.a,1,60);await ledger.recordActiveInterval(f.a,f.id);
+ let reads=0;
+ f.onRead(()=>{if(++reads===2)f.owners.delete(f.a);});
+ assert.equal((await ledger.consumeSupply(f.a,'food',0)).reason,'unverified-survival-owner');
+ f.onRead(null);f.owners.set(f.a,'verified_account_a');
+ assert.equal((await ledger.inspectSupplies(f.a)).food,2);
+ f.setAmbiguous(true);
+ assert.equal((await ledger.consumeSupply(f.a,'food',0)).reason,'survival-storage-unavailable');
+ f.setAmbiguous(false);
+ assert.equal((await ledger.inspectSupplies(f.a)).reason,'survival-storage-unavailable');
+ const fresh=f.make();
+ assert.equal((await fresh.consumeSupply(f.a,'food',0)).reason,'supplies-revision-changed');
+ assert.deepEqual(await fresh.inspectSupplies(f.a),{ok:true,food:1,water:1,revision:1});
+ assert.equal((await fresh.inspect(f.a)).hunger,10000);
+});
+
+test('failed second write rolls back both meter and inventory',async()=>{
+ const f=fixture(), ledger=f.make();
+ await ledger.provisionSupplies('verified_account_a',2,1);
+ f.setProof(f.a,1,60);await ledger.recordActiveInterval(f.a,f.id);
+ let writes=0;
+ const wrapped={transaction:operation=>f.options.storage.transaction(tx=>operation({
+  get:tx.get,put:async(key,value)=>{if(++writes===2)throw Error('fixture write failure');return tx.put(key,value);}
+ }))};
+ const fault=createPrivateSurvivalLedger({...f.options,storage:wrapped});
+ assert.equal((await fault.consumeSupply(f.a,'food',0)).reason,'survival-storage-unavailable');
+ assert.equal((await f.make().inspect(f.a)).hunger,9880);
+ assert.deepEqual(await f.make().inspectSupplies(f.a),{ok:true,food:2,water:1,revision:0});
+ const retry=await f.make().consumeSupply(f.a,'food',0);
+ assert.equal(retry.ok,true);assert.equal(retry.hunger,10000);
+});
+
+test('invalid pantry conservation fails closed without modifying survival',async()=>{
+ const f=fixture(), ledger=f.make();
+ await ledger.provisionSupplies('verified_account_a',2,1);
+ f.setProof(f.a,1,60);await ledger.recordActiveInterval(f.a,f.id);
+ const key=[...f.records.keys()].find(k=>k.includes('survival-pantry'));
+ f.records.set(key,{...f.records.get(key),food:3});
+ assert.equal((await ledger.inspectSupplies(f.a)).reason,'invalid-survival-supplies-state');
+ assert.equal((await ledger.consumeSupply(f.a,'food',0)).reason,'invalid-survival-supplies-state');
+ assert.equal((await ledger.inspect(f.a)).hunger,9880);
+});
