@@ -1,5 +1,11 @@
 # Climboria Game Development Record
 
+## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
+
+- Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
+- Add regression coverage for fresh ledger instances, independent accounts and untouched skills, session revocation/reassignment, corrupt records and storage failure. Ensure the server-authority workflow triggers on mastery source/test edits. Exact candidate CI pending; no production endpoint or player UI is authorized by this change.
+- Next verify exact CI, then integrate a reviewed private player-facing projection with real activity authority. Physical and registered-player acceptance remain external gates; continue independent Game tasks while pending.
+
 ## Phase 03 hero preview gestures — 2026-11-28 PHT
 
 - Hero creation preview now rotates only from the captured primary pointer. Pinching stops rotation, uses touches that began on the canvas, and resets its zoom baseline on cancellation. Closing the editor also clears gesture state.
