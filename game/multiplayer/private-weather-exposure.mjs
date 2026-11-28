@@ -1,10 +1,13 @@
+import {createPrivateCampsiteRegistry} from './private-campsite-registry.mjs';
 // Private R8.3 fixture. Rates and comfort thresholds are provisional test values.
-export function createPrivateWeatherExposure({roomId,storage,resolveOwner,resolveInterval,resolveShelter=null}={}) {
+export function createPrivateWeatherExposure({roomId,storage,resolveOwner,resolveInterval,resolveShelter=null,registryOptions=null}={}) {
  const ROOM='preview-weather-fixture', MAX=10000;
  const int=(v,min,max)=>Number.isSafeInteger(v)&&v>=min&&v<=max;
  const idOk=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{16,100}$/.test(v);
  const deny=reason=>({ok:false,reason});
  if(roomId!==ROOM||typeof storage?.transaction!=='function'||typeof resolveOwner!=='function'||typeof resolveInterval!=='function'||(resolveShelter!==null&&typeof resolveShelter!=='function'))throw Error('Explicit private weather authority required');
+ if(registryOptions!==null&&resolveShelter===null)throw Error('Shelter authority required for campsite composition');
+ const registry=registryOptions===null?null:createPrivateCampsiteRegistry({...registryOptions,storage,roomId:'preview-campsite-fixture'});
  let unavailable=false;
  const key=a=>'game:preview:weather:v1:'+ROOM+':'+a;
  function owner(s){const p=resolveOwner(s,ROOM);return p?.sessionId===s&&p.roomId===ROOM&&idOk(p.accountId)?p.accountId:null;}
@@ -15,7 +18,7 @@ export function createPrivateWeatherExposure({roomId,storage,resolveOwner,resolv
    !int(p.windKph,0,150)||!['dry','rain','snow'].includes(p.precipitation)||p.uniformThroughout!==true)return null;
   // Optional private composition. The room must independently prove the same
   // interval and account; untrusted interval fields cannot grant protection.
-  let shelter='none', siteId=null;
+  let shelter='none', siteId=null, leaseProof=null;
   if(resolveShelter!==null){
    const q=resolveShelter(s,i,ROOM);
    if(!q||q.roomId!==ROOM||q.sessionId!==s||q.accountId!==a||q.intervalId!==i||
@@ -26,9 +29,16 @@ export function createPrivateWeatherExposure({roomId,storage,resolveOwner,resolv
     if((shelter==='roof'||shelter==='roof-and-fire')&&q.coveredThroughout!==true)return null;
     if((shelter==='fire'||shelter==='roof-and-fire')&&q.litThroughout!==true)return null;
     siteId=q.siteId;
+    if(registry){
+     if(typeof q.slot!=='string'||!int(q.generation,1,Number.MAX_SAFE_INTEGER)||
+      !int(q.startedAt,0,Number.MAX_SAFE_INTEGER)||!int(q.endedAt,q.startedAt,Number.MAX_SAFE_INTEGER)||
+      q.endedAt-q.startedAt!==p.seconds*1000||q.siteId!=='camp-'+q.slot+'-'+q.generation)return null;
+     leaseProof={slot:q.slot,generation:q.generation,campsiteId:q.siteId,startedAt:q.startedAt,endedAt:q.endedAt,
+      seconds:p.seconds,requireFire:shelter==='fire'||shelter==='roof-and-fire'};
+    }
    }
   }
-  return {sequence:p.sequence,seconds:p.seconds,temperatureC:p.temperatureC,windKph:p.windKph,precipitation:p.precipitation,shelter,siteId};
+  return {sequence:p.sequence,seconds:p.seconds,temperatureC:p.temperatureC,windKph:p.windKph,precipitation:p.precipitation,shelter,siteId,leaseProof};
  }
  function read(p,a){
   if(p===undefined)return {version:1,accountId:a,sequence:0,cold:0,heat:0};
@@ -53,6 +63,9 @@ export function createPrivateWeatherExposure({roomId,storage,resolveOwner,resolv
    if(!prior)return deny('invalid-weather-state');
    if(p.sequence<=prior.sequence)return deny('weather-interval-already-recorded');
    if(p.sequence!==prior.sequence+1)return deny('weather-interval-out-of-order');
+   const lease=p.leaseProof?await registry.observeRestLease(t,s,a,p.leaseProof):null;
+   if(!same())throw Error('Weather authority changed during lease observation');
+   if(p.leaseProof&&(!lease||!lease.revalidate()))return deny('unverified-weather-campsite');
    // Provisional private effects: a roof blocks rain and wind; a fire warms
    // the player but can increase heat stress. No health or stamina effects.
    const roof=p.shelter==='roof'||p.shelter==='roof-and-fire';
@@ -64,7 +77,7 @@ export function createPrivateWeatherExposure({roomId,storage,resolveOwner,resolv
    const clamp=v=>Math.max(0,Math.min(MAX,v));
    const next={...prior,sequence:p.sequence,cold:clamp(prior.cold+p.seconds*coldRate),heat:clamp(prior.heat+p.seconds*heatRate)};
    await t.put(key(a),next);
-   if(!same())throw Error('Weather authority changed during transaction');
+   if(!same()||(lease&&!lease.revalidate()))throw Error('Weather authority changed during transaction');
    return view(next);
   });
  }
