@@ -129,6 +129,8 @@ jobs:
         run: node --test role-control-evidence.test.mjs
       - name: Verify offline authorization receipt matching
         run: node --test authorization-receipt-match.test.mjs
+      - name: Verify offline typed intent derivation
+        run: node --test typed-intent-reconciliation.test.mjs
       - name: Verify fee-budget observation arithmetic
         run: node --test observe-fee-budget.test.mjs
       - name: Check active public evidence pin
