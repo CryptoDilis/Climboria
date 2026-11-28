@@ -59,6 +59,7 @@ Phase 03 shoreline follow-up adds sampled-bed clearance to diving and deep-to-sh
 ## R2 — Living world and dynamic events (critical)
 
 - [ ] R2.1 Server-defined event scheduler with bounded active events, deterministic test seeds, region-local activation, cooldowns, expiry, restart/reconnect and no duplicate grants.
+  - Phase 06 private scheduler persists one seeded regional event slot with an expiry and cooling interval. Authored placement, device and player acceptance remain **BLOCKED — EXTERNAL VERIFICATION REQUIRED**.
 - [ ] R2.2 Start with lightweight Falling Star, Lost Expedition, Secret Passage, Wandering Merchant and discovery events using existing landmarks/assets.
 - [ ] R2.3 Treasure Storm, Blood Moon, weather-driven encounters, Ancient Awakening/world-boss events only after appropriate loot/AI/combat gates. System-generated events need no manual admin action per occurrence.
 - [ ] R2.4 Region difficulty and secret encounters; no forced linear progression. Event visibility and World Chat notices must respect rate limits and user preferences.

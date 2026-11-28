@@ -3481,6 +3481,15 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 
 ---
 
+## Phase 06 private regional event schedule — 2026-11-28 PHT
+
+- Added a private, clock-driven schedule for Falling Star, Lost Expedition, Secret Passage, and Wandering Merchant. One active event is visible only in its selected region. The seed and timing are explicit fixture inputs. The stored anchor, slot and expiry survive restarts, and missed slots produce no catch-up events.
+- Local tests verify concurrent reads, stable event identity, region isolation, a cooling interval, expiry despite clock reversal, skipped slots, changed configuration rejection and ambiguous storage outcomes. Writes occur only on initialization and slot or expiry transitions.
+- **BLOCKED — EXTERNAL VERIFICATION REQUIRED:** Live placement and encounter participation need authorized regional visibility, map-path and real-player fairness review. Verify reachable landmarks and region transitions in a private device/account run before exposing any scheduler, gameplay effect or reward.
+- Next verify the exact CI and test authored region placement independently of the protected release gates.
+
+---
+
 ## AUTHORED PILOT VERIFIED MILESTONE — 2026-11-27 PHT
 
 - #938 exact head 71d02f0107caac8244c43305187c17b1f5bdb50f all five SUCCESS: Authority 45953113014, Gateway 45953113072, Runtime 45953113123, Validate 45953113109, Gameplay 45953113010. Main's concurrent survival/bounty backlog documentation conflicted with the prepended record only. Preserve all records; append pilot history to avoid repeated collision with concurrent prepends. No code or gate changes in reconciliation. Fresh exact-head CI required.
