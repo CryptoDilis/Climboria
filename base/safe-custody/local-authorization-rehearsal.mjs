@@ -1,6 +1,7 @@
 // Local mined authorization evidence, invoked only by the loopback Anvil rehearsal.
 // No actual spending, LP funding, public RPC, real signers, or release authorization.
 import assert from 'node:assert/strict';
+import {verifyLocalRecipientLifecycle} from './local-recipient-lifecycle-rehearsal.mjs';
 import {verifyLocalHistoricalConfig} from './local-historical-config.mjs';
 import {deriveDirectSafeDigest} from './canonical-safe-envelope.mjs';
 import {decodeFiveOwnerRoster,verifyRawSafeQuorum} from './raw-safe-quorum.mjs';
@@ -17,6 +18,8 @@ export async function verifyLocalAuthorizations(x){
  const pool=await address(liquidityVault,'pool()');
  const receipts=[];
  const before=await Promise.all(vaults.map(v=>number(token,'balanceOf(address)',v.address)));
+ const lifecycle=await verifyLocalRecipientLifecycle(x);
+ const activeContext=BigInt(lifecycle.context);
  const startingNonce=await number(wallet,'nonce()');
  for(const [kind,index] of [['expense',3],['expense',4],['expense',5],['liquidity',2]]){
   const block=await rpc('eth_getBlockByNumber',['latest',false]),now=BigInt(block.timestamp);
@@ -24,7 +27,7 @@ export async function verifyLocalAuthorizations(x){
   assert.equal(epoch,1n);
   const salt=h(100+index),evidence=h(200+index),deadline=now+604800n;
   const sig=kind==='expense'?'proposeExpense(uint256,uint256,address,uint256,bytes32,uint256,bytes32,uint256,uint256,uint256)':'scheduleLiquidity(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,uint256)';
-  const args=kind==='expense'?[epoch,index,payee,10,evidence,0,salt,0,now,now+3600n]:[epoch,1000,500,50,deadline,salt,now,now+3600n];
+  const args=kind==='expense'?[epoch,index,payee,10,evidence,0,salt,activeContext,now,now+3600n]:[epoch,1000,500,50,deadline,salt,now,now+3600n];
   const data=calldata(sig,...args);
   const safeTxHash=await call(wallet,hashSig,guard,0,data,0,0,0,0,ZERO,ZERO,nonce);
   const sigs=signers.map(({key})=>cast('wallet','sign','--no-hash','--private-key',key,safeTxHash));
@@ -50,7 +53,7 @@ export async function verifyLocalAuthorizations(x){
   if(kind==='expense'){
    const context=BigInt(await at(guard,'expenseContext(address)',payee));
    const eligible=BigInt(await at(guard,'expenseRecipientAllowed(address)',payee));
-   assert.equal(context,0n);assert.equal(eligible,1n);
+   assert.equal(context,activeContext);assert.equal(eligible,1n);
    c.recipientContext={recipient:payee,context:hex(context),eligible:true};
   }
   const historicalOwners=decodeFiveOwnerRoster((await at(wallet,'getOwners()')).toLowerCase());
@@ -94,5 +97,5 @@ export async function verifyLocalAuthorizations(x){
  assert.equal(await number(token,'totalSupply()'),888888888000000n);
  assert.equal(await number(liquidityVault,'spent()'),0n);
  for(const v of expenseVaults)assert.equal(await number(v,'totalSpent()'),0n);
- return {status:'LOCAL_MINED_AUTHORIZATION_EVIDENCE_ONLY_NO_GO',chainId:84532,sourceSha:x.sourceSha,receipts,unchangedVaultBalances:true,unchangedSupply:true,noPayments:true,limitations:'Local Anvil, synthetic contracts, known disposable signer keys, independent canonical outer decoding and EIP-712 digest compared with local Safe, independent raw ECDSA verification against local parent state, historical local configuration and runtime binding checks against rehearsal manifest, no historical public-chain authentication or finality, no production authorization.'};
+ return {status:'LOCAL_MINED_AUTHORIZATION_EVIDENCE_ONLY_NO_GO',chainId:84532,sourceSha:x.sourceSha,lifecycle,receipts,unchangedVaultBalances:true,unchangedSupply:true,noPayments:true,limitations:'Local Anvil, synthetic contracts, known disposable signer keys, independent canonical outer decoding and EIP-712 digest compared with local Safe, independent raw ECDSA verification against local parent state, historical local configuration and runtime binding checks against rehearsal manifest, no historical public-chain authentication or finality, no production authorization.'};
 }
