@@ -315,7 +315,6 @@ const rng=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.i
 const POI={sanct:{x:0,z:-90,r:60},park:{x:-170,z:90,r:75},camp:{x:-200,z:-170,r:50},cave:{x:-760,z:-520,r:34},summit:{x:640,z:-620,r:0}};
 const RICE={x:560,z:330};
 let caveG=null;
-const caveApproach={x:0,z:-20};
 // Explicit water bodies share the rendered water plane (Y=0). Freshwater basins
 // are carved into terrain below; their query bounds drive swimming and tests.
 const WATER_BODIES=[
@@ -2292,6 +2291,7 @@ const mapToggle=document.getElementById('world-map-toggle'),mapPanel=document.ge
 function toggleWorldMap(){const opening=mapPanel.classList.toggle('map-expanded');if(opening)releaseGameplayInput();drawWorldMap();drawWorldMapPlayer()}
 mapPanel.style.display='block';
 
+const caveApproach={x:0,z:-20};
 const journalPanel=document.getElementById('field-journal'),journalEntries=document.getElementById('field-journal-entries');
 let fieldJournal;
 function renderFieldJournal(){
