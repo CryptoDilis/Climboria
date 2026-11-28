@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## Phase 06 private wildlife lifecycle candidate — 2026-11-28 PHT
+
+- R4.1–R4.4: one synthetic creature with three bounded fixture sites, trusted contiguous active ticks, roaming/flee state, persistent generation and revision, and three-tick respawn cooldown. No real terrain navigation, model, hostile AI, combat calculation or previously disabled species activation.
+- A room-validated defeat proof binds the current generation, revision, site and verified account/session. One synthetic receipt counter and cooldown commit atomically, rechecking authority after both writes. Stale or concurrent defeats cannot grant a second receipt. No inventory item, token, financial reward or production route.
+- Four isolated JavaScript regression scenarios passed: movement/flee and restart, duplicate defeat and respawn, forged/out-of-range evidence, and authority reassignment rollback. Native Node and exact CI pending. Source and test commit `3fe483598da97095a23dbcd5f5bc1d8edc1107d1`.
+- Next verify exact CI; reconcile old disabled creature/asset rules before choosing a species. Bind one approved creature to authored collision-aware navigation and real private encounter authority before considering hunting drops, physical device testing or broader spawning. Continue independent farming work while gated.
+
+
 ## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
 
 - Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
