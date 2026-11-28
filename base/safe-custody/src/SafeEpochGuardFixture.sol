@@ -77,6 +77,7 @@ contract SafeEpochGuardFixture is BaseGuard {
         rotationSerial++;
         bytes32 digest=keccak256(abi.encodePacked(abi.encodeWithSelector(SWAP,prev,oldOwner,newOwner),rotationSerial));
         pending=Rotation(digest,oldOwner,newOwner,block.timestamp+DELAY,block.timestamp+DELAY+WINDOW);
+        _onNomination(newOwner);
         emit RotationScheduled(epoch,digest,pending.readyAt,pending.expiresAt);
     }
     function cancelRotation(uint256 expectedEpoch,uint256 expectedSerial) external onlyWallet {
@@ -113,6 +114,7 @@ contract SafeEpochGuardFixture is BaseGuard {
             if(v!=27&&v!=28&&v!=31&&v!=32)revert UnsupportedSignatureMode();
         }
     }
+    function _onNomination(address) internal virtual {}
     function _rotationOwnerAllowed(address) internal view virtual returns(bool){return true;}
     function _policyCallAllowed(bytes4,uint256) internal view virtual returns(bool){return false;}
     function _checkCall(address to,bytes memory data) private {

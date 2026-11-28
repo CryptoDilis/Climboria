@@ -7,7 +7,7 @@ const a=n=>'0x'+BigInt(n).toString(16).padStart(40,'0'),w=n=>BigInt(n).toString(
 const sig='execTransaction(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,bytes)';
 const fake='0x'+(w(1)+w(2)+'1b').repeat(3);
 const make=(kind='expense')=>{
- const data=kind==='expense'?'0x6e2e6b4c'+w(1).repeat(9):'0xae7b6095'+w(1).repeat(8);
+ const data=kind==='expense'?'0xbe61343e'+w(1).repeat(10):'0xae7b6095'+w(1).repeat(8);
  return {data,input:cast('calldata',sig,a(4),'0',data,'0','0','0','0',a(0),a(0),fake)};
 };
 for(const kind of ['expense','liquidity'])test('canonical '+kind+' envelope and EIP712 digest',()=>{
@@ -35,13 +35,13 @@ for(const [name,mutate] of [
  ['gasPrice',x=>set(x,6,1)],
  ['gasToken',x=>set(x,7,1)],
  ['refundReceiver',x=>set(x,8,1)],
- ['signature offset',x=>set(x,9,640)],
- ['inner length',x=>set(x,10,291)],
+ ['signature offset',x=>set(x,9,672)],
+ ['inner length',x=>set(x,10,323)],
  ['inner selector',x=>byte(x,352,'ff')],
- ['inner padding',x=>byte(x,644,'01')],
- ['signature length',x=>set(x,21,194)],
- ['signature mode',x=>byte(x,704+64,'00')],
- ['signature padding',x=>byte(x,704+195,'01')]
+ ['inner padding',x=>byte(x,676,'01')],
+ ['signature length',x=>set(x,22,194)],
+ ['signature mode',x=>byte(x,736+64,'00')],
+ ['signature padding',x=>byte(x,736+195,'01')]
 ])test('reject noncanonical '+name,()=>assert.throws(()=>decodeDirectSafeEnvelope(mutate(make().input))));
 test('reject wrong domain and malformed nonce',()=>{
  const {input}=make();

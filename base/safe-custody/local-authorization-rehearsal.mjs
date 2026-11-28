@@ -23,8 +23,8 @@ export async function verifyLocalAuthorizations(x){
   const nonce=await number(wallet,'nonce()'),epoch=await number(guard,'epoch()');
   assert.equal(epoch,1n);
   const salt=h(100+index),evidence=h(200+index),deadline=now+604800n;
-  const sig=kind==='expense'?'proposeExpense(uint256,uint256,address,uint256,bytes32,uint256,bytes32,uint256,uint256)':'scheduleLiquidity(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,uint256)';
-  const args=kind==='expense'?[epoch,index,payee,10,evidence,0,salt,now,now+3600n]:[epoch,1000,500,50,deadline,salt,now,now+3600n];
+  const sig=kind==='expense'?'proposeExpense(uint256,uint256,address,uint256,bytes32,uint256,bytes32,uint256,uint256,uint256)':'scheduleLiquidity(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,uint256)';
+  const args=kind==='expense'?[epoch,index,payee,10,evidence,0,salt,0,now,now+3600n]:[epoch,1000,500,50,deadline,salt,now,now+3600n];
   const data=calldata(sig,...args);
   const safeTxHash=await call(wallet,hashSig,guard,0,data,0,0,0,0,ZERO,ZERO,nonce);
   const sigs=signers.map(({key})=>cast('wallet','sign','--no-hash','--private-key',key,safeTxHash));

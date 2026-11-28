@@ -4,15 +4,15 @@ import {deriveTypedIntent,reconcileTypedIntent} from './typed-intent-reconciliat
 import {execFileSync} from 'node:child_process';
 const h=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),a=n=>'0x'+BigInt(n).toString(16).padStart(40,'0'),w=n=>h(n).slice(2);
 const encode=(selector,words)=>'0x'+selector+words.map(w).join('');
-const expenseId='0xc0133a238870104d6261506aed1ba0b559361f5cc304a565cebd7588c5ef0739';
+const expenseId='0x290f5b501f9987b1a1c0fd5e1ee39b859af075759872ff44189a37b47e53aa33';
 const liquidityId='0x8723669035fc0a7abfbf12628cbe09ed2389b82c757daa734e0f3bb555e2ff84';
 function fixture(kind='expense'){
  const c={chainId:84532,blockNumber:'0x12',blockHash:h(1),timestamp:'0x493e0',transactionHash:h(2),safe:a(3),guard:a(4),safeTxHash:h(13),token:a(9),epoch:'0x1',expenseVaults:[a(5),a(14),a(15)],liquidityVault:a(6),quote:a(10),pool:a(12)};
- const t={to:c.guard,operation:0,value:'0x0',safeTxGas:'0x0',baseGas:'0x0',gasPrice:'0x0',gasToken:a(0),refundReceiver:a(0),data:kind==='expense'?encode('6e2e6b4c',[1,3,8,10,7,0,11,300000,303600]):encode('ae7b6095',[1,1000,500,50,900000,11,300000,303600])};
+ const t={to:c.guard,operation:0,value:'0x0',safeTxGas:'0x0',baseGas:'0x0',gasPrice:'0x0',gasToken:a(0),refundReceiver:a(0),data:kind==='expense'?encode('be61343e',[1,3,8,10,7,0,11,0,300000,303600]):encode('ae7b6095',[1,1000,500,50,900000,11,300000,303600])};
  return [c,t];
 }
 test('selectors agree with pinned ABI signatures',()=>{
- for(const [signature,expected] of [['proposeExpense(uint256,uint256,address,uint256,bytes32,uint256,bytes32,uint256,uint256)','0x6e2e6b4c'],['scheduleLiquidity(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,uint256)','0xae7b6095']])assert.equal(execFileSync('cast',['sig',signature],{encoding:'utf8'}).trim(),expected);
+ for(const [signature,expected] of [['proposeExpense(uint256,uint256,address,uint256,bytes32,uint256,bytes32,uint256,uint256,uint256)','0xbe61343e'],['scheduleLiquidity(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,uint256)','0xae7b6095']])assert.equal(execFileSync('cast',['sig',signature],{encoding:'utf8'}).trim(),expected);
 });
 for(const kind of ['expense','liquidity'])test(kind+' independently computed Keccak ID and full receipt match',()=>{
  const [c,t]=fixture(kind),e=deriveTypedIntent(c,t),id=kind==='expense'?expenseId:liquidityId;
@@ -43,9 +43,9 @@ const cases=[
  ['zero evidence',(c,t)=>setWord(t,4,0)],
  ['invalid month',(c,t)=>setWord(t,5,60)],
  ['zero nonce',(c,t)=>setWord(t,6,0)],
- ['future window',(c,t)=>setWord(t,7,300001)],
- ['expired window',(c,t)=>setWord(t,8,300000)],
- ['overlong window',(c,t)=>setWord(t,8,386401)],
+ ['future window',(c,t)=>setWord(t,8,300001)],
+ ['expired window',(c,t)=>setWord(t,9,300000)],
+ ['overlong window',(c,t)=>setWord(t,9,386401)],
  ['duplicate vault',(c,t)=>c.expenseVaults[1]=c.expenseVaults[0]],
  ['mainnet timestamp overflow',(c,t)=>c.timestamp=h(2n**256n-1n)]
 ];

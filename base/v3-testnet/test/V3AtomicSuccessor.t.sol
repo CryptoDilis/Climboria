@@ -31,8 +31,9 @@ contract SuccessorMockCustody is IV3CustodyEpochFixture {
     function isMember(address) external pure override returns(bool){return false;}
     function rewardSignerAllowed(address) external pure returns(bool){return true;}
     function expenseRecipientAllowed(address) external pure returns(bool){return true;}
+    function expenseContext(address) external pure returns(uint256){return 0;}
     function propose(V3EpochSpendFixture v,address recipient,bytes32 evidence,bytes32 nonce,uint256 amount) external returns(bytes32){
-        return v.propose(recipient,amount,evidence,0,nonce);
+        return v.propose(recipient,amount,evidence,0,nonce,0);
     }
     function scheduleLiquidity(V3DeferredLiquidityFixture v,uint256 deadline) external returns(bytes32){return v.schedule(1000,500,50,deadline,"LP");}
     function scheduleLegacy(V3LegacyProofClaimFixture v,bytes32 digest,uint256 expiry) external {v.schedule(digest,expiry);}

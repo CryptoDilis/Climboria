@@ -96,11 +96,11 @@ contract SafeReserveGuardTest {
     }
     function _bind() private {_quorum(abi.encodeCall(guard.bindSuccessor,(1,block.timestamp,block.timestamp+1 hours)));}
     function _propose(uint256 e,uint256 i,bytes32 evidence,bytes32 nonce) private view returns(bytes memory){
-        return abi.encodeCall(SafeReserveGuardFixture.proposeExpense,(e,i,PAYEE,10,evidence,0,nonce,block.timestamp,block.timestamp+1 hours));
+        return abi.encodeCall(SafeReserveGuardFixture.proposeExpense,(e,i,PAYEE,10,evidence,0,nonce,0,block.timestamp,block.timestamp+1 hours));
     }
     function _id(uint256 e,uint256 i,bytes32 evidence,bytes32 nonce) private view returns(bytes32){
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
-        return keccak256(abi.encode(block.chainid,address(v),address(token),v.purpose(),e,PAYEE,uint256(10),evidence,uint256(0),nonce));
+        return keccak256(abi.encode(block.chainid,address(v),address(token),v.purpose(),e,PAYEE,uint256(10),evidence,uint256(0),nonce,uint256(0)));
     }
     // Match the emitted authorization ID and complete event payload, not merely receipt success.
     function _assertAuthorizationEvent(address emitter,bytes32 eventTopic,bytes32 id,bytes32 evidence,bytes32 dataHash) private {
@@ -208,19 +208,18 @@ contract SafeReserveGuardTest {
         require(wallet.nonce()==n&&!guard.transactionActive()&&v.totalSpent()==0&&v.spent(0)==0);
         require(v.registry().consumedBy(bytes32(i))==address(0)&&token.balanceOf(address(v))==balance);
     }
-    // Characterization of the unresolved policy gap, NOT an acceptable release invariant.
-    // When lifecycle protection is approved, replace these expectations with stale-ID rejection.
-    function testCharacterizePlainExpenseRevivalAfterCancellation() public {
-        _characterizePlainExpenseRevival(false);
+    // Recipient context permanently invalidates affected proposals, not unrelated ones.
+    function testRejectPlainExpenseRevivalAfterCancellation() public {
+        _rejectPlainExpenseRevival(false);
     }
-    function testCharacterizePlainExpenseRevivalAtExpiry() public {
-        _characterizePlainExpenseRevival(true);
+    function testRejectPlainExpenseRevivalAtExpiry() public {
+        _rejectPlainExpenseRevival(true);
     }
-    function _characterizePlainExpenseRevival(bool expire) private {
+    function _rejectPlainExpenseRevival(bool expire) private {
         _bind();
         for(uint256 i=3;i<=5;i++)_quorum(_propose(1,i,bytes32(i),bytes32(i)));
         address unrelated=address(0x204);
-        _quorum(abi.encodeCall(guard.proposeExpense,(1,3,unrelated,10,"UNRELATED",0,"N",block.timestamp,block.timestamp+1 hours)));
+        _quorum(abi.encodeCall(guard.proposeExpense,(1,3,unrelated,10,"UNRELATED",0,"N",0,block.timestamp,block.timestamp+1 hours)));
         _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));
         (bytes32 digest,,address candidate,,uint256 expiresAt)=guard.pending();
         require(digest!=0&&candidate==PAYEE);
@@ -229,22 +228,29 @@ contract SafeReserveGuardTest {
         _executeUnrelatedExpense(unrelated);
         if(expire)vm.warp(expiresAt);
         else _quorum(abi.encodeCall(guard.cancelRotation,(1,guard.rotationSerial())));
-        require(!wallet.isOwner(PAYEE)&&guard.expenseRecipientAllowed(PAYEE)&&guard.epoch()==1);
+        require(!wallet.isOwner(PAYEE)&&!guard.expenseRecipientAllowed(PAYEE)&&guard.epoch()==1&&guard.expenseContext(PAYEE)==1);
+        _releasePayee();
+        require(guard.expenseRecipientAllowed(PAYEE)&&guard.expenseContext(PAYEE)==2);
         for(uint256 i=3;i<=5;i++){
             V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
             bytes32 id=_id(1,i,bytes32(i),bytes32(i));
+            vm.expectRevert();v.execute(id);
             require(v.registry().consumedBy(bytes32(i))==address(0));
-            // Existing behavior: the old proposal re-arms without fresh expense quorum.
-            v.execute(id);
-            require(v.registry().consumedProposal(bytes32(i))==id);
-            require(v.totalSpent()==(i==3?20:10)&&v.spent(0)==v.totalSpent());
+            require(v.totalSpent()==(i==3?10:0));
         }
-        require(token.balanceOf(PAYEE)==30&&token.balanceOf(unrelated)==10&&token.totalSupply()==SUPPLY);
+        require(token.balanceOf(PAYEE)==0&&token.balanceOf(unrelated)==10&&token.totalSupply()==SUPPLY);
+    }
+    function _releasePayee() private {
+        _quorum(abi.encodeCall(guard.releaseExpenseRecipient,(1,PAYEE,guard.expenseContext(PAYEE),block.timestamp,block.timestamp+1 hours)));
+    }
+    function _freshId(uint256 i,bytes32 evidence,bytes32 nonce) private view returns(bytes32){
+        V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
+        return keccak256(abi.encode(block.chainid,address(v),address(token),v.purpose(),uint256(1),PAYEE,uint256(10),evidence,uint256(0),nonce,uint256(2)));
     }
     function _executeUnrelatedExpense(address unrelated) private {
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
         bytes32 id=keccak256(abi.encode(block.chainid,address(v),address(token),v.purpose(),uint256(1),unrelated,
-            uint256(10),bytes32("UNRELATED"),uint256(0),bytes32("N")));
+            uint256(10),bytes32("UNRELATED"),uint256(0),bytes32("N"),uint256(0)));
         require(guard.expenseRecipientAllowed(unrelated)&&!guard.expenseRecipientAllowed(PAYEE));
         v.execute(id);
         require(token.balanceOf(unrelated)==10&&v.registry().consumedProposal("UNRELATED")==id);
@@ -260,42 +266,40 @@ contract SafeReserveGuardTest {
             _quorum(abi.encodeCall(guard.cancelExpense,(1,i,id)));
         }
         _quorum(abi.encodeCall(guard.cancelRotation,(1,guard.rotationSerial())));
-        require(guard.expenseRecipientAllowed(PAYEE)&&guard.epoch()==1);
+        require(!guard.expenseRecipientAllowed(PAYEE)&&guard.epoch()==1);
+        _releasePayee();
         vm.warp(start+2 days);
         for(uint256 i=3;i<=5;i++){
             V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
             bytes32 id=_id(1,i,bytes32(i),bytes32(i));
             vm.expectRevert();v.execute(id);
             require(v.totalSpent()==0&&v.registry().consumedBy(bytes32(i))==address(0));
-            _quorum(_propose(1,i,bytes32(i),bytes32(i+100)));
-            bytes32 fresh=_id(1,i,bytes32(i),bytes32(i+100));
+            _quorum(abi.encodeCall(guard.proposeExpense,(1,i,PAYEE,10,bytes32(i),0,bytes32(i+100),2,block.timestamp,block.timestamp+1 hours)));
+            bytes32 fresh=_freshId(i,bytes32(i),bytes32(i+100));
             vm.expectRevert();v.execute(fresh);
         }
         vm.warp(block.timestamp+2 days);
         for(uint256 i=3;i<=5;i++){
             V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
-            bytes32 fresh=_id(1,i,bytes32(i),bytes32(i+100));
+            bytes32 fresh=_freshId(i,bytes32(i),bytes32(i+100));
             v.execute(fresh);
             require(v.totalSpent()==10&&v.registry().consumedProposal(bytes32(i))==fresh);
         }
         require(token.balanceOf(PAYEE)==30&&token.totalSupply()==SUPPLY);
     }
-    // Baseline only: nonce and window authenticate execution, not when a
-    // quorum actually produced signatures. Replace with context-bound rejection.
-    function testCharacterizePreConflictSignedExpenseAfterCancellation() public {
+    function testRejectPreConflictSignedExpenseAfterCancellation() public {
         _bind();
         bytes memory data=_propose(1,3,"PRECONFLICT","N");
-        bytes memory sigs=_signedAt(address(guard),data,3,wallet.nonce()+2);
+        bytes memory sigs=_signedAt(address(guard),data,3,wallet.nonce()+3);
         _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));
+        _reject(address(guard),abi.encodeCall(guard.releaseExpenseRecipient,(1,PAYEE,1,block.timestamp,block.timestamp+1 hours)),3);
         _quorum(abi.encodeCall(guard.cancelRotation,(1,guard.rotationSerial())));
-        require(guard.epoch()==1&&guard.expenseRecipientAllowed(PAYEE));
-        require(_exec(address(guard),data,sigs));
-        bytes32 id=_id(1,3,"PRECONFLICT","N");
+        _releasePayee();
+        uint256 n=wallet.nonce();
+        vm.expectRevert();_exec(address(guard),data,sigs);
+        require(wallet.nonce()==n&&guard.expenseContext(PAYEE)==2&&!guard.transactionActive());
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
-        vm.expectRevert();v.execute(id);
-        require(v.registry().consumedBy("PRECONFLICT")==address(0)&&v.totalSpent()==0);
-        vm.warp(start+2 days);v.execute(id);
-        require(v.registry().consumedProposal("PRECONFLICT")==id&&token.balanceOf(PAYEE)==10&&token.totalSupply()==SUPPLY);
+        require(v.registry().consumedBy("PRECONFLICT")==address(0)&&v.totalSpent()==0&&token.balanceOf(PAYEE)==0);
     }
     function testPlainReservePendingOwnerBlocksRewardSchedule() public {
         _bind();
@@ -324,7 +328,7 @@ contract SafeReserveGuardTest {
         // Ordinary contract payees are not categorically prohibited.
         require(guard.expenseRecipientAllowed(address(new ReserveLPDestination())));
         uint256 n=wallet.nonce();
-        _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,3,address(1),10,"E",0,"N",block.timestamp,block.timestamp+1 hours)),3);
+        _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,3,address(1),10,"E",0,"N",0,block.timestamp,block.timestamp+1 hours)),3);
         require(wallet.nonce()==n&&!guard.transactionActive()&&token.totalSupply()==SUPPLY);
         // An invalid Safe configuration must fail closed even for a standalone view.
         vm.etch(address(wallet),"");
@@ -333,10 +337,10 @@ contract SafeReserveGuardTest {
     function testNoGenericTransferOrRoleConflict() public {
         _bind();
         _reject(address(token),abi.encodeCall(token.transfer,(PAYEE,1)),3);
-        _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,0,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours)),3);
-        _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,3,address(wallet),10,"E",0,"N",block.timestamp,block.timestamp+1 hours)),3);
+        _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,0,PAYEE,10,"E",0,"N",0,block.timestamp,block.timestamp+1 hours)),3);
+        _reject(address(guard),abi.encodeCall(guard.proposeExpense,(1,3,address(wallet),10,"E",0,"N",0,block.timestamp,block.timestamp+1 hours)),3);
         _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,D,E,FOUNDER,block.timestamp,block.timestamp+1 hours)),3);
-        vm.expectRevert();guard.proposeExpense(1,3,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours);
+        vm.expectRevert();guard.proposeExpense(1,3,PAYEE,10,"E",0,"N",0,block.timestamp,block.timestamp+1 hours);
     }
     function testRoleSeparationPersistsWhenDestinationCodeDisappears() public {
         _bind();
@@ -370,12 +374,12 @@ contract SafeReserveGuardTest {
     function testSignedExpenseValidityWindow() public {
         _bind();
         uint256 t=block.timestamp;
-        bytes memory future=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",t+1 hours,t+2 hours));
+        bytes memory future=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",0,t+1 hours,t+2 hours));
         bytes memory signedFuture=_signed(address(guard),future,3);
         vm.expectRevert();_exec(address(guard),future,signedFuture);
         require(wallet.nonce()==1&&!guard.transactionActive());
         vm.warp(t+1 hours);
-        bytes memory tooLong=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",t,t+2 days));
+        bytes memory tooLong=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",0,t,t+2 days));
         _reject(address(guard),tooLong,3);
         vm.warp(t+2 hours);
         vm.expectRevert();_exec(address(guard),future,signedFuture);

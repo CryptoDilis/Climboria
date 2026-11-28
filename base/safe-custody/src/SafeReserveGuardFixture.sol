@@ -25,6 +25,8 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     V3SuccessorTestToken public asset;
     address[7] public destinations;
     bytes32[7] public destinationHashes;
+    mapping(address=>uint256) public expenseContext;
+    event ExpenseContextChanged(address indexed recipient,uint256 context);
     event Bound(address indexed asset,address[7] vaults);
     constructor(Safe account,address implementation,V3AtomicSuccessorFixture fixedSuccessor)
         SafeEpochGuardFixture(account,implementation){
@@ -105,11 +107,26 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     }
     /// @notice Partial role predicate; NOT standalone payment authorization.
     /// @dev The vault must also enforce epoch, recipient, evidence, delay and budget checks.
-    function expenseRecipientAllowed(address a) public view returns(bool){
+    function _expenseRoleAllowed(address a) private view returns(bool){
         if(!bound)return false;
         validateConfig();
         return a!=address(0)&&a!=address(1)&&!wallet.isOwner(a)&&a!=distributor&&!_reservedRole(a)&&!_rewardRole(a)&&
             !(pending.digest!=0&&block.timestamp<pending.expiresAt&&a==pending.newOwner);
+    }
+    function expenseRecipientAllowed(address a) public view returns(bool){
+        return expenseContext[a]%2==0&&_expenseRoleAllowed(a);
+    }
+    function _onNomination(address a) internal override {
+        uint256 c=expenseContext[a];
+        expenseContext[a]=c+1+c%2;
+        emit ExpenseContextChanged(a,expenseContext[a]);
+    }
+    function releaseExpenseRecipient(uint256 expected,address recipient,uint256 context,uint256 validAfter,uint256 validUntil) external onlyWallet {
+        _authorizationWindow(validAfter,validUntil);
+        _current(expected);
+        if(context%2!=1||expenseContext[recipient]!=context||!_expenseRoleAllowed(recipient))revert Forbidden();
+        expenseContext[recipient]=context+1;
+        emit ExpenseContextChanged(recipient,context+1);
     }
     function revokeRewardSigner(uint256 expected,uint256 generation) external onlyWallet {
         V3GovernedGameRewardFixture(_target(1,expected)).revoke(expected,generation);
@@ -124,10 +141,10 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
         V3GovernedGameRewardFixture(_target(1,expected)).activate(expected,generation,serial,signer);
     }
     // Both bounds are signed as Safe calldata. This constrains execution, not signing time.
-    function proposeExpense(uint256 expected,uint256 i,address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce,uint256 validAfter,uint256 validUntil) external onlyWallet {
+    function proposeExpense(uint256 expected,uint256 i,address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce,uint256 context,uint256 validAfter,uint256 validUntil) external onlyWallet {
         _authorizationWindow(validAfter,validUntil);
-        if(!expenseRecipientAllowed(recipient))revert Forbidden();
-        _expense(i,expected).propose(recipient,amount,evidence,month,nonce);
+        if(expenseContext[recipient]!=context||!expenseRecipientAllowed(recipient))revert Forbidden();
+        _expense(i,expected).propose(recipient,amount,evidence,month,nonce,context);
     }
     function cancelExpense(uint256 expected,uint256 i,bytes32 id) external onlyWallet {_expense(i,expected).cancel(id);}
     function scheduleLiquidity(uint256 expected,uint256 a,uint256 q,uint256 minShares,uint256 deadline,bytes32 nonce,uint256 validAfter,uint256 validUntil) external onlyWallet {
@@ -153,10 +170,10 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
         // Group exact static ABI lengths; the accepted selector/length pairs are unchanged.
         if(len==68)return selector==this.cancelLiquidity.selector||selector==this.cancelLegacy.selector||selector==this.revokeRewardSigner.selector;
         if(len==100)return selector==this.cancelExpense.selector||selector==this.cancelRewardSigner.selector;
-        if(len==164)return selector==this.scheduleLegacy.selector||selector==this.scheduleRewardSigner.selector;
+        if(len==164)return selector==this.scheduleLegacy.selector||selector==this.scheduleRewardSigner.selector||selector==this.releaseExpenseRecipient.selector;
         if(len==132)return selector==this.activateRewardSigner.selector;
         if(len==260)return selector==this.scheduleLiquidity.selector;
-        return len==292&&selector==this.proposeExpense.selector;
+        return len==324&&selector==this.proposeExpense.selector;
     }
 }
 contract SafeReserveFactoryFixture {

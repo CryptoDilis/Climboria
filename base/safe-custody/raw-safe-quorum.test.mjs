@@ -10,7 +10,7 @@ const key=n=>'0x'+w(n);
 const members=[0x12345,0x23456,0x34567,0x45678,0x56789].map(n=>({key:key(n),address:cast('wallet','address','--private-key',key(n)).toLowerCase()})).sort((a,b)=>a.address.localeCompare(b.address));
 const owners=members.map(x=>x.address).reverse(),safe=a(3),nonce='0x1',threshold=3,chainId=84532;
 const sig='execTransaction(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,bytes)';
-const data='0x6e2e6b4c'+w(1).repeat(9),outer=(s,d=data)=>cast('calldata',sig,a(4),'0',d,'0','0','0','0',a(0),a(0),s);
+const data='0xbe61343e'+w(1).repeat(10),outer=(s,d=data)=>cast('calldata',sig,a(4),'0',d,'0','0','0','0',a(0),a(0),s);
 const dummy='0x'+(w(1)+w(2)+'1b').repeat(3);
 const digest=deriveDirectSafeDigest(outer(dummy),chainId,safe,nonce).safeTxHash;
 const sign=k=>cast('wallet','sign','--no-hash','--private-key',k,digest).slice(2).toLowerCase();

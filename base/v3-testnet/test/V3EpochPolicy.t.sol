@@ -18,10 +18,11 @@ contract MockEpochCustody is IV3CustodyEpochFixture {
     uint256 public override memberCount=5;
     mapping(address=>bool) public override isMember;
     function expenseRecipientAllowed(address) external pure returns(bool){return true;}
+    function expenseContext(address) external pure returns(uint256){return 0;}
     function configure(uint256 e,uint256 t,uint256 n) external {epoch=e;threshold=t;memberCount=n;}
     function member(address a,bool yes) external {isMember[a]=yes;}
     function propose(V3EpochSpendFixture v,address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce) external returns(bytes32){
-        return v.propose(recipient,amount,evidence,month,nonce);
+        return v.propose(recipient,amount,evidence,month,nonce,0);
     }
     function cancel(V3EpochSpendFixture v,bytes32 id) external {v.cancel(id);}
 }
@@ -47,7 +48,7 @@ contract V3EpochPolicyTest {
         return control.propose(v,PAYEE,amount,evidence,0,nonce);
     }
     function testOnlyCustodyAuthorizesAndDelay() public {
-        vm.expectRevert(V3EpochSpendFixture.Unauthorized.selector);e.propose(PAYEE,10,"E",0,"N");
+        vm.expectRevert(V3EpochSpendFixture.Unauthorized.selector);e.propose(PAYEE,10,"E",0,"N",0);
         bytes32 id=propose(e,"E","N",10);
         vm.warp(start);
         vm.expectRevert(V3EpochSpendFixture.NotReady.selector);e.execute(id);
