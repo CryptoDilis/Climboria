@@ -3791,3 +3791,10 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 
 - Consolidates exact #1104 and #1101 candidates into one draft for integration testing; do not merge before parent PRs and fresh combined checks. Extends crafting record conservation to account for consumed cooked fish (compatible v1 read, v2 on first spend). Only a previously crafted meal can be consumed; a fixed private survival effect and material debit share one storage transaction. Owner revalidation, bounded recovery, full-meter denial, rollback and replay protection remain mandatory.
 - Three new cross-ledger tests cover concurrent consumption, v1/v2 conservation, account isolation, full meter, revoked owner, second-write rollback and ambiguous commit. Exact CI pending. Private fixture only; no real inventory, public routes or production effects. Next: verify combined CI, then integrate crafted repair kit under the same transactional boundary.
+
+
+## Phase 05 private crafted repair integration candidate — 2026-11-28 PHT
+
+- Stacked on exact #1105 candidate. Adds workbench-gated use of an earned repair kit, both inventory and equipment revision checks, and a single atomic debit plus durability restore. Enhancement and original fixture kit balance are preserved. Crafting v3 tracks separate meal and repair spends; equipment v3 tracks crafted repairs with bounded use/revision conservation, preserving legacy records. No initial provisioned kit can be passed off as crafted stock.
+- Three new cross-ledger tests cover concurrent repair, stale wear/revision, ownership and station, full durability, transaction rollback and ambiguous commit. Fresh combined CI pending; no production item grant, damage, public endpoint or activation. Wait for parent candidates to pass/merge and reconcile the exact combined diff before release.
+- Next verify runtime persistence for both crafted effects, then reviewed private gameplay presentation and trusted authored station bindings. Real players and physical device checks remain external.
