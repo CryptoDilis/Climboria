@@ -301,7 +301,7 @@ contract SafeReserveGuardTest {
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
         require(v.registry().consumedBy("PRECONFLICT")==address(0)&&v.totalSpent()==0&&token.balanceOf(PAYEE)==0);
     }
-    function testFailedNominationAndRepeatedConflictContext() public {
+    function testNominationFailureRollbackAndRepeatedConflictContext() public {
         _bind();
         uint256 n=wallet.nonce();
         _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,A,E,PAYEE,block.timestamp,block.timestamp+1 hours)),3);
