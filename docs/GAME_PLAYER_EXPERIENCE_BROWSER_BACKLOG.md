@@ -50,6 +50,7 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
   - [The field journal](https://github.com/CryptoDilis/Climboria/pull/1052) merged after 16 checks passed. Scoped persistence tests and a mobile-emulated guest touch test passed locally. The cave-approach follow-up adds a camp clue and a visit-triggered field note. Treasure map fragments and physical playtesting remain open.
 - [ ] R1.4 Reuse existing rarity chest system and publish odds before any reward release; materials, outfits, gear, artifacts and useful nonfinancial starter items. No guaranteed rare or monetary rewards; no real grant until authority is ready.
 - [ ] R1.5 Acceptance: skip/revisit introduction, desktop/touch controls, no blocking modal or forced wallet, resume after reload, no duplicated grants, actual new-player playtest and voluntary feedback. Measure time to first discovery and optional return rates without intrusive telemetry.
+  - Hero preview gesture coverage checks drag ownership, pinch without rotation, and cancellation. Physical touch acceptance remains open.
 
 ## R2 — Living world and dynamic events (critical)
 
