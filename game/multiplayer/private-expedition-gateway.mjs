@@ -12,7 +12,7 @@ const exact=(m,keys)=>Object.keys(m).length===keys.length&&keys.every(k=>Object.
 export function createPrivateExpeditionGateway({storage,clock,allowAccount,sessionId=()=> 's_'+crypto.randomUUID().replace(/-/g,'')}={}){
  if(typeof storage?.transaction!=='function'||typeof clock!=='function'||typeof allowAccount!=='function'||typeof sessionId!=='function')
   throw Error('Explicit private expedition gateway authority required');
- const sessions=new Map(),accounts=new Map();
+ const sessions=new Map(),accounts=new Map(),usedIds=new Set();
  let last=clock(),failed=!rev(last)||last>Number.MAX_SAFE_INTEGER-TTL;
  function time(){
   const now=clock();
@@ -46,9 +46,9 @@ export function createPrivateExpeditionGateway({storage,clock,allowAccount,sessi
   if(now===null||!v||!allowed(v.userId)||!rev(v.expiresAt)||v.expiresAt<=now)return deny('invalid-station-ticket');
   sweep();
   const id=sessionId();
-  if(!sid.test(id)||sessions.has(id)||accounts.has(v.userId)||sessions.size>=2)return deny('station-session-unavailable');
+  if(!sid.test(id)||usedIds.has(id)||usedIds.size>=256||accounts.has(v.userId)||sessions.size>=2)return deny('station-session-unavailable');
   const p={account:v.userId,deadline:now+TTL,closed:false,window:now,count:0,busy:false};
-  sessions.set(id,p);accounts.set(v.userId,id);
+  usedIds.add(id);sessions.set(id,p);accounts.set(v.userId,id);
   const joined=runtime.join(id);
   if(!joined.ok){close(id);return joined;}
   async function receive(raw){
