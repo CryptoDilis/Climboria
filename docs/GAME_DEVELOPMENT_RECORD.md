@@ -3798,3 +3798,9 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Stacked on exact #1105 candidate. Adds workbench-gated use of an earned repair kit, both inventory and equipment revision checks, and a single atomic debit plus durability restore. Enhancement and original fixture kit balance are preserved. Crafting v3 tracks separate meal and repair spends; equipment v3 tracks crafted repairs with bounded use/revision conservation, preserving legacy records. No initial provisioned kit can be passed off as crafted stock.
 - Three new cross-ledger tests cover concurrent repair, stale wear/revision, ownership and station, full durability, transaction rollback and ambiguous commit. Fresh combined CI pending; no production item grant, damage, public endpoint or activation. Wait for parent candidates to pass/merge and reconcile the exact combined diff before release.
 - Next verify runtime persistence for both crafted effects, then reviewed private gameplay presentation and trusted authored station bindings. Real players and physical device checks remain external.
+
+
+## Combined crafted item persistence candidate — 2026-11-28 PHT
+
+- Extended #1106 CI-only workerd/SQLite acceptance to exercise cooking, crafting, meal consumption and equipment repair against one synthetic account and one persisted inventory. Concurrent consumption/repair each must succeed once. Restart must retain inventory revision 4, material conservation, hunger/thirst, enhanced equipment durability, and original repair-kit stock; replay, duplicate provisioning and public fixture entry remain denied.
+- Fresh exact-head CI pending. Earlier #1106 runtime checks were green but did not cover the combined effects; no new production route or live gameplay claim. Next reconcile parent PRs and exact combined verification, then move to independent player-facing private presentation.

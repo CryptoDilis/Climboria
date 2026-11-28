@@ -1,3 +1,4 @@
+import { createPrivateCraftingLedger } from '../../game/multiplayer/private-crafting-ledger.mjs';
 import { createPrivateSurvivalLedger } from '../../game/multiplayer/private-survival-ledger.mjs';
 import { createPrivateEquipmentEnhancement } from '../../game/multiplayer/private-equipment-enhancement.mjs';
 import { createPrivateMasteryLedger } from '../../game/multiplayer/private-mastery-ledger.mjs';
@@ -90,6 +91,61 @@ export class PrivateFixture {
         if (url.pathname === '/survival-provision') return Response.json(await survival.provisionSupplies(accountId, 2, 1));
         if (url.pathname === '/survival-active') return Response.json(await survival.recordActiveInterval(sessionId, intervalId));
         return Response.json(await survival.consumeSupply(sessionId, 'food', 0));
+      }
+      case '/crafted-provision':
+      case '/crafted-stock':
+      case '/crafted-cook':
+      case '/crafted-kit':
+      case '/crafted-equipment-provision':
+      case '/crafted-equipment-enhance':
+      case '/crafted-equipment-wear':
+      case '/crafted-equipment-inspect':
+      case '/crafted-survival-active':
+      case '/crafted-survival-inspect':
+      case '/crafted-eat':
+      case '/crafted-repair': {
+        // Separate synthetic account from the original fixtures.
+        const sessionId = 'fixture_session_crafted';
+        const accountId = 'fixture_account_crafted';
+        const craftRoom = 'preview-crafting-fixture';
+        const equipmentRoom = 'preview-equipment-fixture';
+        const survivalRoom = 'preview-survival-fixture';
+        const intervalId = 'fixture_crafted_interval_1';
+        const useId = 'fixture_crafted_equipment_use_1';
+        const owner = (candidate, roomId) => candidate === sessionId ? { sessionId, accountId, roomId } : null;
+        const station = (candidate, roomId) => ({
+          ...owner(candidate, roomId), station: url.pathname === '/crafted-cook' ? 'campfire' : 'workbench', inRange: true,
+        });
+        const crafting = createPrivateCraftingLedger({
+          roomId: craftRoom, storage: this.storage, resolveOwner: owner, resolveStation: station,
+        });
+        const equipment = createPrivateEquipmentEnhancement({
+          roomId: equipmentRoom, storage: this.storage, resolveOwner: owner,
+          resolveUse: () => ({
+            sessionId, accountId, roomId: equipmentRoom, item: 'training-climbing-gloves', useId, sequence: 1, maintenanceRevision: 0,
+          }),
+          craftingOwner: owner, craftingStation: station,
+        });
+        const survival = createPrivateSurvivalLedger({
+          roomId: survivalRoom, storage: this.storage, resolveOwner: owner, hungerRate: 50, thirstRate: 60,
+          resolveActiveInterval: () => ({ sessionId, accountId, roomId: survivalRoom, intervalId, sequence: 1, activeSeconds: 60 }),
+          craftingOwner: owner, craftingStation: station,
+        });
+        switch (url.pathname) {
+          case '/crafted-provision': return Response.json(await crafting.provision(accountId, { fiber: 4, wood: 4, 'raw-fish': 2, 'repair-kit': 0, 'cooked-fish': 0 }));
+          case '/crafted-stock': return Response.json(await crafting.inspect(sessionId));
+          case '/crafted-cook': return Response.json(await crafting.craft(sessionId, 'cooked-fish', 0));
+          case '/crafted-kit': return Response.json(await crafting.craft(sessionId, 'repair-kit', 1));
+          case '/crafted-equipment-provision': return Response.json(await equipment.provision(accountId));
+          case '/crafted-equipment-enhance': return Response.json(await equipment.enhance(sessionId, 0));
+          case '/crafted-equipment-wear': return Response.json(await equipment.recordWear(sessionId, useId));
+          case '/crafted-equipment-inspect': return Response.json(await equipment.inspect(sessionId));
+          case '/crafted-survival-active': return Response.json(await survival.recordActiveInterval(sessionId, intervalId));
+          case '/crafted-survival-inspect': return Response.json(await survival.inspect(sessionId));
+          case '/crafted-eat': return Response.json(await survival.consumeCraftedMeal(sessionId, 2));
+          case '/crafted-repair': return Response.json(await equipment.repairWithCraftedKit(sessionId, 3, 1));
+        }
+        break;
       }
       case '/cave': {
         const events = createPrivateRegionEvents({

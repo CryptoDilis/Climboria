@@ -56,6 +56,24 @@ try {
   assert.equal(eaten.filter(result => result.reason === 'supplies-revision-changed').length, 1);
   assert.deepEqual(await request('survival-stock', 1000), { ok: true, food: 1, water: 1, revision: 1 });
 
+  // Exercise both crafted effects on one account, one SQLite transaction store.
+  assert.equal((await runtime.dispatchFetch('http://localhost/crafted-provision')).status, 404);
+  assert.equal((await request('crafted-provision', 1000)).revision, 0);
+  assert.equal((await request('crafted-cook', 1000)).stock['cooked-fish'], 1);
+  assert.equal((await request('crafted-kit', 1000)).stock['repair-kit'], 1);
+  assert.equal((await request('crafted-equipment-provision', 1000)).ok, true);
+  assert.equal((await request('crafted-equipment-enhance', 1000)).enhancement, 1);
+  assert.equal((await request('crafted-equipment-wear', 1000)).durability, 90);
+  assert.equal((await request('crafted-survival-active', 1000)).hunger, 7000);
+  const meals = await Promise.all([request('crafted-eat', 1000), request('crafted-eat', 1000)]);
+  assert.equal(meals.filter(r => r.ok && r.survival.hunger === 9000).length, 1);
+  assert.equal(meals.filter(r => r.reason === 'crafting-revision-changed').length, 1);
+  const craftedRepairs = await Promise.all([request('crafted-repair', 1000), request('crafted-repair', 1000)]);
+  assert.equal(craftedRepairs.filter(r => r.ok && r.equipment.durability === 100 && r.equipment.enhancement === 1).length, 1);
+  assert.equal(craftedRepairs.filter(r => r.reason === 'crafting-revision-changed').length, 1);
+  const expectedCraftStock = { ok: true, revision: 4, stock: { fiber: 2, wood: 2, 'raw-fish': 1, 'repair-kit': 0, 'cooked-fish': 0 } };
+  assert.deepEqual(await request('crafted-stock', 1000), expectedCraftStock);
+
   const first = await request('cave', 1000);
   assert.equal(first.event.startsAtMs, 1000);
   assert.equal((await request('cave', 1030)).event, null);
@@ -80,13 +98,28 @@ try {
   assert.equal((await request('survival-eat', 1000000000)).reason, 'supplies-revision-changed');
   assert.equal((await request('survival-provision', 1000000000)).reason, 'supplies-already-provisioned');
 
+  assert.deepEqual(await request('crafted-stock', 1000000000), expectedCraftStock);
+  assert.deepEqual(await request('crafted-survival-inspect', 1000000000), { ok: true, hunger: 9000, thirst: 6400, maximum: 10000, sequence: 1 });
+  const craftedEquipment = await request('crafted-equipment-inspect', 1000000000);
+  assert.equal(craftedEquipment.durability, 100);
+  assert.equal(craftedEquipment.enhancement, 1);
+  assert.equal(craftedEquipment.remainingMaterials, 54);
+  assert.equal(craftedEquipment.remainingRepairKits, 3);
+  assert.equal(craftedEquipment.maintenanceRevision, 2);
+  assert.equal((await request('crafted-eat', 1000000000)).reason, 'crafting-revision-changed');
+  assert.equal((await request('crafted-repair', 1000000000)).reason, 'crafting-revision-changed');
+  assert.equal((await request('crafted-equipment-wear', 1000000000)).reason, 'equipment-use-already-recorded');
+  assert.equal((await request('crafted-survival-active', 1000000000)).reason, 'active-interval-already-recorded');
+  assert.equal((await request('crafted-provision', 1000000000)).reason, 'crafting-already-provisioned');
+  assert.deepEqual(await request('crafted-stock', 1000000000), expectedCraftStock);
+
   const claims = await Promise.all([request('claim-drop', 90999), request('claim-drop', 90999)]);
   assert.equal(claims.filter(result => result.ok).length, 1);
   assert.equal(claims.filter(result => result.reason === 'drop-already-claimed').length, 1);
   assert.equal((await request('claim-drop', 91000)).reason, 'drop-expired');
   assert.equal((await request('open-drop', 91000)).reason, 'drop-expired');
 
-  console.log('Verified private drop expiry, mastery replay protection, equipment costs and repair, regional event expiry, and atomic survival consumption across a local workerd restart');
+  console.log('Verified private drop expiry, mastery replay protection, equipment costs and repair, regional event expiry, atomic survival consumption, and both crafted item effects across a local workerd restart');
 } finally {
   try {
     await runtime?.dispose();
