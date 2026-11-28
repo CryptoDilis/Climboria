@@ -31,6 +31,15 @@ try {
   if(!guestState.guest||guestState.hero?.name!=='Guest Explorer'||
      guestState.hero?.model!=='Adventurer'||guestState.persisted!==null)
    errors.push('Guest play must launch without creating/persisting hero: '+JSON.stringify(guestState));
+  await guestProbe.waitForFunction(()=>window.__climboriaGameReady&&document.querySelector('#field-journal')?.hidden===false,undefined,{timeout:120000});
+  const guestJournal=guestProbe.locator('#field-journal');
+  const caveNote=guestJournal.getByText('Cave entrance',{exact:true});
+  await guestJournal.evaluate(journal=>{journal.open=true});
+  if(await caveNote.count()) errors.push('Guest journal revealed the cave entrance before discovery');
+  await guestProbe.evaluate(()=>window.__climboriaJarrellsPeak.positionAtCaveEntranceForSmoke());
+  await caveNote.waitFor({state:'attached',timeout:30000});
+  if(await guestProbe.evaluate(()=>Object.keys(localStorage).some(key=>key.startsWith('climboria:jarrell-field-journal:'))))
+   errors.push('Guest cave discovery persisted a local journal entry');
   await guestProbe.close();
   // The rest of this test exercises 3D creator UX against an explicitly
   // mocked registered account, NOT a real Supabase auth acceptance.

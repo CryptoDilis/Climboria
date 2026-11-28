@@ -315,6 +315,7 @@ const rng=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.i
 const POI={sanct:{x:0,z:-90,r:60},park:{x:-170,z:90,r:75},camp:{x:-200,z:-170,r:50},cave:{x:-760,z:-520,r:34},summit:{x:640,z:-620,r:0}};
 const RICE={x:560,z:330};
 let caveG=null;
+const caveApproach={x:0,z:-20};
 // Explicit water bodies share the rendered water plane (Y=0). Freshwater basins
 // are carved into terrain below; their query bounds drive swimming and tests.
 const WATER_BODIES=[
@@ -2310,10 +2311,12 @@ function renderFieldJournal(){
 journalPanel.addEventListener('keydown',e=>e.stopPropagation());
 journalPanel.addEventListener('toggle',()=>{if(journalPanel.open)releaseGameplayInput();renderFieldJournal()});
 void import('./field-journal.mjs').then(({createFieldJournal})=>{
+ const [caveApproachX,caveApproachZ]=l2w(caveG,caveApproach.x,caveApproach.z);
  const landmarks=[
   {id:'sanctuary',name:'Sanctuary',note:'The stone pillars mark a sheltered starting point. Follow the mapped trail to the park.',...POI.sanct,radius:24},
   {id:'park',name:'Park',note:'The trail opens into a clearing. The map marks an expedition camp to the north.',...POI.park,radius:30},
-  {id:'camp',name:'Expedition camp',note:'The camp is a waymark for trips west toward the cave.',...POI.camp,radius:24}
+  {id:'camp',name:'Expedition camp',note:'Head northwest toward the cave marked on your map. Look for the stone arch at the mouth.',...POI.camp,radius:24},
+  {id:'cave-approach',name:'Cave entrance',note:'The stone arch gives way to a torchlit passage. Follow the lights and watch your footing.',x:caveApproachX,z:caveApproachZ,radius:12}
  ];
  const getScope=()=>window.__climboriaGuestMode?'guest':localPositionUserId?'user:'+localPositionUserId:null;
  // Use lazy storage access so browsers that block it can keep a session-only journal.
@@ -3274,7 +3277,7 @@ function positionAtCaveEntranceForSmoke(){
  mountainSmokeVista=null; // Restore ordinary follow camera for cave and coast QA.
  // Capture from the exterior approach, not beneath the near-mouth rock overhang.
  // Keep the hero facing into the opening with the follow camera behind them.
- const local={x:0,z:-20},world=l2w(caveG,local.x,local.z);
+ const local={...caveApproach},world=l2w(caveG,local.x,local.z);
  updateChunks(world[0],world[1],200);
  P.mode='walk';P.x=world[0];P.z=world[1];P.y=groundAt(P.x,P.z)+1.75;P.vy=0;
  // Local +Z points through the cave mouth. Convert that direction into world yaw;
