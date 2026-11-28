@@ -103,7 +103,7 @@ jobs:
         run: |
           set -euo pipefail
           node --test verify-runtime-template.test.mjs verify-named-runtime.test.mjs exact-build-unit.test.mjs
-          node local-deployment-rehearsal.mjs "$RUNNER_TEMP/safe-local-rehearsal.json" "$RUNNER_TEMP/safe-local-authorization-rehearsal.json" "$RUNNER_TEMP/safe-local-expense-execution-rehearsal.json" "$RUNNER_TEMP/safe-local-liquidity-lock-rehearsal.json"
+          node local-deployment-rehearsal.mjs "$RUNNER_TEMP/safe-local-rehearsal.json" "$RUNNER_TEMP/safe-local-authorization-rehearsal.json" "$RUNNER_TEMP/safe-local-expense-execution-rehearsal.json" "$RUNNER_TEMP/safe-local-liquidity-lock-rehearsal.json" "$RUNNER_TEMP/safe-local-lp-release-rehearsal.json"
       - uses: actions/upload-artifact@v4
         with:
           name: safe-local-rehearsal
@@ -126,6 +126,12 @@ jobs:
         with:
           name: safe-local-liquidity-lock-rehearsal
           path: ${{ runner.temp }}/safe-local-liquidity-lock-rehearsal.json
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: safe-local-lp-release-rehearsal
+          path: ${{ runner.temp }}/safe-local-lp-release-rehearsal.json
           if-no-files-found: error
           retention-days: 14
       - name: Verify frozen testnet build and fail-closed preflight
