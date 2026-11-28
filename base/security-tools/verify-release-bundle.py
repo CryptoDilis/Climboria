@@ -13,6 +13,7 @@ ARTIFACTS = ("compiler", "source_archive", "safe_dependency", "oz_dependency",
              "external_review", "deployment_plan", "issuance_payload")
 ALLOWED_STATUS = "REVIEW_ONLY_NO_GO"
 INTEGRATED_ARTIFACTS = ARTIFACTS + ("unsigned_envelope", "state_observation")
+RUNTIME_ARTIFACTS = INTEGRATED_ARTIFACTS + ("runtime_plans", "runtime_observations")
 
 def require(condition, message):
     if not condition:
@@ -37,8 +38,8 @@ def hex_value(value, n, label):
             and any(c != "0" for c in value), "invalid " + label)
 
 def verified_snapshot(bundle, expected_sha, schema=1):
-    require(type(schema) is int and schema in (1, 2), "unsupported requested schema")
-    roles = ARTIFACTS if schema == 1 else INTEGRATED_ARTIFACTS
+    require(type(schema) is int and schema in (1, 2, 3), "unsupported requested schema")
+    roles = {1: ARTIFACTS, 2: INTEGRATED_ARTIFACTS, 3: RUNTIME_ARTIFACTS}[schema]
     hex_value(expected_sha, 64, "independent manifest digest")
     bundle = Path(bundle)
     require(bundle.is_dir() and not bundle.is_symlink(), "invalid bundle directory")
