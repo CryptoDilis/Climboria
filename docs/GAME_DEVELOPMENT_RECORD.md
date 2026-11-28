@@ -1,5 +1,11 @@
 # Climboria Game Development Record
 
+## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
+
+- Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
+- Add regression coverage for fresh ledger instances, independent accounts and untouched skills, session revocation/reassignment, corrupt records and storage failure. Ensure the server-authority workflow triggers on mastery source/test edits. Exact candidate CI pending; no production endpoint or player UI is authorized by this change.
+- Next verify exact CI, then integrate a reviewed private player-facing projection with real activity authority. Physical and registered-player acceptance remain external gates; continue independent Game tasks while pending.
+
 ## Phase 03 hero preview gestures — 2026-11-28 PHT
 
 - Hero creation preview now rotates only from the captured primary pointer. Pinching stops rotation, uses touches that began on the canvas, and resets its zoom baseline on cancellation. Closing the editor also clears gesture state.
@@ -3764,13 +3770,6 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Next verify exact CI for this input fix and independent cave journal PR #1061. Continue Phase 03 controls and world regressions with the existing release gates.
 
 
-## Phases 05–06 private crafting and cooking candidate — 2026-11-28 PHT
-
-- Added isolated transactional crafting inventory with two synthetic recipes (repair kit at workbench, cooked fish at campfire). Server-resolved ownership and station range are checked before/after storage reads and after writes; materials and output change atomically. Fixed recipes, bounded stack sizes and revision reject invalid input, duplicate crafting, overflow and corrupt conservation. No public route, real items, gameplay effects or production recipe costs.
-- Three focused JavaScript harness scenarios passed: material conservation, concurrent replay, wrong station/account; output capacity, revoked station/owner, rollback and insufficient ingredients; corrupt state and ambiguous commit. Exact Node and CI pending. Existing equipment and survival ledgers are deliberately separate until a reviewed shared inventory transaction can safely consume their crafted outputs.
-- Next verify exact CI, shared inventory integration, private runtime persistence and authored workbench/campfire interactions. External physical and registered-account acceptance remain gated.
-
-
 ## Phase 06 private active-time survival candidate — 2026-11-28 PHT
 
 - Added isolated transactional hunger/thirst state using only room-verified, contiguous active intervals (1–60 seconds). Inspection is owner-bound and read-only; elapsed wall time, reconnects and offline time do not cause catch-up depletion. Fixture rates are explicit, bounded and not production balance decisions. No damage, item consumption, rewards, public route or gameplay activation.
@@ -3787,7 +3786,24 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Extended the existing CI-only workerd/SQLite fixture with survival provisioning, active-interval depletion, concurrent consumption, and restart assertions covering stock conservation, persisted meters, replay, and no offline catch-up. The public fixture router must reject access. Exact updated-head runtime CI is pending; earlier parent checks are not evidence for this new coverage.
 
 
+## Phase 05 private equipment presentation candidate — 2026-11-28 PHT
+
+- Added independent private read-only equipment panel over owner-bound equipment inspection: fixed training gloves, enhancement, durability meter and broken/worn/full condition, material and fixture-kit balances. Strict snapshot validation and lifecycle generation/scope checks reject malformed or stale results; host must clear on session changes. No repair/enhance controls, production route, player wallet or local storage changes.
+- Three isolated JS DOM-fixture scenarios passed. Added scoped navy/gold responsive CSS and Chromium acceptance for 1200×800 and 360×640 covering visible meter, layout, minimum 16px text, and pending-response logout. Exact Node/browser CI pending; no actual gameplay wiring or device claim. Next bind a reviewed private authenticated presentation host and reconcile combined crafted repair after parents merge.
+
+
+## Phases 05–06 private crafting and cooking candidate — 2026-11-28 PHT
+
+- Added isolated transactional crafting inventory with two synthetic recipes (repair kit at workbench, cooked fish at campfire). Server-resolved ownership and station range are checked before/after storage reads and after writes; materials and output change atomically. Fixed recipes, bounded stack sizes and revision reject invalid input, duplicate crafting, overflow and corrupt conservation. No public route, real items, gameplay effects or production recipe costs.
+- Three focused JavaScript harness scenarios passed: material conservation, concurrent replay, wrong station/account; output capacity, revoked station/owner, rollback and insufficient ingredients; corrupt state and ambiguous commit. Exact Node and CI pending. Existing equipment and survival ledgers are deliberately separate until a reviewed shared inventory transaction can safely consume their crafted outputs.
+- Next verify exact CI, shared inventory integration, private runtime persistence and authored workbench/campfire interactions. External physical and registered-account acceptance remain gated.
+
+- Prior exact candidate `c52246b9e7a349969fc704218a6845d54735c068` passed all four CI workflows, including gameplay smoke. Reconciled on updated main `a995e50f2787e32e5f1b5a577967c65155b8bebc`; fresh head CI required before merge. No changes to crafting code or tests in reconciliation.
+
+
 ## Phase 05–06 private crafted meal integration candidate — 2026-11-28 PHT
 
 - Consolidates exact #1104 and #1101 candidates into one draft for integration testing; do not merge before parent PRs and fresh combined checks. Extends crafting record conservation to account for consumed cooked fish (compatible v1 read, v2 on first spend). Only a previously crafted meal can be consumed; a fixed private survival effect and material debit share one storage transaction. Owner revalidation, bounded recovery, full-meter denial, rollback and replay protection remain mandatory.
 - Three new cross-ledger tests cover concurrent consumption, v1/v2 conservation, account isolation, full meter, revoked owner, second-write rollback and ambiguous commit. Exact CI pending. Private fixture only; no real inventory, public routes or production effects. Next: verify combined CI, then integrate crafted repair kit under the same transactional boundary.
+
+- Parent #1104 merged at `5d6eb4dd8559bc8368addd646190e1728c21974d`; #1101 merged at `4261a008b6646811025d3d8fd275a270b1b38025`. Previous exact #1105 head `ed37ef15b558737440c06f63c48fdae63036da32` passed all seven workflows. Reconciled integration-only code with current main `5d6eb4dd8559bc8368addd646190e1728c21974d`; fresh exact-head CI required before merge.

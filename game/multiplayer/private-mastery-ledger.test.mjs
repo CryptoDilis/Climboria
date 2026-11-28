@@ -86,3 +86,50 @@ test('rejects non-private rooms and invalid rank thresholds', () => {
  assert.throws(() => createPrivateMasteryLedger({ ...f.options, thresholds: [2, 2, 4, 5] }));
  assert.throws(() => createPrivateMasteryLedger({ ...f.options, thresholds: Array(4) }));
 });
+
+
+test('owner-only mastery inspection restores every independent skill without writing or exposing another account', async () => {
+ const f = fixture();
+ const owner = sessionId => ({ sessionId, roomId, accountId: 'verified_account_' + sessionId.at(-1) });
+ const make = () => createPrivateMasteryLedger({ ...f.options, resolveOwner: owner });
+ for (let sequence = 1; sequence <= 3; sequence++) {
+  const id = 'mastery_activity_' + sequence;
+  f.setProof(a, 'climbing', sequence, id);
+  assert.equal((await make().record(a, id)).ok, true);
+ }
+ const initial = await make().inspect(a);
+ assert.equal(initial.ok, true);
+ assert.equal(initial.skills.length, 10);
+ assert.deepEqual(initial.skills.find(s => s.skill === 'climbing'), { skill: 'climbing', validatedActivities: 3, rank: 'Skilled' });
+ assert.equal(initial.skills.filter(s => s.validatedActivities === 0 && s.rank === 'Novice').length, 9);
+ assert.equal((await make().inspect(b)).skills.every(s => s.validatedActivities === 0), true);
+ assert.equal(f.records.size, 1);
+ assert.equal((await f.make().inspect(a)).reason, 'unverified-mastery-owner');
+ assert.equal((await make().inspect('invalid')).reason, 'invalid-mastery-intent');
+});
+
+test('inspection fails closed on revocation, reassignment, corrupt state and ambiguous storage', async () => {
+ const f = fixture();
+ let accountId = 'verified_account_a';
+ const make = () => createPrivateMasteryLedger({ ...f.options, resolveOwner: sessionId => accountId ? { sessionId, roomId, accountId } : null });
+ f.setProof(a, 'climbing', 1);
+ await make().record(a, activityId);
+ f.onRead(() => { accountId = null; });
+ assert.equal((await make().inspect(a)).reason, 'unverified-mastery-owner');
+ accountId = 'verified_account_a';
+ f.onRead(() => { accountId = 'verified_account_b'; });
+ assert.equal((await make().inspect(a)).reason, 'unverified-mastery-owner');
+ f.onRead(null);
+ accountId = 'verified_account_a';
+ const key = [...f.records.keys()][0];
+ const prior = f.records.get(key);
+ f.records.set(key, { ...prior, accountId: 'verified_account_b' });
+ assert.equal((await make().inspect(a)).reason, 'invalid-stored-mastery');
+ f.records.set(key, prior);
+ const ledger = make();
+ f.setAmbiguous(true);
+ assert.equal((await ledger.inspect(a)).reason, 'mastery-storage-unavailable');
+ f.setAmbiguous(false);
+ assert.equal((await ledger.inspect(a)).reason, 'mastery-storage-unavailable');
+ assert.equal((await make().inspect(a)).ok, true);
+});

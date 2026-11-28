@@ -79,6 +79,7 @@ Phase 03 shoreline follow-up adds sampled-bed clearance to diving and deep-to-sh
 - [ ] R3.2 Equipment, armor, accessories and climbing gear, item stats, equipping and upgrades; no unapproved hero redesign.
 - [ ] R3.3 Crafting recipes/materials, unlockable outfits/hairstyles/accessories only if asset supports them, personal artifact/trophy collections.
 - [ ] R3.4 Durable authenticated progress/inventory with atomic updates, migrations, reconnect, replay protection, ownership and isolation; guest/local preview remains clearly separate.
+  - Private owner-bound mastery read projection candidate adds ten-skill inspection without writes or new credits; exact CI and player-facing integration remain open.
 - [ ] R3.5 Acceptance: first mastery unlock, meaningful choices, no pay-to-win, deterministic balance tests, no fabricated inventory.
 
 ### Owner-approved progression refinement — 2026-11-27 PHT
