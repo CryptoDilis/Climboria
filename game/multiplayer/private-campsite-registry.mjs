@@ -128,5 +128,24 @@ export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner
   const revalidate=()=>{const current=clock();return ownerFor(sessionId)===accountId&&int(current,now,deadline-1);};
   return revalidate()?{revalidate}:null;
  }
- return Object.freeze({observeRestLease,inspect:sessionId=>transact(sessionId,'inspect'),place:(sessionId,slot,revision)=>transact(sessionId,'place',slot,revision),remove:(sessionId,slot,revision)=>transact(sessionId,'remove',slot,revision),ignite:(sessionId,slot,revision)=>transact(sessionId,'ignite',slot,revision),extinguish:(sessionId,slot,revision)=>transact(sessionId,'extinguish',slot,revision),refuel:(sessionId,slot,campRevision,inventoryRevision)=>transact(sessionId,'refuel',slot,campRevision,inventoryRevision),reviewedForProduction:false});
+ // Internal current-fire observation inside the caller's crafting transaction.
+ // Persist the observed clock even on denial, as with rest lease observations.
+ async function observeCookingFire(tx,sessionId,accountId,slot){
+  if(unavailable||!SLOTS.includes(slot)||ownerFor(sessionId)!==accountId||!placed(sessionId,slot,accountId))return null;
+  const prior=await tx.get(key),now=clock(),state=stateFor(prior,now);
+  if(ownerFor(sessionId)!==accountId||!placed(sessionId,slot,accountId)||!state)return null;
+  const camps=state.camps.filter(c=>c.expiresAt>now),expired=camps.length!==state.camps.length;
+  if(expired&&state.revision===Number.MAX_SAFE_INTEGER)return null;
+  const next={...state,camps,lastObservedAt:now,revision:state.revision+(expired?1:0)};
+  if(prior===undefined||expired||now!==state.lastObservedAt){
+   await tx.put(key,next);
+   if(ownerFor(sessionId)!==accountId||!placed(sessionId,slot,accountId))throw Error('Cooking fire authority changed during observation');
+  }
+  const camp=camps.find(c=>c.slot===slot&&c.accountId===accountId);
+  if(!camp?.fire||camp.fire.extinguished||now>=camp.fire.until)return null;
+  const deadline=Math.min(camp.expiresAt,camp.fire.until);
+  const revalidate=()=>ownerFor(sessionId)===accountId&&placed(sessionId,slot,accountId)&&int(clock(),now,deadline-1);
+  return revalidate()?{revalidate}:null;
+ }
+ return Object.freeze({observeRestLease,observeCookingFire,inspect:sessionId=>transact(sessionId,'inspect'),place:(sessionId,slot,revision)=>transact(sessionId,'place',slot,revision),remove:(sessionId,slot,revision)=>transact(sessionId,'remove',slot,revision),ignite:(sessionId,slot,revision)=>transact(sessionId,'ignite',slot,revision),extinguish:(sessionId,slot,revision)=>transact(sessionId,'extinguish',slot,revision),refuel:(sessionId,slot,campRevision,inventoryRevision)=>transact(sessionId,'refuel',slot,campRevision,inventoryRevision),reviewedForProduction:false});
 }
