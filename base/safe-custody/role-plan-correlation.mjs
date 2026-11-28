@@ -17,8 +17,11 @@ function parsePinned(raw,digest,label){
  const text=new TextDecoder('utf-8',{fatal:true}).decode(raw);
  const value=JSON.parse(text);
  // Only compact JSON.stringify representation accepted. This rejects
- // duplicate names, unsafe-number rounding, alternate encodings and trailing data.
+ // duplicate names, alternate encodings and trailing data. Reject unsafe
+ // numeric values explicitly, even if they serialize identically.
  require(JSON.stringify(value)===text,label+' noncanonical JSON');
+ const checkNumbers=v=>{if(typeof v==='number')require(Number.isSafeInteger(v),label+' unsafe number');else if(v&&typeof v==='object')Object.values(v).forEach(checkNumbers)};
+ checkNumbers(value);
  return value;
 }
 function addr(value){
