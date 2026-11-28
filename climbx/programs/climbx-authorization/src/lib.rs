@@ -1,0 +1,247 @@
+use anchor_lang::prelude::*;
+
+// DEVELOPMENT SCAFFOLD ONLY. Replace this placeholder program ID before any deployment.
+// NO swap, token custody, or trade execution instruction is implemented.
+declare_id!("11111111111111111111111111111111");
+
+#[program]
+pub mod climbx_authorization {
+    use super::*;
+
+    pub fn create_grant(
+        ctx: Context<CreateGrant>,
+        grant_id: u64,
+        executor: Pubkey,
+        allowed_mints: Vec<Pubkey>,
+        expires_at: i64,
+        per_order_cap: u64,
+        cumulative_cap: u64,
+    ) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        validate_new_grant(executor, &allowed_mints, expires_at, per_order_cap, cumulative_cap, now)?;
+        let grant = &mut ctx.accounts.grant;
+        grant.owner = ctx.accounts.owner.key();
+        grant.executor = executor;
+        grant.grant_id = grant_id;
+        grant.allowed_mints = allowed_mints;
+        grant.expires_at = expires_at;
+        grant.per_order_cap = per_order_cap;
+        grant.cumulative_cap = cumulative_cap;
+        grant.spent = 0;
+        grant.next_nonce = 0;
+        grant.revoked = false;
+        grant.bump = ctx.bumps.grant;
+        Ok(())
+    }
+
+    pub fn revoke_grant(ctx: Context<RevokeGrant>) -> Result<()> {
+        require!(!ctx.accounts.grant.revoked, GrantError::AlreadyRevoked);
+        ctx.accounts.grant.revoked = true;
+        Ok(())
+    }
+
+    // Owner-only emergency tightening. Cannot raise spend caps or extend expiry.
+    // Existing authorization stays revoked if already revoked.
+    pub fn tighten_grant(
+        ctx: Context<RevokeGrant>,
+        new_per_order_cap: u64,
+        new_cumulative_cap: u64,
+        new_expires_at: i64,
+    ) -> Result<()> {
+        let grant = &mut ctx.accounts.grant;
+        require!(!grant.revoked, GrantError::AlreadyRevoked);
+        validate_tightening(
+            grant,
+            new_per_order_cap,
+            new_cumulative_cap,
+            new_expires_at,
+            Clock::get()?.unix_timestamp,
+        )?;
+        grant.per_order_cap = new_per_order_cap;
+        grant.cumulative_cap = new_cumulative_cap;
+        grant.expires_at = new_expires_at;
+        Ok(())
+    }
+}
+
+// Deterministic validation shared by the on-chain instruction and unit tests.
+fn validate_new_grant(
+    executor: Pubkey,
+    allowed_mints: &[Pubkey],
+    expires_at: i64,
+    per_order_cap: u64,
+    cumulative_cap: u64,
+    now: i64,
+) -> Result<()> {
+    require!((1..=5).contains(&allowed_mints.len()), GrantError::InvalidMintCount);
+    require!(expires_at > now, GrantError::InvalidExpiry);
+    let max_expiry = now.checked_add(24 * 60 * 60).ok_or(GrantError::InvalidExpiry)?;
+    require!(expires_at <= max_expiry, GrantError::ExpiryTooLong);
+    require!(per_order_cap > 0 && cumulative_cap >= per_order_cap, GrantError::InvalidCap);
+    require!(executor != Pubkey::default(), GrantError::InvalidExecutor);
+    for (index, mint) in allowed_mints.iter().enumerate() {
+        require!(*mint != Pubkey::default(), GrantError::InvalidMint);
+        require!(!allowed_mints[..index].contains(mint), GrantError::DuplicateMint);
+    }
+    Ok(())
+}
+
+// Pure policy function for deterministic negative-case tests. The account context
+// separately enforces owner signature and PDA ownership before this is called.
+fn validate_tightening(
+    grant: &Grant,
+    per_order: u64,
+    cumulative: u64,
+    expiry: i64,
+    now: i64,
+) -> Result<()> {
+    require!(!grant.revoked, GrantError::AlreadyRevoked);
+    require!(per_order > 0, GrantError::InvalidCap);
+    require!(per_order <= grant.per_order_cap, GrantError::CannotExpandGrant);
+    require!(cumulative >= grant.spent, GrantError::InvalidCap);
+    require!(cumulative <= grant.cumulative_cap, GrantError::CannotExpandGrant);
+    require!(cumulative >= per_order, GrantError::InvalidCap);
+    require!(expiry <= grant.expires_at, GrantError::CannotExpandGrant);
+    require!(expiry > now, GrantError::InvalidExpiry);
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_grant_policy_rejects_invalid_mints_caps_and_expiry() {
+        let executor = Pubkey::new_unique();
+        let mint = Pubkey::new_unique();
+        assert!(validate_new_grant(executor, &[mint], 1000, 10, 100, 500).is_ok());
+        assert!(validate_new_grant(executor, &[], 1000, 10, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint; 6], 1000, 10, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint, mint], 1000, 10, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[Pubkey::default()], 1000, 10, 100, 500).is_err());
+        assert!(validate_new_grant(Pubkey::default(), &[mint], 1000, 10, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint], 500, 10, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint], 500 + 86401, 10, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint], 1000, 0, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint], 1000, 101, 100, 500).is_err());
+        assert!(validate_new_grant(executor, &[mint], i64::MAX, 10, 100, i64::MAX - 1).is_err());
+    }
+
+    #[test]
+    fn tightening_policy_rejects_expansion_and_revocation() {
+        let mut grant = Grant {
+            owner: Pubkey::new_unique(), executor: Pubkey::new_unique(),
+            grant_id: 1, allowed_mints: vec![Pubkey::new_unique()],
+            expires_at: 1000, per_order_cap: 10, cumulative_cap: 100,
+            spent: 40, next_nonce: 3, revoked: false, bump: 1,
+        };
+        assert!(validate_tightening(&grant, 8, 80, 900, 500).is_ok());
+        assert!(validate_tightening(&grant, 11, 80, 900, 500).is_err());
+        assert!(validate_tightening(&grant, 8, 101, 900, 500).is_err());
+        assert!(validate_tightening(&grant, 8, 39, 900, 500).is_err());
+        assert!(validate_tightening(&grant, 0, 80, 900, 500).is_err());
+        assert!(validate_tightening(&grant, 8, 80, 1001, 500).is_err());
+        assert!(validate_tightening(&grant, 8, 80, 500, 500).is_err());
+        grant.revoked = true;
+        assert!(validate_tightening(&grant, 8, 80, 900, 500).is_err());
+    }
+
+    #[test]
+    fn grant_size_covers_five_mints() {
+        // 8-byte Anchor discriminator is added at account allocation.
+        assert_eq!(Grant::MAX_SIZE, 278);
+        assert_eq!(8 + Grant::MAX_SIZE, 286);
+    }
+
+    #[test]
+    fn owner_grant_defaults_to_no_execution_authority() {
+        // The on-chain program has no trade/execute instruction.
+        // Default state is zero spend, zero nonce, and non-revoked.
+        let grant = Grant {
+            owner: Pubkey::new_unique(),
+            executor: Pubkey::new_unique(),
+            grant_id: 7,
+            allowed_mints: vec![Pubkey::new_unique()],
+            expires_at: 100,
+            per_order_cap: 10,
+            cumulative_cap: 100,
+            spent: 0,
+            next_nonce: 0,
+            revoked: false,
+            bump: 1,
+        };
+        assert_eq!(grant.spent, 0);
+        assert_eq!(grant.next_nonce, 0);
+        assert!(!grant.revoked);
+    }
+}
+
+#[derive(Accounts)]
+#[instruction(grant_id: u64)]
+pub struct CreateGrant<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+    #[account(
+        init,
+        payer = owner,
+        space = 8 + Grant::MAX_SIZE,
+        seeds = [b"grant", owner.key().as_ref(), &grant_id.to_le_bytes()],
+        bump
+    )]
+    pub grant: Account<'info, Grant>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct RevokeGrant<'info> {
+    pub owner: Signer<'info>,
+    #[account(
+        mut,
+        has_one = owner,
+        seeds = [b"grant", owner.key().as_ref(), &grant.grant_id.to_le_bytes()],
+        bump = grant.bump
+    )]
+    pub grant: Account<'info, Grant>,
+}
+
+#[account]
+pub struct Grant {
+    pub owner: Pubkey,
+    pub executor: Pubkey,
+    pub grant_id: u64,
+    pub allowed_mints: Vec<Pubkey>,
+    pub expires_at: i64,
+    pub per_order_cap: u64,
+    pub cumulative_cap: u64,
+    pub spent: u64,
+    pub next_nonce: u64,
+    pub revoked: bool,
+    pub bump: u8,
+}
+impl Grant {
+    // 2 Pubkeys + grant_id + vector length + up to five Pubkeys +
+    // expiry + four u64 fields + revoked + bump.
+    pub const MAX_SIZE: usize = 32 + 32 + 8 + 4 + 5 * 32 + 8 + 8 + 8 + 8 + 8 + 1 + 1;
+}
+
+#[error_code]
+pub enum GrantError {
+    #[msg("Grant must contain between one and five mints")]
+    InvalidMintCount,
+    #[msg("Grant expiry must be in the future")]
+    InvalidExpiry,
+    #[msg("Grant expiry cannot exceed 24 hours from creation")]
+    ExpiryTooLong,
+    #[msg("Invalid spend caps")]
+    InvalidCap,
+    #[msg("Invalid executor")]
+    InvalidExecutor,
+    #[msg("Invalid token mint")]
+    InvalidMint,
+    #[msg("Duplicate token mint")]
+    DuplicateMint,
+    #[msg("Grant is already revoked")]
+    AlreadyRevoked,
+    #[msg("Grant updates may only tighten authorization")]
+    CannotExpandGrant,
+}

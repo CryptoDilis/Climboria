@@ -1,0 +1,12 @@
+[package]
+name = "climbx-authorization"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "climbx_authorization"
+
+[dependencies]
+anchor-lang = "0.30.1"
