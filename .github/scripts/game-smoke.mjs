@@ -32,6 +32,19 @@ try {
      guestState.hero?.model!=='Adventurer'||guestState.persisted!==null)
    errors.push('Guest play must launch without creating/persisting hero: '+JSON.stringify(guestState));
   await guestProbe.waitForFunction(()=>window.__climboriaGameReady&&document.querySelector('#field-journal')?.hidden===false,undefined,{timeout:120000});
+  const restoredLocomotion=await guestProbe.evaluate(()=>{
+    const {player,groundAt}=window.__climboriaJarrellsPeak;
+    const {jumpCount,landCount}=player;
+    Object.assign(player,{swim:true,swimDepth:3,waterBodyId:'smoke',vy:-4,
+      jumpState:'descent',jumpStateTimer:1,jumpTrace:{jumpCount},moveTarget:{x:1,z:2}});
+    const y=groundAt(0,-30)+1.75;
+    window.__CLIMBORIA_GAME_SAVE_ADAPTER__.restore({version:1,player:{x:0,y,z:-30,yaw:0},inventory:[]});
+    return player.mode==='walk'&&player.x===0&&player.y===y&&player.z===-30&&
+      player.jumpState==='grounded'&&player.jumpStateTimer===0&&player.jumpTrace===null&&
+      player.vy===0&&player.moveTarget===null&&!player.swim&&player.swimDepth===0&&
+      player.waterBodyId===null&&player.jumpCount===jumpCount&&player.landCount===landCount;
+  });
+  if(!restoredLocomotion) errors.push('Restored Game position retained stale locomotion state');
   const guestJournal=guestProbe.locator('#field-journal');
   const caveNote=guestJournal.getByText('Cave entrance',{exact:true});
   await guestJournal.locator('summary').click();
@@ -633,7 +646,7 @@ try {
   if(afterTrapState.inventory!==beforeTrapInventory||afterTrapState.bag)
     errors.push('Legacy cave-death smoke test leaked carried items into a recoverable bag: '+JSON.stringify({beforeTrapInventory,afterTrapState}));
   const deathLoot=await page.evaluate(()=>window.__climboriaJarrellsPeak?.deathLootLifecycleAudit?.()??null);
-  if(!deathLoot?.ok||!deathLoot.inventoryCleared||!deathLoot.respawned||!deathLoot.persisted||
+  if(!deathLoot?.ok||!deathLoot.inventoryCleared||!deathLoot.respawned||!deathLoot.locomotionReset||!deathLoot.persisted||
     !deathLoot.survivesUnload||!deathLoot.isolated||!deathLoot.rehydrated||!deathLoot.recovered||
     !deathLoot.recoveredStored||!deathLoot.clearedOnRecovery||!deathLoot.expired||
     !deathLoot.mapAfterDeath?.visible||!deathLoot.mapAfterDeath?.orange||

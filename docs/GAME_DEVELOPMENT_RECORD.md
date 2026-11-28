@@ -143,6 +143,11 @@ The Geode chamber journal entry passed local desktop and touch-emulated guest ch
 - The recovery cue and pickup now use the same exact four-meter range. At 4.25 meters the direction cue remains visible and pickup is rejected. At exactly four meters the recovery prompt appears and pickup succeeds.
 - Desktop and touch-emulated Chromium passed the existing local lifecycle audit with the new boundary checks. This covers the browser-local backpack.
 
+## Phase 03 respawn and position restore — 2026-11-28 PHT
+
+- Respawn and position restore now reset the old navigation target, vertical velocity, swim depth and jump animation phase. Jump and landing counters retain their values.
+- Local Chromium verified both the death and save-restore paths. The gameplay smoke checks that a respawn from descent creates no extra landing and that a restored position starts with clean movement state.
+
 ## Phase 03 shallow-water clearance — 2026-11-28 PHT
 
 - Fixed the browser swim controller using each water body's nominal depth at every point, which let players dive through raised bed and shore geometry. Dive depth now respects the current terrain sample and upward bed transitions clear the old depth in the same frame. Deep-water limits, surface controls and existing water classification are retained.
