@@ -36,13 +36,15 @@ try {
     const {player,groundAt}=window.__climboriaJarrellsPeak;
     const {jumpCount,landCount}=player;
     Object.assign(player,{swim:true,swimDepth:3,waterBodyId:'smoke',vy:-4,
-      jumpState:'descent',jumpStateTimer:1,jumpTrace:{jumpCount},moveTarget:{x:1,z:2}});
+      jumpState:'descent',jumpStateTimer:1,jumpTrace:{jumpCount},moveTarget:{x:1,z:2},
+      fish:.2,fishSource:'open_sea',fishingSpot:{x:player.x,z:player.z}});
     const y=groundAt(0,-30)+1.75;
     window.__CLIMBORIA_GAME_SAVE_ADAPTER__.restore({version:1,player:{x:0,y,z:-30,yaw:0},inventory:[]});
     return player.mode==='walk'&&player.x===0&&player.y===y&&player.z===-30&&
       player.jumpState==='grounded'&&player.jumpStateTimer===0&&player.jumpTrace===null&&
       player.vy===0&&player.moveTarget===null&&!player.swim&&player.swimDepth===0&&
-      player.waterBodyId===null&&player.jumpCount===jumpCount&&player.landCount===landCount;
+      player.waterBodyId===null&&player.jumpCount===jumpCount&&player.landCount===landCount&&
+      player.fish===0&&player.fishSource===null&&player.fishingSpot===null;
   });
   if(!restoredLocomotion) errors.push('Restored Game position retained stale locomotion state');
   const guestJournal=guestProbe.locator('#field-journal');
@@ -83,7 +85,7 @@ try {
     inventory.splice(0,inventory.length,...Array.from({length:50},(_,index)=>({name:'Capacity fixture '+index,qty:1})));
     window.__smokeFishingEvents=0;
     addEventListener('climboria:fish',()=>window.__smokeFishingEvents++);
-    Object.assign(player,{fish:.001,fishSource:'open_sea'});
+    Object.assign(player,{fish:.001,fishSource:'open_sea',fishingSpot:{x:player.x,z:player.z}});
   });
   await guestProbe.waitForFunction(()=>window.__climboriaJarrellsPeak.player.fishSource===null);
   const blockedCatch=await guestProbe.evaluate(()=>({
@@ -95,7 +97,7 @@ try {
     const {player,inventory}=window.__climboriaJarrellsPeak;
     const seaFish=['Silverfin','Bluefin Tuna','Mahi-Mahi','Old Boot (junk)'];
     seaFish.forEach((name,index)=>{inventory[index].name=name;});
-    Object.assign(player,{fish:.001,fishSource:'open_sea'});
+    Object.assign(player,{fish:.001,fishSource:'open_sea',fishingSpot:{x:player.x,z:player.z}});
   });
   await guestProbe.waitForFunction(()=>window.__climboriaJarrellsPeak.player.fishSource===null);
   const stackedCatch=await guestProbe.evaluate(()=>({
@@ -104,6 +106,13 @@ try {
     units:window.__climboriaJarrellsPeak.inventory.reduce((sum,item)=>sum+item.qty,0),
   }));
   if(stackedCatch.events!==1||stackedCatch.slots!==50||stackedCatch.units!==51) errors.push('Fishing failed to extend an existing stack: '+JSON.stringify(stackedCatch));
+  await guestProbe.evaluate(()=>{
+    const {player}=window.__climboriaJarrellsPeak;
+    Object.assign(player,{fish:.001,fishSource:'open_sea',fishingSpot:{x:player.x+5,z:player.z}});
+  });
+  await guestProbe.waitForFunction(()=>window.__climboriaJarrellsPeak.player.fishSource===null);
+  if(await guestProbe.evaluate(()=>window.__smokeFishingEvents!==1||
+    window.__climboriaJarrellsPeak.player.fishingSpot!==null)) errors.push('Leaving the fishing spot still awarded a catch');
   await guestProbe.close();
   // The rest of this test exercises 3D creator UX against an explicitly
   // mocked registered account, NOT a real Supabase auth acceptance.
@@ -437,10 +446,10 @@ try {
       fishingSpots: w?.fishingSpots?.map(f=>({label:f.label,waterBodyId:f.waterBodyId})) ?? [],
       coastalDocks: w?.coastalDockSpots?.map(d=>({label:d.label,landClear:!w.waterBodyAt(d.x,d.z),waterClear:w.waterBodyAt(d.waterX,d.z)?.id==='open_sea',shoreHeight:w.heightAt(d.x,d.z)})) ?? [],
       fishingInteractions: w ? w.fishingSpots.map(f=>{
-        const p=w.player,ox=p.x,oz=p.z,fish=p.fish,source=p.fishSource,mode=p.mode;
+        const p=w.player,ox=p.x,oz=p.z,fish=p.fish,source=p.fishSource,fishingSpot=p.fishingSpot,mode=p.mode;
         p.mode='walk';p.x=f.x;p.z=f.z;p.fish=0;w.interact();
-        const started=p.fish>0&&p.fishSource===f.waterBodyId;
-        p.x=ox;p.z=oz;p.fish=fish;p.fishSource=source;p.mode=mode;
+        const started=p.fish>0&&p.fishSource===f.waterBodyId&&p.fishingSpot===f;
+        p.x=ox;p.z=oz;p.fish=fish;p.fishSource=source;p.fishingSpot=fishingSpot;p.mode=mode;
         return {waterBodyId:f.waterBodyId,started};
       }) : [],
       freshwaterBodies: w?.waterBodies?.filter(b=>b.kind==='freshwater').map(b=>({id:b.id,name:b.name,center:[b.x,b.z],surfaceY:b.surfaceY,depth:b.depth})) ?? [],
@@ -672,7 +681,7 @@ try {
   if(afterTrapState.inventory!==beforeTrapInventory||afterTrapState.bag)
     errors.push('Legacy cave-death smoke test leaked carried items into a recoverable bag: '+JSON.stringify({beforeTrapInventory,afterTrapState}));
   const deathLoot=await page.evaluate(()=>window.__climboriaJarrellsPeak?.deathLootLifecycleAudit?.()??null);
-  if(!deathLoot?.ok||!deathLoot.inventoryCleared||!deathLoot.respawned||!deathLoot.locomotionReset||!deathLoot.persisted||
+  if(!deathLoot?.ok||!deathLoot.inventoryCleared||!deathLoot.respawned||!deathLoot.locomotionReset||!deathLoot.castCleared||!deathLoot.persisted||
     !deathLoot.survivesUnload||!deathLoot.isolated||!deathLoot.rehydrated||!deathLoot.recovered||
     !deathLoot.recoveredStored||!deathLoot.clearedOnRecovery||!deathLoot.expired||
     !deathLoot.mapAfterDeath?.visible||!deathLoot.mapAfterDeath?.orange||
