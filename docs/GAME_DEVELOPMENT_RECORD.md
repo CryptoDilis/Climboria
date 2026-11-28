@@ -123,6 +123,16 @@
 
 ---
 
+## Private Game state restart verification — 2026-11-28 PHT
+
+The Game Preview Worker Local Runtime workflow exercises the private drop,
+mastery, and regional event fixtures together in a SQLite Durable Object under
+local workerd. The test verifies that concurrent claims and activity replays
+credit once, the original drop deadline and mastery replay protection survive a
+runtime restart, and an expired regional slot stays closed after the clock moves
+backward. The fixture uses synthetic identities and time. Its outer Worker
+returns HTTP 404.
+
 ## Phase 04 private drop expiry — 2026-11-28 PHT
 
 - The isolated drop-claim fixture now writes a 90-second lifetime in room storage before a claim can proceed. New room instances reuse the stored deadline. At expiry the transaction denies pickup, and an issued or consumed drop cannot be reissued to reset its lifetime. Receipt and inventory slot still commit atomically.
