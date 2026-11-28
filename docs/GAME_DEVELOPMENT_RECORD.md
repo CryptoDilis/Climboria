@@ -3799,3 +3799,23 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Next verify exact CI, shared inventory integration, private runtime persistence and authored workbench/campfire interactions. External physical and registered-account acceptance remain gated.
 
 - Prior exact candidate `c52246b9e7a349969fc704218a6845d54735c068` passed all four CI workflows, including gameplay smoke. Reconciled on updated main `a995e50f2787e32e5f1b5a577967c65155b8bebc`; fresh head CI required before merge. No changes to crafting code or tests in reconciliation.
+
+
+## Phase 06 temporary private campsite placement candidate — 2026-11-28 PHT
+
+- Added persistent shared registry for two synthetic authored campsite slots, one active camp per verified account. Trusted placement requires proximity, grounded terrain, clear placement and no combat. A five-minute fixture lease expires automatically on subsequent observation; persistent observed clock prevents resurrection on rollback. Concurrent placement, owner-only removal and stale revision checks are atomic. Projection exposes only occupancy, expiry and own-camp status. No arbitrary client coordinates, permanent land claim, invulnerability or production route.
+- Three isolated JavaScript scenarios passed (slot contention, owner limit/removal, restart-style recreation/expiry, clock rollback, invalid placement, transaction rollback and ambiguous commit). Exact Node CI pending. Slot names and TTL are provisional test values; actual authored world placement, rendering, verified rest binding and real-device acceptance remain open.
+- #1108 previous exact head passed 7/7 CI, but a later crafting merge caused a record conflict. Reconciled again on main with fresh checks required. Next bind temporary campsite registry to trusted rest proofs after parent #1114 acceptance and add environmental exposure.
+
+
+## Phase 06 private campsite resting candidate — 2026-11-28 PHT
+
+- Added private persistent fatigue ledger: completed exertion raises fatigue; server-proven stationary, uninterrupted, out-of-combat rest at an active nearby campsite reduces it. Bounds, contiguous sequence, owner/station revalidation and transaction rollback reject replay and stale authority. No offline catch-up, stamina/health boost, invulnerability, land claim or public activation. Rates are fixture values.
+- Three isolated JavaScript scenarios passed (bounded recovery, concurrency, revoked station/combat/position, rollback, ambiguous commit and malformed records). Exact Node CI and trusted world-interval binding pending. No actual campsite model or placement UI yet.
+- #1104 merged at `5d6eb4dd8559bc8368addd646190e1728c21974d` after four fresh checks; #1110 merged at `a995e50f2787e32e5f1b5a577967c65155b8bebc` after four checks. #1105 reconciled on merged parents; fresh combined CI pending. Next: campsite placement/interaction, private temperature model and runtime acceptance; physical/registered account gates retained.
+
+
+## Phase 06 private campsite lease / fatigue integration candidate — 2026-11-28 PHT
+
+- Stacked on exact #1114 and #1116, with both parent tests preserved. Optional private rest composition uses the same storage transaction to observe and prune the campsite lease and update fatigue; validates account ownership, exact slot/generation, server-proven interval wholly within the lease, duration and current expiry. Persists observed time even on expired lease denial to reject rollback; rechecks authority and lease clock after writes. Existing isolated fixture mode stays available for its tests; integrated mode only is intended for future private world binding.
+- Three new cross-ledger regression tests cover concurrent replay, expired/replaced lease, clock rollback, generation/interval mismatch, failed second write and expiry during commit. Exact Node CI pending. No real world binding, combat effects, offline recovery or production activation. Parent PRs and fresh integrated CI required before merge.
