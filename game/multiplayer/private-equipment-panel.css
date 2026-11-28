@@ -1,0 +1,10 @@
+/* Private preview only; not imported by public game. */
+.private-equipment-panel { box-sizing:border-box; width:min(100%,600px); color:#f4eee1; background:#101923; border:1px solid #806238; border-radius:12px; padding:clamp(12px,4vw,24px); font:16px/1.5 system-ui,sans-serif; overflow-wrap:anywhere; }
+.private-equipment-panel .equipment-title { color:#e9c786; margin:0; font-size:1.4rem; }
+.private-equipment-panel .equipment-item { margin:12px 0; font-size:1.1rem; }
+.private-equipment-panel .equipment-meter { width:100%; height:18px; accent-color:#c69b43; }
+.private-equipment-panel .equipment-durability-label,.private-equipment-panel .equipment-condition { margin:8px 0; }
+.private-equipment-panel .equipment-details { display:grid; gap:8px; }
+.private-equipment-panel .equipment-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; padding:10px 12px; border-radius:6px; background:#1a2634; }
+.private-equipment-panel .equipment-row dd { margin:0; text-align:right; color:#ebcf9c; }
+@media(max-width:440px){.private-equipment-panel .equipment-row{grid-template-columns:minmax(0,1fr);gap:2px}.private-equipment-panel .equipment-row dd{text-align:left}}
