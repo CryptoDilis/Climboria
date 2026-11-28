@@ -22,7 +22,7 @@ The private Game state workflow passed its new real workerd/SQLite restart step.
 - **BLOCKED — EXTERNAL VERIFICATION REQUIRED** for private authored edge acceptance. An approved tester needs the bounded private window and access described by the [operator runbook](GAME_PRIVATE_COMBAT_OPERATOR_QA.md).
 - **BLOCKED — EXTERNAL VERIFICATION REQUIRED** for physical Android/iPhone input and performance. Run the [physical device acceptance protocol](GAME_NPC_PHYSICAL_DEVICE_ACCEPTANCE.md) on the exact reviewed Game revision.
 
-Native HUD keyboard activation, local dropped-backpack range, and responsive backpack layout passed desktop or touch-emulated browser checks, as applicable. Check each exact pull request before merging. [#1071](https://github.com/CryptoDilis/Climboria/pull/1071), [#1076](https://github.com/CryptoDilis/Climboria/pull/1076), [#1078](https://github.com/CryptoDilis/Climboria/pull/1078)
+Native HUD keyboard activation passed 18 exact CI checks and merged at `5a50fa7958b9fe525e9a9fe2dcbe4c7bc621f222`. The local dropped-backpack range and responsive backpack layout passed desktop and touch-emulated Chromium. Both remain subject to their exact pull request CI. [Keyboard #1071](https://github.com/CryptoDilis/Climboria/pull/1071), [range #1076](https://github.com/CryptoDilis/Climboria/pull/1076), [layout #1078](https://github.com/CryptoDilis/Climboria/pull/1078)
 
 ## Crowd C9–C13 and NPC consolidation checkpoint — 2026-11-28 PHT
 
