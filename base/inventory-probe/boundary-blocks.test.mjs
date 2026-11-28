@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {observeBoundaryBlocks,observeBoundarySignatures,boundaryFailureCode} from './boundary-blocks.mjs';
+import {observeBoundaryBlocks,observeBoundarySignatures,boundaryFailureCode,boundaryVersionHint} from './boundary-blocks.mjs';
 import {CLIMB_SOLANA_MINT} from '../../token/climb-bridge/mint-inspect.mjs';
 const A='https://a.invalid',B='https://b.invalid';
 const headers=[
  {blockTime:1795765942,parentSlot:474473088,blockhash:'Pg3nSMoABAGRGxN7Jex97A3MgD98EhqZg4QpSbnYmip',previousBlockhash:'8vzSTRse9S6ghJorV9aKXmCF3mFm8EcBbB4bLdFWUADB'},
  {blockTime:1795765943,parentSlot:474473089,blockhash:'HPh9zhR5mvsZv7nkoFEhjGM3i2U8jrcJ6KX7ifknxxqQ',previousBlockhash:'Pg3nSMoABAGRGxN7Jex97A3MgD98EhqZg4QpSbnYmip'}
 ];
-const tx=(ch,keys=[],meta={err:null,preTokenBalances:[],postTokenBalances:[]})=>({transaction:{signatures:[ch.repeat(64)],message:{accountKeys:keys}},meta});
+const tx=(ch,keys=[],meta={err:null,preTokenBalances:[],postTokenBalances:[]})=>({version:meta===null?undefined:0,transaction:{signatures:[ch.repeat(64)],message:{accountKeys:keys}},meta});
 function mock(mutate=()=>{}){
  const calls=[];
  const fetchFn=async(url,options)=>{
@@ -91,4 +91,21 @@ test('full mode refuses version error without auto-fallback or widening supporte
  assert.equal(calls.length,2);
  assert.equal(calls[1].params[1].maxSupportedTransactionVersion,0);
  assert.equal(calls[1].params[1].transactionDetails,'full');
+});
+
+test('full block response must explicitly report supported version for complete metadata',async()=>{
+ for(const version of [1,2,'0',null,undefined]){
+  const {fetchFn}=mock((x,q)=>{if(q.method==='getBlock')x.result.transactions[0].version=version});
+  await assert.rejects(observeBoundaryBlocks(A,B,{fetchFn}),e=>boundaryFailureCode(e)==='A_getBlock_TRANSACTION_SHAPE');
+ }
+ const {fetchFn}=mock((x,q)=>{if(q.method==='getBlock')x.result.transactions[0].version='legacy'});
+ assert.equal((await observeBoundaryBlocks(A,B,{fetchFn})).authorization,false);
+});
+test('version error hint is numeric only and never widens supported version',async()=>{
+ const template=v=>'Transaction version ('+v+') is not supported by the requesting client. Please try the request again with the following configuration parameter: "maxSupportedTransactionVersion": '+v;
+ for(const [message,expected] of [[template(1),1],[template(255),255],[template(256),null],[template(1)+' SECRET',null],[template(1).replace(/: 1$/,': 2'),null],['SECRET',null]]){
+  const {fetchFn,calls}=mock((x,q)=>{if(q.method==='getBlock'){delete x.result;x.error={code:-32015,message}}});
+  await assert.rejects(observeBoundaryBlocks(A,B,{fetchFn}),e=>boundaryFailureCode(e)==='A_getBlock_RPC_UNSUPPORTED_VERSION'&&boundaryVersionHint(e)===expected&&!e.message.includes('SECRET'));
+  assert.equal(calls.length,2);assert.equal(calls[1].params[1].maxSupportedTransactionVersion,0);
+ }
 });
