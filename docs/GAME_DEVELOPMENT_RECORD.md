@@ -47,6 +47,14 @@
 
 ---
 
+## Phase 03 desktop mouse orbit — 2026-11-28 PHT
+
+- Right-button drag now controls camera orbit independently of left-click movement. Releasing another button preserves the orbit, and subsequent movement without a held right button clears stale orbit after a lost release. The existing pointer-lock route is retained.
+- The exact inline handler tests cover walk destinations, independent button release, missing release and pointer lock. The browser smoke now supplies the held-right-button mask for its synthetic orbit event. Physical desktop acceptance is **BLOCKED — EXTERNAL VERIFICATION REQUIRED**. On the reviewed revision, test left-click walking, right-button orbit with another button released, and release outside the canvas, then record the browser and result.
+- Next verify the desktop-orbit and parallel Phase 03 gesture PRs. Keep the protected pilot and device acceptance gates open until verified.
+
+---
+
 ## Verified reconnect and browser transport merges — 2026-11-28 PHT
 
 - [R1 cave discovery #1060](https://github.com/CryptoDilis/Climboria/pull/1060) merged after 11 checks passed. [Hosted verification](https://github.com/CryptoDilis/Climboria/actions/runs/46090048254) passed. The follow-up adds an optional route clue at the Expedition camp and a field note on reaching the cave approach. The discovery uses the existing journal scope and persistence rules. The gameplay smoke verifies the note stays hidden at spawn, appears on arrival, and leaves no journal storage in guest mode.
