@@ -138,7 +138,7 @@ try{
  assert.match(manifest.sourceSha,/^[a-f0-9]{40}$/);
  writeFileSync(process.argv[2],JSON.stringify(manifest,null,2)+'\n');console.log(JSON.stringify(manifest,null,2));
  if(process.argv[3]){
-  const evidence=await verifyLocalAuthorizations({rpc,call,number,address,record,cast,calldata,creator,wallet,guard,token,quote,vaults,payee,signers,sourceSha:manifest.sourceSha});
+  const evidence=await verifyLocalAuthorizations({rpc,call,number,address,record,cast,calldata,creator,wallet,guard,token,quote,vaults,payee,signers,contracts,sourceSha:manifest.sourceSha});
   writeFileSync(process.argv[3],JSON.stringify(evidence,null,2)+'\n');
   console.log(JSON.stringify(evidence,null,2));
  }
