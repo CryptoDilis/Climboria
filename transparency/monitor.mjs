@@ -16,9 +16,9 @@ function parseQuantity(v){requireValue(typeof v==="string"&&QUANTITY.test(v),"in
 function parseWord(v){requireValue(typeof v==="string"&&WORD.test(v),"invalid ABI word");return BigInt(v);}
 function addr(v){requireValue(typeof v==="string"&&ADDRESS.test(v)&&!/^0x0{40}$/i.test(v),"invalid address");return v.toLowerCase();}
 export function formatRaw(n){requireValue(typeof n==="bigint"&&n>=0n,"invalid token units");return (n/1000000n).toString()+"."+String(n%1000000n).padStart(6,"0");}
-function manifestCheck(m){requireValue(m&&m.chainId===8453&&m.decimals===6&&m.reviewed===true,"manifest unavailable");requireValue(typeof m.runtimeCode==="string"&&RUNTIME.test(m.runtimeCode),"runtime pin absent");const token=addr(m.token);requireValue(Array.isArray(m.wallets)&&m.wallets.length===9,"nine custody addresses required");const wallets=m.wallets.map(addr);requireValue(new Set(wallets).size===wallets.length&&!wallets.includes(token),"duplicate custody address");return {token,wallets,runtime:m.runtimeCode.toLowerCase()};}
+function manifestCheck(m){requireValue(m&&m.chainId===8453&&m.decimals===6&&m.reviewed===true,"manifest unavailable");requireValue(typeof m.runtimeCode==="string"&&RUNTIME.test(m.runtimeCode),"runtime pin absent");const token=addr(m.token);requireValue(Array.isArray(m.wallets)&&m.wallets.length>0&&m.wallets.length<=64,"bounded custody registry required");const wallets=m.wallets.map(addr);requireValue(new Set(wallets).size===wallets.length&&!wallets.includes(token),"duplicate custody address");return {token,wallets,runtime:m.runtimeCode.toLowerCase()};}
 function block(b){requireValue(b&&HASH.test(b.hash),"missing finalized block");return {number:parseQuantity(b.number),hash:b.hash.toLowerCase(),timestamp:parseQuantity(b.timestamp)};}
-function sameBlock(a,b){requireValue(a.number===b.number&&a.hash===b.hash,"block changed");}
+function sameBlock(a,b){requireValue(a.number===b.number&&a.hash===b.hash&&a.timestamp===b.timestamp,"block changed");}
 const topicAddress=t=>"0x"+t.slice(-40).toLowerCase();
 function parseLog(l,token,from,to){
  requireValue(l&&l.removed===false&&addr(l.address)===token&&Array.isArray(l.topics)&&l.topics.length===3&&l.topics[0].toLowerCase()===TRANSFER&&l.topics.slice(1).every(t=>/^0x0{24}[0-9a-f]{40}$/i.test(t)),"invalid transfer log");
@@ -30,12 +30,15 @@ function parseLog(l,token,from,to){
 // The transport must be a reviewed read-only RPC adapter, never a wallet provider.
 // Production wrapper below cannot be activated by browser/query parameters.
 export function createMonitor({manifest=null,rpc,now=()=>Date.now(),ttlMs=30000,maxBlocks=500n}={}){
- let cache=null,inFlight=null;
+ let cache=null,inFlight=null,transferBusy=false;
+ const clone=v=>JSON.parse(JSON.stringify(v));
+ const limits=Number.isFinite(ttlMs)&&ttlMs>=0&&ttlMs<=300000&&typeof maxBlocks==="bigint"&&maxBlocks>0n&&maxBlocks<=500n;
+ const configured=manifest&&typeof rpc==="function"&&limits;
  const unavailable=()=>({status:"unavailable",reason:"verified manifest or provider unavailable",data:null});
  async function snapshot(){
-  if(!manifest||typeof rpc!=="function")return unavailable();
-  if(cache&&now()-cache.observedAt<ttlMs&&now()>=cache.observedAt)return {...cache,status:"fresh"};
-  if(inFlight)return inFlight;
+  if(!configured)return unavailable();
+  if(cache&&now()-cache.observedAt<ttlMs&&now()>=cache.observedAt)return clone({...cache,status:"fresh"});
+  if(inFlight)return clone(await inFlight);
   inFlight=(async()=>{
    try{
     const m=manifestCheck(manifest);
@@ -53,10 +56,11 @@ export function createMonitor({manifest=null,rpc,now=()=>Date.now(),ttlMs=30000,
     return cache;
    }catch{ return cache?{...cache,status:"stale",reason:"provider or verification failed"}:unavailable(); }
   })();
-  try{return await inFlight;}finally{inFlight=null;}
+  try{return clone(await inFlight);}finally{inFlight=null;}
  }
  async function transfers({fromBlock,toBlock}={}){
-  if(!manifest||typeof rpc!=="function")return unavailable();
+  if(!configured||transferBusy)return unavailable();
+  transferBusy=true;
   try{
    const m=manifestCheck(manifest);
    requireValue(typeof fromBlock==="bigint"&&typeof toBlock==="bigint"&&fromBlock>=0n&&toBlock>=fromBlock&&toBlock-fromBlock+1n<=maxBlocks,"invalid page range");
@@ -80,8 +84,36 @@ export function createMonitor({manifest=null,rpc,now=()=>Date.now(),ttlMs=30000,
    requireValue(parseQuantity(await rpc("eth_chainId",[]))===CHAIN_ID,"chain changed");
    const wallets=new Set(m.wallets),rows=[...seen.values()].filter(r=>wallets.has(r.from)||wallets.has(r.to)).sort((a,b)=>BigInt(a.blockNumber)<BigInt(b.blockNumber)?-1:BigInt(a.blockNumber)>BigInt(b.blockNumber)?1:BigInt(a.logIndex)<BigInt(b.logIndex)?-1:BigInt(a.logIndex)>BigInt(b.logIndex)?1:0);
    return {status:"fresh",data:{finality:"finalized-provider-observed",fromBlock:fromBlock.toString(),toBlock:toBlock.toString(),nextFromBlock:toBlock<finalized.number?(toBlock+1n).toString():null,rows,observedAt:now(),coverage:"provider-returned logs for requested range; not proof of complete lifetime transfers"}};
-  }catch{return unavailable();}
+  }catch{return unavailable();}finally{transferBusy=false;}
  }
  return Object.freeze({snapshot,transfers});
 }
+
+// Read-only HTTPS transport. Caller supplies a reviewed endpoint; production remains null.
+// Bounded requests, no credentials, no redirects, no wallet methods, no automatic retries.
+const READ_METHODS=new Set(["eth_chainId","eth_getBlockByNumber","eth_getCode","eth_call","eth_getLogs"]);
+export function createReadOnlyRpc({endpoint,fetchImpl=globalThis.fetch,now=()=>Date.now(),timeoutMs=8000,cooldownMs=30000,maxBytes=2000000}={}){
+ const url=new URL(endpoint);
+ requireValue(url.protocol==="https:"&&!url.username&&!url.password&&!url.search&&!url.hash,"public HTTPS endpoint required");
+ requireValue(typeof fetchImpl==="function"&&Number.isInteger(timeoutMs)&&timeoutMs>0&&timeoutMs<=15000&&Number.isInteger(cooldownMs)&&cooldownMs>=1000&&cooldownMs<=300000&&Number.isInteger(maxBytes)&&maxBytes>=1024&&maxBytes<=4000000,"invalid transport limits");
+ let nextId=0,blockedUntil=0;
+ return async function rpc(method,params){
+  requireValue(READ_METHODS.has(method)&&Array.isArray(params),"non-read-only RPC method");
+  requireValue(now()>=blockedUntil,"RPC cooling down");
+  const id=++nextId,controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{
+   const response=await fetchImpl(url.href,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id,method,params}),credentials:"omit",redirect:"error",cache:"no-store",signal:controller.signal});
+   if(response.status===429||response.status===503){blockedUntil=now()+cooldownMs;throw Error("RPC rate limited");}
+   requireValue(response.ok&&response.body&&typeof response.body.getReader==="function","RPC HTTP failure");
+   const declared=response.headers.get("content-length");requireValue(declared===null||Number(declared)<=maxBytes,"RPC response too large");
+   const reader=response.body.getReader(),decoder=new TextDecoder("utf-8",{fatal:true});let length=0,body="";
+   try{while(true){const {done,value}=await reader.read();if(done)break;length+=value.byteLength;requireValue(length<=maxBytes,"RPC response too large");body+=decoder.decode(value,{stream:true});}body+=decoder.decode();}catch(error){await reader.cancel().catch(()=>{});throw error;}
+   const result=JSON.parse(body);
+   requireValue(result&&result.jsonrpc==="2.0"&&result.id===id&&!Object.hasOwn(result,"error")&&Object.hasOwn(result,"result"),"RPC response mismatch");
+   return result.result;
+  }finally{clearTimeout(timer);}
+ };
+}
+
 export const productionMonitor=createMonitor({manifest:PRODUCTION_MANIFEST});
