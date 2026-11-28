@@ -1,5 +1,9 @@
 # Climboria Game Development Record
 
+## Game Economy V4 — marketplace fee allocation — 2026-11-28 PHT
+
+- Owner approved 2% marketplace transaction fee split 50/50 between Treasure Vault and Climboria revenue (1% of gross sale value each). Seller-side deduction/free listing/zero buyer platform fee interpreted from preceding proposal and recorded for correction if needed. KOS 1% entirely to Treasure Vault unchanged; no ordinary CLIMB transfer tax. Revenue custody, exact settlement/rounding, royalty policy and independent security review pending. No actual fees, contracts, payment path or release implemented; Game design/backlog/record only. Next discuss optional NFT mint/redeem and custody, continue independent nonfinancial Game backlog.
+
 ## Game Economy V4 — immutable CP maximum and marketplace currency — 2026-11-28 PHT
 
 - Owner approved maximum 1,000,000,000 CP (not fixed circulating supply), explicitly no increase even by owner, scarce gameplay acquisition, and official Base CLIMB-only marketplace settlement. Recorded design, conservation invariant, proposed low earning rates and privileged database limitations in economy record and backlog. No cap-changing admin authority or reset/migration bypass; independent verification required before promising absolute immutability.
