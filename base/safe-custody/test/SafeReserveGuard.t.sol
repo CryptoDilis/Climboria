@@ -266,6 +266,26 @@ contract SafeReserveGuardTest {
         _quorum(abi.encodeCall(guard.scheduleLiquidity,(1,1000,500,50,t+7 days,"LP",block.timestamp,block.timestamp+1 hours)));
         require(wallet.nonce()==n+1);
     }
+    function testPlainReserveRewardScheduleSignedWindowBoundaries() public {
+        _bind();
+        _quorum(abi.encodeCall(guard.revokeRewardSigner,(1,1)));
+        uint256 t=block.timestamp;
+        uint256 n=wallet.nonce();
+        bytes memory future=abi.encodeCall(guard.scheduleRewardSigner,(1,2,PAYEE,t+1 hours,t+2 hours));
+        bytes memory sigs=_signed(address(guard),future,3);
+        vm.expectRevert();_exec(address(guard),future,sigs);
+        require(wallet.nonce()==n&&!guard.transactionActive());
+        _reject(address(guard),abi.encodeCall(guard.scheduleRewardSigner,(1,2,PAYEE,t,t+1 days+1)),3);
+        _reject(address(guard),abi.encodeCall(guard.scheduleRewardSigner,(1,2,PAYEE,t,t)),3);
+        vm.warp(t+2 hours);
+        vm.expectRevert();_exec(address(guard),future,sigs);
+        require(wallet.nonce()==n&&guard.epoch()==1&&!guard.transactionActive());
+        _quorum(abi.encodeCall(guard.scheduleRewardSigner,(1,2,PAYEE,block.timestamp,block.timestamp+1 days)));
+        require(wallet.nonce()==n+1&&token.totalSupply()==SUPPLY);
+        vm.warp(block.timestamp+2 days);
+        _quorum(abi.encodeCall(guard.activateRewardSigner,(1,2,1,PAYEE)));
+        require(wallet.nonce()==n+2&&guard.epoch()==1&&!guard.transactionActive());
+    }
     function testStaleLegacyCancellationCannotCancelReplacement() public {
         _bind();
         uint256 t=block.timestamp;
