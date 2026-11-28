@@ -222,6 +222,12 @@ body.mobile-device.climboria-portrait #hud{visibility:hidden!important}
 #player-card{pointer-events:none}body.free #player-card{pointer-events:auto;cursor:pointer}
 #player-avatar{width:38px;height:38px;object-fit:contain;background:#080d14;border:1px solid #cba45e;border-radius:9px;padding:3px}
 #climboriaInventoryPanel{left:50%!important;top:50%!important;right:auto!important;transform:translate(-50%,-50%);width:min(620px,calc(100vw - 28px))!important;max-height:82vh!important}
+#climboriaInventoryPanel{container-type:inline-size}
+.inventory-backpack-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px}
+@container (max-width:500px){
+ .inventory-backpack-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+ .inventory-panel-heading{position:sticky;top:0;z-index:1;background:#0b1119}
+}
 
 /* Restore gameplay interface after first-frame boot on desktop and mobile landscape. */
 body.free #hud,
@@ -2188,13 +2194,13 @@ const invToggle={addEventListener:()=>{}};
  const saveInventory=()=>{try{localStorage.setItem(inventoryStorageKey,JSON.stringify(inventory))}catch(_){}};
 function renderInventory(){
  invPanel.replaceChildren();
- const head=document.createElement('div');head.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;color:#ffe3a3;font-weight:700';head.textContent='CHARACTER · EQUIPMENT & INVENTORY';
+ const head=document.createElement('div');head.className='inventory-panel-heading';head.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;color:#ffe3a3;font-weight:700';head.textContent='CHARACTER · EQUIPMENT & INVENTORY';
  const close=document.createElement('button');close.type='button';close.textContent='CLOSE';close.style.cssText='border:0;background:transparent;color:#ffe3a3;cursor:pointer';close.addEventListener('click',()=>invPanel.style.display='none');head.append(close);invPanel.append(head);
   const eqTitle=document.createElement('div');eqTitle.textContent='EQUIPMENT SLOTS';eqTitle.style.cssText='font-weight:800;color:#e8c77f;letter-spacing:.14em;margin:10px 0';invPanel.append(eqTitle);
   const equip=document.createElement('div');equip.style.cssText='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:16px';
   [['HEAD','Accessory'],['NECK','Accessory'],['CHEST','Armor'],['BACK','Accessory'],['HANDS','Gloves'],['LEGS','Armor'],['FEET','Boots'],['WEAPON','Weapon']].forEach(([slot,type])=>{const box=document.createElement('div');box.style.cssText='min-height:76px;border:1px solid #9b7b4c88;border-radius:9px;background:linear-gradient(145deg,#1b2428,#0b1015);padding:9px;text-align:center';const title=document.createElement('b');title.textContent=slot;title.style.cssText='display:block;color:#e8c77f;font-size:10px;letter-spacing:.1em';const value=document.createElement('span');value.textContent='Empty · '+type;value.style.cssText='display:block;margin-top:10px;color:#aeb4b4;font-size:10px';box.append(title,value);equip.append(box)});invPanel.append(equip);
   const bagTitle=document.createElement('div');bagTitle.textContent='BACKPACK · 50 SLOTS';bagTitle.style.cssText='font-weight:800;color:#e8c77f;letter-spacing:.14em;margin:10px 0';invPanel.append(bagTitle);
-  const bag=document.createElement('div');bag.style.cssText='display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px';
+  const bag=document.createElement('div');bag.className='inventory-backpack-grid';
   const slots=Array.from({length:50},()=>null);
   inventory.slice(0,50).forEach((item,i)=>slots[i]=item);
   slots.forEach((item,i)=>{const cell=document.createElement('div');cell.style.cssText='aspect-ratio:1;min-width:0;border:1px solid #9b7b4c88;border-radius:6px;background:linear-gradient(145deg,#17232b,#090e13);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px;overflow:hidden';const num=document.createElement('small');num.textContent=String(i+1).padStart(2,'0');num.style.cssText='font-size:8px;color:#8f9aa2;align-self:flex-start';cell.append(num);if(item){const name=document.createElement('span');name.textContent=item.name;name.title=item.name;name.style.cssText='font-size:9px;color:#f4ecd8;text-align:center;overflow-wrap:anywhere;line-height:1.1';const qty=document.createElement('b');qty.textContent='×'+item.qty;qty.style.cssText='font-size:9px;color:#e8c77f';cell.append(name,qty)}else{const empty=document.createElement('span');empty.textContent='—';empty.style.cssText='font-size:12px;color:#53606a';cell.append(empty)}bag.append(cell)});invPanel.append(bag);

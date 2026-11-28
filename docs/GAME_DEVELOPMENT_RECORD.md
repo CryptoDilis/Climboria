@@ -63,6 +63,11 @@
 
 ---
 
+## Phase 03 narrow backpack layout — 2026-11-28 PHT
+
+- The backpack shows five wider columns in narrow panels, keeps all 50 slots, and leaves Close visible while players scroll. Desktop keeps its ten columns.
+- Local Chromium verified keyboard open and mouse close at 1200 × 800, and touch open, scroll and close at 844 × 390 and 667 × 340. Desktop and mobile gameplay smoke include assertions for the slot count and layout.
+
 ## Phase 03 desktop mouse orbit — 2026-11-28 PHT
 
 - Right-button drag now controls camera orbit independently of left-click movement. Releasing another button preserves the orbit, and subsequent movement without a held right button clears stale orbit after a lost release. The existing pointer-lock route is retained.

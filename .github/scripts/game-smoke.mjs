@@ -968,7 +968,11 @@ try {
   await page.locator('#player-card').dispatchEvent('click');
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display !== 'none', undefined, { timeout: 5000 });
   if (await page.locator('#climboriaInventoryPanel').isHidden()) errors.push('Inventory panel did not open');
-  const bagSlots = await page.locator('#climboriaInventoryPanel').locator('div').filter({has: page.locator('small')}).count().catch(()=>0);
+  const desktopBackpack = await page.locator('.inventory-backpack-grid').evaluate(grid=>({
+    slots:grid.children.length,
+    columns:getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+  }));
+  if(desktopBackpack.slots!==50||desktopBackpack.columns!==10) errors.push('Desktop backpack layout is invalid: '+JSON.stringify(desktopBackpack));
   if (!(await page.locator('#climboriaInventoryPanel').getByText('BACKPACK · 50 SLOTS').count())) errors.push('50-slot backpack heading missing');
   await page.locator('#climboriaInventoryPanel button').filter({hasText:'CLOSE'}).dispatchEvent('click');
   // CLOSE sets the inline display synchronously; a single browser task checks
@@ -1337,6 +1341,24 @@ try {
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
   await mobile.keyboard.press('w');
   await mobile.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.mode === 'walk', undefined, { timeout: 10000 });
+  await mobile.locator('#player-card').tap();
+  const mobileBackpack = await mobile.locator('.inventory-backpack-grid').evaluate(grid=>{
+    const panel=grid.closest('#climboriaInventoryPanel');
+    const close=panel.querySelector('button');
+    panel.scrollTop=panel.scrollHeight;
+    const closeBounds=close.getBoundingClientRect();
+    const panelBounds=panel.getBoundingClientRect();
+    return {
+      slots:grid.children.length,
+      columns:getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+      scrolled:panel.scrollTop>0,
+      closeVisible:closeBounds.top>=panelBounds.top&&closeBounds.bottom<=panelBounds.bottom,
+    };
+  });
+  if(mobileBackpack.slots!==50||mobileBackpack.columns!==5||!mobileBackpack.scrolled||!mobileBackpack.closeVisible)
+    errors.push('Mobile backpack layout is invalid: '+JSON.stringify(mobileBackpack));
+  await mobile.locator('#climboriaInventoryPanel').getByRole('button',{name:'CLOSE'}).tap();
+  await mobile.locator('#climboriaInventoryPanel').waitFor({state:'hidden'});
   const mobileOrbit = await mobile.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw,hero:api?.heroYaw,glb:api?.heroUsesGlb};
     const target=document.body;
