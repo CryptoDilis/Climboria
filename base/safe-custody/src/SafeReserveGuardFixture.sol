@@ -133,6 +133,8 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     }
     function scheduleRewardSigner(uint256 expected,uint256 generation,address signer,uint256 validAfter,uint256 validUntil) external onlyWallet {
         V3GovernedGameRewardFixture(_target(1,expected)).schedule(expected,generation,signer,validAfter,validUntil);
+        // Successful reward nominations create the same expense conflict as owner nominations.
+        _onNomination(signer);
     }
     function cancelRewardSigner(uint256 expected,uint256 generation,uint256 serial) external onlyWallet {
         V3GovernedGameRewardFixture(_target(1,expected)).cancel(expected,generation,serial);
