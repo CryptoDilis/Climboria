@@ -1,5 +1,6 @@
 // Local-only mined deployment rehearsal. No external RPC, private keys, or network broadcast.
 import assert from 'node:assert/strict';
+import {verifyLocalVaultRuntime} from './local-vault-runtime-provenance.mjs';
 import {verifyRuntime} from './verify-runtime-template.mjs';
 import {verifyNamedRuntime} from './verify-named-runtime.mjs';
 import {verifyLocalAuthorizations} from './local-authorization-rehearsal.mjs';
@@ -155,7 +156,8 @@ try{
  assert.equal(new Set(vaults.map(x=>x.address)).size,7);
  for(const a of [creator,wallet,guard,successor,founder,distributor,payee,...owners])assert.equal(await number(token,'balanceOf(address)',a),0n);
  negative.push(await rejectCall('consumedSafeNonceCannotReplay',creator,wallet,exec(pack(sigs))));
- const manifest={status:'LOCAL_ANVIL_REHEARSAL_ONLY',sourceSha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),chainId:Number(CHAIN),localHardfork:'cancun',localBlockGasLimit:Number(LIMIT),testOnly:true,signatureMode:'ECDSA_ONLY',factoryProvenance,contracts,roles:{creator,owners,founder,distributor},startTimestamp:Number(start),totalSupplyRaw:String(SUPPLY),vaults,transactions:steps,negativeEthCalls:negative,limitations:'Synthetic quote/pool/LP, local unlocked Anvil accounts, three offline ECDSA signatures, no public RPC, no real signers, no production review. Gas observations are local receipts only, not a public Base Sepolia gas estimate or authorization.'};
+ const vaultProvenance=await verifyLocalVaultRuntime({verifyNamed,verify,ast,cast,call,address,number,requireCode,successor,token,guard,quote,lp,founder,distributor,start,vaults,amounts,contracts});
+ const manifest={status:'LOCAL_ANVIL_REHEARSAL_ONLY',sourceSha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),chainId:Number(CHAIN),localHardfork:'cancun',localBlockGasLimit:Number(LIMIT),testOnly:true,signatureMode:'ECDSA_ONLY',factoryProvenance,vaultProvenance,contracts,roles:{creator,owners,founder,distributor},startTimestamp:Number(start),totalSupplyRaw:String(SUPPLY),vaults,transactions:steps,negativeEthCalls:negative,limitations:'Synthetic quote/pool/LP, local unlocked Anvil accounts, three offline ECDSA signatures, no public RPC, no real signers, no production review. Gas observations are local receipts only, not a public Base Sepolia gas estimate or authorization.'};
  assert.match(manifest.sourceSha,/^[a-f0-9]{40}$/);
  writeFileSync(process.argv[2],JSON.stringify(manifest,null,2)+'\n');console.log(JSON.stringify(manifest,null,2));
  if(process.argv[3]){
