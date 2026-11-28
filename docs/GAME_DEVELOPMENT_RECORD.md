@@ -3790,3 +3790,9 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 
 - Added independent private read-only equipment panel over owner-bound equipment inspection: fixed training gloves, enhancement, durability meter and broken/worn/full condition, material and fixture-kit balances. Strict snapshot validation and lifecycle generation/scope checks reject malformed or stale results; host must clear on session changes. No repair/enhance controls, production route, player wallet or local storage changes.
 - Three isolated JS DOM-fixture scenarios passed. Added scoped navy/gold responsive CSS and Chromium acceptance for 1200×800 and 360×640 covering visible meter, layout, minimum 16px text, and pending-response logout. Exact Node/browser CI pending; no actual gameplay wiring or device claim. Next bind a reviewed private authenticated presentation host and reconcile combined crafted repair after parents merge.
+
+
+## Phases 05–06 private crafting presentation candidate — 2026-11-28 PHT
+
+- Independent read-only training inventory and recipe presentation. Displays five stock balances, two fixed fixture recipes, workbench/campfire requirement, missing material and output stack status. Material availability is explicitly not station or server authorization; no mutation controls, actual player transport, local persistence or public activation. Scoped navy/gold responsive stylesheet; no public import.
+- Three focused isolated JavaScript DOM-fixture scenarios passed: materials/output limits, malformed stock and missing inventory, session changes and disposal. Exact repository CI pending; actual browser acceptance and private authenticated host wiring still open. Recipe values are provisional fixture data aligned with #1104; recheck against merged server recipe authority before enabling any actions.
