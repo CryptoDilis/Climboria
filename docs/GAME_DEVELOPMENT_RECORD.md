@@ -3790,3 +3790,12 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 
 - Added independent private read-only equipment panel over owner-bound equipment inspection: fixed training gloves, enhancement, durability meter and broken/worn/full condition, material and fixture-kit balances. Strict snapshot validation and lifecycle generation/scope checks reject malformed or stale results; host must clear on session changes. No repair/enhance controls, production route, player wallet or local storage changes.
 - Three isolated JS DOM-fixture scenarios passed. Added scoped navy/gold responsive CSS and Chromium acceptance for 1200×800 and 360×640 covering visible meter, layout, minimum 16px text, and pending-response logout. Exact Node/browser CI pending; no actual gameplay wiring or device claim. Next bind a reviewed private authenticated presentation host and reconcile combined crafted repair after parents merge.
+
+
+## Phases 05–06 private crafting and cooking candidate — 2026-11-28 PHT
+
+- Added isolated transactional crafting inventory with two synthetic recipes (repair kit at workbench, cooked fish at campfire). Server-resolved ownership and station range are checked before/after storage reads and after writes; materials and output change atomically. Fixed recipes, bounded stack sizes and revision reject invalid input, duplicate crafting, overflow and corrupt conservation. No public route, real items, gameplay effects or production recipe costs.
+- Three focused JavaScript harness scenarios passed: material conservation, concurrent replay, wrong station/account; output capacity, revoked station/owner, rollback and insufficient ingredients; corrupt state and ambiguous commit. Exact Node and CI pending. Existing equipment and survival ledgers are deliberately separate until a reviewed shared inventory transaction can safely consume their crafted outputs.
+- Next verify exact CI, shared inventory integration, private runtime persistence and authored workbench/campfire interactions. External physical and registered-account acceptance remain gated.
+
+- Prior exact candidate `c52246b9e7a349969fc704218a6845d54735c068` passed all four CI workflows, including gameplay smoke. Reconciled on updated main `a995e50f2787e32e5f1b5a577967c65155b8bebc`; fresh head CI required before merge. No changes to crafting code or tests in reconciliation.
