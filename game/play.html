@@ -2445,10 +2445,22 @@ mapToggle.addEventListener('click',toggleWorldMap);
 addEventListener('keydown',e=>{if(!isEditingText(e)&&e.code==='KeyM'&&!e.repeat){e.preventDefault();toggleWorldMap()}});
 
 addEventListener('keydown',e=>{if(!isEditingText(e)&&e.code==='KeyI'&&!e.repeat){e.preventDefault();toggleInventory()}});
+const mobileActionTouches=new Map();
+const gameplayActionHeld=key=>keys[key]||mobileActionTouches.get(key)?.size>0;
 if(MOB){document.body.style.touchAction='none';
  [['JUMP / SURFACE','Space',16,120],['RUN','ShiftLeft',16,40],['USE',null,96,80],['DIVE','ControlLeft',96,160]].forEach(([t,k,r,b])=>{const e=css(document.createElement('div'),`position:fixed;right:${r}px;bottom:calc(${b}px + env(safe-area-inset-bottom));z-index:9;width:62px;height:62px;border-radius:50%;background:#0008;border:2px solid #ffe3a3aa;color:#ffe3a3;font:11px system-ui;display:grid;place-content:center;touch-action:none`);e.textContent=t;e.dataset.mobileAction=t.toLowerCase().replace(/[^a-z]+/g,'-').replace(/^-|-$/g,'');
-  e.addEventListener('touchstart',ev=>{ev.stopPropagation();ev.preventDefault();k?keys[k]=true:interact()},{passive:false});
-  const release=ev=>{ev.stopPropagation();if(k)keys[k]=false;};
+  const touches=new Set();
+  mobileActionTouches.set(k,touches);
+  e.addEventListener('touchstart',ev=>{
+   ev.stopPropagation();ev.preventDefault();
+   const firstTouch=touches.size===0;
+   for(const touch of ev.changedTouches)touches.add(touch.identifier);
+   if(k===null&&firstTouch&&touches.size)interact();
+  },{passive:false});
+  const release=ev=>{
+   ev.stopPropagation();
+   for(const touch of ev.changedTouches)touches.delete(touch.identifier);
+  };
   e.addEventListener('touchend',release);e.addEventListener('touchcancel',release);
   document.body.appendChild(e)});}
 const jr=css(document.createElement('div'),'position:fixed;width:100px;height:100px;border-radius:50%;border:2px solid #ffe3a366;display:none;z-index:9;pointer-events:none'),jk=css(document.createElement('div'),'position:fixed;width:44px;height:44px;border-radius:50%;background:#ffe3a355;display:none;z-index:9;pointer-events:none');document.body.append(jr,jk);
@@ -2499,6 +2511,7 @@ addEventListener('touchend',tend);addEventListener('touchcancel',tend);
 // the hero or changing health, stamina, or the authenticated room state.
 function releaseGameplayInput(){
  for(const k of Object.keys(keys))keys[k]=false;
+ for(const touches of mobileActionTouches.values())touches.clear();
  P.moveTarget=null;drag=false;
  joy.id=null;joy.dx=joy.dy=0;lk.id=null;pinchDistance=0;pinchPair='';
  jr.style.display=jk.style.display='none';
@@ -4602,18 +4615,18 @@ function update(dt){
    if(P.moveTarget&&Math.hypot(fw,rt)<.08){const dx=P.moveTarget.x-P.x,dz=P.moveTarget.z-P.z,dist=Math.hypot(dx,dz);if(dist<2.5)P.moveTarget=null;else{fw=Math.max(-1,Math.min(1,(-Math.cos(cameraYaw)*dz-Math.sin(cameraYaw)*dx)/dist));rt=Math.max(-1,Math.min(1,(Math.cos(cameraYaw)*dx-Math.sin(cameraYaw)*dz)/dist));}}else if(Math.hypot(fw,rt)>.08){P.moveTarget=null;}
   const moving=Math.hypot(fw,rt)>.08;
   const wasExhausted=P.sprintExhausted;
-  const staminaStep=sprintStaminaStep(P.stamina,P.sprintExhausted,P.mode==='walk'&&moving&&keys.ShiftLeft,dt);
+  const staminaStep=sprintStaminaStep(P.stamina,P.sprintExhausted,P.mode==='walk'&&moving&&gameplayActionHeld('ShiftLeft'),dt);
   P.stamina=staminaStep.stamina;P.sprintExhausted=staminaStep.exhausted;
   if(!wasExhausted&&P.sprintExhausted)toast('Out of stamina · rest to recover');
   const sprinting=staminaStep.sprinting;
   document.documentElement.dataset.climboriaSprint=sprinting?'running':P.sprintExhausted?'exhausted':'ready';
-  const sp=(sprinting||(P.mode==='fly'&&keys.ShiftLeft))?22:9;
+  const sp=(sprinting||(P.mode==='fly'&&gameplayActionHeld('ShiftLeft')))?22:9;
   let gh=groundAt(P.x,P.z),activeWater=waterBodyAt(P.x,P.z),sw=activeWater&&gh<activeWater.surfaceY-.2?.5:1,l=Math.max(1,Math.hypot(fw,rt));
   if(Math.hypot(fw,rt)>.08){const moveX=(-sy*fw+cy*rt)/l,moveZ=(-cy*fw-sy*rt)/l,targetYaw=Math.atan2(-moveX,-moveZ),yawDelta=Math.atan2(Math.sin(targetYaw-P.yaw),Math.cos(targetYaw-P.yaw));P.yaw+=yawDelta*Math.min(1,dt*24);}
   {const mx=(-sy*fw+cy*rt)/l*sp*sw*dt,mz=(-cy*fw-sy*rt)/l*sp*sw*dt;moveWalk(mx,mz);}
   gh=groundAt(P.x,P.z);
   activeWater=waterBodyAt(P.x,P.z);
-  const diveInput=(keys.ControlLeft||keys.ControlRight)?1:0,surfaceInput=keys.Space?1:0;
+  const diveInput=(gameplayActionHeld('ControlLeft')||keys.ControlRight)?1:0,surfaceInput=gameplayActionHeld('Space')?1:0;
   updatePlayerWaterState(P,activeWater,gh,dt,diveInput,surfaceInput,Tm);
   // Third-person follow camera keeps the explorer visible in the world.
   cameraDistance+=(targetCameraDistance-cameraDistance)*Math.min(1,dt*9);

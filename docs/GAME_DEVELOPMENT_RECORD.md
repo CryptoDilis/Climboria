@@ -3626,3 +3626,11 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Implementation `3748e56f1b91da7c733b6d86d2240742c3b2039a` adds an optional field journal in the existing Jarrell's Peak field map. Grounded exploration near Sanctuary, Park and Expedition Camp adds a short note and a route clue. Each registered account has separate local entries on the device. Guest discoveries last for the current session.
 - Three local unit tests passed for visit boundaries, duplicate visits, reload, separate account scopes, independent tabs and unavailable storage. Local mobile-emulated Chromium verified touch open/close, an actual scene-position discovery and no guest storage write. Fresh full CI and physical interaction acceptance remain pending.
 - Next verify exact gameplay CI and playtest a normal first adventure, then implement separately authored clue-led discovery. Quest progress, durable cross-device records and rewards remain gated by their own requirements.
+
+
+## Phase 03 touch control lifecycle — 2026-11-28 PHT
+
+- Mobile RUN, JUMP and DIVE shared keyboard state and released an action when any finger ended. Track each touch identifier per control and combine touch holds with physical keyboard input at the point of use. USE now fires once per continuous hold. Blur, hidden-tab and editable-field cleanup release both input sources.
+- Local Game suites passed 402 tests, including mixed input, multi-touch cancellation, USE activation, world pinch isolation and exact terrain source parity. Fresh CI is required before merge.
+- **BLOCKED — EXTERNAL VERIFICATION REQUIRED:** Registered two-account QA has no protected GitHub environment or workflow history. Follow the [registered pilot runbook](GAME_REGISTERED_PILOT_MANUAL_QA_2026-11-25.md) with two disposable accounts and an owner-approved quiet window. Private authored edge QA requires authorized tester access and a bounded window following the [operator runbook](GAME_PRIVATE_COMBAT_OPERATOR_QA.md). Physical acceptance requires hardware and measured passes under the [device protocol](GAME_NPC_PHYSICAL_DEVICE_ACCEPTANCE.md).
+- Next verify exact CI for this input fix and independent cave journal PR #1061. Continue Phase 03 controls and world regressions with the existing release gates.
