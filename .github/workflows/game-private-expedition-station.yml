@@ -4,6 +4,8 @@ on:
     paths:
       - 'game/play.html'
       - 'game/multiplayer/private-expedition-station*.mjs'
+      - 'game/multiplayer/private-expedition-cooking*.mjs'
+      - 'game/multiplayer/private-campsite-*.mjs'
       - 'game/multiplayer/private-crafting-ledger*.mjs'
       - 'game/multiplayer/jarrell-terrain-reference*.mjs'
       - 'game/multiplayer/jarrell-dry-region-prototype*.mjs'
@@ -14,6 +16,8 @@ on:
     paths:
       - 'game/play.html'
       - 'game/multiplayer/private-expedition-station*.mjs'
+      - 'game/multiplayer/private-expedition-cooking*.mjs'
+      - 'game/multiplayer/private-campsite-*.mjs'
       - 'game/multiplayer/private-crafting-ledger*.mjs'
       - 'game/multiplayer/jarrell-terrain-reference*.mjs'
       - 'game/multiplayer/jarrell-dry-region-prototype*.mjs'
@@ -31,4 +35,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test game/multiplayer/private-expedition-station.test.mjs game/multiplayer/jarrell-dry-region-prototype.test.mjs game/multiplayer/private-crafting-ledger.test.mjs
+      - run: node --test game/multiplayer/private-expedition-cooking.test.mjs game/multiplayer/private-campsite-registry.test.mjs game/multiplayer/private-expedition-station.test.mjs game/multiplayer/jarrell-dry-region-prototype.test.mjs game/multiplayer/private-crafting-ledger.test.mjs
