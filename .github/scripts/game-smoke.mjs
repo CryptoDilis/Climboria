@@ -51,6 +51,18 @@ try {
   if(await chamberNote.count()) errors.push('Guest journal revealed the chamber at the cave entrance');
   await guestProbe.evaluate(()=>window.__climboriaJarrellsPeak.positionAtCaveInteriorForSmoke());
   await chamberNote.waitFor({state:'visible',timeout:90000});
+  const geodeNote=guestJournal.getByText('Geode chamber',{exact:true});
+  if(await geodeNote.count()) errors.push('Guest journal revealed the geode chamber before visiting it');
+  if(!(await chamberNote.locator('..').textContent())?.includes('pale mineral seams in a side passage'))
+    errors.push('The Torchlit chamber entry is missing the cave exploration clue');
+  await guestProbe.evaluate(()=>{
+    const world=window.__climboriaJarrellsPeak;
+    const {x,z}=world.chests.find(chest=>chest.kind==='geode');
+    Object.assign(world.player,{x,z,y:world.groundAt(x,z)+1.75,vy:0,moveTarget:null});
+  });
+  await geodeNote.waitFor({state:'visible',timeout:90000});
+  if(await guestProbe.evaluate(()=>window.__climboriaJarrellsPeak.chests.find(chest=>chest.kind==='geode').open))
+    errors.push('The journal discovery opened the geode chest');
   if(await guestProbe.evaluate(()=>Object.keys(localStorage).some(key=>key.startsWith('climboria:jarrell-field-journal:'))))
    errors.push('Guest cave discovery persisted a local journal entry');
   await guestProbe.close();

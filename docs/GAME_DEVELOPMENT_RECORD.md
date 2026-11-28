@@ -171,6 +171,11 @@ runtime restart, and an expired regional slot stays closed after the clock moves
 backward. The fixture uses synthetic identities and time. Its outer Worker
 returns HTTP 404.
 
+## Phase 06 Geode chamber field discovery — 2026-11-28 PHT
+
+- The Torchlit chamber journal entry hints at mineral seams in a side passage. Grounded explorers who visit the existing Geode chamber record a distinct field note. Discovery uses the authored chest position and floor elevation.
+- The Game smoke visits the entrance, Torchlit chamber and Geode chamber in order. It checks when the new entry appears, leaves the chest closed and checks that a guest session writes no durable journal entry. Local desktop and touch-emulated Chromium passed the journal flow.
+
 ## Phase 04 private drop expiry — 2026-11-28 PHT
 
 - The isolated drop-claim fixture now writes a 90-second lifetime in room storage before a claim can proceed. New room instances reuse the stored deadline. At expiry the transaction denies pickup, and an issued or consumed drop cannot be reissued to reset its lifetime. Receipt and inventory slot still commit atomically.
