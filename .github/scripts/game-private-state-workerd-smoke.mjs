@@ -56,6 +56,12 @@ try {
   assert.equal(eaten.filter(result => result.reason === 'supplies-revision-changed').length, 1);
   assert.deepEqual(await request('survival-stock', 1000), { ok: true, food: 1, water: 1, revision: 1 });
 
+  assert.equal((await runtime.dispatchFetch('http://localhost/refuel-camp')).status, 404);
+  assert.equal((await request('prepare-refuel', 1000)).ok, true);
+  const renewals = await Promise.all([request('refuel-camp', 1100), request('refuel-camp', 1100)]);
+  assert.equal(renewals.filter(result => result.ok && result.slots[0].fireLit).length, 1);
+  assert.equal(renewals.filter(result => result.reason === 'campsite-revision-changed').length, 1);
+
   const first = await request('cave', 1000);
   assert.equal(first.event.startsAtMs, 1000);
   assert.equal((await request('cave', 1030)).event, null);
@@ -80,13 +86,18 @@ try {
   assert.equal((await request('survival-eat', 1000000000)).reason, 'supplies-revision-changed');
   assert.equal((await request('survival-provision', 1000000000)).reason, 'supplies-already-provisioned');
 
+  assert.equal((await request('inspect-fuel', 1101)).stock.wood, 0);
+  assert.equal((await request('inspect-camp', 1101)).slots[0].fireLit, true);
+  assert.equal((await request('refuel-camp', 1101)).reason, 'campsite-revision-changed');
+  assert.equal((await request('inspect-camp', 121100)).slots[0].fireLit, false);
+
   const claims = await Promise.all([request('claim-drop', 90999), request('claim-drop', 90999)]);
   assert.equal(claims.filter(result => result.ok).length, 1);
   assert.equal(claims.filter(result => result.reason === 'drop-already-claimed').length, 1);
   assert.equal((await request('claim-drop', 91000)).reason, 'drop-expired');
   assert.equal((await request('open-drop', 91000)).reason, 'drop-expired');
 
-  console.log('Verified private drop expiry, mastery replay protection, equipment costs and repair, regional event expiry, and atomic survival consumption across a local workerd restart');
+  console.log('Verified private drop expiry, mastery replay protection, equipment costs and repair, regional event expiry, atomic survival consumption, and shared campfire fuel across a local workerd restart');
 } finally {
   try {
     await runtime?.dispose();

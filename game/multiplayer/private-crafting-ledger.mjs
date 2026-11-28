@@ -21,13 +21,15 @@ export function createPrivateCraftingLedger({roomId,storage,resolveOwner,resolve
   const p=resolveStation(sessionId,ROOM);
   return p?.sessionId===sessionId&&p.roomId===ROOM&&p.accountId===accountId&&p.station===station&&p.inRange===true;
  }
+ const mealsConsumed=s=>s.version===1?0:s.consumedCookedFish;
+ const fuelSpent=s=>s.version===3?s.campfireWoodSpent:0;
  const validStock=s=>s&&typeof s==='object'&&Object.keys(s).length===ITEMS.length&&ITEMS.every(k=>Object.hasOwn(s,k)&&int(s[k],0,CAP));
  function validState(s,accountId){
-  if(!s||![1,2].includes(s.version)||s.accountId!==accountId||!validStock(s.initial)||!validStock(s.stock)||!int(s.revision,0,2*CAP))return false;
-  const spent=s.version===1?0:s.consumedCookedFish;
-  if(!int(spent,0,CAP))return false;
+  if(!s||![1,2,3].includes(s.version)||s.accountId!==accountId||!validStock(s.initial)||!validStock(s.stock)||!int(s.revision,0,2*CAP))return false;
+  const spent=mealsConsumed(s),fuel=fuelSpent(s);
+  if(!int(spent,0,CAP)||!int(fuel,0,CAP))return false;
   const kits=s.stock['repair-kit']-s.initial['repair-kit'],fish=s.stock['cooked-fish']-s.initial['cooked-fish']+spent;
-  return kits>=0&&fish>=spent&&kits+fish+spent===s.revision&&s.stock.fiber===s.initial.fiber-2*kits&&s.stock.wood===s.initial.wood-kits-fish&&s.stock['raw-fish']===s.initial['raw-fish']-fish;
+  return kits>=0&&fish>=spent&&kits+fish+spent+fuel===s.revision&&s.stock.fiber===s.initial.fiber-2*kits&&s.stock.wood===s.initial.wood-kits-fish-fuel&&s.stock['raw-fish']===s.initial['raw-fish']-fish;
  }
  const view=s=>({ok:true,revision:s.revision,stock:{...s.stock}});
  async function transact(fn){
@@ -94,7 +96,7 @@ export function createPrivateCraftingLedger({roomId,storage,resolveOwner,resolve
    if(!validState(state,accountId))return deny('invalid-crafting-state');
    if(state.revision!==expectedRevision)return deny('crafting-revision-changed');
    if(state.stock['cooked-fish']<=state.initial['cooked-fish'])return deny('no-crafted-meal');
-   const next={...state,version:2,consumedCookedFish:(state.version===2?state.consumedCookedFish:0)+1,
+   const next={...state,version:Math.max(2,state.version),consumedCookedFish:mealsConsumed(state)+1,
     stock:{...state.stock,'cooked-fish':state.stock['cooked-fish']-1},revision:state.revision+1};
    if(!validState(next,accountId))return deny('invalid-crafting-state');
    // The effect callback may read, but only returns a write plan. It cannot
@@ -110,5 +112,20 @@ export function createPrivateCraftingLedger({roomId,storage,resolveOwner,resolve
    return {...view(next),survival:effect.view};
   });
  }
- return Object.freeze({provision,inspect,craft,consumeCookedFish,reviewedForProduction:false});
+ // The campsite registry passes a read-only view of its own transaction.
+ async function planCampfireRefuel(reader,sessionId,accountId,expectedRevision){
+  if(unavailable||!idOk(sessionId)||!idOk(accountId)||!int(expectedRevision,0,2*CAP))return deny('invalid-crafting-intent');
+  const revalidate=()=>ownerFor(sessionId)===accountId&&stationOk(sessionId,accountId,'campfire');
+  if(!revalidate())return deny('crafting-station-unavailable');
+  const key=keyFor(accountId),state=await reader.get(key);
+  if(!revalidate())return deny('crafting-station-unavailable');
+  if(state===undefined)return deny('crafting-not-provisioned');
+  if(!validState(state,accountId))return deny('invalid-crafting-state');
+  if(state.revision!==expectedRevision)return deny('crafting-revision-changed');
+  if(state.stock.wood===0)return deny('insufficient-crafting-materials');
+  const next={...state,version:3,consumedCookedFish:mealsConsumed(state),campfireWoodSpent:fuelSpent(state)+1,
+   stock:{...state.stock,wood:state.stock.wood-1},revision:state.revision+1};
+  return validState(next,accountId)?{ok:true,key,state:next,revalidate}:deny('invalid-crafting-state');
+ }
+ return Object.freeze({provision,inspect,craft,consumeCookedFish,planCampfireRefuel,reviewedForProduction:false});
 }
