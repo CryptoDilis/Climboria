@@ -3762,3 +3762,10 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Local Game suites passed 402 tests, including mixed input, multi-touch cancellation, USE activation, world pinch isolation and exact terrain source parity. Fresh CI is required before merge.
 - **BLOCKED — EXTERNAL VERIFICATION REQUIRED:** Registered two-account QA has no protected GitHub environment or workflow history. Follow the [registered pilot runbook](GAME_REGISTERED_PILOT_MANUAL_QA_2026-11-25.md) with two disposable accounts and an owner-approved quiet window. Private authored edge QA requires authorized tester access and a bounded window following the [operator runbook](GAME_PRIVATE_COMBAT_OPERATOR_QA.md). Physical acceptance requires hardware and measured passes under the [device protocol](GAME_NPC_PHYSICAL_DEVICE_ACCEPTANCE.md).
 - Next verify exact CI for this input fix and independent cave journal PR #1061. Continue Phase 03 controls and world regressions with the existing release gates.
+
+
+## Phases 05–06 private crafting and cooking candidate — 2026-11-28 PHT
+
+- Added isolated transactional crafting inventory with two synthetic recipes (repair kit at workbench, cooked fish at campfire). Server-resolved ownership and station range are checked before/after storage reads and after writes; materials and output change atomically. Fixed recipes, bounded stack sizes and revision reject invalid input, duplicate crafting, overflow and corrupt conservation. No public route, real items, gameplay effects or production recipe costs.
+- Three focused JavaScript harness scenarios passed: material conservation, concurrent replay, wrong station/account; output capacity, revoked station/owner, rollback and insufficient ingredients; corrupt state and ambiguous commit. Exact Node and CI pending. Existing equipment and survival ledgers are deliberately separate until a reviewed shared inventory transaction can safely consume their crafted outputs.
+- Next verify exact CI, shared inventory integration, private runtime persistence and authored workbench/campfire interactions. External physical and registered-account acceptance remain gated.
