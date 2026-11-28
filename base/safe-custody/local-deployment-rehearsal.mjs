@@ -5,6 +5,7 @@ import {verifyRuntime} from './verify-runtime-template.mjs';
 import {verifyNamedRuntime} from './verify-named-runtime.mjs';
 import {verifyLocalAuthorizations} from './local-authorization-rehearsal.mjs';
 import {verifyLocalExpenseExecution} from './local-expense-execution-rehearsal.mjs';
+import {verifyLocalLiquidityLock} from './local-liquidity-lock-rehearsal.mjs';
 import {readFileSync,writeFileSync,readdirSync} from 'node:fs';
 import {exactBuildUnit} from './exact-build-unit.mjs';
 import {spawn,execFileSync} from 'node:child_process';
@@ -193,6 +194,14 @@ try{
    const execution=await verifyLocalExpenseExecution({rpc,call,number,address,record,cast,calldata,creator,wallet,guard,token,vaults,payee,start,sourceSha:manifest.sourceSha},evidence);
    writeFileSync(process.argv[4],JSON.stringify(execution,null,2)+'\n');
    console.log(JSON.stringify(execution,null,2));
+   if(process.argv[5]){
+    const liquidityUnit=exactBuildUnit(builds,sources['V3DeferredLiquidityFixture.sol'],'V3DeferredLiquidityFixture');
+    const lockerUnit=exactBuildUnit(builds,importPath(liquidityUnit,'./V3LiquidityPolicyFixture.sol'),'V3SyntheticLPLock');
+    const verifyLocker=async(at,fields)=>verifyNamedRuntime(lockerUnit.artifact,await rpc('eth_getCode',[at,'latest']),[lockerUnit.ast],Object.fromEntries(Object.entries(fields).map(([k,v])=>['V3SyntheticLPLock.'+k,v])));
+    const lock=await verifyLocalLiquidityLock({rpc,call,number,address,record,cast,calldata,creator,wallet,guard,token,quote,lp,vaults,contracts,verifyLocker,sourceSha:manifest.sourceSha},evidence,execution);
+    writeFileSync(process.argv[5],JSON.stringify(lock,null,2)+'\n');
+    console.log(JSON.stringify(lock,null,2));
+   }
   }
  }
 }finally{anvil.kill();}
