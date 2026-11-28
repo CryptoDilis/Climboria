@@ -80,6 +80,13 @@ Native HUD keyboard activation passed 18 exact CI checks and merged at `5a50fa79
 - Five local regressions cover the cap, insufficient materials, account isolation and reassignment, concurrent and replayed intents, corrupt storage, and ambiguous commits. The local workerd smoke verifies one charge for concurrent requests and checks the persisted level and balance after a SQLite restart.
 - Next define production equipment and recipe data with authorized inventory integration. Wear, repair, crafting, and release acceptance remain open.
 
+## Phase 05 private equipment durability and repair — 2026-11-28 PHT
+
+- The synthetic climbing item begins at 100 durability. A trusted completed use reduces durability by 10. Its receipt is bound to the account, item, maintenance revision, and next accepted sequence. An older receipt cannot apply after a repair.
+- Repair restores durability and atomically consumes one of three synthetic kits. Concurrent duplicates can consume one kit. These costs and limits are fixture values.
+- The first successful maintenance or enhancement write upgrades the earlier record without changing its enhancement or material balance. Local tests cover record migration, exhaustion, stale receipts, and duplicate repair. The SQLite restart smoke checks the persisted repair, kit count and rejection of both replays.
+- Player-facing equipment, real inventory, and production balance remain open.
+
 ## Phase 05 private activity mastery — 2026-11-28 PHT
 
 - Added an isolated transactional ledger for ten independent activity skills. The private room resolves completed activities from server state and supplies a contiguous sequence for each account and skill. Replay, sequence gaps, unverified activity, and revoked sessions are denied, while the stored rank is derived using explicit thresholds for Novice through Master.

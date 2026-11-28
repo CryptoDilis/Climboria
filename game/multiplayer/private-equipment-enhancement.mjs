@@ -2,6 +2,12 @@ const ROOM = 'preview-equipment-fixture';
 const ITEM = 'training-climbing-gloves';
 const MATERIAL = 'training-repair-fiber';
 const MAX_ENHANCEMENT = 10;
+const MAX_DURABILITY = 100;
+const WEAR_PER_USE = 10;
+const REPAIR_KITS = 3;
+const USES_PER_FULL_DURABILITY = MAX_DURABILITY / WEAR_PER_USE;
+const MAX_USE_SEQUENCE = (REPAIR_KITS + 1) * USES_PER_FULL_DURABILITY;
+const MAX_MAINTENANCE_REVISION = MAX_USE_SEQUENCE + REPAIR_KITS;
 const materialCostThrough = level => level * (level + 1) / 2;
 const MAX_MATERIALS = materialCostThrough(MAX_ENHANCEMENT);
 const idOk = value => typeof value === 'string' && /^[a-zA-Z0-9_-]{16,100}$/.test(value);
@@ -9,13 +15,25 @@ const within = (value, maximum) => Number.isSafeInteger(value) && value >= 0 && 
 const deny = reason => ({ ok: false, reason });
 const keyFor = accountId => 'game:preview:equipment:v1:' + ROOM + ':' + accountId;
 
-function validRecord(record, accountId) {
-  return record?.version === 1 && record.accountId === accountId &&
-    record.item === ITEM && record.material === MATERIAL &&
-    within(record.enhancement, MAX_ENHANCEMENT) &&
-    within(record.startingMaterials, MAX_MATERIALS) &&
-    within(record.remainingMaterials, MAX_MATERIALS) &&
-    record.remainingMaterials + materialCostThrough(record.enhancement) === record.startingMaterials;
+const startingMaintenance = () => ({
+  durability: MAX_DURABILITY, remainingRepairKits: REPAIR_KITS, maintenanceRevision: 0, lastUseSequence: 0,
+});
+
+function readRecord(record, accountId) {
+  if (!record || record.accountId !== accountId || record.item !== ITEM || record.material !== MATERIAL ||
+      !within(record.enhancement, MAX_ENHANCEMENT) || !within(record.startingMaterials, MAX_MATERIALS) ||
+      !within(record.remainingMaterials, MAX_MATERIALS) ||
+      record.remainingMaterials + materialCostThrough(record.enhancement) !== record.startingMaterials) return null;
+
+  if (record.version === 1) return { ...record, version: 2, ...startingMaintenance() };
+  if (record.version !== 2 || !within(record.durability, MAX_DURABILITY) || record.durability % WEAR_PER_USE !== 0 ||
+      !within(record.remainingRepairKits, REPAIR_KITS) || !within(record.lastUseSequence, MAX_USE_SEQUENCE) ||
+      !within(record.maintenanceRevision, MAX_MAINTENANCE_REVISION)) return null;
+  const repairs = REPAIR_KITS - record.remainingRepairKits;
+  const usesRepaired = record.lastUseSequence - (MAX_DURABILITY - record.durability) / WEAR_PER_USE;
+  if (record.maintenanceRevision !== record.lastUseSequence + repairs ||
+      usesRepaired < repairs || usesRepaired > repairs * USES_PER_FULL_DURABILITY) return null;
+  return record;
 }
 
 function view(record) {
@@ -25,13 +43,16 @@ function view(record) {
     enhancement: record.enhancement,
     material: record.material,
     remainingMaterials: record.remainingMaterials,
+    durability: record.durability,
+    remainingRepairKits: record.remainingRepairKits,
+    maintenanceRevision: record.maintenanceRevision,
   };
 }
 
 // The fixture room provisions synthetic inventory, resolves authenticated
 // ownership, and accepts only an expected level from an enhancement intent.
-export function createPrivateEquipmentEnhancement({ roomId, storage, resolveOwner } = {}) {
-  if (roomId !== ROOM || typeof storage?.transaction !== 'function' || typeof resolveOwner !== 'function')
+export function createPrivateEquipmentEnhancement({ roomId, storage, resolveOwner, resolveUse = () => null } = {}) {
+  if (roomId !== ROOM || typeof storage?.transaction !== 'function' || typeof resolveOwner !== 'function' || typeof resolveUse !== 'function')
     throw new Error('Explicit private equipment storage and owner authority required');
 
   let unavailable = false;
@@ -58,10 +79,11 @@ export function createPrivateEquipmentEnhancement({ roomId, storage, resolveOwne
       const accountId = accountFor(sessionId);
       if (!accountId) return deny('unverified-equipment-owner');
       const key = keyFor(accountId);
-      const record = await tx.get(key);
+      const stored = await tx.get(key);
       if (accountFor(sessionId) !== accountId) return deny('unverified-equipment-owner');
-      if (record === undefined) return deny('equipment-not-provisioned');
-      if (!validRecord(record, accountId)) return deny('invalid-stored-equipment');
+      if (stored === undefined) return deny('equipment-not-provisioned');
+      const record = readRecord(stored, accountId);
+      if (!record) return deny('invalid-stored-equipment');
       return operation(tx, key, record);
     });
   }
@@ -73,10 +95,10 @@ export function createPrivateEquipmentEnhancement({ roomId, storage, resolveOwne
       const key = keyFor(accountId);
       const prior = await tx.get(key);
       if (prior !== undefined)
-        return validRecord(prior, accountId) ? deny('equipment-already-provisioned') : deny('invalid-stored-equipment');
+        return readRecord(prior, accountId) ? deny('equipment-already-provisioned') : deny('invalid-stored-equipment');
       const record = {
-        version: 1, accountId, item: ITEM, material: MATERIAL, enhancement: 0,
-        startingMaterials: materials, remainingMaterials: materials,
+        version: 2, accountId, item: ITEM, material: MATERIAL, enhancement: 0,
+        startingMaterials: materials, remainingMaterials: materials, ...startingMaintenance(),
       };
       await tx.put(key, record);
       return view(record);
@@ -100,5 +122,47 @@ export function createPrivateEquipmentEnhancement({ roomId, storage, resolveOwne
     });
   }
 
-  return Object.freeze({ provision, inspect, enhance, reviewedForProduction: false });
+  // The room resolves completed uses against this owner and fixture item.
+  async function recordWear(sessionId, useId) {
+    if (!idOk(useId)) return deny('invalid-equipment-intent');
+    return readOwnedEquipment(sessionId, async (tx, key, record) => {
+      const use = resolveUse(sessionId, useId, ROOM);
+      if (!use || use.roomId !== ROOM || use.sessionId !== sessionId || use.useId !== useId ||
+          use.accountId !== record.accountId || use.item !== ITEM ||
+          !within(use.sequence, MAX_USE_SEQUENCE) || use.sequence === 0) return deny('unverified-equipment-use');
+      if (use.sequence <= record.lastUseSequence) return deny('equipment-use-already-recorded');
+      if (use.sequence !== record.lastUseSequence + 1) return deny('equipment-use-out-of-order');
+      if (use.maintenanceRevision !== record.maintenanceRevision) return deny('equipment-maintenance-changed');
+      if (record.durability === 0) return deny('equipment-broken');
+
+      const updated = {
+        ...record,
+        durability: record.durability - WEAR_PER_USE,
+        lastUseSequence: use.sequence,
+        maintenanceRevision: record.maintenanceRevision + 1,
+      };
+      await tx.put(key, updated);
+      return view(updated);
+    });
+  }
+
+  async function repair(sessionId, expectedRevision) {
+    if (!within(expectedRevision, MAX_MAINTENANCE_REVISION)) return deny('invalid-equipment-intent');
+    return readOwnedEquipment(sessionId, async (tx, key, record) => {
+      if (expectedRevision !== record.maintenanceRevision) return deny('equipment-maintenance-changed');
+      if (record.durability === MAX_DURABILITY) return deny('equipment-fully-repaired');
+      if (record.remainingRepairKits === 0) return deny('insufficient-repair-kits');
+
+      const updated = {
+        ...record,
+        durability: MAX_DURABILITY,
+        remainingRepairKits: record.remainingRepairKits - 1,
+        maintenanceRevision: record.maintenanceRevision + 1,
+      };
+      await tx.put(key, updated);
+      return view(updated);
+    });
+  }
+
+  return Object.freeze({ provision, inspect, enhance, recordWear, repair, reviewedForProduction: false });
 }

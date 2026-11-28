@@ -53,16 +53,24 @@ export class PrivateFixture {
       }
       case '/provision-equipment':
       case '/inspect-equipment':
-      case '/enhance-equipment': {
+      case '/enhance-equipment':
+      case '/wear-equipment':
+      case '/repair-equipment': {
         const equipmentRoom = 'preview-equipment-fixture';
+        const useId = 'training_equipment_use_1';
         const equipment = createPrivateEquipmentEnhancement({
           storage: this.storage,
           roomId: equipmentRoom,
           resolveOwner: () => ({ sessionId, accountId, roomId: equipmentRoom }),
+          resolveUse: () => ({
+            sessionId, accountId, roomId: equipmentRoom, item: 'training-climbing-gloves', useId, sequence: 1, maintenanceRevision: 0,
+          }),
         });
         if (url.pathname === '/provision-equipment') return Response.json(await equipment.provision(accountId));
         if (url.pathname === '/inspect-equipment') return Response.json(await equipment.inspect(sessionId));
-        return Response.json(await equipment.enhance(sessionId, 0));
+        if (url.pathname === '/enhance-equipment') return Response.json(await equipment.enhance(sessionId, 0));
+        if (url.pathname === '/wear-equipment') return Response.json(await equipment.recordWear(sessionId, useId));
+        return Response.json(await equipment.repair(sessionId, 1));
       }
       case '/cave': {
         const events = createPrivateRegionEvents({
