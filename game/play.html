@@ -2010,10 +2010,24 @@ document.addEventListener('fullscreenchange',()=>{
 });
 document.addEventListener('pointerdown',requestImmersiveFromGesture,{capture:true});
 document.addEventListener('touchstart',requestImmersiveFromGesture,{capture:true,passive:true});
-cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){const ray=new T3.Raycaster();ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);const planeY=groundAt(P.x,P.z);const plane=new T3.Plane(new T3.Vector3(0,1,0),-planeY);const hit=new T3.Vector3();if(ray.ray.intersectPlane(plane,hit)){P.moveTarget={x:hit.x,z:hit.z};}}drag=true});
-addEventListener('mouseup',()=>drag=false);
+cv.addEventListener('mousedown',e=>{
+ if(e.target!==cv)return;
+ if(e.button===2){drag=true;return}
+ if(e.button!==0||P.mode!=='walk')return;
+ const ray=new T3.Raycaster();
+ ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);
+ const plane=new T3.Plane(new T3.Vector3(0,1,0),-groundAt(P.x,P.z));
+ const hit=new T3.Vector3();
+ if(ray.ray.intersectPlane(plane,hit))P.moveTarget={x:hit.x,z:hit.z};
+});
+addEventListener('mouseup',e=>{if(e.button===2)drag=false});
 document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===cv);
-addEventListener('mousemove',e=>{if(!(locked||drag))return;cameraYaw-=e.movementX*.0022;cameraPitch=Math.max(-1.25,Math.min(1.15,cameraPitch-e.movementY*.0022))});
+addEventListener('mousemove',e=>{
+ if(drag&&!(e.buttons&2))drag=false;
+ if(!(locked||drag))return;
+ cameraYaw-=e.movementX*.0022;
+ cameraPitch=Math.max(-1.25,Math.min(1.15,cameraPitch-e.movementY*.0022));
+});
 
 /* ---------- gameplay layer (functional systems; visuals marked PLACEHOLDER) ---------- */
 const joy={id:null,x0:0,y0:0,dx:0,dy:0},lk={id:null,x:0,y:0};
