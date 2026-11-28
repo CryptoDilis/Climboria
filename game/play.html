@@ -449,6 +449,11 @@ function updatePlayerWaterState(player,body,groundHeight,dt,diveInput=0,surfaceI
   player.waterBodyId=null;player.swimDepth=0;
   const floor=groundHeight+1.75;
   const grounded=player.y<=floor+.12&&player.vy<=0;
+  if(player.y>floor+.12&&player.vy<=0&&['grounded','land','swim'].includes(player.jumpState)){
+   player.jumpState='descent';
+   player.jumpStateTimer=0;
+   player.jumpTrace=null;
+  }
   const wasAirborne=['takeoff','airborne','descent'].includes(player.jumpState);
   if(surfaceInput&&!player.jumpHeld&&grounded){
    // Keep a short, explicit takeoff phase before ascent so the renderer can
