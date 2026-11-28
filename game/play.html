@@ -2291,7 +2291,7 @@ const mapToggle=document.getElementById('world-map-toggle'),mapPanel=document.ge
 function toggleWorldMap(){const opening=mapPanel.classList.toggle('map-expanded');if(opening)releaseGameplayInput();drawWorldMap();drawWorldMapPlayer()}
 mapPanel.style.display='block';
 
-const caveApproach={x:0,z:-20};
+const caveApproach={x:0,z:-20},caveChamber={x:30,z:25};
 const journalPanel=document.getElementById('field-journal'),journalEntries=document.getElementById('field-journal-entries');
 let fieldJournal;
 function renderFieldJournal(){
@@ -2312,11 +2312,13 @@ journalPanel.addEventListener('keydown',e=>e.stopPropagation());
 journalPanel.addEventListener('toggle',()=>{if(journalPanel.open)releaseGameplayInput();renderFieldJournal()});
 void import('./field-journal.mjs').then(({createFieldJournal})=>{
  const [caveApproachX,caveApproachZ]=l2w(caveG,caveApproach.x,caveApproach.z);
+ const [caveChamberX,caveChamberZ]=l2w(caveG,caveChamber.x,caveChamber.z);
  const landmarks=[
   {id:'sanctuary',name:'Sanctuary',note:'The stone pillars mark a sheltered starting point. Follow the mapped trail to the park.',...POI.sanct,radius:24},
   {id:'park',name:'Park',note:'The trail opens into a clearing. The map marks an expedition camp to the north.',...POI.park,radius:30},
   {id:'camp',name:'Expedition camp',note:'Head northwest toward the cave marked on your map. Look for the stone arch at the mouth.',...POI.camp,radius:24},
-  {id:'cave-approach',name:'Cave entrance',note:'The stone arch gives way to a torchlit passage. Follow the lights and watch your footing.',x:caveApproachX,z:caveApproachZ,radius:12}
+  {id:'cave-approach',name:'Cave entrance',note:'The stone arch gives way to a torchlit passage. Follow the lights into the first broad chamber and watch your footing.',x:caveApproachX,z:caveApproachZ,radius:12},
+  {id:'cave-chamber',name:'Torchlit chamber',note:'Torch marks on the stone are a reminder that earlier expeditions used this room to regroup. To retrace your steps, follow the lights back toward daylight.',x:caveChamberX,z:caveChamberZ,radius:7,elevation:groundAt(caveChamberX,caveChamberZ)+1.75}
  ];
  const getScope=()=>window.__climboriaGuestMode?'guest':localPositionUserId?'user:'+localPositionUserId:null;
  // Use lazy storage access so browsers that block it can keep a session-only journal.
@@ -3289,7 +3291,7 @@ function positionAtCaveEntranceForSmoke(){
 }
 function positionAtCaveInteriorForSmoke(){
  // Capture from the center of the main connected chamber (x=22..40, z=16..34).
- const local={x:30,z:25},world=l2w(caveG,local.x,local.z);
+ const local={...caveChamber},world=l2w(caveG,local.x,local.z);
  updateChunks(world[0],world[1],200);
  P.mode='walk';P.x=world[0];P.z=world[1];P.y=groundAt(P.x,P.z)+1.75;P.vy=0;
  const playerYaw=caveG.rotation.y,behindYaw=playerYaw+Math.PI;

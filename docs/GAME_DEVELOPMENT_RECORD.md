@@ -42,7 +42,8 @@
 
 ## Verified reconnect and browser transport merges — 2026-11-28 PHT
 
-- R1 cave discovery follow-up adds an optional route clue at the Expedition camp and a field note on reaching the cave approach. The discovery uses the existing journal scope and persistence rules. The gameplay smoke verifies the note stays hidden at spawn, appears on arrival, and leaves no journal storage in guest mode.
+- [R1 cave discovery #1060](https://github.com/CryptoDilis/Climboria/pull/1060) merged after 11 checks passed. [Hosted verification](https://github.com/CryptoDilis/Climboria/actions/runs/46090048254) passed. The follow-up adds an optional route clue at the Expedition camp and a field note on reaching the cave approach. The discovery uses the existing journal scope and persistence rules. The gameplay smoke verifies the note stays hidden at spawn, appears on arrival, and leaves no journal storage in guest mode.
+- R1 chamber follow-up adds a field note beyond the entrance. The journal requires proximity to the chamber floor, and the guest smoke checks the note appears on arrival and remains session-only. Treasure map fragments and physical playtesting remain open.
 
 
 - [#1047](https://github.com/CryptoDilis/Climboria/pull/1047) merged at `6d8b1fad74a983ddaf2f2316be09edb385a86b63` after all 20 listed checks passed at `911f087494ec6491c15c6b971bfaa92d2f34cde6`. Browser network retry uses bounded randomized backoff through the existing authenticated ticket path. Confirmed spawn resets the backoff. Logout cancels pending retries. Post-merge hosted parity passed in [readiness run 46059088408](https://github.com/CryptoDilis/Climboria/actions/runs/46059088408).

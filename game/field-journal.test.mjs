@@ -48,3 +48,16 @@ test('unavailable local storage still permits a session-only discovery', () => {
  assert.equal(journal.sample({ x: 0, z: 0 }), true);
  assert.deepEqual(journal.entries(), [landmarks[0]]);
 });
+
+test('an underground landmark rejects missing elevation and the surface above it', () => {
+ const underground = { id: 'chamber', x: 5, z: 5, radius: 7, elevation: 12 };
+ const journal = createFieldJournal({
+  landmarks: [underground],
+  storage: { getItem: () => null, setItem: () => {} },
+  getScope: () => 'guest',
+ });
+ assert.equal(journal.sample({ x: 5, z: 5 }), false);
+ assert.equal(journal.sample({ x: 5, y: 32, z: 5 }), false);
+ assert.equal(journal.sample({ x: 5, y: 12, z: 5 }), true);
+ assert.deepEqual(journal.entries(), [underground]);
+});

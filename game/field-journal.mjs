@@ -29,8 +29,9 @@ export function createFieldJournal({ landmarks, storage, getScope }) {
   if (getScope() !== activeScope) refresh();
   if (!activeScope) return false;
   let changed = false;
-  for (const { id, x, z, radius } of landmarks) {
+  for (const { id, x, z, radius, elevation } of landmarks) {
    if (seen.has(id) || Math.hypot(position.x - x, position.z - z) > radius) continue;
+   if (elevation !== undefined && (!Number.isFinite(position.y) || Math.abs(position.y - elevation) > 2)) continue;
    seen.add(id);
    changed = true;
    try {
