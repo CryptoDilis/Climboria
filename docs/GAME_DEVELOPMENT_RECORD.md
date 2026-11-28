@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## Phase 06 private authored Expedition Camp station authority — 2026-11-28 PHT
+
+- On inspected main `2a09d0544ef95ba579e1d34b07514527c92524c3`, merged Living World #1128, crafting #1130, playable hearth #1132, conserved refuel #1134, shelter #1135 and checkpoint #1136 were verified. #1137 regional receipt time, #1108 mastery panel and #1106 crafted repairs were still open at inspection.
+- Adds a separate private station composition using existing ServerGroundMovement and the bounded Jarrell authored dry-region prototype, fixed west approach spawn, exact browser camp coordinates and strict five-metre proximity. Authenticated owner binding is rechecked, browser-supplied world positions are not accepted as movement, and stale/downed/disconnected/reassigned sessions deny station access. A separate lit-station resolver requires independent account/session/camp-bound current fire evidence. No workbench or other station is exposed.
+- Four isolated JavaScript regression scenarios passed with the fetched actual terrain, movement and crafting ledger code, including authored coordinate/range parity, walking to/from the hearth, stale/invalid session rejection, and material debit only near a verified lit station. Added a native Node workflow for station, dry-region and crafting regressions. Source/test checkpoint `3fc073e8005f6cb467907fa4a558647e20d38916`; fresh native CI pending.
+- Not a production movement/terrain provider or actual authenticated transport. Fire evidence is still a trusted fixture callback, not connected to the durable campsite/refuel ledger; full scene collider review and private real-browser acceptance remain required. Next bind durable fire evidence to reviewed private authenticated station path, test storage/owner revocation and actual browser movement. Public presence coordinates must never authorize inventory. Continue independent game work while external gates remain blocked.
+
+
 ## Phase 06 private crafting and meal interaction — 2026-11-28 PHT
 
 - Main-based reconciliation of #1105 atomic crafted meal and #1112 read-only panel on `babce42aeb2c96800e130b08a3420aa989e4486a`. Adds optional Craft and Eat actions with revision-bound intents, one pending action per rendered generation, account scope checks, authoritative snapshot refresh and no automatic retry of uncertain outcomes. Without adapters the panel stays read-only.
