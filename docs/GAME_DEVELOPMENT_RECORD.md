@@ -28,11 +28,27 @@
 - Local workerd verified concurrent refuel requests, then restarted its SQLite Durable Object and checked persisted stock, an active renewed fire, replay rejection and fuel expiry. The outer Worker still returns 404.
 - The authenticated room-to-world station binding remains separate. The playable Expedition Camp hearth has a local fuel budget, and real inventory release remains subject to the existing acceptance gates.
 
+## Phase 05 mastery panel with the consolidated ledger — 2026-11-28 PHT
+
+- Reconciled the existing private read-only panel with the merged Living World ledger. Native Chromium verified the desktop and narrow layouts and rendered all ten skill ranks directly from the actual private ledger after one verified climbing activity. The existing stale-scope and malformed-data tests remain.
+- Twelve focused Node tests passed. Fresh CI exercises the real ledger projection beside the existing fixture and layout checks. Authenticated World station and player-facing panel integration remain separate work.
+
 ## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
 
 - Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
 - Add regression coverage for fresh ledger instances, independent accounts and untouched skills, session revocation/reassignment, corrupt records and storage failure. Ensure the server-authority workflow triggers on mastery source/test edits. Exact candidate CI pending; no production endpoint or player UI is authorized by this change.
 - Next verify exact CI, then integrate a reviewed private player-facing projection with real activity authority. Physical and registered-player acceptance remain external gates; continue independent Game tasks while pending.
+
+## Phase 05 private mastery presentation candidate — 2026-11-28 PHT
+
+- Stacked on exact #1098. Added a private read-only DOM panel for all ten independent ranks using a supplied authenticated snapshot reader. Fixed labels, strict payload validation and textContent avoid accepting arbitrary markup; no global level or client-side credit. Refresh clears earlier results, generation/scope checks discard late responses, and the host must call clear on session changes and dispose on teardown. No public route, gameplay wiring, auth credentials or local storage changes.
+- Three focused JavaScript harness scenarios passed (DOM fixture): ten skills, malformed/duplicate data, overlapping requests, account switch/logout, rejected request and disposal. Exact Node and actual browser acceptance pending. Next bind only to reviewed private authenticated host and test actual browser desktop/mobile layout; do not enable publicly or mark rank gameplay acceptance complete.
+
+- Added scoped high-contrast private panel CSS and Chromium CI acceptance at 1200×800 and 360×640. Tests ten actual rendered rows, readable 16px text, responsive column layout, no horizontal overflow, and logout during a pending snapshot. The route is intercepted in the browser test only; public gameplay does not load the panel or its stylesheet. Fresh exact-head browser CI pending.
+
+- Prior exact candidate `c231ce53a04f5781a5dd661697742833ac67c623` passed all five CI workflows, including Chromium panel acceptance. Reconciled with main `a995e50f2787e32e5f1b5a577967c65155b8bebc` retaining equipment panel acceptance and every existing record; fresh combined CI required.
+
+- Exact prior head `92f2c94e0aeed451c1aed9353d25affb847599a0` passed 7/7 CI workflows; reconciled with latest main `69b2cd05decc9d8c34917813867fef604abf1d49` without dropping existing Game records or equipment acceptance. Fresh CI required.
 
 ## Phase 03 hero preview gestures — 2026-11-28 PHT
 
