@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## Phase 06 private campfire and shelter candidate — 2026-11-28 PHT
+
+- Stacked on weather fixture #1119 exact head `b61edbf39f5037cb61fd611b4c5139e7c3c22459`. Optional independent room authority must bind shelter evidence to the same account, session, interval, sequence and duration. Covered and lit status plus full-interval range are required for their respective effects. Untrusted weather fields cannot grant protection; missing or changed evidence fails closed when the authority is configured.
+- Provisional roof blocks wind/precipitation penalties; campfire adds 12 fixture temperature degrees and may increase heat stress in hot conditions. This is not a live weather, shelter, campfire, fuel, campsite ownership or player-facing implementation. No damage, stamina, invulnerability or economy effects.
+- Seven isolated JavaScript regression scenarios passed (four inherited plus three new): independent roof/fire effects, incomplete or cross-account evidence, replay, changed authority rollback, and ignored untrusted fields. Native Node CI and combined parent verification remain pending. Source/test commit `b1b9a4670a7563f7540653807e9e525fc150c2a6`.
+- Next: reconcile and verify campsite parents #1114, #1116 and #1118 plus weather #1119; bind actual world geometry, active camp lease, campfire fuel/lit state and trusted completed exposure history before private authored-world acceptance. Proceed with independent wildlife work while gated.
+
+
 ## Phase 06 private environmental exposure candidate — 2026-11-28 PHT
 
 - Private server-resolved, uniform completed active intervals of 1–60 seconds produce bounded independent cold and heat stress. Temperature, wind and precipitation are trusted fixture inputs; thresholds and rates are provisional. Neutral exposure recovers stress; no offline catch-up, public routes, damage, stamina changes, real player effects or financial changes.
