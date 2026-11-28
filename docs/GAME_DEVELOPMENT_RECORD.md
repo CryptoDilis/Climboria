@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## Phase 06 private ticket-bound Expedition Camp session gateway — 2026-11-28 PHT
+
+- Parent #1141 head `244b71f558c1dd11f2e33fbca21c51a46e8ecaf6` passed six exact workflows at inspection, including [SQLite restart CI](https://github.com/CryptoDilis/Climboria/actions/runs/46139742033) and its specific private-state restart step; gameplay smoke was still running. Parent merge remains open.
+- Adds a private station session capability reusing existing single-use preview ticket storage with a distinct ticket namespace. Trusted server caller supplies verified account and allowlist; packet shape excludes identity, coordinates, provisioning and arbitrary inventory changes. Supports grounded directional movement, camp/stock inspection, fixed placement/ignition/extinguishing, refuel and cooking. Limits: two simultaneous distinct accounts, 60-second session, 24 messages/second, 512-byte message, one pending action and 256 nonreusable session IDs per fixture instance. Revocation/expiry closes the session and revalidates durable mutations.
+- Three isolated JS regression bodies passed against actual fetched terrain, movement, camp, crafting and ticket-store modules using deterministic crypto and text-encoder stand-ins (not cryptographic verification). Covers single-use tickets, forged packet fields, owner separation, duplicate action, reconnect, expiry, rate limits and rollback on revocation during write. Test checkpoint `94b95dca1ca0af650cf1ce4bb457142c290f33ee`; native Node CI extended to run the tests with real crypto.
+- This is an in-process transport capability, not a WebSocket Worker or browser integration, actual protected authentication or production release. No public route or production import. Next verify exact native CI and parent merge, then attach the capability to an isolated local WebSocket fixture with the existing protected admission pattern and exercise actual browser controls; real account/device acceptance and complete geometry remain open. Do not claim live inventory activation.
+
+
 ## Phase 06 main-based Expedition Camp runtime consolidation — 2026-11-28 PHT
 
 - Reconciles #1138 and #1140 on main `bc878461c10cc127644c2443b524c60155794a75`, preserving the latest development record. Verified main crafting, campsite, terrain, grounded movement and existing workerd fixture/smoke sources matched their parent blobs before copying exact candidates. #1138 five exact checks passed; #1140 three exact checks passed ([station CI](https://github.com/CryptoDilis/Climboria/actions/runs/46138339464)). Both remain unmerged at inspection.
