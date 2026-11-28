@@ -45,7 +45,8 @@ contract SafeEpochGuardFixture is BaseGuard {
         wallet=account;singleton=implementation;
         proxyHash=address(account).codehash;singletonHash=implementation.codehash;
     }
-    modifier onlyWallet(){if(msg.sender!=address(wallet))revert Unauthorized();_;}
+    modifier onlyWallet(){_requireWallet();_;}
+    function _requireWallet() private view {if(msg.sender!=address(wallet))revert Unauthorized();}
     function threshold() external view returns(uint256){validateConfig();return wallet.getThreshold();}
     function memberCount() external view returns(uint256){validateConfig();return wallet.getOwners().length;}
     function isMember(address a) external view returns(bool){validateConfig();return wallet.isOwner(a);}
