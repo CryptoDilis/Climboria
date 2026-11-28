@@ -116,6 +116,8 @@ jobs:
                   raise SystemExit(f"Missing expected homepage control: #{required_id}")
           print("Current homepage structure and hero controls validated.")
           PY
+      - name: Test V4 read-only transparency boundary (offline fixtures only)
+        run: node --test .github/scripts/v4-transparency-monitor.test.mjs
       - name: Verify Base-exclusive CLIMB V4 tokenomics and prior-holder protection
         run: |
           python3 - <<'PY'
