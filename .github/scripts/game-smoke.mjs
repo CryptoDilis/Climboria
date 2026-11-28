@@ -65,6 +65,32 @@ try {
     errors.push('The journal discovery opened the geode chest');
   if(await guestProbe.evaluate(()=>Object.keys(localStorage).some(key=>key.startsWith('climboria:jarrell-field-journal:'))))
    errors.push('Guest cave discovery persisted a local journal entry');
+  await guestProbe.evaluate(()=>{
+    const {player,inventory}=window.__climboriaJarrellsPeak;
+    inventory.splice(0,inventory.length,...Array.from({length:50},(_,index)=>({name:'Capacity fixture '+index,qty:1})));
+    window.__smokeFishingEvents=0;
+    addEventListener('climboria:fish',()=>window.__smokeFishingEvents++);
+    Object.assign(player,{fish:.001,fishSource:'open_sea'});
+  });
+  await guestProbe.waitForFunction(()=>window.__climboriaJarrellsPeak.player.fishSource===null);
+  const blockedCatch=await guestProbe.evaluate(()=>({
+    events:window.__smokeFishingEvents,
+    units:window.__climboriaJarrellsPeak.inventory.reduce((sum,item)=>sum+item.qty,0),
+  }));
+  if(blockedCatch.events!==0||blockedCatch.units!==50) errors.push('Full backpack reported an unawarded catch: '+JSON.stringify(blockedCatch));
+  await guestProbe.evaluate(()=>{
+    const {player,inventory}=window.__climboriaJarrellsPeak;
+    const seaFish=['Silverfin','Bluefin Tuna','Mahi-Mahi','Old Boot (junk)'];
+    seaFish.forEach((name,index)=>{inventory[index].name=name;});
+    Object.assign(player,{fish:.001,fishSource:'open_sea'});
+  });
+  await guestProbe.waitForFunction(()=>window.__climboriaJarrellsPeak.player.fishSource===null);
+  const stackedCatch=await guestProbe.evaluate(()=>({
+    events:window.__smokeFishingEvents,
+    slots:window.__climboriaJarrellsPeak.inventory.length,
+    units:window.__climboriaJarrellsPeak.inventory.reduce((sum,item)=>sum+item.qty,0),
+  }));
+  if(stackedCatch.events!==1||stackedCatch.slots!==50||stackedCatch.units!==51) errors.push('Fishing failed to extend an existing stack: '+JSON.stringify(stackedCatch));
   await guestProbe.close();
   // The rest of this test exercises 3D creator UX against an explicitly
   // mocked registered account, NOT a real Supabase auth acceptance.
@@ -619,7 +645,7 @@ try {
   const grottoTraversal=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveGrottoTraversalAudit?.()??null);
   if(!grottoTraversal||!grottoTraversal.startDry||!grottoTraversal.inside||!grottoTraversal.enteredSwim||!grottoTraversal.surfaceValid||!grottoTraversal.deepened||!grottoTraversal.surfaced||!grottoTraversal.exited||!grottoTraversal.swimReset||grottoTraversal.depth<=0||grottoTraversal.bedClearance<.4||Math.abs(grottoTraversal.groundY-grottoTraversal.floorY)>.02||!grottoTraversal.positionRestoredToAnnex||grottoTraversal.local.x<19||grottoTraversal.local.x>21||grottoTraversal.local.z<41||grottoTraversal.local.z>43) errors.push('Cave grotto live swim controller/traversal/floor-alignment audit failed: '+JSON.stringify(grottoTraversal));
   const geodeLifecycle=await page.evaluate(()=>window.__climboriaJarrellsPeak?.geodeChestLifecycleAudit?.()??null);
-  if(!geodeLifecycle||!geodeLifecycle.ok||!geodeLifecycle.opened||!geodeLifecycle.rewarded||!geodeLifecycle.respawned||geodeLifecycle.timer<120||geodeLifecycle.timer>240) errors.push('Geode chest open/reward/120-240s respawn lifecycle failed: '+JSON.stringify(geodeLifecycle));
+  if(!geodeLifecycle||!geodeLifecycle.ok||!geodeLifecycle.fullBackpackPreserved||!geodeLifecycle.opened||!geodeLifecycle.rewarded||!geodeLifecycle.respawned||geodeLifecycle.timer<120||geodeLifecycle.timer>240) errors.push('Geode chest open/reward/120-240s respawn lifecycle failed: '+JSON.stringify(geodeLifecycle));
   const caveLighting=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveLightingAudit?.()??null);
   const caveTraps=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveTrapAudit?.()??null);
   if(!caveTraps||!Number.isFinite(caveTraps.caveBaseY)||caveTraps.spikeCount!==35||caveTraps.rows!==5||caveTraps.columns!==7||caveTraps.trapRoom?.minX!==-64||caveTraps.trapRoom?.maxX!==-46||caveTraps.trapRoom?.minZ!==-47||caveTraps.trapRoom?.maxZ!==-35||caveTraps.damage!==25||!caveTraps.activeProbe||!caveTraps.inactiveProbe||!caveTraps.outsideProbe) errors.push('Cave spike trap activation/damage audit failed: '+JSON.stringify(caveTraps));
