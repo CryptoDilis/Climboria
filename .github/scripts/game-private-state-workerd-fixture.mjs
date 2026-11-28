@@ -1,3 +1,4 @@
+import { createPrivateExpeditionCooking } from '../../game/multiplayer/private-expedition-cooking.mjs';
 import { createPrivateCampsiteRegistry } from '../../game/multiplayer/private-campsite-registry.mjs';
 import { createPrivateCraftingLedger } from '../../game/multiplayer/private-crafting-ledger.mjs';
 import { createPrivateSurvivalLedger } from '../../game/multiplayer/private-survival-ledger.mjs';
@@ -102,6 +103,38 @@ export class PrivateFixture {
         const lit = await camps.ignite(sessionId, slot, 1);
         const extinguished = await camps.extinguish(sessionId, slot, 2);
         return Response.json({ ok: stock.ok && placed.ok && lit.ok && extinguished.ok });
+      }
+      case '/expedition-prepare':
+      case '/expedition-cook':
+      case '/expedition-extinguish':
+      case '/expedition-refuel':
+      case '/expedition-stock':
+      case '/expedition-camp': {
+        // Separate local DO identity in the smoke driver; no production routing.
+        // Reconstruct the private authored approach on every request, while
+        // durable campsite and inventory state remain in the same SQLite DO.
+        if (!Number.isSafeInteger(now) || now < 400) return Response.json({ ok: false, reason: 'invalid-fixture-time' });
+        let tickTime = now - 400;
+        const owner = (id, roomId) => id === sessionId ? { sessionId, accountId, roomId } : null;
+        const expedition = createPrivateExpeditionCooking({
+          roomId: 'preview-crafting-fixture', storage: this.storage, clock: () => tickTime, resolveOwner: owner,
+        });
+        if (!expedition.join(sessionId).ok) throw Error('Expedition fixture join failed');
+        for (let sequence = 0; sequence < 4; sequence++) {
+          if (!expedition.input(sessionId, { x: 1, z: 0, sequence }).ok) throw Error('Expedition fixture input failed');
+          tickTime += 100;
+          if (!expedition.tick().ok) throw Error('Expedition fixture tick failed');
+        }
+        const revision = Number(url.searchParams.get('revision'));
+        if (url.pathname === '/expedition-stock') return Response.json(await expedition.inspectStock(sessionId));
+        if (url.pathname === '/expedition-camp') return Response.json(await expedition.inspectCamp(sessionId));
+        if (url.pathname === '/expedition-cook') return Response.json(await expedition.cook(sessionId, revision));
+        if (url.pathname === '/expedition-extinguish') return Response.json(await expedition.extinguish(sessionId, revision));
+        if (url.pathname === '/expedition-refuel') return Response.json(await expedition.refuel(sessionId, revision, Number(url.searchParams.get('inventoryRevision'))));
+        const stock = await expedition.provision(accountId, { fiber: 0, wood: 4, 'raw-fish': 3, 'repair-kit': 0, 'cooked-fish': 0 });
+        const placed = await expedition.place(sessionId, 0);
+        const lit = await expedition.ignite(sessionId, 1);
+        return Response.json({ ok: stock.ok && placed.ok && lit.ok });
       }
       case '/survival-inspect':
       case '/survival-stock':

@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## Phase 06 main-based Expedition Camp runtime consolidation — 2026-11-28 PHT
+
+- Reconciles #1138 and #1140 on main `bc878461c10cc127644c2443b524c60155794a75`, preserving the latest development record. Verified main crafting, campsite, terrain, grounded movement and existing workerd fixture/smoke sources matched their parent blobs before copying exact candidates. #1138 five exact checks passed; #1140 three exact checks passed ([station CI](https://github.com/CryptoDilis/Climboria/actions/runs/46138339464)). Both remain unmerged at inspection.
+- Extends existing local workerd SQLite Durable Object smoke in a distinct fixture identity. Reconstructs the same authored private server-grounded approach per request, then tests duplicate cooking, extinguishing, duplicate conserved refuel, persisted stock and lit fire after runtime restart, stale revision denial, subsequent cooking, observed fire expiry and rollback denial after a second restart. Outer Worker remains HTTP 404. No dependency or deployment configuration changes.
+- SQLite smoke code checkpoint `9254b7527c9f54227a982ba6bf1352a1b0a0bc1a`. The actual native runtime test has NOT been executed in this session; fresh main-targeted GitHub CI required. Movement/session state is reconstructed for the synthetic test rather than persisted or authenticated; restart proof concerns durable fire and inventory state only.
+- Next verify exact native station and runtime CI, reconcile main and merge only after gates, then connect reviewed protected browser/room station transport. Production collider completeness, registered players, actual device acceptance, and clock rollback following failed transactions remain separate release gates. Keep earlier drafts until verified replacement is merged.
+
+
 ## Phase 06 private crafting and meal interaction — 2026-11-28 PHT
 
 - Main-based reconciliation of #1105 atomic crafted meal and #1112 read-only panel on `babce42aeb2c96800e130b08a3420aa989e4486a`. Adds optional Craft and Eat actions with revision-bound intents, one pending action per rendered generation, account scope checks, authoritative snapshot refresh and no automatic retry of uncertain outcomes. Without adapters the panel stays read-only.
