@@ -1,0 +1,163 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import {Safe} from "safe-contracts/Safe.sol";
+import {SafeProxy} from "safe-contracts/proxies/SafeProxy.sol";
+import {Enum} from "safe-contracts/common/Enum.sol";
+import {BaseGuard} from "safe-contracts/base/GuardManager.sol";
+// V3 baseline: e18ec20c06649a5f70d4dcaf8ccc42edad0a03b9 base/safe-custody/src/SafeEpochGuardFixture.sol.
+// Chain restriction, names, and factory composition adapted for local V4 tests.
+
+interface IV4LocalSafeProxy { function masterCopy() external view returns(address); }
+
+/// @notice Local-only V4 adaptation of the V3 rotation-only custody boundary. Cannot spend or forward assets.
+/// Not independently reviewed, no recovery below quorum, do not fund.
+contract V4LocalEpochGuard is BaseGuard {
+    error InvalidConfig();
+    error InvalidAuthorizationWindow();
+    uint256 public constant MAX_AUTHORIZATION_WINDOW=1 days;
+    error Unauthorized();
+    error Forbidden();
+    error NotReady();
+    error UnsupportedSignatureMode();
+    error TransactionInProgress();
+    uint256 public constant DELAY=2 days;
+    uint256 public constant WINDOW=7 days;
+    uint256 private constant GUARD_SLOT=0x4a204f620c8c5ccdca3fd54d003badd85ba500436a431f0cbda4f558c93c34c8;
+    uint256 private constant FALLBACK_SLOT=0x6c9a6c4a39284e37ed1cf53d337577d14212a4870fb976a4366c693b939918d5;
+    bytes4 private constant SWAP=bytes4(keccak256("swapOwner(address,address,address)"));
+    Safe public immutable wallet;
+    address public immutable singleton;
+    bytes32 public immutable proxyHash;
+    bytes32 public immutable singletonHash;
+    uint256 public epoch=1;
+    // Every scheduled rotation has a distinct signed execution payload, even after cancellation.
+    uint256 public rotationSerial;
+    struct Rotation { bytes32 digest; address oldOwner; address newOwner; uint256 readyAt; uint256 expiresAt; }
+    Rotation public pending;
+    bool private rotating;
+    bool public transactionActive;
+    event RotationScheduled(uint256 indexed epoch,bytes32 indexed digest,uint256 readyAt,uint256 expiresAt);
+    event RotationCancelled(uint256 indexed epoch,bytes32 indexed digest);
+    event AuthorizationInvalidated(uint256 indexed epoch,uint256 indexed consumedNonce);
+    event Rotated(uint256 indexed epoch,address indexed oldOwner,address indexed newOwner);
+
+    constructor(Safe account,address implementation){
+        if(block.chainid!=31337||address(account).code.length==0||implementation.code.length==0||
+           IV4LocalSafeProxy(address(account)).masterCopy()!=implementation) revert InvalidConfig();
+        wallet=account;singleton=implementation;
+        proxyHash=address(account).codehash;singletonHash=implementation.codehash;
+    }
+    modifier onlyWallet(){_requireWallet();_;}
+    function _requireWallet() private view {if(msg.sender!=address(wallet))revert Unauthorized();}
+    function threshold() external view returns(uint256){validateConfig();return wallet.getThreshold();}
+    function memberCount() external view returns(uint256){validateConfig();return wallet.getOwners().length;}
+    function isMember(address a) external view returns(bool){validateConfig();return wallet.isOwner(a);}
+    function validateConfig() public view {
+        if(block.chainid!=31337||address(wallet).codehash!=proxyHash||singleton.codehash!=singletonHash||
+           IV4LocalSafeProxy(address(wallet)).masterCopy()!=singleton||wallet.getThreshold()!=3||
+           wallet.getOwners().length!=5||abi.decode(wallet.getStorageAt(GUARD_SLOT,1),(address))!=address(this)||
+           abi.decode(wallet.getStorageAt(FALLBACK_SLOT,1),(address))!=address(0)) revert InvalidConfig();
+        (address[] memory modules,address next)=wallet.getModulesPaginated(address(1),1);
+        if(modules.length!=0||next!=address(1))revert InvalidConfig();
+    }
+    function _eligibleReplacement(address oldOwner,address newOwner) private view returns(bool){
+        return wallet.isOwner(oldOwner)&&!wallet.isOwner(newOwner)&&newOwner!=address(0)&&newOwner!=address(1)&&
+            newOwner!=address(wallet)&&newOwner!=address(this)&&newOwner.code.length==0&&_rotationOwnerAllowed(newOwner);
+    }
+    function _authorizationWindow(uint256 validAfter,uint256 validUntil) internal view {
+        if(validAfter>block.timestamp||validUntil<=block.timestamp||validUntil<=validAfter||validUntil-validAfter>MAX_AUTHORIZATION_WINDOW)revert InvalidAuthorizationWindow();
+    }
+    function scheduleRotation(uint256 expectedEpoch,address prev,address oldOwner,address newOwner,uint256 validAfter,uint256 validUntil) external onlyWallet {
+        _authorizationWindow(validAfter,validUntil);
+        validateConfig();
+        if(expectedEpoch!=epoch||rotating||(pending.digest!=0&&block.timestamp<pending.expiresAt)||
+           !_eligibleReplacement(oldOwner,newOwner))revert Forbidden();
+        address[] memory owners=wallet.getOwners();bool valid;
+        for(uint256 i=0;i<owners.length;i++){
+            if(owners[i]==oldOwner&&prev==(i==0?address(1):owners[i-1]))valid=true;
+        }
+        if(!valid)revert Forbidden();
+        rotationSerial++;
+        bytes32 digest=keccak256(abi.encodePacked(abi.encodeWithSelector(SWAP,prev,oldOwner,newOwner),rotationSerial));
+        pending=Rotation(digest,oldOwner,newOwner,block.timestamp+DELAY,block.timestamp+DELAY+WINDOW);
+        _onNomination(newOwner);
+        emit RotationScheduled(epoch,digest,pending.readyAt,pending.expiresAt);
+    }
+    function cancelRotation(uint256 expectedEpoch,uint256 expectedSerial) external onlyWallet {
+        validateConfig();
+        bytes32 d=pending.digest;
+        if(expectedEpoch!=epoch||expectedSerial!=rotationSerial||d==0||rotating)revert Forbidden();
+        delete pending;emit RotationCancelled(epoch,d);
+    }
+    // Quorum-only nonce consumption, before or after binding. Must win the
+    // transaction ordering race; does not cancel an already executed action.
+    function invalidateAuthorization(uint256 expectedEpoch,uint256 expectedNonce) external onlyWallet {
+        validateConfig();
+        if(!transactionActive||rotating||expectedEpoch!=epoch||expectedNonce!=wallet.nonce()-1)revert Forbidden();
+        emit AuthorizationInvalidated(epoch,expectedNonce);
+    }
+    function checkTransaction(address to,uint256 value,bytes memory data,Enum.Operation operation,
+        uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address payable refundReceiver,
+        bytes memory signatures,address) external override onlyWallet {
+        if(transactionActive)revert TransactionInProgress();
+        if(value!=0||operation!=Enum.Operation.Call||safeTxGas!=0||baseGas!=0||gasPrice!=0||
+           gasToken!=address(0)||refundReceiver!=address(0))revert Forbidden();
+        _checkSignerModes(signatures);
+        transactionActive=true;
+        _checkCall(to,data);
+    }
+    // Safe has already verified three distinct, sorted owners. Require an actual
+    // ECDSA signature for each; approved-hash and sender modes cannot prove fresh
+    // key authorization, even if a delegated account later clears its code.
+    // Do not reject a whole owner set merely because a non-signing owner has code.
+    function _checkSignerModes(bytes memory signatures) private pure {
+        if(signatures.length!=195)revert UnsupportedSignatureMode();
+        for(uint256 i=0;i<3;i++){
+            uint8 v=uint8(signatures[i*65+64]);
+            if(v!=27&&v!=28&&v!=31&&v!=32)revert UnsupportedSignatureMode();
+        }
+    }
+    function _onNomination(address) internal virtual {}
+    function _rotationOwnerAllowed(address) internal view virtual returns(bool){return true;}
+    function _policyCallAllowed(bytes4,uint256) internal view virtual returns(bool){return false;}
+    function _checkCall(address to,bytes memory data) private {
+        validateConfig();
+        if(rotating||data.length<4)revert Forbidden();
+        bytes4 selector=bytes4(data);
+        if(to==address(this)){
+            if((selector==this.scheduleRotation.selector&&data.length==196)||
+               (selector==this.cancelRotation.selector&&data.length==68)||
+               (selector==this.invalidateAuthorization.selector&&data.length==68)||_policyCallAllowed(selector,data.length))return;
+            revert Forbidden();
+        }
+        if(to!=address(wallet)||selector!=SWAP||data.length!=132)revert Forbidden();
+        // Safe swapOwner decodes its three address arguments; the appended serial is
+        // additionally authenticated by the Safe transaction hash and this guard's digest.
+        Rotation memory p=pending;
+        if(p.digest==0||p.digest!=keccak256(data)||block.timestamp<p.readyAt||block.timestamp>=p.expiresAt)revert NotReady();
+        // A scheduled address may acquire code or cease to satisfy policy during the delay.
+        if(!_eligibleReplacement(p.oldOwner,p.newOwner))revert Forbidden();
+        rotating=true;
+    }
+    function checkAfterExecution(bytes32,bool success) external override onlyWallet {
+        if(!transactionActive||!success)revert Forbidden();
+        validateConfig();
+        if(rotating){
+            Rotation memory p=pending;
+            if(wallet.isOwner(p.oldOwner)||!wallet.isOwner(p.newOwner)||p.newOwner.code.length!=0||!_rotationOwnerAllowed(p.newOwner))revert InvalidConfig();
+            rotating=false;delete pending;epoch++;
+            emit Rotated(epoch,p.oldOwner,p.newOwner);
+        }
+        transactionActive=false;
+    }
+}
+
+/// @dev Used exclusively by the factory as the Safe setup delegatecall target.
+/// Calls the proxy itself, satisfying Safe self-authorization without exposing
+/// a post-setup public initializer or retaining any authority in the helper.
+contract V4LocalGuardBootstrap {
+    function install(address guard) external {
+        Safe(payable(address(this))).setGuard(guard);
+    }
+}
+
