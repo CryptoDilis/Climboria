@@ -12,11 +12,15 @@ jobs:
   loopback:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    env:
-      FROZEN_CAPTURE: ${{ runner.temp }}/frozen-climb-capture
-      CANDIDATE_CHECKOUT: ${{ github.workspace }}/candidate
-      LOOPBACK_BUNDLE: ${{ runner.temp }}/climb-local-runtime-bundle
     steps:
+      - name: Resolve runner-local rehearsal paths
+        run: |
+          set -euo pipefail
+          {
+            echo "FROZEN_CAPTURE=$RUNNER_TEMP/frozen-climb-capture"
+            echo "CANDIDATE_CHECKOUT=$GITHUB_WORKSPACE/candidate"
+            echo "LOOPBACK_BUNDLE=$RUNNER_TEMP/climb-local-runtime-bundle"
+          } >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
