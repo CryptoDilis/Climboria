@@ -1,58 +1,66 @@
-# Climboria — Project Whitepaper / Design Brief
+# Climboria — V4 Ecosystem Whitepaper
 
-**Version status:** agreed design direction; not a statement that every feature is implemented or live.
+**Policy edition: 2026-11-28 UTC.** Planned design, not deployed or audited V4 code. TESTNET_NO_GO / MAINNET_NO_GO. [V4 policy](../base/CLIMB_BASE_TOKENOMICS_V4_POLICY.md) · [Public transparency](https://climboria.fun/transparency/).
 
-## 1. Vision
+## 1. Executive Summary
+Climboria combines browser-first exploration and Base-first multichain market infrastructure. The official planned CLIMB token is Base-exclusive. No automatic gameplay cryptocurrency rewards.
 
-Climboria is a browser-first climbing, survival, and open-world treasure-hunting project. **Game First, Speculation Later** describes the product philosophy and the importance of a genuinely playable game; it is not the current cross-product engineering release order. The owner-approved execution order is **P1 Live Swap → P2 Live DEX → P3 All Login methods → P4 Fully Live Game → P5 Live Launchpad (last)**, as recorded in the root README and release-priority document. No demo-only delivery is accepted: each product must use real integrations and be verified live before it is called complete. The two game-world destinations are Jarrell’s Peak, the open-world survival experience, and Arena, the separate competitive map.
+## 2. Project Vision
+Game First, Speculation Later is the product philosophy. Jarrell’s Peak focuses on exploration, survival, crafting and progression. Separate DEX, Swap, Signature Launchpad and CLIMBX services have independent release gates.
 
-## 2. Launch world: Jarrell’s Peak
+## 3. Base Network Architecture
+Base mainnet chain 8453 is the intended official token network. Other independently verified networks may remain available for separate trading services. Routine gameplay is off-chain. No unverified token contract or wallet manifest is published.
 
-The world centers on a riverside starting camp, a long river, fishing, swimming, forests, cliffs, hidden routes, landmarks, and treasure discovery. Survival and exploration are the core loop. Existing gameplay mechanics are out of scope for documentation-only changes.
+## 4. Jarrell’s Peak and Game Utility
+Ordinary gameplay earns nonfinancial XP, rank, equipment, cosmetics, loot and progression; no automatic CLIMB or play-to-earn emissions. Competitive and community programs need approved distribution. Marketplace and Arena utility, optional wagers and fee designs remain planned, not operational, and require independent implementation and review. No automatic weekly crypto payout.
 
-## 2A. Game menu and feature status
+## 5. CLIMB Token Overview
+Name and symbol CLIMB; Base ERC-20; fixed planned genesis supply 888,888,888 CLIMB; six decimals subject to final verification. No further minting, ordinary transfer tax or developer-controlled selling restrictions under the approved design. Current on-chain supply and circulating supply are unavailable.
 
-The menu has four entries: **Jarrell’s Peak** (playable open world), **Arena** (separate competitive map; currently a future-feature status panel), **Marketplace** (demo storefront; no live trading), and **Inventory** (local preview; no persistent ownership). Only Jarrell’s Peak and Arena are game-world destinations. Character creation/editing is reached through the Jarrell’s Peak entry flow.
+## 6. V4 Tokenomics
+| Allocation | Total supply share | CLIMB |
+|---|---:|---:|
+| Community / Rewards | 30% | 266,666,666.40 |
+| Liquidity | 20% | 177,777,777.60 |
+| Ecosystem / Development | 18% | 159,999,999.84 |
+| Treasury / DAO | 12% | 106,666,666.56 |
+| Team / Founder | 10% | 88,888,888.80 |
+| Marketing | 7% | 62,222,222.16 |
+| Advisors / Partners | 2% | 17,777,777.76 |
+| Legacy Migration | 1% | 8,888,888.88 |
+| Total | 100% | 888,888,888.00 |
 
-## 3. Top Gainers and rewards
+## 7. Community Distribution
+| Program | Total supply share | CLIMB |
+|---|---:|---:|
+| Staking Rewards | 12% | 106,666,666.56 |
+| Tournaments / Competitive | 8% | 71,111,111.04 |
+| Community Incentives / Quests / Promotions | 6% | 53,333,333.28 |
+| Future Programs Reserve | 4% | 35,555,555.52 |
+These are sub-pools of the 30%, not additional supply. Planned 48-month distribution with approved governance and authorization; no ordinary gameplay token emissions. Staking uses finite reserves; mechanics, security and eligibility are pending. No guaranteed yield.
 
-The intended system has a permanent All-Time Top Gainers leaderboard and a separate Weekly Top Gainers leaderboard. Scoring combines eligible $CLIMB earnings, eligible treasure value, and transparent rarity/difficulty bonuses. There is no summit ranking and no badge system in the current plan.
+## 8. Marketing Allocation and TGE Unlock
+62,222,222.16 CLIMB total; 3,111,111.108 CLIMB direct initial TGE unlock to a dedicated developer-controlled wallet (5% of marketing and 0.35% of supply). Freely transferable and sellable after issuance, subject to actual liquidity. Not individually multisig-controlled or contract-restricted. Counts toward month one. Remaining restricted reserve 59,111,111.052 CLIMB; regular monthly cap 3,111,111.108 CLIMB, maximum two months unused capacity rollover. Exceptional spending requires multisig, public justification and minimum seven-day timelock. Exact accounting remains pending. Transfers alone do not prove campaign expenses.
 
-Weekly payout timing, if funded and launched, is Friday at 03:00 UTC (11:00 AM Philippines time). Rewards require a verified funding pool, published eligibility, secure accounting, and server-side anti-cheat. No reward is guaranteed.
+## 9. Liquidity and LP Locking
+177,777,777.60 CLIMB allocated, not funded liquidity. Actual paired assets and independently verified compatible locker required; DEX, pool, LP identity and funding pending. Planned 36-month LP ownership lock, not permanent burning. No automatic return to team. Migration-only exception requires multisig, public notice, minimum 14-day timelock, remaining lock preservation and no unrestricted team withdrawal.
 
-## 4. Marketplace and game funding
+## 10. Team and Advisor Vesting
+Team 88,888,888.80 CLIMB; advisors 17,777,777.76 CLIMB. Planned 12-month cliff followed by 36 months linear vesting; no immediate unrestricted allocation. Exact cliff behavior, beneficiary and contract terms pending.
 
-Eligible marketplace items and crafted gear are intended to use $CLIMB only. Buy fee is 2.5%; sell fee is 2.5%. Five percent of actual marketplace fee revenue collected is allocated to the Climboria game funding pool. This is not an additional 5% charge on gross trading volume. For example, 2,500 $CLIMB in collected marketplace fees results in 125 $CLIMB allocated to game funding. NFT minting is intended to have no Climboria minting fee; the player pays network gas.
+## 11. Ecosystem Development Funding
+18% milestone-based funding; no unrestricted lump sum. Milestone evidence and actual disbursements pending.
 
-These are agreed design rules, not proof that marketplace, fee collection, NFT minting, or on-chain reward systems are live.
+## 12. Treasury and Governance
+12% treasury allocation, governance approval and multisig execution. Governance and DAO not operational; quorum, eligibility and execution rules pending.
 
-## 5. Future Arena
+## 13. Token Transparency and Accountability
+The public dashboard distinguishes planned genesis supply from verified current supply, locked and vested amounts, wallet balances and transaction history. No wallet required. Live monitoring is disabled until verified contract and wallet manifests exist. Never infer circulating supply from visible wallets. Chain ID, decimals, identity, freshness, finalized/confirmed states and provider failures must be handled explicitly.
 
-The Arena is a separate future public forest map, directly accessible from the game menu. It is planned for free-for-all fights, Guild Battles, and sponsored tournaments. Casual fights have no rewards. During Guild Battle, the entire Arena becomes the battlefield for two participating guilds and other players spectate. Any guild member may request a battle; guild leaders must approve. Weekly Guild Wars depend on future budget and implementation.
+## 14. Legacy Migration
+Official support of the previous Solana CLIMB token has ended. It may still trade independently. The 1% reserve is not an automatic migration promise or 1:1 bridge. Eligibility, exact cutoff, terms, ratio, claims and appeals require verified evidence and approval. Do not purchase legacy tokens expecting compensation or send/sign now.
 
-A single shared world with a target of more than 1,000 concurrent players is a design goal, not a verified capacity claim. Server architecture and load testing must prove feasibility.
-
-## 6. Chatworld
-
-Future Global Chat, Proximity Chat, and Private Messages are planned for Jarrell’s Peak and Arena. Trash talk and competitive banter are allowed within published conduct rules; threats, targeted harassment, hate speech, scams, and spam may be moderated. Mute, block, report, anti-spam, and moderator tools are planned. Server-side messaging, identity, permissions, and moderation are required.
-
-## 7. Wagers and event rewards
-
-Casual fights remain free. Optional wager matches are planned with mutually accepted $CLIMB stakes. The winner receives the total pot minus a 2.5% platform fee on the pot; that fee goes to the game funding pool. Secure escrow, consent, dispute handling, anti-abuse, and compliance review are release prerequisites.
-
-Sponsored tournaments must have fully funded prize pools. There is no event announcement, sponsor branding, or event activation until the complete sponsorship fee and full promised prize pool are received and verified.
-
-## 8. Sponsorship policy
-
-Climboria admin retains final approval. A written eligibility checklist and agreement define the package, full payment, prize pool, exclusivity, duration, branding placements, cancellation/refund terms, postponement, force majeure, renewal, and prize protection.
-
-Launchpad-created tokens may receive fast-track sponsor review after basic eligibility, payment, and event checks. Other crypto sponsors receive full review; non-crypto sponsors are reviewed according to business type and risk. Fast-track is not a blanket exemption for fraud, impersonation, illegal promotions, or misleading claims.
-
-After payment verification, announcements may appear on X.com, the homepage, game menu, and running announcements in both worlds. Arena branding may include the central sponsor flag, entrance panel, and event banners. Automatic renewal at the same price is intended, with a three-day grace period; new announcements and activations pause while unpaid. Cancellation and refund outcomes follow the signed agreement and applicable law.
-
-## 9. Official $CLIMB token details and platform status
-
-**Token:** Climboria ($CLIMB)  
+### Historical record (not active token information)
 **Historical network (retired from official CLIMB support):** Solana mainnet  
 **Historical owner-announced mint / contract address (CA):** `9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump`  
 **Total token supply at the recorded finalized RPC snapshot:** **1,000,000,000 CLIMB**  
@@ -63,22 +71,17 @@ The published [Solana mainnet finalized RPC supply snapshot](../data/climb-suppl
 
 **Historical verification:** [Retirement notice](https://climboria.fun/#climb-token-record) · [Original mint on Solscan](https://solscan.io/token/9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump). This record is not a purchase recommendation.
 
-**Updated token direction:** Climboria tried launching CLIMB on Solana but has chosen to discontinue official CLIMB support there for internal project-direction reasons. Base is the exclusive planned official token and onchain game-economy network; DEX and Swap remain multichain. Eligible holders who purchased and held legacy CLIMB by the first official public retirement announcement are intended to have a migration opportunity; purchases after that announcement will not qualify. Exact UTC publication time, finalized snapshot, eligibility, reserve, conversion terms and appeals must be documented before claims open. No Base mainnet CA is published, migration is not open, no allocation is guaranteed, and the original mint may remain independently tradable. Do not buy, send or sign for migration now. Ordinary gameplay remains off-chain. All previously stated utility and product release gates remain unchanged.
 
-## 10. Roadmap principles
+## 15. Security Architecture
+Separate authorization boundaries, reviewed custody and independent release evidence are required. V3 reviews are historical, not V4 clearance. No production deployment or testnet authorization. No private keys in frontends.
 
-1. Protect and verify existing Jarrell’s Peak gameplay.
-2. Align the website and documentation with the single-world launch.
-3. Implement secure marketplace and reward accounting.
-4. Build Chatworld and moderation.
-5. Build the public Arena and test shared-world scalability.
-6. Implement sponsorship approval, payment verification, and prize protection.
-7. Add Weekly Guild Wars and optional wagers only after budget, implementation, and testing.
-8. Reconsider additional maps and badges only after token launch and budget review.
+## 16. Development Roadmap
+Preserve the owner-approved cross-product execution order in the root README: Swap, DEX, login, fully live Game, Launchpad. V4 token implementation and production deployment require separate engineering and security approvals. Release dates are not promised.
 
-This document describes intended rules and future plans. It does not guarantee token value, liquidity, profits, prize availability, delivery dates, or multiplayer capacity.
+## 17. Risks and Disclosures
+No guaranteed token value, liquidity, returns, listings, compensation or delivery dates. Market, custody, smart-contract, governance, provider and regulatory risks may cause losses. The initial developer-controlled marketing tranche has discretionary spending risk. This document is a policy presentation, not financial or legal advice.
 
-## 11. CLIMBX — personal trading bot (planned; not live)
+## Appendix — CLIMBX — personal trading bot (planned; not live)
 
 **You Dictate. It Climbs. It Learns.** CLIMBX is a planned, free-to-access personal automated trading assistant exclusively for **Climboria DEX**. Its purpose is to give users explicit control over trading rules while placing capital protection ahead of trade frequency or profit-seeking. It is not an investment adviser, profit guarantee, or loss-prevention guarantee.
 
@@ -108,3 +111,6 @@ This document describes intended rules and future plans. It does not guarantee t
 
 Bot access is intended to be free. A **proposed** fee model for any future live product is 10% of eligible *new cumulative net realized profit* above a high-water mark, with prior losses carried forward; network fees may still apply. This is not an active fee, finalized commercial term, or promise of profit.
 
+
+
+[Previous whitepaper preserved in repository history](https://github.com/CryptoDilis/Climboria/blob/921002ad639516c77e7885e7aa2ddc8bad2de15a/docs/WHITEPAPER.md).
