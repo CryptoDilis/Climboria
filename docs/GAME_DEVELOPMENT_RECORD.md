@@ -203,6 +203,11 @@ returns HTTP 404.
 - Fishing reports a catch and emits the catch event only after adding the item. An existing stack can still grow in a full backpack.
 - Local Chromium verified a blocked chest, a successful retry, chest respawn, and both blocked and stackable catches. All 433 scoped Game tests passed locally.
 
+## Phase 03 fishing cast lifecycle — 2026-11-28 PHT
+
+- An active cast is tied to its fishing spot. Leaving the interaction range or entering swimming cancels it before a reward can resolve. Respawn and position restore clear the cast along with the old movement state.
+- Gameplay smoke checks that leaving at the interaction boundary awards no catch and that a respawn drops the old cast. In-range catches still follow backpack capacity rules. Local Chromium verified a real sea-dock cast canceled on departure, the respawn reset, and both in-range capacity paths.
+
 ## Phase 04 private drop expiry — 2026-11-28 PHT
 
 - The isolated drop-claim fixture now writes a 90-second lifetime in room storage before a claim can proceed. New room instances reuse the stored deadline. At expiry the transaction denies pickup, and an issued or consumed drop cannot be reissued to reset its lifetime. Receipt and inventory slot still commit atomically.
