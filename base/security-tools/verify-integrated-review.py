@@ -16,6 +16,10 @@ require = bundle.require
 
 def verify(root, manifest_pin, observation_pin, review_timestamp, max_age_seconds=300):
     report, data = bundle.verified_snapshot(root, manifest_pin, schema=2)
+    return verify_snapshot(report, data, manifest_pin, observation_pin, review_timestamp, max_age_seconds)
+
+def verify_snapshot(report, data, manifest_pin, observation_pin, review_timestamp, max_age_seconds=300):
+    # Internal only: caller must obtain report and data from verified_snapshot.
     bundle.hex_value(observation_pin, 64, "independent observation digest")
     require(bundle.digest(data["state_observation"]) == observation_pin, "observation pin mismatch")
     obs = bundle.strict_json(data["state_observation"])
