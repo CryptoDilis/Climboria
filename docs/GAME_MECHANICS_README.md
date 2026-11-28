@@ -34,7 +34,7 @@ Automated desktop/mobile browser smoke tests check that Jarrell’s Peak initial
 Still separate release gates:
 - Persistent inventory and dropped-item recovery.
 - Server-authoritative multiplayer, inventory, rewards, and anti-cheat.
-- Published loot odds and funded $CLIMB reward rules.
+- Published nonfinancial loot odds and authoritative inventory. No automatic CLIMB gameplay rewards under V4; separately governed competitions remain gated.
 - Physical-device audio, touch controls, camera, and performance checks.
 - Any future teleport-stone design and implementation, after hero/map quality work.
 

@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## Game Economy V4 policy alignment and nonfinancial chest reachability — 2026-11-28 PHT
+
+- Owner requires no automatic CLIMB gameplay payouts; read V4 policy, Game record/backlog and targeted current Game code on `921002ad639516c77e7885e7aa2ddc8bad2de15a`. Created GAME_ECONOMY_V4_DESIGN.md with approved boundaries, Topic A proposals (not approved), historical pricing and B–G unresolved decisions. Replaced old CLIMB earnings leaderboard and CLIMB-only/fee commitments in Game-specific concept docs and page; menu/wallet copy and backlog clarify nonfinancial play and hold historical bounty/job/wager payouts. V3 Base reward path remains out of scope; no real-token grant found in inspected chest path. Targeted audit is not exhaustive proof.
+- Independent nonfinancial core Game task: local treasure interaction requires walk, no swimming, grounded avatar, four-metre horizontal range and bounded chest-floor height. Existing rarity, prices, respawn, items, assets, inventory and public multiplayer gates unchanged. Seven extracted predicate checks passed in isolated JS; expanded existing geode browser smoke to check wrong elevation and swimming denial. Native browser CI pending. This local restriction is not authoritative multiplayer anti-cheat.
+- #1142 exact native station workflow [46140390266](https://github.com/CryptoDilis/Climboria/actions/runs/46140390266) passed; no protected browser or production activation inferred. Next: owner discusses Topic A, then record decision and move to B; independently continue nonfinancial station transport and Game backlog. Registered/physical/financial gates remain blocked.
+
+
 ## Phase 06 private crafting and meal interaction — 2026-11-28 PHT
 
 - Main-based reconciliation of #1105 atomic crafted meal and #1112 read-only panel on `babce42aeb2c96800e130b08a3420aa989e4486a`. Adds optional Craft and Eat actions with revision-bound intents, one pending action per rendered generation, account scope checks, authoritative snapshot refresh and no automatic retry of uncertain outcomes. Without adapters the panel stays read-only.
