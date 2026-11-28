@@ -54,6 +54,8 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 - [ ] R1.5 Acceptance: skip/revisit introduction, desktop/touch controls, no blocking modal or forced wallet, resume after reload, no duplicated grants, actual new-player playtest and voluntary feedback. Measure time to first discovery and optional return rates without intrusive telemetry.
   - Hero preview gesture coverage checks drag ownership, pinch without rotation, and cancellation. Physical touch acceptance remains open.
 
+Phase 03 shoreline follow-up adds sampled-bed clearance to diving and deep-to-shallow swim transitions. Physical bank traversal remains **BLOCKED — EXTERNAL VERIFICATION REQUIRED**.
+
 ## R2 — Living world and dynamic events (critical)
 
 - [ ] R2.1 Server-defined event scheduler with bounded active events, deterministic test seeds, region-local activation, cooldowns, expiry, restart/reconnect and no duplicate grants.

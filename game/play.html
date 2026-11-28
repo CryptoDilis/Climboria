@@ -442,9 +442,12 @@ function updatePlayerWaterState(player,body,groundHeight,dt,diveInput=0,surfaceI
   player.vy=0;
   if(player.waterBodyId!==body.id)player.swimDepth=0;
   player.waterBodyId=body.id;
-  player.swimDepth=Math.max(0,Math.min(maxSwimDepth(body),(player.swimDepth||0)+(diveInput-surfaceInput)*dt*2.4));
-  const swimSurface=swimTargetY(body,player.swimDepth);
-  player.y+=(swimSurface+.045*Math.sin(time*2.2)-player.y)*Math.min(1,dt*7);
+  // A water body has a nominal depth, but its shoreline and bed vary across terrain triangles.
+  const bedFloor=groundHeight+1.75;
+  const depthLimit=Math.min(maxSwimDepth(body),Math.max(0,swimTargetY(body)-bedFloor));
+  player.swimDepth=Math.max(0,Math.min(depthLimit,(player.swimDepth||0)+(diveInput-surfaceInput)*dt*2.4));
+  const swimY=swimTargetY(body,player.swimDepth)+.045*Math.sin(time*2.2);
+  player.y=Math.max(bedFloor,player.y+(swimY-player.y)*Math.min(1,dt*7));
  }else{
   player.waterBodyId=null;player.swimDepth=0;
   const floor=groundHeight+1.75;
