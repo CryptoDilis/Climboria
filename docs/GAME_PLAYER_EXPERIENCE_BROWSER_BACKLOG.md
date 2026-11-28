@@ -20,6 +20,8 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 
 Phase 03 has merged improvements to the field journal, hero preview, desktop orbit, mobile holds, shallow water and ledge descent. Phases 04–06 have private drop expiry, skill mastery and regional event scheduling with a passing SQLite restart check. The [development record](GAME_DEVELOPMENT_RECORD.md#phases-0306-game-checkpoint--2026-11-28-pht) links the exact pull requests, public read-only readiness and outstanding external verification. Keep the release acceptance boxes open.
 
+The Phase 05 private equipment candidate adds a synthetic +0 to +10 enhancement fixture, with atomic material costs and replay checks. Equipment recipes, wear, repair and real inventory integration still need implementation and acceptance.
+
 ### Multiplayer checkpoint — 2026-11-28 PHT
 
 [R0.2 and R0.8 private socket recovery](https://github.com/CryptoDilis/Climboria/pull/1046) merged after CI passed at 10, 25, 50 and 100 synthetic loopback clients. [The follow-up](https://github.com/CryptoDilis/Climboria/pull/1051) merged after exact CI passed at 128, with 104 reconnects and capacity rejection. [Native browser batch transport](https://github.com/CryptoDilis/Climboria/pull/1050) passed locally in desktop and mobile emulation with synthetic admissions. Exact follow-up CI, hosted ticket and durable resume acceptance, production-equivalent capacity and physical-device measures remain open.

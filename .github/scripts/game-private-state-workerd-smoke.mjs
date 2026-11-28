@@ -39,6 +39,11 @@ try {
   assert.equal(credits.filter(result => result.ok && result.rank === 'Apprentice').length, 1);
   assert.equal(credits.filter(result => result.reason === 'activity-already-recorded').length, 1);
 
+  assert.equal((await request('provision-equipment', 1000)).enhancement, 0);
+  const enhanced = await Promise.all([request('enhance-equipment', 1000), request('enhance-equipment', 1000)]);
+  assert.equal(enhanced.filter(result => result.ok && result.enhancement === 1).length, 1);
+  assert.equal(enhanced.filter(result => result.reason === 'equipment-level-changed').length, 1);
+
   const first = await request('cave', 1000);
   assert.equal(first.event.startsAtMs, 1000);
   assert.equal((await request('cave', 1030)).event, null);
@@ -49,6 +54,8 @@ try {
 
   assert.equal((await request('record-skill', 1031)).reason, 'activity-already-recorded');
   assert.equal((await request('cave', 1029)).event, null);
+  assert.equal((await request('inspect-equipment', 1031)).remainingMaterials, 54);
+  assert.equal((await request('enhance-equipment', 1031)).reason, 'equipment-level-changed');
 
   const claims = await Promise.all([request('claim-drop', 90999), request('claim-drop', 90999)]);
   assert.equal(claims.filter(result => result.ok).length, 1);
@@ -56,7 +63,7 @@ try {
   assert.equal((await request('claim-drop', 91000)).reason, 'drop-expired');
   assert.equal((await request('open-drop', 91000)).reason, 'drop-expired');
 
-  console.log('Verified private drop expiry, mastery replay protection, and regional event expiry across a local workerd restart');
+  console.log('Verified private drop expiry, mastery replay protection, equipment enhancement costs, and regional event expiry across a local workerd restart');
 } finally {
   try {
     await runtime?.dispose();
