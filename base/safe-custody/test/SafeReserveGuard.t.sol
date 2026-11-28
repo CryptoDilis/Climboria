@@ -12,6 +12,9 @@ import {V3LegacyProofClaimFixture} from "v3-src/V3LegacyProofClaimFixture.sol";
 import {V3LegacyProofVerifierFixture as LegacyVerifier} from "v3-src/V3LegacyProofVerifierFixture.sol";
 import {IV3SyntheticPool} from "v3-src/V3LiquidityPolicyFixture.sol";
 interface VmReserveGuard {
+    struct Log {bytes32[] topics; bytes data; address emitter;}
+    function recordLogs() external;
+    function getRecordedLogs() external returns(Log[] memory);
     function chainId(uint256) external;
     function etch(address,bytes calldata) external;
     function addr(uint256) external returns(address);
@@ -99,6 +102,28 @@ contract SafeReserveGuardTest {
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
         return keccak256(abi.encode(block.chainid,address(v),address(token),v.purpose(),e,PAYEE,uint256(10),evidence,uint256(0),nonce));
     }
+    // Match the emitted authorization ID and complete event payload, not merely receipt success.
+    function _assertAuthorizationEvent(address emitter,bytes32 eventTopic,bytes32 id,bytes32 evidence,bytes32 dataHash) private {
+        VmReserveGuard.Log[] memory logs=vm.getRecordedLogs();
+        uint256 matches;
+        for(uint256 i=0;i<logs.length;i++){
+            if(logs[i].emitter!=emitter||logs[i].topics.length==0||logs[i].topics[0]!=eventTopic)continue;
+            matches++;
+            require(logs[i].topics.length==(evidence==0?3:4));
+            require(logs[i].topics[1]==id&&logs[i].topics[2]==bytes32(uint256(1)));
+            if(evidence!=0)require(logs[i].topics[3]==evidence);
+            require(keccak256(logs[i].data)==dataHash);
+        }
+        require(matches==1);
+    }
+    function _assertExpenseProposed(uint256 i,bytes32 evidence,bytes32 nonce) private {
+        _assertAuthorizationEvent(successor.vaults(i),keccak256("Proposed(bytes32,uint256,bytes32,address,uint256,uint256)"),
+            _id(1,i,evidence,nonce),evidence,keccak256(abi.encode(PAYEE,uint256(10),block.timestamp+2 days)));
+    }
+    function _assertLiquidityScheduled(V3DeferredLiquidityFixture l,bytes32 id,uint256 deadline) private {
+        _assertAuthorizationEvent(address(l),keccak256("Scheduled(bytes32,uint256,uint256,uint256,uint256,uint256)"),
+            id,bytes32(0),keccak256(abi.encode(uint256(1000),uint256(500),block.timestamp+2 days,deadline)));
+    }
     function testActualECDSAQuorumPayloadBindingAndNonceReplay() public {
         bytes memory binding=abi.encodeCall(guard.bindSuccessor,(1,block.timestamp,block.timestamp+1 hours));
         bytes memory sigs=_signed(address(guard),binding,3);
@@ -129,7 +154,8 @@ contract SafeReserveGuardTest {
     }
     function testActualQuorumExpenseAndSharedReplay() public {
         _bind();_reject(address(guard),_propose(1,3,"E","N"),2);
-        _quorum(_propose(1,3,"E","N"));_quorum(_propose(1,4,"E","M"));
+        vm.recordLogs();_quorum(_propose(1,3,"E","N"));_assertExpenseProposed(3,"E","N");
+        vm.recordLogs();_quorum(_propose(1,4,"E","M"));_assertExpenseProposed(4,"E","M");
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
         bytes32 id=_id(1,3,"E","N");
         vm.expectRevert();v.execute(id);
@@ -333,8 +359,10 @@ contract SafeReserveGuardTest {
         V3DeferredLiquidityFixture l=V3DeferredLiquidityFixture(successor.vaults(2));
         V3LegacyProofClaimFixture legacy=V3LegacyProofClaimFixture(successor.vaults(6));
         uint256 deadline=block.timestamp+7 days;
+        vm.recordLogs();
         _quorum(abi.encodeCall(guard.scheduleLiquidity,(1,1000,500,50,deadline,"LP",block.timestamp,block.timestamp+1 hours)));
         bytes32 id=keccak256(abi.encode(block.chainid,address(l),address(token),address(quote),address(l.pool()),uint256(1),uint256(1000),uint256(500),uint256(50),deadline,bytes32("LP")));
+        _assertLiquidityScheduled(l,id,deadline);
         LegacyVerifier.Commitment memory c=_legacyCommitment(legacy);
         _quorum(abi.encodeCall(guard.scheduleLegacy,(1,legacy.activationDigest(c),deadline,block.timestamp,block.timestamp+1 hours)));
         vm.warp(block.timestamp+2 days);
