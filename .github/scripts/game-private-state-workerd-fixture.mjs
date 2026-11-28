@@ -1,3 +1,4 @@
+import { createPrivateSurvivalLedger } from '../../game/multiplayer/private-survival-ledger.mjs';
 import { createPrivateEquipmentEnhancement } from '../../game/multiplayer/private-equipment-enhancement.mjs';
 import { createPrivateMasteryLedger } from '../../game/multiplayer/private-mastery-ledger.mjs';
 import { createPrivateRegionEvents } from '../../game/multiplayer/private-region-events.mjs';
@@ -71,6 +72,24 @@ export class PrivateFixture {
         if (url.pathname === '/enhance-equipment') return Response.json(await equipment.enhance(sessionId, 0));
         if (url.pathname === '/wear-equipment') return Response.json(await equipment.recordWear(sessionId, useId));
         return Response.json(await equipment.repair(sessionId, 1));
+      }
+      case '/survival-inspect':
+      case '/survival-stock':
+      case '/survival-provision':
+      case '/survival-active':
+      case '/survival-eat': {
+        const roomId = 'preview-survival-fixture';
+        const intervalId = 'fixture_interval_1';
+        const survival = createPrivateSurvivalLedger({
+          storage: this.storage, roomId, hungerRate: 50, thirstRate: 60,
+          resolveOwner: () => ({ sessionId, accountId, roomId }),
+          resolveActiveInterval: () => ({ sessionId, accountId, roomId, intervalId, sequence: 1, activeSeconds: 60 }),
+        });
+        if (url.pathname === '/survival-inspect') return Response.json(await survival.inspect(sessionId));
+        if (url.pathname === '/survival-stock') return Response.json(await survival.inspectSupplies(sessionId));
+        if (url.pathname === '/survival-provision') return Response.json(await survival.provisionSupplies(accountId, 2, 1));
+        if (url.pathname === '/survival-active') return Response.json(await survival.recordActiveInterval(sessionId, intervalId));
+        return Response.json(await survival.consumeSupply(sessionId, 'food', 0));
       }
       case '/cave': {
         const events = createPrivateRegionEvents({

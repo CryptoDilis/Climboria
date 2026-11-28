@@ -3769,3 +3769,25 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Added isolated transactional crafting inventory with two synthetic recipes (repair kit at workbench, cooked fish at campfire). Server-resolved ownership and station range are checked before/after storage reads and after writes; materials and output change atomically. Fixed recipes, bounded stack sizes and revision reject invalid input, duplicate crafting, overflow and corrupt conservation. No public route, real items, gameplay effects or production recipe costs.
 - Three focused JavaScript harness scenarios passed: material conservation, concurrent replay, wrong station/account; output capacity, revoked station/owner, rollback and insufficient ingredients; corrupt state and ambiguous commit. Exact Node and CI pending. Existing equipment and survival ledgers are deliberately separate until a reviewed shared inventory transaction can safely consume their crafted outputs.
 - Next verify exact CI, shared inventory integration, private runtime persistence and authored workbench/campfire interactions. External physical and registered-account acceptance remain gated.
+
+
+## Phase 06 private active-time survival candidate — 2026-11-28 PHT
+
+- Added isolated transactional hunger/thirst state using only room-verified, contiguous active intervals (1–60 seconds). Inspection is owner-bound and read-only; elapsed wall time, reconnects and offline time do not cause catch-up depletion. Fixture rates are explicit, bounded and not production balance decisions. No damage, item consumption, rewards, public route or gameplay activation.
+- Three focused JavaScript regression scenarios passed in the isolated development harness: initial/read-only/account isolation and restart; concurrent replay, interval bounds, sequence gaps and clamping; revoked ownership, mutated proof, corrupt state and ambiguous commits. Exact Node and broader repository CI pending.
+- Next integrate reviewed server active-time receipts and atomic inventory-backed food/water recovery in a private room; production tuning, physical device and real-player acceptance remain separate gates.
+
+
+## Phase 06 private survival recovery candidate — 2026-11-28 PHT
+
+- Stacked on exact private survival ledger candidate #1100. Added bounded synthetic food/water pantry, trusted one-time provisioning, owner-bound read-only inspection, and atomic ration consumption with capped hunger/thirst recovery. Expected pantry revision rejects stale and duplicate consumption; no client amount, target account, or recovery value accepted. No real items or live gameplay grants.
+- Added four focused regression tests for concurrent/replayed consumption, cross-account access, full/empty meters, revoked session, ambiguous commit, transaction rollback on second write, and pantry conservation. Exact CI pending; do not merge before #1100 and required checks. Fixture values are not production balance.
+- Next: verified private activity/inventory integration and cooking recipes; retain physical/actual-player and public release gates.
+
+- Extended the existing CI-only workerd/SQLite fixture with survival provisioning, active-interval depletion, concurrent consumption, and restart assertions covering stock conservation, persisted meters, replay, and no offline catch-up. The public fixture router must reject access. Exact updated-head runtime CI is pending; earlier parent checks are not evidence for this new coverage.
+
+
+## Phase 05–06 private crafted meal integration candidate — 2026-11-28 PHT
+
+- Consolidates exact #1104 and #1101 candidates into one draft for integration testing; do not merge before parent PRs and fresh combined checks. Extends crafting record conservation to account for consumed cooked fish (compatible v1 read, v2 on first spend). Only a previously crafted meal can be consumed; a fixed private survival effect and material debit share one storage transaction. Owner revalidation, bounded recovery, full-meter denial, rollback and replay protection remain mandatory.
+- Three new cross-ledger tests cover concurrent consumption, v1/v2 conservation, account isolation, full meter, revoked owner, second-write rollback and ambiguous commit. Exact CI pending. Private fixture only; no real inventory, public routes or production effects. Next: verify combined CI, then integrate crafted repair kit under the same transactional boundary.
