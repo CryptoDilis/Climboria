@@ -6,6 +6,17 @@
 - Add regression coverage for fresh ledger instances, independent accounts and untouched skills, session revocation/reassignment, corrupt records and storage failure. Ensure the server-authority workflow triggers on mastery source/test edits. Exact candidate CI pending; no production endpoint or player UI is authorized by this change.
 - Next verify exact CI, then integrate a reviewed private player-facing projection with real activity authority. Physical and registered-player acceptance remain external gates; continue independent Game tasks while pending.
 
+## Phase 05 private mastery presentation candidate — 2026-11-28 PHT
+
+- Stacked on exact #1098. Added a private read-only DOM panel for all ten independent ranks using a supplied authenticated snapshot reader. Fixed labels, strict payload validation and textContent avoid accepting arbitrary markup; no global level or client-side credit. Refresh clears earlier results, generation/scope checks discard late responses, and the host must call clear on session changes and dispose on teardown. No public route, gameplay wiring, auth credentials or local storage changes.
+- Three focused JavaScript harness scenarios passed (DOM fixture): ten skills, malformed/duplicate data, overlapping requests, account switch/logout, rejected request and disposal. Exact Node and actual browser acceptance pending. Next bind only to reviewed private authenticated host and test actual browser desktop/mobile layout; do not enable publicly or mark rank gameplay acceptance complete.
+
+- Added scoped high-contrast private panel CSS and Chromium CI acceptance at 1200×800 and 360×640. Tests ten actual rendered rows, readable 16px text, responsive column layout, no horizontal overflow, and logout during a pending snapshot. The route is intercepted in the browser test only; public gameplay does not load the panel or its stylesheet. Fresh exact-head browser CI pending.
+
+- Prior exact candidate `c231ce53a04f5781a5dd661697742833ac67c623` passed all five CI workflows, including Chromium panel acceptance. Reconciled with main `a995e50f2787e32e5f1b5a577967c65155b8bebc` retaining equipment panel acceptance and every existing record; fresh combined CI required.
+
+- Exact prior head `92f2c94e0aeed451c1aed9353d25affb847599a0` passed 7/7 CI workflows; reconciled with latest main `69b2cd05decc9d8c34917813867fef604abf1d49` without dropping existing Game records or equipment acceptance. Fresh CI required.
+
 ## Phase 03 hero preview gestures — 2026-11-28 PHT
 
 - Hero creation preview now rotates only from the captured primary pointer. Pinching stops rotation, uses touches that began on the canvas, and resets its zoom baseline on cancellation. Closing the editor also clears gesture state.
@@ -3792,11 +3803,10 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Three isolated JS DOM-fixture scenarios passed. Added scoped navy/gold responsive CSS and Chromium acceptance for 1200×800 and 360×640 covering visible meter, layout, minimum 16px text, and pending-response logout. Exact Node/browser CI pending; no actual gameplay wiring or device claim. Next bind a reviewed private authenticated presentation host and reconcile combined crafted repair after parents merge.
 
 
-## Phase 05 private mastery presentation candidate — 2026-11-28 PHT
+## Phases 05–06 private crafting and cooking candidate — 2026-11-28 PHT
 
-- Stacked on exact #1098. Added a private read-only DOM panel for all ten independent ranks using a supplied authenticated snapshot reader. Fixed labels, strict payload validation and textContent avoid accepting arbitrary markup; no global level or client-side credit. Refresh clears earlier results, generation/scope checks discard late responses, and the host must call clear on session changes and dispose on teardown. No public route, gameplay wiring, auth credentials or local storage changes.
-- Three focused JavaScript harness scenarios passed (DOM fixture): ten skills, malformed/duplicate data, overlapping requests, account switch/logout, rejected request and disposal. Exact Node and actual browser acceptance pending. Next bind only to reviewed private authenticated host and test actual browser desktop/mobile layout; do not enable publicly or mark rank gameplay acceptance complete.
+- Added isolated transactional crafting inventory with two synthetic recipes (repair kit at workbench, cooked fish at campfire). Server-resolved ownership and station range are checked before/after storage reads and after writes; materials and output change atomically. Fixed recipes, bounded stack sizes and revision reject invalid input, duplicate crafting, overflow and corrupt conservation. No public route, real items, gameplay effects or production recipe costs.
+- Three focused JavaScript harness scenarios passed: material conservation, concurrent replay, wrong station/account; output capacity, revoked station/owner, rollback and insufficient ingredients; corrupt state and ambiguous commit. Exact Node and CI pending. Existing equipment and survival ledgers are deliberately separate until a reviewed shared inventory transaction can safely consume their crafted outputs.
+- Next verify exact CI, shared inventory integration, private runtime persistence and authored workbench/campfire interactions. External physical and registered-account acceptance remain gated.
 
-- Added scoped high-contrast private panel CSS and Chromium CI acceptance at 1200×800 and 360×640. Tests ten actual rendered rows, readable 16px text, responsive column layout, no horizontal overflow, and logout during a pending snapshot. The route is intercepted in the browser test only; public gameplay does not load the panel or its stylesheet. Fresh exact-head browser CI pending.
-
-- Prior exact candidate `c231ce53a04f5781a5dd661697742833ac67c623` passed all five CI workflows, including Chromium panel acceptance. Reconciled with main `a995e50f2787e32e5f1b5a577967c65155b8bebc` retaining equipment panel acceptance and every existing record; fresh combined CI required.
+- Prior exact candidate `c52246b9e7a349969fc704218a6845d54735c068` passed all four CI workflows, including gameplay smoke. Reconciled on updated main `a995e50f2787e32e5f1b5a577967c65155b8bebc`; fresh head CI required before merge. No changes to crafting code or tests in reconciliation.
