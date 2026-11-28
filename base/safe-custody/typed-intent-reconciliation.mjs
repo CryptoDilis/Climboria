@@ -42,7 +42,7 @@ export function deriveTypedIntent(c,t){
   const i=n(1);need(i>=3n&&i<=5n,'VAULT_INDEX');
   need(/^0{24}[0-9a-f]{40}$/.test(w[2]),'ADDRESS_WORD');
   const recipient='0x'+w[2].slice(24),evidence='0x'+w[4];
-  need(addr(recipient)&&n(2)!==1n&&!roles.includes(recipient)&&n(3)>0n&&hash(evidence)&&n(5)<60n&&n(6)>0n,'EXPENSE_FIELDS');
+  need(addr(recipient)&&n(2)!==1n&&n(3)>0n&&hash(evidence)&&n(5)<60n&&n(6)>0n,'EXPENSE_FIELDS');
   const idx=Number(i-3n),vault=c.expenseVaults[idx],purpose=Buffer.from(labels[idx],'ascii').toString('hex').padEnd(64,'0');
   const id=keccak([word(84532n),word(BigInt(vault)),word(BigInt(c.token)),purpose,w[0],...w.slice(2,7)]);
   return {...common,vault,id,recipient,evidence,amount:hex(n(3))};
