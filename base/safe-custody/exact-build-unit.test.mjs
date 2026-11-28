@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {exactBuildUnit} from './exact-build-unit.mjs';
+const unit=(source,object)=>({contract:{evm:{deployedBytecode:{object,immutableReferences:{}}}},ast:{nodeType:'SourceUnit',absolutePath:source,nodes:[{nodeType:'ContractDefinition',name:'Vault'}]}});
+const relative='../v3-testnet/src/Vault.sol',absolute='/workspace/base/v3-testnet/src/Vault.sol';
+const build=()=>{const a=unit(relative,'60aa'),b=unit(absolute,'60bb');return {output:{contracts:{[relative]:{Vault:a.contract},[absolute]:{Vault:b.contract}},sources:{[relative]:{ast:a.ast},[absolute]:{ast:b.ast}}}};};
+test('selects exact source alias and retains every byte',()=>{assert.equal(exactBuildUnit([build()],relative,'Vault').artifact.deployedBytecode.object,'0x60aa');assert.equal(exactBuildUnit([build()],absolute,'Vault').artifact.deployedBytecode.object,'0x60bb');});
+test('rejects basename, missing and duplicate units',()=>{assert.throws(()=>exactBuildUnit([build()],'Vault.sol','Vault'));assert.throws(()=>exactBuildUnit([build()],relative,'Other'));assert.throws(()=>exactBuildUnit([build(),build()],relative,'Vault'));});
+test('rejects mismatched AST identity and absent bytecode',()=>{const b=build();b.output.sources[relative].ast.absolutePath=absolute;assert.throws(()=>exactBuildUnit([b],relative,'Vault'));const c=build();c.output.contracts[relative].Vault.evm.deployedBytecode.object='';assert.throws(()=>exactBuildUnit([c],relative,'Vault'));});
