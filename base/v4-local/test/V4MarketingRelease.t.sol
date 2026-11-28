@@ -148,7 +148,7 @@ contract V4MarketingReleaseTest {
         vm.warp(START+34 days);vault.execute(id);
         require(token.balanceOf(oldOwner)==1&&token.balanceOf(PAYEE)==0);
     }
-    function testFailedTransferRollsBackAccountingAndEvidence() public {
+    function test_TransferFailureRollsBackAccountingAndEvidence() public {
         firstMonth();bytes32 e=bytes32(uint256(1));
         bytes32 id=propose(CAP,e,bytes32(uint256(2)));
         uint256 initial=token.balanceOf(address(vault));
