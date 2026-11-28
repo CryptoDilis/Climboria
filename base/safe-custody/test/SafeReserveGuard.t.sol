@@ -249,6 +249,54 @@ contract SafeReserveGuardTest {
         v.execute(id);
         require(token.balanceOf(unrelated)==10&&v.registry().consumedProposal("UNRELATED")==id);
     }
+    // Manual containment of already recorded proposals is possible, but is not
+    // automatic lifecycle invalidation and does not cover outstanding signatures.
+    function testQuorumCancelsAffectedExpensesBeforeOwnerRelease() public {
+        _bind();
+        for(uint256 i=3;i<=5;i++)_quorum(_propose(1,i,bytes32(i),bytes32(i)));
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));
+        for(uint256 i=3;i<=5;i++){
+            bytes32 id=_id(1,i,bytes32(i),bytes32(i));
+            _quorum(abi.encodeCall(guard.cancelExpense,(1,i,id)));
+        }
+        _quorum(abi.encodeCall(guard.cancelRotation,(1,guard.rotationSerial())));
+        require(guard.expenseRecipientAllowed(PAYEE)&&guard.epoch()==1);
+        vm.warp(start+2 days);
+        for(uint256 i=3;i<=5;i++){
+            V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
+            bytes32 id=_id(1,i,bytes32(i),bytes32(i));
+            vm.expectRevert();v.execute(id);
+            require(v.totalSpent()==0&&v.registry().consumedBy(bytes32(i))==address(0));
+            _quorum(_propose(1,i,bytes32(i),bytes32(i+100)));
+            bytes32 fresh=_id(1,i,bytes32(i),bytes32(i+100));
+            vm.expectRevert();v.execute(fresh);
+        }
+        vm.warp(block.timestamp+2 days);
+        for(uint256 i=3;i<=5;i++){
+            V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
+            bytes32 fresh=_id(1,i,bytes32(i),bytes32(i+100));
+            v.execute(fresh);
+            require(v.totalSpent()==10&&v.registry().consumedProposal(bytes32(i))==fresh);
+        }
+        require(token.balanceOf(PAYEE)==30&&token.totalSupply()==SUPPLY);
+    }
+    // Baseline only: nonce and window authenticate execution, not when a
+    // quorum actually produced signatures. Replace with context-bound rejection.
+    function testCharacterizePreConflictSignedExpenseAfterCancellation() public {
+        _bind();
+        bytes memory data=_propose(1,3,"PRECONFLICT","N");
+        bytes memory sigs=_signedAt(address(guard),data,3,wallet.nonce()+2);
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));
+        _quorum(abi.encodeCall(guard.cancelRotation,(1,guard.rotationSerial())));
+        require(guard.epoch()==1&&guard.expenseRecipientAllowed(PAYEE));
+        require(_exec(address(guard),data,sigs));
+        bytes32 id=_id(1,3,"PRECONFLICT","N");
+        V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
+        vm.expectRevert();v.execute(id);
+        require(v.registry().consumedBy("PRECONFLICT")==address(0)&&v.totalSpent()==0);
+        vm.warp(start+2 days);v.execute(id);
+        require(v.registry().consumedProposal("PRECONFLICT")==id&&token.balanceOf(PAYEE)==10&&token.totalSupply()==SUPPLY);
+    }
     function testPlainReservePendingOwnerBlocksRewardSchedule() public {
         _bind();
         _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));

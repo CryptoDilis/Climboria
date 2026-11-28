@@ -98,7 +98,7 @@ jobs:
           forge config --json --use "$compiler" --evm-version "$target" > "$RUNNER_TEMP/climb-differential/config.json"
           forge test --use "$compiler" --evm-version "$target" -vv | tee "$RUNNER_TEMP/climb-differential/tests.log"
           expected=163
-          if [ "${{ matrix.project }}" = safe-custody ]; then expected=87; fi
+          if [ "${{ matrix.project }}" = safe-custody ]; then expected=89; fi
           grep -Eq "(^|[^0-9])${expected} tests passed, 0 failed, 0 skipped" "$RUNNER_TEMP/climb-differential/tests.log"
           # Capture the actual standard-JSON exchanges, not a reconstructed input.
           real="$compiler"
