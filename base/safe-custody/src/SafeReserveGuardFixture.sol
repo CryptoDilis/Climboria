@@ -105,7 +105,8 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     }
     // The vault calls this at proposal and execution, including after signer rotation.
     function expenseRecipientAllowed(address a) public view returns(bool){
-        return bound&&a!=distributor&&!_reservedRole(a)&&!_rewardRole(a);
+        return bound&&a!=distributor&&!_reservedRole(a)&&!_rewardRole(a)&&
+            !(pending.digest!=0&&block.timestamp<pending.expiresAt&&a==pending.newOwner);
     }
     function revokeRewardSigner(uint256 expected,uint256 generation) external onlyWallet {
         V3GovernedGameRewardFixture(_target(1,expected)).revoke(expected,generation);
