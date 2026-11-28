@@ -7,6 +7,14 @@
 - No public page imports, actual browser/terrain binding, live account transport, production inventory or financial effects. The scope passed to an adapter is only a local correlation hint; trusted owner and station proofs remain required. Actual browser and server integration still required. Next verify native CI and bind private authenticated station interactions before public activation.
 
 
+## Phase 06 main-based Living World consolidation — 2026-11-28 PHT
+
+- Consolidates 15 exact Game source/test blobs from #1127 (lease-bound campsite/weather including #1126 and #1114/#1116/#1118/#1119/#1120), #1121 wildlife, #1122 player resources, #1123 regional participation, and #1124 professions onto main `045f7667fc2dd3dea771c44b7d4df33071544d76`. Verified existing regional-event and mastery source/test blobs on main were unchanged from candidate bases; remaining source/test paths and the new workflow were absent on inspected main. Preserves latest development record and unrelated files.
+- Source workflow results: #1121, #1122 and #1123 each four successful workflows; #1124 and #1126 each five; #1127 dedicated native job [46122032682](https://github.com/CryptoDilis/Climboria/actions/runs/46122032682) succeeded. These historical checks do not substitute for fresh exact-head combined validation.
+- Dedicated scoped Node 22 workflow explicitly runs eight test files containing 44 cases (19 campsite/rest/weather, four wildlife, four resource, eight regional event, nine mastery/professions). Fresh combined CI pending. No world models, authenticated production routes, real inventory or financial effects.
+- Next reconcile exact combined CI and current main before merge; retain earlier drafts until successful reviewed consolidation. Actual authored-world binding, cross-ledger resource/fuel conservation, activity authority and monotonic clock hardening remain open, followed by real account and physical device acceptance. Cooking/meal integration #1105 and crafting UI #1112 remain separate pending candidates.
+
+
 ## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
 
 - Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
