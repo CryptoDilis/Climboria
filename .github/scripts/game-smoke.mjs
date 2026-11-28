@@ -47,6 +47,10 @@ try {
     });
     throw new Error('Guest cave discovery did not render: '+JSON.stringify(state),{cause:error});
   }
+  const chamberNote=guestJournal.getByText('Torchlit chamber',{exact:true});
+  if(await chamberNote.count()) errors.push('Guest journal revealed the chamber at the cave entrance');
+  await guestProbe.evaluate(()=>window.__climboriaJarrellsPeak.positionAtCaveInteriorForSmoke());
+  await chamberNote.waitFor({state:'visible',timeout:90000});
   if(await guestProbe.evaluate(()=>Object.keys(localStorage).some(key=>key.startsWith('climboria:jarrell-field-journal:'))))
    errors.push('Guest cave discovery persisted a local journal entry');
   await guestProbe.close();
