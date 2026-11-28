@@ -1,0 +1,21 @@
+# Exact runtime versions observed in both successful Halmos CI artifacts
+# 15239856816 and 15240465021 (2026-11-28 UTC).
+# This is a version constraint, not a package-hash lock.
+certifi==2026.11.20
+charset-normalizer==3.5.3
+eth-hash==0.8.0
+idna==3.20
+markdown-it-py==4.3.0
+mdurl==0.1.2
+psutil==7.2.2
+Pygments==2.21.0
+python-dotenv==1.2.4
+requests==2.34.2
+rich==14.0.0
+safe-pysha3==1.0.7
+sortedcontainers==2.4.0
+toml==0.10.2
+urllib3==2.8.0
+xxhash==4.1.0
+yices-solver==2.6.4.post23
+z3-solver==4.12.6.0
