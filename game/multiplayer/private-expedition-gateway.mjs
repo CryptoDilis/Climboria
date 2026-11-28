@@ -53,6 +53,7 @@ export function createPrivateExpeditionGateway({storage,clock,allowAccount,sessi
   if(!joined.ok){close(id);return joined;}
   async function receive(raw){
    const at=time();
+   if(sessions.get(id)!==p)return deny('station-session-closed');
    if(at===null||!owner(id,ROOM)){close(id);return deny('station-session-closed');}
    if(at-p.window>=1000){p.window=at;p.count=0;}
    if(++p.count>24||typeof raw!=='string'||new TextEncoder().encode(raw).byteLength>512){close(id);return deny('station-message-limit');}
@@ -71,12 +72,13 @@ export function createPrivateExpeditionGateway({storage,clock,allowAccount,sessi
     else if(m.type==='refuel'&&exact(m,['type','campRevision','inventoryRevision'])&&rev(m.campRevision)&&rev(m.inventoryRevision))
      result=await runtime.refuel(id,m.campRevision,m.inventoryRevision);
     else return deny('invalid-station-packet');
+    if(sessions.get(id)!==p)return deny('station-session-closed');
     if(!owner(id,ROOM)){close(id);return deny('station-session-closed');}
     return result;
-   }catch{close(id);return deny('station-action-unavailable')}
+   }catch{if(sessions.get(id)===p)close(id);return deny('station-action-unavailable')}
    finally{p.busy=false;}
   }
-  return {ok:true,id,snapshot:joined.snapshot,expiresInMs:TTL,receive,close:()=>close(id)};
+  return {ok:true,id,snapshot:joined.snapshot,expiresInMs:TTL,receive,close:()=>{if(sessions.get(id)===p)close(id)}};
  }
  // Synthetic stock setup must not be routed from client messages.
  async function provisionVerifiedFixture(account,stock){
