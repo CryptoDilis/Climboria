@@ -58,6 +58,10 @@ export async function verifyLocalExpenseExecution(x,authorization){
   const beforeProposal=cast('abi-encode','f(address,uint256,bytes32,uint256,uint256,uint256,bool,bool)',payee,String(amount),evidence,'0',String(epoch),String(BigInt(row.readyAt)),'false','false');
   const afterProposal=cast('abi-encode','f(address,uint256,bytes32,uint256,uint256,uint256,bool,bool)',payee,String(amount),evidence,'0',String(epoch),String(BigInt(row.readyAt)),'true','false');
   assert.equal(await at(parent.number,vault,'proposals(bytes32)',id),beforeProposal);
+  assert.deepEqual(row.recipientContext,{recipient:payee,context:'0x0',eligible:true});
+  assert.equal(BigInt(await at(parent.number,guard,'expenseContext(address)',payee)),0n);
+  assert.equal(BigInt(await at(parent.number,guard,'expenseRecipientAllowed(address)',payee)),1n);
+  assert.equal(BigInt(await at(parent.number,vault,'proposalContext(bytes32)',id)),0n);
   assert.equal(await at(parent.number,registry,'consumedBy(bytes32)',evidence),h(0));
   assert.equal(await at(parent.number,registry,'consumedProposal(bytes32)',evidence),h(0));
   const beforePayee=await balance(),beforeVault=await number(token,'balanceOf(address)',vault);
@@ -86,7 +90,7 @@ export async function verifyLocalExpenseExecution(x,authorization){
   assert.equal(BigInt(await at(block.number,vault,'spent(uint256)',0)),amount);
   await assert.rejects(rpc('eth_call',[{from:creator,to:vault,data},'latest']));
   assert.equal(await number(wallet,'nonce()'),nonce);assert.equal(await number(guard,'epoch()'),epoch);
-  receipts.push({index:row.index,id,evidence,transactionHash:r.transactionHash,blockHash:block.hash,amountRaw:String(amount),registryMatched:true,transferMatched:true,executionMatched:true,stateMatched:true,replayRejected:true,alteredReceiptRejections:negatives.length});
+  receipts.push({index:row.index,id,evidence,transactionHash:r.transactionHash,blockHash:block.hash,amountRaw:String(amount),recipientContextMatched:true,registryMatched:true,transferMatched:true,executionMatched:true,stateMatched:true,replayRejected:true,alteredReceiptRejections:negatives.length});
  }
  assert.equal(await balance(),3n*amount);
  assert.deepEqual(await Promise.all(vaults.map(v=>number(token,'balanceOf(address)',v.address))),initial.map((v,i)=>i>=3&&i<=5?v-amount:v));

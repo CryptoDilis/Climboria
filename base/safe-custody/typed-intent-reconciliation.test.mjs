@@ -7,7 +7,7 @@ const encode=(selector,words)=>'0x'+selector+words.map(w).join('');
 const expenseId='0x290f5b501f9987b1a1c0fd5e1ee39b859af075759872ff44189a37b47e53aa33';
 const liquidityId='0x8723669035fc0a7abfbf12628cbe09ed2389b82c757daa734e0f3bb555e2ff84';
 function fixture(kind='expense'){
- const c={chainId:84532,blockNumber:'0x12',blockHash:h(1),timestamp:'0x493e0',transactionHash:h(2),safe:a(3),guard:a(4),safeTxHash:h(13),token:a(9),epoch:'0x1',expenseVaults:[a(5),a(14),a(15)],liquidityVault:a(6),quote:a(10),pool:a(12)};
+ const c={chainId:84532,blockNumber:'0x12',blockHash:h(1),timestamp:'0x493e0',transactionHash:h(2),safe:a(3),guard:a(4),safeTxHash:h(13),token:a(9),epoch:'0x1',expenseVaults:[a(5),a(14),a(15)],liquidityVault:a(6),quote:a(10),pool:a(12),recipientContext:kind==='expense'?{recipient:a(8),context:'0x0',eligible:true}:null};
  const t={to:c.guard,operation:0,value:'0x0',safeTxGas:'0x0',baseGas:'0x0',gasPrice:'0x0',gasToken:a(0),refundReceiver:a(0),data:kind==='expense'?encode('be61343e',[1,3,8,10,7,0,11,0,300000,303600]):encode('ae7b6095',[1,1000,500,50,900000,11,300000,303600])};
  return [c,t];
 }
@@ -43,6 +43,11 @@ const cases=[
  ['zero evidence',(c,t)=>setWord(t,4,0)],
  ['invalid month',(c,t)=>setWord(t,5,60)],
  ['zero nonce',(c,t)=>setWord(t,6,0)],
+ ['odd context',(c,t)=>setWord(t,7,1)],
+ ['stale context',(c,t)=>c.recipientContext.context='0x2'],
+ ['wrong context recipient',(c,t)=>c.recipientContext.recipient=a(99)],
+ ['ineligible context',(c,t)=>c.recipientContext.eligible=false],
+ ['missing context',(c,t)=>delete c.recipientContext],
  ['future window',(c,t)=>setWord(t,8,300001)],
  ['expired window',(c,t)=>setWord(t,9,300000)],
  ['overlong window',(c,t)=>setWord(t,9,386401)],

@@ -36,7 +36,7 @@ export async function verifyLocalAuthorizations(x){
   assert.equal(mined.input.toLowerCase(),outer.toLowerCase());assert.equal(mined.to.toLowerCase(),wallet);
   assert.equal(mined.hash,receipt.transactionHash);assert.equal(mined.blockHash,receipt.blockHash);
   assert.equal(anchor.hash,receipt.blockHash);assert.equal(anchor.number,receipt.blockNumber);
-  const c={chainId:84532,blockNumber:anchor.number,blockHash:anchor.hash,timestamp:anchor.timestamp,transactionHash:receipt.transactionHash,safe:wallet,guard,safeTxHash,token,epoch:hex(epoch),expenseVaults,liquidityVault,quote,pool};
+  const c={chainId:84532,blockNumber:anchor.number,blockHash:anchor.hash,timestamp:anchor.timestamp,transactionHash:receipt.transactionHash,safe:wallet,guard,safeTxHash,token,epoch:hex(epoch),expenseVaults,liquidityVault,quote,pool,recipientContext:null};
   assert.equal(mined.value,'0x0');
   const decoded=deriveDirectSafeDigest(mined.input.toLowerCase(),84532,wallet,hex(nonce));
   assert.equal(decoded.safeTxHash,safeTxHash);
@@ -46,7 +46,13 @@ export async function verifyLocalAuthorizations(x){
   assert.deepEqual(anchor.transactions,[receipt.transactionHash]);
   assert.equal(anchor.parentHash,block.hash);
   assert.equal(BigInt(anchor.number),BigInt(block.number)+1n);
-  const at=async(to,sig)=>rpc('eth_call',[{to,data:calldata(sig)},block.number]);
+  const at=async(to,sig,...args)=>rpc('eth_call',[{to,data:calldata(sig,...args)},block.number]);
+  if(kind==='expense'){
+   const context=BigInt(await at(guard,'expenseContext(address)',payee));
+   const eligible=BigInt(await at(guard,'expenseRecipientAllowed(address)',payee));
+   assert.equal(context,0n);assert.equal(eligible,1n);
+   c.recipientContext={recipient:payee,context:hex(context),eligible:true};
+  }
   const historicalOwners=decodeFiveOwnerRoster((await at(wallet,'getOwners()')).toLowerCase());
   const historicalThreshold=BigInt(await at(wallet,'getThreshold()'));
   const historicalNonce=BigInt(await at(wallet,'nonce()'));
@@ -74,12 +80,13 @@ export async function verifyLocalAuthorizations(x){
   const ready=BigInt(expected.readyAt);
   const stateExpected=kind==='expense'?cast('abi-encode','f(address,uint256,bytes32,uint256,uint256,uint256,bool,bool)',payee,'10',evidence,'0',String(epoch),String(ready),'false','false'):cast('abi-encode','f(uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address)','1000','500','50',String(epoch),String(ready),String(deadline),'false','false',ZERO);
   assert.equal(state.toLowerCase(),stateExpected.toLowerCase());
+  if(kind==='expense')assert.equal(BigInt(await rpc('eth_call',[{to:expected.vault,data:calldata('proposalContext(bytes32)',expected.id)},anchor.number])),BigInt(c.recipientContext.context));
   // Keep the actual mined receipt, change only the independently expected intent.
   const altered={...t,data:calldata(sig,...args.map((v,i)=>i===(kind==='expense'?6:5)?h(999):v))};
   assert.throws(()=>reconcileTypedIntent(c,altered,receipt));
   assert.equal(await number(wallet,'nonce()'),nonce+1n);
   assert.equal(await number(guard,'transactionActive()'),0n);
-  receipts.push({kind,index,...matched,blockNumber:anchor.number,readyAt:expected.readyAt,stateMatched:true,alteredIntentRejected:true,canonicalEnvelopeMatched:true,safeDigestMatched:true,rawQuorumMatched:true,localParentStateMatched:true,verifiedSignerCount:3,localConfigMatched:true,helperBindingsMatched:config.helperBindingsMatched,configRuntimeCount:config.checkedRuntimeCount,configParentBlockHash:config.blockHash});
+  receipts.push({kind,index,...matched,blockNumber:anchor.number,readyAt:expected.readyAt,stateMatched:true,recipientContext:c.recipientContext,alteredIntentRejected:true,canonicalEnvelopeMatched:true,safeDigestMatched:true,rawQuorumMatched:true,localParentStateMatched:true,verifiedSignerCount:3,localConfigMatched:true,helperBindingsMatched:config.helperBindingsMatched,configRuntimeCount:config.checkedRuntimeCount,configParentBlockHash:config.blockHash});
  }
  assert.equal(await number(wallet,'nonce()'),startingNonce+4n);
  assert.deepEqual(await Promise.all(vaults.map(v=>number(token,'balanceOf(address)',v.address))),before);

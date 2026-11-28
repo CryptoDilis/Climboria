@@ -301,6 +301,57 @@ contract SafeReserveGuardTest {
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
         require(v.registry().consumedBy("PRECONFLICT")==address(0)&&v.totalSpent()==0&&token.balanceOf(PAYEE)==0);
     }
+    function testFailedNominationAndRepeatedConflictContext() public {
+        _bind();
+        uint256 n=wallet.nonce();
+        _reject(address(guard),abi.encodeCall(guard.scheduleRotation,(1,A,E,PAYEE,block.timestamp,block.timestamp+1 hours)),3);
+        require(wallet.nonce()==n&&guard.expenseContext(PAYEE)==0&&guard.rotationSerial()==0);
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));
+        _quorum(abi.encodeCall(guard.cancelRotation,(1,1)));
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));
+        require(guard.expenseContext(PAYEE)==3&&guard.rotationSerial()==2);
+        _quorum(abi.encodeCall(guard.cancelRotation,(1,2)));
+        n=wallet.nonce();
+        _reject(address(guard),abi.encodeCall(guard.releaseExpenseRecipient,(1,PAYEE,1,block.timestamp,block.timestamp+1 hours)),3);
+        _reject(address(guard),abi.encodeCall(guard.releaseExpenseRecipient,(2,PAYEE,3,block.timestamp,block.timestamp+1 hours)),3);
+        _reject(address(guard),abi.encodeCall(guard.releaseExpenseRecipient,(1,PAYEE,3,block.timestamp,block.timestamp+1 hours)),2);
+        require(wallet.nonce()==n&&guard.expenseContext(PAYEE)==3&&!guard.expenseRecipientAllowed(PAYEE));
+        _releasePayee();
+        require(guard.expenseContext(PAYEE)==4&&guard.expenseRecipientAllowed(PAYEE)&&guard.expenseContext(F)==0);
+    }
+    function testFormerOwnerRequiresReleaseAfterActualRotation() public {
+        _bind();
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));
+        vm.warp(start+2 days);
+        bytes memory swap=abi.encodePacked(abi.encodeWithSignature("swapOwner(address,address,address)",D,E,PAYEE),guard.rotationSerial());
+        require(_exec(address(wallet),swap,_signed(address(wallet),swap,3)));
+        require(guard.epoch()==2&&wallet.isOwner(PAYEE));
+        _reject(address(guard),abi.encodeCall(guard.releaseExpenseRecipient,(2,PAYEE,1,block.timestamp,block.timestamp+1 hours)),3);
+        _quorum(abi.encodeCall(guard.scheduleRotation,(2,D,PAYEE,F,block.timestamp,block.timestamp+1 hours)));
+        vm.warp(block.timestamp+2 days);
+        swap=abi.encodePacked(abi.encodeWithSignature("swapOwner(address,address,address)",D,PAYEE,F),guard.rotationSerial());
+        require(_exec(address(wallet),swap,_signed(address(wallet),swap,3)));
+        require(guard.epoch()==3&&!wallet.isOwner(PAYEE)&&!guard.expenseRecipientAllowed(PAYEE)&&guard.expenseContext(PAYEE)==1);
+        _quorum(abi.encodeCall(guard.releaseExpenseRecipient,(3,PAYEE,1,block.timestamp,block.timestamp+1 hours)));
+        require(guard.expenseRecipientAllowed(PAYEE)&&guard.expenseContext(PAYEE)==2);
+    }
+    // Document the boundary: a quorum can pre-sign predictable future contexts.
+    // This is not proof of when ECDSA signatures were generated.
+    function testCharacterizeFutureContextPresigningResidual() public {
+        _bind();
+        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"FUTURE",0,bytes32("N"),2,block.timestamp,block.timestamp+1 hours));
+        bytes memory sigs=_signedAt(address(guard),data,3,wallet.nonce()+3);
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));
+        _quorum(abi.encodeCall(guard.cancelRotation,(1,1)));
+        _releasePayee();
+        require(_exec(address(guard),data,sigs));
+        V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
+        bytes32 id=_freshId(3,"FUTURE","N");
+        require(v.proposalContext(id)==2&&v.totalSpent()==0&&token.balanceOf(PAYEE)==0);
+        vm.expectRevert();v.execute(id);
+        vm.warp(start+2 days);v.execute(id);
+        require(token.balanceOf(PAYEE)==10&&token.totalSupply()==SUPPLY);
+    }
     function testPlainReservePendingOwnerBlocksRewardSchedule() public {
         _bind();
         _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));

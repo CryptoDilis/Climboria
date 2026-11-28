@@ -20,7 +20,7 @@ function keccak(words){
  need(hash(out),'HASH_OUTPUT');return out;
 }
 export function deriveTypedIntent(c,t){
- shape(c,['chainId','blockNumber','blockHash','timestamp','transactionHash','safe','guard','safeTxHash','token','epoch','expenseVaults','liquidityVault','quote','pool']);
+ shape(c,['chainId','blockNumber','blockHash','timestamp','transactionHash','safe','guard','safeTxHash','token','epoch','expenseVaults','liquidityVault','quote','pool','recipientContext']);
  shape(t,['to','operation','value','safeTxGas','baseGas','gasPrice','gasToken','refundReceiver','data']);
  need(c.chainId===84532&&q(c.blockNumber)>0n&&hash(c.blockHash)&&hash(c.transactionHash)&&hash(c.safeTxHash),'CONTEXT');
  const now=q(c.timestamp),epoch=q(c.epoch);
@@ -43,10 +43,13 @@ export function deriveTypedIntent(c,t){
   need(/^0{24}[0-9a-f]{40}$/.test(w[2]),'ADDRESS_WORD');
   const recipient='0x'+w[2].slice(24),evidence='0x'+w[4];
   need(addr(recipient)&&n(2)!==1n&&n(3)>0n&&hash(evidence)&&n(5)<60n&&n(6)>0n&&n(7)%2n===0n,'EXPENSE_FIELDS');
+  shape(c.recipientContext,['recipient','context','eligible']);
+  need(c.recipientContext.recipient===recipient&&q(c.recipientContext.context)===n(7)&&c.recipientContext.eligible===true,'RECIPIENT_CONTEXT');
   const idx=Number(i-3n),vault=c.expenseVaults[idx],purpose=Buffer.from(labels[idx],'ascii').toString('hex').padEnd(64,'0');
   const id=keccak([word(84532n),word(BigInt(vault)),word(BigInt(c.token)),purpose,w[0],...w.slice(2,8)]);
   return {...common,vault,id,recipient,evidence,amount:hex(n(3))};
  }
+ need(c.recipientContext===null,'UNEXPECTED_RECIPIENT_CONTEXT');
  need(n(1)>0n&&n(2)>0n&&n(3)>0n&&n(4)>now+172800n&&n(4)-now<=2592000n&&n(5)>0n,'LIQUIDITY_FIELDS');
  const vault=c.liquidityVault,id=keccak([word(84532n),word(BigInt(vault)),word(BigInt(c.token)),word(BigInt(c.quote)),word(BigInt(c.pool)),...w.slice(0,6)]);
  return {...common,vault,id,assetAmount:hex(n(1)),quoteAmount:hex(n(2)),deadline:hex(n(4))};
