@@ -3191,7 +3191,7 @@ function updateExpeditionCamp(dt){
  }
  const nearFire=canReachCampfire(),nearShelter=!nearFire&&canReachCampSite(shelter);
  campfirePrompt.hidden=(!nearFire&&!nearShelter)||deathLootPrompt.style.display==='block'||
-  chests.some(c=>!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4);
+  chests.some(c=>canReachTreasureChest(c));
  if(campfirePrompt.hidden)return;
  const use=MOB?'USE':'E';
  const action=nearShelter?use+(shelter.tent.visible?' · Pack shelter':' · Pitch shelter'):
@@ -3203,9 +3203,15 @@ function underShelterRoof(x,y,z){
  return dx<=SHELTER_ROOF_HALF_WIDTH&&Math.abs(z-shelter.z)<=SHELTER_ROOF.halfDepth&&
   y<shelter.y+SHELTER_ROOF.centerY+(SHELTER_ROOF.centerX-dx)*SHELTER_ROOF_SLOPE;
 }
+// Local prototype reachability only; not server-authoritative item ownership.
+function canReachTreasureChest(c){
+ return P.mode==='walk'&&!P.swim&&!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4&&
+  Number.isFinite(P.y)&&Number.isFinite(c.g.position.y)&&
+  Math.abs(P.y-groundAt(P.x,P.z)-1.75)<.6&&Math.abs(P.y-1.75-c.g.position.y)<2.5;
+}
 function interact(){if(P.mode!='walk')return;
  if(recoverDeathLoot())return;
- for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){
+ for(const c of chests)if(canReachTreasureChest(c)){
   const reward=c.reward;
   if(!addInventoryItem(reward.item,1))return;
   c.open=true;
@@ -3439,8 +3445,12 @@ function geodeChestLifecycleAudit(){
  if(!c)return {ok:false,reason:'geode chest missing'};
  const saved={...P},before=inventory.reduce((n,item)=>n+(item.qty||1),0);
  try{
-  P.mode='walk';P.x=c.x;P.z=c.z;P.y=caveG.position.y+1.75;
+  P.mode='walk';P.swim=false;P.x=c.x;P.z=c.z;P.y=groundAt(c.x,c.z)+1.75;
   c.open=false;c.g.visible=true;
+  const reachable=canReachTreasureChest(c),normalY=P.y;
+  P.y=normalY+8;const wrongHeightDenied=!canReachTreasureChest(c);P.y=normalY;
+  P.swim=true;const swimmingDenied=!canReachTreasureChest(c);P.swim=false;
+  if(!reachable||!wrongHeightDenied||!swimmingDenied)return {ok:false,reason:'chest reachability failed',reachable,wrongHeightDenied,swimmingDenied};
   const savedItems=inventory.slice(),closedTimer=c.t;
   const filled=Array.from({length:50},(_,i)=>({name:'Smoke filler '+i,qty:1}));
   let fullBackpackPreserved;
@@ -3459,7 +3469,7 @@ function geodeChestLifecycleAudit(){
   gameTick(.02,{x:P.x,y:P.y,z:P.z});
   const floor=groundAt(c.x,c.z);
   const respawned=!c.open&&c.g.visible&&Math.abs(c.g.position.y-floor)<=.02;
-  return {ok:fullBackpackPreserved&&opened&&rewarded&&respawned,fullBackpackPreserved,opened,rewarded,respawned,timer,inventoryBefore:before,inventoryAfter:after,visible:c.g.visible,open:c.open,floorY:floor,chestY:c.g.position.y};
+  return {ok:fullBackpackPreserved&&opened&&rewarded&&respawned&&wrongHeightDenied&&swimmingDenied,wrongHeightDenied,swimmingDenied,fullBackpackPreserved,opened,rewarded,respawned,timer,inventoryBefore:before,inventoryAfter:after,visible:c.g.visible,open:c.open,floorY:floor,chestY:c.g.position.y};
  }finally{Object.assign(P,saved)}
 }
 function positionAtMountainCliffForSmoke(){

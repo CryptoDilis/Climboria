@@ -1,5 +1,36 @@
 # Climboria Game Development Record
 
+## Game Economy V4 — marketplace fee allocation — 2026-11-28 PHT
+
+- Owner approved 2% marketplace transaction fee split 50/50 between Treasure Vault and Climboria revenue (1% of gross sale value each). Seller-side deduction/free listing/zero buyer platform fee interpreted from preceding proposal and recorded for correction if needed. KOS 1% entirely to Treasure Vault unchanged; no ordinary CLIMB transfer tax. Revenue custody, exact settlement/rounding, royalty policy and independent security review pending. No actual fees, contracts, payment path or release implemented; Game design/backlog/record only. Next discuss optional NFT mint/redeem and custody, continue independent nonfinancial Game backlog.
+
+## Game Economy V4 — immutable CP maximum and marketplace currency — 2026-11-28 PHT
+
+- Owner approved maximum 1,000,000,000 CP (not fixed circulating supply), explicitly no increase even by owner, scarce gameplay acquisition, and official Base CLIMB-only marketplace settlement. Recorded design, conservation invariant, proposed low earning rates and privileged database limitations in economy record and backlog. No cap-changing admin authority or reset/migration bypass; independent verification required before promising absolute immutability.
+- No financial implementation or actual CP issuance, cap-enforcement code, real settlement, minting, release, or token policy/contract change. Existing V4 financial release gate remains. Next: exact earn/spend balancing and marketplace fee/payer/destination; reconcile #1143 CI and continue independent Game development.
+
+## Game Economy V4 — owner CP direction — 2026-11-28 PHT
+
+- Owner chose Climboria Points (CP), limited global supply with public unmined/circulating UI, gameplay earning and CP service spending recycled to reserve, marketplace-only item transfer, marketplace sale of CP and optional tokenization of all item categories including CP. Recorded design direction and proposed reserve ledger, sample prices, conservation invariant and exclusive ownership rules. Owner delegated additional Treasure Vault funding design; recommend owner deposits and existing approved KOS fee initially, no donation launch.
+- V4 no automatic crypto gameplay rewards remains a blocking policy boundary for tradeable/tokenizable CP and loot; no financial conversion, contracts, on-chain deployment, real balance, CP supply cap or final pricing authorized. Requires explicit policy reconciliation and separate release review. No Base/DEX/Swap/Launchpad changes. Next confirm cap/market settlement and outstanding Topic A/KOS details; continue independent nonfinancial Game work and reconcile #1143 CI.
+
+## Game Economy V4 — CLIMB-only KOS clarification — 2026-11-28 PHT
+
+- Owner explicitly restricted KOS bounty funding/rewards to CLIMB only. Existing player funding and 1% fee to Treasure Vault retained; fee collection basis, quotas, expiration, eligibility and refunds remain pending confirmation. Owner-funded special chest assets remain separately scoped. Updated design and backlog only. No real funds or settlement code authorized. Next confirm outstanding Topic A and KOS decisions, then continue the remaining economy discussions and independent nonfinancial development.
+
+## Game Economy V4 owner decision — Treasure Vault and KOS service fee — 2026-11-28 PHT
+
+- Owner approved the dedicated owner-controlled Treasure Vault, live read-only balance and verified current map allocation UI, occasional manually funded supported token/NFT chest events; KOS reward funded solely by posting player, 1% service fee directed to Treasure Vault. Recorded in GAME_ECONOMY_V4_DESIGN.md and Game backlog. Proposed additional fee on successful settlement with unused funds refunded is not yet approved. No token movement, deployment, custody or address inferred; other economy decisions remain open.
+- Prior #1143 exact head `74cce9d1534e111895f1a65baeb8fdc187195528`: browser smoke, rarity chest acceptance and Jarrell gameplay smoke passed; Game Server Authority Rules failed ([run](https://github.com/CryptoDilis/Climboria/actions/runs/46140765567)); NPC focused browser still running at inspection. No merge or production readiness claim. Next inspect failure and rerun exact candidate CI, continue nonfinancial gameplay; confirm Topic A odds/pacing and KOS fee mechanics before financial work.
+
+
+## Game Economy V4 policy alignment and nonfinancial chest reachability — 2026-11-28 PHT
+
+- Owner requires no automatic CLIMB gameplay payouts; read V4 policy, Game record/backlog and targeted current Game code on `921002ad639516c77e7885e7aa2ddc8bad2de15a`. Created GAME_ECONOMY_V4_DESIGN.md with approved boundaries, Topic A proposals (not approved), historical pricing and B–G unresolved decisions. Replaced old CLIMB earnings leaderboard and CLIMB-only/fee commitments in Game-specific concept docs and page; menu/wallet copy and backlog clarify nonfinancial play and hold historical bounty/job/wager payouts. V3 Base reward path remains out of scope; no real-token grant found in inspected chest path. Targeted audit is not exhaustive proof.
+- Independent nonfinancial core Game task: local treasure interaction requires walk, no swimming, grounded avatar, four-metre horizontal range and bounded chest-floor height. Existing rarity, prices, respawn, items, assets, inventory and public multiplayer gates unchanged. Seven extracted predicate checks passed in isolated JS; expanded existing geode browser smoke to check wrong elevation and swimming denial. Native browser CI pending. This local restriction is not authoritative multiplayer anti-cheat.
+- #1142 exact native station workflow [46140390266](https://github.com/CryptoDilis/Climboria/actions/runs/46140390266) passed; no protected browser or production activation inferred. Next: owner discusses Topic A, then record decision and move to B; independently continue nonfinancial station transport and Game backlog. Registered/physical/financial gates remain blocked.
+
+
 ## Phase 06 private crafting and meal interaction — 2026-11-28 PHT
 
 - Main-based reconciliation of #1105 atomic crafted meal and #1112 read-only panel on `babce42aeb2c96800e130b08a3420aa989e4486a`. Adds optional Craft and Eat actions with revision-bound intents, one pending action per rendered generation, account scope checks, authoritative snapshot refresh and no automatic retry of uncertain outcomes. Without adapters the panel stays read-only.
