@@ -49,6 +49,30 @@ try {
       });
       assert.equal(await page.locator('.mastery-row').count(),0);
       assert.match(await page.locator('[role=status]').innerText(),/unavailable/);
+      const integrated = await page.evaluate(async path => {
+        const [{createPrivateMasteryPanel},{createPrivateMasteryLedger}] = await Promise.all([
+          import(path),import('/game/multiplayer/private-mastery-ledger.mjs'),
+        ]);
+        const sessionId='fixture_session_a',accountId='fixture_account_a';
+        const roomId='preview-mastery-fixture',activityId='fixture_activity_1',records=new Map();
+        const ledger=createPrivateMasteryLedger({
+          roomId,thresholds:[1,2,3,4],
+          storage:{transaction:fn=>fn({get:async key=>records.get(key),put:async(key,state)=>records.set(key,structuredClone(state))})},
+          resolveOwner:id=>id===sessionId?{sessionId,accountId,roomId}:null,
+          resolveActivity:()=>({sessionId,accountId,roomId,activityId,skill:'climbing',sequence:1}),
+        });
+        window.fixture.panel.dispose();
+        const root=document.querySelector('#mastery');
+        const panel=createPrivateMasteryPanel({container:root,getScope:()=>sessionId,readSnapshot:()=>ledger.inspect(sessionId)});
+        const earned=await ledger.record(sessionId,activityId);
+        const rendered=await panel.refresh();
+        return {earned:earned.rank,rendered,rows:root.querySelectorAll('.mastery-row').length,
+          climbing:root.querySelector('.mastery-row')?.innerText};
+      }, modulePath);
+      assert.equal(integrated.earned,'Apprentice');
+      assert.equal(integrated.rendered,true);
+      assert.equal(integrated.rows,10);
+      assert.match(integrated.climbing,/Climbing.*Apprentice/s);
       console.log('Private mastery panel passed at '+viewport.width+'x'+viewport.height);
     } finally {
       await page.close();

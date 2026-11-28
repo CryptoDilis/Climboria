@@ -15,6 +15,11 @@
 - Next reconcile exact combined CI and current main before merge; retain earlier drafts until successful reviewed consolidation. Actual authored-world binding, cross-ledger resource/fuel conservation, activity authority and monotonic clock hardening remain open, followed by real account and physical device acceptance. Cooking/meal integration #1105 and crafting UI #1112 remain separate pending candidates.
 
 
+## Phase 05 mastery panel with the consolidated ledger — 2026-11-28 PHT
+
+- Reconciled the existing private read-only panel with the merged Living World ledger. Native Chromium verified the desktop and narrow layouts and rendered all ten skill ranks directly from the actual private ledger after one verified climbing activity. The existing stale-scope and malformed-data tests remain.
+- Twelve focused Node tests passed. Fresh CI exercises the real ledger projection beside the existing fixture and layout checks. Authenticated World station and player-facing panel integration remain separate work.
+
 ## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
 
 - Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
