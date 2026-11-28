@@ -70,3 +70,52 @@ test('ambiguous initialization never restarts the persisted event clock', async 
  assert.equal(fresh.event.startsAtMs, 1000);
  assert.equal(f.writes(), 1);
 });
+
+const S='session-events-001',A='account-events-001',B='account-events-002',I='complete-event-001',ROOM='preview-region-events-fixture';
+function participationFixture(){
+ let now=1000,state,tail=Promise.resolve(),account=A,region='cave',hook=null;
+ let p={eventId:ROOM+':1000:0',completedAtMs:1000,completed:true,reachable:true};
+ const storage={transaction(fn){const run=tail.then(async()=>{let draft=state;const r=await fn({get:async()=>draft,put:async(k,v)=>{draft=v;if(hook)hook(v);}});state=draft;return r;});tail=run.catch(()=>{});return run;}};
+ const options={roomId:ROOM,storage,clock:()=>now,seed:0,regions:['cave','sanctuary'],intervalMs:100,activeMs:30,
+  resolveOwner:s=>({sessionId:s,roomId:ROOM,accountId:account,regionId:region}),
+  resolveCompletion:(s,i)=>i===I?{sessionId:s,roomId:ROOM,accountId:account,regionId:region,completionId:i,...p}:null};
+ return {options,make:()=>createPrivateRegionEvents(options),at:v=>{now=v;},owner:v=>{account=v;},region:v=>{region=v;},proof:v=>{p={...p,...v};},hook:v=>{hook=v;}};
+}
+test('one durable receipt per account per active slot; concurrent replays and regional isolation',async()=>{
+ const f=participationFixture(),a=f.make();await a.snapshot('cave');
+ const r=await Promise.all([a.recordParticipation(S,I),a.recordParticipation(S,I)]);
+ assert.equal(r.filter(x=>x.ok).length,1);
+ assert.equal((await f.make().recordParticipation(S,I)).reason,'event-already-recorded');
+ f.owner(B);f.region('sanctuary');assert.equal((await a.recordParticipation(S,I)).reason,'event-completion-not-active');
+ f.region('cave');assert.equal((await a.recordParticipation(S,I)).ok,true);
+ f.at(1030);assert.equal((await a.recordParticipation(S,I)).reason,'event-completion-not-active');
+ f.at(1020);assert.equal((await f.make().recordParticipation(S,I)).reason,'event-completion-not-active');
+});
+test('forged owner, unreachable and future completions are rejected',async()=>{
+ const f=participationFixture(),a=f.make();await a.snapshot('cave');
+ f.proof({accountId:B});assert.equal((await a.recordParticipation(S,I)).reason,'unverified-event-completion');
+ f.proof({accountId:A,reachable:false});assert.equal((await a.recordParticipation(S,I)).reason,'unverified-event-completion');
+ f.proof({reachable:true,completedAtMs:1001});assert.equal((await a.recordParticipation(S,I)).reason,'event-completion-not-active');
+ f.at(1001);assert.equal((await a.recordParticipation(S,I)).ok,true);
+});
+test('bounded receipt capacity and fresh slot reset',async()=>{
+ const f=participationFixture(),a=f.make();await a.snapshot('cave');
+ for(let n=0;n<64;n++){f.owner('account-events-'+String(n).padStart(3,'0'));assert.equal((await a.recordParticipation(S,I)).ok,true);}
+ f.owner('account-events-999');assert.equal((await a.recordParticipation(S,I)).reason,'event-participation-cap');
+ f.at(1100);
+ const snapshots=await Promise.all(['cave','sanctuary'].map(r=>a.snapshot(r)));
+ const e=snapshots.find(r=>r.event).event;f.region(e.regionId);f.proof({eventId:e.id,completedAtMs:1100});
+ assert.equal((await a.recordParticipation(S,I)).ok,true);
+});
+test('expiry or account change during write rolls back; disabled legacy participation',async()=>{
+ const f=participationFixture(),a=f.make();await a.snapshot('cave');
+ f.hook(v=>{if(v.participants.length)f.at(1030);});
+ assert.equal((await a.recordParticipation(S,I)).reason,'event-storage-unavailable');
+ f.hook(null);const fresh=f.make();assert.equal((await fresh.snapshot('cave')).event,null);
+ f.at(1001);assert.equal((await fresh.recordParticipation(S,I)).reason,'event-completion-not-active');
+ const g=participationFixture(),b=g.make();await b.snapshot('cave');
+ g.hook(v=>{if(v.participants.length)g.owner(B);});
+ assert.equal((await b.recordParticipation(S,I)).reason,'event-storage-unavailable');
+ g.hook(null);g.owner(A);assert.equal((await g.make().recordParticipation(S,I)).ok,true);
+ assert.equal((await fixture().make().recordParticipation(S,I)).reason,'event-participation-disabled');
+});
