@@ -33,13 +33,23 @@ export function createPrivateRegionEvents({ roomId, storage, clock, seed, region
    !timeOk(prior.anchorMs)||!timeOk(prior.slot)||typeof prior.expired!=='boolean'||
    (prior.participants!==undefined&&(!Array.isArray(prior.participants)||prior.participants.length>CAP||
     !prior.participants.every(idOk)||new Set(prior.participants).size!==prior.participants.length))))return deny('invalid-event-state');
+  const priorReceiptAt=prior?.lastReceiptAtMs??null;
+  if(priorReceiptAt!==null){
+   const priorStart=prior.anchorMs+prior.slot*intervalMs;
+   if(!prior.participants?.length||!timeOk(priorStart)||!timeOk(priorStart+activeMs)||
+    !timeOk(priorReceiptAt)||priorReceiptAt<priorStart||priorReceiptAt>=priorStart+activeMs)
+    return deny('invalid-event-state');
+   if(now<priorReceiptAt)return deny('stale-world-clock');
+  }
   const anchorMs=prior?.anchorMs??now;
   if(now<anchorMs)return deny('stale-world-clock');
   const slot=Math.floor((now-anchorMs)/intervalMs);
   if(prior&&slot<prior.slot)return deny('stale-world-clock');
   const startsAtMs=anchorMs+slot*intervalMs,expiresAtMs=startsAtMs+activeMs;
   const expired=now>=expiresAtMs||(slot===prior?.slot&&prior.expired);
-  const state={version:1,configuration,anchorMs,slot,expired,participants:slot===prior?.slot?(prior.participants??[]):[]};
+  const sameSlot=slot===prior?.slot;
+  const state={version:1,configuration,anchorMs,slot,expired,
+   participants:sameSlot?(prior.participants??[]):[],lastReceiptAtMs:sameSlot?priorReceiptAt:null};
   if(!prior||slot!==prior.slot||expired!==prior.expired)await tx.put(KEY,state);
   const mixed=Math.imul(seed^slot,0x9e3779b1)>>>0;
   const event=expired?null:{id:ROOM+':'+anchorMs+':'+slot,regionId:regionIds[(mixed>>>10)%regionIds.length],kind:KINDS[mixed%KINDS.length],startsAtMs,expiresAtMs};
@@ -79,7 +89,7 @@ export function createPrivateRegionEvents({ roomId, storage, clock, seed, region
    if(o.state.participants.length>=CAP)return deny('event-participation-cap');
    const active=()=>{const now=clock();return timeOk(now)&&now>=o.now&&now<e.expiresAtMs;};
    if(!active())return deny('event-completion-not-active');
-   const next={...o.state,participants:[...o.state.participants,a.accountId]};
+   const next={...o.state,lastReceiptAtMs:o.now,participants:[...o.state.participants,a.accountId]};
    await tx.put(KEY,next);
    if(!valid()||!active())throw Error('Event authority or time changed during receipt write');
    return {ok:true,eventId:e.id,recorded:true};
