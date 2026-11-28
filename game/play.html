@@ -2211,7 +2211,14 @@ function renderInventory(){
   slots.forEach((item,i)=>{const cell=document.createElement('div');cell.style.cssText='aspect-ratio:1;min-width:0;border:1px solid #9b7b4c88;border-radius:6px;background:linear-gradient(145deg,#17232b,#090e13);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px;overflow:hidden';const num=document.createElement('small');num.textContent=String(i+1).padStart(2,'0');num.style.cssText='font-size:8px;color:#8f9aa2;align-self:flex-start';cell.append(num);if(item){const name=document.createElement('span');name.textContent=item.name;name.title=item.name;name.style.cssText='font-size:9px;color:#f4ecd8;text-align:center;overflow-wrap:anywhere;line-height:1.1';const qty=document.createElement('b');qty.textContent='×'+item.qty;qty.style.cssText='font-size:9px;color:#e8c77f';cell.append(name,qty)}else{const empty=document.createElement('span');empty.textContent='—';empty.style.cssText='font-size:12px;color:#53606a';cell.append(empty)}bag.append(cell)});invPanel.append(bag);
   const note=document.createElement('p');note.textContent=inventory.length+' / 50 backpack slots used';note.style.cssText='color:#aeb4b4;font-size:11px;margin:8px 0';invPanel.append(note);
 }
-function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else if(inventory.length<50)inventory.push({name,qty});else{toast('Backpack full · 50/50 slots');return}saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
+function addInventoryItem(name,qty=1){
+ const item=inventory.find(x=>x.name===name);
+ if(item)item.qty+=qty;
+ else if(inventory.length<50)inventory.push({name,qty});
+ else{toast('Backpack full · 50/50 slots');return false}
+ return true;
+}
+function publishInventory(){saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
 const GAME_LOCAL_POSITION_PREFIX='climboria_jarrell_position_v1:user:';
 let localPositionUserId=null,localPositionReady=false;
 function restoreExplorerPosition(position){
@@ -3107,7 +3114,18 @@ function chestDistributionAudit(){
 }
 function interact(){if(P.mode!='walk')return;
  if(recoverDeathLoot())return;
- for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){playGameEffect('chest');c.open=true;c.t=chestRespawnDelay(c);c.g.visible=false;const reward=c.reward;addInventoryItem(reward.item,1);toast('Chest opened · '+reward.rarity.toUpperCase()+' · '+reward.item);emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});return}
+ for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){
+  const reward=c.reward;
+  if(!addInventoryItem(reward.item,1))return;
+  c.open=true;
+  c.t=chestRespawnDelay(c);
+  c.g.visible=false;
+  publishInventory();
+  playGameEffect('chest');
+  toast('Chest opened · '+reward.rarity.toUpperCase()+' · '+reward.item);
+  emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});
+  return;
+ }
  for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){if(P.fish>0)return;P.fish=2+Math.random()*4;P.fishSource=f.waterBodyId||'open_sea';toast('Line cast at '+f.label+'…')}else{toast(f.label);emit(f.type,{})}return}}
 P.fish=0;
 /* weather: clear / rain / thunderstorm */
@@ -3132,7 +3150,18 @@ function gameTick(dt,cp){
  /* Snake AI disabled with wildlife. */
  for(const c of chests)if(c.open&&(c.t-=dt)<0)place(c);
  updateSummitChestStatus();
- if(P.fish>0&&(P.fish-=dt)<=0){P.fish=0;const table=P.fishSource==='open_sea'?['Silverfin','Bluefin Tuna','Mahi-Mahi','Old Boot (junk)']:['Reed Carp','Golden Trout','Moonpool Koi','Woodland Perch'];const f=table[Math.floor(Math.random()*table.length)];addInventoryItem(f,1);toast('Caught: '+f);emit('fish',{item:f,waterBodyId:P.fishSource||'open_sea'});P.fishSource=null}
+ if(P.fish>0&&(P.fish-=dt)<=0){
+  P.fish=0;
+  const waterBodyId=P.fishSource||'open_sea';
+  const table=waterBodyId==='open_sea'?['Silverfin','Bluefin Tuna','Mahi-Mahi','Old Boot (junk)']:['Reed Carp','Golden Trout','Moonpool Koi','Woodland Perch'];
+  const fish=table[Math.floor(Math.random()*table.length)];
+  P.fishSource=null;
+  if(addInventoryItem(fish,1)){
+   publishInventory();
+   toast('Caught: '+fish);
+   emit('fish',{item:fish,waterBodyId});
+  }
+ }
  hpEl.textContent='';
  const hp=Math.max(0,Math.min(P.maxHp,Math.round(P.hp??500))),st=Math.max(0,Math.min(P.maxStamina,Math.round(P.stamina??200)));
  document.getElementById('health-value').textContent=hp;document.getElementById('health-fill').style.width=(hp/P.maxHp*100)+'%';
@@ -3278,7 +3307,17 @@ function geodeChestLifecycleAudit(){
  const saved={...P},before=inventory.reduce((n,item)=>n+(item.qty||1),0);
  try{
   P.mode='walk';P.x=c.x;P.z=c.z;P.y=caveG.position.y+1.75;
-  c.open=false;c.g.visible=true;interact();
+  c.open=false;c.g.visible=true;
+  const savedItems=inventory.slice(),closedTimer=c.t;
+  const filled=Array.from({length:50},(_,i)=>({name:'Smoke filler '+i,qty:1}));
+  let fullBackpackPreserved;
+  try{
+   inventory.splice(0,inventory.length,...filled);
+   interact();
+   fullBackpackPreserved=!c.open&&c.g.visible&&c.t===closedTimer&&
+    inventory.length===filled.length&&inventory.every((item,i)=>item===filled[i]&&item.qty===1);
+  }finally{inventory.splice(0,inventory.length,...savedItems)}
+  interact();
   const opened=c.open&&!c.g.visible&&c.t>=120&&c.t<=240;
   const after=inventory.reduce((n,item)=>n+(item.qty||1),0);
   const rewarded=after>before;
@@ -3287,7 +3326,7 @@ function geodeChestLifecycleAudit(){
   gameTick(.02,{x:P.x,y:P.y,z:P.z});
   const floor=groundAt(c.x,c.z);
   const respawned=!c.open&&c.g.visible&&Math.abs(c.g.position.y-floor)<=.02;
-  return {ok:opened&&rewarded&&respawned,opened,rewarded,respawned,timer,inventoryBefore:before,inventoryAfter:after,visible:c.g.visible,open:c.open,floorY:floor,chestY:c.g.position.y};
+  return {ok:fullBackpackPreserved&&opened&&rewarded&&respawned,fullBackpackPreserved,opened,rewarded,respawned,timer,inventoryBefore:before,inventoryAfter:after,visible:c.g.visible,open:c.open,floorY:floor,chestY:c.g.position.y};
  }finally{Object.assign(P,saved)}
 }
 function positionAtMountainCliffForSmoke(){
