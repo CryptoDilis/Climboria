@@ -47,15 +47,6 @@
 
 ---
 
-## Phase 06 private regional event schedule — 2026-11-28 PHT
-
-- Added a private, clock-driven schedule for Falling Star, Lost Expedition, Secret Passage, and Wandering Merchant. One active event is visible only in its selected region. The seed and timing are explicit fixture inputs. The stored anchor, slot and expiry survive restarts, and missed slots produce no catch-up events.
-- Local tests verify concurrent reads, stable event identity, region isolation, a cooling interval, expiry despite clock reversal, skipped slots, changed configuration rejection and ambiguous storage outcomes. Writes occur only on initialization and slot or expiry transitions.
-- **BLOCKED — EXTERNAL VERIFICATION REQUIRED:** Live placement and encounter participation need authorized regional visibility, map-path and real-player fairness review. Verify reachable landmarks and region transitions in a private device/account run before exposing any scheduler, gameplay effect or reward.
-- Next verify the exact CI and test authored region placement independently of the protected release gates.
-
----
-
 ## Verified reconnect and browser transport merges — 2026-11-28 PHT
 
 - [R1 cave discovery #1060](https://github.com/CryptoDilis/Climboria/pull/1060) merged after 11 checks passed. [Hosted verification](https://github.com/CryptoDilis/Climboria/actions/runs/46090048254) passed. The follow-up adds an optional route clue at the Expedition camp and a field note on reaching the cave approach. The discovery uses the existing journal scope and persistence rules. The gameplay smoke verifies the note stays hidden at spawn, appears on arrival, and leaves no journal storage in guest mode.
@@ -3462,6 +3453,15 @@ World: Common 65%, Uncommon 25%, Rare 8%, Epic 1.8%, Legendary 0.2%. Cave/geode:
 ## Base-first ecosystem direction — 2026-11-27 UTC
 See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_DIRECTION.md). Future blockchain-linked game assets and reward settlement prioritize Base; preserve real-time off-chain gameplay, chat, cloud saves and existing auth/guest paths. No new wallet requirement for gameplay, token payout or public chain transaction authorized. Continue current Game acceptance work; plan wallet linking and authenticated reward events separately.
 
+
+---
+
+## Phase 06 private regional event schedule — 2026-11-28 PHT
+
+- Added a private, clock-driven schedule for Falling Star, Lost Expedition, Secret Passage, and Wandering Merchant. One active event is visible only in its selected region. The seed and timing are explicit fixture inputs. The stored anchor, slot and expiry survive restarts, and missed slots produce no catch-up events.
+- Local tests verify concurrent reads, stable event identity, region isolation, a cooling interval, expiry despite clock reversal, skipped slots, changed configuration rejection and ambiguous storage outcomes. Writes occur only on initialization and slot or expiry transitions.
+- **BLOCKED — EXTERNAL VERIFICATION REQUIRED:** Live placement and encounter participation need authorized regional visibility, map-path and real-player fairness review. Verify reachable landmarks and region transitions in a private device/account run before exposing any scheduler, gameplay effect or reward.
+- Next verify the exact CI and test authored region placement independently of the protected release gates.
 
 ---
 
