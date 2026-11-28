@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## Phase 06 private environmental exposure candidate — 2026-11-28 PHT
+
+- Private server-resolved, uniform completed active intervals of 1–60 seconds produce bounded independent cold and heat stress. Temperature, wind and precipitation are trusted fixture inputs; thresholds and rates are provisional. Neutral exposure recovers stress; no offline catch-up, public routes, damage, stamina changes, real player effects or financial changes.
+- The ledger uses account-bound storage, contiguous sequences, revalidates owner and proof before and after a write, and fails closed on uncertain transaction outcomes. Four Node regression cases cover weather response and restart, replay and invalid proof, reassignment rollback, and caps. Authored tests await actual execution; no local Node or exact CI result claimed.
+- Source and test checkpoint: `e6cac5a20cc4bbe7b967163c47fe6557082b1831`. Related campsite parents #1114 and #1116 and stacked draft #1118 remain independently gated.
+- Next: execute focused Node tests and exact CI, reconcile parent campsite branches on current main, then compose trusted shelter/campfire and authored world weather intervals without changing combat or stamina. Registered-player and physical-device checks remain external gates.
+
+
 ## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
 
 - Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
