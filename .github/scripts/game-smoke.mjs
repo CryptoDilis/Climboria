@@ -113,6 +113,23 @@ try {
   await guestProbe.waitForFunction(()=>window.__climboriaJarrellsPeak.player.fishSource===null);
   if(await guestProbe.evaluate(()=>window.__smokeFishingEvents!==1||
     window.__climboriaJarrellsPeak.player.fishingSpot!==null)) errors.push('Leaving the fishing spot still awarded a catch');
+  await guestProbe.evaluate(()=>{
+    const world=window.__climboriaJarrellsPeak;
+    const camp=world.POI.camp;
+    const offsets=[[3,0],[-3,0],[0,3],[0,-3]];
+    const point=offsets.map(([dx,dz])=>({x:camp.x+dx,z:camp.z+dz}))
+      .find(({x,z})=>world.chests.every(chest=>chest.open||Math.hypot(chest.x-x,chest.z-z)>=4));
+    if(!point)throw new Error('Expedition Camp smoke cannot find a clear interaction point');
+    Object.assign(world.player,{...point,y:world.groundAt(point.x,point.z)+1.75,
+      mode:'walk',swim:false,vy:0,moveTarget:null,jumpState:'grounded'});
+    document.activeElement?.blur();
+  });
+  const campfirePrompt=guestProbe.locator('#expedition-campfire-prompt');
+  await campfirePrompt.filter({hasText:'Light campfire'}).waitFor({state:'visible',timeout:30000});
+  await guestProbe.keyboard.press('e');
+  await campfirePrompt.filter({hasText:'Extinguish campfire'}).waitFor({state:'visible',timeout:30000});
+  await guestProbe.keyboard.press('e');
+  await campfirePrompt.filter({hasText:'Light campfire'}).waitFor({state:'visible',timeout:30000});
   await guestProbe.close();
   // The rest of this test exercises 3D creator UX against an explicitly
   // mocked registered account, NOT a real Supabase auth acceptance.
