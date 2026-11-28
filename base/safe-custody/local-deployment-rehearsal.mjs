@@ -1,9 +1,11 @@
 // Local-only mined deployment rehearsal. No external RPC, private keys, or network broadcast.
 import assert from 'node:assert/strict';
+import {verifyLocalVaultRuntime} from './local-vault-runtime-provenance.mjs';
 import {verifyRuntime} from './verify-runtime-template.mjs';
 import {verifyNamedRuntime} from './verify-named-runtime.mjs';
 import {verifyLocalAuthorizations} from './local-authorization-rehearsal.mjs';
-import {readFileSync,writeFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,readdirSync} from 'node:fs';
+import {exactBuildUnit} from './exact-build-unit.mjs';
 import {spawn,execFileSync} from 'node:child_process';
 import {setTimeout as sleep} from 'node:timers/promises';
 const URL='http://127.0.0.1:18545';
@@ -155,7 +157,31 @@ try{
  assert.equal(new Set(vaults.map(x=>x.address)).size,7);
  for(const a of [creator,wallet,guard,successor,founder,distributor,payee,...owners])assert.equal(await number(token,'balanceOf(address)',a),0n);
  negative.push(await rejectCall('consumedSafeNonceCannotReplay',creator,wallet,exec(pack(sigs))));
- const manifest={status:'LOCAL_ANVIL_REHEARSAL_ONLY',sourceSha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),chainId:Number(CHAIN),localHardfork:'cancun',localBlockGasLimit:Number(LIMIT),testOnly:true,signatureMode:'ECDSA_ONLY',factoryProvenance,contracts,roles:{creator,owners,founder,distributor},startTimestamp:Number(start),totalSupplyRaw:String(SUPPLY),vaults,transactions:steps,negativeEthCalls:negative,limitations:'Synthetic quote/pool/LP, local unlocked Anvil accounts, three offline ECDSA signatures, no public RPC, no real signers, no production review. Gas observations are local receipts only, not a public Base Sepolia gas estimate or authorization.'};
+ // Resolve source-unit identity from the verified compiler import graph.
+ const builds=readdirSync('out/build-info').filter(f=>f.endsWith('.json')).map(f=>JSON.parse(readFileSync('out/build-info/'+f,'utf8')));
+ const quorumUnit=exactBuildUnit(builds,'src/SafeQuorumIssuanceFixture.sol','V3QuorumSuccessorFixture');
+ const importPath=(unit,file)=>{
+  const paths=unit.ast.nodes.filter(n=>n.nodeType==='ImportDirective'&&n.file===file).map(n=>n.absolutePath);
+  assert.equal(paths.length,1,'ambiguous compiler import '+file);return paths[0];
+ };
+ const atomicPath=importPath(quorumUnit,'v3-src/V3AtomicSuccessorFixture.sol');
+ assert.equal(atomicPath,'../v3-testnet/src/V3AtomicSuccessorFixture.sol');
+ const atomicUnit=exactBuildUnit(builds,atomicPath,'V3AtomicSuccessorFixture');
+ const sources={};
+ for(const file of ['ClimbV3TestToken.sol','V3GovernedGameRewardFixture.sol','V3DeferredLiquidityFixture.sol','V3EpochSpendFixture.sol','V3LegacyProofClaimFixture.sol'])sources[file]=importPath(atomicUnit,'./'+file);
+ const expenseUnit=exactBuildUnit(builds,sources['V3EpochSpendFixture.sol'],'V3EpochSpendFixture');
+ sources['V3SharedExpenseFixture.sol']=importPath(expenseUnit,'./V3SharedExpenseFixture.sol');
+ const legacyUnit=exactBuildUnit(builds,sources['V3LegacyProofClaimFixture.sol'],'V3LegacyProofClaimFixture');
+ sources['V3LegacyProofVerifierFixture.sol']=importPath(legacyUnit,'./V3LegacyProofVerifierFixture.sol');
+ const gameUnit=exactBuildUnit(builds,sources['V3GovernedGameRewardFixture.sol'],'V3GovernedGameRewardFixture');
+ sources['EIP712.sol']=importPath(gameUnit,'openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol');
+ sources['SafeReserveGuard.t.sol']='test/SafeReserveGuard.t.sol';
+ const unit=(file,name,options)=>{assert.ok(Object.hasOwn(sources,file),'unmapped source');return exactBuildUnit(builds,sources[file],name,options);};
+ const exactNamed=async(file,name,at,asts,roles)=>verifyNamedRuntime(unit(file,name).artifact,await rpc('eth_getCode',[at,'latest']),asts,roles);
+ const exactPlain=async(file,name,at,imm=[])=>verifyRuntime(unit(file,name).artifact,await rpc('eth_getCode',[at,'latest']),imm);
+ const vaultProvenance=await verifyLocalVaultRuntime({verifyNamed:exactNamed,verify:exactPlain,ast:(file,name)=>unit(file,name,{astOnly:true}).ast,cast,call,address,number,requireCode,successor,token,guard,quote,lp,founder,distributor,start,vaults,amounts,contracts});
+ vaultProvenance.compilerSourceUnits=sources;
+ const manifest={status:'LOCAL_ANVIL_REHEARSAL_ONLY',sourceSha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),chainId:Number(CHAIN),localHardfork:'cancun',localBlockGasLimit:Number(LIMIT),testOnly:true,signatureMode:'ECDSA_ONLY',factoryProvenance,vaultProvenance,contracts,roles:{creator,owners,founder,distributor},startTimestamp:Number(start),totalSupplyRaw:String(SUPPLY),vaults,transactions:steps,negativeEthCalls:negative,limitations:'Synthetic quote/pool/LP, local unlocked Anvil accounts, three offline ECDSA signatures, no public RPC, no real signers, no production review. Gas observations are local receipts only, not a public Base Sepolia gas estimate or authorization.'};
  assert.match(manifest.sourceSha,/^[a-f0-9]{40}$/);
  writeFileSync(process.argv[2],JSON.stringify(manifest,null,2)+'\n');console.log(JSON.stringify(manifest,null,2));
  if(process.argv[3]){
