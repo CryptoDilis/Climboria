@@ -141,6 +141,8 @@ jobs:
         run: node --test canonical-safe-envelope.test.mjs
       - name: Verify raw Safe quorum signatures offline
         run: node --test raw-safe-quorum.test.mjs
+      - name: Verify offline finalized observation boundary
+        run: node --test finalized-observation-boundary.test.mjs
       - name: Verify fee-budget observation arithmetic
         run: node --test observe-fee-budget.test.mjs
       - name: Check active public evidence pin
