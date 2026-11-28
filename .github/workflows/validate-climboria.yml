@@ -116,7 +116,7 @@ jobs:
                   raise SystemExit(f"Missing expected homepage control: #{required_id}")
           print("Current homepage structure and hero controls validated.")
           PY
-      - name: Verify Base-exclusive CLIMB V3 tokenomics and prior-holder protection
+      - name: Verify Base-exclusive CLIMB V4 tokenomics and prior-holder protection
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -138,9 +138,12 @@ jobs:
               assert "Not yet published" in page and "Not open" in page
               assert "exact utc publication time" in page.lower()
           for page in (html, paper):
-              assert 'id="climb-v3-allocations"' in page and 'id="climb-v3-marketing"' in page
-              for amount in ("888,888,888", "311,111,110.80", "222,222,222.00", "133,333,333.20", "88,888,888.80", "106,666,666.56", "17,777,777.76", "8,888,888.88", "26,666,666.64", "35,555,555.52"):
+              assert 'id="climb-v4-allocations"' in page and 'id="climb-v4-community"' in page
+              for amount in ("888,888,888", "266,666,666.40", "177,777,777.60", "159,999,999.84", "106,666,666.56", "88,888,888.80", "62,222,222.16", "17,777,777.76", "8,888,888.88", "71,111,111.04", "53,333,333.28", "35,555,555.52", "3,111,111.108", "59,111,111.052"):
                   assert amount in page, amount
+              assert "No automatic CLIMB rewards" in page
+              assert "developer-controlled wallet" in page
+              assert "311,111,110.80" not in page and "222,222,222.00" not in page
               assert "No conversion rate or allocation is guaranteed" in page
               assert "not a supply-conserving bridge" in page
           assert "1,000,000,000" not in paper
@@ -149,7 +152,18 @@ jobs:
           assert "PLANNED LAUNCH TARGET" not in html
           assert "launch-countdown" not in html and "launch-timer" not in html
           assert "TBD" not in html.split('<div id="tokenomics" class="sec">',1)[1].split('<div id="roadmap"',1)[0]
-          print("Base-exclusive V3 tokenomics and prior-holder notice verified.")
+          from decimal import Decimal
+          supply = Decimal("888888888")
+          allocations = [Decimal(x) for x in ("266666666.40","177777777.60","159999999.84","106666666.56","88888888.80","62222222.16","17777777.76","8888888.88")]
+          assert sum(allocations) == supply
+          assert sum(Decimal(x) for x in ("106666666.56","71111111.04","53333333.28","35555555.52")) == allocations[0]
+          assert Decimal("3111111.108") + Decimal("59111111.052") == allocations[5]
+          dashboard = Path("transparency/index.html").read_text(encoding="utf-8")
+          assert dashboard.count("<details>") == 8 and "TRACKING OFF" in dashboard
+          assert "TESTNET_NO_GO / MAINNET_NO_GO" in dashboard
+          assert "3,111,111.108 CLIMB" in dashboard and "59,111,111.052 CLIMB" in dashboard
+          assert "Unavailable" in dashboard and "Not yet published" in dashboard
+          print("Base-exclusive V4 tokenomics and prior-holder notice verified.")
           PY
 
       - name: Verify safe same-origin CLIMB supply snapshot schema
