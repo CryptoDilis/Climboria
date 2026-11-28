@@ -1,6 +1,7 @@
 // Local-only mined deployment rehearsal. No external RPC, private keys, or network broadcast.
 import assert from 'node:assert/strict';
 import {verifyRuntime} from './verify-runtime-template.mjs';
+import {verifyNamedRuntime} from './verify-named-runtime.mjs';
 import {verifyLocalAuthorizations} from './local-authorization-rehearsal.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {spawn,execFileSync} from 'node:child_process';
@@ -73,7 +74,11 @@ try{
  const singleton=await address(setup,'singleton()'),bootstrap=await address(setup,'bootstrap()'),guardDeployer=await address(setup,'guardDeployer()');
  assert.equal(new Set([setup,singleton,bootstrap,guardDeployer]).size,4);
  const verify=async(file,name,at,imm=[])=>verifyRuntime(JSON.parse(readFileSync('out/'+file+'/'+name+'.json','utf8')),await rpc('eth_getCode',[at,'latest']),imm);
- const factoryProvenance={setup:await verify('SafeQuorumIssuanceFixture.sol','SafeQuorumReserveFactoryFixture',setup,[singleton,bootstrap,guardDeployer]),singleton:await verify('Safe.sol','Safe',singleton),bootstrap:await verify('SafeEpochGuardFixture.sol','SafeGuardBootstrapFixture',bootstrap),singletonAddress:singleton,bootstrapAddress:bootstrap};
+ const artifact=(file,name)=>JSON.parse(readFileSync('out/'+file+'/'+name+'.json','utf8'));
+ const ast=(file,name)=>artifact(file,name).ast;
+ const quorumAst=ast('SafeQuorumIssuanceFixture.sol','SafeQuorumReserveFactoryFixture');
+ const verifyNamed=async(file,name,at,asts,roles)=>verifyNamedRuntime(artifact(file,name),await rpc('eth_getCode',[at,'latest']),asts,roles);
+ const factoryProvenance={setup:await verifyNamed('SafeQuorumIssuanceFixture.sol','SafeQuorumReserveFactoryFixture',setup,[quorumAst],{'SafeQuorumReserveFactoryFixture.singleton':singleton,'SafeQuorumReserveFactoryFixture.bootstrap':bootstrap,'SafeQuorumReserveFactoryFixture.guardDeployer':guardDeployer}),singleton:await verify('Safe.sol','Safe',singleton),bootstrap:await verify('SafeEpochGuardFixture.sol','SafeGuardBootstrapFixture',bootstrap),singletonAddress:singleton,bootstrapAddress:bootstrap};
  assert.equal(await address(guardDeployer,'factory()'),setup);
  const guardDeployerCode=await requireCode(guardDeployer);
  contracts.guardDeployer=guardDeployerCode;
@@ -99,6 +104,8 @@ try{
  assert.equal(await address(successor,'creator()'),creator);
  assert.equal(await address(successor,'guardFactory()'),setup);
  assert.equal(await call(successor,'guardFactoryHash()'),contracts.setupFactory.runtimeKeccak256);
+ const atomicAst=ast('V3AtomicSuccessorFixture.sol','V3AtomicSuccessorFixture');
+ factoryProvenance.successor=await verifyNamed('SafeQuorumIssuanceFixture.sol','V3QuorumSuccessorFixture',successor,[quorumAst,atomicAst],{'V3AtomicSuccessorFixture.creator':creator,'V3AtomicSuccessorFixture.core':core,'V3AtomicSuccessorFixture.conditional':helper,'V3AtomicSuccessorFixture.conditionalHash':helperHash,'V3QuorumSuccessorFixture.guardFactory':setup,'V3QuorumSuccessorFixture.guardFactoryHash':contracts.setupFactory.runtimeKeccak256});
  const quote=await deploy('syntheticQuote','SafeReserveGuard.t.sol','ReserveQuote',creator);
  const builder=await deploy('syntheticPoolBuilder','SafeReserveGuard.t.sol','ReservePoolBuilder',creator);
  const lp=await deploy('syntheticLPDestination','SafeReserveGuard.t.sol','ReserveLPDestination',creator);
@@ -108,6 +115,8 @@ try{
  contracts.guard=await requireCode(guard);contracts.wallet=await requireCode(wallet);
  contracts.singleton=await requireCode(await address(setup,'singleton()'));
  factoryProvenance.wallet=await verify('SafeProxy.sol','SafeProxy',wallet);
+ const epochAst=ast('SafeEpochGuardFixture.sol','SafeEpochGuardFixture'),reserveAst=ast('SafeReserveGuardFixture.sol','SafeReserveGuardFixture');
+ factoryProvenance.guard=await verifyNamed('SafeQuorumIssuanceFixture.sol','SafeQuorumReserveGuardFixture',guard,[quorumAst,epochAst,reserveAst],{'SafeEpochGuardFixture.wallet':wallet,'SafeEpochGuardFixture.singleton':singleton,'SafeEpochGuardFixture.proxyHash':contracts.wallet.runtimeKeccak256,'SafeEpochGuardFixture.singletonHash':contracts.singleton.runtimeKeccak256,'SafeReserveGuardFixture.successor':successor,'SafeReserveGuardFixture.successorHash':contracts.successorFactory.runtimeKeccak256});
  assert.equal(await address(guard,'successor()'),successor);
  assert.equal(await number(wallet,'getThreshold()'),3n);
  assert.equal(await number(guard,'memberCount()'),5n);

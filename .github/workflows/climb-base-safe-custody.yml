@@ -75,11 +75,11 @@ jobs:
           set -euo pipefail
           node --test snapshot-build.test.mjs
           forge clean
-          forge build --force
+          forge build --force --ast
           node snapshot-build.mjs "$RUNNER_TEMP/safe-build-first.json"
           node size-manifest.mjs "$RUNNER_TEMP/safe-custody-size.json"
           forge clean
-          forge build --force
+          forge build --force --ast
           node snapshot-build.mjs "$RUNNER_TEMP/safe-build-second.json"
           node size-manifest.mjs "$RUNNER_TEMP/safe-custody-size-second.json"
           cmp "$RUNNER_TEMP/safe-build-first.json" "$RUNNER_TEMP/safe-build-second.json"
@@ -102,7 +102,7 @@ jobs:
       - name: Rehearse separate mined setup and quorum issuance transactions locally
         run: |
           set -euo pipefail
-          node --test verify-runtime-template.test.mjs
+          node --test verify-runtime-template.test.mjs verify-named-runtime.test.mjs
           node local-deployment-rehearsal.mjs "$RUNNER_TEMP/safe-local-rehearsal.json" "$RUNNER_TEMP/safe-local-authorization-rehearsal.json"
       - uses: actions/upload-artifact@v4
         with:
