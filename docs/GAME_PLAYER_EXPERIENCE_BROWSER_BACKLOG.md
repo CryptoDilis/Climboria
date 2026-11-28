@@ -22,7 +22,7 @@ Phase 03 has merged improvements to the field journal, hero preview, desktop orb
 
 The merged Phase 05 private equipment fixture includes a synthetic +0 to +10 enhancement fixture, with atomic material costs and replay checks. The merged private durability and repair follow-up checks verified wear, atomic kit use, and restart behavior. Equipment recipes and real inventory integration still need implementation and acceptance.
 
-At Expedition Camp, nearby players can now light and extinguish the existing hearth in the local playable world. The fuel lasts 120 seconds of visible simulation time. A marked local campsite can also pitch and pack a canvas shelter. Shared ownership, authoritative refueling and survival recovery remain open.
+At Expedition Camp, nearby players can now light and extinguish the existing hearth in the local playable world. The fuel lasts 120 seconds of visible simulation time. A marked local campsite can also pitch and pack a canvas shelter. Both interactions passed hosted read-only readiness. The private refuel transaction passed its SQLite restart checks. Shared ownership and the authenticated world station binding for inventory and survival remain open. [Shelter readiness](https://github.com/CryptoDilis/Climboria/actions/runs/46130679657)
 
 ### Multiplayer checkpoint — 2026-11-28 PHT
 
