@@ -20,6 +20,15 @@
 
 ---
 
+## Phase 03 keyboard button activation — 2026-11-28 PHT
+
+- Space activates a focused Game button or disclosure through its own keyboard behavior. The world keeps Space-to-jump whenever the event originates in gameplay. The handler also respects an event canceled by a child control.
+- Exact inline regression verifies focused controls, world jump and click-to-move cancellation, text entries, and already handled events. Terrain-source parity passed.
+- Prior R1 cave chamber [#1061](https://github.com/CryptoDilis/Climboria/pull/1061) merged at `979b4672700f207f9fd72127626f89cbae4504ff` after 16 checks passed on `f5670ec7d2cc63b7c62870f2adb23712a2296118`. Desktop and touch-emulated Chromium verified guest chamber discovery remains session-only.
+- Next verify exact CI and native settings keyboard activation while related control PRs finish. Physical controller acceptance stays open.
+
+---
+
 ## Crowd C13 private recovery checkpoint — 2026-11-28 PHT
 
 - [#1046](https://github.com/CryptoDilis/Climboria/pull/1046) implementation commit `167575e52f29a0a119b57ac3495a4362e80b969d` adds loopback socket coverage for 20 ticks with 0–22 ms application send jitter. At 10/25/50/100 sockets, 8/20/40/80 forcibly disconnected clients returned as fresh synthetic sessions. Every remaining and returning client reconciled to independently expected rosters and positions. Final socket, room and movement-interest cleanup passed. All 23 existing focused policy and presence tests passed locally.
