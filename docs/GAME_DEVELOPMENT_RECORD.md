@@ -22,7 +22,11 @@ The private Game state workflow passed its new real workerd/SQLite restart step.
 - **BLOCKED — EXTERNAL VERIFICATION REQUIRED** for private authored edge acceptance. An approved tester needs the bounded private window and access described by the [operator runbook](GAME_PRIVATE_COMBAT_OPERATOR_QA.md).
 - **BLOCKED — EXTERNAL VERIFICATION REQUIRED** for physical Android/iPhone input and performance. Run the [physical device acceptance protocol](GAME_NPC_PHYSICAL_DEVICE_ACCEPTANCE.md) on the exact reviewed Game revision.
 
-Native HUD keyboard activation passed 18 exact CI checks and merged at `5a50fa7958b9fe525e9a9fe2dcbe4c7bc621f222`. The local dropped-backpack range and responsive backpack layout passed desktop and touch-emulated Chromium. Both remain subject to their exact pull request CI. [Keyboard #1071](https://github.com/CryptoDilis/Climboria/pull/1071), [range #1076](https://github.com/CryptoDilis/Climboria/pull/1076), [layout #1078](https://github.com/CryptoDilis/Climboria/pull/1078)
+Native HUD keyboard activation passed 18 exact CI checks and merged at `5a50fa7958b9fe525e9a9fe2dcbe4c7bc621f222`. The local dropped-backpack range and responsive backpack layout passed desktop and touch-emulated Chromium and merged after 16 exact CI checks each. The hosted read-only check passed on the responsive backpack merge. [Keyboard #1071](https://github.com/CryptoDilis/Climboria/pull/1071), [range #1076](https://github.com/CryptoDilis/Climboria/pull/1076), [layout #1078](https://github.com/CryptoDilis/Climboria/pull/1078)
+
+The private equipment enhancement and maintenance fixtures each passed all four CI checks. Their merge commits are `17aa9516815d63b09dcf1cc4a8c9378d82907a65` and `49fb0e53abe1bb95c91999afdbfed53c13c5ed23`. The workerd check verifies persisted enhancement, material and kit balances, durability, and replay rejection after SQLite restart. [Enhancement #1081](https://github.com/CryptoDilis/Climboria/pull/1081), [maintenance #1082](https://github.com/CryptoDilis/Climboria/pull/1082), [hosted backpack readiness](https://github.com/CryptoDilis/Climboria/actions/runs/46096769700)
+
+The Geode chamber journal entry passed local desktop and touch-emulated guest checks. Its exact hosted gameplay and NPC browser CI were still running at this checkpoint. [Geode #1084](https://github.com/CryptoDilis/Climboria/pull/1084)
 
 ## Crowd C9–C13 and NPC consolidation checkpoint — 2026-11-28 PHT
 
