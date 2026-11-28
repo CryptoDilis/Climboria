@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## Phase 06 main-based campsite and weather consolidation — 2026-11-28 PHT
+
+- Consolidates exact campsite integration #1118 head `770a69422ab9e982ca88e23378afce6d8c40e17f` (includes #1114 and #1116) and exact campfire/weather #1120 head `065f3e28bdec5fb27e606e475517bbdf05bc0bd3` (includes #1119), onto main `9ffbd59db00c62ade686a15907cdda7ce8fdbcc1`. Copies seven exact Game module/test blobs and preserves current development history. No live routes, authored models, economy or release gate changes.
+- Prior exact PR workflows all reported success for #1114, #1116, #1118 and #1119; #1120 had no exact PR workflow result. Adds a dedicated Game-only native Node 22 workflow explicitly running all four combined fixture test files; prior broad workflow success does not by itself prove these tests ran. Fresh combined CI required.
+- Weather shelter proof and campsite lease/rest are still separate private interfaces; no trusted actual campfire fuel state or authored world binding. Next compose the lease, shelter and completed weather interval under one shared transaction, review expiry/clock rollback and then bind real terrain in a private fixture. Retire overlapping drafts only after reviewed combined merge; no force merge.
+
+
 ## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
 
 - Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
