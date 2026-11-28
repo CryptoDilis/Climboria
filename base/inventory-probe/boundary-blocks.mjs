@@ -10,14 +10,26 @@ const methods=['getGenesisHash','getBlock'];
 const reasons=['TRANSPORT','HTTP_429','HTTP_OTHER','BODY','ENVELOPE','RPC_ERROR','RPC_HISTORY_UNAVAILABLE','RPC_UNSUPPORTED_VERSION','RPC_INVALID_PARAMS','RPC_METHOD_UNAVAILABLE','RPC_NODE_UNHEALTHY','RPC_RATE_LIMIT','GENESIS','HEADER','TRANSACTION_SHAPE','SOURCE_DISAGREEMENT'];
 const allowed=new Set(['CONFIG_INVALID','SOURCE_DISAGREEMENT','UNCLASSIFIED']);
 for(const p of ['A','B'])for(const m of methods)for(const reason of reasons)allowed.add(p+'_'+m+'_'+reason);
-class BoundaryFailure extends Error{constructor(code){super('NO_GO: boundary block evidence unavailable or inconsistent');this.code=code;}}
-const fail=code=>{throw new BoundaryFailure(code);};
+class BoundaryFailure extends Error{constructor(code,versionHint=null){super('NO_GO: boundary block evidence unavailable or inconsistent');this.code=code;this.versionHint=versionHint;}}
+const fail=(code,versionHint=null)=>{throw new BoundaryFailure(code,versionHint);};
 export const boundaryFailureCode=e=>e instanceof BoundaryFailure&&allowed.has(e.code)?e.code:'UNCLASSIFIED';
+// Only the exact upstream error template can contribute a numeric hint.
+// This hint is untrusted diagnostic metadata, never permission to widen support.
+export function boundaryVersionHint(e){
+ return e instanceof BoundaryFailure&&boundaryFailureCode(e).endsWith('_RPC_UNSUPPORTED_VERSION')&&
+  Number.isInteger(e.versionHint)&&e.versionHint>=0&&e.versionHint<=255?e.versionHint:null;
+}
+function extractVersionHint(message){
+ if(typeof message!=='string'||message.length>240)return null;
+ const m=message.match(/^Transaction version \((\d{1,3})\) is not supported by the requesting client\. Please try the request again with the following configuration parameter: "maxSupportedTransactionVersion": (\d{1,3})$/);
+ if(!m||m[0]!==message||m[1]!==m[2]||Number(m[1])>255)return null;
+ return Number(m[1]);
+}
 const canonical=x=>Array.isArray(x)?'['+x.map(canonical).join(',')+']':x!==null&&typeof x==='object'?'{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+canonical(x[k])).join(',')+'}':JSON.stringify(x);
 const digest=x=>createHash('sha256').update(canonical(x)).digest('hex');
 const MAX_BYTES=32*1024*1024;
 async function rpc(url,id,method,params,p,fetchFn){
- let why='TRANSPORT';
+ let why='TRANSPORT',versionHint=null;
  try{
   const response=await fetchFn(url,{method:'POST',redirect:'error',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id,method,params}),signal:AbortSignal.timeout(30000)});
   if(!response.ok){why=response.status===429?'HTTP_429':'HTTP_OTHER';throw Error();}
@@ -34,11 +46,12 @@ async function rpc(url,id,method,params,p,fetchFn){
     code===-32015?'RPC_UNSUPPORTED_VERSION':code===-32602?'RPC_INVALID_PARAMS':
     code===-32601?'RPC_METHOD_UNAVAILABLE':code===-32005?'RPC_NODE_UNHEALTHY':
     code===429?'RPC_RATE_LIMIT':'RPC_ERROR';
+   if(code===-32015)versionHint=extractVersionHint(x.error?.message);
    throw Error();
   }
   if(!Object.hasOwn(x,'result'))throw Error();
   return x.result;
- }catch{fail(p+'_'+method+'_'+why);}
+ }catch{fail(p+'_'+method+'_'+why,versionHint);}
 }
 function summarize(block,pin,p){
  const reject=reason=>fail(p+'_getBlock_'+reason);
@@ -49,6 +62,11 @@ function summarize(block,pin,p){
   const tx=row?.transaction,meta=row?.meta;
   if(!Array.isArray(tx?.signatures)||!tx.signatures.length||tx.signatures.some(s=>typeof s!=='string'||!/^[1-9A-HJ-NP-Za-km-z]{64,88}$/.test(s))||!Array.isArray(tx?.message?.accountKeys)||tx.message.accountKeys.some(k=>typeof k!=='string'))reject('TRANSACTION_SHAPE');
   const sig=tx.signatures[0];if(signatures.has(sig))reject('TRANSACTION_SHAPE');signatures.add(sig);
+  // Upstream emits explicit legacy or numeric version when complete metadata
+  // is present and maxSupportedTransactionVersion is supplied. Historical
+  // missing-metadata legacy records may omit version; remain uncertified.
+  if(row.version!=='legacy'&&row.version!==0&&
+     !(row.version===undefined&&meta==null))reject('TRANSACTION_SHAPE');
   if(meta===null||meta===undefined)missingMeta++;
   else if(typeof meta!=='object'||!Object.hasOwn(meta,'err'))reject('TRANSACTION_SHAPE');
   if(meta?.err!==null&&meta?.err!==undefined)failed++;
@@ -107,7 +125,7 @@ export async function observeBoundaryBlocks(a,b,{fetchFn=fetch}={}){
   const first=await source(a,'A',fetchFn),second=await source(b,'B',fetchFn);
   if(canonical(first)!==canonical(second))fail('SOURCE_DISAGREEMENT');
   return {status:'REPORTED_BOUNDARY_BLOCKS_ONLY',observedMint:CLIMB_SOLANA_MINT,candidateUtc:'2026-11-27T07:52:22.702Z',blocks:first,providerIndependence:'NOT_VERIFIED',digestScope:'CANONICAL_PARSED_JS_JSON_NOT_RAW_BYTES',mintMentionCoverage:'NOT_CERTIFIED',eligibility:'NOT_CERTIFIED',authorization:false};
- }catch(e){fail(boundaryFailureCode(e));}
+ }catch(e){fail(boundaryFailureCode(e),boundaryVersionHint(e));}
 }
 
 export async function observeBoundarySignatures(a,b,{fetchFn=fetch}={}){
@@ -119,5 +137,5 @@ export async function observeBoundarySignatures(a,b,{fetchFn=fetch}={}){
    candidateUtc:'2026-11-27T07:52:22.702Z',blocks:first,
    providerIndependence:'NOT_VERIFIED',transactionContents:'NOT_FETCHED',transactionVersions:'NOT_FETCHED',
    executionOutcomes:'NOT_FETCHED',mintMentionCoverage:'NOT_CERTIFIED',eligibility:'NOT_CERTIFIED',authorization:false};
- }catch(e){fail(boundaryFailureCode(e));}
+ }catch(e){fail(boundaryFailureCode(e),boundaryVersionHint(e));}
 }
