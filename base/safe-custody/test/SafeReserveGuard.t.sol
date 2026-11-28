@@ -153,6 +153,49 @@ contract SafeReserveGuardTest {
         vm.warp(block.timestamp+2 days);v.execute(fresh);
         require(token.balanceOf(PAYEE)==10);
     }
+
+    function testPlainReservePendingExpenseAndActualRotation() public {
+        _bind();
+        for(uint256 i=3;i<=5;i++)_quorum(_propose(1,i,bytes32(i),bytes32(i)));
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));
+        require(!guard.expenseRecipientAllowed(PAYEE)&&!wallet.isOwner(PAYEE));
+        vm.warp(start+2 days);
+        for(uint256 i=3;i<=5;i++)_assertPlainPendingExpenseRejected(i);
+        bytes memory swap=abi.encodePacked(abi.encodeWithSignature("swapOwner(address,address,address)",D,E,PAYEE),guard.rotationSerial());
+        require(_exec(address(wallet),swap,_signed(address(wallet),swap,3)));
+        require(guard.epoch()==2&&wallet.isOwner(PAYEE)&&!wallet.isOwner(E));
+        for(uint256 i=3;i<=5;i++){
+            V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
+            vm.expectRevert();v.execute(_id(1,i,bytes32(i),bytes32(i)));
+            _reject(address(guard),_propose(2,i,bytes32(i+10),bytes32(i+10)),3);
+            require(v.totalSpent()==0&&v.registry().consumedBy(bytes32(i))==address(0));
+        }
+        require(token.balanceOf(PAYEE)==0&&token.totalSupply()==SUPPLY&&!guard.transactionActive());
+    }
+    function _assertPlainPendingExpenseRejected(uint256 i) private {
+        V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
+        uint256 n=wallet.nonce();uint256 balance=token.balanceOf(address(v));
+        _reject(address(guard),_propose(1,i,bytes32(i+10),bytes32(i+10)),3);
+        vm.expectRevert();v.execute(_id(1,i,bytes32(i),bytes32(i)));
+        require(wallet.nonce()==n&&!guard.transactionActive()&&v.totalSpent()==0&&v.spent(0)==0);
+        require(v.registry().consumedBy(bytes32(i))==address(0)&&token.balanceOf(address(v))==balance);
+    }
+    function testPlainReservePendingOwnerBlocksRewardSchedule() public {
+        _bind();
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));
+        _quorum(abi.encodeCall(guard.revokeRewardSigner,(1,1)));
+        require(!guard.rewardSignerAllowed(PAYEE));
+        uint256 n=wallet.nonce();
+        _reject(address(guard),abi.encodeCall(guard.scheduleRewardSigner,(1,2,PAYEE,block.timestamp,block.timestamp+1 hours)),3);
+        require(wallet.nonce()==n&&guard.epoch()==1&&!guard.transactionActive()&&!wallet.isOwner(PAYEE));
+        (bytes32 digest,,address replacement,,)=guard.pending();
+        require(digest!=0&&replacement==PAYEE);
+        vm.warp(start+2 days);
+        bytes memory swap=abi.encodePacked(abi.encodeWithSignature("swapOwner(address,address,address)",D,E,PAYEE),guard.rotationSerial());
+        require(_exec(address(wallet),swap,_signed(address(wallet),swap,3)));
+        require(guard.epoch()==2&&wallet.isOwner(PAYEE)&&!guard.rewardSignerAllowed(PAYEE));
+    }
+
     function testNoGenericTransferOrRoleConflict() public {
         _bind();
         _reject(address(token),abi.encodeCall(token.transfer,(PAYEE,1)),3);
