@@ -1,3 +1,4 @@
+import { createPrivateCraftingLedger } from './private-crafting-ledger.mjs';
 const ROOM = 'preview-equipment-fixture';
 const ITEM = 'training-climbing-gloves';
 const MATERIAL = 'training-repair-fiber';
@@ -6,8 +7,9 @@ const MAX_DURABILITY = 100;
 const WEAR_PER_USE = 10;
 const REPAIR_KITS = 3;
 const USES_PER_FULL_DURABILITY = MAX_DURABILITY / WEAR_PER_USE;
-const MAX_USE_SEQUENCE = (REPAIR_KITS + 1) * USES_PER_FULL_DURABILITY;
-const MAX_MAINTENANCE_REVISION = MAX_USE_SEQUENCE + REPAIR_KITS;
+const MAX_CRAFTED_REPAIRS = 10;
+const MAX_USE_SEQUENCE = (REPAIR_KITS + MAX_CRAFTED_REPAIRS + 1) * USES_PER_FULL_DURABILITY;
+const MAX_MAINTENANCE_REVISION = MAX_USE_SEQUENCE + REPAIR_KITS + MAX_CRAFTED_REPAIRS;
 const materialCostThrough = level => level * (level + 1) / 2;
 const MAX_MATERIALS = materialCostThrough(MAX_ENHANCEMENT);
 const idOk = value => typeof value === 'string' && /^[a-zA-Z0-9_-]{16,100}$/.test(value);
@@ -26,10 +28,13 @@ function readRecord(record, accountId) {
       record.remainingMaterials + materialCostThrough(record.enhancement) !== record.startingMaterials) return null;
 
   if (record.version === 1) return { ...record, version: 2, ...startingMaintenance() };
-  if (record.version !== 2 || !within(record.durability, MAX_DURABILITY) || record.durability % WEAR_PER_USE !== 0 ||
+  if (![2, 3].includes(record.version) || !within(record.durability, MAX_DURABILITY) || record.durability % WEAR_PER_USE !== 0 ||
       !within(record.remainingRepairKits, REPAIR_KITS) || !within(record.lastUseSequence, MAX_USE_SEQUENCE) ||
       !within(record.maintenanceRevision, MAX_MAINTENANCE_REVISION)) return null;
-  const repairs = REPAIR_KITS - record.remainingRepairKits;
+  const craftedRepairs = record.version === 3 ? record.craftedRepairs : 0;
+  if (!within(craftedRepairs, MAX_CRAFTED_REPAIRS)) return null;
+  const repairs = REPAIR_KITS - record.remainingRepairKits + craftedRepairs;
+  if (record.lastUseSequence > (repairs + 1) * USES_PER_FULL_DURABILITY) return null;
   const usesRepaired = record.lastUseSequence - (MAX_DURABILITY - record.durability) / WEAR_PER_USE;
   if (record.maintenanceRevision !== record.lastUseSequence + repairs ||
       usesRepaired < repairs || usesRepaired > repairs * USES_PER_FULL_DURABILITY) return null;
@@ -51,7 +56,7 @@ function view(record) {
 
 // The fixture room provisions synthetic inventory, resolves authenticated
 // ownership, and accepts only an expected level from an enhancement intent.
-export function createPrivateEquipmentEnhancement({ roomId, storage, resolveOwner, resolveUse = () => null } = {}) {
+export function createPrivateEquipmentEnhancement({ roomId, storage, resolveOwner, resolveUse = () => null, craftingOwner = null, craftingStation = null } = {}) {
   if (roomId !== ROOM || typeof storage?.transaction !== 'function' || typeof resolveOwner !== 'function' || typeof resolveUse !== 'function')
     throw new Error('Explicit private equipment storage and owner authority required');
 
@@ -164,5 +169,39 @@ export function createPrivateEquipmentEnhancement({ roomId, storage, resolveOwne
     });
   }
 
-  return Object.freeze({ provision, inspect, enhance, recordWear, repair, reviewedForProduction: false });
+  // Private crafted repairs consume earned stock and restore equipment in the
+  // same transaction. The ordinary synthetic repair-kit stock is unchanged.
+  if ((craftingOwner !== null || craftingStation !== null) &&
+      (typeof craftingOwner !== 'function' || typeof craftingStation !== 'function'))
+    throw Error('Both private crafting authorities required');
+  const crafting = craftingOwner === null ? null : createPrivateCraftingLedger({
+    roomId: 'preview-crafting-fixture', storage, resolveOwner: craftingOwner, resolveStation: craftingStation,
+    async applyRepairKit(reader, sessionId, accountId, expectedRevision) {
+      const revalidate = () => accountFor(sessionId) === accountId;
+      if (unavailable || !revalidate()) return deny('unverified-equipment-owner');
+      const key = keyFor(accountId), stored = await reader.get(key);
+      if (!revalidate()) return deny('unverified-equipment-owner');
+      if (stored === undefined) return deny('equipment-not-provisioned');
+      const state = readRecord(stored, accountId);
+      if (!state) return deny('invalid-stored-equipment');
+      if (state.maintenanceRevision !== expectedRevision) return deny('equipment-maintenance-changed');
+      if (state.durability === MAX_DURABILITY) return deny('equipment-fully-repaired');
+      const craftedRepairs = (state.version === 3 ? state.craftedRepairs : 0) + 1;
+      if (craftedRepairs > MAX_CRAFTED_REPAIRS) return deny('crafted-repair-limit');
+      const next = { ...state, version: 3, craftedRepairs, durability: MAX_DURABILITY,
+        maintenanceRevision: state.maintenanceRevision + 1 };
+      if (!readRecord(next, accountId)) return deny('invalid-stored-equipment');
+      return { ok: true, key, state: next, view: view(next), revalidate };
+    }
+  });
+  async function repairWithCraftedKit(sessionId, expectedCraftingRevision, expectedMaintenanceRevision) {
+    if (!idOk(sessionId) || !within(expectedMaintenanceRevision, MAX_MAINTENANCE_REVISION))
+      return deny('invalid-equipment-intent');
+    if (unavailable) return deny('equipment-storage-unavailable');
+    if (!crafting) return deny('crafted-repair-disabled');
+    const result = await crafting.consumeRepairKit(sessionId, expectedCraftingRevision, expectedMaintenanceRevision);
+    if (result.reason === 'crafting-storage-unavailable') unavailable = true;
+    return result;
+  }
+  return Object.freeze({ provision, inspect, enhance, recordWear, repair, repairWithCraftedKit, reviewedForProduction: false });
 }

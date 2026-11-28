@@ -75,6 +75,12 @@ The Geode chamber journal entry passed local desktop and touch-emulated guest ch
 
 ---
 
+## Phase 05 private crafted repairs with the shared fuel balance — 2026-11-28 PHT
+
+- Reconciles #1106 with the merged craft, meal and campfire refuel paths. Earlier v1/v2 and fuel-aware v3 records remain readable. The crafted repair adds a separate v4 counter while preserving conserved fuel, ingredient, equipment and meal balances.
+- A verified private workbench may consume an earned kit and repair only the authenticated owner's equipment, with both inventory and maintenance revisions checked in the same transaction. Nine focused Node tests passed, including one account that refuels, repairs, then refuels again. The local workerd/SQLite restart verified both crafted item effects and the conserved campfire fuel path.
+- Authenticated Game station binding and production inventory acceptance remain separate work.
+
 ## Phase 03 keyboard button activation — 2026-11-28 PHT
 
 - Space activates a focused Game button or disclosure through its own keyboard behavior. The world keeps Space-to-jump whenever the event originates in gameplay. The handler also respects an event canceled by a child control.
