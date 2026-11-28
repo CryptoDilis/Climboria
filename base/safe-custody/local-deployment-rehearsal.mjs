@@ -1,6 +1,7 @@
 // Local-only mined deployment rehearsal. No external RPC, private keys, or network broadcast.
 import assert from 'node:assert/strict';
 import {verifyRuntime} from './verify-runtime-template.mjs';
+import {verifyLocalAuthorizations} from './local-authorization-rehearsal.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {spawn,execFileSync} from 'node:child_process';
 import {setTimeout as sleep} from 'node:timers/promises';
@@ -136,4 +137,9 @@ try{
  const manifest={status:'LOCAL_ANVIL_REHEARSAL_ONLY',sourceSha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),chainId:Number(CHAIN),localHardfork:'cancun',localBlockGasLimit:Number(LIMIT),testOnly:true,signatureMode:'ECDSA_ONLY',factoryProvenance,contracts,roles:{creator,owners,founder,distributor},startTimestamp:Number(start),totalSupplyRaw:String(SUPPLY),vaults,transactions:steps,negativeEthCalls:negative,limitations:'Synthetic quote/pool/LP, local unlocked Anvil accounts, three offline ECDSA signatures, no public RPC, no real signers, no production review. Gas observations are local receipts only, not a public Base Sepolia gas estimate or authorization.'};
  assert.match(manifest.sourceSha,/^[a-f0-9]{40}$/);
  writeFileSync(process.argv[2],JSON.stringify(manifest,null,2)+'\n');console.log(JSON.stringify(manifest,null,2));
+ if(process.argv[3]){
+  const evidence=await verifyLocalAuthorizations({rpc,call,number,address,record,cast,calldata,creator,wallet,guard,token,quote,vaults,payee,signers,sourceSha:manifest.sourceSha});
+  writeFileSync(process.argv[3],JSON.stringify(evidence,null,2)+'\n');
+  console.log(JSON.stringify(evidence,null,2));
+ }
 }finally{anvil.kill();}
