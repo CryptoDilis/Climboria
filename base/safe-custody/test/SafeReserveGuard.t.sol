@@ -166,7 +166,8 @@ contract SafeReserveGuardTest {
         require(guard.epoch()==2&&wallet.isOwner(PAYEE)&&!wallet.isOwner(E));
         for(uint256 i=3;i<=5;i++){
             V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
-            vm.expectRevert();v.execute(_id(1,i,bytes32(i),bytes32(i)));
+            bytes32 id=_id(1,i,bytes32(i),bytes32(i));
+        vm.expectRevert();v.execute(id);
             _reject(address(guard),_propose(2,i,bytes32(i+10),bytes32(i+10)),3);
             require(v.totalSpent()==0&&v.registry().consumedBy(bytes32(i))==address(0));
         }
@@ -176,7 +177,8 @@ contract SafeReserveGuardTest {
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
         uint256 n=wallet.nonce();uint256 balance=token.balanceOf(address(v));
         _reject(address(guard),_propose(1,i,bytes32(i+10),bytes32(i+10)),3);
-        vm.expectRevert();v.execute(_id(1,i,bytes32(i),bytes32(i)));
+        bytes32 id=_id(1,i,bytes32(i),bytes32(i));
+        vm.expectRevert();v.execute(id);
         require(wallet.nonce()==n&&!guard.transactionActive()&&v.totalSpent()==0&&v.spent(0)==0);
         require(v.registry().consumedBy(bytes32(i))==address(0)&&token.balanceOf(address(v))==balance);
     }
