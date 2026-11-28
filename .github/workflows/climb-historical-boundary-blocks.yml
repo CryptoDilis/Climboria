@@ -1,6 +1,15 @@
 name: CLIMB Historical Boundary Block Evidence
 on:
   workflow_dispatch:
+    inputs:
+      evidence_mode:
+        description: 'Explicit read-only evidence mode (no automatic fallback)'
+        type: choice
+        options:
+          - full
+          - signatures-only
+        default: full
+        required: true
   pull_request:
     paths:
       - 'base/inventory-probe/boundary-blocks*.mjs'
@@ -36,12 +45,18 @@ jobs:
           node-version: '22'
       - name: Compare pinned boundary blocks (read only)
         env:
+          EVIDENCE_MODE: ${{ inputs.evidence_mode }}
           CLIMB_SOLANA_RPC_A_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL }}
           CLIMB_SOLANA_RPC_B_URL: ${{ secrets.CLIMBORIA_SOLANA_RPC_URL_SECONDARY }}
         run: |
           set -euo pipefail
-          node base/inventory-probe/boundary-blocks-cli.mjs > "$RUNNER_TEMP/climb-boundary-blocks.json"
-          cat "$RUNNER_TEMP/climb-boundary-blocks.json"
+          case "$EVIDENCE_MODE" in
+            full) node base/inventory-probe/boundary-blocks-cli.mjs > "$RUNNER_TEMP/climb-boundary-blocks.json" ;;
+            signatures-only) node base/inventory-probe/boundary-blocks-cli.mjs --signatures-only > "$RUNNER_TEMP/climb-boundary-blocks.json" ;;
+            *) exit 1 ;;
+          esac
+          # Ordered public signatures remain in the evidence artifact, not logs.
+          node -e 'const x=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); console.log(JSON.stringify({...x,blocks:x.blocks.map(({orderedSignatures,...b})=>b)},null,2))' "$RUNNER_TEMP/climb-boundary-blocks.json"
       - uses: actions/upload-artifact@v4
         with:
           name: climb-historical-boundary-blocks
