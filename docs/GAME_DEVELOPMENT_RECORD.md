@@ -3757,3 +3757,10 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Local Game suites passed 402 tests, including mixed input, multi-touch cancellation, USE activation, world pinch isolation and exact terrain source parity. Fresh CI is required before merge.
 - **BLOCKED — EXTERNAL VERIFICATION REQUIRED:** Registered two-account QA has no protected GitHub environment or workflow history. Follow the [registered pilot runbook](GAME_REGISTERED_PILOT_MANUAL_QA_2026-11-25.md) with two disposable accounts and an owner-approved quiet window. Private authored edge QA requires authorized tester access and a bounded window following the [operator runbook](GAME_PRIVATE_COMBAT_OPERATOR_QA.md). Physical acceptance requires hardware and measured passes under the [device protocol](GAME_NPC_PHYSICAL_DEVICE_ACCEPTANCE.md).
 - Next verify exact CI for this input fix and independent cave journal PR #1061. Continue Phase 03 controls and world regressions with the existing release gates.
+
+
+## Phase 06 private active-time survival candidate — 2026-11-28 PHT
+
+- Added isolated transactional hunger/thirst state using only room-verified, contiguous active intervals (1–60 seconds). Inspection is owner-bound and read-only; elapsed wall time, reconnects and offline time do not cause catch-up depletion. Fixture rates are explicit, bounded and not production balance decisions. No damage, item consumption, rewards, public route or gameplay activation.
+- Three focused JavaScript regression scenarios passed in the isolated development harness: initial/read-only/account isolation and restart; concurrent replay, interval bounds, sequence gaps and clamping; revoked ownership, mutated proof, corrupt state and ambiguous commits. Exact Node and broader repository CI pending.
+- Next integrate reviewed server active-time receipts and atomic inventory-backed food/water recovery in a private room; production tuning, physical device and real-player acceptance remain separate gates.
