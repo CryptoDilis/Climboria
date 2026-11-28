@@ -1,3 +1,4 @@
+import { createPrivateEquipmentEnhancement } from '../../game/multiplayer/private-equipment-enhancement.mjs';
 import { createPrivateMasteryLedger } from '../../game/multiplayer/private-mastery-ledger.mjs';
 import { createPrivateRegionEvents } from '../../game/multiplayer/private-region-events.mjs';
 import { createWorldDropClaimPreview } from '../../game/multiplayer/world-drop-claim-preview.mjs';
@@ -49,6 +50,19 @@ export class PrivateFixture {
           }),
         });
         return Response.json(await mastery.record(sessionId, activityId));
+      }
+      case '/provision-equipment':
+      case '/inspect-equipment':
+      case '/enhance-equipment': {
+        const equipmentRoom = 'preview-equipment-fixture';
+        const equipment = createPrivateEquipmentEnhancement({
+          storage: this.storage,
+          roomId: equipmentRoom,
+          resolveOwner: () => ({ sessionId, accountId, roomId: equipmentRoom }),
+        });
+        if (url.pathname === '/provision-equipment') return Response.json(await equipment.provision(accountId));
+        if (url.pathname === '/inspect-equipment') return Response.json(await equipment.inspect(sessionId));
+        return Response.json(await equipment.enhance(sessionId, 0));
       }
       case '/cave': {
         const events = createPrivateRegionEvents({

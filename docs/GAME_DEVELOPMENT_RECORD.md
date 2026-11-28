@@ -73,6 +73,13 @@ Native HUD keyboard activation passed 18 exact CI checks and merged at `5a50fa79
 
 ---
 
+## Phase 05 private equipment enhancement — 2026-11-28 PHT
+
+- A private account-scoped fixture provisions one synthetic pair of climbing gloves. Inspection resolves the verified owner. Enhancement advances exactly one rank from +0 to +10, deducts the authored test materials in the same transaction, and rejects a stale expected level.
+- Fixture costs equal the destination enhancement. A full +0 to +10 run uses 55 synthetic fibers. These values exercise conservation and the upper bound in tests. They are provisional.
+- Five local regressions cover the cap, insufficient materials, account isolation and reassignment, concurrent and replayed intents, corrupt storage, and ambiguous commits. The local workerd smoke verifies one charge for concurrent requests and checks the persisted level and balance after a SQLite restart.
+- Next define production equipment and recipe data with authorized inventory integration. Wear, repair, crafting, and release acceptance remain open.
+
 ## Phase 05 private activity mastery — 2026-11-28 PHT
 
 - Added an isolated transactional ledger for ten independent activity skills. The private room resolves completed activities from server state and supplies a contiguous sequence for each account and skill. Replay, sequence gaps, unverified activity, and revoked sessions are denied, while the stored rank is derived using explicit thresholds for Novice through Master.
