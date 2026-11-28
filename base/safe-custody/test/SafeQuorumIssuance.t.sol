@@ -414,6 +414,31 @@ contract SafeQuorumIssuanceTest {
         }
         require(successor.token().balanceOf(PAYEE)==30&&successor.token().totalSupply()==SUPPLY);
     }
+    function testPendingOwnerExpenseRestrictionExpiresAtExactBoundary() public {
+        _issue();
+        for(uint256 i=3;i<=5;i++)_proposeExpense(i,bytes32(i),bytes32(i));
+        vm.warp(cfg.start+2 days);
+        bytes memory change=abi.encodeCall(guard.scheduleRotation,(1,owners[3],owners[4],PAYEE,block.timestamp,block.timestamp+1 hours));
+        require(_exec(change,_sign(change,3)));
+        (bytes32 digest,,address replacement,,uint256 expiresAt)=guard.pending();
+        require(digest!=0&&replacement==PAYEE);
+        vm.warp(expiresAt-1);
+        require(!guard.expenseRecipientAllowed(PAYEE));
+        for(uint256 i=3;i<=5;i++)_rejectPendingOwnerExpense(i);
+        vm.warp(expiresAt);
+        require(!wallet.isOwner(PAYEE)&&guard.expenseRecipientAllowed(PAYEE)&&guard.epoch()==1);
+        for(uint256 i=3;i<=5;i++){
+            V3EpochSpendFixture expense=V3EpochSpendFixture(successor.vaults(i));
+            expense.execute(_expenseId(i,bytes32(i),bytes32(i)));
+            require(expense.totalSpent()==10&&expense.spent(0)==10);
+        }
+        require(successor.token().balanceOf(PAYEE)==30&&successor.token().totalSupply()==SUPPLY);
+        // Expired rotation does not reserve this address permanently; a new
+        // quorum authorization can schedule it again and reapply the exclusion.
+        change=abi.encodeCall(guard.scheduleRotation,(1,owners[3],owners[4],PAYEE,block.timestamp,block.timestamp+1 hours));
+        require(_exec(change,_sign(change,3)));
+        require(guard.rotationSerial()==2&&!guard.expenseRecipientAllowed(PAYEE));
+    }
     function _rejectPendingOwnerExpense(uint256 i) private {
         bytes memory data=abi.encodeCall(guard.proposeExpense,(1,i,PAYEE,10,bytes32(i+10),0,bytes32(i+10),block.timestamp,block.timestamp+1 hours));
         bytes memory sigs=_sign(data,3);
