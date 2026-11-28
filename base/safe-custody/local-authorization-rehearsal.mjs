@@ -2,6 +2,7 @@
 // No actual spending, LP funding, public RPC, real signers, or release authorization.
 import assert from 'node:assert/strict';
 import {deriveDirectSafeDigest} from './canonical-safe-envelope.mjs';
+import {decodeFiveOwnerRoster,verifyRawSafeQuorum} from './raw-safe-quorum.mjs';
 import {deriveTypedIntent,reconcileTypedIntent} from './typed-intent-reconciliation.mjs';
 const ZERO='0x'+'0'.repeat(40);
 const hex=n=>'0x'+BigInt(n).toString(16);
@@ -39,7 +40,23 @@ export async function verifyLocalAuthorizations(x){
   const decoded=deriveDirectSafeDigest(mined.input.toLowerCase(),84532,wallet,hex(nonce));
   assert.equal(decoded.safeTxHash,safeTxHash);
   assert.equal(decoded.intent.data,data);
-  const t=decoded.intent;
+  // Anvil automines one transaction per block in this isolated fixture. Parent
+  // state is therefore the transaction pre-state, unlike general public blocks.
+  assert.deepEqual(anchor.transactions,[receipt.transactionHash]);
+  assert.equal(anchor.parentHash,block.hash);
+  assert.equal(BigInt(anchor.number),BigInt(block.number)+1n);
+  const at=async(to,sig)=>rpc('eth_call',[{to,data:calldata(sig)},block.number]);
+  const historicalOwners=decodeFiveOwnerRoster((await at(wallet,'getOwners()')).toLowerCase());
+  const historicalThreshold=BigInt(await at(wallet,'getThreshold()'));
+  const historicalNonce=BigInt(await at(wallet,'nonce()'));
+  assert.equal(historicalThreshold,3n);assert.equal(historicalNonce,nonce);
+  assert.equal(BigInt(await at(guard,'epoch()')),epoch);
+  assert.equal((await rpc('eth_getBlockByNumber',[block.number,false])).hash,block.hash);
+  const quorum=verifyRawSafeQuorum({input:mined.input.toLowerCase(),chainId:84532,safe:wallet,nonce:hex(historicalNonce),owners:historicalOwners,threshold:Number(historicalThreshold)});
+  assert.equal(quorum.safeTxHash,safeTxHash);
+  assert.deepEqual(quorum.verifiedSigners,signers.map(s=>s.address));
+  assert.equal(quorum.verifiedCount,3);
+  const t=quorum.intent;
   const expected=deriveTypedIntent(c,t),matched=reconcileTypedIntent(c,t,receipt);
   assert.equal(matched.status,'RECEIPT_MATCH_ONLY_NO_GO');
   const read=kind==='expense'?'proposals(bytes32)':'actions(bytes32)';
@@ -52,7 +69,7 @@ export async function verifyLocalAuthorizations(x){
   assert.throws(()=>reconcileTypedIntent(c,altered,receipt));
   assert.equal(await number(wallet,'nonce()'),nonce+1n);
   assert.equal(await number(guard,'transactionActive()'),0n);
-  receipts.push({kind,index,...matched,blockNumber:anchor.number,readyAt:expected.readyAt,stateMatched:true,alteredIntentRejected:true,canonicalEnvelopeMatched:true,safeDigestMatched:true});
+  receipts.push({kind,index,...matched,blockNumber:anchor.number,readyAt:expected.readyAt,stateMatched:true,alteredIntentRejected:true,canonicalEnvelopeMatched:true,safeDigestMatched:true,rawQuorumMatched:true,localParentStateMatched:true,verifiedSignerCount:3});
  }
  assert.equal(await number(wallet,'nonce()'),startingNonce+4n);
  assert.deepEqual(await Promise.all(vaults.map(v=>number(token,'balanceOf(address)',v.address))),before);
@@ -60,5 +77,5 @@ export async function verifyLocalAuthorizations(x){
  assert.equal(await number(token,'totalSupply()'),888888888000000n);
  assert.equal(await number(liquidityVault,'spent()'),0n);
  for(const v of expenseVaults)assert.equal(await number(v,'totalSpent()'),0n);
- return {status:'LOCAL_MINED_AUTHORIZATION_EVIDENCE_ONLY_NO_GO',chainId:84532,sourceSha:x.sourceSha,receipts,unchangedVaultBalances:true,unchangedSupply:true,noPayments:true,limitations:'Local Anvil, synthetic contracts, known disposable signer keys, independent canonical outer decoding and EIP-712 digest compared with local Safe, no external signature recovery, historical public-chain authentication or finality, no production authorization.'};
+ return {status:'LOCAL_MINED_AUTHORIZATION_EVIDENCE_ONLY_NO_GO',chainId:84532,sourceSha:x.sourceSha,receipts,unchangedVaultBalances:true,unchangedSupply:true,noPayments:true,limitations:'Local Anvil, synthetic contracts, known disposable signer keys, independent canonical outer decoding and EIP-712 digest compared with local Safe, independent raw ECDSA verification against local parent state, no historical public-chain authentication or finality, no production authorization.'};
 }
