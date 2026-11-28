@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## Phase 06 private regional event participation — 2026-11-28 PHT
+
+- Extends merged R2 scheduler #1075, retaining the four existing event kinds and regional deterministic slot timing. Optional trusted owner and completion resolvers bind a completed reachable event to the current account, session, region, event ID and active time window. No client-selected rewards or real item grants.
+- Same durable transaction records at most one synthetic participation receipt per account per active slot, with a provisional 64-account cap and bounded storage reset on the next slot. Revalidates owner, completion and time after the write. Existing observed-expiry and stale-slot protections retained.
+- Eight isolated JavaScript regression scenarios passed (four existing and four new): restart, regional isolation, expiry, concurrent duplicate receipt, malformed or unreachable completion, capacity, slot reset and rollback on changed authority/time. Native Node and fresh exact CI remain pending. Source/test checkpoint `43b0e0dfcad4fa156d98dff95eb9d5c4b0b72b52`.
+- Actual landmark placements, server activity history, reliable monotonic time across failed commits/restarts, fair participation capacity, durable reward entitlement and World Chat notices remain open. The fixture does not authorize Treasure Storm, Blood Moon, weather encounters, Ancient Awakening, boss combat or financial effects. Continue independent profession work while gated.
+
+
 ## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
 
 - Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
