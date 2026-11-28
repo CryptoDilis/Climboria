@@ -1,5 +1,5 @@
 // Isolated crafting/cooking fixture; recipes, stock and costs are not production balance.
-export function createPrivateCraftingLedger({roomId,storage,resolveOwner,resolveStation,applyCookedFish=null}={}) {
+export function createPrivateCraftingLedger({roomId,storage,resolveOwner,resolveStation,applyCookedFish=null,observeCookingFire=null}={}) {
  const ROOM='preview-crafting-fixture', CAP=20;
  const ITEMS=['fiber','wood','raw-fish','repair-kit','cooked-fish'];
  const RECIPES=Object.freeze({
@@ -9,7 +9,7 @@ export function createPrivateCraftingLedger({roomId,storage,resolveOwner,resolve
  const idOk=id=>typeof id==='string'&&/^[a-zA-Z0-9_-]{16,100}$/.test(id);
  const int=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
  const deny=reason=>({ok:false,reason});
- if(roomId!==ROOM||typeof storage?.transaction!=='function'||typeof resolveOwner!=='function'||typeof resolveStation!=='function'||(applyCookedFish!==null&&typeof applyCookedFish!=='function'))
+ if(roomId!==ROOM||typeof storage?.transaction!=='function'||typeof resolveOwner!=='function'||typeof resolveStation!=='function'||(applyCookedFish!==null&&typeof applyCookedFish!=='function')||(observeCookingFire!==null&&typeof observeCookingFire!=='function'))
   throw Error('Explicit private crafting storage and room authority required');
  const keyFor=accountId=>'game:preview:crafting:v1:'+ROOM+':'+accountId;
  let unavailable=false;
@@ -73,13 +73,19 @@ export function createPrivateCraftingLedger({roomId,storage,resolveOwner,resolve
    if(state.revision!==expectedRevision)return deny('crafting-revision-changed');
    if(Object.entries(recipe.inputs).some(([k,n])=>state.stock[k]<n))return deny('insufficient-crafting-materials');
    if(state.stock[recipe.output]>=CAP)return deny('crafting-output-full');
+   const fire=recipe.station==='campfire'&&observeCookingFire?await observeCookingFire(tx,sessionId,accountId):null;
+   if(ownerFor(sessionId)!==accountId||!stationOk(sessionId,accountId,recipe.station)){
+    if(recipe.station==='campfire'&&observeCookingFire)throw Error('Cooking station changed during observation');
+    return deny('crafting-station-unavailable');
+   }
+   if(recipe.station==='campfire'&&observeCookingFire&&(!fire||typeof fire.revalidate!=='function'||!fire.revalidate()))return deny('campfire-not-lit');
    const stock={...state.stock};
    for(const [k,n] of Object.entries(recipe.inputs))stock[k]-=n;
    stock[recipe.output]++;
    const next={...state,stock,revision:state.revision+1};
    if(!validState(next,accountId))return deny('invalid-crafting-state');
    await tx.put(key,next);
-   if(ownerFor(sessionId)!==accountId||!stationOk(sessionId,accountId,recipe.station))throw Error('crafting authority changed during write');
+   if(ownerFor(sessionId)!==accountId||!stationOk(sessionId,accountId,recipe.station)||(fire&&!fire.revalidate()))throw Error('crafting authority changed during write');
    return view(next);
   });
  }
