@@ -395,6 +395,40 @@ contract SafeQuorumIssuanceTest {
         require(successor.token().balanceOf(PAYEE)==0&&successor.token().totalSupply()==SUPPLY);
         (,,,,,,bool executed,)=expense.proposals(id);require(!executed);
     }
+    function testPendingOwnerCannotReceiveExpensesBeforeRotation() public {
+        _issue();
+        require(guard.expenseRecipientAllowed(PAYEE));
+        for(uint256 i=3;i<=5;i++)_proposeExpense(i,bytes32(i),bytes32(i));
+        vm.warp(cfg.start+2 days);
+        bytes memory change=abi.encodeCall(guard.scheduleRotation,(1,owners[3],owners[4],PAYEE,block.timestamp,block.timestamp+1 hours));
+        require(_exec(change,_sign(change,3)));
+        require(!wallet.isOwner(PAYEE)&&!guard.expenseRecipientAllowed(PAYEE));
+        for(uint256 i=3;i<=5;i++)_rejectPendingOwnerExpense(i);
+        bytes memory cancellation=abi.encodeCall(guard.cancelRotation,(1,1));
+        require(_exec(cancellation,_sign(cancellation,3)));
+        require(guard.expenseRecipientAllowed(PAYEE)&&guard.epoch()==1);
+        for(uint256 i=3;i<=5;i++){
+            V3EpochSpendFixture expense=V3EpochSpendFixture(successor.vaults(i));
+            expense.execute(_expenseId(i,bytes32(i),bytes32(i)));
+            require(expense.totalSpent()==10&&expense.spent(0)==10);
+        }
+        require(successor.token().balanceOf(PAYEE)==30&&successor.token().totalSupply()==SUPPLY);
+    }
+    function _rejectPendingOwnerExpense(uint256 i) private {
+        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,i,PAYEE,10,bytes32(i+10),0,bytes32(i+10),block.timestamp,block.timestamp+1 hours));
+        bytes memory sigs=_sign(data,3);
+        uint256 n=wallet.nonce();
+        vm.expectRevert();_exec(data,sigs);
+        require(wallet.nonce()==n&&!guard.transactionActive());
+        V3EpochSpendFixture expense=V3EpochSpendFixture(successor.vaults(i));
+        bytes32 id=_expenseId(i,bytes32(i),bytes32(i));
+        uint256 balance=successor.token().balanceOf(address(expense));
+        vm.expectRevert(V3EpochSpendFixture.NotReady.selector);expense.execute(id);
+        require(expense.totalSpent()==0&&expense.spent(0)==0&&successor.token().balanceOf(address(expense))==balance);
+        require(successor.expenses().registry().consumedBy(bytes32(i))==address(0));
+        (,,,,,,bool executed,)=expense.proposals(id);require(!executed);
+        require(successor.token().balanceOf(PAYEE)==0&&successor.token().totalSupply()==SUPPLY);
+    }
     function testRewardSelectorRejectsTrailingOrMissingWords() public {
         _issue();
         V3GovernedGameRewardFixture gaming=V3GovernedGameRewardFixture(successor.vaults(1));
