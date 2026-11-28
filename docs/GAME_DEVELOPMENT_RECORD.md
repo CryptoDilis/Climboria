@@ -39,6 +39,14 @@
 
 ---
 
+## Phase 05 private activity mastery — 2026-11-28 PHT
+
+- Added an isolated transactional ledger for ten independent activity skills. The private room resolves completed activities from server state and supplies a contiguous sequence for each account and skill. Replay, sequence gaps, unverified activity, and revoked sessions are denied, while the stored rank is derived using explicit thresholds for Novice through Master.
+- Local tests cover persistence across ledger instances, all five ranks, skill/account separation, concurrent duplicate delivery, revocation during a storage read, and ambiguous commits. The fixture never accepts client-supplied credit amounts or global levels.
+- **BLOCKED — EXTERNAL VERIFICATION REQUIRED:** Production event validation and rank balance require reviewed authoritative activity sources and authorized playtests. Provide rank thresholds in reviewed room configuration, exercise each activity on two real tester accounts, and audit that idle, invalid and repeated actions receive no credit. Next verify exact CI and attach trusted activity sources only after review.
+
+---
+
 ## CROWD C8 SUSTAINED PEER DELIVERY LATENCY — 2026-11-28 PHT
 
 - #1038 exact 2a2a7d6d256922aba107e5b003d747d65f4d4a06 all 13 listed workflows success; merged main 8c3bec433e28392cc8c9e1553d780b415de5f7ff. #1039 exact e29c7d11e2cb4e2f9034e549986d2c1257bb2692 all five listed workflows success. Browser run 46046983548 jobs 140668581236 mobile and 140668581496 desktop: malformed batch rejected without mutation, known peer accepted, unknown ignored, 100 descriptors preserved, previously hidden entrant promoted to visible body/nameplate. Controlled scene-transform error converged monotonically from 10.919m/12.124m to 0.000013m/0.000014m; manual fixture steps, not device FPS or network latency. Retarget #1039 to main; verify exact merge readiness.
