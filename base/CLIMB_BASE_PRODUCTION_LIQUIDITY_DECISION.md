@@ -36,3 +36,16 @@ Design boundary: reserve must hold only the existing 25% allocation; pre-commit 
 - Custody: active 3-of-5 required by current candidate, no independent roster/activation verifier yet. Separate founder bootstrap design unapproved; do not fabricate independent members or weaken threshold.
 - Gaming: authoritative server-side finalized event, verified wallet, anti-cheat and durable settlement required; no payout from client/preview events. See V3_GAME_REWARD_SERVICE_CONTRACT.md.
 - Exact compiler repin and irreversible signer retirement remain material decisions; no production deploy or automatic approval based on test results. AI-only review budget accepted, no paid human audit mandatory, but no professional certification claimed.
+
+## Official upstream deployment references — 2026-11-28 UTC
+Fetched exact Uniswap/docs commit 54f3200b76e2e01646c41c9b484600d1fd355c6b, [V2 deployment table](https://github.com/Uniswap/docs/blob/54f3200b76e2e01646c41c9b484600d1fd355c6b/content/protocols/v2/deployments.mdx) blob 72b0c8f8273aa7fb13e15ddb2176a3630d54fe2f and [V3 Base deployment table](https://github.com/Uniswap/docs/blob/54f3200b76e2e01646c41c9b484600d1fd355c6b/content/protocols/v3/deployments/v3-base-deployments.mdx) blob f241de0928299b76017b027b111f3c0d209a9518. These are upstream-documented address candidates, not authenticated current chain observations or protocol selection.
+| Chain | Contract role | Documented address |
+| --- | --- | --- |
+| Base 8453 | V2 factory | 0x8909Dc15e40173Ff4699343b6eB8132c65e18eC6 |
+| Base 8453 | V2 Router02 | 0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24 |
+| Base 8453 | V3 factory | 0x33128a8fC17869897dcE68Ed026d694621f6FDfD |
+| Base 8453 | V3 position manager | 0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1 |
+| Base Sepolia 84532 | V3 factory | 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24 |
+| Base Sepolia 84532 | V3 position manager | 0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2 |
+| Both, separately | Documented WETH | 0x4200000000000000000000000000000000000006 |
+The V2 table does not list Base Sepolia; its "Sepolia" row is not Base Sepolia. Do not transplant the V2 mainnet deployment or the Ethereum Sepolia deployment into chain 84532. In particular the identical hexadecimal address 0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24 denotes different documented roles on different chains. V3 documentation identifies v3-core and v3-periphery npm versions 1.0.0; the v1.0.0 position manager source blob 68532a0bbc4230c170c55e40f081bed498be0d71 matches the previously inspected source blob. No protocol, quote asset or funding approved. No public RPC request, explorer verification, or deployed runtime claim. Next independently observe exact code and manager/router factory and wrapped-native getters at a common finalized block using two distinct operator RPCs; compare code to reproducibly built deployed source, verify governance/proxy/admin risks, then choose integration. Source registry resolves candidate address discovery only; do not waive custody, funding, eligibility or testnet authorization.
