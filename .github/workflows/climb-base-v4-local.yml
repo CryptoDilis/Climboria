@@ -46,8 +46,8 @@ jobs:
         run: |
           set -euo pipefail
           forge test --fuzz-runs 256 -vv | tee "$RUNNER_TEMP/v4-genesis-tests.log"
-          grep -Eq '40 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/v4-genesis-tests.log"
-          test "$(grep -c 'runs: 256' "$RUNNER_TEMP/v4-genesis-tests.log")" -eq 4
+          grep -Eq '49 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/v4-genesis-tests.log"
+          test "$(grep -c 'runs: 256' "$RUNNER_TEMP/v4-genesis-tests.log")" -eq 6
           forge build --sizes
       - uses: actions/upload-artifact@v4
         if: always()
