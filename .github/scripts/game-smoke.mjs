@@ -130,6 +130,19 @@ try {
   await campfirePrompt.filter({hasText:'Extinguish campfire'}).waitFor({state:'visible',timeout:30000});
   await guestProbe.keyboard.press('e');
   await campfirePrompt.filter({hasText:'Light campfire'}).waitFor({state:'visible',timeout:30000});
+  await guestProbe.evaluate(()=>{
+    const world=window.__climboriaJarrellsPeak,{x,z}=world.POI.camp;
+    const offsets=[[0,3],[0,-3],[-3,0]];
+    const point=offsets.map(([dx,dz])=>({x:x-10+dx,z:z+dz}))
+      .find(({x,z})=>world.chests.every(chest=>chest.open||Math.hypot(chest.x-x,chest.z-z)>=4));
+    if(!point)throw new Error('Expedition shelter smoke cannot find a clear interaction point');
+    Object.assign(world.player,{...point,y:world.groundAt(point.x,point.z)+1.75,vy:0,moveTarget:null});
+  });
+  await campfirePrompt.filter({hasText:'Pitch shelter'}).waitFor({state:'visible',timeout:30000});
+  await guestProbe.keyboard.press('e');
+  await campfirePrompt.filter({hasText:'Pack shelter'}).waitFor({state:'visible',timeout:30000});
+  await guestProbe.keyboard.press('e');
+  await campfirePrompt.filter({hasText:'Pitch shelter'}).waitFor({state:'visible',timeout:30000});
   await guestProbe.close();
   // The rest of this test exercises 3D creator UX against an explicitly
   // mocked registered account, NOT a real Supabase auth acceptance.

@@ -1132,6 +1132,32 @@ function camp(){
  return {flame,light,remaining:120};
 }
 const expeditionFire=camp();
+const SHELTER_ROOF={angle:.87,rafter:2.75,centerX:.9,centerY:1.6,halfDepth:1.6};
+const SHELTER_ROOF_HALF_WIDTH=SHELTER_ROOF.centerX+Math.cos(SHELTER_ROOF.angle)*SHELTER_ROOF.rafter/2;
+const SHELTER_ROOF_SLOPE=Math.tan(SHELTER_ROOF.angle);
+const expeditionShelter=(()=>{
+ const x=POI.camp.x-10,z=POI.camp.z;
+ const site=new T3.Group();
+ const y=heightAt(x,z);
+ site.position.set(x,y,z);
+ scene.add(site);
+ const tent=new T3.Group(),packed=new T3.Group();
+ site.add(tent,packed);
+ const canvas=M('#344650'),trim=M('#a18a59'),wood=M('#453629');
+ for(const side of [-1,1]){
+  sc(mk(BOX,canvas,side*SHELTER_ROOF.centerX,SHELTER_ROOF.centerY,0,tent),
+   SHELTER_ROOF.rafter,.09,2*SHELTER_ROOF.halfDepth).rotation.z=-side*SHELTER_ROOF.angle;
+  for(const end of [-1,1]){
+   sc(mk(BOX,trim,side*SHELTER_ROOF.centerX,SHELTER_ROOF.centerY+.01,end*(SHELTER_ROOF.halfDepth-.01),tent),
+    SHELTER_ROOF.rafter,.12,.08).rotation.z=-side*SHELTER_ROOF.angle;
+   sc(mk(CYL,wood,side*1.9,.17,end*1.5,site),.09,.34,.09);
+  }
+ }
+ for(const end of [-1,1])sc(mk(CYL,wood,0,1.32,end*1.48,tent),.12,2.64,.12);
+ sc(mk(BOX,canvas,0,.17,0,packed),1.45,.32,.55);
+ tent.visible=false;
+ return {x,y,z,tent,packed,remaining:0};
+})();
 /* Cave with spike traps */
 const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFill;
 {
@@ -3138,25 +3164,44 @@ campfirePrompt.id='expedition-campfire-prompt';
 campfirePrompt.setAttribute('role','status');
 campfirePrompt.hidden=true;
 document.body.appendChild(campfirePrompt);
-function canReachCampfire(){
- return P.mode==='walk'&&!P.swim&&Math.hypot(P.x-POI.camp.x,P.z-POI.camp.z)<FACILITY_USE_RANGE&&
+function canReachCampSite(site){
+ return P.mode==='walk'&&!P.swim&&Math.hypot(P.x-site.x,P.z-site.z)<FACILITY_USE_RANGE&&
   Math.abs(P.y-groundAt(P.x,P.z)-1.75)<.6;
+}
+function canReachCampfire(){return canReachCampSite(POI.camp)}
+function setExpeditionShelter(deployed){
+ expeditionShelter.tent.visible=deployed;
+ expeditionShelter.packed.visible=!deployed;
+ expeditionShelter.remaining=deployed?300:0;
 }
 function setExpeditionFire(lit){
  expeditionFire.flame.visible=expeditionFire.light.visible=lit;
 }
-function updateExpeditionFire(dt){
- const fire=expeditionFire;
- if(fire.flame.visible&&P.mode==='walk'&&!document.hidden){
-  fire.remaining=Math.max(0,fire.remaining-dt);
-  if(fire.remaining===0)setExpeditionFire(false);
+function updateExpeditionCamp(dt){
+ const fire=expeditionFire,shelter=expeditionShelter;
+ if(P.mode==='walk'&&!document.hidden){
+  if(fire.flame.visible){
+   fire.remaining=Math.max(0,fire.remaining-dt);
+   if(fire.remaining===0)setExpeditionFire(false);
+  }
+  if(shelter.tent.visible){
+   shelter.remaining=Math.max(0,shelter.remaining-dt);
+   if(shelter.remaining===0)setExpeditionShelter(false);
+  }
  }
- campfirePrompt.hidden=!canReachCampfire()||deathLootPrompt.style.display==='block'||
+ const nearFire=canReachCampfire(),nearShelter=!nearFire&&canReachCampSite(shelter);
+ campfirePrompt.hidden=(!nearFire&&!nearShelter)||deathLootPrompt.style.display==='block'||
   chests.some(c=>!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4);
  if(campfirePrompt.hidden)return;
- const action=fire.remaining===0?'Campfire · Out of fuel':
-  (MOB?'USE':'E')+(fire.flame.visible?' · Extinguish campfire':' · Light campfire');
+ const use=MOB?'USE':'E';
+ const action=nearShelter?use+(shelter.tent.visible?' · Pack shelter':' · Pitch shelter'):
+  fire.remaining===0?'Campfire · Out of fuel':use+(fire.flame.visible?' · Extinguish campfire':' · Light campfire');
  if(campfirePrompt.textContent!==action)campfirePrompt.textContent=action;
+}
+function underShelterRoof(x,y,z){
+ const shelter=expeditionShelter,dx=Math.abs(x-shelter.x);
+ return dx<=SHELTER_ROOF_HALF_WIDTH&&Math.abs(z-shelter.z)<=SHELTER_ROOF.halfDepth&&
+  y<shelter.y+SHELTER_ROOF.centerY+(SHELTER_ROOF.centerX-dx)*SHELTER_ROOF_SLOPE;
 }
 function interact(){if(P.mode!='walk')return;
  if(recoverDeathLoot())return;
@@ -3174,7 +3219,12 @@ function interact(){if(P.mode!='walk')return;
  }
  if(canReachCampfire()){
   if(expeditionFire.remaining>0)setExpeditionFire(!expeditionFire.flame.visible);
-  updateExpeditionFire(0);
+  updateExpeditionCamp(0);
+  return;
+ }
+ if(canReachCampSite(expeditionShelter)){
+  setExpeditionShelter(!expeditionShelter.tent.visible);
+  updateExpeditionCamp(0);
   return;
  }
  for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<FACILITY_USE_RANGE){
@@ -3210,7 +3260,7 @@ function updateSummitChestStatus(){
 }
 function gameTick(dt,cp){
  updateDeathLootBag();
- updateExpeditionFire(dt);
+ updateExpeditionCamp(dt);
  const live=P.mode=='walk';P.inv=Math.max(0,P.inv-dt);
  if(live){const c=POI.cave,ry=caveG.rotation.y,cs=Math.cos(ry),sn=Math.sin(ry),dx=P.x-c.x,dz=P.z-c.z,lx=dx*cs-dz*sn,lz=dx*sn+dz*cs;
   for(const o of spikes)if(caveSpikeContact(lx,lz,P.y-caveG.position.y-1.75,o)){hurt(CAVE_SPIKE_DAMAGE,'Spike trap!');break}}
@@ -3252,8 +3302,20 @@ function gameTick(dt,cp){
  rain.visible=weatherVisual>.12;
  rain.material.opacity=Math.min(.52,.45*wetness);
  document.documentElement.dataset.climboriaWeather=weatherNames[wx].toLowerCase();
- if(rain.visible){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
-  rgeo.attributes.position.needsUpdate=true}
+ if(rain.visible){
+  const shelter=expeditionShelter;
+  const shelterInRainField=shelter.tent.visible&&Math.abs(cp.x-shelter.x)<48&&Math.abs(cp.z-shelter.z)<48;
+  for(let i=0;i<RN;i++){
+   rdy[i]-=45*dt;
+   if(rdy[i]<0)rdy[i]+=50;
+   const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i],offset=i*6;
+   rp[offset]=rp[offset+3]=x;
+   rp[offset+1]=y;
+   rp[offset+4]=shelterInRainField&&underShelterRoof(x,y,z)?y:y+1.2;
+   rp[offset+2]=rp[offset+5]=z;
+  }
+  rgeo.attributes.position.needsUpdate=true;
+ }
 }
 function auditCollisionSolids(){
  const invalid=[],large=[],radii=[],waterOverlaps=[];

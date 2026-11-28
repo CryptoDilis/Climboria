@@ -224,6 +224,12 @@ returns HTTP 404.
 - Local Chromium verified E and touch USE in the rendered Game. Focused tests cover fuel exhaustion, hidden-tab pause, range, swim and elevation rejection, and prompt priority.
 - Shared lease placement and refueling remain gated on an authenticated station and authoritative inventory transaction. This hearth consumes its preset local fuel and grants no survival recovery, items or profession progress.
 
+## Phase 06 playable Expedition Camp shelter — 2026-11-28 PHT
+
+- West of the existing hearth, a marked campsite supports pitching and packing an actual open canvas shelter with E or mobile USE. Construction reuses the Game's existing mesh primitives and materials. The slot is outside the hearth interaction range and away from the authored camp characters.
+- One shelter lasts five minutes of visible simulation time and returns to its packed appearance on expiry. Local Chromium verified pitch and pack with keyboard and touch together with the hearth. Tests check expiry and independence from the campfire. Rain streaks clip under the actual sloped roof while the canvas is deployed.
+- The placement is session-local. The authenticated room, joint placement inventory transaction, and survival/weather benefits remain separate release work.
+
 ## Phase 03 fishing cast lifecycle — 2026-11-28 PHT
 
 - An active cast is tied to its fishing spot. Leaving the interaction range or entering swimming cancels it before a reward can resolve. Respawn and position restore clear the cast along with the old movement state.
