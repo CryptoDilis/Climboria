@@ -1,5 +1,11 @@
 # Climboria Game Development Record
 
+## Phase 06 temporary private campsite placement candidate — 2026-11-28 PHT
+
+- Added persistent shared registry for two synthetic authored campsite slots, one active camp per verified account. Trusted placement requires proximity, grounded terrain, clear placement and no combat. A five-minute fixture lease expires automatically on subsequent observation; persistent observed clock prevents resurrection on rollback. Concurrent placement, owner-only removal and stale revision checks are atomic. Projection exposes only occupancy, expiry and own-camp status. No arbitrary client coordinates, permanent land claim, invulnerability or production route.
+- Three isolated JavaScript scenarios passed (slot contention, owner limit/removal, restart-style recreation/expiry, clock rollback, invalid placement, transaction rollback and ambiguous commit). Exact Node CI pending. Slot names and TTL are provisional test values; actual authored world placement, rendering, verified rest binding and real-device acceptance remain open.
+- #1108 previous exact head passed 7/7 CI, but a later crafting merge caused a record conflict. Reconciled again on main with fresh checks required. Next bind temporary campsite registry to trusted rest proofs after parent #1114 acceptance and add environmental exposure.
+
 ## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
 
 - Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
