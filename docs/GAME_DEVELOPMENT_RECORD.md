@@ -246,6 +246,12 @@ returns HTTP 404.
 - Fishing reports a catch and emits the catch event only after adding the item. An existing stack can still grow in a full backpack.
 - Local Chromium verified a blocked chest, a successful retry, chest respawn, and both blocked and stackable catches. All 433 scoped Game tests passed locally.
 
+## Phase 06 regional event receipt clock — 2026-11-28 PHT
+
+- Each accepted private event participation receipt stores the clock of its transaction alongside the account receipt. A subsequent clock rollback within the same event slot now fails closed, including on another instance. The existing slot expiry and one-receipt rule still apply.
+- Legacy receipt records remain readable. Snapshot polling keeps its existing write budget because the additional checkpoint is stored in the receipt transaction. Tests cover same-slot rollback, legacy migration, existing expiry and concurrent receipts.
+- This secures the private state ahead of authenticated world and event location integration.
+
 ## Phase 06 playable Expedition Camp fire — 2026-11-28 PHT
 
 - At the existing Expedition Camp hearth, E and mobile USE now light or extinguish the visible flame and point light. A nearby grounded player sees the action beside the camp. Chest and dropped-loot actions retain priority.

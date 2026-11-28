@@ -79,7 +79,7 @@ function participationFixture(){
  const options={roomId:ROOM,storage,clock:()=>now,seed:0,regions:['cave','sanctuary'],intervalMs:100,activeMs:30,
   resolveOwner:s=>({sessionId:s,roomId:ROOM,accountId:account,regionId:region}),
   resolveCompletion:(s,i)=>i===I?{sessionId:s,roomId:ROOM,accountId:account,regionId:region,completionId:i,...p}:null};
- return {options,make:()=>createPrivateRegionEvents(options),at:v=>{now=v;},owner:v=>{account=v;},region:v=>{region=v;},proof:v=>{p={...p,...v};},hook:v=>{hook=v;}};
+ return {options,make:()=>createPrivateRegionEvents(options),at:v=>{now=v;},owner:v=>{account=v;},region:v=>{region=v;},proof:v=>{p={...p,...v};},hook:v=>{hook=v;},rewrite:fn=>{state=fn({...state});}};
 }
 test('one durable receipt per account per active slot; concurrent replays and regional isolation',async()=>{
  const f=participationFixture(),a=f.make();await a.snapshot('cave');
@@ -118,4 +118,30 @@ test('expiry or account change during write rolls back; disabled legacy particip
  assert.equal((await b.recordParticipation(S,I)).reason,'event-storage-unavailable');
  g.hook(null);g.owner(A);assert.equal((await g.make().recordParticipation(S,I)).ok,true);
  assert.equal((await fixture().make().recordParticipation(S,I)).reason,'event-participation-disabled');
+});
+
+test('a committed receipt prevents a same-slot clock rollback across instances',async()=>{
+ const f=participationFixture(),first=f.make();
+ await first.snapshot('cave');
+ f.at(1020);f.proof({completedAtMs:1020});
+ assert.equal((await first.recordParticipation(S,I)).ok,true);
+ f.owner(B);f.at(1019);f.proof({completedAtMs:1019});
+ const fresh=f.make();
+ assert.equal((await fresh.snapshot('cave')).reason,'stale-world-clock');
+ assert.equal((await fresh.recordParticipation(S,I)).reason,'stale-world-clock');
+ f.at(1020);
+ assert.equal((await fresh.recordParticipation(S,I)).ok,true);
+});
+
+test('legacy receipts remain readable and the first new receipt adds its clock checkpoint',async()=>{
+ const f=participationFixture(),initial=f.make();
+ await initial.snapshot('cave');
+ assert.equal((await initial.recordParticipation(S,I)).ok,true);
+ f.rewrite(state=>{delete state.lastReceiptAtMs;return state;});
+ f.at(1001);
+ assert.equal((await f.make().recordParticipation(S,I)).reason,'event-already-recorded');
+ f.owner(B);
+ assert.equal((await f.make().recordParticipation(S,I)).ok,true);
+ f.at(1000);
+ assert.equal((await f.make().snapshot('cave')).reason,'stale-world-clock');
 });
