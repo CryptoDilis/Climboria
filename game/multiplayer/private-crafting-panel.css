@@ -1,0 +1,17 @@
+/* Private preview only. Public gameplay does not import this stylesheet. */
+.private-crafting-panel{box-sizing:border-box;width:min(100%,720px);padding:clamp(12px,4vw,24px);background:#101923;color:#f4eee1;border:1px solid #806238;border-radius:12px;font:16px/1.5 system-ui,sans-serif;overflow-wrap:anywhere}
+.private-crafting-panel .crafting-title{margin:0;color:#e9c786;font-size:1.4rem}
+.private-crafting-panel .crafting-notice{color:#d4dbe2}
+.private-crafting-panel .crafting-stock{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.private-crafting-panel .crafting-stock-row{display:flex;justify-content:space-between;gap:8px;padding:8px;background:#1a2634;border-radius:6px}
+.private-crafting-panel dd{margin:0;color:#e9c786}
+.private-crafting-panel .crafting-recipes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.private-crafting-panel .crafting-recipe{background:#1a2634;border:1px solid #806238;border-radius:8px;padding:12px}
+.private-crafting-panel .crafting-recipe h3{margin:0;color:#e9c786;font-size:1.1rem}
+.private-crafting-panel .crafting-materials{padding-left:20px}
+.private-crafting-panel .crafting-availability{font-weight:600}
+@media(max-width:480px){.private-crafting-panel .crafting-stock,.private-crafting-panel .crafting-recipes{grid-template-columns:minmax(0,1fr)}}
+
+.private-crafting-panel .crafting-action{min-height:44px;padding:8px 14px;color:#101923;background:#e9c786;border:1px solid #806238;border-radius:7px;font:600 1rem system-ui;cursor:pointer}
+.private-crafting-panel .crafting-action:disabled{opacity:.55;cursor:not-allowed}
+.private-crafting-panel .crafting-action:focus-visible{outline:2px solid white;outline-offset:3px}

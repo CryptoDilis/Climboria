@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## Phase 06 private crafting and meal interaction — 2026-11-28 PHT
+
+- Main-based reconciliation of #1105 atomic crafted meal and #1112 read-only panel on `babce42aeb2c96800e130b08a3420aa989e4486a`. Adds optional Craft and Eat actions with revision-bound intents, one pending action per rendered generation, account scope checks, authoritative snapshot refresh and no automatic retry of uncertain outcomes. Without adapters the panel stays read-only.
+- Five panel test bodies passed in isolated JavaScript harness; two new DOM-stub tests exercise actual private crafting and survival ledger functions, including cooked fish material debit, hunger recovery, duplicate clicks, station denial and stale scope. Native Node workflow explicitly runs all four crafting/survival/meal/panel suites. Fresh exact CI pending.
+- No public page imports, actual browser/terrain binding, live account transport, production inventory or financial effects. The scope passed to an adapter is only a local correlation hint; trusted owner and station proofs remain required. Actual browser and server integration still required. Next verify native CI and bind private authenticated station interactions before public activation.
+
+
 ## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
 
 - Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
