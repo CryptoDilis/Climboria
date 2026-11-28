@@ -1,0 +1,18 @@
+name: CLIMB Base LP Dependency Observation Tool
+on:
+  pull_request:
+    paths:
+      - 'base/liquidity-evidence/**'
+      - '.github/workflows/climb-base-lp-dependency-tool.yml'
+permissions:
+  contents: read
+jobs:
+  offline-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Offline dependency observer regression tests
+        run: node --test base/liquidity-evidence/observe-dependencies.test.mjs
