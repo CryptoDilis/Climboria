@@ -626,7 +626,7 @@ try {
     !deathLoot.recoveredStored||!deathLoot.clearedOnRecovery||!deathLoot.expired||
     !deathLoot.mapAfterDeath?.visible||!deathLoot.mapAfterDeath?.orange||
     !deathLoot.mapAfterReload?.visible||!deathLoot.mapAfterReload?.orange||
-    !deathLoot.farDirectionVisible||!deathLoot.nearDirectionVisible||
+    !deathLoot.farDirectionVisible||!deathLoot.nearDirectionVisible||!deathLoot.outsideRangeRejected||
     deathLoot.mapAfterRecovery?.visible||deathLoot.mapAfterExpiry?.visible||
     deathLoot.droppedEvents!==2||deathLoot.recoveredEvents!==1)
     errors.push('Jarrell death carried-loot drop/E recover/3-minute expiry lifecycle failed: '+JSON.stringify(deathLoot));

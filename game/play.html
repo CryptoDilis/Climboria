@@ -2054,6 +2054,7 @@ const inventory=readInventory(INVENTORY_KEY) || [];
 /* Single-player carried-loot recovery, saved per local guest/account scope.
    Not server inventory, cross-player drops, or cloud custody. */
 const DEATH_LOOT_RECOVERY_SECONDS=180;
+const DEATH_LOOT_RECOVERY_RANGE=4;
 let deathLootBag=null;
 const deathLootPrompt=document.createElement('div');
 deathLootPrompt.id='climboria-death-loot-prompt';
@@ -2125,7 +2126,7 @@ function dropDeathLoot(){
 }
 function recoverDeathLoot(){
  const bag=deathLootBag;
- if(!bag||Math.hypot(P.x-bag.x,P.z-bag.z)>4)return false;
+ if(!bag||Math.hypot(P.x-bag.x,P.z-bag.z)>DEATH_LOOT_RECOVERY_RANGE)return false;
  if(Date.now()>=bag.expiresAt){clearDeathLootBag();return false;}
  const newSlots=bag.items.filter(item=>!inventory.some(owned=>owned.name===item.name)).length;
  if(inventory.length+newSlots>50){toast('Backpack full · make room for your loot');return true;}
@@ -2149,7 +2150,8 @@ function lootRecoveryDirection(fromX,fromZ,toX,toZ,viewYaw){
  const angle=Math.atan2(right,forward);
  const arrows=['↑','↗','→','↘','↓','↙','←','↖'];
  const octant=(Math.round(angle/(Math.PI/4))+8)%8;
- return {arrow:arrows[octant],meters:Math.round(Math.hypot(dx,dz)),octant};
+ const distance=Math.hypot(dx,dz);
+ return {arrow:arrows[octant],meters:Math.round(distance),distance,octant};
 }
 function lootRecoveryDirectionAudit(){
  return {
@@ -2170,7 +2172,7 @@ function updateDeathLootBag(){
  deathLootBag.group.rotation.y+=.005;
  if(P.mode!=='walk'){deathLootPrompt.style.display='none';return;}
  const direction=lootRecoveryDirection(P.x,P.z,deathLootBag.x,deathLootBag.z,cameraYaw);
- deathLootPrompt.textContent=direction.meters<=4?
+ deathLootPrompt.textContent=direction.distance<=DEATH_LOOT_RECOVERY_RANGE?
   (MOB?'USE':'E')+' · RECOVER DROPPED LOOT ('+remaining+'s)':
   direction.arrow+' DROPPED LOOT · '+direction.meters+'m · '+
    Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0')+' remaining';
@@ -2812,7 +2814,12 @@ function deathLootLifecycleAudit(){
   const rehydrated=loadDeathLootBag()&&deathLootBag?.expiresAt===serialized?.expiresAt&&
     deathLootBag?.group.parent===scene;
   const mapAfterReload=deathLootMapMarkerAudit();
-  P.x=125;P.z=125;P.y=groundAt(P.x,P.z)+1.75;P.mode='walk';
+  P.x=129.25;P.z=125;P.y=groundAt(P.x,P.z)+1.75;P.mode='walk';
+  updateDeathLootBag();
+  const outsideRangePrompt=deathLootPrompt.textContent;
+  const outsideRangeRejected=!recoverDeathLoot()&&!!deathLootBag&&inventory.length===0&&
+   deathLootPrompt.style.display==='block'&&outsideRangePrompt.includes('remaining');
+  P.x=129;
   updateDeathLootBag();
   const nearDirectionPrompt=deathLootPrompt.textContent;
   const nearDirectionVisible=deathLootPrompt.style.display==='block'&&
@@ -2835,11 +2842,11 @@ function deathLootLifecycleAudit(){
     mapAfterDeath.visible&&mapAfterDeath.orange&&mapAfterDeath.x===125&&mapAfterDeath.z===125&&
     mapAfterDeath.legend.includes('Orange')&&
     mapAfterReload.visible&&mapAfterReload.orange&&
-    !mapAfterRecovery.visible&&!mapAfterExpiry.visible&&farDirectionVisible&&nearDirectionVisible,
+    !mapAfterRecovery.visible&&!mapAfterExpiry.visible&&farDirectionVisible&&nearDirectionVisible&&outsideRangeRejected,
    dropped,inventoryCleared,respawned,persisted,survivesUnload,isolated,rehydrated,
    recovered,recoveredStored,clearedOnRecovery,expired,droppedEvents,recoveredEvents,hadPriorDeathLoot,
    mapAfterDeath,mapAfterReload,mapAfterRecovery,mapAfterExpiry,
-   farDirectionPrompt,farDirectionVisible,nearDirectionPrompt,nearDirectionVisible};
+   farDirectionPrompt,farDirectionVisible,nearDirectionPrompt,nearDirectionVisible,outsideRangePrompt,outsideRangeRejected};
  }finally{
   inventoryStorageKey=savedScope;
   clearDeathLootBag();
