@@ -352,30 +352,69 @@ contract SafeReserveGuardTest {
         vm.warp(start+2 days);v.execute(id);
         require(token.balanceOf(PAYEE)==10&&token.totalSupply()==SUPPLY);
     }
-    // Scope boundary: reward nomination is not Safe-owner nomination.
-    // Characterize the existing policy; do not count revival as a fixed security invariant.
-    function testCharacterizeRewardNominationCancellationExpenseRevival() public {
+    // The previous #1131 characterization is retained in its exact parent.
+    function testRejectRewardNominationCancellationExpenseRevival() public {
         _bind();
         for(uint256 i=3;i<=5;i++)_quorum(_propose(1,i,bytes32(i),bytes32(i)));
         _quorum(abi.encodeCall(guard.revokeRewardSigner,(1,1)));
+        uint256 n=wallet.nonce();
+        _reject(address(guard),abi.encodeCall(guard.scheduleRewardSigner,(1,3,PAYEE,block.timestamp,block.timestamp+1 hours)),3);
+        require(wallet.nonce()==n&&guard.expenseContext(PAYEE)==0);
         _quorum(abi.encodeCall(guard.scheduleRewardSigner,(1,2,PAYEE,block.timestamp,block.timestamp+1 hours)));
-        require(guard.expenseContext(PAYEE)==0&&!guard.expenseRecipientAllowed(PAYEE));
+        require(guard.expenseContext(PAYEE)==1&&!guard.expenseRecipientAllowed(PAYEE));
+        _reject(address(guard),abi.encodeCall(guard.releaseExpenseRecipient,(1,PAYEE,1,block.timestamp,block.timestamp+1 hours)),3);
         vm.warp(start+2 days);
+        for(uint256 i=3;i<=5;i++)_assertPlainPendingExpenseRejected(i);
+        _quorum(abi.encodeCall(guard.cancelRewardSigner,(1,2,1)));
+        require(guard.epoch()==1&&guard.expenseContext(PAYEE)==1&&!guard.expenseRecipientAllowed(PAYEE));
+        _releasePayee();
+        require(guard.expenseContext(PAYEE)==2&&guard.expenseRecipientAllowed(PAYEE));
         for(uint256 i=3;i<=5;i++){
             V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
             bytes32 id=_id(1,i,bytes32(i),bytes32(i));
             vm.expectRevert();v.execute(id);
             require(v.registry().consumedBy(bytes32(i))==address(0)&&v.totalSpent()==0);
+            _reject(address(guard),_propose(1,i,bytes32(i),bytes32(i+100)),3);
+            _quorum(abi.encodeCall(guard.proposeExpense,(1,i,PAYEE,10,bytes32(i),0,bytes32(i+100),2,block.timestamp,block.timestamp+1 hours)));
+            bytes32 fresh=_freshId(i,bytes32(i),bytes32(i+100));
+            require(v.proposalContext(fresh)==2);
+            vm.expectRevert();v.execute(fresh);
         }
-        _quorum(abi.encodeCall(guard.cancelRewardSigner,(1,2,1)));
-        require(guard.epoch()==1&&guard.expenseContext(PAYEE)==0&&guard.expenseRecipientAllowed(PAYEE));
+        vm.warp(block.timestamp+2 days);
         for(uint256 i=3;i<=5;i++){
             V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
-            bytes32 id=_id(1,i,bytes32(i),bytes32(i));
-            v.execute(id);
-            require(v.registry().consumedProposal(bytes32(i))==id&&v.totalSpent()==10);
+            bytes32 fresh=_freshId(i,bytes32(i),bytes32(i+100));
+            v.execute(fresh);
+            require(v.registry().consumedProposal(bytes32(i))==fresh&&v.totalSpent()==10);
         }
         require(token.balanceOf(PAYEE)==30&&token.totalSupply()==SUPPLY);
+    }
+    function testRewardNomineeSupersessionAndPermanentActivatedExclusion() public {
+        _bind();
+        _quorum(_propose(1,3,"E","N"));
+        _quorum(abi.encodeCall(guard.revokeRewardSigner,(1,1)));
+        uint256 t=block.timestamp;
+        _quorum(abi.encodeCall(guard.scheduleRewardSigner,(1,2,PAYEE,t,t+1 hours)));
+        vm.warp(t+9 days);
+        // An expired pending reward role remains reserved until cancelled or replaced.
+        require(guard.expenseContext(PAYEE)==1&&!guard.expenseRecipientAllowed(PAYEE));
+        _reject(address(guard),abi.encodeCall(guard.releaseExpenseRecipient,(1,PAYEE,1,block.timestamp,block.timestamp+1 hours)),3);
+        _quorum(abi.encodeCall(guard.scheduleRewardSigner,(1,2,PAYEE,block.timestamp,block.timestamp+1 hours)));
+        require(guard.expenseContext(PAYEE)==3);
+        vm.warp(block.timestamp+9 days);
+        _quorum(abi.encodeCall(guard.scheduleRewardSigner,(1,2,F,block.timestamp,block.timestamp+1 hours)));
+        require(guard.expenseContext(PAYEE)==3&&!guard.expenseRecipientAllowed(PAYEE)&&guard.expenseContext(F)==1);
+        _releasePayee();
+        require(guard.expenseContext(PAYEE)==4&&guard.expenseRecipientAllowed(PAYEE));
+        V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
+        vm.expectRevert();v.execute(_id(1,3,"E","N"));
+        vm.warp(block.timestamp+2 days);
+        _quorum(abi.encodeCall(guard.activateRewardSigner,(1,2,3,F)));
+        require(!guard.expenseRecipientAllowed(F)&&guard.expenseContext(F)==1);
+        _quorum(abi.encodeCall(guard.revokeRewardSigner,(1,3)));
+        _reject(address(guard),abi.encodeCall(guard.releaseExpenseRecipient,(1,F,1,block.timestamp,block.timestamp+1 hours)),3);
+        require(!guard.expenseRecipientAllowed(F)&&guard.expenseContext(F)==1&&guard.epoch()==1);
+        require(v.totalSpent()==0&&token.balanceOf(PAYEE)==0&&token.totalSupply()==SUPPLY);
     }
     function testExpenseAndReleaseExactSelectorLengthBoundary() public {
         _bind();
