@@ -56,6 +56,12 @@ try {
   assert.equal(eaten.filter(result => result.reason === 'supplies-revision-changed').length, 1);
   assert.deepEqual(await request('survival-stock', 1000), { ok: true, food: 1, water: 1, revision: 1 });
 
+  assert.equal((await runtime.dispatchFetch('http://localhost/refuel-camp')).status, 404);
+  assert.equal((await request('prepare-refuel', 1000)).ok, true);
+  const renewals = await Promise.all([request('refuel-camp', 1100), request('refuel-camp', 1100)]);
+  assert.equal(renewals.filter(result => result.ok && result.slots[0].fireLit).length, 1);
+  assert.equal(renewals.filter(result => result.reason === 'campsite-revision-changed').length, 1);
+
   // Exercise both crafted effects on one account, one SQLite transaction store.
   assert.equal((await runtime.dispatchFetch('http://localhost/crafted-provision')).status, 404);
   assert.equal((await request('crafted-provision', 1000)).revision, 0);
@@ -98,6 +104,11 @@ try {
   assert.equal((await request('survival-eat', 1000000000)).reason, 'supplies-revision-changed');
   assert.equal((await request('survival-provision', 1000000000)).reason, 'supplies-already-provisioned');
 
+  assert.equal((await request('inspect-fuel', 1101)).stock.wood, 0);
+  assert.equal((await request('inspect-camp', 1101)).slots[0].fireLit, true);
+  assert.equal((await request('refuel-camp', 1101)).reason, 'campsite-revision-changed');
+  assert.equal((await request('inspect-camp', 121100)).slots[0].fireLit, false);
+
   assert.deepEqual(await request('crafted-stock', 1000000000), expectedCraftStock);
   assert.deepEqual(await request('crafted-survival-inspect', 1000000000), { ok: true, hunger: 9000, thirst: 6400, maximum: 10000, sequence: 1 });
   const craftedEquipment = await request('crafted-equipment-inspect', 1000000000);
@@ -119,7 +130,7 @@ try {
   assert.equal((await request('claim-drop', 91000)).reason, 'drop-expired');
   assert.equal((await request('open-drop', 91000)).reason, 'drop-expired');
 
-  console.log('Verified private drop expiry, mastery replay protection, equipment costs and repair, regional event expiry, atomic survival consumption, and both crafted item effects across a local workerd restart');
+  console.log('Verified private drop expiry, mastery replay protection, equipment costs and repair, regional event expiry, atomic survival consumption, shared campfire fuel, and both crafted item effects across a local workerd restart');
 } finally {
   try {
     await runtime?.dispose();

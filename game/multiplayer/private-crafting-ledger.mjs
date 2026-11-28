@@ -21,14 +21,16 @@ export function createPrivateCraftingLedger({roomId,storage,resolveOwner,resolve
   const p=resolveStation(sessionId,ROOM);
   return p?.sessionId===sessionId&&p.roomId===ROOM&&p.accountId===accountId&&p.station===station&&p.inRange===true;
  }
+ const mealsConsumed=s=>s.version===1?0:s.consumedCookedFish;
+ const fuelSpent=s=>s.version>=3?s.campfireWoodSpent:0;
+ const repairsConsumed=s=>s.version===4?s.consumedRepairKits:0;
  const validStock=s=>s&&typeof s==='object'&&Object.keys(s).length===ITEMS.length&&ITEMS.every(k=>Object.hasOwn(s,k)&&int(s[k],0,CAP));
  function validState(s,accountId){
-  if(!s||![1,2,3].includes(s.version)||s.accountId!==accountId||!validStock(s.initial)||!validStock(s.stock)||!int(s.revision,0,2*CAP))return false;
-  const spent=s.version===1?0:s.consumedCookedFish;
-  const spentKits=s.version===3?s.consumedRepairKits:0;
-  if(!int(spent,0,CAP)||!int(spentKits,0,CAP/2))return false;
-  const kits=s.stock['repair-kit']-s.initial['repair-kit']+spentKits,fish=s.stock['cooked-fish']-s.initial['cooked-fish']+spent;
-  return kits>=spentKits&&fish>=spent&&kits+fish+spent+spentKits===s.revision&&s.stock.fiber===s.initial.fiber-2*kits&&s.stock.wood===s.initial.wood-kits-fish&&s.stock['raw-fish']===s.initial['raw-fish']-fish;
+  if(!s||![1,2,3,4].includes(s.version)||s.accountId!==accountId||!validStock(s.initial)||!validStock(s.stock)||!int(s.revision,0,2*CAP))return false;
+  const spent=mealsConsumed(s),fuel=fuelSpent(s),repair=repairsConsumed(s);
+  if(!int(spent,0,CAP)||!int(fuel,0,CAP)||!int(repair,0,CAP/2))return false;
+  const kits=s.stock['repair-kit']-s.initial['repair-kit']+repair,fish=s.stock['cooked-fish']-s.initial['cooked-fish']+spent;
+  return kits>=repair&&fish>=spent&&kits+fish+spent+fuel+repair===s.revision&&s.stock.fiber===s.initial.fiber-2*kits&&s.stock.wood===s.initial.wood-kits-fish-fuel&&s.stock['raw-fish']===s.initial['raw-fish']-fish;
  }
  const view=s=>({ok:true,revision:s.revision,stock:{...s.stock}});
  async function transact(fn){
@@ -92,6 +94,7 @@ export function createPrivateCraftingLedger({roomId,storage,resolveOwner,resolve
  }
  async function consumeCrafted(sessionId,expectedRevision,item,applyEffect,expectedMaintenanceRevision){
   const isMeal=item==='cooked-fish';
+  const effectDenied=isMeal?'crafted-meal-effect-denied':'crafted-repair-effect-denied';
   if(!idOk(sessionId)||!int(expectedRevision,0,2*CAP))return deny('invalid-crafting-intent');
   if(!applyEffect)return deny(isMeal?'crafted-meal-disabled':'crafted-repair-disabled');
   return transact(async tx=>{
@@ -104,18 +107,19 @@ export function createPrivateCraftingLedger({roomId,storage,resolveOwner,resolve
    if(state.revision!==expectedRevision)return deny('crafting-revision-changed');
    if(!isMeal&&!stationOk(sessionId,accountId,'workbench'))return deny('crafting-station-unavailable');
    if(state.stock[item]<=state.initial[item])return deny(isMeal?'no-crafted-meal':'no-crafted-repair-kit');
-   const next={...state,version:3,
-    consumedCookedFish:(state.version===1?0:state.consumedCookedFish)+(isMeal?1:0),
-    consumedRepairKits:(state.version===3?state.consumedRepairKits:0)+(isMeal?0:1),
+   const version=isMeal?Math.max(2,state.version):4;
+   const next={...state,version,consumedCookedFish:mealsConsumed(state)+(isMeal?1:0),
     stock:{...state.stock,[item]:state.stock[item]-1},revision:state.revision+1};
+   if(version>=3)next.campfireWoodSpent=fuelSpent(state);
+   if(version===4)next.consumedRepairKits=repairsConsumed(state)+(isMeal?0:1);
    if(!validState(next,accountId))return deny('invalid-crafting-state');
    // The effect callback may read, but only returns a write plan. It cannot
    // receive the transaction's write API or choose the crafting record.
    const effect=await applyEffect({get:key=>tx.get(key)},sessionId,accountId,expectedMaintenanceRevision);
    if(ownerFor(sessionId)!==accountId)return deny('unverified-crafting-owner');
-   if(!effect?.ok)return deny(effect?.reason??'crafted-effect-denied');
+   if(!effect?.ok)return deny(effect?.reason??effectDenied);
    const authority=()=>ownerFor(sessionId)===accountId&&(isMeal||stationOk(sessionId,accountId,'workbench'))&&effect.revalidate();
-   if(typeof effect.key!=='string'||effect.key===key||typeof effect.revalidate!=='function'||!authority())return deny('crafted-effect-denied');
+   if(typeof effect.key!=='string'||effect.key===key||typeof effect.revalidate!=='function'||!authority())return deny(effectDenied);
    await tx.put(key,next);
    if(!authority())throw Error('crafted item authority changed during write');
    await tx.put(effect.key,effect.state);
@@ -123,5 +127,20 @@ export function createPrivateCraftingLedger({roomId,storage,resolveOwner,resolve
    return {...view(next),[isMeal?'survival':'equipment']:effect.view};
   });
  }
- return Object.freeze({provision,inspect,craft,consumeCookedFish,consumeRepairKit,reviewedForProduction:false});
+ // The campsite registry passes a read-only view of its own transaction.
+ async function planCampfireRefuel(reader,sessionId,accountId,expectedRevision){
+  if(unavailable||!idOk(sessionId)||!idOk(accountId)||!int(expectedRevision,0,2*CAP))return deny('invalid-crafting-intent');
+  const revalidate=()=>ownerFor(sessionId)===accountId&&stationOk(sessionId,accountId,'campfire');
+  if(!revalidate())return deny('crafting-station-unavailable');
+  const key=keyFor(accountId),state=await reader.get(key);
+  if(!revalidate())return deny('crafting-station-unavailable');
+  if(state===undefined)return deny('crafting-not-provisioned');
+  if(!validState(state,accountId))return deny('invalid-crafting-state');
+  if(state.revision!==expectedRevision)return deny('crafting-revision-changed');
+  if(state.stock.wood===0)return deny('insufficient-crafting-materials');
+  const next={...state,version:Math.max(3,state.version),consumedCookedFish:mealsConsumed(state),campfireWoodSpent:fuelSpent(state)+1,
+   stock:{...state.stock,wood:state.stock.wood-1},revision:state.revision+1};
+  return validState(next,accountId)?{ok:true,key,state:next,revalidate}:deny('invalid-crafting-state');
+ }
+ return Object.freeze({provision,inspect,craft,consumeCookedFish,consumeRepairKit,planCampfireRefuel,reviewedForProduction:false});
 }

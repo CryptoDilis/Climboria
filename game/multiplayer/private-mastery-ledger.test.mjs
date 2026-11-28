@@ -86,3 +86,97 @@ test('rejects non-private rooms and invalid rank thresholds', () => {
  assert.throws(() => createPrivateMasteryLedger({ ...f.options, thresholds: [2, 2, 4, 5] }));
  assert.throws(() => createPrivateMasteryLedger({ ...f.options, thresholds: Array(4) }));
 });
+
+
+test('owner-only mastery inspection restores every independent skill without writing or exposing another account', async () => {
+ const f = fixture();
+ const owner = sessionId => ({ sessionId, roomId, accountId: 'verified_account_' + sessionId.at(-1) });
+ const make = () => createPrivateMasteryLedger({ ...f.options, resolveOwner: owner });
+ for (let sequence = 1; sequence <= 3; sequence++) {
+  const id = 'mastery_activity_' + sequence;
+  f.setProof(a, 'climbing', sequence, id);
+  assert.equal((await make().record(a, id)).ok, true);
+ }
+ const initial = await make().inspect(a);
+ assert.equal(initial.ok, true);
+ assert.equal(initial.skills.length, 10);
+ assert.deepEqual(initial.skills.find(s => s.skill === 'climbing'), { skill: 'climbing', validatedActivities: 3, rank: 'Skilled' });
+ assert.equal(initial.skills.filter(s => s.validatedActivities === 0 && s.rank === 'Novice').length, 9);
+ assert.equal((await make().inspect(b)).skills.every(s => s.validatedActivities === 0), true);
+ assert.equal(f.records.size, 1);
+ assert.equal((await f.make().inspect(a)).reason, 'unverified-mastery-owner');
+ assert.equal((await make().inspect('invalid')).reason, 'invalid-mastery-intent');
+});
+
+test('inspection fails closed on revocation, reassignment, corrupt state and ambiguous storage', async () => {
+ const f = fixture();
+ let accountId = 'verified_account_a';
+ const make = () => createPrivateMasteryLedger({ ...f.options, resolveOwner: sessionId => accountId ? { sessionId, roomId, accountId } : null });
+ f.setProof(a, 'climbing', 1);
+ await make().record(a, activityId);
+ f.onRead(() => { accountId = null; });
+ assert.equal((await make().inspect(a)).reason, 'unverified-mastery-owner');
+ accountId = 'verified_account_a';
+ f.onRead(() => { accountId = 'verified_account_b'; });
+ assert.equal((await make().inspect(a)).reason, 'unverified-mastery-owner');
+ f.onRead(null);
+ accountId = 'verified_account_a';
+ const key = [...f.records.keys()][0];
+ const prior = f.records.get(key);
+ f.records.set(key, { ...prior, accountId: 'verified_account_b' });
+ assert.equal((await make().inspect(a)).reason, 'invalid-stored-mastery');
+ f.records.set(key, prior);
+ const ledger = make();
+ f.setAmbiguous(true);
+ assert.equal((await ledger.inspect(a)).reason, 'mastery-storage-unavailable');
+ f.setAmbiguous(false);
+ assert.equal((await ledger.inspect(a)).reason, 'mastery-storage-unavailable');
+ assert.equal((await make().inspect(a)).ok, true);
+});
+
+test('eight optional professions reflect persisted related skills without granting mastery',async()=>{
+ const f=fixture(),owner=sessionId=>({sessionId,roomId,accountId:'verified_account_'+sessionId.at(-1)});
+ const make=()=>createPrivateMasteryLedger({...f.options,resolveOwner:owner});
+ for(let sequence=1;sequence<=3;sequence++){
+  f.setProof(a,'fishing',sequence);
+  assert.equal((await make().record(a,activityId)).ok,true);
+ }
+ const before=await make().inspectProfessions(a);
+ assert.equal(before.professions.length,8);
+ assert.equal(before.professions.every(p=>!p.selected&&!p.professionActivityIntegrated),true);
+ assert.equal(before.professions.find(p=>p.id==='fisherman').relatedSkills[0].rank,'Skilled');
+ assert.deepEqual(before.professions.find(p=>p.id==='merchant').relatedSkills,[]);
+ assert.equal(f.records.size,1);
+ let p=await make().setProfession(a,'fisherman',true,0);assert.equal(p.revision,1);
+ p=await make().setProfession(a,'farmer',true,1);assert.equal(p.professions.filter(x=>x.selected).length,2);
+ assert.equal((await make().inspectProfessions(b)).professions.every(x=>!x.selected),true);
+ p=await make().setProfession(a,'fisherman',false,2);assert.equal(p.professions.filter(x=>x.selected).length,1);
+ assert.equal((await make().inspect(a)).skills.find(x=>x.skill==='fishing').validatedActivities,3);
+});
+test('profession selection is idempotent, revision checked and account bound',async()=>{
+ const f=fixture(),owner=sessionId=>({sessionId,roomId,accountId:'verified_account_'+sessionId.at(-1)});
+ const ledger=createPrivateMasteryLedger({...f.options,resolveOwner:owner});
+ const results=await Promise.all([ledger.setProfession(a,'cook',true,0),ledger.setProfession(a,'farmer',true,0)]);
+ assert.equal(results.filter(x=>x.ok).length,1);
+ assert.equal(results.filter(x=>x.reason==='profession-revision-conflict').length,1);
+ const current=await ledger.inspectProfessions(a),chosen=current.professions.find(p=>p.selected).id;
+ assert.equal((await ledger.setProfession(a,chosen,true,1)).revision,1);
+ assert.equal((await ledger.setProfession(a,'__proto__',true,1)).reason,'invalid-profession-intent');
+ assert.equal((await ledger.setProfession(a,'cook','true',1)).reason,'invalid-profession-intent');
+ assert.equal((await f.make().inspectProfessions(a)).reason,'unverified-mastery-owner');
+ assert.equal((await ledger.inspectProfessions(b)).revision,0);
+});
+test('profession inspection rejects revoked owners, corrupt state and ambiguous writes',async()=>{
+ const f=fixture();let accountId='verified_account_a';
+ const make=()=>createPrivateMasteryLedger({...f.options,resolveOwner:sessionId=>accountId?{sessionId,roomId,accountId}:null});
+ f.onRead(()=>{accountId=null;});
+ assert.equal((await make().inspectProfessions(a)).reason,'unverified-mastery-owner');
+ f.onRead(null);accountId='verified_account_a';
+ f.setAmbiguous(true);const ledger=make();
+ assert.equal((await ledger.setProfession(a,'hunter',true,0)).reason,'mastery-storage-unavailable');
+ f.setAmbiguous(false);assert.equal((await ledger.inspectProfessions(a)).reason,'mastery-storage-unavailable');
+ assert.equal((await make().inspectProfessions(a)).revision,1);
+ const key=[...f.records.keys()][0],prior=f.records.get(key);
+ f.records.set(key,{...prior,selected:['hunter','hunter']});
+ assert.equal((await make().inspectProfessions(a)).reason,'invalid-stored-professions');
+});

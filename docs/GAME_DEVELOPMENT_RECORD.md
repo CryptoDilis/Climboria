@@ -1,5 +1,45 @@
 # Climboria Game Development Record
 
+## Phase 06 private crafting and meal interaction — 2026-11-28 PHT
+
+- Main-based reconciliation of #1105 atomic crafted meal and #1112 read-only panel on `babce42aeb2c96800e130b08a3420aa989e4486a`. Adds optional Craft and Eat actions with revision-bound intents, one pending action per rendered generation, account scope checks, authoritative snapshot refresh and no automatic retry of uncertain outcomes. Without adapters the panel stays read-only.
+- Five panel test bodies passed in isolated JavaScript harness; two new DOM-stub tests exercise actual private crafting and survival ledger functions, including cooked fish material debit, hunger recovery, duplicate clicks, station denial and stale scope. Native Node workflow explicitly runs all four crafting/survival/meal/panel suites. Fresh exact CI pending.
+- No public page imports, actual browser/terrain binding, live account transport, production inventory or financial effects. The scope passed to an adapter is only a local correlation hint; trusted owner and station proofs remain required. Actual browser and server integration still required. Next verify native CI and bind private authenticated station interactions before public activation.
+
+
+## Phase 06 main-based Living World consolidation — 2026-11-28 PHT
+
+- Consolidates 15 exact Game source/test blobs from #1127 (lease-bound campsite/weather including #1126 and #1114/#1116/#1118/#1119/#1120), #1121 wildlife, #1122 player resources, #1123 regional participation, and #1124 professions onto main `045f7667fc2dd3dea771c44b7d4df33071544d76`. Verified existing regional-event and mastery source/test blobs on main were unchanged from candidate bases; remaining source/test paths and the new workflow were absent on inspected main. Preserves latest development record and unrelated files.
+- Source workflow results: #1121, #1122 and #1123 each four successful workflows; #1124 and #1126 each five; #1127 dedicated native job [46122032682](https://github.com/CryptoDilis/Climboria/actions/runs/46122032682) succeeded. These historical checks do not substitute for fresh exact-head combined validation.
+- Dedicated scoped Node 22 workflow explicitly runs eight test files containing 44 cases (19 campsite/rest/weather, four wildlife, four resource, eight regional event, nine mastery/professions). Fresh combined CI pending. No world models, authenticated production routes, real inventory or financial effects.
+- Next reconcile exact combined CI and current main before merge; retain earlier drafts until successful reviewed consolidation. Actual authored-world binding, cross-ledger resource/fuel conservation, activity authority and monotonic clock hardening remain open, followed by real account and physical device acceptance. Cooking/meal integration #1105 and crafting UI #1112 remain separate pending candidates.
+
+
+## Phase 06 verified Living World and crafting consolidation — 2026-11-28 PHT
+
+- The Living World replacement merged at `eb34a58937955a7c91b6461e29b6e5a2a35f7c38` after six exact checks on `963c6423fdf452255db6483f943c3a32dee2a25d` and 483 local Game tests. Its 11 superseded branches remain available after closing their PRs. [Living World CI](https://github.com/CryptoDilis/Climboria/actions/runs/46123400689)
+- The crafting reconciliation preserved both main's Living World record and the crafting notes. It merged at `20c0d6b2a0cf4c7f80b2d9febd21234280ffe259` after five exact checks on `0e87d73275964b058ac73f1040519214037eb74f`. Eighteen focused tests passed locally. Native Chromium touch submitted cook and eat actions to the actual private ledgers through a local fixture, and verified the wood, raw-fish, meal, and hunger results. [Crafting CI](https://github.com/CryptoDilis/Climboria/actions/runs/46127560768)
+- Next bind a real authenticated world station before using private crafting, survival or refuel actions from Jarrell's Peak.
+
+## Phase 06 private campfire refueling and stock conservation — 2026-11-28 PHT
+
+- The existing private campsite and crafting ledgers now renew the fire and spend exactly one wood in the same transaction. Refueling checks camp and inventory revisions, the room-resolved owner, grounded placement, campfire station, and lease expiry. An active fire keeps its remaining time, and a denied or rolled-back renewal keeps its wood.
+- Existing inventory records remain readable. Cooking, eating and refueling share one material balance, with a separate conserved fuel counter. Local Node tests cover concurrency, stale revisions, denial, rollback and stock shared with cooking.
+- Local workerd verified concurrent refuel requests, then restarted its SQLite Durable Object and checked persisted stock, an active renewed fire, replay rejection and fuel expiry. The outer Worker still returns 404.
+- The authenticated room-to-world station binding remains separate. The playable Expedition Camp hearth has a local fuel budget, and real inventory release remains subject to the existing acceptance gates.
+
+## Phase 05 private crafted repairs with the shared fuel balance — 2026-11-28 PHT
+
+- Reconciles #1106 with the merged craft, meal and campfire refuel paths. Earlier v1/v2 and fuel-aware v3 records remain readable. The crafted repair adds a separate v4 counter while preserving conserved fuel, ingredient, equipment and meal balances.
+- A verified private workbench may consume an earned kit and repair only the authenticated owner's equipment, with both inventory and maintenance revisions checked in the same transaction. Nine focused Node tests passed, including one account that refuels, repairs, then refuels again. The local workerd/SQLite restart verified both crafted item effects and the conserved campfire fuel path.
+- Authenticated Game station binding and production inventory acceptance remain separate work.
+
+## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
+
+- Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
+- Add regression coverage for fresh ledger instances, independent accounts and untouched skills, session revocation/reassignment, corrupt records and storage failure. Ensure the server-authority workflow triggers on mastery source/test edits. Exact candidate CI pending; no production endpoint or player UI is authorized by this change.
+- Next verify exact CI, then integrate a reviewed private player-facing projection with real activity authority. Physical and registered-player acceptance remain external gates; continue independent Game tasks while pending.
+
 ## Phase 03 hero preview gestures — 2026-11-28 PHT
 
 - Hero creation preview now rotates only from the captured primary pointer. Pinching stops rotation, uses touches that began on the canvas, and resets its zoom baseline on cancellation. Closing the editor also clears gesture state.
@@ -202,6 +242,13 @@ returns HTTP 404.
 - A chest stays closed and keeps its original timer when its reward needs a slot in a full backpack. The next successful interaction grants the item and starts the usual respawn timer.
 - Fishing reports a catch and emits the catch event only after adding the item. An existing stack can still grow in a full backpack.
 - Local Chromium verified a blocked chest, a successful retry, chest respawn, and both blocked and stackable catches. All 433 scoped Game tests passed locally.
+
+## Phase 06 playable Expedition Camp fire — 2026-11-28 PHT
+
+- At the existing Expedition Camp hearth, E and mobile USE now light or extinguish the visible flame and point light. A nearby grounded player sees the action beside the camp. Chest and dropped-loot actions retain priority.
+- The hearth starts unlit with 120 seconds of session-local simulation fuel. A lit fire burns fuel during visible gameplay, can be put out to preserve the remainder, and goes dark when empty. The existing camp meshes are reused.
+- Local Chromium verified E and touch USE in the rendered Game. Focused tests cover fuel exhaustion, hidden-tab pause, range, swim and elevation rejection, and prompt priority.
+- Shared lease placement and refueling remain gated on an authenticated station and authoritative inventory transaction. This hearth consumes its preset local fuel and grants no survival recovery, items or profession progress.
 
 ## Phase 03 fishing cast lifecycle — 2026-11-28 PHT
 
@@ -3764,13 +3811,6 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Next verify exact CI for this input fix and independent cave journal PR #1061. Continue Phase 03 controls and world regressions with the existing release gates.
 
 
-## Phases 05–06 private crafting and cooking candidate — 2026-11-28 PHT
-
-- Added isolated transactional crafting inventory with two synthetic recipes (repair kit at workbench, cooked fish at campfire). Server-resolved ownership and station range are checked before/after storage reads and after writes; materials and output change atomically. Fixed recipes, bounded stack sizes and revision reject invalid input, duplicate crafting, overflow and corrupt conservation. No public route, real items, gameplay effects or production recipe costs.
-- Three focused JavaScript harness scenarios passed: material conservation, concurrent replay, wrong station/account; output capacity, revoked station/owner, rollback and insufficient ingredients; corrupt state and ambiguous commit. Exact Node and CI pending. Existing equipment and survival ledgers are deliberately separate until a reviewed shared inventory transaction can safely consume their crafted outputs.
-- Next verify exact CI, shared inventory integration, private runtime persistence and authored workbench/campfire interactions. External physical and registered-account acceptance remain gated.
-
-
 ## Phase 06 private active-time survival candidate — 2026-11-28 PHT
 
 - Added isolated transactional hunger/thirst state using only room-verified, contiguous active intervals (1–60 seconds). Inspection is owner-bound and read-only; elapsed wall time, reconnects and offline time do not cause catch-up depletion. Fixture rates are explicit, bounded and not production balance decisions. No damage, item consumption, rewards, public route or gameplay activation.
@@ -3787,20 +3827,16 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Extended the existing CI-only workerd/SQLite fixture with survival provisioning, active-interval depletion, concurrent consumption, and restart assertions covering stock conservation, persisted meters, replay, and no offline catch-up. The public fixture router must reject access. Exact updated-head runtime CI is pending; earlier parent checks are not evidence for this new coverage.
 
 
-## Phase 05–06 private crafted meal integration candidate — 2026-11-28 PHT
+## Phase 05 private equipment presentation candidate — 2026-11-28 PHT
 
-- Consolidates exact #1104 and #1101 candidates into one draft for integration testing; do not merge before parent PRs and fresh combined checks. Extends crafting record conservation to account for consumed cooked fish (compatible v1 read, v2 on first spend). Only a previously crafted meal can be consumed; a fixed private survival effect and material debit share one storage transaction. Owner revalidation, bounded recovery, full-meter denial, rollback and replay protection remain mandatory.
-- Three new cross-ledger tests cover concurrent consumption, v1/v2 conservation, account isolation, full meter, revoked owner, second-write rollback and ambiguous commit. Exact CI pending. Private fixture only; no real inventory, public routes or production effects. Next: verify combined CI, then integrate crafted repair kit under the same transactional boundary.
-
-
-## Phase 05 private crafted repair integration candidate — 2026-11-28 PHT
-
-- Stacked on exact #1105 candidate. Adds workbench-gated use of an earned repair kit, both inventory and equipment revision checks, and a single atomic debit plus durability restore. Enhancement and original fixture kit balance are preserved. Crafting v3 tracks separate meal and repair spends; equipment v3 tracks crafted repairs with bounded use/revision conservation, preserving legacy records. No initial provisioned kit can be passed off as crafted stock.
-- Three new cross-ledger tests cover concurrent repair, stale wear/revision, ownership and station, full durability, transaction rollback and ambiguous commit. Fresh combined CI pending; no production item grant, damage, public endpoint or activation. Wait for parent candidates to pass/merge and reconcile the exact combined diff before release.
-- Next verify runtime persistence for both crafted effects, then reviewed private gameplay presentation and trusted authored station bindings. Real players and physical device checks remain external.
+- Added independent private read-only equipment panel over owner-bound equipment inspection: fixed training gloves, enhancement, durability meter and broken/worn/full condition, material and fixture-kit balances. Strict snapshot validation and lifecycle generation/scope checks reject malformed or stale results; host must clear on session changes. No repair/enhance controls, production route, player wallet or local storage changes.
+- Three isolated JS DOM-fixture scenarios passed. Added scoped navy/gold responsive CSS and Chromium acceptance for 1200×800 and 360×640 covering visible meter, layout, minimum 16px text, and pending-response logout. Exact Node/browser CI pending; no actual gameplay wiring or device claim. Next bind a reviewed private authenticated presentation host and reconcile combined crafted repair after parents merge.
 
 
-## Combined crafted item persistence candidate — 2026-11-28 PHT
+## Phases 05–06 private crafting and cooking candidate — 2026-11-28 PHT
 
-- Extended #1106 CI-only workerd/SQLite acceptance to exercise cooking, crafting, meal consumption and equipment repair against one synthetic account and one persisted inventory. Concurrent consumption/repair each must succeed once. Restart must retain inventory revision 4, material conservation, hunger/thirst, enhanced equipment durability, and original repair-kit stock; replay, duplicate provisioning and public fixture entry remain denied.
-- Fresh exact-head CI pending. Earlier #1106 runtime checks were green but did not cover the combined effects; no new production route or live gameplay claim. Next reconcile parent PRs and exact combined verification, then move to independent player-facing private presentation.
+- Added isolated transactional crafting inventory with two synthetic recipes (repair kit at workbench, cooked fish at campfire). Server-resolved ownership and station range are checked before/after storage reads and after writes; materials and output change atomically. Fixed recipes, bounded stack sizes and revision reject invalid input, duplicate crafting, overflow and corrupt conservation. No public route, real items, gameplay effects or production recipe costs.
+- Three focused JavaScript harness scenarios passed: material conservation, concurrent replay, wrong station/account; output capacity, revoked station/owner, rollback and insufficient ingredients; corrupt state and ambiguous commit. Exact Node and CI pending. Existing equipment and survival ledgers are deliberately separate until a reviewed shared inventory transaction can safely consume their crafted outputs.
+- Next verify exact CI, shared inventory integration, private runtime persistence and authored workbench/campfire interactions. External physical and registered-account acceptance remain gated.
+
+- Prior exact candidate `c52246b9e7a349969fc704218a6845d54735c068` passed all four CI workflows, including gameplay smoke. Reconciled on updated main `a995e50f2787e32e5f1b5a577967c65155b8bebc`; fresh head CI required before merge. No changes to crafting code or tests in reconciliation.

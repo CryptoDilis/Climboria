@@ -4,6 +4,8 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - "game/multiplayer/private-mastery-ledger.mjs"
+      - "game/multiplayer/private-mastery-ledger.test.mjs"
       - "game/multiplayer/server-authority-rules.mjs"
       - "game/multiplayer/server-authority-rules.test.mjs"
       - "game/multiplayer/world-drop-claim-preview.mjs"

@@ -22,6 +22,8 @@ Phase 03 has merged improvements to the field journal, hero preview, desktop orb
 
 The merged Phase 05 private equipment fixture includes a synthetic +0 to +10 enhancement fixture, with atomic material costs and replay checks. The merged private durability and repair follow-up checks verified wear, atomic kit use, and restart behavior. Equipment recipes and real inventory integration still need implementation and acceptance.
 
+At Expedition Camp, nearby players can now light and extinguish the existing hearth in the local playable world. The fuel lasts 120 seconds of visible simulation time. Authoritative refueling, campsite placement, and survival recovery remain open.
+
 ### Multiplayer checkpoint — 2026-11-28 PHT
 
 [R0.2 and R0.8 private socket recovery](https://github.com/CryptoDilis/Climboria/pull/1046) merged after CI passed at 10, 25, 50 and 100 synthetic loopback clients. [The follow-up](https://github.com/CryptoDilis/Climboria/pull/1051) merged after exact CI passed at 128, with 104 reconnects and capacity rejection. [Native browser batch transport](https://github.com/CryptoDilis/Climboria/pull/1050) passed locally in desktop and mobile emulation with synthetic admissions. Exact follow-up CI, hosted ticket and durable resume acceptance, production-equivalent capacity and physical-device measures remain open.
@@ -79,6 +81,7 @@ Phase 03 shoreline follow-up adds sampled-bed clearance to diving and deep-to-sh
 - [ ] R3.2 Equipment, armor, accessories and climbing gear, item stats, equipping and upgrades; no unapproved hero redesign.
 - [ ] R3.3 Crafting recipes/materials, unlockable outfits/hairstyles/accessories only if asset supports them, personal artifact/trophy collections.
 - [ ] R3.4 Durable authenticated progress/inventory with atomic updates, migrations, reconnect, replay protection, ownership and isolation; guest/local preview remains clearly separate.
+  - Private owner-bound mastery read projection candidate adds ten-skill inspection without writes or new credits; exact CI and player-facing integration remain open.
 - [ ] R3.5 Acceptance: first mastery unlock, meaningful choices, no pay-to-win, deterministic balance tests, no fabricated inventory.
 
 ### Owner-approved progression refinement — 2026-11-27 PHT

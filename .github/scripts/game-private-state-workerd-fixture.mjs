@@ -1,3 +1,4 @@
+import { createPrivateCampsiteRegistry } from '../../game/multiplayer/private-campsite-registry.mjs';
 import { createPrivateCraftingLedger } from '../../game/multiplayer/private-crafting-ledger.mjs';
 import { createPrivateSurvivalLedger } from '../../game/multiplayer/private-survival-ledger.mjs';
 import { createPrivateEquipmentEnhancement } from '../../game/multiplayer/private-equipment-enhancement.mjs';
@@ -73,6 +74,34 @@ export class PrivateFixture {
         if (url.pathname === '/enhance-equipment') return Response.json(await equipment.enhance(sessionId, 0));
         if (url.pathname === '/wear-equipment') return Response.json(await equipment.recordWear(sessionId, useId));
         return Response.json(await equipment.repair(sessionId, 1));
+      }
+      case '/prepare-refuel':
+      case '/refuel-camp':
+      case '/inspect-camp':
+      case '/inspect-fuel': {
+        const slot = 'forest-camp';
+        const owner = (id, roomId) => id === sessionId ? { sessionId, accountId, roomId } : null;
+        const crafting = createPrivateCraftingLedger({
+          roomId: 'preview-crafting-fixture', storage: this.storage, resolveOwner: owner,
+          resolveStation: (id, room) => ({ ...owner(id, room), station: 'campfire', inRange: true }),
+        });
+        const camps = createPrivateCampsiteRegistry({
+          roomId: 'preview-campsite-fixture', storage: this.storage, clock: () => now, resolveOwner: owner,
+          resolvePlacement: (id, site, room) => ({
+            ...owner(id, room), slot: site, inRange: true, grounded: true, clear: true, inCombat: false,
+          }),
+          planCampfireRefuel: crafting.planCampfireRefuel,
+        });
+        if (url.pathname === '/inspect-fuel') return Response.json(await crafting.inspect(sessionId));
+        if (url.pathname === '/inspect-camp') return Response.json(await camps.inspect(sessionId));
+        if (url.pathname === '/refuel-camp') return Response.json(await camps.refuel(sessionId, slot, 3, 0));
+        const stock = await crafting.provision(accountId, {
+          fiber: 0, wood: 1, 'raw-fish': 0, 'repair-kit': 0, 'cooked-fish': 0,
+        });
+        const placed = await camps.place(sessionId, slot, 0);
+        const lit = await camps.ignite(sessionId, slot, 1);
+        const extinguished = await camps.extinguish(sessionId, slot, 2);
+        return Response.json({ ok: stock.ok && placed.ok && lit.ok && extinguished.ok });
       }
       case '/survival-inspect':
       case '/survival-stock':

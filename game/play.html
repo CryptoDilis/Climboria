@@ -1125,11 +1125,13 @@ function soldier(){const g=new T3.Group(),cl=M('#3a4234'),sk=M('#8f9d86'),ar=M('
 function camp(){
  const p=POI.camp,r=rng(77),g=new T3.Group();g.position.set(p.x,p.h,p.z);scene.add(g);
  for(let i=0;i<9;i++){const a=i/9*6.283+r()*.3,w=sc(mk(BOX,M('#6e6a60'),Math.sin(a)*30,2,Math.cos(a)*30,g),7+r()*5,3+r()*5,1.4);w.rotation.set((r()-.5)*.2,a+1.57,(r()-.5)*.25)}
- const f=sc(mk(CON,M('#ff8a22',1),0,1.2,0,g),1.1,2.4,1.1);flames.push(f);sc(mk(CYL,M('#3a2a1c'),0,.2,0,g),2,.4,2);
- glow('#ff8a3a',3,70,0,3,0,g);
+ const flame=sc(mk(CON,M('#ff8a22',1),0,1.2,0,g),1.1,2.4,1.1);flames.push(flame);sc(mk(CYL,M('#3a2a1c'),0,.2,0,g),2,.4,2);
+ const light=glow('#ff8a3a',3,70,0,3,0,g);
+ flame.visible=light.visible=false;
  for(let i=0;i<12;i++){const s=soldier(),a=r()*6.283,d=7+r()*20;s.position.set(Math.sin(a)*d,0,Math.cos(a)*d);s.rotation.set(0,r()*6.28,0);g.add(s);soldiers.push({s,ph:r()*6,tilt:.04+r()*.08})}
+ return {flame,light,remaining:120};
 }
-camp();
+const expeditionFire=camp();
 /* Cave with spike traps */
 const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFill;
 {
@@ -3131,6 +3133,31 @@ function chestDistributionAudit(){
   rarityTotals,summitCooldownSeconds:900,summitCooldownScope:'local-prototype-only',summitGlobalClaimReady:false,rarityOdds:CHEST_RARITY_ODDS};
 }
 const FACILITY_USE_RANGE=5;
+const campfirePrompt=css(document.createElement('div'),'position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:11;padding:8px 12px;border:1px solid #dfae6388;border-radius:9px;background:#10191fe8;color:#ffe3a3;font:700 12px/1.4 system-ui;pointer-events:none');
+campfirePrompt.id='expedition-campfire-prompt';
+campfirePrompt.setAttribute('role','status');
+campfirePrompt.hidden=true;
+document.body.appendChild(campfirePrompt);
+function canReachCampfire(){
+ return P.mode==='walk'&&!P.swim&&Math.hypot(P.x-POI.camp.x,P.z-POI.camp.z)<FACILITY_USE_RANGE&&
+  Math.abs(P.y-groundAt(P.x,P.z)-1.75)<.6;
+}
+function setExpeditionFire(lit){
+ expeditionFire.flame.visible=expeditionFire.light.visible=lit;
+}
+function updateExpeditionFire(dt){
+ const fire=expeditionFire;
+ if(fire.flame.visible&&P.mode==='walk'&&!document.hidden){
+  fire.remaining=Math.max(0,fire.remaining-dt);
+  if(fire.remaining===0)setExpeditionFire(false);
+ }
+ campfirePrompt.hidden=!canReachCampfire()||deathLootPrompt.style.display==='block'||
+  chests.some(c=>!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4);
+ if(campfirePrompt.hidden)return;
+ const action=fire.remaining===0?'Campfire · Out of fuel':
+  (MOB?'USE':'E')+(fire.flame.visible?' · Extinguish campfire':' · Light campfire');
+ if(campfirePrompt.textContent!==action)campfirePrompt.textContent=action;
+}
 function interact(){if(P.mode!='walk')return;
  if(recoverDeathLoot())return;
  for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){
@@ -3143,6 +3170,11 @@ function interact(){if(P.mode!='walk')return;
   playGameEffect('chest');
   toast('Chest opened · '+reward.rarity.toUpperCase()+' · '+reward.item);
   emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});
+  return;
+ }
+ if(canReachCampfire()){
+  if(expeditionFire.remaining>0)setExpeditionFire(!expeditionFire.flame.visible);
+  updateExpeditionFire(0);
   return;
  }
  for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<FACILITY_USE_RANGE){
@@ -3178,6 +3210,7 @@ function updateSummitChestStatus(){
 }
 function gameTick(dt,cp){
  updateDeathLootBag();
+ updateExpeditionFire(dt);
  const live=P.mode=='walk';P.inv=Math.max(0,P.inv-dt);
  if(live){const c=POI.cave,ry=caveG.rotation.y,cs=Math.cos(ry),sn=Math.sin(ry),dx=P.x-c.x,dz=P.z-c.z,lx=dx*cs-dz*sn,lz=dx*sn+dz*cs;
   for(const o of spikes)if(caveSpikeContact(lx,lz,P.y-caveG.position.y-1.75,o)){hurt(CAVE_SPIKE_DAMAGE,'Spike trap!');break}}
