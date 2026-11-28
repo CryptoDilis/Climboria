@@ -33,17 +33,24 @@ Benefits: exploration incentives, scarcity, nonfinancial progression, collectibl
  
 Approval question: approve six-tier nonfinancial approach, proposed tables and respawn intervals as a playtest baseline, or revise before implementation? No decision assumed.
  
+## Owner decision — Treasure Vault and KOS fee (2026-11-28 PHT)
+**Approved design:** dedicated owner-controlled Treasure Vault funding wallet, publicly displayed read-only on-chain balances, separately verified current map allocations and confirmed claims, transaction links, freshness timestamps and stale/unavailable states. Owner may choose and explicitly fund occasional special chest events with supported cryptocurrency or NFTs; ordinary chest loot remains nonfinancial. No automatic treasury access, guaranteed crypto reward, or allocation from the official CLIMB Community/Rewards or DAO Treasury. Initial Base support for verified compatible assets, separate funded escrow before announcing a real prize, no exact hidden chest coordinates in public allocation data. No private keys in game server or browser configuration. Balance refresh target 30–60 seconds, not a guarantee of real-time finality. Asset allowlisting, custody, funding address, wallet verification, event eligibility, refund/expiry, reconciliation and legal/security review remain gates. No wallet address provided; no live balances or real funds authorized.
+ 
+**Approved KOS policy (Topic F/C partial):** the posting player alone funds the bounty reward; service fee exactly 1% directed to the dedicated Treasure Vault wallet, not developer revenue or official Community allocation. No general CLIMB transfer tax. Real-token settlement remains disabled pending separate review and release authorization. Nonfinancial board work may continue. Proposed collection detail (NOT yet approved): issuer prefunds advertised hunter reward plus 1% fee, gas separate; pay fee directly to verified Treasure Vault on successful eligible settlement, not on failed/cancelled/expired unclaimed bounty; refund unused reservation including fee. Example 100 CLIMB reward + 1 CLIMB fee = 101 CLIMB before gas. Fee rounding in integer base units, minimum economically meaningful amount, exact funding/settlement asset, quota/expiry, fee timing and refund rules remain to be approved. No duplicate fee, arbitrary wallet debit, or automatic transfer from owner wallet. Require opt-in fictional PvP, verified defeat/life ID, anti-collusion, replay protection, wallet binding, capped escrow, atomic settlement, finality reconciliation and independent security/compliance review.
+ 
+**Scope of approval:** owner expressly approved the preceding Treasure Vault proposal and stated the KOS funding/fee rule. Prior six-tier loot odds, respawn changes and optional item mint eligibility are still awaiting explicit confirmation; B–G remain open except for the above KOS fee direction. No financial implementation in this record.
+ 
 ## Topics B–G — individually pending owner discussion
 | Topic | Open decisions | Status |
 | --- | --- | --- |
 | B currency | Non-crypto currency name, sources/sinks, merchant prices and trade; optional premium services | Pending |
-| C service fees | Marketplace/P2P/NFT royalties, crafting/repair fees, destination/accounting; no token transfer tax | Pending |
+| C service fees | KOS 1% to Treasure Vault approved; other marketplace/P2P/NFT royalties and crafting/repair fees pending; no token transfer tax | Partial approval |
 | D NFT | Eligibility, opt-in mint, gas/service split, escrow and exclusive item state, burn/trade | Pending |
 | E equipment | +0–+10 materials, success/penalties, protection, durability/repair, off-chain routine use | Pending |
-| F competitions/bounties | Nonfinancial board; historical issuer-funded KOS proposal on hold, governed tournament prizes, anti-collusion and separate review | Pending |
+| F competitions/bounties | Player-funded KOS and 1% Treasure Vault fee approved in principle; collection basis/timing, price range, escrow, anti-collusion and governed tournament prizes pending | Partial approval |
 | G sustainability | Transparent optional service pricing, revenue destinations, no pay-to-win or hidden charges, restricted withdrawal authority | Pending |
  
-Historical figures for discussion only, not approved V4 prices: old CLIMB-only marketplace; 2.5% buy and sell fees; 5% of actual collected fee revenue for game funding; no platform mint fee plus gas; 2.5% wager fee; KOS 0.1–999 CLIMB per eligible kill. Demo Coins on menu are illustrations, not currency balances. No new pricing adopted.
+Historical figures for discussion only, not approved V4 prices: old CLIMB-only marketplace; 2.5% buy and sell fees; 5% of actual collected fee revenue for game funding; no platform mint fee plus gas; 2.5% wager fee; KOS 0.1–999 CLIMB per eligible kill. Demo Coins on menu are illustrations, not currency balances. Only the KOS 1% service fee is newly approved; other historical pricing is not adopted.
  
 ## Initial audit and implementation checklist
 - [x] Inspect required V4 policy, latest Game record/backlog, live-source chest and fishing/loot paths, Game concept, menu and optional wallet, wallet security plan, and targeted repository code searches. Historical V3 game reward service under base/ is out of scope and not V4 authority; report to Base workstream, do not edit.

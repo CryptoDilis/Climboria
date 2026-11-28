@@ -1,5 +1,11 @@
 # Climboria Game Development Record
 
+## Game Economy V4 owner decision — Treasure Vault and KOS service fee — 2026-11-28 PHT
+
+- Owner approved the dedicated owner-controlled Treasure Vault, live read-only balance and verified current map allocation UI, occasional manually funded supported token/NFT chest events; KOS reward funded solely by posting player, 1% service fee directed to Treasure Vault. Recorded in GAME_ECONOMY_V4_DESIGN.md and Game backlog. Proposed additional fee on successful settlement with unused funds refunded is not yet approved. No token movement, deployment, custody or address inferred; other economy decisions remain open.
+- Prior #1143 exact head `74cce9d1534e111895f1a65baeb8fdc187195528`: browser smoke, rarity chest acceptance and Jarrell gameplay smoke passed; Game Server Authority Rules failed ([run](https://github.com/CryptoDilis/Climboria/actions/runs/46140765567)); NPC focused browser still running at inspection. No merge or production readiness claim. Next inspect failure and rerun exact candidate CI, continue nonfinancial gameplay; confirm Topic A odds/pacing and KOS fee mechanics before financial work.
+
+
 ## Game Economy V4 policy alignment and nonfinancial chest reachability — 2026-11-28 PHT
 
 - Owner requires no automatic CLIMB gameplay payouts; read V4 policy, Game record/backlog and targeted current Game code on `921002ad639516c77e7885e7aa2ddc8bad2de15a`. Created GAME_ECONOMY_V4_DESIGN.md with approved boundaries, Topic A proposals (not approved), historical pricing and B–G unresolved decisions. Replaced old CLIMB earnings leaderboard and CLIMB-only/fee commitments in Game-specific concept docs and page; menu/wallet copy and backlog clarify nonfinancial play and hold historical bounty/job/wager payouts. V3 Base reward path remains out of scope; no real-token grant found in inspected chest path. Targeted audit is not exhaustive proof.
