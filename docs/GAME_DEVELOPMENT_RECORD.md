@@ -57,6 +57,15 @@
 
 ---
 
+## Phase 03 shallow-water clearance — 2026-11-28 PHT
+
+- Fixed the browser swim controller using each water body's nominal depth at every point, which let players dive through raised bed and shore geometry. Dive depth now respects the current terrain sample and upward bed transitions clear the old depth in the same frame. Deep-water limits, surface controls and existing water classification are retained.
+- Exact-handler regression tests verify a shallow dive with water motion, the nominal deep cap, deep-to-shallow clearance, resurfacing and dry exit while holding the surface control. Terrain-source parity passed.
+- **BLOCKED — EXTERNAL VERIFICATION REQUIRED:** Physical shoreline acceptance needs desktop and Android/iPhone devices. On the reviewed Game revision, dive in Woodland Pond, Moonpool and Sanctuary Lake, swim into shallower water while holding DIVE, surface, and leave each bank. Record device, browser, approach and any visible clipping. Continue automated verification in parallel.
+- Next verify exact CI and real browser terrain samples for this change, then proceed with the remaining Phase 03 world checks.
+
+---
+
 ## CROWD C7 PRIVATE BROWSER BATCH PROJECTION AND CLOSE ENTRANT — 2026-11-28 PHT
 
 - #1038 exact 2a2a7d6d256922aba107e5b003d747d65f4d4a06: native run 46045989344 job 140665286701 SUCCESS including explicit policy regression step; 11/13 listed workflows success at inspection, focused browser and gameplay pending. No merge before terminal exact checks.
