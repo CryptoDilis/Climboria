@@ -1,5 +1,10 @@
 # Climboria Game Development Record
 
+## Game Economy V4 — owner CP direction — 2026-11-28 PHT
+
+- Owner chose Climboria Points (CP), limited global supply with public unmined/circulating UI, gameplay earning and CP service spending recycled to reserve, marketplace-only item transfer, marketplace sale of CP and optional tokenization of all item categories including CP. Recorded design direction and proposed reserve ledger, sample prices, conservation invariant and exclusive ownership rules. Owner delegated additional Treasure Vault funding design; recommend owner deposits and existing approved KOS fee initially, no donation launch.
+- V4 no automatic crypto gameplay rewards remains a blocking policy boundary for tradeable/tokenizable CP and loot; no financial conversion, contracts, on-chain deployment, real balance, CP supply cap or final pricing authorized. Requires explicit policy reconciliation and separate release review. No Base/DEX/Swap/Launchpad changes. Next confirm cap/market settlement and outstanding Topic A/KOS details; continue independent nonfinancial Game work and reconcile #1143 CI.
+
 ## Game Economy V4 — CLIMB-only KOS clarification — 2026-11-28 PHT
 
 - Owner explicitly restricted KOS bounty funding/rewards to CLIMB only. Existing player funding and 1% fee to Treasure Vault retained; fee collection basis, quotas, expiration, eligibility and refunds remain pending confirmation. Owner-funded special chest assets remain separately scoped. Updated design and backlog only. No real funds or settlement code authorized. Next confirm outstanding Topic A and KOS decisions, then continue the remaining economy discussions and independent nonfinancial development.
