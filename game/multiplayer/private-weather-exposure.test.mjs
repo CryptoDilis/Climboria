@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createPrivateCampsiteRegistry} from './private-campsite-registry.mjs';
 import {createPrivateWeatherExposure} from './private-weather-exposure.mjs';
 const ROOM='preview-weather-fixture', S='session-weather-001', A='account-weather-001', B='account-weather-002', I='interval-weather-001';
 function fixture(){
@@ -85,4 +86,47 @@ test('changed shelter during commit rolls back; untrusted weather fields never g
  f.hook(null);assert.equal((await f.make().inspect(S)).sequence,0);
  const g=fixture();g.set({shelter:'roof-and-fire',litThroughout:true,coveredThroughout:true});
  assert.equal((await g.make().record(S,I)).cold,960);
+});
+
+function leasedFixture(){
+ const campRoom='preview-campsite-fixture';
+ let now=1000,data=new Map(),queue=Promise.resolve(),account=A,hook=null;
+ let q={kind:'roof-and-fire',sequence:1,seconds:60,siteId:'camp-forest-camp-1',slot:'forest-camp',generation:1,startedAt:1000,endedAt:61000,inRangeThroughout:true,coveredThroughout:true,litThroughout:true};
+ const storage={transaction(fn){const run=queue.then(async()=>{const staged=new Map(data);const result=await fn({get:async k=>staged.get(k),put:async(k,v)=>{staged.set(k,v);hook?.(k);}});data=staged;return result;});queue=run.catch(()=>{});return run;}};
+ const owner=(s,r)=>({sessionId:s,roomId:r,accountId:account});
+ const registryOptions={clock:()=>now,resolveOwner:owner,resolvePlacement:(s,slot,r)=>({...owner(s,r),slot,inRange:true,grounded:true,clear:true,inCombat:false})};
+ const camp=()=>createPrivateCampsiteRegistry({...registryOptions,roomId:campRoom,storage});
+ const weather=()=>createPrivateWeatherExposure({roomId:ROOM,storage,registryOptions,resolveOwner:owner,
+  resolveInterval:(s,i,r)=>({...owner(s,r),intervalId:i,sequence:q.sequence,seconds:q.seconds,temperatureC:0,windKph:30,precipitation:'rain',uniformThroughout:true}),
+  resolveShelter:(s,i,r)=>({...owner(s,r),intervalId:i,...q})});
+ return {camp,weather,at:v=>{now=v;},patch:v=>{q={...q,...v};},owner:v=>{account=v;},hook:v=>{hook=v;}};
+}
+test('lease-bound warmth needs actual ignition and cannot spend the fixture fuel twice',async()=>{
+ const f=leasedFixture();assert.equal((await f.camp().place(S,'forest-camp',0)).ok,true);
+ f.at(61000);assert.equal((await f.weather().record(S,I)).reason,'unverified-weather-campsite');
+ f.at(61001);assert.equal((await f.camp().ignite(S,'forest-camp',1)).slots[0].fireLit,true);
+ f.at(121001);f.patch({startedAt:61001,endedAt:121001});
+ const result=await Promise.all([f.weather().record(S,I),f.weather().record(S,I)]);
+ assert.equal(result.filter(r=>r.ok&&r.cold===0).length,1);
+ assert.equal((await f.weather().inspect(S)).sequence,1);
+ assert.equal((await f.camp().ignite(S,'forest-camp',2)).reason,'campfire-fuel-spent');
+ f.at(181001);assert.equal((await f.camp().inspect(S)).slots[0].fireLit,false);
+ f.at(180999);assert.equal((await f.camp().inspect(S)).reason,'invalid-campsite-state-or-clock');
+});
+test('manual extinguishing and replaced generation deny stale warmth; roof remains available',async()=>{
+ const f=leasedFixture();await f.camp().place(S,'forest-camp',0);
+ f.owner(B);assert.equal((await f.camp().ignite(S,'forest-camp',1)).reason,'campsite-not-owned');
+ f.owner(A);await f.camp().ignite(S,'forest-camp',1);
+ f.at(61000);assert.equal((await f.camp().extinguish(S,'forest-camp',2)).slots[0].fireLit,false);
+ assert.equal((await f.weather().record(S,I)).reason,'unverified-weather-campsite');
+ f.patch({kind:'roof'});assert.equal((await f.weather().record(S,I)).cold,600);
+ await f.camp().remove(S,'forest-camp',3);await f.camp().place(S,'forest-camp',4);
+ f.patch({sequence:2});assert.equal((await f.weather().record(S,I)).reason,'unverified-weather-campsite');
+});
+test('fire expiry during weather commit rolls back exposure',async()=>{
+ const f=leasedFixture();await f.camp().place(S,'forest-camp',0);await f.camp().ignite(S,'forest-camp',1);f.at(61000);
+ f.hook(k=>{if(k.includes(':weather:'))f.at(121000);});
+ assert.equal((await f.weather().record(S,I)).reason,'weather-storage-unavailable');
+ f.hook(null);assert.equal((await f.weather().inspect(S)).sequence,0);
+ assert.equal((await f.weather().record(S,I)).reason,'unverified-weather-campsite');
 });
