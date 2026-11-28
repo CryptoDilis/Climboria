@@ -176,10 +176,10 @@ try{
  const gameUnit=exactBuildUnit(builds,sources['V3GovernedGameRewardFixture.sol'],'V3GovernedGameRewardFixture');
  sources['EIP712.sol']=importPath(gameUnit,'openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol');
  sources['SafeReserveGuard.t.sol']='test/SafeReserveGuard.t.sol';
- const unit=(file,name)=>{assert.ok(Object.hasOwn(sources,file),'unmapped source');return exactBuildUnit(builds,sources[file],name);};
+ const unit=(file,name,options)=>{assert.ok(Object.hasOwn(sources,file),'unmapped source');return exactBuildUnit(builds,sources[file],name,options);};
  const exactNamed=async(file,name,at,asts,roles)=>verifyNamedRuntime(unit(file,name).artifact,await rpc('eth_getCode',[at,'latest']),asts,roles);
  const exactPlain=async(file,name,at,imm=[])=>verifyRuntime(unit(file,name).artifact,await rpc('eth_getCode',[at,'latest']),imm);
- const vaultProvenance=await verifyLocalVaultRuntime({verifyNamed:exactNamed,verify:exactPlain,ast:(file,name)=>unit(file,name).ast,cast,call,address,number,requireCode,successor,token,guard,quote,lp,founder,distributor,start,vaults,amounts,contracts});
+ const vaultProvenance=await verifyLocalVaultRuntime({verifyNamed:exactNamed,verify:exactPlain,ast:(file,name)=>unit(file,name,{astOnly:true}).ast,cast,call,address,number,requireCode,successor,token,guard,quote,lp,founder,distributor,start,vaults,amounts,contracts});
  vaultProvenance.compilerSourceUnits=sources;
  const manifest={status:'LOCAL_ANVIL_REHEARSAL_ONLY',sourceSha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),chainId:Number(CHAIN),localHardfork:'cancun',localBlockGasLimit:Number(LIMIT),testOnly:true,signatureMode:'ECDSA_ONLY',factoryProvenance,vaultProvenance,contracts,roles:{creator,owners,founder,distributor},startTimestamp:Number(start),totalSupplyRaw:String(SUPPLY),vaults,transactions:steps,negativeEthCalls:negative,limitations:'Synthetic quote/pool/LP, local unlocked Anvil accounts, three offline ECDSA signatures, no public RPC, no real signers, no production review. Gas observations are local receipts only, not a public Base Sepolia gas estimate or authorization.'};
  assert.match(manifest.sourceSha,/^[a-f0-9]{40}$/);
