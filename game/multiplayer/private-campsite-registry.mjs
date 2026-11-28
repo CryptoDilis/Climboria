@@ -1,10 +1,10 @@
 // Temporary authored slots in a private synthetic room. No world land claim or combat effects.
-export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner,resolvePlacement}={}){
+export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner,resolvePlacement,planCampfireRefuel=null}={}){
  const ROOM='preview-campsite-fixture',SLOTS=['forest-camp','coastal-camp'],TTL=300000,FUEL_MS=120000;
  const idOk=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{16,100}$/.test(v);
  const int=(v,min,max)=>Number.isSafeInteger(v)&&v>=min&&v<=max;
  const deny=reason=>({ok:false,reason});
- if(roomId!==ROOM||typeof storage?.transaction!=='function'||typeof clock!=='function'||typeof resolveOwner!=='function'||typeof resolvePlacement!=='function')throw Error('Explicit private campsite authority required');
+ if(roomId!==ROOM||typeof storage?.transaction!=='function'||typeof clock!=='function'||typeof resolveOwner!=='function'||typeof resolvePlacement!=='function'||(planCampfireRefuel!==null&&typeof planCampfireRefuel!=='function'))throw Error('Explicit private campsite authority required');
  const key='game:preview:campsite:v1:'+ROOM;
  let unavailable=false;
  function ownerFor(sessionId){const p=resolveOwner(sessionId,ROOM);return p?.sessionId===sessionId&&p.roomId===ROOM&&idOk(p.accountId)?p.accountId:null;}
@@ -31,8 +31,9 @@ export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner
    return {slot,occupied:!!camp,ownedByYou:camp?.accountId===accountId,expiresAt:camp?.expiresAt??null,fireLit:!!camp?.fire&&!camp.fire.extinguished&&state.lastObservedAt<camp.fire.until};
   })};
  }
- async function transact(sessionId,action,slot,expectedRevision){
+ async function transact(sessionId,action,slot,expectedRevision,expectedInventoryRevision){
   if(!idOk(sessionId)||(action!=='inspect'&&(!SLOTS.includes(slot)||!int(expectedRevision,0,Number.MAX_SAFE_INTEGER))))return deny('invalid-campsite-intent');
+  if(action==='refuel'&&!int(expectedInventoryRevision,0,Number.MAX_SAFE_INTEGER))return deny('invalid-campsite-intent');
   if(unavailable)return deny('campsite-storage-unavailable');
   try{return await storage.transaction(async tx=>{
    const accountId=ownerFor(sessionId);if(!accountId)return deny('unverified-campsite-owner');
@@ -43,7 +44,7 @@ export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner
    const expired=camps.length!==state.camps.length;
    if(expired&&state.revision===Number.MAX_SAFE_INTEGER)return deny('campsite-revision-exhausted');
    let next={...state,lastObservedAt:now,camps,revision:state.revision+(expired?1:0)};
-   let result;
+   let result,fuel;
    if(action==='inspect')result=projection(next,accountId);
    else if(expectedRevision!==next.revision)result=deny('campsite-revision-changed');
    else if(next.revision===Number.MAX_SAFE_INTEGER)result=deny('campsite-revision-exhausted');
@@ -52,6 +53,26 @@ export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner
     else if(camps.some(c=>c.accountId===accountId))result=deny('campsite-owner-limit');
     else if(camps.some(c=>c.slot===slot))result=deny('campsite-slot-occupied');
     else {next={...next,revision:next.revision+1,camps:[...camps,{slot,accountId,createdAt:now,expiresAt:now+TTL,generation:next.revision+1}]};result=projection(next,accountId);}
+   }else if(action==='refuel'){
+    const camp=camps.find(c=>c.slot===slot&&c.accountId===accountId);
+    if(!planCampfireRefuel)result=deny('campfire-refuel-disabled');
+    else if(!camp)result=deny('campsite-not-owned');
+    else if(!placed(sessionId,slot,accountId))result=deny('campsite-placement-denied');
+    else if(!camp.fire)result=deny('campfire-not-started');
+    else if(!camp.fire.extinguished&&now<camp.fire.until)result=deny('campfire-already-lit');
+    else{
+     const plan=await planCampfireRefuel({get:key=>tx.get(key)},sessionId,accountId,expectedInventoryRevision);
+     if(!plan?.ok)result=deny(plan?.reason??'campfire-refuel-denied');
+     else if(typeof plan.key!=='string'||plan.key===key||typeof plan.revalidate!=='function'||!plan.revalidate()||
+       ownerFor(sessionId)!==accountId||!placed(sessionId,slot,accountId)||!int(clock(),now,camp.expiresAt-1))
+      result=deny('campfire-refuel-denied');
+     else{
+      fuel={...plan,expiresAt:camp.expiresAt};
+      const fire={litAt:now,until:Math.min(now+FUEL_MS,camp.expiresAt),extinguished:false};
+      next={...next,revision:next.revision+1,camps:camps.map(c=>c===camp?{...c,fire}:c)};
+      result=projection(next,accountId);
+     }
+    }
    }else if(action==='ignite'||action==='extinguish'){
     const camp=camps.find(c=>c.slot===slot&&c.accountId===accountId);
     if(!camp)result=deny('campsite-not-owned');
@@ -67,11 +88,18 @@ export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner
     if(!camps.some(c=>c.slot===slot&&c.accountId===accountId))result=deny('campsite-not-owned');
     else {next={...next,revision:next.revision+1,camps:camps.filter(c=>c.slot!==slot)};result=projection(next,accountId);}
    }
+   if(fuel){
+    await tx.put(fuel.key,fuel.state);
+    if(!fuel.revalidate()||ownerFor(sessionId)!==accountId||!placed(sessionId,slot,accountId)||
+      !int(clock(),now,fuel.expiresAt-1))throw Error('campfire fuel authority changed during write');
+   }
    // Persist the observed clock even on reads/denials: an expired camp cannot
    // return after a clock rollback. No public account identifiers are projected.
    if(prior===undefined||next.revision!==state.revision||now!==state.lastObservedAt){
     await tx.put(key,next);
     if(ownerFor(sessionId)!==accountId||(['place','ignite','extinguish'].includes(action)&&result.ok&&!placed(sessionId,slot,accountId)))throw Error('campsite authority changed during transaction');
+    if(fuel&&(!fuel.revalidate()||!placed(sessionId,slot,accountId)||!int(clock(),now,fuel.expiresAt-1)))
+     throw Error('campfire fuel authority changed during write');
    }
    return result;
   });}catch{unavailable=true;return deny('campsite-storage-unavailable');}
@@ -100,5 +128,5 @@ export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner
   const revalidate=()=>{const current=clock();return ownerFor(sessionId)===accountId&&int(current,now,deadline-1);};
   return revalidate()?{revalidate}:null;
  }
- return Object.freeze({observeRestLease,inspect:sessionId=>transact(sessionId,'inspect'),place:(sessionId,slot,revision)=>transact(sessionId,'place',slot,revision),remove:(sessionId,slot,revision)=>transact(sessionId,'remove',slot,revision),ignite:(sessionId,slot,revision)=>transact(sessionId,'ignite',slot,revision),extinguish:(sessionId,slot,revision)=>transact(sessionId,'extinguish',slot,revision),reviewedForProduction:false});
+ return Object.freeze({observeRestLease,inspect:sessionId=>transact(sessionId,'inspect'),place:(sessionId,slot,revision)=>transact(sessionId,'place',slot,revision),remove:(sessionId,slot,revision)=>transact(sessionId,'remove',slot,revision),ignite:(sessionId,slot,revision)=>transact(sessionId,'ignite',slot,revision),extinguish:(sessionId,slot,revision)=>transact(sessionId,'extinguish',slot,revision),refuel:(sessionId,slot,campRevision,inventoryRevision)=>transact(sessionId,'refuel',slot,campRevision,inventoryRevision),reviewedForProduction:false});
 }
