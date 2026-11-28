@@ -28,12 +28,6 @@
 - Local workerd verified concurrent refuel requests, then restarted its SQLite Durable Object and checked persisted stock, an active renewed fire, replay rejection and fuel expiry. The outer Worker still returns 404.
 - The authenticated room-to-world station binding remains separate. The playable Expedition Camp hearth has a local fuel budget, and real inventory release remains subject to the existing acceptance gates.
 
-## Phase 05 private crafted repairs with the shared fuel balance — 2026-11-28 PHT
-
-- Reconciles #1106 with the merged craft, meal and campfire refuel paths. Earlier v1/v2 and fuel-aware v3 records remain readable. The crafted repair adds a separate v4 counter while preserving conserved fuel, ingredient, equipment and meal balances.
-- A verified private workbench may consume an earned kit and repair only the authenticated owner's equipment, with both inventory and maintenance revisions checked in the same transaction. Nine focused Node tests passed, including one account that refuels, repairs, then refuels again. The local workerd/SQLite restart verified both crafted item effects and the conserved campfire fuel path.
-- Authenticated Game station binding and production inventory acceptance remain separate work.
-
 ## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
 
 - Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
@@ -80,6 +74,12 @@ The Geode chamber journal entry passed local desktop and touch-emulated guest ch
 - Next verify exact combined heads and merge when all checks pass. Exercise batched network delivery into actual browser peer projection with fresh authenticated tickets and trusted resume. Measure real mobile frame times and real registered two-account reconnect. Public room capacity, NPC population increases and financial release remain gated.
 
 ---
+
+## Phase 05 private crafted repairs with the shared fuel balance — 2026-11-28 PHT
+
+- Reconciles #1106 with the merged craft, meal and campfire refuel paths. Earlier v1/v2 and fuel-aware v3 records remain readable. The crafted repair adds a separate v4 counter while preserving conserved fuel, ingredient, equipment and meal balances.
+- A verified private workbench may consume an earned kit and repair only the authenticated owner's equipment, with both inventory and maintenance revisions checked in the same transaction. Nine focused Node tests passed, including one account that refuels, repairs, then refuels again. The local workerd/SQLite restart verified both crafted item effects and the conserved campfire fuel path.
+- Authenticated Game station binding and production inventory acceptance remain separate work.
 
 ## Phase 03 keyboard button activation — 2026-11-28 PHT
 
