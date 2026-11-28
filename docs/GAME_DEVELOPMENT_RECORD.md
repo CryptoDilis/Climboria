@@ -6,6 +6,12 @@
 - Add regression coverage for fresh ledger instances, independent accounts and untouched skills, session revocation/reassignment, corrupt records and storage failure. Ensure the server-authority workflow triggers on mastery source/test edits. Exact candidate CI pending; no production endpoint or player UI is authorized by this change.
 - Next verify exact CI, then integrate a reviewed private player-facing projection with real activity authority. Physical and registered-player acceptance remain external gates; continue independent Game tasks while pending.
 
+## Phase 06 private campsite resting candidate — 2026-11-28 PHT
+
+- Added private persistent fatigue ledger: completed exertion raises fatigue; server-proven stationary, uninterrupted, out-of-combat rest at an active nearby campsite reduces it. Bounds, contiguous sequence, owner/station revalidation and transaction rollback reject replay and stale authority. No offline catch-up, stamina/health boost, invulnerability, land claim or public activation. Rates are fixture values.
+- Three isolated JavaScript scenarios passed (bounded recovery, concurrency, revoked station/combat/position, rollback, ambiguous commit and malformed records). Exact Node CI and trusted world-interval binding pending. No actual campsite model or placement UI yet.
+- #1104 merged at `5d6eb4dd8559bc8368addd646190e1728c21974d` after four fresh checks; #1110 merged at `a995e50f2787e32e5f1b5a577967c65155b8bebc` after four checks. #1105 reconciled on merged parents; fresh combined CI pending. Next: campsite placement/interaction, private temperature model and runtime acceptance; physical/registered account gates retained.
+
 ## Phase 03 hero preview gestures — 2026-11-28 PHT
 
 - Hero creation preview now rotates only from the captured primary pointer. Pinching stops rotation, uses touches that began on the canvas, and resets its zoom baseline on cancellation. Closing the editor also clears gesture state.
