@@ -4,6 +4,7 @@ import {verifyLocalVaultRuntime} from './local-vault-runtime-provenance.mjs';
 import {verifyRuntime} from './verify-runtime-template.mjs';
 import {verifyNamedRuntime} from './verify-named-runtime.mjs';
 import {verifyLocalAuthorizations} from './local-authorization-rehearsal.mjs';
+import {verifyLocalExpenseExecution} from './local-expense-execution-rehearsal.mjs';
 import {readFileSync,writeFileSync,readdirSync} from 'node:fs';
 import {exactBuildUnit} from './exact-build-unit.mjs';
 import {spawn,execFileSync} from 'node:child_process';
@@ -188,5 +189,10 @@ try{
   const evidence=await verifyLocalAuthorizations({rpc,call,number,address,record,cast,calldata,creator,wallet,guard,token,quote,vaults,payee,signers,contracts,sourceSha:manifest.sourceSha});
   writeFileSync(process.argv[3],JSON.stringify(evidence,null,2)+'\n');
   console.log(JSON.stringify(evidence,null,2));
+  if(process.argv[4]){
+   const execution=await verifyLocalExpenseExecution({rpc,call,number,address,record,cast,calldata,creator,wallet,guard,token,vaults,payee,start,sourceSha:manifest.sourceSha},evidence);
+   writeFileSync(process.argv[4],JSON.stringify(execution,null,2)+'\n');
+   console.log(JSON.stringify(execution,null,2));
+  }
  }
 }finally{anvil.kill();}
