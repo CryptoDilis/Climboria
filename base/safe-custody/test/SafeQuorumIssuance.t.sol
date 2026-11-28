@@ -227,7 +227,7 @@ contract SafeQuorumIssuanceTest {
     }
     function testBoundQuorumCanInvalidateUnexecutedExpenseAuthorization() public {
         _issue();
-        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours));
+        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",0,block.timestamp,block.timestamp+1 hours));
         bytes memory stale=_sign(data,3);
         bytes memory invalidation=abi.encodeCall(guard.invalidateAuthorization,(1,1));
         vm.expectRevert();guard.invalidateAuthorization(1,1);
@@ -244,10 +244,10 @@ contract SafeQuorumIssuanceTest {
     }
     function _expenseId(uint256 i,bytes32 evidence,bytes32 nonce) private view returns(bytes32){
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
-        return keccak256(abi.encode(block.chainid,address(v),address(successor.token()),v.purpose(),uint256(1),PAYEE,uint256(10),evidence,uint256(0),nonce));
+        return keccak256(abi.encode(block.chainid,address(v),address(successor.token()),v.purpose(),uint256(1),PAYEE,uint256(10),evidence,uint256(0),nonce,uint256(0)));
     }
     function _proposeExpense(uint256 i,bytes32 evidence,bytes32 nonce) private {
-        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,i,PAYEE,10,evidence,0,nonce,block.timestamp,block.timestamp+1 hours));
+        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,i,PAYEE,10,evidence,0,nonce,0,block.timestamp,block.timestamp+1 hours));
         require(_exec(data,_sign(data,3)));
     }
     function testAtomicQuorumExpenseRaceAcrossAllThreeReserves() public {
@@ -274,7 +274,7 @@ contract SafeQuorumIssuanceTest {
         }
         require(successor.token().balanceOf(PAYEE)==10&&successor.token().totalSupply()==SUPPLY);
         // A consumed evidence commitment cannot be proposed again with a fresh nonce.
-        bytes memory duplicate=abi.encodeCall(guard.proposeExpense,(1,5,PAYEE,10,"INVOICE",0,"FRESH",block.timestamp,block.timestamp+1 hours));
+        bytes memory duplicate=abi.encodeCall(guard.proposeExpense,(1,5,PAYEE,10,"INVOICE",0,"FRESH",0,block.timestamp,block.timestamp+1 hours));
         bytes memory sigs=_sign(duplicate,3);uint256 n=wallet.nonce();
         vm.expectRevert();_exec(duplicate,sigs);require(wallet.nonce()==n&&!guard.transactionActive());
     }
@@ -406,13 +406,17 @@ contract SafeQuorumIssuanceTest {
         for(uint256 i=3;i<=5;i++)_rejectPendingOwnerExpense(i);
         bytes memory cancellation=abi.encodeCall(guard.cancelRotation,(1,1));
         require(_exec(cancellation,_sign(cancellation,3)));
-        require(guard.expenseRecipientAllowed(PAYEE)&&guard.epoch()==1);
+        require(!guard.expenseRecipientAllowed(PAYEE)&&guard.epoch()==1&&guard.expenseContext(PAYEE)==1);
+        bytes memory release=abi.encodeCall(guard.releaseExpenseRecipient,(1,PAYEE,1,block.timestamp,block.timestamp+1 hours));
+        require(_exec(release,_sign(release,3)));
+        require(guard.expenseRecipientAllowed(PAYEE)&&guard.expenseContext(PAYEE)==2);
         for(uint256 i=3;i<=5;i++){
             V3EpochSpendFixture expense=V3EpochSpendFixture(successor.vaults(i));
-            expense.execute(_expenseId(i,bytes32(i),bytes32(i)));
-            require(expense.totalSpent()==10&&expense.spent(0)==10);
+            bytes32 id=_expenseId(i,bytes32(i),bytes32(i));
+            vm.expectRevert(V3EpochSpendFixture.NotReady.selector);expense.execute(id);
+            require(expense.totalSpent()==0&&expense.spent(0)==0);
         }
-        require(successor.token().balanceOf(PAYEE)==30&&successor.token().totalSupply()==SUPPLY);
+        require(successor.token().balanceOf(PAYEE)==0&&successor.token().totalSupply()==SUPPLY);
     }
     function testPendingOwnerExpenseRestrictionExpiresAtExactBoundary() public {
         _issue();
@@ -426,21 +430,25 @@ contract SafeQuorumIssuanceTest {
         require(!guard.expenseRecipientAllowed(PAYEE));
         for(uint256 i=3;i<=5;i++)_rejectPendingOwnerExpense(i);
         vm.warp(expiresAt);
-        require(!wallet.isOwner(PAYEE)&&guard.expenseRecipientAllowed(PAYEE)&&guard.epoch()==1);
+        require(!guard.expenseRecipientAllowed(PAYEE)&&guard.epoch()==1&&guard.expenseContext(PAYEE)==1);
+        bytes memory release=abi.encodeCall(guard.releaseExpenseRecipient,(1,PAYEE,1,block.timestamp,block.timestamp+1 hours));
+        require(_exec(release,_sign(release,3)));
+        require(guard.expenseRecipientAllowed(PAYEE)&&guard.expenseContext(PAYEE)==2);
         for(uint256 i=3;i<=5;i++){
             V3EpochSpendFixture expense=V3EpochSpendFixture(successor.vaults(i));
-            expense.execute(_expenseId(i,bytes32(i),bytes32(i)));
-            require(expense.totalSpent()==10&&expense.spent(0)==10);
+            bytes32 id=_expenseId(i,bytes32(i),bytes32(i));
+            vm.expectRevert(V3EpochSpendFixture.NotReady.selector);expense.execute(id);
+            require(expense.totalSpent()==0&&expense.spent(0)==0);
         }
-        require(successor.token().balanceOf(PAYEE)==30&&successor.token().totalSupply()==SUPPLY);
+        require(successor.token().balanceOf(PAYEE)==0&&successor.token().totalSupply()==SUPPLY);
         // Expired rotation does not reserve this address permanently; a new
         // quorum authorization can schedule it again and reapply the exclusion.
         change=abi.encodeCall(guard.scheduleRotation,(1,owners[3],owners[4],PAYEE,block.timestamp,block.timestamp+1 hours));
         require(_exec(change,_sign(change,3)));
-        require(guard.rotationSerial()==2&&!guard.expenseRecipientAllowed(PAYEE));
+        require(guard.rotationSerial()==2&&guard.expenseContext(PAYEE)==3&&!guard.expenseRecipientAllowed(PAYEE));
     }
     function _rejectPendingOwnerExpense(uint256 i) private {
-        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,i,PAYEE,10,bytes32(i+10),0,bytes32(i+10),block.timestamp,block.timestamp+1 hours));
+        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,i,PAYEE,10,bytes32(i+10),0,bytes32(i+10),0,block.timestamp,block.timestamp+1 hours));
         bytes memory sigs=_sign(data,3);
         uint256 n=wallet.nonce();
         vm.expectRevert();_exec(data,sigs);
@@ -605,10 +613,10 @@ contract SafeQuorumIssuanceTest {
     }
     function testBoundPoliciesOperateAfterAtomicIssue() public {
         _issue();
-        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",block.timestamp,block.timestamp+1 hours));
+        bytes memory data=abi.encodeCall(guard.proposeExpense,(1,3,PAYEE,10,"E",0,"N",0,block.timestamp,block.timestamp+1 hours));
         require(_exec(data,_sign(data,3)));
         V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
-        bytes32 id=keccak256(abi.encode(block.chainid,address(v),address(successor.token()),v.purpose(),uint256(1),PAYEE,uint256(10),bytes32("E"),uint256(0),bytes32("N")));
+        bytes32 id=keccak256(abi.encode(block.chainid,address(v),address(successor.token()),v.purpose(),uint256(1),PAYEE,uint256(10),bytes32("E"),uint256(0),bytes32("N"),uint256(0)));
         vm.warp(cfg.start+2 days);v.execute(id);
         require(successor.token().balanceOf(PAYEE)==10&&successor.token().totalSupply()==SUPPLY);
     }

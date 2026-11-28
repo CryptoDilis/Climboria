@@ -15,7 +15,7 @@ const keccak=x=>{
  need(hash(out),'HASH_OUTPUT');return out.slice(2);
 };
 export function decodeDirectSafeEnvelope(input){
- // Exactly 10 head words, then one 260/292-byte inner payload and 195 signature bytes.
+ // Exactly 10 head words, then one 260/324-byte inner payload and 195 signature bytes.
  // Require canonical offsets, zero padding, and exact total length, not loose ABI decoding.
  need(typeof input==='string'&&input.length<=2000&&/^0x6a761202[0-9a-f]+$/.test(input),'OUTER_SELECTOR');
  const body=input.slice(10);
@@ -25,7 +25,7 @@ export function decodeDirectSafeEnvelope(input){
  const to='0x'+at(0).slice(24);
  need(addr(to)&&[1,3,4,5,6,7,8].every(i=>at(i)===WORDZERO),'SAFE_CALL_BOUNDARY');
  need(n(2)===320n,'DATA_OFFSET');
- const len=n(10);need(len===260n||len===292n,'INNER_LENGTH');
+ const len=n(10);need(len===260n||len===324n,'INNER_LENGTH');
  const padded=Number((len+31n)/32n*32n),offset=352+padded;
  need(n(9)===BigInt(offset),'SIGNATURE_OFFSET');
  const dataStart=352*2,dataEnd=dataStart+Number(len)*2,sigHead=offset*2;
@@ -39,7 +39,7 @@ export function decodeDirectSafeEnvelope(input){
   need(s.slice(0,64)!==WORDZERO&&s.slice(64,128)!==WORDZERO&&['1b','1c'].includes(s.slice(128)),'RAW_ECDSA_ONLY');
  }
  const data='0x'+body.slice(dataStart,dataEnd);
- need((len===260n&&data.startsWith('0xae7b6095'))||(len===292n&&data.startsWith('0x6e2e6b4c')),'INNER_SELECTOR');
+ need((len===260n&&data.startsWith('0xae7b6095'))||(len===324n&&data.startsWith('0xbe61343e')),'INNER_SELECTOR');
  return {to,operation:0,value:'0x0',safeTxGas:'0x0',baseGas:'0x0',gasPrice:'0x0',gasToken:ZERO,refundReceiver:ZERO,data};
 }
 export function deriveDirectSafeDigest(input,chainId,safe,nonce){

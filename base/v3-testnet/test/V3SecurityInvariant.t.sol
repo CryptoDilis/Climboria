@@ -72,7 +72,7 @@ contract V3SequenceHandler {
         if(left==0)return;
         uint256 amount=uint256(raw)%left+1;
         vm.prank(address(custody));
-        bytes32 id=e.propose(PAYEE,amount,evidence,m,bytes32(uint256(expenseCalls+1)));
+        bytes32 id=e.propose(PAYEE,amount,evidence,m,bytes32(uint256(expenseCalls+1)),0);
         vm.warp(block.timestamp+2 days);
         e.execute(id);
         consumed[evidence]=address(e);expenseCalls++;

@@ -16,6 +16,7 @@ interface IV3CustodyEpochFixture {
 
 interface IV3ExpenseRecipientPolicy {
     function expenseRecipientAllowed(address recipient) external view returns(bool);
+    function expenseContext(address recipient) external view returns(uint256);
 }
 
 /// @notice Test-only spending policy. No signer rotation or custody implementation here.
@@ -50,6 +51,7 @@ contract V3EpochSpendFixture is ReentrancyGuard {
         bool cancelled;
     }
     mapping(bytes32=>Proposal) public proposals;
+    mapping(bytes32=>uint256) public proposalContext;
     event Proposed(bytes32 indexed id,uint256 indexed epoch,bytes32 indexed evidence,address recipient,uint256 amount,uint256 readyAt);
     event Cancelled(bytes32 indexed id);
     event Executed(bytes32 indexed id,uint256 indexed epoch,uint256 amount);
@@ -78,14 +80,15 @@ contract V3EpochSpendFixture is ReentrancyGuard {
     }
     // Only the synthetic multisig boundary authorizes a proposal; execution is public
     // after the delay. Fresh authorization is required after any epoch change.
-    function propose(address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce) external returns(bytes32 id){
+    function propose(address recipient,uint256 amount,bytes32 evidence,uint256 month,bytes32 nonce,uint256 context) external returns(bytes32 id){
         if(msg.sender!=address(custody)) revert Unauthorized();
         uint256 e=_observe();
-        if(!_recipientAllowed(recipient)||evidence==0||nonce==0||month>=60||amount==0||amount>monthlyCap(month)||
+        if(context%2!=0||context!=IV3ExpenseRecipientPolicy(address(custody)).expenseContext(recipient)||!_recipientAllowed(recipient)||evidence==0||nonce==0||month>=60||amount==0||amount>monthlyCap(month)||
            block.timestamp+DELAY>=start+(month+1)*MONTH||registry.consumedBy(evidence)!=address(0)) revert InvalidProposal();
-        id=keccak256(abi.encode(block.chainid,address(this),address(token),purpose,e,recipient,amount,evidence,month,nonce));
+        id=keccak256(abi.encode(block.chainid,address(this),address(token),purpose,e,recipient,amount,evidence,month,nonce,context));
         if(proposals[id].recipient!=address(0)) revert InvalidProposal();
         proposals[id]=Proposal(recipient,amount,evidence,month,e,block.timestamp+DELAY,false,false);
+        proposalContext[id]=context;
         emit Proposed(id,e,evidence,recipient,amount,block.timestamp+DELAY);
     }
     function cancel(bytes32 id) external {
@@ -98,7 +101,7 @@ contract V3EpochSpendFixture is ReentrancyGuard {
     function execute(bytes32 id) external nonReentrant {
         uint256 e=_observe();
         Proposal storage p=proposals[id];
-        if(p.recipient==address(0)||p.executed||p.cancelled||p.epoch!=e||!_recipientAllowed(p.recipient)||
+        if(p.recipient==address(0)||p.executed||p.cancelled||p.epoch!=e||proposalContext[id]!=IV3ExpenseRecipientPolicy(address(custody)).expenseContext(p.recipient)||!_recipientAllowed(p.recipient)||
            block.timestamp<p.readyAt||block.timestamp<start+p.month*MONTH||block.timestamp>=start+(p.month+1)*MONTH) revert NotReady();
         if(p.amount>monthlyCap(p.month)-spent[p.month]||p.amount>budget-totalSpent) revert CapExceeded();
         p.executed=true;spent[p.month]+=p.amount;totalSpent+=p.amount;
