@@ -208,6 +208,47 @@ contract SafeReserveGuardTest {
         require(wallet.nonce()==n&&!guard.transactionActive()&&v.totalSpent()==0&&v.spent(0)==0);
         require(v.registry().consumedBy(bytes32(i))==address(0)&&token.balanceOf(address(v))==balance);
     }
+    // Characterization of the unresolved policy gap, NOT an acceptable release invariant.
+    // When lifecycle protection is approved, replace these expectations with stale-ID rejection.
+    function testCharacterizePlainExpenseRevivalAfterCancellation() public {
+        _characterizePlainExpenseRevival(false);
+    }
+    function testCharacterizePlainExpenseRevivalAtExpiry() public {
+        _characterizePlainExpenseRevival(true);
+    }
+    function _characterizePlainExpenseRevival(bool expire) private {
+        _bind();
+        for(uint256 i=3;i<=5;i++)_quorum(_propose(1,i,bytes32(i),bytes32(i)));
+        address unrelated=address(0x204);
+        _quorum(abi.encodeCall(guard.proposeExpense,(1,3,unrelated,10,"UNRELATED",0,"N",block.timestamp,block.timestamp+1 hours)));
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));
+        (bytes32 digest,,address candidate,,uint256 expiresAt)=guard.pending();
+        require(digest!=0&&candidate==PAYEE);
+        vm.warp(expire?expiresAt-1:start+2 days);
+        for(uint256 i=3;i<=5;i++)_assertPlainPendingExpenseRejected(i);
+        _executeUnrelatedExpense(unrelated);
+        if(expire)vm.warp(expiresAt);
+        else _quorum(abi.encodeCall(guard.cancelRotation,(1,guard.rotationSerial())));
+        require(!wallet.isOwner(PAYEE)&&guard.expenseRecipientAllowed(PAYEE)&&guard.epoch()==1);
+        for(uint256 i=3;i<=5;i++){
+            V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
+            bytes32 id=_id(1,i,bytes32(i),bytes32(i));
+            require(v.registry().consumedBy(bytes32(i))==address(0));
+            // Existing behavior: the old proposal re-arms without fresh expense quorum.
+            v.execute(id);
+            require(v.registry().consumedProposal(bytes32(i))==id);
+            require(v.totalSpent()==(i==3?20:10)&&v.spent(0)==v.totalSpent());
+        }
+        require(token.balanceOf(PAYEE)==30&&token.balanceOf(unrelated)==10&&token.totalSupply()==SUPPLY);
+    }
+    function _executeUnrelatedExpense(address unrelated) private {
+        V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(3));
+        bytes32 id=keccak256(abi.encode(block.chainid,address(v),address(token),v.purpose(),uint256(1),unrelated,
+            uint256(10),bytes32("UNRELATED"),uint256(0),bytes32("N")));
+        require(guard.expenseRecipientAllowed(unrelated)&&!guard.expenseRecipientAllowed(PAYEE));
+        v.execute(id);
+        require(token.balanceOf(unrelated)==10&&v.registry().consumedProposal("UNRELATED")==id);
+    }
     function testPlainReservePendingOwnerBlocksRewardSchedule() public {
         _bind();
         _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));
