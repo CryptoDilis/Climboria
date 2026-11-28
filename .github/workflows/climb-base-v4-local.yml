@@ -34,11 +34,19 @@ jobs:
           git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
           git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
           test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+      - name: Fetch pinned Safe
+        run: |
+          set -euo pipefail
+          mkdir -p lib/safe-contracts
+          git -C lib/safe-contracts init
+          git -C lib/safe-contracts fetch --depth=1 https://github.com/safe-global/safe-smart-account.git bf943f80fec5ac647159d26161446ac5d716a294
+          git -C lib/safe-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/safe-contracts rev-parse HEAD)" = bf943f80fec5ac647159d26161446ac5d716a294
       - name: Local genesis regressions and fuzz
         run: |
           set -euo pipefail
           forge test --fuzz-runs 256 -vv | tee "$RUNNER_TEMP/v4-genesis-tests.log"
-          grep -Eq '19 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/v4-genesis-tests.log"
+          grep -Eq '27 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/v4-genesis-tests.log"
           test "$(grep -c 'runs: 256' "$RUNNER_TEMP/v4-genesis-tests.log")" -eq 3
           forge build --sizes
       - uses: actions/upload-artifact@v4
