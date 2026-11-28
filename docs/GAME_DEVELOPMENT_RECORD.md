@@ -1,5 +1,9 @@
 # Climboria Game Development Record
 
+## Game Economy V4 — CLIMB-only KOS clarification — 2026-11-28 PHT
+
+- Owner explicitly restricted KOS bounty funding/rewards to CLIMB only. Existing player funding and 1% fee to Treasure Vault retained; fee collection basis, quotas, expiration, eligibility and refunds remain pending confirmation. Owner-funded special chest assets remain separately scoped. Updated design and backlog only. No real funds or settlement code authorized. Next confirm outstanding Topic A and KOS decisions, then continue the remaining economy discussions and independent nonfinancial development.
+
 ## Game Economy V4 owner decision — Treasure Vault and KOS service fee — 2026-11-28 PHT
 
 - Owner approved the dedicated owner-controlled Treasure Vault, live read-only balance and verified current map allocation UI, occasional manually funded supported token/NFT chest events; KOS reward funded solely by posting player, 1% service fee directed to Treasure Vault. Recorded in GAME_ECONOMY_V4_DESIGN.md and Game backlog. Proposed additional fee on successful settlement with unused funds refunded is not yet approved. No token movement, deployment, custody or address inferred; other economy decisions remain open.
