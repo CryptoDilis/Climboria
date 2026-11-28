@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## Phase 06 private player farming and resource authority — 2026-11-28 PHT
+
+- Separate from existing NPC crop and forest-gathering simulation (#971). One shared synthetic farm plot with account ownership, plant/grow/harvest/clear lifecycle, and one shared wood node with bounded regeneration. Trusted contiguous active room ticks advance the provisional three-tick crop and two-tick node timers. No wall-clock catch-up.
+- Completed in-range action proof binds account, session, action, site and exact shared revision; state and earned wood/fiber stock commit atomically, with revalidation after each write. Stock cap 20, rejected full-stock collection leaves the node/crop intact. No real item, seed, recipe input, player-facing land claim, token or financial change.
+- Four isolated JavaScript regression scenarios passed: owner-only harvesting and persistence, shared node contention/regeneration, full stock and owner-only clear, authority-change rollback. Native Node and fresh exact CI pending. Source/test checkpoint `a2ed0b8a469c00f506db6b784a003667ca346b5b`.
+- Next integrate with actual authored farming/forest sites and trusted activity history, design plot lease expiry/abandoned-plot cleanup and seed cost, reconcile conservation with crafting ledger #1104 and inventory authority, and verify physical/registered-player acceptance. Continue independent dynamic events and profession work while gated.
+
+
 ## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
 
 - Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
