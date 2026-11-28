@@ -1,0 +1,31 @@
+/* Scoped, private preview styling; not loaded by public gameplay. */
+.private-mastery-panel {
+  box-sizing: border-box;
+  color: #f4eee1;
+  background: #101923;
+  border: 1px solid #806238;
+  border-radius: 12px;
+  padding: clamp(12px, 4vw, 24px);
+  font: 16px/1.5 system-ui, sans-serif;
+  width: min(100%, 680px);
+  overflow-wrap: anywhere;
+}
+.private-mastery-panel .mastery-title { margin: 0; font-size: 1.4rem; color: #e9c786; }
+.private-mastery-panel .mastery-description,
+.private-mastery-panel .mastery-status { margin: 8px 0; color: #d4dbe2; }
+.private-mastery-panel .mastery-skills { margin: 16px 0 0; display: grid; gap: 8px; }
+.private-mastery-panel .mastery-row {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  background: #1a2634;
+  border-radius: 6px;
+}
+.private-mastery-panel .mastery-skill { font-weight: 600; }
+.private-mastery-panel .mastery-progress { margin: 0; text-align: right; color: #ebcf9c; }
+@media (max-width: 440px) {
+  .private-mastery-panel .mastery-row { grid-template-columns: minmax(0,1fr); gap: 2px; }
+  .private-mastery-panel .mastery-progress { text-align: left; }
+}
