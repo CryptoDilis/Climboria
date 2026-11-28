@@ -132,9 +132,10 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
         V3GovernedGameRewardFixture(_target(1,expected)).revoke(expected,generation);
     }
     function scheduleRewardSigner(uint256 expected,uint256 generation,address signer,uint256 validAfter,uint256 validUntil) external onlyWallet {
-        V3GovernedGameRewardFixture(_target(1,expected)).schedule(expected,generation,signer,validAfter,validUntil);
-        // Successful reward nominations create the same expense conflict as owner nominations.
+        V3GovernedGameRewardFixture target=V3GovernedGameRewardFixture(_target(1,expected));
+        // Effects precede interaction; a failed schedule rolls back the context and event.
         _onNomination(signer);
+        target.schedule(expected,generation,signer,validAfter,validUntil);
     }
     function cancelRewardSigner(uint256 expected,uint256 generation,uint256 serial) external onlyWallet {
         V3GovernedGameRewardFixture(_target(1,expected)).cancel(expected,generation,serial);
@@ -156,8 +157,9 @@ contract SafeReserveGuardFixture is SafeEpochGuardFixture {
     function cancelLiquidity(uint256 expected,bytes32 id) external onlyWallet {V3DeferredLiquidityFixture(_target(2,expected)).cancel(id);}
     function scheduleLegacy(uint256 expected,bytes32 digest,uint256 expiresAt,uint256 validAfter,uint256 validUntil) external onlyWallet {
         _authorizationWindow(validAfter,validUntil);
-        V3LegacyProofClaimFixture(_target(6,expected)).schedule(digest,expiresAt);
+        V3LegacyProofClaimFixture target=V3LegacyProofClaimFixture(_target(6,expected));
         legacyScheduleSerial++;
+        target.schedule(digest,expiresAt);
     }
     function cancelLegacy(uint256 expected,uint256 expectedSerial) external onlyWallet {
         if(expectedSerial!=legacyScheduleSerial)revert Forbidden();
