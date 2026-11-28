@@ -31,6 +31,14 @@
 
 ---
 
+## Phase 03 ledge descent — 2026-11-28 PHT
+
+- The Game vertical controller now enters descent when a grounded character steps onto lower terrain with a meaningful drop. This enables the falling and landing animation phases without recording a jump or modifying the previous jump trace. Small height changes retain the existing grounded tolerance.
+- Exact controller regressions cover walking off a ledge, one landing, the stable grounded state, and intentional takeoff. Terrain-source parity passed.
+- Physical desktop/mobile animation acceptance is **BLOCKED — EXTERNAL VERIFICATION REQUIRED**. Walk off a safe ledge in a reviewed build, repeat on Android/iPhone, and record the body pose before and after landing. Next verify CI on this isolated change.
+
+---
+
 ## R5A route planning candidate — 2026-11-28 PHT
 
 - Implementation `4965334ff556a3d6dbf9cc3dbd7b83ccbeabcbbf` uses one breadth-first search per NPC decision, scores existing eligible goals with their shortest hop count, and reconstructs only the selected route. Authored edge order, temporary blocks, traversal validation and activity rules are retained.
