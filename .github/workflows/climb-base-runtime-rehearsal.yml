@@ -1,0 +1,69 @@
+name: CLIMB Base Frozen Local Runtime Rehearsal
+on:
+  pull_request:
+    paths:
+      - 'base/security-tools/**'
+      - '.github/workflows/climb-base-runtime-rehearsal.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  loopback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Resolve runner-local rehearsal paths
+        run: |
+          set -euo pipefail
+          {
+            echo "FROZEN_CAPTURE=$RUNNER_TEMP/frozen-climb-capture"
+            echo "CANDIDATE_CHECKOUT=$GITHUB_WORKSPACE/candidate"
+            echo "LOOPBACK_BUNDLE=$RUNNER_TEMP/climb-local-runtime-bundle"
+          } >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 6deaf2dc0139882215eb71d1ed8fe2785984a0ab
+          path: candidate
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Retrieve and authenticate frozen compiler evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git -C "$CANDIDATE_CHECKOUT" rev-parse HEAD)" = 6deaf2dc0139882215eb71d1ed8fe2785984a0ab
+          gh api "/repos/$GITHUB_REPOSITORY/actions/artifacts/15226960135/zip" > "$RUNNER_TEMP/climb-frozen-capture.zip"
+          echo "2fa3d9349ddc6c32faec5cc42cb7ebab669c8029d7eb22d064ea591ead511254  $RUNNER_TEMP/climb-frozen-capture.zip" | sha256sum -c -
+          mkdir "$FROZEN_CAPTURE"
+          unzip -q "$RUNNER_TEMP/climb-frozen-capture.zip" -d "$FROZEN_CAPTURE"
+      - name: Prepare exact captured bytecode in temporary candidate checkout
+        run: python3 base/security-tools/prepare-loopback-runtime.py
+      - name: Mine local Anvil rehearsal and capture pre-issuance evidence
+        working-directory: candidate/base/safe-custody
+        run: |
+          set -euo pipefail
+          # The pinned rehearsal creates its own loopback Anvil process.
+          # It uses disposable local test identities only, never a public RPC.
+          node local-deployment-rehearsal.mjs "$RUNNER_TEMP/climb-local-rehearsal.json"
+      - name: Verify mined snapshot and semantic tamper rejection
+        run: |
+          set -euo pipefail
+          python3 base/security-tools/verify-loopback-runtime.py "$LOOPBACK_BUNDLE" "$RUNNER_TEMP/climb-local-runtime-report.json"
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: climb-frozen-local-runtime-rehearsal
+          path: |
+            ${{ runner.temp }}/climb-local-runtime-report.json
+            ${{ runner.temp }}/climb-local-rehearsal.json
+            ${{ runner.temp }}/climb-local-runtime-bundle.pins.json
+            ${{ runner.temp }}/climb-local-runtime-bundle/
+          if-no-files-found: error
+          retention-days: 14
