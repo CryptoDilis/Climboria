@@ -15,6 +15,12 @@
 - Next reconcile exact combined CI and current main before merge; retain earlier drafts until successful reviewed consolidation. Actual authored-world binding, cross-ledger resource/fuel conservation, activity authority and monotonic clock hardening remain open, followed by real account and physical device acceptance. Cooking/meal integration #1105 and crafting UI #1112 remain separate pending candidates.
 
 
+## Phase 06 verified Living World and crafting consolidation — 2026-11-28 PHT
+
+- The Living World replacement merged at `eb34a58937955a7c91b6461e29b6e5a2a35f7c38` after six exact checks on `963c6423fdf452255db6483f943c3a32dee2a25d` and 483 local Game tests. Its 11 superseded branches remain available after closing their PRs. [Living World CI](https://github.com/CryptoDilis/Climboria/actions/runs/46123400689)
+- The crafting reconciliation preserved both main's Living World record and the crafting notes. It merged at `20c0d6b2a0cf4c7f80b2d9febd21234280ffe259` after five exact checks on `0e87d73275964b058ac73f1040519214037eb74f`. Eighteen focused tests passed locally. Native Chromium touch submitted cook and eat actions to the actual private ledgers through a local fixture, and verified the wood, raw-fish, meal, and hunger results. [Crafting CI](https://github.com/CryptoDilis/Climboria/actions/runs/46127560768)
+- Next bind a real authenticated world station before using private crafting, survival or refuel actions from Jarrell's Peak.
+
 ## Phase 06 private campfire refueling and stock conservation — 2026-11-28 PHT
 
 - The existing private campsite and crafting ledgers now renew the fire and spend exactly one wood in the same transaction. Refueling checks camp and inventory revisions, the room-resolved owner, grounded placement, campfire station, and lease expiry. An active fire keeps its remaining time, and a denied or rolled-back renewal keeps its wood.
