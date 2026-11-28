@@ -1,6 +1,6 @@
 // Temporary authored slots in a private synthetic room. No world land claim or combat effects.
 export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner,resolvePlacement}={}){
- const ROOM='preview-campsite-fixture',SLOTS=['forest-camp','coastal-camp'],TTL=300000;
+ const ROOM='preview-campsite-fixture',SLOTS=['forest-camp','coastal-camp'],TTL=300000,FUEL_MS=120000;
  const idOk=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{16,100}$/.test(v);
  const int=(v,min,max)=>Number.isSafeInteger(v)&&v>=min&&v<=max;
  const deny=reason=>({ok:false,reason});
@@ -19,6 +19,8 @@ export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner
   const seenSlots=new Set(),seenOwners=new Set();
   for(const c of prior.camps){
    if(!c||!SLOTS.includes(c.slot)||!idOk(c.accountId)||seenSlots.has(c.slot)||seenOwners.has(c.accountId)||!int(c.createdAt,0,prior.lastObservedAt)||c.expiresAt!==c.createdAt+TTL||c.expiresAt<=prior.lastObservedAt||!int(c.generation,1,prior.revision))return null;
+   if(c.fire!==undefined&&(!c.fire||!int(c.fire.litAt,c.createdAt,prior.lastObservedAt)||
+    c.fire.until!==Math.min(c.fire.litAt+FUEL_MS,c.expiresAt)||typeof c.fire.extinguished!=='boolean'))return null;
    seenSlots.add(c.slot);seenOwners.add(c.accountId);
   }
   return prior;
@@ -26,7 +28,7 @@ export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner
  function projection(state,accountId){
   return {ok:true,revision:state.revision,slots:SLOTS.map(slot=>{
    const camp=state.camps.find(c=>c.slot===slot);
-   return {slot,occupied:!!camp,ownedByYou:camp?.accountId===accountId,expiresAt:camp?.expiresAt??null};
+   return {slot,occupied:!!camp,ownedByYou:camp?.accountId===accountId,expiresAt:camp?.expiresAt??null,fireLit:!!camp?.fire&&!camp.fire.extinguished&&state.lastObservedAt<camp.fire.until};
   })};
  }
  async function transact(sessionId,action,slot,expectedRevision){
@@ -50,6 +52,17 @@ export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner
     else if(camps.some(c=>c.accountId===accountId))result=deny('campsite-owner-limit');
     else if(camps.some(c=>c.slot===slot))result=deny('campsite-slot-occupied');
     else {next={...next,revision:next.revision+1,camps:[...camps,{slot,accountId,createdAt:now,expiresAt:now+TTL,generation:next.revision+1}]};result=projection(next,accountId);}
+   }else if(action==='ignite'||action==='extinguish'){
+    const camp=camps.find(c=>c.slot===slot&&c.accountId===accountId);
+    if(!camp)result=deny('campsite-not-owned');
+    else if(!placed(sessionId,slot,accountId))result=deny('campsite-placement-denied');
+    else if(action==='ignite'&&camp.fire!==undefined)result=deny('campfire-fuel-spent');
+    else if(action==='extinguish'&&(!camp.fire||camp.fire.extinguished||now>=camp.fire.until))result=deny('campfire-not-lit');
+    else{
+     const fire=action==='ignite'?{litAt:now,until:Math.min(now+FUEL_MS,camp.expiresAt),extinguished:false}:{...camp.fire,extinguished:true};
+     next={...next,revision:next.revision+1,camps:camps.map(c=>c===camp?{...c,fire}:c)};
+     result=projection(next,accountId);
+    }
    }else{
     if(!camps.some(c=>c.slot===slot&&c.accountId===accountId))result=deny('campsite-not-owned');
     else {next={...next,revision:next.revision+1,camps:camps.filter(c=>c.slot!==slot)};result=projection(next,accountId);}
@@ -58,7 +71,7 @@ export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner
    // return after a clock rollback. No public account identifiers are projected.
    if(prior===undefined||next.revision!==state.revision||now!==state.lastObservedAt){
     await tx.put(key,next);
-    if(ownerFor(sessionId)!==accountId||(action==='place'&&result.ok&&!placed(sessionId,slot,accountId)))throw Error('campsite authority changed during transaction');
+    if(ownerFor(sessionId)!==accountId||(['place','ignite','extinguish'].includes(action)&&result.ok&&!placed(sessionId,slot,accountId)))throw Error('campsite authority changed during transaction');
    }
    return result;
   });}catch{unavailable=true;return deny('campsite-storage-unavailable');}
@@ -81,8 +94,11 @@ export function createPrivateCampsiteRegistry({roomId,storage,clock,resolveOwner
   if(!lease||proof.campsiteId!=='camp-'+lease.slot+'-'+lease.generation||
      !int(proof.startedAt,lease.createdAt,now)||!int(proof.endedAt,proof.startedAt,now)||
      proof.endedAt-proof.startedAt!==proof.seconds*1000||proof.endedAt>=lease.expiresAt)return null;
-  const revalidate=()=>{const current=clock();return ownerFor(sessionId)===accountId&&int(current,now,lease.expiresAt-1);};
+  if(proof.requireFire===true&&(!lease.fire||lease.fire.extinguished||proof.startedAt<lease.fire.litAt||
+   proof.endedAt>=lease.fire.until||now>=lease.fire.until))return null;
+  const deadline=proof.requireFire===true?Math.min(lease.expiresAt,lease.fire.until):lease.expiresAt;
+  const revalidate=()=>{const current=clock();return ownerFor(sessionId)===accountId&&int(current,now,deadline-1);};
   return revalidate()?{revalidate}:null;
  }
- return Object.freeze({observeRestLease,inspect:sessionId=>transact(sessionId,'inspect'),place:(sessionId,slot,revision)=>transact(sessionId,'place',slot,revision),remove:(sessionId,slot,revision)=>transact(sessionId,'remove',slot,revision),reviewedForProduction:false});
+ return Object.freeze({observeRestLease,inspect:sessionId=>transact(sessionId,'inspect'),place:(sessionId,slot,revision)=>transact(sessionId,'place',slot,revision),remove:(sessionId,slot,revision)=>transact(sessionId,'remove',slot,revision),ignite:(sessionId,slot,revision)=>transact(sessionId,'ignite',slot,revision),extinguish:(sessionId,slot,revision)=>transact(sessionId,'extinguish',slot,revision),reviewedForProduction:false});
 }
