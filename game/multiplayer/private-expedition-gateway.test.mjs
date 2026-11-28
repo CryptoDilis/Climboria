@@ -12,12 +12,13 @@ function fixture(){
    delete:async k=>staged.delete(k),list:async({prefix,limit})=>new Map([...staged].filter(([k])=>k.startsWith(prefix)).slice(0,limit))});
   records=staged;return r;
  });queue=run.catch(()=>{});return run;}};
- const gateway=createPrivateExpeditionGateway({storage,clock:()=>now,allowAccount:a=>allowed.has(a),
+ const make=()=>createPrivateExpeditionGateway({storage,clock:()=>now,allowAccount:a=>allowed.has(a),
   sessionId:()=> 's_'+(++serial).toString(16).padStart(32,'0')});
+ let gateway=make();
  const send=(session,m)=>session.receive(JSON.stringify(m));
  async function connect(a){const t=await gateway.issueVerifiedAccount(a);assert.equal(t.ok,true);const s=await gateway.connect(t.ticket);assert.equal(s.ok,true);return s;}
  async function approach(s){for(let sequence=0;sequence<4;sequence++){assert.equal((await send(s,{type:'input',x:1,z:0,sequence,sprint:false})).ok,true);now+=100;assert.equal(gateway.tick().ok,true);}}
- return {gateway,allowed,send,connect,approach,at:n=>{now=n},hook:v=>{hook=v}};
+ return {gateway,allowed,send,connect,approach,restart:()=>{gateway=make();return gateway;},at:n=>{now=n},hook:v=>{hook=v}};
 }
 const stock={fiber:0,wood:4,'raw-fish':3,'repair-kit':0,'cooked-fish':0};
 test('single-use tickets, socket-bound identity and strict packet shape',async()=>{
@@ -53,7 +54,7 @@ test('revocation during inventory commit rolls back; expired or rate-limited cap
  await f.approach(a);await f.send(a,{type:'place',revision:0});await f.send(a,{type:'ignite',revision:1});
  f.hook(k=>{if(k.includes(':crafting:'))f.allowed.delete(A);});
  assert.equal((await f.send(a,{type:'cook',revision:0})).reason,'station-session-closed');
- f.hook(null);f.allowed.add(A);const b=await f.connect(A);
+ f.hook(null);f.allowed.add(A);f.restart();const b=await f.connect(A);
  assert.equal((await f.send(b,{type:'stock'})).stock.wood,4);
  f.at(61400);assert.equal((await f.send(b,{type:'stock'})).reason,'station-session-closed');
  const c=await f.connect(A);
