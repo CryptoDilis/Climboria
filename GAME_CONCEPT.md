@@ -47,7 +47,7 @@ Documentation and website copy changes must not redesign or remove current gamep
 
 ## Leaderboards and rewards
 
-There is no summit ranking and no current badge system. The planned ranking system includes a permanent All-Time Top Gainers board and a separate Weekly Top Gainers board for any funded weekly rewards. Scoring combines eligible $CLIMB earnings, published eligible treasure value, and transparent rarity/difficulty bonuses. Weekly payout timing, if activated and funded, is Friday at 03:00 UTC / 11:00 AM Philippine time. Rewards require a verified funded pool and published eligibility rules; they are not guaranteed.
+Ordinary gameplay rankings use nonfinancial progression, equipment, loot and rarity/difficulty criteria. No automatic CLIMB rewards or weekly cryptocurrency payouts. Special competitive and community programs require separately approved and funded distributions.
 
 ## Marketplace economy
 
@@ -83,7 +83,7 @@ Sponsored tournaments require a fully funded prize pool. Full sponsorship fee an
 
 ## Token and platform status
 
-Solana is the initial chain focus; Base is a later possibility. $CLIMB is the intended ticker, not proof of a launched token. Launchpad, DEX, swap, live liquidity, marketplace, NFT minting, multiplayer, Chatworld, Arena, wagers, sponsorship management, and token rewards must be clearly marked planned or in development until implemented and verified.
+Base mainnet (chain 8453) is the exclusive planned official CLIMB token network. The previous Solana launch is historical. V4 is not deployed; see the [V4 Transparency Center](https://climboria.fun/transparency/). Launchpad, DEX, swap, live liquidity, marketplace, NFT minting, multiplayer, Chatworld, Arena, wagers, sponsorship management, and token rewards must be clearly marked planned or in development until implemented and verified.
 
 ## Milestone order
 
