@@ -21,7 +21,7 @@ try {
   if(await anonymous.evaluate(()=>localStorage.getItem('climboria-created-hero-v1')!==null))
    errors.push('Anonymous Hero Creation wrote a local hero');
   await anonymous.close();
-  const guestProbe=await browser.newPage();
+  const guestProbe=await browser.newPage({viewport:{width:844,height:500}});
   await guestProbe.goto('http://127.0.0.1:4173/game/play.html?guest=1',{waitUntil:'domcontentloaded'});
   const guestState=await guestProbe.evaluate(()=>({
    guest:window.__climboriaGuestMode===true,
@@ -31,6 +31,24 @@ try {
   if(!guestState.guest||guestState.hero?.name!=='Guest Explorer'||
      guestState.hero?.model!=='Adventurer'||guestState.persisted!==null)
    errors.push('Guest play must launch without creating/persisting hero: '+JSON.stringify(guestState));
+  await guestProbe.waitForFunction(()=>window.__climboriaGameReady&&document.querySelector('#field-journal')?.hidden===false,undefined,{timeout:120000});
+  const guestJournal=guestProbe.locator('#field-journal');
+  const caveNote=guestJournal.getByText('Cave entrance',{exact:true});
+  await guestJournal.locator('summary').click();
+  if(await caveNote.count()) errors.push('Guest journal revealed the cave entrance before discovery');
+  await guestProbe.evaluate(()=>window.__climboriaJarrellsPeak.positionAtCaveEntranceForSmoke());
+  try {
+    await caveNote.waitFor({state:'visible',timeout:90000});
+  } catch (error) {
+    const state=await guestProbe.evaluate(()=>{
+      const {x,y,z,mode,swim,jumpState}=window.__climboriaJarrellsPeak.player;
+      return {x,y,z,mode,swim,jumpState,render:window.__climboriaRenderState,
+        journal:document.querySelector('#field-journal')?.textContent};
+    });
+    throw new Error('Guest cave discovery did not render: '+JSON.stringify(state),{cause:error});
+  }
+  if(await guestProbe.evaluate(()=>Object.keys(localStorage).some(key=>key.startsWith('climboria:jarrell-field-journal:'))))
+   errors.push('Guest cave discovery persisted a local journal entry');
   await guestProbe.close();
   // The rest of this test exercises 3D creator UX against an explicitly
   // mocked registered account, NOT a real Supabase auth acceptance.
