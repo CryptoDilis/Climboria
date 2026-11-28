@@ -1,0 +1,49 @@
+name: CLIMB Base V4 Local Genesis
+on:
+  pull_request:
+    paths:
+      - 'base/v4-local/**'
+      - '.github/workflows/climb-base-v4-local.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'base/v4-local/**'
+      - '.github/workflows/climb-base-v4-local.yml'
+permissions:
+  contents: read
+jobs:
+  genesis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: base/v4-local
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf
+        with:
+          version: v1.5.0
+          cache: false
+      - name: Fetch pinned OpenZeppelin
+        run: |
+          set -euo pipefail
+          mkdir -p lib/openzeppelin-contracts
+          git -C lib/openzeppelin-contracts init
+          git -C lib/openzeppelin-contracts fetch --depth=1 https://github.com/OpenZeppelin/openzeppelin-contracts.git dc44c9f1a4c3b10af99492eed84f83ed244203f6
+          git -C lib/openzeppelin-contracts checkout --detach FETCH_HEAD
+          test "$(git -C lib/openzeppelin-contracts rev-parse HEAD)" = dc44c9f1a4c3b10af99492eed84f83ed244203f6
+      - name: Local genesis regressions and fuzz
+        run: |
+          set -euo pipefail
+          forge test --fuzz-runs 256 -vv | tee "$RUNNER_TEMP/v4-genesis-tests.log"
+          grep -Eq '9 tests passed, 0 failed, 0 skipped' "$RUNNER_TEMP/v4-genesis-tests.log"
+          test "$(grep -c 'runs: 256' "$RUNNER_TEMP/v4-genesis-tests.log")" -eq 2
+          forge build --sizes
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v4-local-genesis-tests
+          path: ${{ runner.temp }}/v4-genesis-tests.log
+          if-no-files-found: error
