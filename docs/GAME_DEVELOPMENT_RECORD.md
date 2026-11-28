@@ -115,6 +115,15 @@
 
 ---
 
+## Phase 04 private drop expiry — 2026-11-28 PHT
+
+- The isolated drop-claim fixture now writes a 90-second lifetime in room storage before a claim can proceed. New room instances reuse the stored deadline. At expiry the transaction denies pickup, and an issued or consumed drop cannot be reissued to reset its lifetime. Receipt and inventory slot still commit atomically.
+- Eight focused tests cover the deadline boundary, concurrent issuance, missing lifetime/receipt consistency, ambiguous writes, and prior atomic claim behavior. All 404 Game tests passed locally.
+- **BLOCKED — EXTERNAL VERIFICATION REQUIRED:** Production inventory, real death-to-drop handling, and public recovery depend on approved authenticated authority and separate release review. Verify an authorized private two-account run against the reviewed room integration before considering any release. The existing local recovery timer remains three minutes while this isolated fixture tests the planned 90-second authority window.
+- Next verify the fixture's exact CI, then wire it to trusted private room events after the relevant authorization and lifecycle review.
+
+---
+
 ## CROWD C6 PRIVATE BATCHED MOVEMENT CANDIDATE — 2026-11-28 PHT
 
 - #1035 exact 208739f6cbe69897cbdf616ac97cbe01bb52254a renderer 46043165304 jobs 140655762093 mobile and 140655762531 desktop SUCCESS; actual private loopback renderer fixtures at 10/25/32/50/100 entries with pressure recovery and cleanup. Mobile 100: 2 heavy, 8 light, 16 markers, 74 hidden; no physical device or close-range combat visibility proof. Foundation 46043165313, world chat 46043165465 and native load 46043165314 SUCCESS. Native job 140655749320 clustered 100 unchanged 118800 packets, p95 97.97→124.56ms; distributed 118800→37555, p95 105.87→93.52ms. Runner-specific timings, not production SLA. Focused desktop still running at inspection; #1034 draft not mergeable, its focused desktop still running; hero retry 46042604104 now SUCCESS.
