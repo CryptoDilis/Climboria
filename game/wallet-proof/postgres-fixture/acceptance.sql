@@ -42,3 +42,37 @@ DO $$ BEGIN
  IF NOT (SELECT consumed FROM wallet_fixture.challenges WHERE id=repeat('a',32)) THEN RAISE EXCEPTION 'nonce not consumed'; END IF;
 END $$;
 SELECT 'PASS PostgreSQL fixture role isolation, consume, replay and conflict rollback' AS result;
+
+-- Frozen addresses retain evidence and cannot issue, consume or transfer.
+DO $$ BEGIN
+ IF has_function_privilege('wallet_fixture_authenticated','wallet_fixture.revoke_verified_fixture(text,uuid,timestamptz)','EXECUTE')
+ OR has_function_privilege('wallet_fixture_anon','wallet_fixture.revoke_verified_fixture(text,uuid,timestamptz)','EXECUTE')
+ OR has_table_privilege('wallet_fixture_backend','wallet_fixture.revocations','INSERT,UPDATE,DELETE,SELECT') THEN RAISE EXCEPTION 'revocation ACL leak'; END IF;
+END $$;
+SET ROLE wallet_fixture_backend;
+SELECT wallet_fixture.issue(repeat('9',32),'11111111-1111-4111-8111-111111111111','0x'||repeat('1',40),repeat('9',64),'2026-11-27 00:00:02+00','2026-11-27 00:05:02+00');
+DO $$ BEGIN
+ BEGIN
+  PERFORM wallet_fixture.revoke_verified_fixture('0x'||repeat('1',40),'22222222-2222-4222-8222-222222222222','2026-11-27 00:00:03+00');
+  RAISE EXCEPTION 'unexpected unauthorized freeze';
+ EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'fixture-proof-rejected' THEN RAISE; END IF; END;
+ IF wallet_fixture.revoke_verified_fixture('0x'||repeat('1',40),'11111111-1111-4111-8111-111111111111','2026-11-27 00:00:03+00')<>repeat('a',32) THEN RAISE EXCEPTION 'wrong frozen evidence'; END IF;
+ IF wallet_fixture.revoke_verified_fixture('0x'||repeat('1',40),'11111111-1111-4111-8111-111111111111','2026-11-27 00:00:04+00')<>repeat('a',32) THEN RAISE EXCEPTION 'wrong repeated freeze'; END IF;
+ BEGIN
+  PERFORM wallet_fixture.consume_verified_fixture(repeat('9',32),'11111111-1111-4111-8111-111111111111',repeat('9',64),'2026-11-27 00:00:04+00');
+  RAISE EXCEPTION 'unexpected stale proof success';
+ EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'fixture-proof-rejected' THEN RAISE; END IF; END;
+ BEGIN
+  PERFORM wallet_fixture.issue(repeat('8',32),'22222222-2222-4222-8222-222222222222','0x'||repeat('1',40),repeat('8',64),'2026-11-27 00:00:04+00','2026-11-27 00:05:04+00');
+  RAISE EXCEPTION 'unexpected frozen address reissue';
+ EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'fixture-proof-rejected' THEN RAISE; END IF; END;
+END $$;
+RESET ROLE;
+DO $$ BEGIN
+ IF (SELECT count(*) FROM wallet_fixture.revocations WHERE evidence=repeat('a',32))<>1 OR
+ (SELECT count(*) FROM wallet_fixture.associations WHERE evidence=repeat('a',32))<>1 OR
+ EXISTS(SELECT 1 FROM wallet_fixture.challenges WHERE address='0x'||repeat('1',40) AND NOT consumed) THEN
+  RAISE EXCEPTION 'freeze did not preserve evidence and invalidate all pending challenges';
+ END IF;
+END $$;
+SELECT 'PASS PostgreSQL revocation ACL, immutable evidence and stale challenge rejection' AS result;
