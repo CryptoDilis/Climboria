@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## Phase 03 hero preview gestures — 2026-11-28 PHT
+
+- Hero creation preview now rotates only from the captured primary pointer. Pinching stops rotation, uses touches that began on the canvas, and resets its zoom baseline on cancellation. Closing the editor also clears gesture state.
+- The gesture regression checks unrelated pointer movement and release, capture loss, secondary mouse input, pinch zoom, and cancellation with a fresh distance. Existing hero authentication lifecycle tests pass.
+- Physical Android/iPhone touch performance is **BLOCKED — EXTERNAL VERIFICATION REQUIRED**. On the exact reviewed revision, open the Game hero editor, drag the model, pinch without rotating, interrupt the gesture with an OS switch, and repeat after reopening. Record device, browser and result under the existing [device protocol](GAME_NPC_PHYSICAL_DEVICE_ACCEPTANCE.md).
+- Next verify CI for the independent hero preview and movement-input PRs. Preserve the existing account gates.
+
 ## Crowd C9–C13 and NPC consolidation checkpoint — 2026-11-28 PHT
 
 - C9 [#1041](https://github.com/CryptoDilis/Climboria/pull/1041) head `81327e0e37bcb2d20bfe1bf61757259fd5aeeda9` exercised 100 peers within 2.8 m. Critical pressure drew 3 bodies and 9 markers on desktop, and 2 bodies and 6 markers in mobile emulation. Hidden peers remained in the fixture roster.
