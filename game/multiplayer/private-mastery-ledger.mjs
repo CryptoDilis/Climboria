@@ -4,6 +4,14 @@ const SKILLS = new Set([
  'climbing', 'swimming', 'fishing', 'farming', 'combat',
  'endurance', 'survival', 'crafting', 'treasure-hunting', 'weapon-handling',
 ]);
+// Related skills are affinities, not proof of profession-specific activity.
+// In particular, combat is not hunting and crafting is not commerce.
+const PROFESSIONS = Object.freeze({
+ blacksmith:['crafting'], fisherman:['fishing'], farmer:['farming'],
+ hunter:['combat','survival'], cook:['crafting','survival'],
+ explorer:['climbing','swimming','endurance'], merchant:[],
+ 'treasure-hunter':['treasure-hunting'],
+});
 const idOk = id => typeof id === 'string' && /^[a-zA-Z0-9_-]{16,100}$/.test(id);
 const deny = reason => ({ ok: false, reason });
 
@@ -53,6 +61,49 @@ export function createPrivateMasteryLedger({ roomId, storage, resolveActivity, t
    return deny('mastery-storage-unavailable');
   }
  }
+ const preferenceKey = accountId => 'game:preview:professions:v1:' + ROOM + ':' + accountId;
+ const validPreference = (p,accountId) => p && p.version===1 && p.accountId===accountId &&
+  Number.isSafeInteger(p.revision) && p.revision>0 && Array.isArray(p.selected) &&
+  p.selected.length<=Object.keys(PROFESSIONS).length && p.selected.every(id=>typeof id==='string'&&Object.hasOwn(PROFESSIONS,id)) &&
+  new Set(p.selected).size===p.selected.length;
+ const readPreference = (p,accountId) => p===undefined ? {version:1,accountId,revision:0,selected:[]} : validPreference(p,accountId)?p:null;
+ async function professionProfile(sessionId,change=null) {
+  if(!idOk(sessionId))return deny('invalid-profession-intent');
+  if(unavailable)return deny('mastery-storage-unavailable');
+  try{return await storage.transaction(async tx=>{
+   const accountId=accountFor(sessionId);if(!accountId)return deny('unverified-mastery-owner');
+   const prior=readPreference(await tx.get(preferenceKey(accountId)),accountId);
+   if(accountFor(sessionId)!==accountId)return deny('unverified-mastery-owner');
+   if(!prior)return deny('invalid-stored-professions');
+   const skills=new Map();
+   for(const skill of SKILLS){
+    const stored=await tx.get(keyFor(accountId,skill));
+    if(accountFor(sessionId)!==accountId)return deny('unverified-mastery-owner');
+    if(stored!==undefined&&!validRecord(stored,accountId,skill))return deny('invalid-stored-mastery');
+    skills.set(skill,progress(skill,stored?.sequence??0));
+   }
+   let next=prior;
+   if(change!==null){
+    if(change.revision!==prior.revision)return deny('profession-revision-conflict');
+    if(prior.selected.includes(change.id)!==change.selected){
+     if(prior.revision===Number.MAX_SAFE_INTEGER)return deny('profession-revision-exhausted');
+     next={...prior,revision:prior.revision+1,selected:Object.keys(PROFESSIONS).filter(id=>id===change.id?change.selected:prior.selected.includes(id))};
+     await tx.put(preferenceKey(accountId),next);
+     if(accountFor(sessionId)!==accountId)throw Error('Profession owner changed during write');
+    }
+   }
+   // No class assignment, XP grant, unlock, economic effect or invented rank.
+   return {ok:true,revision:next.revision,professions:Object.entries(PROFESSIONS).map(([id,related])=>({
+    id,selected:next.selected.includes(id),relatedSkills:related.map(skill=>skills.get(skill)),
+    professionActivityIntegrated:false
+   }))};
+  });}catch{unavailable=true;return deny('mastery-storage-unavailable');}
+ }
+ async function setProfession(sessionId,id,selected,revision){
+  if(typeof id!=='string'||!Object.hasOwn(PROFESSIONS,id)||typeof selected!=='boolean'||!Number.isSafeInteger(revision)||revision<0)
+   return deny('invalid-profession-intent');
+  return professionProfile(sessionId,{id,selected,revision});
+ }
  function verifiedActivity(sessionId, activityId) {
   const proof = resolveActivity(sessionId, activityId, ROOM);
   if (!proof || proof.sessionId !== sessionId || proof.activityId !== activityId ||
@@ -90,5 +141,5 @@ export function createPrivateMasteryLedger({ roomId, storage, resolveActivity, t
   }
  }
 
- return Object.freeze({ record, inspect, reviewedForProduction: false });
+ return Object.freeze({ record, inspect, inspectProfessions: sessionId=>professionProfile(sessionId), setProfession, reviewedForProduction: false });
 }
