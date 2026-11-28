@@ -1,5 +1,6 @@
+import { createPrivateCraftingLedger } from './private-crafting-ledger.mjs';
 // Private fixture only. Unit balances and rates are test values, not production survival tuning.
-export function createPrivateSurvivalLedger({roomId,storage,resolveOwner,resolveActiveInterval,hungerRate,thirstRate}={}) {
+export function createPrivateSurvivalLedger({roomId,storage,resolveOwner,resolveActiveInterval,hungerRate,thirstRate,craftingOwner=null,craftingStation=null}={}) {
  const ROOM='preview-survival-fixture', MAX=10000;
  const idOk=id=>typeof id==='string'&&/^[a-zA-Z0-9_-]{16,100}$/.test(id);
  const integer=(value,min,max)=>Number.isSafeInteger(value)&&value>=min&&value<=max;
@@ -127,5 +128,28 @@ export function createPrivateSurvivalLedger({roomId,storage,resolveOwner,resolve
    return {...view(next),supplies:supplies(nextPantry)};
   });
  }
- return Object.freeze({inspect,recordActiveInterval,provisionSupplies,inspectSupplies,consumeSupply,reviewedForProduction:false});
+ // Optional private integration; existing survival-only rooms stay disabled.
+ if((craftingOwner!==null||craftingStation!==null)&&(typeof craftingOwner!=='function'||typeof craftingStation!=='function'))
+  throw Error('Both private crafting authorities required');
+ const crafting=craftingOwner===null?null:createPrivateCraftingLedger({
+  roomId:'preview-crafting-fixture',storage,resolveOwner:craftingOwner,resolveStation:craftingStation,
+  async applyCookedFish(reader,sessionId,accountId){
+   const revalidate=()=>ownerFor(sessionId)===accountId;
+   if(unavailable||!revalidate())return deny('unverified-survival-owner');
+   const key=keyFor(accountId),state=readState(await reader.get(key),accountId);
+   if(!revalidate())return deny('unverified-survival-owner');
+   if(!state)return deny('invalid-survival-state');
+   if(state.hunger===MAX)return deny('survival-meter-full');
+   const next={...state,hunger:Math.min(MAX,state.hunger+RECOVERY)};
+   return {ok:true,key,state:next,view:view(next),revalidate};
+  }
+ });
+ async function consumeCraftedMeal(sessionId,expectedRevision){
+  if(unavailable)return deny('survival-storage-unavailable');
+  if(!crafting)return deny('crafted-meal-disabled');
+  const result=await crafting.consumeCookedFish(sessionId,expectedRevision);
+  if(result.reason==='crafting-storage-unavailable')unavailable=true;
+  return result;
+ }
+ return Object.freeze({inspect,recordActiveInterval,provisionSupplies,inspectSupplies,consumeSupply,consumeCraftedMeal,reviewedForProduction:false});
 }

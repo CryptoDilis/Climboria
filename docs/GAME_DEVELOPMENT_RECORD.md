@@ -1,5 +1,12 @@
 # Climboria Game Development Record
 
+## Phase 06 private crafting and meal interaction — 2026-11-28 PHT
+
+- Main-based reconciliation of #1105 atomic crafted meal and #1112 read-only panel on `babce42aeb2c96800e130b08a3420aa989e4486a`. Adds optional Craft and Eat actions with revision-bound intents, one pending action per rendered generation, account scope checks, authoritative snapshot refresh and no automatic retry of uncertain outcomes. Without adapters the panel stays read-only.
+- Five panel test bodies passed in isolated JavaScript harness; two new DOM-stub tests exercise actual private crafting and survival ledger functions, including cooked fish material debit, hunger recovery, duplicate clicks, station denial and stale scope. Native Node workflow explicitly runs all four crafting/survival/meal/panel suites. Fresh exact CI pending.
+- No public page imports, actual browser/terrain binding, live account transport, production inventory or financial effects. The scope passed to an adapter is only a local correlation hint; trusted owner and station proofs remain required. Actual browser and server integration still required. Next verify native CI and bind private authenticated station interactions before public activation.
+
+
 ## Phase 06 main-based Living World consolidation — 2026-11-28 PHT
 
 - Consolidates 15 exact Game source/test blobs from #1127 (lease-bound campsite/weather including #1126 and #1114/#1116/#1118/#1119/#1120), #1121 wildlife, #1122 player resources, #1123 regional participation, and #1124 professions onto main `045f7667fc2dd3dea771c44b7d4df33071544d76`. Verified existing regional-event and mastery source/test blobs on main were unchanged from candidate bases; remaining source/test paths and the new workflow were absent on inspected main. Preserves latest development record and unrelated files.
