@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## Phase 06 private optional profession profiles — 2026-11-28 PHT
+
+- R8.7: extend the existing mastery ledger with an account-bound optional selection of any of eight professions (blacksmith, fisherman, farmer, hunter, cook, explorer, merchant, treasure hunter). Selections are independent, reversible, persisted with an expected revision, and do not assign a class or grant XP, perks, currency or items.
+- Read-only related-skill projections use existing persisted mastery and rank boundaries in the same transaction. The provisional mappings express skill affinities only, not validated profession-specific progression: combat is not hunting, crafting is not cooking or commerce, and merchant has no direct skill mapping yet. Every profile explicitly reports profession activity integration as false.
+- Nine isolated JavaScript regression scenarios passed (six inherited plus three new), including multi-selection, restart, owner isolation, unchanged mastery, concurrent revision conflict, corrupt preferences, revocation and ambiguous write recovery. Native Node and fresh exact CI pending. Source/test checkpoint `10ae0205629d66504b6181c16c5331edf7db29c6`.
+- Next integrate validated profession-specific activities and review mappings with actual crafting, farming, wildlife, exploration and trading authority. Add a private responsive profession profile and real player acceptance only after transport and authority gates; no real financial trade. Continue independent game tasks while gated.
+
+
 ## Phase 05 private mastery inspection candidate — 2026-11-28 PHT
 
 - Add a private, read-only, owner-bound projection of all ten persisted skills and their derived ranks. It does not provision progress, take a client-selected account, or grant credit. Every asynchronous storage read rechecks the room-resolved owner; malformed records and ambiguous storage fail closed.
