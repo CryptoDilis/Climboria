@@ -1,4 +1,4 @@
-// Base V3 tokenomics UI; prior-holder protection without historical mint display.
+// Base V4 tokenomics UI; prior-holder protection without historical mint display.
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 const MINT='9eSDKvWPwLV3h94aacf1C8EBgftw1A69U4X88Sktpump',base='http://127.0.0.1:4173/';
@@ -14,14 +14,14 @@ try{
    const primary=page.locator('#climb-base-transition'),notice=page.locator('#climb-token-record'),utility=page.locator('.climb-token-utility');
    assert.equal(await primary.count(),1);assert.equal(await notice.count(),1);assert.equal(await utility.count(),1);
    assert.match(await primary.innerText(),/Not yet published/);assert.match(await primary.innerText(),/888,888,888 CLIMB/);assert.match(await primary.innerText(),/Not open/);
-   assert.match(await notice.innerText(),/first official public retirement announcement/);
+   assert.match(await notice.innerText(),/first official public retirement announcement/);assert.match(await notice.innerText(),/No automatic CLIMB rewards/);assert.match(await notice.innerText(),/3,111,111\.108 CLIMB/);assert.match(await notice.innerText(),/59,111,111\.052 CLIMB/);
    assert.match(await notice.innerText(),/Purchases after that announcement will not qualify/);
    assert.match(await notice.innerText(),/exact UTC publication time, finalized snapshot/);
    assert.match(await notice.innerText(),/No conversion rate or allocation is guaranteed/);
    assert.match(await notice.innerText(),/may still exist and trade independently/);
    assert.equal(await primary.locator('a[href="/whitepaper/#economy"]').count(),1);
-   assert.equal(await primary.locator("#climb-v3-allocations .climb-token-fact").count(),7);
-   assert.equal(await notice.locator("#climb-v3-marketing .climb-token-fact").count(),4);
+   assert.equal(await primary.locator("#climb-v4-allocations .climb-token-fact").count(),8);
+   assert.equal(await notice.locator("#climb-v4-community .climb-token-fact").count(),4);
    assert.equal(await page.locator('#climbOfficialCa,#copyClimbCa,#climbSupplyPanel,#climbSupplyRefresh,script[src="/climb-token-supply.js"]').count(),0);
    assert.ok(!(await page.content()).includes(MINT));assert.equal(await page.locator('a[href*="pump.fun/coin/"],a[href*="solscan.io/token/"]').count(),0);
    assert.match(await utility.innerText(),/NOT YET LIVE/);
@@ -56,8 +56,8 @@ try{
     assert.ok(!(await page.content()).includes(MINT));
     assert.match(await legacy.innerText(),/Prior-holder notice/);assert.match(await planned.innerText(),/888,888,888 CLIMB/);
     assert.match(await legacy.innerText(),/not a supply-conserving bridge/);
-    assert.equal(await page.locator("#climb-v3-allocations tbody tr").count(),7);
-    assert.equal(await page.locator("#climb-v3-marketing tbody tr").count(),4);
+    assert.equal(await page.locator("#climb-v4-allocations tbody tr").count(),8);
+    assert.equal(await page.locator("#climb-v4-community tbody tr").count(),4);
     assert.match(await legacy.innerText(),/Purchases after that announcement will not qualify/);
     assert.equal(await legacy.locator('a[href*="solscan.io/token/"]').count(),0);assert.equal(await legacy.locator('a[href*="pump.fun"]').count(),0);
     const boxes=await page.evaluate(()=>({width:document.documentElement.clientWidth,cards:[...document.querySelectorAll('.token-record')].map(e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}})}));
