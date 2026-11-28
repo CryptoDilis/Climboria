@@ -8,6 +8,7 @@ import { Miniflare } from 'miniflare';
 const storageDirectory = await mkdtemp(join(tmpdir(), 'climboria-fixture-sqlite-'));
 let runtime;
 let fixture;
+let expeditionFixture;
 
 async function start() {
   runtime = new Miniflare({
@@ -20,6 +21,7 @@ async function start() {
   });
   const namespace = await runtime.getDurableObjectNamespace('FIXTURE');
   fixture = namespace.get(namespace.idFromName('combined-private-fixture'));
+  expeditionFixture = namespace.get(namespace.idFromName('expedition-private-fixture'));
 }
 
 async function request(path, now) {
@@ -30,8 +32,29 @@ async function request(path, now) {
   return response.json();
 }
 
+async function expedition(path, now, revision = 0, inventoryRevision = 0) {
+  const url = new URL('expedition-' + path, 'https://private-fixture.internal/');
+  url.searchParams.set('now', now);
+  url.searchParams.set('revision', revision);
+  url.searchParams.set('inventoryRevision', inventoryRevision);
+  const response = await expeditionFixture.fetch(url);
+  assert.equal(response.status, 200, path);
+  return response.json();
+}
+
 try {
   await start();
+  assert.equal((await runtime.dispatchFetch('http://localhost/expedition-prepare?now=1000')).status, 404);
+  assert.equal((await expedition('prepare', 1000)).ok, true);
+  const cooked = await Promise.all([expedition('cook', 1100), expedition('cook', 1100)]);
+  assert.equal(cooked.filter(r => r.ok && r.stock['cooked-fish'] === 1).length, 1);
+  assert.equal(cooked.filter(r => r.reason === 'crafting-revision-changed').length, 1);
+  assert.equal((await expedition('extinguish', 1200, 2)).ok, true);
+  assert.equal((await expedition('cook', 1200, 1)).reason, 'campfire-not-lit');
+  const refueled = await Promise.all([expedition('refuel', 1300, 3, 1), expedition('refuel', 1300, 3, 1)]);
+  assert.equal(refueled.filter(r => r.ok).length, 1);
+  assert.equal(refueled.filter(r => r.reason === 'campsite-revision-changed').length, 1);
+  assert.deepEqual((await expedition('stock', 1300)).stock, { fiber: 0, wood: 2, 'raw-fish': 2, 'repair-kit': 0, 'cooked-fish': 1 });
   assert.equal((await runtime.dispatchFetch('http://localhost/open-drop?now=1000')).status, 404);
   assert.deepEqual(await request('open-drop', 1000), { ok: true, expiresAtMs: 91000 });
 
@@ -69,6 +92,21 @@ try {
   await runtime.dispose();
   runtime = undefined;
   await start();
+
+  assert.equal((await expedition('camp', 1301)).slots[0].fireLit, true);
+  assert.equal((await expedition('stock', 1301)).revision, 2);
+  assert.equal((await expedition('cook', 1301, 0)).reason, 'crafting-revision-changed');
+  assert.equal((await expedition('refuel', 1301, 3, 1)).reason, 'campsite-revision-changed');
+  assert.equal((await expedition('cook', 1301, 2)).ok, true);
+  assert.deepEqual((await expedition('stock', 1301)).stock, { fiber: 0, wood: 1, 'raw-fish': 1, 'repair-kit': 0, 'cooked-fish': 2 });
+  assert.equal((await expedition('cook', 121300, 3)).reason, 'campfire-not-lit');
+  await runtime.dispose();
+  runtime = undefined;
+  await start();
+  assert.equal((await expedition('cook', 121299, 3)).reason, 'campfire-not-lit');
+  assert.equal((await expedition('stock', 121300)).revision, 3);
+  assert.equal((await expedition('stock', 121300)).stock.wood, 1);
+  assert.equal((await runtime.dispatchFetch('http://localhost/expedition-cook')).status, 404);
 
   assert.equal((await request('record-skill', 1031)).reason, 'activity-already-recorded');
   assert.equal((await request('cave', 1029)).event, null);
