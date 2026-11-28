@@ -161,7 +161,7 @@ jobs:
           assert sum(Decimal(x) for x in ("106666666.56","71111111.04","53333333.28","35555555.52")) == allocations[0]
           assert Decimal("3111111.108") + Decimal("59111111.052") == allocations[5]
           dashboard = Path("transparency/index.html").read_text(encoding="utf-8")
-          assert dashboard.count("<details>") == 8 and "TRACKING OFF" in dashboard
+          assert dashboard.count('<details id="allocation-') == 8 and "TRACKING OFF" in dashboard
           assert "TESTNET_NO_GO / MAINNET_NO_GO" in dashboard
           assert "3,111,111.108 CLIMB" in dashboard and "59,111,111.052 CLIMB" in dashboard
           assert "Unavailable" in dashboard and "Not yet published" in dashboard
