@@ -352,6 +352,56 @@ contract SafeReserveGuardTest {
         vm.warp(start+2 days);v.execute(id);
         require(token.balanceOf(PAYEE)==10&&token.totalSupply()==SUPPLY);
     }
+    // Scope boundary: reward nomination is not Safe-owner nomination.
+    // Characterize the existing policy; do not count revival as a fixed security invariant.
+    function testCharacterizeRewardNominationCancellationExpenseRevival() public {
+        _bind();
+        for(uint256 i=3;i<=5;i++)_quorum(_propose(1,i,bytes32(i),bytes32(i)));
+        _quorum(abi.encodeCall(guard.revokeRewardSigner,(1,1)));
+        _quorum(abi.encodeCall(guard.scheduleRewardSigner,(1,2,PAYEE,block.timestamp,block.timestamp+1 hours)));
+        require(guard.expenseContext(PAYEE)==0&&!guard.expenseRecipientAllowed(PAYEE));
+        vm.warp(start+2 days);
+        for(uint256 i=3;i<=5;i++){
+            V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
+            bytes32 id=_id(1,i,bytes32(i),bytes32(i));
+            vm.expectRevert();v.execute(id);
+            require(v.registry().consumedBy(bytes32(i))==address(0)&&v.totalSpent()==0);
+        }
+        _quorum(abi.encodeCall(guard.cancelRewardSigner,(1,2,1)));
+        require(guard.epoch()==1&&guard.expenseContext(PAYEE)==0&&guard.expenseRecipientAllowed(PAYEE));
+        for(uint256 i=3;i<=5;i++){
+            V3EpochSpendFixture v=V3EpochSpendFixture(successor.vaults(i));
+            bytes32 id=_id(1,i,bytes32(i),bytes32(i));
+            v.execute(id);
+            require(v.registry().consumedProposal(bytes32(i))==id&&v.totalSpent()==10);
+        }
+        require(token.balanceOf(PAYEE)==30&&token.totalSupply()==SUPPLY);
+    }
+    function testExpenseAndReleaseExactSelectorLengthBoundary() public {
+        _bind();
+        uint256 t=block.timestamp;
+        uint256 n=wallet.nonce();
+        bytes memory old=abi.encodeWithSignature("proposeExpense(uint256,uint256,address,uint256,bytes32,uint256,bytes32,uint256,uint256)",uint256(1),uint256(3),PAYEE,uint256(10),bytes32("E"),uint256(0),bytes32("N"),t,t+1 hours);
+        require(old.length==292);
+        _reject(address(guard),old,3);
+        bytes memory correct=_propose(1,3,"E","N");
+        require(correct.length==324);
+        _reject(address(guard),abi.encodePacked(correct,bytes32(0)),3);
+        bytes memory shortCall=abi.encodeWithSelector(guard.proposeExpense.selector,uint256(1),uint256(3),PAYEE,uint256(10),bytes32("E"),uint256(0),bytes32("N"),uint256(0),t);
+        _reject(address(guard),shortCall,3);
+        require(wallet.nonce()==n&&guard.expenseContext(PAYEE)==0&&!guard.transactionActive());
+        _quorum(correct);
+        _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,t,t+1 hours)));
+        _quorum(abi.encodeCall(guard.cancelRotation,(1,1)));
+        bytes memory release=abi.encodeCall(guard.releaseExpenseRecipient,(1,PAYEE,1,t,t+1 hours));
+        require(release.length==164);
+        n=wallet.nonce();
+        _reject(address(guard),abi.encodePacked(release,bytes32(0)),3);
+        _reject(address(guard),abi.encodeWithSelector(guard.releaseExpenseRecipient.selector,uint256(1),PAYEE,uint256(1),t),3);
+        require(wallet.nonce()==n&&guard.expenseContext(PAYEE)==1&&!guard.transactionActive());
+        _quorum(release);
+        require(guard.expenseContext(PAYEE)==2&&guard.expenseRecipientAllowed(PAYEE));
+    }
     function testPlainReservePendingOwnerBlocksRewardSchedule() public {
         _bind();
         _quorum(abi.encodeCall(guard.scheduleRotation,(1,D,E,PAYEE,block.timestamp,block.timestamp+1 hours)));
