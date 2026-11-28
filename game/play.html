@@ -1940,8 +1940,13 @@ function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.8,P.z+Math.cos(cameraYaw)*targetCameraDistance);cam.lookAt(P.x,P.y+.9,P.z);
  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='awaiting-saved-glb';}
  free(true)}
+function resetRepositionLocomotion(){
+ Object.assign(P,{mode:'walk',moveTarget:null,vy:0,swim:false,swimDepth:0,
+  waterBodyId:null,jumpState:'grounded',jumpStateTimer:0,jumpTrace:null});
+}
 function tp(x,z,yaw){
- P.x=x;P.z=z;P.yaw=yaw;cameraYaw=yaw;cameraPitch=-.05;P.vy=0;P.mode='walk';
+ P.x=x;P.z=z;P.yaw=yaw;cameraYaw=yaw;cameraPitch=-.05;
+ resetRepositionLocomotion();
  P.y=groundAt(x,z)+1.75;free(true);updateChunks(x,z,200);
  // An instant local map teleport cannot be accepted as normal 28 m/s
  // multiplayer movement. Invalidate the old room position; the registered
@@ -2228,8 +2233,8 @@ function restoreExplorerPosition(position){
  // containing only X/Z still fall back to the current procedural ground.
  const savedY=position?.y==null?NaN:Number(position.y);
  P.x=x;P.z=z;P.y=Number.isFinite(savedY)&&savedY>=-200&&savedY<=2000?
-  savedY:groundAt(x,z)+1.75;P.yaw=yaw;P.vy=0;
- P.mode='walk';P.moveTarget=null;P.swim=false;P.swimDepth=0;P.waterBodyId=null;
+  savedY:groundAt(x,z)+1.75;P.yaw=yaw;
+ resetRepositionLocomotion();
  cameraYaw=yaw;cameraPitch=-.08;camY=null;free(true);
  cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.8,P.z+Math.cos(cameraYaw)*targetCameraDistance);
  cam.lookAt(P.x,P.y+.9,P.z);updateChunks(P.x,P.z,120);
@@ -2811,6 +2816,9 @@ function deathLootLifecycleAudit(){
   inventory.splice(0,inventory.length,{name:'Smoke Recovery Relic',qty:2});
   saveInventory();renderInventory();
   P.mode='walk';P.inv=0;P.hp=1;P.x=125;P.z=125;P.y=groundAt(P.x,P.z)+1.75;
+  const {jumpCount,landCount}=P;
+  Object.assign(P,{jumpState:'descent',jumpStateTimer:.2,jumpTrace:{jumpCount},
+   vy:-3,swim:true,swimDepth:1,waterBodyId:'smoke',moveTarget:{x:1,z:1}});
   hurt(1,'Smoke death with carried loot');
   const dropped=deathLootBag?{
    x:deathLootBag.x,z:deathLootBag.z,stacks:deathLootBag.items.length,
@@ -2818,7 +2826,11 @@ function deathLootLifecycleAudit(){
    markerVisible:deathLootBag.group.parent===scene
   }:null;
   const inventoryCleared=inventory.length===0;
+  updatePlayerWaterState(P,null,groundAt(P.x,P.z),.016);
   const respawned=P.hp===P.maxHp&&P.x===0&&P.z===-30;
+  const locomotionReset=P.jumpState==='grounded'&&P.jumpStateTimer===0&&P.jumpTrace===null&&
+   P.vy===0&&!P.swim&&P.swimDepth===0&&P.waterBodyId===null&&P.moveTarget===null&&
+   P.jumpCount===jumpCount&&P.landCount===landCount;
   const mapAfterDeath=deathLootMapMarkerAudit();
   updateDeathLootBag();
   const farDirectionPrompt=deathLootPrompt.textContent;
@@ -2859,14 +2871,14 @@ function deathLootLifecycleAudit(){
    localStorage.getItem(deathLootStorageKey())===null;
   const mapAfterExpiry=deathLootMapMarkerAudit();
   return {ok:!!dropped&&dropped.stacks===1&&dropped.qty===2&&dropped.markerVisible&&
-    dropped.ttl>0&&dropped.ttl<=180000&&inventoryCleared&&respawned&&persisted&&
+    dropped.ttl>0&&dropped.ttl<=180000&&inventoryCleared&&respawned&&locomotionReset&&persisted&&
     survivesUnload&&isolated&&rehydrated&&recovered&&recoveredStored&&
     clearedOnRecovery&&expired&&droppedEvents===2&&recoveredEvents===1&&
     mapAfterDeath.visible&&mapAfterDeath.orange&&mapAfterDeath.x===125&&mapAfterDeath.z===125&&
     mapAfterDeath.legend.includes('Orange')&&
     mapAfterReload.visible&&mapAfterReload.orange&&
     !mapAfterRecovery.visible&&!mapAfterExpiry.visible&&farDirectionVisible&&nearDirectionVisible&&outsideRangeRejected,
-   dropped,inventoryCleared,respawned,persisted,survivesUnload,isolated,rehydrated,
+   dropped,inventoryCleared,respawned,locomotionReset,persisted,survivesUnload,isolated,rehydrated,
    recovered,recoveredStored,clearedOnRecovery,expired,droppedEvents,recoveredEvents,hadPriorDeathLoot,
    mapAfterDeath,mapAfterReload,mapAfterRecovery,mapAfterExpiry,
    farDirectionPrompt,farDirectionVisible,nearDirectionPrompt,nearDirectionVisible,outsideRangePrompt,outsideRangeRejected};
