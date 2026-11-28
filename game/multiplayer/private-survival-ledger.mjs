@@ -64,5 +64,68 @@ export function createPrivateSurvivalLedger({roomId,storage,resolveOwner,resolve
    return view(next);
   });
  }
- return Object.freeze({inspect,recordActiveInterval,reviewedForProduction:false});
+
+ const pantryKey=accountId=>'game:preview:survival-pantry:v1:'+ROOM+':'+accountId;
+ const MAX_STOCK=20, RECOVERY=2000;
+ function validPantry(p,accountId) {
+  return p&&p.version===1&&p.accountId===accountId&&
+   integer(p.startFood,0,MAX_STOCK)&&integer(p.startWater,0,MAX_STOCK)&&
+   integer(p.food,0,p.startFood)&&integer(p.water,0,p.startWater)&&
+   p.revision===p.startFood+p.startWater-p.food-p.water;
+ }
+ function supplies(p) {return {food:p.food,water:p.water,revision:p.revision};}
+ // Trusted fixture setup only; provisioning cannot replenish existing stock.
+ async function provisionSupplies(accountId,food,water) {
+  if(!idOk(accountId)||!integer(food,0,MAX_STOCK)||!integer(water,0,MAX_STOCK))
+   return deny('invalid-survival-supplies');
+  return transact(async tx=>{
+   const key=pantryKey(accountId), prior=await tx.get(key);
+   if(prior!==undefined) return deny(validPantry(prior,accountId)?'supplies-already-provisioned':'invalid-survival-supplies-state');
+   const p={version:1,accountId,startFood:food,startWater:water,food,water,revision:0};
+   await tx.put(key,p);
+   return {ok:true,...supplies(p)};
+  });
+ }
+ async function inspectSupplies(sessionId) {
+  if(!idOk(sessionId))return deny('invalid-survival-intent');
+  return transact(async tx=>{
+   const accountId=ownerFor(sessionId);
+   if(!accountId)return deny('unverified-survival-owner');
+   const p=await tx.get(pantryKey(accountId));
+   if(ownerFor(sessionId)!==accountId)return deny('unverified-survival-owner');
+   if(p===undefined)return deny('supplies-not-provisioned');
+   return validPantry(p,accountId)?{ok:true,...supplies(p)}:deny('invalid-survival-supplies-state');
+  });
+ }
+ // One server-defined ration, consumed atomically with its recovery effect.
+ // Only a fixed item selector and expected revision come from the intent.
+ async function consumeSupply(sessionId,item,expectedRevision) {
+  if(!idOk(sessionId)||(item!=='food'&&item!=='water')||!integer(expectedRevision,0,2*MAX_STOCK))
+   return deny('invalid-survival-intent');
+  return transact(async tx=>{
+   const accountId=ownerFor(sessionId);
+   if(!accountId)return deny('unverified-survival-owner');
+   const key=keyFor(accountId), stockKey=pantryKey(accountId);
+   const state=readState(await tx.get(key),accountId);
+   if(ownerFor(sessionId)!==accountId)return deny('unverified-survival-owner');
+   if(!state)return deny('invalid-survival-state');
+   const p=await tx.get(stockKey);
+   if(ownerFor(sessionId)!==accountId)return deny('unverified-survival-owner');
+   if(p===undefined)return deny('supplies-not-provisioned');
+   if(!validPantry(p,accountId))return deny('invalid-survival-supplies-state');
+   if(p.revision!==expectedRevision)return deny('supplies-revision-changed');
+   if(!p[item])return deny('insufficient-survival-supplies');
+   const meter=item==='food'?'hunger':'thirst';
+   if(state[meter]===MAX)return deny('survival-meter-full');
+   const next={...state,[meter]:Math.min(MAX,state[meter]+RECOVERY)};
+   const nextPantry={...p,[item]:p[item]-1,revision:p.revision+1};
+   // Both writes share a transaction. Throwing must roll back both writes.
+   await tx.put(key,next);
+   if(ownerFor(sessionId)!==accountId)throw Error('survival owner changed during write');
+   await tx.put(stockKey,nextPantry);
+   if(ownerFor(sessionId)!==accountId)throw Error('survival owner changed during write');
+   return {...view(next),supplies:supplies(nextPantry)};
+  });
+ }
+ return Object.freeze({inspect,recordActiveInterval,provisionSupplies,inspectSupplies,consumeSupply,reviewedForProduction:false});
 }

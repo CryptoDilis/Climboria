@@ -3775,3 +3775,12 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Added isolated transactional hunger/thirst state using only room-verified, contiguous active intervals (1–60 seconds). Inspection is owner-bound and read-only; elapsed wall time, reconnects and offline time do not cause catch-up depletion. Fixture rates are explicit, bounded and not production balance decisions. No damage, item consumption, rewards, public route or gameplay activation.
 - Three focused JavaScript regression scenarios passed in the isolated development harness: initial/read-only/account isolation and restart; concurrent replay, interval bounds, sequence gaps and clamping; revoked ownership, mutated proof, corrupt state and ambiguous commits. Exact Node and broader repository CI pending.
 - Next integrate reviewed server active-time receipts and atomic inventory-backed food/water recovery in a private room; production tuning, physical device and real-player acceptance remain separate gates.
+
+
+## Phase 06 private survival recovery candidate — 2026-11-28 PHT
+
+- Stacked on exact private survival ledger candidate #1100. Added bounded synthetic food/water pantry, trusted one-time provisioning, owner-bound read-only inspection, and atomic ration consumption with capped hunger/thirst recovery. Expected pantry revision rejects stale and duplicate consumption; no client amount, target account, or recovery value accepted. No real items or live gameplay grants.
+- Added four focused regression tests for concurrent/replayed consumption, cross-account access, full/empty meters, revoked session, ambiguous commit, transaction rollback on second write, and pantry conservation. Exact CI pending; do not merge before #1100 and required checks. Fixture values are not production balance.
+- Next: verified private activity/inventory integration and cooking recipes; retain physical/actual-player and public release gates.
+
+- Extended the existing CI-only workerd/SQLite fixture with survival provisioning, active-interval depletion, concurrent consumption, and restart assertions covering stock conservation, persisted meters, replay, and no offline catch-up. The public fixture router must reject access. Exact updated-head runtime CI is pending; earlier parent checks are not evidence for this new coverage.

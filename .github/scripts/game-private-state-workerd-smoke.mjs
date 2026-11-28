@@ -48,6 +48,14 @@ try {
   assert.equal(repairs.filter(result => result.ok && result.remainingRepairKits === 2).length, 1);
   assert.equal(repairs.filter(result => result.reason === 'equipment-maintenance-changed').length, 1);
 
+  assert.equal((await runtime.dispatchFetch('http://localhost/survival-provision')).status, 404);
+  assert.deepEqual(await request('survival-provision', 1000), { ok: true, food: 2, water: 1, revision: 0 });
+  assert.equal((await request('survival-active', 1000)).hunger, 7000);
+  const eaten = await Promise.all([request('survival-eat', 1000), request('survival-eat', 1000)]);
+  assert.equal(eaten.filter(result => result.ok && result.hunger === 9000).length, 1);
+  assert.equal(eaten.filter(result => result.reason === 'supplies-revision-changed').length, 1);
+  assert.deepEqual(await request('survival-stock', 1000), { ok: true, food: 1, water: 1, revision: 1 });
+
   const first = await request('cave', 1000);
   assert.equal(first.event.startsAtMs, 1000);
   assert.equal((await request('cave', 1030)).event, null);
@@ -66,13 +74,19 @@ try {
   assert.equal((await request('wear-equipment', 1031)).reason, 'equipment-use-already-recorded');
   assert.equal((await request('repair-equipment', 1031)).reason, 'equipment-maintenance-changed');
 
+  assert.deepEqual(await request('survival-inspect', 1000000000), { ok: true, hunger: 9000, thirst: 6400, maximum: 10000, sequence: 1 });
+  assert.deepEqual(await request('survival-stock', 1000000000), { ok: true, food: 1, water: 1, revision: 1 });
+  assert.equal((await request('survival-active', 1000000000)).reason, 'active-interval-already-recorded');
+  assert.equal((await request('survival-eat', 1000000000)).reason, 'supplies-revision-changed');
+  assert.equal((await request('survival-provision', 1000000000)).reason, 'supplies-already-provisioned');
+
   const claims = await Promise.all([request('claim-drop', 90999), request('claim-drop', 90999)]);
   assert.equal(claims.filter(result => result.ok).length, 1);
   assert.equal(claims.filter(result => result.reason === 'drop-already-claimed').length, 1);
   assert.equal((await request('claim-drop', 91000)).reason, 'drop-expired');
   assert.equal((await request('open-drop', 91000)).reason, 'drop-expired');
 
-  console.log('Verified private drop expiry, mastery replay protection, equipment costs and repair, and regional event expiry across a local workerd restart');
+  console.log('Verified private drop expiry, mastery replay protection, equipment costs and repair, regional event expiry, and atomic survival consumption across a local workerd restart');
 } finally {
   try {
     await runtime?.dispose();
