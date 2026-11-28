@@ -1,5 +1,13 @@
 # Climboria Game Development Record
 
+## Phase 06 private durable Expedition Camp cooking — 2026-11-28 PHT
+
+- Stacked on #1138 exact head `51f69af85d7e718c8f19a640f77f20703ddd181d` (five exact CI workflows successful, including [native station CI](https://github.com/CryptoDilis/Climboria/actions/runs/46136281921)). Compared current main `a89ed624a7813c076be104cf4079ba396ab4d47c` and parent: campsite, crafting, terrain and grounded movement source blobs match. Parent merge remains open.
+- Composes the bounded authored Expedition Camp station with one explicitly mapped private forest-camp lease, persisted fire state and existing conserved refueling. Crafting transaction observes and revalidates actual durable fire and owner/proximity, rather than relying on a standalone lit callback. Denial due to observed expiry persists the registry clock; a changed fire deadline during inventory write rolls back the action. Legacy standalone crafting fixtures retain their existing optional configuration.
+- Four isolated JavaScript regression bodies passed using actual fetched source modules: persisted ignition/refuel and concurrent cooking, observed expiry across fresh composition and rollback, atomic material rollback on fire expiry, owner reassignment and downed rejection. Test checkpoint `6f177eefb5471fbc78ef785e31d997ebaa04eb5a`. Native station CI extended; fresh exact CI pending.
+- No public world land claim, registered-player transport, full collider coverage, actual protected edge/browser acceptance or real inventory effects. The fixture mapping is not a production placement decision. Failed-transaction clock rollback across process restart remains an open monotonic-clock gate. Next reconcile parent/main and run native CI; verify local workerd SQLite restart, then protected station/browser acceptance before any public activation.
+
+
 ## Phase 06 private authored Expedition Camp station authority — 2026-11-28 PHT
 
 - On inspected main `2a09d0544ef95ba579e1d34b07514527c92524c3`, merged Living World #1128, crafting #1130, playable hearth #1132, conserved refuel #1134, shelter #1135 and checkpoint #1136 were verified. #1137 regional receipt time, #1108 mastery panel and #1106 crafted repairs were still open at inspection.
