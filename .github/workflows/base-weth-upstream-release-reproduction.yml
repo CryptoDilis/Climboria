@@ -1,0 +1,38 @@
+name: Base DEX WETH Upstream Release Reproduction
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/base-weth-upstream-release-reproduction.mjs"
+      - ".github/workflows/base-weth-upstream-release-reproduction.yml"
+permissions:
+  contents: read
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: ethereum-optimism/optimism
+          ref: a12a09f7000ff785a4058998e09b366cbe5a3ed2
+          path: official-op-contracts
+          persist-credentials: false
+          sparse-checkout: |
+            op-bindings/bindings/weth9_more.go
+            packages/contracts-bedrock/contracts/vendor/WETH9.sol
+            packages/contracts-bedrock/package.json
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --prefix .github/scripts --no-save --package-lock=false --ignore-scripts --no-audit --no-fund solc@0.5.17
+      - run: |
+          node --check .github/scripts/base-weth-upstream-release-reproduction.mjs
+          npm pack @eth-optimism/contracts-bedrock@0.14.0 --ignore-scripts --pack-destination "$RUNNER_TEMP" --silent
+          tar -xOzf "$RUNNER_TEMP/eth-optimism-contracts-bedrock-0.14.0.tgz" package/artifacts/contracts/vendor/WETH9.sol/WETH9.json > "$RUNNER_TEMP/weth9-artifact.json"
+          node .github/scripts/base-weth-upstream-release-reproduction.mjs "$RUNNER_TEMP/weth9-artifact.json"
+          grep -Fqx 'export const BASE_EXECUTION_ENABLED=false;' dex/base-execution/intent-policy.mjs
