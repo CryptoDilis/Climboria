@@ -209,6 +209,13 @@ returns HTTP 404.
 - Fishing reports a catch and emits the catch event only after adding the item. An existing stack can still grow in a full backpack.
 - Local Chromium verified a blocked chest, a successful retry, chest respawn, and both blocked and stackable catches. All 433 scoped Game tests passed locally.
 
+## Phase 06 playable Expedition Camp fire — 2026-11-28 PHT
+
+- At the existing Expedition Camp hearth, E and mobile USE now light or extinguish the visible flame and point light. A nearby grounded player sees the action beside the camp. Chest and dropped-loot actions retain priority.
+- The hearth starts unlit with 120 seconds of session-local simulation fuel. A lit fire burns fuel during visible gameplay, can be put out to preserve the remainder, and goes dark when empty. The existing camp meshes are reused.
+- Local Chromium verified E and touch USE in the rendered Game. Focused tests cover fuel exhaustion, hidden-tab pause, range, swim and elevation rejection, and prompt priority.
+- Shared lease placement and refueling remain gated on an authenticated station and authoritative inventory transaction. This hearth consumes its preset local fuel and grants no survival recovery, items or profession progress.
+
 ## Phase 03 fishing cast lifecycle — 2026-11-28 PHT
 
 - An active cast is tied to its fishing spot. Leaving the interaction range or entering swimming cancels it before a reward can resolve. Respawn and position restore clear the cast along with the old movement state.
