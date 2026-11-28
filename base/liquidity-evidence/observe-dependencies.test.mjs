@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CANDIDATES, observe, makeRpc } from "./observe-dependencies.mjs";
+import { CANDIDATES, observe, makeRpc, endpoint } from "./observe-dependencies.mjs";
 
 const hash="0x"+"a".repeat(64), other="0x"+"b".repeat(64);
-const block=(number="0x10",h=hash)=>({number,hash:h,timestamp:"0x6b123456"});
+const block=(number="0x10",h=hash)=>({number,hash:h,timestamp:"0x6b123456",stateRoot:"0x"+"c".repeat(64)});
 function mock(chain="8453",protocol="v2",override=()=>undefined){
   const c=CANDIDATES[chain+":"+protocol],calls=[];
   return {calls,rpc:async(method,params)=>{
@@ -36,6 +36,9 @@ for(const [chain,protocol] of [["8453","v2"],["8453","v3"],["84532","v3"]]){
     assert.equal(result.sourceRuntimeMatch,"NOT_VERIFIED");
     assert.equal(a.calls.length,8);assert.equal(b.calls.length,8);
     assert.equal(Object.keys(result.contracts).length,3);
+    assert.equal(result.stateRoot,"0x"+"c".repeat(64));
+    assert.equal(result.contracts.factory.runtimeHex,"6000");
+    assert.equal(result.contracts.factory.byteLength,2);
   });
 }
 test("select lower finalized-reported tip",async()=>{
@@ -61,4 +64,46 @@ test("forbid writes before network request",async()=>assert.rejects(makeRpc("htt
 test("reject non-HTTPS and embedded credentials",()=>{
   assert.throws(()=>makeRpc("http://example.invalid","A"),/INVALID_ENDPOINT/);
   assert.throws(()=>makeRpc("https://u:p@example.invalid","A"),/INVALID_ENDPOINT/);
+});
+
+test("reject same block hash with inconsistent state root",async()=>{
+  const b=mock("8453","v2",(m,p)=>m==="eth_getBlockByNumber"&&p[0]==="0x10"?{...block(),stateRoot:other}:undefined);
+  await assert.rejects(run(mock(),b),/BLOCK_MISMATCH/);
+});
+test("reject missing state root",async()=>{
+  const b=mock("8453","v2",m=>m==="eth_getBlockByNumber"?{number:"0x10",hash,timestamp:"0x6b123456"}:undefined);
+  await assert.rejects(run(mock(),b),/INVALID_BLOCK/);
+});
+test("reject finalized tip timestamp inconsistent with exact block",async()=>{
+  const b=mock("8453","v2",(m,p)=>m==="eth_getBlockByNumber"&&p[0]==="finalized"?{...block(),timestamp:"0x6b123457"}:undefined);
+  await assert.rejects(run(mock(),b),/FINALIZED_TIP_MISMATCH/);
+});
+test("canonicalize equivalent endpoint spelling",()=>{
+  assert.equal(endpoint("https://EXAMPLE.invalid:443","A").href,endpoint("https://example.invalid/","B").href);
+});
+test("bounded transport and strict envelope",async(t)=>{
+  const original=globalThis.fetch;
+  t.after(()=>{globalThis.fetch=original});
+  let reply;
+  globalThis.fetch=async(url,options)=>{
+    assert.equal(options.redirect,"error");
+    const req=JSON.parse(options.body);
+    return reply(req);
+  };
+  const rpc=makeRpc("https://example.invalid","A");
+  const json=obj=>new Response(JSON.stringify(obj));
+  reply=req=>json({jsonrpc:"2.0",id:req.id,result:"0x2105"});
+  assert.equal(await rpc("eth_chainId",[]),"0x2105");
+  reply=req=>json({jsonrpc:"2.0",id:req.id,result:"0x2105",error:null});
+  await assert.rejects(rpc("eth_chainId",[]),/INVALID_RESPONSE/);
+  reply=req=>json({jsonrpc:"2.0",id:req.id+1,result:"0x2105"});
+  await assert.rejects(rpc("eth_chainId",[]),/INVALID_RESPONSE/);
+  reply=req=>json({jsonrpc:"2.0",id:req.id,error:{code:-32000,message:"DO_NOT_LOG_PROVIDER_SECRET"}});
+  await assert.rejects(rpc("eth_chainId",[]),{message:"A_eth_chainId_RPC_-32000"});
+  reply=()=>new Response("{}",{headers:{"content-length":"2097153"}});
+  await assert.rejects(rpc("eth_chainId",[]),/RESPONSE_TOO_LARGE/);
+  reply=()=>new Response(new Uint8Array(2097153));
+  await assert.rejects(rpc("eth_chainId",[]),/RESPONSE_TOO_LARGE/);
+  reply=()=>new Response(new Uint8Array([255,254]));
+  await assert.rejects(rpc("eth_chainId",[]),/INVALID_JSON/);
 });
