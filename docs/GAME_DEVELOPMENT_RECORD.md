@@ -21,6 +21,17 @@
 - Add regression coverage for fresh ledger instances, independent accounts and untouched skills, session revocation/reassignment, corrupt records and storage failure. Ensure the server-authority workflow triggers on mastery source/test edits. Exact candidate CI pending; no production endpoint or player UI is authorized by this change.
 - Next verify exact CI, then integrate a reviewed private player-facing projection with real activity authority. Physical and registered-player acceptance remain external gates; continue independent Game tasks while pending.
 
+## Phase 05 private mastery presentation candidate — 2026-11-28 PHT
+
+- Stacked on exact #1098. Added a private read-only DOM panel for all ten independent ranks using a supplied authenticated snapshot reader. Fixed labels, strict payload validation and textContent avoid accepting arbitrary markup; no global level or client-side credit. Refresh clears earlier results, generation/scope checks discard late responses, and the host must call clear on session changes and dispose on teardown. No public route, gameplay wiring, auth credentials or local storage changes.
+- Three focused JavaScript harness scenarios passed (DOM fixture): ten skills, malformed/duplicate data, overlapping requests, account switch/logout, rejected request and disposal. Exact Node and actual browser acceptance pending. Next bind only to reviewed private authenticated host and test actual browser desktop/mobile layout; do not enable publicly or mark rank gameplay acceptance complete.
+
+- Added scoped high-contrast private panel CSS and Chromium CI acceptance at 1200×800 and 360×640. Tests ten actual rendered rows, readable 16px text, responsive column layout, no horizontal overflow, and logout during a pending snapshot. The route is intercepted in the browser test only; public gameplay does not load the panel or its stylesheet. Fresh exact-head browser CI pending.
+
+- Prior exact candidate `c231ce53a04f5781a5dd661697742833ac67c623` passed all five CI workflows, including Chromium panel acceptance. Reconciled with main `a995e50f2787e32e5f1b5a577967c65155b8bebc` retaining equipment panel acceptance and every existing record; fresh combined CI required.
+
+- Exact prior head `92f2c94e0aeed451c1aed9353d25affb847599a0` passed 7/7 CI workflows; reconciled with latest main `69b2cd05decc9d8c34917813867fef604abf1d49` without dropping existing Game records or equipment acceptance. Fresh CI required.
+
 ## Phase 03 hero preview gestures — 2026-11-28 PHT
 
 - Hero creation preview now rotates only from the captured primary pointer. Pinching stops rotation, uses touches that began on the canvas, and resets its zoom baseline on cancellation. Closing the editor also clears gesture state.

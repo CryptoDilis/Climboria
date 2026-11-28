@@ -94,6 +94,9 @@ jobs:
       - name: Verify private equipment panel desktop and mobile layout
         timeout-minutes: 2
         run: node .github/scripts/game-private-equipment-panel-browser.mjs
+      - name: Verify private mastery panel desktop and mobile layout
+        timeout-minutes: 2
+        run: node .github/scripts/game-private-mastery-panel-browser.mjs
       - name: Verify isolated authored combat browser controls
         timeout-minutes: 4
         run: node .github/scripts/game-authored-browser-smoke.mjs
