@@ -66,12 +66,38 @@ function summarize(block,pin,p){
  // JSON number parsing can lose precision; do not use for exact u64 accounting.
  return {slot:pin.slot,blockhash:pin.blockhash,transactionCount:block.transactions.length,failed,missingMeta,missingTokenBalanceFields,transactionsSha256:digest(block.transactions),mintMentionCandidates:hits};
 }
-async function source(url,p,fetchFn){
+// Diagnostic only: ordered transaction identifiers, without transaction decoding.
+function summarizeSignatures(block,pin,p){
+ const reject=reason=>fail(p+'_getBlock_'+reason);
+ if(!block||Object.keys(pin).some(k=>k!=='slot'&&block[k]!==pin[k]))reject('HEADER');
+ if(!Array.isArray(block.signatures)||block.signatures.length>100000||
+    Object.hasOwn(block,'transactions'))reject('TRANSACTION_SHAPE');
+ const seen=new Set();
+ for(const signature of block.signatures){
+  if(!validSignature(signature)||seen.has(signature))reject('TRANSACTION_SHAPE');
+  seen.add(signature);
+ }
+ return {slot:pin.slot,blockhash:pin.blockhash,transactionCount:block.signatures.length,
+    orderedSignaturesSha256:digest(block.signatures),orderedSignatures:block.signatures};
+}
+function validSignature(s){
+ if(typeof s!=='string'||!/^[1-9A-HJ-NP-Za-km-z]{64,88}$/.test(s))return false;
+ const alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+ let n=0n;
+ for(const c of s)n=n*58n+BigInt(alphabet.indexOf(c));
+ const leading=s.match(/^1*/)[0].length;
+ const bytes=n===0n?0:Math.ceil(n.toString(2).length/8);
+ return leading+bytes===64;
+}
+async function source(url,p,fetchFn,signaturesOnly=false){
  if(await rpc(url,1,'getGenesisHash',[],p,fetchFn)!==MAINNET_GENESIS)fail(p+'_getGenesisHash_GENESIS');
  const out=[];
  for(const [i,pin] of pins.entries()){
-  const b=await rpc(url,i+2,'getBlock',[pin.slot,{commitment:'finalized',encoding:'json',transactionDetails:'full',rewards:false,maxSupportedTransactionVersion:0}],p,fetchFn);
-  out.push(summarize(b,pin,p));
+  const config=signaturesOnly?
+   {commitment:'finalized',encoding:'json',transactionDetails:'signatures',rewards:false}:
+   {commitment:'finalized',encoding:'json',transactionDetails:'full',rewards:false,maxSupportedTransactionVersion:0};
+  const b=await rpc(url,i+2,'getBlock',[pin.slot,config],p,fetchFn);
+  out.push(signaturesOnly?summarizeSignatures(b,pin,p):summarize(b,pin,p));
  }
  return out;
 }
@@ -81,5 +107,17 @@ export async function observeBoundaryBlocks(a,b,{fetchFn=fetch}={}){
   const first=await source(a,'A',fetchFn),second=await source(b,'B',fetchFn);
   if(canonical(first)!==canonical(second))fail('SOURCE_DISAGREEMENT');
   return {status:'REPORTED_BOUNDARY_BLOCKS_ONLY',observedMint:CLIMB_SOLANA_MINT,candidateUtc:'2026-11-27T07:52:22.702Z',blocks:first,providerIndependence:'NOT_VERIFIED',digestScope:'CANONICAL_PARSED_JS_JSON_NOT_RAW_BYTES',mintMentionCoverage:'NOT_CERTIFIED',eligibility:'NOT_CERTIFIED',authorization:false};
+ }catch(e){fail(boundaryFailureCode(e));}
+}
+
+export async function observeBoundarySignatures(a,b,{fetchFn=fetch}={}){
+ try{
+  try{assertDistinctRpcEndpoints(a,b);}catch{fail('CONFIG_INVALID');}
+  const first=await source(a,'A',fetchFn,true),second=await source(b,'B',fetchFn,true);
+  if(canonical(first)!==canonical(second))fail('SOURCE_DISAGREEMENT');
+  return {status:'REPORTED_BOUNDARY_SIGNATURES_ONLY_NO_GO',observedMint:CLIMB_SOLANA_MINT,
+   candidateUtc:'2026-11-27T07:52:22.702Z',blocks:first,
+   providerIndependence:'NOT_VERIFIED',transactionContents:'NOT_FETCHED',transactionVersions:'NOT_FETCHED',
+   executionOutcomes:'NOT_FETCHED',mintMentionCoverage:'NOT_CERTIFIED',eligibility:'NOT_CERTIFIED',authorization:false};
  }catch(e){fail(boundaryFailureCode(e));}
 }
