@@ -7,6 +7,23 @@
 - Physical Android/iPhone touch performance is **BLOCKED — EXTERNAL VERIFICATION REQUIRED**. On the exact reviewed revision, open the Game hero editor, drag the model, pinch without rotating, interrupt the gesture with an OS switch, and repeat after reopening. Record device, browser and result under the existing [device protocol](GAME_NPC_PHYSICAL_DEVICE_ACCEPTANCE.md).
 - Next verify CI for the independent hero preview and movement-input PRs. Preserve the existing account gates.
 
+## Phases 03–06 Game checkpoint — 2026-11-28 PHT
+
+| Phase | Verified on main |
+| --- | --- |
+| 03 | The Torchlit Chamber journal discovery, captured hero preview gestures, desktop right-button orbit, mobile input ownership, shallow-water clearance and natural ledge descent passed their exact pull request CI ([#1061](https://github.com/CryptoDilis/Climboria/pull/1061), [#1065](https://github.com/CryptoDilis/Climboria/pull/1065), [#1066](https://github.com/CryptoDilis/Climboria/pull/1066), [#1063](https://github.com/CryptoDilis/Climboria/pull/1063), [#1068](https://github.com/CryptoDilis/Climboria/pull/1068), [#1070](https://github.com/CryptoDilis/Climboria/pull/1070)). |
+| 04 | The private synthetic drop stores one immutable 90-second deadline and commits the claim and receipt in one transaction. [#1073](https://github.com/CryptoDilis/Climboria/pull/1073) |
+| 05 | The private mastery ledger recognizes ten independent skills and the five approved ranks. It credits validated, contiguous completions once per account and skill. [#1074](https://github.com/CryptoDilis/Climboria/pull/1074) |
+| 06 | The private regional scheduler persists deterministic, expiring slots for Falling Star, Lost Expedition, Secret Passage and Wandering Merchant. [#1075](https://github.com/CryptoDilis/Climboria/pull/1075) |
+
+The private Game state workflow passed its new real workerd/SQLite restart step. It exercises expiry, concurrent claims, replay protection and clock rollback with synthetic identities. [#1077](https://github.com/CryptoDilis/Climboria/pull/1077) The integrated gameplay, NPC and multiplayer suite passed 425 local tests. The live read-only check passed after the ledge-descent merge with room readiness and hosted Game byte parity. [Readiness run](https://github.com/CryptoDilis/Climboria/actions/runs/46094760329)
+
+- **BLOCKED — EXTERNAL VERIFICATION REQUIRED** for two real registered accounts. An owner-approved quiet window, protected environment and two disposable registered accounts are required for the [registered pilot runbook](GAME_REGISTERED_PILOT_MANUAL_QA_2026-11-25.md).
+- **BLOCKED — EXTERNAL VERIFICATION REQUIRED** for private authored edge acceptance. An approved tester needs the bounded private window and access described by the [operator runbook](GAME_PRIVATE_COMBAT_OPERATOR_QA.md).
+- **BLOCKED — EXTERNAL VERIFICATION REQUIRED** for physical Android/iPhone input and performance. Run the [physical device acceptance protocol](GAME_NPC_PHYSICAL_DEVICE_ACCEPTANCE.md) on the exact reviewed Game revision.
+
+Native HUD keyboard activation passed 18 exact CI checks and merged at `5a50fa7958b9fe525e9a9fe2dcbe4c7bc621f222`. The local dropped-backpack range and responsive backpack layout passed desktop and touch-emulated Chromium. Both remain subject to their exact pull request CI. [Keyboard #1071](https://github.com/CryptoDilis/Climboria/pull/1071), [range #1076](https://github.com/CryptoDilis/Climboria/pull/1076), [layout #1078](https://github.com/CryptoDilis/Climboria/pull/1078)
+
 ## Crowd C9–C13 and NPC consolidation checkpoint — 2026-11-28 PHT
 
 - C9 [#1041](https://github.com/CryptoDilis/Climboria/pull/1041) head `81327e0e37bcb2d20bfe1bf61757259fd5aeeda9` exercised 100 peers within 2.8 m. Critical pressure drew 3 bodies and 9 markers on desktop, and 2 bodies and 6 markers in mobile emulation. Hidden peers remained in the fixture roster.
