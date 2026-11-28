@@ -18,42 +18,66 @@ class IntegratedRuntimeTests(unittest.TestCase):
         self.addCleanup(self.f.temp.cleanup)
         self.f.manifest["schema"] = 3
         intent = self.f.fixture.plan
-        self.template = bytes.fromhex("60"+"00"*32+"61"+"00"*32+"62")
+        singleton = addr(42)
         roles = {
             "guard": [(1,"SafeEpochGuardFixture","wallet","contract Safe",intent["safe"]),
-                      (2,"SafeReserveGuardFixture","successor","contract V3AtomicSuccessorFixture",intent["successor"])],
+                      (2,"SafeReserveGuardFixture","successor","contract V3AtomicSuccessorFixture",intent["successor"]),
+                      (5,"SafeEpochGuardFixture","singleton","address",singleton),
+                      (6,"SafeEpochGuardFixture","proxyHash","bytes32",None),
+                      (7,"SafeEpochGuardFixture","singletonHash","bytes32",None),
+                      (8,"SafeReserveGuardFixture","successorHash","bytes32",None)],
             "successor": [(3,"V3QuorumSuccessorFixture","guardFactory","address",addr(40)),
                           (4,"V3AtomicSuccessorFixture","creator","address",addr(41))],
+            "safe": [],
+            "singleton": [],
         }
-        addresses = {"guard":intent["fields"]["guard"], "successor":intent["successor"]}
-        self.output = {"contracts":{review.SOURCE:{}},"sources":{review.SOURCE:{"ast":{"nodes":[]}}}}
+        addresses = {"guard":intent["fields"]["guard"], "successor":intent["successor"],
+                     "safe":intent["safe"],"singleton":singleton}
+        self.output = {"contracts":{},"sources":{}}
+        self.templates = {}
         for role, declarations in roles.items():
+            source, contract = review.CONTRACTS[role]
             refs = {}
+            nodes = self.output["sources"].setdefault(source,{"ast":{"nodes":[]}})["ast"]["nodes"]
+            template = bytes([0x60])+b"".join(bytes(32)+bytes([0x61+i]) for i in range(len(declarations)))+bytes([0x70+list(roles).index(role)])
+            self.templates[role] = template
             for index,(ident,owner,name,typ,value) in enumerate(declarations):
                 refs[str(ident)] = [{"start":1+33*index,"length":32}]
-                self.output["sources"][review.SOURCE]["ast"]["nodes"].append({
-                    "nodeType":"ContractDefinition","name":owner,"nodes":[{
+                nodes.append({"nodeType":"ContractDefinition","name":owner,"nodes":[{
                     "nodeType":"VariableDeclaration","mutability":"immutable","id":ident,
                     "name":name,"typeDescriptions":{"typeString":typ}}]})
-            self.output["contracts"][review.SOURCE][review.CONTRACTS[role]] = {
-                "evm":{"deployedBytecode":{"object":self.template.hex(),
+            self.output["contracts"].setdefault(source,{})[contract] = {
+                "evm":{"deployedBytecode":{"object":template.hex(),
                                            "linkReferences":{},"immutableReferences":refs}}}
         compiler = encode(self.output)
         self.f.raw["compiler_output"] = compiler
         header = {"schema":1,"status":"REVIEW_ONLY_NO_GO","chain_id":84532,"source_commit":intent["source_commit"]}
         self.plans = dict(header,contracts={})
-        self.observed = dict(header,block_number=self.f.obs["block_number"],block_hash=self.f.obs["block_hash"],contracts={})
+        self.observed = dict(header,block_number=self.f.obs["block_number"],block_hash=self.f.obs["block_hash"],
+                             safe_slot0=int(singleton,16).to_bytes(32,"big").hex(),contracts={})
         for role, declarations in roles.items():
-            words = {str(i):{"owner":o,"name":n,"type":t,"word":int(a,16).to_bytes(32,"big").hex()}
+            source, contract = review.CONTRACTS[role]
+            words = {str(i):{"owner":o,"name":n,"type":t,"word":int(a,16).to_bytes(32,"big").hex() if a else "00"*32}
                      for i,o,n,t,a in declarations}
-            plan = dict(header,compiler_output_sha256=digest(compiler),source_unit=review.SOURCE,
-                        contract=review.CONTRACTS[role],runtime_template_sha256=digest(self.template),immutables=words)
+            plan = dict(header,compiler_output_sha256=digest(compiler),source_unit=source,
+                        contract=contract,runtime_template_sha256=digest(self.templates[role]),immutables=words)
             self.plans["contracts"][role] = {"address":addresses[role],"plan":plan}
+        for role in ("safe","singleton","successor"):
             self.observed["contracts"][role] = {"address":addresses[role],"runtime_hex":self.code(role)}
+        for ident, role in (("6","safe"),("7","singleton"),("8","successor")):
+            self.plans["contracts"]["guard"]["plan"]["immutables"][ident]["word"] = review.evm_keccak(bytes.fromhex(self.code(role)))
+        self.observed["contracts"]["guard"] = {"address":addresses["guard"],"runtime_hex":self.code("guard")}
         self.pins = self.write()
     def code(self,role):
         words=self.plans["contracts"][role]["plan"]["immutables"]
-        return "60"+list(words.values())[0]["word"]+"61"+list(words.values())[1]["word"]+"62"
+        source, contract = review.CONTRACTS[role]
+        refs = self.output["contracts"][source][contract]["evm"]["deployedBytecode"]["immutableReferences"]
+        code = bytearray(self.templates[role])
+        for ident, ranges in refs.items():
+            for ref in ranges:
+                offset=ref["start"]
+                code[offset:offset+32]=bytes.fromhex(words[ident]["word"])
+        return code.hex()
     def write(self):
         self.f.raw["runtime_plans"] = encode(self.plans)
         self.f.raw["runtime_observations"] = encode(self.observed)
@@ -67,7 +91,7 @@ class IntegratedRuntimeTests(unittest.TestCase):
         r=self.verify()
         self.assertEqual(r["status"],"INTEGRATED_RUNTIME_REVIEW_MATCHES_NO_GO")
         self.assertEqual(r["artifact_count"],14)
-        self.assertEqual(set(r["runtime_contracts"]),{"guard","successor"})
+        self.assertEqual(set(r["runtime_contracts"]),{"guard","successor","safe","singleton"})
         self.assertEqual(r["testnet"],"NO_GO")
         self.assertEqual(r["mainnet"],"NO_GO")
     def test_independent_runtime_plan_pin(self):
@@ -107,7 +131,7 @@ class IntegratedRuntimeTests(unittest.TestCase):
         self.f.raw["compiler_output"]+=b" "
         self.reject()
     def test_wrong_contract(self):
-        self.plans["contracts"]["guard"]["plan"]["contract"]=review.CONTRACTS["successor"]
+        self.plans["contracts"]["guard"]["plan"]["contract"]=review.CONTRACTS["successor"][1]
         self.reject()
     def test_wrong_source(self):
         self.plans["contracts"]["guard"]["plan"]["source_commit"]="c"*40
@@ -126,6 +150,34 @@ class IntegratedRuntimeTests(unittest.TestCase):
             review.verify(self.f.root,*self.f.write(),self.pins[2],self.pins[3],self.f.now)
     def test_schema_downgrade(self):
         self.f.manifest["schema"]=2
+        self.reject()
+    def test_keccak_known_vectors(self):
+        self.assertEqual(review.evm_keccak(b""),"c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470")
+        self.assertEqual(review.evm_keccak(b"abc"),"4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45")
+    def test_wrong_safe_mastercopy_slot(self):
+        self.observed["safe_slot0"]=int(addr(99),16).to_bytes(32,"big").hex()
+        self.reject()
+    def test_noncanonical_safe_mastercopy_slot(self):
+        self.observed["safe_slot0"]="01"+self.observed["safe_slot0"][2:]
+        self.reject()
+    def test_rehashed_wrong_codehash_even_with_matching_guard_bytes(self):
+        for ident in ("6","7","8"):
+            with self.subTest(ident=ident):
+                word=self.plans["contracts"]["guard"]["plan"]["immutables"][ident]
+                old=word["word"]
+                word["word"]="ab"*32
+                self.observed["contracts"]["guard"]["runtime_hex"]=self.code("guard")
+                self.reject()
+                word["word"]=old
+                self.observed["contracts"]["guard"]["runtime_hex"]=self.code("guard")
+    def test_missing_singleton_runtime(self):
+        del self.observed["contracts"]["singleton"]
+        self.reject()
+    def test_wrong_singleton_address(self):
+        self.observed["contracts"]["singleton"]["address"]=addr(99)
+        self.reject()
+    def test_wrong_safe_proxy_bytes(self):
+        self.observed["contracts"]["safe"]["runtime_hex"]+="00"
         self.reject()
     def test_stale_shared_observation(self):
         self.f.obs["timestamp"]=self.f.now-301
