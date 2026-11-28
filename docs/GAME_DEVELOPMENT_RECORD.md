@@ -3763,3 +3763,9 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Local Game suites passed 402 tests, including mixed input, multi-touch cancellation, USE activation, world pinch isolation and exact terrain source parity. Fresh CI is required before merge.
 - **BLOCKED — EXTERNAL VERIFICATION REQUIRED:** Registered two-account QA has no protected GitHub environment or workflow history. Follow the [registered pilot runbook](GAME_REGISTERED_PILOT_MANUAL_QA_2026-11-25.md) with two disposable accounts and an owner-approved quiet window. Private authored edge QA requires authorized tester access and a bounded window following the [operator runbook](GAME_PRIVATE_COMBAT_OPERATOR_QA.md). Physical acceptance requires hardware and measured passes under the [device protocol](GAME_NPC_PHYSICAL_DEVICE_ACCEPTANCE.md).
 - Next verify exact CI for this input fix and independent cave journal PR #1061. Continue Phase 03 controls and world regressions with the existing release gates.
+
+
+## Phase 05 private mastery presentation candidate — 2026-11-28 PHT
+
+- Stacked on exact #1098. Added a private read-only DOM panel for all ten independent ranks using a supplied authenticated snapshot reader. Fixed labels, strict payload validation and textContent avoid accepting arbitrary markup; no global level or client-side credit. Refresh clears earlier results, generation/scope checks discard late responses, and the host must call clear on session changes and dispose on teardown. No public route, gameplay wiring, auth credentials or local storage changes.
+- Three focused JavaScript harness scenarios passed (DOM fixture): ten skills, malformed/duplicate data, overlapping requests, account switch/logout, rejected request and disposal. Exact Node and actual browser acceptance pending. Next bind only to reviewed private authenticated host and test actual browser desktop/mobile layout; do not enable publicly or mark rank gameplay acceptance complete.
