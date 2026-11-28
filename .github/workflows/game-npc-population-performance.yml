@@ -1,0 +1,47 @@
+name: Game NPC Population Performance
+on:
+  push:
+    paths: ['.github/scripts/game-npc-population-performance.mjs','.github/workflows/game-npc-population-performance.yml']
+  pull_request:
+    paths: ['.github/scripts/game-npc-population-performance.mjs','.github/workflows/game-npc-population-performance.yml']
+permissions:
+  contents: read
+concurrency:
+  group: game-npc-population-performance-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  npc-browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [desktop, mobile]
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.device == 'desktop' && 30 || 20 }}
+    env:
+      NPC_QA_DEVICE: ${{ matrix.device }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-v1
+      - name: Install focused browser dependencies
+        run: |
+          npm init -y
+          npm install --no-save playwright three@0.128.0
+          npx playwright install chromium
+      - name: Start local static server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/npc-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Measure baseline, single, pair and recovered frame times
+        run: node .github/scripts/game-npc-population-performance.mjs
