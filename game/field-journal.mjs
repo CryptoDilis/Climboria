@@ -15,13 +15,25 @@ export function createFieldJournal({ landmarks, storage, getScope }) {
    seen = new Set();
   }
   if (!scope) return;
-  for (const { id } of landmarks) {
-   try {
-    if (storage.getItem(key(id)) === 'visited') seen.add(id);
-   } catch {
-    // Keep discoveries in memory when local storage is unavailable.
-   }
+  for (const { id } of landmarks) readVisit(id);
+ }
+
+ function readVisit(id) {
+  if (seen.has(id)) return false;
+  try {
+   if (storage.getItem(key(id)) !== 'visited') return false;
+  } catch {
+   // Keep discoveries in memory when local storage is unavailable.
+   return false;
   }
+  seen.add(id);
+  return true;
+ }
+
+ function syncVisitedKey(changedKey) {
+  if (!activeScope || activeScope !== getScope()) return false;
+  const landmark = landmarks.find(({ id }) => key(id) === changedKey);
+  return landmark ? readVisit(landmark.id) : false;
  }
 
  function sample(position) {
@@ -48,5 +60,5 @@ export function createFieldJournal({ landmarks, storage, getScope }) {
   return landmarks.filter(({ id }) => seen.has(id));
  }
 
- return { sample, entries };
+ return { sample, entries, syncVisitedKey };
 }

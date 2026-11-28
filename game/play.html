@@ -2343,6 +2343,9 @@ function renderFieldJournal(){
 }
 journalPanel.addEventListener('keydown',e=>e.stopPropagation());
 journalPanel.addEventListener('toggle',()=>{if(journalPanel.open)releaseGameplayInput();renderFieldJournal()});
+addEventListener('storage',event=>{
+ if(journalPanel.open&&event.newValue==='visited'&&fieldJournal?.syncVisitedKey(event.key))renderFieldJournal();
+});
 void import('./field-journal.mjs').then(({createFieldJournal})=>{
  const [caveApproachX,caveApproachZ]=l2w(caveG,caveApproach.x,caveApproach.z);
  const [caveChamberX,caveChamberZ]=l2w(caveG,caveChamber.x,caveChamber.z);

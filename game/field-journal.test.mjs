@@ -61,3 +61,24 @@ test('an underground landmark rejects missing elevation and the surface above it
  assert.equal(journal.sample({ x: 5, y: 12, z: 5 }), true);
  assert.deepEqual(journal.entries(), [underground]);
 });
+
+test('an open journal can pick up a persisted visit from another tab in the current scope', () => {
+ const data = new Map(), writes = [];
+ const storage = { getItem: key => data.get(key), setItem(key, value) { data.set(key, value); writes.push(key); } };
+ let scope = 'user:a';
+ const reader = createFieldJournal({ landmarks, storage, getScope: () => scope });
+ const firstWriter = createFieldJournal({ landmarks, storage, getScope: () => 'user:a' });
+ const secondWriter = createFieldJournal({ landmarks, storage, getScope: () => 'user:b' });
+ assert.deepEqual(reader.entries(), []);
+ secondWriter.sample({ x: 30, z: 5 });
+ assert.equal(reader.syncVisitedKey(writes.at(-1)), false);
+ assert.deepEqual(reader.entries(), []);
+ firstWriter.sample({ x: 0, z: 0 });
+ const visitKey = writes.at(-1);
+ assert.equal(reader.syncVisitedKey(visitKey), true);
+ assert.equal(reader.syncVisitedKey(visitKey), false);
+ assert.deepEqual(reader.entries(), [landmarks[0]]);
+ scope = 'user:b';
+ assert.equal(reader.syncVisitedKey(visitKey), false);
+ assert.deepEqual(reader.entries(), [landmarks[1]]);
+});
