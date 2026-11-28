@@ -1,0 +1,109 @@
+name: DEX Swap Isolated Staging Runtime Safety
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/dex-swap-pinned-staging.mjs"
+      - ".github/scripts/dex-swap-staging-runtime-policy.mjs"
+      - ".github/scripts/dex-swap-staging-runtime-policy.test.mjs"
+      - ".github/scripts/dex-swap-staging-off-browser-smoke.mjs"
+      - ".github/scripts/dex-swap-staging-approval-browser-smoke.mjs"
+      - ".github/scripts/dex-swap-synthetic-runtime-integrity-browser-smoke.mjs"
+      - ".github/scripts/dex-swap-jupiter-source-provenance.mjs"
+      - ".github/scripts/dex-swap-jupiter-source-provenance.test.mjs"
+      - ".github/scripts/dex-swap-jupiter-runtime-contract-audit.mjs"
+      - ".github/scripts/dex-swap-jupiter-runtime-contract-audit.test.mjs"
+      - ".github/workflows/dex-swap-staging-safety.yml"
+      - "dex/provider-managed-swap.mjs"
+      - "swap-config.js"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dex-swap-isolated-staging-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  staging-static:
+    name: Confirm staging cannot enable production or execute trades
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check isolated staging harness syntax
+        run: |
+          node --check .github/scripts/dex-swap-pinned-staging.mjs
+          node --check .github/scripts/dex-swap-staging-runtime-policy.mjs
+          node --check .github/scripts/dex-swap-staging-runtime-policy.test.mjs
+          node --check .github/scripts/dex-swap-jupiter-source-provenance.mjs
+          node --check .github/scripts/dex-swap-jupiter-source-provenance.test.mjs
+          node --check .github/scripts/dex-swap-jupiter-runtime-contract-audit.mjs
+          node --check .github/scripts/dex-swap-jupiter-runtime-contract-audit.test.mjs
+      - name: Test staging release status and production fail-closed gates OFFLINE
+        run: |
+          node --test .github/scripts/dex-swap-staging-runtime-policy.test.mjs
+          node --test .github/scripts/dex-swap-managed-provider-shell.test.mjs
+          node --test .github/scripts/dex-swap-jupiter-source-provenance.test.mjs
+          node --test .github/scripts/dex-swap-jupiter-runtime-contract-audit.test.mjs
+
+  staging-browser:
+    name: Browser checks of disabled Swap and DEX staging on desktop/mobile
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install isolated Playwright Chromium
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Real DOM, network blocked, disabled-provider proof on both routes
+        run: |
+          node --check .github/scripts/dex-swap-staging-off-browser-smoke.mjs
+          node .github/scripts/dex-swap-staging-off-browser-smoke.mjs
+      - name: Synthetic approval and revocation on live Swap/DEX DOM (no Jupiter or wallet)
+        run: |
+          node --check .github/scripts/dex-swap-staging-approval-browser-smoke.mjs
+          node .github/scripts/dex-swap-staging-approval-browser-smoke.mjs
+      - name: Synthetic transitive app SRI and CSS SHA-384 runtime (6 cases x Swap/DEX x desktop/mobile)
+        run: |
+          node --check .github/scripts/dex-swap-synthetic-runtime-integrity-browser-smoke.mjs
+          node .github/scripts/dex-swap-synthetic-runtime-integrity-browser-smoke.mjs
+
+  source-provenance:
+    name: Compare immutable Jupiter source assets against pinned staging CDN hashes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Read ONLY exact upstream SHA-pinned release assets and compare hashes
+        run: |
+          node .github/scripts/dex-swap-jupiter-source-provenance.mjs --check-pinned-source
+
+  runtime-contract:
+    name: Audit exact Jupiter source dynamic JS and CSS integration (GO stays NO)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify immutable source loaders, remote fonts and absent browser runtime SRI
+        run: |
+          node .github/scripts/dex-swap-jupiter-runtime-contract-audit.mjs --audit-pinned-source
