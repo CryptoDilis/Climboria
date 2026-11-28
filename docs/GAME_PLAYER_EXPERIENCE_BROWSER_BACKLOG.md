@@ -40,6 +40,7 @@ Owner-approved additions: 2026-11-27 PHT. Status: APPROVED BACKLOG, NOT IMPLEMEN
 - [ ] R0.6 Optimize GLB/textures/audio with approved source backups, licensing, compression compatible with existing loader, caching and lazy loading; don't remove approved artwork/animations or hide loading failures.
 - [ ] R0.7 Adaptive quality presets Ultra Low/Low/Medium/High/Ultra with manual override; proposed 30 FPS low-end and 30–60 midrange, 60 high-end targets only. WebGL compatibility first; WebGPU optional future path, never a requirement. Graceful degradation, no forced graphics downgrade without clear feedback.
 - [ ] R0.8 Establish bounded server processing for authoritative multiplayer, inventory, events, rewards, AI where required; client renders/interpolates. Set real cost, per-room, entity, and payload limits after measurement.
+  - Phase 03 keyboard coverage preserves Space activation on focused controls and Space-to-jump in gameplay.
 - [ ] R0.9 Optional PWA install/home-screen experience after core browser acceptance; keep direct browser access; test cache/version/offline error handling, no offline authority or fake multiplayer.
 
 ## R1 — First adventure / discovery (highest new player-experience priority)

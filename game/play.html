@@ -1961,8 +1961,11 @@ punchButton.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();
 // Input/chat/settings fields own their keyboard events; never teleport or ATTACK while composing.
 const isEditingText=e=>e.isComposing===true||!!e.target?.closest?.('input,textarea,select,[contenteditable]');
 addEventListener('keydown',e=>{
- if(isEditingText(e))return;
- if(e.code=='Space')e.preventDefault();
+ if(e.defaultPrevented||isEditingText(e))return;
+ if(e.code==='Space'){
+  if(e.target?.closest?.('button,summary,[role="button"]'))return;
+  e.preventDefault();
+ }
  // Direct player input always takes priority over a queued Dota-style click destination.
  if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))P.moveTarget=null;
  keys[e.code]=true;
