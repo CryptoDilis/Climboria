@@ -2,6 +2,11 @@ name: CLIMB Base Halmos Successor Policy Experiment
 on:
   pull_request:
     paths:
+      - 'base/safe-custody/src/**'
+      - 'base/safe-custody/foundry.toml'
+      - 'base/v3-testnet/src/**'
+      - 'base/symbolic-security/verify-halmos-results.py'
+      - 'base/symbolic-security/halmos-constraints.txt'
       - 'base/quorum-symbolic-security/**'
       - '.github/workflows/climb-base-halmos-quorum.yml'
   workflow_dispatch:
@@ -65,8 +70,18 @@ jobs:
         run: |
           set -euo pipefail
           python3.12 -m venv "$RUNNER_TEMP/halmos-venv"
-          "$RUNNER_TEMP/halmos-venv/bin/python" -m pip install "git+https://github.com/a16z/halmos.git@079bb4241d1b460baf986257d56ea86977d73451"
+          "$RUNNER_TEMP/halmos-venv/bin/python" -m pip install --constraint "$GITHUB_WORKSPACE/base/symbolic-security/halmos-constraints.txt" "git+https://github.com/a16z/halmos.git@079bb4241d1b460baf986257d56ea86977d73451"
           "$RUNNER_TEMP/halmos-venv/bin/python" -m pip freeze > "$RUNNER_TEMP/halmos-evidence/python-dependencies.txt"
+          "$RUNNER_TEMP/halmos-venv/bin/python" -m pip check
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          pins = Path(os.environ["GITHUB_WORKSPACE"],"base/symbolic-security/halmos-constraints.txt")
+          expected = {line.strip() for line in pins.read_text().splitlines() if line.strip() and not line.startswith("#")}
+          expected.add("halmos @ git+https://github.com/a16z/halmos.git@079bb4241d1b460baf986257d56ea86977d73451")
+          actual = set(Path(os.environ["RUNNER_TEMP"],"halmos-evidence/python-dependencies.txt").read_text().splitlines())
+          assert actual == expected, {"missing":sorted(expected-actual),"unexpected":sorted(actual-expected)}
+          PY
           "$RUNNER_TEMP/halmos-venv/bin/halmos" --version
       - name: Execute actual symbolic properties and negative control
         run: |
