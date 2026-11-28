@@ -19,10 +19,19 @@ Latest verified: 2026-11-28 UTC. Scope: public frontend and read-only token pres
 - [x] Predeployment transparency page, allocation disclosures and illustrative vesting timeline.
 - [x] Repository whitepaper 17-section rewrite; online whitepaper economic sections updated.
 - [x] Overview outdated play-to-earn and Solana TGE copy updated.
-- [ ] Verify online whitepaper all 17 dedicated sections, preserve unrelated product descriptions and navigation anchors.
-- [ ] Audit remaining public copy and DEX read-only token information; add verified navigation and shared exact data consistency as appropriate; preserve business logic.
+- [x] Online whitepaper all 17 dedicated sections, existing product descriptions in appendices and navigation anchors preserved (source inspection).
+- [ ] Broader remaining public copy audit and shared data consistency; DEX read-only transparency link added without execution changes.
 - [ ] Verify CI and desktop/mobile browser layout and interaction; fix actual failures; review final diff and main drift.
 - [ ] Production read-only monitor implementation/acceptance: blocked for activation by missing verified Base mainnet token identity, wallet manifest, finalized ABI, custody, pool and locker. Do not infer addresses from testnet. Prepare fail-closed provider design and tests independent of deployment.
 - [ ] Verified balances, transfers, release dates, circulating supply, campaign reconciliation, governance proposals, liquidity funding and lock evidence: unavailable until authoritative sources exist.
 
 Next: open scoped draft PR; inspect exact-head Validate and Browser Smoke, then refine online whitepaper structure and remaining public copy. Record PR URL and exact-head evidence in next checkpoint. No contract, issuance script, security gate, Game mechanics, DEX/Swap/Launchpad/CLIMBX execution or secrets modified.
+
+## Cycle 2 — full online structure and DEX discoverability
+- PR [#1145](https://github.com/CryptoDilis/Climboria/pull/1145), draft, not merged. Initial PR head e25f494953f9e75cb3f781794f7f75f05e7d54b6: [Validate 46141024400](https://github.com/CryptoDilis/Climboria/actions/runs/46141024400) and [Browser Smoke 46141024393](https://github.com/CryptoDilis/Climboria/actions/runs/46141024393) were in progress at observation; not accepted as passing or current-head evidence.
+- 0b8667920246d1aefc3858c19c0b1b62180cb4ee: whitepaper/index.html reorganized into all 17 requested sections plus DEX, Launchpad and CLIMBX appendices; existing anchors retained.
+- 638ce9cd143e5db79c45e6a923a0e3fd1897a55d: dex/index.html read-only link in Base market introduction; no execution logic touched.
+- Source re-fetch at 638ce9cd143e5db79c45e6a923a0e3fd1897a55d confirms all 14 required amounts present across homepage, online whitepaper and transparency center; no obsolete V3 IDs or two outdated values; 17 dedicated online V4 sections found.
+- Exact-head Validate [46141087946](https://github.com/CryptoDilis/Climboria/actions/runs/46141087946) pending at observation. Base DEX price/wallet, Base Swap and CLIMBX workflows queued or in progress. No latest-head browser pass claimed. Recheck exact code head; documentation follow-up does not constitute new test evidence.
+- Main drift at initial PR comparison: one main commit ahead, only base/CLIMB_BASE_CURRENT_RELEASE_HANDOFF.md changed; no overlap in returned file paths. Do not overwrite the independent Base handoff. GitHub initially reported mergeable false, so no merge attempted.
+- Next: inspect terminal CI and browser evidence; correct actual failures, verify desktop/mobile dashboard and whitepaper navigation, then review remaining public concept pages and design a reviewed read-only monitoring contract/manifest boundary. Production data still unavailable.
