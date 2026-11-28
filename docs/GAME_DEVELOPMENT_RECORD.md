@@ -209,6 +209,11 @@ returns HTTP 404.
 - Fishing reports a catch and emits the catch event only after adding the item. An existing stack can still grow in a full backpack.
 - Local Chromium verified a blocked chest, a successful retry, chest respawn, and both blocked and stackable catches. All 433 scoped Game tests passed locally.
 
+## Phase 03 fishing cast lifecycle — 2026-11-28 PHT
+
+- An active cast is tied to its fishing spot. Leaving the interaction range or entering swimming cancels it before a reward can resolve. Respawn and position restore clear the cast along with the old movement state.
+- Gameplay smoke checks that leaving at the interaction boundary awards no catch and that a respawn drops the old cast. In-range catches still follow backpack capacity rules. Local Chromium verified a real sea-dock cast canceled on departure, the respawn reset, and both in-range capacity paths.
+
 ## Phase 04 private drop expiry — 2026-11-28 PHT
 
 - The isolated drop-claim fixture now writes a 90-second lifetime in room storage before a claim can proceed. New room instances reuse the stored deadline. At expiry the transaction denies pickup, and an issued or consumed drop cannot be reissued to reset its lifetime. Receipt and inventory slot still commit atomically.
@@ -3765,9 +3770,33 @@ See [owner-approved cross-workstream direction](CLIMBORIA_BASE_FIRST_ECOSYSTEM_D
 - Next verify exact CI for this input fix and independent cave journal PR #1061. Continue Phase 03 controls and world regressions with the existing release gates.
 
 
+## Phase 06 private active-time survival candidate — 2026-11-28 PHT
+
+- Added isolated transactional hunger/thirst state using only room-verified, contiguous active intervals (1–60 seconds). Inspection is owner-bound and read-only; elapsed wall time, reconnects and offline time do not cause catch-up depletion. Fixture rates are explicit, bounded and not production balance decisions. No damage, item consumption, rewards, public route or gameplay activation.
+- Three focused JavaScript regression scenarios passed in the isolated development harness: initial/read-only/account isolation and restart; concurrent replay, interval bounds, sequence gaps and clamping; revoked ownership, mutated proof, corrupt state and ambiguous commits. Exact Node and broader repository CI pending.
+- Next integrate reviewed server active-time receipts and atomic inventory-backed food/water recovery in a private room; production tuning, physical device and real-player acceptance remain separate gates.
+
+
+## Phase 06 private survival recovery candidate — 2026-11-28 PHT
+
+- Stacked on exact private survival ledger candidate #1100. Added bounded synthetic food/water pantry, trusted one-time provisioning, owner-bound read-only inspection, and atomic ration consumption with capped hunger/thirst recovery. Expected pantry revision rejects stale and duplicate consumption; no client amount, target account, or recovery value accepted. No real items or live gameplay grants.
+- Added four focused regression tests for concurrent/replayed consumption, cross-account access, full/empty meters, revoked session, ambiguous commit, transaction rollback on second write, and pantry conservation. Exact CI pending; do not merge before #1100 and required checks. Fixture values are not production balance.
+- Next: verified private activity/inventory integration and cooking recipes; retain physical/actual-player and public release gates.
+
+- Extended the existing CI-only workerd/SQLite fixture with survival provisioning, active-interval depletion, concurrent consumption, and restart assertions covering stock conservation, persisted meters, replay, and no offline catch-up. The public fixture router must reject access. Exact updated-head runtime CI is pending; earlier parent checks are not evidence for this new coverage.
+
+
+## Phase 05 private equipment presentation candidate — 2026-11-28 PHT
+
+- Added independent private read-only equipment panel over owner-bound equipment inspection: fixed training gloves, enhancement, durability meter and broken/worn/full condition, material and fixture-kit balances. Strict snapshot validation and lifecycle generation/scope checks reject malformed or stale results; host must clear on session changes. No repair/enhance controls, production route, player wallet or local storage changes.
+- Three isolated JS DOM-fixture scenarios passed. Added scoped navy/gold responsive CSS and Chromium acceptance for 1200×800 and 360×640 covering visible meter, layout, minimum 16px text, and pending-response logout. Exact Node/browser CI pending; no actual gameplay wiring or device claim. Next bind a reviewed private authenticated presentation host and reconcile combined crafted repair after parents merge.
+
+
 ## Phase 05 private mastery presentation candidate — 2026-11-28 PHT
 
 - Stacked on exact #1098. Added a private read-only DOM panel for all ten independent ranks using a supplied authenticated snapshot reader. Fixed labels, strict payload validation and textContent avoid accepting arbitrary markup; no global level or client-side credit. Refresh clears earlier results, generation/scope checks discard late responses, and the host must call clear on session changes and dispose on teardown. No public route, gameplay wiring, auth credentials or local storage changes.
 - Three focused JavaScript harness scenarios passed (DOM fixture): ten skills, malformed/duplicate data, overlapping requests, account switch/logout, rejected request and disposal. Exact Node and actual browser acceptance pending. Next bind only to reviewed private authenticated host and test actual browser desktop/mobile layout; do not enable publicly or mark rank gameplay acceptance complete.
 
 - Added scoped high-contrast private panel CSS and Chromium CI acceptance at 1200×800 and 360×640. Tests ten actual rendered rows, readable 16px text, responsive column layout, no horizontal overflow, and logout during a pending snapshot. The route is intercepted in the browser test only; public gameplay does not load the panel or its stylesheet. Fresh exact-head browser CI pending.
+
+- Prior exact candidate `c231ce53a04f5781a5dd661697742833ac67c623` passed all five CI workflows, including Chromium panel acceptance. Reconciled with main `a995e50f2787e32e5f1b5a577967c65155b8bebc` retaining equipment panel acceptance and every existing record; fresh combined CI required.

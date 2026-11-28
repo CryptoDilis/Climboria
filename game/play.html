@@ -1943,6 +1943,7 @@ function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
 function resetRepositionLocomotion(){
  Object.assign(P,{mode:'walk',moveTarget:null,vy:0,swim:false,swimDepth:0,
   waterBodyId:null,jumpState:'grounded',jumpStateTimer:0,jumpTrace:null});
+ clearFishingCast();
 }
 function tp(x,z,yaw){
  P.x=x;P.z=z;P.yaw=yaw;cameraYaw=yaw;cameraPitch=-.05;
@@ -2821,7 +2822,8 @@ function deathLootLifecycleAudit(){
   P.mode='walk';P.inv=0;P.hp=1;P.x=125;P.z=125;P.y=groundAt(P.x,P.z)+1.75;
   const {jumpCount,landCount}=P;
   Object.assign(P,{jumpState:'descent',jumpStateTimer:.2,jumpTrace:{jumpCount},
-   vy:-3,swim:true,swimDepth:1,waterBodyId:'smoke',moveTarget:{x:1,z:1}});
+   vy:-3,swim:true,swimDepth:1,waterBodyId:'smoke',moveTarget:{x:1,z:1},
+   fish:.2,fishSource:'open_sea',fishingSpot:{x:P.x,z:P.z}});
   hurt(1,'Smoke death with carried loot');
   const dropped=deathLootBag?{
    x:deathLootBag.x,z:deathLootBag.z,stacks:deathLootBag.items.length,
@@ -2834,6 +2836,7 @@ function deathLootLifecycleAudit(){
   const locomotionReset=P.jumpState==='grounded'&&P.jumpStateTimer===0&&P.jumpTrace===null&&
    P.vy===0&&!P.swim&&P.swimDepth===0&&P.waterBodyId===null&&P.moveTarget===null&&
    P.jumpCount===jumpCount&&P.landCount===landCount;
+  const castCleared=P.fish===0&&P.fishSource===null&&P.fishingSpot===null;
   const mapAfterDeath=deathLootMapMarkerAudit();
   updateDeathLootBag();
   const farDirectionPrompt=deathLootPrompt.textContent;
@@ -2874,14 +2877,14 @@ function deathLootLifecycleAudit(){
    localStorage.getItem(deathLootStorageKey())===null;
   const mapAfterExpiry=deathLootMapMarkerAudit();
   return {ok:!!dropped&&dropped.stacks===1&&dropped.qty===2&&dropped.markerVisible&&
-    dropped.ttl>0&&dropped.ttl<=180000&&inventoryCleared&&respawned&&locomotionReset&&persisted&&
+    dropped.ttl>0&&dropped.ttl<=180000&&inventoryCleared&&respawned&&locomotionReset&&castCleared&&persisted&&
     survivesUnload&&isolated&&rehydrated&&recovered&&recoveredStored&&
     clearedOnRecovery&&expired&&droppedEvents===2&&recoveredEvents===1&&
     mapAfterDeath.visible&&mapAfterDeath.orange&&mapAfterDeath.x===125&&mapAfterDeath.z===125&&
     mapAfterDeath.legend.includes('Orange')&&
     mapAfterReload.visible&&mapAfterReload.orange&&
     !mapAfterRecovery.visible&&!mapAfterExpiry.visible&&farDirectionVisible&&nearDirectionVisible&&outsideRangeRejected,
-   dropped,inventoryCleared,respawned,locomotionReset,persisted,survivesUnload,isolated,rehydrated,
+   dropped,inventoryCleared,respawned,locomotionReset,castCleared,persisted,survivesUnload,isolated,rehydrated,
    recovered,recoveredStored,clearedOnRecovery,expired,droppedEvents,recoveredEvents,hadPriorDeathLoot,
    mapAfterDeath,mapAfterReload,mapAfterRecovery,mapAfterExpiry,
    farDirectionPrompt,farDirectionVisible,nearDirectionPrompt,nearDirectionVisible,outsideRangePrompt,outsideRangeRejected};
@@ -3127,6 +3130,7 @@ function chestDistributionAudit(){
   respawnSamples:{world:chestRespawnDelay({kind:'remote'}),cave:chestRespawnDelay({kind:'cave'}),summit:chestRespawnDelay({kind:'summit'})},
   rarityTotals,summitCooldownSeconds:900,summitCooldownScope:'local-prototype-only',summitGlobalClaimReady:false,rarityOdds:CHEST_RARITY_ODDS};
 }
+const FACILITY_USE_RANGE=5;
 function interact(){if(P.mode!='walk')return;
  if(recoverDeathLoot())return;
  for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){
@@ -3141,8 +3145,23 @@ function interact(){if(P.mode!='walk')return;
   emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});
   return;
  }
- for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){if(P.fish>0)return;P.fish=2+Math.random()*4;P.fishSource=f.waterBodyId||'open_sea';toast('Line cast at '+f.label+'…')}else{toast(f.label);emit(f.type,{})}return}}
-P.fish=0;
+ for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<FACILITY_USE_RANGE){
+  if(f.type==='fish'){
+   if(P.fish>0)return;
+   P.fish=2+Math.random()*4;
+   P.fishSource=f.waterBodyId||'open_sea';
+   P.fishingSpot=f;
+   toast('Line cast at '+f.label+'…');
+  }else{toast(f.label);emit(f.type,{})}
+  return;
+ }
+}
+function clearFishingCast(){
+ P.fish=0;
+ P.fishSource=null;
+ P.fishingSpot=null;
+}
+clearFishingCast();
 /* weather: clear / rain / thunderstorm */
 const RN=MOB?500:1100,rp=new Float32Array(RN*6),rox=new Float32Array(RN),roz=new Float32Array(RN),rdy=new Float32Array(RN);for(let i=0;i<RN;i++){rox[i]=(Math.random()-.5)*90;roz[i]=(Math.random()-.5)*90;rdy[i]=Math.random()*50}
 const rgeo=new T3.BufferGeometry();rgeo.setAttribute('position',new T3.BufferAttribute(rp,3));
@@ -3165,12 +3184,16 @@ function gameTick(dt,cp){
  /* Snake AI disabled with wildlife. */
  for(const c of chests)if(c.open&&(c.t-=dt)<0)place(c);
  updateSummitChestStatus();
+ if(P.fish>0&&(!live||P.swim||!P.fishingSpot||
+     Math.hypot(P.x-P.fishingSpot.x,P.z-P.fishingSpot.z)>=FACILITY_USE_RANGE)){
+  clearFishingCast();
+  toast('Fishing stopped · return to the fishing spot to cast again');
+ }
  if(P.fish>0&&(P.fish-=dt)<=0){
-  P.fish=0;
   const waterBodyId=P.fishSource||'open_sea';
   const table=waterBodyId==='open_sea'?['Silverfin','Bluefin Tuna','Mahi-Mahi','Old Boot (junk)']:['Reed Carp','Golden Trout','Moonpool Koi','Woodland Perch'];
   const fish=table[Math.floor(Math.random()*table.length)];
-  P.fishSource=null;
+  clearFishingCast();
   if(addInventoryItem(fish,1)){
    publishInventory();
    toast('Caught: '+fish);
